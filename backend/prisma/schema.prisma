@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  did         String   @id
+  handle      String   @unique
+  displayName String?
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  trackedMovies TrackedMovie[]
+  
+  @@index([handle])
+}
+
+model Movie {
+  movieId      String   @id
+  title        String
+  posterPath   String?
+  backdropPath String?
+  releaseYear  Int?
+  releaseDate  DateTime?
+  overview     String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  trackedBy    TrackedMovie[]
+  
+  @@index([title])
+}
+
+model TrackedMovie {
+  id          String   @id @default(cuid())
+  rkey        String
+  uri         String   @unique
+  cid         String
+  
+  userDid     String
+  user        User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  
+  movieId     String
+  movie       Movie    @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  
+  status      String   @default("watched")
+  watchedDate DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userDid])
+  @@index([movieId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([watchedDate])
+  @@index([uri])
+  @@index([cid])
+}

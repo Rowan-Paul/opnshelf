@@ -1,0 +1,19 @@
+{
+  "name": "opnshelf",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "build": "turbo run build",
+    "generate:api": "openapi-typescript http://localhost:3001/api-json -o packages/api/src/generated/schema.ts",
+    "prisma:generate": "pnpm --filter backend prisma generate",
+    "prisma:migrate": "pnpm --filter backend prisma migrate dev"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "backend"
+  ]
+}
