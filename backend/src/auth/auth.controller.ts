@@ -30,6 +30,24 @@ export class AuthController {
   ) {}
 
   /**
+   * Root domain for cookie in production (e.g. .opnshelf.xyz) so cookie is sent to api and frontend.
+   */
+  private getCookieDomain(): string | undefined {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    if (!isProduction) return undefined;
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || '';
+    try {
+      const host = new URL(frontendUrl).hostname;
+      if (host && !host.startsWith('localhost') && !host.startsWith('127.')) {
+        return host.startsWith('.') ? host : `.${host}`;
+      }
+    } catch {
+      // ignore invalid FRONTEND_URL
+    }
+    return undefined;
+  }
+
+  /**
    * Client metadata endpoint for AT Protocol OAuth
    */
   @Get('.well-known/oauth-client-metadata.json')
@@ -76,6 +94,7 @@ export class AuthController {
   ) {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://127.0.0.1:3000';
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.getCookieDomain();
 
     try {
       // Parse callback query params
@@ -92,13 +111,14 @@ export class AuthController {
       
       this.logger.log(`User upserted: ${profile.handle}`);
 
-      // Set session cookie with the DID
+      // Set session cookie with the DID (domain set so frontend at opnshelf.xyz receives it)
       res.cookie(SESSION_COOKIE_NAME, session.did, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
         maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
         path: '/',
+        ...(cookieDomain && { domain: cookieDomain }),
       });
 
       return res.redirect(frontendUrl);
@@ -151,12 +171,16 @@ export class AuthController {
       await this.authService.revoke(did);
     }
 
-    // Clear the session cookie
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const cookieDomain = this.getCookieDomain();
+
+    // Clear the session cookie (same options as set, including domain)
     res.clearCookie(SESSION_COOKIE_NAME, {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      secure: isProduction,
       sameSite: 'lax',
       path: '/',
+      ...(cookieDomain && { domain: cookieDomain }),
     });
 
     return res.status(HttpStatus.OK).json({ message: 'Logged out successfully' });
