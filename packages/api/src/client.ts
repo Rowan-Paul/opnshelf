@@ -2,7 +2,7 @@ import createClient from 'openapi-fetch';
 import type { paths } from './generated/schema';
 
 // Allow configuring base URL
-let baseUrl = 'http://localhost:3001';
+let baseUrl = 'http://127.0.0.1:3001';
 
 export function configureApiClient(url: string) {
   baseUrl = url;
@@ -12,8 +12,48 @@ export const apiClient = createClient<paths>({
   get baseUrl() {
     return baseUrl;
   },
+  // Include credentials for cookie-based auth
+  credentials: 'include',
 });
 
+// Auth types
+export interface AuthUser {
+  did: string;
+  handle: string;
+  displayName: string | null;
+  avatar: string | null;
+}
+
+// Auth functions
+export async function getAuthUser(): Promise<AuthUser | null> {
+  try {
+    const response = await fetch(`${baseUrl}/auth/me`, {
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export function getLoginUrl(handle?: string): string {
+  const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
+  return `${baseUrl}/auth/login${params}`;
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${baseUrl}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+}
+
+// Movie functions
 export async function searchMovies(query: string) {
   const { data, error } = await apiClient.GET('/movies/search', {
     params: { query: { query } },

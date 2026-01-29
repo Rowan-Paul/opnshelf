@@ -1,9 +1,30 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Film, Home, Menu, Search, X } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Film, Home, Menu, Search, X, LogIn, LogOut, User } from 'lucide-react'
+import { getAuthUser, logout } from '@opnshelf/api'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  // Fetch auth state
+  const { data: user, isLoading: isAuthLoading } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: getAuthUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  })
+
+  const handleLogout = async () => {
+    await logout()
+    queryClient.invalidateQueries({ queryKey: ['auth'] })
+  }
+
+  const handleLogin = () => {
+    navigate({ to: '/login' })
+  }
 
   return (
     <>
@@ -47,6 +68,45 @@ export default function Header() {
             <Search size={18} />
             <span className="font-medium">Search</span>
           </Link>
+
+          {/* Auth section */}
+          <div className="ml-4 pl-4 border-l border-gray-700">
+            {isAuthLoading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.displayName || user.handle}
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                    <User size={16} />
+                  </div>
+                )}
+                <span className="text-sm text-gray-300">
+                  {user.displayName || `@${user.handle}`}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white text-sm"
+                  title="Sign out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white text-sm font-medium"
+              >
+                <LogIn size={16} />
+                <span>Sign in</span>
+              </button>
+            )}
+          </div>
         </nav>
       </header>
 
@@ -106,6 +166,54 @@ export default function Header() {
             <span className="font-medium">Search</span>
           </Link>
         </nav>
+
+        {/* Mobile auth section */}
+        <div className="p-4 border-t border-gray-800">
+          {isAuthLoading ? (
+            <div className="h-12 bg-gray-700 rounded-lg animate-pulse" />
+          ) : user ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.displayName || user.handle}
+                    className="w-10 h-10 rounded-full"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+                    <User size={20} />
+                  </div>
+                )}
+                <div>
+                  <div className="font-medium">{user.displayName || user.handle}</div>
+                  <div className="text-sm text-gray-400">@{user.handle}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setIsOpen(false)
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300"
+              >
+                <LogOut size={18} />
+                <span>Sign out</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                handleLogin()
+                setIsOpen(false)
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white font-medium"
+            >
+              <LogIn size={18} />
+              <span>Sign in with Bluesky</span>
+            </button>
+          )}
+        </div>
       </aside>
     </>
   )

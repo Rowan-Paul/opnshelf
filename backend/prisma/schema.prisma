@@ -21,6 +21,26 @@ model User {
   @@index([handle])
 }
 
+// OAuth session storage for @atproto/oauth-client-node sessionStore
+// No FK to User because the OAuth library stores session before we create the User
+model AuthSession {
+  userDid     String   @id
+  sessionData String   // JSON-serialized session from the library
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([updatedAt])
+}
+
+model AuthState {
+  key       String   @id
+  stateData String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([expiresAt])
+}
+
 model Movie {
   movieId      String   @id
   title        String

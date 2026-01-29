@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { configureApiClient } from '@opnshelf/api';
-import { env } from './lib/env';
+import { env } from './env';
 
 import { routeTree } from './routeTree.gen';
 

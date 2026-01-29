@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  AuthSession: 'AuthSession',
+  AuthState: 'AuthState',
   Movie: 'Movie',
   TrackedMovie: 'TrackedMovie'
 } as const
@@ -82,6 +84,26 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const AuthSessionScalarFieldEnum = {
+  userDid: 'userDid',
+  sessionData: 'sessionData',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AuthSessionScalarFieldEnum = (typeof AuthSessionScalarFieldEnum)[keyof typeof AuthSessionScalarFieldEnum]
+
+
+export const AuthStateScalarFieldEnum = {
+  key: 'key',
+  stateData: 'stateData',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AuthStateScalarFieldEnum = (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {

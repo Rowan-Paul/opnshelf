@@ -9,6 +9,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
+  server: {
+    port: 3000,
+    host: true,   // listen on 0.0.0.0 so both localhost and 127.0.0.1 work
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

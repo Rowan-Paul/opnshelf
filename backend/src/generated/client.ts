@@ -43,6 +43,16 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model AuthSession
+ * 
+ */
+export type AuthSession = Prisma.AuthSessionModel
+/**
+ * Model AuthState
+ * 
+ */
+export type AuthState = Prisma.AuthStateModel
+/**
  * Model Movie
  * 
  */
