@@ -30,7 +30,8 @@ export class AuthController {
   ) {}
 
   /**
-   * Root domain for cookie in production (e.g. .opnshelf.xyz) so cookie is sent to api and frontend.
+   * Root domain for cookie in production (e.g. opnshelf.xyz) so cookie is sent to apex and all subdomains (api, www, etc.).
+   * Use bare hostname without leading dot for reliable behavior on apex domain.
    */
   private getCookieDomain(): string | undefined {
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
@@ -39,7 +40,8 @@ export class AuthController {
     try {
       const host = new URL(frontendUrl).hostname;
       if (host && !host.startsWith('localhost') && !host.startsWith('127.')) {
-        return host.startsWith('.') ? host : `.${host}`;
+        // Bare domain (e.g. opnshelf.xyz) works for apex + subdomains; leading dot can be unreliable on apex
+        return host.startsWith('.') ? host.slice(1) : host;
       }
     } catch {
       // ignore invalid FRONTEND_URL
