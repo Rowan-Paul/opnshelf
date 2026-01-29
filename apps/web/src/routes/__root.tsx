@@ -13,6 +13,8 @@ import Header from '../components/Header'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
+import { configureApiClient } from '@opnshelf/api'
+import { env } from '@/env'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -43,6 +45,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: RootComponent,
   shellComponent: RootDocument,
 })
+
+
+configureApiClient(env.VITE_API_URL);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext()

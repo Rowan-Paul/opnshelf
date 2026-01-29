@@ -19,6 +19,7 @@ function HomePage() {
           </p>
           <Link
             to="/search"
+            search={{ q: '' }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
           >
             <Search className="w-5 h-5" />
