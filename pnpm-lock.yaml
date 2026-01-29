@@ -275,6 +275,9 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.19.7
       openapi-typescript:
         specifier: ^7.10.1
         version: 7.10.1(typescript@5.9.3)

@@ -1,24 +1,30 @@
-import { createRouter } from '@tanstack/react-router'
-import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
-import * as TanstackQuery from './integrations/tanstack-query/root-provider'
+import { QueryClient } from '@tanstack/react-query';
+import { createRouter as createTanStackRouter } from '@tanstack/react-router';
+import { configureApiClient } from '@opnshelf/api';
+import { env } from './lib/env';
 
-// Import the generated route tree
-import { routeTree } from './routeTree.gen'
+import { routeTree } from './routeTree.gen';
 
-// Create a new router instance
-export const getRouter = () => {
-  const rqContext = TanstackQuery.getContext()
+configureApiClient(env.VITE_API_URL);
 
-  const router = createRouter({
-    routeTree,
-    context: {
-      ...rqContext,
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
     },
+  },
+});
 
+export function getRouter() {
+  return createTanStackRouter({
+    routeTree,
+    context: { queryClient },
     defaultPreload: 'intent',
-  })
+  });
+}
 
-  setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })
-
-  return router
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: ReturnType<typeof getRouter>;
+  }
 }

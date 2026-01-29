@@ -7,7 +7,7 @@
     "dev:mobile": "pnpm --filter mobile start",
     "dev:backend": "pnpm --filter backend start:dev",
     "build": "turbo run build",
-    "generate:api": "openapi-typescript http://localhost:3001/api-json -o packages/api/src/generated/schema.ts",
+    "generate:api": "pnpm --filter @opnshelf/api exec openapi-typescript http://localhost:3001/api-json -o src/generated/schema.ts",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev"
   },
