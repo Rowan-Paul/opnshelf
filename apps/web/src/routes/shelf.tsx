@@ -21,7 +21,7 @@ function ShelfPage() {
   // Fetch user's tracked movies
   const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
     queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user!.did),
+    queryFn: () => getUserMovies(user?.did),
     enabled: !!user?.did,
   });
 
@@ -106,6 +106,7 @@ function ShelfPage() {
                       </div>
                     )}
                     <button
+                      type="button"
                       onClick={() => unmarkMutation.mutate(tracked.movieId)}
                       disabled={unmarkMutation.isPending}
                       className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"

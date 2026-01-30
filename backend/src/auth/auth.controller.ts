@@ -12,10 +12,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { UserDto } from './dto/user.dto';
+import { AuthenticatedRequest } from './types';
 
 const SESSION_COOKIE_NAME = 'session';
 const PLATFORM_COOKIE_NAME = 'auth_platform';
@@ -158,7 +159,8 @@ export class AuthController {
       });
 
       // Check if request originated from mobile app
-      const platform = req.cookies?.[PLATFORM_COOKIE_NAME];
+      const cookies = req.cookies as Record<string, string | undefined>;
+      const platform = cookies?.[PLATFORM_COOKIE_NAME];
 
       // Clear platform cookie after use
       if (platform) {
@@ -187,8 +189,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current authenticated user' })
   @ApiResponse({ status: 200, type: UserDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async me(@Req() req: Request): Promise<UserDto> {
-    const did = (req as any).user?.did;
+  async me(@Req() req: AuthenticatedRequest): Promise<UserDto> {
+    const did = req.user?.did;
     if (!did) {
       throw new BadRequestException('User not found in request');
     }
@@ -212,8 +214,9 @@ export class AuthController {
   @Post('auth/logout')
   @ApiOperation({ summary: 'Logout and clear session' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(@Req() req: Request, @Res() res: Response) {
-    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
+  async logout(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+    const cookies = req.cookies as Record<string, string | undefined>;
+    const sessionId = cookies?.[SESSION_COOKIE_NAME];
 
     if (sessionId) {
       await this.authService.revokeBySessionId(sessionId);

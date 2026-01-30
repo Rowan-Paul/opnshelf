@@ -32,6 +32,16 @@ function isMovieRecord(record: unknown): record is MovieRecord {
   );
 }
 
+interface FirehoseEvent {
+  event: string;
+  collection?: string;
+  record?: unknown;
+  uri?: { toString(): string };
+  rkey?: string;
+  cid?: { toString(): string };
+  author?: string;
+}
+
 @Injectable()
 export class IngesterService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(IngesterService.name);
@@ -47,15 +57,15 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
       this.config.get<string>('ATPROTO_RELAY_URL') || 'wss://bsky.network';
   }
 
-  async onModuleInit() {
-    await this.startIngester();
+  onModuleInit() {
+    void this.startIngester();
   }
 
-  async onModuleDestroy() {
-    await this.stopIngester();
+  onModuleDestroy() {
+    this.stopIngester();
   }
 
-  private async startIngester() {
+  private startIngester() {
     this.logger.log(
       `Starting firehose ingester, connecting to ${this.relayUrl}`,
     );
@@ -66,27 +76,27 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
     this.firehose = new Firehose({
       idResolver,
       filterCollections: [COLLECTION],
-      handleEvent: async (evt) => {
+      handleEvent: async (evt: FirehoseEvent) => {
         try {
           await this.handleEvent(evt);
         } catch (err) {
           this.logger.error('Error handling firehose event', err);
         }
       },
-      onError: (err) => {
+      onError: (err: { message: string }) => {
         // Log non-fatal errors (e.g., parse errors for events we don't handle)
         this.logger.warn('Firehose error (non-fatal)', err.message);
       },
     });
 
     // Start the firehose connection
-    this.firehose.start();
+    void this.firehose.start();
     this.logger.log('Firehose ingester started');
   }
 
-  private async stopIngester() {
+  private stopIngester() {
     if (this.firehose) {
-      this.firehose.destroy();
+      void this.firehose.destroy();
       this.firehose = null;
       this.logger.log('Firehose ingester stopped');
     }
@@ -100,7 +110,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
     return match ? match[1] : null;
   }
 
-  private async handleEvent(evt: any) {
+  private async handleEvent(evt: FirehoseEvent) {
     // Handle create and update events
     if (evt.event === 'create' || evt.event === 'update') {
       if (evt.collection !== COLLECTION) return;
@@ -111,9 +121,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      const uri = evt.uri.toString();
-      const rkey = evt.rkey;
-      const cid = evt.cid?.toString() || '';
+      const uri = evt.uri?.toString() ?? '';
+      const rkey = evt.rkey ?? '';
+      const cid = evt.cid?.toString() ?? '';
 
       // Extract author DID from event or URI
       const authorDid = evt.author || this.extractDidFromUri(uri);

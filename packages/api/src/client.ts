@@ -1,5 +1,4 @@
-import createClient, { type Middleware } from 'openapi-fetch';
-import type { paths } from './generated/schema';
+import { client } from './generated/client.gen';
 
 // Allow configuring base URL
 let baseUrl = 'http://127.0.0.1:3001';
@@ -11,7 +10,7 @@ let sessionToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
 export function setOnUnauthorized(callback: (() => void) | null): void {
-  onUnauthorized = callback;
+	onUnauthorized = callback;
 }
 
 /**
@@ -19,153 +18,102 @@ export function setOnUnauthorized(callback: (() => void) | null): void {
  * When set, requests will use Authorization header instead of cookies.
  */
 export function setSessionToken(token: string | null): void {
-  sessionToken = token;
-  // Recreate client to pick up new middleware config
-  apiClient = createApiClient();
+	sessionToken = token;
+	// Update client config with new auth header
+	updateClientConfig();
 }
 
 /**
  * Get the current session token (useful for checking if logged in)
  */
 export function getSessionToken(): string | null {
-  return sessionToken;
+	return sessionToken;
 }
 
-const unauthorizedMiddleware: Middleware = {
-  async onResponse({ response }) {
-    if (response.status === 401) {
-      onUnauthorized?.();
-    }
-    return response;
-  },
-};
+function updateClientConfig() {
+	const headers: Record<string, string> = {};
+	if (sessionToken) {
+		headers['Authorization'] = `Bearer ${sessionToken}`;
+	}
 
-const authMiddleware: Middleware = {
-  async onRequest({ request }) {
-    // Add Authorization header if we have a session token (mobile auth)
-    if (sessionToken) {
-      request.headers.set('Authorization', `Bearer ${sessionToken}`);
-    }
-    return request;
-  },
-};
-
-function createApiClient() {
-  const client = createClient<paths>({
-    baseUrl,
-    credentials: 'include',
-  });
-  client.use(authMiddleware);
-  client.use(unauthorizedMiddleware);
-  return client;
+	client.setConfig({
+		baseUrl,
+		headers,
+		credentials: 'include',
+	});
 }
 
-let apiClient = createApiClient();
+// Set up response interceptor for 401 handling
+client.interceptors.response.use(async (response) => {
+	if (response.status === 401) {
+		onUnauthorized?.();
+	}
+	return response;
+});
+
+// Initialize client with default config
+updateClientConfig();
 
 export function configureApiClient(url: string) {
-  baseUrl = url;
-  apiClient = createApiClient();
+	baseUrl = url;
+	updateClientConfig();
 }
 
-export { apiClient };
+export { client };
 
 // Auth types
 export interface AuthUser {
-  did: string;
-  handle: string;
-  displayName: string | null;
-  avatar: string | null;
+	did: string;
+	handle: string;
+	displayName: string | null;
+	avatar: string | null;
 }
 
 // Auth functions
 export async function getAuthUser(): Promise<AuthUser | null> {
-  try {
-    const headers: HeadersInit = {};
-    if (sessionToken) {
-      headers['Authorization'] = `Bearer ${sessionToken}`;
-    }
+	try {
+		const headers: HeadersInit = {};
+		if (sessionToken) {
+			headers['Authorization'] = `Bearer ${sessionToken}`;
+		}
 
-    const response = await fetch(`${baseUrl}/auth/me`, {
-      credentials: 'include',
-      headers,
-    });
+		const response = await fetch(`${baseUrl}/auth/me`, {
+			credentials: 'include',
+			headers,
+		});
 
-    if (response.status === 401) {
-      onUnauthorized?.();
-    }
+		if (response.status === 401) {
+			onUnauthorized?.();
+		}
 
-    if (!response.ok) {
-      return null;
-    }
+		if (!response.ok) {
+			return null;
+		}
 
-    return response.json();
-  } catch {
-    return null;
-  }
+		return response.json();
+	} catch {
+		return null;
+	}
 }
 
 export function getLoginUrl(handle?: string): string {
-  const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
-  return `${baseUrl}/auth/login${params}`;
+	const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
+	return `${baseUrl}/auth/login${params}`;
 }
 
 export async function logout(): Promise<void> {
-  const headers: HeadersInit = {};
-  if (sessionToken) {
-    headers['Authorization'] = `Bearer ${sessionToken}`;
-  }
+	const headers: HeadersInit = {};
+	if (sessionToken) {
+		headers['Authorization'] = `Bearer ${sessionToken}`;
+	}
 
-  await fetch(`${baseUrl}/auth/logout`, {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-  });
+	await fetch(`${baseUrl}/auth/logout`, {
+		method: 'POST',
+		credentials: 'include',
+		headers,
+	});
 
-  // Clear session token on logout
-  sessionToken = null;
-}
-
-// Movie functions
-export async function searchMovies(query: string) {
-  const { data, error } = await apiClient.GET('/movies/search', {
-    params: { query: { query } },
-  });
-  
-  if (error) throw new Error('Failed to search movies');
-  return data;
-}
-
-export async function getMovieDetails(movieId: string) {
-  const { data, error } = await apiClient.GET('/movies/tmdb/{movieId}', {
-    params: { path: { movieId } },
-  });
-  
-  if (error) throw new Error('Failed to get movie details');
-  return data;
-}
-
-export async function getUserMovies(userDid: string) {
-  const { data, error } = await apiClient.GET('/movies/user/{userDid}', {
-    params: { path: { userDid } },
-  });
-  
-  if (error) throw new Error('Failed to get user movies');
-  return data;
-}
-
-export async function markMovieWatched(movieId: string) {
-  const { data, error } = await apiClient.POST('/movies/watched', {
-    body: { movieId },
-  });
-  
-  if (error) throw new Error('Failed to mark movie as watched');
-  return data;
-}
-
-export async function unmarkMovieWatched(movieId: string) {
-  const { error } = await apiClient.DELETE('/movies/watched/{movieId}', {
-    params: { path: { movieId } },
-  });
-  
-  if (error) throw new Error('Failed to unmark movie as watched');
+	// Clear session token on logout
+	sessionToken = null;
+	updateClientConfig();
 }

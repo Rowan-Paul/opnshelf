@@ -5,6 +5,26 @@ import { Agent } from '@atproto/api';
 
 const COLLECTION = 'app.opnshelf.movie';
 
+interface TMDBMovie {
+  id: number;
+  title: string;
+  poster_path?: string;
+  backdrop_path?: string;
+  release_date?: string;
+  overview?: string;
+}
+
+interface TMDBSearchResponse {
+  page: number;
+  results: TMDBMovie[];
+  total_results: number;
+  total_pages: number;
+}
+
+interface ATSession {
+  did: string;
+}
+
 @Injectable()
 export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
@@ -18,7 +38,10 @@ export class MoviesService {
     this.tmdbApiKey = this.config.get('TMDB_API_KEY') ?? '';
   }
 
-  async searchMovies(query: string, page: number = 1) {
+  async searchMovies(
+    query: string,
+    page: number = 1,
+  ): Promise<TMDBSearchResponse> {
     const response = await fetch(
       `${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
     );
@@ -27,10 +50,10 @@ export class MoviesService {
       throw new Error('Failed to search movies');
     }
 
-    return response.json();
+    return response.json() as Promise<TMDBSearchResponse>;
   }
 
-  async getMovieDetails(movieId: string) {
+  async getMovieDetails(movieId: string): Promise<TMDBMovie> {
     const response = await fetch(
       `${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,
     );
@@ -39,7 +62,7 @@ export class MoviesService {
       throw new Error('Movie not found');
     }
 
-    return response.json();
+    return response.json() as Promise<TMDBMovie>;
   }
 
   async getUserMovies(userDid: string) {
@@ -56,33 +79,33 @@ export class MoviesService {
     });
   }
 
-  async upsertMovie(movieData: any) {
+  async upsertMovie(movieData: TMDBMovie) {
     return this.prisma.movie.upsert({
       where: { movieId: movieData.id.toString() },
       create: {
         movieId: movieData.id.toString(),
         title: movieData.title,
-        posterPath: movieData.poster_path,
-        backdropPath: movieData.backdrop_path,
+        posterPath: movieData.poster_path ?? null,
+        backdropPath: movieData.backdrop_path ?? null,
         releaseYear: movieData.release_date
           ? new Date(movieData.release_date).getFullYear()
           : null,
         releaseDate: movieData.release_date
           ? new Date(movieData.release_date)
           : null,
-        overview: movieData.overview,
+        overview: movieData.overview ?? null,
       },
       update: {
         title: movieData.title,
-        posterPath: movieData.poster_path,
-        backdropPath: movieData.backdrop_path,
+        posterPath: movieData.poster_path ?? null,
+        backdropPath: movieData.backdrop_path ?? null,
         releaseYear: movieData.release_date
           ? new Date(movieData.release_date).getFullYear()
           : null,
         releaseDate: movieData.release_date
           ? new Date(movieData.release_date)
           : null,
-        overview: movieData.overview,
+        overview: movieData.overview ?? null,
       },
     });
   }
@@ -91,7 +114,7 @@ export class MoviesService {
    * Mark a movie as watched by creating an AT Protocol record in the user's PDS.
    * Database indexing happens via the firehose ingester or optimistic update in controller.
    */
-  async markWatched(userDid: string, session: any, movieId: string) {
+  async markWatched(userDid: string, session: ATSession, movieId: string) {
     const rkey = `movie-${movieId}`;
     const now = new Date().toISOString();
 
@@ -105,7 +128,9 @@ export class MoviesService {
     };
 
     // Create agent from session and write record to user's PDS
-    const agent = new Agent(session);
+    const agent = new Agent(
+      session as unknown as ConstructorParameters<typeof Agent>[0],
+    );
     const response = await agent.com.atproto.repo.putRecord({
       repo: session.did,
       collection: COLLECTION,
@@ -131,11 +156,13 @@ export class MoviesService {
    * Unmark a movie as watched by deleting the AT Protocol record from the user's PDS.
    * Database cleanup happens via the firehose ingester or optimistic update in controller.
    */
-  async unmarkWatched(userDid: string, session: any, movieId: string) {
+  async unmarkWatched(userDid: string, session: ATSession, movieId: string) {
     const rkey = `movie-${movieId}`;
 
     // Create agent from session and delete record from user's PDS
-    const agent = new Agent(session);
+    const agent = new Agent(
+      session as unknown as ConstructorParameters<typeof Agent>[0],
+    );
     await agent.com.atproto.repo.deleteRecord({
       repo: session.did,
       collection: COLLECTION,

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Film, LogIn, AlertCircle } from 'lucide-react';
 import { getAuthUser, getLoginUrl } from '@opnshelf/api';
@@ -22,6 +22,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { error, redirect, reason } = Route.useSearch();
+  const handleId = useId();
 
   // Check if user is already logged in
   const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -104,13 +105,13 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
-                htmlFor="handle"
+                htmlFor={handleId}
                 className="block text-sm font-medium text-gray-300 mb-2"
               >
                 Bluesky Handle
               </label>
               <input
-                id="handle"
+                id={handleId}
                 type="text"
                 value={handle}
                 onChange={(e) => setHandle(e.target.value)}

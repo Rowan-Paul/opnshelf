@@ -91,7 +91,7 @@ describe('AuthService', () => {
     configService = module.get(ConfigService);
 
     // Initialize the OAuth client
-    await service.onModuleInit();
+    service.onModuleInit();
   });
 
   describe('getSessionById', () => {

@@ -17,9 +17,17 @@ import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: jest.Mocked<AuthService>;
 
-  const mockAuthService = {
+  const mockAuthService: {
+    getClientMetadata: jest.Mock;
+    authorize: jest.Mock;
+    callback: jest.Mock;
+    fetchProfile: jest.Mock;
+    upsertUser: jest.Mock;
+    getSessionByUserDid: jest.Mock;
+    getUser: jest.Mock;
+    revokeBySessionId: jest.Mock;
+  } = {
     getClientMetadata: jest.fn(),
     authorize: jest.fn(),
     callback: jest.fn(),
@@ -71,7 +79,6 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    authService = module.get(AuthService);
   });
 
   describe('getClientMetadata', () => {

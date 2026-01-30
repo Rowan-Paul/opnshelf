@@ -6,7 +6,7 @@ OpnShelf is a monorepo with pnpm workspaces containing:
 - **apps/web**: React + TanStack Router + Vite frontend
 - **apps/mobile**: Expo/React Native mobile app
 - **backend**: NestJS API server with Prisma
-- **packages/api**: OpenAPI-generated API client
+- **packages/api**: OpenAPI-generated API client with TanStack Query support
 - **packages/types**: Shared TypeScript types
 
 ## Build Commands
@@ -170,6 +170,49 @@ pnpm --filter backend add -D <package>
 - `/backend/eslint.config.mjs` - Backend linting rules
 - `/turbo.json` - Build pipeline configuration
 - `/pnpm-workspace.yaml` - Workspace definitions
+
+## API Client (@opnshelf/api)
+
+The API client is generated using `@hey-api/openapi-ts` with TanStack Query support.
+
+### Generated Code Structure
+
+- `src/generated/` - Auto-generated SDK and types
+- `src/generated/@tanstack/react-query.gen.ts` - TanStack Query hooks (queryOptions, mutationOptions)
+- `src/client.ts` - Custom client wrapper with auth interceptors
+
+### Using TanStack Query Hooks
+
+```typescript
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { moviesControllerSearchMoviesOptions, moviesControllerMarkWatchedMutation } from '@opnshelf/api';
+
+// Query example
+const { data, isLoading } = useQuery({
+  ...moviesControllerSearchMoviesOptions({
+    query: { query: 'Inception' }
+  })
+});
+
+// Mutation example
+const markWatched = useMutation({
+  ...moviesControllerMarkWatchedMutation(),
+  onSuccess: () => {
+    // Handle success
+  }
+});
+
+markWatched.mutate({
+  body: { movieId: '123' }
+});
+```
+
+### Regenerating API Client
+
+```bash
+# Ensure backend is running on port 3001, then:
+pnpm generate:api
+```
 
 ## Cursor Rules
 

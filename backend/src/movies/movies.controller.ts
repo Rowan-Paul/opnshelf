@@ -13,7 +13,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import type { Request } from 'express';
 import { MoviesService } from './movies.service';
 import {
   SearchMoviesDto,
@@ -23,6 +22,7 @@ import {
   MarkWatchedDto,
 } from './dto/movie.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { AuthenticatedRequest } from '../auth/types';
 
 @ApiTags('movies')
 @Controller('movies')
@@ -58,8 +58,11 @@ export class MoviesController {
   @ApiOperation({ summary: 'Mark a movie as watched' })
   @ApiResponse({ status: 201, type: TrackedMovieDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async markWatched(@Body() body: MarkWatchedDto, @Req() req: Request) {
-    const user = (req as any).user;
+  async markWatched(
+    @Body() body: MarkWatchedDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const user = req.user;
 
     // Write to user's PDS
     const { uri, cid, rkey, record } = await this.moviesService.markWatched(
@@ -80,9 +83,9 @@ export class MoviesController {
         record.watchedAt,
       );
       return trackedMovie;
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.warn(
-        { err },
+        { err: err instanceof Error ? err.message : String(err) },
         'Failed to optimistically update DB; firehose will catch it',
       );
       // Return a minimal response since PDS write succeeded
@@ -96,8 +99,11 @@ export class MoviesController {
   @ApiOperation({ summary: 'Unmark a movie as watched' })
   @ApiResponse({ status: 204, description: 'Movie unmarked as watched' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async unmarkWatched(@Param('movieId') movieId: string, @Req() req: Request) {
-    const user = (req as any).user;
+  async unmarkWatched(
+    @Param('movieId') movieId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const user = req.user;
 
     // Delete from user's PDS
     await this.moviesService.unmarkWatched(user.did, user.session, movieId);
@@ -106,9 +112,9 @@ export class MoviesController {
     // If this fails, the firehose ingester will catch it later
     try {
       await this.moviesService.removeTrackedMovie(user.did, movieId);
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.warn(
-        { err },
+        { err: err instanceof Error ? err.message : String(err) },
         'Failed to optimistically remove from DB; firehose will catch it',
       );
     }

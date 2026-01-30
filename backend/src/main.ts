@@ -43,4 +43,4 @@ async function bootstrap() {
   console.log(`🚀 API running on http://127.0.0.1:${port}`);
   console.log(`📚 API docs at http://127.0.0.1:${port}/api`);
 }
-bootstrap();
+void bootstrap();

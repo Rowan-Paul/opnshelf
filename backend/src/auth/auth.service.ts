@@ -18,11 +18,11 @@ export class AuthService implements OnModuleInit {
     private readonly configService: ConfigService,
   ) {}
 
-  async onModuleInit() {
-    await this.initializeOAuthClient();
+  onModuleInit() {
+    this.initializeOAuthClient();
   }
 
-  private async initializeOAuthClient() {
+  private initializeOAuthClient() {
     const backendUrl =
       this.configService.get<string>('BACKEND_PUBLIC_URL') ||
       'http://127.0.0.1:3001';
@@ -228,8 +228,10 @@ export class AuthService implements OnModuleInit {
    * @param session - The OAuth session
    * @returns User profile data
    */
-  async fetchProfile(session: any) {
-    const agent = new Agent(session);
+  async fetchProfile(session: { did: string }) {
+    const agent = new Agent(
+      session as unknown as ConstructorParameters<typeof Agent>[0],
+    );
     const profile = await agent.getProfile({ actor: session.did });
     return {
       did: session.did,

@@ -31,6 +31,7 @@ export default function Header() {
       <header className="px-4 py-3 flex items-center justify-between bg-gray-900 text-white border-b border-gray-800">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setIsOpen(true)}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors md:hidden"
             aria-label="Open menu"
@@ -100,6 +101,7 @@ export default function Header() {
                   {user.displayName || `@${user.handle}`}
                 </span>
                 <button
+                  type="button"
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white text-sm"
                   title="Sign out"
@@ -109,6 +111,7 @@ export default function Header() {
               </div>
             ) : (
               <button
+                type="button"
                 onClick={handleLogin}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white text-sm font-medium"
               >
@@ -122,9 +125,11 @@ export default function Header() {
 
       {/* Mobile drawer overlay */}
       {isOpen && (
-        <div
+        <button
+          type="button"
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
+          aria-label="Close menu overlay"
         />
       )}
 
@@ -140,6 +145,7 @@ export default function Header() {
             <span className="text-lg font-bold">OpnShelf</span>
           </div>
           <button
+            type="button"
             onClick={() => setIsOpen(false)}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Close menu"
@@ -213,6 +219,7 @@ export default function Header() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   handleLogout()
                   setIsOpen(false)
@@ -225,6 +232,7 @@ export default function Header() {
             </div>
           ) : (
             <button
+              type="button"
               onClick={() => {
                 handleLogin()
                 setIsOpen(false)

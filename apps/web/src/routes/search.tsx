@@ -31,7 +31,7 @@ function SearchPage() {
   // Fetch user's tracked movies when logged in
   const { data: trackedMovies } = useQuery({
     queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user!.did),
+    queryFn: () => getUserMovies(user?.did),
     enabled: !!user?.did,
   });
 
@@ -149,6 +149,7 @@ function SearchPage() {
                       )}
                       {user && (
                         <button
+                          type="button"
                           onClick={() => {
                             if (isWatched) {
                               unmarkMutation.mutate(movieId);
