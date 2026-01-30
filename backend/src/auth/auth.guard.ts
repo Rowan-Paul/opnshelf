@@ -18,10 +18,10 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    
+
     // Cookie stores opaque session id (not DID)
     const sessionId = request.cookies?.[SESSION_COOKIE_NAME];
-    
+
     if (!sessionId) {
       this.logger.debug('No session cookie found');
       throw new UnauthorizedException('Not authenticated');

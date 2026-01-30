@@ -34,7 +34,8 @@ export class AuthController {
    * Use bare hostname without leading dot for reliable behavior on apex domain.
    */
   private getCookieDomain(): string | undefined {
-    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
     if (!isProduction) return undefined;
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || '';
     try {
@@ -63,7 +64,11 @@ export class AuthController {
    */
   @Get('auth/login')
   @ApiOperation({ summary: 'Start AT Protocol OAuth login' })
-  @ApiQuery({ name: 'handle', required: false, description: 'User handle (e.g., user.bsky.social)' })
+  @ApiQuery({
+    name: 'handle',
+    required: false,
+    description: 'User handle (e.g., user.bsky.social)',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to authorization server' })
   async login(
     @Query('handle') handle: string | undefined,
@@ -79,7 +84,9 @@ export class AuthController {
       return res.redirect(authUrl);
     } catch (error) {
       this.logger.error('OAuth authorization failed', error);
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://127.0.0.1:3000';
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://127.0.0.1:3000';
       return res.redirect(`${frontendUrl}?error=auth_failed`);
     }
   }
@@ -89,32 +96,36 @@ export class AuthController {
    */
   @Get('auth/callback')
   @ApiOperation({ summary: 'AT Protocol OAuth callback' })
-  @ApiResponse({ status: 302, description: 'Redirect to frontend after authentication' })
-  async callback(
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://127.0.0.1:3000';
-    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to frontend after authentication',
+  })
+  async callback(@Req() req: Request, @Res() res: Response) {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://127.0.0.1:3000';
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
     const cookieDomain = this.getCookieDomain();
 
     try {
       // Parse callback query params
       const params = new URLSearchParams(req.url.split('?')[1] || '');
-      
+
       this.logger.log('Processing OAuth callback');
       const { session } = await this.authService.callback(params);
-      
+
       this.logger.log(`OAuth callback successful for DID: ${session.did}`);
 
       // Fetch user profile and upsert in database
       const profile = await this.authService.fetchProfile(session);
       await this.authService.upsertUser(profile);
-      
+
       this.logger.log(`User upserted: ${profile.handle}`);
 
       // Resolve opaque session id (cookie stores this, not DID)
-      const sessionRecord = await this.authService.getSessionByUserDid(session.did);
+      const sessionRecord = await this.authService.getSessionByUserDid(
+        session.did,
+      );
       if (!sessionRecord) {
         this.logger.error('AuthSession not found after callback');
         return res.redirect(`${frontendUrl}?error=callback_failed`);
@@ -130,7 +141,9 @@ export class AuthController {
         ...(cookieDomain && { domain: cookieDomain }),
       });
 
-      return res.redirect(frontendUrl);
+      // Redirect to /auth/complete so frontend can handle post-login redirect
+      const completeUrl = new URL('/auth/complete', frontendUrl).toString();
+      return res.redirect(completeUrl);
     } catch (error) {
       this.logger.error('OAuth callback failed', error);
       return res.redirect(`${frontendUrl}?error=callback_failed`);
@@ -170,17 +183,15 @@ export class AuthController {
   @Post('auth/logout')
   @ApiOperation({ summary: 'Logout and clear session' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async logout(@Req() req: Request, @Res() res: Response) {
     const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
-    
+
     if (sessionId) {
       await this.authService.revokeBySessionId(sessionId);
     }
 
-    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
     const cookieDomain = this.getCookieDomain();
 
     // Clear the session cookie (same options as set, including domain)
@@ -192,6 +203,8 @@ export class AuthController {
       ...(cookieDomain && { domain: cookieDomain }),
     });
 
-    return res.status(HttpStatus.OK).json({ message: 'Logged out successfully' });
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: 'Logged out successfully' });
   }
 }

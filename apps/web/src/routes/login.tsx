@@ -125,6 +125,18 @@ function LoginPage() {
                 </>
               )}
             </button>
+
+            <p className="text-center text-sm text-gray-400">
+              Don&apos;t have an account?{' '}
+              <a
+                href="https://bsky.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 underline underline-offset-2 transition-colors"
+              >
+                Sign up on Bluesky
+              </a>
+            </p>
           </form>
         </div>
       </div>

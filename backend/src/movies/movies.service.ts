@@ -16,25 +16,25 @@ export class MoviesService {
 
   async searchMovies(query: string, page: number = 1) {
     const response = await fetch(
-      `${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`
+      `${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
     );
-    
+
     if (!response.ok) {
       throw new Error('Failed to search movies');
     }
-    
+
     return response.json();
   }
 
   async getMovieDetails(movieId: string) {
     const response = await fetch(
-      `${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`
+      `${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,
     );
-    
+
     if (!response.ok) {
       throw new Error('Movie not found');
     }
-    
+
     return response.json();
   }
 
@@ -60,16 +60,24 @@ export class MoviesService {
         title: movieData.title,
         posterPath: movieData.poster_path,
         backdropPath: movieData.backdrop_path,
-        releaseYear: movieData.release_date ? new Date(movieData.release_date).getFullYear() : null,
-        releaseDate: movieData.release_date ? new Date(movieData.release_date) : null,
+        releaseYear: movieData.release_date
+          ? new Date(movieData.release_date).getFullYear()
+          : null,
+        releaseDate: movieData.release_date
+          ? new Date(movieData.release_date)
+          : null,
         overview: movieData.overview,
       },
       update: {
         title: movieData.title,
         posterPath: movieData.poster_path,
         backdropPath: movieData.backdrop_path,
-        releaseYear: movieData.release_date ? new Date(movieData.release_date).getFullYear() : null,
-        releaseDate: movieData.release_date ? new Date(movieData.release_date) : null,
+        releaseYear: movieData.release_date
+          ? new Date(movieData.release_date).getFullYear()
+          : null,
+        releaseDate: movieData.release_date
+          ? new Date(movieData.release_date)
+          : null,
         overview: movieData.overview,
       },
     });

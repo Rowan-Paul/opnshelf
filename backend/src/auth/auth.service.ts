@@ -23,8 +23,11 @@ export class AuthService implements OnModuleInit {
   }
 
   private async initializeOAuthClient() {
-    const backendUrl = this.configService.get<string>('BACKEND_PUBLIC_URL') || 'http://127.0.0.1:3001';
-    const isLocalhost = backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1');
+    const backendUrl =
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      'http://127.0.0.1:3001';
+    const isLocalhost =
+      backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1');
     const port = this.configService.get<number>('PORT') || 3001;
 
     // For localhost development:
@@ -273,15 +276,18 @@ export class AuthService implements OnModuleInit {
    * For localhost development, the Authorization Server generates virtual metadata
    */
   getClientMetadata() {
-    const backendUrl = this.configService.get<string>('BACKEND_PUBLIC_URL') || 'http://127.0.0.1:3001';
-    const isLocalhost = backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1');
+    const backendUrl =
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      'http://127.0.0.1:3001';
+    const isLocalhost =
+      backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1');
     const port = new URL(backendUrl).port || '3001';
-    
+
     // For localhost, use 127.0.0.1 in redirect_uri
     const redirectUri = isLocalhost
       ? `http://127.0.0.1:${port}/auth/callback`
       : `${backendUrl}/auth/callback`;
-    
+
     return {
       client_id: `${backendUrl}/.well-known/oauth-client-metadata.json`,
       client_name: 'OpnShelf',

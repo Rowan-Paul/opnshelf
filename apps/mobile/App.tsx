@@ -15,6 +15,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const queryClient = new QueryClient();
 
 const linking = {
+  prefixes: ['opnshelf://'],
   config: {
     screens: {
       Home: '',

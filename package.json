@@ -16,5 +16,8 @@
     "packages/*",
     "backend"
   ],
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  },
   "packageManager": "pnpm@10.28.2"
 }

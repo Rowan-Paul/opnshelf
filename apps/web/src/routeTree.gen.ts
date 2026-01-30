@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -28,35 +29,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCompleteRoute = AuthCompleteRouteImport.update({
+  id: '/auth/complete',
+  path: '/auth/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/search'
+  fullPaths: '/' | '/login' | '/search' | '/auth/complete'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/search'
-  id: '__root__' | '/' | '/login' | '/search'
+  to: '/' | '/login' | '/search' | '/auth/complete'
+  id: '__root__' | '/' | '/login' | '/search' | '/auth/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
+  AuthCompleteRoute: typeof AuthCompleteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/complete': {
+      id: '/auth/complete'
+      path: '/auth/complete'
+      fullPath: '/auth/complete'
+      preLoaderRoute: typeof AuthCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
+  AuthCompleteRoute: AuthCompleteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

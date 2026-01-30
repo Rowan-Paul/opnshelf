@@ -16,18 +16,16 @@ async function bootstrap() {
   // CORS with credentials for cookie-based auth
   const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
   app.enableCors({
-    origin: [
-      frontendUrl,
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:8081',
-    ],
+    origin: [frontendUrl, 'http://127.0.0.1:3000', 'http://127.0.0.1:8081'],
     credentials: true,
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('OpnShelf API')
@@ -41,7 +39,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  
+
   console.log(`🚀 API running on http://127.0.0.1:${port}`);
   console.log(`📚 API docs at http://127.0.0.1:${port}/api`);
 }

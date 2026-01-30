@@ -1,0 +1,48 @@
+name: CI (Web)
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/web/**", "packages/**", "pnpm-lock.yaml", "package.json"]
+  pull_request:
+    branches: [main]
+    paths: ["apps/web/**", "packages/**", "pnpm-lock.yaml", "package.json"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter "./apps/web" run check
+
+      - name: Typecheck
+        run: pnpm --filter "./apps/web" exec tsc --noEmit
+
+      - name: Test
+        run: pnpm --filter "./apps/web" run test
+
+      - name: Build
+        run: pnpm --filter "./apps/web" run build
+        env:
+          VITE_API_URL: "http://localhost:3001"

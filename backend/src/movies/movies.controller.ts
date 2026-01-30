@@ -1,11 +1,11 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { MoviesService } from './movies.service';
-import { 
-  SearchMoviesDto, 
-  SearchResultsDto, 
+import {
+  SearchMoviesDto,
+  SearchResultsDto,
   TrackedMovieDto,
-  MovieDto 
+  MovieDto,
 } from './dto/movie.dto';
 
 @ApiTags('movies')
