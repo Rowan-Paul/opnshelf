@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ShelfRouteImport } from './routes/shelf'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 
+const ShelfRoute = ShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRoutesById {
@@ -52,25 +60,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/search' | '/auth/complete'
+  fullPaths: '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/search' | '/auth/complete'
-  id: '__root__' | '/' | '/login' | '/search' | '/auth/complete'
+  to: '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
+  id: '__root__' | '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
+  ShelfRoute: typeof ShelfRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/shelf': {
+      id: '/shelf'
+      path: '/shelf'
+      fullPath: '/shelf'
+      preLoaderRoute: typeof ShelfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
+  ShelfRoute: ShelfRoute,
   AuthCompleteRoute: AuthCompleteRoute,
 }
 export const routeTree = rootRouteImport

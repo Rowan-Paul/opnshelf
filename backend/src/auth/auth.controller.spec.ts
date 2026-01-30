@@ -96,7 +96,7 @@ describe('AuthController', () => {
       mockAuthService.authorize.mockResolvedValue(authUrl);
       const res = createMockResponse();
 
-      await controller.login('user.bsky.social', res);
+      await controller.login('user.bsky.social', undefined, res);
 
       expect(mockAuthService.authorize).toHaveBeenCalledWith(
         'user.bsky.social',
@@ -109,16 +109,31 @@ describe('AuthController', () => {
       mockAuthService.authorize.mockResolvedValue(authUrl);
       const res = createMockResponse();
 
-      await controller.login(undefined, res);
+      await controller.login(undefined, undefined, res);
 
       expect(mockAuthService.authorize).toHaveBeenCalledWith('bsky.social');
+    });
+
+    it('should set platform cookie when platform=mobile', async () => {
+      const authUrl = 'https://bsky.social/oauth/authorize?state=abc';
+      mockAuthService.authorize.mockResolvedValue(authUrl);
+      const res = createMockResponse();
+
+      await controller.login('user.bsky.social', 'mobile', res);
+
+      expect(res.cookie).toHaveBeenCalledWith('auth_platform', 'mobile', {
+        httpOnly: true,
+        maxAge: 5 * 60 * 1000,
+        sameSite: 'lax',
+      });
+      expect(res.redirect).toHaveBeenCalledWith(authUrl);
     });
 
     it('should redirect to frontend with error on failure', async () => {
       mockAuthService.authorize.mockRejectedValue(new Error('OAuth error'));
       const res = createMockResponse();
 
-      await controller.login('user.bsky.social', res);
+      await controller.login('user.bsky.social', undefined, res);
 
       expect(res.redirect).toHaveBeenCalledWith(
         'http://127.0.0.1:3000?error=auth_failed',
@@ -166,6 +181,38 @@ describe('AuthController', () => {
       );
       expect(res.redirect).toHaveBeenCalledWith(
         'http://127.0.0.1:3000/auth/complete',
+      );
+    });
+
+    it('should redirect to mobile deep link when platform cookie is set', async () => {
+      const mockSession = { did: 'did:plc:abc123' };
+      const mockProfile = {
+        did: 'did:plc:abc123',
+        handle: 'user.bsky.social',
+        displayName: 'Test User',
+        avatar: 'https://example.com/avatar.jpg',
+      };
+      const mockSessionRecord = {
+        id: 'session-123',
+        userDid: 'did:plc:abc123',
+      };
+
+      mockAuthService.callback.mockResolvedValue({ session: mockSession });
+      mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+      mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+      mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
+
+      const req = createMockRequest({
+        url: '/auth/callback?code=abc&state=xyz',
+        cookies: { auth_platform: 'mobile' },
+      });
+      const res = createMockResponse();
+
+      await controller.callback(req, res);
+
+      expect(res.clearCookie).toHaveBeenCalledWith('auth_platform');
+      expect(res.redirect).toHaveBeenCalledWith(
+        'opnshelf://auth/complete?session=session-123',
       );
     });
 

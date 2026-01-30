@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Film, Home, Menu, Search, X, LogIn, LogOut, User } from 'lucide-react'
+import { Film, Home, Menu, Search, X, LogIn, LogOut, User, BookOpen } from 'lucide-react'
 import { getAuthUser, logout } from '@opnshelf/api'
 
 export default function Header() {
@@ -65,6 +65,19 @@ export default function Header() {
             <Search size={18} />
             <span className="font-medium">Search</span>
           </Link>
+          {user && (
+            <Link
+              to="/shelf"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
+              activeProps={{
+                className:
+                  'flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white',
+              }}
+            >
+              <BookOpen size={18} />
+              <span className="font-medium">My Shelf</span>
+            </Link>
+          )}
 
           {/* Auth section */}
           <div className="ml-4 pl-4 border-l border-gray-700">
@@ -159,6 +172,21 @@ export default function Header() {
             <Search size={20} />
             <span className="font-medium">Search</span>
           </Link>
+
+          {user && (
+            <Link
+              to="/shelf"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors mb-2 text-white',
+              }}
+            >
+              <BookOpen size={20} />
+              <span className="font-medium">My Shelf</span>
+            </Link>
+          )}
         </nav>
 
         {/* Mobile auth section */}

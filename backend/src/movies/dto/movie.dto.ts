@@ -107,3 +107,9 @@ export class SearchResultsDto {
   @ApiProperty()
   page: number;
 }
+
+export class MarkWatchedDto {
+  @ApiProperty({ description: 'TMDB movie ID' })
+  @IsString()
+  movieId: string;
+}

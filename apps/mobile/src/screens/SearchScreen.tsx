@@ -1,6 +1,12 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
-import { searchMovies } from '@opnshelf/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  getAuthUser,
+  getUserMovies,
+  searchMovies,
+  markMovieWatched,
+  unmarkMovieWatched,
+} from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
@@ -8,6 +14,7 @@ import {
   Image,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,10 +32,22 @@ type MovieItem = {
   release_date?: string;
 };
 
-function MovieCard({ movie }: { movie: MovieItem }) {
+function MovieCard({
+  movie,
+  isWatched,
+  onMarkWatched,
+  onUnmarkWatched,
+  isLoading,
+}: {
+  movie: MovieItem;
+  isWatched: boolean;
+  onMarkWatched: () => void;
+  onUnmarkWatched: () => void;
+  isLoading: boolean;
+}) {
   return (
     <View className="flex-1 min-w-0">
-      <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2">
+      <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
         {movie.poster_path ? (
           <Image
             source={{ uri: `${POSTER_BASE}${movie.poster_path}` }}
@@ -40,6 +59,23 @@ function MovieCard({ movie }: { movie: MovieItem }) {
             <Text className="text-gray-500 text-xs">No poster</Text>
           </View>
         )}
+        {/* Watch status button */}
+        <TouchableOpacity
+          onPress={isWatched ? onUnmarkWatched : onMarkWatched}
+          disabled={isLoading}
+          className={`absolute top-2 right-2 p-2 rounded-full ${
+            isWatched ? 'bg-green-600' : 'bg-violet-600'
+          }`}
+          activeOpacity={0.7}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : isWatched ? (
+            <Ionicons name="checkmark" size={16} color="#fff" />
+          ) : (
+            <Ionicons name="add" size={16} color="#fff" />
+          )}
+        </TouchableOpacity>
       </View>
       <Text className="text-sm font-semibold text-gray-50 mb-1" numberOfLines={2}>
         {movie.title}
@@ -53,7 +89,8 @@ function MovieCard({ movie }: { movie: MovieItem }) {
   );
 }
 
-export function SearchScreen({ route }: Props) {
+export function SearchScreen({ route, navigation }: Props) {
+  const queryClient = useQueryClient();
   const initialQ = route.params?.q ?? '';
   const [query, setQuery] = useState(initialQ);
   const [searchQuery, setSearchQuery] = useState(initialQ);
@@ -73,6 +110,41 @@ export function SearchScreen({ route }: Props) {
     };
   }, [query, searchQuery]);
 
+  // Auth state
+  const { data: user } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: getAuthUser,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // User's tracked movies
+  const { data: trackedMovies } = useQuery({
+    queryKey: ['shelf', user?.did],
+    queryFn: () => getUserMovies(user!.did),
+    enabled: !!user?.did,
+  });
+
+  // Create a set of watched movie IDs for quick lookup
+  const watchedMovieIds = new Set(
+    trackedMovies?.map((t: { movieId: string }) => t.movieId) ?? [],
+  );
+
+  // Mutations for marking/unmarking movies
+  const markMutation = useMutation({
+    mutationFn: markMovieWatched,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+    },
+  });
+
+  const unmarkMutation = useMutation({
+    mutationFn: unmarkMovieWatched,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+    },
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['search', searchQuery],
     queryFn: () => searchMovies(searchQuery),
@@ -82,9 +154,43 @@ export function SearchScreen({ route }: Props) {
   const results = data?.results ?? [];
   const totalResults = data?.total_results ?? 0;
 
+  const handleMarkWatched = useCallback(
+    (movieId: string) => {
+      if (!user) {
+        navigation.navigate('Login', { redirect: 'Search' });
+        return;
+      }
+      markMutation.mutate(movieId);
+    },
+    [user, navigation, markMutation],
+  );
+
+  const handleUnmarkWatched = useCallback(
+    (movieId: string) => {
+      unmarkMutation.mutate(movieId);
+    },
+    [unmarkMutation],
+  );
+
   const renderItem = useCallback(
-    ({ item }: { item: MovieItem }) => <MovieCard movie={item} />,
-    [],
+    ({ item }: { item: MovieItem }) => {
+      const movieId = String(item.id);
+      const isWatched = watchedMovieIds.has(movieId);
+      const isLoading =
+        (markMutation.isPending && markMutation.variables === movieId) ||
+        (unmarkMutation.isPending && unmarkMutation.variables === movieId);
+
+      return (
+        <MovieCard
+          movie={item}
+          isWatched={isWatched}
+          onMarkWatched={() => handleMarkWatched(movieId)}
+          onUnmarkWatched={() => handleUnmarkWatched(movieId)}
+          isLoading={isLoading}
+        />
+      );
+    },
+    [watchedMovieIds, markMutation, unmarkMutation, handleMarkWatched, handleUnmarkWatched],
   );
 
   const keyExtractor = useCallback((item: MovieItem) => String(item.id), []);

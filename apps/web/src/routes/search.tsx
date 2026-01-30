@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { searchMovies } from '@opnshelf/api';
-import { Search } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { searchMovies, getAuthUser, getUserMovies, markMovieWatched, unmarkMovieWatched } from '@opnshelf/api';
+import { Search, Check, Plus } from 'lucide-react';
 
 export const Route = createFileRoute('/search')({
   component: SearchPage,
@@ -16,8 +16,46 @@ const DEBOUNCE_MS = 300;
 function SearchPage() {
   const { q: searchQuery } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState(searchQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch auth state
+  const { data: user } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: getAuthUser,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // Fetch user's tracked movies when logged in
+  const { data: trackedMovies } = useQuery({
+    queryKey: ['shelf', user?.did],
+    queryFn: () => getUserMovies(user!.did),
+    enabled: !!user?.did,
+  });
+
+  // Build a set of watched movie IDs for fast lookup
+  const watchedMovieIds = useMemo(() => {
+    if (!trackedMovies) return new Set<string>();
+    return new Set(trackedMovies.map((m) => m.movieId));
+  }, [trackedMovies]);
+
+  // Mutation for marking as watched
+  const markMutation = useMutation({
+    mutationFn: markMovieWatched,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+    },
+  });
+
+  // Mutation for unmarking as watched
+  const unmarkMutation = useMutation({
+    mutationFn: unmarkMovieWatched,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+    },
+  });
 
   // Sync input with URL when navigating back/forward
   useEffect(() => {
@@ -49,6 +87,8 @@ function SearchPage() {
     queryFn: () => searchMovies(searchQuery),
     enabled: searchQuery.length > 0,
   });
+
+  const isPending = markMutation.isPending || unmarkMutation.isPending;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-50">
@@ -86,34 +126,63 @@ function SearchPage() {
               Found {data.total_results.toLocaleString()} results
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {data.results.map((movie) => (
-                <div
-                  key={movie.id}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2">
-                    {movie.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                        alt={movie.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-600">
-                        No poster
-                      </div>
+              {data.results.map((movie) => {
+                const movieId = movie.id.toString();
+                const isWatched = watchedMovieIds.has(movieId);
+
+                return (
+                  <div
+                    key={movie.id}
+                    className="group"
+                  >
+                    <div className="relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2">
+                      {movie.poster_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                          alt={movie.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-600">
+                          No poster
+                        </div>
+                      )}
+                      {user && (
+                        <button
+                          onClick={() => {
+                            if (isWatched) {
+                              unmarkMutation.mutate(movieId);
+                            } else {
+                              markMutation.mutate(movieId);
+                            }
+                          }}
+                          disabled={isPending}
+                          className={`absolute top-2 right-2 p-2 rounded-full transition-opacity disabled:opacity-50 ${
+                            isWatched
+                              ? 'bg-green-600 hover:bg-red-600 opacity-100'
+                              : 'bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100'
+                          }`}
+                          title={isWatched ? 'Remove from shelf' : 'Mark as watched'}
+                        >
+                          {isWatched ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+                      {movie.title}
+                    </h3>
+                    {movie.release_date && (
+                      <p className="text-gray-500 text-sm">
+                        {movie.release_date.split('-')[0]}
+                      </p>
                     )}
                   </div>
-                  <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-                    {movie.title}
-                  </h3>
-                  {movie.release_date && (
-                    <p className="text-gray-500 text-sm">
-                      {movie.release_date.split('-')[0]}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

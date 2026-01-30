@@ -22,9 +22,13 @@ describe('AuthGuard', () => {
     restore: jest.fn(),
   };
 
-  const createMockExecutionContext = (cookies: Record<string, string> = {}) => {
+  const createMockExecutionContext = (
+    cookies: Record<string, string> = {},
+    headers: Record<string, string> = {},
+  ) => {
     const mockRequest = {
       cookies,
+      headers,
     };
 
     return {
@@ -103,7 +107,7 @@ describe('AuthGuard', () => {
       mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
       mockAuthService.restore.mockResolvedValue(mockSession);
 
-      const mockRequest = { cookies: { session: 'session-123' } };
+      const mockRequest = { cookies: { session: 'session-123' }, headers: {} };
       const context = {
         switchToHttp: () => ({
           getRequest: () => mockRequest,
@@ -156,7 +160,7 @@ describe('AuthGuard', () => {
     });
 
     it('should handle undefined cookies object', async () => {
-      const mockRequest = {};
+      const mockRequest = { headers: {} };
       const context = {
         switchToHttp: () => ({
           getRequest: () => mockRequest,
@@ -166,6 +170,35 @@ describe('AuthGuard', () => {
       await expect(guard.canActivate(context)).rejects.toThrow(
         new UnauthorizedException('Not authenticated'),
       );
+    });
+
+    it('should authenticate with Bearer token', async () => {
+      const mockSessionRecord = {
+        id: 'session-123',
+        userDid: 'did:plc:abc123',
+        sessionData: '{}',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const mockSession = { did: 'did:plc:abc123' };
+
+      mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
+      mockAuthService.restore.mockResolvedValue(mockSession);
+
+      const mockRequest = {
+        cookies: {},
+        headers: { authorization: 'Bearer session-123' },
+      };
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+        }),
+      } as unknown as ExecutionContext;
+
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(true);
+      expect(mockAuthService.getSessionById).toHaveBeenCalledWith('session-123');
     });
   });
 });

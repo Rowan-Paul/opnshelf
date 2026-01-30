@@ -18,6 +18,7 @@ import { AuthGuard } from './auth.guard';
 import { UserDto } from './dto/user.dto';
 
 const SESSION_COOKIE_NAME = 'session';
+const PLATFORM_COOKIE_NAME = 'auth_platform';
 
 @ApiTags('auth')
 @Controller()
@@ -69,13 +70,28 @@ export class AuthController {
     required: false,
     description: 'User handle (e.g., user.bsky.social)',
   })
+  @ApiQuery({
+    name: 'platform',
+    required: false,
+    description: 'Platform identifier (e.g., "mobile") for redirect handling',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to authorization server' })
   async login(
     @Query('handle') handle: string | undefined,
+    @Query('platform') platform: string | undefined,
     @Res() res: Response,
   ) {
     // Default to bsky.social if no handle provided
     const userHandle = handle || 'bsky.social';
+
+    // Set platform cookie if mobile, so callback knows where to redirect
+    if (platform === 'mobile') {
+      res.cookie(PLATFORM_COOKIE_NAME, 'mobile', {
+        httpOnly: true,
+        maxAge: 5 * 60 * 1000, // 5 minutes
+        sameSite: 'lax',
+      });
+    }
 
     try {
       this.logger.log(`Starting OAuth flow for handle: ${userHandle}`);
@@ -141,8 +157,21 @@ export class AuthController {
         ...(cookieDomain && { domain: cookieDomain }),
       });
 
-      // Redirect to /auth/complete so frontend can handle post-login redirect
-      const completeUrl = new URL('/auth/complete', frontendUrl).toString();
+      // Check if request originated from mobile app
+      const platform = req.cookies?.[PLATFORM_COOKIE_NAME];
+
+      // Clear platform cookie after use
+      if (platform) {
+        res.clearCookie(PLATFORM_COOKIE_NAME);
+      }
+
+      // Redirect to mobile deep link (with session token) or web frontend (uses cookie)
+      const completeUrl =
+        platform === 'mobile'
+          ? `opnshelf://auth/complete?session=${encodeURIComponent(sessionRecord.id)}`
+          : new URL('/auth/complete', frontendUrl).toString();
+
+      this.logger.log(`Redirecting to: ${completeUrl}`);
       return res.redirect(completeUrl);
     } catch (error) {
       this.logger.error('OAuth callback failed', error);

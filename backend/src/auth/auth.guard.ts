@@ -19,11 +19,20 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    // Cookie stores opaque session id (not DID)
-    const sessionId = request.cookies?.[SESSION_COOKIE_NAME];
+    // Try Bearer token first (for mobile apps), then fall back to cookie (for web)
+    const authHeader = request.headers.authorization;
+    let sessionId: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      sessionId = authHeader.slice(7);
+      this.logger.debug('Using Bearer token for auth');
+    } else {
+      // Cookie stores opaque session id (not DID)
+      sessionId = request.cookies?.[SESSION_COOKIE_NAME];
+    }
 
     if (!sessionId) {
-      this.logger.debug('No session cookie found');
+      this.logger.debug('No session cookie or Bearer token found');
       throw new UnauthorizedException('Not authenticated');
     }
 
