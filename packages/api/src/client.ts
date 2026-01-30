@@ -4,17 +4,21 @@ import type { paths } from './generated/schema';
 // Allow configuring base URL
 let baseUrl = 'http://127.0.0.1:3001';
 
-export function configureApiClient(url: string) {
-  baseUrl = url;
+function createApiClient() {
+  return createClient<paths>({
+    baseUrl,
+    credentials: 'include',
+  });
 }
 
-export const apiClient = createClient<paths>({
-  get baseUrl() {
-    return baseUrl;
-  },
-  // Include credentials for cookie-based auth
-  credentials: 'include',
-});
+let apiClient = createApiClient();
+
+export function configureApiClient(url: string) {
+  baseUrl = url;
+  apiClient = createApiClient();
+}
+
+export { apiClient };
 
 // Auth types
 export interface AuthUser {
