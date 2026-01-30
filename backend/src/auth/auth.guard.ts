@@ -19,21 +19,25 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     
-    // Get DID from session cookie
-    const did = request.cookies?.[SESSION_COOKIE_NAME];
+    // Cookie stores opaque session id (not DID)
+    const sessionId = request.cookies?.[SESSION_COOKIE_NAME];
     
-    if (!did) {
+    if (!sessionId) {
       this.logger.debug('No session cookie found');
       throw new UnauthorizedException('Not authenticated');
     }
 
     try {
-      // Try to restore the session using the OAuth client
-      // This will also refresh tokens if needed
-      const session = await this.authService.restore(did);
-      
+      const sessionRecord = await this.authService.getSessionById(sessionId);
+      if (!sessionRecord) {
+        this.logger.debug('Session not found for cookie id');
+        throw new UnauthorizedException('Session not found or expired');
+      }
+
+      // Restore session using OAuth client (refreshes tokens if needed)
+      const session = await this.authService.restore(sessionRecord.userDid);
       if (!session) {
-        this.logger.debug(`No session found for DID: ${did}`);
+        this.logger.debug(`No session found for DID: ${sessionRecord.userDid}`);
         throw new UnauthorizedException('Session not found or expired');
       }
 
@@ -45,7 +49,8 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      this.logger.debug(`Failed to restore session for DID: ${did}`, error);
+      if (error instanceof UnauthorizedException) throw error;
+      this.logger.debug('Failed to restore session', error);
       throw new UnauthorizedException('Invalid or expired session');
     }
   }

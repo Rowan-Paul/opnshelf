@@ -113,8 +113,15 @@ export class AuthController {
       
       this.logger.log(`User upserted: ${profile.handle}`);
 
-      // Set session cookie with the DID (domain set so frontend at opnshelf.xyz receives it)
-      res.cookie(SESSION_COOKIE_NAME, session.did, {
+      // Resolve opaque session id (cookie stores this, not DID)
+      const sessionRecord = await this.authService.getSessionByUserDid(session.did);
+      if (!sessionRecord) {
+        this.logger.error('AuthSession not found after callback');
+        return res.redirect(`${frontendUrl}?error=callback_failed`);
+      }
+
+      // Set session cookie with opaque id (domain set so frontend at opnshelf.xyz receives it)
+      res.cookie(SESSION_COOKIE_NAME, sessionRecord.id, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
@@ -167,10 +174,10 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const did = req.cookies?.[SESSION_COOKIE_NAME];
+    const sessionId = req.cookies?.[SESSION_COOKIE_NAME];
     
-    if (did) {
-      await this.authService.revoke(did);
+    if (sessionId) {
+      await this.authService.revokeBySessionId(sessionId);
     }
 
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';

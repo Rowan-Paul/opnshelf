@@ -178,16 +178,45 @@ export class AuthService implements OnModuleInit {
   }
 
   /**
-   * Revoke a user's session
+   * Get session record by opaque id (cookie value). Used to resolve DID from cookie.
+   */
+  async getSessionById(sessionId: string) {
+    return this.prisma.authSession.findUnique({
+      where: { id: sessionId },
+    });
+  }
+
+  /**
+   * Get session record by user DID. Used after OAuth callback to get opaque id for cookie.
+   */
+  async getSessionByUserDid(userDid: string) {
+    return this.prisma.authSession.findUnique({
+      where: { userDid },
+    });
+  }
+
+  /**
+   * Revoke a user's session by DID (e.g. admin or bulk revoke)
    * @param did - User's DID
    */
   async revoke(did: string) {
     try {
-      // Delete session from our store
       await this.prisma.authSession.deleteMany({ where: { userDid: did } });
       this.logger.log(`Session revoked for ${did}`);
     } catch (error) {
       this.logger.error(`Failed to revoke session for ${did}`, error);
+    }
+  }
+
+  /**
+   * Revoke session by opaque id (cookie value). Used on logout.
+   */
+  async revokeBySessionId(sessionId: string) {
+    try {
+      await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
+      this.logger.log('Session revoked by id');
+    } catch (error) {
+      this.logger.error('Failed to revoke session by id', error);
     }
   }
 

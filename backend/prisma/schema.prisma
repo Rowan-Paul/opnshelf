@@ -23,8 +23,10 @@ model User {
 
 // OAuth session storage for @atproto/oauth-client-node sessionStore
 // No FK to User because the OAuth library stores session before we create the User
+// Cookie stores opaque id (not DID) for session lookup
 model AuthSession {
-  userDid     String   @id
+  id          String   @id @default(cuid())
+  userDid     String   @unique
   sessionData String   // JSON-serialized session from the library
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
