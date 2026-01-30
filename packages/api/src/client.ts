@@ -1,14 +1,32 @@
-import createClient from 'openapi-fetch';
+import createClient, { type Middleware } from 'openapi-fetch';
 import type { paths } from './generated/schema';
 
 // Allow configuring base URL
 let baseUrl = 'http://127.0.0.1:3001';
 
+/** Called when any API request returns 401. Set by the app to redirect to login. */
+let onUnauthorized: (() => void) | null = null;
+
+export function setOnUnauthorized(callback: (() => void) | null): void {
+  onUnauthorized = callback;
+}
+
+const unauthorizedMiddleware: Middleware = {
+  async onResponse({ response }) {
+    if (response.status === 401) {
+      onUnauthorized?.();
+    }
+    return response;
+  },
+};
+
 function createApiClient() {
-  return createClient<paths>({
+  const client = createClient<paths>({
     baseUrl,
     credentials: 'include',
   });
+  client.use(unauthorizedMiddleware);
+  return client;
 }
 
 let apiClient = createApiClient();
@@ -34,11 +52,15 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     const response = await fetch(`${baseUrl}/auth/me`, {
       credentials: 'include',
     });
-    
+
+    if (response.status === 401) {
+      onUnauthorized?.();
+    }
+
     if (!response.ok) {
       return null;
     }
-    
+
     return response.json();
   } catch {
     return null;

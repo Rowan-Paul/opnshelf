@@ -3,7 +3,9 @@ import {
   Scripts,
   createRootRouteWithContext,
   Outlet,
+  useNavigate,
 } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
@@ -13,7 +15,7 @@ import Header from '../components/Header'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
-import { configureApiClient } from '@opnshelf/api'
+import { configureApiClient, setOnUnauthorized } from '@opnshelf/api'
 import { env } from '@/env'
 
 interface MyRouterContext {
@@ -51,6 +53,20 @@ configureApiClient(env.VITE_API_URL);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      queryClient.invalidateQueries({ queryKey: ['auth'] })
+      navigate({
+        to: '/login',
+        search: { reason: 'session_expired' },
+        replace: true,
+      })
+    })
+    return () => setOnUnauthorized(null)
+  }, [queryClient, navigate])
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">

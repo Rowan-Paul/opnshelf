@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Film, LogIn, AlertCircle } from 'lucide-react';
 import { getAuthUser, getLoginUrl } from '@opnshelf/api';
 import { z } from 'zod';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const loginSearchSchema = z.object({
   error: z.enum(['auth_failed', 'callback_failed']).optional(),
   redirect: z.string().optional(),
+  reason: z.enum(['session_expired']).optional(),
 });
 
 export const Route = createFileRoute('/login')({
@@ -19,7 +21,7 @@ function LoginPage() {
   const [handle, setHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { error, redirect } = Route.useSearch();
+  const { error, redirect, reason } = Route.useSearch();
 
   // Check if user is already logged in
   const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -77,6 +79,16 @@ function LoginPage() {
               Use your Bluesky account to sign in
             </p>
           </div>
+
+          {/* Logged out message (session expired / 401 redirect) */}
+          {reason === 'session_expired' && (
+            <Alert className="mb-6 border-amber-800 bg-amber-950/50 text-amber-200 [&>svg]:text-amber-500">
+              <AlertTitle>You have been logged out</AlertTitle>
+              <AlertDescription>
+                Your session has expired. Please sign in again to continue.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Error message */}
           {error && (
