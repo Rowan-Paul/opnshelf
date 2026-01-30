@@ -1,10 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAuthUser, logout } from '@opnshelf/api';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { authControllerMeOptions, authControllerLogoutMutation } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Image, TouchableOpacity, View } from 'react-native';
-import { useState } from 'react';
 import type { RootStackParamList } from '../navigation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -12,30 +11,32 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export function HeaderRight() {
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
+  // Logout mutation using generated TanStack Query hook
+  const logoutMutation = useMutation({
+    ...authControllerLogoutMutation(),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth'] });
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Logout failed:', error);
-    } finally {
-      setIsLoggingOut(false);
-    }
+    },
+  });
+
+  const handleLogout = async () => {
+    await logoutMutation.mutateAsync({});
   };
 
   if (isLoading) {
@@ -71,14 +72,14 @@ export function HeaderRight() {
       {/* User avatar/logout */}
       <TouchableOpacity
         onPress={handleLogout}
-        disabled={isLoggingOut}
+        disabled={logoutMutation.isPending}
         activeOpacity={0.7}
       >
-        {isLoggingOut ? (
+        {logoutMutation.isPending ? (
           <ActivityIndicator size="small" color="#a855f7" />
         ) : user.avatar ? (
           <Image
-            source={{ uri: user.avatar }}
+            source={{ uri: String(user.avatar) }}
             className="w-8 h-8 rounded-full"
           />
         ) : (

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Film, LogIn, AlertCircle } from 'lucide-react';
-import { getAuthUser, getLoginUrl } from '@opnshelf/api';
+import { authControllerMeOptions, getLoginUrl } from '@opnshelf/api';
 import { z } from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,10 +24,9 @@ function LoginPage() {
   const { error, redirect, reason } = Route.useSearch();
   const handleId = useId();
 
-  // Check if user is already logged in
+  // Check if user is already logged in using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

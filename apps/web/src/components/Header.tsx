@@ -1,25 +1,31 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { Film, Home, Menu, Search, X, LogIn, LogOut, User, BookOpen } from 'lucide-react'
-import { getAuthUser, logout } from '@opnshelf/api'
+import { authControllerMeOptions, authControllerLogoutMutation } from '@opnshelf/api'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  // Fetch auth state
+  // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
   })
 
+  // Logout mutation using generated TanStack Query hook
+  const logoutMutation = useMutation({
+    ...authControllerLogoutMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth'] })
+    },
+  })
+
   const handleLogout = async () => {
-    await logout()
-    queryClient.invalidateQueries({ queryKey: ['auth'] })
+    await logoutMutation.mutateAsync({})
   }
 
   const handleLogin = () => {
@@ -58,14 +64,6 @@ export default function Header() {
             <Home size={18} />
             <span className="font-medium">Home</span>
           </Link>
-          <Link
-            to="/search"
-            search={{ q: '' }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
-          >
-            <Search size={18} />
-            <span className="font-medium">Search</span>
-          </Link>
           {user && (
             <Link
               to="/shelf"
@@ -79,6 +77,14 @@ export default function Header() {
               <span className="font-medium">My Shelf</span>
             </Link>
           )}
+          <Link
+            to="/search"
+            search={{ q: '' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
+          >
+            <Search size={18} />
+            <span className="font-medium">Search</span>
+          </Link>
 
           {/* Auth section */}
           <div className="ml-4 pl-4 border-l border-gray-700">
@@ -88,8 +94,8 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 {user.avatar ? (
                   <img
-                    src={user.avatar}
-                    alt={user.displayName || user.handle}
+                    src={String(user.avatar)}
+                    alt={String(user.displayName || user.handle)}
                     className="w-8 h-8 rounded-full"
                   />
                 ) : (
@@ -98,11 +104,12 @@ export default function Header() {
                   </div>
                 )}
                 <span className="text-sm text-gray-300">
-                  {user.displayName || `@${user.handle}`}
+                  {user.displayName ? String(user.displayName) : `@${user.handle}`}
                 </span>
                 <button
                   type="button"
                   onClick={handleLogout}
+                  disabled={logoutMutation.isPending}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white text-sm"
                   title="Sign out"
                 >
@@ -204,8 +211,8 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 {user.avatar ? (
                   <img
-                    src={user.avatar}
-                    alt={user.displayName || user.handle}
+                    src={String(user.avatar)}
+                    alt={String(user.displayName || user.handle)}
                     className="w-10 h-10 rounded-full"
                   />
                 ) : (
@@ -214,7 +221,7 @@ export default function Header() {
                   </div>
                 )}
                 <div>
-                  <div className="font-medium">{user.displayName || user.handle}</div>
+                  <div className="font-medium">{user.displayName ? String(user.displayName) : user.handle}</div>
                   <div className="text-sm text-gray-400">@{user.handle}</div>
                 </div>
               </div>
@@ -224,6 +231,7 @@ export default function Header() {
                   handleLogout()
                   setIsOpen(false)
                 }}
+                disabled={logoutMutation.isPending}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300"
               >
                 <LogOut size={18} />

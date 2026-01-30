@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { searchMovies, getAuthUser, getUserMovies, markMovieWatched, unmarkMovieWatched } from '@opnshelf/api';
+import { authControllerMeOptions, moviesControllerGetUserMoviesOptions, moviesControllerSearchMoviesOptions, moviesControllerMarkWatchedMutation, moviesControllerUnmarkWatchedMutation } from '@opnshelf/api';
 import { Search, Check, Plus } from 'lucide-react';
 
 export const Route = createFileRoute('/search')({
@@ -20,38 +20,38 @@ function SearchPage() {
   const [query, setQuery] = useState(searchQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch auth state
+  // Fetch auth state using generated TanStack Query hook
   const { data: user } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  // Fetch user's tracked movies when logged in
+  // Fetch user's tracked movies when logged in using generated TanStack Query hook
   const { data: trackedMovies } = useQuery({
-    queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user?.did),
+    ...moviesControllerGetUserMoviesOptions({
+      path: { userDid: user?.did || '' },
+    }),
     enabled: !!user?.did,
   });
 
   // Build a set of watched movie IDs for fast lookup
   const watchedMovieIds = useMemo(() => {
     if (!trackedMovies) return new Set<string>();
-    return new Set(trackedMovies.map((m) => m.movieId));
+    return new Set(trackedMovies.map((m: { movieId: string }) => m.movieId));
   }, [trackedMovies]);
 
-  // Mutation for marking as watched
+  // Mutation for marking as watched using generated TanStack Query hook
   const markMutation = useMutation({
-    mutationFn: markMovieWatched,
+    ...moviesControllerMarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
   });
 
-  // Mutation for unmarking as watched
+  // Mutation for unmarking as watched using generated TanStack Query hook
   const unmarkMutation = useMutation({
-    mutationFn: unmarkMovieWatched,
+    ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
@@ -82,9 +82,11 @@ function SearchPage() {
     };
   }, [query, searchQuery, navigate]);
 
+  // Search movies using generated TanStack Query hook
   const { data, isLoading, error } = useQuery({
-    queryKey: ['search', searchQuery],
-    queryFn: () => searchMovies(searchQuery),
+    ...moviesControllerSearchMoviesOptions({
+      query: { query: searchQuery },
+    }),
     enabled: searchQuery.length > 0,
   });
 
@@ -152,9 +154,9 @@ function SearchPage() {
                           type="button"
                           onClick={() => {
                             if (isWatched) {
-                              unmarkMutation.mutate(movieId);
+                              unmarkMutation.mutate({ path: { movieId } });
                             } else {
-                              markMutation.mutate(movieId);
+                              markMutation.mutate({ body: { movieId } });
                             }
                           }}
                           disabled={isPending}

@@ -69,51 +69,8 @@ export interface AuthUser {
 	avatar: string | null;
 }
 
-// Auth functions
-export async function getAuthUser(): Promise<AuthUser | null> {
-	try {
-		const headers: HeadersInit = {};
-		if (sessionToken) {
-			headers['Authorization'] = `Bearer ${sessionToken}`;
-		}
-
-		const response = await fetch(`${baseUrl}/auth/me`, {
-			credentials: 'include',
-			headers,
-		});
-
-		if (response.status === 401) {
-			onUnauthorized?.();
-		}
-
-		if (!response.ok) {
-			return null;
-		}
-
-		return response.json();
-	} catch {
-		return null;
-	}
-}
-
+// Simple URL helper for login (not an API call)
 export function getLoginUrl(handle?: string): string {
 	const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
 	return `${baseUrl}/auth/login${params}`;
-}
-
-export async function logout(): Promise<void> {
-	const headers: HeadersInit = {};
-	if (sessionToken) {
-		headers['Authorization'] = `Bearer ${sessionToken}`;
-	}
-
-	await fetch(`${baseUrl}/auth/logout`, {
-		method: 'POST',
-		credentials: 'include',
-		headers,
-	});
-
-	// Clear session token on logout
-	sessionToken = null;
-	updateClientConfig();
 }

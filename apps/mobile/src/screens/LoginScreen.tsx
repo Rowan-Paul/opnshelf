@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { getAuthUser, getLoginUrl } from '@opnshelf/api';
+import { authControllerMeOptions, getLoginUrl } from '@opnshelf/api';
 import type { RootStackParamList } from '../navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -21,10 +21,9 @@ export function LoginScreen({ navigation, route }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { error, redirect, reason } = route.params ?? {};
 
-  // Check if user is already logged in
+  // Check if user is already logged in using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

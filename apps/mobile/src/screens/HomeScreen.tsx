@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
-import { getAuthUser } from '@opnshelf/api';
+import { authControllerMeOptions } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import type { RootStackParamList } from '../navigation';
@@ -8,10 +8,9 @@ import type { RootStackParamList } from '../navigation';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
-  // Check auth state
+  // Check auth state using generated TanStack Query hook
   const { data: user } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -32,7 +31,7 @@ export function HomeScreen({ navigation }: Props) {
           <View className="flex-row items-center gap-3 mb-6 bg-gray-900 py-3 px-4 rounded-lg border border-gray-800">
             {user.avatar ? (
               <Image
-                source={{ uri: user.avatar }}
+                source={{ uri: String(user.avatar) }}
                 className="w-10 h-10 rounded-full"
               />
             ) : (
@@ -42,7 +41,7 @@ export function HomeScreen({ navigation }: Props) {
             )}
             <View>
               <Text className="text-gray-50 font-semibold">
-                {user.displayName || user.handle}
+                {user.displayName ? String(user.displayName) : user.handle}
               </Text>
               <Text className="text-gray-500 text-sm">@{user.handle}</Text>
             </View>

@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthUser, getUserMovies, unmarkMovieWatched } from '@opnshelf/api';
+import { authControllerMeOptions, moviesControllerGetUserMoviesOptions, moviesControllerUnmarkWatchedMutation } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
@@ -22,8 +22,8 @@ type TrackedMovie = {
   movieId: string;
   movie: {
     title: string;
-    posterPath: string | null;
-    releaseYear: number | null;
+    posterPath?: string;
+    releaseYear?: number;
   };
 };
 
@@ -76,24 +76,24 @@ function MovieCard({
 export function ShelfScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
 
-  // Fetch auth state
+  // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  // Fetch user's tracked movies
+  // Fetch user's tracked movies using generated TanStack Query hook
   const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
-    queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user!.did),
+    ...moviesControllerGetUserMoviesOptions({
+      path: { userDid: user?.did || '' },
+    }),
     enabled: !!user?.did,
   });
 
-  // Mutation for removing from shelf
+  // Mutation for removing from shelf using generated TanStack Query hook
   const unmarkMutation = useMutation({
-    mutationFn: unmarkMovieWatched,
+    ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
@@ -103,8 +103,8 @@ export function ShelfScreen({ navigation }: Props) {
     ({ item }: { item: TrackedMovie }) => (
       <MovieCard
         tracked={item}
-        onRemove={() => unmarkMutation.mutate(item.movieId)}
-        isRemoving={unmarkMutation.isPending && unmarkMutation.variables === item.movieId}
+        onRemove={() => unmarkMutation.mutate({ path: { movieId: item.movieId } })}
+        isRemoving={unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === item.movieId}
       />
     ),
     [unmarkMutation],

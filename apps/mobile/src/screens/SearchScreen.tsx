@@ -1,11 +1,11 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getAuthUser,
-  getUserMovies,
-  searchMovies,
-  markMovieWatched,
-  unmarkMovieWatched,
+  authControllerMeOptions,
+  moviesControllerGetUserMoviesOptions,
+  moviesControllerSearchMoviesOptions,
+  moviesControllerMarkWatchedMutation,
+  moviesControllerUnmarkWatchedMutation,
 } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -110,18 +110,18 @@ export function SearchScreen({ route, navigation }: Props) {
     };
   }, [query, searchQuery]);
 
-  // Auth state
+  // Auth state using generated TanStack Query hook
   const { data: user } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  // User's tracked movies
+  // User's tracked movies using generated TanStack Query hook
   const { data: trackedMovies } = useQuery({
-    queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user!.did),
+    ...moviesControllerGetUserMoviesOptions({
+      path: { userDid: user?.did || '' },
+    }),
     enabled: !!user?.did,
   });
 
@@ -130,24 +130,26 @@ export function SearchScreen({ route, navigation }: Props) {
     trackedMovies?.map((t: { movieId: string }) => t.movieId) ?? [],
   );
 
-  // Mutations for marking/unmarking movies
+  // Mutations for marking/unmarking movies using generated TanStack Query hooks
   const markMutation = useMutation({
-    mutationFn: markMovieWatched,
+    ...moviesControllerMarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
   });
 
   const unmarkMutation = useMutation({
-    mutationFn: unmarkMovieWatched,
+    ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
   });
 
+  // Search movies using generated TanStack Query hook
   const { data, isLoading, error } = useQuery({
-    queryKey: ['search', searchQuery],
-    queryFn: () => searchMovies(searchQuery),
+    ...moviesControllerSearchMoviesOptions({
+      query: { query: searchQuery },
+    }),
     enabled: searchQuery.length > 0,
   });
 
@@ -160,14 +162,14 @@ export function SearchScreen({ route, navigation }: Props) {
         navigation.navigate('Login', { redirect: 'Search' });
         return;
       }
-      markMutation.mutate(movieId);
+      markMutation.mutate({ body: { movieId } });
     },
     [user, navigation, markMutation],
   );
 
   const handleUnmarkWatched = useCallback(
     (movieId: string) => {
-      unmarkMutation.mutate(movieId);
+      unmarkMutation.mutate({ path: { movieId } });
     },
     [unmarkMutation],
   );
@@ -177,8 +179,8 @@ export function SearchScreen({ route, navigation }: Props) {
       const movieId = String(item.id);
       const isWatched = watchedMovieIds.has(movieId);
       const isLoading =
-        (markMutation.isPending && markMutation.variables === movieId) ||
-        (unmarkMutation.isPending && unmarkMutation.variables === movieId);
+        (markMutation.isPending && markMutation.variables?.body?.movieId === movieId) ||
+        (unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === movieId);
 
       return (
         <MovieCard

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthUser, getUserMovies, unmarkMovieWatched } from '@opnshelf/api';
+import { authControllerMeOptions, moviesControllerGetUserMoviesOptions, moviesControllerUnmarkWatchedMutation } from '@opnshelf/api';
 import { BookOpen, Trash2, LogIn } from 'lucide-react';
 
 export const Route = createFileRoute('/shelf')({
@@ -10,24 +10,24 @@ export const Route = createFileRoute('/shelf')({
 function ShelfPage() {
   const queryClient = useQueryClient();
 
-  // Fetch auth state
+  // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: getAuthUser,
+    ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  // Fetch user's tracked movies
+  // Fetch user's tracked movies using generated TanStack Query hook
   const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
-    queryKey: ['shelf', user?.did],
-    queryFn: () => getUserMovies(user?.did),
+    ...moviesControllerGetUserMoviesOptions({
+      path: { userDid: user?.did || '' },
+    }),
     enabled: !!user?.did,
   });
 
-  // Mutation for removing from shelf
+  // Mutation for removing from shelf using generated TanStack Query hook
   const unmarkMutation = useMutation({
-    mutationFn: unmarkMovieWatched,
+    ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
     },
@@ -107,7 +107,7 @@ function ShelfPage() {
                     )}
                     <button
                       type="button"
-                      onClick={() => unmarkMutation.mutate(tracked.movieId)}
+                      onClick={() => unmarkMutation.mutate({ path: { movieId: tracked.movieId } })}
                       disabled={unmarkMutation.isPending}
                       className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       title="Remove from shelf"
