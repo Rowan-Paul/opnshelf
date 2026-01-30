@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Firehose } from '@atproto/sync';
 import { IdResolver } from '@atproto/identity';
@@ -39,8 +44,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
   ) {
     // Default to Bluesky's public relay
     this.relayUrl =
-      this.config.get<string>('ATPROTO_RELAY_URL') ||
-      'wss://bsky.network';
+      this.config.get<string>('ATPROTO_RELAY_URL') || 'wss://bsky.network';
   }
 
   async onModuleInit() {
@@ -52,7 +56,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async startIngester() {
-    this.logger.log(`Starting firehose ingester, connecting to ${this.relayUrl}`);
+    this.logger.log(
+      `Starting firehose ingester, connecting to ${this.relayUrl}`,
+    );
 
     // IdResolver is required to verify repo signatures on firehose events
     const idResolver = new IdResolver();
@@ -148,7 +154,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      this.logger.debug(`Indexed movie ${record.movieId} for user ${authorDid}`);
+      this.logger.debug(
+        `Indexed movie ${record.movieId} for user ${authorDid}`,
+      );
     }
 
     // Handle delete events

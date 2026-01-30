@@ -198,7 +198,9 @@ describe('AuthGuard', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(mockAuthService.getSessionById).toHaveBeenCalledWith('session-123');
+      expect(mockAuthService.getSessionById).toHaveBeenCalledWith(
+        'session-123',
+      );
     });
   });
 });

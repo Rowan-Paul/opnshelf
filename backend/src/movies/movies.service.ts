@@ -114,7 +114,9 @@ export class MoviesService {
       validate: false, // PDS may not have app.opnshelf.movie lexicon
     });
 
-    this.logger.log(`Created AT record for movie ${movieId}: ${response.data.uri}`);
+    this.logger.log(
+      `Created AT record for movie ${movieId}: ${response.data.uri}`,
+    );
 
     // Return the record info for optimistic updates
     return {

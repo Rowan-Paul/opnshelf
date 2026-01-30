@@ -56,9 +56,10 @@ export function LoginScreen({ navigation, route }: Props) {
       );
 
       if (result.type === 'success') {
-        // Browser redirected back via deep link, navigate to auth complete
-        // The session param will be extracted from the deep link URL
-        navigation.replace('AuthComplete', {});
+        // Browser redirected back via deep link, extract session from URL
+        const url = new URL(result.url);
+        const session = url.searchParams.get('session');
+        navigation.replace('AuthComplete', { session: session || undefined });
       } else {
         setIsSubmitting(false);
       }
