@@ -34,10 +34,10 @@ type FirehoseEvent = {
     watchedAt?: string;
     createdAt?: string;
   };
-  uri: {
+  uri?: {
     toString: () => string;
   };
-  rkey: string;
+  rkey?: string;
   cid?: { toString: () => string };
   author?: string;
 };
@@ -45,9 +45,19 @@ type FirehoseEvent = {
 type HandleEventCallback = (event: FirehoseEvent) => Promise<void>;
 type OnErrorCallback = (err: { message: string }) => void;
 
+type MockPrismaService = {
+  user: {
+    findUnique: jest.Mock;
+  };
+  trackedMovie: {
+    upsert: jest.Mock;
+    deleteMany: jest.Mock;
+  };
+};
+
 describe('IngesterService', () => {
   let service: IngesterService;
-  let mockPrismaService: jest.Mocked<PrismaService>;
+  let mockPrismaService: MockPrismaService;
   let mockFirehoseInstance: { start: jest.Mock; destroy: jest.Mock };
 
   const mockConfigService = {
@@ -73,7 +83,7 @@ describe('IngesterService', () => {
         upsert: jest.fn(),
         deleteMany: jest.fn(),
       },
-    } as unknown as jest.Mocked<PrismaService>;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -532,9 +542,11 @@ describe('IngesterService', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Should not throw when onError is called
-      if (onErrorCallback) {
-        expect(() => onErrorCallback({ message: 'Test error' })).not.toThrow();
-      }
+      expect(() => {
+        if (onErrorCallback) {
+          onErrorCallback({ message: 'Test error' });
+        }
+      }).not.toThrow();
     });
   });
 });
