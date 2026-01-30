@@ -17,7 +17,7 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { UserDto } from './dto/user.dto';
 
-const SESSION_COOKIE_NAME = 'opnshelf_session';
+const SESSION_COOKIE_NAME = 'session';
 
 @ApiTags('auth')
 @Controller()

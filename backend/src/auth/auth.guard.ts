@@ -8,7 +8,7 @@ import {
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 
-const SESSION_COOKIE_NAME = 'opnshelf_session';
+const SESSION_COOKIE_NAME = 'session';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

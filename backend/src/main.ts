@@ -33,7 +33,7 @@ async function bootstrap() {
     .setTitle('OpnShelf API')
     .setDescription('Personal media tracker powered by AT Protocol')
     .setVersion('1.0')
-    .addCookieAuth('opnshelf_session')
+    .addCookieAuth('session')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

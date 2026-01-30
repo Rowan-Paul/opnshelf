@@ -53,8 +53,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext()
   return (
     <QueryClientProvider client={queryClient}>
-      <Header />
-      <Outlet />
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex flex-col min-h-0">
+          <Outlet />
+        </main>
+      </div>
       <TanStackDevtools
         config={{
           position: 'bottom-right',
@@ -70,6 +74,7 @@ function RootComponent() {
     </QueryClientProvider>
   )
 }
+
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
