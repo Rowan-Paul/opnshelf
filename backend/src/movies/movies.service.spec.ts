@@ -6,6 +6,22 @@ jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn(),
 }));
 
+// Mock @atproto/api Agent
+const mockPutRecord = jest.fn();
+const mockDeleteRecord = jest.fn();
+jest.mock('@atproto/api', () => ({
+  Agent: jest.fn().mockImplementation(() => ({
+    com: {
+      atproto: {
+        repo: {
+          putRecord: mockPutRecord,
+          deleteRecord: mockDeleteRecord,
+        },
+      },
+    },
+  })),
+}));
+
 import { MoviesService } from './movies.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -19,6 +35,8 @@ describe('MoviesService', () => {
   const mockPrismaService = {
     trackedMovie: {
       findMany: jest.fn(),
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
     },
     movie: {
       findUnique: jest.fn(),
@@ -35,6 +53,8 @@ describe('MoviesService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPutRecord.mockReset();
+    mockDeleteRecord.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -251,9 +271,9 @@ describe('MoviesService', () => {
       const movieData = {
         id: 456,
         title: 'Movie Without Date',
-        poster_path: null,
-        backdrop_path: null,
-        release_date: null,
+        poster_path: undefined,
+        backdrop_path: undefined,
+        release_date: undefined,
         overview: 'No release date',
       };
       mockPrismaService.movie.upsert.mockResolvedValue({
@@ -285,10 +305,10 @@ describe('MoviesService', () => {
       const movieData = {
         id: 789,
         title: 'Movie With Empty Date',
-        poster_path: null,
-        backdrop_path: null,
+        poster_path: undefined,
+        backdrop_path: undefined,
         release_date: '',
-        overview: null,
+        overview: undefined,
       };
       mockPrismaService.movie.upsert.mockResolvedValue({
         movieId: '789',
@@ -308,6 +328,184 @@ describe('MoviesService', () => {
           releaseDate: null,
         }),
       });
+    });
+  });
+
+  describe('markWatched', () => {
+    it('should create AT Protocol record and return record info', async () => {
+      const mockSession = { did: 'did:plc:abc123' };
+      const mockPutRecordResponse = {
+        data: {
+          uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+          cid: 'cid123',
+        },
+      };
+
+      mockPutRecord.mockResolvedValue(mockPutRecordResponse);
+
+      const result = await service.markWatched(
+        'did:plc:abc123',
+        mockSession,
+        '123',
+      );
+
+      expect(mockPutRecord).toHaveBeenCalledWith({
+        repo: 'did:plc:abc123',
+        collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
+        record: expect.objectContaining({
+          $type: 'app.opnshelf.movie',
+          movieId: '123',
+          source: 'tmdb',
+        }),
+        validate: false,
+      });
+      expect(result).toMatchObject({
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+        cid: 'cid123',
+        rkey: 'movie-123',
+        record: expect.objectContaining({
+          $type: 'app.opnshelf.movie',
+          movieId: '123',
+          source: 'tmdb',
+        }),
+      });
+    });
+  });
+
+  describe('unmarkWatched', () => {
+    it('should delete AT Protocol record', async () => {
+      const mockSession = { did: 'did:plc:abc123' };
+
+      mockDeleteRecord.mockResolvedValue({});
+
+      const result = await service.unmarkWatched(
+        'did:plc:abc123',
+        mockSession,
+        '123',
+      );
+
+      expect(mockDeleteRecord).toHaveBeenCalledWith({
+        repo: 'did:plc:abc123',
+        collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
+      });
+      expect(result).toEqual({
+        rkey: 'movie-123',
+        movieId: '123',
+      });
+    });
+  });
+
+  describe('indexTrackedMovie', () => {
+    it('should upsert tracked movie with movie details', async () => {
+      const mockMovieDetails = {
+        id: 123,
+        title: 'Test Movie',
+        poster_path: '/poster.jpg',
+        backdrop_path: '/backdrop.jpg',
+        release_date: '2024-01-01',
+        overview: 'A test movie',
+      };
+      const mockUpsertedMovie = {
+        movieId: '123',
+        title: 'Test Movie',
+        posterPath: '/poster.jpg',
+      };
+      const mockTrackedMovie = {
+        id: 'tracked-1',
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+        rkey: 'movie-123',
+        cid: 'cid123',
+        userDid: 'did:plc:abc123',
+        movieId: '123',
+        status: 'watched',
+        watchedDate: new Date('2024-01-15'),
+        movie: mockUpsertedMovie,
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockMovieDetails),
+      });
+      mockPrismaService.movie.upsert.mockResolvedValue(mockUpsertedMovie);
+      mockPrismaService.trackedMovie.upsert.mockResolvedValue(mockTrackedMovie);
+
+      const result = await service.indexTrackedMovie(
+        'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+        'cid123',
+        'movie-123',
+        'did:plc:abc123',
+        '123',
+        '2024-01-15T10:00:00Z',
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/movie/123?api_key=test-api-key'),
+      );
+      expect(mockPrismaService.movie.upsert).toHaveBeenCalled();
+      expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith({
+        where: { uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123' },
+        create: expect.objectContaining({
+          uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+          rkey: 'movie-123',
+          cid: 'cid123',
+          userDid: 'did:plc:abc123',
+          movieId: '123',
+          status: 'watched',
+        }),
+        update: expect.objectContaining({
+          cid: 'cid123',
+          status: 'watched',
+        }),
+        include: { movie: true },
+      });
+      expect(result).toEqual(mockTrackedMovie);
+    });
+
+    it('should throw error when TMDB API fails during indexing', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+      });
+
+      await expect(
+        service.indexTrackedMovie(
+          'at://did:plc:abc123/app.opnshelf.movie/movie-123',
+          'cid123',
+          'movie-123',
+          'did:plc:abc123',
+          '123',
+          '2024-01-15T10:00:00Z',
+        ),
+      ).rejects.toThrow('Movie not found');
+    });
+  });
+
+  describe('removeTrackedMovie', () => {
+    it('should delete tracked movie records', async () => {
+      mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
+        count: 1,
+      } as any);
+
+      await service.removeTrackedMovie('did:plc:abc123', '123');
+
+      expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
+        where: {
+          userDid: 'did:plc:abc123',
+          movieId: '123',
+        },
+      });
+    });
+
+    it('should handle when no records exist to delete', async () => {
+      mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
+        count: 0,
+      } as any);
+
+      await expect(
+        service.removeTrackedMovie('did:plc:abc123', '999'),
+      ).resolves.not.toThrow();
     });
   });
 });

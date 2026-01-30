@@ -22,7 +22,8 @@ import {
   MarkWatchedDto,
 } from './dto/movie.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/types';
+import type { AuthenticatedRequest } from '../auth/types';
+import type { ATSession } from './movies.service';
 
 @ApiTags('movies')
 @Controller('movies')
@@ -67,7 +68,7 @@ export class MoviesController {
     // Write to user's PDS
     const { uri, cid, rkey, record } = await this.moviesService.markWatched(
       user.did,
-      user.session,
+      user.session as ATSession,
       body.movieId,
     );
 
@@ -106,7 +107,11 @@ export class MoviesController {
     const user = req.user;
 
     // Delete from user's PDS
-    await this.moviesService.unmarkWatched(user.did, user.session, movieId);
+    await this.moviesService.unmarkWatched(
+      user.did,
+      user.session as ATSession,
+      movieId,
+    );
 
     // Optimistic update: remove from local DB so user sees their changes immediately
     // If this fails, the firehose ingester will catch it later

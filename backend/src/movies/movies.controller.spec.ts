@@ -1,9 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthGuard } from '../auth/auth.guard';
+import { AuthService } from '../auth/auth.service';
+import type { AuthenticatedRequest } from '../auth/types';
 
 // Mock PrismaService before importing
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn(),
 }));
+
+// Mock @atproto modules to prevent import errors
+jest.mock('@atproto/oauth-client-node', () => ({}));
+jest.mock('@atproto/api', () => ({}));
 
 import { MoviesController } from './movies.controller';
 import { MoviesService } from './movies.service';
@@ -17,6 +24,15 @@ describe('MoviesController', () => {
     getMovieDetails: jest.fn(),
     getUserMovies: jest.fn(),
     getMovieByTMDBId: jest.fn(),
+    markWatched: jest.fn(),
+    indexTrackedMovie: jest.fn(),
+    unmarkWatched: jest.fn(),
+    removeTrackedMovie: jest.fn(),
+  };
+
+  const mockAuthService = {
+    getUser: jest.fn(),
+    revokeBySessionId: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -24,7 +40,11 @@ describe('MoviesController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MoviesController],
-      providers: [{ provide: MoviesService, useValue: mockMoviesService }],
+      providers: [
+        { provide: MoviesService, useValue: mockMoviesService },
+        { provide: AuthService, useValue: mockAuthService },
+        AuthGuard,
+      ],
     }).compile();
 
     controller = module.get<MoviesController>(MoviesController);
@@ -158,6 +178,145 @@ describe('MoviesController', () => {
       const result = await controller.getMovie('999');
 
       expect(result).toBeNull();
+    });
+  });
+
+  const createMockRequest = (user: {
+    did: string;
+    session: { did: string };
+  }): AuthenticatedRequest => {
+    return { user } as unknown as AuthenticatedRequest;
+  };
+
+  describe('markWatched', () => {
+    it('should mark movie as watched and return tracked movie', async () => {
+      const mockUser = {
+        did: 'did:plc:abc123',
+        session: { did: 'did:plc:abc123' },
+      };
+      const mockMarkWatchedResult = {
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-456',
+        cid: 'cid456',
+        rkey: 'movie-456',
+        record: {
+          watchedAt: '2024-01-15T10:00:00Z',
+        },
+      };
+      const mockTrackedMovie = {
+        id: 'tracked-1',
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-456',
+        rkey: 'movie-456',
+        cid: 'cid456',
+        userDid: 'did:plc:abc123',
+        movieId: '456',
+        status: 'watched',
+        watchedDate: new Date('2024-01-15'),
+        movie: {
+          movieId: '456',
+          title: 'Test Movie',
+        },
+      };
+
+      mockMoviesService.markWatched.mockResolvedValue(mockMarkWatchedResult);
+      mockMoviesService.indexTrackedMovie.mockResolvedValue(mockTrackedMovie);
+
+      const req = createMockRequest(mockUser);
+      const result = await controller.markWatched({ movieId: '456' }, req);
+
+      expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
+        'did:plc:abc123',
+        mockUser.session,
+        '456',
+      );
+      expect(mockMoviesService.indexTrackedMovie).toHaveBeenCalledWith(
+        'at://did:plc:abc123/app.opnshelf.movie/movie-456',
+        'cid456',
+        'movie-456',
+        'did:plc:abc123',
+        '456',
+        '2024-01-15T10:00:00Z',
+      );
+      expect(result).toEqual(mockTrackedMovie);
+    });
+
+    it('should return minimal response when optimistic update fails', async () => {
+      const mockUser = {
+        did: 'did:plc:abc123',
+        session: { did: 'did:plc:abc123' },
+      };
+      const mockMarkWatchedResult = {
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-789',
+        cid: 'cid789',
+        rkey: 'movie-789',
+        record: {
+          watchedAt: '2024-01-20T15:30:00Z',
+        },
+      };
+
+      mockMoviesService.markWatched.mockResolvedValue(mockMarkWatchedResult);
+      mockMoviesService.indexTrackedMovie.mockRejectedValue(
+        new Error('DB error'),
+      );
+
+      const req = createMockRequest(mockUser);
+      const result = await controller.markWatched({ movieId: '789' }, req);
+
+      expect(result).toEqual({
+        uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-789',
+        cid: 'cid789',
+        rkey: 'movie-789',
+        movieId: '789',
+        userDid: 'did:plc:abc123',
+      });
+    });
+  });
+
+  describe('unmarkWatched', () => {
+    it('should unmark movie as watched', async () => {
+      const mockUser = {
+        did: 'did:plc:abc123',
+        session: { did: 'did:plc:abc123' },
+      };
+
+      mockMoviesService.unmarkWatched.mockResolvedValue({
+        rkey: 'movie-123',
+        movieId: '123',
+      });
+      mockMoviesService.removeTrackedMovie.mockResolvedValue({
+        count: 1,
+      } as unknown as ReturnType<typeof mockMoviesService.removeTrackedMovie>);
+
+      const req = createMockRequest(mockUser);
+      await controller.unmarkWatched('123', req);
+
+      expect(mockMoviesService.unmarkWatched).toHaveBeenCalledWith(
+        'did:plc:abc123',
+        mockUser.session,
+        '123',
+      );
+      expect(mockMoviesService.removeTrackedMovie).toHaveBeenCalledWith(
+        'did:plc:abc123',
+        '123',
+      );
+    });
+
+    it('should handle failure when removing from local DB', async () => {
+      const mockUser = {
+        did: 'did:plc:abc123',
+        session: { did: 'did:plc:abc123' },
+      };
+
+      mockMoviesService.unmarkWatched.mockResolvedValue({
+        rkey: 'movie-456',
+        movieId: '456',
+      });
+      mockMoviesService.removeTrackedMovie.mockRejectedValue(
+        new Error('DB error'),
+      );
+
+      const req = createMockRequest(mockUser);
+      // Should not throw
+      await expect(controller.unmarkWatched('456', req)).resolves.not.toThrow();
     });
   });
 });

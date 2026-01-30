@@ -173,7 +173,11 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
     if (evt.event === 'delete') {
       if (evt.collection !== COLLECTION) return;
 
-      const uri = evt.uri.toString();
+      const uri = evt.uri?.toString();
+      if (!uri) {
+        this.logger.warn('Delete event missing URI, skipping');
+        return;
+      }
       this.logger.log(`Removing movie record: ${uri}`);
 
       await this.prisma.trackedMovie.deleteMany({

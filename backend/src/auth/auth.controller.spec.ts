@@ -59,12 +59,14 @@ describe('AuthController', () => {
     return res;
   };
 
-  const createMockRequest = (overrides: Partial<Request> = {}) => {
+  const createMockRequest = (
+    overrides: Partial<import('express').Request> = {},
+  ) => {
     return {
       url: '/auth/callback',
       cookies: {},
       ...overrides,
-    } as unknown as Request;
+    } as unknown as import('express').Request;
   };
 
   beforeEach(async () => {
@@ -275,10 +277,13 @@ describe('AuthController', () => {
       };
       mockAuthService.getUser.mockResolvedValue(mockUser);
 
-      const req = createMockRequest();
-      (req as any).user = { did: 'did:plc:abc123' };
+      const req = createMockRequest({
+        user: { did: 'did:plc:abc123', session: {} },
+      } as unknown as import('express').Request);
 
-      const result = await controller.me(req);
+      const result = await controller.me(
+        req as unknown as import('../auth/types').AuthenticatedRequest,
+      );
 
       expect(result).toEqual(mockUser);
       expect(mockAuthService.getUser).toHaveBeenCalledWith('did:plc:abc123');
@@ -287,16 +292,25 @@ describe('AuthController', () => {
     it('should throw BadRequestException when no user in request', async () => {
       const req = createMockRequest();
 
-      await expect(controller.me(req)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.me(
+          req as unknown as import('../auth/types').AuthenticatedRequest,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when user not found in DB', async () => {
       mockAuthService.getUser.mockResolvedValue(null);
 
-      const req = createMockRequest();
-      (req as any).user = { did: 'did:plc:abc123' };
+      const req = createMockRequest({
+        user: { did: 'did:plc:abc123', session: {} },
+      } as unknown as import('express').Request);
 
-      await expect(controller.me(req)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.me(
+          req as unknown as import('../auth/types').AuthenticatedRequest,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -304,10 +318,14 @@ describe('AuthController', () => {
     it('should revoke session and clear cookie', async () => {
       const req = createMockRequest({
         cookies: { session: 'session-123' },
-      });
+        user: { did: 'did:plc:abc123', session: {} },
+      } as unknown as import('express').Request);
       const res = createMockResponse();
 
-      await controller.logout(req, res);
+      await controller.logout(
+        req as unknown as import('../auth/types').AuthenticatedRequest,
+        res,
+      );
 
       expect(mockAuthService.revokeBySessionId).toHaveBeenCalledWith(
         'session-123',
@@ -327,10 +345,16 @@ describe('AuthController', () => {
     });
 
     it('should still clear cookie when no session exists', async () => {
-      const req = createMockRequest({ cookies: {} });
+      const req = createMockRequest({
+        cookies: {},
+        user: { did: 'did:plc:abc123', session: {} },
+      } as unknown as import('express').Request);
       const res = createMockResponse();
 
-      await controller.logout(req, res);
+      await controller.logout(
+        req as unknown as import('../auth/types').AuthenticatedRequest,
+        res,
+      );
 
       expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
       expect(res.clearCookie).toHaveBeenCalled();

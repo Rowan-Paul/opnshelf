@@ -5,7 +5,7 @@ import { Agent } from '@atproto/api';
 
 const COLLECTION = 'app.opnshelf.movie';
 
-interface TMDBMovie {
+export interface TMDBMovie {
   id: number;
   title: string;
   poster_path?: string;
@@ -14,14 +14,14 @@ interface TMDBMovie {
   overview?: string;
 }
 
-interface TMDBSearchResponse {
+export interface TMDBSearchResponse {
   page: number;
   results: TMDBMovie[];
   total_results: number;
   total_pages: number;
 }
 
-interface ATSession {
+export interface ATSession {
   did: string;
 }
 

@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { UserDto } from './dto/user.dto';
-import { AuthenticatedRequest } from './types';
+import type { AuthenticatedRequest } from './types';
 
 const SESSION_COOKIE_NAME = 'session';
 const PLATFORM_COOKIE_NAME = 'auth_platform';
@@ -117,7 +117,7 @@ export class AuthController {
     status: 302,
     description: 'Redirect to frontend after authentication',
   })
-  async callback(@Req() req: Request, @Res() res: Response) {
+  async callback(@Req() req: import('express').Request, @Res() res: Response) {
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://127.0.0.1:3000';
     const isProduction =
