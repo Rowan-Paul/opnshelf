@@ -1,4 +1,4 @@
-import { configureApiClient, setOnUnauthorized } from "@opnshelf/api";
+import { configureApiClient } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -6,10 +6,8 @@ import {
 	HeadContent,
 	Outlet,
 	Scripts,
-	useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect } from "react";
 import { env } from "@/env";
 import Header from "../components/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -49,19 +47,6 @@ configureApiClient(env.VITE_API_URL);
 
 function RootComponent() {
 	const { queryClient } = Route.useRouteContext();
-	const navigate = useNavigate();
-
-	useEffect(() => {
-		setOnUnauthorized(() => {
-			queryClient.invalidateQueries({ queryKey: ["auth"] });
-			navigate({
-				to: "/login",
-				search: { reason: "session_expired" },
-				replace: true,
-			});
-		});
-		return () => setOnUnauthorized(null);
-	}, [queryClient, navigate]);
 
 	return (
 		<QueryClientProvider client={queryClient}>
