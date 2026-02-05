@@ -163,7 +163,7 @@ function SearchPage() {
                           className={`absolute top-2 right-2 p-2 rounded-full transition-opacity disabled:opacity-50 ${
                             isWatched
                               ? 'bg-green-600 hover:bg-red-600 opacity-100'
-                              : 'bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100'
+                              : 'bg-purple-600 hover:bg-purple-700 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100'
                           }`}
                           title={isWatched ? 'Remove from shelf' : 'Mark as watched'}
                         >

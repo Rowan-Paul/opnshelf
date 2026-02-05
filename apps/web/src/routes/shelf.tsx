@@ -109,7 +109,7 @@ function ShelfPage() {
                       type="button"
                       onClick={() => unmarkMutation.mutate({ path: { movieId: tracked.movieId } })}
                       disabled={unmarkMutation.isPending}
-                      className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       title="Remove from shelf"
                     >
                       <Trash2 className="w-4 h-4" />
