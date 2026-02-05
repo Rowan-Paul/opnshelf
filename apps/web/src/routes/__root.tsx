@@ -1,107 +1,105 @@
 import {
-  HeadContent,
-  Scripts,
-  createRootRouteWithContext,
-  Outlet,
-  useNavigate,
-} from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
+	HeadContent,
+	Scripts,
+	createRootRouteWithContext,
+	Outlet,
+	useNavigate,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { TanStackDevtools } from "@tanstack/react-devtools";
 
-import Header from '../components/Header'
+import Header from "../components/Header";
 
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
-import appCss from '../styles.css?url'
-import { configureApiClient, setOnUnauthorized } from '@opnshelf/api'
-import { env } from '@/env'
+import appCss from "../styles.css?url";
+import { configureApiClient, setOnUnauthorized } from "@opnshelf/api";
+import { env } from "@/env";
 
 interface MyRouterContext {
-  queryClient: QueryClient
+	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'OpnShelf',
-      },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
-  }),
+	head: () => ({
+		meta: [
+			{
+				charSet: "utf-8",
+			},
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1",
+			},
+			{
+				title: "OpnShelf",
+			},
+		],
+		links: [
+			{
+				rel: "stylesheet",
+				href: appCss,
+			},
+		],
+	}),
 
-  component: RootComponent,
-  shellComponent: RootDocument,
-})
-
+	component: RootComponent,
+	shellComponent: RootDocument,
+});
 
 configureApiClient(env.VITE_API_URL);
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext()
-  const navigate = useNavigate()
+	const { queryClient } = Route.useRouteContext();
+	const navigate = useNavigate();
 
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      queryClient.invalidateQueries({ queryKey: ['auth'] })
-      navigate({
-        to: '/login',
-        search: { reason: 'session_expired' },
-        replace: true,
-      })
-    })
-    return () => setOnUnauthorized(null)
-  }, [queryClient, navigate])
+	useEffect(() => {
+		setOnUnauthorized(() => {
+			queryClient.invalidateQueries({ queryKey: ["auth"] });
+			navigate({
+				to: "/login",
+				search: { reason: "session_expired" },
+				replace: true,
+			});
+		});
+		return () => setOnUnauthorized(null);
+	}, [queryClient, navigate]);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex flex-col min-h-0">
-          <Outlet />
-        </main>
-      </div>
-      <TanStackDevtools
-        config={{
-          position: 'bottom-right',
-        }}
-        plugins={[
-          {
-            name: 'Tanstack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-          TanStackQueryDevtools,
-        ]}
-      />
-    </QueryClientProvider>
-  )
+	return (
+		<QueryClientProvider client={queryClient}>
+			<div className="min-h-screen flex flex-col">
+				<Header />
+				<main className="flex-1 flex flex-col min-h-0">
+					<Outlet />
+				</main>
+			</div>
+			<TanStackDevtools
+				config={{
+					position: "bottom-right",
+				}}
+				plugins={[
+					{
+						name: "Tanstack Router",
+						render: <TanStackRouterDevtoolsPanel />,
+					},
+					TanStackQueryDevtools,
+				]}
+			/>
+		</QueryClientProvider>
+	);
 }
 
-
 function RootDocument({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  )
+	return (
+		<html lang="en">
+			<head>
+				<HeadContent />
+			</head>
+			<body>
+				{children}
+				<Scripts />
+			</body>
+		</html>
+	);
 }
