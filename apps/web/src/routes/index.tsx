@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Film } from "lucide-react";
+import { Film, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
 	component: HomePage,

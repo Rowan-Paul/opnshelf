@@ -1,21 +1,21 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
+	authControllerLogoutMutation,
+	authControllerMeOptions,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+	BookOpen,
 	Film,
 	Home,
-	Menu,
-	Search,
-	X,
 	LogIn,
 	LogOut,
+	Menu,
+	Search,
 	User,
-	BookOpen,
+	X,
 } from "lucide-react";
-import {
-	authControllerMeOptions,
-	authControllerLogoutMutation,
-} from "@opnshelf/api";
+import { useState } from "react";
 
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);

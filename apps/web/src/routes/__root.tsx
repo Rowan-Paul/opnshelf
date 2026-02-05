@@ -1,22 +1,19 @@
+import { configureApiClient, setOnUnauthorized } from "@opnshelf/api";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-	HeadContent,
-	Scripts,
 	createRootRouteWithContext,
+	HeadContent,
 	Outlet,
+	Scripts,
 	useNavigate,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-
-import Header from "../components/Header";
-
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-
-import appCss from "../styles.css?url";
-import { configureApiClient, setOnUnauthorized } from "@opnshelf/api";
+import { useEffect } from "react";
 import { env } from "@/env";
+import Header from "../components/Header";
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import appCss from "../styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;

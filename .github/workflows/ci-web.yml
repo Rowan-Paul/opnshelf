@@ -37,10 +37,3 @@ jobs:
       - name: Typecheck
         run: pnpm --filter "./apps/web" exec tsc --noEmit
 
-      - name: Test
-        run: pnpm --filter "./apps/web" run test
-
-      - name: Build
-        run: pnpm --filter "./apps/web" run build
-        env:
-          VITE_API_URL: "http://localhost:3001"

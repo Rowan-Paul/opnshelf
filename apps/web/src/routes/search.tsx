@@ -1,14 +1,14 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
-	moviesControllerSearchMoviesOptions,
 	moviesControllerMarkWatchedMutation,
+	moviesControllerSearchMoviesOptions,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import { Search, Check, Plus } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Check, Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,

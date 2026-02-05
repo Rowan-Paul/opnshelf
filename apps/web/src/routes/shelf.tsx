@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import { BookOpen, Trash2, LogIn } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BookOpen, LogIn, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/shelf")({
 	component: ShelfPage,
