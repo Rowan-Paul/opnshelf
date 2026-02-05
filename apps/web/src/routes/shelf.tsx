@@ -1,11 +1,12 @@
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, LogIn, Trash2 } from "lucide-react";
+import { BookOpen, Loader2, LogIn, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/shelf")({
 	component: ShelfPage,
@@ -33,7 +34,11 @@ function ShelfPage() {
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf"] });
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
 		},
 	});
 
@@ -114,11 +119,21 @@ function ShelfPage() {
 													path: { movieId: tracked.movieId },
 												})
 											}
-											disabled={unmarkMutation.isPending}
+											disabled={
+												unmarkMutation.isPending &&
+												unmarkMutation.variables?.path?.movieId ===
+													tracked.movieId
+											}
 											className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity disabled:opacity-50"
 											title="Remove from shelf"
 										>
-											<Trash2 className="w-4 h-4" />
+											{unmarkMutation.isPending &&
+											unmarkMutation.variables?.path?.movieId ===
+												tracked.movieId ? (
+												<Loader2 className="w-4 h-4 animate-spin" />
+											) : (
+												<Trash2 className="w-4 h-4" />
+											)}
 										</button>
 									</div>
 									<h3 className="font-semibold text-sm line-clamp-2 mb-1">
