@@ -7,7 +7,7 @@ import {
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, Loader2, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -147,12 +147,16 @@ function SearchPage() {
 
 								return (
 									<div key={movie.id} className="group">
-										<div className="relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2">
+										<Link
+											to="/movies/$movieId"
+											params={{ movieId: movieId }}
+											className="block relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2"
+										>
 											{movie.poster_path ? (
 												<img
 													src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
 													alt={movie.title}
-													className="w-full h-full object-cover"
+													className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
 												/>
 											) : (
 												<div className="w-full h-full flex items-center justify-center text-gray-600">
@@ -162,7 +166,9 @@ function SearchPage() {
 											{user && (
 												<button
 													type="button"
-													onClick={() => {
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
 														if (isWatched) {
 															unmarkMutation.mutate({ path: { movieId } });
 														} else {
@@ -177,7 +183,7 @@ function SearchPage() {
 															unmarkMutation.variables?.path?.movieId ===
 																movieId)
 													}
-													className={`absolute top-2 right-2 p-2 rounded-full transition-opacity disabled:opacity-50 ${
+													className={`absolute top-2 right-2 p-2 rounded-full transition-opacity disabled:opacity-50 z-10 ${
 														isWatched
 															? "bg-green-600 hover:bg-red-600 opacity-100"
 															: "bg-purple-600 hover:bg-purple-700 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
@@ -200,15 +206,21 @@ function SearchPage() {
 													)}
 												</button>
 											)}
-										</div>
-										<h3 className="font-semibold text-sm line-clamp-2 mb-1">
-											{movie.title}
-										</h3>
-										{movie.release_date && (
-											<p className="text-gray-500 text-sm">
-												{movie.release_date.split("-")[0]}
-											</p>
-										)}
+										</Link>
+										<Link
+											to="/movies/$movieId"
+											params={{ movieId: movieId }}
+											className="block"
+										>
+											<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">
+												{movie.title}
+											</h3>
+											{movie.release_date && (
+												<p className="text-gray-500 text-sm">
+													{movie.release_date.split("-")[0]}
+												</p>
+											)}
+										</Link>
 									</div>
 								);
 							})}
