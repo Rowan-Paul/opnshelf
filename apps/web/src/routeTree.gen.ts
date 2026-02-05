@@ -13,6 +13,7 @@ import { Route as ShelfRouteImport } from './routes/shelf'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MoviesMovieIdRouteImport } from './routes/movies.$movieId'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 
 const ShelfRoute = ShelfRouteImport.update({
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoviesMovieIdRoute = MoviesMovieIdRouteImport.update({
+  id: '/movies/$movieId',
+  path: '/movies/$movieId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/movies/$movieId': typeof MoviesMovieIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/search'
+    | '/shelf'
+    | '/auth/complete'
+    | '/movies/$movieId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
-  id: '__root__' | '/' | '/login' | '/search' | '/shelf' | '/auth/complete'
+  to:
+    | '/'
+    | '/login'
+    | '/search'
+    | '/shelf'
+    | '/auth/complete'
+    | '/movies/$movieId'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/search'
+    | '/shelf'
+    | '/auth/complete'
+    | '/movies/$movieId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   ShelfRoute: typeof ShelfRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
+  MoviesMovieIdRoute: typeof MoviesMovieIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/movies/$movieId': {
+      id: '/movies/$movieId'
+      path: '/movies/$movieId'
+      fullPath: '/movies/$movieId'
+      preLoaderRoute: typeof MoviesMovieIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/complete': {
       id: '/auth/complete'
       path: '/auth/complete'
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   ShelfRoute: ShelfRoute,
   AuthCompleteRoute: AuthCompleteRoute,
+  MoviesMovieIdRoute: MoviesMovieIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

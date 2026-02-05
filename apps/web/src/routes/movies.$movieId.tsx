@@ -12,6 +12,20 @@ import { ArrowLeft, Calendar, Check, Clock, Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { usePosterColors } from "../hooks/usePosterColors";
 
+// TMDB Movie Detail type based on API response
+interface TMDBMovieDetail {
+	id: number;
+	title: string;
+	poster_path?: string;
+	backdrop_path?: string;
+	release_date?: string;
+	overview?: string;
+	runtime?: number;
+	vote_average?: number;
+	vote_count?: number;
+	genres?: Array<{ id: number; name: string }>;
+}
+
 export const Route = createFileRoute("/movies/$movieId")({
 	component: MovieDetailPage,
 });
@@ -28,11 +42,13 @@ function MovieDetailPage() {
 	});
 
 	// Fetch movie details
-	const { data: movie, isLoading: isMovieLoading } = useQuery({
+	const { data: movieData, isLoading: isMovieLoading } = useQuery({
 		...moviesControllerGetMovieDetailsOptions({
 			path: { movieId },
 		}),
 	});
+
+	const movie = movieData as TMDBMovieDetail | undefined;
 
 	// Fetch user's tracked movies
 	const { data: trackedMovies } = useQuery({
@@ -49,7 +65,7 @@ function MovieDetailPage() {
 	}, [trackedMovies, movieId]);
 
 	// Extract accent colors from poster
-	const colors = usePosterColors(movie?.poster_path as string);
+	const colors = usePosterColors(movie?.poster_path);
 
 	// Mutations for watchlist
 	const markMutation = useMutation({
@@ -89,7 +105,7 @@ function MovieDetailPage() {
 			unmarkMutation.variables?.path?.movieId === movieId);
 
 	const releaseYear = movie?.release_date
-		? new Date(movie.release_date as string).getFullYear()
+		? new Date(movie.release_date).getFullYear()
 		: null;
 
 	const backdropUrl = movie?.backdrop_path
@@ -137,6 +153,7 @@ function MovieDetailPage() {
 				{/* Back button */}
 				<Link
 					to="/search"
+					search={{ q: "" }}
 					className="absolute top-4 left-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
 				>
 					<ArrowLeft className="w-5 h-5" />
@@ -157,7 +174,7 @@ function MovieDetailPage() {
 									{posterUrl ? (
 										<img
 											src={posterUrl}
-											alt={movie?.title as string}
+											alt={movie?.title}
 											className="w-full aspect-2/3 object-cover"
 										/>
 									) : (
@@ -219,7 +236,7 @@ function MovieDetailPage() {
 								>
 									<img
 										src={posterUrl}
-										alt={movie?.title as string}
+										alt={movie?.title}
 										className="w-full aspect-2/3 object-cover"
 									/>
 								</div>
@@ -355,14 +372,11 @@ function MovieDetailPage() {
 										Release Date
 									</span>
 									<span className="text-gray-200 font-medium">
-										{new Date(movie.release_date as string).toLocaleDateString(
-											"en-US",
-											{
-												year: "numeric",
-												month: "long",
-												day: "numeric",
-											},
-										)}
+										{new Date(movie.release_date).toLocaleDateString("en-US", {
+											year: "numeric",
+											month: "long",
+											day: "numeric",
+										})}
 									</span>
 								</div>
 							)}
@@ -385,7 +399,7 @@ function MovieDetailPage() {
 										className="font-medium"
 										style={{ color: colors.accent }}
 									>
-										{(movie.vote_average as number).toFixed(1)}/10
+										{movie.vote_average.toFixed(1)}/10
 									</span>
 								</div>
 							)}
@@ -395,42 +409,38 @@ function MovieDetailPage() {
 										Votes
 									</span>
 									<span className="text-gray-200 font-medium">
-										{(movie.vote_count as number).toLocaleString()}
+										{movie.vote_count.toLocaleString()}
 									</span>
 								</div>
 							)}
 						</section>
 
 						{/* Genres */}
-						{movie?.genres &&
-							(movie.genres as Array<{ id: number; name: string }>).length >
-								0 && (
-								<section>
-									<h2
-										className="text-xl font-semibold mb-3"
-										style={{ color: colors.primary }}
-									>
-										Genres
-									</h2>
-									<div className="flex flex-wrap gap-2">
-										{(movie.genres as Array<{ id: number; name: string }>).map(
-											(genre) => (
-												<span
-													key={genre.id}
-													className="px-4 py-2 rounded-full text-sm font-medium"
-													style={{
-														backgroundColor: `${colors.primary}20`,
-														color: colors.accent,
-														border: `1px solid ${colors.primary}40`,
-													}}
-												>
-													{genre.name}
-												</span>
-											),
-										)}
-									</div>
-								</section>
-							)}
+						{movie?.genres && movie.genres.length > 0 && (
+							<section>
+								<h2
+									className="text-xl font-semibold mb-3"
+									style={{ color: colors.primary }}
+								>
+									Genres
+								</h2>
+								<div className="flex flex-wrap gap-2">
+									{movie.genres.map((genre) => (
+										<span
+											key={genre.id}
+											className="px-4 py-2 rounded-full text-sm font-medium"
+											style={{
+												backgroundColor: `${colors.primary}20`,
+												color: colors.accent,
+												border: `1px solid ${colors.primary}40`,
+											}}
+										>
+											{genre.name}
+										</span>
+									))}
+								</div>
+							</section>
+						)}
 					</div>
 				</div>
 			</div>
