@@ -1,13 +1,14 @@
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerSearchMoviesOptions,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Check, Plus, Search } from "lucide-react";
+import { Check, Loader2, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export const Route = createFileRoute("/search")({
@@ -51,7 +52,11 @@ function SearchPage() {
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf"] });
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
 		},
 	});
 
@@ -59,7 +64,11 @@ function SearchPage() {
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf"] });
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
 		},
 	});
 
@@ -95,8 +104,6 @@ function SearchPage() {
 		}),
 		enabled: searchQuery.length > 0,
 	});
-
-	const isPending = markMutation.isPending || unmarkMutation.isPending;
 
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
@@ -162,7 +169,14 @@ function SearchPage() {
 															markMutation.mutate({ body: { movieId } });
 														}
 													}}
-													disabled={isPending}
+													disabled={
+														(markMutation.isPending &&
+															markMutation.variables?.body?.movieId ===
+																movieId) ||
+														(unmarkMutation.isPending &&
+															unmarkMutation.variables?.path?.movieId ===
+																movieId)
+													}
 													className={`absolute top-2 right-2 p-2 rounded-full transition-opacity disabled:opacity-50 ${
 														isWatched
 															? "bg-green-600 hover:bg-red-600 opacity-100"
@@ -172,7 +186,14 @@ function SearchPage() {
 														isWatched ? "Remove from shelf" : "Mark as watched"
 													}
 												>
-													{isWatched ? (
+													{(markMutation.isPending &&
+														markMutation.variables?.body?.movieId ===
+															movieId) ||
+													(unmarkMutation.isPending &&
+														unmarkMutation.variables?.path?.movieId ===
+															movieId) ? (
+														<Loader2 className="w-4 h-4 animate-spin" />
+													) : isWatched ? (
 														<Check className="w-4 h-4" />
 													) : (
 														<Plus className="w-4 h-4" />
