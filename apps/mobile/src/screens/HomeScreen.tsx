@@ -8,12 +8,16 @@ import type { RootStackParamList } from '../navigation';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
+  console.log('[HomeScreen] Component mounted');
+
   // Check auth state using generated TanStack Query hook
   const { data: user } = useQuery({
     ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  console.log('[HomeScreen] Rendered. User data:', user ? 'FOUND' : 'NOT FOUND');
 
   return (
     <View className="flex-1 bg-gray-950 px-4 pt-12 pb-6">

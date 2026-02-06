@@ -28,6 +28,8 @@ describe('MoviesController', () => {
     indexTrackedMovie: jest.fn(),
     unmarkWatched: jest.fn(),
     removeTrackedMovie: jest.fn(),
+    ensureMovieHasColors: jest.fn(),
+    upsertMovie: jest.fn(),
   };
 
   const mockAuthService = {
@@ -80,7 +82,7 @@ describe('MoviesController', () => {
   });
 
   describe('getMovieDetails', () => {
-    it('should return movie details from TMDB', async () => {
+    it('should return movie details from TMDB with colors', async () => {
       const mockMovie = {
         id: 123,
         title: 'Test Movie',
@@ -91,12 +93,26 @@ describe('MoviesController', () => {
         runtime: 120,
         vote_average: 7.5,
       };
+      const mockUpsertedMovie = {
+        movieId: '123',
+        colors: {
+          primary: '#ff0000',
+          secondary: '#00ff00',
+          accent: '#0000ff',
+          muted: '#808080',
+        },
+      };
       mockMoviesService.getMovieDetails.mockResolvedValue(mockMovie);
+      mockMoviesService.upsertMovie.mockResolvedValue(mockUpsertedMovie);
 
       const result = await controller.getMovieDetails('123');
 
-      expect(result).toEqual(mockMovie);
+      expect(result).toEqual({
+        ...mockMovie,
+        colors: mockUpsertedMovie.colors,
+      });
       expect(mockMoviesService.getMovieDetails).toHaveBeenCalledWith('123');
+      expect(mockMoviesService.upsertMovie).toHaveBeenCalledWith(mockMovie);
     });
 
     it('should handle movie not found', async () => {

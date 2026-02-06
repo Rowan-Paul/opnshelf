@@ -52,7 +52,11 @@ function AppNavigator() {
 
   // Load session from secure storage on app start
   useEffect(() => {
-    loadSession().finally(() => {
+    console.log('[App] AppNavigator mounted - loading session');
+    loadSession().then((token) => {
+      console.log('[App] loadSession completed with token:', token ? 'YES' : 'NO');
+    }).finally(() => {
+      console.log('[App] Session loaded or completed');
       setIsSessionLoaded(true);
     });
   }, []);
@@ -60,6 +64,7 @@ function AppNavigator() {
   // Set up 401 handler
   useEffect(() => {
     setOnUnauthorized(() => {
+      console.log('[App] onUnauthorized called - 401 detected');
       // Clear stored session on 401
       clearSession();
 
@@ -68,6 +73,7 @@ function AppNavigator() {
 
       // Navigate to login with session_expired reason
       if (navigationRef.current) {
+        console.log('[App] Navigating to Login screen with session_expired reason');
         navigationRef.current.reset({
           index: 0,
           routes: [
@@ -87,12 +93,15 @@ function AppNavigator() {
 
   // Show loading screen while restoring session
   if (!isSessionLoaded) {
+    console.log('[App] Showing loading screen');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#030712' }}>
         <ActivityIndicator size="large" color="#a855f7" />
       </View>
     );
   }
+
+  console.log('[App] Session loaded, showing app');
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>

@@ -137,6 +137,231 @@ cd apps/mobile && pnpm typecheck
 - **Web**: Vitest with `.test.tsx` suffix
 - **Mocking**: Use proper dependency injection for testability
 
+## Backend Testing
+
+The backend uses **Jest** for testing with comprehensive test coverage for services, controllers, and guards.
+
+### Test Structure
+
+```
+backend/src/
+├── auth/
+│   ├── auth.service.spec.ts      # Service logic tests
+│   ├── auth.controller.spec.ts   # Controller/HTTP tests
+│   └── auth.guard.spec.ts        # Auth guard tests
+├── movies/
+│   ├── movies.service.spec.ts    # Movie business logic
+│   ├── movies.controller.spec.ts # Movie API endpoints
+│   └── color-extraction.service.spec.ts  # Color extraction tests
+├── ingester/
+│   └── ingester.service.spec.ts  # Firehose ingester tests
+└── prisma/
+    └── prisma.service.spec.ts    # Database service tests
+```
+
+### Running Tests
+
+```bash
+cd backend
+
+# Run all tests
+pnpm test
+
+# Run with watch mode for development
+pnpm test:watch
+
+# Run specific test file
+pnpm test -- auth.service.spec.ts
+
+# Run tests matching a pattern
+pnpm test -- --testNamePattern="should create"
+
+# Run with coverage
+pnpm test -- --coverage
+```
+
+### Test Patterns
+
+#### 1. Service Testing
+
+Services are tested with mocked dependencies:
+
+```typescript
+describe('MoviesService', () => {
+  let service: MoviesService;
+  
+  const mockPrismaService = {
+    movie: { findUnique: jest.fn(), upsert: jest.fn() },
+    trackedMovie: { findMany: jest.fn(), upsert: jest.fn() }
+  };
+  
+  const mockColorExtraction = {
+    extractColorsFromPoster: jest.fn()
+  };
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        MoviesService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ColorExtractionService, useValue: mockColorExtraction },
+        { provide: ConfigService, useValue: { get: jest.fn() } }
+      ]
+    }).compile();
+
+    service = module.get<MoviesService>(MoviesService);
+  });
+
+  it('should find movie by ID', async () => {
+    const mockMovie = { movieId: '123', title: 'Test Movie' };
+    mockPrismaService.movie.findUnique.mockResolvedValue(mockMovie);
+    
+    const result = await service.getMovieByTMDBId('123');
+    
+    expect(result).toEqual(mockMovie);
+    expect(mockPrismaService.movie.findUnique).toHaveBeenCalledWith({
+      where: { movieId: '123' }
+    });
+  });
+});
+```
+
+#### 2. Controller Testing
+
+Controllers are tested with mocked services:
+
+```typescript
+describe('MoviesController', () => {
+  let controller: MoviesController;
+  
+  const mockMoviesService = {
+    searchMovies: jest.fn(),
+    getMovieDetails: jest.fn(),
+    markWatched: jest.fn()
+  };
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      controllers: [MoviesController],
+      providers: [{ provide: MoviesService, useValue: mockMoviesService }]
+    }).compile();
+
+    controller = module.get<MoviesController>(MoviesController);
+  });
+
+  it('should search movies', async () => {
+    const mockResults = { results: [{ id: 1, title: 'Movie' }] };
+    mockMoviesService.searchMovies.mockResolvedValue(mockResults);
+    
+    const result = await controller.searchMovies({ query: 'test' });
+    
+    expect(result).toEqual(mockResults);
+  });
+});
+```
+
+#### 3. Guard Testing
+
+Guards test authentication logic:
+
+```typescript
+describe('AuthGuard', () => {
+  let guard: AuthGuard;
+  
+  const mockAuthService = {
+    getSessionById: jest.fn(),
+    restore: jest.fn()
+  };
+
+  it('should allow access with valid session', async () => {
+    mockAuthService.getSessionById.mockResolvedValue({ userDid: 'did:123' });
+    mockAuthService.restore.mockResolvedValue({ did: 'did:123' });
+    
+    const context = createMockExecutionContext({ session: 'valid-session' });
+    const result = await guard.canActivate(context);
+    
+    expect(result).toBe(true);
+  });
+
+  it('should deny access without session', async () => {
+    const context = createMockExecutionContext({});
+    
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      UnauthorizedException
+    );
+  });
+});
+```
+
+### Mocking External Dependencies
+
+#### AT Protocol Modules
+
+```typescript
+// Mock @atproto modules before imports
+jest.mock('@atproto/oauth-client-node', () => ({
+  NodeOAuthClient: jest.fn().mockImplementation(() => ({
+    authorize: jest.fn(),
+    callback: jest.fn(),
+    restore: jest.fn()
+  }))
+}));
+
+jest.mock('@atproto/api', () => ({
+  Agent: jest.fn().mockImplementation(() => ({
+    getProfile: jest.fn(),
+    com: { atproto: { repo: { putRecord: jest.fn(), deleteRecord: jest.fn() } } }
+  }))
+}));
+
+jest.mock('@atproto/sync', () => ({
+  Firehose: jest.fn().mockImplementation(() => ({
+    start: jest.fn(),
+    destroy: jest.fn()
+  }))
+}));
+```
+
+#### Prisma Service
+
+```typescript
+jest.mock('../prisma/prisma.service', () => ({
+  PrismaService: jest.fn()
+}));
+
+// Then provide mock values in test module
+const mockPrisma = {
+  user: { findUnique: jest.fn(), upsert: jest.fn() },
+  movie: { findUnique: jest.fn(), upsert: jest.fn() },
+  trackedMovie: { findMany: jest.fn(), upsert: jest.fn(), deleteMany: jest.fn() }
+};
+
+{ provide: PrismaService, useValue: mockPrisma }
+```
+
+### Testing Best Practices
+
+1. **Mock External Services**: Always mock Prisma, external APIs, and AT Protocol
+2. **Test Service Boundaries**: Focus on public methods and their interactions
+3. **Clear Mocks**: Use `jest.clearAllMocks()` in `beforeEach`
+4. **Test Error Cases**: Verify proper error handling and edge cases
+5. **Type Safety**: Use proper typing for mock values and return values
+6. **Isolated Tests**: Each test should be independent and not rely on test order
+
+### Creating New Tests
+
+When creating tests for a new service:
+
+1. Create a `.spec.ts` file alongside the service file
+2. Mock all dependencies using `jest.mock()` before imports
+3. Set up the testing module in `beforeEach`
+4. Write tests for:
+   - Happy path (successful operations)
+   - Error cases (exceptions, missing data)
+   - Edge cases (null values, empty arrays)
+   - Boundary conditions
+5. Verify mock interactions with `expect(mock).toHaveBeenCalledWith()`
+
 ## Workspace Commands
 
 ```bash

@@ -24,6 +24,7 @@ jest.mock('@atproto/api', () => ({
 
 import { MoviesService } from './movies.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ColorExtractionService } from './color-extraction.service';
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -41,6 +42,7 @@ describe('MoviesService', () => {
     movie: {
       findUnique: jest.fn(),
       upsert: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -49,6 +51,10 @@ describe('MoviesService', () => {
       if (key === 'TMDB_API_KEY') return 'test-api-key';
       return undefined;
     }),
+  };
+
+  const mockColorExtractionService = {
+    extractColorsFromPoster: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -61,6 +67,10 @@ describe('MoviesService', () => {
         MoviesService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
+        {
+          provide: ColorExtractionService,
+          useValue: mockColorExtractionService,
+        },
       ],
     }).compile();
 
@@ -242,10 +252,22 @@ describe('MoviesService', () => {
         releaseDate: new Date('2024-06-15'),
         overview: 'A great test movie',
       };
+      const mockColors = {
+        primary: '#ff0000',
+        secondary: '#00ff00',
+        accent: '#0000ff',
+        muted: '#808080',
+      };
+      mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+        mockColors,
+      );
       mockPrismaService.movie.upsert.mockResolvedValue(mockUpsertedMovie);
 
       const result = await service.upsertMovie(movieData);
 
+      expect(
+        mockColorExtractionService.extractColorsFromPoster,
+      ).toHaveBeenCalledWith('/poster.jpg');
       expect(result).toEqual(mockUpsertedMovie);
       expect(mockPrismaService.movie.upsert).toHaveBeenCalledWith({
         where: { movieId: '123' },
@@ -256,6 +278,7 @@ describe('MoviesService', () => {
           backdropPath: '/backdrop.jpg',
           releaseYear: 2024,
           overview: 'A great test movie',
+          colors: mockColors,
         }),
         update: expect.objectContaining({
           title: 'Test Movie',
@@ -276,6 +299,9 @@ describe('MoviesService', () => {
         release_date: undefined,
         overview: 'No release date',
       };
+      mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+        null,
+      );
       mockPrismaService.movie.upsert.mockResolvedValue({
         movieId: '456',
         title: 'Movie Without Date',
@@ -288,6 +314,9 @@ describe('MoviesService', () => {
 
       await service.upsertMovie(movieData);
 
+      expect(
+        mockColorExtractionService.extractColorsFromPoster,
+      ).toHaveBeenCalledWith(null);
       expect(mockPrismaService.movie.upsert).toHaveBeenCalledWith({
         where: { movieId: '456' },
         create: expect.objectContaining({
@@ -310,6 +339,9 @@ describe('MoviesService', () => {
         release_date: '',
         overview: undefined,
       };
+      mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+        null,
+      );
       mockPrismaService.movie.upsert.mockResolvedValue({
         movieId: '789',
         title: 'Movie With Empty Date',
@@ -328,6 +360,73 @@ describe('MoviesService', () => {
           releaseDate: null,
         }),
       });
+    });
+  });
+
+  describe('ensureMovieHasColors', () => {
+    it('should return existing colors when movie already has them', async () => {
+      const existingColors = {
+        primary: '#ff0000',
+        secondary: '#00ff00',
+        accent: '#0000ff',
+        muted: '#808080',
+      };
+      mockPrismaService.movie.findUnique.mockResolvedValue({
+        posterPath: '/poster.jpg',
+        colors: existingColors,
+      });
+
+      const result = await service.ensureMovieHasColors('123');
+
+      expect(result).toEqual(existingColors);
+      expect(
+        mockColorExtractionService.extractColorsFromPoster,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should extract and save colors when movie has no colors', async () => {
+      const newColors = {
+        primary: '#ff0000',
+        secondary: '#00ff00',
+        accent: '#0000ff',
+        muted: '#808080',
+      };
+      mockPrismaService.movie.findUnique.mockResolvedValue({
+        posterPath: '/poster.jpg',
+        colors: null,
+      });
+      mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+        newColors,
+      );
+
+      const result = await service.ensureMovieHasColors('456');
+
+      expect(
+        mockColorExtractionService.extractColorsFromPoster,
+      ).toHaveBeenCalledWith('/poster.jpg');
+      expect(result).toEqual(newColors);
+    });
+
+    it('should return null when movie not found', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue(null);
+
+      const result = await service.ensureMovieHasColors('999');
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle color extraction failure gracefully', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue({
+        posterPath: '/poster.jpg',
+        colors: null,
+      });
+      mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+        null,
+      );
+
+      const result = await service.ensureMovieHasColors('123');
+
+      expect(result).toBeNull();
     });
   });
 

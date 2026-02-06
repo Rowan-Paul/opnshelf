@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createCanvas, loadImage } from 'canvas';
+import { Jimp } from 'jimp';
 
 export interface ColorPalette {
   primary: string;
@@ -23,16 +23,13 @@ export class ColorExtractionService {
 
     try {
       const imageUrl = `${this.tmdbImageBaseUrl}w342${posterPath}`;
-      const image = await loadImage(imageUrl);
+      const image = await Jimp.read(imageUrl);
 
-      // Create canvas and resize for performance
-      const canvas = createCanvas(100, 150);
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(image, 0, 0, 100, 150);
+      // Resize for performance
+      image.resize({ w: 100, h: 150 });
 
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, 100, 150);
-      const pixels = imageData.data;
+      // Get raw pixel data (RGBA format)
+      const pixels = image.bitmap.data;
 
       // Extract and quantize colors
       const colorCounts = new Map<
