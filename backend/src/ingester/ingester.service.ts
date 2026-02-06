@@ -8,29 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { Firehose } from '@atproto/sync';
 import { IdResolver } from '@atproto/identity';
 import { PrismaService } from '../prisma/prisma.service';
-
-const COLLECTION = 'app.opnshelf.movie';
-
-// Expected record shape for app.opnshelf.movie
-interface MovieRecord {
-  $type: string;
-  movieId: string;
-  source: string;
-  watchedAt: string;
-  createdAt: string;
-}
-
-function isMovieRecord(record: unknown): record is MovieRecord {
-  if (!record || typeof record !== 'object') return false;
-  const r = record as Record<string, unknown>;
-  return (
-    (r.$type === COLLECTION || r.$type === `${COLLECTION}#main`) &&
-    typeof r.movieId === 'string' &&
-    typeof r.source === 'string' &&
-    typeof r.watchedAt === 'string' &&
-    typeof r.createdAt === 'string'
-  );
-}
+import {
+  main as movieSchema,
+  $nsid as COLLECTION,
+} from '../lexicons/app/opnshelf/movie';
+import type { Main as MovieRecord } from '../lexicons/app/opnshelf/movie.defs';
 
 interface FirehoseEvent {
   event: string;
@@ -116,7 +98,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
       if (evt.collection !== COLLECTION) return;
 
       const record = evt.record;
-      if (!isMovieRecord(record)) {
+
+      // Validate the record using the generated schema
+      let movieRecord: MovieRecord;
+      try {
+        movieRecord = movieSchema.parse(record);
+      } catch {
         this.logger.debug('Received invalid movie record, skipping');
         return;
       }
@@ -153,19 +140,19 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
           rkey,
           cid,
           userDid: authorDid,
-          movieId: record.movieId,
-          watchedDate: new Date(record.watchedAt),
+          movieId: movieRecord.movieId,
+          watchedDate: new Date(movieRecord.watchedAt),
           status: 'watched',
         },
         update: {
           cid,
-          watchedDate: new Date(record.watchedAt),
+          watchedDate: new Date(movieRecord.watchedAt),
           status: 'watched',
         },
       });
 
       this.logger.debug(
-        `Indexed movie ${record.movieId} for user ${authorDid}`,
+        `Indexed movie ${movieRecord.movieId} for user ${authorDid}`,
       );
     }
 

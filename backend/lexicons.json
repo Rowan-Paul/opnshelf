@@ -1,0 +1,10 @@
+{
+	"version": 1,
+	"lexicons": [
+		{
+			"id": "app.opnshelf.movie",
+			"path": "lexicons/app/opnshelf/movie.json",
+			"local": true
+		}
+	]
+}

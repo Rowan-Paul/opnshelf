@@ -8,22 +8,24 @@
 			"key": "tid",
 			"record": {
 				"type": "object",
-				"required": ["movieId", "status"],
+				"required": ["movieId", "source", "watchedAt", "createdAt"],
 				"properties": {
 					"movieId": {
 						"type": "string",
 						"description": "TMDB movie ID"
 					},
-					"status": {
+					"source": {
 						"type": "string",
-						"description": "Watch status of the movie (e.g., watched, wantToWatch, watching)"
+						"description": "Source of the movie data (e.g., tmdb)"
 					},
-					"watchedDate": {
-						"type": "datetime",
+					"watchedAt": {
+						"type": "string",
+						"format": "datetime",
 						"description": "When the movie was watched"
 					},
 					"createdAt": {
-						"type": "datetime",
+						"type": "string",
+						"format": "datetime",
 						"description": "Record creation timestamp"
 					}
 				}

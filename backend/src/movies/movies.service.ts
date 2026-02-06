@@ -2,8 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Agent } from '@atproto/api';
-
-const COLLECTION = 'app.opnshelf.movie';
+import {
+  main as movieSchema,
+  $nsid as COLLECTION,
+} from '../lexicons/app/opnshelf/movie';
+import type { Main as MovieRecord } from '../lexicons/app/opnshelf/movie.defs';
 
 export interface TMDBMovie {
   id: number;
@@ -118,14 +121,14 @@ export class MoviesService {
     const rkey = `movie-${movieId}`;
     const now = new Date().toISOString();
 
-    // Build the AT Protocol record
-    const record = {
-      $type: COLLECTION,
+    // Build the AT Protocol record using the generated schema builder
+    // This ensures type safety and validation
+    const record: MovieRecord = movieSchema.build({
       movieId,
       source: 'tmdb',
       watchedAt: now,
       createdAt: now,
-    };
+    });
 
     // Create agent from session and write record to user's PDS
     const agent = new Agent(
