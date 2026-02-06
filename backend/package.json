@@ -8,7 +8,8 @@
   "scripts": {
     "build": "nest build",
     "prebuild": "prisma generate && npm run lex:build",
-    "lex:build": "lex build --lexicons ../lexicons --out ./src/lexicons --clear",
+    "railway:build": "prisma generate && nest build",
+    "lex:build": "lex build --lexicons ../lexicons --out ./src/lexicons --clear && pnpm format",
     "lex:install": "lex install",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
