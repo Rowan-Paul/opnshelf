@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { appControllerGetHello, authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options } from '../sdk.gen';
-import type { AppControllerGetHelloData, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -38,21 +38,6 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     }
     return [params];
 };
-
-export const appControllerGetHelloQueryKey = (options?: Options<AppControllerGetHelloData>) => createQueryKey('appControllerGetHello', options);
-
-export const appControllerGetHelloOptions = (options?: Options<AppControllerGetHelloData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof appControllerGetHelloQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await appControllerGetHello({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: appControllerGetHelloQueryKey(options)
-});
 
 export const moviesControllerSearchMoviesQueryKey = (options: Options<MoviesControllerSearchMoviesData>) => createQueryKey('moviesControllerSearchMovies', options);
 

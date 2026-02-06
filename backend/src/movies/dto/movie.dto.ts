@@ -1,6 +1,28 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, IsDateString } from 'class-validator';
 
+export class MovieColorsDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  primary?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  secondary?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  accent?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  muted?: string;
+}
+
 export class MovieDto {
   @ApiProperty()
   @IsString()
@@ -34,6 +56,10 @@ export class MovieDto {
   @IsOptional()
   @IsString()
   overview?: string;
+
+  @ApiPropertyOptional({ type: MovieColorsDto })
+  @IsOptional()
+  colors?: MovieColorsDto;
 }
 
 export class TrackedMovieDto {

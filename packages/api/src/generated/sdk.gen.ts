@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AppControllerGetHelloData, AppControllerGetHelloResponses, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,8 +17,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
-
-export const appControllerGetHello = <ThrowOnError extends boolean = false>(options?: Options<AppControllerGetHelloData, ThrowOnError>) => (options?.client ?? client).get<AppControllerGetHelloResponses, unknown, ThrowOnError>({ url: '/', ...options });
 
 /**
  * Search movies from TMDB

@@ -92,7 +92,7 @@ export function LoginScreen({ navigation, route }: Props) {
             Sign in to OpnShelf
           </Text>
           <Text className="text-base text-gray-400 text-center">
-            Use your Bluesky account to sign in
+            Use your ATProto account to sign in
           </Text>
         </View>
 
@@ -122,7 +122,7 @@ export function LoginScreen({ navigation, route }: Props) {
         <View className="gap-6">
           <View>
             <Text className="text-sm font-medium text-gray-300 mb-2">
-              Bluesky Handle
+              Handle
             </Text>
             <TextInput
               className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
@@ -152,7 +152,7 @@ export function LoginScreen({ navigation, route }: Props) {
               <>
                 <Ionicons name="log-in" size={20} color="#fff" />
                 <Text className="text-white font-semibold">
-                  Sign in with Bluesky
+                  Sign in
                 </Text>
               </>
             )}

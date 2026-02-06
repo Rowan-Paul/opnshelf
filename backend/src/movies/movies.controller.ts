@@ -44,14 +44,43 @@ export class MoviesController {
   @ApiOperation({ summary: 'Get movie details from TMDB' })
   @ApiResponse({ status: 200 })
   async getMovieDetails(@Param('movieId') movieId: string) {
-    return this.moviesService.getMovieDetails(movieId);
+    // Get movie details from TMDB
+    const movieData = await this.moviesService.getMovieDetails(movieId);
+
+    // Ensure movie is in database with colors
+    const movie = await this.moviesService.upsertMovie(movieData);
+
+    // Return combined data with colors
+    return {
+      ...movieData,
+      colors: movie.colors ?? undefined,
+    };
   }
 
   @Get('user/:userDid')
   @ApiOperation({ summary: 'Get tracked movies for a user' })
   @ApiResponse({ status: 200, type: [TrackedMovieDto] })
   async getUserMovies(@Param('userDid') userDid: string) {
-    return this.moviesService.getUserMovies(userDid);
+    const trackedMovies = await this.moviesService.getUserMovies(userDid);
+
+    // Process each movie to ensure colors are included
+    const moviesWithColors = await Promise.all(
+      trackedMovies.map(async (tracked) => {
+        const colors = await this.moviesService.ensureMovieHasColors(
+          tracked.movieId,
+        );
+
+        return {
+          ...tracked,
+          movie: {
+            ...tracked.movie,
+            colors: colors ?? undefined,
+          },
+        };
+      }),
+    );
+
+    return moviesWithColors;
   }
 
   @Post('watched')
@@ -129,6 +158,19 @@ export class MoviesController {
   @ApiOperation({ summary: 'Get movie from database' })
   @ApiResponse({ status: 200, type: MovieDto })
   async getMovie(@Param('movieId') movieId: string) {
-    return this.moviesService.getMovieByTMDBId(movieId);
+    // Get movie from database
+    const movie = await this.moviesService.getMovieByTMDBId(movieId);
+
+    if (!movie) {
+      return null;
+    }
+
+    // Ensure colors are extracted if missing (lazy backfill)
+    const colors = await this.moviesService.ensureMovieHasColors(movieId);
+
+    return {
+      ...movie,
+      colors: colors ?? undefined,
+    };
   }
 }

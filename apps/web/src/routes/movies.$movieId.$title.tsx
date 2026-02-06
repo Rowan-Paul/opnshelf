@@ -11,7 +11,14 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Calendar, Check, Clock, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { usePosterColors } from "../hooks/usePosterColors";
+
+// Movie colors from server
+interface MovieColors {
+	primary?: string;
+	secondary?: string;
+	accent?: string;
+	muted?: string;
+}
 
 // TMDB Movie Detail type based on API response
 interface TMDBMovieDetail {
@@ -25,6 +32,7 @@ interface TMDBMovieDetail {
 	vote_average?: number;
 	vote_count?: number;
 	genres?: Array<{ id: number; name: string }>;
+	colors?: MovieColors;
 }
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
@@ -112,8 +120,13 @@ function MovieDetailPage() {
 		});
 	}, [trackedMovie]);
 
-	// Extract accent colors from poster
-	const colors = usePosterColors(movie?.poster_path);
+	// Use server-provided colors with fallbacks
+	const colors = movie?.colors || {
+		primary: "#8b5cf6", // Default purple
+		secondary: "#6366f1", // Default indigo
+		accent: "#a855f7", // Default purple
+		muted: "#4c1d95", // Default dark purple
+	};
 
 	// Mutations for watchlist
 	const markMutation = useMutation({
@@ -400,27 +413,6 @@ function MovieDetailPage() {
 								Sign in to Track
 							</Link>
 						)}
-
-						{/* Color preview (subtle) */}
-						<div className="pt-4 border-t border-gray-800">
-							<div className="flex gap-2">
-								<div
-									className="w-8 h-8 rounded-full"
-									style={{ backgroundColor: colors.primary }}
-									title="Primary"
-								/>
-								<div
-									className="w-8 h-8 rounded-full"
-									style={{ backgroundColor: colors.secondary }}
-									title="Secondary"
-								/>
-								<div
-									className="w-8 h-8 rounded-full"
-									style={{ backgroundColor: colors.accent }}
-									title="Accent"
-								/>
-							</div>
-						</div>
 					</div>
 
 					{/* Right Column - Details */}

@@ -19,6 +19,13 @@ export type SearchResultsDto = {
     page: number;
 };
 
+export type MovieColorsDto = {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    muted?: string;
+};
+
 export type MovieDto = {
     movieId: string;
     title: string;
@@ -27,6 +34,7 @@ export type MovieDto = {
     releaseYear?: number;
     releaseDate?: string;
     overview?: string;
+    colors?: MovieColorsDto;
 };
 
 export type TrackedMovieDto = {
@@ -71,17 +79,6 @@ export type UserDto = {
     avatar: {
         [key: string]: unknown;
     } | null;
-};
-
-export type AppControllerGetHelloData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/';
-};
-
-export type AppControllerGetHelloResponses = {
-    200: unknown;
 };
 
 export type MoviesControllerSearchMoviesData = {

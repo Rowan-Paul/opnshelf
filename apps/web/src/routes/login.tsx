@@ -78,7 +78,7 @@ function LoginPage() {
 							<Film className="w-12 h-12 text-purple-500" />
 						</div>
 						<h1 className="text-3xl font-bold mb-2">Sign in to OpnShelf</h1>
-						<p className="text-gray-400">Use your Bluesky account to sign in</p>
+						<p className="text-gray-400">Use your ATProto account to sign in</p>
 					</div>
 
 					{/* Logged out message (session expired / 401 redirect) */}
@@ -108,7 +108,7 @@ function LoginPage() {
 								htmlFor={handleId}
 								className="block text-sm font-medium text-gray-300 mb-2"
 							>
-								Bluesky Handle
+								Handle
 							</label>
 							<input
 								id={handleId}
@@ -134,7 +134,7 @@ function LoginPage() {
 							) : (
 								<>
 									<LogIn size={20} />
-									<span>Sign in with Bluesky</span>
+									<span>Sign in</span>
 								</>
 							)}
 						</button>

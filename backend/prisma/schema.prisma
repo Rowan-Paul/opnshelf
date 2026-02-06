@@ -51,12 +51,13 @@ model Movie {
   releaseYear  Int?
   releaseDate  DateTime?
   overview     String?
-  
+  colors       Json?    // { primary, secondary, accent, muted }
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  
+
   trackedBy    TrackedMovie[]
-  
+
   @@index([title])
 }
 

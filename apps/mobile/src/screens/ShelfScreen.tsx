@@ -20,6 +20,7 @@ const POSTER_BASE = 'https://image.tmdb.org/t/p/w342';
 type TrackedMovie = {
   id: string;
   movieId: string;
+  watchedDate?: string;
   movie: {
     title: string;
     posterPath?: string;
@@ -31,13 +32,27 @@ function MovieCard({
   tracked,
   onRemove,
   isRemoving,
+  onPress,
 }: {
   tracked: TrackedMovie;
   onRemove: () => void;
   isRemoving: boolean;
+  onPress: () => void;
 }) {
+  // Format watched date
+  const formattedWatchedDate = tracked.watchedDate
+    ? new Date(tracked.watchedDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+    : null;
+
   return (
-    <View className="flex-1 min-w-0">
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-1 min-w-0"
+      activeOpacity={0.8}
+    >
       <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
         {tracked.movie.posterPath ? (
           <Image
@@ -50,8 +65,12 @@ function MovieCard({
             <Text className="text-gray-500 text-xs">No poster</Text>
           </View>
         )}
+        {/* Remove button - stop propagation */}
         <TouchableOpacity
-          onPress={onRemove}
+          onPress={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
           disabled={isRemoving}
           className="absolute top-2 right-2 p-2 bg-red-600 rounded-full"
           activeOpacity={0.7}
@@ -66,10 +85,18 @@ function MovieCard({
       <Text className="text-sm font-semibold text-gray-50 mb-1" numberOfLines={2}>
         {tracked.movie.title}
       </Text>
-      {tracked.movie.releaseYear && (
-        <Text className="text-xs text-gray-500">{tracked.movie.releaseYear}</Text>
-      )}
-    </View>
+      <View className="flex-row justify-between items-center">
+        {tracked.movie.releaseYear && (
+          <Text className="text-xs text-gray-500">{tracked.movie.releaseYear}</Text>
+        )}
+        {formattedWatchedDate && (
+          <View className="flex-row items-center">
+            <Ionicons name="checkmark-circle" size={10} color="#22c55e" />
+            <Text className="text-xs text-green-500 ml-1">{formattedWatchedDate}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -99,15 +126,26 @@ export function ShelfScreen({ navigation }: Props) {
     },
   });
 
+  const handleNavigateToDetail = useCallback(
+    (tracked: TrackedMovie) => {
+      navigation.navigate('MovieDetail', {
+        movieId: tracked.movieId,
+        title: tracked.movie.title,
+      });
+    },
+    [navigation],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: TrackedMovie }) => (
       <MovieCard
         tracked={item}
         onRemove={() => unmarkMutation.mutate({ path: { movieId: item.movieId } })}
         isRemoving={unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === item.movieId}
+        onPress={() => handleNavigateToDetail(item)}
       />
     ),
-    [unmarkMutation],
+    [unmarkMutation, handleNavigateToDetail],
   );
 
   const keyExtractor = useCallback((item: TrackedMovie) => item.id, []);
@@ -137,7 +175,7 @@ export function ShelfScreen({ navigation }: Props) {
             activeOpacity={0.8}
           >
             <Ionicons name="log-in" size={20} color="#fff" />
-            <Text className="text-white font-semibold">Sign in with Bluesky</Text>
+            <Text className="text-white font-semibold">Sign in</Text>
           </TouchableOpacity>
         </View>
       </View>

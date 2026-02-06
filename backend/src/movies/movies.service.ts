@@ -7,6 +7,7 @@ import {
   $nsid as COLLECTION,
 } from '../lexicons/app/opnshelf/movie';
 import type { Main as MovieRecord } from '../lexicons/app/opnshelf/movie.defs';
+import { ColorExtractionService } from './color-extraction.service';
 
 export interface TMDBMovie {
   id: number;
@@ -37,6 +38,7 @@ export class MoviesService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private colorExtraction: ColorExtractionService,
   ) {
     this.tmdbApiKey = this.config.get('TMDB_API_KEY') ?? '';
   }
@@ -83,6 +85,11 @@ export class MoviesService {
   }
 
   async upsertMovie(movieData: TMDBMovie) {
+    // Extract colors from poster if available
+    const colors = await this.colorExtraction.extractColorsFromPoster(
+      movieData.poster_path ?? null,
+    );
+
     return this.prisma.movie.upsert({
       where: { movieId: movieData.id.toString() },
       create: {
@@ -97,6 +104,7 @@ export class MoviesService {
           ? new Date(movieData.release_date)
           : null,
         overview: movieData.overview ?? null,
+        colors: colors ?? undefined,
       },
       update: {
         title: movieData.title,
@@ -109,8 +117,59 @@ export class MoviesService {
           ? new Date(movieData.release_date)
           : null,
         overview: movieData.overview ?? null,
+        // Only update colors if they don't exist (lazy backfill)
+        colors: undefined,
       },
     });
+  }
+
+  async ensureMovieHasColors(movieId: string): Promise<{
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    muted?: string;
+  } | null> {
+    const movie = await this.prisma.movie.findUnique({
+      where: { movieId },
+      select: {
+        posterPath: true,
+        colors: true,
+      },
+    });
+
+    if (!movie) {
+      return null;
+    }
+
+    // If colors already exist, return them
+    const existingColors = movie.colors as {
+      primary?: string;
+      secondary?: string;
+      accent?: string;
+      muted?: string;
+    } | null;
+    if (existingColors?.primary) {
+      return existingColors;
+    }
+
+    // Extract colors if missing
+    const colors = await this.colorExtraction.extractColorsFromPoster(
+      movie.posterPath,
+    );
+
+    if (!colors) {
+      return existingColors ?? null;
+    }
+
+    // Update the movie with extracted colors
+    await this.prisma.movie.update({
+      where: { movieId },
+      data: {
+        colors: colors,
+      },
+    });
+
+    return colors;
   }
 
   /**

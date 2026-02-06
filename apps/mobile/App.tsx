@@ -15,6 +15,7 @@ import { SearchScreen } from './src/screens/SearchScreen';
 import { ShelfScreen } from './src/screens/ShelfScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { AuthCompleteScreen } from './src/screens/AuthCompleteScreen';
+import { MovieDetailScreen } from './src/screens/MovieDetailScreen';
 import { HeaderRight } from './src/components/HeaderRight';
 import { loadSession, clearSession } from './src/lib/session';
 import { env } from './src/env';
@@ -39,6 +40,7 @@ const linking = {
       Shelf: 'shelf',
       Login: 'login',
       AuthComplete: 'auth/complete',
+      MovieDetail: 'movie/:movieId/:title',
     },
   },
 };
@@ -134,6 +136,13 @@ function AppNavigator() {
             title: '',
             headerRight: undefined,
             headerBackVisible: false,
+          }}
+        />
+        <Stack.Screen
+          name="MovieDetail"
+          component={MovieDetailScreen}
+          options={{
+            headerShown: false,
           }}
         />
       </Stack.Navigator>

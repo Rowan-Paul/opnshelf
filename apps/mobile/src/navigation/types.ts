@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Shelf: undefined;
   Login: { error?: 'auth_failed' | 'callback_failed'; redirect?: string; reason?: 'session_expired' };
   AuthComplete: { session?: string };
+  MovieDetail: { movieId: string; title: string };
 };

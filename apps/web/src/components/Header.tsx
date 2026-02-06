@@ -33,7 +33,10 @@ export default function Header() {
 	const logoutMutation = useMutation({
 		...authControllerLogoutMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["auth"] });
+			// Remove auth queries to immediately clear user data
+			queryClient.removeQueries(authControllerMeOptions());
+			// Navigate to home page after successful logout
+			navigate({ to: "/" });
 		},
 	});
 
@@ -265,7 +268,7 @@ export default function Header() {
 							className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white font-medium"
 						>
 							<LogIn size={18} />
-							<span>Sign in with Bluesky</span>
+							<span>Sign in</span>
 						</button>
 					)}
 				</div>

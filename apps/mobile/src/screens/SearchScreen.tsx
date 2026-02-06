@@ -38,15 +38,21 @@ function MovieCard({
   onMarkWatched,
   onUnmarkWatched,
   isLoading,
+  onPress,
 }: {
   movie: MovieItem;
   isWatched: boolean;
   onMarkWatched: () => void;
   onUnmarkWatched: () => void;
   isLoading: boolean;
+  onPress: () => void;
 }) {
   return (
-    <View className="flex-1 min-w-0">
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-1 min-w-0"
+      activeOpacity={0.8}
+    >
       <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
         {movie.poster_path ? (
           <Image
@@ -59,9 +65,16 @@ function MovieCard({
             <Text className="text-gray-500 text-xs">No poster</Text>
           </View>
         )}
-        {/* Watch status button */}
+        {/* Watch status button - stop propagation to prevent navigation when clicking this */}
         <TouchableOpacity
-          onPress={isWatched ? onUnmarkWatched : onMarkWatched}
+          onPress={(e) => {
+            e.stopPropagation();
+            if (isWatched) {
+              onUnmarkWatched();
+            } else {
+              onMarkWatched();
+            }
+          }}
           disabled={isLoading}
           className={`absolute top-2 right-2 p-2 rounded-full ${
             isWatched ? 'bg-green-600' : 'bg-violet-600'
@@ -85,7 +98,7 @@ function MovieCard({
           {movie.release_date.split('-')[0]}
         </Text>
       ) : null}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -174,6 +187,16 @@ export function SearchScreen({ route, navigation }: Props) {
     [unmarkMutation],
   );
 
+  const handleNavigateToDetail = useCallback(
+    (movie: MovieItem) => {
+      navigation.navigate('MovieDetail', {
+        movieId: String(movie.id),
+        title: movie.title,
+      });
+    },
+    [navigation],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: MovieItem }) => {
       const movieId = String(item.id);
@@ -189,10 +212,11 @@ export function SearchScreen({ route, navigation }: Props) {
           onMarkWatched={() => handleMarkWatched(movieId)}
           onUnmarkWatched={() => handleUnmarkWatched(movieId)}
           isLoading={isLoading}
+          onPress={() => handleNavigateToDetail(item)}
         />
       );
     },
-    [watchedMovieIds, markMutation, unmarkMutation, handleMarkWatched, handleUnmarkWatched],
+    [watchedMovieIds, markMutation, unmarkMutation, handleMarkWatched, handleUnmarkWatched, handleNavigateToDetail],
   );
 
   const keyExtractor = useCallback((item: MovieItem) => String(item.id), []);
