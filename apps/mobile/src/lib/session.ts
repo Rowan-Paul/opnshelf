@@ -7,10 +7,8 @@ const SESSION_KEY = 'auth_session';
  * Store the session token securely and configure the API client to use it.
  */
 export async function saveSession(token: string): Promise<void> {
-  console.log('[Session] saveSession called with token:', token.substring(0, 20) + '...');
   await SecureStore.setItemAsync(SESSION_KEY, token);
   setSessionToken(token);
-  console.log('[Session] Session saved');
 }
 
 /**
@@ -19,11 +17,8 @@ export async function saveSession(token: string): Promise<void> {
  */
 export async function loadSession(): Promise<string | null> {
   const token = await SecureStore.getItemAsync(SESSION_KEY);
-  console.log('[Session] loadSession called');
-  console.log('[Session] Token found:', token ? 'YES' : 'NO');
   if (token) {
     setSessionToken(token);
-    console.log('[Session] Token set via setSessionToken()');
   }
   return token;
 }
@@ -33,10 +28,8 @@ export async function loadSession(): Promise<string | null> {
  * Call this on logout.
  */
 export async function clearSession(): Promise<void> {
-  console.log('[Session] clearSession called');
   await SecureStore.deleteItemAsync(SESSION_KEY);
   setSessionToken(null);
-  console.log('[Session] Session cleared');
 }
 
 /**

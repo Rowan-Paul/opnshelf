@@ -44,16 +44,18 @@ function MovieCard({
     ? new Date(tracked.watchedDate).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
+        year: 'numeric',
       })
     : null;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-1 min-w-0"
+      className="flex-row bg-gray-900/50 rounded-lg overflow-hidden border border-gray-800/50"
       activeOpacity={0.8}
     >
-      <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
+      {/* Poster thumbnail - smaller for mobile list */}
+      <View className="w-20 aspect-2/3 bg-gray-900">
         {tracked.movie.posterPath ? (
           <Image
             source={{ uri: `${POSTER_BASE}${tracked.movie.posterPath}` }}
@@ -62,39 +64,54 @@ function MovieCard({
           />
         ) : (
           <View className="flex-1 justify-center items-center">
-            <Text className="text-gray-500 text-xs">No poster</Text>
+            <Text className="text-gray-600 text-xs">No poster</Text>
           </View>
         )}
-        {/* Remove button - stop propagation */}
-        <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          disabled={isRemoving}
-          className="absolute top-2 right-2 p-2 bg-red-600 rounded-full"
-          activeOpacity={0.7}
-        >
-          {isRemoving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Ionicons name="trash" size={16} color="#fff" />
-          )}
-        </TouchableOpacity>
       </View>
-      <Text className="text-sm font-semibold text-gray-50 mb-1" numberOfLines={2}>
-        {tracked.movie.title}
-      </Text>
-      <View className="flex-row justify-between items-center">
-        {tracked.movie.releaseYear && (
-          <Text className="text-xs text-gray-500">{tracked.movie.releaseYear}</Text>
-        )}
-        {formattedWatchedDate && (
-          <View className="flex-row items-center">
-            <Ionicons name="checkmark-circle" size={10} color="#22c55e" />
-            <Text className="text-xs text-green-500 ml-1">{formattedWatchedDate}</Text>
+
+      {/* Content */}
+      <View className="flex-1 p-3 justify-between">
+        <View>
+          <Text className="text-base font-semibold text-gray-50 mb-1" numberOfLines={2}>
+            {tracked.movie.title}
+          </Text>
+          <View className="flex-row items-center gap-2">
+            {tracked.movie.releaseYear && (
+              <Text className="text-sm text-gray-400">{tracked.movie.releaseYear}</Text>
+            )}
+            {formattedWatchedDate && (
+              <>
+                <Text className="text-gray-600">•</Text>
+                <View className="flex-row items-center">
+                  <Ionicons name="checkmark-circle" size={12} color="#22c55e" />
+                  <Text className="text-sm text-green-500 ml-1">{formattedWatchedDate}</Text>
+                </View>
+              </>
+            )}
           </View>
-        )}
+        </View>
+
+        {/* Remove button */}
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            disabled={isRemoving}
+            className="flex-row items-center gap-1 px-3 py-1.5 bg-red-600/90 rounded-full"
+            activeOpacity={0.7}
+          >
+            {isRemoving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={14} color="#fff" />
+                <Text className="text-white text-sm font-medium">Remove</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -205,10 +222,8 @@ export function ShelfScreen({ navigation }: Props) {
             data={trackedMovies as TrackedMovie[]}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            numColumns={2}
-            columnWrapperClassName="gap-4 mb-4"
-            contentContainerClassName="pb-6"
-            key="grid"
+            contentContainerClassName="pb-6 gap-3"
+            key="list"
           />
         </>
       )}

@@ -21,8 +21,6 @@ export function LoginScreen({ navigation, route }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { error, redirect, reason } = route.params ?? {};
 
-  console.log('[LoginScreen] Rendered with params:', route.params);
-
   // Check if user is already logged in using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
     ...authControllerMeOptions(),
@@ -76,7 +74,6 @@ export function LoginScreen({ navigation, route }: Props) {
   };
 
   if (isAuthLoading) {
-    console.log('[LoginScreen] Showing loading indicator');
     return (
       <View className="flex-1 bg-gray-950 justify-center items-center">
         <ActivityIndicator size="large" colorClassName="accent-violet-500" />
@@ -84,7 +81,8 @@ export function LoginScreen({ navigation, route }: Props) {
     );
   }
 
-  console.log('[LoginScreen] Rendering login UI, user:', user ? 'found' : 'not found');
+  return (
+    <View className="flex-1 bg-gray-950 px-4 pt-12 pb-6">
       <View className="flex-1 justify-center">
         <View className="items-center mb-8">
           <View className="mb-4">

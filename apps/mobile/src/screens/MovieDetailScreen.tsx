@@ -247,7 +247,7 @@ export function MovieDetailScreen({
 						>
 							{movie?.title || title}
 						</Text>
-						{releaseYear && (
+						{!!releaseYear && (
 							<View className="flex-row items-center mt-2">
 								<Ionicons
 									name="calendar-outline"

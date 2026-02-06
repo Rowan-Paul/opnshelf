@@ -23,29 +23,13 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
     let sessionId: string | undefined;
 
-    this.logger.debug('[AuthGuard] Checking auth for request');
-    this.logger.debug('[AuthGuard] Auth header present:', !!authHeader);
-    this.logger.debug(
-      '[AuthGuard] Auth header value:',
-      authHeader ? `${authHeader.substring(0, 30)}...` : 'none',
-    );
-
     if (authHeader?.startsWith('Bearer ')) {
       sessionId = authHeader.slice(7);
-      this.logger.debug('[AuthGuard] Using Bearer token for auth');
-      this.logger.debug(
-        '[AuthGuard] Session ID from Bearer:',
-        sessionId.substring(0, 20) + '...',
-      );
+      this.logger.debug('Using Bearer token for auth');
     } else {
       // Cookie stores opaque session id (not DID)
       const cookies = request.cookies as Record<string, string | undefined>;
       sessionId = cookies?.[SESSION_COOKIE_NAME];
-      this.logger.debug('[AuthGuard] No Bearer token, checking cookies');
-      this.logger.debug(
-        '[AuthGuard] Session ID from cookie:',
-        sessionId?.substring(0, 20) + '...' || 'none',
-      );
     }
 
     if (!sessionId) {
@@ -56,7 +40,7 @@ export class AuthGuard implements CanActivate {
     try {
       const sessionRecord = await this.authService.getSessionById(sessionId);
       if (!sessionRecord) {
-        this.logger.debug('Session not found for cookie id');
+        this.logger.debug('Session not found');
         throw new UnauthorizedException('Session not found or expired');
       }
 

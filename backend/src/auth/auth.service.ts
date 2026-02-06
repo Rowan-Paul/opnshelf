@@ -173,19 +173,13 @@ export class AuthService implements OnModuleInit {
    * @returns The restored session or undefined if not found
    */
   async restore(did: string) {
-    this.logger.debug(`[AuthService.restore] Called with DID: ${did}`);
+    this.logger.debug(`Restoring session for DID: ${did}`);
     const client = this.getOAuthClient();
     try {
       const session = await client.restore(did);
-      this.logger.debug(
-        `[AuthService.restore] Session restored: ${session ? 'YES' : 'NO'}`,
-      );
       return session;
     } catch (error) {
-      this.logger.warn(
-        `[AuthService.restore] Failed to restore session for ${did}`,
-        error,
-      );
+      this.logger.warn(`Failed to restore session for ${did}`, error);
       return undefined;
     }
   }
