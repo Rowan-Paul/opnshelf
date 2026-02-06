@@ -7,7 +7,7 @@ import {
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Calendar, Check, Clock, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -55,6 +55,7 @@ export const Route = createFileRoute("/movies/$movieId/$title")({
 function MovieDetailPage() {
 	const { movieId } = Route.useParams();
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const [showHours, setShowHours] = useState(false);
 
 	const formatRuntime = (minutes: number, useHours: boolean) => {
@@ -206,13 +207,13 @@ function MovieDetailPage() {
 				)}
 
 				{/* Back button */}
-				<Link
-					to="/search"
-					search={{ q: "" }}
-					className="absolute top-4 left-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+				<button
+					type="button"
+					onClick={() => router.history.back()}
+					className="absolute top-4 left-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors cursor-pointer"
 				>
 					<ArrowLeft className="w-5 h-5" />
-				</Link>
+				</button>
 
 				{/* Hero Content */}
 				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">

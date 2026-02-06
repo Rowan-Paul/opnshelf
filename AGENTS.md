@@ -164,6 +164,31 @@ pnpm --filter backend add -D <package>
 - **PRs**: Ensure typecheck passes before submitting
 - **Pre-commit**: Biome/ESLint runs on staged files
 
+## Wrapping Up Tasks
+
+**When finishing work on any task, always run the project's typecheck and lint commands to ensure code quality before submitting.**
+
+### Web App
+```bash
+cd apps/web
+pnpm check        # Run Biome lint + format checks
+npx tsc --noEmit  # TypeScript type check
+```
+
+### Backend
+```bash
+cd backend
+pnpm lint         # ESLint + Prettier (includes type checking)
+```
+
+### Mobile
+```bash
+cd apps/mobile
+pnpm typecheck    # TypeScript check only
+```
+
+**Note**: If any checks fail, fix the issues before considering the task complete.
+
 ## Key Files
 
 - `/apps/web/biome.json` - Web linting/formatting rules
