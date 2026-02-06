@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authControllerMeOptions, moviesControllerGetUserMoviesOptions, moviesControllerUnmarkWatchedMutation } from '@opnshelf/api';
+import { authControllerMeOptions, moviesControllerGetUserMoviesOptions, moviesControllerGetUserMoviesQueryKey, moviesControllerUnmarkWatchedMutation } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
@@ -139,7 +139,11 @@ export function ShelfScreen({ navigation }: Props) {
   const unmarkMutation = useMutation({
     ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+      queryClient.invalidateQueries({
+        queryKey: moviesControllerGetUserMoviesQueryKey({
+          path: { userDid: user?.did || '' },
+        }),
+      });
     },
   });
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   authControllerMeOptions,
   moviesControllerGetUserMoviesOptions,
+  moviesControllerGetUserMoviesQueryKey,
   moviesControllerSearchMoviesOptions,
   moviesControllerMarkWatchedMutation,
   moviesControllerUnmarkWatchedMutation,
@@ -147,14 +148,22 @@ export function SearchScreen({ route, navigation }: Props) {
   const markMutation = useMutation({
     ...moviesControllerMarkWatchedMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+      queryClient.invalidateQueries({
+        queryKey: moviesControllerGetUserMoviesQueryKey({
+          path: { userDid: user?.did || '' },
+        }),
+      });
     },
   });
 
   const unmarkMutation = useMutation({
     ...moviesControllerUnmarkWatchedMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shelf'] });
+      queryClient.invalidateQueries({
+        queryKey: moviesControllerGetUserMoviesQueryKey({
+          path: { userDid: user?.did || '' },
+        }),
+      });
     },
   });
 
