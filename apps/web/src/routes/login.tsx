@@ -14,6 +14,9 @@ const loginSearchSchema = z.object({
 
 export const Route = createFileRoute("/login")({
 	validateSearch: loginSearchSchema,
+	head: () => ({
+		meta: [{ title: "Sign In | OpnShelf" }],
+	}),
 	component: LoginPage,
 });
 
@@ -34,7 +37,7 @@ function LoginPage() {
 	// Redirect if already logged in
 	useEffect(() => {
 		if (user && !isAuthLoading) {
-			navigate({ to: redirect || "/" });
+			navigate({ to: redirect || "/shelf" });
 		}
 	}, [user, isAuthLoading, navigate, redirect]);
 

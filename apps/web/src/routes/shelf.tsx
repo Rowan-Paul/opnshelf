@@ -7,8 +7,19 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Loader2, LogIn, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+function createTitleSlug(title: string): string {
+	return title
+		.replace(/[^a-zA-Z0-9\s-]/g, "")
+		.trim()
+		.replace(/\s+/g, "-");
+}
 
 export const Route = createFileRoute("/shelf")({
+	head: () => ({
+		meta: [{ title: "My Shelf | OpnShelf" }],
+	}),
 	component: ShelfPage,
 });
 
@@ -39,6 +50,10 @@ function ShelfPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			toast.success("Removed from your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
 		},
 	});
 
@@ -100,7 +115,14 @@ function ShelfPage() {
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 							{trackedMovies.map((tracked) => (
 								<div key={tracked.id} className="group relative">
-									<div className="relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2">
+									<Link
+										to="/movies/$movieId/$title"
+										params={{
+											movieId: tracked.movieId,
+											title: createTitleSlug(tracked.movie.title),
+										}}
+										className="block relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2"
+									>
 										{tracked.movie.posterPath ? (
 											<img
 												src={`https://image.tmdb.org/t/p/w342${tracked.movie.posterPath}`}
@@ -114,11 +136,13 @@ function ShelfPage() {
 										)}
 										<button
 											type="button"
-											onClick={() =>
+											onClick={(e) => {
+												e.preventDefault();
+												e.stopPropagation();
 												unmarkMutation.mutate({
 													path: { movieId: tracked.movieId },
-												})
-											}
+												});
+											}}
 											disabled={
 												unmarkMutation.isPending &&
 												unmarkMutation.variables?.path?.movieId ===
@@ -135,15 +159,37 @@ function ShelfPage() {
 												<Trash2 className="w-4 h-4" />
 											)}
 										</button>
-									</div>
-									<h3 className="font-semibold text-sm line-clamp-2 mb-1">
-										{tracked.movie.title}
-									</h3>
-									{tracked.movie.releaseYear && (
-										<p className="text-gray-500 text-sm">
-											{tracked.movie.releaseYear}
-										</p>
-									)}
+									</Link>
+									<Link
+										to="/movies/$movieId/$title"
+										params={{
+											movieId: tracked.movieId,
+											title: createTitleSlug(tracked.movie.title),
+										}}
+										className="block"
+									>
+										<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">
+											{tracked.movie.title}
+										</h3>
+										{tracked.movie.releaseYear && (
+											<p className="text-gray-500 text-sm">
+												{tracked.movie.releaseYear}
+											</p>
+										)}
+										{tracked.watchedDate && (
+											<p className="text-gray-400 text-xs mt-1">
+												Watched{" "}
+												{new Date(tracked.watchedDate).toLocaleDateString(
+													"en-US",
+													{
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													},
+												)}
+											</p>
+										)}
+									</Link>
 								</div>
 							))}
 						</div>

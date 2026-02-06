@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Film, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+	head: () => ({
+		meta: [{ title: "OpnShelf" }],
+	}),
 	component: HomePage,
 });
 

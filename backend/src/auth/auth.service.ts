@@ -8,6 +8,9 @@ import {
 import { Agent } from '@atproto/api';
 import { PrismaService } from '../prisma/prisma.service';
 
+const OAUTH_SCOPE =
+  'atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview';
+
 @Injectable()
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
@@ -39,7 +42,7 @@ export class AuthService implements OnModuleInit {
       : `${backendUrl}/auth/callback`;
 
     const clientId = isLocalhost
-      ? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent('atproto transition:generic')}`
+      ? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(OAUTH_SCOPE)}`
       : `${backendUrl}/.well-known/oauth-client-metadata.json`;
 
     this.logger.log(`Initializing OAuth client with client_id: ${clientId}`);
@@ -113,7 +116,7 @@ export class AuthService implements OnModuleInit {
           client_name: 'OpnShelf',
           client_uri: isLocalhost ? `http://127.0.0.1:${port}` : backendUrl,
           redirect_uris: [redirectUri],
-          scope: 'atproto transition:generic',
+          scope: OAUTH_SCOPE,
           grant_types: ['authorization_code', 'refresh_token'],
           response_types: ['code'],
           // For localhost: application_type must be 'native' per AT Protocol spec
@@ -148,7 +151,7 @@ export class AuthService implements OnModuleInit {
   async authorize(handle: string): Promise<string> {
     const client = this.getOAuthClient();
     const url = await client.authorize(handle, {
-      scope: 'atproto transition:generic',
+      scope: OAUTH_SCOPE,
     });
     return url.toString();
   }
@@ -295,7 +298,7 @@ export class AuthService implements OnModuleInit {
       client_name: 'OpnShelf',
       client_uri: isLocalhost ? `http://127.0.0.1:${port}` : backendUrl,
       redirect_uris: [redirectUri],
-      scope: 'atproto transition:generic',
+      scope: OAUTH_SCOPE,
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
       application_type: isLocalhost ? 'native' : 'web',

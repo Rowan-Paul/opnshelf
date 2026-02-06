@@ -1,0 +1,33 @@
+{
+	"lexicon": 1,
+	"id": "app.opnshelf.movie",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A tracked movie record for OpnShelf",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["movieId", "status"],
+				"properties": {
+					"movieId": {
+						"type": "string",
+						"description": "TMDB movie ID"
+					},
+					"status": {
+						"type": "string",
+						"description": "Watch status of the movie (e.g., watched, wantToWatch, watching)"
+					},
+					"watchedDate": {
+						"type": "datetime",
+						"description": "When the movie was watched"
+					},
+					"createdAt": {
+						"type": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

@@ -8,6 +8,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Toaster } from "sonner";
 import { env } from "@/env";
 import Header from "../components/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -68,6 +69,7 @@ function RootComponent() {
 					TanStackQueryDevtools,
 				]}
 			/>
+			<Toaster />
 		</QueryClientProvider>
 	);
 }

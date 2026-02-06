@@ -10,11 +10,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, Loader2, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+
+function createTitleSlug(title: string): string {
+	return title
+		.replace(/[^a-zA-Z0-9\s-]/g, "")
+		.trim()
+		.replace(/\s+/g, "-");
+}
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
 	validateSearch: (search: Record<string, unknown>) => ({
 		q: (search.q as string) || "",
+	}),
+	head: () => ({
+		meta: [{ title: "Search Movies | OpnShelf" }],
 	}),
 });
 
@@ -57,6 +68,10 @@ function SearchPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			toast.success("Added to your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
 		},
 	});
 
@@ -69,6 +84,10 @@ function SearchPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			toast.success("Removed from your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
 		},
 	});
 
@@ -148,8 +167,11 @@ function SearchPage() {
 								return (
 									<div key={movie.id} className="group">
 										<Link
-											to="/movies/$movieId"
-											params={{ movieId: movieId }}
+											to="/movies/$movieId/$title"
+											params={{
+												movieId: movieId,
+												title: createTitleSlug(movie.title),
+											}}
 											className="block relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2"
 										>
 											{movie.poster_path ? (
@@ -208,8 +230,11 @@ function SearchPage() {
 											)}
 										</Link>
 										<Link
-											to="/movies/$movieId"
-											params={{ movieId: movieId }}
+											to="/movies/$movieId/$title"
+											params={{
+												movieId: movieId,
+												title: createTitleSlug(movie.title),
+											}}
 											className="block"
 										>
 											<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">

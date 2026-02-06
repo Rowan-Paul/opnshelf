@@ -38,7 +38,7 @@ function AuthCompletePage() {
 		if (storedRedirect && isValidRedirectPath(storedRedirect)) {
 			navigate({ to: storedRedirect });
 		} else {
-			navigate({ to: "/" });
+			navigate({ to: "/shelf" });
 		}
 	}, [navigate, queryClient]);
 
