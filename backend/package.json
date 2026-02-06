@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "prebuild": "prisma generate && pnpm lex:build",
+    "prebuild": "prisma generate && npm run lex:build",
     "lex:build": "lex build --lexicons ../lexicons --out ./src/lexicons --clear",
     "lex:install": "lex install",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
