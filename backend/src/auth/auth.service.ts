@@ -8,7 +8,7 @@ import {
 import { Agent } from '@atproto/api';
 import { PrismaService } from '../prisma/prisma.service';
 
-const OAUTH_SCOPE =
+export const OAUTH_SCOPE =
   'atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview';
 
 @Injectable()

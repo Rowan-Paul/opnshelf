@@ -299,7 +299,8 @@ describe('AuthService', () => {
         client_name: 'OpnShelf',
         client_uri: 'http://127.0.0.1:3001',
         redirect_uris: ['http://127.0.0.1:3001/auth/callback'],
-        scope: 'atproto transition:generic',
+        scope:
+          'atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview',
         grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
         application_type: 'native',
@@ -366,7 +367,8 @@ describe('AuthService', () => {
       const result = await service.authorize('user.bsky.social');
 
       expect(client.authorize).toHaveBeenCalledWith('user.bsky.social', {
-        scope: 'atproto transition:generic',
+        scope:
+          'atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview',
       });
       expect(result).toBe(mockUrl.toString());
     });
@@ -456,6 +458,30 @@ describe('AuthService', () => {
         displayName: null,
         avatar: null,
       });
+    });
+  });
+
+  describe('OAUTH_SCOPE', () => {
+    it('should have the correct OAuth scope for app functionality', () => {
+      // Import the service module to access the constant
+      const authServiceModule = require('./auth.service');
+
+      // The OAUTH_SCOPE constant should include:
+      // - atproto: base AT Protocol access
+      // - repo:app.opnshelf.movie: write movie records
+      // - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
+      expect(authServiceModule.OAUTH_SCOPE).toBe(
+        'atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview',
+      );
+    });
+
+    it('should be used consistently across all OAuth operations', () => {
+      // This test verifies that the scope is properly defined and accessible
+      // The actual usage is tested in the authorize() and getClientMetadata() tests
+      const authServiceModule = require('./auth.service');
+      expect(authServiceModule.OAUTH_SCOPE).toBeDefined();
+      expect(typeof authServiceModule.OAUTH_SCOPE).toBe('string');
+      expect(authServiceModule.OAUTH_SCOPE.length).toBeGreaterThan(0);
     });
   });
 });
