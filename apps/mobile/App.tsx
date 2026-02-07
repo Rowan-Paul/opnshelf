@@ -7,8 +7,8 @@ import {
   type NavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { configureApiClient, setOnUnauthorized } from '@opnshelf/api';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { configureApiClient } from '@opnshelf/api';
 import type { RootStackParamList } from './src/navigation';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
@@ -17,10 +17,10 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { AuthCompleteScreen } from './src/screens/AuthCompleteScreen';
 import { MovieDetailScreen } from './src/screens/MovieDetailScreen';
 import { HeaderRight } from './src/components/HeaderRight';
-import { loadSession, clearSession } from './src/lib/session';
+import { loadSession } from './src/lib/session';
 import { env } from './src/env';
 
-configureApiClient(env.API_URL);
+configureApiClient(env.EXPO_PUBLIC_API_URL);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const queryClient = new QueryClient({
@@ -47,7 +47,6 @@ const linking = {
 
 function AppNavigator() {
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
-  const queryClientLocal = useQueryClient();
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
 
   // Load session from secure storage on app start
@@ -57,41 +56,7 @@ function AppNavigator() {
     });
   }, []);
 
-  // Set up 401 handler
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      // Check if we're already on the Login screen to avoid infinite loop
-      const currentRoute = navigationRef.current?.getCurrentRoute();
-      const isOnLoginScreen = currentRoute?.name === 'Login';
-      
-      if (isOnLoginScreen) {
-        return;
-      }
 
-      // Clear stored session on 401
-      clearSession();
-
-      // Invalidate auth queries
-      queryClientLocal.invalidateQueries({ queryKey: ['auth'] });
-
-      // Navigate to login with session_expired reason
-      if (navigationRef.current) {
-        navigationRef.current.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'Login',
-              params: { reason: 'session_expired' as const },
-            },
-          ],
-        });
-      }
-    });
-
-    return () => {
-      setOnUnauthorized(null);
-    };
-  }, [queryClientLocal]);
 
   // Show loading screen while restoring session
   if (!isSessionLoaded) {
