@@ -11,9 +11,14 @@ jest.mock('../prisma/prisma.service', () => ({
 // Mock @atproto modules to prevent import errors
 jest.mock('@atproto/oauth-client-node', () => ({}));
 jest.mock('@atproto/api', () => ({}));
+jest.mock('@atproto/tap', () => ({
+  Tap: jest.fn(),
+  SimpleIndexer: jest.fn(),
+}));
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { IngesterService } from '../ingester/ingester.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -36,6 +41,10 @@ describe('AuthController', () => {
     getSessionByUserDid: jest.fn(),
     getUser: jest.fn(),
     revokeBySessionId: jest.fn(),
+  };
+
+  const mockIngesterService = {
+    addRepo: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockConfigService = {
@@ -77,6 +86,7 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: IngesterService, useValue: mockIngesterService },
       ],
     }).compile();
 
@@ -188,6 +198,67 @@ describe('AuthController', () => {
           path: '/',
         }),
       );
+      expect(res.redirect).toHaveBeenCalledWith(
+        'http://127.0.0.1:3000/auth/complete',
+      );
+    });
+
+    it('should register user DID with TAP on successful callback', async () => {
+      const mockSession = { did: 'did:plc:abc123' };
+      const mockProfile = {
+        did: 'did:plc:abc123',
+        handle: 'user.bsky.social',
+        displayName: 'Test User',
+        avatar: 'https://example.com/avatar.jpg',
+      };
+      const mockSessionRecord = {
+        id: 'session-123',
+        userDid: 'did:plc:abc123',
+      };
+
+      mockAuthService.callback.mockResolvedValue({ session: mockSession });
+      mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+      mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+      mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
+
+      const req = createMockRequest({
+        url: '/auth/callback?code=abc&state=xyz',
+      });
+      const res = createMockResponse();
+
+      await controller.callback(req, res);
+
+      expect(mockIngesterService.addRepo).toHaveBeenCalledWith(
+        'did:plc:abc123',
+      );
+    });
+
+    it('should still redirect on success even if TAP registration fails', async () => {
+      const mockSession = { did: 'did:plc:abc123' };
+      const mockProfile = {
+        did: 'did:plc:abc123',
+        handle: 'user.bsky.social',
+        displayName: 'Test User',
+        avatar: 'https://example.com/avatar.jpg',
+      };
+      const mockSessionRecord = {
+        id: 'session-123',
+        userDid: 'did:plc:abc123',
+      };
+
+      mockAuthService.callback.mockResolvedValue({ session: mockSession });
+      mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+      mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+      mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
+      mockIngesterService.addRepo.mockRejectedValue(new Error('TAP error'));
+
+      const req = createMockRequest({
+        url: '/auth/callback?code=abc&state=xyz',
+      });
+      const res = createMockResponse();
+
+      await controller.callback(req, res);
+
       expect(res.redirect).toHaveBeenCalledWith(
         'http://127.0.0.1:3000/auth/complete',
       );

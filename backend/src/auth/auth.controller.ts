@@ -17,6 +17,7 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { UserDto } from './dto/user.dto';
 import type { AuthenticatedRequest } from './types';
+import { IngesterService } from '../ingester/ingester.service';
 
 const SESSION_COOKIE_NAME = 'session';
 const PLATFORM_COOKIE_NAME = 'auth_platform';
@@ -29,6 +30,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly ingesterService: IngesterService,
   ) {}
 
   /**
@@ -138,6 +140,18 @@ export class AuthController {
       await this.authService.upsertUser(profile);
 
       this.logger.log(`User upserted: ${profile.handle}`);
+
+      // Register user's DID with TAP for repo tracking and backfill
+      try {
+        await this.ingesterService.addRepo(session.did);
+        this.logger.log(`Registered ${session.did} with TAP for backfill`);
+      } catch (tapError) {
+        // Log but don't fail login if TAP registration fails
+        this.logger.error(
+          `Failed to register ${session.did} with TAP`,
+          tapError,
+        );
+      }
 
       // Resolve opaque session id (cookie stores this, not DID)
       const sessionRecord = await this.authService.getSessionByUserDid(

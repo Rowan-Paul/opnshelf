@@ -6,48 +6,53 @@ jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn(),
 }));
 
-// Mock @atproto modules
-jest.mock('@atproto/sync', () => ({
-  Firehose: jest.fn().mockImplementation(() => ({
-    start: jest.fn().mockResolvedValue(undefined),
-    destroy: jest.fn().mockResolvedValue(undefined),
+// Mock MoviesService before importing
+jest.mock('../movies/movies.service', () => ({
+  MoviesService: jest.fn().mockImplementation(() => ({
+    getMovieByTMDBId: jest.fn(),
+    getMovieDetails: jest.fn(),
+    upsertMovie: jest.fn(),
   })),
 }));
 
-jest.mock('@atproto/identity', () => ({
-  IdResolver: jest.fn().mockImplementation(() => ({
-    resolve: jest.fn(),
+// Mock @atproto/tap
+const mockTapChannel = {
+  start: jest.fn().mockResolvedValue(undefined),
+  destroy: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockTapInstance = {
+  channel: jest.fn().mockReturnValue(mockTapChannel),
+  addRepos: jest.fn().mockResolvedValue(undefined),
+  removeRepos: jest.fn().mockResolvedValue(undefined),
+  getRepoInfo: jest.fn().mockResolvedValue({
+    did: 'did:plc:test',
+    handle: 'test.bsky.social',
+    state: 'active',
+    rev: '3mebdinas5v2j',
+    records: 13073,
+  }),
+};
+
+jest.mock('@atproto/tap', () => ({
+  Tap: jest.fn().mockImplementation(() => mockTapInstance),
+  SimpleIndexer: jest.fn().mockImplementation(() => ({
+    record: jest.fn(),
+    identity: jest.fn(),
+    error: jest.fn(),
   })),
 }));
 
 import { IngesterService } from './ingester.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Firehose } from '@atproto/sync';
-
-type FirehoseEvent = {
-  event: string;
-  collection: string;
-  record?: {
-    $type: string;
-    movieId?: string;
-    source?: string;
-    watchedAt?: string;
-    createdAt?: string;
-  };
-  uri?: {
-    toString: () => string;
-  };
-  rkey?: string;
-  cid?: { toString: () => string };
-  author?: string;
-};
-
-type HandleEventCallback = (event: FirehoseEvent) => Promise<void>;
-type OnErrorCallback = (err: { message: string }) => void;
+import { MoviesService } from '../movies/movies.service';
+import { Tap, SimpleIndexer } from '@atproto/tap';
+import type { RecordEvent, IdentityEvent } from '@atproto/tap';
 
 type MockPrismaService = {
   user: {
     findUnique: jest.Mock;
+    findMany: jest.Mock;
   };
   trackedMovie: {
     upsert: jest.Mock;
@@ -55,29 +60,31 @@ type MockPrismaService = {
   };
 };
 
+type MockMoviesService = {
+  getMovieByTMDBId: jest.Mock;
+  getMovieDetails: jest.Mock;
+  upsertMovie: jest.Mock;
+};
+
 describe('IngesterService', () => {
   let service: IngesterService;
   let mockPrismaService: MockPrismaService;
-  let mockFirehoseInstance: { start: jest.Mock; destroy: jest.Mock };
+  let mockMoviesService: MockMoviesService;
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
-      if (key === 'ATPROTO_RELAY_URL') return 'wss://test.relay';
+      if (key === 'TAP_URL') return 'wss://tap.opnshelf.xyz';
       return undefined;
     }),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockFirehoseInstance = {
-      start: jest.fn().mockResolvedValue(undefined),
-      destroy: jest.fn().mockResolvedValue(undefined),
-    };
-    (Firehose as jest.Mock).mockImplementation(() => mockFirehoseInstance);
 
     mockPrismaService = {
       user: {
         findUnique: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       trackedMovie: {
         upsert: jest.fn(),
@@ -85,11 +92,18 @@ describe('IngesterService', () => {
       },
     };
 
+    mockMoviesService = {
+      getMovieByTMDBId: jest.fn(),
+      getMovieDetails: jest.fn(),
+      upsertMovie: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IngesterService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: MoviesService, useValue: mockMoviesService },
       ],
     }).compile();
 
@@ -97,44 +111,103 @@ describe('IngesterService', () => {
   });
 
   describe('onModuleInit', () => {
-    it('should start the firehose ingester', async () => {
+    it('should start the TAP ingester', () => {
       service.onModuleInit();
-      // Allow async operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(Firehose).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filterCollections: ['app.opnshelf.movie'],
-        }),
-      );
-      expect(mockFirehoseInstance.start).toHaveBeenCalled();
+      expect(Tap).toHaveBeenCalledWith('wss://tap.opnshelf.xyz', {
+        adminPassword: undefined,
+      });
+      expect(SimpleIndexer).toHaveBeenCalled();
+      expect(mockTapInstance.channel).toHaveBeenCalled();
+      expect(mockTapChannel.start).toHaveBeenCalled();
+    });
+
+    it('should register existing users with TAP', async () => {
+      jest.useFakeTimers();
+      const mockUsers = [{ did: 'did:plc:user1' }, { did: 'did:plc:user2' }];
+      mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
+
+      service.onModuleInit();
+
+      // Fast-forward past the setTimeout
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve(); // Let any pending promises resolve
+
+      expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+        select: { did: true },
+      });
+      expect(mockTapInstance.addRepos).toHaveBeenCalledWith(['did:plc:user1']);
+      jest.useRealTimers();
     });
   });
 
   describe('onModuleDestroy', () => {
-    it('should stop the firehose ingester', async () => {
+    it('should stop the TAP ingester', async () => {
       service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await service.onModuleDestroy();
 
-      service.onModuleDestroy();
-
-      expect(mockFirehoseInstance.destroy).toHaveBeenCalled();
-    });
-
-    it('should handle destroy when firehose is not initialized', () => {
-      expect(() => service.onModuleDestroy()).not.toThrow();
+      expect(mockTapChannel.destroy).toHaveBeenCalled();
     });
   });
 
-  describe('handleEvent - create', () => {
+  describe('addRepo', () => {
+    it('should add a repo to TAP', async () => {
+      service.onModuleInit();
+      await service.addRepo('did:plc:abc123');
+
+      expect(mockTapInstance.addRepos).toHaveBeenCalledWith(['did:plc:abc123']);
+    });
+
+    it('should throw if TAP is not initialized', async () => {
+      await expect(service.addRepo('did:plc:abc123')).rejects.toThrow(
+        'TAP client not initialized',
+      );
+    });
+  });
+
+  describe('removeRepo', () => {
+    it('should remove a repo from TAP', async () => {
+      service.onModuleInit();
+      await service.removeRepo('did:plc:abc123');
+
+      expect(mockTapInstance.removeRepos).toHaveBeenCalledWith([
+        'did:plc:abc123',
+      ]);
+    });
+
+    it('should throw if TAP is not initialized', async () => {
+      await expect(service.removeRepo('did:plc:abc123')).rejects.toThrow(
+        'TAP client not initialized',
+      );
+    });
+  });
+
+  describe('handleRecordEvent - create', () => {
     it('should upsert tracked movie for existing user', async () => {
       const mockUser = { did: 'did:plc:abc123', handle: 'test.bsky.social' };
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser as any);
       mockPrismaService.trackedMovie.upsert.mockResolvedValue({} as any);
 
-      const createEvent = {
-        event: 'create',
+      // Capture the record handler
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const createEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'create',
+        did: 'did:plc:abc123',
+        rev: 'rev123',
         collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
         record: {
           $type: 'app.opnshelf.movie',
           movieId: '123',
@@ -142,26 +215,12 @@ describe('IngesterService', () => {
           watchedAt: '2024-01-15T10:00:00Z',
           createdAt: '2024-01-15T10:00:00Z',
         },
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
-        },
-        rkey: 'movie-123',
-        cid: { toString: () => 'cid123' },
-        author: 'did:plc:abc123',
+        cid: 'cid123',
+        live: true,
       };
 
-      // Trigger the handleEvent through the Firehose constructor callback
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
+      if (recordHandler) {
+        await recordHandler(createEvent);
       }
 
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
@@ -187,9 +246,25 @@ describe('IngesterService', () => {
     it('should skip records for non-existent users', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      const createEvent = {
-        event: 'create',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const createEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'create',
+        did: 'did:plc:unknown',
+        rev: 'rev123',
         collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
         record: {
           $type: 'app.opnshelf.movie',
           movieId: '123',
@@ -197,25 +272,12 @@ describe('IngesterService', () => {
           watchedAt: '2024-01-15T10:00:00Z',
           createdAt: '2024-01-15T10:00:00Z',
         },
-        uri: {
-          toString: () => 'at://did:plc:unknown/app.opnshelf.movie/movie-123',
-        },
-        rkey: 'movie-123',
-        cid: { toString: () => 'cid123' },
-        author: 'did:plc:unknown',
+        cid: 'cid123',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
+      if (recordHandler) {
+        await recordHandler(createEvent);
       }
 
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
@@ -225,32 +287,35 @@ describe('IngesterService', () => {
     });
 
     it('should skip invalid movie records', async () => {
-      const createEvent = {
-        event: 'create',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const invalidEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'create',
+        did: 'did:plc:abc123',
+        rev: 'rev123',
         collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
         record: {
           $type: 'app.opnshelf.movie',
           // Missing required fields
         },
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
-        },
-        rkey: 'movie-123',
-        cid: { toString: () => 'cid123' },
-        author: 'did:plc:abc123',
+        cid: 'cid123',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
+      if (recordHandler) {
+        await recordHandler(invalidEvent);
       }
 
       expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
@@ -258,116 +323,63 @@ describe('IngesterService', () => {
     });
 
     it('should skip events for other collections', async () => {
-      const createEvent = {
-        event: 'create',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const otherEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'create',
+        did: 'did:plc:abc123',
+        rev: 'rev123',
         collection: 'app.bsky.feed.post',
-        record: { $type: 'app.bsky.feed.post' },
-        uri: { toString: () => 'at://did:plc:abc123/app.bsky.feed.post/abc' },
         rkey: 'abc',
-        cid: { toString: () => 'cid123' },
-        author: 'did:plc:abc123',
+        record: { $type: 'app.bsky.feed.post' },
+        cid: 'cid123',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
-      }
-
-      expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
-    });
-
-    it('should extract DID from URI when author is not provided', async () => {
-      const mockUser = { did: 'did:plc:abc123', handle: 'test.bsky.social' };
-      mockPrismaService.user.findUnique.mockResolvedValue(mockUser as any);
-      mockPrismaService.trackedMovie.upsert.mockResolvedValue({} as any);
-
-      const createEvent = {
-        event: 'create',
-        collection: 'app.opnshelf.movie',
-        record: {
-          $type: 'app.opnshelf.movie',
-          movieId: '456',
-          source: 'tmdb',
-          watchedAt: '2024-01-15T10:00:00Z',
-          createdAt: '2024-01-15T10:00:00Z',
-        },
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-456',
-        },
-        rkey: 'movie-456',
-        cid: { toString: () => 'cid456' },
-        // No author field
-      };
-
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
-      }
-
-      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-        where: { did: 'did:plc:abc123' },
-      });
-    });
-
-    it('should skip when author cannot be determined', async () => {
-      const createEvent = {
-        event: 'create',
-        collection: 'app.opnshelf.movie',
-        record: {
-          $type: 'app.opnshelf.movie',
-          movieId: '123',
-          source: 'tmdb',
-          watchedAt: '2024-01-15T10:00:00Z',
-          createdAt: '2024-01-15T10:00:00Z',
-        },
-        uri: { toString: () => 'invalid-uri' },
-        rkey: 'movie-123',
-        cid: { toString: () => 'cid123' },
-        // No author field and invalid URI
-      };
-
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(createEvent);
+      if (recordHandler) {
+        await recordHandler(otherEvent);
       }
 
       expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
     });
   });
 
-  describe('handleEvent - update', () => {
+  describe('handleRecordEvent - update', () => {
     it('should handle update events same as create', async () => {
       const mockUser = { did: 'did:plc:abc123', handle: 'test.bsky.social' };
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser as any);
       mockPrismaService.trackedMovie.upsert.mockResolvedValue({} as any);
 
-      const updateEvent = {
-        event: 'update',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const updateEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'update',
+        did: 'did:plc:abc123',
+        rev: 'rev456',
         collection: 'app.opnshelf.movie',
+        rkey: 'movie-789',
         record: {
           $type: 'app.opnshelf.movie',
           movieId: '789',
@@ -375,25 +387,12 @@ describe('IngesterService', () => {
           watchedAt: '2024-02-20T15:30:00Z',
           createdAt: '2024-01-15T10:00:00Z',
         },
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-789',
-        },
-        rkey: 'movie-789',
-        cid: { toString: () => 'cid789-updated' },
-        author: 'did:plc:abc123',
+        cid: 'cid789-updated',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(updateEvent);
+      if (recordHandler) {
+        await recordHandler(updateEvent);
       }
 
       expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
@@ -407,33 +406,36 @@ describe('IngesterService', () => {
     });
   });
 
-  describe('handleEvent - delete', () => {
+  describe('handleRecordEvent - delete', () => {
     it('should delete tracked movie record', async () => {
       mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
         count: 1,
       } as any);
 
-      const deleteEvent = {
-        event: 'delete',
-        collection: 'app.opnshelf.movie',
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
-        },
-        rkey: 'movie-123',
-        author: 'did:plc:abc123',
-      };
-
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
 
       service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
 
-      if (handleEventCallback) {
-        await handleEventCallback(deleteEvent);
+      const deleteEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'delete',
+        did: 'did:plc:abc123',
+        rev: 'rev789',
+        collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
+        live: true,
+      };
+
+      if (recordHandler) {
+        await recordHandler(deleteEvent);
       }
 
       expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
@@ -442,65 +444,90 @@ describe('IngesterService', () => {
     });
 
     it('should skip delete events for other collections', async () => {
-      const deleteEvent = {
-        event: 'delete',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const otherEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'delete',
+        did: 'did:plc:abc123',
+        rev: 'rev123',
         collection: 'app.bsky.feed.post',
-        uri: { toString: () => 'at://did:plc:abc123/app.bsky.feed.post/abc' },
         rkey: 'abc',
-        author: 'did:plc:abc123',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(deleteEvent);
-      }
-
-      expect(mockPrismaService.trackedMovie.deleteMany).not.toHaveBeenCalled();
-    });
-
-    it('should skip delete when URI is missing', async () => {
-      const deleteEvent = {
-        event: 'delete',
-        collection: 'app.opnshelf.movie',
-        // No uri field
-        rkey: 'movie-123',
-        author: 'did:plc:abc123',
-      };
-
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      if (handleEventCallback) {
-        await handleEventCallback(deleteEvent);
+      if (recordHandler) {
+        await recordHandler(otherEvent);
       }
 
       expect(mockPrismaService.trackedMovie.deleteMany).not.toHaveBeenCalled();
     });
   });
 
+  describe('handleIdentityEvent', () => {
+    it('should handle identity events', async () => {
+      let identityHandler: ((evt: IdentityEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn(),
+        identity: jest.fn((handler) => {
+          identityHandler = handler;
+        }),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const identityEvent: IdentityEvent = {
+        id: 1,
+        type: 'identity',
+        did: 'did:plc:abc123',
+        handle: 'test.bsky.social',
+        isActive: true,
+        status: 'active',
+      };
+
+      // Should not throw
+      if (identityHandler !== undefined) {
+        await expect(identityHandler(identityEvent)).resolves.not.toThrow();
+      }
+    });
+  });
+
   describe('error handling', () => {
-    it('should handle errors in event handler gracefully', async () => {
+    it('should handle errors in record handler gracefully', async () => {
       mockPrismaService.user.findUnique.mockRejectedValue(
         new Error('DB error'),
       );
 
-      const createEvent = {
-        event: 'create',
+      let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn((handler) => {
+          recordHandler = handler;
+        }),
+        identity: jest.fn(),
+        error: jest.fn(),
+      }));
+
+      service.onModuleInit();
+
+      const createEvent: RecordEvent = {
+        id: 1,
+        type: 'record',
+        action: 'create',
+        did: 'did:plc:abc123',
+        rev: 'rev123',
         collection: 'app.opnshelf.movie',
+        rkey: 'movie-123',
         record: {
           $type: 'app.opnshelf.movie',
           movieId: '123',
@@ -508,43 +535,32 @@ describe('IngesterService', () => {
           watchedAt: '2024-01-15T10:00:00Z',
           createdAt: '2024-01-15T10:00:00Z',
         },
-        uri: {
-          toString: () => 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
-        },
-        rkey: 'movie-123',
-        cid: { toString: () => 'cid123' },
-        author: 'did:plc:abc123',
+        cid: 'cid123',
+        live: true,
       };
 
-      let handleEventCallback: HandleEventCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        handleEventCallback = config.handleEvent;
-        return mockFirehoseInstance;
-      });
-
-      service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // Should not throw
-      if (handleEventCallback) {
-        await expect(handleEventCallback(createEvent)).resolves.not.toThrow();
+      // Should not throw (errors are caught and logged)
+      if (recordHandler !== undefined) {
+        await expect(recordHandler(createEvent)).resolves.not.toThrow();
       }
     });
 
-    it('should call onError callback for firehose errors', async () => {
-      let onErrorCallback: OnErrorCallback | undefined;
-      (Firehose as jest.Mock).mockImplementation((config: any) => {
-        onErrorCallback = config.onError;
-        return mockFirehoseInstance;
-      });
+    it('should call error handler for TAP errors', () => {
+      let errorHandler: ((err: Error) => void) | undefined;
+      (SimpleIndexer as jest.Mock).mockImplementation(() => ({
+        record: jest.fn(),
+        identity: jest.fn(),
+        error: jest.fn((handler) => {
+          errorHandler = handler;
+        }),
+      }));
 
       service.onModuleInit();
-      await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Should not throw when onError is called
+      // Should not throw when error handler is called
       expect(() => {
-        if (onErrorCallback) {
-          onErrorCallback({ message: 'Test error' });
+        if (errorHandler) {
+          errorHandler(new Error('Test error'));
         }
       }).not.toThrow();
     });
