@@ -2,12 +2,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import { authControllerMeOptions } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import type { RootStackParamList } from '../navigation';
+import { useIsTablet } from '../utils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const isTablet = useIsTablet();
+
   // Check auth state using generated TanStack Query hook
   const { data: user } = useQuery({
     ...authControllerMeOptions(),
@@ -49,7 +53,7 @@ export function HomeScreen({ navigation }: Props) {
         )}
 
         {/* Action buttons */}
-        <View className="flex-row gap-3">
+        <View className={`${isTablet ? 'flex-row gap-4' : 'flex-col gap-3'}`}>
           <TouchableOpacity
             className="flex-row items-center gap-2 bg-violet-600 py-3 px-6 rounded-lg"
             onPress={() => navigation.navigate('Search', {})}
@@ -87,8 +91,8 @@ export function HomeScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <View className="gap-6">
-        <View className="bg-gray-900 p-6 rounded-lg border border-gray-800">
+      <View className={`${isTablet ? 'flex-row flex-wrap gap-4' : 'gap-6'}`}>
+        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
           <Text className="text-lg font-semibold text-gray-50 mb-2">
             Track Your Media
           </Text>
@@ -96,7 +100,7 @@ export function HomeScreen({ navigation }: Props) {
             Keep track of movies, shows, and games you've watched and played
           </Text>
         </View>
-        <View className="bg-gray-900 p-6 rounded-lg border border-gray-800">
+        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
           <Text className="text-lg font-semibold text-gray-50 mb-2">
             Own Your Data
           </Text>
@@ -104,7 +108,7 @@ export function HomeScreen({ navigation }: Props) {
             Built on AT Protocol - your data belongs to you
           </Text>
         </View>
-        <View className="bg-gray-900 p-6 rounded-lg border border-gray-800">
+        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
           <Text className="text-lg font-semibold text-gray-50 mb-2">
             Discover & Share
           </Text>

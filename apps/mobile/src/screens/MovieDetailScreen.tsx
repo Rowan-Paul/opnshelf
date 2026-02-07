@@ -16,9 +16,11 @@ import {
 	TouchableOpacity,
 	View,
 	ActivityIndicator,
+	useWindowDimensions,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { RootStackParamList } from '../navigation/types';
+import { useIsLandscape } from '../utils';
 
 // Movie colors from server
 interface MovieColors {
@@ -55,6 +57,8 @@ export function MovieDetailScreen({
 	const { movieId, title } = route.params;
 	const queryClient = useQueryClient();
 	const [showHours, setShowHours] = useState(false);
+	const isLandscape = useIsLandscape();
+	const backdropHeight = isLandscape ? 'h-80' : 'h-64';
 
 	const formatRuntime = (minutes: number, useHours: boolean) => {
 		if (!useHours) return `${minutes} min`;
@@ -189,12 +193,12 @@ export function MovieDetailScreen({
 				{backdropUrl ? (
 					<Image
 						source={{ uri: backdropUrl }}
-						className="w-full h-64"
+						className={`w-full ${backdropHeight}`}
 						resizeMode="cover"
 					/>
 				) : (
 					<View
-						className="w-full h-64"
+						className={`w-full ${backdropHeight}`}
 						style={{
 							backgroundColor: colors.muted,
 						}}

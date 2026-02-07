@@ -9,9 +9,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useCallback } from 'react';
 import type { RootStackParamList } from '../navigation';
+import { useNumColumns } from '../utils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Shelf'>;
 
@@ -117,8 +119,84 @@ function MovieCard({
   );
 }
 
+function GridMovieCard({
+  tracked,
+  onRemove,
+  isRemoving,
+  onPress,
+}: {
+  tracked: TrackedMovie;
+  onRemove: () => void;
+  isRemoving: boolean;
+  onPress: () => void;
+}) {
+  const formattedWatchedDate = tracked.watchedDate
+    ? new Date(tracked.watchedDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-1"
+      activeOpacity={0.8}
+    >
+      <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
+        {tracked.movie.posterPath ? (
+          <Image
+            source={{ uri: `${POSTER_BASE}${tracked.movie.posterPath}` }}
+            className="w-full h-full"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-gray-600 text-xs">No poster</Text>
+          </View>
+        )}
+        {/* Remove button */}
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          disabled={isRemoving}
+          className="absolute top-2 right-2 p-2 rounded-full bg-red-600/90"
+          activeOpacity={0.7}
+        >
+          {isRemoving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="trash-outline" size={14} color="#fff" />
+          )}
+        </TouchableOpacity>
+      </View>
+      <Text className="text-sm font-semibold text-gray-50 mb-1" numberOfLines={2}>
+        {tracked.movie.title}
+      </Text>
+      <View className="flex-row items-center gap-1">
+        {tracked.movie.releaseYear && (
+          <Text className="text-xs text-gray-400">{tracked.movie.releaseYear}</Text>
+        )}
+        {formattedWatchedDate && (
+          <>
+            <Text className="text-gray-600 text-xs">•</Text>
+            <Ionicons name="checkmark-circle" size={10} color="#22c55e" />
+          </>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export function ShelfScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
+  const { width } = useWindowDimensions();
+  const numColumns = useNumColumns('shelf');
+  const isGrid = numColumns > 1;
+  const flatListKey = `shelf-${numColumns}-${width}`;
 
   // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -158,15 +236,27 @@ export function ShelfScreen({ navigation }: Props) {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: TrackedMovie }) => (
-      <MovieCard
-        tracked={item}
-        onRemove={() => unmarkMutation.mutate({ path: { movieId: item.movieId } })}
-        isRemoving={unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === item.movieId}
-        onPress={() => handleNavigateToDetail(item)}
-      />
-    ),
-    [unmarkMutation, handleNavigateToDetail],
+    ({ item }: { item: TrackedMovie }) => {
+      if (isGrid) {
+        return (
+          <GridMovieCard
+            tracked={item}
+            onRemove={() => unmarkMutation.mutate({ path: { movieId: item.movieId } })}
+            isRemoving={unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === item.movieId}
+            onPress={() => handleNavigateToDetail(item)}
+          />
+        );
+      }
+      return (
+        <MovieCard
+          tracked={item}
+          onRemove={() => unmarkMutation.mutate({ path: { movieId: item.movieId } })}
+          isRemoving={unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === item.movieId}
+          onPress={() => handleNavigateToDetail(item)}
+        />
+      );
+    },
+    [unmarkMutation, handleNavigateToDetail, isGrid],
   );
 
   const keyExtractor = useCallback((item: TrackedMovie) => item.id, []);
@@ -226,8 +316,10 @@ export function ShelfScreen({ navigation }: Props) {
             data={trackedMovies as TrackedMovie[]}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            contentContainerClassName="pb-6 gap-3"
-            key="list"
+            numColumns={numColumns}
+            columnWrapperClassName={isGrid ? "gap-4 mb-4" : undefined}
+            contentContainerClassName="pb-6"
+            key={flatListKey}
           />
         </>
       )}

@@ -17,9 +17,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RootStackParamList } from '../navigation';
+import { useNumColumns } from '../utils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Search'>;
 
@@ -109,6 +111,9 @@ export function SearchScreen({ route, navigation }: Props) {
   const [query, setQuery] = useState(initialQ);
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { width } = useWindowDimensions();
+  const numColumns = useNumColumns('search');
+  const flatListKey = `search-grid-${numColumns}-${width}`;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -274,10 +279,10 @@ export function SearchScreen({ route, navigation }: Props) {
             data={results}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            numColumns={2}
+            numColumns={numColumns}
             columnWrapperClassName="gap-4 mb-4"
             contentContainerClassName="pb-6"
-            key="grid"
+            key={flatListKey}
           />
         </>
       )}

@@ -9,10 +9,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { authControllerMeOptions, getLoginUrl } from '@opnshelf/api';
 import type { RootStackParamList } from '../navigation';
+import { useIsTablet } from '../utils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -20,6 +22,7 @@ export function LoginScreen({ navigation, route }: Props) {
   const [handle, setHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { error, redirect, reason } = route.params ?? {};
+  const isTablet = useIsTablet();
 
   // Check if user is already logged in using generated TanStack Query hook
   const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -83,8 +86,8 @@ export function LoginScreen({ navigation, route }: Props) {
 
   return (
     <View className="flex-1 bg-gray-950 px-4 pt-12 pb-6">
-      <View className="flex-1 justify-center">
-        <View className="items-center mb-8">
+      <View className={`flex-1 justify-center ${isTablet ? 'items-center' : ''}`}>
+        <View className={`items-center mb-8 ${isTablet ? 'w-full max-w-md' : ''}`}>
           <View className="mb-4">
             <Ionicons name="film" size={48} color="#a855f7" />
           </View>
@@ -119,7 +122,7 @@ export function LoginScreen({ navigation, route }: Props) {
         )}
 
         {/* Login form */}
-        <View className="gap-6">
+        <View className={`gap-6 ${isTablet ? 'w-full max-w-md' : ''}`}>
           <View>
             <Text className="text-sm font-medium text-gray-300 mb-2">
               Handle
