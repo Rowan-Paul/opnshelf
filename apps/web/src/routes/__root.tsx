@@ -10,6 +10,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "sonner";
 import { env } from "@/env";
+import Footer from "../components/Footer";
 import Header from "../components/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -56,6 +57,7 @@ function RootComponent() {
 				<main className="flex-1 flex flex-col min-h-0">
 					<Outlet />
 				</main>
+				<Footer />
 			</div>
 			<TanStackDevtools
 				config={{
