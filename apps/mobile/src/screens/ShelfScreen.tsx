@@ -318,6 +318,7 @@ export function ShelfScreen({ navigation }: Props) {
             keyExtractor={keyExtractor}
             numColumns={numColumns}
             columnWrapperClassName={isGrid ? "gap-4 mb-4" : undefined}
+            ItemSeparatorComponent={() => isGrid ? null : <View className="h-4" />}
             contentContainerClassName="pb-6"
             key={flatListKey}
           />
