@@ -8,7 +8,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:android": "eas build --local --platform android",
+    "build:ios": "eas build --local --platform ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.0",
