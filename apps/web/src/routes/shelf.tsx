@@ -179,14 +179,22 @@ function ShelfPage() {
 										{tracked.watchedDate && (
 											<p className="text-gray-400 text-xs mt-1">
 												Watched{" "}
-												{new Date(tracked.watchedDate).toLocaleDateString(
-													"en-US",
-													{
-														month: "short",
-														day: "numeric",
-														year: "numeric",
-													},
-												)}
+												{new Date(tracked.watchedDate).toLocaleString("en-US", {
+													month: "short",
+													day: "numeric",
+													year: "numeric",
+													hour: "numeric",
+													minute: "2-digit",
+												})}
+												{(() => {
+													const count = (tracked as { watchCount?: number })
+														.watchCount;
+													return count && count > 1 ? (
+														<span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded-full">
+															{count}×
+														</span>
+													) : null;
+												})()}
 											</p>
 										)}
 									</Link>

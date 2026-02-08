@@ -71,10 +71,37 @@ export class MoviesService {
   }
 
   async getUserMovies(userDid: string) {
-    return this.prisma.trackedMovie.findMany({
+    // Get all tracked movies with their watch counts
+    const trackedMovies = await this.prisma.trackedMovie.findMany({
       where: { userDid },
       include: { movie: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { watchedDate: 'desc' },
+    });
+
+    // Group by movieId and take the latest watch for each movie
+    const movieMap = new Map<
+      string,
+      (typeof trackedMovies)[0] & { watchCount: number }
+    >();
+
+    for (const tracked of trackedMovies) {
+      const existing = movieMap.get(tracked.movieId);
+      if (!existing) {
+        // Count total watches for this movie
+        const watchCount = trackedMovies.filter(
+          (tm) => tm.movieId === tracked.movieId,
+        ).length;
+        movieMap.set(tracked.movieId, { ...tracked, watchCount });
+      }
+    }
+
+    return Array.from(movieMap.values());
+  }
+
+  async getMovieWatchHistory(userDid: string, movieId: string) {
+    return this.prisma.trackedMovie.findMany({
+      where: { userDid, movieId },
+      orderBy: { watchedDate: 'desc' },
     });
   }
 
@@ -176,8 +203,18 @@ export class MoviesService {
    * Mark a movie as watched by creating an AT Protocol record in the user's PDS.
    * Database indexing happens via the firehose ingester or optimistic update in controller.
    */
-  async markWatched(userDid: string, session: ATSession, movieId: string) {
-    const rkey = `movie-${movieId}`;
+  async markWatched(
+    userDid: string,
+    session: ATSession,
+    movieId: string,
+    customWatchedAt?: string,
+  ) {
+    // Generate unique rkey with timestamp to allow multiple watches
+    const timestamp = Date.now();
+    const rkey = `movie-${movieId}-${timestamp}`;
+    const watchedAt = customWatchedAt
+      ? new Date(customWatchedAt).toISOString()
+      : new Date().toISOString();
     const now = new Date().toISOString();
 
     // Build the AT Protocol record using the generated schema builder
@@ -185,7 +222,7 @@ export class MoviesService {
     const record: MovieRecord = movieSchema.build({
       movieId,
       source: 'tmdb',
-      watchedAt: now,
+      watchedAt,
       createdAt: now,
     });
 
@@ -215,25 +252,69 @@ export class MoviesService {
   }
 
   /**
-   * Unmark a movie as watched by deleting the AT Protocol record from the user's PDS.
+   * Unmark a movie as watched by deleting AT Protocol record(s) from the user's PDS.
    * Database cleanup happens via the firehose ingester or optimistic update in controller.
+   * @param mode - 'latest' removes most recent watch, 'all' removes all watches
    */
-  async unmarkWatched(userDid: string, session: ATSession, movieId: string) {
-    const rkey = `movie-${movieId}`;
-
-    // Create agent from session and delete record from user's PDS
+  async unmarkWatched(
+    userDid: string,
+    session: ATSession,
+    movieId: string,
+    mode: 'latest' | 'all' = 'latest',
+  ) {
     const agent = new Agent(
       session as unknown as ConstructorParameters<typeof Agent>[0],
     );
-    await agent.com.atproto.repo.deleteRecord({
-      repo: session.did,
-      collection: COLLECTION,
-      rkey,
-    });
 
-    this.logger.log(`Deleted AT record for movie ${movieId}`);
+    if (mode === 'all') {
+      // Get all tracked movies for this user and movie
+      const trackedMovies = await this.prisma.trackedMovie.findMany({
+        where: { userDid, movieId },
+        orderBy: { watchedDate: 'desc' },
+      });
 
-    return { rkey, movieId };
+      // Delete all records from PDS
+      for (const tracked of trackedMovies) {
+        try {
+          await agent.com.atproto.repo.deleteRecord({
+            repo: session.did,
+            collection: COLLECTION,
+            rkey: tracked.rkey,
+          });
+          this.logger.log(
+            `Deleted AT record for movie ${movieId} with rkey ${tracked.rkey}`,
+          );
+        } catch {
+          this.logger.warn(
+            `Failed to delete record ${tracked.rkey}, may not exist in PDS`,
+          );
+        }
+      }
+
+      return { movieId, mode, deletedCount: trackedMovies.length };
+    } else {
+      // Get the most recent watch
+      const latestWatch = await this.prisma.trackedMovie.findFirst({
+        where: { userDid, movieId },
+        orderBy: { watchedDate: 'desc' },
+      });
+
+      if (!latestWatch) {
+        throw new Error('No watch record found for this movie');
+      }
+
+      // Delete from PDS
+      await agent.com.atproto.repo.deleteRecord({
+        repo: session.did,
+        collection: COLLECTION,
+        rkey: latestWatch.rkey,
+      });
+
+      this.logger.log(
+        `Deleted AT record for movie ${movieId} with rkey ${latestWatch.rkey}`,
+      );
+      return { movieId, mode, rkey: latestWatch.rkey };
+    }
   }
 
   /**
@@ -252,10 +333,9 @@ export class MoviesService {
     const movieData = await this.getMovieDetails(movieId);
     await this.upsertMovie(movieData);
 
-    // Upsert TrackedMovie in database
-    return this.prisma.trackedMovie.upsert({
-      where: { uri },
-      create: {
+    // Create new TrackedMovie record (since rkey is unique, each watch is a new record)
+    return this.prisma.trackedMovie.create({
+      data: {
         uri,
         rkey,
         cid,
@@ -264,25 +344,44 @@ export class MoviesService {
         watchedDate: new Date(watchedAt),
         status: 'watched',
       },
-      update: {
-        cid,
-        watchedDate: new Date(watchedAt),
-        status: 'watched',
-      },
       include: { movie: true },
     });
   }
 
   /**
-   * Remove a tracked movie from the database.
+   * Remove all tracked movies for a user and movie.
    * Called by controller after successful PDS delete for immediate user feedback.
    */
-  async removeTrackedMovie(userDid: string, movieId: string) {
+  async removeAllTrackedMovies(userDid: string, movieId: string) {
     await this.prisma.trackedMovie.deleteMany({
       where: {
         userDid,
         movieId,
       },
     });
+  }
+
+  /**
+   * Remove the latest tracked movie for a user and movie.
+   * Called by controller after successful PDS delete for immediate user feedback.
+   */
+  async removeLatestTrackedMovie(userDid: string, movieId: string) {
+    const latest = await this.prisma.trackedMovie.findFirst({
+      where: {
+        userDid,
+        movieId,
+      },
+      orderBy: {
+        watchedDate: 'desc',
+      },
+    });
+
+    if (latest) {
+      await this.prisma.trackedMovie.delete({
+        where: {
+          id: latest.id,
+        },
+      });
+    }
   }
 }

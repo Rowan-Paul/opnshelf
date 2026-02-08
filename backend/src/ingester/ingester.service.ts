@@ -244,9 +244,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      // Upsert TrackedMovie in database
+      // Create or update TrackedMovie in database (rkey is unique)
       await this.prisma.trackedMovie.upsert({
-        where: { uri },
+        where: { rkey: evt.rkey },
         create: {
           uri,
           rkey: evt.rkey,
@@ -270,13 +270,13 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
     // Handle delete events
     if (evt.action === 'delete') {
-      this.logger.log(`Removing movie record: ${uri}`);
+      this.logger.log(`Removing movie record: ${uri} (rkey: ${evt.rkey})`);
 
       await this.prisma.trackedMovie.deleteMany({
-        where: { uri },
+        where: { rkey: evt.rkey },
       });
 
-      this.logger.debug(`Removed record ${uri}`);
+      this.logger.debug(`Removed record with rkey ${evt.rkey}`);
     }
   }
 }

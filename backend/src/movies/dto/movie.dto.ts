@@ -138,4 +138,28 @@ export class MarkWatchedDto {
   @ApiProperty({ description: 'TMDB movie ID' })
   @IsString()
   movieId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Custom watch datetime (ISO 8601). If not provided, current time is used.',
+  })
+  @IsOptional()
+  @IsDateString()
+  watchedAt?: string;
+}
+
+export class UnmarkWatchedDto {
+  @ApiProperty({ description: 'Movie ID to unmark' })
+  @IsString()
+  movieId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Mode: "latest" removes most recent watch, "all" removes all watches',
+    enum: ['latest', 'all'],
+    default: 'latest',
+  })
+  @IsOptional()
+  @IsString()
+  mode?: 'latest' | 'all';
 }

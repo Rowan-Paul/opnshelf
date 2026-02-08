@@ -12,7 +12,13 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 import { MoviesService } from './movies.service';
 import {
   SearchMoviesDto,
@@ -99,6 +105,7 @@ export class MoviesController {
       user.did,
       user.session as ATSession,
       body.movieId,
+      body.watchedAt,
     );
 
     // Optimistic update: index in local DB so user sees their changes immediately
@@ -127,10 +134,18 @@ export class MoviesController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Unmark a movie as watched' })
+  @ApiQuery({
+    name: 'mode',
+    required: false,
+    enum: ['latest', 'all'],
+    description:
+      'Remove mode: latest (default) removes most recent watch, all removes all watches',
+  })
   @ApiResponse({ status: 204, description: 'Movie unmarked as watched' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async unmarkWatched(
     @Param('movieId') movieId: string,
+    @Query('mode') mode: 'latest' | 'all' = 'latest',
     @Req() req: AuthenticatedRequest,
   ) {
     const user = req.user;
@@ -140,12 +155,17 @@ export class MoviesController {
       user.did,
       user.session as ATSession,
       movieId,
+      mode,
     );
 
     // Optimistic update: remove from local DB so user sees their changes immediately
     // If this fails, the firehose ingester will catch it later
     try {
-      await this.moviesService.removeTrackedMovie(user.did, movieId);
+      if (mode === 'all') {
+        await this.moviesService.removeAllTrackedMovies(user.did, movieId);
+      } else {
+        await this.moviesService.removeLatestTrackedMovie(user.did, movieId);
+      }
     } catch (err: unknown) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err) },
@@ -172,5 +192,32 @@ export class MoviesController {
       ...movie,
       colors: colors ?? undefined,
     };
+  }
+
+  @Get('user/:userDid/movie/:movieId/history')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Get watch history for a specific movie' })
+  @ApiParam({ name: 'userDid', description: 'User DID' })
+  @ApiParam({ name: 'movieId', description: 'TMDB movie ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Watch history retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  async getMovieWatchHistory(
+    @Param('userDid') userDid: string,
+    @Param('movieId') movieId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // Ensure user can only access their own history
+    if (req.user.did !== userDid) {
+      throw new Error('Unauthorized');
+    }
+
+    const history = await this.moviesService.getMovieWatchHistory(
+      userDid,
+      movieId,
+    );
+    return history;
   }
 }

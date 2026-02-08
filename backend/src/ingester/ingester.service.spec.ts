@@ -227,7 +227,7 @@ describe('IngesterService', () => {
         where: { did: 'did:plc:abc123' },
       });
       expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith({
-        where: { uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123' },
+        where: { rkey: 'movie-123' },
         create: expect.objectContaining({
           uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123',
           rkey: 'movie-123',
@@ -397,7 +397,7 @@ describe('IngesterService', () => {
 
       expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-789' },
+          where: { rkey: 'movie-789' },
           update: expect.objectContaining({
             cid: 'cid789-updated',
           }),
@@ -439,7 +439,7 @@ describe('IngesterService', () => {
       }
 
       expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
-        where: { uri: 'at://did:plc:abc123/app.opnshelf.movie/movie-123' },
+        where: { rkey: 'movie-123' },
       });
     });
 

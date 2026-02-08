@@ -63,8 +63,8 @@ model Movie {
 
 model TrackedMovie {
   id          String   @id @default(cuid())
-  rkey        String
-  uri         String   @unique
+  rkey        String   @unique
+  uri         String
   cid         String
   
   userDid     String

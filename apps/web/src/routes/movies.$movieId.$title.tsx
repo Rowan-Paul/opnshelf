@@ -8,8 +8,19 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Check, Clock, Loader2, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+	ArrowLeft,
+	Calendar,
+	Check,
+	Clock,
+	History,
+	Loader2,
+	Plus,
+	RotateCcw,
+	Trash2,
+	X,
+} from "lucide-react";
+import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 // Movie colors from server
@@ -33,6 +44,17 @@ interface TMDBMovieDetail {
 	vote_count?: number;
 	genres?: Array<{ id: number; name: string }>;
 	colors?: MovieColors;
+}
+
+interface TrackedMovie {
+	id: string;
+	movieId: string;
+	watchedDate?: string;
+	watchCount?: number;
+	movie: {
+		title: string;
+		posterPath?: string;
+	};
 }
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
@@ -64,7 +86,13 @@ function MovieDetailPage() {
 	const { movieId } = Route.useParams();
 	const queryClient = useQueryClient();
 	const router = useRouter();
+	const dateInputId = useId();
+	const timeInputId = useId();
 	const [showHours, setShowHours] = useState(false);
+	const [showDateModal, setShowDateModal] = useState(false);
+	const [customDate, setCustomDate] = useState("");
+	const [customTime, setCustomTime] = useState("");
+	const [showRemoveModal, setShowRemoveModal] = useState(false);
 
 	const formatRuntime = (minutes: number, useHours: boolean) => {
 		if (!useHours) return `${minutes} min`;
@@ -101,31 +129,35 @@ function MovieDetailPage() {
 	// Check if this movie is in user's watched list
 	const isWatched = useMemo(() => {
 		if (!trackedMovies) return false;
-		return trackedMovies.some((tm) => tm.movieId === movieId);
+		return trackedMovies.some((tm: TrackedMovie) => tm.movieId === movieId);
 	}, [trackedMovies, movieId]);
 
-	// Find the tracked movie entry to get watched date
+	// Find the tracked movie entry to get watched date and count
 	const trackedMovie = useMemo(() => {
 		if (!trackedMovies) return null;
-		return trackedMovies.find((tm) => tm.movieId === movieId) || null;
+		return (
+			trackedMovies.find((tm: TrackedMovie) => tm.movieId === movieId) || null
+		);
 	}, [trackedMovies, movieId]);
 
-	// Format the watched date
+	// Format the watched date with time
 	const formattedWatchedDate = useMemo(() => {
 		if (!trackedMovie?.watchedDate) return null;
-		return new Date(trackedMovie.watchedDate).toLocaleDateString("en-US", {
+		return new Date(trackedMovie.watchedDate).toLocaleString("en-US", {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
 		});
 	}, [trackedMovie]);
 
 	// Use server-provided colors with fallbacks
 	const colors = movie?.colors || {
-		primary: "#8b5cf6", // Default purple
-		secondary: "#6366f1", // Default indigo
-		accent: "#a855f7", // Default purple
-		muted: "#4c1d95", // Default dark purple
+		primary: "#8b5cf6",
+		secondary: "#6366f1",
+		accent: "#a855f7",
+		muted: "#4c1d95",
 	};
 
 	// Mutations for watchlist
@@ -138,6 +170,9 @@ function MovieDetailPage() {
 				}),
 			});
 			toast.success("Added to your shelf");
+			setShowDateModal(false);
+			setCustomDate("");
+			setCustomTime("");
 		},
 		onError: () => {
 			toast.error("Failed to update. Please try again.");
@@ -153,18 +188,44 @@ function MovieDetailPage() {
 				}),
 			});
 			toast.success("Removed from your shelf");
+			setShowRemoveModal(false);
 		},
 		onError: () => {
 			toast.error("Failed to update. Please try again.");
 		},
 	});
 
-	const handleToggleWatched = () => {
-		if (isWatched) {
-			unmarkMutation.mutate({ path: { movieId } });
-		} else {
-			markMutation.mutate({ body: { movieId } });
-		}
+	const handleMarkWatched = () => {
+		markMutation.mutate({ body: { movieId } });
+	};
+
+	const handleMarkWatchedWithDate = () => {
+		if (!customDate) return;
+
+		const dateTime = customTime
+			? `${customDate}T${customTime}`
+			: `${customDate}T00:00:00`;
+
+		markMutation.mutate({
+			body: {
+				movieId,
+				watchedAt: dateTime,
+			},
+		});
+	};
+
+	const handleRemoveLatest = () => {
+		unmarkMutation.mutate({
+			path: { movieId },
+			query: { mode: "latest" },
+		});
+	};
+
+	const handleRemoveAll = () => {
+		unmarkMutation.mutate({
+			path: { movieId },
+			query: { mode: "all" },
+		});
 	};
 
 	const isPending =
@@ -185,6 +246,14 @@ function MovieDetailPage() {
 		? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
 		: null;
 
+	// Initialize date/time inputs to current values when modal opens
+	const openDateModal = () => {
+		const now = new Date();
+		setCustomDate(now.toISOString().split("T")[0]);
+		setCustomTime(now.toTimeString().slice(0, 5));
+		setShowDateModal(true);
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
 			{/* Hero Section with Backdrop */}
@@ -196,7 +265,6 @@ function MovieDetailPage() {
 							alt=""
 							className="w-full h-full object-cover"
 						/>
-						{/* Gradient overlays */}
 						<div
 							className="absolute inset-0"
 							style={{
@@ -314,41 +382,53 @@ function MovieDetailPage() {
 									/>
 								</div>
 							)}
-							<div className="flex-1 flex flex-col justify-center">
+							<div className="flex-1 flex flex-col gap-2 justify-center">
 								{user ? (
-									<button
-										type="button"
-										onClick={handleToggleWatched}
-										disabled={isPending}
-										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
-										style={{
-											background: isWatched
-												? `linear-gradient(135deg, ${colors.muted} 0%, ${colors.primary} 100%)`
-												: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
-										}}
-									>
-										{isPending ? (
-											<Loader2 className="w-5 h-5 animate-spin" />
-										) : isWatched ? (
-											<div className="flex flex-col items-center">
-												<span className="flex items-center gap-2">
-													<Check className="w-5 h-5" />
-													On Your Shelf
-												</span>
-												{formattedWatchedDate && (
-													<span className="text-xs font-normal opacity-80">
-														Watched on {formattedWatchedDate}
-													</span>
-												)}
-											</div>
-										) : (
-											<>
-												<Plus className="w-5 h-5" />
-												Add to Shelf
-											</>
-										)}
-									</button>
+									!isWatched ? (
+										<button
+											type="button"
+											onClick={handleMarkWatched}
+											disabled={isPending}
+											className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+											style={{
+												background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+												boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+											}}
+										>
+											{isPending ? (
+												<Loader2 className="w-5 h-5 animate-spin" />
+											) : (
+												<>
+													<Plus className="w-5 h-5" />
+													Add to Shelf
+												</>
+											)}
+										</button>
+									) : (
+										<>
+											<button
+												type="button"
+												onClick={openDateModal}
+												disabled={isPending}
+												className="w-full py-2 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 text-sm"
+												style={{
+													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+												}}
+											>
+												<RotateCcw className="w-4 h-4" />
+												Watch Again
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowRemoveModal(true)}
+												className="w-full py-2 px-4 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 text-sm bg-red-600/80 hover:bg-red-600"
+											>
+												<Trash2 className="w-4 h-4" />
+												Remove
+											</button>
+										</>
+									)
 								) : (
 									<Link
 										to="/login"
@@ -363,44 +443,92 @@ function MovieDetailPage() {
 								)}
 							</div>
 						</div>
+						{isWatched && trackedMovie && (
+							<div className="mt-4 p-4 rounded-xl bg-gray-900/50">
+								<div className="flex items-center gap-2 text-green-400 mb-1">
+									<Check className="w-5 h-5" />
+									<span className="font-semibold">On Your Shelf</span>
+								</div>
+								{formattedWatchedDate && (
+									<p className="text-sm text-gray-400">
+										Watched on {formattedWatchedDate}
+										{trackedMovie.watchCount && trackedMovie.watchCount > 1 && (
+											<span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded-full">
+												{trackedMovie.watchCount} watches
+											</span>
+										)}
+									</p>
+								)}
+							</div>
+						)}
 					</div>
 
 					{/* Desktop Actions */}
 					<div className="hidden md:block space-y-4">
 						{user ? (
-							<button
-								type="button"
-								onClick={handleToggleWatched}
-								disabled={isPending}
-								className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
-								style={{
-									background: isWatched
-										? `linear-gradient(135deg, ${colors.muted} 0%, ${colors.primary} 100%)`
-										: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-									boxShadow: `0 15px 35px -10px ${colors.primary}60`,
-								}}
-							>
-								{isPending ? (
-									<Loader2 className="w-5 h-5 animate-spin" />
-								) : isWatched ? (
-									<div className="flex flex-col items-center">
-										<span className="flex items-center gap-2">
+							!isWatched ? (
+								<button
+									type="button"
+									onClick={handleMarkWatched}
+									disabled={isPending}
+									className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
+									style={{
+										background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+										boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+									}}
+								>
+									{isPending ? (
+										<Loader2 className="w-5 h-5 animate-spin" />
+									) : (
+										<>
+											<Plus className="w-5 h-5" />
+											Add to Shelf
+										</>
+									)}
+								</button>
+							) : (
+								<div className="space-y-3">
+									<div className="p-4 rounded-xl bg-gray-900/50">
+										<div className="flex items-center gap-2 text-green-400 mb-2">
 											<Check className="w-5 h-5" />
-											On Your Shelf
-										</span>
+											<span className="font-semibold">On Your Shelf</span>
+										</div>
 										{formattedWatchedDate && (
-											<span className="text-sm font-normal opacity-80">
+											<p className="text-sm text-gray-400">
 												Watched on {formattedWatchedDate}
-											</span>
+											</p>
 										)}
+										{trackedMovie?.watchCount &&
+											trackedMovie.watchCount > 1 && (
+												<div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+													<History className="w-3 h-3" />
+													<span>{trackedMovie.watchCount} total watches</span>
+												</div>
+											)}
 									</div>
-								) : (
-									<>
-										<Plus className="w-5 h-5" />
-										Add to Shelf
-									</>
-								)}
-							</button>
+									<button
+										type="button"
+										onClick={openDateModal}
+										disabled={isPending}
+										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
+										style={{
+											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+										}}
+									>
+										<RotateCcw className="w-4 h-4" />
+										Watch Again
+									</button>
+									<button
+										type="button"
+										onClick={() => setShowRemoveModal(true)}
+										className="w-full py-3 px-6 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 bg-red-600/80 hover:bg-red-600 hover:scale-[1.02]"
+									>
+										<Trash2 className="w-4 h-4" />
+										Remove from Shelf
+									</button>
+								</div>
+							)
 						) : (
 							<Link
 								to="/login"
@@ -523,6 +651,132 @@ function MovieDetailPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Date Picker Modal */}
+			{showDateModal && (
+				<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+					<div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full">
+						<div className="flex justify-between items-center mb-6">
+							<h3 className="text-xl font-semibold">Watch Again</h3>
+							<button
+								type="button"
+								onClick={() => setShowDateModal(false)}
+								className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+							>
+								<X className="w-5 h-5" />
+							</button>
+						</div>
+						<p className="text-gray-400 mb-4">When did you watch this movie?</p>
+						<div className="space-y-4">
+							<div>
+								<label
+									htmlFor={dateInputId}
+									className="block text-sm text-gray-400 mb-2"
+								>
+									Date
+								</label>
+								<input
+									id={dateInputId}
+									type="date"
+									value={customDate}
+									onChange={(e) => setCustomDate(e.target.value)}
+									className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 text-white focus:outline-none focus:border-purple-500"
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor={timeInputId}
+									className="block text-sm text-gray-400 mb-2"
+								>
+									Time (optional)
+								</label>
+								<input
+									id={timeInputId}
+									type="time"
+									value={customTime}
+									onChange={(e) => setCustomTime(e.target.value)}
+									className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 text-white focus:outline-none focus:border-purple-500"
+								/>
+							</div>
+							<div className="flex gap-3 pt-4">
+								<button
+									type="button"
+									onClick={() => setShowDateModal(false)}
+									className="flex-1 py-3 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleMarkWatchedWithDate}
+									disabled={!customDate || markMutation.isPending}
+									className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+								>
+									{markMutation.isPending ? (
+										<Loader2 className="w-5 h-5 animate-spin mx-auto" />
+									) : (
+										"Add Watch"
+									)}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Remove Options Modal */}
+			{showRemoveModal && (
+				<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+					<div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full">
+						<div className="flex justify-between items-center mb-6">
+							<h3 className="text-xl font-semibold">Remove from Shelf</h3>
+							<button
+								type="button"
+								onClick={() => setShowRemoveModal(false)}
+								className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+							>
+								<X className="w-5 h-5" />
+							</button>
+						</div>
+						<p className="text-gray-400 mb-4">
+							How would you like to remove this movie?
+						</p>
+						<div className="space-y-3">
+							<button
+								type="button"
+								onClick={handleRemoveLatest}
+								disabled={unmarkMutation.isPending}
+								className="w-full py-4 px-6 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors text-left"
+							>
+								<div className="font-medium">Remove Latest Watch</div>
+								<div className="text-sm text-gray-400">
+									Remove only the most recent watch entry
+								</div>
+							</button>
+							<button
+								type="button"
+								onClick={handleRemoveAll}
+								disabled={unmarkMutation.isPending}
+								className="w-full py-4 px-6 rounded-xl bg-red-900/30 hover:bg-red-900/50 border border-red-800 transition-colors text-left"
+							>
+								<div className="font-medium text-red-400">
+									Remove All Watches
+								</div>
+								<div className="text-sm text-red-300/70">
+									Remove all watch history for this movie
+								</div>
+							</button>
+						</div>
+						<button
+							type="button"
+							onClick={() => setShowRemoveModal(false)}
+							className="w-full mt-4 py-3 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			)}
 
 			{/* Loading State */}
 			{isMovieLoading && (
