@@ -19,11 +19,30 @@ export type SearchResultsDto = {
     page: number;
 };
 
+export type TmdbGenreDto = {
+    id: number;
+    name: string;
+};
+
 export type MovieColorsDto = {
     primary?: string;
     secondary?: string;
     accent?: string;
     muted?: string;
+};
+
+export type TmdbMovieDetailDto = {
+    id: number;
+    title: string;
+    poster_path?: string;
+    backdrop_path?: string;
+    release_date?: string;
+    overview?: string;
+    runtime?: number;
+    vote_average?: number;
+    vote_count?: number;
+    genres?: Array<TmdbGenreDto>;
+    colors?: MovieColorsDto;
 };
 
 export type MovieDto = {
@@ -56,6 +75,15 @@ export type MarkWatchedDto = {
      * TMDB movie ID
      */
     movieId: string;
+    /**
+     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     */
+    watchedAt?: string;
+};
+
+export type WatchHistoryItemDto = {
+    id: string;
+    watchedDate: string;
 };
 
 export type UserDto = {
@@ -109,8 +137,10 @@ export type MoviesControllerGetMovieDetailsData = {
 };
 
 export type MoviesControllerGetMovieDetailsResponses = {
-    200: unknown;
+    200: TmdbMovieDetailDto;
 };
+
+export type MoviesControllerGetMovieDetailsResponse = MoviesControllerGetMovieDetailsResponses[keyof MoviesControllerGetMovieDetailsResponses];
 
 export type MoviesControllerGetUserMoviesData = {
     body?: never;
@@ -152,7 +182,12 @@ export type MoviesControllerUnmarkWatchedData = {
     path: {
         movieId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Remove mode: latest (default) removes most recent watch, all removes all watches
+         */
+        mode?: 'latest' | 'all';
+    };
     url: '/movies/watched/{movieId}';
 };
 
@@ -172,6 +207,35 @@ export type MoviesControllerUnmarkWatchedResponses = {
 
 export type MoviesControllerUnmarkWatchedResponse = MoviesControllerUnmarkWatchedResponses[keyof MoviesControllerUnmarkWatchedResponses];
 
+export type MoviesControllerDeleteWatchHistoryEntryData = {
+    body?: never;
+    path: {
+        trackedMovieId: string;
+    };
+    query?: never;
+    url: '/movies/history/{trackedMovieId}';
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Tracked movie entry not found
+     */
+    404: unknown;
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryResponses = {
+    /**
+     * Watch history entry deleted
+     */
+    204: void;
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryResponse = MoviesControllerDeleteWatchHistoryEntryResponses[keyof MoviesControllerDeleteWatchHistoryEntryResponses];
+
 export type MoviesControllerGetMovieData = {
     body?: never;
     path: {
@@ -186,6 +250,38 @@ export type MoviesControllerGetMovieResponses = {
 };
 
 export type MoviesControllerGetMovieResponse = MoviesControllerGetMovieResponses[keyof MoviesControllerGetMovieResponses];
+
+export type MoviesControllerGetMovieWatchHistoryData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+        /**
+         * TMDB movie ID
+         */
+        movieId: string;
+    };
+    query?: never;
+    url: '/movies/user/{userDid}/movie/{movieId}/history';
+};
+
+export type MoviesControllerGetMovieWatchHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type MoviesControllerGetMovieWatchHistoryResponses = {
+    /**
+     * Watch history retrieved successfully
+     */
+    200: Array<WatchHistoryItemDto>;
+};
+
+export type MoviesControllerGetMovieWatchHistoryResponse = MoviesControllerGetMovieWatchHistoryResponses[keyof MoviesControllerGetMovieWatchHistoryResponses];
 
 export type AuthControllerGetClientMetadataData = {
     body?: never;

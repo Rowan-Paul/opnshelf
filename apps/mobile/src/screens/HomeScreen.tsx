@@ -5,6 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import type { RootStackParamList } from '../navigation';
 import { useIsTablet } from '../utils';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -54,16 +62,15 @@ export function HomeScreen({ navigation }: Props) {
 
         {/* Action buttons */}
         <View className={`${isTablet ? 'flex-row gap-4' : 'flex-col gap-3'}`}>
-          <TouchableOpacity
-            className="flex-row items-center gap-2 bg-violet-600 py-3 px-6 rounded-lg"
+          <Button
+            size="lg"
             onPress={() => navigation.navigate('Search', {})}
-            activeOpacity={0.8}
           >
             <Ionicons name="search" size={20} color="#fff" />
-            <Text className="text-white text-base font-semibold">
+            <Text className="text-white text-base font-semibold ml-2">
               Search Movies
             </Text>
-          </TouchableOpacity>
+          </Button>
 
           {user ? (
             <TouchableOpacity
@@ -91,31 +98,37 @@ export function HomeScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <View className={`${isTablet ? 'flex-row flex-wrap gap-4' : 'gap-6'}`}>
-        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
-          <Text className="text-lg font-semibold text-gray-50 mb-2">
-            Track Your Media
-          </Text>
-          <Text className="text-sm text-gray-400">
-            Keep track of movies, shows, and games you've watched and played
-          </Text>
-        </View>
-        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
-          <Text className="text-lg font-semibold text-gray-50 mb-2">
-            Own Your Data
-          </Text>
-          <Text className="text-sm text-gray-400">
-            Built on AT Protocol - your data belongs to you
-          </Text>
-        </View>
-        <View className={`bg-gray-900 p-6 rounded-lg border border-gray-800 ${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
-          <Text className="text-lg font-semibold text-gray-50 mb-2">
-            Discover & Share
-          </Text>
-          <Text className="text-sm text-gray-400">
-            See what others are watching and share your favorites
-          </Text>
-        </View>
+        <View className={`${isTablet ? 'flex-row flex-wrap gap-4' : 'gap-6'}`}>
+        <Card className={`${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
+          <CardHeader>
+            <CardTitle className="text-lg">Track Your Media</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Keep track of movies, shows, and games you&apos;ve watched and played
+            </CardDescription>
+          </CardContent>
+        </Card>
+        <Card className={`${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
+          <CardHeader>
+            <CardTitle className="text-lg">Own Your Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Built on AT Protocol - your data belongs to you
+            </CardDescription>
+          </CardContent>
+        </Card>
+        <Card className={`${isTablet ? 'flex-1 min-w-[45%]' : ''}`}>
+          <CardHeader>
+            <CardTitle className="text-lg">Discover & Share</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              See what others are watching and share your favorites
+            </CardDescription>
+          </CardContent>
+        </Card>
       </View>
     </View>
   );

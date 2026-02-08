@@ -1,10 +1,15 @@
 import {
 	authControllerMeOptions,
+	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
+	moviesControllerGetMovieWatchHistory,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	type TmdbMovieDetailDto,
+	type TrackedMovieDto,
+	type WatchHistoryItemDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
@@ -13,6 +18,7 @@ import {
 	Calendar,
 	Check,
 	Clock,
+	Eye,
 	History,
 	Loader2,
 	Plus,
@@ -22,40 +28,14 @@ import {
 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-// Movie colors from server
-interface MovieColors {
-	primary?: string;
-	secondary?: string;
-	accent?: string;
-	muted?: string;
-}
-
-// TMDB Movie Detail type based on API response
-interface TMDBMovieDetail {
-	id: number;
-	title: string;
-	poster_path?: string;
-	backdrop_path?: string;
-	release_date?: string;
-	overview?: string;
-	runtime?: number;
-	vote_average?: number;
-	vote_count?: number;
-	genres?: Array<{ id: number; name: string }>;
-	colors?: MovieColors;
-}
-
-interface TrackedMovie {
-	id: string;
-	movieId: string;
-	watchedDate?: string;
-	watchCount?: number;
-	movie: {
-		title: string;
-		posterPath?: string;
-	};
-}
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
 	loader: async ({ params, context }) => {
@@ -68,7 +48,7 @@ export const Route = createFileRoute("/movies/$movieId/$title")({
 			}),
 		});
 
-		return data as TMDBMovieDetail;
+		return data as TmdbMovieDetailDto;
 	},
 	head: ({ loaderData }) => ({
 		meta: [
@@ -92,7 +72,7 @@ function MovieDetailPage() {
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [customDate, setCustomDate] = useState("");
 	const [customTime, setCustomTime] = useState("");
-	const [showRemoveModal, setShowRemoveModal] = useState(false);
+	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
 
 	const formatRuntime = (minutes: number, useHours: boolean) => {
 		if (!useHours) return `${minutes} min`;
@@ -116,7 +96,7 @@ function MovieDetailPage() {
 		}),
 	});
 
-	const movie = movieData as TMDBMovieDetail | undefined;
+	const movie = movieData as TmdbMovieDetailDto | undefined;
 
 	// Fetch user's tracked movies
 	const { data: trackedMovies } = useQuery({
@@ -126,31 +106,58 @@ function MovieDetailPage() {
 		enabled: !!user?.did,
 	});
 
+	// Fetch watch history for this movie
+	const { data: watchHistory } = useQuery<WatchHistoryItemDto[]>({
+		queryKey: ["watchHistory", user?.did, movieId],
+		queryFn: async () => {
+			if (!user?.did) return [];
+			const { data } = await moviesControllerGetMovieWatchHistory({
+				path: { userDid: user.did, movieId },
+			});
+			return data || [];
+		},
+		enabled: !!user?.did && !!movieId,
+	});
+
 	// Check if this movie is in user's watched list
 	const isWatched = useMemo(() => {
 		if (!trackedMovies) return false;
-		return trackedMovies.some((tm: TrackedMovie) => tm.movieId === movieId);
+		return trackedMovies.some((tm: TrackedMovieDto) => tm.movieId === movieId);
 	}, [trackedMovies, movieId]);
 
 	// Find the tracked movie entry to get watched date and count
 	const trackedMovie = useMemo(() => {
 		if (!trackedMovies) return null;
 		return (
-			trackedMovies.find((tm: TrackedMovie) => tm.movieId === movieId) || null
+			trackedMovies.find((tm: TrackedMovieDto) => tm.movieId === movieId) ||
+			null
 		);
 	}, [trackedMovies, movieId]);
 
-	// Format the watched date with time
+	// Format the watched date with time (24-hour notation)
 	const formattedWatchedDate = useMemo(() => {
 		if (!trackedMovie?.watchedDate) return null;
 		return new Date(trackedMovie.watchedDate).toLocaleString("en-US", {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
-			hour: "numeric",
+			hour: "2-digit",
 			minute: "2-digit",
+			hour12: false,
 		});
 	}, [trackedMovie]);
+
+	// Format watch history dates (24-hour notation)
+	const formatWatchDate = (dateString: string) => {
+		return new Date(dateString).toLocaleString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		});
+	};
 
 	// Use server-provided colors with fallbacks
 	const colors = movie?.colors || {
@@ -169,6 +176,9 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: ["watchHistory", user?.did, movieId],
+			});
 			toast.success("Added to your shelf");
 			setShowDateModal(false);
 			setCustomDate("");
@@ -179,6 +189,26 @@ function MovieDetailPage() {
 		},
 	});
 
+	// Delete individual watch history entry
+	const deleteWatchEntryMutation = useMutation({
+		...moviesControllerDeleteWatchHistoryEntryMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["watchHistory", user?.did, movieId],
+			});
+			toast.success("Watch entry removed");
+		},
+		onError: () => {
+			toast.error("Failed to remove watch entry. Please try again.");
+		},
+	});
+
+	// Unmark movie as watched (remove entirely or latest)
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
@@ -187,11 +217,13 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: ["watchHistory", user?.did, movieId],
+			});
 			toast.success("Removed from your shelf");
-			setShowRemoveModal(false);
 		},
 		onError: () => {
-			toast.error("Failed to update. Please try again.");
+			toast.error("Failed to remove from shelf. Please try again.");
 		},
 	});
 
@@ -214,14 +246,7 @@ function MovieDetailPage() {
 		});
 	};
 
-	const handleRemoveLatest = () => {
-		unmarkMutation.mutate({
-			path: { movieId },
-			query: { mode: "latest" },
-		});
-	};
-
-	const handleRemoveAll = () => {
+	const handleUnmarkWatched = () => {
 		unmarkMutation.mutate({
 			path: { movieId },
 			query: { mode: "all" },
@@ -229,10 +254,7 @@ function MovieDetailPage() {
 	};
 
 	const isPending =
-		(markMutation.isPending &&
-			markMutation.variables?.body?.movieId === movieId) ||
-		(unmarkMutation.isPending &&
-			unmarkMutation.variables?.path?.movieId === movieId);
+		markMutation.isPending && markMutation.variables?.body?.movieId === movieId;
 
 	const releaseYear = movie?.release_date
 		? new Date(movie.release_date).getFullYear()
@@ -385,47 +407,63 @@ function MovieDetailPage() {
 							<div className="flex-1 flex flex-col gap-2 justify-center">
 								{user ? (
 									!isWatched ? (
-										<button
-											type="button"
-											onClick={handleMarkWatched}
-											disabled={isPending}
-											className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
-											style={{
-												background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-												boxShadow: `0 10px 30px -10px ${colors.primary}60`,
-											}}
-										>
-											{isPending ? (
-												<Loader2 className="w-5 h-5 animate-spin" />
-											) : (
-												<>
-													<Plus className="w-5 h-5" />
-													Add to Shelf
-												</>
-											)}
-										</button>
-									) : (
 										<>
 											<button
 												type="button"
-												onClick={openDateModal}
+												onClick={handleMarkWatched}
 												disabled={isPending}
-												className="w-full py-2 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 text-sm"
+												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
 												style={{
 													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
 												}}
 											>
-												<RotateCcw className="w-4 h-4" />
-												Watch Again
+												{isPending ? (
+													<Loader2 className="w-5 h-5 animate-spin" />
+												) : (
+													<>
+														<Plus className="w-5 h-5" />
+														Add to Shelf
+													</>
+												)}
 											</button>
 											<button
 												type="button"
-												onClick={() => setShowRemoveModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 text-sm bg-red-600/80 hover:bg-red-600"
+												onClick={openDateModal}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 											>
-												<Trash2 className="w-4 h-4" />
-												Remove
+												<Calendar className="w-4 h-4" />
+												Add on Different Date
+											</button>
+										</>
+									) : (
+										<>
+											<button
+												type="button"
+												onClick={handleMarkWatched}
+												disabled={isPending}
+												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+												style={{
+													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+												}}
+											>
+												{isPending ? (
+													<Loader2 className="w-5 h-5 animate-spin" />
+												) : (
+													<>
+														<RotateCcw className="w-4 h-4" />
+														Watch Now
+													</>
+												)}
+											</button>
+											<button
+												type="button"
+												onClick={openDateModal}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+											>
+												<Calendar className="w-4 h-4" />
+												Watch on Different Date
 											</button>
 										</>
 									)
@@ -452,12 +490,40 @@ function MovieDetailPage() {
 								{formattedWatchedDate && (
 									<p className="text-sm text-gray-400">
 										Watched on {formattedWatchedDate}
-										{trackedMovie.watchCount && trackedMovie.watchCount > 1 && (
+										{watchHistory && watchHistory.length > 1 && (
 											<span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded-full">
-												{trackedMovie.watchCount} watches
+												{watchHistory.length} watches
 											</span>
 										)}
 									</p>
+								)}
+								{watchHistory && watchHistory.length > 1 && (
+									<button
+										type="button"
+										onClick={() => setShowHistoryDialog(true)}
+										className="mt-2 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-gray-800/50"
+									>
+										<Eye className="w-4 h-4" />
+										View all watches
+									</button>
+								)}
+								{/* Remove button when only watched once */}
+								{watchHistory && watchHistory.length === 1 && (
+									<button
+										type="button"
+										onClick={handleUnmarkWatched}
+										disabled={unmarkMutation.isPending}
+										className="mt-2 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-red-900/20 disabled:opacity-50"
+									>
+										{unmarkMutation.isPending ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<>
+												<Trash2 className="w-4 h-4" />
+												Remove from shelf
+											</>
+										)}
+									</button>
 								)}
 							</div>
 						)}
@@ -467,25 +533,35 @@ function MovieDetailPage() {
 					<div className="hidden md:block space-y-4">
 						{user ? (
 							!isWatched ? (
-								<button
-									type="button"
-									onClick={handleMarkWatched}
-									disabled={isPending}
-									className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
-									style={{
-										background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-										boxShadow: `0 15px 35px -10px ${colors.primary}60`,
-									}}
-								>
-									{isPending ? (
-										<Loader2 className="w-5 h-5 animate-spin" />
-									) : (
-										<>
-											<Plus className="w-5 h-5" />
-											Add to Shelf
-										</>
-									)}
-								</button>
+								<div className="space-y-3">
+									<button
+										type="button"
+										onClick={handleMarkWatched}
+										disabled={isPending}
+										className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
+										style={{
+											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+											boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+										}}
+									>
+										{isPending ? (
+											<Loader2 className="w-5 h-5 animate-spin" />
+										) : (
+											<>
+												<Plus className="w-5 h-5" />
+												Add to Shelf
+											</>
+										)}
+									</button>
+									<button
+										type="button"
+										onClick={openDateModal}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+									>
+										<Calendar className="w-4 h-4" />
+										Add on Different Date
+									</button>
+								</div>
 							) : (
 								<div className="space-y-3">
 									<div className="p-4 rounded-xl bg-gray-900/50">
@@ -498,17 +574,44 @@ function MovieDetailPage() {
 												Watched on {formattedWatchedDate}
 											</p>
 										)}
-										{trackedMovie?.watchCount &&
-											trackedMovie.watchCount > 1 && (
+										{watchHistory && watchHistory.length > 1 && (
+											<>
 												<div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
 													<History className="w-3 h-3" />
-													<span>{trackedMovie.watchCount} total watches</span>
+													<span>{watchHistory.length} total watches</span>
 												</div>
-											)}
+												<button
+													type="button"
+													onClick={() => setShowHistoryDialog(true)}
+													className="mt-2 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-gray-800/50"
+												>
+													<Eye className="w-4 h-4" />
+													View all watches
+												</button>
+											</>
+										)}
+										{/* Remove button when only watched once */}
+										{watchHistory && watchHistory.length === 1 && (
+											<button
+												type="button"
+												onClick={handleUnmarkWatched}
+												disabled={unmarkMutation.isPending}
+												className="mt-2 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-red-900/20 disabled:opacity-50"
+											>
+												{unmarkMutation.isPending ? (
+													<Loader2 className="w-4 h-4 animate-spin" />
+												) : (
+													<>
+														<Trash2 className="w-4 h-4" />
+														Remove from shelf
+													</>
+												)}
+											</button>
+										)}
 									</div>
 									<button
 										type="button"
-										onClick={openDateModal}
+										onClick={handleMarkWatched}
 										disabled={isPending}
 										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
 										style={{
@@ -516,16 +619,22 @@ function MovieDetailPage() {
 											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
 										}}
 									>
-										<RotateCcw className="w-4 h-4" />
-										Watch Again
+										{isPending ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<>
+												<RotateCcw className="w-4 h-4" />
+												Watch Now
+											</>
+										)}
 									</button>
 									<button
 										type="button"
-										onClick={() => setShowRemoveModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 bg-red-600/80 hover:bg-red-600 hover:scale-[1.02]"
+										onClick={openDateModal}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 									>
-										<Trash2 className="w-4 h-4" />
-										Remove from Shelf
+										<Calendar className="w-4 h-4" />
+										Watch on Different Date
 									</button>
 								</div>
 							)
@@ -652,6 +761,69 @@ function MovieDetailPage() {
 				</div>
 			</div>
 
+			{/* Watch History Dialog */}
+			<Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+				<DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<History className="w-5 h-5" />
+							Watch History
+						</DialogTitle>
+						<DialogDescription className="text-gray-400">
+							All the times you&apos;ve watched {movie?.title}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
+						{watchHistory && watchHistory.length > 0 ? (
+							watchHistory.map((watch) => (
+								<div
+									key={watch.id}
+									className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50"
+								>
+									<div className="flex-1">
+										<p className="text-sm font-medium text-white">
+											{formatWatchDate(watch.watchedDate)}
+										</p>
+									</div>
+									<button
+										type="button"
+										onClick={() =>
+											deleteWatchEntryMutation.mutate({
+												path: { trackedMovieId: watch.id },
+											})
+										}
+										disabled={deleteWatchEntryMutation.isPending}
+										className="flex-shrink-0 p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+										title="Remove this watch"
+									>
+										{deleteWatchEntryMutation.isPending &&
+										deleteWatchEntryMutation.variables?.path?.trackedMovieId ===
+											watch.id ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<Trash2 className="w-4 h-4" />
+										)}
+									</button>
+								</div>
+							))
+						) : (
+							<div className="text-center py-8 text-gray-500">
+								No watch history found
+							</div>
+						)}
+					</div>
+					<div className="mt-4 flex justify-end">
+						<Button
+							variant="outline"
+							onClick={() => setShowHistoryDialog(false)}
+							className="border-gray-700 text-white hover:bg-gray-800"
+						>
+							Close
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+
 			{/* Date Picker Modal */}
 			{showDateModal && (
 				<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -699,81 +871,28 @@ function MovieDetailPage() {
 								/>
 							</div>
 							<div className="flex gap-3 pt-4">
-								<button
+								<Button
 									type="button"
+									variant="outline"
 									onClick={() => setShowDateModal(false)}
-									className="flex-1 py-3 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+									className="flex-1 border-gray-700 text-white hover:bg-gray-800"
 								>
 									Cancel
-								</button>
-								<button
+								</Button>
+								<Button
 									type="button"
 									onClick={handleMarkWatchedWithDate}
 									disabled={!customDate || markMutation.isPending}
-									className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+									className="flex-1 bg-purple-600 hover:bg-purple-700"
 								>
 									{markMutation.isPending ? (
 										<Loader2 className="w-5 h-5 animate-spin mx-auto" />
 									) : (
 										"Add Watch"
 									)}
-								</button>
+								</Button>
 							</div>
 						</div>
-					</div>
-				</div>
-			)}
-
-			{/* Remove Options Modal */}
-			{showRemoveModal && (
-				<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-					<div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full">
-						<div className="flex justify-between items-center mb-6">
-							<h3 className="text-xl font-semibold">Remove from Shelf</h3>
-							<button
-								type="button"
-								onClick={() => setShowRemoveModal(false)}
-								className="p-2 hover:bg-gray-800 rounded-full transition-colors"
-							>
-								<X className="w-5 h-5" />
-							</button>
-						</div>
-						<p className="text-gray-400 mb-4">
-							How would you like to remove this movie?
-						</p>
-						<div className="space-y-3">
-							<button
-								type="button"
-								onClick={handleRemoveLatest}
-								disabled={unmarkMutation.isPending}
-								className="w-full py-4 px-6 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors text-left"
-							>
-								<div className="font-medium">Remove Latest Watch</div>
-								<div className="text-sm text-gray-400">
-									Remove only the most recent watch entry
-								</div>
-							</button>
-							<button
-								type="button"
-								onClick={handleRemoveAll}
-								disabled={unmarkMutation.isPending}
-								className="w-full py-4 px-6 rounded-xl bg-red-900/30 hover:bg-red-900/50 border border-red-800 transition-colors text-left"
-							>
-								<div className="font-medium text-red-400">
-									Remove All Watches
-								</div>
-								<div className="text-sm text-red-300/70">
-									Remove all watch history for this movie
-								</div>
-							</button>
-						</div>
-						<button
-							type="button"
-							onClick={() => setShowRemoveModal(false)}
-							className="w-full mt-4 py-3 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 transition-colors"
-						>
-							Cancel
-						</button>
 					</div>
 				</div>
 			)}

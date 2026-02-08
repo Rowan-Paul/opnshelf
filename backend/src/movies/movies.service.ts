@@ -384,4 +384,46 @@ export class MoviesService {
       });
     }
   }
+
+  /**
+   * Remove a specific tracked movie by ID.
+   * Called by controller to delete individual watch history entries.
+   */
+  async removeTrackedMovieById(
+    userDid: string,
+    session: ATSession,
+    trackedMovieId: string,
+  ) {
+    const trackedMovie = await this.prisma.trackedMovie.findFirst({
+      where: {
+        id: trackedMovieId,
+        userDid,
+      },
+    });
+
+    if (!trackedMovie) {
+      throw new Error('Tracked movie not found');
+    }
+
+    // Delete the AT Protocol record from user's PDS
+    const agent = new Agent(
+      session as unknown as ConstructorParameters<typeof Agent>[0],
+    );
+    await agent.com.atproto.repo.deleteRecord({
+      repo: userDid,
+      collection: COLLECTION,
+      rkey: trackedMovie.rkey,
+    });
+
+    // Delete from local database
+    await this.prisma.trackedMovie.delete({
+      where: {
+        id: trackedMovieId,
+      },
+    });
+
+    this.logger.log(
+      `Deleted tracked movie ${trackedMovieId} (rkey: ${trackedMovie.rkey})`,
+    );
+  }
 }

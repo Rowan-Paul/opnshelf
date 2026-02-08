@@ -14,6 +14,16 @@ import {
 import { useCallback } from 'react';
 import type { RootStackParamList } from '../navigation';
 import { useNumColumns } from '../utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Shelf'>;
 
@@ -23,6 +33,7 @@ type TrackedMovie = {
   id: string;
   movieId: string;
   watchedDate?: string;
+  watchCount?: number;
   movie: {
     title: string;
     posterPath?: string;
@@ -41,12 +52,15 @@ function MovieCard({
   isRemoving: boolean;
   onPress: () => void;
 }) {
-  // Format watched date
+  // Format watched date with time (24-hour notation)
   const formattedWatchedDate = tracked.watchedDate
-    ? new Date(tracked.watchedDate).toLocaleDateString('en-US', {
+    ? new Date(tracked.watchedDate).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
       })
     : null;
 
@@ -88,6 +102,11 @@ function MovieCard({
                   <Ionicons name="checkmark-circle" size={12} color="#22c55e" />
                   <Text className="text-sm text-green-500 ml-1">{formattedWatchedDate}</Text>
                 </View>
+                {tracked.watchCount && tracked.watchCount > 1 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {tracked.watchCount}×
+                  </Badge>
+                )}
               </>
             )}
           </View>
@@ -131,10 +150,13 @@ function GridMovieCard({
   onPress: () => void;
 }) {
   const formattedWatchedDate = tracked.watchedDate
-    ? new Date(tracked.watchedDate).toLocaleDateString('en-US', {
+    ? new Date(tracked.watchedDate).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
       })
     : null;
 
@@ -184,6 +206,11 @@ function GridMovieCard({
           <>
             <Text className="text-gray-600 text-xs">•</Text>
             <Ionicons name="checkmark-circle" size={10} color="#22c55e" />
+            {tracked.watchCount && tracked.watchCount > 1 && (
+              <Badge variant="secondary" className="ml-1">
+                {tracked.watchCount}×
+              </Badge>
+            )}
           </>
         )}
       </View>
@@ -263,8 +290,32 @@ export function ShelfScreen({ navigation }: Props) {
 
   if (isAuthLoading) {
     return (
-      <View className="flex-1 bg-gray-950 justify-center items-center">
-        <ActivityIndicator size="large" colorClassName="accent-violet-500" />
+      <View className="flex-1 bg-gray-950 px-4 pt-12 pb-6">
+        <View className="flex-row items-center gap-3 mb-8">
+          <Skeleton className="w-8 h-8 rounded" />
+          <Skeleton className="w-40 h-8 rounded" />
+        </View>
+        <View className={`flex-row flex-wrap gap-4`}>
+          {[...Array(10)].map((_, index) => (
+            <View key={`auth-skeleton-${index}`} className={`${isGrid ? 'flex-1 min-w-0' : 'w-full'}`}>
+              {isGrid ? (
+                <>
+                  <Skeleton className="aspect-2/3 rounded-lg mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-1" />
+                  <Skeleton className="h-3 w-1/2" />
+                </>
+              ) : (
+                <View className="flex-row">
+                  <Skeleton className="w-20 aspect-2/3 rounded-lg" />
+                  <View className="flex-1 ml-3 justify-between">
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -273,21 +324,24 @@ export function ShelfScreen({ navigation }: Props) {
     return (
       <View className="flex-1 bg-gray-950 px-4 pt-12 pb-6">
         <View className="flex-1 justify-center items-center">
-          <Ionicons name="book" size={64} color="#a855f7" />
-          <Text className="text-3xl font-bold text-gray-50 mt-6 mb-4">
-            My Shelf
-          </Text>
-          <Text className="text-lg text-gray-400 text-center mb-8">
-            Sign in to track movies you've watched
-          </Text>
-          <TouchableOpacity
-            className="flex-row items-center gap-2 bg-violet-600 py-3 px-6 rounded-lg"
-            onPress={() => navigation.navigate('Login', { redirect: 'Shelf' })}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="log-in" size={20} color="#fff" />
-            <Text className="text-white font-semibold">Sign in</Text>
-          </TouchableOpacity>
+          <Card className="w-full max-w-md">
+            <CardHeader className="items-center">
+              <Ionicons name="book" size={64} color="#a855f7" className="mb-4" />
+              <CardTitle className="text-3xl text-center">My Shelf</CardTitle>
+              <CardDescription className="text-lg text-center">
+                Sign in to track movies you&apos;ve watched
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                size="lg"
+                onPress={() => navigation.navigate('Login', { redirect: 'Shelf' })}
+              >
+                <Ionicons name="log-in" size={20} color="#fff" />
+                <Text className="text-white font-semibold ml-2">Sign in</Text>
+              </Button>
+            </CardContent>
+          </Card>
         </View>
       </View>
     );
@@ -301,8 +355,26 @@ export function ShelfScreen({ navigation }: Props) {
       </View>
 
       {isMoviesLoading && (
-        <View className="flex-1 justify-center py-12">
-          <ActivityIndicator size="large" colorClassName="accent-violet-500" />
+        <View className={`flex-row flex-wrap gap-4`}>
+          {[...Array(10)].map((_, index) => (
+            <View key={`movies-skeleton-${index}`} className={`${isGrid ? 'flex-1 min-w-0' : 'w-full'}`}>
+              {isGrid ? (
+                <>
+                  <Skeleton className="aspect-2/3 rounded-lg mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-1" />
+                  <Skeleton className="h-3 w-1/2" />
+                </>
+              ) : (
+                <View className="flex-row">
+                  <Skeleton className="w-20 aspect-2/3 rounded-lg" />
+                  <View className="flex-1 ml-3 justify-between">
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
         </View>
       )}
 
@@ -327,18 +399,23 @@ export function ShelfScreen({ navigation }: Props) {
 
       {trackedMovies && trackedMovies.length === 0 && (
         <View className="flex-1 justify-center items-center py-12">
-          <Ionicons name="book" size={64} color="#374151" />
-          <Text className="text-gray-400 text-lg mt-4 mb-6">
-            Your shelf is empty
-          </Text>
-          <TouchableOpacity
-            className="flex-row items-center gap-2 bg-violet-600 py-3 px-6 rounded-lg"
-            onPress={() => navigation.navigate('Search', {})}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="search" size={20} color="#fff" />
-            <Text className="text-white font-semibold">Search for movies</Text>
-          </TouchableOpacity>
+          <Card className="w-full max-w-sm">
+            <CardHeader className="items-center">
+              <Ionicons name="book" size={64} color="#374151" className="mb-4" />
+              <CardTitle className="text-2xl text-center">Your shelf is empty</CardTitle>
+              <CardDescription className="text-center">
+                Start tracking movies you&apos;ve watched
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onPress={() => navigation.navigate('Search', {})}
+              >
+                <Ionicons name="search" size={20} color="#fff" />
+                <Text className="text-white font-semibold ml-2">Search for movies</Text>
+              </Button>
+            </CardContent>
+          </Card>
         </View>
       )}
     </View>

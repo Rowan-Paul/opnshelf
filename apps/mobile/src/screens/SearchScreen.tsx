@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RootStackParamList } from '../navigation';
 import { useNumColumns } from '../utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Search'>;
 
@@ -42,6 +43,7 @@ function MovieCard({
   onUnmarkWatched,
   isLoading,
   onPress,
+  cardWidth,
 }: {
   movie: MovieItem;
   isWatched: boolean;
@@ -49,11 +51,12 @@ function MovieCard({
   onUnmarkWatched: () => void;
   isLoading: boolean;
   onPress: () => void;
+  cardWidth: number;
 }) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-1 min-w-0"
+      style={{ width: cardWidth }}
       activeOpacity={0.8}
     >
       <View className="aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2 relative">
@@ -114,6 +117,9 @@ export function SearchScreen({ route, navigation }: Props) {
   const { width } = useWindowDimensions();
   const numColumns = useNumColumns('search');
   const flatListKey = `search-grid-${numColumns}-${width}`;
+  
+  // Calculate card width: (screen width - padding - gaps) / numColumns
+  const cardWidth = (width - 32 - (numColumns - 1) * 16) / numColumns;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -227,10 +233,11 @@ export function SearchScreen({ route, navigation }: Props) {
           onUnmarkWatched={() => handleUnmarkWatched(movieId)}
           isLoading={isLoading}
           onPress={() => handleNavigateToDetail(item)}
+          cardWidth={cardWidth}
         />
       );
     },
-    [watchedMovieIds, markMutation, unmarkMutation, handleMarkWatched, handleUnmarkWatched, handleNavigateToDetail],
+    [watchedMovieIds, markMutation, unmarkMutation, handleMarkWatched, handleUnmarkWatched, handleNavigateToDetail, cardWidth],
   );
 
   const keyExtractor = useCallback((item: MovieItem) => String(item.id), []);
@@ -257,8 +264,21 @@ export function SearchScreen({ route, navigation }: Props) {
       </View>
 
       {isLoading && (
-        <View className="flex-1 justify-center py-12">
-          <ActivityIndicator size="large" colorClassName="accent-violet-500" />
+        <View className="flex-1">
+          <FlatList
+            data={[...Array(numColumns * 3)]}
+            renderItem={() => (
+              <View style={{ width: cardWidth }}>
+                <Skeleton className="aspect-2/3 rounded-lg mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-1" />
+                <Skeleton className="h-3 w-1/2" />
+              </View>
+            )}
+            keyExtractor={(_, index) => `search-skeleton-${index}`}
+            numColumns={numColumns}
+            columnWrapperClassName="gap-4 mb-4"
+            contentContainerClassName="pb-6"
+          />
         </View>
       )}
 
@@ -290,7 +310,7 @@ export function SearchScreen({ route, navigation }: Props) {
       {data && results.length === 0 && searchQuery.length > 0 && (
         <View className="flex-1 justify-center py-12">
           <Text className="text-gray-400 text-lg text-center">
-            No results found for "{searchQuery}"
+            No results found for &quot;{searchQuery}&quot;
           </Text>
         </View>
       )}

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -54,6 +54,16 @@ export const moviesControllerUnmarkWatched = <ThrowOnError extends boolean = fal
  * Get movie from database
  */
 export const moviesControllerGetMovie = <ThrowOnError extends boolean = false>(options: Options<MoviesControllerGetMovieData, ThrowOnError>) => (options.client ?? client).get<MoviesControllerGetMovieResponses, unknown, ThrowOnError>({ url: '/movies/{movieId}', ...options });
+
+/**
+ * Get watch history for a specific movie
+ */
+export const moviesControllerGetMovieWatchHistory = <ThrowOnError extends boolean = false>(options: Options<MoviesControllerGetMovieWatchHistoryData, ThrowOnError>) => (options.client ?? client).get<MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetMovieWatchHistoryErrors, ThrowOnError>({ url: '/movies/user/{userDid}/movie/{movieId}/history', ...options });
+
+/**
+ * Delete a specific watch history entry
+ */
+export const moviesControllerDeleteWatchHistoryEntry = <ThrowOnError extends boolean = false>(options: Options<MoviesControllerDeleteWatchHistoryEntryData, ThrowOnError>) => (options.client ?? client).delete<MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDeleteWatchHistoryEntryErrors, ThrowOnError>({ url: '/movies/history/{trackedMovieId}', ...options });
 
 /**
  * OAuth client metadata

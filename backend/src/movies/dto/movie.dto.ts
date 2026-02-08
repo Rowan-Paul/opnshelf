@@ -123,6 +123,34 @@ export class TMDBMovieResultDto {
   overview?: string;
 }
 
+export class TMDBGenreDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+}
+
+export class TMDBMovieDetailDto extends TMDBMovieResultDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  runtime?: number;
+
+  @ApiPropertyOptional()
+  vote_average?: number;
+
+  @ApiPropertyOptional()
+  vote_count?: number;
+
+  @ApiPropertyOptional({ type: [TMDBGenreDto] })
+  genres?: TMDBGenreDto[];
+
+  @ApiPropertyOptional({ type: MovieColorsDto })
+  @IsOptional()
+  colors?: MovieColorsDto;
+}
+
 export class SearchResultsDto {
   @ApiProperty({ type: [TMDBMovieResultDto] })
   results: TMDBMovieResultDto[];
@@ -162,4 +190,12 @@ export class UnmarkWatchedDto {
   @IsOptional()
   @IsString()
   mode?: 'latest' | 'all';
+}
+
+export class WatchHistoryItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  watchedDate: string;
 }

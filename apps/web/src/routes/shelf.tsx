@@ -8,6 +8,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Loader2, LogIn, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function createTitleSlug(title: string): string {
 	return title
@@ -61,8 +71,10 @@ function ShelfPage() {
 		return (
 			<div className="min-h-screen bg-gray-950 text-gray-50">
 				<div className="container mx-auto px-4 py-8 max-w-7xl">
-					<div className="flex justify-center py-12">
-						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+						{["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map((key) => (
+							<Skeleton key={key} className="aspect-2/3 rounded-lg" />
+						))}
 					</div>
 				</div>
 			</div>
@@ -73,20 +85,23 @@ function ShelfPage() {
 		return (
 			<div className="min-h-screen bg-gray-950 text-gray-50">
 				<div className="container mx-auto px-4 py-16 max-w-4xl">
-					<div className="text-center">
-						<BookOpen className="w-16 h-16 text-purple-500 mx-auto mb-6" />
-						<h1 className="text-4xl font-bold mb-4">My Shelf</h1>
-						<p className="text-xl text-gray-400 mb-8">
-							Sign in to track movies you've watched
-						</p>
-						<Link
-							to="/login"
-							className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
-						>
-							<LogIn className="w-5 h-5" />
-							Sign in
-						</Link>
-					</div>
+					<Card className="bg-gray-900 border-gray-800 text-center">
+						<CardHeader>
+							<BookOpen className="w-16 h-16 text-purple-500 mx-auto mb-4" />
+							<CardTitle className="text-3xl">My Shelf</CardTitle>
+							<CardDescription className="text-xl">
+								Sign in to track movies you&apos;ve watched
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<Button asChild size="lg">
+								<Link to="/login">
+									<LogIn className="w-5 h-5 mr-2" />
+									Sign in
+								</Link>
+							</Button>
+						</CardContent>
+					</Card>
 				</div>
 			</div>
 		);
@@ -101,8 +116,14 @@ function ShelfPage() {
 				</div>
 
 				{isMoviesLoading && (
-					<div className="flex justify-center py-12">
-						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+						{["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map((key) => (
+							<div key={`movies-loading-${key}`}>
+								<Skeleton className="aspect-2/3 rounded-lg mb-2" />
+								<Skeleton className="h-4 w-3/4 mb-1" />
+								<Skeleton className="h-3 w-1/2" />
+							</div>
+						))}
 					</div>
 				)}
 
@@ -134,8 +155,10 @@ function ShelfPage() {
 												No poster
 											</div>
 										)}
-										<button
+										<Button
 											type="button"
+											size="icon"
+											variant="destructive"
 											onClick={(e) => {
 												e.preventDefault();
 												e.stopPropagation();
@@ -148,7 +171,7 @@ function ShelfPage() {
 												unmarkMutation.variables?.path?.movieId ===
 													tracked.movieId
 											}
-											className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity disabled:opacity-50"
+											className="absolute top-2 right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
 											title="Remove from shelf"
 										>
 											{unmarkMutation.isPending &&
@@ -158,7 +181,7 @@ function ShelfPage() {
 											) : (
 												<Trash2 className="w-4 h-4" />
 											)}
-										</button>
+										</Button>
 									</Link>
 									<Link
 										to="/movies/$movieId/$title"
@@ -183,16 +206,17 @@ function ShelfPage() {
 													month: "short",
 													day: "numeric",
 													year: "numeric",
-													hour: "numeric",
+													hour: "2-digit",
 													minute: "2-digit",
+													hour12: false,
 												})}
 												{(() => {
 													const count = (tracked as { watchCount?: number })
 														.watchCount;
 													return count && count > 1 ? (
-														<span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded-full">
+														<Badge variant="secondary" className="ml-2 text-xs">
 															{count}×
-														</span>
+														</Badge>
 													) : null;
 												})()}
 											</p>
@@ -205,17 +229,22 @@ function ShelfPage() {
 				)}
 
 				{trackedMovies && trackedMovies.length === 0 && (
-					<div className="text-center py-12">
-						<BookOpen className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-						<p className="text-gray-400 text-lg mb-4">Your shelf is empty</p>
-						<Link
-							to="/search"
-							search={{ q: "" }}
-							className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
-						>
-							Search for movies
-						</Link>
-					</div>
+					<Card className="bg-gray-900 border-gray-800 text-center max-w-md mx-auto">
+						<CardHeader>
+							<BookOpen className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+							<CardTitle className="text-2xl">Your shelf is empty</CardTitle>
+							<CardDescription>
+								Start tracking movies you&apos;ve watched
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<Button asChild>
+								<Link to="/search" search={{ q: "" }}>
+									Search for movies
+								</Link>
+							</Button>
+						</CardContent>
+					</Card>
 				)}
 			</div>
 		</div>

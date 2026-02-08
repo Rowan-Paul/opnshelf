@@ -1,9 +1,16 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
-const { withUniwindConfig } = require('uniwind/metro'); 
+const { withUniwindConfig } = require('uniwind/metro');
+const path = require('path');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
+
+// Configure path aliases
+config.resolver.alias = {
+  ...(config.resolver.alias || {}),
+  '@': path.resolve(__dirname, 'src'),
+};
 
 module.exports = withUniwindConfig(config, {  
     // relative path to your global.css file (from previous step)

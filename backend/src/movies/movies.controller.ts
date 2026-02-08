@@ -26,6 +26,7 @@ import {
   TrackedMovieDto,
   MovieDto,
   MarkWatchedDto,
+  TMDBMovieDetailDto,
 } from './dto/movie.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import type { AuthenticatedRequest } from '../auth/types';
@@ -48,7 +49,7 @@ export class MoviesController {
 
   @Get('tmdb/:movieId')
   @ApiOperation({ summary: 'Get movie details from TMDB' })
-  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 200, type: TMDBMovieDetailDto })
   async getMovieDetails(@Param('movieId') movieId: string) {
     // Get movie details from TMDB
     const movieData = await this.moviesService.getMovieDetails(movieId);
@@ -219,5 +220,24 @@ export class MoviesController {
       movieId,
     );
     return history;
+  }
+
+  @Delete('history/:trackedMovieId')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a specific watch history entry' })
+  @ApiParam({ name: 'trackedMovieId', description: 'Tracked movie entry ID' })
+  @ApiResponse({ status: 204, description: 'Watch history entry deleted' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Tracked movie entry not found' })
+  async deleteWatchHistoryEntry(
+    @Param('trackedMovieId') trackedMovieId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.moviesService.removeTrackedMovieById(
+      req.user.did,
+      req.user.session as ATSession,
+      trackedMovieId,
+    );
   }
 }

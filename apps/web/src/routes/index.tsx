@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Film, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
@@ -20,35 +28,46 @@ function HomePage() {
 					<p className="text-xl text-gray-400 mb-8">
 						Your personal media tracker powered by AT Protocol
 					</p>
-					<Link
-						to="/search"
-						search={{ q: "" }}
-						className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
-					>
-						<Search className="w-5 h-5" />
-						Search Movies
-					</Link>
+					<Button asChild size="lg">
+						<Link to="/search" search={{ q: "" }}>
+							<Search className="w-5 h-5 mr-2" />
+							Search Movies
+						</Link>
+					</Button>
 				</div>
 
 				<div className="grid md:grid-cols-3 gap-6 mt-16">
-					<div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-						<h3 className="text-lg font-semibold mb-2">Track Your Media</h3>
-						<p className="text-gray-400">
-							Keep track of movies, shows, and games you've watched and played
-						</p>
-					</div>
-					<div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-						<h3 className="text-lg font-semibold mb-2">Own Your Data</h3>
-						<p className="text-gray-400">
-							Built on AT Protocol - your data belongs to you
-						</p>
-					</div>
-					<div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-						<h3 className="text-lg font-semibold mb-2">Discover & Share</h3>
-						<p className="text-gray-400">
-							See what others are watching and share your favorites
-						</p>
-					</div>
+					<Card className="bg-gray-900 border-gray-800">
+						<CardHeader>
+							<CardTitle>Track Your Media</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<CardDescription>
+								Keep track of movies, shows, and games you&apos;ve watched and
+								played
+							</CardDescription>
+						</CardContent>
+					</Card>
+					<Card className="bg-gray-900 border-gray-800">
+						<CardHeader>
+							<CardTitle>Own Your Data</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<CardDescription>
+								Built on AT Protocol - your data belongs to you
+							</CardDescription>
+						</CardContent>
+					</Card>
+					<Card className="bg-gray-900 border-gray-800">
+						<CardHeader>
+							<CardTitle>Discover & Share</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<CardDescription>
+								See what others are watching and share your favorites
+							</CardDescription>
+						</CardContent>
+					</Card>
 				</div>
 			</div>
 		</div>

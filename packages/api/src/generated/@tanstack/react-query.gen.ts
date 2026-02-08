@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, moviesControllerDeleteWatchHistoryEntry, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -62,7 +62,7 @@ export const moviesControllerGetMovieDetailsQueryKey = (options: Options<MoviesC
 /**
  * Get movie details from TMDB
  */
-export const moviesControllerGetMovieDetailsOptions = (options: Options<MoviesControllerGetMovieDetailsData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof moviesControllerGetMovieDetailsQueryKey>>({
+export const moviesControllerGetMovieDetailsOptions = (options: Options<MoviesControllerGetMovieDetailsData>) => queryOptions<MoviesControllerGetMovieDetailsResponse, DefaultError, MoviesControllerGetMovieDetailsResponse, ReturnType<typeof moviesControllerGetMovieDetailsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await moviesControllerGetMovieDetails({
             ...options,
@@ -127,6 +127,23 @@ export const moviesControllerUnmarkWatchedMutation = (options?: Partial<Options<
     return mutationOptions;
 };
 
+/**
+ * Delete a specific watch history entry
+ */
+export const moviesControllerDeleteWatchHistoryEntryMutation = (options?: Partial<Options<MoviesControllerDeleteWatchHistoryEntryData>>): UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> => {
+    const mutationOptions: UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await moviesControllerDeleteWatchHistoryEntry({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const moviesControllerGetMovieQueryKey = (options: Options<MoviesControllerGetMovieData>) => createQueryKey('moviesControllerGetMovie', options);
 
 /**
@@ -143,6 +160,24 @@ export const moviesControllerGetMovieOptions = (options: Options<MoviesControlle
         return data;
     },
     queryKey: moviesControllerGetMovieQueryKey(options)
+});
+
+export const moviesControllerGetMovieWatchHistoryQueryKey = (options: Options<MoviesControllerGetMovieWatchHistoryData>) => createQueryKey('moviesControllerGetMovieWatchHistory', options);
+
+/**
+ * Get watch history for a specific movie
+ */
+export const moviesControllerGetMovieWatchHistoryOptions = (options: Options<MoviesControllerGetMovieWatchHistoryData>) => queryOptions<MoviesControllerGetMovieWatchHistoryResponse, DefaultError, MoviesControllerGetMovieWatchHistoryResponse, ReturnType<typeof moviesControllerGetMovieWatchHistoryQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await moviesControllerGetMovieWatchHistory({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: moviesControllerGetMovieWatchHistoryQueryKey(options)
 });
 
 export const authControllerGetClientMetadataQueryKey = (options?: Options<AuthControllerGetClientMetadataData>) => createQueryKey('authControllerGetClientMetadata', options);
