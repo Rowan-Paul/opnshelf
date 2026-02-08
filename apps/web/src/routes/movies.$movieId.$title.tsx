@@ -13,6 +13,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { format } from "date-fns";
 import {
 	ArrowLeft,
 	Calendar,
@@ -26,9 +27,10 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
 	Dialog,
 	DialogContent,
@@ -36,6 +38,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { TimePicker } from "@/components/ui/time-picker";
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
 	loader: async ({ params, context }) => {
@@ -66,13 +74,22 @@ function MovieDetailPage() {
 	const { movieId } = Route.useParams();
 	const queryClient = useQueryClient();
 	const router = useRouter();
-	const dateInputId = useId();
-	const timeInputId = useId();
+
 	const [showHours, setShowHours] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [customDate, setCustomDate] = useState("");
 	const [customTime, setCustomTime] = useState("");
+	const [timeDate, setTimeDate] = useState<Date | undefined>(undefined);
 	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+
+	// Sync timeDate changes to customTime string
+	useEffect(() => {
+		if (timeDate) {
+			const hours = timeDate.getHours().toString().padStart(2, "0");
+			const minutes = timeDate.getMinutes().toString().padStart(2, "0");
+			setCustomTime(`${hours}:${minutes}`);
+		}
+	}, [timeDate]);
 
 	const formatRuntime = (minutes: number, useHours: boolean) => {
 		if (!useHours) return `${minutes} min`;
@@ -273,6 +290,7 @@ function MovieDetailPage() {
 		const now = new Date();
 		setCustomDate(now.toISOString().split("T")[0]);
 		setCustomTime(now.toTimeString().slice(0, 5));
+		setTimeDate(now);
 		setShowDateModal(true);
 	};
 
@@ -842,33 +860,44 @@ function MovieDetailPage() {
 						<div className="space-y-4">
 							<div>
 								<label
-									htmlFor={dateInputId}
-									className="block text-sm text-gray-400 mb-2"
+									htmlFor="date-picker"
+									className="block text-sm text-gray-400 mb-2 cursor-pointer"
 								>
 									Date
 								</label>
-								<input
-									id={dateInputId}
-									type="date"
-									value={customDate}
-									onChange={(e) => setCustomDate(e.target.value)}
-									className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 text-white focus:outline-none focus:border-purple-500"
-								/>
+								<Popover>
+									<PopoverTrigger asChild>
+										<Button
+											variant="outline"
+											className="w-full px-4 py-3 h-auto mt-2 bg-gray-800 rounded-xl border border-gray-700 text-white hover:bg-gray-700 hover:text-white justify-start text-left font-normal"
+										>
+											<Calendar className="mr-2 h-4 w-4 text-gray-400" />
+											{customDate ? (
+												format(new Date(customDate), "PPP")
+											) : (
+												<span className="text-gray-400">Pick a date</span>
+											)}
+										</Button>
+									</PopoverTrigger>
+									<PopoverContent
+										className="w-auto p-0 bg-gray-900 border-gray-700"
+										align="start"
+									>
+										<CalendarComponent
+											mode="single"
+											selected={customDate ? new Date(customDate) : undefined}
+											onSelect={(date) => {
+												if (date) {
+													setCustomDate(format(date, "yyyy-MM-dd"));
+												}
+											}}
+											autoFocus
+										/>
+									</PopoverContent>
+								</Popover>
 							</div>
 							<div>
-								<label
-									htmlFor={timeInputId}
-									className="block text-sm text-gray-400 mb-2"
-								>
-									Time (optional)
-								</label>
-								<input
-									id={timeInputId}
-									type="time"
-									value={customTime}
-									onChange={(e) => setCustomTime(e.target.value)}
-									className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 text-white focus:outline-none focus:border-purple-500"
-								/>
+								<TimePicker date={timeDate} setDate={setTimeDate} />
 							</div>
 							<div className="flex gap-3 pt-4">
 								<Button

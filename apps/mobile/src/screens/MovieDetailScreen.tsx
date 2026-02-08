@@ -25,7 +25,7 @@ import {
 	TextInput,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-native-date-picker';
 import type { RootStackParamList } from '../navigation/types';
 import { useIsLandscape } from '../utils';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,6 @@ export function MovieDetailScreen({
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [customDate, setCustomDate] = useState<Date | null>(null);
 	const [showDatePicker, setShowDatePicker] = useState(false);
-	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
 	const isLandscape = useIsLandscape();
 	const backdropHeight = isLandscape ? 'h-80' : 'h-64';
@@ -235,29 +234,6 @@ export function MovieDetailScreen({
 	const openDateModal = () => {
 		setCustomDate(new Date());
 		setShowDateModal(true);
-	};
-
-	const onDateChange = (event: any, selectedDate?: Date) => {
-		if (event.type === 'dismissed') {
-			setShowDatePicker(false);
-			return;
-		}
-		setShowDatePicker(false);
-		if (selectedDate) {
-			const currentDate = customDate || new Date();
-			selectedDate.setHours(currentDate.getHours(), currentDate.getMinutes());
-			setCustomDate(selectedDate);
-			setShowTimePicker(true);
-		}
-	};
-
-	const onTimeChange = (event: any, selectedTime?: Date) => {
-		setShowTimePicker(false);
-		if (selectedTime && customDate) {
-			const newDate = new Date(customDate);
-			newDate.setHours(selectedTime.getHours(), selectedTime.getMinutes());
-			setCustomDate(newDate);
-		}
 	};
 
 	const isPending =
@@ -725,32 +701,18 @@ export function MovieDetailScreen({
 							className="flex-row items-center justify-between p-4 bg-gray-800 rounded-lg"
 							activeOpacity={0.7}
 						>
-							<Text className="text-gray-300">Date</Text>
+							<Text className="text-gray-300">Date & Time</Text>
 							<Text className="text-white font-medium">
 								{customDate
-									? customDate.toLocaleDateString('en-US', {
+									? customDate.toLocaleString('en-US', {
 											year: 'numeric',
 											month: 'short',
 											day: 'numeric',
-									  })
-									: 'Select date'}
-							</Text>
-						</TouchableOpacity>
-
-						<TouchableOpacity
-							onPress={() => setShowTimePicker(true)}
-							className="flex-row items-center justify-between p-4 bg-gray-800 rounded-lg"
-							activeOpacity={0.7}
-						>
-							<Text className="text-gray-300">Time</Text>
-							<Text className="text-white font-medium">
-								{customDate
-									? customDate.toLocaleTimeString('en-US', {
 											hour: '2-digit',
 											minute: '2-digit',
 											hour12: false,
 									  })
-									: 'Select time'}
+									: 'Select date and time'}
 							</Text>
 						</TouchableOpacity>
 					</View>
@@ -771,27 +733,18 @@ export function MovieDetailScreen({
 				</DialogContent>
 			</Dialog>
 
-			{/* Date Picker */}
-			{showDatePicker && (
-				<DateTimePicker
-					value={customDate || new Date()}
-					mode="date"
-					display="default"
-					onChange={onDateChange}
-					maximumDate={new Date()}
-				/>
-			)}
-
-			{/* Time Picker */}
-			{showTimePicker && (
-				<DateTimePicker
-					value={customDate || new Date()}
-					mode="time"
-					display="default"
-					onChange={onTimeChange}
-					is24Hour={true}
-				/>
-			)}
+			<DatePicker
+				modal
+				open={showDatePicker}
+				date={customDate || new Date()}
+				mode="datetime"
+				maximumDate={new Date()}
+				onConfirm={(date) => {
+					setShowDatePicker(false);
+					setCustomDate(date);
+				}}
+				onCancel={() => setShowDatePicker(false)}
+			/>
 		</>
 	);
 }
