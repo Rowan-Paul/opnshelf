@@ -28,7 +28,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
     private readonly moviesService: MoviesService,
   ) {
     this.tapUrl =
-      this.config.get<string>('TAP_URL') || 'wss://tap.opnshelf.xyz';
+      this.config.get<string>('TAP_URL') ?? 'http://localhost:2480';
     this.tapAdminPassword = this.config.get<string>('TAP_ADMIN_PASSWORD');
   }
 
