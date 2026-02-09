@@ -6,7 +6,6 @@ import { TID } from '@atproto/common';
 import {
   main as movieSchema,
   $nsid as COLLECTION,
-  $validate as validateMovieRecord,
 } from '../lexicons/app/opnshelf/movie';
 import type { Main as MovieRecord } from '../lexicons/app/opnshelf/movie.defs';
 import { ColorExtractionService } from './color-extraction.service';
@@ -225,14 +224,6 @@ export class MoviesService {
       watchedAt,
       createdAt: now,
     });
-
-    // Validate record before writing (matching tutorial pattern)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const validation = validateMovieRecord(record) as { success: boolean };
-    if (!validation.success) {
-      this.logger.warn({ record }, 'Invalid movie record');
-      throw new Error('Invalid movie record');
-    }
 
     // Create agent from session and write record to user's PDS
     const agent = new Agent(
