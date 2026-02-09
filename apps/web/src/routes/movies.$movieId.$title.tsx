@@ -917,7 +917,7 @@ function MovieDetailPage() {
 									{markMutation.isPending ? (
 										<Loader2 className="w-5 h-5 animate-spin mx-auto" />
 									) : (
-										"Add Watch"
+										"Add Play"
 									)}
 								</Button>
 							</div>

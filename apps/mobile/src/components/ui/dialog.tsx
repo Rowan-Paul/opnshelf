@@ -9,6 +9,9 @@ import {
   type ModalProps,
   ScrollView,
   Pressable,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { cn } from '@/lib/utils';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,14 +34,21 @@ const Dialog = React.forwardRef<
       onRequestClose={() => onOpenChange(false)}
       {...props}
     >
-      <Pressable
-        className="flex-1 bg-black/70 justify-center items-center p-4"
-        onPress={() => onOpenChange(false)}
-      >
-        <Pressable onPress={(e) => e.stopPropagation()}>
-          {children}
-        </Pressable>
-      </Pressable>
+      <SafeAreaView className="flex-1">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          <Pressable
+            className="flex-1 bg-black/70 justify-center items-center p-4"
+            onPress={() => onOpenChange(false)}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              {children}
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 });
@@ -131,11 +141,15 @@ DialogClose.displayName = 'DialogClose';
 const DialogScrollContent = React.forwardRef<
   React.ElementRef<typeof ScrollView>,
   React.ComponentProps<typeof ScrollView>
->(({ className, ...props }, ref) => (
+>(({ className, contentContainerStyle, ...props }, ref) => (
   <ScrollView
     ref={ref}
     className={cn('max-h-[50vh]', className)}
     showsVerticalScrollIndicator={true}
+    contentContainerStyle={[
+      { flexGrow: 0 },
+      contentContainerStyle,
+    ]}
     {...props}
   />
 ));

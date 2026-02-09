@@ -1,34 +1,25 @@
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { authControllerMeOptions, authControllerLogoutMutation } from '@opnshelf/api';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Image, TouchableOpacity, View } from 'react-native';
-import type { RootStackParamList } from '../navigation';
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function HeaderRight() {
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Fetch auth state using generated TanStack Query hook
   const { data: user, isLoading } = useQuery({
     ...authControllerMeOptions(),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  // Logout mutation using generated TanStack Query hook
   const logoutMutation = useMutation({
     ...authControllerLogoutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth'] });
       queryClient.invalidateQueries({ queryKey: ['shelf'] });
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+      router.replace('/');
     },
     onError: (error) => {
       console.error('Logout failed:', error);
@@ -51,7 +42,7 @@ export function HeaderRight() {
     return (
       <TouchableOpacity
         className="mr-4 flex-row items-center gap-2"
-        onPress={() => navigation.navigate('Login', {})}
+        onPress={() => router.push('/login')}
         activeOpacity={0.7}
       >
         <Ionicons name="log-in" size={24} color="#a855f7" />
@@ -61,15 +52,13 @@ export function HeaderRight() {
 
   return (
     <View className="flex-row items-center gap-3 mr-4">
-      {/* Shelf button */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('Shelf')}
+        onPress={() => router.push('/shelf')}
         activeOpacity={0.7}
       >
         <Ionicons name="book" size={24} color="#a855f7" />
       </TouchableOpacity>
 
-      {/* User avatar/logout */}
       <TouchableOpacity
         onPress={handleLogout}
         disabled={logoutMutation.isPending}

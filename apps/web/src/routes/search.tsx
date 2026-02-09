@@ -47,6 +47,7 @@ function SearchPage() {
 	const queryClient = useQueryClient();
 	const [query, setQuery] = useState(searchQuery);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const lastNavigatedQueryRef = useRef<string>(searchQuery);
 
 	// Fetch auth state using generated TanStack Query hook
 	const { data: user } = useQuery({
@@ -101,9 +102,13 @@ function SearchPage() {
 		},
 	});
 
-	// Sync input with URL when navigating back/forward
+	// Sync input with URL only for external navigation (back/forward buttons)
+	// Skip sync if we just navigated internally to avoid overwriting user's input
 	useEffect(() => {
-		setQuery(searchQuery);
+		if (searchQuery !== lastNavigatedQueryRef.current) {
+			setQuery(searchQuery);
+			lastNavigatedQueryRef.current = searchQuery;
+		}
 	}, [searchQuery]);
 
 	// Debounced navigation when query changes
@@ -115,6 +120,7 @@ function SearchPage() {
 		const trimmed = query.trim();
 		if (trimmed !== searchQuery) {
 			debounceRef.current = setTimeout(() => {
+				lastNavigatedQueryRef.current = trimmed;
 				navigate({ search: { q: trimmed } });
 			}, DEBOUNCE_MS);
 		}

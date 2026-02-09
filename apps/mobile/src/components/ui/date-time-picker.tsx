@@ -58,14 +58,16 @@ export function DateTimePickerModal({
 
 	const handleDayPress = useCallback(
 		(day: number) => {
-			const newDate = new Date(selectedDate);
-			newDate.setFullYear(currentYear, currentMonth, day);
+			const hours = parseInt(hourInput, 10) || 0;
+			const minutes = parseInt(minuteInput, 10) || 0;
+
+			const newDate = new Date(currentYear, currentMonth, day, hours, minutes, 0, 0);
 			setSelectedDate(newDate);
 		},
-		[selectedDate, currentMonth, currentYear],
+		[currentMonth, currentYear, hourInput, minuteInput],
 	);
 
-	const handleTimeChange = useCallback(() => {
+	const normalizeTimeInput = useCallback(() => {
 		let hours = parseInt(hourInput, 10);
 		let minutes = parseInt(minuteInput, 10);
 
@@ -74,19 +76,23 @@ export function DateTimePickerModal({
 		if (isNaN(minutes) || minutes < 0) minutes = 0;
 		if (minutes > 59) minutes = 59;
 
-		const newDate = new Date(selectedDate);
-		newDate.setHours(hours, minutes);
-		setSelectedDate(newDate);
-		setHourInput(hours.toString().padStart(2, '0'));
-		setMinuteInput(minutes.toString().padStart(2, '0'));
-	}, [hourInput, minuteInput, selectedDate]);
+		const normalizedHours = hours.toString().padStart(2, '0');
+		const normalizedMinutes = minutes.toString().padStart(2, '0');
+
+		setHourInput(normalizedHours);
+		setMinuteInput(normalizedMinutes);
+
+		return { hours, minutes };
+	}, [hourInput, minuteInput]);
 
 	const handleConfirm = useCallback(() => {
-		handleTimeChange();
+		const { hours, minutes } = normalizeTimeInput();
+
 		const finalDate = new Date(selectedDate);
-		finalDate.setHours(parseInt(hourInput, 10), parseInt(minuteInput, 10));
+		finalDate.setHours(hours, minutes, 0, 0);
+
 		onConfirm(finalDate);
-	}, [selectedDate, hourInput, minuteInput, onConfirm, handleTimeChange]);
+	}, [selectedDate, hourInput, minuteInput, onConfirm, normalizeTimeInput]);
 
 	const goToPreviousMonth = useCallback(() => {
 		if (currentMonth === 0) {
@@ -238,7 +244,7 @@ export function DateTimePickerModal({
 							<TextInput
 								value={hourInput}
 								onChangeText={setHourInput}
-								onBlur={handleTimeChange}
+								onBlur={normalizeTimeInput}
 								keyboardType="number-pad"
 								maxLength={2}
 								className="bg-gray-800 text-white text-center text-xl w-16 h-12 rounded-lg border border-gray-700"
@@ -249,7 +255,7 @@ export function DateTimePickerModal({
 							<TextInput
 								value={minuteInput}
 								onChangeText={setMinuteInput}
-								onBlur={handleTimeChange}
+								onBlur={normalizeTimeInput}
 								keyboardType="number-pad"
 								maxLength={2}
 								className="bg-gray-800 text-white text-center text-xl w-16 h-12 rounded-lg border border-gray-700"
