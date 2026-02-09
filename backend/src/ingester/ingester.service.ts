@@ -27,8 +27,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly moviesService: MoviesService,
   ) {
-    this.tapUrl =
-      this.config.get<string>('TAP_URL') ?? 'http://localhost:2480';
+    this.tapUrl = this.config.get<string>('TAP_URL') ?? 'http://localhost:2480';
     this.tapAdminPassword = this.config.get<string>('TAP_ADMIN_PASSWORD');
   }
 

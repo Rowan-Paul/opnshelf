@@ -6,6 +6,7 @@ services:
       - "2480:2480"
     environment:
       - TAP_ADMIN_PASSWORD=y29d6b572f17af0f150cd4b480bec85cf
+      - TAP_COLLECTION_FILTERS=app.opnshelf.*
     volumes:
       - tap-data:/data
     depends_on:

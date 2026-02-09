@@ -300,7 +300,7 @@ export class MoviesService {
       });
 
       if (!latestWatch) {
-        throw new Error('No watch record found for this movie');
+        return { movieId, mode };
       }
 
       // Delete from PDS
