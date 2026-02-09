@@ -22,6 +22,19 @@ jest.mock('@atproto/api', () => ({
   })),
 }));
 
+// Mock lexicon module
+const mockValidateMovieRecord = jest.fn();
+jest.mock('../lexicons/app/opnshelf/movie', () => ({
+  main: {
+    build: jest.fn((data: Record<string, unknown>) => ({
+      $type: 'app.opnshelf.movie',
+      ...data,
+    })),
+  },
+  $nsid: 'app.opnshelf.movie',
+  $validate: mockValidateMovieRecord,
+}));
+
 import { MoviesService } from './movies.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ColorExtractionService } from './color-extraction.service';
@@ -64,6 +77,7 @@ describe('MoviesService', () => {
     jest.clearAllMocks();
     mockPutRecord.mockReset();
     mockDeleteRecord.mockReset();
+    mockValidateMovieRecord.mockReturnValue({ success: true });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -456,7 +470,7 @@ describe('MoviesService', () => {
       expect(mockPutRecord).toHaveBeenCalledWith({
         repo: 'did:plc:abc123',
         collection: 'app.opnshelf.movie',
-        rkey: expect.stringMatching(/^movie-123-\d+$/),
+        rkey: expect.stringMatching(/^[a-z0-9]+$/),
         record: expect.objectContaining({
           $type: 'app.opnshelf.movie',
           movieId: '123',
@@ -464,7 +478,7 @@ describe('MoviesService', () => {
         }),
         validate: false,
       });
-      expect(result.rkey).toMatch(/^movie-123-\d+$/);
+      expect(result.rkey).toMatch(/^[a-z0-9]+$/);
       expect(result.record).toMatchObject({
         $type: 'app.opnshelf.movie',
         movieId: '123',
@@ -580,14 +594,19 @@ describe('MoviesService', () => {
       });
     });
 
-    it('should throw error when no watch record found in latest mode', async () => {
+    it('should return empty result when no watch record found in latest mode', async () => {
       const mockSession = { did: 'did:plc:abc123' };
 
       mockPrismaService.trackedMovie.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.unmarkWatched('did:plc:abc123', mockSession, '123', 'latest'),
-      ).rejects.toThrow('No watch record found for this movie');
+      const result = await service.unmarkWatched(
+        'did:plc:abc123',
+        mockSession,
+        '123',
+        'latest',
+      );
+
+      expect(result).toEqual({ movieId: '123', mode: 'latest' });
     });
   });
 
