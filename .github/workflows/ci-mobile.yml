@@ -31,5 +31,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm --filter mobile run lint
+
       - name: Typecheck
         run: pnpm --filter mobile exec tsc --noEmit
