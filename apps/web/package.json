@@ -1,5 +1,5 @@
 {
-  "name": "opnshelf",
+  "name": "@opnshelf/web",
   "private": true,
   "type": "module",
   "scripts": {
