@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@atproto/api": "^0.18.18",
+    "@atproto/common": "^0.5.11",
     "@atproto/identity": "^0.4.10",
     "@atproto/lex": "^0.0.14",
     "@atproto/oauth-client-node": "^0.3.16",

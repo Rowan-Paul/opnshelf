@@ -217,6 +217,9 @@ importers:
       '@atproto/api':
         specifier: ^0.18.18
         version: 0.18.18
+      '@atproto/common':
+        specifier: ^0.5.11
+        version: 0.5.11
       '@atproto/identity':
         specifier: ^0.4.10
         version: 0.4.10
@@ -472,10 +475,6 @@ packages:
 
   '@atproto/common@0.5.11':
     resolution: {integrity: sha512-WRlT4s+wv80WdQuzkQub9D5vTD82O8dH2p91u4b+x3O17q5IQbmA3Lj+1NICINNSy2voqloqAWdqXEkRfdlAPw==}
-    engines: {node: '>=18.7.0'}
-
-  '@atproto/common@0.5.9':
-    resolution: {integrity: sha512-rzl8dB7ErpA/VUgCidahUtbxEph50J4g7j68bZmlwwrHlrtvTe8DjrwH5EUFEcegl9dadIhcVJ3qi0kPKEUr+g==}
     engines: {node: '>=18.7.0'}
 
   '@atproto/crypto@0.4.5':
@@ -9115,15 +9114,6 @@ snapshots:
       multiformats: 9.9.0
       pino: 8.21.0
 
-  '@atproto/common@0.5.9':
-    dependencies:
-      '@atproto/common-web': 0.4.14
-      '@atproto/lex-cbor': 0.0.9
-      '@atproto/lex-data': 0.0.9
-      iso-datestring-validator: 2.2.2
-      multiformats: 9.9.0
-      pino: 8.21.0
-
   '@atproto/crypto@0.4.5':
     dependencies:
       '@noble/curves': 1.9.7
@@ -9372,7 +9362,7 @@ snapshots:
 
   '@atproto/repo@0.8.12':
     dependencies:
-      '@atproto/common': 0.5.9
+      '@atproto/common': 0.5.11
       '@atproto/common-web': 0.4.14
       '@atproto/crypto': 0.4.5
       '@atproto/lexicon': 0.6.1
@@ -9384,7 +9374,7 @@ snapshots:
 
   '@atproto/sync@0.1.39':
     dependencies:
-      '@atproto/common': 0.5.9
+      '@atproto/common': 0.5.11
       '@atproto/identity': 0.4.10
       '@atproto/lexicon': 0.6.1
       '@atproto/repo': 0.8.12
@@ -9423,7 +9413,7 @@ snapshots:
 
   '@atproto/xrpc-server@0.10.10':
     dependencies:
-      '@atproto/common': 0.5.9
+      '@atproto/common': 0.5.11
       '@atproto/crypto': 0.4.5
       '@atproto/lex-cbor': 0.0.9
       '@atproto/lex-data': 0.0.9

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Agent } from '@atproto/api';
+import { TID } from '@atproto/common';
 import {
   main as movieSchema,
   $nsid as COLLECTION,
@@ -209,9 +210,8 @@ export class MoviesService {
     movieId: string,
     customWatchedAt?: string,
   ) {
-    // Generate unique rkey with timestamp to allow multiple watches
-    const timestamp = Date.now();
-    const rkey = `movie-${movieId}-${timestamp}`;
+    // Generate unique TID for rkey (chronological sortable, collision-resistant)
+    const rkey = TID.nextStr();
     const watchedAt = customWatchedAt
       ? new Date(customWatchedAt).toISOString()
       : new Date().toISOString();
