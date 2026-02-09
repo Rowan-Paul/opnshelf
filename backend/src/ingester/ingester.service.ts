@@ -33,12 +33,16 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit() {
-    // Start the ingester (non-blocking)
-    this.startIngester();
-    // Wait a moment for the channel to start connecting, then register repos
-    setTimeout(() => {
-      void this.registerExistingUsers();
-    }, 1000);
+    try {
+      // Start the ingester (non-blocking)
+      this.startIngester();
+      // Wait a moment for the channel to start connecting, then register repos
+      setTimeout(() => {
+        void this.registerExistingUsers();
+      }, 1000);
+    } catch (e) {
+      this.logger.error('TAP init failed; continuing without ingester', e);
+    }
   }
 
   async onModuleDestroy() {
