@@ -13,7 +13,6 @@ import { Check, Loader2, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	Pressable,
 	StyleSheet,
 	Text,
@@ -21,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/contexts/toast";
 import { Badge } from "@/components/ui/Badge";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -105,6 +105,7 @@ export default function SearchScreen() {
 	const [debouncedQuery, setDebouncedQuery] = useState("");
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const { user } = useAuth();
+	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
 	// Debounce search query
@@ -155,10 +156,10 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
-			Alert.alert("Success", "Added to your shelf");
+			showToast("Added to your shelf", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to add to shelf. Please try again.");
+			showToast("Failed to add to shelf. Please try again.", "error");
 		},
 	});
 
@@ -171,20 +172,18 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
-			Alert.alert("Success", "Removed from your shelf");
+			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to remove from shelf. Please try again.");
+			showToast("Failed to remove from shelf. Please try again.", "error");
 		},
 	});
 
 	const handleToggleWatched = useCallback(
 		(movieId: string, isWatched: boolean) => {
 			if (!user) {
-				Alert.alert("Sign In Required", "Please sign in to track movies", [
-					{ text: "Cancel", style: "cancel" },
-					{ text: "Sign In", onPress: () => router.push("/(tabs)/shelf") },
-				]);
+				showToast("Sign in to track movies", "info");
+				router.push("/login");
 				return;
 			}
 
@@ -194,7 +193,7 @@ export default function SearchScreen() {
 				markMutation.mutate({ body: { movieId } });
 			}
 		},
-		[user, markMutation, unmarkMutation]
+		[user, markMutation, unmarkMutation, router, showToast]
 	);
 
 	const handleMoviePress = useCallback(
@@ -238,8 +237,8 @@ export default function SearchScreen() {
 	const renderSkeleton = () => (
 		<View style={styles.skeletonGrid}>
 			{[...Array(10)].map((_, i) => (
-				<View key={i} style={styles.movieItem}>
-					<Skeleton width="100%" height={180} borderRadius={borderRadius.lg} />
+				<View key={i} style={styles.skeletonItem}>
+					<Skeleton width="100%" height={210} borderRadius={borderRadius.lg} />
 					<View style={{ marginTop: spacing.sm }}>
 						<Skeleton width="80%" height={16} />
 					</View>
@@ -279,6 +278,7 @@ export default function SearchScreen() {
 					keyExtractor={keyExtractor}
 					numColumns={2}
 					contentContainerStyle={styles.listContent}
+					extraData={watchedMovieIds}
 					ListHeaderComponent={
 						<Text style={styles.resultsCount}>
 							Found {data.total_results.toLocaleString()} results
@@ -322,7 +322,9 @@ const styles = StyleSheet.create({
 	movieItem: {
 		flex: 1,
 		marginBottom: spacing.lg,
-		maxWidth: "48%",
+		marginHorizontal: spacing.sm,
+		minWidth: 140,
+		maxWidth: "47%",
 	},
 	posterContainer: {
 		aspectRatio: 2 / 3,
@@ -393,6 +395,18 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		flexWrap: "wrap",
 		padding: spacing.lg,
-		gap: spacing.md,
+		paddingTop: 0,
+	},
+	skeletonItem: {
+		flex: 1,
+		marginBottom: spacing.lg,
+		marginHorizontal: spacing.sm,
+		minWidth: 140,
+		maxWidth: "47%",
+	},
+	skeletonPoster: {
+		aspectRatio: 2 / 3,
+		borderRadius: borderRadius.lg,
+		overflow: "hidden",
 	},
 });

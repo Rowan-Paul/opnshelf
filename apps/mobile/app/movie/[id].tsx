@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState, useCallback } from "react";
 import {
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
@@ -11,38 +12,24 @@ import {
 import type { TmdbMovieDetailDto, WatchHistoryItemDto } from "@opnshelf/api";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import {
-	ArrowLeft,
-	Calendar,
-	Check,
-	Clock,
-	Eye,
-	History,
-	Loader2,
-	Plus,
-	RotateCcw,
-	Trash2,
-	X,
-} from "lucide-react-native";
-import { useCallback, useMemo, useState } from "react";
-import {
-	Alert,
+	ActivityIndicator,
 	Modal,
 	Pressable,
 	ScrollView,
 	StyleSheet,
 	Text,
+	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/contexts/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { colors, spacing, borderRadius } from "@/constants/theme";
-import { Image } from "expo-image";
-import { format } from "date-fns";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
 const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";
@@ -55,10 +42,22 @@ function formatRuntime(minutes: number, useHours: boolean): string {
 	return `${hours}h ${mins}m`;
 }
 
+function formatWatchDate(dateString: string): string {
+	return new Date(dateString).toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	});
+}
+
 export default function MovieDetailScreen() {
 	const { id: movieId, title } = useLocalSearchParams<{ id: string; title?: string }>();
 	const router = useRouter();
 	const { user } = useAuth();
+	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
 	const [showHours, setShowHours] = useState(false);
@@ -76,6 +75,14 @@ export default function MovieDetailScreen() {
 	});
 
 	const movie = movieData as TmdbMovieDetailDto | undefined;
+
+	// Use server-provided colors with fallbacks
+	const movieColors = movie?.colors || {
+		primary: "#8b5cf6",
+		secondary: "#6366f1",
+		accent: "#a855f7",
+		muted: "#4c1d95",
+	};
 
 	// Fetch user's tracked movies
 	const { data: trackedMovies } = useQuery({
@@ -113,16 +120,8 @@ export default function MovieDetailScreen() {
 	// Format the watched date
 	const formattedWatchedDate = useMemo(() => {
 		if (!trackedMovie?.watchedDate) return null;
-		return format(new Date(trackedMovie.watchedDate), "MMM d, yyyy HH:mm");
+		return formatWatchDate(trackedMovie.watchedDate);
 	}, [trackedMovie]);
-
-	// Use server-provided colors with fallbacks
-	const movieColors = movie?.colors || {
-		primary: "#8b5cf6",
-		secondary: "#6366f1",
-		accent: "#a855f7",
-		muted: "#4c1d95",
-	};
 
 	// Mutations
 	const markMutation = useMutation({
@@ -137,10 +136,10 @@ export default function MovieDetailScreen() {
 				queryKey: ["watchHistory", user?.did, movieId],
 			});
 			setShowDateModal(false);
-			Alert.alert("Success", "Added to your shelf");
+			showToast("Added to your shelf", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to add. Please try again.");
+			showToast("Failed to add. Please try again.", "error");
 		},
 	});
 
@@ -155,10 +154,10 @@ export default function MovieDetailScreen() {
 			queryClient.invalidateQueries({
 				queryKey: ["watchHistory", user?.did, movieId],
 			});
-			Alert.alert("Success", "Removed from your shelf");
+			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to remove. Please try again.");
+			showToast("Failed to remove. Please try again.", "error");
 		},
 	});
 
@@ -173,10 +172,10 @@ export default function MovieDetailScreen() {
 			queryClient.invalidateQueries({
 				queryKey: ["watchHistory", user?.did, movieId],
 			});
-			Alert.alert("Success", "Watch entry removed");
+			showToast("Watch entry removed", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to remove watch entry. Please try again.");
+			showToast("Failed to remove watch entry. Please try again.", "error");
 		},
 	});
 
@@ -251,81 +250,81 @@ export default function MovieDetailScreen() {
 		return (
 			<SafeAreaView style={styles.container}>
 				<View style={styles.loadingContainer}>
-					<Skeleton width={80} height={80} borderRadius={borderRadius.full} />
-					<View style={{ marginTop: spacing.lg }}>
-						<Skeleton width={200} height={24} />
-					</View>
+					<ActivityIndicator size="large" color={movieColors.primary} />
 				</View>
 			</SafeAreaView>
 		);
 	}
 
 	return (
-		<View style={styles.container}>
-			<ScrollView>
+		<>
+			<ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
 				{/* Hero Section with Backdrop */}
-				<View style={styles.heroContainer}>
+				<View style={styles.heroWrapper}>
 					{backdropUrl ? (
-						<>
-							<Image
-								source={{ uri: backdropUrl }}
-								style={styles.backdrop}
-								contentFit="cover"
-							/>
-							<View style={[styles.gradientOverlay, styles.bottomGradient]} />
-							<View style={[styles.gradientOverlay, styles.sideGradient]} />
-						</>
-					) : (
-						<View
-							style={[
-								styles.backdrop,
-								{ backgroundColor: movieColors.muted },
-							]}
+						<Image
+							source={{ uri: backdropUrl }}
+							style={styles.backdrop}
+							contentFit="cover"
 						/>
+					) : (
+						<View style={[styles.backdrop, { backgroundColor: movieColors.muted }]} />
 					)}
 
 					{/* Back button */}
-					<Pressable onPress={() => router.back()} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.text} />
-					</Pressable>
+					<TouchableOpacity
+						onPress={() => router.back()}
+						style={styles.backButton}
+						activeOpacity={0.8}
+					>
+						<Ionicons name="arrow-back" size={24} color="#f9fafb" />
+					</TouchableOpacity>
 
-					{/* Hero Content */}
-					<View style={styles.heroContent}>
-						{posterUrl && (
-							<View
-								style={[
-									styles.posterContainer,
-									{ shadowColor: movieColors.primary },
-								]}
-							>
+					{/* Poster and Title Overlay */}
+					<View style={styles.heroOverlay}>
+						<View style={styles.posterWrapper}>
+							{posterUrl ? (
 								<Image
 									source={{ uri: posterUrl }}
 									style={styles.poster}
 									contentFit="cover"
 								/>
-							</View>
-						)}
-
-						<View style={styles.titleContainer}>
-							<Text style={[styles.title, { textShadowColor: `${movieColors.primary}60` }]}>
-								{movie?.title}
-							</Text>
-							{releaseYear && (
-								<View style={styles.metaRow}>
-									<View style={styles.metaItem}>
-										<Calendar size={16} color={movieColors.accent} />
-										<Text style={styles.metaText}>{releaseYear}</Text>
-									</View>
-									{movie?.runtime && (
-										<Pressable onPress={() => setShowHours(!showHours)} style={styles.metaItem}>
-											<Clock size={16} color={movieColors.accent} />
-											<Text style={styles.metaText}>
-												{formatRuntime(movie.runtime, showHours)}
-											</Text>
-										</Pressable>
-									)}
+							) : (
+								<View style={[styles.poster, styles.noPoster]}>
+									<Text style={styles.noPosterText}>No poster</Text>
 								</View>
 							)}
+						</View>
+
+						<View style={styles.titleWrapper}>
+							<Text
+								style={[styles.title, { textShadowColor: movieColors.primary }]}
+								numberOfLines={2}
+								adjustsFontSizeToFit
+								minimumFontScale={0.7}
+							>
+								{movie?.title || title}
+							</Text>
+							<View style={styles.metaRow}>
+								{!!releaseYear && (
+									<View style={styles.metaItem}>
+										<Ionicons name="calendar-outline" size={14} color={movieColors.accent} />
+										<Text style={styles.metaText}>{releaseYear}</Text>
+									</View>
+								)}
+								{movie?.runtime && (
+									<TouchableOpacity
+										onPress={() => setShowHours(!showHours)}
+										style={styles.metaItem}
+										activeOpacity={0.8}
+									>
+										<Ionicons name="time-outline" size={14} color={movieColors.accent} />
+										<Text style={styles.metaText}>
+											{formatRuntime(movie.runtime, showHours)}
+										</Text>
+									</TouchableOpacity>
+								)}
+							</View>
 						</View>
 					</View>
 				</View>
@@ -337,153 +336,182 @@ export default function MovieDetailScreen() {
 						{user ? (
 							!isWatched ? (
 								<>
-									<Button
-										size="lg"
+									<TouchableOpacity
 										onPress={handleMarkWatched}
-										isLoading={isPending}
+										disabled={isPending}
 										style={[
 											styles.primaryButton,
-											{
-												backgroundColor: movieColors.primary,
-												shadowColor: movieColors.primary,
-											},
+											{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
 										]}
+										activeOpacity={0.8}
 									>
-										<Plus size={20} color={colors.text} style={styles.buttonIcon} />
-										<Text style={styles.buttonText}>Add to Shelf</Text>
-									</Button>
-									<Button variant="outline" onPress={openDateModal}>
-										<Calendar size={16} color={colors.textMuted} style={styles.buttonIcon} />
-										<Text style={styles.secondaryButtonText}>Add on Different Date</Text>
-									</Button>
+										{isPending ? (
+											<ActivityIndicator color="#f9fafb" />
+										) : (
+											<View style={styles.buttonContent}>
+												<Ionicons name="add" size={20} color="#f9fafb" />
+												<Text style={styles.buttonText}>Add to Shelf</Text>
+											</View>
+										)}
+									</TouchableOpacity>
+
+									<TouchableOpacity
+										onPress={openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons name="calendar" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Add on Different Date
+											</Text>
+										</View>
+									</TouchableOpacity>
 								</>
 							) : (
 								<>
-									<Card style={styles.watchedCard}>
-										<View style={styles.watchedHeader}>
-											<Check size={20} color={colors.success} />
-											<Text style={styles.watchedText}>On Your Shelf</Text>
-										</View>
-										{formattedWatchedDate && (
-											<Text style={styles.watchedDate}>
-												Watched on {formattedWatchedDate}
-											</Text>
-										)}
-										{(watchHistory?.length ?? 0) > 1 && (
-											<>
-												<View style={styles.watchCount}>
-													<History size={14} color={colors.textMuted} />
-													<Text style={styles.watchCountText}>
-														{watchHistory?.length} total watches
-													</Text>
-												</View>
-												<Pressable
-													onPress={() => setShowHistoryModal(true)}
-													style={styles.viewHistoryButton}
-												>
-													<Eye size={16} color={colors.textMuted} />
-													<Text style={styles.viewHistoryText}>View all watches</Text>
-												</Pressable>
-											</>
-										)}
-										{watchHistory?.length === 1 && (
-											<Pressable
-												onPress={handleUnmarkWatched}
-												disabled={unmarkMutation.isPending}
-												style={styles.removeButton}
-											>
-												{unmarkMutation.isPending ? (
-													<Loader2 size={16} color={colors.error} />
-												) : (
-													<>
-														<Trash2 size={16} color={colors.error} />
-														<Text style={styles.removeButtonText}>Remove from shelf</Text>
-													</>
-												)}
-											</Pressable>
-										)}
-									</Card>
-									<Button
-										size="lg"
+									<TouchableOpacity
 										onPress={handleMarkWatched}
-										isLoading={isPending}
+										disabled={isPending}
 										style={[
 											styles.primaryButton,
-											{
-												backgroundColor: movieColors.primary,
-												shadowColor: movieColors.primary,
-											},
+											{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
 										]}
+										activeOpacity={0.8}
 									>
-										<RotateCcw size={18} color={colors.text} style={styles.buttonIcon} />
-										<Text style={styles.buttonText}>Watch Now</Text>
-									</Button>
-									<Button variant="outline" onPress={openDateModal}>
-										<Calendar size={16} color={colors.textMuted} style={styles.buttonIcon} />
-										<Text style={styles.secondaryButtonText}>Watch on Different Date</Text>
-									</Button>
+										{isPending ? (
+											<ActivityIndicator color="#f9fafb" />
+										) : (
+											<View style={styles.buttonContent}>
+												<Ionicons name="refresh" size={20} color="#f9fafb" />
+												<Text style={styles.buttonText}>Watch Now</Text>
+											</View>
+										)}
+									</TouchableOpacity>
+
+									<TouchableOpacity
+										onPress={openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons name="calendar" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Watch on Different Date
+											</Text>
+										</View>
+									</TouchableOpacity>
 								</>
 							)
 						) : (
-							<Button
-								size="lg"
-								onPress={() => router.push("/(tabs)/shelf")}
-								style={[
-									styles.primaryButton,
-									{
-										backgroundColor: movieColors.primary,
-										shadowColor: movieColors.primary,
-									},
-								]}
+							<TouchableOpacity
+								onPress={() => router.push("/login")}
+								style={[styles.primaryButton, { backgroundColor: movieColors.primary }]}
+								activeOpacity={0.8}
 							>
 								<Text style={styles.buttonText}>Sign in to Track</Text>
-							</Button>
+							</TouchableOpacity>
 						)}
 					</View>
 
+					{/* Watched Info Card */}
+					{isWatched && (
+						<View style={styles.watchedCard}>
+							<View style={styles.watchedHeader}>
+								<Ionicons name="checkmark-circle" size={20} color="#22c55e" />
+								<Text style={styles.watchedText}>On Your Shelf</Text>
+							</View>
+							{formattedWatchedDate && (
+								<View style={styles.watchedDateRow}>
+									<Text style={styles.watchedDateText}>
+										Watched on {formattedWatchedDate}
+									</Text>
+									{watchHistory && watchHistory.length > 1 && (
+										<Badge variant="secondary">{watchHistory.length} watches</Badge>
+									)}
+								</View>
+							)}
+							{watchHistory && watchHistory.length > 1 && (
+								<TouchableOpacity
+									onPress={() => setShowHistoryModal(true)}
+									style={styles.viewHistoryRow}
+									activeOpacity={0.7}
+								>
+									<Ionicons name="eye" size={16} color="#9ca3af" />
+									<Text style={styles.viewHistoryText}>View all watches</Text>
+								</TouchableOpacity>
+							)}
+							{watchHistory && watchHistory.length === 1 && (
+								<TouchableOpacity
+									onPress={handleUnmarkWatched}
+									disabled={unmarkMutation.isPending}
+									style={styles.removeRow}
+									activeOpacity={0.7}
+								>
+									{unmarkMutation.isPending ? (
+										<ActivityIndicator size="small" color="#ef4444" />
+									) : (
+										<>
+											<Ionicons name="trash-outline" size={16} color="#ef4444" />
+											<Text style={styles.removeText}>Remove from shelf</Text>
+										</>
+									)}
+								</TouchableOpacity>
+							)}
+						</View>
+					)}
+
 					{/* Overview */}
-					<View style={styles.section}>
-						<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
-							Overview
-						</Text>
-						<Text style={styles.overview}>{movie?.overview || "No overview available."}</Text>
-					</View>
+					{movie?.overview && (
+						<View style={styles.section}>
+							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+								Overview
+							</Text>
+							<Text style={styles.overview}>{movie.overview}</Text>
+						</View>
+					)}
 
 					{/* Additional Info */}
 					<View style={styles.infoGrid}>
 						{movie?.release_date && (
-							<Card style={styles.infoCard}>
+							<View style={styles.infoCard}>
 								<Text style={styles.infoLabel}>Release Date</Text>
 								<Text style={[styles.infoValue, { color: movieColors.accent }]}>
-									{format(new Date(movie.release_date), "MMMM d, yyyy")}
+									{new Date(movie.release_date).toLocaleDateString("en-US", {
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									})}
 								</Text>
-							</Card>
+							</View>
 						)}
 						{movie?.runtime && (
-							<Pressable onPress={() => setShowHours(!showHours)}>
-								<Card style={styles.infoCard}>
-									<Text style={styles.infoLabel}>Runtime</Text>
-									<Text style={[styles.infoValue, { color: movieColors.accent }]}>
-										{formatRuntime(movie.runtime, showHours)}
-									</Text>
-								</Card>
-							</Pressable>
+							<TouchableOpacity
+								onPress={() => setShowHours(!showHours)}
+								style={styles.infoCard}
+								activeOpacity={0.8}
+							>
+								<Text style={styles.infoLabel}>Runtime</Text>
+								<Text style={[styles.infoValue, { color: movieColors.accent }]}>
+									{formatRuntime(movie.runtime, showHours)}
+								</Text>
+							</TouchableOpacity>
 						)}
-						{movie?.vote_average && (
-							<Card style={styles.infoCard}>
+						{movie?.vote_average !== undefined && (
+							<View style={styles.infoCard}>
 								<Text style={styles.infoLabel}>Rating</Text>
 								<Text style={[styles.infoValue, { color: movieColors.accent }]}>
 									{movie.vote_average.toFixed(1)}/10
 								</Text>
-							</Card>
+							</View>
 						)}
-						{movie?.vote_count && (
-							<Card style={styles.infoCard}>
+						{movie?.vote_count !== undefined && (
+							<View style={styles.infoCard}>
 								<Text style={styles.infoLabel}>Votes</Text>
 								<Text style={[styles.infoValue, { color: movieColors.accent }]}>
 									{movie.vote_count.toLocaleString()}
 								</Text>
-							</Card>
+							</View>
 						)}
 					</View>
 
@@ -495,9 +523,8 @@ export default function MovieDetailScreen() {
 							</Text>
 							<View style={styles.genresContainer}>
 								{movie.genres.map((genre) => (
-									<Badge
+									<View
 										key={genre.id}
-										variant="outline"
 										style={[
 											styles.genreBadge,
 											{
@@ -509,7 +536,7 @@ export default function MovieDetailScreen() {
 										<Text style={[styles.genreText, { color: movieColors.accent }]}>
 											{genre.name}
 										</Text>
-									</Badge>
+									</View>
 								))}
 							</View>
 						</View>
@@ -520,7 +547,7 @@ export default function MovieDetailScreen() {
 			{/* Date Picker Modal */}
 			<Modal
 				visible={showDateModal}
-				animationType="slide"
+				animationType="fade"
 				transparent={true}
 				onRequestClose={() => setShowDateModal(false)}
 			>
@@ -529,27 +556,56 @@ export default function MovieDetailScreen() {
 						<View style={styles.modalHeader}>
 							<Text style={styles.modalTitle}>Watch Again</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
-								<X size={24} color={colors.text} />
+								<Ionicons name="close" size={24} color={colors.text} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>When did you watch this movie?</Text>
 
 						<View style={styles.dateTimeContainer}>
-							<Pressable onPress={() => setShowDatePicker(true)} style={styles.dateTimeButton}>
-								<Calendar size={20} color={colors.textMuted} />
+							<TouchableOpacity
+								onPress={() => setShowDatePicker(true)}
+								style={styles.dateTimeButton}
+								activeOpacity={0.7}
+							>
+								<Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
 								<Text style={styles.dateTimeText}>
-									{format(customDate, "MMMM d, yyyy")}
+									{customDate.toLocaleDateString("en-US", {
+										year: "numeric",
+										month: "short",
+										day: "numeric",
+									})}
 								</Text>
-							</Pressable>
-							<Pressable onPress={() => setShowTimePicker(true)} style={styles.dateTimeButton}>
-								<Clock size={20} color={colors.textMuted} />
+							</TouchableOpacity>
+							<TouchableOpacity
+								onPress={() => setShowTimePicker(true)}
+								style={styles.dateTimeButton}
+								activeOpacity={0.7}
+							>
+								<Ionicons name="time-outline" size={20} color={colors.textMuted} />
 								<Text style={styles.dateTimeText}>
-									{format(customDate, "HH:mm")}
+									{customDate.toLocaleTimeString("en-US", {
+										hour: "2-digit",
+										minute: "2-digit",
+										hour12: false,
+									})}
 								</Text>
-							</Pressable>
+							</TouchableOpacity>
 						</View>
 
-						<View style={styles.modalActions}>
+						{/* Date/Time Pickers inside modal */}
+						{showDatePicker && (
+							<DateTimePicker value={customDate} mode="date" onChange={onDateChange} />
+						)}
+						{showTimePicker && (
+							<DateTimePicker
+								value={customDate}
+								mode="time"
+								is24Hour={true}
+								onChange={onTimeChange}
+							/>
+						)}
+
+						<View style={styles.modalActionsSplit}>
 							<Button variant="outline" onPress={() => setShowDateModal(false)}>
 								<Text style={styles.secondaryButtonText}>Cancel</Text>
 							</Button>
@@ -568,7 +624,7 @@ export default function MovieDetailScreen() {
 			{/* History Modal */}
 			<Modal
 				visible={showHistoryModal}
-				animationType="slide"
+				animationType="fade"
 				transparent={true}
 				onRequestClose={() => setShowHistoryModal(false)}
 			>
@@ -576,36 +632,36 @@ export default function MovieDetailScreen() {
 					<View style={styles.modalContent}>
 						<View style={styles.modalHeader}>
 							<View style={styles.modalTitleContainer}>
-								<History size={20} color={colors.text} />
+								<Ionicons name="time" size={20} color={colors.primary} />
 								<Text style={styles.modalTitle}>Watch History</Text>
 							</View>
 							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<X size={24} color={colors.text} />
+								<Ionicons name="close" size={24} color={colors.text} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
-							All the times you've watched {movie?.title}
+							All the times you&apos;ve watched {movie?.title}
 						</Text>
 
 						<ScrollView style={styles.historyList}>
 							{watchHistory && watchHistory.length > 0 ? (
 								watchHistory.map((watch) => (
 									<View key={watch.id} style={styles.historyItem}>
-										<Text style={styles.historyDate}>
-											{format(new Date(watch.watchedDate), "MMM d, yyyy HH:mm")}
-										</Text>
-										<Pressable
+										<Text style={styles.historyDate}>{formatWatchDate(watch.watchedDate)}</Text>
+										<TouchableOpacity
 											onPress={() => handleDeleteWatchEntry(watch.id)}
 											disabled={deleteWatchEntryMutation.isPending}
 											style={styles.historyDeleteButton}
+											activeOpacity={0.7}
 										>
 											{deleteWatchEntryMutation.isPending &&
-											deleteWatchEntryMutation.variables?.path?.trackedMovieId === watch.id ? (
-												<Loader2 size={16} color={colors.textMuted} />
+											deleteWatchEntryMutation.variables?.path?.trackedMovieId ===
+												watch.id ? (
+												<ActivityIndicator size="small" color={colors.textMuted} />
 											) : (
-												<Trash2 size={16} color={colors.error} />
+												<Ionicons name="trash-outline" size={18} color="#ef4444" />
 											)}
-										</Pressable>
+										</TouchableOpacity>
 									</View>
 								))
 							) : (
@@ -620,23 +676,7 @@ export default function MovieDetailScreen() {
 				</View>
 			</Modal>
 
-			{/* Date/Time Pickers */}
-			{showDatePicker && (
-				<DateTimePicker
-					value={customDate}
-					mode="date"
-					onChange={onDateChange}
-				/>
-			)}
-			{showTimePicker && (
-				<DateTimePicker
-					value={customDate}
-					mode="time"
-					is24Hour={true}
-					onChange={onTimeChange}
-				/>
-			)}
-		</View>
+		</>
 	);
 }
 
@@ -645,187 +685,206 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: colors.background,
 	},
+	scrollContent: {
+		paddingBottom: 32,
+	},
 	loadingContainer: {
 		flex: 1,
 		justifyContent: "center",
 		alignItems: "center",
 	},
-	heroContainer: {
-		height: 400,
+	heroWrapper: {
+		height: 256,
 		position: "relative",
 	},
 	backdrop: {
-		...StyleSheet.absoluteFillObject,
-	},
-	gradientOverlay: {
-		...StyleSheet.absoluteFillObject,
-	},
-	bottomGradient: {
-		backgroundColor: "rgba(3, 7, 18, 0.6)",
-	},
-	sideGradient: {
-		backgroundColor: "rgba(3, 7, 18, 0.4)",
+		width: "100%",
+		height: "100%",
 	},
 	backButton: {
 		position: "absolute",
-		top: spacing.lg,
-		left: spacing.lg,
+		top: 48,
+		left: 16,
 		zIndex: 10,
-		padding: spacing.sm,
+		padding: 8,
 		borderRadius: borderRadius.full,
 		backgroundColor: "rgba(0, 0, 0, 0.5)",
 	},
-	heroContent: {
+	heroOverlay: {
 		position: "absolute",
-		bottom: 0,
-		left: 0,
-		right: 0,
-		padding: spacing.lg,
+		bottom: -64,
+		left: 16,
+		right: 16,
 		flexDirection: "row",
 		alignItems: "flex-end",
 	},
-	posterContainer: {
-		width: 120,
+	posterWrapper: {
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
-		shadowOffset: { width: 0, height: 10 },
-		shadowOpacity: 0.5,
-		shadowRadius: 20,
-		elevation: 10,
+		shadowColor: colors.primary,
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.4,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	poster: {
-		width: "100%",
-		aspectRatio: 2 / 3,
+		width: 112,
+		height: 160,
 	},
-	titleContainer: {
+	noPoster: {
+		backgroundColor: "#111827",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	noPosterText: {
+		color: "#4b5563",
+		fontSize: 12,
+	},
+	titleWrapper: {
+		marginLeft: 16,
+		marginBottom: 16,
 		flex: 1,
-		marginLeft: spacing.md,
-		paddingBottom: spacing.sm,
 	},
 	title: {
 		fontSize: 24,
 		fontWeight: "bold",
-		color: colors.text,
-		textShadowOffset: { width: 0, height: 4 },
-		textShadowRadius: 30,
-		marginBottom: spacing.sm,
+		color: "#f9fafb",
+		textShadowOffset: { width: 0, height: 2 },
+		textShadowRadius: 8,
 	},
 	metaRow: {
 		flexDirection: "row",
-		gap: spacing.md,
+		alignItems: "center",
+		marginTop: 8,
+		gap: 12,
 	},
 	metaItem: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.xs,
 	},
 	metaText: {
 		fontSize: 14,
-		color: colors.textMuted,
+		color: "#9ca3af",
+		marginLeft: 4,
 	},
 	content: {
-		padding: spacing.lg,
+		marginTop: 80,
+		paddingHorizontal: 16,
 	},
 	actionsContainer: {
-		gap: spacing.md,
-		marginBottom: spacing.xl,
+		gap: 12,
+		marginBottom: 24,
 	},
 	primaryButton: {
-		shadowOffset: { width: 0, height: 10 },
-		shadowOpacity: 0.3,
-		shadowRadius: 15,
-		elevation: 5,
+		borderRadius: 12,
+		paddingVertical: 16,
+		paddingHorizontal: 24,
+		alignItems: "center",
+		justifyContent: "center",
 	},
-	buttonIcon: {
-		marginRight: spacing.sm,
+	secondaryButton: {
+		borderRadius: 12,
+		paddingVertical: 12,
+		paddingHorizontal: 24,
+		alignItems: "center",
+		justifyContent: "center",
+		borderWidth: 1,
+		borderColor: "#374151",
+	},
+	buttonContent: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 8,
 	},
 	buttonText: {
-		color: colors.text,
-		fontSize: 16,
+		color: "#f9fafb",
+		fontSize: 18,
 		fontWeight: "600",
 	},
 	secondaryButtonText: {
-		color: colors.textMuted,
+		color: "#9ca3af",
 		fontSize: 16,
-		fontWeight: "600",
+		fontWeight: "500",
 	},
 	watchedCard: {
-		padding: spacing.md,
+		backgroundColor: "rgba(17, 24, 39, 0.5)",
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: "#1f2937",
+		padding: 16,
+		marginBottom: 24,
 	},
 	watchedHeader: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.xs,
-		marginBottom: spacing.xs,
+		marginBottom: 8,
 	},
 	watchedText: {
-		color: colors.success,
+		color: "#22c55e",
 		fontSize: 16,
 		fontWeight: "600",
+		marginLeft: 8,
 	},
-	watchedDate: {
+	watchedDateRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		flexWrap: "wrap",
+		gap: 8,
+	},
+	watchedDateText: {
 		fontSize: 14,
-		color: colors.textMuted,
-		marginBottom: spacing.xs,
+		color: "#9ca3af",
 	},
-	watchCount: {
+	viewHistoryRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.xs,
-		marginTop: spacing.xs,
-	},
-	watchCountText: {
-		fontSize: 12,
-		color: colors.textMuted,
-	},
-	viewHistoryButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-		marginTop: spacing.sm,
+		marginTop: 12,
 	},
 	viewHistoryText: {
 		fontSize: 14,
-		color: colors.textMuted,
+		color: "#9ca3af",
+		marginLeft: 8,
 	},
-	removeButton: {
+	removeRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.xs,
-		marginTop: spacing.md,
+		marginTop: 12,
 	},
-	removeButtonText: {
+	removeText: {
 		fontSize: 14,
-		color: colors.error,
+		color: "#ef4444",
+		marginLeft: 8,
 	},
 	section: {
-		marginBottom: spacing.xl,
+		marginBottom: 24,
 	},
 	sectionTitle: {
 		fontSize: 20,
 		fontWeight: "600",
-		marginBottom: spacing.md,
+		marginBottom: 12,
 	},
 	overview: {
 		fontSize: 16,
-		color: colors.textMuted,
+		color: "#d1d5db",
 		lineHeight: 24,
 	},
 	infoGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: spacing.md,
-		marginBottom: spacing.xl,
+		gap: 12,
+		marginBottom: 24,
 	},
 	infoCard: {
+		backgroundColor: "#111827",
+		borderRadius: 8,
+		padding: 12,
 		flex: 1,
 		minWidth: "45%",
-		padding: spacing.md,
 	},
 	infoLabel: {
 		fontSize: 12,
-		color: colors.textMuted,
-		marginBottom: spacing.xs,
+		color: "#6b7280",
+		marginBottom: 4,
 	},
 	infoValue: {
 		fontSize: 16,
@@ -834,11 +893,13 @@ const styles = StyleSheet.create({
 	genresContainer: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: spacing.sm,
+		gap: 8,
 	},
 	genreBadge: {
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		borderRadius: borderRadius.full,
+		borderWidth: 1,
 	},
 	genreText: {
 		fontSize: 14,
@@ -848,13 +909,13 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "rgba(0, 0, 0, 0.7)",
 		justifyContent: "center",
-		padding: spacing.lg,
+		padding: 16,
 	},
 	modalContent: {
 		backgroundColor: colors.card,
-		borderRadius: borderRadius.xl,
-		padding: spacing.lg,
-		gap: spacing.md,
+		borderRadius: 16,
+		padding: 16,
+		gap: 12,
 	},
 	modalHeader: {
 		flexDirection: "row",
@@ -864,7 +925,7 @@ const styles = StyleSheet.create({
 	modalTitleContainer: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.sm,
+		gap: 8,
 	},
 	modalTitle: {
 		fontSize: 20,
@@ -873,27 +934,33 @@ const styles = StyleSheet.create({
 	},
 	modalDescription: {
 		fontSize: 14,
-		color: colors.textMuted,
+		color: "#9ca3af",
 	},
 	dateTimeContainer: {
-		gap: spacing.md,
+		gap: 12,
 	},
 	dateTimeButton: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: spacing.md,
-		padding: spacing.md,
-		backgroundColor: colors.cardMuted,
-		borderRadius: borderRadius.lg,
+		gap: 12,
+		padding: 16,
+		backgroundColor: "#111827",
+		borderRadius: 12,
 	},
 	dateTimeText: {
 		fontSize: 16,
-		color: colors.text,
+		color: "#f9fafb",
 	},
 	modalActions: {
 		flexDirection: "row",
-		gap: spacing.md,
-		marginTop: spacing.md,
+		gap: 12,
+		marginTop: 8,
+	},
+	modalActionsSplit: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		gap: 12,
+		marginTop: 8,
 	},
 	historyList: {
 		maxHeight: 300,
@@ -902,10 +969,10 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		padding: spacing.md,
-		backgroundColor: colors.cardMuted,
-		borderRadius: borderRadius.lg,
-		marginBottom: spacing.sm,
+		padding: 12,
+		backgroundColor: "#1f2937",
+		borderRadius: 8,
+		marginBottom: 8,
 	},
 	historyDate: {
 		fontSize: 14,
@@ -913,11 +980,11 @@ const styles = StyleSheet.create({
 		fontWeight: "500",
 	},
 	historyDeleteButton: {
-		padding: spacing.sm,
+		padding: 8,
 	},
 	emptyHistory: {
 		textAlign: "center",
-		color: colors.textMuted,
-		padding: spacing.xl,
+		color: "#6b7280",
+		padding: 32,
 	},
 });

@@ -7,11 +7,12 @@ import {
 import type { TrackedMovieDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
-import { BookOpen, Loader2, LogIn, Trash2 } from "lucide-react-native";
+import { BookOpen, Loader2, LogIn, LogOut, Trash2 } from "lucide-react-native";
 import { useCallback } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/contexts/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -96,7 +97,8 @@ const TrackedMovieItem = ({ tracked, isRemoving, onRemove, onPress }: TrackedMov
 };
 
 export default function ShelfScreen() {
-	const { user, isLoading: isAuthLoading, isAuthenticated, login } = useAuth();
+	const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth();
+	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
 	// Fetch user's tracked movies
@@ -116,10 +118,10 @@ export default function ShelfScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
-			Alert.alert("Success", "Removed from your shelf");
+			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
-			Alert.alert("Error", "Failed to remove from shelf. Please try again.");
+			showToast("Failed to remove from shelf. Please try again.", "error");
 		},
 	});
 
@@ -171,8 +173,8 @@ export default function ShelfScreen() {
 				</View>
 				<View style={styles.skeletonGrid}>
 					{[...Array(8)].map((_, i) => (
-						<View key={i} style={styles.movieItem}>
-							<Skeleton width="100%" height={180} borderRadius={borderRadius.lg} />
+						<View key={i} style={styles.skeletonItem}>
+							<View style={[styles.skeletonPoster, { backgroundColor: colors.cardMuted }]} />
 							<View style={{ marginTop: spacing.sm }}>
 								<Skeleton width="80%" height={16} />
 							</View>
@@ -196,11 +198,11 @@ export default function ShelfScreen() {
 							<BookOpen size={64} color={colors.primary} style={styles.authIcon} />
 							<Text style={styles.authTitle}>My Shelf</Text>
 							<Text style={styles.authDescription}>
-								Sign in to track movies you've watched
+								Sign in to track movies you&apos;ve watched
 							</Text>
 						</CardHeader>
 						<CardContent>
-							<Button size="lg" onPress={() => login()}>
+							<Button size="lg" onPress={() => router.push("/login")}>
 								<LogIn size={20} color={colors.text} style={styles.buttonIcon} />
 								<Text style={styles.buttonText}>Sign in</Text>
 							</Button>
@@ -218,13 +220,23 @@ export default function ShelfScreen() {
 					<BookOpen size={32} color={colors.primary} />
 					<Text style={styles.title}>My Shelf</Text>
 				</View>
+				<Pressable
+					onPress={async () => {
+						await logout();
+						await queryClient.resetQueries({ queryKey: ["authControllerMe"] });
+						showToast("Logged out successfully", "success");
+					}}
+					style={styles.logoutButton}
+				>
+					<LogOut size={20} color={colors.textMuted} />
+				</Pressable>
 			</View>
 
 			{isMoviesLoading && (
 				<View style={styles.skeletonGrid}>
 					{[...Array(8)].map((_, i) => (
-						<View key={i} style={styles.movieItem}>
-							<Skeleton width="100%" height={180} borderRadius={borderRadius.lg} />
+						<View key={i} style={styles.skeletonItem}>
+							<View style={[styles.skeletonPoster, { backgroundColor: colors.cardMuted }]} />
 							<View style={{ marginTop: spacing.sm }}>
 								<Skeleton width="80%" height={16} />
 							</View>
@@ -282,11 +294,17 @@ const styles = StyleSheet.create({
 	header: {
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
 	},
 	headerContent: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.sm,
+	},
+	logoutButton: {
+		padding: spacing.sm,
 	},
 	title: {
 		fontSize: 28,
@@ -299,7 +317,9 @@ const styles = StyleSheet.create({
 	movieItem: {
 		flex: 1,
 		marginBottom: spacing.lg,
-		maxWidth: "48%",
+		marginHorizontal: spacing.sm,
+		minWidth: 140,
+		maxWidth: "47%",
 	},
 	posterContainer: {
 		aspectRatio: 2 / 3,
@@ -419,6 +439,17 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		flexWrap: "wrap",
 		padding: spacing.lg,
-		gap: spacing.md,
+	},
+	skeletonItem: {
+		flex: 1,
+		marginBottom: spacing.lg,
+		marginHorizontal: spacing.sm,
+		minWidth: 140,
+		maxWidth: "47%",
+	},
+	skeletonPoster: {
+		aspectRatio: 2 / 3,
+		borderRadius: borderRadius.lg,
+		overflow: "hidden",
 	},
 });
