@@ -13,6 +13,7 @@ import type { TmdbCastDto, TmdbCrewDto, TmdbMovieDetailDto, WatchHistoryItemDto 
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import {
 	ActivityIndicator,
@@ -548,41 +549,49 @@ export default function MovieDetailScreen() {
 							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
 								Cast
 							</Text>
-							<ScrollView
-								horizontal
-								showsHorizontalScrollIndicator={false}
-								contentContainerStyle={styles.castScrollContent}
-							>
-								{movie.credits.cast.map((person: TmdbCastDto) => (
-									<TouchableOpacity
-										key={person.id}
-										style={styles.castCard}
-										activeOpacity={0.8}
-									>
-										<View style={styles.castImageContainer}>
-											{person.profile_path ? (
-												<Image
-													source={{ uri: `https://image.tmdb.org/t/p/w185${person.profile_path}` }}
-													style={styles.castImage}
-													contentFit="cover"
-												/>
-											) : (
-												<View style={styles.castImagePlaceholder}>
-													<Text style={styles.castImagePlaceholderText}>No photo</Text>
-												</View>
-											)}
-										</View>
-										<Text style={styles.castName} numberOfLines={2}>
-											{person.name}
-										</Text>
-										{person.character && (
-											<Text style={[styles.castCharacter, { color: movieColors.muted }]}>
-												as {person.character}
+							<View style={styles.castContainer}>
+								<ScrollView
+									horizontal
+									showsHorizontalScrollIndicator={false}
+									contentContainerStyle={styles.castScrollContent}
+								>
+									{movie.credits.cast.map((person: TmdbCastDto) => (
+										<TouchableOpacity
+											key={person.id}
+											style={styles.castCard}
+											activeOpacity={0.8}
+										>
+											<View style={styles.castImageContainer}>
+												{person.profile_path ? (
+													<Image
+														source={{ uri: `https://image.tmdb.org/t/p/w185${person.profile_path}` }}
+														style={styles.castImage}
+														contentFit="cover"
+													/>
+												) : (
+													<View style={styles.castImagePlaceholder}>
+														<Text style={styles.castImagePlaceholderText}>No photo</Text>
+													</View>
+												)}
+											</View>
+											<Text style={styles.castName} numberOfLines={2}>
+												{person.name}
 											</Text>
-										)}
-									</TouchableOpacity>
-								))}
-							</ScrollView>
+											{person.character && (
+												<Text style={[styles.castCharacter, { color: movieColors.muted }]}>
+													as {person.character}
+												</Text>
+											)}
+										</TouchableOpacity>
+									))}
+								</ScrollView>
+								<LinearGradient
+									colors={["rgba(3, 7, 18, 0)", "rgba(3, 7, 18, 1)"]}
+									start={{ x: 0, y: 0.5 }}
+									end={{ x: 1, y: 0.5 }}
+									style={styles.castGradient}
+								/>
+							</View>
 						</View>
 					)}
 
@@ -1056,9 +1065,20 @@ const styles = StyleSheet.create({
 		color: "#6b7280",
 		padding: 32,
 	},
+	castContainer: {
+		position: "relative",
+	},
 	castScrollContent: {
 		paddingRight: 16,
 		gap: 12,
+	},
+	castGradient: {
+		position: "absolute",
+		right: 0,
+		top: 0,
+		bottom: 16,
+		width: 48,
+		pointerEvents: "none",
 	},
 	castCard: {
 		width: 100,

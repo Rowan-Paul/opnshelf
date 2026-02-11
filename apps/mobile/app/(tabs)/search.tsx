@@ -139,11 +139,11 @@ const MovieItem = ({ movie, isWatched, isMarking, isUnmarking, onToggle, onPress
 				>
 					<View style={styles.iconContainer}>
 						{isPending ? (
-							<SpinningLoader size={22} color={colors.text} />
+							<SpinningLoader size={16} color={colors.text} />
 						) : isWatched ? (
-							<Check size={22} color={colors.text} strokeWidth={2.5} />
+							<Check size={16} color={colors.text} strokeWidth={2.5} />
 						) : (
-							<Plus size={22} color={colors.text} strokeWidth={2.5} />
+							<Plus size={16} color={colors.text} strokeWidth={2.5} />
 						)}
 					</View>
 				</AnimatedPressable>
@@ -422,8 +422,8 @@ const styles = StyleSheet.create({
 		position: "absolute",
 		top: spacing.sm,
 		right: spacing.sm,
-		width: 44,
-		height: 44,
+		width: 40,
+		height: 40,
 		borderRadius: borderRadius.full,
 		backgroundColor: colors.primary,
 		justifyContent: "center",
@@ -438,8 +438,8 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.success,
 	},
 	iconContainer: {
-		width: 22,
-		height: 22,
+		width: 20,
+		height: 20,
 		justifyContent: "center",
 		alignItems: "center",
 	},

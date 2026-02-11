@@ -426,7 +426,7 @@ pnpm lint         # ESLint + Prettier (includes type checking)
 ### Mobile
 ```bash
 cd apps/mobile
-pnpm typecheck    # TypeScript check only
+pnpm tsc --noEmit    # TypeScript check only
 ```
 
 **Note**: If any checks fail, fix the issues before considering the task complete.
