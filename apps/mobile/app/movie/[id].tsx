@@ -29,7 +29,7 @@ import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { colors, borderRadius } from "@/constants/theme";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
 const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";

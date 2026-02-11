@@ -1,6 +1,6 @@
 import type { UserDto } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { authControllerMeOptions, getLoginUrl } from "@opnshelf/api";
+import { authControllerMeOptions, authControllerMeQueryKey, getLoginUrl } from "@opnshelf/api";
 import * as WebBrowser from "expo-web-browser";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
@@ -51,14 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const logout = useCallback(async () => {
 		await saveSessionToken(null);
-		queryClient.removeQueries({ queryKey: ["authControllerMe"] });
+		// Set user to null immediately to update UI, then remove queries
+		// Use the exact query key structure created by authControllerMeQueryKey()
+		const meQueryKey = authControllerMeQueryKey();
+		queryClient.setQueryData(meQueryKey, null);
+		queryClient.removeQueries({ queryKey: meQueryKey });
 		queryClient.removeQueries({ queryKey: ["moviesControllerGetUserMovies"] });
 	}, [queryClient]);
 
 	const handleAuthCallback = useCallback(async (token: string) => {
 		await saveSessionToken(token);
 		// Refetch user to update auth state
-		await queryClient.invalidateQueries({ queryKey: ["authControllerMe"] });
+		await queryClient.invalidateQueries({ queryKey: authControllerMeQueryKey() });
 	}, [queryClient]);
 
 	const value: AuthContextType = {

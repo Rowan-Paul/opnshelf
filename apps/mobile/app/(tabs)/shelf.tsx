@@ -13,7 +13,6 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -223,12 +222,12 @@ export default function ShelfScreen() {
 				<Pressable
 					onPress={async () => {
 						await logout();
-						await queryClient.resetQueries({ queryKey: ["authControllerMe"] });
 						showToast("Logged out successfully", "success");
 					}}
 					style={styles.logoutButton}
 				>
 					<LogOut size={20} color={colors.textMuted} />
+					<Text style={styles.logoutButtonText}>Logout</Text>
 				</Pressable>
 			</View>
 
@@ -271,7 +270,7 @@ export default function ShelfScreen() {
 							<BookOpen size={64} color={colors.textSecondary} style={styles.emptyIcon} />
 							<Text style={styles.emptyTitle}>Your shelf is empty</Text>
 							<Text style={styles.emptyDescription}>
-								Start tracking movies you've watched
+								Start tracking movies you&apos;ve watched
 							</Text>
 						</CardHeader>
 						<CardContent>
@@ -305,6 +304,14 @@ const styles = StyleSheet.create({
 	},
 	logoutButton: {
 		padding: spacing.sm,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.sm,
+	},
+	logoutButtonText: {
+		color: colors.textMuted,
+		fontSize: 16,
+		fontWeight: "600",
 	},
 	title: {
 		fontSize: 28,

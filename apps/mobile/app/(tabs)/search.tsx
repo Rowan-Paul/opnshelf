@@ -12,7 +12,6 @@ import { router } from "expo-router";
 import { Check, Loader2, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	ActivityIndicator,
 	Pressable,
 	StyleSheet,
 	Text,
@@ -21,7 +20,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
-import { Badge } from "@/components/ui/Badge";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { colors, spacing, borderRadius } from "@/constants/theme";
@@ -193,7 +191,7 @@ export default function SearchScreen() {
 				markMutation.mutate({ body: { movieId } });
 			}
 		},
-		[user, markMutation, unmarkMutation, router, showToast]
+		[user, markMutation, unmarkMutation, showToast]
 	);
 
 	const handleMoviePress = useCallback(
@@ -290,7 +288,7 @@ export default function SearchScreen() {
 			{data && data.results.length === 0 && debouncedQuery && (
 				<View style={styles.centerContent}>
 					<Text style={styles.emptyText}>
-						No results found for "{debouncedQuery}"
+						No results found for &quot;{debouncedQuery}&quot;
 					</Text>
 				</View>
 			)}

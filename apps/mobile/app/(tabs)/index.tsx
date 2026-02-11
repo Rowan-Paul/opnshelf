@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { colors, spacing } from "@/constants/theme";
 
 const features = [
 	{

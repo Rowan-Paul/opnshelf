@@ -1,6 +1,8 @@
 import { StyleSheet, View, type ViewStyle } from "react-native";
 import { colors, borderRadius, spacing } from "@/constants/theme";
 
+import { Text } from "react-native";
+
 interface CardProps {
 	children: React.ReactNode;
 	style?: ViewStyle;
@@ -48,8 +50,6 @@ interface CardDescriptionProps {
 export function CardDescription({ children }: CardDescriptionProps) {
 	return <Text style={styles.description}>{children}</Text>;
 }
-
-import { Text } from "react-native";
 
 const styles = StyleSheet.create({
 	base: {

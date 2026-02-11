@@ -137,6 +137,23 @@ cd apps/mobile && pnpm typecheck
 - **Web**: Vitest with `.test.tsx` suffix
 - **Mocking**: Use proper dependency injection for testability
 
+#### TanStack Query Anti-patterns
+
+**Avoid using simple string keys with generated API clients:**
+The API client generates complex query key objects. Using simple string arrays won't match:
+
+```typescript
+// DON'T do this - wrong query key structure
+queryClient.setQueryData(["authControllerMe"], null);
+queryClient.removeQueries({ queryKey: ["authControllerMe"] });
+
+// DO this instead - use the generated query key function
+import { authControllerMeQueryKey } from "@opnshelf/api";
+const meQueryKey = authControllerMeQueryKey();
+queryClient.setQueryData(meQueryKey, null);
+queryClient.removeQueries({ queryKey: meQueryKey });
+```
+
 ## Backend Testing
 
 The backend uses **Jest** for testing with comprehensive test coverage for services, controllers, and guards.
