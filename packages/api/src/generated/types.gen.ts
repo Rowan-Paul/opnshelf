@@ -31,6 +31,27 @@ export type MovieColorsDto = {
     muted?: string;
 };
 
+export type TmdbCastDto = {
+    id: number;
+    name: string;
+    character?: string;
+    profile_path?: string;
+    order: number;
+};
+
+export type TmdbCrewDto = {
+    id: number;
+    name: string;
+    job?: string;
+    department?: string;
+    profile_path?: string;
+};
+
+export type TmdbCreditsDto = {
+    cast: Array<TmdbCastDto>;
+    crew: Array<TmdbCrewDto>;
+};
+
 export type TmdbMovieDetailDto = {
     id: number;
     title: string;
@@ -43,6 +64,7 @@ export type TmdbMovieDetailDto = {
     vote_count?: number;
     genres?: Array<TmdbGenreDto>;
     colors?: MovieColorsDto;
+    credits?: TmdbCreditsDto;
 };
 
 export type MovieDto = {
@@ -207,35 +229,6 @@ export type MoviesControllerUnmarkWatchedResponses = {
 
 export type MoviesControllerUnmarkWatchedResponse = MoviesControllerUnmarkWatchedResponses[keyof MoviesControllerUnmarkWatchedResponses];
 
-export type MoviesControllerDeleteWatchHistoryEntryData = {
-    body?: never;
-    path: {
-        trackedMovieId: string;
-    };
-    query?: never;
-    url: '/movies/history/{trackedMovieId}';
-};
-
-export type MoviesControllerDeleteWatchHistoryEntryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-    /**
-     * Tracked movie entry not found
-     */
-    404: unknown;
-};
-
-export type MoviesControllerDeleteWatchHistoryEntryResponses = {
-    /**
-     * Watch history entry deleted
-     */
-    204: void;
-};
-
-export type MoviesControllerDeleteWatchHistoryEntryResponse = MoviesControllerDeleteWatchHistoryEntryResponses[keyof MoviesControllerDeleteWatchHistoryEntryResponses];
-
 export type MoviesControllerGetMovieData = {
     body?: never;
     path: {
@@ -282,6 +275,38 @@ export type MoviesControllerGetMovieWatchHistoryResponses = {
 };
 
 export type MoviesControllerGetMovieWatchHistoryResponse = MoviesControllerGetMovieWatchHistoryResponses[keyof MoviesControllerGetMovieWatchHistoryResponses];
+
+export type MoviesControllerDeleteWatchHistoryEntryData = {
+    body?: never;
+    path: {
+        /**
+         * Tracked movie entry ID
+         */
+        trackedMovieId: string;
+    };
+    query?: never;
+    url: '/movies/history/{trackedMovieId}';
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Tracked movie entry not found
+     */
+    404: unknown;
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryResponses = {
+    /**
+     * Watch history entry deleted
+     */
+    204: void;
+};
+
+export type MoviesControllerDeleteWatchHistoryEntryResponse = MoviesControllerDeleteWatchHistoryEntryResponses[keyof MoviesControllerDeleteWatchHistoryEntryResponses];
 
 export type AuthControllerGetClientMetadataData = {
     body?: never;

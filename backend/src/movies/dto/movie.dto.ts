@@ -131,6 +131,48 @@ export class TMDBGenreDto {
   name: string;
 }
 
+export class TMDBCastDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiPropertyOptional()
+  character?: string;
+
+  @ApiPropertyOptional()
+  profile_path?: string;
+
+  @ApiProperty()
+  order: number;
+}
+
+export class TMDBCrewDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiPropertyOptional()
+  job?: string;
+
+  @ApiPropertyOptional()
+  department?: string;
+
+  @ApiPropertyOptional()
+  profile_path?: string;
+}
+
+export class TMDBCreditsDto {
+  @ApiProperty({ type: [TMDBCastDto] })
+  cast: TMDBCastDto[];
+
+  @ApiProperty({ type: [TMDBCrewDto] })
+  crew: TMDBCrewDto[];
+}
+
 export class TMDBMovieDetailDto extends TMDBMovieResultDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -149,6 +191,9 @@ export class TMDBMovieDetailDto extends TMDBMovieResultDto {
   @ApiPropertyOptional({ type: MovieColorsDto })
   @IsOptional()
   colors?: MovieColorsDto;
+
+  @ApiPropertyOptional({ type: TMDBCreditsDto })
+  credits?: TMDBCreditsDto;
 }
 
 export class SearchResultsDto {

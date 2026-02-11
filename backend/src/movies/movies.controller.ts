@@ -27,6 +27,7 @@ import {
   MovieDto,
   MarkWatchedDto,
   TMDBMovieDetailDto,
+  WatchHistoryItemDto,
 } from './dto/movie.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import type { AuthenticatedRequest } from '../auth/types';
@@ -57,10 +58,14 @@ export class MoviesController {
     // Ensure movie is in database with colors
     const movie = await this.moviesService.upsertMovie(movieData);
 
-    // Return combined data with colors
+    // Get movie credits
+    const credits = await this.moviesService.getMovieCredits(movieId);
+
+    // Return combined data with colors and credits
     return {
       ...movieData,
       colors: movie.colors ?? undefined,
+      credits,
     };
   }
 
@@ -203,6 +208,7 @@ export class MoviesController {
   @ApiResponse({
     status: 200,
     description: 'Watch history retrieved successfully',
+    type: [WatchHistoryItemDto],
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async getMovieWatchHistory(

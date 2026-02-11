@@ -7,6 +7,8 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	type TmdbCastDto,
+	type TmdbCrewDto,
 	type TmdbMovieDetailDto,
 	type TrackedMovieDto,
 	type WatchHistoryItemDto,
@@ -341,7 +343,7 @@ function MovieDetailPage() {
 					<div className="container mx-auto max-w-6xl">
 						<div className="flex items-end gap-4 md:gap-8">
 							{/* Poster */}
-							<div className="hidden md:block flex-shrink-0">
+							<div className="hidden md:block shrink-0">
 								<div
 									className="w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
 									style={{
@@ -404,13 +406,13 @@ function MovieDetailPage() {
 
 			{/* Main Content */}
 			<div className="container mx-auto px-4 py-4 max-w-6xl">
-				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
 					{/* Left Column - Poster (mobile) & Actions */}
-					<div className="md:hidden">
+					<div className="md:hidden min-w-0">
 						<div className="flex gap-4">
 							{posterUrl && (
 								<div
-									className="w-32 flex-shrink-0 rounded-lg overflow-hidden"
+									className="w-32 shrink-0 rounded-lg overflow-hidden"
 									style={{
 										boxShadow: `0 20px 40px -10px ${colors.primary}40`,
 									}}
@@ -548,7 +550,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Desktop Actions */}
-					<div className="hidden md:block space-y-4">
+					<div className="hidden md:block space-y-4 min-w-0">
 						{user ? (
 							!isWatched ? (
 								<div className="space-y-3">
@@ -671,7 +673,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Right Column - Details */}
-					<div className="space-y-6">
+					<div className="space-y-6 min-w-0 w-full">
 						{/* Overview */}
 						<section>
 							<h2
@@ -680,13 +682,13 @@ function MovieDetailPage() {
 							>
 								Overview
 							</h2>
-							<p className="text-gray-300 leading-relaxed text-lg">
+							<p className="text-gray-300 leading-relaxed text-lg wrap-break-word">
 								{movie?.overview || "No overview available."}
 							</p>
 						</section>
 
 						{/* Additional Info */}
-						<section className="grid grid-cols-2 gap-4">
+						<section className="grid grid-cols-2 gap-4 min-w-0">
 							{movie?.release_date && (
 								<div className="p-4 rounded-lg bg-gray-900/50">
 									<span className="text-gray-500 text-sm block mb-1">
@@ -775,6 +777,94 @@ function MovieDetailPage() {
 								</div>
 							</section>
 						)}
+
+						{/* Cast */}
+						{movie?.credits?.cast && movie.credits.cast.length > 0 && (
+							<section className="pt-4 min-w-0">
+								<h2
+									className="text-xl font-semibold mb-4"
+									style={{ color: colors.primary }}
+								>
+									Cast
+								</h2>
+								<div className="relative w-full overflow-hidden">
+									<div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent w-full pr-8">
+										{movie.credits.cast.map((person: TmdbCastDto) => (
+											<div
+												key={person.id}
+												className="shrink-0 w-32 group cursor-pointer"
+											>
+												<div className="relative overflow-hidden rounded-lg bg-gray-900/50 aspect-2/3 mb-2 transition-transform duration-300 group-hover:scale-[1.02]">
+													{person.profile_path ? (
+														<img
+															src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+															alt={person.name}
+															className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
+															loading="lazy"
+														/>
+													) : (
+														<div className="w-full h-full bg-gray-800 flex items-center justify-center">
+															<span className="text-gray-600 text-xs text-center px-2">
+																No photo
+															</span>
+														</div>
+													)}
+												</div>
+												<div className="space-y-0.5">
+													<p className="text-sm font-medium text-gray-200 line-clamp-2 transition-colors duration-200 group-hover:text-white">
+														{person.name}
+													</p>
+													{person.character && (
+														<p
+															className="text-xs line-clamp-2"
+															style={{ color: colors.muted }}
+														>
+															as {person.character}
+														</p>
+													)}
+												</div>
+											</div>
+										))}
+									</div>
+									<div
+										className="absolute right-0 top-0 bottom-4 w-16 pointer-events-none"
+										style={{
+											background: `linear-gradient(to left, rgb(3, 7, 18), transparent)`,
+										}}
+									/>
+								</div>
+							</section>
+						)}
+
+						{/* Crew */}
+						{movie?.credits?.crew && movie.credits.crew.length > 0 && (
+							<section className="pt-2">
+								<h2
+									className="text-xl font-semibold mb-4"
+									style={{ color: colors.primary }}
+								>
+									Crew
+								</h2>
+								<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+									{movie.credits.crew.map((person: TmdbCrewDto) => (
+										<div
+											key={`${person.id}-${person.job}`}
+											className="group p-3 rounded-lg bg-gray-900/30 hover:bg-gray-900/60 transition-all duration-200 cursor-pointer"
+										>
+											<p className="text-sm font-medium text-gray-200 line-clamp-1 transition-colors duration-200 group-hover:text-white">
+												{person.name}
+											</p>
+											<p
+												className="text-xs mt-0.5"
+												style={{ color: colors.muted }}
+											>
+												{person.job}
+											</p>
+										</div>
+									))}
+								</div>
+							</section>
+						)}
 					</div>
 				</div>
 			</div>
@@ -811,7 +901,7 @@ function MovieDetailPage() {
 											})
 										}
 										disabled={deleteWatchEntryMutation.isPending}
-										className="flex-shrink-0 p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+										className="shrink-0 p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
 										title="Remove this watch"
 									>
 										{deleteWatchEntryMutation.isPending &&

@@ -127,23 +127,6 @@ export const moviesControllerUnmarkWatchedMutation = (options?: Partial<Options<
     return mutationOptions;
 };
 
-/**
- * Delete a specific watch history entry
- */
-export const moviesControllerDeleteWatchHistoryEntryMutation = (options?: Partial<Options<MoviesControllerDeleteWatchHistoryEntryData>>): UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> => {
-    const mutationOptions: UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await moviesControllerDeleteWatchHistoryEntry({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const moviesControllerGetMovieQueryKey = (options: Options<MoviesControllerGetMovieData>) => createQueryKey('moviesControllerGetMovie', options);
 
 /**
@@ -179,6 +162,23 @@ export const moviesControllerGetMovieWatchHistoryOptions = (options: Options<Mov
     },
     queryKey: moviesControllerGetMovieWatchHistoryQueryKey(options)
 });
+
+/**
+ * Delete a specific watch history entry
+ */
+export const moviesControllerDeleteWatchHistoryEntryMutation = (options?: Partial<Options<MoviesControllerDeleteWatchHistoryEntryData>>): UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> => {
+    const mutationOptions: UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await moviesControllerDeleteWatchHistoryEntry({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const authControllerGetClientMetadataQueryKey = (options?: Options<AuthControllerGetClientMetadataData>) => createQueryKey('authControllerGetClientMetadata', options);
 

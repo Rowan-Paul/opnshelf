@@ -9,7 +9,7 @@ import {
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import type { TmdbMovieDetailDto, WatchHistoryItemDto } from "@opnshelf/api";
+import type { TmdbCastDto, TmdbCrewDto, TmdbMovieDetailDto, WatchHistoryItemDto } from "@opnshelf/api";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -541,6 +541,75 @@ export default function MovieDetailScreen() {
 							</View>
 						</View>
 					)}
+
+					{/* Cast */}
+					{movie?.credits?.cast && movie.credits.cast.length > 0 && (
+						<View style={styles.section}>
+							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+								Cast
+							</Text>
+							<ScrollView
+								horizontal
+								showsHorizontalScrollIndicator={false}
+								contentContainerStyle={styles.castScrollContent}
+							>
+								{movie.credits.cast.map((person: TmdbCastDto) => (
+									<TouchableOpacity
+										key={person.id}
+										style={styles.castCard}
+										activeOpacity={0.8}
+									>
+										<View style={styles.castImageContainer}>
+											{person.profile_path ? (
+												<Image
+													source={{ uri: `https://image.tmdb.org/t/p/w185${person.profile_path}` }}
+													style={styles.castImage}
+													contentFit="cover"
+												/>
+											) : (
+												<View style={styles.castImagePlaceholder}>
+													<Text style={styles.castImagePlaceholderText}>No photo</Text>
+												</View>
+											)}
+										</View>
+										<Text style={styles.castName} numberOfLines={2}>
+											{person.name}
+										</Text>
+										{person.character && (
+											<Text style={[styles.castCharacter, { color: movieColors.muted }]}>
+												as {person.character}
+											</Text>
+										)}
+									</TouchableOpacity>
+								))}
+							</ScrollView>
+						</View>
+					)}
+
+					{/* Crew */}
+					{movie?.credits?.crew && movie.credits.crew.length > 0 && (
+						<View style={styles.section}>
+							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+								Crew
+							</Text>
+							<View style={styles.crewGrid}>
+								{movie.credits.crew.map((person: TmdbCrewDto) => (
+									<TouchableOpacity
+										key={`${person.id}-${person.job}`}
+										style={styles.crewCard}
+										activeOpacity={0.8}
+									>
+										<Text style={styles.crewName} numberOfLines={1}>
+											{person.name}
+										</Text>
+										<Text style={[styles.crewJob, { color: movieColors.muted }]}>
+											{person.job}
+										</Text>
+									</TouchableOpacity>
+								))}
+							</View>
+						</View>
+					)}
 				</View>
 			</ScrollView>
 
@@ -986,5 +1055,67 @@ const styles = StyleSheet.create({
 		textAlign: "center",
 		color: "#6b7280",
 		padding: 32,
+	},
+	castScrollContent: {
+		paddingRight: 16,
+		gap: 12,
+	},
+	castCard: {
+		width: 100,
+	},
+	castImageContainer: {
+		borderRadius: borderRadius.md,
+		overflow: "hidden",
+		marginBottom: 8,
+		backgroundColor: "#1f2937",
+	},
+	castImage: {
+		width: 100,
+		height: 140,
+	},
+	castImagePlaceholder: {
+		width: 100,
+		height: 140,
+		backgroundColor: "#1f2937",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	castImagePlaceholderText: {
+		fontSize: 12,
+		color: "#6b7280",
+		textAlign: "center",
+		paddingHorizontal: 8,
+	},
+	castName: {
+		fontSize: 13,
+		fontWeight: "500",
+		color: "#e5e7eb",
+		marginBottom: 2,
+	},
+	castCharacter: {
+		fontSize: 11,
+		color: "#6b7280",
+	},
+	crewGrid: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 8,
+	},
+	crewCard: {
+		backgroundColor: "#111827",
+		borderRadius: borderRadius.md,
+		padding: 12,
+		flex: 1,
+		minWidth: "45%",
+	},
+	crewName: {
+		fontSize: 14,
+		fontWeight: "500",
+		color: "#e5e7eb",
+		marginBottom: 2,
+	},
+	crewJob: {
+		fontSize: 12,
+		color: "#6b7280",
 	},
 });

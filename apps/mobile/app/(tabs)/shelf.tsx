@@ -16,7 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 import { useCallback } from "react";
-import { Pressable, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
@@ -42,8 +42,6 @@ function createTitleSlug(title: string): string {
     .trim()
     .replace(/\s+/g, "-");
 }
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Spinning loader component
 const SpinningLoader = ({ size, color }: { size: number; color: string }) => {

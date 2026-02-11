@@ -26,6 +26,23 @@ export interface TMDBSearchResponse {
   total_pages: number;
 }
 
+export interface TMDBCredits {
+  cast: {
+    id: number;
+    name: string;
+    character?: string;
+    profile_path?: string;
+    order: number;
+  }[];
+  crew: {
+    id: number;
+    name: string;
+    job?: string;
+    department?: string;
+    profile_path?: string;
+  }[];
+}
+
 export interface ATSession {
   did: string;
 }
@@ -69,6 +86,44 @@ export class MoviesService {
     }
 
     return response.json() as Promise<TMDBMovie>;
+  }
+
+  async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {
+    const response = await fetch(
+      `${this.tmdbBaseUrl}/movie/${movieId}/credits?api_key=${this.tmdbApiKey}`,
+    );
+
+    if (!response.ok) {
+      this.logger.warn(`Failed to fetch credits for movie ${movieId}`);
+      return null;
+    }
+
+    const data = (await response.json()) as TMDBCredits;
+
+    // Sort cast by order and limit to top 15
+    const sortedCast = (data.cast || [])
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .slice(0, 15);
+
+    // Filter key crew roles
+    const keyJobs = [
+      'Director',
+      'Producer',
+      'Executive Producer',
+      'Screenplay',
+      'Writer',
+      'Director of Photography',
+      'Original Music Composer',
+      'Composer',
+    ];
+    const filteredCrew = (data.crew || [])
+      .filter((member) => keyJobs.includes(member.job || ''))
+      .slice(0, 10);
+
+    return {
+      cast: sortedCast,
+      crew: filteredCrew,
+    };
   }
 
   async getUserMovies(userDid: string) {
