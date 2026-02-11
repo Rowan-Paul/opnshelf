@@ -268,7 +268,7 @@ export default function ShelfScreen() {
         </View>
         <View style={styles.centerContent}>
           <Card style={styles.authCard}>
-            <CardHeader>
+            <CardHeader style={styles.authCardHeader}>
               <BookOpen
                 size={64}
                 color={colors.primary}
@@ -340,7 +340,7 @@ export default function ShelfScreen() {
       {trackedMovies && trackedMovies.length === 0 && (
         <View style={styles.centerContent}>
           <Card style={styles.emptyCard}>
-            <CardHeader>
+            <CardHeader style={styles.emptyCardHeader}>
               <BookOpen
                 size={64}
                 color={colors.textSecondary}
@@ -504,6 +504,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: "center",
   },
+  authCardHeader: {
+    alignItems: "center",
+  },
   authIcon: {
     marginBottom: spacing.md,
   },
@@ -522,6 +525,9 @@ const styles = StyleSheet.create({
   emptyCard: {
     width: "100%",
     maxWidth: 400,
+    alignItems: "center",
+  },
+  emptyCardHeader: {
     alignItems: "center",
   },
   emptyIcon: {
