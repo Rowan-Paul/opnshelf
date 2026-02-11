@@ -23,6 +23,7 @@ export default function TabLayout() {
 				options={{
 					title: "Home",
 					tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+					headerShown: false,
 				}}
 			/>
 			<Tabs.Screen
@@ -30,6 +31,7 @@ export default function TabLayout() {
 				options={{
 					title: "Search",
 					tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
+					headerShown: false,
 				}}
 			/>
 			<Tabs.Screen
@@ -37,6 +39,7 @@ export default function TabLayout() {
 				options={{
 					title: "Shelf",
 					tabBarIcon: ({ color, size }) => <Library size={size} color={color} />,
+					headerShown: false,
 				}}
 			/>
 		</Tabs>

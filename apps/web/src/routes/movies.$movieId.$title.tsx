@@ -403,7 +403,7 @@ function MovieDetailPage() {
 			</div>
 
 			{/* Main Content */}
-			<div className="container mx-auto px-4 py-8 max-w-6xl">
+			<div className="container mx-auto px-4 py-4 max-w-6xl">
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
 					{/* Left Column - Poster (mobile) & Actions */}
 					<div className="md:hidden">

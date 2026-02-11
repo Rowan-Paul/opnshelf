@@ -70,7 +70,7 @@ function ShelfPage() {
 	if (isAuthLoading) {
 		return (
 			<div className="min-h-screen bg-gray-950 text-gray-50">
-				<div className="container mx-auto px-4 py-8 max-w-7xl">
+				<div className="container mx-auto px-4 py-4 max-w-7xl">
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 						{["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map((key) => (
 							<Skeleton key={key} className="aspect-2/3 rounded-lg" />
@@ -109,7 +109,7 @@ function ShelfPage() {
 
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
-			<div className="container mx-auto px-4 py-8 max-w-7xl">
+			<div className="container mx-auto px-4 py-4 max-w-7xl">
 				<div className="flex items-center gap-3 mb-8">
 					<BookOpen className="w-8 h-8 text-purple-500" />
 					<h1 className="text-4xl font-bold">My Shelf</h1>

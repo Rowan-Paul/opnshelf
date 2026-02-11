@@ -16,6 +16,7 @@ import {
 	StyleSheet,
 	Text,
 	View,
+	Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
@@ -24,6 +25,15 @@ import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { colors, spacing, borderRadius } from "@/constants/theme";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withSpring,
+	withTiming,
+	withRepeat,
+	Easing,
+} from "react-native-reanimated";
 
 const DEBOUNCE_MS = 300;
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w342";
@@ -44,10 +54,57 @@ interface MovieItemProps {
 	onPress: () => void;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Spinning loader component
+const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
+	const rotation = useSharedValue(0);
+
+	rotation.value = withRepeat(
+		withTiming(360, { duration: 1000, easing: Easing.linear }),
+		-1,
+		false
+	);
+
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ rotate: `${rotation.value}deg` }],
+	}));
+
+	return (
+		<Animated.View style={animatedStyle}>
+			<Loader2 size={size} color={color} />
+		</Animated.View>
+	);
+};
+
 const MovieItem = ({ movie, isWatched, isMarking, isUnmarking, onToggle, onPress }: MovieItemProps) => {
-	const handleToggle = useCallback(() => {
+	const scale = useSharedValue(1);
+	const opacity = useSharedValue(1);
+
+	const handleToggle = useCallback((e: any) => {
+		e.stopPropagation();
+		
+		if (Platform.OS !== "web") {
+			Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+		}
+		
 		onToggle(movie.id.toString(), isWatched);
 	}, [movie.id, isWatched, onToggle]);
+
+	const handlePressIn = useCallback(() => {
+		scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+		opacity.value = withTiming(0.8, { duration: 100 });
+	}, [scale, opacity]);
+
+	const handlePressOut = useCallback(() => {
+		scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+		opacity.value = withTiming(1, { duration: 100 });
+	}, [scale, opacity]);
+
+	const animatedButtonStyle = useAnimatedStyle(() => ({
+		transform: [{ scale: scale.value }],
+		opacity: opacity.value,
+	}));
 
 	const isPending = isMarking || isUnmarking;
 
@@ -66,32 +123,41 @@ const MovieItem = ({ movie, isWatched, isMarking, isUnmarking, onToggle, onPress
 						<Text style={styles.noPosterText}>No poster</Text>
 					</View>
 				)}
-				{/* Quick add button */}
-				<Pressable
+				
+				{/* Quick add button - icon only, top-right with expanded touch area */}
+				<AnimatedPressable
 					onPress={handleToggle}
+					onPressIn={handlePressIn}
+					onPressOut={handlePressOut}
 					disabled={isPending}
+					hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 					style={[
-						styles.quickAddButton,
-						isWatched && styles.quickAddButtonWatched,
+						styles.actionButton,
+						isWatched && styles.actionButtonWatched,
+						animatedButtonStyle,
 					]}
 				>
-					{isPending ? (
-						<Loader2 size={16} color={colors.text} />
-					) : isWatched ? (
-						<Check size={16} color={colors.text} />
-					) : (
-						<Plus size={16} color={colors.text} />
-					)}
-				</Pressable>
+					<View style={styles.iconContainer}>
+						{isPending ? (
+							<SpinningLoader size={22} color={colors.text} />
+						) : isWatched ? (
+							<Check size={22} color={colors.text} strokeWidth={2.5} />
+						) : (
+							<Plus size={22} color={colors.text} strokeWidth={2.5} />
+						)}
+					</View>
+				</AnimatedPressable>
 			</Pressable>
-			<Pressable onPress={onPress}>
+			<Pressable onPress={onPress} style={styles.titleContainer}>
 				<Text style={styles.movieTitle} numberOfLines={2}>
 					{movie.title}
 				</Text>
 				{movie.release_date && (
-					<Text style={styles.movieYear}>
-						{movie.release_date.split("-")[0]}
-					</Text>
+					<View style={styles.yearBadge}>
+						<Text style={styles.movieYear}>
+							{movie.release_date.split("-")[0]}
+						</Text>
+					</View>
 				)}
 			</Pressable>
 		</View>
@@ -309,6 +375,7 @@ const styles = StyleSheet.create({
 		fontSize: 28,
 		fontWeight: "bold",
 		color: colors.text,
+		letterSpacing: -0.5,
 	},
 	searchInput: {
 		marginHorizontal: spacing.lg,
@@ -330,6 +397,11 @@ const styles = StyleSheet.create({
 		overflow: "hidden",
 		backgroundColor: colors.card,
 		position: "relative",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	poster: {
 		width: "100%",
@@ -338,35 +410,59 @@ const styles = StyleSheet.create({
 	noPoster: {
 		justifyContent: "center",
 		alignItems: "center",
+		backgroundColor: colors.cardMuted,
 	},
 	noPosterText: {
 		color: colors.textSecondary,
 		fontSize: 12,
+		fontWeight: "500",
 	},
-	quickAddButton: {
+	// Icon-only action button - top right
+	actionButton: {
 		position: "absolute",
 		top: spacing.sm,
 		right: spacing.sm,
-		width: 32,
-		height: 32,
+		width: 44,
+		height: 44,
 		borderRadius: borderRadius.full,
 		backgroundColor: colors.primary,
 		justifyContent: "center",
 		alignItems: "center",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 3 },
+		shadowOpacity: 0.4,
+		shadowRadius: 5,
+		elevation: 5,
 	},
-	quickAddButtonWatched: {
+	actionButtonWatched: {
 		backgroundColor: colors.success,
 	},
+	iconContainer: {
+		width: 22,
+		height: 22,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	titleContainer: {
+		marginTop: spacing.sm,
+		minHeight: 40,
+	},
 	movieTitle: {
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: "600",
 		color: colors.text,
-		marginTop: spacing.sm,
+		letterSpacing: -0.2,
+		lineHeight: 20,
+		flexWrap: "wrap",
+	},
+	yearBadge: {
+		marginTop: spacing.xs,
 	},
 	movieYear: {
 		fontSize: 12,
 		color: colors.textMuted,
-		marginTop: 2,
+		fontWeight: "500",
+		letterSpacing: 0.5,
 	},
 	resultsCount: {
 		fontSize: 14,
