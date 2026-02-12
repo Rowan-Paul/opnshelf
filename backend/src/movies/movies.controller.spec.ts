@@ -22,6 +22,7 @@ describe('MoviesController', () => {
   const mockMoviesService = {
     searchMovies: jest.fn(),
     getMovieDetails: jest.fn(),
+    getMovieCredits: jest.fn(),
     getUserMovies: jest.fn(),
     getMovieByTMDBId: jest.fn(),
     markWatched: jest.fn(),

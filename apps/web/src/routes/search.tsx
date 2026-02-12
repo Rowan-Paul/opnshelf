@@ -316,13 +316,15 @@ function SearchPage() {
 						</h2>
 						{isDiscoverLoading && (
 							<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-								{["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map((key) => (
-									<div key={`discover-loading-${key}`}>
-										<Skeleton className="aspect-2/3 rounded-lg mb-2" />
-										<Skeleton className="h-4 w-3/4 mb-1" />
-										<Skeleton className="h-3 w-1/2" />
-									</div>
-								))}
+								{["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map(
+									(key) => (
+										<div key={`discover-loading-${key}`}>
+											<Skeleton className="aspect-2/3 rounded-lg mb-2" />
+											<Skeleton className="h-4 w-3/4 mb-1" />
+											<Skeleton className="h-3 w-1/2" />
+										</div>
+									),
+								)}
 							</div>
 						)}
 						{discoverData && discoverData.results.length > 0 && (
@@ -377,9 +379,9 @@ function SearchPage() {
 																		(markMutation.isPending &&
 																			markMutation.variables?.body?.movieId ===
 																				movieId) ||
-																				(unmarkMutation.isPending &&
-																					unmarkMutation.variables?.path
-																						?.movieId === movieId)
+																		(unmarkMutation.isPending &&
+																			unmarkMutation.variables?.path
+																				?.movieId === movieId)
 																	}
 																	className={`absolute top-2 right-2 z-10 ${
 																		isWatched
