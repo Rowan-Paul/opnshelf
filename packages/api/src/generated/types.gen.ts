@@ -92,15 +92,8 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
-export type MarkWatchedDto = {
-    /**
-     * TMDB movie ID
-     */
-    movieId: string;
-    /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
-     */
-    watchedAt?: string;
+export type Function = {
+    [key: string]: unknown;
 };
 
 export type WatchHistoryItemDto = {
@@ -131,6 +124,28 @@ export type UserDto = {
     } | null;
 };
 
+export type UserSettingsDto = {
+    /**
+     * Time format preference
+     */
+    timeFormat: '12h' | '24h';
+    /**
+     * IANA timezone identifier (e.g., America/New_York)
+     */
+    timezone: string;
+};
+
+export type UpdateUserSettingsDto = {
+    /**
+     * Time format preference
+     */
+    timeFormat?: '12h' | '24h';
+    /**
+     * IANA timezone identifier (e.g., America/New_York)
+     */
+    timezone?: string;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -138,7 +153,7 @@ export type MoviesControllerSearchMoviesData = {
         /**
          * Search term
          */
-        query: string;
+        query: unknown;
     };
     url: '/movies/search';
 };
@@ -152,20 +167,7 @@ export type MoviesControllerSearchMoviesResponse = MoviesControllerSearchMoviesR
 export type MoviesControllerDiscoverMoviesData = {
     body?: never;
     path?: never;
-    query?: {
-        /**
-         * Sort order for results
-         */
-        sortBy?: 'popularity.desc' | 'popularity.asc' | 'release_date.desc' | 'release_date.asc' | 'vote_average.desc' | 'vote_average.asc';
-        /**
-         * Filter by release year
-         */
-        year?: number;
-        /**
-         * Page number
-         */
-        page?: number;
-    };
+    query?: never;
     url: '/movies/discover';
 };
 
@@ -206,7 +208,7 @@ export type MoviesControllerGetUserMoviesResponses = {
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
 
 export type MoviesControllerMarkWatchedData = {
-    body: MarkWatchedDto;
+    body: Function;
     path?: never;
     query?: never;
     url: '/movies/watched';
@@ -348,15 +350,15 @@ export type AuthControllerGetClientMetadataResponses = {
 export type AuthControllerLoginData = {
     body?: never;
     path?: never;
-    query?: {
+    query: {
         /**
          * Platform identifier (e.g., "mobile") for redirect handling
          */
         platform?: unknown;
         /**
-         * User handle (e.g., user.bsky.social)
+         * User handle (e.g., user.bsky.social or user.custompds.com)
          */
-        handle?: unknown;
+        handle: unknown;
     };
     url: '/auth/login';
 };
@@ -401,3 +403,43 @@ export type AuthControllerLogoutResponses = {
      */
     200: unknown;
 };
+
+export type UsersControllerGetMySettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings';
+};
+
+export type UsersControllerGetMySettingsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerGetMySettingsResponses = {
+    200: UserSettingsDto;
+};
+
+export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
+
+export type UsersControllerUpdateMySettingsData = {
+    body: UpdateUserSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings';
+};
+
+export type UsersControllerUpdateMySettingsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerUpdateMySettingsResponses = {
+    200: UserSettingsDto;
+};
+
+export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];

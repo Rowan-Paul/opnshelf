@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "timezone" TEXT NOT NULL DEFAULT 'UTC',
+ADD COLUMN     "timeFormat" TEXT NOT NULL DEFAULT '24h';

@@ -11,6 +11,7 @@
 			"**/src/**/*.ts",
 			"**/test/**/*.ts",
 			"!**/src/lexicons",
+			"!**/src/generated",
 			"!**/dist"
 		]
 	},

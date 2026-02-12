@@ -12,6 +12,7 @@ import {
 	LogOut,
 	Menu,
 	Search,
+	Settings,
 	User,
 	X,
 } from "lucide-react";
@@ -124,6 +125,13 @@ export default function Header() {
 										? String(user.displayName)
 										: `@${user.handle}`}
 								</span>
+								<Link
+									to="/settings"
+									className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white text-sm"
+									title="Settings"
+								>
+									<Settings size={16} />
+								</Link>
 								<button
 									type="button"
 									onClick={handleLogout}
@@ -205,18 +213,28 @@ export default function Header() {
 					</Link>
 
 					{user && (
-						<Link
-							to="/shelf"
-							onClick={() => setIsOpen(false)}
-							className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
-							activeProps={{
-								className:
-									"flex items-center gap-3 p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors mb-2 text-white",
-							}}
-						>
-							<BookOpen size={20} />
-							<span className="font-medium">My Shelf</span>
-						</Link>
+						<>
+							<Link
+								to="/shelf"
+								onClick={() => setIsOpen(false)}
+								className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
+								activeProps={{
+									className:
+										"flex items-center gap-3 p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors mb-2 text-white",
+								}}
+							>
+								<BookOpen size={20} />
+								<span className="font-medium">My Shelf</span>
+							</Link>
+							<Link
+								to="/settings"
+								onClick={() => setIsOpen(false)}
+								className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
+							>
+								<Settings size={20} />
+								<span className="font-medium">Settings</span>
+							</Link>
+						</>
 					)}
 				</nav>
 

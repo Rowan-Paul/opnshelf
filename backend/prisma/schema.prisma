@@ -13,6 +13,8 @@ model User {
   handle      String   @unique
   displayName String?
   avatar      String?
+  timezone    String   @default("UTC")
+  timeFormat  String   @default("24h")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

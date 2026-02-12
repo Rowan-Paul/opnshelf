@@ -12,6 +12,7 @@ import {
   Loader2,
   LogIn,
   LogOut,
+  Settings,
   Trash2,
   CheckCircle2,
 } from "lucide-react-native";
@@ -300,10 +301,18 @@ export default function ShelfScreen() {
           <BookOpen size={32} color={colors.primary} />
           <Text style={styles.title}>My Shelf</Text>
         </View>
-        <TouchableOpacity onPress={handleAuthAction} style={styles.authButton}>
-          <LogOut size={20} color={colors.text} />
-          <Text style={styles.authButtonText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            onPress={() => router.push("/settings")} 
+            style={styles.iconButton}
+          >
+            <Settings size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleAuthAction} style={styles.authButton}>
+            <LogOut size={20} color={colors.text} />
+            <Text style={styles.authButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isMoviesLoading && (
@@ -382,6 +391,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: colors.text,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  iconButton: {
+    padding: spacing.sm,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
   },
   authButton: {
     flexDirection: "row",

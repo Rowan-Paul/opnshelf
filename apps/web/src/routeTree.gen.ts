@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShelfRouteImport } from './routes/shelf'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
@@ -20,6 +21,11 @@ import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId
 const ShelfRoute = ShelfRouteImport.update({
   id: '/shelf',
   path: '/shelf',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/search'
+    | '/settings'
     | '/shelf'
     | '/auth/complete'
     | '/movies/$movieId/$title'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/search'
+    | '/settings'
     | '/shelf'
     | '/auth/complete'
     | '/movies/$movieId/$title'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/search'
+    | '/settings'
     | '/shelf'
     | '/auth/complete'
     | '/movies/$movieId/$title'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
+  SettingsRoute: typeof SettingsRoute
   ShelfRoute: typeof ShelfRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/shelf'
       fullPath: '/shelf'
       preLoaderRoute: typeof ShelfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
+  SettingsRoute: SettingsRoute,
   ShelfRoute: ShelfRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,

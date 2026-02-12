@@ -143,9 +143,7 @@ function SearchPage() {
 
 	// Discover popular movies when no search query
 	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
-		...moviesControllerDiscoverMoviesOptions({
-			query: { sortBy: "popularity.desc", page: 1 },
-		}),
+		...moviesControllerDiscoverMoviesOptions({}),
 		enabled: searchQuery.length === 0,
 	});
 
