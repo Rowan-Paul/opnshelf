@@ -76,6 +76,26 @@ export class MoviesService {
     return response.json() as Promise<TMDBSearchResponse>;
   }
 
+  async discoverMovies(
+    sortBy: string = 'popularity.desc',
+    page: number = 1,
+    year?: number,
+  ): Promise<TMDBSearchResponse> {
+    let url = `${this.tmdbBaseUrl}/discover/movie?api_key=${this.tmdbApiKey}&sort_by=${sortBy}&page=${page}`;
+
+    if (year) {
+      url += `&primary_release_year=${year}`;
+    }
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Failed to discover movies');
+    }
+
+    return response.json() as Promise<TMDBSearchResponse>;
+  }
+
   async getMovieDetails(movieId: string): Promise<TMDBMovie> {
     const response = await fetch(
       `${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,

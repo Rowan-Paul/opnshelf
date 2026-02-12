@@ -70,8 +70,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Start AT Protocol OAuth login' })
   @ApiQuery({
     name: 'handle',
-    required: false,
-    description: 'User handle (e.g., user.bsky.social)',
+    required: true,
+    description: 'User handle (e.g., user.bsky.social or user.custompds.com)',
   })
   @ApiQuery({
     name: 'platform',
@@ -84,8 +84,15 @@ export class AuthController {
     @Query('platform') platform: string | undefined,
     @Res() res: Response,
   ) {
-    // Default to bsky.social if no handle provided
-    const userHandle = handle || 'bsky.social';
+    // Require handle to be provided
+    if (!handle || handle.trim() === '') {
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://127.0.0.1:3000';
+      return res.redirect(`${frontendUrl}?error=handle_required`);
+    }
+
+    const userHandle = handle.trim();
 
     // Set platform cookie if mobile, so callback knows where to redirect
     if (platform === 'mobile') {

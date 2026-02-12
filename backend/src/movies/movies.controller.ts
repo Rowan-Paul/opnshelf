@@ -22,6 +22,7 @@ import {
 import { MoviesService } from './movies.service';
 import {
   SearchMoviesDto,
+  DiscoverMoviesDto,
   SearchResultsDto,
   TrackedMovieDto,
   MovieDto,
@@ -46,6 +47,17 @@ export class MoviesController {
   @ApiResponse({ status: 200, type: SearchResultsDto })
   async searchMovies(@Query() searchDto: SearchMoviesDto) {
     return this.moviesService.searchMovies(searchDto.query);
+  }
+
+  @Get('discover')
+  @ApiOperation({ summary: 'Discover popular movies from TMDB' })
+  @ApiResponse({ status: 200, type: SearchResultsDto })
+  async discoverMovies(@Query() discoverDto: DiscoverMoviesDto) {
+    return this.moviesService.discoverMovies(
+      discoverDto.sortBy,
+      discoverDto.page ?? 1,
+      discoverDto.year,
+    );
   }
 
   @Get('tmdb/:movieId')

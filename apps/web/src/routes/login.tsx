@@ -58,6 +58,7 @@ function LoginPage() {
 	const errorMessages: Record<string, string> = {
 		auth_failed: "Authentication failed. Please try again.",
 		callback_failed: "Something went wrong during sign in. Please try again.",
+		handle_required: "Please enter your handle (e.g., username.bsky.social).",
 	};
 
 	if (isAuthLoading) {

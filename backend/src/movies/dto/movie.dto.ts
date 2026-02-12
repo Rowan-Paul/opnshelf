@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class MovieColorsDto {
   @ApiPropertyOptional()
@@ -101,6 +102,41 @@ export class SearchMoviesDto {
   @ApiProperty()
   @IsString()
   query: string;
+}
+
+export class DiscoverMoviesDto {
+  @ApiPropertyOptional({
+    description: 'Sort order for results',
+    enum: [
+      'popularity.desc',
+      'popularity.asc',
+      'release_date.desc',
+      'release_date.asc',
+      'vote_average.desc',
+      'vote_average.asc',
+    ],
+    default: 'popularity.desc',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by release year',
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  year?: number;
+
+  @ApiPropertyOptional({
+    description: 'Page number',
+    default: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  page?: number;
 }
 
 export class TMDBMovieResultDto {

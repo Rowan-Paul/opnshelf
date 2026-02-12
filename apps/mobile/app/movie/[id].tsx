@@ -20,6 +20,7 @@ import {
 	Modal,
 	Pressable,
 	ScrollView,
+	Share,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -205,6 +206,17 @@ export default function MovieDetailScreen() {
 		[deleteWatchEntryMutation]
 	);
 
+	const handleShare = useCallback(async () => {
+		const url = `https://opnshelf.xyz/movie/${movieId}/${title || ""}`;
+		try {
+			await Share.share({
+				url,
+			});
+		} catch {
+			showToast("Failed to share", "error");
+		}
+	}, [movieId, title, showToast]);
+
 	const onDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
 		setShowDatePicker(false);
 		if (selectedDate) {
@@ -356,54 +368,74 @@ export default function MovieDetailScreen() {
 										)}
 									</TouchableOpacity>
 
-									<TouchableOpacity
-										onPress={openDateModal}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
+								<TouchableOpacity
+									onPress={openDateModal}
+									style={styles.secondaryButton}
+									activeOpacity={0.8}
+								>
+									<View style={styles.buttonContent}>
+										<Ionicons name="calendar" size={18} color="#9ca3af" />
+										<Text style={styles.secondaryButtonText}>
+											Add on Different Date
+										</Text>
+									</View>
+								</TouchableOpacity>
+								<TouchableOpacity
+									onPress={handleShare}
+									style={styles.secondaryButton}
+									activeOpacity={0.8}
+								>
+									<View style={styles.buttonContent}>
+										<Ionicons name="share-outline" size={18} color="#9ca3af" />
+										<Text style={styles.secondaryButtonText}>Share</Text>
+									</View>
+								</TouchableOpacity>
+							</>
+						) : (
+							<>
+								<TouchableOpacity
+									onPress={handleMarkWatched}
+									disabled={isPending}
+									style={[
+										styles.primaryButton,
+										{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
+									]}
+									activeOpacity={0.8}
+								>
+									{isPending ? (
+										<ActivityIndicator color="#f9fafb" />
+									) : (
 										<View style={styles.buttonContent}>
-											<Ionicons name="calendar" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Add on Different Date
-											</Text>
+											<Ionicons name="refresh" size={20} color="#f9fafb" />
+											<Text style={styles.buttonText}>Watch Now</Text>
 										</View>
-									</TouchableOpacity>
-								</>
-							) : (
-								<>
-									<TouchableOpacity
-										onPress={handleMarkWatched}
-										disabled={isPending}
-										style={[
-											styles.primaryButton,
-											{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
-										]}
-										activeOpacity={0.8}
-									>
-										{isPending ? (
-											<ActivityIndicator color="#f9fafb" />
-										) : (
-											<View style={styles.buttonContent}>
-												<Ionicons name="refresh" size={20} color="#f9fafb" />
-												<Text style={styles.buttonText}>Watch Now</Text>
-											</View>
-										)}
-									</TouchableOpacity>
+									)}
+								</TouchableOpacity>
 
-									<TouchableOpacity
-										onPress={openDateModal}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
-										<View style={styles.buttonContent}>
-											<Ionicons name="calendar" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Watch on Different Date
-											</Text>
-										</View>
-									</TouchableOpacity>
-								</>
-							)
+								<TouchableOpacity
+									onPress={openDateModal}
+									style={styles.secondaryButton}
+									activeOpacity={0.8}
+								>
+									<View style={styles.buttonContent}>
+										<Ionicons name="calendar" size={18} color="#9ca3af" />
+										<Text style={styles.secondaryButtonText}>
+											Watch on Different Date
+										</Text>
+									</View>
+								</TouchableOpacity>
+								<TouchableOpacity
+									onPress={handleShare}
+									style={styles.secondaryButton}
+									activeOpacity={0.8}
+								>
+									<View style={styles.buttonContent}>
+										<Ionicons name="share-outline" size={18} color="#9ca3af" />
+										<Text style={styles.secondaryButtonText}>Share</Text>
+									</View>
+								</TouchableOpacity>
+							</>
+						)
 						) : (
 							<TouchableOpacity
 								onPress={() => router.push("/login")}

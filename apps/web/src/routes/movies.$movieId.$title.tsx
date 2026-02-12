@@ -26,6 +26,7 @@ import {
 	Loader2,
 	Plus,
 	RotateCcw,
+	Share2,
 	Trash2,
 	X,
 } from "lucide-react";
@@ -296,6 +297,27 @@ function MovieDetailPage() {
 		setShowDateModal(true);
 	};
 
+	const handleShare = async () => {
+		const url = window.location.href;
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: movie?.title,
+					url,
+				});
+			} catch {
+				// User cancelled share
+			}
+		} else {
+			try {
+				await navigator.clipboard.writeText(url);
+				toast.success("Link copied to clipboard");
+			} catch {
+				toast.error("Failed to copy link");
+			}
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
 			{/* Hero Section with Backdrop */}
@@ -455,6 +477,14 @@ function MovieDetailPage() {
 												<Calendar className="w-4 h-4" />
 												Add on Different Date
 											</button>
+											<button
+												type="button"
+												onClick={handleShare}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+											>
+												<Share2 className="w-4 h-4" />
+												Share
+											</button>
 										</>
 									) : (
 										<>
@@ -484,6 +514,14 @@ function MovieDetailPage() {
 											>
 												<Calendar className="w-4 h-4" />
 												Watch on Different Date
+											</button>
+											<button
+												type="button"
+												onClick={handleShare}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+											>
+												<Share2 className="w-4 h-4" />
+												Share
 											</button>
 										</>
 									)
@@ -581,6 +619,14 @@ function MovieDetailPage() {
 										<Calendar className="w-4 h-4" />
 										Add on Different Date
 									</button>
+									<button
+										type="button"
+										onClick={handleShare}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+									>
+										<Share2 className="w-4 h-4" />
+										Share
+									</button>
 								</div>
 							) : (
 								<div className="space-y-3">
@@ -655,6 +701,14 @@ function MovieDetailPage() {
 									>
 										<Calendar className="w-4 h-4" />
 										Watch on Different Date
+									</button>
+									<button
+										type="button"
+										onClick={handleShare}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+									>
+										<Share2 className="w-4 h-4" />
+										Share
 									</button>
 								</div>
 							)

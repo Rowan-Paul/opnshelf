@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import {
 	ActivityIndicator,
@@ -13,7 +12,8 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { authControllerMeOptions, getLoginUrl } from "@opnshelf/api";
+import { getLoginUrl } from "@opnshelf/api";
+import { useAuth } from "@/contexts/auth";
 
 export default function LoginScreen() {
 	const [handle, setHandle] = useState("");
@@ -26,11 +26,7 @@ export default function LoginScreen() {
 	}>();
 	const { error, redirect, reason } = params;
 
-	const { data: user, isLoading: isAuthLoading } = useQuery({
-		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
+	const { user, isLoading: isAuthLoading } = useAuth();
 
 	useEffect(() => {
 		if (user && !isAuthLoading) {

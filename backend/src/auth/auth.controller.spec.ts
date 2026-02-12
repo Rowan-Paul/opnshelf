@@ -123,14 +123,15 @@ describe('AuthController', () => {
       expect(res.redirect).toHaveBeenCalledWith(authUrl);
     });
 
-    it('should use bsky.social as default handle', async () => {
-      const authUrl = 'https://bsky.social/oauth/authorize?state=abc';
-      mockAuthService.authorize.mockResolvedValue(authUrl);
+    it('should redirect with error when handle is not provided', async () => {
       const res = createMockResponse();
 
       await controller.login(undefined, undefined, res);
 
-      expect(mockAuthService.authorize).toHaveBeenCalledWith('bsky.social');
+      expect(mockAuthService.authorize).not.toHaveBeenCalled();
+      expect(res.redirect).toHaveBeenCalledWith(
+        'http://127.0.0.1:3000?error=handle_required',
+      );
     });
 
     it('should set platform cookie when platform=mobile', async () => {

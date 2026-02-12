@@ -149,6 +149,32 @@ export type MoviesControllerSearchMoviesResponses = {
 
 export type MoviesControllerSearchMoviesResponse = MoviesControllerSearchMoviesResponses[keyof MoviesControllerSearchMoviesResponses];
 
+export type MoviesControllerDiscoverMoviesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort order for results
+         */
+        sortBy?: 'popularity.desc' | 'popularity.asc' | 'release_date.desc' | 'release_date.asc' | 'vote_average.desc' | 'vote_average.asc';
+        /**
+         * Filter by release year
+         */
+        year?: number;
+        /**
+         * Page number
+         */
+        page?: number;
+    };
+    url: '/movies/discover';
+};
+
+export type MoviesControllerDiscoverMoviesResponses = {
+    200: SearchResultsDto;
+};
+
+export type MoviesControllerDiscoverMoviesResponse = MoviesControllerDiscoverMoviesResponses[keyof MoviesControllerDiscoverMoviesResponses];
+
 export type MoviesControllerGetMovieDetailsData = {
     body?: never;
     path: {

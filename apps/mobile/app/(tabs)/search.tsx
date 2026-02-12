@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+	moviesControllerDiscoverMoviesOptions,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
@@ -211,6 +212,14 @@ export default function SearchScreen() {
 		enabled: debouncedQuery.length > 0,
 	});
 
+	// Discover popular movies when no search query
+	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
+		...moviesControllerDiscoverMoviesOptions({
+			query: { sortBy: 'popularity.desc', page: 1 },
+		}),
+		enabled: debouncedQuery.length === 0,
+	});
+
 	// Mark watched mutation
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
@@ -356,6 +365,26 @@ export default function SearchScreen() {
 					<Text style={styles.emptyText}>
 						No results found for &quot;{debouncedQuery}&quot;
 					</Text>
+				</View>
+			)}
+
+			{/* Popular movies suggestions when no search query */}
+			{!debouncedQuery && (
+				<View style={{ flex: 1 }}>
+					<View style={styles.header}>
+						<Text style={styles.title}>Popular Movies</Text>
+					</View>
+					{isDiscoverLoading && renderSkeleton()}
+					{discoverData && discoverData.results.length > 0 && (
+						<FlashList
+							data={discoverData.results}
+							renderItem={renderMovieItem}
+							keyExtractor={keyExtractor}
+							numColumns={2}
+							contentContainerStyle={styles.listContent}
+							extraData={watchedMovieIds}
+						/>
+					)}
 				</View>
 			)}
 		</SafeAreaView>

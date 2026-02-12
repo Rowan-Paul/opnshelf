@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -22,6 +22,11 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  * Search movies from TMDB
  */
 export const moviesControllerSearchMovies = <ThrowOnError extends boolean = false>(options: Options<MoviesControllerSearchMoviesData, ThrowOnError>) => (options.client ?? client).get<MoviesControllerSearchMoviesResponses, unknown, ThrowOnError>({ url: '/movies/search', ...options });
+
+/**
+ * Discover popular movies from TMDB
+ */
+export const moviesControllerDiscoverMovies = <ThrowOnError extends boolean = false>(options?: Options<MoviesControllerDiscoverMoviesData, ThrowOnError>) => (options?.client ?? client).get<MoviesControllerDiscoverMoviesResponses, unknown, ThrowOnError>({ url: '/movies/discover', ...options });
 
 /**
  * Get movie details from TMDB
