@@ -14,23 +14,23 @@
  * model files in the `model` directory!
  */
 
-import * as runtime from '@prisma/client/runtime/index-browser';
+import * as runtime from "@prisma/client/runtime/index-browser";
 
-export type * from '../models.js';
-export type * from './prismaNamespace.js';
+export type * from "../models.js";
+export type * from "./prismaNamespace.js";
 
 export const Decimal = runtime.Decimal;
 
 export const NullTypes = {
-  DbNull: runtime.NullTypes.DbNull as new (
-    secret: never,
-  ) => typeof runtime.DbNull,
-  JsonNull: runtime.NullTypes.JsonNull as new (
-    secret: never,
-  ) => typeof runtime.JsonNull,
-  AnyNull: runtime.NullTypes.AnyNull as new (
-    secret: never,
-  ) => typeof runtime.AnyNull,
+	DbNull: runtime.NullTypes.DbNull as new (
+		secret: never,
+	) => typeof runtime.DbNull,
+	JsonNull: runtime.NullTypes.JsonNull as new (
+		secret: never,
+	) => typeof runtime.JsonNull,
+	AnyNull: runtime.NullTypes.AnyNull as new (
+		secret: never,
+	) => typeof runtime.AnyNull,
 };
 /**
  * Helper for filtering JSON entries that have `null` on the database (empty on the db)
@@ -54,11 +54,11 @@ export const JsonNull = runtime.JsonNull;
 export const AnyNull = runtime.AnyNull;
 
 export const ModelName = {
-  User: 'User',
-  AuthSession: 'AuthSession',
-  AuthState: 'AuthState',
-  Movie: 'Movie',
-  TrackedMovie: 'TrackedMovie',
+	User: "User",
+	AuthSession: "AuthSession",
+	AuthState: "AuthState",
+	Movie: "Movie",
+	TrackedMovie: "TrackedMovie",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -68,114 +68,114 @@ export type ModelName = (typeof ModelName)[keyof typeof ModelName];
  */
 
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
-  Serializable: 'Serializable',
+	ReadUncommitted: "ReadUncommitted",
+	ReadCommitted: "ReadCommitted",
+	RepeatableRead: "RepeatableRead",
+	Serializable: "Serializable",
 } as const);
 
 export type TransactionIsolationLevel =
-  (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
+	(typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
 
 export const UserScalarFieldEnum = {
-  did: 'did',
-  handle: 'handle',
-  displayName: 'displayName',
-  avatar: 'avatar',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+	did: "did",
+	handle: "handle",
+	displayName: "displayName",
+	avatar: "avatar",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
 } as const;
 
 export type UserScalarFieldEnum =
-  (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+	(typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
 
 export const AuthSessionScalarFieldEnum = {
-  id: 'id',
-  userDid: 'userDid',
-  sessionData: 'sessionData',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+	id: "id",
+	userDid: "userDid",
+	sessionData: "sessionData",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
 } as const;
 
 export type AuthSessionScalarFieldEnum =
-  (typeof AuthSessionScalarFieldEnum)[keyof typeof AuthSessionScalarFieldEnum];
+	(typeof AuthSessionScalarFieldEnum)[keyof typeof AuthSessionScalarFieldEnum];
 
 export const AuthStateScalarFieldEnum = {
-  key: 'key',
-  stateData: 'stateData',
-  expiresAt: 'expiresAt',
-  createdAt: 'createdAt',
+	key: "key",
+	stateData: "stateData",
+	expiresAt: "expiresAt",
+	createdAt: "createdAt",
 } as const;
 
 export type AuthStateScalarFieldEnum =
-  (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum];
+	(typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum];
 
 export const MovieScalarFieldEnum = {
-  movieId: 'movieId',
-  title: 'title',
-  posterPath: 'posterPath',
-  backdropPath: 'backdropPath',
-  releaseYear: 'releaseYear',
-  releaseDate: 'releaseDate',
-  overview: 'overview',
-  colors: 'colors',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+	movieId: "movieId",
+	title: "title",
+	posterPath: "posterPath",
+	backdropPath: "backdropPath",
+	releaseYear: "releaseYear",
+	releaseDate: "releaseDate",
+	overview: "overview",
+	colors: "colors",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
 } as const;
 
 export type MovieScalarFieldEnum =
-  (typeof MovieScalarFieldEnum)[keyof typeof MovieScalarFieldEnum];
+	(typeof MovieScalarFieldEnum)[keyof typeof MovieScalarFieldEnum];
 
 export const TrackedMovieScalarFieldEnum = {
-  id: 'id',
-  rkey: 'rkey',
-  uri: 'uri',
-  cid: 'cid',
-  userDid: 'userDid',
-  movieId: 'movieId',
-  status: 'status',
-  watchedDate: 'watchedDate',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+	id: "id",
+	rkey: "rkey",
+	uri: "uri",
+	cid: "cid",
+	userDid: "userDid",
+	movieId: "movieId",
+	status: "status",
+	watchedDate: "watchedDate",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
 } as const;
 
 export type TrackedMovieScalarFieldEnum =
-  (typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum];
+	(typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum];
 
 export const SortOrder = {
-  asc: 'asc',
-  desc: 'desc',
+	asc: "asc",
+	desc: "desc",
 } as const;
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
 export const NullableJsonNullValueInput = {
-  DbNull: DbNull,
-  JsonNull: JsonNull,
+	DbNull: DbNull,
+	JsonNull: JsonNull,
 } as const;
 
 export type NullableJsonNullValueInput =
-  (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
+	(typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
 
 export const QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive',
+	default: "default",
+	insensitive: "insensitive",
 } as const;
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
 
 export const NullsOrder = {
-  first: 'first',
-  last: 'last',
+	first: "first",
+	last: "last",
 } as const;
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 
 export const JsonNullValueFilter = {
-  DbNull: DbNull,
-  JsonNull: JsonNull,
-  AnyNull: AnyNull,
+	DbNull: DbNull,
+	JsonNull: JsonNull,
+	AnyNull: AnyNull,
 } as const;
 
 export type JsonNullValueFilter =
-  (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];
+	(typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];

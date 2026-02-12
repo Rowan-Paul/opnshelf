@@ -1,282 +1,282 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsDateString, IsInt, IsOptional, IsString } from "class-validator";
 
 export class MovieColorsDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  primary?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	primary?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  secondary?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	secondary?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  accent?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	accent?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  muted?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	muted?: string;
 }
 
 export class MovieDto {
-  @ApiProperty()
-  @IsString()
-  movieId: string;
+	@ApiProperty()
+	@IsString()
+	movieId: string;
 
-  @ApiProperty()
-  @IsString()
-  title: string;
+	@ApiProperty()
+	@IsString()
+	title: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  posterPath?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	posterPath?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  backdropPath?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	backdropPath?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  releaseYear?: number;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsInt()
+	releaseYear?: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  releaseDate?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsDateString()
+	releaseDate?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  overview?: string;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	overview?: string;
 
-  @ApiPropertyOptional({ type: MovieColorsDto })
-  @IsOptional()
-  colors?: MovieColorsDto;
+	@ApiPropertyOptional({ type: MovieColorsDto })
+	@IsOptional()
+	colors?: MovieColorsDto;
 }
 
 export class TrackedMovieDto {
-  @ApiProperty()
-  id: string;
+	@ApiProperty()
+	id: string;
 
-  @ApiProperty()
-  rkey: string;
+	@ApiProperty()
+	rkey: string;
 
-  @ApiProperty()
-  uri: string;
+	@ApiProperty()
+	uri: string;
 
-  @ApiProperty()
-  cid: string;
+	@ApiProperty()
+	cid: string;
 
-  @ApiProperty()
-  userDid: string;
+	@ApiProperty()
+	userDid: string;
 
-  @ApiProperty()
-  movieId: string;
+	@ApiProperty()
+	movieId: string;
 
-  @ApiProperty()
-  status: string;
+	@ApiProperty()
+	status: string;
 
-  @ApiPropertyOptional()
-  watchedDate?: string;
+	@ApiPropertyOptional()
+	watchedDate?: string;
 
-  @ApiProperty()
-  createdAt: string;
+	@ApiProperty()
+	createdAt: string;
 
-  @ApiProperty()
-  updatedAt: string;
+	@ApiProperty()
+	updatedAt: string;
 
-  @ApiProperty({ type: MovieDto })
-  movie: MovieDto;
+	@ApiProperty({ type: MovieDto })
+	movie: MovieDto;
 }
 
 export class SearchMoviesDto {
-  @ApiProperty()
-  @IsString()
-  query: string;
+	@ApiProperty()
+	@IsString()
+	query: string;
 }
 
 export class DiscoverMoviesDto {
-  @ApiPropertyOptional({
-    description: 'Sort order for results',
-    enum: [
-      'popularity.desc',
-      'popularity.asc',
-      'release_date.desc',
-      'release_date.asc',
-      'vote_average.desc',
-      'vote_average.asc',
-    ],
-    default: 'popularity.desc',
-  })
-  @IsOptional()
-  @IsString()
-  sortBy?: string;
+	@ApiPropertyOptional({
+		description: "Sort order for results",
+		enum: [
+			"popularity.desc",
+			"popularity.asc",
+			"release_date.desc",
+			"release_date.asc",
+			"vote_average.desc",
+			"vote_average.asc",
+		],
+		default: "popularity.desc",
+	})
+	@IsOptional()
+	@IsString()
+	sortBy?: string;
 
-  @ApiPropertyOptional({
-    description: 'Filter by release year',
-  })
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  year?: number;
+	@ApiPropertyOptional({
+		description: "Filter by release year",
+	})
+	@IsOptional()
+	@IsInt()
+	@Type(() => Number)
+	year?: number;
 
-  @ApiPropertyOptional({
-    description: 'Page number',
-    default: 1,
-  })
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  page?: number;
+	@ApiPropertyOptional({
+		description: "Page number",
+		default: 1,
+	})
+	@IsOptional()
+	@IsInt()
+	@Type(() => Number)
+	page?: number;
 }
 
 export class TMDBMovieResultDto {
-  @ApiProperty()
-  id: number;
+	@ApiProperty()
+	id: number;
 
-  @ApiProperty()
-  title: string;
+	@ApiProperty()
+	title: string;
 
-  @ApiPropertyOptional()
-  poster_path?: string;
+	@ApiPropertyOptional()
+	poster_path?: string;
 
-  @ApiPropertyOptional()
-  backdrop_path?: string;
+	@ApiPropertyOptional()
+	backdrop_path?: string;
 
-  @ApiPropertyOptional()
-  release_date?: string;
+	@ApiPropertyOptional()
+	release_date?: string;
 
-  @ApiPropertyOptional()
-  overview?: string;
+	@ApiPropertyOptional()
+	overview?: string;
 }
 
 export class TMDBGenreDto {
-  @ApiProperty()
-  id: number;
+	@ApiProperty()
+	id: number;
 
-  @ApiProperty()
-  name: string;
+	@ApiProperty()
+	name: string;
 }
 
 export class TMDBCastDto {
-  @ApiProperty()
-  id: number;
+	@ApiProperty()
+	id: number;
 
-  @ApiProperty()
-  name: string;
+	@ApiProperty()
+	name: string;
 
-  @ApiPropertyOptional()
-  character?: string;
+	@ApiPropertyOptional()
+	character?: string;
 
-  @ApiPropertyOptional()
-  profile_path?: string;
+	@ApiPropertyOptional()
+	profile_path?: string;
 
-  @ApiProperty()
-  order: number;
+	@ApiProperty()
+	order: number;
 }
 
 export class TMDBCrewDto {
-  @ApiProperty()
-  id: number;
+	@ApiProperty()
+	id: number;
 
-  @ApiProperty()
-  name: string;
+	@ApiProperty()
+	name: string;
 
-  @ApiPropertyOptional()
-  job?: string;
+	@ApiPropertyOptional()
+	job?: string;
 
-  @ApiPropertyOptional()
-  department?: string;
+	@ApiPropertyOptional()
+	department?: string;
 
-  @ApiPropertyOptional()
-  profile_path?: string;
+	@ApiPropertyOptional()
+	profile_path?: string;
 }
 
 export class TMDBCreditsDto {
-  @ApiProperty({ type: [TMDBCastDto] })
-  cast: TMDBCastDto[];
+	@ApiProperty({ type: [TMDBCastDto] })
+	cast: TMDBCastDto[];
 
-  @ApiProperty({ type: [TMDBCrewDto] })
-  crew: TMDBCrewDto[];
+	@ApiProperty({ type: [TMDBCrewDto] })
+	crew: TMDBCrewDto[];
 }
 
 export class TMDBMovieDetailDto extends TMDBMovieResultDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  runtime?: number;
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsInt()
+	runtime?: number;
 
-  @ApiPropertyOptional()
-  vote_average?: number;
+	@ApiPropertyOptional()
+	vote_average?: number;
 
-  @ApiPropertyOptional()
-  vote_count?: number;
+	@ApiPropertyOptional()
+	vote_count?: number;
 
-  @ApiPropertyOptional({ type: [TMDBGenreDto] })
-  genres?: TMDBGenreDto[];
+	@ApiPropertyOptional({ type: [TMDBGenreDto] })
+	genres?: TMDBGenreDto[];
 
-  @ApiPropertyOptional({ type: MovieColorsDto })
-  @IsOptional()
-  colors?: MovieColorsDto;
+	@ApiPropertyOptional({ type: MovieColorsDto })
+	@IsOptional()
+	colors?: MovieColorsDto;
 
-  @ApiPropertyOptional({ type: TMDBCreditsDto })
-  credits?: TMDBCreditsDto;
+	@ApiPropertyOptional({ type: TMDBCreditsDto })
+	credits?: TMDBCreditsDto;
 }
 
 export class SearchResultsDto {
-  @ApiProperty({ type: [TMDBMovieResultDto] })
-  results: TMDBMovieResultDto[];
+	@ApiProperty({ type: [TMDBMovieResultDto] })
+	results: TMDBMovieResultDto[];
 
-  @ApiProperty()
-  total_results: number;
+	@ApiProperty()
+	total_results: number;
 
-  @ApiProperty()
-  page: number;
+	@ApiProperty()
+	page: number;
 }
 
 export class MarkWatchedDto {
-  @ApiProperty({ description: 'TMDB movie ID' })
-  @IsString()
-  movieId: string;
+	@ApiProperty({ description: "TMDB movie ID" })
+	@IsString()
+	movieId: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Custom watch datetime (ISO 8601). If not provided, current time is used.',
-  })
-  @IsOptional()
-  @IsDateString()
-  watchedAt?: string;
+	@ApiPropertyOptional({
+		description:
+			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+	})
+	@IsOptional()
+	@IsDateString()
+	watchedAt?: string;
 }
 
 export class UnmarkWatchedDto {
-  @ApiProperty({ description: 'Movie ID to unmark' })
-  @IsString()
-  movieId: string;
+	@ApiProperty({ description: "Movie ID to unmark" })
+	@IsString()
+	movieId: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Mode: "latest" removes most recent watch, "all" removes all watches',
-    enum: ['latest', 'all'],
-    default: 'latest',
-  })
-  @IsOptional()
-  @IsString()
-  mode?: 'latest' | 'all';
+	@ApiPropertyOptional({
+		description:
+			'Mode: "latest" removes most recent watch, "all" removes all watches',
+		enum: ["latest", "all"],
+		default: "latest",
+	})
+	@IsOptional()
+	@IsString()
+	mode?: "latest" | "all";
 }
 
 export class WatchHistoryItemDto {
-  @ApiProperty()
-  id: string;
+	@ApiProperty()
+	id: string;
 
-  @ApiProperty()
-  watchedDate: string;
+	@ApiProperty()
+	watchedDate: string;
 }

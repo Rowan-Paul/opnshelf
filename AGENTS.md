@@ -47,12 +47,13 @@ pnpm test -- --grep "HomePage"            # Run tests matching pattern
 ```
 
 ### Backend
-Uses **ESLint + Prettier**:
+Uses **Biome** (same as web app):
 
 ```bash
 cd backend
-pnpm lint             # Lint and auto-fix
-pnpm format           # Format with Prettier
+pnpm lint             # Run linter
+pnpm format           # Format code
+pnpm check            # Run both lint and format checks
 ```
 
 **Running a single test:**
@@ -77,8 +78,8 @@ pnpm typecheck        # TypeScript check only
 # Web app
 cd apps/web && npx tsc --noEmit
 
-# Backend (has type checking built into lint)
-cd backend && pnpm lint
+# Backend
+cd backend && pnpm check
 
 # Mobile
 cd apps/mobile && pnpm typecheck
@@ -98,9 +99,8 @@ cd apps/mobile && pnpm typecheck
 - **Biome**: Auto-organizes imports on format (source.organizeImports: on)
 
 ### Formatting
-- **Web**: Biome with tabs, double quotes
-- **Backend**: Prettier with ESLint, single quotes
-- **Line endings**: Auto-detected (Prettier: endOfLine: auto)
+- **Web & Backend**: Biome with tabs, double quotes
+- **Line endings**: Auto-detected
 
 ### Naming Conventions
 - **Files**: kebab-case (e.g., `auth.service.ts`, `button.tsx`)
@@ -404,7 +404,7 @@ pnpm --filter backend add -D <package>
 
 - **Commits**: Write clear, descriptive commit messages
 - **PRs**: Ensure typecheck passes before submitting
-- **Pre-commit**: Biome/ESLint runs on staged files
+- **Pre-commit**: Biome runs on staged files
 
 ## Wrapping Up Tasks
 
@@ -420,7 +420,7 @@ npx tsc --noEmit  # TypeScript type check
 ### Backend
 ```bash
 cd backend
-pnpm lint         # ESLint + Prettier (includes type checking)
+pnpm check        # Run Biome lint + format checks
 ```
 
 ### Mobile
@@ -434,7 +434,7 @@ pnpm tsc --noEmit    # TypeScript check only
 ## Key Files
 
 - `/apps/web/biome.json` - Web linting/formatting rules
-- `/backend/eslint.config.mjs` - Backend linting rules
+- `/backend/biome.json` - Backend linting/formatting rules
 - `/turbo.json` - Build pipeline configuration
 - `/pnpm-workspace.yaml` - Workspace definitions
 

@@ -7,1650 +7,1650 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from '@prisma/client/runtime/client';
-import type * as $Enums from '../enums.js';
-import type * as Prisma from '../internal/prismaNamespace.js';
+import type * as runtime from "@prisma/client/runtime/client";
+import type * as $Enums from "../enums.js";
+import type * as Prisma from "../internal/prismaNamespace.js";
 
 /**
  * Model TrackedMovie
  *
  */
 export type TrackedMovieModel =
-  runtime.Types.Result.DefaultSelection<Prisma.$TrackedMoviePayload>;
+	runtime.Types.Result.DefaultSelection<Prisma.$TrackedMoviePayload>;
 
 export type AggregateTrackedMovie = {
-  _count: TrackedMovieCountAggregateOutputType | null;
-  _min: TrackedMovieMinAggregateOutputType | null;
-  _max: TrackedMovieMaxAggregateOutputType | null;
+	_count: TrackedMovieCountAggregateOutputType | null;
+	_min: TrackedMovieMinAggregateOutputType | null;
+	_max: TrackedMovieMaxAggregateOutputType | null;
 };
 
 export type TrackedMovieMinAggregateOutputType = {
-  id: string | null;
-  rkey: string | null;
-  uri: string | null;
-  cid: string | null;
-  userDid: string | null;
-  movieId: string | null;
-  status: string | null;
-  watchedDate: Date | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+	id: string | null;
+	rkey: string | null;
+	uri: string | null;
+	cid: string | null;
+	userDid: string | null;
+	movieId: string | null;
+	status: string | null;
+	watchedDate: Date | null;
+	createdAt: Date | null;
+	updatedAt: Date | null;
 };
 
 export type TrackedMovieMaxAggregateOutputType = {
-  id: string | null;
-  rkey: string | null;
-  uri: string | null;
-  cid: string | null;
-  userDid: string | null;
-  movieId: string | null;
-  status: string | null;
-  watchedDate: Date | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+	id: string | null;
+	rkey: string | null;
+	uri: string | null;
+	cid: string | null;
+	userDid: string | null;
+	movieId: string | null;
+	status: string | null;
+	watchedDate: Date | null;
+	createdAt: Date | null;
+	updatedAt: Date | null;
 };
 
 export type TrackedMovieCountAggregateOutputType = {
-  id: number;
-  rkey: number;
-  uri: number;
-  cid: number;
-  userDid: number;
-  movieId: number;
-  status: number;
-  watchedDate: number;
-  createdAt: number;
-  updatedAt: number;
-  _all: number;
+	id: number;
+	rkey: number;
+	uri: number;
+	cid: number;
+	userDid: number;
+	movieId: number;
+	status: number;
+	watchedDate: number;
+	createdAt: number;
+	updatedAt: number;
+	_all: number;
 };
 
 export type TrackedMovieMinAggregateInputType = {
-  id?: true;
-  rkey?: true;
-  uri?: true;
-  cid?: true;
-  userDid?: true;
-  movieId?: true;
-  status?: true;
-  watchedDate?: true;
-  createdAt?: true;
-  updatedAt?: true;
+	id?: true;
+	rkey?: true;
+	uri?: true;
+	cid?: true;
+	userDid?: true;
+	movieId?: true;
+	status?: true;
+	watchedDate?: true;
+	createdAt?: true;
+	updatedAt?: true;
 };
 
 export type TrackedMovieMaxAggregateInputType = {
-  id?: true;
-  rkey?: true;
-  uri?: true;
-  cid?: true;
-  userDid?: true;
-  movieId?: true;
-  status?: true;
-  watchedDate?: true;
-  createdAt?: true;
-  updatedAt?: true;
+	id?: true;
+	rkey?: true;
+	uri?: true;
+	cid?: true;
+	userDid?: true;
+	movieId?: true;
+	status?: true;
+	watchedDate?: true;
+	createdAt?: true;
+	updatedAt?: true;
 };
 
 export type TrackedMovieCountAggregateInputType = {
-  id?: true;
-  rkey?: true;
-  uri?: true;
-  cid?: true;
-  userDid?: true;
-  movieId?: true;
-  status?: true;
-  watchedDate?: true;
-  createdAt?: true;
-  updatedAt?: true;
-  _all?: true;
+	id?: true;
+	rkey?: true;
+	uri?: true;
+	cid?: true;
+	userDid?: true;
+	movieId?: true;
+	status?: true;
+	watchedDate?: true;
+	createdAt?: true;
+	updatedAt?: true;
+	_all?: true;
 };
 
 export type TrackedMovieAggregateArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Filter which TrackedMovie to aggregate.
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-   *
-   * Determine the order of TrackedMovies to fetch.
-   */
-  orderBy?:
-    | Prisma.TrackedMovieOrderByWithRelationInput
-    | Prisma.TrackedMovieOrderByWithRelationInput[];
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-   *
-   * Sets the start position
-   */
-  cursor?: Prisma.TrackedMovieWhereUniqueInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Take `±n` TrackedMovies from the position of the cursor.
-   */
-  take?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Skip the first `n` TrackedMovies.
-   */
-  skip?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   *
-   * Count returned TrackedMovies
-   **/
-  _count?: true | TrackedMovieCountAggregateInputType;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   *
-   * Select which fields to find the minimum value
-   **/
-  _min?: TrackedMovieMinAggregateInputType;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   *
-   * Select which fields to find the maximum value
-   **/
-  _max?: TrackedMovieMaxAggregateInputType;
+	/**
+	 * Filter which TrackedMovie to aggregate.
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+	 *
+	 * Determine the order of TrackedMovies to fetch.
+	 */
+	orderBy?:
+		| Prisma.TrackedMovieOrderByWithRelationInput
+		| Prisma.TrackedMovieOrderByWithRelationInput[];
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+	 *
+	 * Sets the start position
+	 */
+	cursor?: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Take `±n` TrackedMovies from the position of the cursor.
+	 */
+	take?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Skip the first `n` TrackedMovies.
+	 */
+	skip?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+	 *
+	 * Count returned TrackedMovies
+	 **/
+	_count?: true | TrackedMovieCountAggregateInputType;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+	 *
+	 * Select which fields to find the minimum value
+	 **/
+	_min?: TrackedMovieMinAggregateInputType;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+	 *
+	 * Select which fields to find the maximum value
+	 **/
+	_max?: TrackedMovieMaxAggregateInputType;
 };
 
 export type GetTrackedMovieAggregateType<T extends TrackedMovieAggregateArgs> =
-  {
-    [P in keyof T & keyof AggregateTrackedMovie]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : Prisma.GetScalarType<T[P], AggregateTrackedMovie[P]>
-      : Prisma.GetScalarType<T[P], AggregateTrackedMovie[P]>;
-  };
+	{
+		[P in keyof T & keyof AggregateTrackedMovie]: P extends "_count" | "count"
+			? T[P] extends true
+				? number
+				: Prisma.GetScalarType<T[P], AggregateTrackedMovie[P]>
+			: Prisma.GetScalarType<T[P], AggregateTrackedMovie[P]>;
+	};
 
 export type TrackedMovieGroupByArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  where?: Prisma.TrackedMovieWhereInput;
-  orderBy?:
-    | Prisma.TrackedMovieOrderByWithAggregationInput
-    | Prisma.TrackedMovieOrderByWithAggregationInput[];
-  by: Prisma.TrackedMovieScalarFieldEnum[] | Prisma.TrackedMovieScalarFieldEnum;
-  having?: Prisma.TrackedMovieScalarWhereWithAggregatesInput;
-  take?: number;
-  skip?: number;
-  _count?: TrackedMovieCountAggregateInputType | true;
-  _min?: TrackedMovieMinAggregateInputType;
-  _max?: TrackedMovieMaxAggregateInputType;
+	where?: Prisma.TrackedMovieWhereInput;
+	orderBy?:
+		| Prisma.TrackedMovieOrderByWithAggregationInput
+		| Prisma.TrackedMovieOrderByWithAggregationInput[];
+	by: Prisma.TrackedMovieScalarFieldEnum[] | Prisma.TrackedMovieScalarFieldEnum;
+	having?: Prisma.TrackedMovieScalarWhereWithAggregatesInput;
+	take?: number;
+	skip?: number;
+	_count?: TrackedMovieCountAggregateInputType | true;
+	_min?: TrackedMovieMinAggregateInputType;
+	_max?: TrackedMovieMaxAggregateInputType;
 };
 
 export type TrackedMovieGroupByOutputType = {
-  id: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  userDid: string;
-  movieId: string;
-  status: string;
-  watchedDate: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  _count: TrackedMovieCountAggregateOutputType | null;
-  _min: TrackedMovieMinAggregateOutputType | null;
-  _max: TrackedMovieMaxAggregateOutputType | null;
+	id: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	userDid: string;
+	movieId: string;
+	status: string;
+	watchedDate: Date | null;
+	createdAt: Date;
+	updatedAt: Date;
+	_count: TrackedMovieCountAggregateOutputType | null;
+	_min: TrackedMovieMinAggregateOutputType | null;
+	_max: TrackedMovieMaxAggregateOutputType | null;
 };
 
 type GetTrackedMovieGroupByPayload<T extends TrackedMovieGroupByArgs> =
-  Prisma.PrismaPromise<
-    Array<
-      Prisma.PickEnumerable<TrackedMovieGroupByOutputType, T['by']> & {
-        [P in keyof T & keyof TrackedMovieGroupByOutputType]: P extends '_count'
-          ? T[P] extends boolean
-            ? number
-            : Prisma.GetScalarType<T[P], TrackedMovieGroupByOutputType[P]>
-          : Prisma.GetScalarType<T[P], TrackedMovieGroupByOutputType[P]>;
-      }
-    >
-  >;
+	Prisma.PrismaPromise<
+		Array<
+			Prisma.PickEnumerable<TrackedMovieGroupByOutputType, T["by"]> & {
+				[P in keyof T & keyof TrackedMovieGroupByOutputType]: P extends "_count"
+					? T[P] extends boolean
+						? number
+						: Prisma.GetScalarType<T[P], TrackedMovieGroupByOutputType[P]>
+					: Prisma.GetScalarType<T[P], TrackedMovieGroupByOutputType[P]>;
+			}
+		>
+	>;
 
 export type TrackedMovieWhereInput = {
-  AND?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
-  OR?: Prisma.TrackedMovieWhereInput[];
-  NOT?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
-  id?: Prisma.StringFilter<'TrackedMovie'> | string;
-  rkey?: Prisma.StringFilter<'TrackedMovie'> | string;
-  uri?: Prisma.StringFilter<'TrackedMovie'> | string;
-  cid?: Prisma.StringFilter<'TrackedMovie'> | string;
-  userDid?: Prisma.StringFilter<'TrackedMovie'> | string;
-  movieId?: Prisma.StringFilter<'TrackedMovie'> | string;
-  status?: Prisma.StringFilter<'TrackedMovie'> | string;
-  watchedDate?:
-    | Prisma.DateTimeNullableFilter<'TrackedMovie'>
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
-  updatedAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
-  movie?: Prisma.XOR<Prisma.MovieScalarRelationFilter, Prisma.MovieWhereInput>;
+	AND?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
+	OR?: Prisma.TrackedMovieWhereInput[];
+	NOT?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
+	id?: Prisma.StringFilter<"TrackedMovie"> | string;
+	rkey?: Prisma.StringFilter<"TrackedMovie"> | string;
+	uri?: Prisma.StringFilter<"TrackedMovie"> | string;
+	cid?: Prisma.StringFilter<"TrackedMovie"> | string;
+	userDid?: Prisma.StringFilter<"TrackedMovie"> | string;
+	movieId?: Prisma.StringFilter<"TrackedMovie"> | string;
+	status?: Prisma.StringFilter<"TrackedMovie"> | string;
+	watchedDate?:
+		| Prisma.DateTimeNullableFilter<"TrackedMovie">
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
+	updatedAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
+	user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+	movie?: Prisma.XOR<Prisma.MovieScalarRelationFilter, Prisma.MovieWhereInput>;
 };
 
 export type TrackedMovieOrderByWithRelationInput = {
-  id?: Prisma.SortOrder;
-  rkey?: Prisma.SortOrder;
-  uri?: Prisma.SortOrder;
-  cid?: Prisma.SortOrder;
-  userDid?: Prisma.SortOrder;
-  movieId?: Prisma.SortOrder;
-  status?: Prisma.SortOrder;
-  watchedDate?: Prisma.SortOrderInput | Prisma.SortOrder;
-  createdAt?: Prisma.SortOrder;
-  updatedAt?: Prisma.SortOrder;
-  user?: Prisma.UserOrderByWithRelationInput;
-  movie?: Prisma.MovieOrderByWithRelationInput;
+	id?: Prisma.SortOrder;
+	rkey?: Prisma.SortOrder;
+	uri?: Prisma.SortOrder;
+	cid?: Prisma.SortOrder;
+	userDid?: Prisma.SortOrder;
+	movieId?: Prisma.SortOrder;
+	status?: Prisma.SortOrder;
+	watchedDate?: Prisma.SortOrderInput | Prisma.SortOrder;
+	createdAt?: Prisma.SortOrder;
+	updatedAt?: Prisma.SortOrder;
+	user?: Prisma.UserOrderByWithRelationInput;
+	movie?: Prisma.MovieOrderByWithRelationInput;
 };
 
 export type TrackedMovieWhereUniqueInput = Prisma.AtLeast<
-  {
-    id?: string;
-    rkey?: string;
-    AND?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
-    OR?: Prisma.TrackedMovieWhereInput[];
-    NOT?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
-    uri?: Prisma.StringFilter<'TrackedMovie'> | string;
-    cid?: Prisma.StringFilter<'TrackedMovie'> | string;
-    userDid?: Prisma.StringFilter<'TrackedMovie'> | string;
-    movieId?: Prisma.StringFilter<'TrackedMovie'> | string;
-    status?: Prisma.StringFilter<'TrackedMovie'> | string;
-    watchedDate?:
-      | Prisma.DateTimeNullableFilter<'TrackedMovie'>
-      | Date
-      | string
-      | null;
-    createdAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
-    updatedAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
-    user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
-    movie?: Prisma.XOR<
-      Prisma.MovieScalarRelationFilter,
-      Prisma.MovieWhereInput
-    >;
-  },
-  'id' | 'rkey'
+	{
+		id?: string;
+		rkey?: string;
+		AND?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
+		OR?: Prisma.TrackedMovieWhereInput[];
+		NOT?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[];
+		uri?: Prisma.StringFilter<"TrackedMovie"> | string;
+		cid?: Prisma.StringFilter<"TrackedMovie"> | string;
+		userDid?: Prisma.StringFilter<"TrackedMovie"> | string;
+		movieId?: Prisma.StringFilter<"TrackedMovie"> | string;
+		status?: Prisma.StringFilter<"TrackedMovie"> | string;
+		watchedDate?:
+			| Prisma.DateTimeNullableFilter<"TrackedMovie">
+			| Date
+			| string
+			| null;
+		createdAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
+		updatedAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
+		user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+		movie?: Prisma.XOR<
+			Prisma.MovieScalarRelationFilter,
+			Prisma.MovieWhereInput
+		>;
+	},
+	"id" | "rkey"
 >;
 
 export type TrackedMovieOrderByWithAggregationInput = {
-  id?: Prisma.SortOrder;
-  rkey?: Prisma.SortOrder;
-  uri?: Prisma.SortOrder;
-  cid?: Prisma.SortOrder;
-  userDid?: Prisma.SortOrder;
-  movieId?: Prisma.SortOrder;
-  status?: Prisma.SortOrder;
-  watchedDate?: Prisma.SortOrderInput | Prisma.SortOrder;
-  createdAt?: Prisma.SortOrder;
-  updatedAt?: Prisma.SortOrder;
-  _count?: Prisma.TrackedMovieCountOrderByAggregateInput;
-  _max?: Prisma.TrackedMovieMaxOrderByAggregateInput;
-  _min?: Prisma.TrackedMovieMinOrderByAggregateInput;
+	id?: Prisma.SortOrder;
+	rkey?: Prisma.SortOrder;
+	uri?: Prisma.SortOrder;
+	cid?: Prisma.SortOrder;
+	userDid?: Prisma.SortOrder;
+	movieId?: Prisma.SortOrder;
+	status?: Prisma.SortOrder;
+	watchedDate?: Prisma.SortOrderInput | Prisma.SortOrder;
+	createdAt?: Prisma.SortOrder;
+	updatedAt?: Prisma.SortOrder;
+	_count?: Prisma.TrackedMovieCountOrderByAggregateInput;
+	_max?: Prisma.TrackedMovieMaxOrderByAggregateInput;
+	_min?: Prisma.TrackedMovieMinOrderByAggregateInput;
 };
 
 export type TrackedMovieScalarWhereWithAggregatesInput = {
-  AND?:
-    | Prisma.TrackedMovieScalarWhereWithAggregatesInput
-    | Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
-  OR?: Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
-  NOT?:
-    | Prisma.TrackedMovieScalarWhereWithAggregatesInput
-    | Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
-  id?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  rkey?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  uri?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  cid?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  userDid?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  movieId?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  status?: Prisma.StringWithAggregatesFilter<'TrackedMovie'> | string;
-  watchedDate?:
-    | Prisma.DateTimeNullableWithAggregatesFilter<'TrackedMovie'>
-    | Date
-    | string
-    | null;
-  createdAt?:
-    | Prisma.DateTimeWithAggregatesFilter<'TrackedMovie'>
-    | Date
-    | string;
-  updatedAt?:
-    | Prisma.DateTimeWithAggregatesFilter<'TrackedMovie'>
-    | Date
-    | string;
+	AND?:
+		| Prisma.TrackedMovieScalarWhereWithAggregatesInput
+		| Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
+	OR?: Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
+	NOT?:
+		| Prisma.TrackedMovieScalarWhereWithAggregatesInput
+		| Prisma.TrackedMovieScalarWhereWithAggregatesInput[];
+	id?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	rkey?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	uri?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	cid?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	userDid?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	movieId?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	status?: Prisma.StringWithAggregatesFilter<"TrackedMovie"> | string;
+	watchedDate?:
+		| Prisma.DateTimeNullableWithAggregatesFilter<"TrackedMovie">
+		| Date
+		| string
+		| null;
+	createdAt?:
+		| Prisma.DateTimeWithAggregatesFilter<"TrackedMovie">
+		| Date
+		| string;
+	updatedAt?:
+		| Prisma.DateTimeWithAggregatesFilter<"TrackedMovie">
+		| Date
+		| string;
 };
 
 export type TrackedMovieCreateInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-  user: Prisma.UserCreateNestedOneWithoutTrackedMoviesInput;
-  movie: Prisma.MovieCreateNestedOneWithoutTrackedByInput;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	user: Prisma.UserCreateNestedOneWithoutTrackedMoviesInput;
+	movie: Prisma.MovieCreateNestedOneWithoutTrackedByInput;
 };
 
 export type TrackedMovieUncheckedCreateInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  userDid: string;
-  movieId: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	userDid: string;
+	movieId: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  user?: Prisma.UserUpdateOneRequiredWithoutTrackedMoviesNestedInput;
-  movie?: Prisma.MovieUpdateOneRequiredWithoutTrackedByNestedInput;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	user?: Prisma.UserUpdateOneRequiredWithoutTrackedMoviesNestedInput;
+	movie?: Prisma.MovieUpdateOneRequiredWithoutTrackedByNestedInput;
 };
 
 export type TrackedMovieUncheckedUpdateInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string;
-  movieId?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	userDid?: Prisma.StringFieldUpdateOperationsInput | string;
+	movieId?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieCreateManyInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  userDid: string;
-  movieId: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	userDid: string;
+	movieId: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieUpdateManyMutationInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieUncheckedUpdateManyInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string;
-  movieId?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	userDid?: Prisma.StringFieldUpdateOperationsInput | string;
+	movieId?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieListRelationFilter = {
-  every?: Prisma.TrackedMovieWhereInput;
-  some?: Prisma.TrackedMovieWhereInput;
-  none?: Prisma.TrackedMovieWhereInput;
+	every?: Prisma.TrackedMovieWhereInput;
+	some?: Prisma.TrackedMovieWhereInput;
+	none?: Prisma.TrackedMovieWhereInput;
 };
 
 export type TrackedMovieOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder;
+	_count?: Prisma.SortOrder;
 };
 
 export type TrackedMovieCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder;
-  rkey?: Prisma.SortOrder;
-  uri?: Prisma.SortOrder;
-  cid?: Prisma.SortOrder;
-  userDid?: Prisma.SortOrder;
-  movieId?: Prisma.SortOrder;
-  status?: Prisma.SortOrder;
-  watchedDate?: Prisma.SortOrder;
-  createdAt?: Prisma.SortOrder;
-  updatedAt?: Prisma.SortOrder;
+	id?: Prisma.SortOrder;
+	rkey?: Prisma.SortOrder;
+	uri?: Prisma.SortOrder;
+	cid?: Prisma.SortOrder;
+	userDid?: Prisma.SortOrder;
+	movieId?: Prisma.SortOrder;
+	status?: Prisma.SortOrder;
+	watchedDate?: Prisma.SortOrder;
+	createdAt?: Prisma.SortOrder;
+	updatedAt?: Prisma.SortOrder;
 };
 
 export type TrackedMovieMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder;
-  rkey?: Prisma.SortOrder;
-  uri?: Prisma.SortOrder;
-  cid?: Prisma.SortOrder;
-  userDid?: Prisma.SortOrder;
-  movieId?: Prisma.SortOrder;
-  status?: Prisma.SortOrder;
-  watchedDate?: Prisma.SortOrder;
-  createdAt?: Prisma.SortOrder;
-  updatedAt?: Prisma.SortOrder;
+	id?: Prisma.SortOrder;
+	rkey?: Prisma.SortOrder;
+	uri?: Prisma.SortOrder;
+	cid?: Prisma.SortOrder;
+	userDid?: Prisma.SortOrder;
+	movieId?: Prisma.SortOrder;
+	status?: Prisma.SortOrder;
+	watchedDate?: Prisma.SortOrder;
+	createdAt?: Prisma.SortOrder;
+	updatedAt?: Prisma.SortOrder;
 };
 
 export type TrackedMovieMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder;
-  rkey?: Prisma.SortOrder;
-  uri?: Prisma.SortOrder;
-  cid?: Prisma.SortOrder;
-  userDid?: Prisma.SortOrder;
-  movieId?: Prisma.SortOrder;
-  status?: Prisma.SortOrder;
-  watchedDate?: Prisma.SortOrder;
-  createdAt?: Prisma.SortOrder;
-  updatedAt?: Prisma.SortOrder;
+	id?: Prisma.SortOrder;
+	rkey?: Prisma.SortOrder;
+	uri?: Prisma.SortOrder;
+	cid?: Prisma.SortOrder;
+	userDid?: Prisma.SortOrder;
+	movieId?: Prisma.SortOrder;
+	status?: Prisma.SortOrder;
+	watchedDate?: Prisma.SortOrder;
+	createdAt?: Prisma.SortOrder;
+	updatedAt?: Prisma.SortOrder;
 };
 
 export type TrackedMovieCreateNestedManyWithoutUserInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutUserInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-      >
-    | Prisma.TrackedMovieCreateWithoutUserInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
-  createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutUserInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutUserInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
+	createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
 };
 
 export type TrackedMovieUncheckedCreateNestedManyWithoutUserInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutUserInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-      >
-    | Prisma.TrackedMovieCreateWithoutUserInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
-  createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutUserInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutUserInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
+	createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
 };
 
 export type TrackedMovieUpdateManyWithoutUserNestedInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutUserInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-      >
-    | Prisma.TrackedMovieCreateWithoutUserInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
-  upsert?:
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput[];
-  createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
-  set?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  disconnect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  delete?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  update?:
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput[];
-  updateMany?:
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput[];
-  deleteMany?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutUserInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutUserInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
+	upsert?:
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput[];
+	createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
+	set?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	disconnect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	delete?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	update?:
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput[];
+	updateMany?:
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput[];
+	deleteMany?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
 };
 
 export type TrackedMovieUncheckedUpdateManyWithoutUserNestedInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutUserInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-      >
-    | Prisma.TrackedMovieCreateWithoutUserInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
-  upsert?:
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput[];
-  createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
-  set?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  disconnect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  delete?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  update?:
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput[];
-  updateMany?:
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput[];
-  deleteMany?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutUserInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutUserInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutUserInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutUserInput[];
+	upsert?:
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutUserInput[];
+	createMany?: Prisma.TrackedMovieCreateManyUserInputEnvelope;
+	set?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	disconnect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	delete?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	update?:
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutUserInput[];
+	updateMany?:
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutUserInput[];
+	deleteMany?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
 };
 
 export type TrackedMovieCreateNestedManyWithoutMovieInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutMovieInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-      >
-    | Prisma.TrackedMovieCreateWithoutMovieInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
-  createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutMovieInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutMovieInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
+	createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
 };
 
 export type TrackedMovieUncheckedCreateNestedManyWithoutMovieInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutMovieInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-      >
-    | Prisma.TrackedMovieCreateWithoutMovieInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
-  createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutMovieInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutMovieInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
+	createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
 };
 
 export type TrackedMovieUpdateManyWithoutMovieNestedInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutMovieInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-      >
-    | Prisma.TrackedMovieCreateWithoutMovieInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
-  upsert?:
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput[];
-  createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
-  set?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  disconnect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  delete?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  update?:
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput[];
-  updateMany?:
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput[];
-  deleteMany?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutMovieInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutMovieInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
+	upsert?:
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput[];
+	createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
+	set?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	disconnect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	delete?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	update?:
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput[];
+	updateMany?:
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput[];
+	deleteMany?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
 };
 
 export type TrackedMovieUncheckedUpdateManyWithoutMovieNestedInput = {
-  create?:
-    | Prisma.XOR<
-        Prisma.TrackedMovieCreateWithoutMovieInput,
-        Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-      >
-    | Prisma.TrackedMovieCreateWithoutMovieInput[]
-    | Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
-  connectOrCreate?:
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
-    | Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
-  upsert?:
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput
-    | Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput[];
-  createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
-  set?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  disconnect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  delete?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  connect?:
-    | Prisma.TrackedMovieWhereUniqueInput
-    | Prisma.TrackedMovieWhereUniqueInput[];
-  update?:
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput
-    | Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput[];
-  updateMany?:
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput
-    | Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput[];
-  deleteMany?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
+	create?:
+		| Prisma.XOR<
+				Prisma.TrackedMovieCreateWithoutMovieInput,
+				Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+		  >
+		| Prisma.TrackedMovieCreateWithoutMovieInput[]
+		| Prisma.TrackedMovieUncheckedCreateWithoutMovieInput[];
+	connectOrCreate?:
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput
+		| Prisma.TrackedMovieCreateOrConnectWithoutMovieInput[];
+	upsert?:
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput
+		| Prisma.TrackedMovieUpsertWithWhereUniqueWithoutMovieInput[];
+	createMany?: Prisma.TrackedMovieCreateManyMovieInputEnvelope;
+	set?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	disconnect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	delete?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	connect?:
+		| Prisma.TrackedMovieWhereUniqueInput
+		| Prisma.TrackedMovieWhereUniqueInput[];
+	update?:
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput
+		| Prisma.TrackedMovieUpdateWithWhereUniqueWithoutMovieInput[];
+	updateMany?:
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput
+		| Prisma.TrackedMovieUpdateManyWithWhereWithoutMovieInput[];
+	deleteMany?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
 };
 
 export type TrackedMovieCreateWithoutUserInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-  movie: Prisma.MovieCreateNestedOneWithoutTrackedByInput;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	movie: Prisma.MovieCreateNestedOneWithoutTrackedByInput;
 };
 
 export type TrackedMovieUncheckedCreateWithoutUserInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  movieId: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	movieId: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieCreateOrConnectWithoutUserInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  create: Prisma.XOR<
-    Prisma.TrackedMovieCreateWithoutUserInput,
-    Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.TrackedMovieCreateWithoutUserInput,
+		Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+	>;
 };
 
 export type TrackedMovieCreateManyUserInputEnvelope = {
-  data:
-    | Prisma.TrackedMovieCreateManyUserInput
-    | Prisma.TrackedMovieCreateManyUserInput[];
-  skipDuplicates?: boolean;
+	data:
+		| Prisma.TrackedMovieCreateManyUserInput
+		| Prisma.TrackedMovieCreateManyUserInput[];
+	skipDuplicates?: boolean;
 };
 
 export type TrackedMovieUpsertWithWhereUniqueWithoutUserInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  update: Prisma.XOR<
-    Prisma.TrackedMovieUpdateWithoutUserInput,
-    Prisma.TrackedMovieUncheckedUpdateWithoutUserInput
-  >;
-  create: Prisma.XOR<
-    Prisma.TrackedMovieCreateWithoutUserInput,
-    Prisma.TrackedMovieUncheckedCreateWithoutUserInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	update: Prisma.XOR<
+		Prisma.TrackedMovieUpdateWithoutUserInput,
+		Prisma.TrackedMovieUncheckedUpdateWithoutUserInput
+	>;
+	create: Prisma.XOR<
+		Prisma.TrackedMovieCreateWithoutUserInput,
+		Prisma.TrackedMovieUncheckedCreateWithoutUserInput
+	>;
 };
 
 export type TrackedMovieUpdateWithWhereUniqueWithoutUserInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateWithoutUserInput,
-    Prisma.TrackedMovieUncheckedUpdateWithoutUserInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateWithoutUserInput,
+		Prisma.TrackedMovieUncheckedUpdateWithoutUserInput
+	>;
 };
 
 export type TrackedMovieUpdateManyWithWhereWithoutUserInput = {
-  where: Prisma.TrackedMovieScalarWhereInput;
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateManyMutationInput,
-    Prisma.TrackedMovieUncheckedUpdateManyWithoutUserInput
-  >;
+	where: Prisma.TrackedMovieScalarWhereInput;
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateManyMutationInput,
+		Prisma.TrackedMovieUncheckedUpdateManyWithoutUserInput
+	>;
 };
 
 export type TrackedMovieScalarWhereInput = {
-  AND?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
-  OR?: Prisma.TrackedMovieScalarWhereInput[];
-  NOT?:
-    | Prisma.TrackedMovieScalarWhereInput
-    | Prisma.TrackedMovieScalarWhereInput[];
-  id?: Prisma.StringFilter<'TrackedMovie'> | string;
-  rkey?: Prisma.StringFilter<'TrackedMovie'> | string;
-  uri?: Prisma.StringFilter<'TrackedMovie'> | string;
-  cid?: Prisma.StringFilter<'TrackedMovie'> | string;
-  userDid?: Prisma.StringFilter<'TrackedMovie'> | string;
-  movieId?: Prisma.StringFilter<'TrackedMovie'> | string;
-  status?: Prisma.StringFilter<'TrackedMovie'> | string;
-  watchedDate?:
-    | Prisma.DateTimeNullableFilter<'TrackedMovie'>
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
-  updatedAt?: Prisma.DateTimeFilter<'TrackedMovie'> | Date | string;
+	AND?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
+	OR?: Prisma.TrackedMovieScalarWhereInput[];
+	NOT?:
+		| Prisma.TrackedMovieScalarWhereInput
+		| Prisma.TrackedMovieScalarWhereInput[];
+	id?: Prisma.StringFilter<"TrackedMovie"> | string;
+	rkey?: Prisma.StringFilter<"TrackedMovie"> | string;
+	uri?: Prisma.StringFilter<"TrackedMovie"> | string;
+	cid?: Prisma.StringFilter<"TrackedMovie"> | string;
+	userDid?: Prisma.StringFilter<"TrackedMovie"> | string;
+	movieId?: Prisma.StringFilter<"TrackedMovie"> | string;
+	status?: Prisma.StringFilter<"TrackedMovie"> | string;
+	watchedDate?:
+		| Prisma.DateTimeNullableFilter<"TrackedMovie">
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
+	updatedAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string;
 };
 
 export type TrackedMovieCreateWithoutMovieInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-  user: Prisma.UserCreateNestedOneWithoutTrackedMoviesInput;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
+	user: Prisma.UserCreateNestedOneWithoutTrackedMoviesInput;
 };
 
 export type TrackedMovieUncheckedCreateWithoutMovieInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  userDid: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	userDid: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieCreateOrConnectWithoutMovieInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  create: Prisma.XOR<
-    Prisma.TrackedMovieCreateWithoutMovieInput,
-    Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	create: Prisma.XOR<
+		Prisma.TrackedMovieCreateWithoutMovieInput,
+		Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+	>;
 };
 
 export type TrackedMovieCreateManyMovieInputEnvelope = {
-  data:
-    | Prisma.TrackedMovieCreateManyMovieInput
-    | Prisma.TrackedMovieCreateManyMovieInput[];
-  skipDuplicates?: boolean;
+	data:
+		| Prisma.TrackedMovieCreateManyMovieInput
+		| Prisma.TrackedMovieCreateManyMovieInput[];
+	skipDuplicates?: boolean;
 };
 
 export type TrackedMovieUpsertWithWhereUniqueWithoutMovieInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  update: Prisma.XOR<
-    Prisma.TrackedMovieUpdateWithoutMovieInput,
-    Prisma.TrackedMovieUncheckedUpdateWithoutMovieInput
-  >;
-  create: Prisma.XOR<
-    Prisma.TrackedMovieCreateWithoutMovieInput,
-    Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	update: Prisma.XOR<
+		Prisma.TrackedMovieUpdateWithoutMovieInput,
+		Prisma.TrackedMovieUncheckedUpdateWithoutMovieInput
+	>;
+	create: Prisma.XOR<
+		Prisma.TrackedMovieCreateWithoutMovieInput,
+		Prisma.TrackedMovieUncheckedCreateWithoutMovieInput
+	>;
 };
 
 export type TrackedMovieUpdateWithWhereUniqueWithoutMovieInput = {
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateWithoutMovieInput,
-    Prisma.TrackedMovieUncheckedUpdateWithoutMovieInput
-  >;
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateWithoutMovieInput,
+		Prisma.TrackedMovieUncheckedUpdateWithoutMovieInput
+	>;
 };
 
 export type TrackedMovieUpdateManyWithWhereWithoutMovieInput = {
-  where: Prisma.TrackedMovieScalarWhereInput;
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateManyMutationInput,
-    Prisma.TrackedMovieUncheckedUpdateManyWithoutMovieInput
-  >;
+	where: Prisma.TrackedMovieScalarWhereInput;
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateManyMutationInput,
+		Prisma.TrackedMovieUncheckedUpdateManyWithoutMovieInput
+	>;
 };
 
 export type TrackedMovieCreateManyUserInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  movieId: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	movieId: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieUpdateWithoutUserInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  movie?: Prisma.MovieUpdateOneRequiredWithoutTrackedByNestedInput;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	movie?: Prisma.MovieUpdateOneRequiredWithoutTrackedByNestedInput;
 };
 
 export type TrackedMovieUncheckedUpdateWithoutUserInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  movieId?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	movieId?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieUncheckedUpdateManyWithoutUserInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  movieId?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	movieId?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieCreateManyMovieInput = {
-  id?: string;
-  rkey: string;
-  uri: string;
-  cid: string;
-  userDid: string;
-  status?: string;
-  watchedDate?: Date | string | null;
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
+	id?: string;
+	rkey: string;
+	uri: string;
+	cid: string;
+	userDid: string;
+	status?: string;
+	watchedDate?: Date | string | null;
+	createdAt?: Date | string;
+	updatedAt?: Date | string;
 };
 
 export type TrackedMovieUpdateWithoutMovieInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  user?: Prisma.UserUpdateOneRequiredWithoutTrackedMoviesNestedInput;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	user?: Prisma.UserUpdateOneRequiredWithoutTrackedMoviesNestedInput;
 };
 
 export type TrackedMovieUncheckedUpdateWithoutMovieInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	userDid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieUncheckedUpdateManyWithoutMovieInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string;
-  rkey?: Prisma.StringFieldUpdateOperationsInput | string;
-  uri?: Prisma.StringFieldUpdateOperationsInput | string;
-  cid?: Prisma.StringFieldUpdateOperationsInput | string;
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string;
-  status?: Prisma.StringFieldUpdateOperationsInput | string;
-  watchedDate?:
-    | Prisma.NullableDateTimeFieldUpdateOperationsInput
-    | Date
-    | string
-    | null;
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	id?: Prisma.StringFieldUpdateOperationsInput | string;
+	rkey?: Prisma.StringFieldUpdateOperationsInput | string;
+	uri?: Prisma.StringFieldUpdateOperationsInput | string;
+	cid?: Prisma.StringFieldUpdateOperationsInput | string;
+	userDid?: Prisma.StringFieldUpdateOperationsInput | string;
+	status?: Prisma.StringFieldUpdateOperationsInput | string;
+	watchedDate?:
+		| Prisma.NullableDateTimeFieldUpdateOperationsInput
+		| Date
+		| string
+		| null;
+	createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+	updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 
 export type TrackedMovieSelect<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
-  {
-    id?: boolean;
-    rkey?: boolean;
-    uri?: boolean;
-    cid?: boolean;
-    userDid?: boolean;
-    movieId?: boolean;
-    status?: boolean;
-    watchedDate?: boolean;
-    createdAt?: boolean;
-    updatedAt?: boolean;
-    user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
-  },
-  ExtArgs['result']['trackedMovie']
+	{
+		id?: boolean;
+		rkey?: boolean;
+		uri?: boolean;
+		cid?: boolean;
+		userDid?: boolean;
+		movieId?: boolean;
+		status?: boolean;
+		watchedDate?: boolean;
+		createdAt?: boolean;
+		updatedAt?: boolean;
+		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+		movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	},
+	ExtArgs["result"]["trackedMovie"]
 >;
 
 export type TrackedMovieSelectCreateManyAndReturn<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
-  {
-    id?: boolean;
-    rkey?: boolean;
-    uri?: boolean;
-    cid?: boolean;
-    userDid?: boolean;
-    movieId?: boolean;
-    status?: boolean;
-    watchedDate?: boolean;
-    createdAt?: boolean;
-    updatedAt?: boolean;
-    user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
-  },
-  ExtArgs['result']['trackedMovie']
+	{
+		id?: boolean;
+		rkey?: boolean;
+		uri?: boolean;
+		cid?: boolean;
+		userDid?: boolean;
+		movieId?: boolean;
+		status?: boolean;
+		watchedDate?: boolean;
+		createdAt?: boolean;
+		updatedAt?: boolean;
+		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+		movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	},
+	ExtArgs["result"]["trackedMovie"]
 >;
 
 export type TrackedMovieSelectUpdateManyAndReturn<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
-  {
-    id?: boolean;
-    rkey?: boolean;
-    uri?: boolean;
-    cid?: boolean;
-    userDid?: boolean;
-    movieId?: boolean;
-    status?: boolean;
-    watchedDate?: boolean;
-    createdAt?: boolean;
-    updatedAt?: boolean;
-    user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
-  },
-  ExtArgs['result']['trackedMovie']
+	{
+		id?: boolean;
+		rkey?: boolean;
+		uri?: boolean;
+		cid?: boolean;
+		userDid?: boolean;
+		movieId?: boolean;
+		status?: boolean;
+		watchedDate?: boolean;
+		createdAt?: boolean;
+		updatedAt?: boolean;
+		user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+		movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	},
+	ExtArgs["result"]["trackedMovie"]
 >;
 
 export type TrackedMovieSelectScalar = {
-  id?: boolean;
-  rkey?: boolean;
-  uri?: boolean;
-  cid?: boolean;
-  userDid?: boolean;
-  movieId?: boolean;
-  status?: boolean;
-  watchedDate?: boolean;
-  createdAt?: boolean;
-  updatedAt?: boolean;
+	id?: boolean;
+	rkey?: boolean;
+	uri?: boolean;
+	cid?: boolean;
+	userDid?: boolean;
+	movieId?: boolean;
+	status?: boolean;
+	watchedDate?: boolean;
+	createdAt?: boolean;
+	updatedAt?: boolean;
 };
 
 export type TrackedMovieOmit<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetOmit<
-  | 'id'
-  | 'rkey'
-  | 'uri'
-  | 'cid'
-  | 'userDid'
-  | 'movieId'
-  | 'status'
-  | 'watchedDate'
-  | 'createdAt'
-  | 'updatedAt',
-  ExtArgs['result']['trackedMovie']
+	| "id"
+	| "rkey"
+	| "uri"
+	| "cid"
+	| "userDid"
+	| "movieId"
+	| "status"
+	| "watchedDate"
+	| "createdAt"
+	| "updatedAt",
+	ExtArgs["result"]["trackedMovie"]
 >;
 export type TrackedMovieInclude<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+	movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
 };
 export type TrackedMovieIncludeCreateManyAndReturn<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+	movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
 };
 export type TrackedMovieIncludeUpdateManyAndReturn<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
+	user?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+	movie?: boolean | Prisma.MovieDefaultArgs<ExtArgs>;
 };
 
 export type $TrackedMoviePayload<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  name: 'TrackedMovie';
-  objects: {
-    user: Prisma.$UserPayload<ExtArgs>;
-    movie: Prisma.$MoviePayload<ExtArgs>;
-  };
-  scalars: runtime.Types.Extensions.GetPayloadResult<
-    {
-      id: string;
-      rkey: string;
-      uri: string;
-      cid: string;
-      userDid: string;
-      movieId: string;
-      status: string;
-      watchedDate: Date | null;
-      createdAt: Date;
-      updatedAt: Date;
-    },
-    ExtArgs['result']['trackedMovie']
-  >;
-  composites: {};
+	name: "TrackedMovie";
+	objects: {
+		user: Prisma.$UserPayload<ExtArgs>;
+		movie: Prisma.$MoviePayload<ExtArgs>;
+	};
+	scalars: runtime.Types.Extensions.GetPayloadResult<
+		{
+			id: string;
+			rkey: string;
+			uri: string;
+			cid: string;
+			userDid: string;
+			movieId: string;
+			status: string;
+			watchedDate: Date | null;
+			createdAt: Date;
+			updatedAt: Date;
+		},
+		ExtArgs["result"]["trackedMovie"]
+	>;
+	composites: {};
 };
 
 export type TrackedMovieGetPayload<
-  S extends boolean | null | undefined | TrackedMovieDefaultArgs,
+	S extends boolean | null | undefined | TrackedMovieDefaultArgs,
 > = runtime.Types.Result.GetResult<Prisma.$TrackedMoviePayload, S>;
 
 export type TrackedMovieCountArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = Omit<
-  TrackedMovieFindManyArgs,
-  'select' | 'include' | 'distinct' | 'omit'
+	TrackedMovieFindManyArgs,
+	"select" | "include" | "distinct" | "omit"
 > & {
-  select?: TrackedMovieCountAggregateInputType | true;
+	select?: TrackedMovieCountAggregateInputType | true;
 };
 
 export interface TrackedMovieDelegate<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
-  GlobalOmitOptions = {},
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+	GlobalOmitOptions = {},
 > {
-  [K: symbol]: {
-    types: Prisma.TypeMap<ExtArgs>['model']['TrackedMovie'];
-    meta: { name: 'TrackedMovie' };
-  };
-  /**
-   * Find zero or one TrackedMovie that matches the filter.
-   * @param {TrackedMovieFindUniqueArgs} args - Arguments to find a TrackedMovie
-   * @example
-   * // Get one TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.findUnique({
-   *   where: {
-   *     // ... provide filter here
-   *   }
-   * })
-   */
-  findUnique<T extends TrackedMovieFindUniqueArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieFindUniqueArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'findUnique',
-      GlobalOmitOptions
-    > | null,
-    null,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	[K: symbol]: {
+		types: Prisma.TypeMap<ExtArgs>["model"]["TrackedMovie"];
+		meta: { name: "TrackedMovie" };
+	};
+	/**
+	 * Find zero or one TrackedMovie that matches the filter.
+	 * @param {TrackedMovieFindUniqueArgs} args - Arguments to find a TrackedMovie
+	 * @example
+	 * // Get one TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.findUnique({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   }
+	 * })
+	 */
+	findUnique<T extends TrackedMovieFindUniqueArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieFindUniqueArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"findUnique",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Find one TrackedMovie that matches the filter or throw an error with `error.code='P2025'`
-   * if no matches were found.
-   * @param {TrackedMovieFindUniqueOrThrowArgs} args - Arguments to find a TrackedMovie
-   * @example
-   * // Get one TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.findUniqueOrThrow({
-   *   where: {
-   *     // ... provide filter here
-   *   }
-   * })
-   */
-  findUniqueOrThrow<T extends TrackedMovieFindUniqueOrThrowArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieFindUniqueOrThrowArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'findUniqueOrThrow',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Find one TrackedMovie that matches the filter or throw an error with `error.code='P2025'`
+	 * if no matches were found.
+	 * @param {TrackedMovieFindUniqueOrThrowArgs} args - Arguments to find a TrackedMovie
+	 * @example
+	 * // Get one TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.findUniqueOrThrow({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   }
+	 * })
+	 */
+	findUniqueOrThrow<T extends TrackedMovieFindUniqueOrThrowArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieFindUniqueOrThrowArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"findUniqueOrThrow",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Find the first TrackedMovie that matches the filter.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieFindFirstArgs} args - Arguments to find a TrackedMovie
-   * @example
-   * // Get one TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.findFirst({
-   *   where: {
-   *     // ... provide filter here
-   *   }
-   * })
-   */
-  findFirst<T extends TrackedMovieFindFirstArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieFindFirstArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'findFirst',
-      GlobalOmitOptions
-    > | null,
-    null,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Find the first TrackedMovie that matches the filter.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieFindFirstArgs} args - Arguments to find a TrackedMovie
+	 * @example
+	 * // Get one TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.findFirst({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   }
+	 * })
+	 */
+	findFirst<T extends TrackedMovieFindFirstArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieFindFirstArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"findFirst",
+			GlobalOmitOptions
+		> | null,
+		null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Find the first TrackedMovie that matches the filter or
-   * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieFindFirstOrThrowArgs} args - Arguments to find a TrackedMovie
-   * @example
-   * // Get one TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.findFirstOrThrow({
-   *   where: {
-   *     // ... provide filter here
-   *   }
-   * })
-   */
-  findFirstOrThrow<T extends TrackedMovieFindFirstOrThrowArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieFindFirstOrThrowArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'findFirstOrThrow',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Find the first TrackedMovie that matches the filter or
+	 * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieFindFirstOrThrowArgs} args - Arguments to find a TrackedMovie
+	 * @example
+	 * // Get one TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.findFirstOrThrow({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   }
+	 * })
+	 */
+	findFirstOrThrow<T extends TrackedMovieFindFirstOrThrowArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieFindFirstOrThrowArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"findFirstOrThrow",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Find zero or more TrackedMovies that matches the filter.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieFindManyArgs} args - Arguments to filter and select certain fields only.
-   * @example
-   * // Get all TrackedMovies
-   * const trackedMovies = await prisma.trackedMovie.findMany()
-   *
-   * // Get first 10 TrackedMovies
-   * const trackedMovies = await prisma.trackedMovie.findMany({ take: 10 })
-   *
-   * // Only select the `id`
-   * const trackedMovieWithIdOnly = await prisma.trackedMovie.findMany({ select: { id: true } })
-   *
-   */
-  findMany<T extends TrackedMovieFindManyArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieFindManyArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'findMany',
-      GlobalOmitOptions
-    >
-  >;
+	/**
+	 * Find zero or more TrackedMovies that matches the filter.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieFindManyArgs} args - Arguments to filter and select certain fields only.
+	 * @example
+	 * // Get all TrackedMovies
+	 * const trackedMovies = await prisma.trackedMovie.findMany()
+	 *
+	 * // Get first 10 TrackedMovies
+	 * const trackedMovies = await prisma.trackedMovie.findMany({ take: 10 })
+	 *
+	 * // Only select the `id`
+	 * const trackedMovieWithIdOnly = await prisma.trackedMovie.findMany({ select: { id: true } })
+	 *
+	 */
+	findMany<T extends TrackedMovieFindManyArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieFindManyArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"findMany",
+			GlobalOmitOptions
+		>
+	>;
 
-  /**
-   * Create a TrackedMovie.
-   * @param {TrackedMovieCreateArgs} args - Arguments to create a TrackedMovie.
-   * @example
-   * // Create one TrackedMovie
-   * const TrackedMovie = await prisma.trackedMovie.create({
-   *   data: {
-   *     // ... data to create a TrackedMovie
-   *   }
-   * })
-   *
-   */
-  create<T extends TrackedMovieCreateArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieCreateArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'create',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Create a TrackedMovie.
+	 * @param {TrackedMovieCreateArgs} args - Arguments to create a TrackedMovie.
+	 * @example
+	 * // Create one TrackedMovie
+	 * const TrackedMovie = await prisma.trackedMovie.create({
+	 *   data: {
+	 *     // ... data to create a TrackedMovie
+	 *   }
+	 * })
+	 *
+	 */
+	create<T extends TrackedMovieCreateArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieCreateArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"create",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Create many TrackedMovies.
-   * @param {TrackedMovieCreateManyArgs} args - Arguments to create many TrackedMovies.
-   * @example
-   * // Create many TrackedMovies
-   * const trackedMovie = await prisma.trackedMovie.createMany({
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   *
-   */
-  createMany<T extends TrackedMovieCreateManyArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieCreateManyArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<Prisma.BatchPayload>;
+	/**
+	 * Create many TrackedMovies.
+	 * @param {TrackedMovieCreateManyArgs} args - Arguments to create many TrackedMovies.
+	 * @example
+	 * // Create many TrackedMovies
+	 * const trackedMovie = await prisma.trackedMovie.createMany({
+	 *   data: [
+	 *     // ... provide data here
+	 *   ]
+	 * })
+	 *
+	 */
+	createMany<T extends TrackedMovieCreateManyArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieCreateManyArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<Prisma.BatchPayload>;
 
-  /**
-   * Create many TrackedMovies and returns the data saved in the database.
-   * @param {TrackedMovieCreateManyAndReturnArgs} args - Arguments to create many TrackedMovies.
-   * @example
-   * // Create many TrackedMovies
-   * const trackedMovie = await prisma.trackedMovie.createManyAndReturn({
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   *
-   * // Create many TrackedMovies and only return the `id`
-   * const trackedMovieWithIdOnly = await prisma.trackedMovie.createManyAndReturn({
-   *   select: { id: true },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   *
-   */
-  createManyAndReturn<T extends TrackedMovieCreateManyAndReturnArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieCreateManyAndReturnArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'createManyAndReturn',
-      GlobalOmitOptions
-    >
-  >;
+	/**
+	 * Create many TrackedMovies and returns the data saved in the database.
+	 * @param {TrackedMovieCreateManyAndReturnArgs} args - Arguments to create many TrackedMovies.
+	 * @example
+	 * // Create many TrackedMovies
+	 * const trackedMovie = await prisma.trackedMovie.createManyAndReturn({
+	 *   data: [
+	 *     // ... provide data here
+	 *   ]
+	 * })
+	 *
+	 * // Create many TrackedMovies and only return the `id`
+	 * const trackedMovieWithIdOnly = await prisma.trackedMovie.createManyAndReturn({
+	 *   select: { id: true },
+	 *   data: [
+	 *     // ... provide data here
+	 *   ]
+	 * })
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 *
+	 */
+	createManyAndReturn<T extends TrackedMovieCreateManyAndReturnArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieCreateManyAndReturnArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"createManyAndReturn",
+			GlobalOmitOptions
+		>
+	>;
 
-  /**
-   * Delete a TrackedMovie.
-   * @param {TrackedMovieDeleteArgs} args - Arguments to delete one TrackedMovie.
-   * @example
-   * // Delete one TrackedMovie
-   * const TrackedMovie = await prisma.trackedMovie.delete({
-   *   where: {
-   *     // ... filter to delete one TrackedMovie
-   *   }
-   * })
-   *
-   */
-  delete<T extends TrackedMovieDeleteArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieDeleteArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'delete',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Delete a TrackedMovie.
+	 * @param {TrackedMovieDeleteArgs} args - Arguments to delete one TrackedMovie.
+	 * @example
+	 * // Delete one TrackedMovie
+	 * const TrackedMovie = await prisma.trackedMovie.delete({
+	 *   where: {
+	 *     // ... filter to delete one TrackedMovie
+	 *   }
+	 * })
+	 *
+	 */
+	delete<T extends TrackedMovieDeleteArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieDeleteArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"delete",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Update one TrackedMovie.
-   * @param {TrackedMovieUpdateArgs} args - Arguments to update one TrackedMovie.
-   * @example
-   * // Update one TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.update({
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: {
-   *     // ... provide data here
-   *   }
-   * })
-   *
-   */
-  update<T extends TrackedMovieUpdateArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieUpdateArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'update',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Update one TrackedMovie.
+	 * @param {TrackedMovieUpdateArgs} args - Arguments to update one TrackedMovie.
+	 * @example
+	 * // Update one TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.update({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   },
+	 *   data: {
+	 *     // ... provide data here
+	 *   }
+	 * })
+	 *
+	 */
+	update<T extends TrackedMovieUpdateArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieUpdateArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"update",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Delete zero or more TrackedMovies.
-   * @param {TrackedMovieDeleteManyArgs} args - Arguments to filter TrackedMovies to delete.
-   * @example
-   * // Delete a few TrackedMovies
-   * const { count } = await prisma.trackedMovie.deleteMany({
-   *   where: {
-   *     // ... provide filter here
-   *   }
-   * })
-   *
-   */
-  deleteMany<T extends TrackedMovieDeleteManyArgs>(
-    args?: Prisma.SelectSubset<T, TrackedMovieDeleteManyArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<Prisma.BatchPayload>;
+	/**
+	 * Delete zero or more TrackedMovies.
+	 * @param {TrackedMovieDeleteManyArgs} args - Arguments to filter TrackedMovies to delete.
+	 * @example
+	 * // Delete a few TrackedMovies
+	 * const { count } = await prisma.trackedMovie.deleteMany({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   }
+	 * })
+	 *
+	 */
+	deleteMany<T extends TrackedMovieDeleteManyArgs>(
+		args?: Prisma.SelectSubset<T, TrackedMovieDeleteManyArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<Prisma.BatchPayload>;
 
-  /**
-   * Update zero or more TrackedMovies.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieUpdateManyArgs} args - Arguments to update one or more rows.
-   * @example
-   * // Update many TrackedMovies
-   * const trackedMovie = await prisma.trackedMovie.updateMany({
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: {
-   *     // ... provide data here
-   *   }
-   * })
-   *
-   */
-  updateMany<T extends TrackedMovieUpdateManyArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieUpdateManyArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<Prisma.BatchPayload>;
+	/**
+	 * Update zero or more TrackedMovies.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieUpdateManyArgs} args - Arguments to update one or more rows.
+	 * @example
+	 * // Update many TrackedMovies
+	 * const trackedMovie = await prisma.trackedMovie.updateMany({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   },
+	 *   data: {
+	 *     // ... provide data here
+	 *   }
+	 * })
+	 *
+	 */
+	updateMany<T extends TrackedMovieUpdateManyArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieUpdateManyArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<Prisma.BatchPayload>;
 
-  /**
-   * Update zero or more TrackedMovies and returns the data updated in the database.
-   * @param {TrackedMovieUpdateManyAndReturnArgs} args - Arguments to update many TrackedMovies.
-   * @example
-   * // Update many TrackedMovies
-   * const trackedMovie = await prisma.trackedMovie.updateManyAndReturn({
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   *
-   * // Update zero or more TrackedMovies and only return the `id`
-   * const trackedMovieWithIdOnly = await prisma.trackedMovie.updateManyAndReturn({
-   *   select: { id: true },
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   *
-   */
-  updateManyAndReturn<T extends TrackedMovieUpdateManyAndReturnArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieUpdateManyAndReturnArgs<ExtArgs>>,
-  ): Prisma.PrismaPromise<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'updateManyAndReturn',
-      GlobalOmitOptions
-    >
-  >;
+	/**
+	 * Update zero or more TrackedMovies and returns the data updated in the database.
+	 * @param {TrackedMovieUpdateManyAndReturnArgs} args - Arguments to update many TrackedMovies.
+	 * @example
+	 * // Update many TrackedMovies
+	 * const trackedMovie = await prisma.trackedMovie.updateManyAndReturn({
+	 *   where: {
+	 *     // ... provide filter here
+	 *   },
+	 *   data: [
+	 *     // ... provide data here
+	 *   ]
+	 * })
+	 *
+	 * // Update zero or more TrackedMovies and only return the `id`
+	 * const trackedMovieWithIdOnly = await prisma.trackedMovie.updateManyAndReturn({
+	 *   select: { id: true },
+	 *   where: {
+	 *     // ... provide filter here
+	 *   },
+	 *   data: [
+	 *     // ... provide data here
+	 *   ]
+	 * })
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 *
+	 */
+	updateManyAndReturn<T extends TrackedMovieUpdateManyAndReturnArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieUpdateManyAndReturnArgs<ExtArgs>>,
+	): Prisma.PrismaPromise<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"updateManyAndReturn",
+			GlobalOmitOptions
+		>
+	>;
 
-  /**
-   * Create or update one TrackedMovie.
-   * @param {TrackedMovieUpsertArgs} args - Arguments to update or create a TrackedMovie.
-   * @example
-   * // Update or create a TrackedMovie
-   * const trackedMovie = await prisma.trackedMovie.upsert({
-   *   create: {
-   *     // ... data to create a TrackedMovie
-   *   },
-   *   update: {
-   *     // ... in case it already exists, update
-   *   },
-   *   where: {
-   *     // ... the filter for the TrackedMovie we want to update
-   *   }
-   * })
-   */
-  upsert<T extends TrackedMovieUpsertArgs>(
-    args: Prisma.SelectSubset<T, TrackedMovieUpsertArgs<ExtArgs>>,
-  ): Prisma.Prisma__TrackedMovieClient<
-    runtime.Types.Result.GetResult<
-      Prisma.$TrackedMoviePayload<ExtArgs>,
-      T,
-      'upsert',
-      GlobalOmitOptions
-    >,
-    never,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
+	/**
+	 * Create or update one TrackedMovie.
+	 * @param {TrackedMovieUpsertArgs} args - Arguments to update or create a TrackedMovie.
+	 * @example
+	 * // Update or create a TrackedMovie
+	 * const trackedMovie = await prisma.trackedMovie.upsert({
+	 *   create: {
+	 *     // ... data to create a TrackedMovie
+	 *   },
+	 *   update: {
+	 *     // ... in case it already exists, update
+	 *   },
+	 *   where: {
+	 *     // ... the filter for the TrackedMovie we want to update
+	 *   }
+	 * })
+	 */
+	upsert<T extends TrackedMovieUpsertArgs>(
+		args: Prisma.SelectSubset<T, TrackedMovieUpsertArgs<ExtArgs>>,
+	): Prisma.Prisma__TrackedMovieClient<
+		runtime.Types.Result.GetResult<
+			Prisma.$TrackedMoviePayload<ExtArgs>,
+			T,
+			"upsert",
+			GlobalOmitOptions
+		>,
+		never,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
 
-  /**
-   * Count the number of TrackedMovies.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieCountArgs} args - Arguments to filter TrackedMovies to count.
-   * @example
-   * // Count the number of TrackedMovies
-   * const count = await prisma.trackedMovie.count({
-   *   where: {
-   *     // ... the filter for the TrackedMovies we want to count
-   *   }
-   * })
-   **/
-  count<T extends TrackedMovieCountArgs>(
-    args?: Prisma.Subset<T, TrackedMovieCountArgs>,
-  ): Prisma.PrismaPromise<
-    T extends runtime.Types.Utils.Record<'select', any>
-      ? T['select'] extends true
-        ? number
-        : Prisma.GetScalarType<
-            T['select'],
-            TrackedMovieCountAggregateOutputType
-          >
-      : number
-  >;
+	/**
+	 * Count the number of TrackedMovies.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieCountArgs} args - Arguments to filter TrackedMovies to count.
+	 * @example
+	 * // Count the number of TrackedMovies
+	 * const count = await prisma.trackedMovie.count({
+	 *   where: {
+	 *     // ... the filter for the TrackedMovies we want to count
+	 *   }
+	 * })
+	 **/
+	count<T extends TrackedMovieCountArgs>(
+		args?: Prisma.Subset<T, TrackedMovieCountArgs>,
+	): Prisma.PrismaPromise<
+		T extends runtime.Types.Utils.Record<"select", any>
+			? T["select"] extends true
+				? number
+				: Prisma.GetScalarType<
+						T["select"],
+						TrackedMovieCountAggregateOutputType
+					>
+			: number
+	>;
 
-  /**
-   * Allows you to perform aggregations operations on a TrackedMovie.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-   * @example
-   * // Ordered by age ascending
-   * // Where email contains prisma.io
-   * // Limited to the 10 users
-   * const aggregations = await prisma.user.aggregate({
-   *   _avg: {
-   *     age: true,
-   *   },
-   *   where: {
-   *     email: {
-   *       contains: "prisma.io",
-   *     },
-   *   },
-   *   orderBy: {
-   *     age: "asc",
-   *   },
-   *   take: 10,
-   * })
-   **/
-  aggregate<T extends TrackedMovieAggregateArgs>(
-    args: Prisma.Subset<T, TrackedMovieAggregateArgs>,
-  ): Prisma.PrismaPromise<GetTrackedMovieAggregateType<T>>;
+	/**
+	 * Allows you to perform aggregations operations on a TrackedMovie.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+	 * @example
+	 * // Ordered by age ascending
+	 * // Where email contains prisma.io
+	 * // Limited to the 10 users
+	 * const aggregations = await prisma.user.aggregate({
+	 *   _avg: {
+	 *     age: true,
+	 *   },
+	 *   where: {
+	 *     email: {
+	 *       contains: "prisma.io",
+	 *     },
+	 *   },
+	 *   orderBy: {
+	 *     age: "asc",
+	 *   },
+	 *   take: 10,
+	 * })
+	 **/
+	aggregate<T extends TrackedMovieAggregateArgs>(
+		args: Prisma.Subset<T, TrackedMovieAggregateArgs>,
+	): Prisma.PrismaPromise<GetTrackedMovieAggregateType<T>>;
 
-  /**
-   * Group by TrackedMovie.
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * @param {TrackedMovieGroupByArgs} args - Group by arguments.
-   * @example
-   * // Group by city, order by createdAt, get count
-   * const result = await prisma.user.groupBy({
-   *   by: ['city', 'createdAt'],
-   *   orderBy: {
-   *     createdAt: true
-   *   },
-   *   _count: {
-   *     _all: true
-   *   },
-   * })
-   *
-   **/
-  groupBy<
-    T extends TrackedMovieGroupByArgs,
-    HasSelectOrTake extends Prisma.Or<
-      Prisma.Extends<'skip', Prisma.Keys<T>>,
-      Prisma.Extends<'take', Prisma.Keys<T>>
-    >,
-    OrderByArg extends Prisma.True extends HasSelectOrTake
-      ? { orderBy: TrackedMovieGroupByArgs['orderBy'] }
-      : { orderBy?: TrackedMovieGroupByArgs['orderBy'] },
-    OrderFields extends Prisma.ExcludeUnderscoreKeys<
-      Prisma.Keys<Prisma.MaybeTupleToUnion<T['orderBy']>>
-    >,
-    ByFields extends Prisma.MaybeTupleToUnion<T['by']>,
-    ByValid extends Prisma.Has<ByFields, OrderFields>,
-    HavingFields extends Prisma.GetHavingFields<T['having']>,
-    HavingValid extends Prisma.Has<ByFields, HavingFields>,
-    ByEmpty extends T['by'] extends never[] ? Prisma.True : Prisma.False,
-    InputErrors extends ByEmpty extends Prisma.True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends Prisma.False
-        ? {
-            [P in HavingFields]: P extends ByFields
-              ? never
-              : P extends string
-                ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-                : [
-                    Error,
-                    'Field ',
-                    P,
-                    ` in "having" needs to be provided in "by"`,
-                  ];
-          }[HavingFields]
-        : 'take' extends Prisma.Keys<T>
-          ? 'orderBy' extends Prisma.Keys<T>
-            ? ByValid extends Prisma.True
-              ? {}
-              : {
-                  [P in OrderFields]: P extends ByFields
-                    ? never
-                    : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
-                }[OrderFields]
-            : 'Error: If you provide "take", you also need to provide "orderBy"'
-          : 'skip' extends Prisma.Keys<T>
-            ? 'orderBy' extends Prisma.Keys<T>
-              ? ByValid extends Prisma.True
-                ? {}
-                : {
-                    [P in OrderFields]: P extends ByFields
-                      ? never
-                      : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
-                  }[OrderFields]
-              : 'Error: If you provide "skip", you also need to provide "orderBy"'
-            : ByValid extends Prisma.True
-              ? {}
-              : {
-                  [P in OrderFields]: P extends ByFields
-                    ? never
-                    : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
-                }[OrderFields],
-  >(
-    args: Prisma.SubsetIntersection<T, TrackedMovieGroupByArgs, OrderByArg> &
-      InputErrors,
-  ): {} extends InputErrors
-    ? GetTrackedMovieGroupByPayload<T>
-    : Prisma.PrismaPromise<InputErrors>;
-  /**
-   * Fields of the TrackedMovie model
-   */
-  readonly fields: TrackedMovieFieldRefs;
+	/**
+	 * Group by TrackedMovie.
+	 * Note, that providing `undefined` is treated as the value not being there.
+	 * Read more here: https://pris.ly/d/null-undefined
+	 * @param {TrackedMovieGroupByArgs} args - Group by arguments.
+	 * @example
+	 * // Group by city, order by createdAt, get count
+	 * const result = await prisma.user.groupBy({
+	 *   by: ['city', 'createdAt'],
+	 *   orderBy: {
+	 *     createdAt: true
+	 *   },
+	 *   _count: {
+	 *     _all: true
+	 *   },
+	 * })
+	 *
+	 **/
+	groupBy<
+		T extends TrackedMovieGroupByArgs,
+		HasSelectOrTake extends Prisma.Or<
+			Prisma.Extends<"skip", Prisma.Keys<T>>,
+			Prisma.Extends<"take", Prisma.Keys<T>>
+		>,
+		OrderByArg extends Prisma.True extends HasSelectOrTake
+			? { orderBy: TrackedMovieGroupByArgs["orderBy"] }
+			: { orderBy?: TrackedMovieGroupByArgs["orderBy"] },
+		OrderFields extends Prisma.ExcludeUnderscoreKeys<
+			Prisma.Keys<Prisma.MaybeTupleToUnion<T["orderBy"]>>
+		>,
+		ByFields extends Prisma.MaybeTupleToUnion<T["by"]>,
+		ByValid extends Prisma.Has<ByFields, OrderFields>,
+		HavingFields extends Prisma.GetHavingFields<T["having"]>,
+		HavingValid extends Prisma.Has<ByFields, HavingFields>,
+		ByEmpty extends T["by"] extends never[] ? Prisma.True : Prisma.False,
+		InputErrors extends ByEmpty extends Prisma.True
+			? `Error: "by" must not be empty.`
+			: HavingValid extends Prisma.False
+				? {
+						[P in HavingFields]: P extends ByFields
+							? never
+							: P extends string
+								? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+								: [
+										Error,
+										"Field ",
+										P,
+										` in "having" needs to be provided in "by"`,
+									];
+					}[HavingFields]
+				: "take" extends Prisma.Keys<T>
+					? "orderBy" extends Prisma.Keys<T>
+						? ByValid extends Prisma.True
+							? {}
+							: {
+									[P in OrderFields]: P extends ByFields
+										? never
+										: `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+								}[OrderFields]
+						: 'Error: If you provide "take", you also need to provide "orderBy"'
+					: "skip" extends Prisma.Keys<T>
+						? "orderBy" extends Prisma.Keys<T>
+							? ByValid extends Prisma.True
+								? {}
+								: {
+										[P in OrderFields]: P extends ByFields
+											? never
+											: `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+									}[OrderFields]
+							: 'Error: If you provide "skip", you also need to provide "orderBy"'
+						: ByValid extends Prisma.True
+							? {}
+							: {
+									[P in OrderFields]: P extends ByFields
+										? never
+										: `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+								}[OrderFields],
+	>(
+		args: Prisma.SubsetIntersection<T, TrackedMovieGroupByArgs, OrderByArg> &
+			InputErrors,
+	): {} extends InputErrors
+		? GetTrackedMovieGroupByPayload<T>
+		: Prisma.PrismaPromise<InputErrors>;
+	/**
+	 * Fields of the TrackedMovie model
+	 */
+	readonly fields: TrackedMovieFieldRefs;
 }
 
 /**
@@ -1660,93 +1660,93 @@ export interface TrackedMovieDelegate<
  * https://github.com/prisma/prisma-client-js/issues/707
  */
 export interface Prisma__TrackedMovieClient<
-  T,
-  Null = never,
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
-  GlobalOmitOptions = {},
+	T,
+	Null = never,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+	GlobalOmitOptions = {},
 > extends Prisma.PrismaPromise<T> {
-  readonly [Symbol.toStringTag]: 'PrismaPromise';
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(
-    args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>,
-  ): Prisma.Prisma__UserClient<
-    | runtime.Types.Result.GetResult<
-        Prisma.$UserPayload<ExtArgs>,
-        T,
-        'findUniqueOrThrow',
-        GlobalOmitOptions
-      >
-    | Null,
-    Null,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
-  movie<T extends Prisma.MovieDefaultArgs<ExtArgs> = {}>(
-    args?: Prisma.Subset<T, Prisma.MovieDefaultArgs<ExtArgs>>,
-  ): Prisma.Prisma__MovieClient<
-    | runtime.Types.Result.GetResult<
-        Prisma.$MoviePayload<ExtArgs>,
-        T,
-        'findUniqueOrThrow',
-        GlobalOmitOptions
-      >
-    | Null,
-    Null,
-    ExtArgs,
-    GlobalOmitOptions
-  >;
-  /**
-   * Attaches callbacks for the resolution and/or rejection of the Promise.
-   * @param onfulfilled The callback to execute when the Promise is resolved.
-   * @param onrejected The callback to execute when the Promise is rejected.
-   * @returns A Promise for the completion of which ever callback is executed.
-   */
-  then<TResult1 = T, TResult2 = never>(
-    onfulfilled?:
-      | ((value: T) => TResult1 | PromiseLike<TResult1>)
-      | undefined
-      | null,
-    onrejected?:
-      | ((reason: any) => TResult2 | PromiseLike<TResult2>)
-      | undefined
-      | null,
-  ): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
-  /**
-   * Attaches a callback for only the rejection of the Promise.
-   * @param onrejected The callback to execute when the Promise is rejected.
-   * @returns A Promise for the completion of the callback.
-   */
-  catch<TResult = never>(
-    onrejected?:
-      | ((reason: any) => TResult | PromiseLike<TResult>)
-      | undefined
-      | null,
-  ): runtime.Types.Utils.JsPromise<T | TResult>;
-  /**
-   * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-   * resolved value cannot be modified from the callback.
-   * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-   * @returns A Promise for the completion of the callback.
-   */
-  finally(
-    onfinally?: (() => void) | undefined | null,
-  ): runtime.Types.Utils.JsPromise<T>;
+	readonly [Symbol.toStringTag]: "PrismaPromise";
+	user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>,
+	): Prisma.Prisma__UserClient<
+		| runtime.Types.Result.GetResult<
+				Prisma.$UserPayload<ExtArgs>,
+				T,
+				"findUniqueOrThrow",
+				GlobalOmitOptions
+		  >
+		| Null,
+		Null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
+	movie<T extends Prisma.MovieDefaultArgs<ExtArgs> = {}>(
+		args?: Prisma.Subset<T, Prisma.MovieDefaultArgs<ExtArgs>>,
+	): Prisma.Prisma__MovieClient<
+		| runtime.Types.Result.GetResult<
+				Prisma.$MoviePayload<ExtArgs>,
+				T,
+				"findUniqueOrThrow",
+				GlobalOmitOptions
+		  >
+		| Null,
+		Null,
+		ExtArgs,
+		GlobalOmitOptions
+	>;
+	/**
+	 * Attaches callbacks for the resolution and/or rejection of the Promise.
+	 * @param onfulfilled The callback to execute when the Promise is resolved.
+	 * @param onrejected The callback to execute when the Promise is rejected.
+	 * @returns A Promise for the completion of which ever callback is executed.
+	 */
+	then<TResult1 = T, TResult2 = never>(
+		onfulfilled?:
+			| ((value: T) => TResult1 | PromiseLike<TResult1>)
+			| undefined
+			| null,
+		onrejected?:
+			| ((reason: any) => TResult2 | PromiseLike<TResult2>)
+			| undefined
+			| null,
+	): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
+	/**
+	 * Attaches a callback for only the rejection of the Promise.
+	 * @param onrejected The callback to execute when the Promise is rejected.
+	 * @returns A Promise for the completion of the callback.
+	 */
+	catch<TResult = never>(
+		onrejected?:
+			| ((reason: any) => TResult | PromiseLike<TResult>)
+			| undefined
+			| null,
+	): runtime.Types.Utils.JsPromise<T | TResult>;
+	/**
+	 * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+	 * resolved value cannot be modified from the callback.
+	 * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+	 * @returns A Promise for the completion of the callback.
+	 */
+	finally(
+		onfinally?: (() => void) | undefined | null,
+	): runtime.Types.Utils.JsPromise<T>;
 }
 
 /**
  * Fields of the TrackedMovie model
  */
 export interface TrackedMovieFieldRefs {
-  readonly id: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly rkey: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly uri: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly cid: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly userDid: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly movieId: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly status: Prisma.FieldRef<'TrackedMovie', 'String'>;
-  readonly watchedDate: Prisma.FieldRef<'TrackedMovie', 'DateTime'>;
-  readonly createdAt: Prisma.FieldRef<'TrackedMovie', 'DateTime'>;
-  readonly updatedAt: Prisma.FieldRef<'TrackedMovie', 'DateTime'>;
+	readonly id: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly rkey: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly uri: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly cid: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly userDid: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly movieId: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly status: Prisma.FieldRef<"TrackedMovie", "String">;
+	readonly watchedDate: Prisma.FieldRef<"TrackedMovie", "DateTime">;
+	readonly createdAt: Prisma.FieldRef<"TrackedMovie", "DateTime">;
+	readonly updatedAt: Prisma.FieldRef<"TrackedMovie", "DateTime">;
 }
 
 // Custom InputTypes
@@ -1754,486 +1754,486 @@ export interface TrackedMovieFieldRefs {
  * TrackedMovie findUnique
  */
 export type TrackedMovieFindUniqueArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter, which TrackedMovie to fetch.
-   */
-  where: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter, which TrackedMovie to fetch.
+	 */
+	where: Prisma.TrackedMovieWhereUniqueInput;
 };
 
 /**
  * TrackedMovie findUniqueOrThrow
  */
 export type TrackedMovieFindUniqueOrThrowArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter, which TrackedMovie to fetch.
-   */
-  where: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter, which TrackedMovie to fetch.
+	 */
+	where: Prisma.TrackedMovieWhereUniqueInput;
 };
 
 /**
  * TrackedMovie findFirst
  */
 export type TrackedMovieFindFirstArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter, which TrackedMovie to fetch.
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-   *
-   * Determine the order of TrackedMovies to fetch.
-   */
-  orderBy?:
-    | Prisma.TrackedMovieOrderByWithRelationInput
-    | Prisma.TrackedMovieOrderByWithRelationInput[];
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-   *
-   * Sets the position for searching for TrackedMovies.
-   */
-  cursor?: Prisma.TrackedMovieWhereUniqueInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Take `±n` TrackedMovies from the position of the cursor.
-   */
-  take?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Skip the first `n` TrackedMovies.
-   */
-  skip?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   *
-   * Filter by unique combinations of TrackedMovies.
-   */
-  distinct?:
-    | Prisma.TrackedMovieScalarFieldEnum
-    | Prisma.TrackedMovieScalarFieldEnum[];
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter, which TrackedMovie to fetch.
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+	 *
+	 * Determine the order of TrackedMovies to fetch.
+	 */
+	orderBy?:
+		| Prisma.TrackedMovieOrderByWithRelationInput
+		| Prisma.TrackedMovieOrderByWithRelationInput[];
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+	 *
+	 * Sets the position for searching for TrackedMovies.
+	 */
+	cursor?: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Take `±n` TrackedMovies from the position of the cursor.
+	 */
+	take?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Skip the first `n` TrackedMovies.
+	 */
+	skip?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+	 *
+	 * Filter by unique combinations of TrackedMovies.
+	 */
+	distinct?:
+		| Prisma.TrackedMovieScalarFieldEnum
+		| Prisma.TrackedMovieScalarFieldEnum[];
 };
 
 /**
  * TrackedMovie findFirstOrThrow
  */
 export type TrackedMovieFindFirstOrThrowArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter, which TrackedMovie to fetch.
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-   *
-   * Determine the order of TrackedMovies to fetch.
-   */
-  orderBy?:
-    | Prisma.TrackedMovieOrderByWithRelationInput
-    | Prisma.TrackedMovieOrderByWithRelationInput[];
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-   *
-   * Sets the position for searching for TrackedMovies.
-   */
-  cursor?: Prisma.TrackedMovieWhereUniqueInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Take `±n` TrackedMovies from the position of the cursor.
-   */
-  take?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Skip the first `n` TrackedMovies.
-   */
-  skip?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   *
-   * Filter by unique combinations of TrackedMovies.
-   */
-  distinct?:
-    | Prisma.TrackedMovieScalarFieldEnum
-    | Prisma.TrackedMovieScalarFieldEnum[];
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter, which TrackedMovie to fetch.
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+	 *
+	 * Determine the order of TrackedMovies to fetch.
+	 */
+	orderBy?:
+		| Prisma.TrackedMovieOrderByWithRelationInput
+		| Prisma.TrackedMovieOrderByWithRelationInput[];
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+	 *
+	 * Sets the position for searching for TrackedMovies.
+	 */
+	cursor?: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Take `±n` TrackedMovies from the position of the cursor.
+	 */
+	take?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Skip the first `n` TrackedMovies.
+	 */
+	skip?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+	 *
+	 * Filter by unique combinations of TrackedMovies.
+	 */
+	distinct?:
+		| Prisma.TrackedMovieScalarFieldEnum
+		| Prisma.TrackedMovieScalarFieldEnum[];
 };
 
 /**
  * TrackedMovie findMany
  */
 export type TrackedMovieFindManyArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter, which TrackedMovies to fetch.
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-   *
-   * Determine the order of TrackedMovies to fetch.
-   */
-  orderBy?:
-    | Prisma.TrackedMovieOrderByWithRelationInput
-    | Prisma.TrackedMovieOrderByWithRelationInput[];
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-   *
-   * Sets the position for listing TrackedMovies.
-   */
-  cursor?: Prisma.TrackedMovieWhereUniqueInput;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Take `±n` TrackedMovies from the position of the cursor.
-   */
-  take?: number;
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-   *
-   * Skip the first `n` TrackedMovies.
-   */
-  skip?: number;
-  distinct?:
-    | Prisma.TrackedMovieScalarFieldEnum
-    | Prisma.TrackedMovieScalarFieldEnum[];
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter, which TrackedMovies to fetch.
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+	 *
+	 * Determine the order of TrackedMovies to fetch.
+	 */
+	orderBy?:
+		| Prisma.TrackedMovieOrderByWithRelationInput
+		| Prisma.TrackedMovieOrderByWithRelationInput[];
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+	 *
+	 * Sets the position for listing TrackedMovies.
+	 */
+	cursor?: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Take `±n` TrackedMovies from the position of the cursor.
+	 */
+	take?: number;
+	/**
+	 * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+	 *
+	 * Skip the first `n` TrackedMovies.
+	 */
+	skip?: number;
+	distinct?:
+		| Prisma.TrackedMovieScalarFieldEnum
+		| Prisma.TrackedMovieScalarFieldEnum[];
 };
 
 /**
  * TrackedMovie create
  */
 export type TrackedMovieCreateArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * The data needed to create a TrackedMovie.
-   */
-  data: Prisma.XOR<
-    Prisma.TrackedMovieCreateInput,
-    Prisma.TrackedMovieUncheckedCreateInput
-  >;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * The data needed to create a TrackedMovie.
+	 */
+	data: Prisma.XOR<
+		Prisma.TrackedMovieCreateInput,
+		Prisma.TrackedMovieUncheckedCreateInput
+	>;
 };
 
 /**
  * TrackedMovie createMany
  */
 export type TrackedMovieCreateManyArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * The data used to create many TrackedMovies.
-   */
-  data:
-    | Prisma.TrackedMovieCreateManyInput
-    | Prisma.TrackedMovieCreateManyInput[];
-  skipDuplicates?: boolean;
+	/**
+	 * The data used to create many TrackedMovies.
+	 */
+	data:
+		| Prisma.TrackedMovieCreateManyInput
+		| Prisma.TrackedMovieCreateManyInput[];
+	skipDuplicates?: boolean;
 };
 
 /**
  * TrackedMovie createManyAndReturn
  */
 export type TrackedMovieCreateManyAndReturnArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelectCreateManyAndReturn<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * The data used to create many TrackedMovies.
-   */
-  data:
-    | Prisma.TrackedMovieCreateManyInput
-    | Prisma.TrackedMovieCreateManyInput[];
-  skipDuplicates?: boolean;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieIncludeCreateManyAndReturn<ExtArgs> | null;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelectCreateManyAndReturn<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * The data used to create many TrackedMovies.
+	 */
+	data:
+		| Prisma.TrackedMovieCreateManyInput
+		| Prisma.TrackedMovieCreateManyInput[];
+	skipDuplicates?: boolean;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieIncludeCreateManyAndReturn<ExtArgs> | null;
 };
 
 /**
  * TrackedMovie update
  */
 export type TrackedMovieUpdateArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * The data needed to update a TrackedMovie.
-   */
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateInput,
-    Prisma.TrackedMovieUncheckedUpdateInput
-  >;
-  /**
-   * Choose, which TrackedMovie to update.
-   */
-  where: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * The data needed to update a TrackedMovie.
+	 */
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateInput,
+		Prisma.TrackedMovieUncheckedUpdateInput
+	>;
+	/**
+	 * Choose, which TrackedMovie to update.
+	 */
+	where: Prisma.TrackedMovieWhereUniqueInput;
 };
 
 /**
  * TrackedMovie updateMany
  */
 export type TrackedMovieUpdateManyArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * The data used to update TrackedMovies.
-   */
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateManyMutationInput,
-    Prisma.TrackedMovieUncheckedUpdateManyInput
-  >;
-  /**
-   * Filter which TrackedMovies to update
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * Limit how many TrackedMovies to update.
-   */
-  limit?: number;
+	/**
+	 * The data used to update TrackedMovies.
+	 */
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateManyMutationInput,
+		Prisma.TrackedMovieUncheckedUpdateManyInput
+	>;
+	/**
+	 * Filter which TrackedMovies to update
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * Limit how many TrackedMovies to update.
+	 */
+	limit?: number;
 };
 
 /**
  * TrackedMovie updateManyAndReturn
  */
 export type TrackedMovieUpdateManyAndReturnArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelectUpdateManyAndReturn<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * The data used to update TrackedMovies.
-   */
-  data: Prisma.XOR<
-    Prisma.TrackedMovieUpdateManyMutationInput,
-    Prisma.TrackedMovieUncheckedUpdateManyInput
-  >;
-  /**
-   * Filter which TrackedMovies to update
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * Limit how many TrackedMovies to update.
-   */
-  limit?: number;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieIncludeUpdateManyAndReturn<ExtArgs> | null;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelectUpdateManyAndReturn<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * The data used to update TrackedMovies.
+	 */
+	data: Prisma.XOR<
+		Prisma.TrackedMovieUpdateManyMutationInput,
+		Prisma.TrackedMovieUncheckedUpdateManyInput
+	>;
+	/**
+	 * Filter which TrackedMovies to update
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * Limit how many TrackedMovies to update.
+	 */
+	limit?: number;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieIncludeUpdateManyAndReturn<ExtArgs> | null;
 };
 
 /**
  * TrackedMovie upsert
  */
 export type TrackedMovieUpsertArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * The filter to search for the TrackedMovie to update in case it exists.
-   */
-  where: Prisma.TrackedMovieWhereUniqueInput;
-  /**
-   * In case the TrackedMovie found by the `where` argument doesn't exist, create a new TrackedMovie with this data.
-   */
-  create: Prisma.XOR<
-    Prisma.TrackedMovieCreateInput,
-    Prisma.TrackedMovieUncheckedCreateInput
-  >;
-  /**
-   * In case the TrackedMovie was found with the provided `where` argument, update it with this data.
-   */
-  update: Prisma.XOR<
-    Prisma.TrackedMovieUpdateInput,
-    Prisma.TrackedMovieUncheckedUpdateInput
-  >;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * The filter to search for the TrackedMovie to update in case it exists.
+	 */
+	where: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * In case the TrackedMovie found by the `where` argument doesn't exist, create a new TrackedMovie with this data.
+	 */
+	create: Prisma.XOR<
+		Prisma.TrackedMovieCreateInput,
+		Prisma.TrackedMovieUncheckedCreateInput
+	>;
+	/**
+	 * In case the TrackedMovie was found with the provided `where` argument, update it with this data.
+	 */
+	update: Prisma.XOR<
+		Prisma.TrackedMovieUpdateInput,
+		Prisma.TrackedMovieUncheckedUpdateInput
+	>;
 };
 
 /**
  * TrackedMovie delete
  */
 export type TrackedMovieDeleteArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
-  /**
-   * Filter which TrackedMovie to delete.
-   */
-  where: Prisma.TrackedMovieWhereUniqueInput;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Filter which TrackedMovie to delete.
+	 */
+	where: Prisma.TrackedMovieWhereUniqueInput;
 };
 
 /**
  * TrackedMovie deleteMany
  */
 export type TrackedMovieDeleteManyArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Filter which TrackedMovies to delete
-   */
-  where?: Prisma.TrackedMovieWhereInput;
-  /**
-   * Limit how many TrackedMovies to delete.
-   */
-  limit?: number;
+	/**
+	 * Filter which TrackedMovies to delete
+	 */
+	where?: Prisma.TrackedMovieWhereInput;
+	/**
+	 * Limit how many TrackedMovies to delete.
+	 */
+	limit?: number;
 };
 
 /**
  * TrackedMovie without action
  */
 export type TrackedMovieDefaultArgs<
-  ExtArgs extends runtime.Types.Extensions.InternalArgs =
-    runtime.Types.Extensions.DefaultArgs,
+	ExtArgs extends
+		runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
-  /**
-   * Select specific fields to fetch from the TrackedMovie
-   */
-  select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
-  /**
-   * Omit specific fields from the TrackedMovie
-   */
-  omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
+	/**
+	 * Select specific fields to fetch from the TrackedMovie
+	 */
+	select?: Prisma.TrackedMovieSelect<ExtArgs> | null;
+	/**
+	 * Omit specific fields from the TrackedMovie
+	 */
+	omit?: Prisma.TrackedMovieOmit<ExtArgs> | null;
+	/**
+	 * Choose, which related nodes to fetch as well
+	 */
+	include?: Prisma.TrackedMovieInclude<ExtArgs> | null;
 };

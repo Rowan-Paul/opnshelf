@@ -1,10 +1,10 @@
-import { Request } from 'express';
+import type { Request } from "express";
 
 export interface AuthUser {
-  did: string;
-  session: unknown;
+	did: string;
+	session: unknown;
 }
 
 export interface AuthenticatedRequest extends Request {
-  user: AuthUser;
+	user: AuthUser;
 }

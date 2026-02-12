@@ -1,11 +1,11 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { IngesterService } from './ingester.service';
-import { PrismaModule } from '../prisma/prisma.module';
-import { MoviesModule } from '../movies/movies.module';
+import { forwardRef, Module } from "@nestjs/common";
+import { MoviesModule } from "../movies/movies.module";
+import { PrismaModule } from "../prisma/prisma.module";
+import { IngesterService } from "./ingester.service";
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => MoviesModule)],
-  providers: [IngesterService],
-  exports: [IngesterService],
+	imports: [PrismaModule, forwardRef(() => MoviesModule)],
+	providers: [IngesterService],
+	exports: [IngesterService],
 })
 export class IngesterModule {}

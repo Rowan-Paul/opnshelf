@@ -1,261 +1,261 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Query,
-  Param,
-  Body,
-  Req,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Logger,
+	Param,
+	Post,
+	Query,
+	Req,
+	UseGuards,
+} from "@nestjs/common";
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-} from '@nestjs/swagger';
-import { MoviesService } from './movies.service';
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
+import { AuthGuard } from "../auth/auth.guard";
+import type { AuthenticatedRequest } from "../auth/types";
 import {
-  SearchMoviesDto,
-  DiscoverMoviesDto,
-  SearchResultsDto,
-  TrackedMovieDto,
-  MovieDto,
-  MarkWatchedDto,
-  TMDBMovieDetailDto,
-  WatchHistoryItemDto,
-} from './dto/movie.dto';
-import { AuthGuard } from '../auth/auth.guard';
-import type { AuthenticatedRequest } from '../auth/types';
-import type { ATSession } from './movies.service';
+	type DiscoverMoviesDto,
+	type MarkWatchedDto,
+	MovieDto,
+	type SearchMoviesDto,
+	SearchResultsDto,
+	TMDBMovieDetailDto,
+	TrackedMovieDto,
+	WatchHistoryItemDto,
+} from "./dto/movie.dto";
+import type { ATSession } from "./movies.service";
+import { MoviesService } from "./movies.service";
 
-@ApiTags('movies')
-@Controller('movies')
+@ApiTags("movies")
+@Controller("movies")
 export class MoviesController {
-  private readonly logger = new Logger(MoviesController.name);
+	private readonly logger = new Logger(MoviesController.name);
 
-  constructor(private readonly moviesService: MoviesService) {}
+	constructor(private readonly moviesService: MoviesService) {}
 
-  @Get('search')
-  @ApiOperation({ summary: 'Search movies from TMDB' })
-  @ApiQuery({ name: 'query', required: true, description: 'Search term' })
-  @ApiResponse({ status: 200, type: SearchResultsDto })
-  async searchMovies(@Query() searchDto: SearchMoviesDto) {
-    return this.moviesService.searchMovies(searchDto.query);
-  }
+	@Get("search")
+	@ApiOperation({ summary: "Search movies from TMDB" })
+	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiResponse({ status: 200, type: SearchResultsDto })
+	async searchMovies(@Query() searchDto: SearchMoviesDto) {
+		return this.moviesService.searchMovies(searchDto.query);
+	}
 
-  @Get('discover')
-  @ApiOperation({ summary: 'Discover popular movies from TMDB' })
-  @ApiResponse({ status: 200, type: SearchResultsDto })
-  async discoverMovies(@Query() discoverDto: DiscoverMoviesDto) {
-    return this.moviesService.discoverMovies(
-      discoverDto.sortBy,
-      discoverDto.page ?? 1,
-      discoverDto.year,
-    );
-  }
+	@Get("discover")
+	@ApiOperation({ summary: "Discover popular movies from TMDB" })
+	@ApiResponse({ status: 200, type: SearchResultsDto })
+	async discoverMovies(@Query() discoverDto: DiscoverMoviesDto) {
+		return this.moviesService.discoverMovies(
+			discoverDto.sortBy,
+			discoverDto.page ?? 1,
+			discoverDto.year,
+		);
+	}
 
-  @Get('tmdb/:movieId')
-  @ApiOperation({ summary: 'Get movie details from TMDB' })
-  @ApiResponse({ status: 200, type: TMDBMovieDetailDto })
-  async getMovieDetails(@Param('movieId') movieId: string) {
-    // Get movie details from TMDB
-    const movieData = await this.moviesService.getMovieDetails(movieId);
+	@Get("tmdb/:movieId")
+	@ApiOperation({ summary: "Get movie details from TMDB" })
+	@ApiResponse({ status: 200, type: TMDBMovieDetailDto })
+	async getMovieDetails(@Param("movieId") movieId: string) {
+		// Get movie details from TMDB
+		const movieData = await this.moviesService.getMovieDetails(movieId);
 
-    // Ensure movie is in database with colors
-    const movie = await this.moviesService.upsertMovie(movieData);
+		// Ensure movie is in database with colors
+		const movie = await this.moviesService.upsertMovie(movieData);
 
-    // Get movie credits
-    const credits = await this.moviesService.getMovieCredits(movieId);
+		// Get movie credits
+		const credits = await this.moviesService.getMovieCredits(movieId);
 
-    // Return combined data with colors and credits
-    return {
-      ...movieData,
-      colors: movie.colors ?? undefined,
-      credits,
-    };
-  }
+		// Return combined data with colors and credits
+		return {
+			...movieData,
+			colors: movie.colors ?? undefined,
+			credits,
+		};
+	}
 
-  @Get('user/:userDid')
-  @ApiOperation({ summary: 'Get tracked movies for a user' })
-  @ApiResponse({ status: 200, type: [TrackedMovieDto] })
-  async getUserMovies(@Param('userDid') userDid: string) {
-    const trackedMovies = await this.moviesService.getUserMovies(userDid);
+	@Get("user/:userDid")
+	@ApiOperation({ summary: "Get tracked movies for a user" })
+	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
+	async getUserMovies(@Param("userDid") userDid: string) {
+		const trackedMovies = await this.moviesService.getUserMovies(userDid);
 
-    // Process each movie to ensure colors are included
-    const moviesWithColors = await Promise.all(
-      trackedMovies.map(async (tracked) => {
-        const colors = await this.moviesService.ensureMovieHasColors(
-          tracked.movieId,
-        );
+		// Process each movie to ensure colors are included
+		const moviesWithColors = await Promise.all(
+			trackedMovies.map(async (tracked) => {
+				const colors = await this.moviesService.ensureMovieHasColors(
+					tracked.movieId,
+				);
 
-        return {
-          ...tracked,
-          movie: {
-            ...tracked.movie,
-            colors: colors ?? undefined,
-          },
-        };
-      }),
-    );
+				return {
+					...tracked,
+					movie: {
+						...tracked.movie,
+						colors: colors ?? undefined,
+					},
+				};
+			}),
+		);
 
-    return moviesWithColors;
-  }
+		return moviesWithColors;
+	}
 
-  @Post('watched')
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Mark a movie as watched' })
-  @ApiResponse({ status: 201, type: TrackedMovieDto })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async markWatched(
-    @Body() body: MarkWatchedDto,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    const user = req.user;
+	@Post("watched")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Mark a movie as watched" })
+	@ApiResponse({ status: 201, type: TrackedMovieDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async markWatched(
+		@Body() body: MarkWatchedDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		const user = req.user;
 
-    // Write to user's PDS
-    const { uri, cid, rkey, record } = await this.moviesService.markWatched(
-      user.did,
-      user.session as ATSession,
-      body.movieId,
-      body.watchedAt,
-    );
+		// Write to user's PDS
+		const { uri, cid, rkey, record } = await this.moviesService.markWatched(
+			user.did,
+			user.session as ATSession,
+			body.movieId,
+			body.watchedAt,
+		);
 
-    // Optimistic update: index in local DB so user sees their changes immediately
-    // If this fails, the firehose ingester will catch it later
-    try {
-      const trackedMovie = await this.moviesService.indexTrackedMovie(
-        uri,
-        cid,
-        rkey,
-        user.did,
-        body.movieId,
-        record.watchedAt,
-      );
-      return trackedMovie;
-    } catch (err: unknown) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err) },
-        'Failed to optimistically update DB; firehose will catch it',
-      );
-      // Return a minimal response since PDS write succeeded
-      return { uri, cid, rkey, movieId: body.movieId, userDid: user.did };
-    }
-  }
+		// Optimistic update: index in local DB so user sees their changes immediately
+		// If this fails, the firehose ingester will catch it later
+		try {
+			const trackedMovie = await this.moviesService.indexTrackedMovie(
+				uri,
+				cid,
+				rkey,
+				user.did,
+				body.movieId,
+				record.watchedAt,
+			);
+			return trackedMovie;
+		} catch (err: unknown) {
+			this.logger.warn(
+				{ err: err instanceof Error ? err.message : String(err) },
+				"Failed to optimistically update DB; firehose will catch it",
+			);
+			// Return a minimal response since PDS write succeeded
+			return { uri, cid, rkey, movieId: body.movieId, userDid: user.did };
+		}
+	}
 
-  @Delete('watched/:movieId')
-  @UseGuards(AuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Unmark a movie as watched' })
-  @ApiQuery({
-    name: 'mode',
-    required: false,
-    enum: ['latest', 'all'],
-    description:
-      'Remove mode: latest (default) removes most recent watch, all removes all watches',
-  })
-  @ApiResponse({ status: 204, description: 'Movie unmarked as watched' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async unmarkWatched(
-    @Param('movieId') movieId: string,
-    @Query('mode') mode: 'latest' | 'all' = 'latest',
-    @Req() req: AuthenticatedRequest,
-  ) {
-    const user = req.user;
+	@Delete("watched/:movieId")
+	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Unmark a movie as watched" })
+	@ApiQuery({
+		name: "mode",
+		required: false,
+		enum: ["latest", "all"],
+		description:
+			"Remove mode: latest (default) removes most recent watch, all removes all watches",
+	})
+	@ApiResponse({ status: 204, description: "Movie unmarked as watched" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async unmarkWatched(
+		@Param("movieId") movieId: string,
+		@Query("mode") mode: "latest" | "all" = "latest",
+		@Req() req: AuthenticatedRequest,
+	) {
+		const user = req.user;
 
-    // Delete from user's PDS
-    await this.moviesService.unmarkWatched(
-      user.did,
-      user.session as ATSession,
-      movieId,
-      mode,
-    );
+		// Delete from user's PDS
+		await this.moviesService.unmarkWatched(
+			user.did,
+			user.session as ATSession,
+			movieId,
+			mode,
+		);
 
-    // Optimistic update: remove from local DB so user sees their changes immediately
-    // If this fails, the firehose ingester will catch it later
-    try {
-      if (mode === 'all') {
-        await this.moviesService.removeAllTrackedMovies(user.did, movieId);
-      } else {
-        await this.moviesService.removeLatestTrackedMovie(user.did, movieId);
-      }
-    } catch (err: unknown) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err) },
-        'Failed to optimistically remove from DB; firehose will catch it',
-      );
-    }
-  }
+		// Optimistic update: remove from local DB so user sees their changes immediately
+		// If this fails, the firehose ingester will catch it later
+		try {
+			if (mode === "all") {
+				await this.moviesService.removeAllTrackedMovies(user.did, movieId);
+			} else {
+				await this.moviesService.removeLatestTrackedMovie(user.did, movieId);
+			}
+		} catch (err: unknown) {
+			this.logger.warn(
+				{ err: err instanceof Error ? err.message : String(err) },
+				"Failed to optimistically remove from DB; firehose will catch it",
+			);
+		}
+	}
 
-  @Get(':movieId')
-  @ApiOperation({ summary: 'Get movie from database' })
-  @ApiResponse({ status: 200, type: MovieDto })
-  async getMovie(@Param('movieId') movieId: string) {
-    // Get movie from database
-    const movie = await this.moviesService.getMovieByTMDBId(movieId);
+	@Get(":movieId")
+	@ApiOperation({ summary: "Get movie from database" })
+	@ApiResponse({ status: 200, type: MovieDto })
+	async getMovie(@Param("movieId") movieId: string) {
+		// Get movie from database
+		const movie = await this.moviesService.getMovieByTMDBId(movieId);
 
-    if (!movie) {
-      return null;
-    }
+		if (!movie) {
+			return null;
+		}
 
-    // Ensure colors are extracted if missing (lazy backfill)
-    const colors = await this.moviesService.ensureMovieHasColors(movieId);
+		// Ensure colors are extracted if missing (lazy backfill)
+		const colors = await this.moviesService.ensureMovieHasColors(movieId);
 
-    return {
-      ...movie,
-      colors: colors ?? undefined,
-    };
-  }
+		return {
+			...movie,
+			colors: colors ?? undefined,
+		};
+	}
 
-  @Get('user/:userDid/movie/:movieId/history')
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Get watch history for a specific movie' })
-  @ApiParam({ name: 'userDid', description: 'User DID' })
-  @ApiParam({ name: 'movieId', description: 'TMDB movie ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Watch history retrieved successfully',
-    type: [WatchHistoryItemDto],
-  })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async getMovieWatchHistory(
-    @Param('userDid') userDid: string,
-    @Param('movieId') movieId: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    // Ensure user can only access their own history
-    if (req.user.did !== userDid) {
-      throw new Error('Unauthorized');
-    }
+	@Get("user/:userDid/movie/:movieId/history")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Get watch history for a specific movie" })
+	@ApiParam({ name: "userDid", description: "User DID" })
+	@ApiParam({ name: "movieId", description: "TMDB movie ID" })
+	@ApiResponse({
+		status: 200,
+		description: "Watch history retrieved successfully",
+		type: [WatchHistoryItemDto],
+	})
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async getMovieWatchHistory(
+		@Param("userDid") userDid: string,
+		@Param("movieId") movieId: string,
+		@Req() req: AuthenticatedRequest,
+	) {
+		// Ensure user can only access their own history
+		if (req.user.did !== userDid) {
+			throw new Error("Unauthorized");
+		}
 
-    const history = await this.moviesService.getMovieWatchHistory(
-      userDid,
-      movieId,
-    );
-    return history;
-  }
+		const history = await this.moviesService.getMovieWatchHistory(
+			userDid,
+			movieId,
+		);
+		return history;
+	}
 
-  @Delete('history/:trackedMovieId')
-  @UseGuards(AuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a specific watch history entry' })
-  @ApiParam({ name: 'trackedMovieId', description: 'Tracked movie entry ID' })
-  @ApiResponse({ status: 204, description: 'Watch history entry deleted' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 404, description: 'Tracked movie entry not found' })
-  async deleteWatchHistoryEntry(
-    @Param('trackedMovieId') trackedMovieId: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    await this.moviesService.removeTrackedMovieById(
-      req.user.did,
-      req.user.session as ATSession,
-      trackedMovieId,
-    );
-  }
+	@Delete("history/:trackedMovieId")
+	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Delete a specific watch history entry" })
+	@ApiParam({ name: "trackedMovieId", description: "Tracked movie entry ID" })
+	@ApiResponse({ status: 204, description: "Watch history entry deleted" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	@ApiResponse({ status: 404, description: "Tracked movie entry not found" })
+	async deleteWatchHistoryEntry(
+		@Param("trackedMovieId") trackedMovieId: string,
+		@Req() req: AuthenticatedRequest,
+	) {
+		await this.moviesService.removeTrackedMovieById(
+			req.user.did,
+			req.user.session as ATSession,
+			trackedMovieId,
+		);
+	}
 }
