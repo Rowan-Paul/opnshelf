@@ -95,7 +95,7 @@ cd apps/mobile && pnpm typecheck
 
 ### Imports & Organization
 - **Order**: External imports first, then internal (workspace packages), then relative
-- **Workspace imports**: Use `@opnshelf/api` and `@opnshelf/types` for shared code
+- **Workspace imports**: Use `@opnshelf/api` for shared code
 - **Biome**: Auto-organizes imports on format (source.organizeImports: on)
 
 ### Formatting

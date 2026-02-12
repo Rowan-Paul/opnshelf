@@ -37,6 +37,9 @@
         "projectId": "87d86952-59ab-4711-9f5f-f9477b2d14f6"
       }
     },
-    "owner": "rowanpaul"
+    "owner": "rowanpaul",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }
