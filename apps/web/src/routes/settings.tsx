@@ -5,19 +5,19 @@ import {
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	Clock,
 	Globe,
 	Loader2,
-	LogIn,
 	Settings2,
 	Trash2,
 	User,
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
+import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -45,7 +45,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
-// Common timezones grouped by region
 const TIMEZONES = [
 	{ region: "UTC", zones: ["UTC"] },
 	{
@@ -136,28 +135,22 @@ function SettingsPage() {
 	const timezoneId = useId();
 	const deletePdsId = useId();
 
-	// Fetch auth state
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
 
-	// Fetch user settings
 	const { data: settings, isLoading: isSettingsLoading } = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user,
 	});
 
-	// Local state for form values
 	const [timezone, setTimezone] = useState<string>("UTC");
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
-
-	// Delete account dialog state
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deletePDSData, setDeletePDSData] = useState(false);
 
-	// Update local state when settings load
 	useEffect(() => {
 		if (settings) {
 			setTimezone(settings.timezone);
@@ -165,7 +158,6 @@ function SettingsPage() {
 		}
 	}, [settings]);
 
-	// Mutation for updating settings
 	const updateSettingsMutation = useMutation({
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
@@ -179,15 +171,12 @@ function SettingsPage() {
 		},
 	});
 
-	// Mutation for deleting account
 	const deleteAccountMutation = useMutation({
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: () => {
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
-			// Force set user to null to immediately update Header state
-			queryClient.setQueryData(authControllerMeOptions().queryKey, null);
-			// Navigate to home page
+			queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
 			router.navigate({ to: "/" });
 		},
 		onError: () => {
@@ -195,14 +184,6 @@ function SettingsPage() {
 		},
 	});
 
-	// Handle account deletion
-	const handleDeleteAccount = () => {
-		deleteAccountMutation.mutate({
-			body: { deletePDSData },
-		});
-	};
-
-	// Handle timezone change
 	const handleTimezoneChange = (value: string) => {
 		setTimezone(value);
 		updateSettingsMutation.mutate({
@@ -210,7 +191,6 @@ function SettingsPage() {
 		});
 	};
 
-	// Handle time format toggle
 	const handleTimeFormatToggle = (checked: boolean) => {
 		setIs24Hour(checked);
 		updateSettingsMutation.mutate({
@@ -218,7 +198,6 @@ function SettingsPage() {
 		});
 	};
 
-	// Get current time display based on settings
 	const getCurrentTimeDisplay = () => {
 		const now = new Date();
 		try {
@@ -229,7 +208,6 @@ function SettingsPage() {
 				minute: "2-digit",
 			});
 		} catch {
-			// Fallback if timezone is invalid
 			return now.toLocaleTimeString("en-US", {
 				hour12: !is24Hour,
 				hour: "numeric",
@@ -238,7 +216,6 @@ function SettingsPage() {
 		}
 	};
 
-	// Loading state
 	if (isAuthLoading) {
 		return (
 			<div className="min-h-screen bg-gray-950 text-gray-50">
@@ -253,43 +230,24 @@ function SettingsPage() {
 		);
 	}
 
-	// Not authenticated state
 	if (!user) {
 		return (
-			<div className="min-h-screen bg-gray-950 text-gray-50">
-				<div className="container mx-auto px-4 py-16 max-w-4xl">
-					<Card className="bg-gray-900 border-gray-800 text-center">
-						<CardHeader>
-							<Settings2 className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-							<CardTitle className="text-3xl">Settings</CardTitle>
-							<CardDescription className="text-xl">
-								Sign in to customize your preferences
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<Button asChild size="lg">
-								<Link to="/login">
-									<LogIn className="w-5 h-5 mr-2" />
-									Sign in
-								</Link>
-							</Button>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
+			<UnauthenticatedState
+				title="Settings"
+				description="Sign in to customize your preferences"
+				icon="settings"
+			/>
 		);
 	}
 
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
 			<div className="container mx-auto px-4 py-8 max-w-3xl">
-				{/* Header */}
 				<div className="flex items-center gap-3 mb-8">
 					<Settings2 className="w-8 h-8 text-amber-500" />
 					<h1 className="text-3xl font-bold">Settings</h1>
 				</div>
 
-				{/* Time & Region Section */}
 				<Card className="bg-gray-900 border-gray-800">
 					<CardHeader>
 						<div className="flex items-center gap-3">
@@ -305,7 +263,6 @@ function SettingsPage() {
 						</div>
 					</CardHeader>
 					<CardContent className="space-y-6">
-						{/* Timezone Selector */}
 						<div className="space-y-3">
 							<Label htmlFor={timezoneId} className="text-sm font-medium">
 								Timezone
@@ -346,10 +303,8 @@ function SettingsPage() {
 							)}
 						</div>
 
-						{/* Divider */}
 						<div className="h-px bg-gray-800" />
 
-						{/* Time Format Toggle */}
 						<div className="space-y-3">
 							<div className="flex items-center justify-between gap-2">
 								<div className="space-y-0.5">
@@ -375,7 +330,6 @@ function SettingsPage() {
 							</div>
 						</div>
 
-						{/* Live Preview */}
 						{!isSettingsLoading && (
 							<div className="mt-4 p-4 bg-gray-950/50 rounded-lg border border-gray-800">
 								<div className="flex items-center gap-3">
@@ -394,7 +348,6 @@ function SettingsPage() {
 					</CardContent>
 				</Card>
 
-				{/* Account Section */}
 				<Card className="bg-gray-900 border-gray-800 mt-6">
 					<CardHeader>
 						<div className="flex items-center gap-3">
@@ -441,7 +394,6 @@ function SettingsPage() {
 				</Card>
 			</div>
 
-			{/* Delete Account Confirmation Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<DialogContent className="bg-gray-900 border-gray-800">
 					<DialogHeader>
@@ -512,7 +464,11 @@ function SettingsPage() {
 						</Button>
 						<Button
 							variant="destructive"
-							onClick={handleDeleteAccount}
+							onClick={() =>
+								deleteAccountMutation.mutate({
+									body: { deletePDSData },
+								})
+							}
 							disabled={deleteAccountMutation.isPending}
 						>
 							{deleteAccountMutation.isPending && (

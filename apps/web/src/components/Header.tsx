@@ -23,20 +23,16 @@ export default function Header() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
-	// Fetch auth state using generated TanStack Query hook
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000, // 5 minutes
+		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
 
-	// Logout mutation using generated TanStack Query hook
 	const logoutMutation = useMutation({
 		...authControllerLogoutMutation(),
 		onSuccess: () => {
-			// Remove auth queries to immediately clear user data
 			queryClient.removeQueries(authControllerMeOptions());
-			// Navigate to home page after successful logout
 			navigate({ to: "/" });
 		},
 	});
@@ -67,7 +63,6 @@ export default function Header() {
 					</Link>
 				</div>
 
-				{/* Desktop nav */}
 				<nav className="hidden md:flex items-center gap-1">
 					<Link
 						to="/"
@@ -103,7 +98,6 @@ export default function Header() {
 						<span className="font-medium">Search</span>
 					</Link>
 
-					{/* Auth section */}
 					<div className="ml-4 pl-4 border-l border-gray-700">
 						{isAuthLoading ? (
 							<div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
@@ -156,7 +150,6 @@ export default function Header() {
 				</nav>
 			</header>
 
-			{/* Mobile drawer overlay */}
 			{isOpen && (
 				<button
 					type="button"
@@ -166,7 +159,6 @@ export default function Header() {
 				/>
 			)}
 
-			{/* Mobile drawer */}
 			<aside
 				className={`fixed top-0 left-0 h-full w-72 bg-gray-900 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col md:hidden ${
 					isOpen ? "translate-x-0" : "-translate-x-full"
@@ -238,7 +230,6 @@ export default function Header() {
 					)}
 				</nav>
 
-				{/* Mobile auth section */}
 				<div className="p-4 border-t border-gray-800">
 					{isAuthLoading ? (
 						<div className="h-12 bg-gray-700 rounded-lg animate-pulse" />

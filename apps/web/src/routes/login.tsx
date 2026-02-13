@@ -40,21 +40,18 @@ function LoginPage() {
 	const suggestionsRef = useRef<HTMLDivElement>(null);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Check if user is already logged in using generated TanStack Query hook
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
 
-	// Redirect if already logged in
 	useEffect(() => {
 		if (user && !isAuthLoading) {
 			navigate({ to: redirect || "/shelf" });
 		}
 	}, [user, isAuthLoading, navigate, redirect]);
 
-	// Fetch suggestions when handle changes
 	useEffect(() => {
 		const fetchSuggestions = async () => {
 			if (handle.trim().length < 2) {
@@ -96,7 +93,6 @@ function LoginPage() {
 		};
 	}, [handle]);
 
-	// Close suggestions when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
 			if (
@@ -111,7 +107,6 @@ function LoginPage() {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
-	// Detect user's timezone
 	const detectUserTimezone = (): string => {
 		try {
 			return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -124,12 +119,10 @@ function LoginPage() {
 		e.preventDefault();
 		setIsSubmitting(true);
 
-		// Store redirect URL in sessionStorage so we can use it after callback
 		if (redirect) {
 			sessionStorage.setItem("auth_redirect", redirect);
 		}
 
-		// Redirect to backend login with handle and timezone
 		const timezone = detectUserTimezone();
 		const loginUrl = getLoginUrl(handle || undefined, timezone || undefined);
 		window.location.href = loginUrl;
@@ -153,7 +146,6 @@ function LoginPage() {
 		<div className="flex-1 bg-gray-950 text-gray-50 flex flex-col min-h-0">
 			<div className="flex-1 flex items-center justify-center p-4">
 				<div className="w-full max-w-md">
-					{/* Logo and title */}
 					<div className="text-center mb-8">
 						<div className="flex justify-center mb-4">
 							<Film className="w-12 h-12 text-purple-500" />
@@ -162,7 +154,6 @@ function LoginPage() {
 						<p className="text-gray-400">Use your ATProto account to sign in</p>
 					</div>
 
-					{/* Logged out message (session expired / 401 redirect) */}
 					{reason === "session_expired" && (
 						<Alert className="mb-6 border-amber-800 bg-amber-950/50 text-amber-200 [&>svg]:text-amber-500">
 							<AlertTitle>You have been logged out</AlertTitle>
@@ -172,7 +163,6 @@ function LoginPage() {
 						</Alert>
 					)}
 
-					{/* Error message */}
 					{error && (
 						<div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-lg flex items-start gap-3">
 							<AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
@@ -182,7 +172,6 @@ function LoginPage() {
 						</div>
 					)}
 
-					{/* Login form */}
 					<form onSubmit={handleSubmit} className="space-y-6">
 						<div className="relative">
 							<label
