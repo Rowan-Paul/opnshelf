@@ -15,7 +15,6 @@ import {
 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
-	Alert,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -121,6 +120,8 @@ export default function SettingsScreen() {
 	const { user, logout } = useAuth();
 	const queryClient = useQueryClient();
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [showPDSOptionModal, setShowPDSOptionModal] = useState(false);
 	const [timezoneSearch, setTimezoneSearch] = useState("");
 
 	// Fetch user settings
@@ -167,48 +168,27 @@ export default function SettingsScreen() {
 		},
 	});
 
-	// Handle delete account with confirmation
+	// Handle delete account - show confirmation modal
 	const handleDeleteAccount = useCallback(() => {
-		Alert.alert(
-			"Delete Account",
-			"Are you sure you want to delete your account? This action cannot be undone.",
-			[
-				{
-					text: "Cancel",
-					style: "cancel",
-				},
-				{
-					text: "Delete",
-					style: "destructive",
-					onPress: () => {
-						Alert.alert(
-							"Delete PDS Data",
-							"Do you also want to delete your watch history from your PDS?",
-							[
-								{
-									text: "Keep on PDS",
-									onPress: () => {
-										deleteAccountMutation.mutate({
-											body: { deletePDSData: false },
-										});
-									},
-								},
-								{
-									text: "Delete from PDS",
-									style: "destructive",
-									onPress: () => {
-										deleteAccountMutation.mutate({
-											body: { deletePDSData: true },
-										});
-									},
-								},
-							],
-						);
-					},
-				},
-			],
-		);
-	}, [deleteAccountMutation]);
+		setShowDeleteModal(true);
+	}, []);
+
+	// Handle confirmed deletion - show PDS option modal
+	const handleConfirmDelete = useCallback(() => {
+		setShowDeleteModal(false);
+		setShowPDSOptionModal(true);
+	}, []);
+
+	// Handle PDS data deletion option
+	const handlePDSOption = useCallback(
+		(deletePDS: boolean) => {
+			setShowPDSOptionModal(false);
+			deleteAccountMutation.mutate({
+				body: { deletePDSData: deletePDS },
+			});
+		},
+		[deleteAccountMutation],
+	);
 
 	// Handle timezone change
 	const handleTimezoneChange = useCallback(
@@ -493,6 +473,92 @@ export default function SettingsScreen() {
 					</ScrollView>
 				</SafeAreaView>
 			</Modal>
+
+			{/* Delete Account Confirmation Modal */}
+			<Modal
+				visible={showDeleteModal}
+				animationType="fade"
+				transparent
+				onRequestClose={() => setShowDeleteModal(false)}
+			>
+				<View style={styles.modalOverlay}>
+					<View style={styles.deleteModalContent}>
+						<View style={styles.deleteModalIcon}>
+							<Trash2 size={32} color={colors.error} />
+						</View>
+						<Text style={styles.deleteModalTitle}>Delete Account</Text>
+						<Text style={styles.deleteModalDescription}>
+							Are you sure you want to delete your account? This action cannot
+							be undone.
+						</Text>
+						<View style={styles.deleteModalButtons}>
+							<Button
+								variant="outline"
+								onPress={() => setShowDeleteModal(false)}
+								style={styles.deleteModalButton}
+							>
+								<Text style={styles.deleteModalButtonText}>Cancel</Text>
+							</Button>
+							<Button
+								variant="destructive"
+								onPress={handleConfirmDelete}
+								style={styles.deleteModalButton}
+							>
+								<Text style={styles.deleteModalButtonText}>Delete</Text>
+							</Button>
+						</View>
+					</View>
+				</View>
+			</Modal>
+
+			{/* PDS Data Option Modal */}
+			<Modal
+				visible={showPDSOptionModal}
+				animationType="fade"
+				transparent
+				onRequestClose={() => setShowPDSOptionModal(false)}
+			>
+				<View style={styles.modalOverlay}>
+					<View style={styles.deleteModalContent}>
+						<Text style={styles.deleteModalTitle}>Delete PDS Data?</Text>
+						<Text style={styles.deleteModalDescription}>
+							Do you also want to delete your watch history from your PDS?
+						</Text>
+						<View style={styles.pdsOptionBox}>
+							<View style={styles.pdsOptionItem}>
+								<Text style={styles.pdsOptionCheck}>✓</Text>
+								<Text style={styles.pdsOptionText}>
+									Your OpnShelf account and settings will be deleted
+								</Text>
+							</View>
+							<View style={styles.pdsOptionItem}>
+								<Text style={styles.pdsOptionCheck}>✓</Text>
+								<Text style={styles.pdsOptionText}>
+									Your local session will be cleared
+								</Text>
+							</View>
+						</View>
+						<View style={styles.deleteModalButtons}>
+							<Button
+								variant="outline"
+								onPress={() => handlePDSOption(false)}
+								style={styles.deleteModalButton}
+							>
+								<Text style={styles.deleteModalOutlineText}>Keep on PDS</Text>
+							</Button>
+							<Button
+								variant="destructive"
+								onPress={() => handlePDSOption(true)}
+								style={styles.deleteModalButton}
+							>
+								<Text style={styles.deleteModalButtonText}>
+									Delete from PDS
+								</Text>
+							</Button>
+						</View>
+					</View>
+				</View>
+			</Modal>
 		</SafeAreaView>
 	);
 }
@@ -690,5 +756,84 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		color: colors.textMuted,
 		marginTop: spacing.xs / 2,
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.7)",
+		justifyContent: "center",
+		alignItems: "center",
+		padding: spacing.lg,
+	},
+	deleteModalContent: {
+		backgroundColor: colors.card,
+		borderRadius: borderRadius.xl,
+		padding: spacing.xl,
+		width: "100%",
+		maxWidth: 340,
+		alignItems: "center",
+	},
+	deleteModalIcon: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		backgroundColor: "rgba(239, 68, 68, 0.1)",
+		justifyContent: "center",
+		alignItems: "center",
+		marginBottom: spacing.md,
+	},
+	deleteModalTitle: {
+		fontSize: 20,
+		fontWeight: "600",
+		color: colors.text,
+		marginBottom: spacing.sm,
+		textAlign: "center",
+	},
+	deleteModalDescription: {
+		fontSize: 14,
+		color: colors.textMuted,
+		textAlign: "center",
+		marginBottom: spacing.lg,
+		lineHeight: 20,
+	},
+	deleteModalButtons: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		width: "100%",
+	},
+	deleteModalButton: {
+		flex: 1,
+	},
+	deleteModalButtonText: {
+		color: "#fff",
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	deleteModalOutlineText: {
+		color: colors.text,
+		fontSize: 14,
+		fontWeight: "500",
+	},
+	pdsOptionBox: {
+		backgroundColor: colors.background,
+		borderRadius: borderRadius.lg,
+		padding: spacing.md,
+		width: "100%",
+		marginBottom: spacing.lg,
+	},
+	pdsOptionItem: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		gap: spacing.sm,
+		marginBottom: spacing.xs,
+	},
+	pdsOptionCheck: {
+		color: "#22c55e",
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	pdsOptionText: {
+		fontSize: 13,
+		color: colors.textMuted,
+		flex: 1,
 	},
 });

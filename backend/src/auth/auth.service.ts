@@ -248,13 +248,17 @@ export class AuthService implements OnModuleInit {
 
 	/**
 	 * Upsert user in database with profile data
+	 * Only sets timezone for new users - existing users keep their settings
 	 */
-	async upsertUser(profile: {
-		did: string;
-		handle: string;
-		displayName: string | null;
-		avatar: string | null;
-	}) {
+	async upsertUser(
+		profile: {
+			did: string;
+			handle: string;
+			displayName: string | null;
+			avatar: string | null;
+		},
+		timezone?: string,
+	) {
 		return this.prisma.user.upsert({
 			where: { did: profile.did },
 			update: {
@@ -267,6 +271,7 @@ export class AuthService implements OnModuleInit {
 				handle: profile.handle,
 				displayName: profile.displayName,
 				avatar: profile.avatar,
+				timezone: timezone || "UTC",
 			},
 		});
 	}

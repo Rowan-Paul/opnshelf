@@ -485,9 +485,3 @@ markWatched.mutate({
 # Ensure backend is running on port 3001, then:
 pnpm generate:api
 ```
-
-## Cursor Rules
-
-The following Cursor rules apply:
-1. Use `pnpm dlx shadcn@latest add <component>` for adding shadcn components
-2. Finish with typecheck, not full build (unless build artifacts needed)

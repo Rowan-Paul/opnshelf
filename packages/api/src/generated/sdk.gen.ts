@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -79,6 +79,11 @@ export const authControllerGetClientMetadata = <ThrowOnError extends boolean = f
  * Start AT Protocol OAuth login
  */
 export const authControllerLogin = <ThrowOnError extends boolean = false>(options: Options<AuthControllerLoginData, ThrowOnError>) => (options.client ?? client).get<unknown, unknown, ThrowOnError>({ url: '/auth/login', ...options });
+
+/**
+ * Search for actor suggestions by handle prefix
+ */
+export const authControllerSuggestions = <ThrowOnError extends boolean = false>(options: Options<AuthControllerSuggestionsData, ThrowOnError>) => (options.client ?? client).get<AuthControllerSuggestionsResponses, unknown, ThrowOnError>({ url: '/auth/suggestions', ...options });
 
 /**
  * AT Protocol OAuth callback

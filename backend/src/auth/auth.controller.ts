@@ -21,6 +21,7 @@ import type { AuthenticatedRequest } from "./types";
 
 const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
+const TIMEZONE_COOKIE_NAME = "auth_timezone";
 
 @ApiTags("auth")
 @Controller()
@@ -78,10 +79,16 @@ export class AuthController {
 		required: false,
 		description: 'Platform identifier (e.g., "mobile") for redirect handling',
 	})
+	@ApiQuery({
+		name: "timezone",
+		required: false,
+		description: "User's IANA timezone (e.g., Europe/London)",
+	})
 	@ApiResponse({ status: 302, description: "Redirect to authorization server" })
 	async login(
 		@Query("handle") handle: string | undefined,
 		@Query("platform") platform: string | undefined,
+		@Query("timezone") timezone: string | undefined,
 		@Res() res: Response,
 	) {
 		// Require handle to be provided
@@ -97,6 +104,15 @@ export class AuthController {
 		// Set platform cookie if mobile, so callback knows where to redirect
 		if (platform === "mobile") {
 			res.cookie(PLATFORM_COOKIE_NAME, "mobile", {
+				httpOnly: true,
+				maxAge: 5 * 60 * 1000, // 5 minutes
+				sameSite: "lax",
+			});
+		}
+
+		// Store timezone in cookie for use during callback (only for new users)
+		if (timezone) {
+			res.cookie(TIMEZONE_COOKIE_NAME, timezone, {
 				httpOnly: true,
 				maxAge: 5 * 60 * 1000, // 5 minutes
 				sameSite: "lax",
@@ -163,9 +179,18 @@ export class AuthController {
 
 			this.logger.log(`OAuth callback successful for DID: ${session.did}`);
 
-			// Fetch user profile and upsert in database
+			// Get timezone from cookie (set during login) - only used for new users
+			const cookies = req.cookies as Record<string, string | undefined>;
+			const timezone = cookies?.[TIMEZONE_COOKIE_NAME];
+
+			// Fetch user profile and upsert in database (timezone only set for new users)
 			const profile = await this.authService.fetchProfile(session);
-			await this.authService.upsertUser(profile);
+			await this.authService.upsertUser(profile, timezone);
+
+			// Clear timezone cookie after use
+			if (timezone) {
+				res.clearCookie(TIMEZONE_COOKIE_NAME);
+			}
 
 			this.logger.log(`User upserted: ${profile.handle}`);
 
@@ -200,8 +225,7 @@ export class AuthController {
 				...(cookieDomain && { domain: cookieDomain }),
 			});
 
-			// Check if request originated from mobile app
-			const cookies = req.cookies as Record<string, string | undefined>;
+			// Check if request originated from mobile app (reuse cookies variable)
 			const platform = cookies?.[PLATFORM_COOKIE_NAME];
 
 			// Clear platform cookie after use

@@ -185,8 +185,9 @@ function SettingsPage() {
 		onSuccess: () => {
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
-			// Clear all queries and redirect to home
-			queryClient.clear();
+			// Force set user to null to immediately update Header state
+			queryClient.setQueryData(authControllerMeOptions().queryKey, null);
+			// Navigate to home page
 			router.navigate({ to: "/" });
 		},
 		onError: () => {

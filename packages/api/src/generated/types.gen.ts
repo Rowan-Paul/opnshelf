@@ -364,6 +364,10 @@ export type AuthControllerLoginData = {
     path?: never;
     query: {
         /**
+         * User's IANA timezone (e.g., Europe/London)
+         */
+        timezone?: unknown;
+        /**
          * Platform identifier (e.g., "mobile") for redirect handling
          */
         platform?: unknown;
@@ -373,6 +377,25 @@ export type AuthControllerLoginData = {
         handle: unknown;
     };
     url: '/auth/login';
+};
+
+export type AuthControllerSuggestionsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Search query (handle prefix)
+         */
+        q: unknown;
+    };
+    url: '/auth/suggestions';
+};
+
+export type AuthControllerSuggestionsResponses = {
+    /**
+     * Array of actor suggestions
+     */
+    200: unknown;
 };
 
 export type AuthControllerCallbackData = {

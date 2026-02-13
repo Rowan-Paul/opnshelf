@@ -111,6 +111,15 @@ function LoginPage() {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
+	// Detect user's timezone
+	const detectUserTimezone = (): string => {
+		try {
+			return Intl.DateTimeFormat().resolvedOptions().timeZone;
+		} catch {
+			return "";
+		}
+	};
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
@@ -120,8 +129,9 @@ function LoginPage() {
 			sessionStorage.setItem("auth_redirect", redirect);
 		}
 
-		// Redirect to backend login with optional handle
-		const loginUrl = getLoginUrl(handle || undefined);
+		// Redirect to backend login with handle and timezone
+		const timezone = detectUserTimezone();
+		const loginUrl = getLoginUrl(handle || undefined, timezone || undefined);
 		window.location.href = loginUrl;
 	};
 
@@ -198,7 +208,7 @@ function LoginPage() {
 							{showSuggestions && suggestions.length > 0 && (
 								<div
 									ref={suggestionsRef}
-									className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden"
+									className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-y-auto max-h-60"
 								>
 									{suggestions.map((actor) => (
 										<button
