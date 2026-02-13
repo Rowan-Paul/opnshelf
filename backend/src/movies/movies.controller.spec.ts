@@ -67,7 +67,7 @@ describe("MoviesController", () => {
 			};
 			mockMoviesService.searchMovies.mockResolvedValue(mockResults);
 
-			const result = await controller.searchMovies({ query: "test" });
+			const result = await controller.searchMovies("test");
 
 			expect(result).toEqual(mockResults);
 			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("test");
@@ -77,9 +77,26 @@ describe("MoviesController", () => {
 			const mockResults = { results: [], total_pages: 0, total_results: 0 };
 			mockMoviesService.searchMovies.mockResolvedValue(mockResults);
 
-			const result = await controller.searchMovies({ query: "nonexistent" });
+			const result = await controller.searchMovies("nonexistent");
 
 			expect(result).toEqual(mockResults);
+		});
+
+		it("should pass query string directly to service without DTO wrapping", async () => {
+			const mockResults = {
+				results: [{ id: 1, title: "Dune", release_date: "2024-01-01" }],
+				total_pages: 1,
+				total_results: 1,
+			};
+			mockMoviesService.searchMovies.mockResolvedValue(mockResults);
+
+			const result = await controller.searchMovies("Dune");
+
+			expect(result).toEqual(mockResults);
+			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("Dune");
+			expect(mockMoviesService.searchMovies).not.toHaveBeenCalledWith(
+				expect.objectContaining({ query: "Dune" }),
+			);
 		});
 	});
 
@@ -252,7 +269,7 @@ describe("MoviesController", () => {
 			mockMoviesService.indexTrackedMovie.mockResolvedValue(mockTrackedMovie);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched({ movieId: "456" }, req);
+			const result = await controller.markWatched("456", undefined, req);
 
 			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -304,10 +321,7 @@ describe("MoviesController", () => {
 			mockMoviesService.indexTrackedMovie.mockResolvedValue(mockTrackedMovie);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched(
-				{ movieId: "456", watchedAt: customDate },
-				req,
-			);
+			const result = await controller.markWatched("456", customDate, req);
 
 			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -338,7 +352,7 @@ describe("MoviesController", () => {
 			);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched({ movieId: "789" }, req);
+			const result = await controller.markWatched("789", undefined, req);
 
 			expect(result).toEqual({
 				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-789-1234567890",
@@ -347,6 +361,33 @@ describe("MoviesController", () => {
 				movieId: "789",
 				userDid: "did:plc:abc123",
 			});
+		});
+
+		it("should receive body parameters directly (not as DTO object)", async () => {
+			const mockUser = {
+				did: "did:plc:abc123",
+				session: { did: "did:plc:abc123" },
+			};
+			const mockMarkWatchedResult = {
+				uri: "at://did:plc:abc123/app.opnshelf.movie/test-rkey",
+				cid: "test-cid",
+				rkey: "test-rkey",
+				record: {
+					watchedAt: "2024-06-15T12:00:00Z",
+				},
+			};
+
+			mockMoviesService.markWatched.mockResolvedValue(mockMarkWatchedResult);
+
+			const req = createMockRequest(mockUser);
+			await controller.markWatched("999999", "2024-06-15T12:00:00Z", req);
+
+			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				mockUser.session,
+				"999999",
+				"2024-06-15T12:00:00Z",
+			);
 		});
 	});
 

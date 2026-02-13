@@ -92,10 +92,6 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
-export type Function = {
-    [key: string]: unknown;
-};
-
 export type WatchHistoryItemDto = {
     id: string;
     watchedDate: string;
@@ -153,7 +149,7 @@ export type MoviesControllerSearchMoviesData = {
         /**
          * Search term
          */
-        query: unknown;
+        query: string;
     };
     url: '/movies/search';
 };
@@ -208,7 +204,16 @@ export type MoviesControllerGetUserMoviesResponses = {
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
 
 export type MoviesControllerMarkWatchedData = {
-    body: Function;
+    body: {
+        /**
+         * TMDB movie ID
+         */
+        movieId: string;
+        /**
+         * Custom watch datetime (ISO 8601)
+         */
+        watchedAt?: string;
+    };
     path?: never;
     query?: never;
     url: '/movies/watched';

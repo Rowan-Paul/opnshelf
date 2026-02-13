@@ -13,6 +13,7 @@ import {
 	UseGuards,
 } from "@nestjs/common";
 import {
+	ApiBody,
 	ApiOperation,
 	ApiParam,
 	ApiQuery,
@@ -23,9 +24,7 @@ import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	type DiscoverMoviesDto,
-	type MarkWatchedDto,
 	MovieDto,
-	type SearchMoviesDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
 	TrackedMovieDto,
@@ -45,8 +44,8 @@ export class MoviesController {
 	@ApiOperation({ summary: "Search movies from TMDB" })
 	@ApiQuery({ name: "query", required: true, description: "Search term" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
-	async searchMovies(@Query() searchDto: SearchMoviesDto) {
-		return this.moviesService.searchMovies(searchDto.query);
+	async searchMovies(@Query("query") query: string) {
+		return this.moviesService.searchMovies(query);
 	}
 
 	@Get("discover")
@@ -110,10 +109,25 @@ export class MoviesController {
 	@Post("watched")
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark a movie as watched" })
+	@ApiBody({
+		schema: {
+			type: "object",
+			required: ["movieId"],
+			properties: {
+				movieId: { type: "string", description: "TMDB movie ID" },
+				watchedAt: {
+					type: "string",
+					format: "date-time",
+					description: "Custom watch datetime (ISO 8601)",
+				},
+			},
+		},
+	})
 	@ApiResponse({ status: 201, type: TrackedMovieDto })
 	@ApiResponse({ status: 401, description: "Not authenticated" })
 	async markWatched(
-		@Body() body: MarkWatchedDto,
+		@Body("movieId") movieId: string,
+		@Body("watchedAt") watchedAt: string | undefined,
 		@Req() req: AuthenticatedRequest,
 	) {
 		const user = req.user;
@@ -122,8 +136,8 @@ export class MoviesController {
 		const { uri, cid, rkey, record } = await this.moviesService.markWatched(
 			user.did,
 			user.session as ATSession,
-			body.movieId,
-			body.watchedAt,
+			movieId,
+			watchedAt,
 		);
 
 		// Optimistic update: index in local DB so user sees their changes immediately
@@ -134,7 +148,7 @@ export class MoviesController {
 				cid,
 				rkey,
 				user.did,
-				body.movieId,
+				movieId,
 				record.watchedAt,
 			);
 			return trackedMovie;
@@ -144,7 +158,7 @@ export class MoviesController {
 				"Failed to optimistically update DB; firehose will catch it",
 			);
 			// Return a minimal response since PDS write succeeded
-			return { uri, cid, rkey, movieId: body.movieId, userDid: user.did };
+			return { uri, cid, rkey, movieId, userDid: user.did };
 		}
 	}
 
