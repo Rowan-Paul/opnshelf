@@ -8,9 +8,10 @@ import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, List, X } from "lucide-react-native";
+import { ArrowLeft, List, Trash2 } from "lucide-react-native";
 import { useCallback } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -178,68 +179,72 @@ export default function ListDetailScreen() {
 	const movies = list.items || [];
 
 	return (
-		<SafeAreaView style={styles.container} edges={["top"]}>
-			<View style={styles.header}>
-				<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-					<ArrowLeft size={24} color={colors.text} />
-				</TouchableOpacity>
-				<View style={styles.headerContent}>
-					<Text style={styles.title} numberOfLines={1}>
-						{list.name}
-					</Text>
-					{list.isDefault && (
-						<View style={styles.defaultBadge}>
-							<Text style={styles.defaultBadgeText}>Default</Text>
-						</View>
-					)}
+		<GestureHandlerRootView style={styles.container}>
+			<SafeAreaView style={styles.container} edges={["top"]}>
+				<View style={styles.header}>
+					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
+						<ArrowLeft size={24} color={colors.text} />
+					</TouchableOpacity>
+					<View style={styles.headerContent}>
+						<Text style={styles.title} numberOfLines={1}>
+							{list.name}
+						</Text>
+						{list.isDefault && (
+							<View style={styles.defaultBadge}>
+								<Text style={styles.defaultBadgeText}>Default</Text>
+							</View>
+						)}
+					</View>
 				</View>
-			</View>
 
-			{list.description && (
-				<Text style={styles.description}>{list.description}</Text>
-			)}
+				{list.description && (
+					<Text style={styles.description}>{list.description}</Text>
+				)}
 
-			{movies.length > 0 && (
-				<>
-					<Text style={styles.resultsCount}>
-						{movies.length} movie{movies.length !== 1 ? "s" : ""}
-					</Text>
-					<FlashList
-						data={movies}
-						renderItem={renderItem}
-						keyExtractor={keyExtractor}
-						contentContainerStyle={styles.listContent}
-						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-					/>
-				</>
-			)}
+				{movies.length > 0 && (
+					<>
+						<Text style={styles.resultsCount}>
+							{movies.length} movie{movies.length !== 1 ? "s" : ""}
+						</Text>
+						<FlashList
+							data={movies}
+							renderItem={renderItem}
+							keyExtractor={keyExtractor}
+							contentContainerStyle={styles.listContent}
+							ItemSeparatorComponent={() => (
+								<View style={styles.itemSeparator} />
+							)}
+						/>
+					</>
+				)}
 
-			{movies.length === 0 && (
-				<View style={styles.centerContent}>
-					<Card style={styles.emptyCard}>
-						<CardHeader style={styles.emptyCardHeader}>
-							<List
-								size={64}
-								color={colors.textSecondary}
-								style={styles.emptyIcon}
-							/>
-							<Text style={styles.emptyTitle}>No movies yet</Text>
-							<Text style={styles.emptyDescription}>
-								Add movies to this list from the search page
-							</Text>
-						</CardHeader>
-						<CardContent>
-							<TouchableOpacity
-								onPress={() => router.push("/(tabs)/search")}
-								style={styles.searchButton}
-							>
-								<Text style={styles.searchButtonText}>Search for movies</Text>
-							</TouchableOpacity>
-						</CardContent>
-					</Card>
-				</View>
-			)}
-		</SafeAreaView>
+				{movies.length === 0 && (
+					<View style={styles.centerContent}>
+						<Card style={styles.emptyCard}>
+							<CardHeader style={styles.emptyCardHeader}>
+								<List
+									size={64}
+									color={colors.textSecondary}
+									style={styles.emptyIcon}
+								/>
+								<Text style={styles.emptyTitle}>No movies yet</Text>
+								<Text style={styles.emptyDescription}>
+									Add movies to this list from the search page
+								</Text>
+							</CardHeader>
+							<CardContent>
+								<TouchableOpacity
+									onPress={() => router.push("/(tabs)/search")}
+									style={styles.searchButton}
+								>
+									<Text style={styles.searchButtonText}>Search for movies</Text>
+								</TouchableOpacity>
+							</CardContent>
+						</Card>
+					</View>
+				)}
+			</SafeAreaView>
+		</GestureHandlerRootView>
 	);
 }
 
@@ -264,36 +269,49 @@ function ListMovieItem({
 	const releaseYear = movie.releaseYear as number | null | undefined;
 
 	return (
-		<TouchableOpacity onPress={onPress} style={styles.movieItem}>
-			{posterUrl ? (
-				<Image
-					source={{ uri: posterUrl }}
-					style={styles.poster}
-					contentFit="cover"
-				/>
-			) : (
-				<View style={[styles.poster, styles.noPoster]}>
-					<Text style={styles.noPosterText}>No poster</Text>
-				</View>
-			)}
-			<View style={styles.movieContent}>
-				<Text style={styles.movieTitle} numberOfLines={2}>
-					{movieTitle}
-				</Text>
-				{releaseYear && <Text style={styles.movieYear}>{releaseYear}</Text>}
+		<View style={styles.card}>
+			<View style={styles.posterContainer}>
+				{posterUrl ? (
+					<Image
+						source={{ uri: posterUrl }}
+						style={styles.poster}
+						contentFit="cover"
+					/>
+				) : (
+					<View style={[styles.poster, styles.noPoster]}>
+						<Text style={styles.noPosterText}>No poster</Text>
+					</View>
+				)}
 			</View>
 			<TouchableOpacity
-				onPress={onRemove}
-				disabled={isRemoving}
-				style={styles.removeButton}
+				onPress={onPress}
+				style={styles.cardContent}
+				activeOpacity={0.8}
 			>
-				{isRemoving ? (
-					<SpinningLoader size={20} color={colors.error} />
-				) : (
-					<X size={20} color={colors.textMuted} />
-				)}
+				<View style={styles.info}>
+					<Text style={styles.movieTitle} numberOfLines={2}>
+						{movieTitle}
+					</Text>
+					{releaseYear && <Text style={styles.movieYear}>{releaseYear}</Text>}
+				</View>
+
+				<TouchableOpacity
+					onPress={onRemove}
+					disabled={isRemoving}
+					style={styles.removeButton}
+					activeOpacity={0.7}
+				>
+					{isRemoving ? (
+						<SpinningLoader size={14} color={colors.text} />
+					) : (
+						<>
+							<Trash2 size={14} color={colors.text} />
+							<Text style={styles.removeButtonText}>Remove</Text>
+						</>
+					)}
+				</TouchableOpacity>
 			</TouchableOpacity>
-		</TouchableOpacity>
+		</View>
 	);
 }
 
@@ -423,43 +441,66 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		justifyContent: "center",
 	},
-	movieItem: {
+	card: {
 		flexDirection: "row",
-		padding: spacing.sm,
 		backgroundColor: colors.card,
-		borderRadius: borderRadius.md,
-		alignItems: "center",
+		borderRadius: borderRadius.lg,
+		overflow: "hidden",
+		borderWidth: 1,
+		borderColor: colors.border,
+	},
+	posterContainer: {
+		width: 80,
+		aspectRatio: 2 / 3,
+		backgroundColor: colors.cardMuted,
 	},
 	poster: {
-		width: 60,
-		height: 90,
-		borderRadius: borderRadius.sm,
+		width: "100%",
+		height: "100%",
 	},
-	noPoster: {
-		backgroundColor: colors.cardMuted,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	noPosterText: {
-		color: colors.textMuted,
-		fontSize: 10,
-		textAlign: "center",
-	},
-	movieContent: {
+	cardContent: {
 		flex: 1,
-		marginLeft: spacing.md,
+		padding: spacing.md,
+		justifyContent: "space-between",
+	},
+	info: {
+		flex: 1,
 	},
 	movieTitle: {
-		fontSize: 14,
+		fontSize: 16,
 		fontWeight: "600",
 		color: colors.text,
 		marginBottom: spacing.xs,
+		lineHeight: 22,
 	},
 	movieYear: {
-		fontSize: 12,
+		fontSize: 14,
 		color: colors.textMuted,
 	},
 	removeButton: {
-		padding: spacing.sm,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+		backgroundColor: colors.error,
+		borderRadius: borderRadius.full,
+		alignSelf: "flex-start",
+		marginTop: spacing.sm,
+	},
+	removeButtonText: {
+		color: colors.text,
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	noPoster: {
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: colors.cardMuted,
+	},
+	noPosterText: {
+		color: colors.textSecondary,
+		fontSize: 12,
+		fontWeight: "500",
 	},
 });

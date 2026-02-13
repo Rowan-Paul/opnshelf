@@ -62,6 +62,12 @@ function AppContent() {
 						headerShown: true,
 					}}
 				/>
+				<Stack.Screen
+					name="list/[slug]"
+					options={{
+						headerShown: false,
+					}}
+				/>
 			</Stack>
 			<StatusBar style="light" />
 		</ToastProvider>
