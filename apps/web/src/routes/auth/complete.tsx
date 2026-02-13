@@ -1,4 +1,8 @@
-import { useQueryClient } from "@tanstack/react-query";
+import {
+	usersControllerGetMySettingsOptions,
+	usersControllerUpdateMySettingsMutation,
+} from "@opnshelf/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Film } from "lucide-react";
 import { useEffect } from "react";
@@ -7,40 +11,76 @@ export const Route = createFileRoute("/auth/complete")({
 	component: AuthCompletePage,
 });
 
-/**
- * Validates that a redirect path is safe (relative path only).
- * Rejects absolute URLs, protocol-relative URLs, and other attack vectors.
- */
 function isValidRedirectPath(path: string): boolean {
 	if (!path || typeof path !== "string") return false;
-	// Must start with /
 	if (!path.startsWith("/")) return false;
-	// Must not contain // (protocol-relative or double slash)
 	if (path.includes("//")) return false;
-	// Must not start with /\ (Windows path injection)
 	if (path.startsWith("/\\")) return false;
 	return true;
+}
+
+function detectUserTimezone(): string {
+	try {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone;
+	} catch {
+		return "UTC";
+	}
+}
+
+function detectUserTimeFormat(): string {
+	try {
+		const hour12 = Intl.DateTimeFormat().resolvedOptions().hour12;
+		return hour12 ? "12h" : "24h";
+	} catch {
+		return "24h";
+	}
 }
 
 function AuthCompletePage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
+	const updateSettingsMutation = usersControllerUpdateMySettingsMutation();
+
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+
 	useEffect(() => {
-		// Invalidate auth query so app picks up the new session
-		queryClient.invalidateQueries({ queryKey: ["auth"] });
+		const savedTimeout = setTimeout(async () => {
+			queryClient.invalidateQueries({ queryKey: ["auth"] });
 
-		// Read stored redirect path
-		const storedRedirect = sessionStorage.getItem("auth_redirect");
-		sessionStorage.removeItem("auth_redirect");
+			const storedRedirect = sessionStorage.getItem("auth_redirect");
+			sessionStorage.removeItem("auth_redirect");
 
-		// Validate and redirect
-		if (storedRedirect && isValidRedirectPath(storedRedirect)) {
-			navigate({ to: storedRedirect });
-		} else {
-			navigate({ to: "/shelf" });
-		}
+			if (storedRedirect && isValidRedirectPath(storedRedirect)) {
+				navigate({ to: storedRedirect });
+			} else {
+				navigate({ to: "/shelf" });
+			}
+		}, 1500);
+
+		return () => clearTimeout(savedTimeout);
 	}, [navigate, queryClient]);
+
+	useEffect(() => {
+		if (!userSettings) return;
+
+		const detectedTimezone = detectUserTimezone();
+		const detectedTimeFormat = detectUserTimeFormat();
+
+		if (
+			userSettings.timezone === "UTC" &&
+			(detectedTimezone !== "UTC" || userSettings.timeFormat === "24h")
+		) {
+			updateSettingsMutation.mutate({
+				body: {
+					timezone: detectedTimezone,
+					timeFormat: detectedTimeFormat,
+				},
+			});
+		}
+	}, [userSettings, updateSettingsMutation]);
 
 	return (
 		<div className="flex-1 bg-gray-950 text-gray-50 flex flex-col min-h-0">

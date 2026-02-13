@@ -3,6 +3,7 @@ import {
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,6 +72,8 @@ interface MovieCardProps {
 	isRemoving: boolean;
 	onRemove: (movieId: string) => void;
 	onPress: () => void;
+	timezone: string;
+	is24Hour: boolean;
 }
 
 const MovieCard = ({
@@ -78,9 +81,19 @@ const MovieCard = ({
 	isRemoving,
 	onRemove,
 	onPress,
+	timezone,
+	is24Hour,
 }: MovieCardProps) => {
 	const formattedWatchedDate = tracked.watchedDate
-		? format(new Date(tracked.watchedDate), "MMM d, yyyy • HH:mm")
+		? new Date(tracked.watchedDate).toLocaleString("en-US", {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: !is24Hour,
+				timeZone: timezone,
+		  })
 		: null;
 
 	return (
@@ -160,6 +173,15 @@ export default function ShelfScreen() {
 		enabled: !!user?.did,
 	});
 
+	// Fetch user settings for timezone and time format
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user?.did,
+	});
+
+	const userTimezone = userSettings?.timezone || "UTC";
+	const is24Hour = userSettings?.timeFormat === "24h";
+
 	// Remove from shelf mutation
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
@@ -205,10 +227,12 @@ export default function ShelfScreen() {
 					isRemoving={isRemoving}
 					onRemove={handleRemove}
 					onPress={() => handleMoviePress(item)}
+					timezone={userTimezone}
+					is24Hour={is24Hour}
 				/>
 			);
 		},
-		[unmarkMutation, handleRemove, handleMoviePress],
+		[unmarkMutation, handleRemove, handleMoviePress, userTimezone, is24Hour],
 	);
 
 	const keyExtractor = useCallback((item: TrackedMovieDto) => item.id, []);

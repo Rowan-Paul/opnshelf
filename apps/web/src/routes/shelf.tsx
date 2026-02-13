@@ -3,6 +3,7 @@ import {
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -50,6 +51,15 @@ function ShelfPage() {
 		}),
 		enabled: !!user?.did,
 	});
+
+	// Fetch user settings for timezone and time format
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user?.did,
+	});
+
+	const userTimezone = userSettings?.timezone || "UTC";
+	const is24Hour = userSettings?.timeFormat === "24h";
 
 	// Mutation for removing from shelf using generated TanStack Query hook
 	const unmarkMutation = useMutation({
@@ -208,7 +218,8 @@ function ShelfPage() {
 													year: "numeric",
 													hour: "2-digit",
 													minute: "2-digit",
-													hour12: false,
+													hour12: !is24Hour,
+													timeZone: userTimezone,
 												})}
 												{(() => {
 													const count = (tracked as { watchCount?: number })

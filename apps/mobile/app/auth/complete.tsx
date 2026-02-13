@@ -1,10 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
-import { authControllerMeOptions } from "@opnshelf/api";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+	authControllerMeOptions,
+	usersControllerGetMySettingsOptions,
+	usersControllerUpdateMySettingsMutation,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { saveSessionToken } from "@/lib/api";
+
+function detectUserTimezone(): string {
+	try {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone;
+	} catch {
+		return "UTC";
+	}
+}
+
+function detectUserTimeFormat(): "12h" | "24h" {
+	try {
+		const hour12 = Intl.DateTimeFormat().resolvedOptions().hour12;
+		return hour12 ? "12h" : "24h";
+	} catch {
+		return "24h";
+	}
+}
 
 export default function AuthCompleteScreen() {
 	const queryClient = useQueryClient();
@@ -12,19 +33,25 @@ export default function AuthCompleteScreen() {
 	const params = useLocalSearchParams<{ session?: string }>();
 	const { session } = params;
 
+	const updateSettings = useMutation({
+		...usersControllerUpdateMySettingsMutation(),
+	});
+
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+
 	useEffect(() => {
 		async function completeAuth() {
 			if (session) {
 				await saveSessionToken(session);
 			}
 
-			// Refetch auth query and wait for it to complete
 			await queryClient.fetchQuery({
 				...authControllerMeOptions(),
 				staleTime: 0,
 			});
 
-			// Small delay to ensure state is propagated
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			router.replace("/(tabs)/shelf");
@@ -32,6 +59,25 @@ export default function AuthCompleteScreen() {
 
 		completeAuth();
 	}, [router, queryClient, session]);
+
+	useEffect(() => {
+		if (!userSettings) return;
+
+		const detectedTimezone = detectUserTimezone();
+		const detectedTimeFormat = detectUserTimeFormat();
+
+		if (
+			userSettings.timezone === "UTC" &&
+			(detectedTimezone !== "UTC" || userSettings.timeFormat === "24h")
+		) {
+			updateSettings.mutate({
+				body: {
+					timezone: detectedTimezone,
+					timeFormat: detectedTimeFormat,
+				},
+			});
+		}
+	}, [userSettings, updateSettings]);
 
 	return (
 		<View

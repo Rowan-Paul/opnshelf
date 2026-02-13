@@ -13,6 +13,7 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import DateTimePicker, {
 	type DateTimePickerEvent,
@@ -51,14 +52,19 @@ function formatRuntime(minutes: number, useHours: boolean): string {
 	return `${hours}h ${mins}m`;
 }
 
-function formatWatchDate(dateString: string): string {
+function formatWatchDate(
+	dateString: string,
+	timezone: string,
+	is24Hour: boolean,
+): string {
 	return new Date(dateString).toLocaleString("en-US", {
 		year: "numeric",
 		month: "short",
 		day: "numeric",
 		hour: "2-digit",
 		minute: "2-digit",
-		hour12: false,
+		hour12: !is24Hour,
+		timeZone: timezone,
 	});
 }
 
@@ -117,6 +123,15 @@ export default function MovieDetailScreen() {
 		enabled: !!user?.did && !!movieId,
 	});
 
+	// Fetch user settings for timezone and time format
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user?.did,
+	});
+
+	const userTimezone = userSettings?.timezone || "UTC";
+	const is24Hour = userSettings?.timeFormat === "24h";
+
 	// Check if this movie is in user's watched list
 	const isWatched = useMemo(() => {
 		if (!trackedMovies) return false;
@@ -132,8 +147,8 @@ export default function MovieDetailScreen() {
 	// Format the watched date
 	const formattedWatchedDate = useMemo(() => {
 		if (!trackedMovie?.watchedDate) return null;
-		return formatWatchDate(trackedMovie.watchedDate);
-	}, [trackedMovie]);
+		return formatWatchDate(trackedMovie.watchedDate, userTimezone, is24Hour);
+	}, [trackedMovie, userTimezone, is24Hour]);
 
 	// Mutations
 	const markMutation = useMutation({
@@ -845,7 +860,7 @@ export default function MovieDetailScreen() {
 								watchHistory.map((watch) => (
 									<View key={watch.id} style={styles.historyItem}>
 										<Text style={styles.historyDate}>
-											{formatWatchDate(watch.watchedDate)}
+											{formatWatchDate(watch.watchedDate, userTimezone, is24Hour)}
 										</Text>
 										<TouchableOpacity
 											onPress={() => handleDeleteWatchEntry(watch.id)}

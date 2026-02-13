@@ -11,6 +11,7 @@ import {
 	type TmdbCrewDto,
 	type TmdbMovieDetailDto,
 	type TrackedMovieDto,
+	usersControllerGetMySettingsOptions,
 	type WatchHistoryItemDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -139,6 +140,15 @@ function MovieDetailPage() {
 		enabled: !!user?.did && !!movieId,
 	});
 
+	// Fetch user settings for timezone and time format
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user?.did,
+	});
+
+	const userTimezone = userSettings?.timezone || "UTC";
+	const is24Hour = userSettings?.timeFormat === "24h";
+
 	// Check if this movie is in user's watched list
 	const isWatched = useMemo(() => {
 		if (!trackedMovies) return false;
@@ -163,9 +173,10 @@ function MovieDetailPage() {
 			day: "numeric",
 			hour: "2-digit",
 			minute: "2-digit",
-			hour12: false,
+			hour12: !is24Hour,
+			timeZone: userTimezone,
 		});
-	}, [trackedMovie]);
+	}, [trackedMovie, userTimezone, is24Hour]);
 
 	// Format watch history dates (24-hour notation)
 	const formatWatchDate = (dateString: string) => {
@@ -175,7 +186,8 @@ function MovieDetailPage() {
 			day: "numeric",
 			hour: "2-digit",
 			minute: "2-digit",
-			hour12: false,
+			hour12: !is24Hour,
+			timeZone: userTimezone,
 		});
 	};
 
