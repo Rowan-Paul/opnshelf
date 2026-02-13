@@ -45,15 +45,10 @@ export default function LoginScreen() {
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
-	// Open modal when user starts typing (1+ characters)
+	// Open modal when user starts typing
 	const handleInputChange = (text: string) => {
 		setHandle(text);
-		if (text.trim().length >= 1) {
-			setModalInputValue(text);
-			setShowSuggestionsModal(true);
-		} else {
-			setShowSuggestionsModal(false);
-		}
+		setModalInputValue(text);
 	};
 
 	// Close modal and keep current handle value
@@ -321,6 +316,10 @@ export default function LoginScreen() {
 								}}
 								value={handle}
 								onChangeText={handleInputChange}
+								onFocus={() => {
+									setModalInputValue(handle);
+									setShowSuggestionsModal(true);
+								}}
 								placeholder="username.bsky.social"
 								placeholderTextColor="#6b7280"
 								autoCapitalize="none"
