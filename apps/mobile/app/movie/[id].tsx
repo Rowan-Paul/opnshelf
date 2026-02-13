@@ -284,7 +284,7 @@ export default function MovieDetailScreen() {
 		[customDate],
 	);
 
-	const openDateModal = useCallback(() => {
+	const _openDateModal = useCallback(() => {
 		setCustomDate(new Date());
 		setShowDateModal(true);
 	}, []);
