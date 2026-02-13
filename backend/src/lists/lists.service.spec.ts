@@ -655,10 +655,12 @@ describe("ListsService", () => {
 				"testtid123",
 				"did:plc:abc123",
 				{
+					$type: "app.opnshelf.list",
 					name: "My List",
 					description: "A test list",
 					slug: "my-list",
 					isDefault: false,
+					createdAt: "2024-01-01T00:00:00.000Z",
 				},
 			);
 
@@ -711,9 +713,11 @@ describe("ListsService", () => {
 				"testtid123",
 				"did:plc:abc123",
 				{
+					$type: "app.opnshelf.listItem",
 					listRkey: "watchlist-abc123",
 					movieId: "123",
 					notes: "Want to watch",
+					createdAt: "2024-01-01T00:00:00.000Z",
 				},
 			);
 
@@ -739,8 +743,10 @@ describe("ListsService", () => {
 				"testtid123",
 				"did:plc:abc123",
 				{
+					$type: "app.opnshelf.listItem",
 					listRkey: "nonexistent",
 					movieId: "123",
+					createdAt: "2024-01-01T00:00:00.000Z",
 				},
 			);
 
@@ -774,8 +780,10 @@ describe("ListsService", () => {
 				"testtid123",
 				"did:plc:abc123",
 				{
+					$type: "app.opnshelf.listItem",
 					listRkey: "watchlist-abc123",
 					movieId: "123",
+					createdAt: "2024-01-01T00:00:00.000Z",
 				},
 			);
 
