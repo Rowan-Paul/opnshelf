@@ -115,8 +115,7 @@ function LoginPage() {
 		}
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
+	const performLogin = (loginHandle: string) => {
 		setIsSubmitting(true);
 
 		if (redirect) {
@@ -124,8 +123,16 @@ function LoginPage() {
 		}
 
 		const timezone = detectUserTimezone();
-		const loginUrl = getLoginUrl(handle || undefined, timezone || undefined);
+		const loginUrl = getLoginUrl(
+			loginHandle || undefined,
+			timezone || undefined,
+		);
 		window.location.href = loginUrl;
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		performLogin(handle);
 	};
 
 	const errorMessages: Record<string, string> = {
@@ -207,6 +214,7 @@ function LoginPage() {
 												setHandle(actor.handle);
 												setShowSuggestions(false);
 												setSuggestions([]);
+												performLogin(actor.handle);
 											}}
 											className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-700 transition-colors text-left"
 										>

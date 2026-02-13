@@ -35,6 +35,7 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AddToListModal } from "@/components/AddToListModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { borderRadius, colors } from "@/constants/theme";
@@ -80,6 +81,7 @@ export default function MovieDetailScreen() {
 
 	const [showHours, setShowHours] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
+	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [customDate, setCustomDate] = useState<Date>(new Date());
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [showTimePicker, setShowTimePicker] = useState(false);
@@ -423,6 +425,18 @@ export default function MovieDetailScreen() {
 										</View>
 									</TouchableOpacity>
 									<TouchableOpacity
+										onPress={() => setShowAddToListModal(true)}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons name="list-outline" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Add to List
+											</Text>
+										</View>
+									</TouchableOpacity>
+									<TouchableOpacity
 										onPress={handleShare}
 										style={styles.secondaryButton}
 										activeOpacity={0.8}
@@ -470,6 +484,18 @@ export default function MovieDetailScreen() {
 											<Ionicons name="calendar" size={18} color="#9ca3af" />
 											<Text style={styles.secondaryButtonText}>
 												Watch on Different Date
+											</Text>
+										</View>
+									</TouchableOpacity>
+									<TouchableOpacity
+										onPress={() => setShowAddToListModal(true)}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons name="list-outline" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Add to List
 											</Text>
 										</View>
 									</TouchableOpacity>
@@ -889,6 +915,13 @@ export default function MovieDetailScreen() {
 					</View>
 				</View>
 			</Modal>
+
+			<AddToListModal
+				visible={showAddToListModal}
+				onClose={() => setShowAddToListModal(false)}
+				movieId={movieId}
+				movieTitle={movie?.title || title || ""}
+			/>
 		</>
 	);
 }

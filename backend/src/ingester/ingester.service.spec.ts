@@ -15,6 +15,16 @@ jest.mock("../movies/movies.service", () => ({
 	})),
 }));
 
+// Mock ListsService before importing
+jest.mock("../lists/lists.service", () => ({
+	ListsService: jest.fn().mockImplementation(() => ({
+		indexListRecord: jest.fn(),
+		deleteListRecord: jest.fn(),
+		indexListItemRecord: jest.fn(),
+		deleteListItemRecord: jest.fn(),
+	})),
+}));
+
 // Mock @atproto/tap
 const mockTapChannel = {
 	start: jest.fn().mockResolvedValue(undefined),
@@ -45,6 +55,7 @@ jest.mock("@atproto/tap", () => ({
 
 import type { IdentityEvent, RecordEvent } from "@atproto/tap";
 import { SimpleIndexer, Tap } from "@atproto/tap";
+import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { IngesterService } from "./ingester.service";
@@ -66,10 +77,18 @@ type MockMoviesService = {
 	upsertMovie: jest.Mock;
 };
 
+type MockListsService = {
+	indexListRecord: jest.Mock;
+	deleteListRecord: jest.Mock;
+	indexListItemRecord: jest.Mock;
+	deleteListItemRecord: jest.Mock;
+};
+
 describe("IngesterService", () => {
 	let service: IngesterService;
 	let mockPrismaService: MockPrismaService;
 	let mockMoviesService: MockMoviesService;
+	let mockListsService: MockListsService;
 
 	const mockConfigService = {
 		get: jest.fn((key: string) => {
@@ -98,12 +117,20 @@ describe("IngesterService", () => {
 			upsertMovie: jest.fn(),
 		};
 
+		mockListsService = {
+			indexListRecord: jest.fn(),
+			deleteListRecord: jest.fn(),
+			indexListItemRecord: jest.fn(),
+			deleteListItemRecord: jest.fn(),
+		};
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				IngesterService,
 				{ provide: PrismaService, useValue: mockPrismaService },
 				{ provide: ConfigService, useValue: mockConfigService },
 				{ provide: MoviesService, useValue: mockMoviesService },
+				{ provide: ListsService, useValue: mockListsService },
 			],
 		}).compile();
 

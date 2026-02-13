@@ -55,7 +55,9 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   Movie: 'Movie',
-  TrackedMovie: 'TrackedMovie'
+  TrackedMovie: 'TrackedMovie',
+  MovieList: 'MovieList',
+  MovieListItem: 'MovieListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -139,6 +141,38 @@ export const TrackedMovieScalarFieldEnum = {
 } as const
 
 export type TrackedMovieScalarFieldEnum = (typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum]
+
+
+export const MovieListScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  name: 'name',
+  description: 'description',
+  slug: 'slug',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MovieListScalarFieldEnum = (typeof MovieListScalarFieldEnum)[keyof typeof MovieListScalarFieldEnum]
+
+
+export const MovieListItemScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  listId: 'listId',
+  movieId: 'movieId',
+  notes: 'notes',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type MovieListItemScalarFieldEnum = (typeof MovieListItemScalarFieldEnum)[keyof typeof MovieListItemScalarFieldEnum]
 
 
 export const SortOrder = {

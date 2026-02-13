@@ -105,47 +105,49 @@ export function MovieCard({
 					</div>
 				)}
 				{showActions && user && (
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									type="button"
-									size="icon"
-									variant="default"
-									onClick={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										if (isWatched) {
-											unmarkMutation.mutate({
-												path: { movieId },
-											});
-										} else {
-											markMutation.mutate({
-												body: { movieId },
-											});
-										}
-									}}
-									disabled={isPending}
-									className={`absolute top-2 right-2 z-10 ${
-										isWatched
-											? "bg-green-600 hover:bg-red-600"
-											: "bg-purple-600 hover:bg-purple-700 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-									} transition-opacity`}
-								>
-									{isPending ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : isWatched ? (
-										<Check className="w-4 h-4" />
-									) : (
-										<Plus className="w-4 h-4" />
-									)}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>{isWatched ? "Remove from shelf" : "Mark as watched"}</p>
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
+					<div className="absolute top-2 right-2 z-10">
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										type="button"
+										size="icon"
+										variant="default"
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											if (isWatched) {
+												unmarkMutation.mutate({
+													path: { movieId },
+												});
+											} else {
+												markMutation.mutate({
+													body: { movieId },
+												});
+											}
+										}}
+										disabled={isPending}
+										className={`${
+											isWatched
+												? "bg-green-600 hover:bg-red-600"
+												: "bg-purple-600 hover:bg-purple-700 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+										} transition-opacity`}
+									>
+										{isPending ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : isWatched ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<Plus className="w-4 h-4" />
+										)}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>{isWatched ? "Remove from shelf" : "Mark as watched"}</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+					</div>
 				)}
 			</Link>
 			<Link

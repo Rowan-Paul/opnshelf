@@ -1,0 +1,38 @@
+{
+	"lexicon": 1,
+	"id": "app.opnshelf.list",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A movie list for OpnShelf",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["name", "slug", "isDefault", "createdAt"],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Display name of the list"
+					},
+					"description": {
+						"type": "string",
+						"description": "Optional description of the list"
+					},
+					"slug": {
+						"type": "string",
+						"description": "URL-friendly identifier"
+					},
+					"isDefault": {
+						"type": "boolean",
+						"description": "Whether this is a default list (watchlist/favorites)"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

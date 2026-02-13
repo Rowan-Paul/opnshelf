@@ -120,6 +120,99 @@ export type UserDto = {
     } | null;
 };
 
+export type MovieListSummaryDto = {
+    id: string;
+    rkey: string;
+    name: string;
+    description?: string;
+    slug: string;
+    isDefault: boolean;
+    movieCount: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CreateListDto = {
+    /**
+     * Name of the list
+     */
+    name: string;
+    /**
+     * Description of the list
+     */
+    description?: string;
+};
+
+export type MovieInListDto = {
+    id: string;
+    rkey: string;
+    movieId: string;
+    notes?: string;
+    position: number;
+    createdAt: string;
+    movie: {
+        [key: string]: unknown;
+    };
+};
+
+export type MovieListDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    userDid: string;
+    name: string;
+    description?: string;
+    slug: string;
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+    items?: Array<MovieInListDto>;
+};
+
+export type MovieListWithMoviesDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    userDid: string;
+    name: string;
+    description?: string;
+    slug: string;
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+    items: Array<MovieInListDto>;
+};
+
+export type UpdateListDto = {
+    /**
+     * Name of the list
+     */
+    name?: string;
+    /**
+     * Description of the list
+     */
+    description?: string;
+};
+
+export type AddToListDto = {
+    /**
+     * TMDB movie ID
+     */
+    movieId: string;
+    /**
+     * Optional notes about the movie
+     */
+    notes?: string;
+};
+
+export type MovieListsForMovieDto = {
+    listId: string;
+    listName: string;
+    listSlug: string;
+    isDefault: boolean;
+    isInList: boolean;
+};
+
 export type UserSettingsDto = {
     /**
      * Time format preference
@@ -438,6 +531,261 @@ export type AuthControllerLogoutResponses = {
      */
     200: unknown;
 };
+
+export type ListsControllerGetUserListsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/lists';
+};
+
+export type ListsControllerGetUserListsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListsControllerGetUserListsResponses = {
+    /**
+     * List of user's lists
+     */
+    200: Array<MovieListSummaryDto>;
+};
+
+export type ListsControllerGetUserListsResponse = ListsControllerGetUserListsResponses[keyof ListsControllerGetUserListsResponses];
+
+export type ListsControllerCreateListData = {
+    body: CreateListDto;
+    path?: never;
+    query?: never;
+    url: '/lists';
+};
+
+export type ListsControllerCreateListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListsControllerCreateListResponses = {
+    /**
+     * List created
+     */
+    201: MovieListDto;
+};
+
+export type ListsControllerCreateListResponse = ListsControllerCreateListResponses[keyof ListsControllerCreateListResponses];
+
+export type ListsControllerInitDefaultListsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/lists/init-defaults';
+};
+
+export type ListsControllerInitDefaultListsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListsControllerInitDefaultListsResponses = {
+    /**
+     * Default lists
+     */
+    200: Array<MovieListDto>;
+};
+
+export type ListsControllerInitDefaultListsResponse = ListsControllerInitDefaultListsResponses[keyof ListsControllerInitDefaultListsResponses];
+
+export type ListsControllerDeleteListData = {
+    body?: never;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}';
+};
+
+export type ListsControllerDeleteListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerDeleteListResponses = {
+    /**
+     * List deleted
+     */
+    200: unknown;
+};
+
+export type ListsControllerGetListData = {
+    body?: never;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}';
+};
+
+export type ListsControllerGetListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerGetListResponses = {
+    /**
+     * List details with movies
+     */
+    200: MovieListWithMoviesDto;
+};
+
+export type ListsControllerGetListResponse = ListsControllerGetListResponses[keyof ListsControllerGetListResponses];
+
+export type ListsControllerUpdateListData = {
+    body: UpdateListDto;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}';
+};
+
+export type ListsControllerUpdateListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerUpdateListResponses = {
+    /**
+     * List updated
+     */
+    200: MovieListDto;
+};
+
+export type ListsControllerUpdateListResponse = ListsControllerUpdateListResponses[keyof ListsControllerUpdateListResponses];
+
+export type ListsControllerAddToListData = {
+    body: AddToListDto;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}/movies';
+};
+
+export type ListsControllerAddToListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List or movie not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerAddToListResponses = {
+    /**
+     * Movie added to list
+     */
+    200: unknown;
+};
+
+export type ListsControllerRemoveFromListData = {
+    body?: never;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+        /**
+         * TMDB movie ID
+         */
+        movieId: string;
+    };
+    query?: never;
+    url: '/lists/{slug}/movies/{movieId}';
+};
+
+export type ListsControllerRemoveFromListErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerRemoveFromListResponses = {
+    /**
+     * Movie removed from list
+     */
+    200: unknown;
+};
+
+export type ListsControllerGetListsForMovieData = {
+    body?: never;
+    path: {
+        /**
+         * TMDB movie ID
+         */
+        movieId: string;
+    };
+    query?: never;
+    url: '/lists/for-movie/{movieId}';
+};
+
+export type ListsControllerGetListsForMovieErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListsControllerGetListsForMovieResponses = {
+    /**
+     * Lists with membership status
+     */
+    200: Array<MovieListsForMovieDto>;
+};
+
+export type ListsControllerGetListsForMovieResponse = ListsControllerGetListsForMovieResponses[keyof ListsControllerGetListsForMovieResponses];
 
 export type UsersControllerGetMySettingsData = {
     body?: never;

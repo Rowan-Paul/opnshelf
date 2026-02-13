@@ -62,3 +62,13 @@ export type Movie = Prisma.MovieModel
  * 
  */
 export type TrackedMovie = Prisma.TrackedMovieModel
+/**
+ * Model MovieList
+ * 
+ */
+export type MovieList = Prisma.MovieListModel
+/**
+ * Model MovieListItem
+ * 
+ */
+export type MovieListItem = Prisma.MovieListItemModel

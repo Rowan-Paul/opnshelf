@@ -12,10 +12,21 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
-	$nsid as COLLECTION,
+	$nsid as LIST_COLLECTION,
+	main as listSchema,
+} from "../lexicons/app/opnshelf/list";
+import type { Main as ListRecord } from "../lexicons/app/opnshelf/list.defs";
+import {
+	$nsid as LIST_ITEM_COLLECTION,
+	main as listItemSchema,
+} from "../lexicons/app/opnshelf/listItem";
+import type { Main as ListItemRecord } from "../lexicons/app/opnshelf/listItem.defs";
+import {
+	$nsid as MOVIE_COLLECTION,
 	main as movieSchema,
 } from "../lexicons/app/opnshelf/movie";
 import type { Main as MovieRecord } from "../lexicons/app/opnshelf/movie.defs";
+import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -31,6 +42,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly prisma: PrismaService,
 		private readonly config: ConfigService,
 		private readonly moviesService: MoviesService,
+		private readonly listsService: ListsService,
 	) {
 		this.tapUrl = this.config.get<string>("TAP_URL") ?? "http://localhost:2480";
 		this.tapAdminPassword = this.config.get<string>("TAP_ADMIN_PASSWORD");
@@ -194,22 +206,26 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			`Received TAP event: ${evt.action} ${evt.collection} for ${evt.did} (live: ${evt.live})`,
 		);
 
-		// Only process events for our collection
-		if (evt.collection !== COLLECTION) {
-			this.logger.debug(`Skipping event for collection ${evt.collection}`);
-			return;
-		}
-
 		const uri = `at://${evt.did}/${evt.collection}/${evt.rkey}`;
 
-		// Handle create and update events
+		if (evt.collection === MOVIE_COLLECTION) {
+			await this.handleMovieEvent(evt, uri);
+		} else if (evt.collection === LIST_COLLECTION) {
+			await this.handleListEvent(evt, uri);
+		} else if (evt.collection === LIST_ITEM_COLLECTION) {
+			await this.handleListItemEvent(evt, uri);
+		} else {
+			this.logger.debug(`Skipping event for collection ${evt.collection}`);
+		}
+	}
+
+	private async handleMovieEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
 				this.logger.warn(`Record event missing record data: ${uri}`);
 				return;
 			}
 
-			// Validate the record using the generated schema
 			let movieRecord: MovieRecord;
 			try {
 				movieRecord = movieSchema.parse(evt.record);
@@ -218,7 +234,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			// Only index records for users who exist in our database
 			const user = await this.prisma.user.findUnique({
 				where: { did: evt.did },
 			});
@@ -232,7 +247,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				`Indexing movie record (${evt.live ? "live" : "backfill"}): ${uri}`,
 			);
 
-			// Ensure movie exists in database before creating tracked movie
 			const existingMovie = await this.moviesService.getMovieByTMDBId(
 				movieRecord.movieId,
 			);
@@ -252,7 +266,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				}
 			}
 
-			// Create or update TrackedMovie in database (rkey is unique)
 			await this.prisma.trackedMovie.upsert({
 				where: { rkey: evt.rkey },
 				create: {
@@ -276,7 +289,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			);
 		}
 
-		// Handle delete events
 		if (evt.action === "delete") {
 			this.logger.log(`Removing movie record: ${uri} (rkey: ${evt.rkey})`);
 
@@ -285,6 +297,92 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			this.logger.debug(`Removed record with rkey ${evt.rkey}`);
+		}
+	}
+
+	private async handleListEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.warn(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let listRecord: ListRecord;
+			try {
+				listRecord = listSchema.parse(evt.record);
+			} catch {
+				this.logger.debug("Received invalid list record, skipping");
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				this.logger.debug(`User ${evt.did} not in database, skipping record`);
+				return;
+			}
+
+			this.logger.log(
+				`Indexing list record (${evt.live ? "live" : "backfill"}): ${uri}`,
+			);
+
+			await this.listsService.indexListRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				listRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			this.logger.log(`Removing list record: ${uri} (rkey: ${evt.rkey})`);
+			await this.listsService.deleteListRecord(evt.rkey);
+		}
+	}
+
+	private async handleListItemEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.warn(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let listItemRecord: ListItemRecord;
+			try {
+				listItemRecord = listItemSchema.parse(evt.record);
+			} catch {
+				this.logger.debug("Received invalid list item record, skipping");
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				this.logger.debug(`User ${evt.did} not in database, skipping record`);
+				return;
+			}
+
+			this.logger.log(
+				`Indexing list item record (${evt.live ? "live" : "backfill"}): ${uri}`,
+			);
+
+			await this.listsService.indexListItemRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				listItemRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			this.logger.log(`Removing list item record: ${uri} (rkey: ${evt.rkey})`);
+			await this.listsService.deleteListItemRecord(evt.rkey);
 		}
 	}
 }

@@ -1,0 +1,129 @@
+import {
+	listsControllerAddToListMutation,
+	listsControllerGetListQueryKey,
+	listsControllerGetListsForMovieOptions,
+	listsControllerGetListsForMovieQueryKey,
+	type UserDto,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface AddToListModalProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	movieId: string;
+	movieTitle: string;
+	user: UserDto;
+}
+
+export function AddToListModal({
+	open,
+	onOpenChange,
+	movieId,
+	movieTitle,
+	user,
+}: AddToListModalProps) {
+	const queryClient = useQueryClient();
+
+	const { data: listsForMovie, isLoading } = useQuery({
+		...listsControllerGetListsForMovieOptions({
+			path: { movieId },
+		}),
+		enabled: open && !!user?.did,
+	});
+
+	const addMutation = useMutation({
+		...listsControllerAddToListMutation(),
+		onSuccess: (_, variables) => {
+			const slug = variables.path.slug;
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListsForMovieQueryKey({
+					path: { movieId },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+			toast.success("Added to list");
+		},
+		onError: () => {
+			toast.error("Failed to add to list. Please try again.");
+		},
+	});
+
+	const handleToggleList = (slug: string, isInList: boolean) => {
+		if (isInList) return;
+		addMutation.mutate({
+			path: { slug },
+			body: { movieId },
+		});
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="bg-gray-900 border-gray-800 text-gray-50 max-w-md">
+				<DialogHeader>
+					<DialogTitle>Add to List</DialogTitle>
+					<DialogDescription className="text-gray-400">
+						Add &quot;{movieTitle}&quot; to one of your lists
+					</DialogDescription>
+				</DialogHeader>
+				<ScrollArea className="max-h-[300px]">
+					{isLoading && (
+						<div className="flex items-center justify-center py-8">
+							<Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+						</div>
+					)}
+					{listsForMovie && (
+						<div className="space-y-2 py-2">
+							{listsForMovie.map((list) => {
+								const isPending =
+									addMutation.isPending &&
+									addMutation.variables?.path?.slug === list.listSlug;
+								const isInList = list.isInList;
+
+								return (
+									<Button
+										key={list.listId}
+										variant="outline"
+										className={`w-full justify-between ${
+											isInList
+												? "bg-purple-600/20 border-purple-600 text-purple-300"
+												: "bg-gray-800 border-gray-700 hover:bg-gray-700"
+										}`}
+										onClick={() => handleToggleList(list.listSlug, isInList)}
+										disabled={isPending || isInList}
+									>
+										<span className="flex items-center gap-2">
+											<span>{list.listName}</span>
+											{list.isDefault && (
+												<span className="text-xs text-purple-400">Default</span>
+											)}
+										</span>
+										{isPending ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : isInList ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<Plus className="w-4 h-4" />
+										)}
+									</Button>
+								);
+							})}
+						</div>
+					)}
+				</ScrollArea>
+			</DialogContent>
+		</Dialog>
+	);
+}

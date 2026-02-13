@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSuggestions, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, usersControllerDeleteMyAccount, usersControllerGetMySettings, usersControllerUpdateMySettings } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSuggestionsData, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSuggestions, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForMovie, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, usersControllerDeleteMyAccount, usersControllerGetMySettings, usersControllerUpdateMySettings } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSuggestionsData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForMovieData, ListsControllerGetListsForMovieResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -304,6 +304,162 @@ export const authControllerLogoutMutation = (options?: Partial<Options<AuthContr
     };
     return mutationOptions;
 };
+
+export const listsControllerGetUserListsQueryKey = (options?: Options<ListsControllerGetUserListsData>) => createQueryKey('listsControllerGetUserLists', options);
+
+/**
+ * Get all lists for the authenticated user
+ */
+export const listsControllerGetUserListsOptions = (options?: Options<ListsControllerGetUserListsData>) => queryOptions<ListsControllerGetUserListsResponse, DefaultError, ListsControllerGetUserListsResponse, ReturnType<typeof listsControllerGetUserListsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listsControllerGetUserLists({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listsControllerGetUserListsQueryKey(options)
+});
+
+/**
+ * Create a new list
+ */
+export const listsControllerCreateListMutation = (options?: Partial<Options<ListsControllerCreateListData>>): UseMutationOptions<ListsControllerCreateListResponse, DefaultError, Options<ListsControllerCreateListData>> => {
+    const mutationOptions: UseMutationOptions<ListsControllerCreateListResponse, DefaultError, Options<ListsControllerCreateListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerCreateList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Initialize default lists (watchlist, favorites)
+ */
+export const listsControllerInitDefaultListsMutation = (options?: Partial<Options<ListsControllerInitDefaultListsData>>): UseMutationOptions<ListsControllerInitDefaultListsResponse, DefaultError, Options<ListsControllerInitDefaultListsData>> => {
+    const mutationOptions: UseMutationOptions<ListsControllerInitDefaultListsResponse, DefaultError, Options<ListsControllerInitDefaultListsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerInitDefaultLists({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a list (not allowed for default lists)
+ */
+export const listsControllerDeleteListMutation = (options?: Partial<Options<ListsControllerDeleteListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerDeleteListData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerDeleteListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerDeleteList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listsControllerGetListQueryKey = (options: Options<ListsControllerGetListData>) => createQueryKey('listsControllerGetList', options);
+
+/**
+ * Get a specific list with its movies
+ */
+export const listsControllerGetListOptions = (options: Options<ListsControllerGetListData>) => queryOptions<ListsControllerGetListResponse, DefaultError, ListsControllerGetListResponse, ReturnType<typeof listsControllerGetListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listsControllerGetList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listsControllerGetListQueryKey(options)
+});
+
+/**
+ * Update a list
+ */
+export const listsControllerUpdateListMutation = (options?: Partial<Options<ListsControllerUpdateListData>>): UseMutationOptions<ListsControllerUpdateListResponse, DefaultError, Options<ListsControllerUpdateListData>> => {
+    const mutationOptions: UseMutationOptions<ListsControllerUpdateListResponse, DefaultError, Options<ListsControllerUpdateListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerUpdateList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Add a movie to a list
+ */
+export const listsControllerAddToListMutation = (options?: Partial<Options<ListsControllerAddToListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerAddToList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Remove a movie from a list
+ */
+export const listsControllerRemoveFromListMutation = (options?: Partial<Options<ListsControllerRemoveFromListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerRemoveFromList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listsControllerGetListsForMovieQueryKey = (options: Options<ListsControllerGetListsForMovieData>) => createQueryKey('listsControllerGetListsForMovie', options);
+
+/**
+ * Get all lists with membership status for a movie
+ */
+export const listsControllerGetListsForMovieOptions = (options: Options<ListsControllerGetListsForMovieData>) => queryOptions<ListsControllerGetListsForMovieResponse, DefaultError, ListsControllerGetListsForMovieResponse, ReturnType<typeof listsControllerGetListsForMovieQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listsControllerGetListsForMovie({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listsControllerGetListsForMovieQueryKey(options)
+});
 
 export const usersControllerGetMySettingsQueryKey = (options?: Options<UsersControllerGetMySettingsData>) => createQueryKey('usersControllerGetMySettings', options);
 

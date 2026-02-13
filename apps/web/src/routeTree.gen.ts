@@ -9,20 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ShelfRouteImport } from './routes/shelf'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ListsRouteImport } from './routes/lists'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileShelfRouteImport } from './routes/profile.shelf'
+import { Route as ProfileListsRouteImport } from './routes/profile.lists'
+import { Route as ListsSlugRouteImport } from './routes/lists.$slug'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
 
-const ShelfRoute = ShelfRouteImport.update({
-  id: '/shelf',
-  path: '/shelf',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -31,6 +30,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -43,10 +47,30 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListsRoute = ListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileShelfRoute = ProfileShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileListsRoute = ProfileListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ListsSlugRoute = ListsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ListsRoute,
 } as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
@@ -61,88 +85,106 @@ const MoviesMovieIdTitleRoute = MoviesMovieIdTitleRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$slug': typeof ListsSlugRoute
+  '/profile/lists': typeof ProfileListsRoute
+  '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$slug': typeof ListsSlugRoute
+  '/profile/lists': typeof ProfileListsRoute
+  '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/shelf': typeof ShelfRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$slug': typeof ListsSlugRoute
+  '/profile/lists': typeof ProfileListsRoute
+  '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/lists'
     | '/login'
     | '/privacy'
+    | '/profile'
     | '/search'
     | '/settings'
-    | '/shelf'
     | '/auth/complete'
+    | '/lists/$slug'
+    | '/profile/lists'
+    | '/profile/shelf'
     | '/movies/$movieId/$title'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/lists'
     | '/login'
     | '/privacy'
+    | '/profile'
     | '/search'
     | '/settings'
-    | '/shelf'
     | '/auth/complete'
+    | '/lists/$slug'
+    | '/profile/lists'
+    | '/profile/shelf'
     | '/movies/$movieId/$title'
   id:
     | '__root__'
     | '/'
+    | '/lists'
     | '/login'
     | '/privacy'
+    | '/profile'
     | '/search'
     | '/settings'
-    | '/shelf'
     | '/auth/complete'
+    | '/lists/$slug'
+    | '/profile/lists'
+    | '/profile/shelf'
     | '/movies/$movieId/$title'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ListsRoute: typeof ListsRouteWithChildren
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
-  ShelfRoute: typeof ShelfRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/shelf': {
-      id: '/shelf'
-      path: '/shelf'
-      fullPath: '/shelf'
-      preLoaderRoute: typeof ShelfRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -155,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -171,12 +220,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lists': {
+      id: '/lists'
+      path: '/lists'
+      fullPath: '/lists'
+      preLoaderRoute: typeof ListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/profile/shelf': {
+      id: '/profile/shelf'
+      path: '/shelf'
+      fullPath: '/profile/shelf'
+      preLoaderRoute: typeof ProfileShelfRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/lists': {
+      id: '/profile/lists'
+      path: '/lists'
+      fullPath: '/profile/lists'
+      preLoaderRoute: typeof ProfileListsRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/lists/$slug': {
+      id: '/lists/$slug'
+      path: '/$slug'
+      fullPath: '/lists/$slug'
+      preLoaderRoute: typeof ListsSlugRouteImport
+      parentRoute: typeof ListsRoute
     }
     '/auth/complete': {
       id: '/auth/complete'
@@ -195,13 +272,37 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ListsRouteChildren {
+  ListsSlugRoute: typeof ListsSlugRoute
+}
+
+const ListsRouteChildren: ListsRouteChildren = {
+  ListsSlugRoute: ListsSlugRoute,
+}
+
+const ListsRouteWithChildren = ListsRoute._addFileChildren(ListsRouteChildren)
+
+interface ProfileRouteChildren {
+  ProfileListsRoute: typeof ProfileListsRoute
+  ProfileShelfRoute: typeof ProfileShelfRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileListsRoute: ProfileListsRoute,
+  ProfileShelfRoute: ProfileShelfRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ListsRoute: ListsRouteWithChildren,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
-  ShelfRoute: ShelfRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,
 }

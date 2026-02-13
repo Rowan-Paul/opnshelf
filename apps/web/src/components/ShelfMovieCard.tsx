@@ -16,7 +16,7 @@ import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 interface ShelfMovieCardProps {
 	tracked: TrackedMovieDto;
-	user: UserDto;
+	user: UserDto | undefined;
 }
 
 export function ShelfMovieCard({ tracked, user }: ShelfMovieCardProps) {

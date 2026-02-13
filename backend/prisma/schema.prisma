@@ -19,6 +19,7 @@ model User {
   updatedAt   DateTime @updatedAt
   
   trackedMovies TrackedMovie[]
+  lists        MovieList[]
   
   @@index([handle])
 }
@@ -59,6 +60,7 @@ model Movie {
   updatedAt    DateTime @updatedAt
 
   trackedBy    TrackedMovie[]
+  listItems    MovieListItem[]
 
   @@index([title])
 }
@@ -88,4 +90,50 @@ model TrackedMovie {
   @@index([watchedDate])
   @@index([uri])
   @@index([cid])
+}
+
+model MovieList {
+  id          String   @id @default(cuid())
+  rkey        String   @unique
+  uri         String
+  cid         String?
+  
+  userDid     String
+  user        User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  
+  name        String
+  description String?
+  slug        String
+  isDefault   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  items       MovieListItem[]
+  
+  @@unique([userDid, slug])
+  @@index([userDid])
+  @@index([isDefault])
+}
+
+model MovieListItem {
+  id        String   @id @default(cuid())
+  rkey      String   @unique
+  uri       String
+  cid       String?
+  
+  listId    String
+  list      MovieList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  
+  movieId   String
+  movie     Movie    @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  
+  notes     String?
+  position  Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([listId, movieId])
+  @@index([listId])
+  @@index([movieId])
 }

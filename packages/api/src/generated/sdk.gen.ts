@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, ListsControllerAddToListData, ListsControllerAddToListErrors, ListsControllerAddToListResponses, ListsControllerCreateListData, ListsControllerCreateListErrors, ListsControllerCreateListResponses, ListsControllerDeleteListData, ListsControllerDeleteListErrors, ListsControllerDeleteListResponses, ListsControllerGetListData, ListsControllerGetListErrors, ListsControllerGetListResponses, ListsControllerGetListsForMovieData, ListsControllerGetListsForMovieErrors, ListsControllerGetListsForMovieResponses, ListsControllerGetUserListsData, ListsControllerGetUserListsErrors, ListsControllerGetUserListsResponses, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsErrors, ListsControllerInitDefaultListsResponses, ListsControllerRemoveFromListData, ListsControllerRemoveFromListErrors, ListsControllerRemoveFromListResponses, ListsControllerUpdateListData, ListsControllerUpdateListErrors, ListsControllerUpdateListResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -99,6 +99,72 @@ export const authControllerMe = <ThrowOnError extends boolean = false>(options?:
  * Logout and clear session
  */
 export const authControllerLogout = <ThrowOnError extends boolean = false>(options?: Options<AuthControllerLogoutData, ThrowOnError>) => (options?.client ?? client).post<AuthControllerLogoutResponses, unknown, ThrowOnError>({ url: '/auth/logout', ...options });
+
+/**
+ * Get all lists for the authenticated user
+ */
+export const listsControllerGetUserLists = <ThrowOnError extends boolean = false>(options?: Options<ListsControllerGetUserListsData, ThrowOnError>) => (options?.client ?? client).get<ListsControllerGetUserListsResponses, ListsControllerGetUserListsErrors, ThrowOnError>({ url: '/lists', ...options });
+
+/**
+ * Create a new list
+ */
+export const listsControllerCreateList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerCreateListData, ThrowOnError>) => (options.client ?? client).post<ListsControllerCreateListResponses, ListsControllerCreateListErrors, ThrowOnError>({
+    url: '/lists',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Initialize default lists (watchlist, favorites)
+ */
+export const listsControllerInitDefaultLists = <ThrowOnError extends boolean = false>(options?: Options<ListsControllerInitDefaultListsData, ThrowOnError>) => (options?.client ?? client).post<ListsControllerInitDefaultListsResponses, ListsControllerInitDefaultListsErrors, ThrowOnError>({ url: '/lists/init-defaults', ...options });
+
+/**
+ * Delete a list (not allowed for default lists)
+ */
+export const listsControllerDeleteList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerDeleteListData, ThrowOnError>) => (options.client ?? client).delete<ListsControllerDeleteListResponses, ListsControllerDeleteListErrors, ThrowOnError>({ url: '/lists/{slug}', ...options });
+
+/**
+ * Get a specific list with its movies
+ */
+export const listsControllerGetList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListResponses, ListsControllerGetListErrors, ThrowOnError>({ url: '/lists/{slug}', ...options });
+
+/**
+ * Update a list
+ */
+export const listsControllerUpdateList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerUpdateListData, ThrowOnError>) => (options.client ?? client).put<ListsControllerUpdateListResponses, ListsControllerUpdateListErrors, ThrowOnError>({
+    url: '/lists/{slug}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add a movie to a list
+ */
+export const listsControllerAddToList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerAddToListData, ThrowOnError>) => (options.client ?? client).post<ListsControllerAddToListResponses, ListsControllerAddToListErrors, ThrowOnError>({
+    url: '/lists/{slug}/movies',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a movie from a list
+ */
+export const listsControllerRemoveFromList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerRemoveFromListData, ThrowOnError>) => (options.client ?? client).delete<ListsControllerRemoveFromListResponses, ListsControllerRemoveFromListErrors, ThrowOnError>({ url: '/lists/{slug}/movies/{movieId}', ...options });
+
+/**
+ * Get all lists with membership status for a movie
+ */
+export const listsControllerGetListsForMovie = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListsForMovieData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListsForMovieResponses, ListsControllerGetListsForMovieErrors, ThrowOnError>({ url: '/lists/for-movie/{movieId}', ...options });
 
 /**
  * Get current user's settings

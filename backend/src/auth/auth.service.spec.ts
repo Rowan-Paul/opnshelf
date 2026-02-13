@@ -224,6 +224,7 @@ describe("AuthService", () => {
 					handle: profile.handle,
 					displayName: profile.displayName,
 					avatar: profile.avatar,
+					timezone: "UTC",
 				},
 			});
 		});
@@ -255,6 +256,7 @@ describe("AuthService", () => {
 					handle: profile.handle,
 					displayName: null,
 					avatar: null,
+					timezone: "UTC",
 				},
 			});
 		});
@@ -300,7 +302,7 @@ describe("AuthService", () => {
 				client_uri: "http://127.0.0.1:3001",
 				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
 				scope:
-					"atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:app.opnshelf.movie repo:app.opnshelf.list rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 				grant_types: ["authorization_code", "refresh_token"],
 				response_types: ["code"],
 				application_type: "native",
@@ -368,7 +370,7 @@ describe("AuthService", () => {
 
 			expect(client.authorize).toHaveBeenCalledWith("user.bsky.social", {
 				scope:
-					"atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:app.opnshelf.movie repo:app.opnshelf.list rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 			});
 			expect(result).toBe(mockUrl.toString());
 		});
@@ -469,9 +471,10 @@ describe("AuthService", () => {
 			// The OAUTH_SCOPE constant should include:
 			// - atproto: base AT Protocol access
 			// - repo:app.opnshelf.movie: write movie records
+			// - repo:app.opnshelf.list: write list records
 			// - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
 			expect(authServiceModule.OAUTH_SCOPE).toBe(
-				"atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+				"atproto repo:app.opnshelf.movie repo:app.opnshelf.list rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 			);
 		});
 

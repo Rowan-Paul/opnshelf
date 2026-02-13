@@ -5,7 +5,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-	BookOpen,
 	Film,
 	Home,
 	LogIn,
@@ -76,19 +75,6 @@ export default function Header() {
 						<Home size={18} />
 						<span className="font-medium">Home</span>
 					</Link>
-					{user && (
-						<Link
-							to="/shelf"
-							className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
-							activeProps={{
-								className:
-									"flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white",
-							}}
-						>
-							<BookOpen size={18} />
-							<span className="font-medium">My Shelf</span>
-						</Link>
-					)}
 					<Link
 						to="/search"
 						search={{ q: "" }}
@@ -97,6 +83,19 @@ export default function Header() {
 						<Search size={18} />
 						<span className="font-medium">Search</span>
 					</Link>
+					{user && (
+						<Link
+							to="/profile/shelf"
+							className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
+							activeProps={{
+								className:
+									"flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white",
+							}}
+						>
+							<User size={18} />
+							<span className="font-medium">Profile</span>
+						</Link>
+					)}
 
 					<div className="ml-4 pl-4 border-l border-gray-700">
 						{isAuthLoading ? (
@@ -207,7 +206,7 @@ export default function Header() {
 					{user && (
 						<>
 							<Link
-								to="/shelf"
+								to="/profile/shelf"
 								onClick={() => setIsOpen(false)}
 								className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
 								activeProps={{
@@ -215,8 +214,8 @@ export default function Header() {
 										"flex items-center gap-3 p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors mb-2 text-white",
 								}}
 							>
-								<BookOpen size={20} />
-								<span className="font-medium">My Shelf</span>
+								<User size={20} />
+								<span className="font-medium">Profile</span>
 							</Link>
 							<Link
 								to="/settings"

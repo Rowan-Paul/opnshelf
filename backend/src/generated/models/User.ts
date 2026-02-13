@@ -207,6 +207,7 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
+  lists?: Prisma.MovieListListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -219,6 +220,7 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
+  lists?: Prisma.MovieListOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -234,6 +236,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
+  lists?: Prisma.MovieListListRelationFilter
 }, "did" | "handle">
 
 export type UserOrderByWithAggregationInput = {
@@ -274,6 +277,7 @@ export type UserCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  lists?: Prisma.MovieListCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -286,6 +290,7 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.MovieListUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -298,6 +303,7 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  lists?: Prisma.MovieListUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -310,6 +316,7 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.MovieListUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -409,6 +416,20 @@ export type UserUpdateOneRequiredWithoutTrackedMoviesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTrackedMoviesInput, Prisma.UserUpdateWithoutTrackedMoviesInput>, Prisma.UserUncheckedUpdateWithoutTrackedMoviesInput>
 }
 
+export type UserCreateNestedOneWithoutListsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutListsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutListsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutListsInput
+  upsert?: Prisma.UserUpsertWithoutListsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutListsInput, Prisma.UserUpdateWithoutListsInput>, Prisma.UserUncheckedUpdateWithoutListsInput>
+}
+
 export type UserCreateWithoutTrackedMoviesInput = {
   did: string
   handle: string
@@ -418,6 +439,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   timeFormat?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  lists?: Prisma.MovieListCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrackedMoviesInput = {
@@ -429,6 +451,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   timeFormat?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  lists?: Prisma.MovieListUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrackedMoviesInput = {
@@ -456,6 +479,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lists?: Prisma.MovieListUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
@@ -467,6 +491,71 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lists?: Prisma.MovieListUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutListsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  timezone?: string
+  timeFormat?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutListsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  timezone?: string
+  timeFormat?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutListsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+}
+
+export type UserUpsertWithoutListsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutListsInput, Prisma.UserUncheckedUpdateWithoutListsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutListsInput, Prisma.UserUncheckedCreateWithoutListsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutListsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutListsInput, Prisma.UserUncheckedUpdateWithoutListsInput>
+}
+
+export type UserUpdateWithoutListsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutListsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -476,10 +565,12 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
 
 export type UserCountOutputType = {
   trackedMovies: number
+  lists: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | UserCountOutputTypeCountTrackedMoviesArgs
+  lists?: boolean | UserCountOutputTypeCountListsArgs
 }
 
 /**
@@ -499,6 +590,13 @@ export type UserCountOutputTypeCountTrackedMoviesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.TrackedMovieWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountListsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MovieListWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   did?: boolean
@@ -510,6 +608,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
+  lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -549,6 +648,7 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "timezone" | "timeFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
+  lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -558,6 +658,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     trackedMovies: Prisma.$TrackedMoviePayload<ExtArgs>[]
+    lists: Prisma.$MovieListPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     did: string
@@ -963,6 +1064,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   trackedMovies<T extends Prisma.User$trackedMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  lists<T extends Prisma.User$listsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MovieListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1409,6 +1511,30 @@ export type User$trackedMoviesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.TrackedMovieScalarFieldEnum | Prisma.TrackedMovieScalarFieldEnum[]
+}
+
+/**
+ * User.lists
+ */
+export type User$listsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MovieList
+   */
+  select?: Prisma.MovieListSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MovieList
+   */
+  omit?: Prisma.MovieListOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MovieListInclude<ExtArgs> | null
+  where?: Prisma.MovieListWhereInput
+  orderBy?: Prisma.MovieListOrderByWithRelationInput | Prisma.MovieListOrderByWithRelationInput[]
+  cursor?: Prisma.MovieListWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MovieListScalarFieldEnum | Prisma.MovieListScalarFieldEnum[]
 }
 
 /**

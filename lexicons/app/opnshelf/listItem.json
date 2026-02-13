@@ -1,0 +1,34 @@
+{
+	"lexicon": 1,
+	"id": "app.opnshelf.listItem",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A movie item in a list for OpnShelf",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["listRkey", "movieId", "createdAt"],
+				"properties": {
+					"listRkey": {
+						"type": "string",
+						"description": "Rkey of the parent list"
+					},
+					"movieId": {
+						"type": "string",
+						"description": "TMDB movie ID"
+					},
+					"notes": {
+						"type": "string",
+						"description": "Optional user notes about the movie in this list"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

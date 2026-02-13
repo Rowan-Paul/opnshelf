@@ -388,7 +388,9 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   Movie: 'Movie',
-  TrackedMovie: 'TrackedMovie'
+  TrackedMovie: 'TrackedMovie',
+  MovieList: 'MovieList',
+  MovieListItem: 'MovieListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "authSession" | "authState" | "movie" | "trackedMovie"
+    modelProps: "user" | "authSession" | "authState" | "movie" | "trackedMovie" | "movieList" | "movieListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -778,6 +780,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MovieList: {
+      payload: Prisma.$MovieListPayload<ExtArgs>
+      fields: Prisma.MovieListFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MovieListFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MovieListFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        findFirst: {
+          args: Prisma.MovieListFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MovieListFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        findMany: {
+          args: Prisma.MovieListFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>[]
+        }
+        create: {
+          args: Prisma.MovieListCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        createMany: {
+          args: Prisma.MovieListCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MovieListCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>[]
+        }
+        delete: {
+          args: Prisma.MovieListDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        update: {
+          args: Prisma.MovieListUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        deleteMany: {
+          args: Prisma.MovieListDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MovieListUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MovieListUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>[]
+        }
+        upsert: {
+          args: Prisma.MovieListUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListPayload>
+        }
+        aggregate: {
+          args: Prisma.MovieListAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMovieList>
+        }
+        groupBy: {
+          args: Prisma.MovieListGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MovieListGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MovieListCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MovieListCountAggregateOutputType> | number
+        }
+      }
+    }
+    MovieListItem: {
+      payload: Prisma.$MovieListItemPayload<ExtArgs>
+      fields: Prisma.MovieListItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MovieListItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MovieListItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        findFirst: {
+          args: Prisma.MovieListItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MovieListItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        findMany: {
+          args: Prisma.MovieListItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+        }
+        create: {
+          args: Prisma.MovieListItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        createMany: {
+          args: Prisma.MovieListItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MovieListItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+        }
+        delete: {
+          args: Prisma.MovieListItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        update: {
+          args: Prisma.MovieListItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.MovieListItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MovieListItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MovieListItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.MovieListItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+        }
+        aggregate: {
+          args: Prisma.MovieListItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMovieListItem>
+        }
+        groupBy: {
+          args: Prisma.MovieListItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MovieListItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MovieListItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MovieListItemCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -884,6 +1034,38 @@ export const TrackedMovieScalarFieldEnum = {
 export type TrackedMovieScalarFieldEnum = (typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum]
 
 
+export const MovieListScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  name: 'name',
+  description: 'description',
+  slug: 'slug',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MovieListScalarFieldEnum = (typeof MovieListScalarFieldEnum)[keyof typeof MovieListScalarFieldEnum]
+
+
+export const MovieListItemScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  listId: 'listId',
+  movieId: 'movieId',
+  notes: 'notes',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type MovieListItemScalarFieldEnum = (typeof MovieListItemScalarFieldEnum)[keyof typeof MovieListItemScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -984,6 +1166,13 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1100,6 +1289,8 @@ export type GlobalOmitConfig = {
   authState?: Prisma.AuthStateOmit
   movie?: Prisma.MovieOmit
   trackedMovie?: Prisma.TrackedMovieOmit
+  movieList?: Prisma.MovieListOmit
+  movieListItem?: Prisma.MovieListItemOmit
 }
 
 /* Types for Logging */

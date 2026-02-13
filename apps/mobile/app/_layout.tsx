@@ -49,6 +49,13 @@ function AppContent() {
 					}}
 				/>
 				<Stack.Screen
+					name="auth/complete"
+					options={{
+						presentation: "modal",
+						headerShown: false,
+					}}
+				/>
+				<Stack.Screen
 					name="settings"
 					options={{
 						title: "Settings",

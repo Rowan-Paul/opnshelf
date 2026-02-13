@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { TmdbMovieResultDto } from "@opnshelf/api";
-import { Check, Plus } from "lucide-react-native";
+import { Check, Loader2, Plus } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import {
@@ -12,14 +12,15 @@ import {
 	View,
 } from "react-native";
 import Animated, {
+	Easing,
 	useAnimatedStyle,
 	useSharedValue,
+	withRepeat,
 	withSpring,
 	withTiming,
 } from "react-native-reanimated";
 import { borderRadius, colors, spacing } from "@/constants/theme";
 import { getTmdbPosterUrl } from "@/lib/utils";
-import { SpinningLoader } from "./SpinningLoader";
 
 interface MovieItemProps {
 	movie: TmdbMovieResultDto;
@@ -31,6 +32,26 @@ interface MovieItemProps {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
+	const rotation = useSharedValue(0);
+
+	rotation.value = withRepeat(
+		withTiming(360, { duration: 1000, easing: Easing.linear }),
+		-1,
+		false,
+	);
+
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ rotate: `${rotation.value}deg` }],
+	}));
+
+	return (
+		<Animated.View style={animatedStyle}>
+			<Loader2 size={size} color={color} />
+		</Animated.View>
+	);
+};
 
 export function MovieItem({
 	movie,
@@ -131,73 +152,82 @@ export function MovieItem({
 
 const styles = StyleSheet.create({
 	movieItem: {
-		flexDirection: "row",
-		padding: spacing.sm,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.md,
-		marginBottom: spacing.sm,
+		flex: 1,
+		marginBottom: spacing.lg,
+		marginHorizontal: spacing.sm,
+		minWidth: 140,
+		maxWidth: "47%",
 	},
 	posterContainer: {
+		aspectRatio: 2 / 3,
+		borderRadius: borderRadius.lg,
+		overflow: "hidden",
+		backgroundColor: colors.card,
 		position: "relative",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
+		elevation: 8,
 	},
 	poster: {
-		width: 80,
-		height: 120,
-		borderRadius: borderRadius.sm,
+		width: "100%",
+		height: "100%",
 	},
 	noPoster: {
-		backgroundColor: colors.cardMuted,
 		justifyContent: "center",
 		alignItems: "center",
+		backgroundColor: colors.cardMuted,
 	},
 	noPosterText: {
-		color: colors.textMuted,
-		fontSize: 10,
-		textAlign: "center",
+		color: colors.textSecondary,
+		fontSize: 12,
+		fontWeight: "500",
 	},
 	actionButton: {
 		position: "absolute",
-		top: -4,
-		right: -4,
-		width: 24,
-		height: 24,
-		borderRadius: 12,
+		top: spacing.sm,
+		right: spacing.sm,
+		width: 40,
+		height: 40,
+		borderRadius: borderRadius.full,
 		backgroundColor: colors.primary,
 		justifyContent: "center",
 		alignItems: "center",
-		elevation: 2,
 		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
+		shadowOffset: { width: 0, height: 3 },
+		shadowOpacity: 0.4,
+		shadowRadius: 5,
+		elevation: 5,
 	},
 	actionButtonWatched: {
 		backgroundColor: colors.success,
 	},
 	iconContainer: {
+		width: 20,
+		height: 20,
 		justifyContent: "center",
 		alignItems: "center",
 	},
 	titleContainer: {
-		flex: 1,
-		marginLeft: spacing.md,
-		justifyContent: "center",
+		marginTop: spacing.sm,
+		minHeight: 40,
 	},
 	movieTitle: {
-		color: colors.text,
-		fontSize: 14,
+		fontSize: 15,
 		fontWeight: "600",
-		marginBottom: spacing.xs,
+		color: colors.text,
+		letterSpacing: -0.2,
+		lineHeight: 20,
+		flexWrap: "wrap",
 	},
 	yearBadge: {
-		alignSelf: "flex-start",
-		backgroundColor: colors.cardMuted,
-		paddingHorizontal: spacing.sm,
-		paddingVertical: 2,
-		borderRadius: borderRadius.sm,
+		marginTop: spacing.xs,
 	},
 	movieYear: {
-		color: colors.textMuted,
 		fontSize: 12,
+		color: colors.textMuted,
+		fontWeight: "500",
+		letterSpacing: 0.5,
 	},
 });

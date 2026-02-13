@@ -18,12 +18,15 @@ import {
 	Check,
 	Eye,
 	History,
+	ListPlus,
 	Loader2,
 	RotateCcw,
+	Share2,
 	Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AddToListModal } from "@/components/AddToListModal";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
 import { DatePickerModal } from "@/components/DatePickerModal";
@@ -100,6 +103,7 @@ function MovieDetailPage() {
 
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+	const [showListModal, setShowListModal] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -272,7 +276,8 @@ function MovieDetailPage() {
 								{user ? (
 									!isWatched ? (
 										<>
-											<Button
+											<button
+												type="button"
 												onClick={handleMarkWatched}
 												disabled={isPending}
 												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
@@ -289,21 +294,35 @@ function MovieDetailPage() {
 														Add to Shelf
 													</>
 												)}
-											</Button>
-											<Button
+											</button>
+											<button
+												type="button"
 												onClick={() => setShowDateModal(true)}
-												variant="outline"
-												className="w-full"
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 											>
+												<Calendar className="w-4 h-4" />
 												Add on Different Date
-											</Button>
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowListModal(true)}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+											>
+												<ListPlus className="w-4 h-4" />
+												Add to List
+											</button>
 										</>
 									) : (
 										<>
-											<Button
+											<button
+												type="button"
 												onClick={handleMarkWatched}
 												disabled={isPending}
-												className="w-full"
+												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+												style={{
+													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+												}}
 											>
 												{isPending ? (
 													<Loader2 className="w-5 h-5 animate-spin" />
@@ -313,23 +332,37 @@ function MovieDetailPage() {
 														Watch Now
 													</>
 												)}
-											</Button>
-											<Button
+											</button>
+											<button
+												type="button"
 												onClick={() => setShowDateModal(true)}
-												variant="outline"
-												className="w-full"
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 											>
+												<Calendar className="w-4 h-4" />
 												Watch on Different Date
-											</Button>
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowListModal(true)}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+											>
+												<ListPlus className="w-4 h-4" />
+												Add to List
+											</button>
 										</>
 									)
 								) : (
-									<Button
-										className="w-full"
+									<button
+										type="button"
+										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2"
+										style={{
+											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+										}}
 										onClick={() => router.navigate({ to: "/login" })}
 									>
 										Sign in to Track
-									</Button>
+									</button>
 								)}
 							</div>
 						</div>
@@ -339,7 +372,8 @@ function MovieDetailPage() {
 						{user ? (
 							!isWatched ? (
 								<div className="space-y-3">
-									<Button
+									<button
+										type="button"
 										onClick={handleMarkWatched}
 										disabled={isPending}
 										className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
@@ -356,21 +390,31 @@ function MovieDetailPage() {
 												Add to Shelf
 											</>
 										)}
-									</Button>
-									<Button
+									</button>
+									<button
+										type="button"
 										onClick={() => setShowDateModal(true)}
-										variant="outline"
-										className="w-full"
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 									>
+										<Calendar className="w-4 h-4" />
 										Add on Different Date
-									</Button>
-									<Button
-										onClick={handleShare}
-										variant="outline"
-										className="w-full"
+									</button>
+									<button
+										type="button"
+										onClick={() => setShowListModal(true)}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 									>
+										<ListPlus className="w-4 h-4" />
+										Add to List
+									</button>
+									<button
+										type="button"
+										onClick={handleShare}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+									>
+										<Share2 className="w-4 h-4" />
 										Share
-									</Button>
+									</button>
 								</div>
 							) : (
 								<div className="space-y-3">
@@ -418,10 +462,15 @@ function MovieDetailPage() {
 											</button>
 										)}
 									</div>
-									<Button
+									<button
+										type="button"
 										onClick={handleMarkWatched}
 										disabled={isPending}
-										className="w-full"
+										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+										style={{
+											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+										}}
 									>
 										{isPending ? (
 											<Loader2 className="w-4 h-4 animate-spin" />
@@ -431,26 +480,37 @@ function MovieDetailPage() {
 												Watch Now
 											</>
 										)}
-									</Button>
-									<Button
+									</button>
+									<button
+										type="button"
 										onClick={() => setShowDateModal(true)}
-										variant="outline"
-										className="w-full"
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 									>
+										<Calendar className="w-4 h-4" />
 										Watch on Different Date
-									</Button>
-									<Button
-										onClick={handleShare}
-										variant="outline"
-										className="w-full"
+									</button>
+									<button
+										type="button"
+										onClick={() => setShowListModal(true)}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
 									>
+										<ListPlus className="w-4 h-4" />
+										Add to List
+									</button>
+									<button
+										type="button"
+										onClick={handleShare}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+									>
+										<Share2 className="w-4 h-4" />
 										Share
-									</Button>
+									</button>
 								</div>
 							)
 						) : (
-							<Button
-								className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg text-center transition-all duration-200"
+							<button
+								type="button"
+								className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg text-center transition-all duration-200 hover:scale-[1.02]"
 								style={{
 									background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 									boxShadow: `0 15px 35px -10px ${colors.primary}60`,
@@ -458,7 +518,7 @@ function MovieDetailPage() {
 								onClick={() => router.navigate({ to: "/login" })}
 							>
 								Sign in to Track
-							</Button>
+							</button>
 						)}
 					</div>
 
@@ -551,6 +611,16 @@ function MovieDetailPage() {
 				movieId={movieId}
 				userDid={user?.did}
 			/>
+
+			{user && (
+				<AddToListModal
+					open={showListModal}
+					onOpenChange={setShowListModal}
+					movieId={movieId}
+					movieTitle={movie?.title || ""}
+					user={user}
+				/>
+			)}
 
 			{isMovieLoading && (
 				<div className="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
