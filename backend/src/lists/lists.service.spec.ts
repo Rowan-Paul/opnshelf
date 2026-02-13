@@ -203,7 +203,10 @@ describe("ListsService", () => {
 			};
 			mockPrismaService.movieList.findFirst.mockResolvedValue(mockList);
 
-			const result = await service.getList("did:plc:abc123", "watchlist-abc123");
+			const result = await service.getList(
+				"did:plc:abc123",
+				"watchlist-abc123",
+			);
 
 			expect(result).not.toBeNull();
 			expect(result?.name).toBe("Watchlist");
@@ -281,7 +284,10 @@ describe("ListsService", () => {
 				]);
 
 			mockPutRecord.mockResolvedValue({
-				data: { uri: "at://did:plc:abc123/app.opnshelf.list/testtid123", cid: "cid123" },
+				data: {
+					uri: "at://did:plc:abc123/app.opnshelf.list/testtid123",
+					cid: "cid123",
+				},
 			});
 
 			mockPrismaService.movieList.create.mockResolvedValue({
@@ -566,7 +572,9 @@ describe("ListsService", () => {
 					posterPath: "/poster.jpg",
 				},
 			};
-			mockPrismaService.movieListItem.findUnique.mockResolvedValue(existingItem);
+			mockPrismaService.movieListItem.findUnique.mockResolvedValue(
+				existingItem,
+			);
 
 			const mockSession = { did: "did:plc:abc123" };
 			const result = await service.addToList(
@@ -594,7 +602,9 @@ describe("ListsService", () => {
 				rkey: "item-abc",
 				movieId: "123",
 			};
-			mockPrismaService.movieListItem.findUnique.mockResolvedValue(existingItem);
+			mockPrismaService.movieListItem.findUnique.mockResolvedValue(
+				existingItem,
+			);
 
 			mockDeleteRecord.mockResolvedValue({});
 			mockPrismaService.movieListItem.delete.mockResolvedValue(existingItem);
@@ -775,7 +785,9 @@ describe("ListsService", () => {
 
 	describe("deleteListItemRecord", () => {
 		it("should delete a list item record by rkey", async () => {
-			mockPrismaService.movieListItem.deleteMany.mockResolvedValue({ count: 1 });
+			mockPrismaService.movieListItem.deleteMany.mockResolvedValue({
+				count: 1,
+			});
 
 			await service.deleteListItemRecord("testtid123");
 

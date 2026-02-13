@@ -1,5 +1,6 @@
 import {
 	authControllerMeOptions,
+	listsControllerGetListsForMovieOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetUserMoviesOptions,
@@ -130,6 +131,16 @@ function MovieDetailPage() {
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
 	});
+
+	const { data: listsForMovie } = useQuery({
+		...listsControllerGetListsForMovieOptions({
+			path: { movieId },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const listsCount = listsForMovie?.filter((l) => l.isInList).length ?? 0;
+	const isInAnyList = listsCount > 0;
 
 	const userTimezone = userSettings?.timezone || "UTC";
 	const is24Hour = userSettings?.timeFormat === "24h";
@@ -297,19 +308,21 @@ function MovieDetailPage() {
 											</button>
 											<button
 												type="button"
-												onClick={() => setShowDateModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-											>
-												<Calendar className="w-4 h-4" />
-												Add on Different Date
-											</button>
-											<button
-												type="button"
 												onClick={() => setShowListModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+												className={`w-full py-2 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+													isInAnyList
+														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
+														: "text-gray-300 hover:bg-gray-800 border-gray-700"
+												}`}
 											>
-												<ListPlus className="w-4 h-4" />
-												Add to List
+												{isInAnyList ? (
+													<Check className="w-4 h-4" />
+												) : (
+													<ListPlus className="w-4 h-4" />
+												)}
+												{isInAnyList
+													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+													: "Add to List"}
 											</button>
 										</>
 									) : (
@@ -335,19 +348,21 @@ function MovieDetailPage() {
 											</button>
 											<button
 												type="button"
-												onClick={() => setShowDateModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-											>
-												<Calendar className="w-4 h-4" />
-												Watch on Different Date
-											</button>
-											<button
-												type="button"
 												onClick={() => setShowListModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+												className={`w-full py-2 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+													isInAnyList
+														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
+														: "text-gray-300 hover:bg-gray-800 border-gray-700"
+												}`}
 											>
-												<ListPlus className="w-4 h-4" />
-												Add to List
+												{isInAnyList ? (
+													<Check className="w-4 h-4" />
+												) : (
+													<ListPlus className="w-4 h-4" />
+												)}
+												{isInAnyList
+													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+													: "Add to List"}
 											</button>
 										</>
 									)
@@ -393,19 +408,21 @@ function MovieDetailPage() {
 									</button>
 									<button
 										type="button"
-										onClick={() => setShowDateModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-									>
-										<Calendar className="w-4 h-4" />
-										Add on Different Date
-									</button>
-									<button
-										type="button"
 										onClick={() => setShowListModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+										className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+											isInAnyList
+												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
+												: "text-gray-300 hover:bg-gray-800 border-gray-700"
+										}`}
 									>
-										<ListPlus className="w-4 h-4" />
-										Add to List
+										{isInAnyList ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<ListPlus className="w-4 h-4" />
+										)}
+										{isInAnyList
+											? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+											: "Add to List"}
 									</button>
 									<button
 										type="button"
@@ -483,19 +500,21 @@ function MovieDetailPage() {
 									</button>
 									<button
 										type="button"
-										onClick={() => setShowDateModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-									>
-										<Calendar className="w-4 h-4" />
-										Watch on Different Date
-									</button>
-									<button
-										type="button"
 										onClick={() => setShowListModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+										className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+											isInAnyList
+												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
+												: "text-gray-300 hover:bg-gray-800 border-gray-700"
+										}`}
 									>
-										<ListPlus className="w-4 h-4" />
-										Add to List
+										{isInAnyList ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<ListPlus className="w-4 h-4" />
+										)}
+										{isInAnyList
+											? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+											: "Add to List"}
 									</button>
 									<button
 										type="button"

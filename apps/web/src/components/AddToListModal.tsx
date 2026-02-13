@@ -3,10 +3,11 @@ import {
 	listsControllerGetListQueryKey,
 	listsControllerGetListsForMovieOptions,
 	listsControllerGetListsForMovieQueryKey,
+	listsControllerRemoveFromListMutation,
 	type UserDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, Plus } from "lucide-react";
+import { Loader2, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,21 +62,45 @@ export function AddToListModal({
 		},
 	});
 
+	const removeMutation = useMutation({
+		...listsControllerRemoveFromListMutation(),
+		onSuccess: (_, variables) => {
+			const slug = variables.path.slug;
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListsForMovieQueryKey({
+					path: { movieId },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+			toast.success("Removed from list");
+		},
+		onError: () => {
+			toast.error("Failed to remove from list. Please try again.");
+		},
+	});
+
 	const handleToggleList = (slug: string, isInList: boolean) => {
-		if (isInList) return;
-		addMutation.mutate({
-			path: { slug },
-			body: { movieId },
-		});
+		if (isInList) {
+			removeMutation.mutate({
+				path: { slug, movieId },
+			});
+		} else {
+			addMutation.mutate({
+				path: { slug },
+				body: { movieId },
+			});
+		}
 	};
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="bg-gray-900 border-gray-800 text-gray-50 max-w-md">
 				<DialogHeader>
-					<DialogTitle>Add to List</DialogTitle>
+					<DialogTitle>Manage Lists</DialogTitle>
 					<DialogDescription className="text-gray-400">
-						Add &quot;{movieTitle}&quot; to one of your lists
+						Add or remove &quot;{movieTitle}&quot; from your lists
 					</DialogDescription>
 				</DialogHeader>
 				<ScrollArea className="max-h-[300px]">
@@ -87,9 +112,13 @@ export function AddToListModal({
 					{listsForMovie && (
 						<div className="space-y-2 py-2">
 							{listsForMovie.map((list) => {
-								const isPending =
+								const isAddPending =
 									addMutation.isPending &&
 									addMutation.variables?.path?.slug === list.listSlug;
+								const isRemovePending =
+									removeMutation.isPending &&
+									removeMutation.variables?.path?.slug === list.listSlug;
+								const isPending = isAddPending || isRemovePending;
 								const isInList = list.isInList;
 
 								return (
@@ -98,11 +127,11 @@ export function AddToListModal({
 										variant="outline"
 										className={`w-full justify-between ${
 											isInList
-												? "bg-purple-600/20 border-purple-600 text-purple-300"
+												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
 												: "bg-gray-800 border-gray-700 hover:bg-gray-700"
 										}`}
 										onClick={() => handleToggleList(list.listSlug, isInList)}
-										disabled={isPending || isInList}
+										disabled={isPending}
 									>
 										<span className="flex items-center gap-2">
 											<span>{list.listName}</span>
@@ -113,7 +142,7 @@ export function AddToListModal({
 										{isPending ? (
 											<Loader2 className="w-4 h-4 animate-spin" />
 										) : isInList ? (
-											<Check className="w-4 h-4" />
+											<Minus className="w-4 h-4" />
 										) : (
 											<Plus className="w-4 h-4" />
 										)}

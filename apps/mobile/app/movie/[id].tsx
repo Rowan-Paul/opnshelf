@@ -6,6 +6,7 @@ import type {
 	WatchHistoryItemDto,
 } from "@opnshelf/api";
 import {
+	listsControllerGetListsForMovieOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetMovieWatchHistory,
@@ -130,6 +131,17 @@ export default function MovieDetailScreen() {
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
 	});
+
+	// Fetch lists for this movie
+	const { data: listsForMovie } = useQuery({
+		...listsControllerGetListsForMovieOptions({
+			path: { movieId },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const listsCount = listsForMovie?.filter((l) => l.isInList).length ?? 0;
+	const isInAnyList = listsCount > 0;
 
 	const userTimezone = userSettings?.timezone || "UTC";
 	const is24Hour = userSettings?.timeFormat === "24h";
@@ -413,14 +425,28 @@ export default function MovieDetailScreen() {
 									</TouchableOpacity>
 
 									<TouchableOpacity
-										onPress={openDateModal}
-										style={styles.secondaryButton}
+										onPress={() => setShowAddToListModal(true)}
+										style={[
+											styles.secondaryButton,
+											isInAnyList && styles.secondaryButtonActive,
+										]}
 										activeOpacity={0.8}
 									>
 										<View style={styles.buttonContent}>
-											<Ionicons name="calendar" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Add on Different Date
+											<Ionicons
+												name={isInAnyList ? "checkmark" : "list-outline"}
+												size={18}
+												color={isInAnyList ? "#8b5cf6" : "#9ca3af"}
+											/>
+											<Text
+												style={[
+													styles.secondaryButtonText,
+													isInAnyList && styles.secondaryButtonTextActive,
+												]}
+											>
+												{isInAnyList
+													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+													: "Add to List"}
 											</Text>
 										</View>
 									</TouchableOpacity>
@@ -476,14 +502,28 @@ export default function MovieDetailScreen() {
 									</TouchableOpacity>
 
 									<TouchableOpacity
-										onPress={openDateModal}
-										style={styles.secondaryButton}
+										onPress={() => setShowAddToListModal(true)}
+										style={[
+											styles.secondaryButton,
+											isInAnyList && styles.secondaryButtonActive,
+										]}
 										activeOpacity={0.8}
 									>
 										<View style={styles.buttonContent}>
-											<Ionicons name="calendar" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Watch on Different Date
+											<Ionicons
+												name={isInAnyList ? "checkmark" : "list-outline"}
+												size={18}
+												color={isInAnyList ? "#8b5cf6" : "#9ca3af"}
+											/>
+											<Text
+												style={[
+													styles.secondaryButtonText,
+													isInAnyList && styles.secondaryButtonTextActive,
+												]}
+											>
+												{isInAnyList
+													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+													: "Add to List"}
 											</Text>
 										</View>
 									</TouchableOpacity>
@@ -1037,6 +1077,10 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: "#374151",
 	},
+	secondaryButtonActive: {
+		backgroundColor: "rgba(139, 92, 246, 0.2)",
+		borderColor: "#8b5cf6",
+	},
 	buttonContent: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -1051,6 +1095,9 @@ const styles = StyleSheet.create({
 		color: "#9ca3af",
 		fontSize: 16,
 		fontWeight: "500",
+	},
+	secondaryButtonTextActive: {
+		color: "#8b5cf6",
 	},
 	watchedCard: {
 		backgroundColor: "rgba(17, 24, 39, 0.5)",

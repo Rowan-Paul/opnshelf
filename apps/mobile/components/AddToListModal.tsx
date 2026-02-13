@@ -3,6 +3,7 @@ import {
 	listsControllerGetListsForMovieOptions,
 	listsControllerGetListsForMovieQueryKey,
 	listsControllerGetListQueryKey,
+	listsControllerRemoveFromListMutation,
 	type MovieListsForMovieDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,15 +57,35 @@ export const AddToListModal = memo(function AddToListModal({
 		},
 	});
 
-	const handleToggleList = useCallback(
-		(slug: string, isInList: boolean) => {
-			if (isInList) return;
-			addMutation.mutate({
-				path: { slug },
-				body: { movieId },
+	const removeMutation = useMutation({
+		...listsControllerRemoveFromListMutation(),
+		onSuccess: (_, variables) => {
+			const slug = variables.path.slug;
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListsForMovieQueryKey({
+					path: { movieId },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
 			});
 		},
-		[addMutation, movieId],
+	});
+
+	const handleToggleList = useCallback(
+		(slug: string, isInList: boolean) => {
+			if (isInList) {
+				removeMutation.mutate({
+					path: { slug, movieId },
+				});
+			} else {
+				addMutation.mutate({
+					path: { slug },
+					body: { movieId },
+				});
+			}
+		},
+		[addMutation, removeMutation, movieId],
 	);
 
 	return (
@@ -77,13 +98,13 @@ export const AddToListModal = memo(function AddToListModal({
 			<Pressable style={styles.overlay} onPress={onClose}>
 				<Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
 					<View style={styles.header}>
-						<Text style={styles.title}>Add to List</Text>
+						<Text style={styles.title}>Manage Lists</Text>
 						<Pressable onPress={onClose} hitSlop={8}>
 							<Ionicons name="close" size={24} color={colors.text} />
 						</Pressable>
 					</View>
 					<Text style={styles.description}>
-						Add "{movieTitle}" to one of your lists
+						Add or remove "{movieTitle}" from your lists
 					</Text>
 
 					<ScrollView style={styles.listContainer}>
@@ -97,9 +118,13 @@ export const AddToListModal = memo(function AddToListModal({
 								<ListItem
 									key={list.listId}
 									list={list}
-									isPending={
+									isAddPending={
 										addMutation.isPending &&
 										addMutation.variables?.path?.slug === list.listSlug
+									}
+									isRemovePending={
+										removeMutation.isPending &&
+										removeMutation.variables?.path?.slug === list.listSlug
 									}
 									onPress={handleToggleList}
 								/>
@@ -113,11 +138,18 @@ export const AddToListModal = memo(function AddToListModal({
 
 interface ListItemProps {
 	list: MovieListsForMovieDto;
-	isPending: boolean;
+	isAddPending: boolean;
+	isRemovePending: boolean;
 	onPress: (slug: string, isInList: boolean) => void;
 }
 
-const ListItem = memo(function ListItem({ list, isPending, onPress }: ListItemProps) {
+const ListItem = memo(function ListItem({
+	list,
+	isAddPending,
+	isRemovePending,
+	onPress,
+}: ListItemProps) {
+	const isPending = isAddPending || isRemovePending;
 	const isInList = list.isInList;
 
 	return (
@@ -127,7 +159,7 @@ const ListItem = memo(function ListItem({ list, isPending, onPress }: ListItemPr
 				isInList && styles.listItemActive,
 			]}
 			onPress={() => onPress(list.listSlug, isInList)}
-			disabled={isPending || isInList}
+			disabled={isPending}
 		>
 			<View style={styles.listItemContent}>
 				<Text
@@ -144,7 +176,7 @@ const ListItem = memo(function ListItem({ list, isPending, onPress }: ListItemPr
 			{isPending ? (
 				<ActivityIndicator size="small" color={colors.primary} />
 			) : isInList ? (
-				<Ionicons name="checkmark" size={20} color={colors.primary} />
+				<Ionicons name="remove" size={20} color={colors.primary} />
 			) : (
 				<Ionicons name="add" size={20} color={colors.textMuted} />
 			)}

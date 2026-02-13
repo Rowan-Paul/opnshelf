@@ -154,13 +154,22 @@ describe("AuthController", () => {
 			mockAuthService.authorize.mockResolvedValue(authUrl);
 			const res = createMockResponse();
 
-			await controller.login("user.bsky.social", undefined, "Europe/London", res);
+			await controller.login(
+				"user.bsky.social",
+				undefined,
+				"Europe/London",
+				res,
+			);
 
-			expect(res.cookie).toHaveBeenCalledWith("auth_timezone", "Europe/London", {
-				httpOnly: true,
-				maxAge: 5 * 60 * 1000,
-				sameSite: "lax",
-			});
+			expect(res.cookie).toHaveBeenCalledWith(
+				"auth_timezone",
+				"Europe/London",
+				{
+					httpOnly: true,
+					maxAge: 5 * 60 * 1000,
+					sameSite: "lax",
+				},
+			);
 			expect(res.redirect).toHaveBeenCalledWith(authUrl);
 		});
 
@@ -204,7 +213,10 @@ describe("AuthController", () => {
 
 			expect(mockAuthService.callback).toHaveBeenCalled();
 			expect(mockAuthService.fetchProfile).toHaveBeenCalledWith(mockSession);
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
 				"session-123",
@@ -244,7 +256,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(mockIngesterService.addRepo).toHaveBeenCalledWith(
 				"did:plc:abc123",
 			);
@@ -276,7 +291,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/auth/complete",
 			);
@@ -308,7 +326,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(res.clearCookie).toHaveBeenCalledWith("auth_platform");
 			expect(res.redirect).toHaveBeenCalledWith(
 				"opnshelf://auth/complete?session=session-123",
@@ -336,7 +357,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000?error=callback_failed",
 			);
@@ -477,7 +501,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			// In test/dev mode, domain should not be set
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
@@ -518,7 +545,10 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(mockProfile, undefined);
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
 				"session-123",
