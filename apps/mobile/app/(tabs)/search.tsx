@@ -9,172 +9,19 @@ import {
 } from "@opnshelf/api";
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Check, Loader2, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-	type GestureResponderEvent,
-	Platform,
-	Pressable,
-	StyleSheet,
-	Text,
-	View,
-} from "react-native";
-import Animated, {
-	Easing,
-	useAnimatedStyle,
-	useSharedValue,
-	withRepeat,
-	withSpring,
-	withTiming,
-} from "react-native-reanimated";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MovieItem } from "@/components/MovieItem";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, colors, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
+import { createTitleSlug } from "@/lib/utils";
 
 const DEBOUNCE_MS = 300;
-const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w342";
-
-function createTitleSlug(title: string): string {
-	return title
-		.replace(/[^a-zA-Z0-9\s-]/g, "")
-		.trim()
-		.replace(/\s+/g, "-");
-}
-
-interface MovieItemProps {
-	movie: TmdbMovieResultDto;
-	isWatched: boolean;
-	isMarking: boolean;
-	isUnmarking: boolean;
-	onToggle: (movieId: string, isWatched: boolean) => void;
-	onPress: () => void;
-}
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// Spinning loader component
-const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
-	const rotation = useSharedValue(0);
-
-	rotation.value = withRepeat(
-		withTiming(360, { duration: 1000, easing: Easing.linear }),
-		-1,
-		false,
-	);
-
-	const animatedStyle = useAnimatedStyle(() => ({
-		transform: [{ rotate: `${rotation.value}deg` }],
-	}));
-
-	return (
-		<Animated.View style={animatedStyle}>
-			<Loader2 size={size} color={color} />
-		</Animated.View>
-	);
-};
-
-const MovieItem = ({
-	movie,
-	isWatched,
-	isMarking,
-	isUnmarking,
-	onToggle,
-	onPress,
-}: MovieItemProps) => {
-	const scale = useSharedValue(1);
-	const opacity = useSharedValue(1);
-
-	const handleToggle = useCallback(
-		(e: GestureResponderEvent) => {
-			e.stopPropagation();
-
-			if (Platform.OS !== "web") {
-				Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-			}
-
-			onToggle(movie.id.toString(), isWatched);
-		},
-		[movie.id, isWatched, onToggle],
-	);
-
-	const handlePressIn = useCallback(() => {
-		scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-		opacity.value = withTiming(0.8, { duration: 100 });
-	}, [scale, opacity]);
-
-	const handlePressOut = useCallback(() => {
-		scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-		opacity.value = withTiming(1, { duration: 100 });
-	}, [scale, opacity]);
-
-	const animatedButtonStyle = useAnimatedStyle(() => ({
-		transform: [{ scale: scale.value }],
-		opacity: opacity.value,
-	}));
-
-	const isPending = isMarking || isUnmarking;
-
-	return (
-		<View style={styles.movieItem}>
-			<Pressable onPress={onPress} style={styles.posterContainer}>
-				{movie.poster_path ? (
-					<Image
-						source={{ uri: `${POSTER_BASE_URL}${movie.poster_path}` }}
-						style={styles.poster}
-						contentFit="cover"
-						transition={200}
-					/>
-				) : (
-					<View style={[styles.poster, styles.noPoster]}>
-						<Text style={styles.noPosterText}>No poster</Text>
-					</View>
-				)}
-
-				{/* Quick add button - icon only, top-right with expanded touch area */}
-				<AnimatedPressable
-					onPress={handleToggle}
-					onPressIn={handlePressIn}
-					onPressOut={handlePressOut}
-					disabled={isPending}
-					hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-					style={[
-						styles.actionButton,
-						isWatched && styles.actionButtonWatched,
-						animatedButtonStyle,
-					]}
-				>
-					<View style={styles.iconContainer}>
-						{isPending ? (
-							<SpinningLoader size={16} color={colors.text} />
-						) : isWatched ? (
-							<Check size={16} color={colors.text} strokeWidth={2.5} />
-						) : (
-							<Plus size={16} color={colors.text} strokeWidth={2.5} />
-						)}
-					</View>
-				</AnimatedPressable>
-			</Pressable>
-			<Pressable onPress={onPress} style={styles.titleContainer}>
-				<Text style={styles.movieTitle} numberOfLines={2}>
-					{movie.title}
-				</Text>
-				{movie.release_date && (
-					<View style={styles.yearBadge}>
-						<Text style={styles.movieYear}>
-							{movie.release_date.split("-")[0]}
-						</Text>
-					</View>
-				)}
-			</Pressable>
-		</View>
-	);
-};
 
 export default function SearchScreen() {
 	const [query, setQuery] = useState("");
@@ -184,7 +31,6 @@ export default function SearchScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
-	// Debounce search query
 	useEffect(() => {
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current);
@@ -201,7 +47,6 @@ export default function SearchScreen() {
 		};
 	}, [query]);
 
-	// Fetch user's tracked movies
 	const { data: trackedMovies } = useQuery({
 		...moviesControllerGetUserMoviesOptions({
 			path: { userDid: user?.did || "" },
@@ -209,13 +54,11 @@ export default function SearchScreen() {
 		enabled: !!user?.did,
 	});
 
-	// Build set of watched movie IDs
 	const watchedMovieIds = useMemo(() => {
 		if (!trackedMovies) return new Set<string>();
 		return new Set(trackedMovies.map((m) => m.movieId));
 	}, [trackedMovies]);
 
-	// Search movies using generated hook
 	const { data, isLoading, error } = useQuery({
 		...moviesControllerSearchMoviesOptions({
 			query: { query: debouncedQuery },
@@ -223,13 +66,11 @@ export default function SearchScreen() {
 		enabled: debouncedQuery.length > 0,
 	});
 
-	// Discover popular movies when no search query
 	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
 		...moviesControllerDiscoverMoviesOptions({}),
 		enabled: debouncedQuery.length === 0,
 	});
 
-	// Mark watched mutation
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
@@ -245,7 +86,6 @@ export default function SearchScreen() {
 		},
 	});
 
-	// Unmark watched mutation
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
@@ -388,7 +228,6 @@ export default function SearchScreen() {
 				</View>
 			)}
 
-			{/* Popular movies suggestions when no search query */}
 			{!debouncedQuery && (
 				<View style={{ flex: 1 }}>
 					<View style={styles.header}>
@@ -433,86 +272,6 @@ const styles = StyleSheet.create({
 	listContent: {
 		padding: spacing.lg,
 	},
-	movieItem: {
-		flex: 1,
-		marginBottom: spacing.lg,
-		marginHorizontal: spacing.sm,
-		minWidth: 140,
-		maxWidth: "47%",
-	},
-	posterContainer: {
-		aspectRatio: 2 / 3,
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		backgroundColor: colors.card,
-		position: "relative",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 8,
-		elevation: 8,
-	},
-	poster: {
-		width: "100%",
-		height: "100%",
-	},
-	noPoster: {
-		justifyContent: "center",
-		alignItems: "center",
-		backgroundColor: colors.cardMuted,
-	},
-	noPosterText: {
-		color: colors.textSecondary,
-		fontSize: 12,
-		fontWeight: "500",
-	},
-	// Icon-only action button - top right
-	actionButton: {
-		position: "absolute",
-		top: spacing.sm,
-		right: spacing.sm,
-		width: 40,
-		height: 40,
-		borderRadius: borderRadius.full,
-		backgroundColor: colors.primary,
-		justifyContent: "center",
-		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 3 },
-		shadowOpacity: 0.4,
-		shadowRadius: 5,
-		elevation: 5,
-	},
-	actionButtonWatched: {
-		backgroundColor: colors.success,
-	},
-	iconContainer: {
-		width: 20,
-		height: 20,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	titleContainer: {
-		marginTop: spacing.sm,
-		minHeight: 40,
-	},
-	movieTitle: {
-		fontSize: 15,
-		fontWeight: "600",
-		color: colors.text,
-		letterSpacing: -0.2,
-		lineHeight: 20,
-		flexWrap: "wrap",
-	},
-	yearBadge: {
-		marginTop: spacing.xs,
-	},
-	movieYear: {
-		fontSize: 12,
-		color: colors.textMuted,
-		fontWeight: "500",
-		letterSpacing: 0.5,
-	},
 	resultsCount: {
 		fontSize: 14,
 		color: colors.textMuted,
@@ -546,10 +305,5 @@ const styles = StyleSheet.create({
 		marginHorizontal: spacing.sm,
 		minWidth: 140,
 		maxWidth: "47%",
-	},
-	skeletonPoster: {
-		aspectRatio: 2 / 3,
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
 	},
 });

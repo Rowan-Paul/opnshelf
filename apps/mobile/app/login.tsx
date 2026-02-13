@@ -397,7 +397,6 @@ export default function LoginScreen() {
 				</View>
 			</View>
 
-			{/* Suggestions Modal */}
 			<Modal
 				visible={showSuggestionsModal}
 				animationType="slide"

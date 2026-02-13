@@ -306,7 +306,6 @@ export default function MovieDetailScreen() {
 				style={styles.container}
 				contentContainerStyle={styles.scrollContent}
 			>
-				{/* Hero Section with Backdrop */}
 				<View style={styles.heroWrapper}>
 					{backdropUrl ? (
 						<Image
@@ -320,7 +319,6 @@ export default function MovieDetailScreen() {
 						/>
 					)}
 
-					{/* Back button */}
 					<TouchableOpacity
 						onPress={() => router.back()}
 						style={styles.backButton}
@@ -329,7 +327,6 @@ export default function MovieDetailScreen() {
 						<Ionicons name="arrow-back" size={24} color="#f9fafb" />
 					</TouchableOpacity>
 
-					{/* Poster and Title Overlay */}
 					<View style={styles.heroOverlay}>
 						<View style={styles.posterWrapper}>
 							{posterUrl ? (
@@ -386,9 +383,7 @@ export default function MovieDetailScreen() {
 					</View>
 				</View>
 
-				{/* Content */}
 				<View style={styles.content}>
-					{/* Actions */}
 					<View style={styles.actionsContainer}>
 						{user ? (
 							!isWatched ? (
@@ -508,7 +503,6 @@ export default function MovieDetailScreen() {
 						)}
 					</View>
 
-					{/* Watched Info Card */}
 					{isWatched && (
 						<View style={styles.watchedCard}>
 							<View style={styles.watchedHeader}>
@@ -561,7 +555,6 @@ export default function MovieDetailScreen() {
 						</View>
 					)}
 
-					{/* Overview */}
 					{movie?.overview && (
 						<View style={styles.section}>
 							<Text
@@ -573,7 +566,6 @@ export default function MovieDetailScreen() {
 						</View>
 					)}
 
-					{/* Additional Info */}
 					<View style={styles.infoGrid}>
 						{movie?.release_date && (
 							<View style={styles.infoCard}>
@@ -617,7 +609,6 @@ export default function MovieDetailScreen() {
 						)}
 					</View>
 
-					{/* Genres */}
 					{movie?.genres && movie.genres.length > 0 && (
 						<View style={styles.section}>
 							<Text
@@ -648,7 +639,6 @@ export default function MovieDetailScreen() {
 						</View>
 					)}
 
-					{/* Cast */}
 					{movie?.credits?.cast && movie.credits.cast.length > 0 && (
 						<View style={styles.section}>
 							<Text
@@ -711,7 +701,6 @@ export default function MovieDetailScreen() {
 						</View>
 					)}
 
-					{/* Crew */}
 					{movie?.credits?.crew && movie.credits.crew.length > 0 && (
 						<View style={styles.section}>
 							<Text
@@ -742,7 +731,6 @@ export default function MovieDetailScreen() {
 				</View>
 			</ScrollView>
 
-			{/* Date Picker Modal */}
 			<Modal
 				visible={showDateModal}
 				animationType="fade"
@@ -800,7 +788,6 @@ export default function MovieDetailScreen() {
 							</TouchableOpacity>
 						</View>
 
-						{/* Date/Time Pickers inside modal */}
 						{showDatePicker && (
 							<DateTimePicker
 								value={customDate}
@@ -833,7 +820,6 @@ export default function MovieDetailScreen() {
 				</View>
 			</Modal>
 
-			{/* History Modal */}
 			<Modal
 				visible={showHistoryModal}
 				animationType="fade"

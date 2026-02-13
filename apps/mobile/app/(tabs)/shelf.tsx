@@ -3,168 +3,30 @@ import {
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
-	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image } from "expo-image";
 import { router } from "expo-router";
-import {
-	BookOpen,
-	CheckCircle2,
-	Loader2,
-	LogIn,
-	LogOut,
-	Settings,
-	Trash2,
-} from "lucide-react-native";
+import { BookOpen, LogIn, LogOut, Settings } from "lucide-react-native";
 import { useCallback } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Animated, {
-	Easing,
-	useAnimatedStyle,
-	useSharedValue,
-	withRepeat,
-	withTiming,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, colors, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
-
-const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w342";
-
-function createTitleSlug(title: string): string {
-	return title
-		.replace(/[^a-zA-Z0-9\s-]/g, "")
-		.trim()
-		.replace(/\s+/g, "-");
-}
-
-// Spinning loader component
-const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
-	const rotation = useSharedValue(0);
-
-	rotation.value = withRepeat(
-		withTiming(360, { duration: 1000, easing: Easing.linear }),
-		-1,
-		false,
-	);
-
-	const animatedStyle = useAnimatedStyle(() => ({
-		transform: [{ rotate: `${rotation.value}deg` }],
-	}));
-
-	return (
-		<Animated.View style={animatedStyle}>
-			<Loader2 size={size} color={color} />
-		</Animated.View>
-	);
-};
-
-// Movie Card - Horizontal layout with poster on left
-interface MovieCardProps {
-	tracked: TrackedMovieDto;
-	isRemoving: boolean;
-	onRemove: (movieId: string) => void;
-	onPress: () => void;
-	timezone: string;
-	is24Hour: boolean;
-}
-
-const MovieCard = ({
-	tracked,
-	isRemoving,
-	onRemove,
-	onPress,
-	timezone,
-	is24Hour,
-}: MovieCardProps) => {
-	const formattedWatchedDate = tracked.watchedDate
-		? new Date(tracked.watchedDate).toLocaleString("en-US", {
-				month: "short",
-				day: "numeric",
-				year: "numeric",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: !is24Hour,
-				timeZone: timezone,
-			})
-		: null;
-
-	return (
-		<TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
-			{/* Poster on the left */}
-			<View style={styles.posterContainer}>
-				{tracked.movie.posterPath ? (
-					<Image
-						source={{ uri: `${POSTER_BASE_URL}${tracked.movie.posterPath}` }}
-						style={styles.poster}
-						contentFit="cover"
-						transition={200}
-					/>
-				) : (
-					<View style={[styles.poster, styles.noPoster]}>
-						<Text style={styles.noPosterText}>No poster</Text>
-					</View>
-				)}
-			</View>
-
-			{/* Content on the right */}
-			<View style={styles.cardContent}>
-				<View style={styles.info}>
-					<Text style={styles.movieTitle} numberOfLines={2}>
-						{tracked.movie.title}
-					</Text>
-					<View style={styles.meta}>
-						{tracked.movie.releaseYear && (
-							<Text style={styles.year}>{tracked.movie.releaseYear}</Text>
-						)}
-						{formattedWatchedDate && (
-							<>
-								<Text style={styles.metaDot}>•</Text>
-								<View style={styles.watchedRow}>
-									<CheckCircle2 size={12} color={colors.success} />
-									<Text style={styles.watchedDate}>{formattedWatchedDate}</Text>
-								</View>
-							</>
-						)}
-					</View>
-				</View>
-
-				{/* Remove button */}
-				<TouchableOpacity
-					onPress={(e) => {
-						e.stopPropagation();
-						onRemove(tracked.movieId);
-					}}
-					disabled={isRemoving}
-					style={styles.removeButton}
-					activeOpacity={0.7}
-				>
-					{isRemoving ? (
-						<SpinningLoader size={14} color={colors.text} />
-					) : (
-						<>
-							<Trash2 size={14} color={colors.text} />
-							<Text style={styles.removeButtonText}>Remove</Text>
-						</>
-					)}
-				</TouchableOpacity>
-			</View>
-		</TouchableOpacity>
-	);
-};
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { createTitleSlug } from "@/lib/utils";
 
 export default function ShelfScreen() {
 	const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
+	const { timezone, is24Hour } = useUserSettings();
 
-	// Fetch user's tracked movies
 	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
 		...moviesControllerGetUserMoviesOptions({
 			path: { userDid: user?.did || "" },
@@ -172,16 +34,6 @@ export default function ShelfScreen() {
 		enabled: !!user?.did,
 	});
 
-	// Fetch user settings for timezone and time format
-	const { data: userSettings } = useQuery({
-		...usersControllerGetMySettingsOptions(),
-		enabled: !!user?.did,
-	});
-
-	const userTimezone = userSettings?.timezone || "UTC";
-	const is24Hour = userSettings?.timeFormat === "24h";
-
-	// Remove from shelf mutation
 	const unmarkMutation = useMutation({
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
@@ -226,12 +78,12 @@ export default function ShelfScreen() {
 					isRemoving={isRemoving}
 					onRemove={handleRemove}
 					onPress={() => handleMoviePress(item)}
-					timezone={userTimezone}
+					timezone={timezone}
 					is24Hour={is24Hour}
 				/>
 			);
 		},
-		[unmarkMutation, handleRemove, handleMoviePress, userTimezone, is24Hour],
+		[unmarkMutation, handleRemove, handleMoviePress, timezone, is24Hour],
 	);
 
 	const keyExtractor = useCallback((item: TrackedMovieDto) => item.id, []);
@@ -245,7 +97,6 @@ export default function ShelfScreen() {
 		}
 	}, [isAuthenticated, logout, showToast]);
 
-	// Loading state
 	if (isAuthLoading) {
 		return (
 			<SafeAreaView style={styles.container} edges={["top"]}>
@@ -279,7 +130,6 @@ export default function ShelfScreen() {
 		);
 	}
 
-	// Not authenticated state
 	if (!isAuthenticated) {
 		return (
 			<SafeAreaView style={styles.container} edges={["top"]}>
@@ -469,90 +319,8 @@ const styles = StyleSheet.create({
 	listContent: {
 		padding: spacing.lg,
 	},
-	card: {
-		flexDirection: "row",
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		borderWidth: 1,
-		borderColor: colors.border,
-	},
-	posterContainer: {
-		width: 80,
-		aspectRatio: 2 / 3,
-		backgroundColor: colors.cardMuted,
-	},
-	poster: {
-		width: "100%",
-		height: "100%",
-	},
-	cardContent: {
-		flex: 1,
-		padding: spacing.md,
-		justifyContent: "space-between",
-	},
-	info: {
-		flex: 1,
-	},
-	movieTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: colors.text,
-		marginBottom: spacing.xs,
-		lineHeight: 22,
-	},
-	meta: {
-		flexDirection: "row",
-		alignItems: "center",
-		flexWrap: "wrap",
-		gap: spacing.xs,
-	},
-	year: {
-		fontSize: 14,
-		color: colors.textMuted,
-	},
-	watchedRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-	},
-	watchedDate: {
-		fontSize: 14,
-		color: colors.success,
-		fontWeight: "500",
-	},
-	removeButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-		backgroundColor: colors.error,
-		borderRadius: borderRadius.full,
-		alignSelf: "flex-start",
-		marginTop: spacing.sm,
-	},
-	removeButtonText: {
-		color: colors.text,
-		fontSize: 14,
-		fontWeight: "600",
-	},
 	itemSeparator: {
 		height: spacing.md,
-	},
-	metaDot: {
-		color: colors.textSecondary,
-		fontSize: 12,
-	},
-	noPoster: {
-		justifyContent: "center",
-		alignItems: "center",
-		backgroundColor: colors.cardMuted,
-	},
-	noPosterText: {
-		color: colors.textSecondary,
-		fontSize: 12,
-		fontWeight: "500",
 	},
 	centerContent: {
 		flex: 1,

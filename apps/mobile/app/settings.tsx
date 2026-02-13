@@ -245,7 +245,6 @@ export default function SettingsScreen() {
 	return (
 		<SafeAreaView style={styles.container} edges={["top"]}>
 			<ScrollView style={styles.scrollView}>
-				{/* Header */}
 				<View style={styles.header}>
 					<View style={styles.headerLeft}>
 						<Globe size={28} color={colors.warning} />
@@ -253,7 +252,6 @@ export default function SettingsScreen() {
 					</View>
 				</View>
 
-				{/* Time & Region Card */}
 				<Card style={styles.card}>
 					<CardHeader style={styles.cardHeader}>
 						<View style={styles.cardHeaderContent}>
@@ -269,7 +267,6 @@ export default function SettingsScreen() {
 						</View>
 					</CardHeader>
 					<CardContent style={styles.cardContent}>
-						{/* Timezone Row */}
 						<Pressable
 							onPress={() => setShowTimezoneModal(true)}
 							style={styles.settingRow}
@@ -295,10 +292,8 @@ export default function SettingsScreen() {
 							<ChevronRight size={20} color={colors.textMuted} />
 						</Pressable>
 
-						{/* Divider */}
 						<View style={styles.divider} />
 
-						{/* Time Format Row */}
 						<View style={styles.settingRow}>
 							<View style={styles.settingLabelContainer}>
 								<Text style={styles.settingLabel}>Time Format</Text>
@@ -326,10 +321,8 @@ export default function SettingsScreen() {
 							)}
 						</View>
 
-						{/* Divider */}
 						<View style={styles.divider} />
 
-						{/* Live Preview */}
 						{!isSettingsLoading && (
 							<View style={styles.previewContainer}>
 								<View style={styles.previewContent}>
@@ -348,7 +341,6 @@ export default function SettingsScreen() {
 					</CardContent>
 				</Card>
 
-				{/* Account Card */}
 				{user && (
 					<Card style={styles.card}>
 						<CardHeader style={styles.cardHeader}>
@@ -370,7 +362,6 @@ export default function SettingsScreen() {
 							</View>
 						</CardHeader>
 						<CardContent style={styles.cardContent}>
-							{/* User Info */}
 							<View style={styles.settingRow}>
 								<View style={styles.settingLabelContainer}>
 									<Text style={styles.settingLabel}>Handle</Text>
@@ -394,7 +385,6 @@ export default function SettingsScreen() {
 
 							<View style={styles.divider} />
 
-							{/* Delete Account Button */}
 							<Pressable
 								onPress={handleDeleteAccount}
 								disabled={deleteAccountMutation.isPending}
@@ -422,7 +412,6 @@ export default function SettingsScreen() {
 				)}
 			</ScrollView>
 
-			{/* Timezone Modal */}
 			<Modal
 				visible={showTimezoneModal}
 				animationType="slide"
@@ -474,7 +463,6 @@ export default function SettingsScreen() {
 				</SafeAreaView>
 			</Modal>
 
-			{/* Delete Account Confirmation Modal */}
 			<Modal
 				visible={showDeleteModal}
 				animationType="fade"
@@ -511,7 +499,6 @@ export default function SettingsScreen() {
 				</View>
 			</Modal>
 
-			{/* PDS Data Option Modal */}
 			<Modal
 				visible={showPDSOptionModal}
 				animationType="fade"
