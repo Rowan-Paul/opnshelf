@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		zIndex: 9999,
 		pointerEvents: "box-none",
+		paddingBottom: 80,
 	},
 	toastItem: {
 		flexDirection: "row",

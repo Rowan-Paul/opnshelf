@@ -142,6 +142,13 @@ export type UpdateUserSettingsDto = {
     timezone?: string;
 };
 
+export type DeleteUserAccountDto = {
+    /**
+     * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
+     */
+    deletePDSData: boolean;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -448,3 +455,26 @@ export type UsersControllerUpdateMySettingsResponses = {
 };
 
 export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
+
+export type UsersControllerDeleteMyAccountData = {
+    body: DeleteUserAccountDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/account';
+};
+
+export type UsersControllerDeleteMyAccountErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerDeleteMyAccountResponses = {
+    /**
+     * Account deleted successfully
+     */
+    204: void;
+};
+
+export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];

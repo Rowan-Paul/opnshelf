@@ -118,6 +118,27 @@ export class AuthController {
 	}
 
 	/**
+	 * Search for actor suggestions by handle prefix
+	 */
+	@Get("auth/suggestions")
+	@ApiOperation({ summary: "Search for actor suggestions by handle prefix" })
+	@ApiQuery({
+		name: "q",
+		required: true,
+		description: "Search query (handle prefix)",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Array of actor suggestions",
+	})
+	async suggestions(@Query("q") query: string | undefined) {
+		if (!query || query.trim().length < 2) {
+			return [];
+		}
+		return this.authService.searchActors(query);
+	}
+
+	/**
 	 * OAuth callback handler
 	 */
 	@Get("auth/callback")

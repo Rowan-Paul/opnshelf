@@ -1,12 +1,21 @@
 import {
+	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronRight, Clock, Globe, Loader2 } from "lucide-react-native";
+import {
+	ChevronRight,
+	Clock,
+	Globe,
+	Loader2,
+	Trash2,
+	User,
+} from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
+	Alert,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -20,6 +29,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { borderRadius, colors, spacing } from "@/constants/theme";
+import { useAuth } from "@/contexts/auth";
 import { useToast } from "@/contexts/toast";
 
 // Common timezones grouped by region
@@ -106,8 +116,9 @@ const ALL_ZONES = TIMEZONES.flatMap((group) =>
 );
 
 export default function SettingsScreen() {
-	const _router = useRouter();
+	const router = useRouter();
 	const { showToast } = useToast();
+	const { user, logout } = useAuth();
 	const queryClient = useQueryClient();
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
 	const [timezoneSearch, setTimezoneSearch] = useState("");
@@ -142,6 +153,62 @@ export default function SettingsScreen() {
 			showToast("Failed to save settings", "error");
 		},
 	});
+
+	// Mutation for deleting account
+	const deleteAccountMutation = useMutation({
+		...usersControllerDeleteMyAccountMutation(),
+		onSuccess: async () => {
+			showToast("Account deleted", "success");
+			await logout();
+			router.replace("/");
+		},
+		onError: () => {
+			showToast("Failed to delete account", "error");
+		},
+	});
+
+	// Handle delete account with confirmation
+	const handleDeleteAccount = useCallback(() => {
+		Alert.alert(
+			"Delete Account",
+			"Are you sure you want to delete your account? This action cannot be undone.",
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: () => {
+						Alert.alert(
+							"Delete PDS Data",
+							"Do you also want to delete your watch history from your PDS?",
+							[
+								{
+									text: "Keep on PDS",
+									onPress: () => {
+										deleteAccountMutation.mutate({
+											body: { deletePDSData: false },
+										});
+									},
+								},
+								{
+									text: "Delete from PDS",
+									style: "destructive",
+									onPress: () => {
+										deleteAccountMutation.mutate({
+											body: { deletePDSData: true },
+										});
+									},
+								},
+							],
+						);
+					},
+				},
+			],
+		);
+	}, [deleteAccountMutation]);
 
 	// Handle timezone change
 	const handleTimezoneChange = useCallback(
@@ -300,6 +367,79 @@ export default function SettingsScreen() {
 						)}
 					</CardContent>
 				</Card>
+
+				{/* Account Card */}
+				{user && (
+					<Card style={styles.card}>
+						<CardHeader style={styles.cardHeader}>
+							<View style={styles.cardHeaderContent}>
+								<View
+									style={[
+										styles.iconContainer,
+										{ backgroundColor: "rgba(59, 130, 246, 0.1)" },
+									]}
+								>
+									<User size={20} color={colors.primary} />
+								</View>
+								<View style={styles.cardTitleContainer}>
+									<Text style={styles.cardTitle}>Account</Text>
+									<Text style={styles.cardDescription}>
+										Manage your account information
+									</Text>
+								</View>
+							</View>
+						</CardHeader>
+						<CardContent style={styles.cardContent}>
+							{/* User Info */}
+							<View style={styles.settingRow}>
+								<View style={styles.settingLabelContainer}>
+									<Text style={styles.settingLabel}>Handle</Text>
+									<Text style={styles.settingValue}>@{user.handle}</Text>
+								</View>
+							</View>
+
+							{user.displayName && (
+								<>
+									<View style={styles.divider} />
+									<View style={styles.settingRow}>
+										<View style={styles.settingLabelContainer}>
+											<Text style={styles.settingLabel}>Display Name</Text>
+											<Text style={styles.settingValue}>
+												{String(user.displayName)}
+											</Text>
+										</View>
+									</View>
+								</>
+							)}
+
+							<View style={styles.divider} />
+
+							{/* Delete Account Button */}
+							<Pressable
+								onPress={handleDeleteAccount}
+								disabled={deleteAccountMutation.isPending}
+								style={[styles.settingRow, styles.deleteButton]}
+							>
+								<View style={styles.settingLabelContainer}>
+									<Text style={[styles.settingLabel, { color: colors.error }]}>
+										Delete Account
+									</Text>
+									<Text style={styles.settingDescription}>
+										Remove your account and data
+									</Text>
+								</View>
+								{deleteAccountMutation.isPending && (
+									<Loader2
+										size={16}
+										color={colors.error}
+										style={styles.spinner}
+									/>
+								)}
+								<Trash2 size={20} color={colors.error} />
+							</Pressable>
+						</CardContent>
+					</Card>
+				)}
 			</ScrollView>
 
 			{/* Timezone Modal */}
@@ -485,6 +625,9 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontWeight: "600",
 		color: colors.warning,
+	},
+	deleteButton: {
+		paddingHorizontal: 0,
 	},
 	// Modal styles
 	modalContainer: {

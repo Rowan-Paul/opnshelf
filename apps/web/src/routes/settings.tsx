@@ -1,11 +1,21 @@
 import {
 	authControllerMeOptions,
+	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Clock, Globe, Loader2, LogIn, Settings2 } from "lucide-react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import {
+	AlertTriangle,
+	Clock,
+	Globe,
+	Loader2,
+	LogIn,
+	Settings2,
+	Trash2,
+	User,
+} from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +26,14 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
@@ -113,8 +131,10 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+	const router = useRouter();
 	const queryClient = useQueryClient();
 	const timezoneId = useId();
+	const deletePdsId = useId();
 
 	// Fetch auth state
 	const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -132,6 +152,10 @@ function SettingsPage() {
 	// Local state for form values
 	const [timezone, setTimezone] = useState<string>("UTC");
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
+
+	// Delete account dialog state
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [deletePDSData, setDeletePDSData] = useState(false);
 
 	// Update local state when settings load
 	useEffect(() => {
@@ -154,6 +178,28 @@ function SettingsPage() {
 			toast.error("Failed to save settings");
 		},
 	});
+
+	// Mutation for deleting account
+	const deleteAccountMutation = useMutation({
+		...usersControllerDeleteMyAccountMutation(),
+		onSuccess: () => {
+			setShowDeleteDialog(false);
+			toast.success("Account deleted");
+			// Clear all queries and redirect to home
+			queryClient.clear();
+			router.navigate({ to: "/" });
+		},
+		onError: () => {
+			toast.error("Failed to delete account");
+		},
+	});
+
+	// Handle account deletion
+	const handleDeleteAccount = () => {
+		deleteAccountMutation.mutate({
+			body: { deletePDSData },
+		});
+	};
 
 	// Handle timezone change
 	const handleTimezoneChange = (value: string) => {
@@ -346,7 +392,136 @@ function SettingsPage() {
 						)}
 					</CardContent>
 				</Card>
+
+				{/* Account Section */}
+				<Card className="bg-gray-900 border-gray-800 mt-6">
+					<CardHeader>
+						<div className="flex items-center gap-3">
+							<div className="p-2 bg-blue-500/10 rounded-lg">
+								<User className="w-5 h-5 text-blue-500" />
+							</div>
+							<div>
+								<CardTitle>Account</CardTitle>
+								<CardDescription>
+									Manage your account information
+								</CardDescription>
+							</div>
+						</div>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium">Handle</p>
+								<p className="text-sm text-gray-400">@{user.handle}</p>
+							</div>
+							{user.displayName && (
+								<div className="text-right">
+									<p className="text-sm font-medium">Display Name</p>
+									<p className="text-sm text-gray-400">
+										{String(user.displayName)}
+									</p>
+								</div>
+							)}
+						</div>
+
+						<div className="h-px bg-gray-800" />
+
+						<div>
+							<Button
+								variant="destructive"
+								onClick={() => setShowDeleteDialog(true)}
+								className="w-full"
+							>
+								<Trash2 className="w-4 h-4 mr-2" />
+								Delete Account
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
 			</div>
+
+			{/* Delete Account Confirmation Dialog */}
+			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<DialogContent className="bg-gray-900 border-gray-800">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<AlertTriangle className="w-5 h-5 text-red-500" />
+							Delete Account
+						</DialogTitle>
+						<DialogDescription className="text-gray-400">
+							Are you sure you want to delete your account? This action cannot
+							be undone.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 py-4">
+						<div className="p-4 bg-gray-950 rounded-lg border border-gray-800">
+							<p className="text-sm text-gray-400 mb-3">
+								What happens to your data:
+							</p>
+							<div className="space-y-2 text-sm">
+								<p className="flex items-start gap-2">
+									<span className="text-green-500">✓</span>
+									Your OpnShelf account and settings will be deleted
+								</p>
+								<p className="flex items-start gap-2">
+									<span className="text-green-500">✓</span>
+									Your local session will be cleared
+								</p>
+							</div>
+						</div>
+
+						<div className="flex items-center gap-3 p-4 bg-gray-950 rounded-lg border border-gray-800">
+							<input
+								type="checkbox"
+								id={deletePdsId}
+								checked={deletePDSData}
+								onChange={(e) => setDeletePDSData(e.target.checked)}
+								className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+							/>
+							<Label htmlFor={deletePdsId} className="text-sm cursor-pointer">
+								Also delete my watch history from my PDS
+							</Label>
+						</div>
+
+						{deletePDSData ? (
+							<div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+								<p className="text-sm text-red-400">
+									Your watch history will be permanently deleted from your
+									personal data server. This cannot be recovered.
+								</p>
+							</div>
+						) : (
+							<div className="p-3 bg-gray-800/50 rounded-lg">
+								<p className="text-sm text-gray-400">
+									Your watch history will remain on your PDS. You can use
+									another app or re-authorize OpnShelf later to access it.
+								</p>
+							</div>
+						)}
+					</div>
+
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setShowDeleteDialog(false)}
+							disabled={deleteAccountMutation.isPending}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleDeleteAccount}
+							disabled={deleteAccountMutation.isPending}
+						>
+							{deleteAccountMutation.isPending && (
+								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+							)}
+							Delete Account
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

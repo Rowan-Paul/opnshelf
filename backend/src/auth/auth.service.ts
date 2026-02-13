@@ -8,6 +8,8 @@ import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 
+const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
+
 export const OAUTH_SCOPE =
 	"atproto repo:app.opnshelf.movie rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
@@ -318,6 +320,62 @@ export class AuthService implements OnModuleInit {
 		});
 		if (result.count > 0) {
 			this.logger.log(`Cleaned up ${result.count} expired auth states`);
+		}
+	}
+
+	/**
+	 * Search for actor suggestions by handle prefix
+	 * @param query - The search query (handle prefix)
+	 * @returns Array of actor suggestions with handle, displayName, and avatar
+	 */
+	async searchActors(query: string): Promise<
+		Array<{
+			did: string;
+			handle: string;
+			displayName: string | null;
+			avatar: string | null;
+		}>
+	> {
+		if (!query || query.trim().length < 2) {
+			return [];
+		}
+
+		try {
+			const url = new URL(
+				`${BLUESKY_PUBLIC_API}/app.bsky.actor.searchActorsTypeahead`,
+			);
+			url.searchParams.set("q", query.trim());
+			url.searchParams.set("limit", "10");
+
+			const response = await fetch(url.toString(), {
+				signal: AbortSignal.timeout(5000),
+			});
+
+			if (!response.ok) {
+				this.logger.warn(
+					`Bluesky API returned ${response.status}: ${response.statusText}`,
+				);
+				return [];
+			}
+
+			const data = (await response.json()) as {
+				actors: Array<{
+					did: string;
+					handle: string;
+					displayName?: string | null;
+					avatar?: string | null;
+				}>;
+			};
+
+			return data.actors.map((actor) => ({
+				did: actor.did,
+				handle: actor.handle,
+				displayName: actor.displayName ?? null,
+				avatar: actor.avatar ?? null,
+			}));
+		} catch (error) {
+			this.logger.warn(`Failed to search actors: ${error}`);
+			return [];
 		}
 	}
 }

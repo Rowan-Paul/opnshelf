@@ -2,7 +2,7 @@ import {
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Film } from "lucide-react";
 import { useEffect } from "react";
@@ -27,7 +27,7 @@ function detectUserTimezone(): string {
 	}
 }
 
-function detectUserTimeFormat(): string {
+function detectUserTimeFormat(): "12h" | "24h" {
 	try {
 		const hour12 = Intl.DateTimeFormat().resolvedOptions().hour12;
 		return hour12 ? "12h" : "24h";
@@ -40,7 +40,9 @@ function AuthCompletePage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
-	const updateSettingsMutation = usersControllerUpdateMySettingsMutation();
+	const updateSettingsMutation = useMutation({
+		...usersControllerUpdateMySettingsMutation(),
+	});
 
 	const { data: userSettings } = useQuery({
 		...usersControllerGetMySettingsOptions(),

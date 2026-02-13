@@ -2,9 +2,10 @@ import { authControllerMeOptions, getLoginUrl } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Film, LogIn } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { env } from "@/env";
 
 const loginSearchSchema = z.object({
 	error: z.enum(["auth_failed", "callback_failed"]).optional(),
@@ -23,9 +24,21 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [suggestions, setSuggestions] = useState<
+		Array<{
+			did: string;
+			handle: string;
+			displayName: string | null;
+			avatar: string | null;
+		}>
+	>([]);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const navigate = useNavigate();
 	const { error, redirect, reason } = Route.useSearch();
 	const handleId = useId();
+	const suggestionsRef = useRef<HTMLDivElement>(null);
+	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Check if user is already logged in using generated TanStack Query hook
 	const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -40,6 +53,63 @@ function LoginPage() {
 			navigate({ to: redirect || "/shelf" });
 		}
 	}, [user, isAuthLoading, navigate, redirect]);
+
+	// Fetch suggestions when handle changes
+	useEffect(() => {
+		const fetchSuggestions = async () => {
+			if (handle.trim().length < 2) {
+				setSuggestions([]);
+				return;
+			}
+
+			setIsLoadingSuggestions(true);
+			try {
+				const response = await fetch(
+					`${env.VITE_API_URL}/auth/suggestions?q=${encodeURIComponent(handle.trim())}`,
+				);
+				if (response.ok) {
+					const data = (await response.json()) as Array<{
+						did: string;
+						handle: string;
+						displayName: string | null;
+						avatar: string | null;
+					}>;
+					setSuggestions(data);
+				}
+			} catch {
+				setSuggestions([]);
+			} finally {
+				setIsLoadingSuggestions(false);
+			}
+		};
+
+		if (debounceRef.current) {
+			clearTimeout(debounceRef.current);
+		}
+
+		debounceRef.current = setTimeout(fetchSuggestions, 300);
+
+		return () => {
+			if (debounceRef.current) {
+				clearTimeout(debounceRef.current);
+			}
+		};
+	}, [handle]);
+
+	// Close suggestions when clicking outside
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				suggestionsRef.current &&
+				!suggestionsRef.current.contains(e.target as Node)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -104,7 +174,7 @@ function LoginPage() {
 
 					{/* Login form */}
 					<form onSubmit={handleSubmit} className="space-y-6">
-						<div>
+						<div className="relative">
 							<label
 								htmlFor={handleId}
 								className="block text-sm font-medium text-gray-300 mb-2"
@@ -115,11 +185,68 @@ function LoginPage() {
 								id={handleId}
 								type="text"
 								value={handle}
-								onChange={(e) => setHandle(e.target.value)}
+								onChange={(e) => {
+									setHandle(e.target.value);
+									setShowSuggestions(true);
+								}}
+								onFocus={() => setShowSuggestions(true)}
 								placeholder="username.bsky.social"
 								className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
 								disabled={isSubmitting}
+								autoComplete="off"
 							/>
+							{showSuggestions && suggestions.length > 0 && (
+								<div
+									ref={suggestionsRef}
+									className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden"
+								>
+									{suggestions.map((actor) => (
+										<button
+											key={actor.did}
+											type="button"
+											onClick={() => {
+												setHandle(actor.handle);
+												setShowSuggestions(false);
+												setSuggestions([]);
+											}}
+											className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-700 transition-colors text-left"
+										>
+											{actor.avatar ? (
+												<img
+													src={actor.avatar}
+													alt=""
+													className="w-8 h-8 rounded-full object-cover"
+												/>
+											) : (
+												<div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+													<span className="text-sm text-gray-300">
+														{actor.handle[0]?.toUpperCase()}
+													</span>
+												</div>
+											)}
+											<div className="flex-1 min-w-0">
+												<div className="text-white font-medium truncate">
+													{actor.displayName || actor.handle}
+												</div>
+												<div className="text-gray-400 text-sm truncate">
+													{actor.handle}
+												</div>
+											</div>
+										</button>
+									))}
+								</div>
+							)}
+							{showSuggestions && isLoadingSuggestions && (
+								<div
+									ref={suggestionsRef}
+									className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-4"
+								>
+									<div className="flex items-center justify-center gap-2 text-gray-400">
+										<div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+										<span className="text-sm">Searching...</span>
+									</div>
+								</div>
+							)}
 						</div>
 
 						<button

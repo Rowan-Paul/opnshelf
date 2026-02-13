@@ -7,7 +7,6 @@ import {
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import {
@@ -93,7 +92,7 @@ const MovieCard = ({
 				minute: "2-digit",
 				hour12: !is24Hour,
 				timeZone: timezone,
-		  })
+			})
 		: null;
 
 	return (

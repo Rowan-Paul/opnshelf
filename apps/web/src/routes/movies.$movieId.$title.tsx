@@ -62,15 +62,43 @@ export const Route = createFileRoute("/movies/$movieId/$title")({
 
 		return data as TmdbMovieDetailDto;
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{
-				title: loaderData
-					? `${loaderData.title} | OpnShelf`
-					: "Movie | OpnShelf",
-			},
-		],
-	}),
+	head: ({ loaderData }) => {
+		const posterUrl = loaderData?.poster_path
+			? `https://image.tmdb.org/t/p/w780${loaderData.poster_path}`
+			: null;
+		const title = loaderData
+			? `${loaderData.title} | OpnShelf`
+			: "Movie | OpnShelf";
+		const url = typeof window !== "undefined" ? window.location.href : "";
+
+		return {
+			meta: [
+				{ title },
+				{
+					name: "description",
+					content: loaderData?.overview?.slice(0, 160) || "",
+				},
+				{ property: "og:title", content: title },
+				{
+					property: "og:description",
+					content: loaderData?.overview?.slice(0, 160) || "",
+				},
+				{ property: "og:type", content: "video.movie" },
+				{ property: "og:url", content: url },
+				...(posterUrl ? [{ property: "og:image", content: posterUrl }] : []),
+				{ property: "og:image:width", content: "780" },
+				{ property: "og:image:height", content: "1170" },
+				{ name: "twitter:card", content: "summary_large_image" },
+				{ name: "twitter:title", content: title },
+				{
+					name: "twitter:description",
+					content: loaderData?.overview?.slice(0, 160) || "",
+				},
+				...(posterUrl ? [{ name: "twitter:image", content: posterUrl }] : []),
+				{ name: "twitter:url", content: url },
+			],
+		};
+	},
 	component: MovieDetailPage,
 });
 

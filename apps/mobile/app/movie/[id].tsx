@@ -860,7 +860,11 @@ export default function MovieDetailScreen() {
 								watchHistory.map((watch) => (
 									<View key={watch.id} style={styles.historyItem}>
 										<Text style={styles.historyDate}>
-											{formatWatchDate(watch.watchedDate, userTimezone, is24Hour)}
+											{formatWatchDate(
+												watch.watchedDate,
+												userTimezone,
+												is24Hour,
+											)}
 										</Text>
 										<TouchableOpacity
 											onPress={() => handleDeleteWatchEntry(watch.id)}

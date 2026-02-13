@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -105,6 +105,18 @@ export const usersControllerGetMySettings = <ThrowOnError extends boolean = fals
  */
 export const usersControllerUpdateMySettings = <ThrowOnError extends boolean = false>(options: Options<UsersControllerUpdateMySettingsData, ThrowOnError>) => (options.client ?? client).patch<UsersControllerUpdateMySettingsResponses, UsersControllerUpdateMySettingsErrors, ThrowOnError>({
     url: '/users/me/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete current user's account
+ */
+export const usersControllerDeleteMyAccount = <ThrowOnError extends boolean = false>(options: Options<UsersControllerDeleteMyAccountData, ThrowOnError>) => (options.client ?? client).delete<UsersControllerDeleteMyAccountResponses, UsersControllerDeleteMyAccountErrors, ThrowOnError>({
+    url: '/users/me/account',
     ...options,
     headers: {
         'Content-Type': 'application/json',

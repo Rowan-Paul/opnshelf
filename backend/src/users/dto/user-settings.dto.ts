@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserSettingsDto {
 	@ApiProperty({
@@ -19,6 +19,17 @@ export class UpdateUserSettingsDto {
 	@IsString()
 	@IsOptional()
 	timezone?: string;
+}
+
+export class DeleteUserAccountDto {
+	@ApiProperty({
+		description:
+			"Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.",
+		default: false,
+	})
+	@IsBoolean()
+	@IsOptional()
+	deletePDSData?: boolean;
 }
 
 export class UserSettingsDto {
