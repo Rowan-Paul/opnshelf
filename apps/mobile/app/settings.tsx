@@ -3,8 +3,8 @@ import {
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Globe, Clock, ChevronRight, Loader2 } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronRight, Clock, Globe, Loader2 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
 	Modal,
@@ -19,8 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
+import { borderRadius, colors, spacing } from "@/constants/theme";
 import { useToast } from "@/contexts/toast";
-import { colors, spacing, borderRadius } from "@/constants/theme";
 
 // Common timezones grouped by region
 const TIMEZONES = [
@@ -106,7 +106,7 @@ const ALL_ZONES = TIMEZONES.flatMap((group) =>
 );
 
 export default function SettingsScreen() {
-	const router = useRouter();
+	const _router = useRouter();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
@@ -239,7 +239,11 @@ export default function SettingsScreen() {
 								)}
 							</View>
 							{updateSettingsMutation.isPending && (
-								<Loader2 size={16} color={colors.warning} style={styles.spinner} />
+								<Loader2
+									size={16}
+									color={colors.warning}
+									style={styles.spinner}
+								/>
 							)}
 							<ChevronRight size={20} color={colors.textMuted} />
 						</Pressable>
@@ -284,7 +288,9 @@ export default function SettingsScreen() {
 								<View style={styles.previewContent}>
 									<Clock size={20} color={colors.warning} />
 									<View>
-										<Text style={styles.previewLabel}>Current time preview</Text>
+										<Text style={styles.previewLabel}>
+											Current time preview
+										</Text>
 										<Text style={styles.previewValue}>
 											{getCurrentTimeDisplay()}
 										</Text>

@@ -64,9 +64,14 @@ pnpm test -- --testNamePattern="should"   # Run tests matching pattern
 pnpm test:watch       # Watch mode
 ```
 
-### Mobile App
+### Mobile App (apps/mobile)
+Uses **Biome** (same as web app):
+
 ```bash
 cd apps/mobile
+pnpm lint             # Run linter
+pnpm format           # Format code
+pnpm check            # Run both lint and format checks
 pnpm typecheck        # TypeScript check only
 ```
 

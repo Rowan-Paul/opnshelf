@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { getLoginUrl } from "@opnshelf/api";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	KeyboardAvoidingView,
@@ -10,9 +13,6 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { getLoginUrl } from "@opnshelf/api";
 import { useAuth } from "@/contexts/auth";
 
 export default function LoginScreen() {
@@ -48,7 +48,7 @@ export default function LoginScreen() {
 
 			const result = await WebBrowser.openAuthSessionAsync(
 				loginUrl,
-				"opnshelf://auth/callback"
+				"opnshelf://auth/callback",
 			);
 
 			if (result.type === "success") {
@@ -73,7 +73,14 @@ export default function LoginScreen() {
 
 	if (isAuthLoading) {
 		return (
-			<View style={{ flex: 1, backgroundColor: "#030712", justifyContent: "center", alignItems: "center" }}>
+			<View
+				style={{
+					flex: 1,
+					backgroundColor: "#030712",
+					justifyContent: "center",
+					alignItems: "center",
+				}}
+			>
 				<ActivityIndicator size="large" color="#a855f7" />
 			</View>
 		);
@@ -227,14 +234,26 @@ export default function LoginScreen() {
 							{isSubmitting ? (
 								<>
 									<ActivityIndicator size="small" color="#fff" />
-									<Text style={{ color: "#ffffff", fontWeight: "600", fontSize: 16 }}>
+									<Text
+										style={{
+											color: "#ffffff",
+											fontWeight: "600",
+											fontSize: 16,
+										}}
+									>
 										Redirecting...
 									</Text>
 								</>
 							) : (
 								<>
 									<Ionicons name="log-in" size={20} color="#fff" />
-									<Text style={{ color: "#ffffff", fontWeight: "600", fontSize: 16 }}>
+									<Text
+										style={{
+											color: "#ffffff",
+											fontWeight: "600",
+											fontSize: 16,
+										}}
+									>
 										Sign in
 									</Text>
 								</>

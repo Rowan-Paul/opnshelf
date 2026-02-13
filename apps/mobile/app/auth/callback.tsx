@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useAuth } from "@/contexts/auth";
 import { colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/auth";
 
 export default function AuthCallbackScreen() {
 	const { token } = useLocalSearchParams<{ token?: string }>();

@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Film, Search, Shield, Share2 } from "lucide-react-native";
+import { Film, Search, Share2, Shield } from "lucide-react-native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -10,7 +10,8 @@ const features = [
 	{
 		icon: Film,
 		title: "Track Your Media",
-		description: "Keep track of movies, shows, and games you've watched and played",
+		description:
+			"Keep track of movies, shows, and games you've watched and played",
 	},
 	{
 		icon: Shield,
@@ -50,11 +51,17 @@ export default function HomeScreen() {
 					{features.map((feature, index) => (
 						<Card key={index} style={styles.featureCard}>
 							<CardHeader>
-								<feature.icon size={32} color={colors.primary} style={styles.featureIcon} />
+								<feature.icon
+									size={32}
+									color={colors.primary}
+									style={styles.featureIcon}
+								/>
 								<Text style={styles.featureTitle}>{feature.title}</Text>
 							</CardHeader>
 							<CardContent>
-								<Text style={styles.featureDescription}>{feature.description}</Text>
+								<Text style={styles.featureDescription}>
+									{feature.description}
+								</Text>
 							</CardContent>
 						</Card>
 					))}

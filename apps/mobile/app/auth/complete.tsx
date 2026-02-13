@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Text, View } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import { authControllerMeOptions } from "@opnshelf/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 import { saveSessionToken } from "@/lib/api";
 
 export default function AuthCompleteScreen() {
@@ -44,7 +44,11 @@ export default function AuthCompleteScreen() {
 			}}
 		>
 			<Ionicons name="film" size={48} color="#a855f7" />
-			<ActivityIndicator size="large" color="#a855f7" style={{ marginVertical: 16 }} />
+			<ActivityIndicator
+				size="large"
+				color="#a855f7"
+				style={{ marginVertical: 16 }}
+			/>
 			<Text style={{ color: "#9ca3af" }}>Completing sign-in...</Text>
 		</View>
 	);

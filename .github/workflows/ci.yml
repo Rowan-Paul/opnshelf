@@ -125,7 +125,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm --filter mobile run lint
+        run: pnpm --filter mobile run check
 
       - name: Typecheck
         run: pnpm --filter mobile exec tsc --noEmit

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Search, Library } from "lucide-react-native";
+import { Home, Library, Search } from "lucide-react-native";
 import { colors } from "@/constants/theme";
 
 export default function TabLayout() {
@@ -38,7 +38,9 @@ export default function TabLayout() {
 				name="shelf"
 				options={{
 					title: "Shelf",
-					tabBarIcon: ({ color, size }) => <Library size={size} color={color} />,
+					tabBarIcon: ({ color, size }) => (
+						<Library size={size} color={color} />
+					),
 					headerShown: false,
 				}}
 			/>

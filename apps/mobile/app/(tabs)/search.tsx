@@ -1,4 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	moviesControllerDiscoverMoviesOptions,
 	moviesControllerGetUserMoviesOptions,
@@ -9,32 +8,34 @@ import {
 	type TmdbMovieResultDto,
 } from "@opnshelf/api";
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Check, Loader2, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+	type GestureResponderEvent,
+	Platform,
 	Pressable,
 	StyleSheet,
 	Text,
 	View,
-	Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/auth";
-import { useToast } from "@/contexts/toast";
-import { SearchInput } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { colors, spacing, borderRadius } from "@/constants/theme";
-import { Image } from "expo-image";
-import * as Haptics from "expo-haptics";
 import Animated, {
+	Easing,
 	useAnimatedStyle,
 	useSharedValue,
+	withRepeat,
 	withSpring,
 	withTiming,
-	withRepeat,
-	Easing,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SearchInput } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { borderRadius, colors, spacing } from "@/constants/theme";
+import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/contexts/toast";
 
 const DEBOUNCE_MS = 300;
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w342";
@@ -64,7 +65,7 @@ const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
 	rotation.value = withRepeat(
 		withTiming(360, { duration: 1000, easing: Easing.linear }),
 		-1,
-		false
+		false,
 	);
 
 	const animatedStyle = useAnimatedStyle(() => ({
@@ -78,19 +79,29 @@ const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
 	);
 };
 
-const MovieItem = ({ movie, isWatched, isMarking, isUnmarking, onToggle, onPress }: MovieItemProps) => {
+const MovieItem = ({
+	movie,
+	isWatched,
+	isMarking,
+	isUnmarking,
+	onToggle,
+	onPress,
+}: MovieItemProps) => {
 	const scale = useSharedValue(1);
 	const opacity = useSharedValue(1);
 
-	const handleToggle = useCallback((e: any) => {
-		e.stopPropagation();
-		
-		if (Platform.OS !== "web") {
-			Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-		}
-		
-		onToggle(movie.id.toString(), isWatched);
-	}, [movie.id, isWatched, onToggle]);
+	const handleToggle = useCallback(
+		(e: GestureResponderEvent) => {
+			e.stopPropagation();
+
+			if (Platform.OS !== "web") {
+				Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+			}
+
+			onToggle(movie.id.toString(), isWatched);
+		},
+		[movie.id, isWatched, onToggle],
+	);
 
 	const handlePressIn = useCallback(() => {
 		scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
@@ -124,7 +135,7 @@ const MovieItem = ({ movie, isWatched, isMarking, isUnmarking, onToggle, onPress
 						<Text style={styles.noPosterText}>No poster</Text>
 					</View>
 				)}
-				
+
 				{/* Quick add button - icon only, top-right with expanded touch area */}
 				<AnimatedPressable
 					onPress={handleToggle}
@@ -214,8 +225,7 @@ export default function SearchScreen() {
 
 	// Discover popular movies when no search query
 	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
-		...moviesControllerDiscoverMoviesOptions({
-		}),
+		...moviesControllerDiscoverMoviesOptions({}),
 		enabled: debouncedQuery.length === 0,
 	});
 
@@ -265,7 +275,7 @@ export default function SearchScreen() {
 				markMutation.mutate({ body: { movieId } });
 			}
 		},
-		[user, markMutation, unmarkMutation, showToast]
+		[user, markMutation, unmarkMutation, showToast],
 	);
 
 	const handleMoviePress = useCallback(
@@ -278,7 +288,7 @@ export default function SearchScreen() {
 				},
 			});
 		},
-		[]
+		[],
 	);
 
 	const renderMovieItem: ListRenderItem<TmdbMovieResultDto> = useCallback(
@@ -286,9 +296,11 @@ export default function SearchScreen() {
 			const movieId = item.id.toString();
 			const isWatched = watchedMovieIds.has(movieId);
 			const isMarking =
-				markMutation.isPending && markMutation.variables?.body?.movieId === movieId;
+				markMutation.isPending &&
+				markMutation.variables?.body?.movieId === movieId;
 			const isUnmarking =
-				unmarkMutation.isPending && unmarkMutation.variables?.path?.movieId === movieId;
+				unmarkMutation.isPending &&
+				unmarkMutation.variables?.path?.movieId === movieId;
 
 			return (
 				<MovieItem
@@ -301,10 +313,19 @@ export default function SearchScreen() {
 				/>
 			);
 		},
-		[watchedMovieIds, markMutation, unmarkMutation, handleToggleWatched, handleMoviePress]
+		[
+			watchedMovieIds,
+			markMutation,
+			unmarkMutation,
+			handleToggleWatched,
+			handleMoviePress,
+		],
 	);
 
-	const keyExtractor = useCallback((item: TmdbMovieResultDto) => item.id.toString(), []);
+	const keyExtractor = useCallback(
+		(item: TmdbMovieResultDto) => item.id.toString(),
+		[],
+	);
 
 	const renderSkeleton = () => (
 		<View style={styles.skeletonGrid}>

@@ -2,12 +2,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ToastProvider } from "@/contexts/toast";
 import { initializeApiClient } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
-import { colors } from "@/constants/theme";
-import { LoadingScreen } from "@/components/LoadingScreen";
 
 function AppContent() {
 	const { isLoading } = useAuth();

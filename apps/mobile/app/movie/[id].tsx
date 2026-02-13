@@ -1,5 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, useCallback } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import type {
+	TmdbCastDto,
+	TmdbCrewDto,
+	TmdbMovieDetailDto,
+	WatchHistoryItemDto,
+} from "@opnshelf/api";
 import {
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
@@ -9,12 +14,14 @@ import {
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import type { TmdbCastDto, TmdbCrewDto, TmdbMovieDetailDto, WatchHistoryItemDto } from "@opnshelf/api";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import DateTimePicker, {
+	type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Modal,
@@ -27,11 +34,11 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/auth";
-import { useToast } from "@/contexts/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { colors, borderRadius } from "@/constants/theme";
+import { borderRadius, colors } from "@/constants/theme";
+import { useAuth } from "@/contexts/auth";
+import { useToast } from "@/contexts/toast";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
 const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";
@@ -56,7 +63,10 @@ function formatWatchDate(dateString: string): string {
 }
 
 export default function MovieDetailScreen() {
-	const { id: movieId, title } = useLocalSearchParams<{ id: string; title?: string }>();
+	const { id: movieId, title } = useLocalSearchParams<{
+		id: string;
+		title?: string;
+	}>();
 	const router = useRouter();
 	const { user } = useAuth();
 	const { showToast } = useToast();
@@ -203,7 +213,7 @@ export default function MovieDetailScreen() {
 		(trackedMovieId: string) => {
 			deleteWatchEntryMutation.mutate({ path: { trackedMovieId } });
 		},
-		[deleteWatchEntryMutation]
+		[deleteWatchEntryMutation],
 	);
 
 	const handleShare = useCallback(async () => {
@@ -217,27 +227,33 @@ export default function MovieDetailScreen() {
 		}
 	}, [movieId, title, showToast]);
 
-	const onDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
-		setShowDatePicker(false);
-		if (selectedDate) {
-			const newDate = new Date(customDate);
-			newDate.setFullYear(selectedDate.getFullYear());
-			newDate.setMonth(selectedDate.getMonth());
-			newDate.setDate(selectedDate.getDate());
-			setCustomDate(newDate);
-			setShowTimePicker(true);
-		}
-	}, [customDate]);
+	const onDateChange = useCallback(
+		(_event: DateTimePickerEvent, selectedDate?: Date) => {
+			setShowDatePicker(false);
+			if (selectedDate) {
+				const newDate = new Date(customDate);
+				newDate.setFullYear(selectedDate.getFullYear());
+				newDate.setMonth(selectedDate.getMonth());
+				newDate.setDate(selectedDate.getDate());
+				setCustomDate(newDate);
+				setShowTimePicker(true);
+			}
+		},
+		[customDate],
+	);
 
-	const onTimeChange = useCallback((event: DateTimePickerEvent, selectedTime?: Date) => {
-		setShowTimePicker(false);
-		if (selectedTime) {
-			const newDate = new Date(customDate);
-			newDate.setHours(selectedTime.getHours());
-			newDate.setMinutes(selectedTime.getMinutes());
-			setCustomDate(newDate);
-		}
-	}, [customDate]);
+	const onTimeChange = useCallback(
+		(_event: DateTimePickerEvent, selectedTime?: Date) => {
+			setShowTimePicker(false);
+			if (selectedTime) {
+				const newDate = new Date(customDate);
+				newDate.setHours(selectedTime.getHours());
+				newDate.setMinutes(selectedTime.getMinutes());
+				setCustomDate(newDate);
+			}
+		},
+		[customDate],
+	);
 
 	const openDateModal = useCallback(() => {
 		setCustomDate(new Date());
@@ -271,7 +287,10 @@ export default function MovieDetailScreen() {
 
 	return (
 		<>
-			<ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+			<ScrollView
+				style={styles.container}
+				contentContainerStyle={styles.scrollContent}
+			>
 				{/* Hero Section with Backdrop */}
 				<View style={styles.heroWrapper}>
 					{backdropUrl ? (
@@ -281,7 +300,9 @@ export default function MovieDetailScreen() {
 							contentFit="cover"
 						/>
 					) : (
-						<View style={[styles.backdrop, { backgroundColor: movieColors.muted }]} />
+						<View
+							style={[styles.backdrop, { backgroundColor: movieColors.muted }]}
+						/>
 					)}
 
 					{/* Back button */}
@@ -321,7 +342,11 @@ export default function MovieDetailScreen() {
 							<View style={styles.metaRow}>
 								{!!releaseYear && (
 									<View style={styles.metaItem}>
-										<Ionicons name="calendar-outline" size={14} color={movieColors.accent} />
+										<Ionicons
+											name="calendar-outline"
+											size={14}
+											color={movieColors.accent}
+										/>
 										<Text style={styles.metaText}>{releaseYear}</Text>
 									</View>
 								)}
@@ -331,7 +356,11 @@ export default function MovieDetailScreen() {
 										style={styles.metaItem}
 										activeOpacity={0.8}
 									>
-										<Ionicons name="time-outline" size={14} color={movieColors.accent} />
+										<Ionicons
+											name="time-outline"
+											size={14}
+											color={movieColors.accent}
+										/>
 										<Text style={styles.metaText}>
 											{formatRuntime(movie.runtime, showHours)}
 										</Text>
@@ -354,7 +383,10 @@ export default function MovieDetailScreen() {
 										disabled={isPending}
 										style={[
 											styles.primaryButton,
-											{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
+											{
+												backgroundColor: movieColors.primary,
+												opacity: isPending ? 0.7 : 1,
+											},
 										]}
 										activeOpacity={0.8}
 									>
@@ -368,78 +400,92 @@ export default function MovieDetailScreen() {
 										)}
 									</TouchableOpacity>
 
-								<TouchableOpacity
-									onPress={openDateModal}
-									style={styles.secondaryButton}
-									activeOpacity={0.8}
-								>
-									<View style={styles.buttonContent}>
-										<Ionicons name="calendar" size={18} color="#9ca3af" />
-										<Text style={styles.secondaryButtonText}>
-											Add on Different Date
-										</Text>
-									</View>
-								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={handleShare}
-									style={styles.secondaryButton}
-									activeOpacity={0.8}
-								>
-									<View style={styles.buttonContent}>
-										<Ionicons name="share-outline" size={18} color="#9ca3af" />
-										<Text style={styles.secondaryButtonText}>Share</Text>
-									</View>
-								</TouchableOpacity>
-							</>
-						) : (
-							<>
-								<TouchableOpacity
-									onPress={handleMarkWatched}
-									disabled={isPending}
-									style={[
-										styles.primaryButton,
-										{ backgroundColor: movieColors.primary, opacity: isPending ? 0.7 : 1 },
-									]}
-									activeOpacity={0.8}
-								>
-									{isPending ? (
-										<ActivityIndicator color="#f9fafb" />
-									) : (
+									<TouchableOpacity
+										onPress={openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
 										<View style={styles.buttonContent}>
-											<Ionicons name="refresh" size={20} color="#f9fafb" />
-											<Text style={styles.buttonText}>Watch Now</Text>
+											<Ionicons name="calendar" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Add on Different Date
+											</Text>
 										</View>
-									)}
-								</TouchableOpacity>
+									</TouchableOpacity>
+									<TouchableOpacity
+										onPress={handleShare}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons
+												name="share-outline"
+												size={18}
+												color="#9ca3af"
+											/>
+											<Text style={styles.secondaryButtonText}>Share</Text>
+										</View>
+									</TouchableOpacity>
+								</>
+							) : (
+								<>
+									<TouchableOpacity
+										onPress={handleMarkWatched}
+										disabled={isPending}
+										style={[
+											styles.primaryButton,
+											{
+												backgroundColor: movieColors.primary,
+												opacity: isPending ? 0.7 : 1,
+											},
+										]}
+										activeOpacity={0.8}
+									>
+										{isPending ? (
+											<ActivityIndicator color="#f9fafb" />
+										) : (
+											<View style={styles.buttonContent}>
+												<Ionicons name="refresh" size={20} color="#f9fafb" />
+												<Text style={styles.buttonText}>Watch Now</Text>
+											</View>
+										)}
+									</TouchableOpacity>
 
-								<TouchableOpacity
-									onPress={openDateModal}
-									style={styles.secondaryButton}
-									activeOpacity={0.8}
-								>
-									<View style={styles.buttonContent}>
-										<Ionicons name="calendar" size={18} color="#9ca3af" />
-										<Text style={styles.secondaryButtonText}>
-											Watch on Different Date
-										</Text>
-									</View>
-								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={handleShare}
-									style={styles.secondaryButton}
-									activeOpacity={0.8}
-								>
-									<View style={styles.buttonContent}>
-										<Ionicons name="share-outline" size={18} color="#9ca3af" />
-										<Text style={styles.secondaryButtonText}>Share</Text>
-									</View>
-								</TouchableOpacity>
-							</>
-						)
+									<TouchableOpacity
+										onPress={openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons name="calendar" size={18} color="#9ca3af" />
+											<Text style={styles.secondaryButtonText}>
+												Watch on Different Date
+											</Text>
+										</View>
+									</TouchableOpacity>
+									<TouchableOpacity
+										onPress={handleShare}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons
+												name="share-outline"
+												size={18}
+												color="#9ca3af"
+											/>
+											<Text style={styles.secondaryButtonText}>Share</Text>
+										</View>
+									</TouchableOpacity>
+								</>
+							)
 						) : (
 							<TouchableOpacity
 								onPress={() => router.push("/login")}
-								style={[styles.primaryButton, { backgroundColor: movieColors.primary }]}
+								style={[
+									styles.primaryButton,
+									{ backgroundColor: movieColors.primary },
+								]}
 								activeOpacity={0.8}
 							>
 								<Text style={styles.buttonText}>Sign in to Track</Text>
@@ -460,7 +506,9 @@ export default function MovieDetailScreen() {
 										Watched on {formattedWatchedDate}
 									</Text>
 									{watchHistory && watchHistory.length > 1 && (
-										<Badge variant="secondary">{watchHistory.length} watches</Badge>
+										<Badge variant="secondary">
+											{watchHistory.length} watches
+										</Badge>
 									)}
 								</View>
 							)}
@@ -485,7 +533,11 @@ export default function MovieDetailScreen() {
 										<ActivityIndicator size="small" color="#ef4444" />
 									) : (
 										<>
-											<Ionicons name="trash-outline" size={16} color="#ef4444" />
+											<Ionicons
+												name="trash-outline"
+												size={16}
+												color="#ef4444"
+											/>
 											<Text style={styles.removeText}>Remove from shelf</Text>
 										</>
 									)}
@@ -497,7 +549,9 @@ export default function MovieDetailScreen() {
 					{/* Overview */}
 					{movie?.overview && (
 						<View style={styles.section}>
-							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+							<Text
+								style={[styles.sectionTitle, { color: movieColors.primary }]}
+							>
 								Overview
 							</Text>
 							<Text style={styles.overview}>{movie.overview}</Text>
@@ -551,7 +605,9 @@ export default function MovieDetailScreen() {
 					{/* Genres */}
 					{movie?.genres && movie.genres.length > 0 && (
 						<View style={styles.section}>
-							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+							<Text
+								style={[styles.sectionTitle, { color: movieColors.primary }]}
+							>
 								Genres
 							</Text>
 							<View style={styles.genresContainer}>
@@ -566,7 +622,9 @@ export default function MovieDetailScreen() {
 											},
 										]}
 									>
-										<Text style={[styles.genreText, { color: movieColors.accent }]}>
+										<Text
+											style={[styles.genreText, { color: movieColors.accent }]}
+										>
 											{genre.name}
 										</Text>
 									</View>
@@ -578,7 +636,9 @@ export default function MovieDetailScreen() {
 					{/* Cast */}
 					{movie?.credits?.cast && movie.credits.cast.length > 0 && (
 						<View style={styles.section}>
-							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+							<Text
+								style={[styles.sectionTitle, { color: movieColors.primary }]}
+							>
 								Cast
 							</Text>
 							<View style={styles.castContainer}>
@@ -596,13 +656,17 @@ export default function MovieDetailScreen() {
 											<View style={styles.castImageContainer}>
 												{person.profile_path ? (
 													<Image
-														source={{ uri: `https://image.tmdb.org/t/p/w185${person.profile_path}` }}
+														source={{
+															uri: `https://image.tmdb.org/t/p/w185${person.profile_path}`,
+														}}
 														style={styles.castImage}
 														contentFit="cover"
 													/>
 												) : (
 													<View style={styles.castImagePlaceholder}>
-														<Text style={styles.castImagePlaceholderText}>No photo</Text>
+														<Text style={styles.castImagePlaceholderText}>
+															No photo
+														</Text>
 													</View>
 												)}
 											</View>
@@ -610,7 +674,12 @@ export default function MovieDetailScreen() {
 												{person.name}
 											</Text>
 											{person.character && (
-												<Text style={[styles.castCharacter, { color: movieColors.muted }]}>
+												<Text
+													style={[
+														styles.castCharacter,
+														{ color: movieColors.muted },
+													]}
+												>
 													as {person.character}
 												</Text>
 											)}
@@ -630,7 +699,9 @@ export default function MovieDetailScreen() {
 					{/* Crew */}
 					{movie?.credits?.crew && movie.credits.crew.length > 0 && (
 						<View style={styles.section}>
-							<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+							<Text
+								style={[styles.sectionTitle, { color: movieColors.primary }]}
+							>
 								Crew
 							</Text>
 							<View style={styles.crewGrid}>
@@ -643,7 +714,9 @@ export default function MovieDetailScreen() {
 										<Text style={styles.crewName} numberOfLines={1}>
 											{person.name}
 										</Text>
-										<Text style={[styles.crewJob, { color: movieColors.muted }]}>
+										<Text
+											style={[styles.crewJob, { color: movieColors.muted }]}
+										>
 											{person.job}
 										</Text>
 									</TouchableOpacity>
@@ -669,7 +742,9 @@ export default function MovieDetailScreen() {
 								<Ionicons name="close" size={24} color={colors.text} />
 							</Pressable>
 						</View>
-						<Text style={styles.modalDescription}>When did you watch this movie?</Text>
+						<Text style={styles.modalDescription}>
+							When did you watch this movie?
+						</Text>
 
 						<View style={styles.dateTimeContainer}>
 							<TouchableOpacity
@@ -677,7 +752,11 @@ export default function MovieDetailScreen() {
 								style={styles.dateTimeButton}
 								activeOpacity={0.7}
 							>
-								<Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
+								<Ionicons
+									name="calendar-outline"
+									size={20}
+									color={colors.textMuted}
+								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleDateString("en-US", {
 										year: "numeric",
@@ -691,7 +770,11 @@ export default function MovieDetailScreen() {
 								style={styles.dateTimeButton}
 								activeOpacity={0.7}
 							>
-								<Ionicons name="time-outline" size={20} color={colors.textMuted} />
+								<Ionicons
+									name="time-outline"
+									size={20}
+									color={colors.textMuted}
+								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleTimeString("en-US", {
 										hour: "2-digit",
@@ -704,7 +787,11 @@ export default function MovieDetailScreen() {
 
 						{/* Date/Time Pickers inside modal */}
 						{showDatePicker && (
-							<DateTimePicker value={customDate} mode="date" onChange={onDateChange} />
+							<DateTimePicker
+								value={customDate}
+								mode="date"
+								onChange={onDateChange}
+							/>
 						)}
 						{showTimePicker && (
 							<DateTimePicker
@@ -757,7 +844,9 @@ export default function MovieDetailScreen() {
 							{watchHistory && watchHistory.length > 0 ? (
 								watchHistory.map((watch) => (
 									<View key={watch.id} style={styles.historyItem}>
-										<Text style={styles.historyDate}>{formatWatchDate(watch.watchedDate)}</Text>
+										<Text style={styles.historyDate}>
+											{formatWatchDate(watch.watchedDate)}
+										</Text>
 										<TouchableOpacity
 											onPress={() => handleDeleteWatchEntry(watch.id)}
 											disabled={deleteWatchEntryMutation.isPending}
@@ -765,11 +854,18 @@ export default function MovieDetailScreen() {
 											activeOpacity={0.7}
 										>
 											{deleteWatchEntryMutation.isPending &&
-											deleteWatchEntryMutation.variables?.path?.trackedMovieId ===
-												watch.id ? (
-												<ActivityIndicator size="small" color={colors.textMuted} />
+											deleteWatchEntryMutation.variables?.path
+												?.trackedMovieId === watch.id ? (
+												<ActivityIndicator
+													size="small"
+													color={colors.textMuted}
+												/>
 											) : (
-												<Ionicons name="trash-outline" size={18} color="#ef4444" />
+												<Ionicons
+													name="trash-outline"
+													size={18}
+													color="#ef4444"
+												/>
 											)}
 										</TouchableOpacity>
 									</View>
@@ -779,13 +875,15 @@ export default function MovieDetailScreen() {
 							)}
 						</ScrollView>
 
-						<Button variant="outline" onPress={() => setShowHistoryModal(false)}>
+						<Button
+							variant="outline"
+							onPress={() => setShowHistoryModal(false)}
+						>
 							<Text style={styles.secondaryButtonText}>Close</Text>
 						</Button>
 					</View>
 				</View>
 			</Modal>
-
 		</>
 	);
 }
