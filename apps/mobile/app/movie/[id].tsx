@@ -425,6 +425,23 @@ export default function MovieDetailScreen() {
 									</TouchableOpacity>
 
 									<TouchableOpacity
+										onPress={_openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons
+												name="calendar-outline"
+												size={18}
+												color="#9ca3af"
+											/>
+											<Text style={styles.secondaryButtonText}>
+												Watch on different date
+											</Text>
+										</View>
+									</TouchableOpacity>
+
+									<TouchableOpacity
 										onPress={() => setShowAddToListModal(true)}
 										style={[
 											styles.secondaryButton,
@@ -447,18 +464,6 @@ export default function MovieDetailScreen() {
 												{isInAnyList
 													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
 													: "Add to List"}
-											</Text>
-										</View>
-									</TouchableOpacity>
-									<TouchableOpacity
-										onPress={() => setShowAddToListModal(true)}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
-										<View style={styles.buttonContent}>
-											<Ionicons name="list-outline" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Add to List
 											</Text>
 										</View>
 									</TouchableOpacity>
@@ -502,6 +507,23 @@ export default function MovieDetailScreen() {
 									</TouchableOpacity>
 
 									<TouchableOpacity
+										onPress={_openDateModal}
+										style={styles.secondaryButton}
+										activeOpacity={0.8}
+									>
+										<View style={styles.buttonContent}>
+											<Ionicons
+												name="calendar-outline"
+												size={18}
+												color="#9ca3af"
+											/>
+											<Text style={styles.secondaryButtonText}>
+												Watch on different date
+											</Text>
+										</View>
+									</TouchableOpacity>
+
+									<TouchableOpacity
 										onPress={() => setShowAddToListModal(true)}
 										style={[
 											styles.secondaryButton,
@@ -524,18 +546,6 @@ export default function MovieDetailScreen() {
 												{isInAnyList
 													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
 													: "Add to List"}
-											</Text>
-										</View>
-									</TouchableOpacity>
-									<TouchableOpacity
-										onPress={() => setShowAddToListModal(true)}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
-										<View style={styles.buttonContent}>
-											<Ionicons name="list-outline" size={18} color="#9ca3af" />
-											<Text style={styles.secondaryButtonText}>
-												Add to List
 											</Text>
 										</View>
 									</TouchableOpacity>

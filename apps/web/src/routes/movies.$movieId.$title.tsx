@@ -3,6 +3,8 @@ import {
 	listsControllerGetListsForMovieOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
+	moviesControllerGetMovieWatchHistoryOptions,
+	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
@@ -10,7 +12,6 @@ import {
 	type TmdbMovieDetailDto,
 	type TrackedMovieDto,
 	usersControllerGetMySettingsOptions,
-	type WatchHistoryItemDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -25,7 +26,7 @@ import {
 	Share2,
 	Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
 import { CastSection } from "@/components/CastSection";
@@ -145,14 +146,12 @@ function MovieDetailPage() {
 	const userTimezone = userSettings?.timezone || "UTC";
 	const is24Hour = userSettings?.timeFormat === "24h";
 
-	const [watchHistory] = useState<WatchHistoryItemDto[]>([]);
-
-	useEffect(() => {
-		const fetchWatchHistory = async () => {
-			if (!user?.did || !movieId) return;
-		};
-		fetchWatchHistory();
-	}, [user?.did, movieId]);
+	const { data: watchHistory } = useQuery({
+		...moviesControllerGetMovieWatchHistoryOptions({
+			path: { userDid: user?.did || "", movieId },
+		}),
+		enabled: !!user?.did && !!movieId,
+	});
 
 	const isWatched = useMemo(() => {
 		if (!trackedMovies) return false;
@@ -190,6 +189,11 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
+				}),
+			});
 			toast.success("Added to your shelf");
 			setShowDateModal(false);
 		},
@@ -206,6 +210,11 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
+				}),
+			});
 			toast.success("Removed from your shelf");
 		},
 		onError: () => {
@@ -219,6 +228,11 @@ function MovieDetailPage() {
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetUserMoviesQueryKey({
 					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
 				}),
 			});
 			toast.success("Watch entry removed");
@@ -308,6 +322,14 @@ function MovieDetailPage() {
 											</button>
 											<button
 												type="button"
+												onClick={() => setShowDateModal(true)}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+											>
+												<Calendar className="w-4 h-4" />
+												Watch on different date
+											</button>
+											<button
+												type="button"
 												onClick={() => setShowListModal(true)}
 												className={`w-full py-2 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
 													isInAnyList
@@ -345,6 +367,14 @@ function MovieDetailPage() {
 														Watch Now
 													</>
 												)}
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowDateModal(true)}
+												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+											>
+												<Calendar className="w-4 h-4" />
+												Watch on different date
 											</button>
 											<button
 												type="button"
@@ -408,6 +438,14 @@ function MovieDetailPage() {
 									</button>
 									<button
 										type="button"
+										onClick={() => setShowDateModal(true)}
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+									>
+										<Calendar className="w-4 h-4" />
+										Watch on different date
+									</button>
+									<button
+										type="button"
 										onClick={() => setShowListModal(true)}
 										className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
 											isInAnyList
@@ -445,11 +483,11 @@ function MovieDetailPage() {
 												Watched on {formattedWatchedDate}
 											</p>
 										)}
-										{watchHistory.length > 1 && (
+										{(watchHistory?.length ?? 0) > 1 && (
 											<>
 												<div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
 													<History className="w-3 h-3" />
-													<span>{watchHistory.length} total watches</span>
+													<span>{watchHistory?.length} total watches</span>
 												</div>
 												<button
 													type="button"
@@ -461,7 +499,7 @@ function MovieDetailPage() {
 												</button>
 											</>
 										)}
-										{watchHistory.length === 1 && (
+										{(watchHistory?.length ?? 0) === 1 && (
 											<button
 												type="button"
 												onClick={handleUnmarkWatched}
@@ -497,6 +535,14 @@ function MovieDetailPage() {
 												Watch Now
 											</>
 										)}
+									</button>
+									<button
+										type="button"
+										onClick={() => setShowDateModal(true)}
+										className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+									>
+										<Calendar className="w-4 h-4" />
+										Watch on different date
 									</button>
 									<button
 										type="button"
@@ -574,8 +620,8 @@ function MovieDetailPage() {
 						</DialogDescription>
 					</DialogHeader>
 					<div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-						{watchHistory.length > 0 ? (
-							watchHistory.map((watch) => (
+						{(watchHistory?.length ?? 0) > 0 ? (
+							watchHistory?.map((watch) => (
 								<div
 									key={watch.id}
 									className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50"
