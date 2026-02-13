@@ -2,18 +2,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { getLoginUrl } from "@opnshelf/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Image,
 	KeyboardAvoidingView,
-	type LayoutRectangle,
+	Modal,
 	Platform,
+	ScrollView,
 	Text,
 	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:3001";
@@ -30,7 +32,8 @@ export default function LoginScreen() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [suggestions, setSuggestions] = useState<ActorSuggestion[]>([]);
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-	const [inputLayout, setInputLayout] = useState<LayoutRectangle | null>(null);
+	const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
+	const [modalInputValue, setModalInputValue] = useState("");
 	const router = useRouter();
 	const params = useLocalSearchParams<{
 		error?: "auth_failed" | "callback_failed";
@@ -42,17 +45,30 @@ export default function LoginScreen() {
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
-	const onInputLayout = useCallback(
-		(event: { nativeEvent: { layout: LayoutRectangle } }) => {
-			setInputLayout(event.nativeEvent.layout);
-		},
-		[],
-	);
+	// Open modal when user starts typing (1+ characters)
+	const handleInputChange = (text: string) => {
+		setHandle(text);
+		if (text.trim().length >= 1) {
+			setModalInputValue(text);
+			setShowSuggestionsModal(true);
+		} else {
+			setShowSuggestionsModal(false);
+		}
+	};
 
-	// Fetch suggestions when handle changes
+	// Close modal and keep current handle value
+	const handleCloseModal = () => {
+		setShowSuggestionsModal(false);
+		setSuggestions([]);
+		setIsLoadingSuggestions(false);
+	};
+
+	// Fetch suggestions when modalInputValue changes (while modal is open)
 	useEffect(() => {
+		if (!showSuggestionsModal) return;
+
 		const fetchSuggestions = async () => {
-			if (handle.trim().length < 2) {
+			if (modalInputValue.trim().length < 1) {
 				setSuggestions([]);
 				return;
 			}
@@ -60,7 +76,7 @@ export default function LoginScreen() {
 			setIsLoadingSuggestions(true);
 			try {
 				const response = await fetch(
-					`${API_URL}/auth/suggestions?q=${encodeURIComponent(handle.trim())}`,
+					`${API_URL}/auth/suggestions?q=${encodeURIComponent(modalInputValue.trim())}`,
 				);
 				if (response.ok) {
 					const data = (await response.json()) as ActorSuggestion[];
@@ -84,7 +100,7 @@ export default function LoginScreen() {
 				clearTimeout(debounceRef.current);
 			}
 		};
-	}, [handle]);
+	}, [modalInputValue, showSuggestionsModal]);
 
 	useEffect(() => {
 		if (user && !isAuthLoading) {
@@ -108,7 +124,36 @@ export default function LoginScreen() {
 
 	const handleSelectSuggestion = (actor: ActorSuggestion) => {
 		setHandle(actor.handle);
+		setShowSuggestionsModal(false);
 		setSuggestions([]);
+		setIsSubmitting(true);
+
+		const submitWithHandle = async () => {
+			try {
+				const timezone = detectUserTimezone();
+				const loginUrl = `${getLoginUrl(actor.handle, timezone || undefined)}&platform=mobile`;
+
+				const result = await WebBrowser.openAuthSessionAsync(
+					loginUrl,
+					"opnshelf://auth/callback",
+				);
+
+				if (result.type === "success") {
+					const url = new URL(result.url);
+					const session = url.searchParams.get("session");
+					if (session) {
+						router.replace({ pathname: "/auth/complete", params: { session } });
+					}
+				} else {
+					setIsSubmitting(false);
+				}
+			} catch (err) {
+				console.error("Auth error:", err);
+				setIsSubmitting(false);
+			}
+		};
+
+		submitWithHandle();
 	};
 
 	const handleSubmit = async () => {
@@ -251,7 +296,7 @@ export default function LoginScreen() {
 					)}
 
 					<View style={{ gap: 24 }}>
-						<View style={{ position: "relative" }} onLayout={onInputLayout}>
+						<View>
 							<Text
 								style={{
 									fontSize: 14,
@@ -275,7 +320,7 @@ export default function LoginScreen() {
 									fontSize: 16,
 								}}
 								value={handle}
-								onChangeText={setHandle}
+								onChangeText={handleInputChange}
 								placeholder="username.bsky.social"
 								placeholderTextColor="#6b7280"
 								autoCapitalize="none"
@@ -352,115 +397,188 @@ export default function LoginScreen() {
 				</View>
 			</View>
 
-			{/* Dropdown overlay - rendered outside ScrollView to avoid clipping */}
-			{inputLayout && suggestions.length > 0 && (
-				<View
-					style={{
-						position: "absolute",
-						left: 16,
-						right: 16,
-						top: inputLayout.y + inputLayout.height + 60, // Account for header and spacing
-						backgroundColor: "#1f2937",
-						borderWidth: 1,
-						borderColor: "#374151",
-						borderRadius: 8,
-						maxHeight: 240,
-						zIndex: 1000,
-						shadowColor: "#000",
-						shadowOffset: { width: 0, height: 4 },
-						shadowOpacity: 0.3,
-						shadowRadius: 8,
-						elevation: 8,
-					}}
-				>
-					{suggestions.map((item, index) => (
-						<TouchableOpacity
-							key={item.did}
-							style={{
-								flexDirection: "row",
-								alignItems: "center",
-								gap: 12,
-								padding: 12,
-								borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
-								borderBottomColor: "#374151",
-							}}
-							onPress={() => handleSelectSuggestion(item)}
-						>
-							{item.avatar ? (
-								<Image
-									source={{ uri: item.avatar }}
-									style={{
-										width: 32,
-										height: 32,
-										borderRadius: 16,
-									}}
-								/>
-							) : (
-								<View
-									style={{
-										width: 32,
-										height: 32,
-										borderRadius: 16,
-										backgroundColor: "#4b5563",
-										alignItems: "center",
-										justifyContent: "center",
-									}}
-								>
-									<Text style={{ color: "#d1d5db", fontSize: 14 }}>
-										{item.handle[0]?.toUpperCase() ?? ""}
-									</Text>
-								</View>
-							)}
-							<View style={{ flex: 1 }}>
-								<Text
-									style={{
-										color: "#ffffff",
-										fontWeight: "500",
-									}}
-									numberOfLines={1}
-								>
-									{item.displayName || item.handle}
-								</Text>
-								<Text
-									style={{ color: "#9ca3af", fontSize: 12 }}
-									numberOfLines={1}
-								>
-									{item.handle}
-								</Text>
-							</View>
+			{/* Suggestions Modal */}
+			<Modal
+				visible={showSuggestionsModal}
+				animationType="slide"
+				presentationStyle="pageSheet"
+				onRequestClose={handleCloseModal}
+			>
+				<SafeAreaView style={modalStyles.container}>
+					<View style={modalStyles.header}>
+						<Text style={modalStyles.title}>Find your handle</Text>
+						<TouchableOpacity onPress={handleCloseModal}>
+							<Text style={modalStyles.closeButton}>Close</Text>
 						</TouchableOpacity>
-					))}
-				</View>
-			)}
-			{/* Loading indicator overlay */}
-			{inputLayout && isLoadingSuggestions && suggestions.length === 0 && (
-				<View
-					style={{
-						position: "absolute",
-						left: 16,
-						right: 16,
-						top: inputLayout.y + inputLayout.height + 60,
-						backgroundColor: "#1f2937",
-						borderWidth: 1,
-						borderColor: "#374151",
-						borderRadius: 8,
-						padding: 16,
-						zIndex: 1000,
-					}}
-				>
-					<View
-						style={{
-							flexDirection: "row",
-							alignItems: "center",
-							justifyContent: "center",
-							gap: 8,
-						}}
-					>
-						<ActivityIndicator size="small" color="#9ca3af" />
-						<Text style={{ color: "#9ca3af", fontSize: 14 }}>Searching...</Text>
 					</View>
-				</View>
-			)}
+
+					<View style={modalStyles.inputContainer}>
+						<TextInput
+							style={modalStyles.input}
+							value={modalInputValue}
+							onChangeText={setModalInputValue}
+							placeholder="Search for your handle..."
+							placeholderTextColor="#6b7280"
+							autoCapitalize="none"
+							autoCorrect={false}
+							autoFocus
+						/>
+					</View>
+
+					<ScrollView style={modalStyles.suggestionsList}>
+						{isLoadingSuggestions ? (
+							<View style={modalStyles.loadingContainer}>
+								<ActivityIndicator size="small" color="#9ca3af" />
+								<Text style={modalStyles.loadingText}>Searching...</Text>
+							</View>
+						) : suggestions.length > 0 ? (
+							suggestions.map((item) => (
+								<TouchableOpacity
+									key={item.did}
+									style={modalStyles.suggestionItem}
+									onPress={() => handleSelectSuggestion(item)}
+								>
+									{item.avatar ? (
+										<Image
+											source={{ uri: item.avatar }}
+											style={modalStyles.avatar}
+										/>
+									) : (
+										<View style={modalStyles.avatarPlaceholder}>
+											<Text style={modalStyles.avatarText}>
+												{item.handle[0]?.toUpperCase() ?? ""}
+											</Text>
+										</View>
+									)}
+									<View style={modalStyles.suggestionTextContainer}>
+										<Text
+											style={modalStyles.suggestionDisplayName}
+											numberOfLines={1}
+										>
+											{item.displayName || item.handle}
+										</Text>
+										<Text
+											style={modalStyles.suggestionHandle}
+											numberOfLines={1}
+										>
+											{item.handle}
+										</Text>
+									</View>
+								</TouchableOpacity>
+							))
+						) : modalInputValue.trim().length >= 1 ? (
+							<View style={modalStyles.emptyContainer}>
+								<Text style={modalStyles.emptyText}>No handles found</Text>
+							</View>
+						) : null}
+					</ScrollView>
+				</SafeAreaView>
+			</Modal>
 		</KeyboardAvoidingView>
 	);
 }
+
+const modalStyles = {
+	container: {
+		flex: 1,
+		backgroundColor: "#030712",
+	},
+	header: {
+		flexDirection: "row" as const,
+		justifyContent: "space-between" as const,
+		alignItems: "center" as const,
+		paddingHorizontal: 16,
+		paddingVertical: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: "#374151",
+	},
+	title: {
+		fontSize: 18,
+		fontWeight: "600" as const,
+		color: "#f9fafb",
+	},
+	closeButton: {
+		fontSize: 16,
+		fontWeight: "500" as const,
+		color: "#a855f7",
+	},
+	inputContainer: {
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#374151",
+	},
+	input: {
+		width: "100%" as const,
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		backgroundColor: "#111827",
+		borderWidth: 1,
+		borderColor: "#374151",
+		borderRadius: 8,
+		color: "#ffffff",
+		fontSize: 16,
+	},
+	suggestionsList: {
+		flex: 1,
+		paddingHorizontal: 16,
+	},
+	loadingContainer: {
+		flexDirection: "row" as const,
+		alignItems: "center" as const,
+		justifyContent: "center" as const,
+		gap: 8,
+		padding: 24,
+	},
+	loadingText: {
+		color: "#9ca3af",
+		fontSize: 14,
+	},
+	suggestionItem: {
+		flexDirection: "row" as const,
+		alignItems: "center" as const,
+		gap: 12,
+		padding: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#374151",
+	},
+	avatar: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+	},
+	avatarPlaceholder: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "#4b5563",
+		alignItems: "center" as const,
+		justifyContent: "center" as const,
+	},
+	avatarText: {
+		color: "#d1d5db",
+		fontSize: 16,
+		fontWeight: "500" as const,
+	},
+	suggestionTextContainer: {
+		flex: 1,
+	},
+	suggestionDisplayName: {
+		color: "#ffffff",
+		fontWeight: "500" as const,
+		fontSize: 16,
+	},
+	suggestionHandle: {
+		color: "#9ca3af",
+		fontSize: 14,
+		marginTop: 2,
+	},
+	emptyContainer: {
+		padding: 24,
+		alignItems: "center" as const,
+	},
+	emptyText: {
+		color: "#9ca3af",
+		fontSize: 14,
+	},
+};
