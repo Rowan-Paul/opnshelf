@@ -72,7 +72,7 @@ cd apps/mobile
 pnpm lint             # Run linter
 pnpm format           # Format code
 pnpm check            # Run both lint and format checks
-pnpm typecheck        # TypeScript check only
+pnpm tsc              # TypeScript check only
 ```
 
 ## Type Checking
@@ -84,10 +84,10 @@ pnpm typecheck        # TypeScript check only
 cd apps/web && npx tsc --noEmit
 
 # Backend
-cd backend && pnpm check
+cd backend && pnpm tsc --noEmit
 
 # Mobile
-cd apps/mobile && pnpm typecheck
+cd apps/mobile && pnpm tsc noEmit
 ```
 
 ## Code Style Guidelines

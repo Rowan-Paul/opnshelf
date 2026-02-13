@@ -1,5 +1,7 @@
 import { Agent } from "@atproto/api";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { $nsid as LIST_COLLECTION } from "../lexicons/app/opnshelf/list";
+import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/app/opnshelf/listItem";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	UpdateUserSettingsDto,
@@ -123,6 +125,54 @@ export class UsersService {
 
 				this.logger.log(
 					`Deleted ${trackedMovies.length} records from PDS for user ${did}`,
+				);
+
+				const listItems = await this.prisma.movieListItem.findMany({
+					where: { list: { userDid: did } },
+				});
+
+				for (const item of listItems) {
+					try {
+						await agent.com.atproto.repo.deleteRecord({
+							repo: session.did,
+							collection: LIST_ITEM_COLLECTION,
+							rkey: item.rkey,
+						});
+						this.logger.log(
+							`Deleted list item with rkey ${item.rkey} from PDS`,
+						);
+					} catch (error) {
+						this.logger.warn(
+							`Failed to delete list item ${item.rkey} from PDS: ${error}`,
+						);
+					}
+				}
+
+				this.logger.log(
+					`Deleted ${listItems.length} list items from PDS for user ${did}`,
+				);
+
+				const lists = await this.prisma.movieList.findMany({
+					where: { userDid: did },
+				});
+
+				for (const list of lists) {
+					try {
+						await agent.com.atproto.repo.deleteRecord({
+							repo: session.did,
+							collection: LIST_COLLECTION,
+							rkey: list.rkey,
+						});
+						this.logger.log(`Deleted list with rkey ${list.rkey} from PDS`);
+					} catch (error) {
+						this.logger.warn(
+							`Failed to delete list ${list.rkey} from PDS: ${error}`,
+						);
+					}
+				}
+
+				this.logger.log(
+					`Deleted ${lists.length} lists from PDS for user ${did}`,
 				);
 			} catch (error) {
 				this.logger.error(
