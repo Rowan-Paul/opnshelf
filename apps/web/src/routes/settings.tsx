@@ -1,5 +1,6 @@
 import {
 	authControllerMeOptions,
+	authControllerMeQueryKey,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
@@ -177,7 +178,8 @@ function SettingsPage() {
 		onSuccess: () => {
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
-			queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
+			queryClient.setQueryData(authControllerMeQueryKey(), null);
+			queryClient.removeQueries({ queryKey: authControllerMeQueryKey() });
 			router.navigate({ to: "/" });
 		},
 		onError: () => {
