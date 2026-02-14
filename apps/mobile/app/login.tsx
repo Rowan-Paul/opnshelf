@@ -100,11 +100,11 @@ export default function LoginScreen() {
 	useEffect(() => {
 		if (user && !isAuthLoading) {
 			if (redirect === "shelf") {
-				router.replace("/(tabs)/shelf");
+				router.replace("/(tabs)");
 			} else if (redirect === "search") {
 				router.replace("/(tabs)/search");
 			} else {
-				router.replace("/(tabs)/shelf");
+				router.replace("/(tabs)");
 			}
 		}
 	}, [user, isAuthLoading, router, redirect]);

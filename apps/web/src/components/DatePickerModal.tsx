@@ -41,19 +41,6 @@ export function DatePickerModal({
 		}
 	}, [open]);
 
-	useEffect(() => {
-		if (timeDate && customDate) {
-			const [year, month, day] = customDate.split("-").map(Number);
-			if (year && month && day) {
-				const newDate = new Date(timeDate);
-				newDate.setFullYear(year);
-				newDate.setMonth(month - 1);
-				newDate.setDate(day);
-				setTimeDate(newDate);
-			}
-		}
-	}, [customDate, timeDate]);
-
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
@@ -76,14 +63,23 @@ export function DatePickerModal({
 	const handleSubmit = () => {
 		if (!customDate) return;
 
-		const dateTime = timeDate
-			? timeDate.toISOString()
-			: `${customDate}T00:00:00.000Z`;
+		let dateTime: Date;
+		if (timeDate && customDate) {
+			const [year, month, day] = customDate.split("-").map(Number);
+			dateTime = new Date(timeDate);
+			dateTime.setFullYear(year);
+			dateTime.setMonth(month - 1);
+			dateTime.setDate(day);
+		} else if (customDate) {
+			dateTime = new Date(customDate);
+		} else {
+			return;
+		}
 
 		markMutation.mutate({
 			body: {
 				movieId,
-				watchedAt: dateTime,
+				watchedAt: dateTime.toISOString(),
 			},
 		});
 	};

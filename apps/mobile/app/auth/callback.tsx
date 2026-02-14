@@ -12,7 +12,7 @@ export default function AuthCallbackScreen() {
 	useEffect(() => {
 		if (token) {
 			handleAuthCallback(token).then(() => {
-				router.replace("/(tabs)/shelf");
+				router.replace("/(tabs)");
 			});
 		}
 	}, [token, handleAuthCallback, router]);

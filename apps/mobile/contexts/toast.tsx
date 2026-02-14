@@ -176,13 +176,12 @@ export function useToast() {
 const styles = StyleSheet.create({
 	toastContainer: {
 		position: "absolute",
-		bottom: 0,
-		left: 0,
-		right: 0,
+		top: 60,
+		left: 16,
+		right: 16,
 		alignItems: "center",
 		zIndex: 9999,
 		pointerEvents: "box-none",
-		paddingBottom: 80,
 	},
 	toastItem: {
 		flexDirection: "row",

@@ -25,7 +25,7 @@ export default function AuthCompleteScreen() {
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			router.replace("/(tabs)/shelf");
+			router.replace("/(tabs)");
 		}
 
 		completeAuth();
