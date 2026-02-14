@@ -140,7 +140,10 @@ export function AddToListModal({
 											)}
 										</span>
 										{isPending ? (
-											<Loader2 className="w-4 h-4 animate-spin" />
+											<span className="flex items-center gap-2">
+												<span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+												Loading
+											</span>
 										) : isInList ? (
 											<Minus className="w-4 h-4" />
 										) : (

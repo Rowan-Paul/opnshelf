@@ -5,6 +5,7 @@ import { AlertCircle, Film, LogIn } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { env } from "@/env";
 
 const loginSearchSchema = z.object({
@@ -256,23 +257,15 @@ function LoginPage() {
 							)}
 						</div>
 
-						<button
+						<LoadingButton
 							type="submit"
 							disabled={isSubmitting}
+							isLoading={isSubmitting}
 							className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
 						>
-							{isSubmitting ? (
-								<>
-									<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-									<span>Redirecting...</span>
-								</>
-							) : (
-								<>
-									<LogIn size={20} />
-									<span>Sign in</span>
-								</>
-							)}
-						</button>
+							<LogIn size={20} />
+							Sign in
+						</LoadingButton>
 
 						<p className="text-center text-sm text-gray-400">
 							Don&apos;t have an account?{" "}

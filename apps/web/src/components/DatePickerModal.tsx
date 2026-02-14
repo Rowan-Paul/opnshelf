@@ -4,11 +4,12 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar, Loader2, X } from "lucide-react";
+import { Calendar, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
 	Popover,
 	PopoverContent,
@@ -151,18 +152,15 @@ export function DatePickerModal({
 						>
 							Cancel
 						</Button>
-						<Button
+						<LoadingButton
 							type="button"
 							onClick={handleSubmit}
 							disabled={!customDate || markMutation.isPending}
 							className="flex-1 bg-purple-600 hover:bg-purple-700"
+							isLoading={markMutation.isPending}
 						>
-							{markMutation.isPending ? (
-								<Loader2 className="w-5 h-5 animate-spin mx-auto" />
-							) : (
-								"Add Play"
-							)}
-						</Button>
+							Add Play
+						</LoadingButton>
 					</div>
 				</div>
 			</div>

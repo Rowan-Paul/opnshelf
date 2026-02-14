@@ -29,7 +29,10 @@ export function Button({
 	return (
 		<Pressable style={buttonStyles} disabled={disabled || isLoading} {...props}>
 			{isLoading ? (
-				<ActivityIndicator size="small" color={variant === "primary" ? colors.text : colors.primary} />
+				<>
+					<ActivityIndicator size="small" color={variant === "primary" ? colors.text : colors.primary} />
+					<Text style={[styles.text, styles[`${variant}Text`]]}>Loading</Text>
+				</>
 			) : typeof children === "string" ? (
 				<Text style={[styles.text, styles[`${variant}Text`]]}>{children}</Text>
 			) : (

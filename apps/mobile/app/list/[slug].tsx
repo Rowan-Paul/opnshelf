@@ -302,7 +302,10 @@ function ListMovieItem({
 					activeOpacity={0.7}
 				>
 					{isRemoving ? (
-						<SpinningLoader size={14} color={colors.text} />
+						<View style={styles.removeButtonContent}>
+							<SpinningLoader size={14} color={colors.text} />
+							<Text style={styles.removeButtonText}>Loading</Text>
+						</View>
 					) : (
 						<>
 							<Trash2 size={14} color={colors.text} />
@@ -492,6 +495,11 @@ const styles = StyleSheet.create({
 		color: colors.text,
 		fontSize: 14,
 		fontWeight: "600",
+	},
+	removeButtonContent: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
 	},
 	noPoster: {
 		justifyContent: "center",

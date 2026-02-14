@@ -146,7 +146,10 @@ export function MovieActions({
 					}}
 				>
 					{isPending ? (
-						<Loader2 className="w-5 h-5 animate-spin" />
+						<>
+							<Loader2 className="w-5 h-5 animate-spin" />
+							Loading
+						</>
 					) : (
 						<>
 							<Plus className="w-5 h-5" />
@@ -212,7 +215,10 @@ export function MovieActions({
 						className="mt-2 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-red-900/20 disabled:opacity-50"
 					>
 						{unmarkMutation.isPending ? (
-							<Loader2 className="w-4 h-4 animate-spin" />
+							<>
+								<span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+								Loading
+							</>
 						) : (
 							<>
 								<Trash2 className="w-4 h-4" />
@@ -233,7 +239,10 @@ export function MovieActions({
 				}}
 			>
 				{isPending ? (
-					<Loader2 className="w-4 h-4 animate-spin" />
+					<>
+						<Loader2 className="w-4 h-4 animate-spin" />
+						Loading
+					</>
 				) : (
 					<>
 						<RotateCcw className="w-4 h-4" />

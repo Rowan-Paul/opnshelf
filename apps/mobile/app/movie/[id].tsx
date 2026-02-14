@@ -415,7 +415,10 @@ export default function MovieDetailScreen() {
 										activeOpacity={0.8}
 									>
 										{isPending ? (
-											<ActivityIndicator color="#f9fafb" />
+											<View style={styles.buttonContent}>
+												<ActivityIndicator color="#f9fafb" />
+												<Text style={styles.buttonText}>Loading</Text>
+											</View>
 										) : (
 											<View style={styles.buttonContent}>
 												<Ionicons name="add" size={20} color="#f9fafb" />
@@ -497,7 +500,10 @@ export default function MovieDetailScreen() {
 										activeOpacity={0.8}
 									>
 										{isPending ? (
-											<ActivityIndicator color="#f9fafb" />
+											<View style={styles.buttonContent}>
+												<ActivityIndicator color="#f9fafb" />
+												<Text style={styles.buttonText}>Loading</Text>
+											</View>
 										) : (
 											<View style={styles.buttonContent}>
 												<Ionicons name="refresh" size={20} color="#f9fafb" />
@@ -615,7 +621,10 @@ export default function MovieDetailScreen() {
 									activeOpacity={0.7}
 								>
 									{unmarkMutation.isPending ? (
-										<ActivityIndicator size="small" color="#ef4444" />
+										<View style={styles.removeRowContent}>
+											<ActivityIndicator size="small" color="#ef4444" />
+											<Text style={styles.removeText}>Loading</Text>
+										</View>
 									) : (
 										<>
 											<Ionicons
@@ -1152,6 +1161,11 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		marginTop: 12,
+	},
+	removeRowContent: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 8,
 	},
 	removeText: {
 		fontSize: 14,

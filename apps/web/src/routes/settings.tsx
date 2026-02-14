@@ -35,6 +35,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
 	Select,
 	SelectContent,
@@ -462,7 +463,7 @@ function SettingsPage() {
 						>
 							Cancel
 						</Button>
-						<Button
+						<LoadingButton
 							variant="destructive"
 							onClick={() =>
 								deleteAccountMutation.mutate({
@@ -470,12 +471,10 @@ function SettingsPage() {
 								})
 							}
 							disabled={deleteAccountMutation.isPending}
+							isLoading={deleteAccountMutation.isPending}
 						>
-							{deleteAccountMutation.isPending && (
-								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-							)}
 							Delete Account
-						</Button>
+						</LoadingButton>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

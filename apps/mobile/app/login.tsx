@@ -355,7 +355,7 @@ export default function LoginScreen() {
 											fontSize: 16,
 										}}
 									>
-										Redirecting...
+										Loading
 									</Text>
 								</>
 							) : (

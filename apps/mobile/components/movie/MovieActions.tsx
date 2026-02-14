@@ -1,7 +1,8 @@
 import type { TmdbMovieDetailDto, UserDto } from "@opnshelf/api";
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { borderRadius, colors, spacing } from "@/constants/theme";
+import { Button } from "@/components/ui/Button";
 
 interface MovieActionsProps {
 	movie: TmdbMovieDetailDto | null;
@@ -33,12 +34,11 @@ export function MovieActions({
 	if (!user) {
 		return (
 			<View style={styles.actionsContainer}>
-				<TouchableOpacity
-					style={[styles.primaryButton, { backgroundColor: movieColors.primary }]}
-					activeOpacity={0.8}
+				<Button
+					style={{ backgroundColor: movieColors.primary }}
 				>
-					<Text style={styles.buttonText}>Sign in to Track</Text>
-				</TouchableOpacity>
+					Sign in to Track
+				</Button>
 			</View>
 		);
 	}
@@ -46,85 +46,32 @@ export function MovieActions({
 	if (!isWatched) {
 		return (
 			<View style={styles.actionsContainer}>
-				<TouchableOpacity
+				<Button
 					onPress={onMarkWatched}
-					disabled={isPending}
-					style={[
-						styles.primaryButton,
-						{
-							backgroundColor: movieColors.primary,
-							opacity: isPending ? 0.7 : 1,
-						},
-					]}
-					activeOpacity={0.8}
-				>
-					{isPending ? (
-						<ActivityIndicator color="#f9fafb" />
-					) : (
-						<View style={styles.buttonContent}>
-							<Ionicons name="add" size={20} color="#f9fafb" />
-							<Text style={styles.buttonText}>Add to Shelf</Text>
-						</View>
-				)}
-			</TouchableOpacity>
-			<TouchableOpacity
-					onPress={onOpenDateModal}
-					style={styles.secondaryButton}
-					activeOpacity={0.8}
+					isLoading={isPending}
+					style={{ backgroundColor: movieColors.primary }}
 				>
 					<View style={styles.buttonContent}>
-						<Ionicons name="calendar" size={18} color="#9ca3af" />
-						<Text style={styles.secondaryButtonText}>Add on Different Date</Text>
+						<Ionicons name="add" size={20} color="#f9fafb" />
+						<Text style={styles.buttonText}>Add to Shelf</Text>
 					</View>
-				</TouchableOpacity>
-				<TouchableOpacity
-					onPress={onShare}
-					style={styles.secondaryButton}
-					activeOpacity={0.8}
-				>
-					<View style={styles.buttonContent}>
-						<Ionicons
-							name="share-outline"
-							size={18}
-							color="#9ca3af"
-						/>
-						<Text style={styles.secondaryButtonText}>Share</Text>
-					</View>
-				</TouchableOpacity>
+				</Button>
 			</View>
 		);
 	}
 
 	return (
 		<View style={styles.actionsContainer}>
-			<TouchableOpacity
+			<Button
 				onPress={onMarkWatched}
-				disabled={isPending}
-				style={[
-					styles.primaryButton,
-					{ backgroundColor: movieColors.primary },
-				]}
-				activeOpacity={0.8}
-			>
-				{isPending ? (
-					<ActivityIndicator color="#f9fafb" />
-				) : (
-					<View style={styles.buttonContent}>
-						<Ionicons name="checkmark" size={20} color="#f9fafb" />
-						<Text style={styles.buttonText}>On Your Shelf</Text>
-					</View>
-				)}
-			</TouchableOpacity>
-			<TouchableOpacity
-				onPress={onShare}
-				style={styles.secondaryButton}
-				activeOpacity={0.8}
+				isLoading={isPending}
+				style={{ backgroundColor: movieColors.primary }}
 			>
 				<View style={styles.buttonContent}>
-					<Ionicons name="share-outline" size={18} color="#9ca3af" />
-					<Text style={styles.secondaryButtonText}>Share</Text>
+					<Ionicons name="checkmark" size={20} color="#f9fafb" />
+					<Text style={styles.buttonText}>On Your Shelf</Text>
 				</View>
-			</TouchableOpacity>
+			</Button>
 		</View>
 	);
 }
