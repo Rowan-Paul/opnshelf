@@ -12,7 +12,6 @@ import {
 	Clock,
 	Globe,
 	Loader2,
-	Settings2,
 	Trash2,
 	User,
 } from "lucide-react";
@@ -124,7 +123,7 @@ const TIMEZONES = [
 	},
 ];
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/profile/settings")({
 	head: () => ({
 		meta: [{ title: "Settings | OpnShelf" }],
 	}),
@@ -246,11 +245,6 @@ function SettingsPage() {
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">
 			<div className="container mx-auto px-4 py-8 max-w-3xl">
-				<div className="flex items-center gap-3 mb-8">
-					<Settings2 className="w-8 h-8 text-amber-500" />
-					<h1 className="text-3xl font-bold">Settings</h1>
-				</div>
-
 				<Card className="bg-gray-900 border-gray-800">
 					<CardHeader>
 						<div className="flex items-center gap-3">

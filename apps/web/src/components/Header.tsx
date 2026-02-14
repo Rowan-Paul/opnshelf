@@ -4,17 +4,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-	Film,
-	Home,
-	LogIn,
-	LogOut,
-	Menu,
-	Search,
-	Settings,
-	User,
-	X,
-} from "lucide-react";
+import { Film, Home, LogIn, LogOut, Menu, Search, User, X } from "lucide-react";
 import { useState } from "react";
 
 export default function Header() {
@@ -83,47 +73,31 @@ export default function Header() {
 						<Search size={18} />
 						<span className="font-medium">Search</span>
 					</Link>
-					{user && (
-						<Link
-							to="/profile/shelf"
-							className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
-							activeProps={{
-								className:
-									"flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white",
-							}}
-						>
-							<User size={18} />
-							<span className="font-medium">Profile</span>
-						</Link>
-					)}
-
 					<div className="ml-4 pl-4 border-l border-gray-700">
 						{isAuthLoading ? (
 							<div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
 						) : user ? (
 							<div className="flex items-center gap-3">
-								{user.avatar ? (
-									<img
-										src={String(user.avatar)}
-										alt={String(user.displayName || user.handle)}
-										className="w-8 h-8 rounded-full"
-									/>
-								) : (
-									<div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
-										<User size={16} />
-									</div>
-								)}
-								<span className="text-sm text-gray-300">
-									{user.displayName
-										? String(user.displayName)
-										: `@${user.handle}`}
-								</span>
 								<Link
-									to="/settings"
-									className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-white text-sm"
-									title="Settings"
+									to="/profile/shelf"
+									className="flex items-center gap-3 hover:bg-gray-800 rounded-lg px-2 py-1.5 transition-colors"
 								>
-									<Settings size={16} />
+									{user.avatar ? (
+										<img
+											src={String(user.avatar)}
+											alt={String(user.displayName || user.handle)}
+											className="w-8 h-8 rounded-full"
+										/>
+									) : (
+										<div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+											<User size={16} />
+										</div>
+									)}
+									<span className="text-sm text-gray-300">
+										{user.displayName
+											? String(user.displayName)
+											: `@${user.handle}`}
+									</span>
 								</Link>
 								<button
 									type="button"
@@ -202,31 +176,6 @@ export default function Header() {
 						<Search size={20} />
 						<span className="font-medium">Search</span>
 					</Link>
-
-					{user && (
-						<>
-							<Link
-								to="/profile/shelf"
-								onClick={() => setIsOpen(false)}
-								className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
-								activeProps={{
-									className:
-										"flex items-center gap-3 p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors mb-2 text-white",
-								}}
-							>
-								<User size={20} />
-								<span className="font-medium">Profile</span>
-							</Link>
-							<Link
-								to="/settings"
-								onClick={() => setIsOpen(false)}
-								className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2 text-gray-300 hover:text-white"
-							>
-								<Settings size={20} />
-								<span className="font-medium">Settings</span>
-							</Link>
-						</>
-					)}
 				</nav>
 
 				<div className="p-4 border-t border-gray-800">

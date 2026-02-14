@@ -1,7 +1,7 @@
 import { authControllerMeOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { BookOpen, List } from "lucide-react";
+import { BookOpen, List, Settings } from "lucide-react";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 
 export const Route = createFileRoute("/profile")({
@@ -81,6 +81,7 @@ function ProfileLayout() {
 				<div className="flex gap-2 mb-8 border-b border-gray-800 pb-4">
 					<NavLink to="/profile/shelf" icon={BookOpen} label="My Shelf" />
 					<NavLink to="/profile/lists" icon={List} label="My Lists" />
+					<NavLink to="/profile/settings" icon={Settings} label="Settings" />
 				</div>
 
 				{/* Nested Routes */}
