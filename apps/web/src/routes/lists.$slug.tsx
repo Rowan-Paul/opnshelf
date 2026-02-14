@@ -1,14 +1,18 @@
 import {
 	authControllerMeOptions,
+	listsControllerDeleteListMutation,
 	listsControllerGetListOptions,
 	listsControllerGetListQueryKey,
+	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveFromListMutation,
 	type MovieInListDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, List, Loader2, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MovieGridSkeleton } from "@/components/MovieGrid";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import { Button } from "@/components/ui/button";
@@ -30,7 +34,9 @@ export const Route = createFileRoute("/lists/$slug")({
 
 function ListDetailPage() {
 	const { slug } = Route.useParams();
+	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -55,6 +61,20 @@ function ListDetailPage() {
 		},
 		onError: () => {
 			toast.error("Failed to remove. Please try again.");
+		},
+	});
+
+	const deleteMutation = useMutation({
+		...listsControllerDeleteListMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+			toast.success("List deleted");
+			navigate({ to: "/profile/lists" });
+		},
+		onError: () => {
+			toast.error("Failed to delete. Please try again.");
 		},
 	});
 
@@ -138,9 +158,14 @@ function ListDetailPage() {
 							)}
 						</div>
 						{!list.isDefault && (
-							<Button variant="destructive" size="sm">
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={() => setShowDeleteConfirm(true)}
+								disabled={deleteMutation.isPending}
+							>
 								<Trash2 className="w-4 h-4 mr-2" />
-								Delete
+								{deleteMutation.isPending ? "Deleting..." : "Delete"}
 							</Button>
 						)}
 					</div>
@@ -191,6 +216,15 @@ function ListDetailPage() {
 					</Card>
 				)}
 			</div>
+			<ConfirmDialog
+				open={showDeleteConfirm}
+				onOpenChange={setShowDeleteConfirm}
+				onConfirm={() => deleteMutation.mutate({ path: { slug } })}
+				title="Delete List"
+				description={`Are you sure you want to delete "${list.name}"? This action cannot be undone.`}
+				confirmText="Delete"
+				isLoading={deleteMutation.isPending}
+			/>
 		</div>
 	);
 }

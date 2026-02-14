@@ -6,9 +6,10 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { List, ListPlus, Star } from "lucide-react-native";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -17,6 +18,7 @@ import { useAuth } from "@/contexts/auth";
 
 export default function ListsScreen() {
 	const { user } = useAuth();
+	const [showCreateModal, setShowCreateModal] = useState(false);
 
 	const { data: lists, isLoading: isListsLoading } = useQuery({
 		...listsControllerGetUserListsOptions(),
@@ -58,6 +60,16 @@ export default function ListsScreen() {
 
 	return (
 		<SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+			<View style={styles.header}>
+				<Text style={styles.headerTitle}>My Lists</Text>
+				<TouchableOpacity
+					style={styles.createButton}
+					onPress={() => setShowCreateModal(true)}
+				>
+					<ListPlus size={20} color={colors.text} />
+					<Text style={styles.createButtonText}>Create</Text>
+				</TouchableOpacity>
+			</View>
 			{lists && lists.length > 0 && (
 				<FlashList
 					data={lists}
@@ -90,6 +102,10 @@ export default function ListsScreen() {
 					</Card>
 				</View>
 			)}
+			<CreateListModal
+				visible={showCreateModal}
+				onClose={() => setShowCreateModal(false)}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -139,6 +155,32 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: colors.background,
+	},
+	header: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		paddingHorizontal: spacing.lg,
+		paddingVertical: spacing.md,
+	},
+	headerTitle: {
+		fontSize: 28,
+		fontWeight: "bold",
+		color: colors.text,
+	},
+	createButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+		backgroundColor: colors.primary,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+		borderRadius: borderRadius.md,
+	},
+	createButtonText: {
+		color: colors.text,
+		fontSize: 14,
+		fontWeight: "600",
 	},
 	listContent: {
 		padding: spacing.lg,

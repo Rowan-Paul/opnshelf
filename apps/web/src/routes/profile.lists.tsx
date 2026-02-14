@@ -5,6 +5,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListPlus } from "lucide-react";
+import { CreateListDialog } from "@/components/CreateListDialog";
 import { ListCard } from "@/components/ListCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,10 @@ function ListsPage() {
 
 	return (
 		<div>
+			<div className="flex justify-between items-center mb-6">
+				<h1 className="text-2xl font-semibold">My Lists</h1>
+				<CreateListDialog />
+			</div>
 			{lists && lists.length > 0 && (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 					{lists.map((list) => (

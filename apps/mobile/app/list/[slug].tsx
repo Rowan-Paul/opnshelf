@@ -1,6 +1,8 @@
 import {
+	listsControllerDeleteListMutation,
 	listsControllerGetListOptions,
 	listsControllerGetListQueryKey,
+	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveFromListMutation,
 	type MovieInListDto,
 } from "@opnshelf/api";
@@ -9,10 +11,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, List, Trash2 } from "lucide-react-native";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -27,6 +30,7 @@ export default function ListDetailScreen() {
 	const { user, isAuthenticated } = useAuth();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	const { data: list, isLoading } = useQuery({
 		...listsControllerGetListOptions({
@@ -47,6 +51,20 @@ export default function ListDetailScreen() {
 		},
 		onError: () => {
 			showToast("Failed to remove. Please try again.", "error");
+		},
+	});
+
+	const deleteMutation = useMutation({
+		...listsControllerDeleteListMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+			showToast("List deleted", "success");
+			router.push("/(tabs)/profile/lists");
+		},
+		onError: () => {
+			showToast("Failed to delete. Please try again.", "error");
 		},
 	});
 
@@ -195,6 +213,17 @@ export default function ListDetailScreen() {
 							</View>
 						)}
 					</View>
+					{!list.isDefault && (
+						<TouchableOpacity
+							onPress={() => setShowDeleteConfirm(true)}
+							disabled={deleteMutation.isPending}
+							style={styles.deleteButton}
+						>
+							<Text style={styles.deleteButtonText}>
+								{deleteMutation.isPending ? "..." : "Delete"}
+							</Text>
+						</TouchableOpacity>
+					)}
 				</View>
 
 				{list.description && (
@@ -244,6 +273,19 @@ export default function ListDetailScreen() {
 					</View>
 				)}
 			</SafeAreaView>
+
+			<ConfirmModal
+				visible={showDeleteConfirm}
+				onClose={() => setShowDeleteConfirm(false)}
+				onConfirm={() => {
+					setShowDeleteConfirm(false);
+					deleteMutation.mutate({ path: { slug } });
+				}}
+				title="Delete List"
+				description={`Are you sure you want to delete "${list.name}"? This action cannot be undone.`}
+				confirmText="Delete"
+				isLoading={deleteMutation.isPending}
+			/>
 		</GestureHandlerRootView>
 	);
 }
@@ -355,6 +397,15 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 		fontWeight: "600",
 		color: colors.primary,
+	},
+	deleteButton: {
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+	},
+	deleteButtonText: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: colors.error,
 	},
 	description: {
 		fontSize: 14,
