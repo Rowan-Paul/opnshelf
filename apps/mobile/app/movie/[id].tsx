@@ -402,34 +402,37 @@ export default function MovieDetailScreen() {
 						{user ? (
 							!isWatched ? (
 								<>
-										<TouchableOpacity
-											onPress={handleMarkWatched}
-											disabled={isPending}
-											style={[styles.primaryButton, { opacity: isPending ? 0.7 : 1 }]}
-											activeOpacity={0.8}
+									<TouchableOpacity
+										onPress={handleMarkWatched}
+										disabled={isPending}
+										style={[
+											styles.primaryButton,
+											{ opacity: isPending ? 0.7 : 1 },
+										]}
+										activeOpacity={0.8}
+									>
+										<LinearGradient
+											colors={[
+												movieColors.primary || "#8b5cf6",
+												movieColors.secondary || "#6366f1",
+											]}
+											start={{ x: 0, y: 0 }}
+											end={{ x: 1, y: 1 }}
+											style={styles.gradientButton}
 										>
-											<LinearGradient
-												colors={[
-													movieColors.primary || "#8b5cf6",
-													movieColors.secondary || "#6366f1",
-												]}
-												start={{ x: 0, y: 0 }}
-												end={{ x: 1, y: 1 }}
-												style={styles.gradientButton}
-											>
-												{isPending ? (
-													<View style={styles.buttonContent}>
-														<ActivityIndicator color="#f9fafb" />
-														<Text style={styles.buttonText}>Loading</Text>
-													</View>
-												) : (
-													<View style={styles.buttonContent}>
-														<Ionicons name="add" size={20} color="#f9fafb" />
-														<Text style={styles.buttonText}>Add to Shelf</Text>
-													</View>
-												)}
-											</LinearGradient>
-										</TouchableOpacity>
+											{isPending ? (
+												<View style={styles.buttonContent}>
+													<ActivityIndicator color="#f9fafb" />
+													<Text style={styles.buttonText}>Loading</Text>
+												</View>
+											) : (
+												<View style={styles.buttonContent}>
+													<Ionicons name="add" size={20} color="#f9fafb" />
+													<Text style={styles.buttonText}>Add to Shelf</Text>
+												</View>
+											)}
+										</LinearGradient>
+									</TouchableOpacity>
 
 									<TouchableOpacity
 										onPress={_openDateModal}
@@ -494,7 +497,10 @@ export default function MovieDetailScreen() {
 									<TouchableOpacity
 										onPress={handleMarkWatched}
 										disabled={isPending}
-										style={[styles.primaryButton, { opacity: isPending ? 0.7 : 1 }]}
+										style={[
+											styles.primaryButton,
+											{ opacity: isPending ? 0.7 : 1 },
+										]}
 										activeOpacity={0.8}
 									>
 										<LinearGradient
