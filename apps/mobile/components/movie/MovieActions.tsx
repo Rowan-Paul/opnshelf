@@ -1,8 +1,8 @@
 import type { TmdbMovieDetailDto, UserDto } from "@opnshelf/api";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
-import { Button } from "@/components/ui/Button";
+import { LinearGradient } from "expo-linear-gradient";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { borderRadius, spacing } from "@/constants/theme";
 
 interface MovieActionsProps {
 	movie: TmdbMovieDetailDto | null;
@@ -21,12 +21,10 @@ export function MovieActions({
 	isWatched,
 	isPending,
 	onMarkWatched,
-	onOpenDateModal,
-	onShare,
-	onUnmarkWatched,
 }: MovieActionsProps) {
-	const movieColors = {
+	const movieColors = movie?.colors || {
 		primary: "#8b5cf6",
+		secondary: "#6366f1",
 		accent: "#a855f7",
 		muted: "#4c1d95",
 	};
@@ -34,11 +32,19 @@ export function MovieActions({
 	if (!user) {
 		return (
 			<View style={styles.actionsContainer}>
-				<Button
-					style={{ backgroundColor: movieColors.primary }}
+				<TouchableOpacity style={styles.button} activeOpacity={0.8}>
+				<LinearGradient
+					colors={[
+						movieColors.primary || "#8b5cf6",
+						movieColors.secondary || "#6366f1",
+					]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 1 }}
+					style={styles.gradient}
 				>
-					Sign in to Track
-				</Button>
+					<Text style={styles.buttonText}>Sign in to Track</Text>
+				</LinearGradient>
+				</TouchableOpacity>
 			</View>
 		);
 	}
@@ -46,32 +52,68 @@ export function MovieActions({
 	if (!isWatched) {
 		return (
 			<View style={styles.actionsContainer}>
-				<Button
+				<TouchableOpacity
 					onPress={onMarkWatched}
-					isLoading={isPending}
-					style={{ backgroundColor: movieColors.primary }}
+					disabled={isPending}
+					style={[styles.button, { opacity: isPending ? 0.7 : 1 }]}
+					activeOpacity={0.8}
 				>
-					<View style={styles.buttonContent}>
-						<Ionicons name="add" size={20} color="#f9fafb" />
-						<Text style={styles.buttonText}>Add to Shelf</Text>
-					</View>
-				</Button>
+				<LinearGradient
+					colors={[
+						movieColors.primary || "#8b5cf6",
+						movieColors.secondary || "#6366f1",
+					]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 1 }}
+					style={styles.gradient}
+				>
+					{isPending ? (
+						<View style={styles.buttonContent}>
+							<ActivityIndicator color="#f9fafb" />
+							<Text style={styles.buttonText}>Loading</Text>
+						</View>
+					) : (
+						<View style={styles.buttonContent}>
+							<Ionicons name="add" size={20} color="#f9fafb" />
+							<Text style={styles.buttonText}>Add to Shelf</Text>
+						</View>
+					)}
+				</LinearGradient>
+				</TouchableOpacity>
 			</View>
 		);
 	}
 
 	return (
 		<View style={styles.actionsContainer}>
-			<Button
+			<TouchableOpacity
 				onPress={onMarkWatched}
-				isLoading={isPending}
-				style={{ backgroundColor: movieColors.primary }}
+				disabled={isPending}
+				style={[styles.button, { opacity: isPending ? 0.7 : 1 }]}
+				activeOpacity={0.8}
 			>
-				<View style={styles.buttonContent}>
-					<Ionicons name="checkmark" size={20} color="#f9fafb" />
-					<Text style={styles.buttonText}>On Your Shelf</Text>
-				</View>
-			</Button>
+			<LinearGradient
+				colors={[
+					movieColors.primary || "#8b5cf6",
+					movieColors.secondary || "#6366f1",
+				]}
+				start={{ x: 0, y: 0 }}
+				end={{ x: 1, y: 1 }}
+				style={styles.gradient}
+			>
+				{isPending ? (
+					<View style={styles.buttonContent}>
+						<ActivityIndicator color="#f9fafb" />
+						<Text style={styles.buttonText}>Loading</Text>
+					</View>
+				) : (
+					<View style={styles.buttonContent}>
+						<Ionicons name="checkmark" size={20} color="#f9fafb" />
+						<Text style={styles.buttonText}>On Your Shelf</Text>
+					</View>
+				)}
+			</LinearGradient>
+			</TouchableOpacity>
 		</View>
 	);
 }
@@ -81,13 +123,16 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 		marginTop: spacing.lg,
 	},
-	primaryButton: {
+	button: {
+		borderRadius: borderRadius.md,
+		overflow: "hidden",
+	},
+	gradient: {
 		flexDirection: "row",
 		justifyContent: "center",
 		alignItems: "center",
 		paddingVertical: spacing.md,
-		borderRadius: borderRadius.md,
-		gap: spacing.sm,
+		paddingHorizontal: spacing.lg,
 	},
 	buttonContent: {
 		flexDirection: "row",
@@ -98,20 +143,5 @@ const styles = StyleSheet.create({
 		color: "#f9fafb",
 		fontSize: 16,
 		fontWeight: "600",
-	},
-	secondaryButton: {
-		flexDirection: "row",
-		justifyContent: "center",
-		alignItems: "center",
-		paddingVertical: spacing.md,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		borderColor: colors.border,
-	},
-	secondaryButtonText: {
-		color: "#9ca3af",
-		fontSize: 14,
-		fontWeight: "500",
 	},
 });
