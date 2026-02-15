@@ -1,6 +1,6 @@
-import { StyleSheet, View, TextInput, type TextInputProps, ViewStyle } from "react-native";
+import { StyleSheet, View, TextInput, TouchableOpacity, type TextInputProps, ViewStyle } from "react-native";
 import { colors, borderRadius, spacing } from "@/constants/theme";
-import { Search } from "lucide-react-native";
+import { Search, X } from "lucide-react-native";
 
 interface InputProps extends TextInputProps {
 	icon?: React.ReactNode;
@@ -22,15 +22,28 @@ export function Input({ icon, containerStyle, style, ...props }: InputProps) {
 
 interface SearchInputProps extends Omit<TextInputProps, "icon"> {
 	containerStyle?: ViewStyle;
+	onClear?: () => void;
 }
 
-export function SearchInput({ containerStyle, ...props }: SearchInputProps) {
+export function SearchInput({ containerStyle, onClear, value, ...props }: SearchInputProps) {
+	const hasValue = value && value.toString().length > 0;
 	return (
-		<Input
-			icon={<Search size={20} color={colors.textMuted} />}
-			containerStyle={containerStyle}
-			{...props}
-		/>
+		<View style={[styles.container, containerStyle]}>
+			<View style={styles.icon}>
+				<Search size={20} color={colors.textMuted} />
+			</View>
+			<TextInput
+				style={[styles.input, styles.inputWithIcon, hasValue ? styles.inputWithClear : null]}
+				placeholderTextColor={colors.textSecondary}
+				value={value}
+				{...props}
+			/>
+			{hasValue && onClear && (
+				<TouchableOpacity style={styles.clearButton} onPress={onClear}>
+					<X size={20} color={colors.textMuted} />
+				</TouchableOpacity>
+			)}
+		</View>
 	);
 }
 
@@ -55,5 +68,12 @@ const styles = StyleSheet.create({
 	},
 	inputWithIcon: {
 		paddingLeft: spacing.sm,
+	},
+	inputWithClear: {
+		paddingRight: spacing.sm,
+	},
+	clearButton: {
+		padding: spacing.sm,
+		paddingRight: spacing.md,
 	},
 });

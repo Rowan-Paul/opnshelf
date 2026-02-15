@@ -7,7 +7,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MovieGrid, MovieGridSkeleton } from "@/components/MovieGrid";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -105,8 +105,21 @@ function SearchPage() {
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 							placeholder="Search for a movie..."
-							className="w-full pl-10 bg-gray-900 border-gray-800 text-gray-50 placeholder:text-gray-500 focus-visible:ring-purple-500"
+							className="w-full pl-10 pr-10 bg-gray-900 border-gray-800 text-gray-50 placeholder:text-gray-500 focus-visible:ring-purple-500"
 						/>
+						{query && (
+							<button
+								type="button"
+								onClick={() => {
+									setQuery("");
+									lastNavigatedQueryRef.current = "";
+									navigate({ search: { q: "" } });
+								}}
+								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-800 transition-colors"
+							>
+								<X className="w-4 h-4 text-gray-400" />
+							</button>
+						)}
 					</div>
 				</div>
 

@@ -194,6 +194,7 @@ export default function SearchScreen() {
 				onChangeText={setQuery}
 				placeholder="Search for a movie..."
 				containerStyle={styles.searchInput}
+				onClear={() => setQuery("")}
 			/>
 
 			{isLoading && renderSkeleton()}
