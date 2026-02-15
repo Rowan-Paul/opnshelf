@@ -48,7 +48,6 @@ function ListsPage() {
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-6">
-				<h1 className="text-2xl font-semibold">My Lists</h1>
 				<CreateListDialog />
 			</div>
 			{lists && lists.length > 0 && (

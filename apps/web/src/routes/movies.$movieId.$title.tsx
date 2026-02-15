@@ -326,7 +326,7 @@ function MovieDetailPage() {
 											<button
 												type="button"
 												onClick={() => setShowDateModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
 											>
 												<Calendar className="w-4 h-4" />
 												Watch on different date
@@ -334,7 +334,7 @@ function MovieDetailPage() {
 											<button
 												type="button"
 												onClick={() => setShowListModal(true)}
-												className={`w-full py-2 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+												className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
 													isInAnyList
 														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
 														: "text-gray-300 hover:bg-gray-800 border-gray-700"
@@ -348,6 +348,14 @@ function MovieDetailPage() {
 												{isInAnyList
 													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
 													: "Add to List"}
+											</button>
+											<button
+												type="button"
+												onClick={handleShare}
+												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+											>
+												<Share2 className="w-4 h-4" />
+												Share
 											</button>
 										</>
 									) : (
@@ -377,7 +385,7 @@ function MovieDetailPage() {
 											<button
 												type="button"
 												onClick={() => setShowDateModal(true)}
-												className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
 											>
 												<Calendar className="w-4 h-4" />
 												Watch on different date
@@ -385,7 +393,7 @@ function MovieDetailPage() {
 											<button
 												type="button"
 												onClick={() => setShowListModal(true)}
-												className={`w-full py-2 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+												className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
 													isInAnyList
 														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
 														: "text-gray-300 hover:bg-gray-800 border-gray-700"
@@ -415,6 +423,14 @@ function MovieDetailPage() {
 										Sign in to Track
 									</button>
 								)}
+								<button
+									type="button"
+									onClick={handleShare}
+									className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+								>
+									<Share2 className="w-4 h-4" />
+									Share
+								</button>
 							</div>
 						</div>
 					</div>
@@ -554,7 +570,7 @@ function MovieDetailPage() {
 									<button
 										type="button"
 										onClick={() => setShowDateModal(true)}
-										className="w-full py-2 px-4 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
+										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
 									>
 										<Calendar className="w-4 h-4" />
 										Watch on different date
@@ -577,14 +593,6 @@ function MovieDetailPage() {
 											? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
 											: "Add to List"}
 									</button>
-									<button
-										type="button"
-										onClick={handleShare}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-									>
-										<Share2 className="w-4 h-4" />
-										Share
-									</button>
 								</div>
 							)
 						) : (
@@ -600,6 +608,14 @@ function MovieDetailPage() {
 								Sign in to Track
 							</button>
 						)}
+						<button
+							type="button"
+							onClick={handleShare}
+							className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
+						>
+							<Share2 className="w-4 h-4" />
+							Share
+						</button>
 					</div>
 
 					<div className="space-y-6 min-w-0 w-full">

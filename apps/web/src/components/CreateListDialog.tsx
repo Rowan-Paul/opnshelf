@@ -52,7 +52,7 @@ export function CreateListDialog() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="gap-2">
+				<Button className="gap-2 ml-auto">
 					<ListPlus className="size-4" />
 					Create List
 				</Button>

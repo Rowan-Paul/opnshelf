@@ -249,6 +249,7 @@ export default function MovieDetailScreen() {
 		const url = `https://opnshelf.xyz/movie/${movieId}/${title || ""}`;
 		try {
 			await Share.share({
+				title: `Check out ${title} on OpnShelf`,
 				url,
 			});
 		} catch {

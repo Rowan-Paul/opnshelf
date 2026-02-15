@@ -183,25 +183,33 @@ export default function Header() {
 						<div className="h-12 bg-gray-700 rounded-lg animate-pulse" />
 					) : user ? (
 						<div className="space-y-3">
-							<div className="flex items-center gap-3">
-								{user.avatar ? (
-									<img
-										src={String(user.avatar)}
-										alt={String(user.displayName || user.handle)}
-										className="w-10 h-10 rounded-full"
-									/>
-								) : (
-									<div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
-										<User size={20} />
+							<Link
+								to="/profile/shelf"
+								onClick={() => setIsOpen(false)}
+								className="flex items-center gap-3"
+							>
+								<div className="flex items-center gap-3">
+									{user.avatar ? (
+										<img
+											src={String(user.avatar)}
+											alt={String(user.displayName || user.handle)}
+											className="w-10 h-10 rounded-full"
+										/>
+									) : (
+										<div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+											<User size={20} />
+										</div>
+									)}
+									<div>
+										<div className="font-medium">
+											{user.displayName
+												? String(user.displayName)
+												: user.handle}
+										</div>
+										<div className="text-sm text-gray-400">@{user.handle}</div>
 									</div>
-								)}
-								<div>
-									<div className="font-medium">
-										{user.displayName ? String(user.displayName) : user.handle}
-									</div>
-									<div className="text-sm text-gray-400">@{user.handle}</div>
 								</div>
-							</div>
+							</Link>
 							<button
 								type="button"
 								onClick={() => {
