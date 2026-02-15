@@ -103,12 +103,3 @@ export function formatDateOnly(
 		});
 	}
 }
-
-function _getReleaseYear(dateString: string | null | undefined): number | null {
-	if (!dateString) return null;
-	try {
-		return new Date(dateString).getFullYear();
-	} catch {
-		return null;
-	}
-}

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { type DateFormatOptions, formatDateWithTimezone } from "@/lib/utils";
 import { useUserSettings } from "./useUserSettings";
 
@@ -17,15 +16,4 @@ export function useFormattedDate() {
 	};
 
 	return { formatDate, timezone, is24Hour };
-}
-
-function _useMemoizedFormattedDate(
-	dateString: string | Date | null | undefined,
-) {
-	const { formatDate } = useFormattedDate();
-
-	return useMemo(() => {
-		if (!dateString) return null;
-		return formatDate(dateString);
-	}, [dateString, formatDate]);
 }
