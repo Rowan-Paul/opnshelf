@@ -153,7 +153,7 @@ describe("ListsService", () => {
 			expect(result[1].movieCount).toBe(3);
 			expect(mockPrismaService.movieList.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
-				orderBy: [{ isDefault: "asc" }, { createdAt: "asc" }],
+				orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 				include: { _count: { select: { items: true } } },
 			});
 		});
