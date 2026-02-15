@@ -151,13 +151,4 @@ const M3CardFooter = React.forwardRef<
 ));
 M3CardFooter.displayName = "M3CardFooter";
 
-export {
-	M3Card,
-	M3CardHeader,
-	M3CardTitle,
-	M3CardDescription,
-	M3CardContent,
-	
-	
-};
-;
+export { M3Card, M3CardHeader, M3CardTitle, M3CardDescription, M3CardContent };

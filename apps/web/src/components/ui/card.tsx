@@ -48,7 +48,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+function _CardAction({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-action"
@@ -71,7 +71,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+function _CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
@@ -81,12 +81,4 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-export {
-	Card,
-	CardHeader,
-	
-	CardTitle,
-	
-	CardDescription,
-	CardContent,
-};
+export { Card, CardHeader, CardTitle, CardDescription, CardContent };

@@ -133,5 +133,4 @@ function M3Button({
 	);
 }
 
-export { M3Button,  };
-;
+export { M3Button };

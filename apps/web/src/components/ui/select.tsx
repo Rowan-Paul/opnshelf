@@ -10,7 +10,7 @@ function Select({
 	return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
 
-function SelectGroup({
+function _SelectGroup({
 	...props
 }: React.ComponentProps<typeof SelectPrimitive.Group>) {
 	return <SelectPrimitive.Group data-slot="select-group" {...props} />;
@@ -85,7 +85,7 @@ function SelectContent({
 	);
 }
 
-function SelectLabel({
+function _SelectLabel({
 	className,
 	...props
 }: React.ComponentProps<typeof SelectPrimitive.Label>) {
@@ -125,7 +125,7 @@ function SelectItem({
 	);
 }
 
-function SelectSeparator({
+function _SelectSeparator({
 	className,
 	...props
 }: React.ComponentProps<typeof SelectPrimitive.Separator>) {
@@ -174,15 +174,4 @@ function SelectScrollDownButton({
 	);
 }
 
-export {
-	Select,
-	SelectContent,
-	
-	SelectItem,
-	
-	
-	
-	
-	SelectTrigger,
-	SelectValue,
-};
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue };
