@@ -355,11 +355,6 @@ function MovieDetailPage() {
 												isActive={isInAnyList}
 												activeColor={seedColor}
 											/>
-											<ActionButton
-												icon={<Share2 className="w-4 h-4" />}
-												label="Share"
-												onClick={handleShare}
-											/>
 										</>
 									) : (
 										<>
@@ -481,11 +476,6 @@ function MovieDetailPage() {
 										onClick={() => setShowListModal(true)}
 										isActive={isInAnyList}
 										activeColor={seedColor}
-									/>
-									<ActionButton
-										icon={<Share2 className="w-4 h-4" />}
-										label="Share"
-										onClick={handleShare}
 									/>
 								</div>
 							) : (
