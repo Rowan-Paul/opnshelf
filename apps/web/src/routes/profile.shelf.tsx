@@ -7,14 +7,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { MovieGridSkeleton } from "@/components/MovieGrid";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
-import { Button } from "@/components/ui/button";
+import { M3Button } from "@/components/ui/m3-button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+	M3Card,
+	M3CardContent,
+	M3CardDescription,
+	M3CardHeader,
+	M3CardTitle,
+} from "@/components/ui/m3-card";
 
 export const Route = createFileRoute("/profile/shelf")({
 	head: () => ({
@@ -45,7 +45,10 @@ function ShelfPage() {
 		<div>
 			{trackedMovies && trackedMovies.length > 0 && (
 				<div>
-					<p className="text-gray-400 mb-6">
+					<p
+						className="mb-6 md-body-large"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
 						{trackedMovies.length} movie
 						{trackedMovies.length !== 1 ? "s" : ""} watched
 					</p>
@@ -58,22 +61,27 @@ function ShelfPage() {
 			)}
 
 			{trackedMovies && trackedMovies.length === 0 && (
-				<Card className="bg-gray-900 border-gray-800 text-center max-w-md mx-auto">
-					<CardHeader>
-						<BookOpen className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-						<CardTitle className="text-2xl">Your shelf is empty</CardTitle>
-						<CardDescription>
+				<M3Card variant="elevated" className="text-center max-w-md mx-auto">
+					<M3CardHeader>
+						<BookOpen
+							className="w-16 h-16 mx-auto mb-4"
+							style={{ color: "var(--md-sys-color-outline)" }}
+						/>
+						<M3CardTitle className="md-headline-small">
+							Your shelf is empty
+						</M3CardTitle>
+						<M3CardDescription>
 							Start tracking movies you&apos;ve watched
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<Button asChild>
+						</M3CardDescription>
+					</M3CardHeader>
+					<M3CardContent>
+						<M3Button variant="filled" asChild>
 							<Link to="/search" search={{ q: "" }}>
 								Search for movies
 							</Link>
-						</Button>
-					</CardContent>
-				</Card>
+						</M3Button>
+					</M3CardContent>
+				</M3Card>
 			)}
 		</div>
 	);

@@ -7,9 +7,9 @@ import { format } from "date-fns";
 import { Calendar, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { M3Button } from "@/components/ui/m3-button";
 import {
 	Popover,
 	PopoverContent,
@@ -89,42 +89,48 @@ export function DatePickerModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-			<div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full">
+			<div className="bg-md-surface-container-high rounded-[1.75rem] p-6 max-w-md w-full">
 				<div className="flex justify-between items-center mb-6">
-					<h3 className="text-xl font-semibold">Watch Again</h3>
+					<h3 className="text-xl font-semibold text-md-on-surface">
+						Watch Again
+					</h3>
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+						className="p-2 hover:bg-md-surface-container-high rounded-full transition-colors text-md-on-surface-variant"
 					>
 						<X className="w-5 h-5" />
 					</button>
 				</div>
-				<p className="text-gray-400 mb-4">When did you watch this movie?</p>
+				<p className="text-md-on-surface-variant mb-4">
+					When did you watch this movie?
+				</p>
 				<div className="space-y-4">
 					<div>
 						<label
 							htmlFor="date-picker"
-							className="block text-sm text-gray-400 mb-2 cursor-pointer"
+							className="block text-sm text-md-on-surface-variant mb-2 cursor-pointer"
 						>
 							Date
 						</label>
 						<Popover>
 							<PopoverTrigger asChild>
-								<Button
-									variant="outline"
-									className="w-full px-4 py-3 h-auto mt-2 bg-gray-800 rounded-xl border border-gray-700 text-white hover:bg-gray-700 hover:text-white justify-start text-left font-normal"
+								<M3Button
+									variant="outlined"
+									className="w-full px-4 py-3 h-auto mt-2 bg-md-surface-container-high rounded-xl border border-md-outline text-md-on-surface hover:bg-md-surface-container-high justify-start text-left font-normal"
 								>
-									<Calendar className="mr-2 h-4 w-4 text-gray-400" />
+									<Calendar className="mr-2 h-4 w-4 text-md-on-surface-variant" />
 									{customDate ? (
 										format(new Date(customDate), "PPP")
 									) : (
-										<span className="text-gray-400">Pick a date</span>
+										<span className="text-md-on-surface-variant">
+											Pick a date
+										</span>
 									)}
-								</Button>
+								</M3Button>
 							</PopoverTrigger>
 							<PopoverContent
-								className="w-auto p-0 bg-gray-900 border-gray-700"
+								className="w-auto p-0 bg-md-surface-container border-md-outline"
 								align="start"
 							>
 								<CalendarComponent
@@ -144,19 +150,19 @@ export function DatePickerModal({
 						<TimePicker date={timeDate} setDate={setTimeDate} />
 					</div>
 					<div className="flex gap-3 pt-4">
-						<Button
+						<M3Button
 							type="button"
-							variant="outline"
+							variant="outlined"
 							onClick={onClose}
-							className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+							className="flex-1 border-md-outline text-md-on-surface hover:bg-md-surface-container-high"
 						>
 							Cancel
-						</Button>
+						</M3Button>
 						<LoadingButton
 							type="button"
 							onClick={handleSubmit}
 							disabled={!customDate || markMutation.isPending}
-							className="flex-1 bg-purple-600 hover:bg-purple-700"
+							className="flex-1 bg-md-primary hover:bg-(--md-sys-color-primary)/90"
 							isLoading={markMutation.isPending}
 						>
 							Add Play

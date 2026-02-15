@@ -10,8 +10,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MovieGrid, MovieGridSkeleton } from "@/components/MovieGrid";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
+import { M3TextField } from "@/components/ui/m3-text-field";
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
@@ -93,19 +92,25 @@ function SearchPage() {
 	const discoverResults: TmdbMovieResultDto[] = discoverData?.results || [];
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-gray-50">
+		<div
+			className="min-h-screen"
+			style={{
+				backgroundColor: "var(--md-sys-color-background)",
+				color: "var(--md-sys-color-on-background)",
+			}}
+		>
 			<div className="container mx-auto px-4 py-4 max-w-7xl">
-				<h1 className="text-4xl font-bold mb-8">Search Movies</h1>
+				<h1 className="md-display-small mb-8">Search Movies</h1>
 
 				<div className="mb-8">
 					<div className="relative max-w-2xl">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-						<Input
+						<M3TextField
 							type="text"
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 							placeholder="Search for a movie..."
-							className="w-full pl-10 pr-10 bg-gray-900 border-gray-800 text-gray-50 placeholder:text-gray-500 focus-visible:ring-purple-500"
+							variant="outlined"
+							leadingIcon={<Search className="w-5 h-5" />}
 						/>
 						{query && (
 							<button
@@ -115,9 +120,10 @@ function SearchPage() {
 									lastNavigatedQueryRef.current = "";
 									navigate({ search: { q: "" } });
 								}}
-								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-800 transition-colors"
+								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-[var(--md-sys-color-on-surface)]/10"
+								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 							>
-								<X className="w-4 h-4 text-gray-400" />
+								<X className="w-4 h-4" />
 							</button>
 						)}
 					</div>
@@ -126,14 +132,25 @@ function SearchPage() {
 				{isLoading && <MovieGridSkeleton />}
 
 				{error && (
-					<Alert variant="destructive" className="max-w-2xl">
-						<AlertDescription>Error: {error.message}</AlertDescription>
-					</Alert>
+					<div
+						className="max-w-2xl p-4 rounded-lg mb-4"
+						style={{
+							backgroundColor: "var(--md-sys-color-error-container)",
+							border: "1px solid var(--md-sys-color-error)",
+						}}
+					>
+						<p style={{ color: "var(--md-sys-color-on-error-container)" }}>
+							Error: {error.message}
+						</p>
+					</div>
 				)}
 
 				{data && searchResults.length > 0 && (
 					<div>
-						<p className="text-gray-400 mb-6">
+						<p
+							className="mb-6 md-body-large"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
 							Found {data.total_results.toLocaleString()} results
 						</p>
 						<MovieGrid
@@ -146,7 +163,10 @@ function SearchPage() {
 
 				{data && searchResults.length === 0 && searchQuery && (
 					<div className="text-center py-12">
-						<p className="text-gray-400 text-lg">
+						<p
+							className="md-body-large"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
 							No results found for &quot;{searchQuery}&quot;
 						</p>
 					</div>
@@ -154,7 +174,10 @@ function SearchPage() {
 
 				{!searchQuery && (
 					<div>
-						<h2 className="text-xl font-semibold text-gray-200 mb-4">
+						<h2
+							className="md-title-large mb-4"
+							style={{ color: "var(--md-sys-color-on-surface)" }}
+						>
 							Popular Movies
 						</h2>
 						{isDiscoverLoading && <MovieGridSkeleton />}

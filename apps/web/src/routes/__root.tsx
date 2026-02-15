@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -51,34 +52,36 @@ function RootComponent() {
 	const { queryClient } = Route.useRouteContext();
 
 	return (
-		<QueryClientProvider client={queryClient}>
-			<div className="min-h-screen flex flex-col">
-				<Header />
-				<main className="flex-1 flex flex-col min-h-0">
-					<Outlet />
-				</main>
-				<Footer />
-			</div>
-			<TanStackDevtools
-				config={{
-					position: "bottom-right",
-				}}
-				plugins={[
-					{
-						name: "Tanstack Router",
-						render: <TanStackRouterDevtoolsPanel />,
-					},
-					TanStackQueryDevtools,
-				]}
-			/>
-			<Toaster />
-		</QueryClientProvider>
+		<ThemeProvider>
+			<QueryClientProvider client={queryClient}>
+				<div className="min-h-screen flex flex-col">
+					<Header />
+					<main className="flex-1 flex flex-col min-h-0">
+						<Outlet />
+					</main>
+					<Footer />
+				</div>
+				<TanStackDevtools
+					config={{
+						position: "bottom-right",
+					}}
+					plugins={[
+						{
+							name: "Tanstack Router",
+							render: <TanStackRouterDevtoolsPanel />,
+						},
+						TanStackQueryDevtools,
+					]}
+				/>
+				<Toaster />
+			</QueryClientProvider>
+		</ThemeProvider>
 	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en" className="dark">
 			<head>
 				<HeadContent />
 			</head>

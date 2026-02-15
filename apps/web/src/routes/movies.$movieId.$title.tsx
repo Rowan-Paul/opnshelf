@@ -35,7 +35,8 @@ import { DatePickerModal } from "@/components/DatePickerModal";
 import { GenresSection } from "@/components/GenresSection";
 import { MovieDetails } from "@/components/MovieDetails";
 import { MovieHero } from "@/components/MovieHero";
-import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
+import { ActionButton } from "@/components/ui/action-button";
 import {
 	Dialog,
 	DialogContent,
@@ -43,6 +44,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { M3Button } from "@/components/ui/m3-button";
 import { formatDateWithTimezone, getTmdbPosterUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
@@ -102,6 +104,7 @@ function MovieDetailPage() {
 	const { movieId } = Route.useParams();
 	const queryClient = useQueryClient();
 	const router = useRouter();
+	const { seedColor } = useTheme();
 
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -175,10 +178,10 @@ function MovieDetailPage() {
 	}, [trackedMovie, userTimezone, is24Hour]);
 
 	const colors = movie?.colors || {
-		primary: "#8b5cf6",
-		secondary: "#6366f1",
-		accent: "#a855f7",
-		muted: "#4c1d95",
+		primary: seedColor,
+		secondary: seedColor,
+		accent: seedColor,
+		muted: seedColor,
 	};
 
 	const markMutation = useMutation({
@@ -276,8 +279,14 @@ function MovieDetailPage() {
 		markMutation.isPending && markMutation.variables?.body?.movieId === movieId;
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-gray-50">
-			<MovieHero movie={movie} />
+		<div
+			className="min-h-screen m3-background m3-on-background"
+			style={{
+				backgroundColor: "var(--md-sys-color-background)",
+				color: "var(--md-sys-color-on-background)",
+			}}
+		>
+			<MovieHero movie={movie} isLoading={isMovieLoading} />
 
 			<div className="container mx-auto px-4 py-4 max-w-6xl">
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
@@ -305,10 +314,11 @@ function MovieDetailPage() {
 												type="button"
 												onClick={handleMarkWatched}
 												disabled={isPending}
-												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+												className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
 												style={{
 													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+													color: "var(--md-sys-color-on-primary)",
 												}}
 											>
 												{isPending ? (
@@ -323,40 +333,33 @@ function MovieDetailPage() {
 													</>
 												)}
 											</button>
-											<button
-												type="button"
+											<ActionButton
+												icon={<Calendar className="w-4 h-4" />}
+												label="Watch on different date"
 												onClick={() => setShowDateModal(true)}
-												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-											>
-												<Calendar className="w-4 h-4" />
-												Watch on different date
-											</button>
-											<button
-												type="button"
-												onClick={() => setShowListModal(true)}
-												className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+											/>
+											<ActionButton
+												icon={
+													isInAnyList ? (
+														<Check className="w-4 h-4" />
+													) : (
+														<ListPlus className="w-4 h-4" />
+													)
+												}
+												label={
 													isInAnyList
-														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
-														: "text-gray-300 hover:bg-gray-800 border-gray-700"
-												}`}
-											>
-												{isInAnyList ? (
-													<Check className="w-4 h-4" />
-												) : (
-													<ListPlus className="w-4 h-4" />
-												)}
-												{isInAnyList
-													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-													: "Add to List"}
-											</button>
-											<button
-												type="button"
+														? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+														: "Add to List"
+												}
+												onClick={() => setShowListModal(true)}
+												isActive={isInAnyList}
+												activeColor={seedColor}
+											/>
+											<ActionButton
+												icon={<Share2 className="w-4 h-4" />}
+												label="Share"
 												onClick={handleShare}
-												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-											>
-												<Share2 className="w-4 h-4" />
-												Share
-											</button>
+											/>
 										</>
 									) : (
 										<>
@@ -364,10 +367,11 @@ function MovieDetailPage() {
 												type="button"
 												onClick={handleMarkWatched}
 												disabled={isPending}
-												className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+												className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
 												style={{
 													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+													color: "var(--md-sys-color-on-primary)",
 												}}
 											>
 												{isPending ? (
@@ -382,55 +386,49 @@ function MovieDetailPage() {
 													</>
 												)}
 											</button>
-											<button
-												type="button"
+											<ActionButton
+												icon={<Calendar className="w-4 h-4" />}
+												label="Watch on different date"
 												onClick={() => setShowDateModal(true)}
-												className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-											>
-												<Calendar className="w-4 h-4" />
-												Watch on different date
-											</button>
-											<button
-												type="button"
-												onClick={() => setShowListModal(true)}
-												className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+											/>
+											<ActionButton
+												icon={
+													isInAnyList ? (
+														<Check className="w-4 h-4" />
+													) : (
+														<ListPlus className="w-4 h-4" />
+													)
+												}
+												label={
 													isInAnyList
-														? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
-														: "text-gray-300 hover:bg-gray-800 border-gray-700"
-												}`}
-											>
-												{isInAnyList ? (
-													<Check className="w-4 h-4" />
-												) : (
-													<ListPlus className="w-4 h-4" />
-												)}
-												{isInAnyList
-													? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-													: "Add to List"}
-											</button>
+														? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+														: "Add to List"
+												}
+												onClick={() => setShowListModal(true)}
+												isActive={isInAnyList}
+												activeColor={seedColor}
+											/>
 										</>
 									)
 								) : (
 									<button
 										type="button"
-										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2"
+										className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2"
 										style={{
 											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+											color: "var(--md-sys-color-on-primary)",
 										}}
 										onClick={() => router.navigate({ to: "/login" })}
 									>
 										Sign in to Track
 									</button>
 								)}
-								<button
-									type="button"
+								<ActionButton
+									icon={<Share2 className="w-4 h-4" />}
+									label="Share"
 									onClick={handleShare}
-									className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-								>
-									<Share2 className="w-4 h-4" />
-									Share
-								</button>
+								/>
 							</div>
 						</div>
 					</div>
@@ -443,10 +441,11 @@ function MovieDetailPage() {
 										type="button"
 										onClick={handleMarkWatched}
 										disabled={isPending}
-										className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
+										className="w-full py-4 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
 										style={{
 											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 											boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+											color: "var(--md-sys-color-on-primary)",
 										}}
 									>
 										{isPending ? (
@@ -461,63 +460,90 @@ function MovieDetailPage() {
 											</>
 										)}
 									</button>
-									<button
-										type="button"
+									<ActionButton
+										icon={<Calendar className="w-4 h-4" />}
+										label="Watch on different date"
 										onClick={() => setShowDateModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-									>
-										<Calendar className="w-4 h-4" />
-										Watch on different date
-									</button>
-									<button
-										type="button"
-										onClick={() => setShowListModal(true)}
-										className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+									/>
+									<ActionButton
+										icon={
+											isInAnyList ? (
+												<Check className="w-4 h-4" />
+											) : (
+												<ListPlus className="w-4 h-4" />
+											)
+										}
+										label={
 											isInAnyList
-												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
-												: "text-gray-300 hover:bg-gray-800 border-gray-700"
-										}`}
-									>
-										{isInAnyList ? (
-											<Check className="w-4 h-4" />
-										) : (
-											<ListPlus className="w-4 h-4" />
-										)}
-										{isInAnyList
-											? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-											: "Add to List"}
-									</button>
-									<button
-										type="button"
+												? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+												: "Add to List"
+										}
+										onClick={() => setShowListModal(true)}
+										isActive={isInAnyList}
+										activeColor={seedColor}
+									/>
+									<ActionButton
+										icon={<Share2 className="w-4 h-4" />}
+										label="Share"
 										onClick={handleShare}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-									>
-										<Share2 className="w-4 h-4" />
-										Share
-									</button>
+									/>
 								</div>
 							) : (
 								<div className="space-y-3">
-									<div className="p-4 rounded-xl bg-gray-900/50">
-										<div className="flex items-center gap-2 text-green-400 mb-2">
+									<div
+										className="p-4 rounded-xl"
+										style={{
+											backgroundColor:
+												"var(--md-sys-color-surface-container-highest)",
+										}}
+									>
+										<div
+											className="flex items-center gap-2 mb-2"
+											style={{ color: "var(--md-sys-color-primary)" }}
+										>
 											<Check className="w-5 h-5" />
-											<span className="font-semibold">On Your Shelf</span>
+											<span className="m3-title-medium">On Your Shelf</span>
 										</div>
 										{formattedWatchedDate && (
-											<p className="text-sm text-gray-400">
+											<p
+												className="m3-body-medium"
+												style={{
+													color: "var(--md-sys-color-on-surface-variant)",
+												}}
+											>
 												Watched on {formattedWatchedDate}
 											</p>
 										)}
 										{(watchHistory?.length ?? 0) > 1 && (
 											<>
-												<div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+												<div
+													className="mt-2 flex items-center gap-2 m3-body-small"
+													style={{
+														color: "var(--md-sys-color-on-surface-variant)",
+													}}
+												>
 													<History className="w-3 h-3" />
 													<span>{watchHistory?.length} total watches</span>
 												</div>
 												<button
 													type="button"
 													onClick={() => setShowHistoryDialog(true)}
-													className="mt-2 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-gray-800/50"
+													className="mt-2 flex items-center gap-2 m3-body-medium transition-colors py-2 px-3 -ml-3 rounded-lg"
+													style={{
+														color: "var(--md-sys-color-on-surface-variant)",
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.color =
+															"var(--md-sys-color-on-surface)";
+														e.currentTarget.style.backgroundColor =
+															"var(--md-sys-color-surface-container)";
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.color =
+															"var(--md-sys-color-on-surface-variant)";
+														e.currentTarget.style.backgroundColor =
+															"transparent";
+													}}
 												>
 													<Eye className="w-4 h-4" />
 													View all watches
@@ -529,7 +555,17 @@ function MovieDetailPage() {
 												type="button"
 												onClick={handleUnmarkWatched}
 												disabled={unmarkMutation.isPending}
-												className="mt-2 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors py-2 px-3 -ml-3 rounded-lg hover:bg-red-900/20 disabled:opacity-50"
+												className="mt-2 flex items-center gap-2 m3-body-medium transition-colors py-2 px-3 -ml-3 rounded-lg disabled:opacity-50"
+												style={{
+													color: "var(--md-sys-color-error)",
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.backgroundColor =
+														"var(--md-sys-color-error-container)";
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.backgroundColor = "transparent";
+												}}
 											>
 												{unmarkMutation.isPending ? (
 													<>
@@ -549,10 +585,11 @@ function MovieDetailPage() {
 										type="button"
 										onClick={handleMarkWatched}
 										disabled={isPending}
-										className="w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+										className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
 										style={{
 											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
+											color: "var(--md-sys-color-on-primary)",
 										}}
 									>
 										{isPending ? (
@@ -567,66 +604,63 @@ function MovieDetailPage() {
 											</>
 										)}
 									</button>
-									<button
-										type="button"
+									<ActionButton
+										icon={<Calendar className="w-4 h-4" />}
+										label="Watch on different date"
 										onClick={() => setShowDateModal(true)}
-										className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 hover:bg-gray-800 border border-gray-700 transition-all duration-200 flex items-center justify-center gap-2"
-									>
-										<Calendar className="w-4 h-4" />
-										Watch on different date
-									</button>
-									<button
-										type="button"
-										onClick={() => setShowListModal(true)}
-										className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+									/>
+									<ActionButton
+										icon={
+											isInAnyList ? (
+												<Check className="w-4 h-4" />
+											) : (
+												<ListPlus className="w-4 h-4" />
+											)
+										}
+										label={
 											isInAnyList
-												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
-												: "text-gray-300 hover:bg-gray-800 border-gray-700"
-										}`}
-									>
-										{isInAnyList ? (
-											<Check className="w-4 h-4" />
-										) : (
-											<ListPlus className="w-4 h-4" />
-										)}
-										{isInAnyList
-											? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-											: "Add to List"}
-									</button>
+												? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+												: "Add to List"
+										}
+										onClick={() => setShowListModal(true)}
+										isActive={isInAnyList}
+										activeColor={seedColor}
+									/>
 								</div>
 							)
 						) : (
 							<button
 								type="button"
-								className="w-full py-4 px-6 rounded-xl font-semibold text-white text-lg text-center transition-all duration-200 hover:scale-[1.02]"
+								className="w-full py-4 px-6 rounded-xl m3-label-large text-center transition-all duration-200 hover:scale-[1.02]"
 								style={{
 									background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
 									boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+									color: "var(--md-sys-color-on-primary)",
 								}}
 								onClick={() => router.navigate({ to: "/login" })}
 							>
 								Sign in to Track
 							</button>
 						)}
-						<button
-							type="button"
+						<ActionButton
+							icon={<Share2 className="w-4 h-4" />}
+							label="Share"
 							onClick={handleShare}
-							className="w-full py-3 px-6 rounded-xl font-medium text-gray-300 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-800 border border-gray-700"
-						>
-							<Share2 className="w-4 h-4" />
-							Share
-						</button>
+						/>
 					</div>
 
 					<div className="space-y-6 min-w-0 w-full">
 						<section>
 							<h2
-								className="text-xl font-semibold mb-3"
+								className="m3-title-large mb-3"
 								style={{ color: colors.primary }}
 							>
 								Overview
 							</h2>
-							<p className="text-gray-300 leading-relaxed text-lg wrap-break-word">
+							<p
+								className="m3-body-large leading-relaxed wrap-break-word"
+								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+							>
 								{movie?.overview || "No overview available."}
 							</p>
 						</section>
@@ -640,13 +674,22 @@ function MovieDetailPage() {
 			</div>
 
 			<Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-				<DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+				<DialogContent
+					className="max-w-md"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container-highest)",
+						borderColor: "var(--md-sys-color-outline)",
+						color: "var(--md-sys-color-on-surface)",
+					}}
+				>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<History className="w-5 h-5" />
 							Watch History
 						</DialogTitle>
-						<DialogDescription className="text-gray-400">
+						<DialogDescription
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
 							All the times you&apos;ve watched {movie?.title}
 						</DialogDescription>
 					</DialogHeader>
@@ -655,10 +698,16 @@ function MovieDetailPage() {
 							watchHistory?.map((watch) => (
 								<div
 									key={watch.id}
-									className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50"
+									className="flex items-center gap-3 p-3 rounded-lg"
+									style={{
+										backgroundColor: "var(--md-sys-color-surface-container)",
+									}}
 								>
 									<div className="flex-1">
-										<p className="text-sm font-medium text-white">
+										<p
+											className="m3-body-medium"
+											style={{ color: "var(--md-sys-color-on-surface)" }}
+										>
 											{formatDateWithTimezone(watch.watchedDate, {
 												timezone: userTimezone,
 												is24Hour,
@@ -673,7 +722,20 @@ function MovieDetailPage() {
 											})
 										}
 										disabled={deleteWatchEntryMutation.isPending}
-										className="shrink-0 p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+										className="shrink-0 p-2 rounded-lg transition-colors disabled:opacity-50"
+										style={{
+											color: "var(--md-sys-color-on-surface-variant)",
+										}}
+										onMouseEnter={(e) => {
+											e.currentTarget.style.color = "var(--md-sys-color-error)";
+											e.currentTarget.style.backgroundColor =
+												"var(--md-sys-color-error-container)";
+										}}
+										onMouseLeave={(e) => {
+											e.currentTarget.style.color =
+												"var(--md-sys-color-on-surface-variant)";
+											e.currentTarget.style.backgroundColor = "transparent";
+										}}
 									>
 										{deleteWatchEntryMutation.isPending ? (
 											<Loader2 className="w-4 h-4 animate-spin" />
@@ -684,19 +746,21 @@ function MovieDetailPage() {
 								</div>
 							))
 						) : (
-							<div className="text-center py-8 text-gray-500">
+							<div
+								className="text-center py-8 m3-body-large"
+								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+							>
 								No watch history found
 							</div>
 						)}
 					</div>
 					<div className="mt-4 flex justify-end">
-						<Button
-							variant="outline"
+						<M3Button
+							variant="outlined"
 							onClick={() => setShowHistoryDialog(false)}
-							className="border-gray-700 text-white hover:bg-gray-800"
 						>
 							Close
-						</Button>
+						</M3Button>
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -719,7 +783,12 @@ function MovieDetailPage() {
 			)}
 
 			{isMovieLoading && (
-				<div className="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
+				<div
+					className="fixed inset-0 flex items-center justify-center z-50"
+					style={{
+						backgroundColor: "var(--md-sys-color-background)",
+					}}
+				>
 					<div
 						className="animate-spin rounded-full h-16 w-16 border-b-2"
 						style={{ borderColor: colors.primary }}

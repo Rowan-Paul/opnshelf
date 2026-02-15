@@ -10,9 +10,10 @@ import {
 
 interface MovieHeroProps {
 	movie: TmdbMovieDetailDto | undefined;
+	isLoading?: boolean;
 }
 
-export function MovieHero({ movie }: MovieHeroProps) {
+export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 	const router = useRouter();
 	const [showHours, setShowHours] = useState(false);
 
@@ -28,6 +29,31 @@ export function MovieHero({ movie }: MovieHeroProps) {
 		accent: "#a855f7",
 		muted: "#4c1d95",
 	};
+
+	if (isLoading || !movie) {
+		return (
+			<div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+				<div
+					className="w-full h-full animate-pulse"
+					style={{
+						background: `linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%)`,
+					}}
+				/>
+				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
+					<div className="container mx-auto max-w-6xl">
+						<div className="flex items-end gap-4 md:gap-8">
+							<div className="hidden md:block shrink-0">
+								<div className="w-48 lg:w-64 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-container)]" />
+							</div>
+							<div className="flex-1 pb-2">
+								<div className="h-12 w-64 md:h-16 md:w-96 bg-[var(--md-sys-color-surface-container)] rounded-lg animate-pulse" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="relative h-[50vh] md:h-[60vh] overflow-hidden">

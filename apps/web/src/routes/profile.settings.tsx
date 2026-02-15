@@ -12,20 +12,15 @@ import {
 	Clock,
 	Globe,
 	Loader2,
+	Palette,
 	Trash2,
 	User,
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
+import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
 	Dialog,
 	DialogContent,
@@ -36,6 +31,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { M3Button } from "@/components/ui/m3-button";
+import {
+	M3Card,
+	M3CardContent,
+	M3CardDescription,
+	M3CardHeader,
+	M3CardTitle,
+} from "@/components/ui/m3-card";
 import {
 	Select,
 	SelectContent,
@@ -133,6 +136,7 @@ export const Route = createFileRoute("/profile/settings")({
 function SettingsPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const { seedColor } = useTheme();
 	const timezoneId = useId();
 	const deletePdsId = useId();
 
@@ -220,7 +224,7 @@ function SettingsPage() {
 
 	if (isAuthLoading) {
 		return (
-			<div className="min-h-screen bg-gray-950 text-gray-50">
+			<div className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
 				<div className="container mx-auto px-4 py-8 max-w-3xl">
 					<div className="flex items-center gap-3 mb-8">
 						<Skeleton className="w-8 h-8 rounded" />
@@ -243,25 +247,40 @@ function SettingsPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-gray-50">
-			<div className="container mx-auto px-4 py-8 max-w-3xl">
-				<Card className="bg-gray-900 border-gray-800">
-					<CardHeader>
+		<div className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+			<div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+				{/* Page Header */}
+				<div className="flex items-center gap-3 mb-2">
+					<div
+						className="p-2 rounded-lg"
+						style={{ backgroundColor: `${seedColor}20` }}
+					>
+						<Palette className="w-6 h-6" style={{ color: seedColor }} />
+					</div>
+					<h1 className="md-headline-medium">Settings</h1>
+				</div>
+
+				{/* Theme Color Settings */}
+				<ColorPicker />
+
+				{/* Time & Region Settings */}
+				<M3Card variant="elevated">
+					<M3CardHeader>
 						<div className="flex items-center gap-3">
-							<div className="p-2 bg-amber-500/10 rounded-lg">
-								<Globe className="w-5 h-5 text-amber-500" />
+							<div className="p-2 rounded-lg bg-[var(--md-sys-color-primary-container)]">
+								<Globe className="w-5 h-5 text-[var(--md-sys-color-on-primary-container)]" />
 							</div>
 							<div>
-								<CardTitle>Time & Region</CardTitle>
-								<CardDescription>
+								<M3CardTitle>Time & Region</M3CardTitle>
+								<M3CardDescription>
 									Customize how dates and times are displayed
-								</CardDescription>
+								</M3CardDescription>
 							</div>
 						</div>
-					</CardHeader>
-					<CardContent className="space-y-6">
+					</M3CardHeader>
+					<M3CardContent className="space-y-6">
 						<div className="space-y-3">
-							<Label htmlFor={timezoneId} className="text-sm font-medium">
+							<Label htmlFor={timezoneId} className="md-label-large">
 								Timezone
 							</Label>
 							{isSettingsLoading ? (
@@ -274,21 +293,21 @@ function SettingsPage() {
 								>
 									<SelectTrigger
 										id={timezoneId}
-										className="bg-gray-950 border-gray-700"
+										className="bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)]"
 									>
 										<SelectValue placeholder="Select timezone" />
 									</SelectTrigger>
-									<SelectContent className="bg-gray-900 border-gray-700 max-h-80">
+									<SelectContent className="bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)] max-h-80">
 										{TIMEZONES.map((group) => (
 											<div key={group.region}>
-												<div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
+												<div className="px-2 py-1.5 text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">
 													{group.region}
 												</div>
 												{group.zones.map((zone) => (
 													<SelectItem
 														key={zone}
 														value={zone}
-														className="text-gray-300 focus:bg-gray-800 focus:text-gray-100"
+														className="text-[var(--md-sys-color-on-surface)] focus:bg-[var(--md-sys-color-surface-container-high)]"
 													>
 														{zone.replace(/_/g, " ")}
 													</SelectItem>
@@ -300,13 +319,13 @@ function SettingsPage() {
 							)}
 						</div>
 
-						<div className="h-px bg-gray-800" />
+						<div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
 
 						<div className="space-y-3">
 							<div className="flex items-center justify-between gap-2">
 								<div className="space-y-0.5">
-									<Label className="text-sm font-medium">Time Format</Label>
-									<p className="text-sm text-gray-500">
+									<Label className="md-label-large">Time Format</Label>
+									<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
 										Use 24-hour format (14:00) instead of 12-hour (2:00 PM)
 									</p>
 								</div>
@@ -315,7 +334,10 @@ function SettingsPage() {
 								) : (
 									<div className="flex items-center gap-3">
 										{updateSettingsMutation.isPending && (
-											<Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+											<Loader2
+												className="w-4 h-4 animate-spin"
+												style={{ color: seedColor }}
+											/>
 										)}
 										<Switch
 											checked={is24Hour}
@@ -328,122 +350,161 @@ function SettingsPage() {
 						</div>
 
 						{!isSettingsLoading && (
-							<div className="mt-4 p-4 bg-gray-950/50 rounded-lg border border-gray-800">
+							<div
+								className="mt-4 p-4 rounded-lg border"
+								style={{
+									backgroundColor: "var(--md-sys-color-surface-container)",
+									borderColor: "var(--md-sys-color-outline-variant)",
+								}}
+							>
 								<div className="flex items-center gap-3">
-									<Clock className="w-5 h-5 text-amber-500" />
+									<Clock className="w-5 h-5" style={{ color: seedColor }} />
 									<div>
-										<p className="text-sm text-gray-500">
+										<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
 											Current time preview
 										</p>
-										<p className="text-xl font-mono font-semibold text-amber-500">
+										<p
+											className="text-xl font-mono font-semibold"
+											style={{ color: seedColor }}
+										>
 											{getCurrentTimeDisplay()}
 										</p>
 									</div>
 								</div>
 							</div>
 						)}
-					</CardContent>
-				</Card>
+					</M3CardContent>
+				</M3Card>
 
-				<Card className="bg-gray-900 border-gray-800 mt-6">
-					<CardHeader>
+				{/* Account Settings */}
+				<M3Card variant="elevated">
+					<M3CardHeader>
 						<div className="flex items-center gap-3">
-							<div className="p-2 bg-blue-500/10 rounded-lg">
-								<User className="w-5 h-5 text-blue-500" />
+							<div className="p-2 rounded-lg bg-[var(--md-sys-color-secondary-container)]">
+								<User className="w-5 h-5 text-[var(--md-sys-color-on-secondary-container)]" />
 							</div>
 							<div>
-								<CardTitle>Account</CardTitle>
-								<CardDescription>
+								<M3CardTitle>Account</M3CardTitle>
+								<M3CardDescription>
 									Manage your account information
-								</CardDescription>
+								</M3CardDescription>
 							</div>
 						</div>
-					</CardHeader>
-					<CardContent className="space-y-4">
+					</M3CardHeader>
+					<M3CardContent className="space-y-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium">Handle</p>
-								<p className="text-sm text-gray-400">@{user.handle}</p>
+								<p className="md-label-large">Handle</p>
+								<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
+									@{user.handle}
+								</p>
 							</div>
 							{user.displayName && (
 								<div className="text-right">
-									<p className="text-sm font-medium">Display Name</p>
-									<p className="text-sm text-gray-400">
+									<p className="md-label-large">Display Name</p>
+									<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
 										{String(user.displayName)}
 									</p>
 								</div>
 							)}
 						</div>
 
-						<div className="h-px bg-gray-800" />
+						<div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
 
 						<div>
-							<Button
-								variant="destructive"
+							<M3Button
+								variant="outlined"
 								onClick={() => setShowDeleteDialog(true)}
-								className="w-full"
+								className="w-full text-[var(--md-sys-color-error)] border-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-error-container)]/10"
 							>
 								<Trash2 className="w-4 h-4 mr-2" />
 								Delete Account
-							</Button>
+							</M3Button>
 						</div>
-					</CardContent>
-				</Card>
+					</M3CardContent>
+				</M3Card>
 			</div>
 
+			{/* Delete Account Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent className="bg-gray-900 border-gray-800">
+				<DialogContent className="bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)]">
 					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2">
-							<AlertTriangle className="w-5 h-5 text-red-500" />
+						<DialogTitle className="flex items-center gap-2 text-[var(--md-sys-color-on-surface)]">
+							<AlertTriangle className="w-5 h-5 text-[var(--md-sys-color-error)]" />
 							Delete Account
 						</DialogTitle>
-						<DialogDescription className="text-gray-400">
+						<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
 							Are you sure you want to delete your account? This action cannot
 							be undone.
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="space-y-4 py-4">
-						<div className="p-4 bg-gray-950 rounded-lg border border-gray-800">
-							<p className="text-sm text-gray-400 mb-3">
+						<div
+							className="p-4 rounded-lg border"
+							style={{
+								backgroundColor: "var(--md-sys-color-surface-container-lowest)",
+								borderColor: "var(--md-sys-color-outline-variant)",
+							}}
+						>
+							<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)] mb-3">
 								What happens to your data:
 							</p>
 							<div className="space-y-2 text-sm">
-								<p className="flex items-start gap-2">
-									<span className="text-green-500">✓</span>
+								<p className="flex items-start gap-2 text-[var(--md-sys-color-on-surface)]">
+									<span style={{ color: seedColor }}>✓</span>
 									Your OpnShelf account and settings will be deleted
 								</p>
-								<p className="flex items-start gap-2">
-									<span className="text-green-500">✓</span>
+								<p className="flex items-start gap-2 text-[var(--md-sys-color-on-surface)]">
+									<span style={{ color: seedColor }}>✓</span>
 									Your local session will be cleared
 								</p>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-3 p-4 bg-gray-950 rounded-lg border border-gray-800">
+						<div
+							className="flex items-center gap-3 p-4 rounded-lg border"
+							style={{
+								backgroundColor: "var(--md-sys-color-surface-container-lowest)",
+								borderColor: "var(--md-sys-color-outline-variant)",
+							}}
+						>
 							<input
 								type="checkbox"
 								id={deletePdsId}
 								checked={deletePDSData}
 								onChange={(e) => setDeletePDSData(e.target.checked)}
-								className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+								className="w-4 h-4 rounded border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] accent-[var(--md-sys-color-primary)]"
 							/>
-							<Label htmlFor={deletePdsId} className="text-sm cursor-pointer">
+							<Label
+								htmlFor={deletePdsId}
+								className="md-body-medium cursor-pointer text-[var(--md-sys-color-on-surface)]"
+							>
 								Also delete my watch history from my PDS
 							</Label>
 						</div>
 
 						{deletePDSData ? (
-							<div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-								<p className="text-sm text-red-400">
+							<div
+								className="p-3 rounded-lg border"
+								style={{
+									backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
+									borderColor: "rgba(var(--md-sys-color-error), 0.2)",
+								}}
+							>
+								<p className="md-body-medium text-[var(--md-sys-color-error)]">
 									Your watch history will be permanently deleted from your
 									personal data server. This cannot be recovered.
 								</p>
 							</div>
 						) : (
-							<div className="p-3 bg-gray-800/50 rounded-lg">
-								<p className="text-sm text-gray-400">
+							<div
+								className="p-3 rounded-lg"
+								style={{
+									backgroundColor: "var(--md-sys-color-surface-container)",
+								}}
+							>
+								<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
 									Your watch history will remain on your PDS. You can use
 									another app or re-authorize OpnShelf later to access it.
 								</p>
@@ -451,14 +512,14 @@ function SettingsPage() {
 						)}
 					</div>
 
-					<DialogFooter>
-						<Button
-							variant="outline"
+					<DialogFooter className="gap-2">
+						<M3Button
+							variant="outlined"
 							onClick={() => setShowDeleteDialog(false)}
 							disabled={deleteAccountMutation.isPending}
 						>
 							Cancel
-						</Button>
+						</M3Button>
 						<LoadingButton
 							variant="destructive"
 							onClick={() =>

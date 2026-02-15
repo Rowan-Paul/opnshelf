@@ -2,6 +2,7 @@ import { authControllerMeOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { BookOpen, List, Settings } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 
 export const Route = createFileRoute("/profile")({
@@ -17,22 +18,59 @@ function ProfileLayout() {
 		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
+	const { seedColor } = useTheme();
 
 	if (isAuthLoading) {
 		return (
-			<div className="min-h-screen bg-gray-950 text-gray-50">
+			<div
+				className="min-h-screen"
+				style={{
+					backgroundColor: "var(--md-sys-color-background)",
+					color: "var(--md-sys-color-on-background)",
+				}}
+			>
 				<div className="container mx-auto px-4 py-4 max-w-7xl">
 					<div className="animate-pulse space-y-8">
 						<div className="flex items-center gap-4">
-							<div className="w-16 h-16 bg-gray-800 rounded-full" />
+							<div
+								className="w-16 h-16 rounded-full"
+								style={{
+									backgroundColor:
+										"var(--md-sys-color-surface-container-highest)",
+								}}
+							/>
 							<div className="space-y-2">
-								<div className="h-6 w-32 bg-gray-800 rounded" />
-								<div className="h-4 w-48 bg-gray-800 rounded" />
+								<div
+									className="h-6 w-32 rounded"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-highest)",
+									}}
+								/>
+								<div
+									className="h-4 w-48 rounded"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-highest)",
+									}}
+								/>
 							</div>
 						</div>
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<div className="h-24 bg-gray-800 rounded-lg" />
-							<div className="h-24 bg-gray-800 rounded-lg" />
+							<div
+								className="h-24 rounded-lg"
+								style={{
+									backgroundColor:
+										"var(--md-sys-color-surface-container-highest)",
+								}}
+							/>
+							<div
+								className="h-24 rounded-lg"
+								style={{
+									backgroundColor:
+										"var(--md-sys-color-surface-container-highest)",
+								}}
+							/>
 						</div>
 					</div>
 				</div>
@@ -50,7 +88,13 @@ function ProfileLayout() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-gray-50">
+		<div
+			className="min-h-screen"
+			style={{
+				backgroundColor: "var(--md-sys-color-background)",
+				color: "var(--md-sys-color-on-background)",
+			}}
+		>
 			<div className="container mx-auto px-4 py-4 max-w-7xl">
 				{/* Profile Header */}
 				<div className="flex items-center gap-4 mb-8">
@@ -61,24 +105,37 @@ function ProfileLayout() {
 							className="w-16 h-16 rounded-full object-cover"
 						/>
 					) : (
-						<div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center">
+						<div
+							className="w-16 h-16 rounded-full flex items-center justify-center"
+							style={{
+								backgroundColor: seedColor,
+								color: "var(--md-sys-color-on-primary)",
+							}}
+						>
 							<span className="text-2xl font-bold">
 								{String(user.displayName)?.[0] || user.handle[0]}
 							</span>
 						</div>
 					)}
 					<div>
-						<h1 className="text-2xl font-bold">
+						<h1 className="md-headline-medium">
 							{String(user.displayName || user.handle)}
 						</h1>
 						{user.displayName && (
-							<p className="text-gray-400">@{user.handle}</p>
+							<p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+								@{user.handle}
+							</p>
 						)}
 					</div>
 				</div>
 
 				{/* Navigation Tabs */}
-				<div className="flex gap-2 mb-8 border-b border-gray-800 pb-4">
+				<div
+					className="flex gap-2 mb-8 pb-4"
+					style={{
+						borderBottom: "1px solid var(--md-sys-color-outline-variant)",
+					}}
+				>
 					<NavLink to="/profile/shelf" icon={BookOpen} label="My Shelf" />
 					<NavLink to="/profile/lists" icon={List} label="My Lists" />
 					<NavLink to="/profile/settings" icon={Settings} label="Settings" />
@@ -100,10 +157,30 @@ function NavLink({
 	icon: React.ComponentType<{ className?: string }>;
 	label: string;
 }) {
+	const { seedColor } = useTheme();
+
 	return (
 		<Link
 			to={to}
-			className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-400 hover:text-gray-50 hover:bg-gray-800 transition-colors [&.active]:text-purple-500 [&.active]:bg-purple-500/10"
+			className="flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] transition-colors md-label-large"
+			style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+			activeProps={{
+				className:
+					"flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] md-label-large",
+				style: {
+					backgroundColor: `${seedColor}20`,
+					color: seedColor,
+				},
+			}}
+			onMouseEnter={(e) => {
+				e.currentTarget.style.backgroundColor =
+					"var(--md-sys-color-surface-container)";
+				e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
+			}}
+			onMouseLeave={(e) => {
+				e.currentTarget.style.backgroundColor = "transparent";
+				e.currentTarget.style.color = "var(--md-sys-color-on-surface-variant)";
+			}}
 		>
 			<Icon className="w-5 h-5" />
 			<span>{label}</span>

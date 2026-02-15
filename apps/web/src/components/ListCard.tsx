@@ -1,19 +1,22 @@
 import type { MovieListSummaryDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { List, Star } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+	M3Card,
+	M3CardContent,
+	M3CardDescription,
+	M3CardHeader,
+	M3CardTitle,
+} from "@/components/ui/m3-card";
 
 interface ListCardProps {
 	list: MovieListSummaryDto;
 }
 
 export function ListCard({ list }: ListCardProps) {
+	const { seedColor } = useTheme();
+
 	const getIcon = () => {
 		if (list.slug.includes("watchlist")) {
 			return <List className="w-5 h-5" />;
@@ -26,31 +29,47 @@ export function ListCard({ list }: ListCardProps) {
 
 	return (
 		<Link to="/lists/$slug" params={{ slug: list.slug }}>
-			<Card className="bg-gray-900 border-gray-800 hover:border-purple-600 transition-colors cursor-pointer h-full">
-				<CardHeader className="pb-2">
+			<M3Card
+				variant="elevated"
+				className="cursor-pointer h-full transition-all hover:md-elevation-2"
+			>
+				<M3CardHeader className="pb-2">
 					<div className="flex items-center gap-2">
-						<div className="p-2 bg-purple-600/20 rounded-lg text-purple-400">
+						<div
+							className="p-2 rounded-lg"
+							style={{
+								backgroundColor: `${seedColor}20`,
+								color: seedColor,
+							}}
+						>
 							{getIcon()}
 						</div>
 						<div className="flex-1 min-w-0">
-							<CardTitle className="text-lg truncate">{list.name}</CardTitle>
+							<M3CardTitle className="md-title-medium truncate">
+								{list.name}
+							</M3CardTitle>
 							{list.isDefault && (
-								<span className="text-xs text-purple-400">Default list</span>
+								<span className="md-label-small" style={{ color: seedColor }}>
+									Default list
+								</span>
 							)}
 						</div>
 					</div>
-				</CardHeader>
-				<CardContent>
+				</M3CardHeader>
+				<M3CardContent>
 					{list.description && (
-						<CardDescription className="line-clamp-2 mb-2">
+						<M3CardDescription className="line-clamp-2 mb-2">
 							{list.description}
-						</CardDescription>
+						</M3CardDescription>
 					)}
-					<p className="text-sm text-gray-400">
+					<p
+						className="md-body-medium"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
 						{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
 					</p>
-				</CardContent>
-			</Card>
+				</M3CardContent>
+			</M3Card>
 		</Link>
 	);
 }

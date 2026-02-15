@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -7,6 +6,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { M3Button } from "@/components/ui/m3-button";
 
 interface ConfirmDialogProps {
 	open: boolean;
@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
 	confirmText?: string;
 	cancelText?: string;
 	isLoading?: boolean;
+	danger?: boolean;
 }
 
 export function ConfirmDialog({
@@ -28,6 +29,7 @@ export function ConfirmDialog({
 	confirmText = "Confirm",
 	cancelText = "Cancel",
 	isLoading = false,
+	danger = false,
 }: ConfirmDialogProps) {
 	const handleConfirm = () => {
 		onConfirm();
@@ -36,26 +38,39 @@ export function ConfirmDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
+			<DialogContent className="bg-[var(--md-sys-color-surface-container-high)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] rounded-[1.75rem]">
 				<DialogHeader>
-					<DialogTitle>{title}</DialogTitle>
-					<DialogDescription>{description}</DialogDescription>
+					<DialogTitle className="text-[var(--md-sys-color-on-surface)]">
+						{title}
+					</DialogTitle>
+					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
+						{description}
+					</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>
-					<Button
-						variant="outline"
+					<M3Button
+						variant="outlined"
 						onClick={() => onOpenChange(false)}
 						disabled={isLoading}
+						className="border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)]"
 					>
 						{cancelText}
-					</Button>
-					<Button
-						variant="destructive"
+					</M3Button>
+					<M3Button
+						variant={danger ? "filled" : "filled"}
 						onClick={handleConfirm}
 						disabled={isLoading}
+						style={
+							danger
+								? {
+										backgroundColor: "var(--md-sys-color-error)",
+										color: "var(--md-sys-color-on-error)",
+									}
+								: undefined
+						}
 					>
 						{isLoading ? "Loading..." : confirmText}
-					</Button>
+					</M3Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

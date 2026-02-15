@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Film } from "lucide-react";
 import { useEffect } from "react";
+import { useTheme } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/auth/complete")({
 	component: AuthCompletePage,
@@ -18,6 +19,7 @@ function isValidRedirectPath(path: string): boolean {
 function AuthCompletePage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const { seedColor } = useTheme();
 
 	useEffect(() => {
 		queryClient.invalidateQueries({ queryKey: ["auth"] });
@@ -33,11 +35,22 @@ function AuthCompletePage() {
 	}, [navigate, queryClient]);
 
 	return (
-		<div className="flex-1 bg-gray-950 text-gray-50 flex flex-col min-h-0">
+		<div
+			className="flex-1 flex flex-col min-h-0"
+			style={{
+				backgroundColor: "var(--md-sys-color-background)",
+				color: "var(--md-sys-color-on-background)",
+			}}
+		>
 			<div className="flex-1 flex flex-col items-center justify-center p-4">
-				<Film className="w-12 h-12 text-purple-500 mb-4" />
-				<div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-				<p className="text-gray-400">Completing sign-in...</p>
+				<Film className="w-12 h-12 mb-4" style={{ color: seedColor }} />
+				<div
+					className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin mb-4"
+					style={{ borderColor: seedColor }}
+				/>
+				<p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+					Completing sign-in...
+				</p>
 			</div>
 		</div>
 	);

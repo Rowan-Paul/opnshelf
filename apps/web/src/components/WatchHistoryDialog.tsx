@@ -6,7 +6,6 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { History, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -14,6 +13,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { M3Button } from "@/components/ui/m3-button";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 interface WatchHistoryDialogProps {
@@ -56,13 +56,13 @@ export function WatchHistoryDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
+			<DialogContent className="bg-[var(--md-sys-color-surface-container-high)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] max-w-md rounded-[1.75rem]">
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
+					<DialogTitle className="flex items-center gap-2 text-[var(--md-sys-color-on-surface)]">
 						<History className="w-5 h-5" />
 						Watch History
 					</DialogTitle>
-					<DialogDescription className="text-gray-400">
+					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
 						All the times you&apos;ve watched {movieTitle}
 					</DialogDescription>
 				</DialogHeader>
@@ -71,10 +71,10 @@ export function WatchHistoryDialog({
 						watchHistory.map((watch) => (
 							<div
 								key={watch.id}
-								className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50"
+								className="flex items-center gap-3 p-3 rounded-lg bg-[var(--md-sys-color-surface-container-low)]"
 							>
 								<div className="flex-1">
-									<p className="text-sm font-medium text-white">
+									<p className="text-sm font-medium text-[var(--md-sys-color-on-surface)]">
 										{formatDate(watch.watchedDate)}
 									</p>
 								</div>
@@ -86,7 +86,7 @@ export function WatchHistoryDialog({
 										})
 									}
 									disabled={deleteWatchEntryMutation.isPending}
-									className="shrink-0 p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+									className="shrink-0 p-2 text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-error)]/10 rounded-lg transition-colors disabled:opacity-50"
 									title="Remove this watch"
 								>
 									{deleteWatchEntryMutation.isPending &&
@@ -100,19 +100,19 @@ export function WatchHistoryDialog({
 							</div>
 						))
 					) : (
-						<div className="text-center py-8 text-gray-500">
+						<div className="text-center py-8 text-[var(--md-sys-color-on-surface-variant)]">
 							No watch history found
 						</div>
 					)}
 				</div>
 				<div className="mt-4 flex justify-end">
-					<Button
-						variant="outline"
+					<M3Button
+						variant="outlined"
 						onClick={() => onOpenChange(false)}
-						className="border-gray-700 text-white hover:bg-gray-800"
+						className="border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)]"
 					>
 						Close
-					</Button>
+					</M3Button>
 				</div>
 			</DialogContent>
 		</Dialog>

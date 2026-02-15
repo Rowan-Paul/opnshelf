@@ -17,6 +17,9 @@ const config = defineConfig({
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
 		},
 	},
+	optimizeDeps: {
+		include: ["@material/material-color-utilities"],
+	},
 	plugins: [
 		devtools(),
 		nitro(),

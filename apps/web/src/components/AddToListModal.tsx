@@ -9,7 +9,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -17,6 +16,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { M3Button } from "@/components/ui/m3-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AddToListModalProps {
@@ -96,17 +96,19 @@ export function AddToListModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-gray-900 border-gray-800 text-gray-50 max-w-md">
+			<DialogContent className="bg-[var(--md-sys-color-surface-container-high)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] max-w-md rounded-[1.75rem]">
 				<DialogHeader>
-					<DialogTitle>Manage Lists</DialogTitle>
-					<DialogDescription className="text-gray-400">
+					<DialogTitle className="text-[var(--md-sys-color-on-surface)]">
+						Manage Lists
+					</DialogTitle>
+					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
 						Add or remove &quot;{movieTitle}&quot; from your lists
 					</DialogDescription>
 				</DialogHeader>
 				<ScrollArea className="max-h-[300px]">
 					{isLoading && (
 						<div className="flex items-center justify-center py-8">
-							<Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+							<Loader2 className="w-6 h-6 animate-spin text-[var(--md-sys-color-primary)]" />
 						</div>
 					)}
 					{listsForMovie && (
@@ -122,13 +124,13 @@ export function AddToListModal({
 								const isInList = list.isInList;
 
 								return (
-									<Button
+									<M3Button
 										key={list.listId}
-										variant="outline"
+										variant="outlined"
 										className={`w-full justify-between py-6 ${
 											isInList
-												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
-												: "bg-gray-800 border-gray-700 hover:bg-gray-700"
+												? "bg-[var(--md-sys-color-secondary-container)] border-[var(--md-sys-color-secondary)] text-[var(--md-sys-color-on-secondary-container)] hover:bg-[var(--md-sys-color-secondary-container)]/80"
+												: "bg-transparent border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container-high)]"
 										}`}
 										onClick={() => handleToggleList(list.listSlug, isInList)}
 										disabled={isPending}
@@ -136,7 +138,9 @@ export function AddToListModal({
 										<span className="flex items-center gap-2">
 											<span>{list.listName}</span>
 											{list.isDefault && (
-												<span className="text-xs text-purple-400">Default</span>
+												<span className="text-xs text-[var(--md-sys-color-on-secondary-container)]/70">
+													Default
+												</span>
 											)}
 										</span>
 										{isPending ? (
@@ -149,7 +153,7 @@ export function AddToListModal({
 										) : (
 											<Plus className="w-4 h-4" />
 										)}
-									</Button>
+									</M3Button>
 								);
 							})}
 						</div>
