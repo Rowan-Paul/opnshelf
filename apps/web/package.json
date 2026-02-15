@@ -13,6 +13,7 @@
     "start": "node .output/server/index.mjs"
   },
   "dependencies": {
+    "@opnshelf/api": "workspace:*",
     "@material/material-color-utilities": "0.3.0",
     "@radix-ui/react-switch": "^1.2.6",
     "@t3-oss/env-core": "^0.13.8",
