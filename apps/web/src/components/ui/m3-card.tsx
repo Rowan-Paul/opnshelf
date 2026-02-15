@@ -157,7 +157,7 @@ export {
 	M3CardTitle,
 	M3CardDescription,
 	M3CardContent,
-	M3CardFooter,
-	m3CardVariants,
+	
+	
 };
-export type { M3CardProps };
+;

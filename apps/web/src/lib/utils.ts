@@ -104,7 +104,7 @@ export function formatDateOnly(
 	}
 }
 
-export function getReleaseYear(
+function getReleaseYear(
 	dateString: string | null | undefined,
 ): number | null {
 	if (!dateString) return null;

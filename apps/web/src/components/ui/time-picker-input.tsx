@@ -9,7 +9,7 @@ import {
 	type TimePickerType,
 } from "./time-picker-utils";
 
-export interface TimePickerInputProps
+interface TimePickerInputProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
 	picker: TimePickerType;
 	date: Date | undefined;

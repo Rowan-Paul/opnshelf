@@ -133,5 +133,5 @@ function M3Button({
 	);
 }
 
-export { M3Button, m3ButtonVariants };
-export type { M3ButtonProps };
+export { M3Button,  };
+;

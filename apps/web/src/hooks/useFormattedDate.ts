@@ -19,7 +19,7 @@ export function useFormattedDate() {
 	return { formatDate, timezone, is24Hour };
 }
 
-export function useMemoizedFormattedDate(
+function useMemoizedFormattedDate(
 	dateString: string | Date | null | undefined,
 ) {
 	const { formatDate } = useFormattedDate();

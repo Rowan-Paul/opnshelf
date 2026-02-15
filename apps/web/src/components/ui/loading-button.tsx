@@ -33,4 +33,4 @@ function LoadingButton({
 	);
 }
 
-export { LoadingButton, type LoadingButtonProps };
+export { LoadingButton,  };

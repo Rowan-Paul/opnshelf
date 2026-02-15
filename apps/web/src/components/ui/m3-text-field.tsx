@@ -277,5 +277,5 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 );
 M3TextField.displayName = "M3TextField";
 
-export { M3TextField, m3TextFieldVariants, m3TextFieldInputVariants };
-export type { M3TextFieldProps };
+export { M3TextField,   };
+;
