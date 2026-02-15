@@ -125,7 +125,7 @@ export function AddToListModal({
 									<Button
 										key={list.listId}
 										variant="outline"
-										className={`w-full justify-between py-6 md:py-4 ${
+										className={`w-full justify-between py-6 ${
 											isInList
 												? "bg-purple-600/20 border-purple-600 text-purple-300 hover:bg-purple-600/30"
 												: "bg-gray-800 border-gray-700 hover:bg-gray-700"
