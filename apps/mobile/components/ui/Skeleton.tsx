@@ -1,5 +1,6 @@
 import { StyleSheet, View, type ViewStyle } from "react-native";
-import { colors, borderRadius } from "@/constants/theme";
+import { borderRadius } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface SkeletonProps {
 	width?: number | `${number}%`;
@@ -9,11 +10,13 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width = "100%", height = 16, borderRadius: br = borderRadius.md, style }: SkeletonProps) {
+	const { colors } = useTheme();
+
 	return (
 		<View
 			style={[
 				styles.skeleton,
-				{ width, height, borderRadius: br },
+				{ width, height, borderRadius: br, backgroundColor: colors.surfaceContainerHigh },
 				style,
 			]}
 		/>
@@ -21,7 +24,5 @@ export function Skeleton({ width = "100%", height = 16, borderRadius: br = borde
 }
 
 const styles = StyleSheet.create({
-	skeleton: {
-		backgroundColor: colors.cardMuted,
-	},
+	skeleton: {},
 });

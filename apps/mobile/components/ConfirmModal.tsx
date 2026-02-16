@@ -8,7 +8,7 @@ import {
 	Text,
 	View,
 } from "react-native";
-import { borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { Button } from "@/components/ui/Button";
 

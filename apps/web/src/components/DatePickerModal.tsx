@@ -89,27 +89,27 @@ export function DatePickerModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-			<div className="bg-md-surface-container-high rounded-[1.75rem] p-6 max-w-md w-full">
+			<div className="bg-[var(--md-sys-color-surface-container-high)] rounded-[1.75rem] p-6 max-w-md w-full">
 				<div className="flex justify-between items-center mb-6">
-					<h3 className="text-xl font-semibold text-md-on-surface">
+					<h3 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">
 						Watch Again
 					</h3>
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-2 hover:bg-md-surface-container-high rounded-full transition-colors text-md-on-surface-variant"
+						className="p-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-colors text-[var(--md-sys-color-on-surface-variant)]"
 					>
 						<X className="w-5 h-5" />
 					</button>
 				</div>
-				<p className="text-md-on-surface-variant mb-4">
+				<p className="text-[var(--md-sys-color-on-surface-variant)] mb-4">
 					When did you watch this movie?
 				</p>
 				<div className="space-y-4">
 					<div>
 						<label
 							htmlFor="date-picker"
-							className="block text-sm text-md-on-surface-variant mb-2 cursor-pointer"
+							className="block text-sm text-[var(--md-sys-color-on-surface-variant)] mb-2 cursor-pointer"
 						>
 							Date
 						</label>
@@ -117,20 +117,20 @@ export function DatePickerModal({
 							<PopoverTrigger asChild>
 								<M3Button
 									variant="outlined"
-									className="w-full px-4 py-3 h-auto mt-2 bg-md-surface-container-high rounded-xl border border-md-outline text-md-on-surface hover:bg-md-surface-container-high justify-start text-left font-normal"
+									className="w-full px-4 py-3 h-auto mt-2 bg-[var(--md-sys-color-surface-container-high)] rounded-xl border border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)] justify-start text-left font-normal"
 								>
-									<Calendar className="mr-2 h-4 w-4 text-md-on-surface-variant" />
+									<Calendar className="mr-2 h-4 w-4 text-[var(--md-sys-color-on-surface-variant)]" />
 									{customDate ? (
 										format(new Date(customDate), "PPP")
 									) : (
-										<span className="text-md-on-surface-variant">
+										<span className="text-[var(--md-sys-color-on-surface-variant)]">
 											Pick a date
 										</span>
 									)}
 								</M3Button>
 							</PopoverTrigger>
 							<PopoverContent
-								className="w-auto p-0 bg-md-surface-container border-md-outline"
+								className="w-auto p-0 bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)]"
 								align="start"
 							>
 								<CalendarComponent
@@ -154,7 +154,7 @@ export function DatePickerModal({
 							type="button"
 							variant="outlined"
 							onClick={onClose}
-							className="flex-1 border-md-outline text-md-on-surface hover:bg-md-surface-container-high"
+							className="flex-1 border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)]"
 						>
 							Cancel
 						</M3Button>
@@ -162,7 +162,7 @@ export function DatePickerModal({
 							type="button"
 							onClick={handleSubmit}
 							disabled={!customDate || markMutation.isPending}
-							className="flex-1 bg-md-primary hover:bg-(--md-sys-color-primary)/90"
+							className="flex-1 bg-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/90"
 							isLoading={markMutation.isPending}
 						>
 							Add Play

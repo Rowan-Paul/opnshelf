@@ -8,13 +8,15 @@ import Animated, {
 	Easing,
 } from "react-native-reanimated";
 import { useEffect } from "react";
-import { colors, spacing } from "@/constants/theme";
+import { spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface LoadingScreenProps {
 	message?: string;
 }
 
 export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
+	const { colors } = useTheme();
 	const pulse = useSharedValue(1);
 
 	useEffect(() => {
@@ -33,7 +35,7 @@ export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
 	}));
 
 	return (
-		<View style={styles.container}>
+		<View style={[styles.container, { backgroundColor: colors.background }]}>
 			<Animated.View style={[styles.logoContainer, animatedStyle]}>
 				<Ionicons name="film" size={64} color={colors.primary} />
 			</Animated.View>
@@ -42,7 +44,7 @@ export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
 				color={colors.primary}
 				style={styles.spinner}
 			/>
-			<Text style={styles.message}>{message}</Text>
+			<Text style={[styles.message, { color: colors.onSurfaceVariant }]}>{message}</Text>
 		</View>
 	);
 }
@@ -50,7 +52,6 @@ export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 		justifyContent: "center",
 		alignItems: "center",
 		padding: spacing.lg,
@@ -62,7 +63,6 @@ const styles = StyleSheet.create({
 		marginVertical: spacing.md,
 	},
 	message: {
-		color: colors.textMuted,
 		fontSize: 16,
 		fontWeight: "500",
 	},

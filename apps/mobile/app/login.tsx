@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:3001";
 
@@ -42,6 +43,7 @@ export default function LoginScreen() {
 	}>();
 	const { error, redirect, reason } = params;
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const { colors } = useTheme();
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -188,12 +190,12 @@ export default function LoginScreen() {
 			<View
 				style={{
 					flex: 1,
-					backgroundColor: "#030712",
+					backgroundColor: colors.background,
 					justifyContent: "center",
 					alignItems: "center",
 				}}
 			>
-				<ActivityIndicator size="large" color="#a855f7" />
+				<ActivityIndicator size="large" color={colors.primary} />
 			</View>
 		);
 	}
@@ -201,7 +203,7 @@ export default function LoginScreen() {
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
-			style={{ flex: 1, backgroundColor: "#030712" }}
+			style={{ flex: 1, backgroundColor: colors.background }}
 		>
 			<View
 				style={{
@@ -214,13 +216,13 @@ export default function LoginScreen() {
 				<View style={{ flex: 1, justifyContent: "center" }}>
 					<View style={{ alignItems: "center", marginBottom: 32 }}>
 						<View style={{ marginBottom: 16 }}>
-							<Ionicons name="film" size={48} color="#8b5cf6" />
+							<Ionicons name="film" size={48} color={colors.primary} />
 						</View>
 						<Text
 							style={{
 								fontSize: 28,
 								fontWeight: "bold",
-								color: "#f9fafb",
+								color: colors.onSurface,
 								marginBottom: 8,
 							}}
 						>
@@ -229,7 +231,7 @@ export default function LoginScreen() {
 						<Text
 							style={{
 								fontSize: 16,
-								color: "#9ca3af",
+								color: colors.onSurfaceVariant,
 								textAlign: "center",
 							}}
 						>
@@ -242,22 +244,22 @@ export default function LoginScreen() {
 							style={{
 								marginBottom: 24,
 								padding: 16,
-								backgroundColor: "rgba(251, 191, 36, 0.1)",
+								backgroundColor: `${colors.tertiary}15`,
 								borderWidth: 1,
-								borderColor: "rgba(251, 191, 36, 0.3)",
+								borderColor: `${colors.tertiary}40`,
 								borderRadius: 8,
 							}}
 						>
 							<Text
 								style={{
-									color: "#fcd34d",
+									color: colors.tertiary,
 									fontWeight: "600",
 									marginBottom: 4,
 								}}
 							>
 								You have been logged out
 							</Text>
-							<Text style={{ color: "rgba(252, 211, 77, 0.8)", fontSize: 14 }}>
+							<Text style={{ color: `${colors.tertiary}cc`, fontSize: 14 }}>
 								Your session has expired. Please sign in again to continue.
 							</Text>
 						</View>
@@ -268,19 +270,19 @@ export default function LoginScreen() {
 							style={{
 								marginBottom: 24,
 								padding: 16,
-								backgroundColor: "rgba(239, 68, 68, 0.1)",
+								backgroundColor: `${colors.error}15`,
 								borderWidth: 1,
-								borderColor: "rgba(239, 68, 68, 0.3)",
+								borderColor: `${colors.error}40`,
 								borderRadius: 8,
 								flexDirection: "row",
 								alignItems: "flex-start",
 								gap: 12,
 							}}
 						>
-							<Ionicons name="alert-circle" size={20} color="#f87171" />
+							<Ionicons name="alert-circle" size={20} color={colors.error} />
 							<Text
 								style={{
-									color: "#fecaca",
+									color: `${colors.error}dd`,
 									fontSize: 14,
 									flex: 1,
 								}}
@@ -296,7 +298,7 @@ export default function LoginScreen() {
 								style={{
 									fontSize: 14,
 									fontWeight: "500",
-									color: "#d1d5db",
+									color: colors.onSurface,
 									marginBottom: 8,
 								}}
 							>
@@ -307,11 +309,11 @@ export default function LoginScreen() {
 									width: "100%",
 									paddingHorizontal: 16,
 									paddingVertical: 12,
-									backgroundColor: "#111827",
+									backgroundColor: colors.surfaceContainer,
 									borderWidth: 1,
-									borderColor: "#374151",
+									borderColor: colors.outline,
 									borderRadius: 8,
-									color: "#ffffff",
+									color: colors.onSurface,
 									fontSize: 16,
 								}}
 								value={handle}
@@ -321,7 +323,7 @@ export default function LoginScreen() {
 									setShowSuggestionsModal(true);
 								}}
 								placeholder="username.bsky.social"
-								placeholderTextColor="#6b7280"
+								placeholderTextColor={colors.onSurfaceVariant}
 								autoCapitalize="none"
 								autoCorrect={false}
 								keyboardType="email-address"
@@ -337,7 +339,9 @@ export default function LoginScreen() {
 								gap: 8,
 								paddingHorizontal: 16,
 								paddingVertical: 12,
-								backgroundColor: isSubmitting ? "#5b21b6" : "#7c3aed",
+								backgroundColor: isSubmitting
+									? `${colors.primary}cc`
+									: colors.primary,
 								borderRadius: 8,
 								opacity: isSubmitting ? 0.7 : 1,
 							}}
@@ -347,10 +351,10 @@ export default function LoginScreen() {
 						>
 							{isSubmitting ? (
 								<>
-									<ActivityIndicator size="small" color="#fff" />
+									<ActivityIndicator size="small" color={colors.onPrimary} />
 									<Text
 										style={{
-											color: "#ffffff",
+											color: colors.onPrimary,
 											fontWeight: "600",
 											fontSize: 16,
 										}}
@@ -360,10 +364,10 @@ export default function LoginScreen() {
 								</>
 							) : (
 								<>
-									<Ionicons name="log-in" size={20} color="#fff" />
+									<Ionicons name="log-in" size={20} color={colors.onPrimary} />
 									<Text
 										style={{
-											color: "#ffffff",
+											color: colors.onPrimary,
 											fontWeight: "600",
 											fontSize: 16,
 										}}
@@ -378,13 +382,13 @@ export default function LoginScreen() {
 							style={{
 								textAlign: "center",
 								fontSize: 14,
-								color: "#9ca3af",
+								color: colors.onSurfaceVariant,
 							}}
 						>
 							Don&apos;t have an account?{" "}
 							<Text
 								style={{
-									color: "#8b5cf6",
+									color: colors.primary,
 									textDecorationLine: "underline",
 								}}
 								onPress={() => {}}
@@ -402,61 +406,152 @@ export default function LoginScreen() {
 				presentationStyle="pageSheet"
 				onRequestClose={handleCloseModal}
 			>
-				<SafeAreaView style={modalStyles.container}>
-					<View style={modalStyles.header}>
-						<Text style={modalStyles.title}>Find your handle</Text>
+				<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+					<View
+						style={{
+							flexDirection: "row",
+							justifyContent: "space-between",
+							alignItems: "center",
+							paddingHorizontal: 16,
+							paddingVertical: 16,
+							borderBottomWidth: 1,
+							borderBottomColor: colors.outline,
+						}}
+					>
+						<Text
+							style={{
+								fontSize: 18,
+								fontWeight: "600",
+								color: colors.onSurface,
+							}}
+						>
+							Find your handle
+						</Text>
 						<TouchableOpacity onPress={handleCloseModal}>
-							<Text style={modalStyles.closeButton}>Close</Text>
+							<Text
+								style={{
+									fontSize: 16,
+									fontWeight: "500",
+									color: colors.primary,
+								}}
+							>
+								Close
+							</Text>
 						</TouchableOpacity>
 					</View>
 
-					<View style={modalStyles.inputContainer}>
+					<View
+						style={{
+							paddingHorizontal: 16,
+							paddingVertical: 12,
+							borderBottomWidth: 1,
+							borderBottomColor: colors.outline,
+						}}
+					>
 						<TextInput
-							style={modalStyles.input}
+							style={{
+								width: "100%",
+								paddingHorizontal: 16,
+								paddingVertical: 12,
+								backgroundColor: colors.surfaceContainer,
+								borderWidth: 1,
+								borderColor: colors.outline,
+								borderRadius: 8,
+								color: colors.onSurface,
+								fontSize: 16,
+							}}
 							value={modalInputValue}
 							onChangeText={setModalInputValue}
 							placeholder="Search for your handle..."
-							placeholderTextColor="#6b7280"
+							placeholderTextColor={colors.onSurfaceVariant}
 							autoCapitalize="none"
 							autoCorrect={false}
 							autoFocus
 						/>
 					</View>
 
-					<ScrollView style={modalStyles.suggestionsList}>
+					<ScrollView
+						style={{
+							flex: 1,
+							paddingHorizontal: 16,
+						}}
+					>
 						{isLoadingSuggestions ? (
-							<View style={modalStyles.loadingContainer}>
-								<ActivityIndicator size="small" color="#9ca3af" />
-								<Text style={modalStyles.loadingText}>Searching...</Text>
+							<View
+								style={{
+									flexDirection: "row",
+									alignItems: "center",
+									justifyContent: "center",
+									gap: 8,
+									padding: 24,
+								}}
+							>
+								<ActivityIndicator
+									size="small"
+									color={colors.onSurfaceVariant}
+								/>
+								<Text style={{ color: colors.onSurfaceVariant, fontSize: 14 }}>
+									Searching...
+								</Text>
 							</View>
 						) : suggestions.length > 0 ? (
 							suggestions.map((item) => (
 								<TouchableOpacity
 									key={item.did}
-									style={modalStyles.suggestionItem}
+									style={{
+										flexDirection: "row",
+										alignItems: "center",
+										gap: 12,
+										padding: 12,
+										borderBottomWidth: 1,
+										borderBottomColor: colors.outline,
+									}}
 									onPress={() => handleSelectSuggestion(item)}
 								>
 									{item.avatar ? (
 										<Image
 											source={{ uri: item.avatar }}
-											style={modalStyles.avatar}
+											style={{ width: 40, height: 40, borderRadius: 20 }}
 										/>
 									) : (
-										<View style={modalStyles.avatarPlaceholder}>
-											<Text style={modalStyles.avatarText}>
+										<View
+											style={{
+												width: 40,
+												height: 40,
+												borderRadius: 20,
+												backgroundColor: colors.surfaceContainerHigh,
+												alignItems: "center",
+												justifyContent: "center",
+											}}
+										>
+											<Text
+												style={{
+													color: colors.onSurface,
+													fontSize: 16,
+													fontWeight: "500",
+												}}
+											>
 												{item.handle[0]?.toUpperCase() ?? ""}
 											</Text>
 										</View>
 									)}
-									<View style={modalStyles.suggestionTextContainer}>
+									<View style={{ flex: 1 }}>
 										<Text
-											style={modalStyles.suggestionDisplayName}
+											style={{
+												color: colors.onSurface,
+												fontWeight: "500",
+												fontSize: 16,
+											}}
 											numberOfLines={1}
 										>
 											{item.displayName || item.handle}
 										</Text>
 										<Text
-											style={modalStyles.suggestionHandle}
+											style={{
+												color: colors.onSurfaceVariant,
+												fontSize: 14,
+												marginTop: 2,
+											}}
 											numberOfLines={1}
 										>
 											{item.handle}
@@ -465,8 +560,10 @@ export default function LoginScreen() {
 								</TouchableOpacity>
 							))
 						) : modalInputValue.trim().length >= 1 ? (
-							<View style={modalStyles.emptyContainer}>
-								<Text style={modalStyles.emptyText}>No handles found</Text>
+							<View style={{ padding: 24, alignItems: "center" }}>
+								<Text style={{ color: colors.onSurfaceVariant, fontSize: 14 }}>
+									No handles found
+								</Text>
 							</View>
 						) : null}
 					</ScrollView>
@@ -475,108 +572,3 @@ export default function LoginScreen() {
 		</KeyboardAvoidingView>
 	);
 }
-
-const modalStyles = {
-	container: {
-		flex: 1,
-		backgroundColor: "#030712",
-	},
-	header: {
-		flexDirection: "row" as const,
-		justifyContent: "space-between" as const,
-		alignItems: "center" as const,
-		paddingHorizontal: 16,
-		paddingVertical: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: "#374151",
-	},
-	title: {
-		fontSize: 18,
-		fontWeight: "600" as const,
-		color: "#f9fafb",
-	},
-	closeButton: {
-		fontSize: 16,
-		fontWeight: "500" as const,
-		color: "#a855f7",
-	},
-	inputContainer: {
-		paddingHorizontal: 16,
-		paddingVertical: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#374151",
-	},
-	input: {
-		width: "100%" as const,
-		paddingHorizontal: 16,
-		paddingVertical: 12,
-		backgroundColor: "#111827",
-		borderWidth: 1,
-		borderColor: "#374151",
-		borderRadius: 8,
-		color: "#ffffff",
-		fontSize: 16,
-	},
-	suggestionsList: {
-		flex: 1,
-		paddingHorizontal: 16,
-	},
-	loadingContainer: {
-		flexDirection: "row" as const,
-		alignItems: "center" as const,
-		justifyContent: "center" as const,
-		gap: 8,
-		padding: 24,
-	},
-	loadingText: {
-		color: "#9ca3af",
-		fontSize: 14,
-	},
-	suggestionItem: {
-		flexDirection: "row" as const,
-		alignItems: "center" as const,
-		gap: 12,
-		padding: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#374151",
-	},
-	avatar: {
-		width: 40,
-		height: 40,
-		borderRadius: 20,
-	},
-	avatarPlaceholder: {
-		width: 40,
-		height: 40,
-		borderRadius: 20,
-		backgroundColor: "#4b5563",
-		alignItems: "center" as const,
-		justifyContent: "center" as const,
-	},
-	avatarText: {
-		color: "#d1d5db",
-		fontSize: 16,
-		fontWeight: "500" as const,
-	},
-	suggestionTextContainer: {
-		flex: 1,
-	},
-	suggestionDisplayName: {
-		color: "#ffffff",
-		fontWeight: "500" as const,
-		fontSize: 16,
-	},
-	suggestionHandle: {
-		color: "#9ca3af",
-		fontSize: 14,
-		marginTop: 2,
-	},
-	emptyContainer: {
-		padding: 24,
-		alignItems: "center" as const,
-	},
-	emptyText: {
-		color: "#9ca3af",
-		fontSize: 14,
-	},
-};

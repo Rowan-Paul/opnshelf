@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { StyleSheet, View, TextInput, TouchableOpacity, type TextInputProps, ViewStyle } from "react-native";
-import { colors, borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 import { Search, X } from "lucide-react-native";
 
 interface InputProps extends TextInputProps {
@@ -8,12 +10,14 @@ interface InputProps extends TextInputProps {
 }
 
 export function Input({ icon, containerStyle, style, ...props }: InputProps) {
+	const { colors } = useTheme();
+
 	return (
-		<View style={[styles.container, containerStyle]}>
+		<View style={[styles.container, { backgroundColor: colors.surfaceContainer, borderColor: colors.outline }, containerStyle]}>
 			{icon ? <View style={styles.icon}>{icon}</View> : null}
 			<TextInput
-				style={[styles.input, icon ? styles.inputWithIcon : null, style]}
-				placeholderTextColor={colors.textSecondary}
+				style={[styles.input, icon ? styles.inputWithIcon : undefined, { color: colors.onSurface }, style]}
+				placeholderTextColor={colors.onSurfaceVariant}
 				{...props}
 			/>
 		</View>
@@ -26,21 +30,37 @@ interface SearchInputProps extends Omit<TextInputProps, "icon"> {
 }
 
 export function SearchInput({ containerStyle, onClear, value, ...props }: SearchInputProps) {
+	const { colors } = useTheme();
 	const hasValue = value && value.toString().length > 0;
+
+	const containerStyles = useMemo(
+		() => [
+			styles.container,
+			{ backgroundColor: colors.surfaceContainer, borderColor: colors.outline },
+			containerStyle,
+		],
+		[colors.surfaceContainer, colors.outline, containerStyle],
+	);
+
+	const inputStyles = useMemo(
+		() => [
+			styles.input,
+			styles.inputWithIcon,
+			{ color: colors.onSurface, placeholderTextColor: colors.onSurfaceVariant },
+			hasValue ? styles.inputWithClear : null,
+		],
+		[colors.onSurface, colors.onSurfaceVariant, hasValue],
+	);
+
 	return (
-		<View style={[styles.container, containerStyle]}>
+		<View style={containerStyles}>
 			<View style={styles.icon}>
-				<Search size={20} color={colors.textMuted} />
+				<Search size={20} color={colors.onSurfaceVariant} />
 			</View>
-			<TextInput
-				style={[styles.input, styles.inputWithIcon, hasValue ? styles.inputWithClear : null]}
-				placeholderTextColor={colors.textSecondary}
-				value={value}
-				{...props}
-			/>
+			<TextInput style={inputStyles} value={value} {...props} />
 			{hasValue && onClear && (
 				<TouchableOpacity style={styles.clearButton} onPress={onClear}>
-					<X size={20} color={colors.textMuted} />
+					<X size={20} color={colors.onSurfaceVariant} />
 				</TouchableOpacity>
 			)}
 		</View>
@@ -51,10 +71,8 @@ const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		borderWidth: 1,
-		borderColor: colors.border,
 	},
 	icon: {
 		paddingLeft: spacing.md,
@@ -63,7 +81,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		paddingVertical: 12,
 		paddingHorizontal: spacing.md,
-		color: colors.text,
 		fontSize: 16,
 	},
 	inputWithIcon: {

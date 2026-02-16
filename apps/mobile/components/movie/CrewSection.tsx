@@ -1,37 +1,33 @@
 import type { TmdbCrewDto, TmdbMovieDetailDto } from "@opnshelf/api";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface CrewSectionProps {
 	movie: TmdbMovieDetailDto | null;
 }
 
 export function CrewSection({ movie }: CrewSectionProps) {
-	if (!movie?.credits?.crew || movie.credits.crew.length === 0) return null;
+	const { colors } = useTheme();
 
-	const movieColors = {
-		primary: "#8b5cf6",
-		muted: "#4c1d95",
-	};
+	if (!movie?.credits?.crew || movie.credits.crew.length === 0) return null;
 
 	return (
 		<View style={styles.section}>
-			<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+			<Text style={[styles.sectionTitle, { color: colors.primary }]}>
 				Crew
 			</Text>
 			<View style={styles.crewGrid}>
 				{movie.credits.crew.map((person: TmdbCrewDto) => (
 					<TouchableOpacity
 						key={`${person.id}-${person.job}`}
-						style={styles.crewCard}
+						style={[styles.crewCard, { backgroundColor: colors.surfaceContainer }]}
 						activeOpacity={0.8}
 					>
-						<Text style={styles.crewName} numberOfLines={1}>
+						<Text style={[styles.crewName, { color: colors.onSurface }]} numberOfLines={1}>
 							{person.name}
 						</Text>
-						<Text
-							style={[styles.crewJob, { color: movieColors.muted }]}
-						>
+						<Text style={[styles.crewJob, { color: colors.onSurfaceVariant }]}>
 							{person.job}
 						</Text>
 					</TouchableOpacity>
@@ -56,14 +52,12 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	crewCard: {
-		backgroundColor: colors.card,
 		padding: spacing.md,
 		borderRadius: borderRadius.md,
 		minWidth: "45%",
 		flex: 1,
 	},
 	crewName: {
-		color: colors.text,
 		fontSize: 14,
 		fontWeight: "600",
 		marginBottom: 2,

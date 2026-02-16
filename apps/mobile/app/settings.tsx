@@ -28,9 +28,13 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { ColorPicker } from "@/components/ui/m3/ColorPicker";
 import { Switch } from "@/components/ui/Switch";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { defaultColors as staticColors } from "@/constants/extended-theme";
+import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+
+const colors = staticColors;
 
 // Common timezones grouped by region
 const TIMEZONES = [
@@ -119,7 +123,9 @@ export default function SettingsScreen() {
 	const router = useRouter();
 	const { showToast } = useToast();
 	const { user, logout } = useAuth();
+	const { colors } = useTheme();
 	const queryClient = useQueryClient();
+
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showPDSOptionModal, setShowPDSOptionModal] = useState(false);

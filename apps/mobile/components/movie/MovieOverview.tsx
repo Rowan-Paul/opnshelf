@@ -1,25 +1,23 @@
 import type { TmdbMovieDetailDto } from "@opnshelf/api";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@/constants/theme";
+import { spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface MovieOverviewProps {
 	movie: TmdbMovieDetailDto | null;
 }
 
 export function MovieOverview({ movie }: MovieOverviewProps) {
-	if (!movie?.overview) return null;
+	const { colors } = useTheme();
 
-	const movieColors = {
-		primary: "#8b5cf6",
-		accent: "#a855f7",
-	};
+	if (!movie?.overview) return null;
 
 	return (
 		<View style={styles.section}>
-			<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+			<Text style={[styles.sectionTitle, { color: colors.primary }]}>
 				Overview
 			</Text>
-			<Text style={styles.overview}>{movie.overview}</Text>
+			<Text style={[styles.overview, { color: colors.onSurface }]}>{movie.overview}</Text>
 		</View>
 	);
 }
@@ -34,7 +32,6 @@ const styles = StyleSheet.create({
 		marginBottom: spacing.md,
 	},
 	overview: {
-		color: colors.text,
 		fontSize: 14,
 		lineHeight: 22,
 	},

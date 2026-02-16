@@ -141,7 +141,7 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 		};
 
 		// Determine if label should float
-		const isLabelFloating = isFocused || hasValue;
+		const isLabelFloating = isFocused || hasValue || !!props.placeholder;
 
 		// Clear button for text input
 		const showClearButton = onClear && hasValue && !disabled;

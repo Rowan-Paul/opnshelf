@@ -1,6 +1,7 @@
 import type { TmdbMovieDetailDto } from "@opnshelf/api";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 import { formatRuntime } from "@/lib/utils";
 
 interface MovieDetailsProps {
@@ -10,20 +11,16 @@ interface MovieDetailsProps {
 }
 
 export function MovieDetails({ movie, showHours, onToggleHours }: MovieDetailsProps) {
-	if (!movie) return null;
+	const { colors } = useTheme();
 
-	const movieColors = {
-		primary: "#8b5cf6",
-		accent: "#a855f7",
-		muted: "#4c1d95",
-	};
+	if (!movie) return null;
 
 	return (
 		<View style={styles.infoGrid}>
 			{movie.release_date && (
-				<View style={styles.infoCard}>
-					<Text style={styles.infoLabel}>Release Date</Text>
-					<Text style={[styles.infoValue, { color: movieColors.accent }]}>
+				<View style={[styles.infoCard, { backgroundColor: colors.surfaceContainer }]}>
+					<Text style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}>Release Date</Text>
+					<Text style={[styles.infoValue, { color: colors.primary }]}>
 						{new Date(movie.release_date).toLocaleDateString("en-US", {
 							year: "numeric",
 							month: "short",
@@ -35,27 +32,27 @@ export function MovieDetails({ movie, showHours, onToggleHours }: MovieDetailsPr
 			{movie.runtime && (
 				<TouchableOpacity
 					onPress={onToggleHours}
-					style={styles.infoCard}
+					style={[styles.infoCard, { backgroundColor: colors.surfaceContainer }]}
 					activeOpacity={0.8}
 				>
-					<Text style={styles.infoLabel}>Runtime</Text>
-					<Text style={[styles.infoValue, { color: movieColors.accent }]}>
+					<Text style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}>Runtime</Text>
+					<Text style={[styles.infoValue, { color: colors.primary }]}>
 						{formatRuntime(movie.runtime, showHours)}
 					</Text>
 				</TouchableOpacity>
 			)}
 			{movie.vote_average !== undefined && (
-				<View style={styles.infoCard}>
-					<Text style={styles.infoLabel}>Rating</Text>
-					<Text style={[styles.infoValue, { color: movieColors.accent }]}>
+				<View style={[styles.infoCard, { backgroundColor: colors.surfaceContainer }]}>
+					<Text style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}>Rating</Text>
+					<Text style={[styles.infoValue, { color: colors.primary }]}>
 						{movie.vote_average.toFixed(1)}/10
 					</Text>
 				</View>
 			)}
 			{movie.vote_count !== undefined && (
-				<View style={styles.infoCard}>
-					<Text style={styles.infoLabel}>Votes</Text>
-					<Text style={[styles.infoValue, { color: movieColors.accent }]}>
+				<View style={[styles.infoCard, { backgroundColor: colors.surfaceContainer }]}>
+					<Text style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}>Votes</Text>
+					<Text style={[styles.infoValue, { color: colors.primary }]}>
 						{movie.vote_count.toLocaleString()}
 					</Text>
 				</View>
@@ -72,14 +69,12 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	infoCard: {
-		backgroundColor: colors.card,
 		padding: spacing.md,
 		borderRadius: borderRadius.md,
 		minWidth: "45%",
 		flex: 1,
 	},
 	infoLabel: {
-		color: colors.textMuted,
 		fontSize: 12,
 		marginBottom: spacing.xs,
 	},

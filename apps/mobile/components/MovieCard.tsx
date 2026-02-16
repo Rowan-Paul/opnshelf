@@ -2,7 +2,7 @@ import type { TrackedMovieDto } from "@opnshelf/api";
 import { CheckCircle2, Trash2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { getTmdbPosterUrl } from "@/lib/utils";
 import { SpinningLoader } from "./SpinningLoader";

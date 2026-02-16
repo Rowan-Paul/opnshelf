@@ -13,6 +13,7 @@ import {
 	generateMaterialTheme,
 	type MaterialThemeColors,
 } from "@/constants/material-theme";
+import { createExtendedColors, type ExtendedThemeColors } from "@/constants/extended-theme";
 import {
 	authControllerMeOptions,
 	usersControllerGetMySettingsOptions,
@@ -23,7 +24,7 @@ import {
 interface ThemeContextType {
 	seedColor: string;
 	setSeedColor: (color: string) => void;
-	colors: MaterialThemeColors;
+	colors: ExtendedThemeColors;
 	isDark: boolean;
 }
 
@@ -41,8 +42,8 @@ export function ThemeProvider({
 	defaultSeedColor = DEFAULT_SEED_COLOR,
 }: ThemeProviderProps) {
 	const [seedColor, setSeedColorState] = useState(defaultSeedColor);
-	const [colors, setColors] = useState<MaterialThemeColors>(() =>
-		generateMaterialTheme(defaultSeedColor, true),
+	const [colors, setColors] = useState<ExtendedThemeColors>(() =>
+		createExtendedColors(generateMaterialTheme(defaultSeedColor, true)),
 	);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const isDark = true;
@@ -77,7 +78,7 @@ export function ThemeProvider({
 			const stored = await SecureStore.getItemAsync(SEED_COLOR_KEY);
 			if (stored) {
 				setSeedColorState(stored);
-				setColors(generateMaterialTheme(stored, true));
+				setColors(createExtendedColors(generateMaterialTheme(stored, true)));
 			}
 			setIsLoaded(true);
 		};
@@ -91,7 +92,7 @@ export function ThemeProvider({
 			// Only update if different from current (to avoid overwriting user selection)
 			if (settings.accentColor !== seedColor) {
 				setSeedColorState(settings.accentColor);
-				setColors(generateMaterialTheme(settings.accentColor, true));
+				setColors(createExtendedColors(generateMaterialTheme(settings.accentColor, true)));
 				// Also update SecureStore to match server
 				SecureStore.setItemAsync(SEED_COLOR_KEY, settings.accentColor);
 			}
@@ -101,7 +102,7 @@ export function ThemeProvider({
 	const setSeedColor = useCallback(
 		async (color: string) => {
 			setSeedColorState(color);
-			const newColors = generateMaterialTheme(color, true);
+			const newColors = createExtendedColors(generateMaterialTheme(color, true));
 			setColors(newColors);
 
 			// Always save to SecureStore for offline support

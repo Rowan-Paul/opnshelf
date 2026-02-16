@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, type StyleProp, type ViewStyle } from "react-native";
-import { colors, borderRadius } from "@/constants/theme";
+import { borderRadius } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface BadgeProps {
 	children: React.ReactNode;
@@ -8,9 +9,39 @@ interface BadgeProps {
 }
 
 export function Badge({ children, variant = "default", style }: BadgeProps) {
+	const { colors } = useTheme();
+
+	const getVariantStyles = () => {
+		switch (variant) {
+			case "secondary":
+				return {
+					backgroundColor: colors.surfaceContainerHigh,
+					textColor: colors.onSurfaceVariant,
+				};
+			case "success":
+				return {
+					backgroundColor: colors.tertiary,
+					textColor: colors.onTertiary,
+				};
+			case "outline":
+				return {
+					backgroundColor: "transparent",
+					borderColor: colors.outline,
+					textColor: colors.onSurfaceVariant,
+				};
+			default:
+				return {
+					backgroundColor: colors.primary,
+					textColor: colors.onPrimary,
+				};
+		}
+	};
+
+	const variantStyles = getVariantStyles();
+
 	return (
-		<View style={[styles.base, styles[variant], style]}>
-			<Text style={[styles.text, styles[`${variant}Text`]]}>{children}</Text>
+		<View style={[styles.base, { backgroundColor: variantStyles.backgroundColor, borderColor: variantStyles.borderColor }, style]}>
+			<Text style={[styles.text, { color: variantStyles.textColor }]}>{children}</Text>
 		</View>
 	);
 }
@@ -21,35 +52,10 @@ const styles = StyleSheet.create({
 		paddingVertical: 2,
 		borderRadius: borderRadius.full,
 		alignSelf: "flex-start",
-	},
-	default: {
-		backgroundColor: colors.primary,
-	},
-	secondary: {
-		backgroundColor: colors.cardMuted,
-	},
-	success: {
-		backgroundColor: colors.success,
-	},
-	outline: {
-		backgroundColor: "transparent",
 		borderWidth: 1,
-		borderColor: colors.borderLight,
 	},
 	text: {
 		fontSize: 12,
 		fontWeight: "500",
-	},
-	defaultText: {
-		color: colors.text,
-	},
-	secondaryText: {
-		color: colors.textMuted,
-	},
-	successText: {
-		color: colors.text,
-	},
-	outlineText: {
-		color: colors.textMuted,
 	},
 });

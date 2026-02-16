@@ -19,7 +19,7 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";

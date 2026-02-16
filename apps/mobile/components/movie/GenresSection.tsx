@@ -1,22 +1,20 @@
 import type { TmdbMovieDetailDto } from "@opnshelf/api";
 import { StyleSheet, Text, View } from "react-native";
-import { borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 
 interface GenresSectionProps {
 	movie: TmdbMovieDetailDto | null;
 }
 
 export function GenresSection({ movie }: GenresSectionProps) {
-	if (!movie?.genres || movie.genres.length === 0) return null;
+	const { colors } = useTheme();
 
-	const movieColors = {
-		primary: "#8b5cf6",
-		accent: "#a855f7",
-	};
+	if (!movie?.genres || movie.genres.length === 0) return null;
 
 	return (
 		<View style={styles.section}>
-			<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+			<Text style={[styles.sectionTitle, { color: colors.primary }]}>
 				Genres
 			</Text>
 			<View style={styles.genresContainer}>
@@ -26,12 +24,12 @@ export function GenresSection({ movie }: GenresSectionProps) {
 						style={[
 							styles.genreBadge,
 							{
-								backgroundColor: `${movieColors.primary}20`,
-								borderColor: `${movieColors.primary}40`,
+								backgroundColor: `${colors.primary}20`,
+								borderColor: `${colors.primary}40`,
 							},
 						]}
 					>
-						<Text style={[styles.genreText, { color: movieColors.accent }]}>
+						<Text style={[styles.genreText, { color: colors.primary }]}>
 							{genre.name}
 						</Text>
 					</View>

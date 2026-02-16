@@ -8,7 +8,8 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { colors, spacing } from "@/constants/theme";
+import { spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 import {
 	formatRuntime,
 	getReleaseYear,
@@ -31,15 +32,10 @@ export function MovieHero({
 	onToggleHours,
 	onBack,
 }: MovieHeroProps) {
+	const { colors } = useTheme();
 	const backdropUrl = getTmdbBackdropUrl(movie?.backdrop_path);
 	const posterUrl = getTmdbPosterUrl(movie?.poster_path, "w500");
 	const releaseYear = getReleaseYear(movie?.release_date);
-
-	const movieColors = {
-		primary: "#8b5cf6",
-		accent: "#a855f7",
-		muted: "#4c1d95",
-	};
 
 	return (
 		<View style={styles.heroWrapper}>
@@ -51,7 +47,7 @@ export function MovieHero({
 				/>
 			) : (
 				<View
-					style={[styles.backdrop, { backgroundColor: movieColors.muted }]}
+					style={[styles.backdrop, { backgroundColor: colors.surfaceContainerHighest }]}
 				/>
 			)}
 
@@ -80,7 +76,7 @@ export function MovieHero({
 
 				<View style={styles.titleWrapper}>
 					<Text
-						style={[styles.title, { textShadowColor: movieColors.primary }]}
+						style={[styles.title, { textShadowColor: colors.primary }]}
 						numberOfLines={2}
 						adjustsFontSizeToFit
 						minimumFontScale={0.7}
@@ -93,7 +89,7 @@ export function MovieHero({
 								<Ionicons
 									name="calendar-outline"
 									size={14}
-									color={movieColors.accent}
+									color={colors.primary}
 								/>
 								<Text style={styles.metaText}>{releaseYear}</Text>
 							</View>
@@ -107,7 +103,7 @@ export function MovieHero({
 								<Ionicons
 									name="time-outline"
 									size={14}
-									color={movieColors.accent}
+									color={colors.primary}
 								/>
 								<Text style={styles.metaText}>
 									{formatRuntime(movie.runtime, showHours)}

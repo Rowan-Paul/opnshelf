@@ -2,7 +2,8 @@ import type { TmdbCastDto, TmdbMovieDetailDto } from "@opnshelf/api";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useTheme } from "@/contexts/theme";
 import { getTmdbProfileUrl } from "@/lib/utils";
 
 interface CastSectionProps {
@@ -10,17 +11,13 @@ interface CastSectionProps {
 }
 
 export function CastSection({ movie }: CastSectionProps) {
-	if (!movie?.credits?.cast || movie.credits.cast.length === 0) return null;
+	const { colors } = useTheme();
 
-	const movieColors = {
-		primary: "#8b5cf6",
-		accent: "#a855f7",
-		muted: "#4c1d95",
-	};
+	if (!movie?.credits?.cast || movie.credits.cast.length === 0) return null;
 
 	return (
 		<View style={styles.section}>
-			<Text style={[styles.sectionTitle, { color: movieColors.primary }]}>
+			<Text style={[styles.sectionTitle, { color: colors.primary }]}>
 				Cast
 			</Text>
 			<View style={styles.castContainer}>
@@ -42,20 +39,20 @@ export function CastSection({ movie }: CastSectionProps) {
 										/>
 									) : (
 										<View style={styles.castImagePlaceholder}>
-											<Text style={styles.castImagePlaceholderText}>
+											<Text style={[styles.castImagePlaceholderText, { color: colors.onSurfaceVariant }]}>
 												No photo
 											</Text>
 										</View>
 									)}
 								</View>
-								<Text style={styles.castName} numberOfLines={2}>
+								<Text style={[styles.castName, { color: colors.onSurface }]} numberOfLines={2}>
 									{person.name}
 								</Text>
 								{person.character && (
 									<Text
 										style={[
 											styles.castCharacter,
-											{ color: movieColors.muted },
+											{ color: colors.onSurfaceVariant },
 										]}
 									>
 										as {person.character}
@@ -102,7 +99,6 @@ const styles = StyleSheet.create({
 		height: 80,
 		borderRadius: 40,
 		overflow: "hidden",
-		backgroundColor: colors.cardMuted,
 		marginBottom: spacing.sm,
 	},
 	castImage: {
@@ -116,12 +112,10 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	castImagePlaceholderText: {
-		color: colors.textMuted,
 		fontSize: 10,
 		textAlign: "center",
 	},
 	castName: {
-		color: colors.text,
 		fontSize: 12,
 		fontWeight: "600",
 		textAlign: "center",

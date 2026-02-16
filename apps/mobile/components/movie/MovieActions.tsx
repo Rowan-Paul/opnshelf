@@ -2,7 +2,7 @@ import type { TmdbMovieDetailDto, UserDto } from "@opnshelf/api";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { borderRadius, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/spacing";
 
 interface MovieActionsProps {
 	movie: TmdbMovieDetailDto | null;

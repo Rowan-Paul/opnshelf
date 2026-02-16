@@ -39,7 +39,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { borderRadius, colors as staticColors } from "@/constants/theme";
+import { defaultColors as staticColors } from "@/constants/extended-theme";
+import { borderRadius } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -79,7 +80,7 @@ export default function MovieDetailScreen() {
 	const router = useRouter();
 	const { user } = useAuth();
 	const { showToast } = useToast();
-	const { colors } = useTheme();
+	useTheme(); // Initialize theme context
 	const queryClient = useQueryClient();
 
 	const [showHours, setShowHours] = useState(false);
@@ -858,7 +859,11 @@ export default function MovieDetailScreen() {
 						<View style={styles.modalHeader}>
 							<Text style={styles.modalTitle}>Watch Again</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons name="close" size={24} color={colors.onSurface} />
+								<Ionicons
+									name="close"
+									size={24}
+									color={staticColors.onSurface}
+								/>
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -874,7 +879,7 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="calendar-outline"
 									size={20}
-									color={colors.onSurfaceVariant}
+									color={staticColors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleDateString("en-US", {
@@ -892,7 +897,7 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="time-outline"
 									size={20}
-									color={colors.onSurfaceVariant}
+									color={staticColors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleTimeString("en-US", {
@@ -930,7 +935,7 @@ export default function MovieDetailScreen() {
 							<Button
 								onPress={handleMarkWatchedWithDate}
 								isLoading={markMutation.isPending}
-								style={{ backgroundColor: colors.primary }}
+								style={{ backgroundColor: staticColors.primary }}
 							>
 								<Text style={styles.buttonText}>Add Play</Text>
 							</Button>
@@ -949,11 +954,15 @@ export default function MovieDetailScreen() {
 					<View style={styles.modalContent}>
 						<View style={styles.modalHeader}>
 							<View style={styles.modalTitleContainer}>
-								<Ionicons name="time" size={20} color={colors.primary} />
+								<Ionicons name="time" size={20} color={staticColors.primary} />
 								<Text style={styles.modalTitle}>Watch History</Text>
 							</View>
 							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons name="close" size={24} color={colors.onSurface} />
+								<Ionicons
+									name="close"
+									size={24}
+									color={staticColors.onSurface}
+								/>
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -982,7 +991,7 @@ export default function MovieDetailScreen() {
 												?.trackedMovieId === watch.id ? (
 												<ActivityIndicator
 													size="small"
-													color={colors.onSurfaceVariant}
+													color={staticColors.onSurfaceVariant}
 												/>
 											) : (
 												<Ionicons
