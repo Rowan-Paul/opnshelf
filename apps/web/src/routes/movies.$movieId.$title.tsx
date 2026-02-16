@@ -45,7 +45,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { M3Button } from "@/components/ui/m3-button";
-import { formatDateWithTimezone, getTmdbPosterUrl } from "@/lib/utils";
+import { formatDateWithTimezone } from "@/lib/utils";
 
 export const Route = createFileRoute("/movies/$movieId/$title")({
 	loader: async ({ params, context }) => {
@@ -274,7 +274,6 @@ function MovieDetailPage() {
 		}
 	};
 
-	const _posterUrl = getTmdbPosterUrl(movie?.poster_path, "w500");
 	const isPending =
 		markMutation.isPending && markMutation.variables?.body?.movieId === movieId;
 
