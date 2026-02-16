@@ -14,7 +14,8 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
+import { useTheme } from "@/contexts/theme";
 import { Button } from "@/components/ui/Button";
 
 interface CreateListModalProps {
@@ -29,6 +30,7 @@ export const CreateListModal = memo(function CreateListModal({
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
 	const queryClient = useQueryClient();
+	const { colors } = useTheme();
 
 	const createListMutation = useMutation({
 		...listsControllerCreateListMutation(),
@@ -67,24 +69,28 @@ export const CreateListModal = memo(function CreateListModal({
 			onRequestClose={handleClose}
 		>
 			<Pressable style={styles.overlay} onPress={handleClose}>
-				<Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
+				<Pressable style={[styles.content, { backgroundColor: colors.surfaceContainer }]} onPress={(e) => e.stopPropagation()}>
 					<View style={styles.header}>
-						<Text style={styles.title}>Create New List</Text>
+						<Text style={[styles.title, { color: colors.onSurface }]}>Create New List</Text>
 						<Pressable onPress={handleClose} hitSlop={8}>
-							<Ionicons name="close" size={24} color={colors.text} />
+							<Ionicons name="close" size={24} color={colors.onSurface} />
 						</Pressable>
 					</View>
-					<Text style={styles.description}>
+					<Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
 						Create a custom list to organize your movies.
 					</Text>
 
 					<View style={styles.form}>
 						<View style={styles.inputContainer}>
-							<Text style={styles.label}>Name</Text>
+							<Text style={[styles.label, { color: colors.onSurface }]}>Name</Text>
 							<TextInput
-								style={styles.input}
+								style={[styles.input, { 
+									backgroundColor: colors.background, 
+									borderColor: colors.outline,
+									color: colors.onSurface 
+								}]}
 								placeholder="My Awesome List"
-								placeholderTextColor={colors.textSecondary}
+								placeholderTextColor={colors.onSurfaceVariant}
 								value={name}
 								onChangeText={setName}
 								maxLength={100}
@@ -92,11 +98,15 @@ export const CreateListModal = memo(function CreateListModal({
 						</View>
 
 						<View style={styles.inputContainer}>
-							<Text style={styles.label}>Description (optional)</Text>
+							<Text style={[styles.label, { color: colors.onSurface }]}>Description (optional)</Text>
 							<TextInput
-								style={[styles.input, styles.textArea]}
+								style={[styles.input, styles.textArea, { 
+									backgroundColor: colors.background, 
+									borderColor: colors.outline,
+									color: colors.onSurface 
+								}]}
 								placeholder="What's this list about?"
-								placeholderTextColor={colors.textSecondary}
+								placeholderTextColor={colors.onSurfaceVariant}
 								value={description}
 								onChangeText={setDescription}
 								maxLength={500}
@@ -108,11 +118,11 @@ export const CreateListModal = memo(function CreateListModal({
 
 						<View style={styles.buttons}>
 							<Button
-								variant="outline"
+								variant="outlined"
 								onPress={handleClose}
 								style={styles.button}
 							>
-								<Text style={styles.buttonOutlineText}>Cancel</Text>
+								<Text style={[styles.buttonOutlineText, { color: colors.onSurface }]}>Cancel</Text>
 							</Button>
 							<Button
 								onPress={handleSubmit}
@@ -120,9 +130,9 @@ export const CreateListModal = memo(function CreateListModal({
 								style={styles.button}
 							>
 								{createListMutation.isPending ? (
-									<ActivityIndicator size="small" color={colors.text} />
+									<ActivityIndicator size="small" color={colors.onPrimary} />
 								) : (
-									<Text style={styles.buttonText}>Create</Text>
+									<Text style={[styles.buttonText, { color: colors.onPrimary }]}>Create</Text>
 								)}
 							</Button>
 						</View>
@@ -141,7 +151,6 @@ const styles = StyleSheet.create({
 		padding: spacing.lg,
 	},
 	content: {
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		padding: spacing.md,
 	},
@@ -154,11 +163,9 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	description: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginBottom: spacing.md,
 	},
 	form: {
@@ -170,15 +177,11 @@ const styles = StyleSheet.create({
 	label: {
 		fontSize: 14,
 		fontWeight: "500",
-		color: colors.text,
 	},
 	input: {
-		backgroundColor: colors.background,
 		borderRadius: borderRadius.md,
 		borderWidth: 1,
-		borderColor: colors.border,
 		padding: spacing.md,
-		color: colors.text,
 		fontSize: 16,
 	},
 	textArea: {
@@ -194,12 +197,10 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	buttonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
 	buttonOutlineText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},

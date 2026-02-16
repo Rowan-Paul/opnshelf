@@ -3,13 +3,13 @@ import type {
 	TmdbCastDto,
 	TmdbCrewDto,
 	TmdbMovieDetailDto,
-	WatchHistoryItemDto,
 } from "@opnshelf/api";
 import {
 	listsControllerGetListsForMovieOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
-	moviesControllerGetMovieWatchHistory,
+	moviesControllerGetMovieWatchHistoryOptions,
+	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
@@ -39,8 +39,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { borderRadius, colors } from "@/constants/theme";
+import { borderRadius, colors as staticColors } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -78,6 +79,7 @@ export default function MovieDetailScreen() {
 	const router = useRouter();
 	const { user } = useAuth();
 	const { showToast } = useToast();
+	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 
 	const [showHours, setShowHours] = useState(false);
@@ -114,15 +116,10 @@ export default function MovieDetailScreen() {
 	});
 
 	// Fetch watch history for this movie
-	const { data: watchHistory } = useQuery<WatchHistoryItemDto[]>({
-		queryKey: ["watchHistory", user?.did, movieId],
-		queryFn: async () => {
-			if (!user?.did) return [];
-			const { data } = await moviesControllerGetMovieWatchHistory({
-				path: { userDid: user.did, movieId },
-			});
-			return data || [];
-		},
+	const { data: watchHistory } = useQuery({
+		...moviesControllerGetMovieWatchHistoryOptions({
+			path: { userDid: user?.did || "", movieId },
+		}),
 		enabled: !!user?.did && !!movieId,
 	});
 
@@ -174,7 +171,9 @@ export default function MovieDetailScreen() {
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["watchHistory", user?.did, movieId],
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
+				}),
 			});
 			setShowDateModal(false);
 			showToast("Added to your shelf", "success");
@@ -193,7 +192,9 @@ export default function MovieDetailScreen() {
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["watchHistory", user?.did, movieId],
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
+				}),
 			});
 			showToast("Removed from your shelf", "success");
 		},
@@ -211,7 +212,9 @@ export default function MovieDetailScreen() {
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["watchHistory", user?.did, movieId],
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", movieId },
+				}),
 			});
 			showToast("Watch entry removed", "success");
 		},
@@ -456,7 +459,10 @@ export default function MovieDetailScreen() {
 										onPress={() => setShowAddToListModal(true)}
 										style={[
 											styles.secondaryButton,
-											isInAnyList && styles.secondaryButtonActive,
+											isInAnyList && {
+												backgroundColor: `${movieColors.primary}20`,
+												borderColor: movieColors.primary,
+											},
 										]}
 										activeOpacity={0.8}
 									>
@@ -464,12 +470,12 @@ export default function MovieDetailScreen() {
 											<Ionicons
 												name={isInAnyList ? "checkmark" : "list-outline"}
 												size={18}
-												color={isInAnyList ? "#8b5cf6" : "#9ca3af"}
+												color={isInAnyList ? movieColors.primary : "#9ca3af"}
 											/>
 											<Text
 												style={[
 													styles.secondaryButtonText,
-													isInAnyList && styles.secondaryButtonTextActive,
+													isInAnyList && { color: movieColors.primary },
 												]}
 											>
 												{isInAnyList
@@ -548,7 +554,10 @@ export default function MovieDetailScreen() {
 										onPress={() => setShowAddToListModal(true)}
 										style={[
 											styles.secondaryButton,
-											isInAnyList && styles.secondaryButtonActive,
+											isInAnyList && {
+												backgroundColor: `${movieColors.primary}20`,
+												borderColor: movieColors.primary,
+											},
 										]}
 										activeOpacity={0.8}
 									>
@@ -556,12 +565,12 @@ export default function MovieDetailScreen() {
 											<Ionicons
 												name={isInAnyList ? "checkmark" : "list-outline"}
 												size={18}
-												color={isInAnyList ? "#8b5cf6" : "#9ca3af"}
+												color={isInAnyList ? movieColors.primary : "#9ca3af"}
 											/>
 											<Text
 												style={[
 													styles.secondaryButtonText,
-													isInAnyList && styles.secondaryButtonTextActive,
+													isInAnyList && { color: movieColors.primary },
 												]}
 											>
 												{isInAnyList
@@ -589,13 +598,20 @@ export default function MovieDetailScreen() {
 						) : (
 							<TouchableOpacity
 								onPress={() => router.push("/login")}
-								style={[
-									styles.primaryButton,
-									{ backgroundColor: movieColors.primary },
-								]}
+								style={styles.primaryButton}
 								activeOpacity={0.8}
 							>
-								<Text style={styles.buttonText}>Sign in to Track</Text>
+								<LinearGradient
+									colors={[
+										movieColors.primary || "#8b5cf6",
+										movieColors.secondary || "#6366f1",
+									]}
+									start={{ x: 0, y: 0 }}
+									end={{ x: 1, y: 1 }}
+									style={styles.gradientButton}
+								>
+									<Text style={styles.buttonText}>Sign in to Track</Text>
+								</LinearGradient>
 							</TouchableOpacity>
 						)}
 					</View>
@@ -842,7 +858,7 @@ export default function MovieDetailScreen() {
 						<View style={styles.modalHeader}>
 							<Text style={styles.modalTitle}>Watch Again</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons name="close" size={24} color={colors.text} />
+								<Ionicons name="close" size={24} color={colors.onSurface} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -858,7 +874,7 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="calendar-outline"
 									size={20}
-									color={colors.textMuted}
+									color={colors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleDateString("en-US", {
@@ -876,7 +892,7 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="time-outline"
 									size={20}
-									color={colors.textMuted}
+									color={colors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleTimeString("en-US", {
@@ -905,7 +921,10 @@ export default function MovieDetailScreen() {
 						)}
 
 						<View style={styles.modalActionsSplit}>
-							<Button variant="outline" onPress={() => setShowDateModal(false)}>
+							<Button
+								variant="outlined"
+								onPress={() => setShowDateModal(false)}
+							>
 								<Text style={styles.secondaryButtonText}>Cancel</Text>
 							</Button>
 							<Button
@@ -934,7 +953,7 @@ export default function MovieDetailScreen() {
 								<Text style={styles.modalTitle}>Watch History</Text>
 							</View>
 							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons name="close" size={24} color={colors.text} />
+								<Ionicons name="close" size={24} color={colors.onSurface} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -963,7 +982,7 @@ export default function MovieDetailScreen() {
 												?.trackedMovieId === watch.id ? (
 												<ActivityIndicator
 													size="small"
-													color={colors.textMuted}
+													color={colors.onSurfaceVariant}
 												/>
 											) : (
 												<Ionicons
@@ -981,7 +1000,7 @@ export default function MovieDetailScreen() {
 						</ScrollView>
 
 						<Button
-							variant="outline"
+							variant="outlined"
 							onPress={() => setShowHistoryModal(false)}
 						>
 							<Text style={styles.secondaryButtonText}>Close</Text>
@@ -1003,7 +1022,7 @@ export default function MovieDetailScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
+		backgroundColor: staticColors.background,
 	},
 	scrollContent: {
 		paddingBottom: 32,
@@ -1041,7 +1060,7 @@ const styles = StyleSheet.create({
 	posterWrapper: {
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
-		shadowColor: colors.primary,
+		shadowColor: staticColors.primary,
 		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.4,
 		shadowRadius: 8,
@@ -1114,10 +1133,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: "#374151",
 	},
-	secondaryButtonActive: {
-		backgroundColor: "rgba(139, 92, 246, 0.2)",
-		borderColor: "#8b5cf6",
-	},
+
 	buttonContent: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -1133,9 +1149,7 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: "500",
 	},
-	secondaryButtonTextActive: {
-		color: "#8b5cf6",
-	},
+
 	watchedCard: {
 		backgroundColor: "rgba(17, 24, 39, 0.5)",
 		borderRadius: 12,
@@ -1247,7 +1261,7 @@ const styles = StyleSheet.create({
 		padding: 16,
 	},
 	modalContent: {
-		backgroundColor: colors.card,
+		backgroundColor: staticColors.card,
 		borderRadius: 16,
 		padding: 16,
 		gap: 12,
@@ -1265,7 +1279,7 @@ const styles = StyleSheet.create({
 	modalTitle: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
+		color: staticColors.text,
 	},
 	modalDescription: {
 		fontSize: 14,
@@ -1311,7 +1325,7 @@ const styles = StyleSheet.create({
 	},
 	historyDate: {
 		fontSize: 14,
-		color: colors.text,
+		color: staticColors.text,
 		fontWeight: "500",
 	},
 	historyDeleteButton: {

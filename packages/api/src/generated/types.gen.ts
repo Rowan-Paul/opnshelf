@@ -222,6 +222,10 @@ export type UserSettingsDto = {
      * IANA timezone identifier (e.g., America/New_York)
      */
     timezone: string;
+    /**
+     * Accent color for theming (hex format, e.g., #F59E0B)
+     */
+    accentColor: string;
 };
 
 export type UpdateUserSettingsDto = {
@@ -233,6 +237,10 @@ export type UpdateUserSettingsDto = {
      * IANA timezone identifier (e.g., America/New_York)
      */
     timezone?: string;
+    /**
+     * Accent color for theming (hex format, e.g., #F59E0B)
+     */
+    accentColor?: string;
 };
 
 export type DeleteUserAccountDto = {

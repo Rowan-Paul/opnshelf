@@ -26,6 +26,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { ColorPicker } from "@/components/ui/m3/ColorPicker";
 import { Switch } from "@/components/ui/Switch";
 import { borderRadius, colors, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
@@ -252,6 +253,10 @@ export default function SettingsScreen() {
 					</View>
 				</View>
 
+				<View style={styles.section}>
+					<ColorPicker />
+				</View>
+
 				<Card style={styles.card}>
 					<CardHeader style={styles.cardHeader}>
 						<View style={styles.cardHeaderContent}>
@@ -422,7 +427,7 @@ export default function SettingsScreen() {
 					<View style={styles.modalHeader}>
 						<Text style={styles.modalTitle}>Select Timezone</Text>
 						<Button
-							variant="ghost"
+							variant="text"
 							size="sm"
 							onPress={() => setShowTimezoneModal(false)}
 						>
@@ -481,14 +486,14 @@ export default function SettingsScreen() {
 						</Text>
 						<View style={styles.deleteModalButtons}>
 							<Button
-								variant="outline"
+								variant="outlined"
 								onPress={() => setShowDeleteModal(false)}
 								style={styles.deleteModalButton}
 							>
 								<Text style={styles.deleteModalButtonText}>Cancel</Text>
 							</Button>
 							<Button
-								variant="destructive"
+								variant="filled"
 								onPress={handleConfirmDelete}
 								style={styles.deleteModalButton}
 							>
@@ -527,14 +532,14 @@ export default function SettingsScreen() {
 						</View>
 						<View style={styles.deleteModalButtons}>
 							<Button
-								variant="outline"
+								variant="outlined"
 								onPress={() => handlePDSOption(false)}
 								style={styles.deleteModalButton}
 							>
 								<Text style={styles.deleteModalOutlineText}>Keep on PDS</Text>
 							</Button>
 							<Button
-								variant="destructive"
+								variant="filled"
 								onPress={() => handlePDSOption(true)}
 								style={styles.deleteModalButton}
 							>
@@ -574,6 +579,10 @@ const styles = StyleSheet.create({
 		fontSize: 28,
 		fontWeight: "bold",
 		color: colors.text,
+	},
+	section: {
+		paddingHorizontal: spacing.lg,
+		paddingBottom: spacing.lg,
 	},
 	card: {
 		marginHorizontal: spacing.lg,

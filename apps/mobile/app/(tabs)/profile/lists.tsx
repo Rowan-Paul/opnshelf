@@ -13,11 +13,13 @@ import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 
 export default function ListsScreen() {
 	const { user } = useAuth();
+	const { colors } = useTheme();
 	const [showCreateModal, setShowCreateModal] = useState(false);
 
 	const { data: lists, isLoading: isListsLoading } = useQuery({
@@ -41,7 +43,7 @@ export default function ListsScreen() {
 	if (isListsLoading) {
 		return (
 			<SafeAreaView
-				style={styles.container}
+				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["left", "right", "bottom"]}
 			>
 				<View style={styles.skeletonContainer}>
@@ -59,15 +61,22 @@ export default function ListsScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["left", "right", "bottom"]}
+		>
 			<View style={styles.header}>
-				<Text style={styles.headerTitle}>My Lists</Text>
+				<Text style={[styles.headerTitle, { color: colors.onBackground }]}>
+					My Lists
+				</Text>
 				<TouchableOpacity
-					style={styles.createButton}
+					style={[styles.createButton, { backgroundColor: colors.primary }]}
 					onPress={() => setShowCreateModal(true)}
 				>
-					<ListPlus size={20} color={colors.text} />
-					<Text style={styles.createButtonText}>Create</Text>
+					<ListPlus size={20} color={colors.onPrimary} />
+					<Text style={[styles.createButtonText, { color: colors.onPrimary }]}>
+						Create
+					</Text>
 				</TouchableOpacity>
 			</View>
 			{lists && lists.length > 0 && (
@@ -86,17 +95,26 @@ export default function ListsScreen() {
 						<CardHeader style={styles.emptyCardHeader}>
 							<ListPlus
 								size={64}
-								color={colors.textSecondary}
+								color={colors.onSurfaceVariant}
 								style={styles.emptyIcon}
 							/>
-							<Text style={styles.emptyTitle}>No lists yet</Text>
-							<Text style={styles.emptyDescription}>
+							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+								No lists yet
+							</Text>
+							<Text
+								style={[
+									styles.emptyDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
 								Your default lists will appear after you add movies
 							</Text>
 						</CardHeader>
 						<CardContent>
 							<Button onPress={() => router.push("/(tabs)/search")}>
-								<Text style={styles.buttonText}>Search for movies</Text>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+									Search for movies
+								</Text>
 							</Button>
 						</CardContent>
 					</Card>
@@ -116,6 +134,8 @@ interface ListCardProps {
 }
 
 function ListCard({ list, onPress }: ListCardProps) {
+	const { colors } = useTheme();
+
 	const getIcon = () => {
 		if (list.slug.includes("watchlist")) {
 			return <List size={24} color={colors.primary} />;
@@ -127,23 +147,58 @@ function ListCard({ list, onPress }: ListCardProps) {
 	};
 
 	return (
-		<TouchableOpacity onPress={onPress} style={styles.listCard}>
-			<View style={styles.listCardIcon}>{getIcon()}</View>
+		<TouchableOpacity
+			onPress={onPress}
+			style={[
+				styles.listCard,
+				{
+					backgroundColor: colors.surfaceContainer,
+					borderColor: colors.outline,
+				},
+			]}
+		>
+			<View
+				style={[
+					styles.listCardIcon,
+					{ backgroundColor: `${colors.primary}20` },
+				]}
+			>
+				{getIcon()}
+			</View>
 			<View style={styles.listCardContent}>
 				<View style={styles.listCardHeader}>
-					<Text style={styles.listCardTitle}>{list.name}</Text>
+					<Text style={[styles.listCardTitle, { color: colors.onSurface }]}>
+						{list.name}
+					</Text>
 					{list.isDefault && (
-						<View style={styles.defaultBadge}>
-							<Text style={styles.defaultBadgeText}>Default</Text>
+						<View
+							style={[
+								styles.defaultBadge,
+								{ backgroundColor: `${colors.primary}30` },
+							]}
+						>
+							<Text
+								style={[styles.defaultBadgeText, { color: colors.primary }]}
+							>
+								Default
+							</Text>
 						</View>
 					)}
 				</View>
 				{list.description && (
-					<Text style={styles.listCardDescription} numberOfLines={2}>
+					<Text
+						style={[
+							styles.listCardDescription,
+							{ color: colors.onSurfaceVariant },
+						]}
+						numberOfLines={2}
+					>
 						{list.description}
 					</Text>
 				)}
-				<Text style={styles.listCardCount}>
+				<Text
+					style={[styles.listCardCount, { color: colors.onSurfaceVariant }]}
+				>
 					{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
 				</Text>
 			</View>
@@ -154,7 +209,6 @@ function ListCard({ list, onPress }: ListCardProps) {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		flexDirection: "row",
@@ -166,19 +220,16 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 28,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	createButton: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
-		backgroundColor: colors.primary,
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
 		borderRadius: borderRadius.md,
 	},
 	createButtonText: {
-		color: colors.text,
 		fontSize: 14,
 		fontWeight: "600",
 	},
@@ -208,17 +259,14 @@ const styles = StyleSheet.create({
 	emptyTitle: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 		textAlign: "center",
 		marginBottom: spacing.sm,
 	},
 	emptyDescription: {
 		fontSize: 14,
-		color: colors.textMuted,
 		textAlign: "center",
 	},
 	buttonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
@@ -227,17 +275,14 @@ const styles = StyleSheet.create({
 	},
 	listCard: {
 		flexDirection: "row",
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		padding: spacing.md,
 		borderWidth: 1,
-		borderColor: colors.border,
 	},
 	listCardIcon: {
 		width: 48,
 		height: 48,
 		borderRadius: borderRadius.md,
-		backgroundColor: `${colors.primary}20`,
 		justifyContent: "center",
 		alignItems: "center",
 	},
@@ -253,10 +298,8 @@ const styles = StyleSheet.create({
 	listCardTitle: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 	},
 	defaultBadge: {
-		backgroundColor: `${colors.primary}30`,
 		paddingHorizontal: spacing.sm,
 		paddingVertical: 2,
 		borderRadius: borderRadius.sm,
@@ -264,16 +307,13 @@ const styles = StyleSheet.create({
 	defaultBadgeText: {
 		fontSize: 10,
 		fontWeight: "600",
-		color: colors.primary,
 	},
 	listCardDescription: {
 		fontSize: 12,
-		color: colors.textMuted,
 		marginTop: spacing.xs,
 	},
 	listCardCount: {
 		fontSize: 12,
-		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
 });

@@ -18,7 +18,8 @@ import {
 	Text,
 	View,
 } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
+import { useTheme } from "@/contexts/theme";
 
 interface AddToListModalProps {
 	visible: boolean;
@@ -34,6 +35,7 @@ export const AddToListModal = memo(function AddToListModal({
 	movieTitle,
 }: AddToListModalProps) {
 	const queryClient = useQueryClient();
+	const { colors } = useTheme();
 
 	const { data: listsForMovie, isLoading } = useQuery({
 		...listsControllerGetListsForMovieOptions({
@@ -96,14 +98,14 @@ export const AddToListModal = memo(function AddToListModal({
 			onRequestClose={onClose}
 		>
 			<Pressable style={styles.overlay} onPress={onClose}>
-				<Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
+				<Pressable style={[styles.content, { backgroundColor: colors.surfaceContainer }]} onPress={(e) => e.stopPropagation()}>
 					<View style={styles.header}>
-						<Text style={styles.title}>Manage Lists</Text>
+						<Text style={[styles.title, { color: colors.onSurface }]}>Manage Lists</Text>
 						<Pressable onPress={onClose} hitSlop={8}>
-							<Ionicons name="close" size={24} color={colors.text} />
+							<Ionicons name="close" size={24} color={colors.onSurface} />
 						</Pressable>
 					</View>
-					<Text style={styles.description}>
+					<Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
 						Add or remove "{movieTitle}" from your lists
 					</Text>
 
@@ -149,6 +151,7 @@ const ListItem = memo(function ListItem({
 	isRemovePending,
 	onPress,
 }: ListItemProps) {
+	const { colors } = useTheme();
 	const isPending = isAddPending || isRemovePending;
 	const isInList = list.isInList;
 
@@ -156,20 +159,21 @@ const ListItem = memo(function ListItem({
 		<Pressable
 			style={[
 				styles.listItem,
-				isInList && styles.listItemActive,
+				{ backgroundColor: colors.background, borderColor: colors.outline },
+				isInList && { backgroundColor: `${colors.primary}20`, borderColor: colors.primary },
 			]}
 			onPress={() => onPress(list.listSlug, isInList)}
 			disabled={isPending}
 		>
 			<View style={styles.listItemContent}>
 				<Text
-					style={[styles.listItemText, isInList && styles.listItemTextActive]}
+					style={[styles.listItemText, { color: colors.onSurface }, isInList && { color: colors.primary }]}
 				>
 					{list.listName}
 				</Text>
 				{list.isDefault && (
-					<View style={styles.defaultBadge}>
-						<Text style={styles.defaultBadgeText}>Default</Text>
+					<View style={[styles.defaultBadge, { backgroundColor: `${colors.primary}30` }]}>
+						<Text style={[styles.defaultBadgeText, { color: colors.primary }]}>Default</Text>
 					</View>
 				)}
 			</View>
@@ -178,7 +182,7 @@ const ListItem = memo(function ListItem({
 			) : isInList ? (
 				<Ionicons name="remove" size={20} color={colors.primary} />
 			) : (
-				<Ionicons name="add" size={20} color={colors.textMuted} />
+				<Ionicons name="add" size={20} color={colors.onSurfaceVariant} />
 			)}
 		</Pressable>
 	);
@@ -192,7 +196,6 @@ const styles = StyleSheet.create({
 		padding: spacing.lg,
 	},
 	content: {
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		padding: spacing.md,
 		maxHeight: "70%",
@@ -206,11 +209,9 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	description: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginBottom: spacing.md,
 	},
 	listContainer: {
@@ -227,13 +228,7 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		borderRadius: borderRadius.md,
 		marginBottom: spacing.sm,
-		backgroundColor: colors.background,
 		borderWidth: 1,
-		borderColor: colors.border,
-	},
-	listItemActive: {
-		backgroundColor: `${colors.primary}20`,
-		borderColor: colors.primary,
 	},
 	listItemContent: {
 		flexDirection: "row",
@@ -243,13 +238,8 @@ const styles = StyleSheet.create({
 	},
 	listItemText: {
 		fontSize: 16,
-		color: colors.text,
-	},
-	listItemTextActive: {
-		color: colors.primary,
 	},
 	defaultBadge: {
-		backgroundColor: `${colors.primary}30`,
 		paddingHorizontal: spacing.sm,
 		paddingVertical: 2,
 		borderRadius: borderRadius.sm,
@@ -257,6 +247,5 @@ const styles = StyleSheet.create({
 	defaultBadgeText: {
 		fontSize: 10,
 		fontWeight: "600",
-		color: colors.primary,
 	},
 });

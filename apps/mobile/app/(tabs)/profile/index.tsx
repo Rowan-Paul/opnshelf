@@ -16,13 +16,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 
 export default function ProfileScreen() {
 	const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth();
 	const { showToast } = useToast();
+	const { colors } = useTheme();
 
 	const { data: profile } = useQuery({
 		...authControllerMeOptions(),
@@ -40,11 +42,16 @@ export default function ProfileScreen() {
 
 	if (isAuthLoading) {
 		return (
-			<SafeAreaView style={styles.container} edges={["top"]}>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<View style={styles.headerLeft}>
 						<User size={32} color={colors.primary} />
-						<Text style={styles.title}>Profile</Text>
+						<Text style={[styles.title, { color: colors.onBackground }]}>
+							Profile
+						</Text>
 					</View>
 				</View>
 				<View style={styles.skeletonContainer}>
@@ -66,26 +73,43 @@ export default function ProfileScreen() {
 
 	if (!isAuthenticated) {
 		return (
-			<SafeAreaView style={styles.container} edges={["top"]}>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<View style={styles.headerLeft}>
 						<User size={32} color={colors.primary} />
-						<Text style={styles.title}>Profile</Text>
+						<Text style={[styles.title, { color: colors.onBackground }]}>
+							Profile
+						</Text>
 					</View>
 					<TouchableOpacity
 						onPress={handleAuthAction}
-						style={styles.authButton}
+						style={[
+							styles.authButton,
+							{ backgroundColor: colors.surfaceContainer },
+						]}
 					>
-						<LogIn size={20} color={colors.text} />
-						<Text style={styles.authButtonText}>Sign in</Text>
+						<LogIn size={20} color={colors.onSurface} />
+						<Text style={[styles.authButtonText, { color: colors.onSurface }]}>
+							Sign in
+						</Text>
 					</TouchableOpacity>
 				</View>
 				<View style={styles.centerContent}>
 					<Card style={styles.authCard}>
 						<CardHeader style={styles.authCardHeader}>
 							<User size={64} color={colors.primary} style={styles.authIcon} />
-							<Text style={styles.authTitle}>Welcome to OpnShelf</Text>
-							<Text style={styles.authDescription}>
+							<Text style={[styles.authTitle, { color: colors.onSurface }]}>
+								Welcome to OpnShelf
+							</Text>
+							<Text
+								style={[
+									styles.authDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
 								Sign in to track movies and create lists
 							</Text>
 						</CardHeader>
@@ -93,10 +117,12 @@ export default function ProfileScreen() {
 							<Button size="lg" onPress={() => router.push("/login")}>
 								<LogIn
 									size={20}
-									color={colors.text}
+									color={colors.onPrimary}
 									style={styles.buttonIcon}
 								/>
-								<Text style={styles.buttonText}>Sign in</Text>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+									Sign in
+								</Text>
 							</Button>
 						</CardContent>
 					</Card>
@@ -106,25 +132,38 @@ export default function ProfileScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={["top"]}>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["top"]}
+		>
 			<View style={styles.header}>
 				<View style={styles.headerLeft}>
 					<User size={32} color={colors.primary} />
-					<Text style={styles.title}>Profile</Text>
+					<Text style={[styles.title, { color: colors.onBackground }]}>
+						Profile
+					</Text>
 				</View>
 				<View style={styles.headerRight}>
 					<TouchableOpacity
 						onPress={() => router.push("/settings")}
-						style={styles.iconButton}
+						style={[
+							styles.iconButton,
+							{ backgroundColor: colors.surfaceContainer },
+						]}
 					>
-						<Settings size={20} color={colors.text} />
+						<Settings size={20} color={colors.onSurface} />
 					</TouchableOpacity>
 					<TouchableOpacity
 						onPress={handleAuthAction}
-						style={styles.authButton}
+						style={[
+							styles.authButton,
+							{ backgroundColor: colors.surfaceContainer },
+						]}
 					>
-						<LogOut size={20} color={colors.text} />
-						<Text style={styles.authButtonText}>Logout</Text>
+						<LogOut size={20} color={colors.onSurface} />
+						<Text style={[styles.authButtonText, { color: colors.onSurface }]}>
+							Logout
+						</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -138,8 +177,8 @@ export default function ProfileScreen() {
 							style={styles.avatarImage}
 						/>
 					) : (
-						<View style={styles.avatar}>
-							<Text style={styles.avatarText}>
+						<View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+							<Text style={[styles.avatarText, { color: colors.onPrimary }]}>
 								{String(profile?.displayName)?.[0] ||
 									profile?.handle?.[0] ||
 									"U"}
@@ -147,11 +186,13 @@ export default function ProfileScreen() {
 						</View>
 					)}
 					<View style={styles.profileInfo}>
-						<Text style={styles.displayName}>
+						<Text style={[styles.displayName, { color: colors.onSurface }]}>
 							{String(profile?.displayName || profile?.handle || "User")}
 						</Text>
 						{profile?.displayName && (
-							<Text style={styles.handle}>@{profile.handle}</Text>
+							<Text style={[styles.handle, { color: colors.onSurfaceVariant }]}>
+								@{profile.handle}
+							</Text>
 						)}
 					</View>
 				</CardHeader>
@@ -160,33 +201,75 @@ export default function ProfileScreen() {
 			{/* Navigation Links */}
 			<View style={styles.linksContainer}>
 				<TouchableOpacity
-					style={styles.linkCard}
+					style={[
+						styles.linkCard,
+						{
+							backgroundColor: colors.surfaceContainer,
+							borderColor: colors.outline,
+						},
+					]}
 					onPress={() => router.push("/(tabs)/profile/shelf")}
 				>
-					<View style={styles.linkIconContainer}>
+					<View
+						style={[
+							styles.linkIconContainer,
+							{ backgroundColor: `${colors.primary}20` },
+						]}
+					>
 						<BookOpen size={24} color={colors.primary} />
 					</View>
 					<View style={styles.linkContent}>
-						<Text style={styles.linkTitle}>My Shelf</Text>
-						<Text style={styles.linkDescription}>
+						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+							My Shelf
+						</Text>
+						<Text
+							style={[
+								styles.linkDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
 							Movies you&apos;ve watched
 						</Text>
 					</View>
-					<Text style={styles.linkArrow}>→</Text>
+					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
+						→
+					</Text>
 				</TouchableOpacity>
 
 				<TouchableOpacity
-					style={styles.linkCard}
+					style={[
+						styles.linkCard,
+						{
+							backgroundColor: colors.surfaceContainer,
+							borderColor: colors.outline,
+						},
+					]}
 					onPress={() => router.push("/(tabs)/profile/lists")}
 				>
-					<View style={styles.linkIconContainer}>
+					<View
+						style={[
+							styles.linkIconContainer,
+							{ backgroundColor: `${colors.primary}20` },
+						]}
+					>
 						<List size={24} color={colors.primary} />
 					</View>
 					<View style={styles.linkContent}>
-						<Text style={styles.linkTitle}>My Lists</Text>
-						<Text style={styles.linkDescription}>Custom movie collections</Text>
+						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+							My Lists
+						</Text>
+						<Text
+							style={[
+								styles.linkDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							Custom movie collections
+						</Text>
 					</View>
-					<Text style={styles.linkArrow}>→</Text>
+					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
+						→
+					</Text>
 				</TouchableOpacity>
 			</View>
 		</SafeAreaView>
@@ -196,7 +279,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.lg,
@@ -213,7 +295,6 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 28,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	headerRight: {
 		flexDirection: "row",
@@ -222,7 +303,6 @@ const styles = StyleSheet.create({
 	},
 	iconButton: {
 		padding: spacing.sm,
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.md,
 	},
 	authButton: {
@@ -231,13 +311,11 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.md,
 	},
 	authButtonText: {
 		fontSize: 14,
 		fontWeight: "600",
-		color: colors.text,
 	},
 	centerContent: {
 		flex: 1,
@@ -259,20 +337,17 @@ const styles = StyleSheet.create({
 	authTitle: {
 		fontSize: 24,
 		fontWeight: "bold",
-		color: colors.text,
 		textAlign: "center",
 		marginBottom: spacing.sm,
 	},
 	authDescription: {
 		fontSize: 16,
-		color: colors.textMuted,
 		textAlign: "center",
 	},
 	buttonIcon: {
 		marginRight: spacing.sm,
 	},
 	buttonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
@@ -291,7 +366,6 @@ const styles = StyleSheet.create({
 		width: 64,
 		height: 64,
 		borderRadius: 32,
-		backgroundColor: colors.primary,
 		justifyContent: "center",
 		alignItems: "center",
 		marginRight: spacing.md,
@@ -305,7 +379,6 @@ const styles = StyleSheet.create({
 	avatarText: {
 		fontSize: 28,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	profileInfo: {
 		flex: 1,
@@ -313,11 +386,9 @@ const styles = StyleSheet.create({
 	displayName: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 	},
 	handle: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginTop: spacing.xs,
 	},
 	linksContainer: {
@@ -327,17 +398,14 @@ const styles = StyleSheet.create({
 	linkCard: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		padding: spacing.md,
 		borderWidth: 1,
-		borderColor: colors.border,
 	},
 	linkIconContainer: {
 		width: 48,
 		height: 48,
 		borderRadius: borderRadius.md,
-		backgroundColor: `${colors.primary}20`,
 		justifyContent: "center",
 		alignItems: "center",
 	},
@@ -348,15 +416,12 @@ const styles = StyleSheet.create({
 	linkTitle: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 	},
 	linkDescription: {
 		fontSize: 12,
-		color: colors.textMuted,
 		marginTop: spacing.xs,
 	},
 	linkArrow: {
 		fontSize: 20,
-		color: colors.textMuted,
 	},
 });

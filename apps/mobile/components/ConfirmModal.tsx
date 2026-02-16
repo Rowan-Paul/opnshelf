@@ -8,7 +8,8 @@ import {
 	Text,
 	View,
 } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
+import { useTheme } from "@/contexts/theme";
 import { Button } from "@/components/ui/Button";
 
 interface ConfirmModalProps {
@@ -32,6 +33,8 @@ export const ConfirmModal = memo(function ConfirmModal({
 	cancelText = "Cancel",
 	isLoading = false,
 }: ConfirmModalProps) {
+	const { colors } = useTheme();
+
 	return (
 		<Modal
 			visible={visible}
@@ -40,15 +43,15 @@ export const ConfirmModal = memo(function ConfirmModal({
 			onRequestClose={onClose}
 		>
 			<Pressable style={styles.overlay} onPress={onClose}>
-				<Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
-					<View style={styles.iconContainer}>
+				<Pressable style={[styles.content, { backgroundColor: colors.surfaceContainer }]} onPress={(e) => e.stopPropagation()}>
+					<View style={[styles.iconContainer, { backgroundColor: `${colors.error}20` }]}>
 						<Ionicons name="warning" size={32} color={colors.error} />
 					</View>
-					<Text style={styles.title}>{title}</Text>
-					<Text style={styles.description}>{description}</Text>
+					<Text style={[styles.title, { color: colors.onSurface }]}>{title}</Text>
+					<Text style={[styles.description, { color: colors.onSurfaceVariant }]}>{description}</Text>
 					<View style={styles.buttons}>
-						<Button variant="outline" onPress={onClose} style={styles.button}>
-							<Text style={styles.buttonOutlineText}>{cancelText}</Text>
+						<Button variant="outlined" onPress={onClose} style={styles.button}>
+							<Text style={[styles.buttonOutlineText, { color: colors.onSurface }]}>{cancelText}</Text>
 						</Button>
 						<Button
 							onPress={onConfirm}
@@ -56,9 +59,9 @@ export const ConfirmModal = memo(function ConfirmModal({
 							style={styles.button}
 						>
 							{isLoading ? (
-								<ActivityIndicator size="small" color={colors.text} />
+								<ActivityIndicator size="small" color={colors.onPrimary} />
 							) : (
-								<Text style={styles.buttonText}>{confirmText}</Text>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>{confirmText}</Text>
 							)}
 						</Button>
 					</View>
@@ -76,7 +79,6 @@ const styles = StyleSheet.create({
 		padding: spacing.lg,
 	},
 	content: {
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		padding: spacing.lg,
 		alignItems: "center",
@@ -85,7 +87,6 @@ const styles = StyleSheet.create({
 		width: 56,
 		height: 56,
 		borderRadius: 28,
-		backgroundColor: `${colors.error}20`,
 		justifyContent: "center",
 		alignItems: "center",
 		marginBottom: spacing.md,
@@ -93,13 +94,11 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 		marginBottom: spacing.sm,
 		textAlign: "center",
 	},
 	description: {
 		fontSize: 14,
-		color: colors.textMuted,
 		textAlign: "center",
 		marginBottom: spacing.lg,
 	},
@@ -114,11 +113,9 @@ const styles = StyleSheet.create({
 	buttonText: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 	},
 	buttonOutlineText: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 	},
 });

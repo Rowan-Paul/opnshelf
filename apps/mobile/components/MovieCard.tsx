@@ -2,7 +2,8 @@ import type { TrackedMovieDto } from "@opnshelf/api";
 import { CheckCircle2, Trash2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
+import { useTheme } from "@/contexts/theme";
 import { getTmdbPosterUrl } from "@/lib/utils";
 import { SpinningLoader } from "./SpinningLoader";
 
@@ -23,6 +24,7 @@ export function MovieCard({
 	timezone,
 	is24Hour,
 }: MovieCardProps) {
+	const { colors } = useTheme();
 	const formattedWatchedDate = tracked.watchedDate
 		? new Date(tracked.watchedDate).toLocaleString("en-US", {
 				month: "short",
@@ -38,8 +40,8 @@ export function MovieCard({
 	const posterUrl = getTmdbPosterUrl(tracked.movie.posterPath);
 
 	return (
-		<TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
-			<View style={styles.posterContainer}>
+		<TouchableOpacity onPress={onPress} style={[styles.card, { backgroundColor: colors.surfaceContainer, borderColor: colors.outline }]} activeOpacity={0.8}>
+			<View style={[styles.posterContainer, { backgroundColor: colors.surfaceContainerHigh }]}>
 				{posterUrl ? (
 					<Image
 						source={{ uri: posterUrl }}
@@ -48,27 +50,27 @@ export function MovieCard({
 						transition={200}
 					/>
 				) : (
-					<View style={[styles.poster, styles.noPoster]}>
-						<Text style={styles.noPosterText}>No poster</Text>
+					<View style={[styles.poster, styles.noPoster, { backgroundColor: colors.surfaceContainerHigh }]}>
+						<Text style={[styles.noPosterText, { color: colors.onSurfaceVariant }]}>No poster</Text>
 					</View>
 				)}
 			</View>
 
 			<View style={styles.cardContent}>
 				<View style={styles.info}>
-					<Text style={styles.movieTitle} numberOfLines={2}>
+					<Text style={[styles.movieTitle, { color: colors.onSurface }]} numberOfLines={2}>
 						{tracked.movie.title}
 					</Text>
 					<View style={styles.meta}>
 						{tracked.movie.releaseYear && (
-							<Text style={styles.year}>{tracked.movie.releaseYear}</Text>
+							<Text style={[styles.year, { color: colors.onSurfaceVariant }]}>{tracked.movie.releaseYear}</Text>
 						)}
 						{formattedWatchedDate && (
 							<>
-								<Text style={styles.metaDot}>•</Text>
+								<Text style={[styles.metaDot, { color: colors.onSurfaceVariant }]}>•</Text>
 								<View style={styles.watchedRow}>
-									<CheckCircle2 size={12} color={colors.success} />
-									<Text style={styles.watchedDate}>{formattedWatchedDate}</Text>
+									<CheckCircle2 size={12} color={colors.primary} />
+									<Text style={[styles.watchedDate, { color: colors.primary }]}>{formattedWatchedDate}</Text>
 								</View>
 							</>
 						)}
@@ -81,18 +83,18 @@ export function MovieCard({
 						onRemove(tracked.movieId);
 					}}
 					disabled={isRemoving}
-					style={styles.removeButton}
+					style={[styles.removeButton, { backgroundColor: colors.error }]}
 					activeOpacity={0.7}
 				>
 					{isRemoving ? (
 						<View style={styles.removeButtonContent}>
-							<SpinningLoader size={14} color={colors.text} />
-							<Text style={styles.removeButtonText}>Loading</Text>
+							<SpinningLoader size={14} color={colors.onError} />
+							<Text style={[styles.removeButtonText, { color: colors.onError }]}>Loading</Text>
 						</View>
 					) : (
 						<>
-							<Trash2 size={14} color={colors.text} />
-							<Text style={styles.removeButtonText}>Remove</Text>
+							<Trash2 size={14} color={colors.onError} />
+							<Text style={[styles.removeButtonText, { color: colors.onError }]}>Remove</Text>
 						</>
 					)}
 				</TouchableOpacity>
@@ -104,16 +106,13 @@ export function MovieCard({
 const styles = StyleSheet.create({
 	card: {
 		flexDirection: "row",
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
 		borderWidth: 1,
-		borderColor: colors.border,
 	},
 	posterContainer: {
 		width: 80,
 		aspectRatio: 2 / 3,
-		backgroundColor: colors.cardMuted,
 	},
 	poster: {
 		width: "100%",
@@ -130,7 +129,6 @@ const styles = StyleSheet.create({
 	movieTitle: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 		marginBottom: spacing.xs,
 		lineHeight: 22,
 	},
@@ -142,7 +140,6 @@ const styles = StyleSheet.create({
 	},
 	year: {
 		fontSize: 14,
-		color: colors.textMuted,
 	},
 	watchedRow: {
 		flexDirection: "row",
@@ -151,7 +148,6 @@ const styles = StyleSheet.create({
 	},
 	watchedDate: {
 		fontSize: 14,
-		color: colors.success,
 		fontWeight: "500",
 	},
 	removeButton: {
@@ -160,13 +156,11 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
-		backgroundColor: colors.error,
 		borderRadius: borderRadius.full,
 		alignSelf: "flex-start",
 		marginTop: spacing.sm,
 	},
 	removeButtonText: {
-		color: colors.text,
 		fontSize: 14,
 		fontWeight: "600",
 	},
@@ -176,16 +170,13 @@ const styles = StyleSheet.create({
 		gap: 6,
 	},
 	metaDot: {
-		color: colors.textSecondary,
 		fontSize: 12,
 	},
 	noPoster: {
 		justifyContent: "center",
 		alignItems: "center",
-		backgroundColor: colors.cardMuted,
 	},
 	noPosterText: {
-		color: colors.textSecondary,
 		fontSize: 12,
 		fontWeight: "500",
 	},

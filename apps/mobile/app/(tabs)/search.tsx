@@ -16,8 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { createTitleSlug } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export default function SearchScreen() {
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const { user } = useAuth();
 	const { showToast } = useToast();
+	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
@@ -184,9 +186,14 @@ export default function SearchScreen() {
 	);
 
 	return (
-		<SafeAreaView style={styles.container} edges={["top"]}>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["top"]}
+		>
 			<View style={styles.header}>
-				<Text style={styles.title}>Search Movies</Text>
+				<Text style={[styles.title, { color: colors.onBackground }]}>
+					Search Movies
+				</Text>
 			</View>
 
 			<SearchInput
@@ -201,7 +208,9 @@ export default function SearchScreen() {
 
 			{error && (
 				<View style={styles.centerContent}>
-					<Text style={styles.errorText}>Error: {error.message}</Text>
+					<Text style={[styles.errorText, { color: colors.error }]}>
+						Error: {error.message}
+					</Text>
 				</View>
 			)}
 
@@ -214,7 +223,9 @@ export default function SearchScreen() {
 					contentContainerStyle={styles.listContent}
 					extraData={watchedMovieIds}
 					ListHeaderComponent={
-						<Text style={styles.resultsCount}>
+						<Text
+							style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
+						>
 							Found {data.total_results.toLocaleString()} results
 						</Text>
 					}
@@ -223,7 +234,7 @@ export default function SearchScreen() {
 
 			{data && data.results.length === 0 && debouncedQuery && (
 				<View style={styles.centerContent}>
-					<Text style={styles.emptyText}>
+					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
 						No results found for &quot;{debouncedQuery}&quot;
 					</Text>
 				</View>
@@ -232,7 +243,9 @@ export default function SearchScreen() {
 			{!debouncedQuery && (
 				<View style={{ flex: 1 }}>
 					<View style={styles.header}>
-						<Text style={styles.title}>Popular Movies</Text>
+						<Text style={[styles.title, { color: colors.onBackground }]}>
+							Popular Movies
+						</Text>
 					</View>
 					{isDiscoverLoading && renderSkeleton()}
 					{discoverData && discoverData.results.length > 0 && (
@@ -254,7 +267,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.lg,
@@ -263,7 +275,6 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 28,
 		fontWeight: "bold",
-		color: colors.text,
 		letterSpacing: -0.5,
 	},
 	searchInput: {
@@ -275,7 +286,6 @@ const styles = StyleSheet.create({
 	},
 	resultsCount: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginBottom: spacing.md,
 	},
 	centerContent: {
@@ -286,12 +296,10 @@ const styles = StyleSheet.create({
 	},
 	emptyText: {
 		fontSize: 16,
-		color: colors.textMuted,
 		textAlign: "center",
 	},
 	errorText: {
 		fontSize: 14,
-		color: colors.error,
 		textAlign: "center",
 	},
 	skeletonGrid: {

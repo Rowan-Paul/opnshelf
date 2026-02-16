@@ -4,7 +4,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { colors, spacing } from "@/constants/theme";
+import { spacing } from "@/constants/theme";
+import { useTheme } from "@/contexts/theme";
 
 const features = [
 	{
@@ -26,15 +27,22 @@ const features = [
 ];
 
 export default function HomeScreen() {
+	const { colors } = useTheme();
+
 	return (
-		<SafeAreaView style={styles.container} edges={["top"]}>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["top"]}
+		>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
 				<View style={styles.hero}>
 					<View style={styles.logoContainer}>
 						<Film size={64} color={colors.primary} />
 					</View>
-					<Text style={styles.title}>OpnShelf</Text>
-					<Text style={styles.subtitle}>
+					<Text style={[styles.title, { color: colors.onBackground }]}>
+						OpnShelf
+					</Text>
+					<Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
 						Your personal media tracker powered by AT Protocol
 					</Text>
 					<Button
@@ -42,8 +50,14 @@ export default function HomeScreen() {
 						onPress={() => router.push("/(tabs)/search")}
 						style={styles.searchButton}
 					>
-						<Search size={20} color={colors.text} style={styles.buttonIcon} />
-						<Text style={styles.buttonText}>Search Movies</Text>
+						<Search
+							size={20}
+							color={colors.onPrimary}
+							style={styles.buttonIcon}
+						/>
+						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+							Search Movies
+						</Text>
 					</Button>
 				</View>
 
@@ -56,10 +70,19 @@ export default function HomeScreen() {
 									color={colors.primary}
 									style={styles.featureIcon}
 								/>
-								<Text style={styles.featureTitle}>{feature.title}</Text>
+								<Text
+									style={[styles.featureTitle, { color: colors.onSurface }]}
+								>
+									{feature.title}
+								</Text>
 							</CardHeader>
 							<CardContent>
-								<Text style={styles.featureDescription}>
+								<Text
+									style={[
+										styles.featureDescription,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
 									{feature.description}
 								</Text>
 							</CardContent>
@@ -74,7 +97,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	scrollContent: {
 		padding: spacing.lg,
@@ -89,12 +111,10 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 40,
 		fontWeight: "bold",
-		color: colors.text,
 		marginBottom: spacing.sm,
 	},
 	subtitle: {
 		fontSize: 16,
-		color: colors.textMuted,
 		textAlign: "center",
 		marginBottom: spacing.xl,
 		paddingHorizontal: spacing.lg,
@@ -106,7 +126,6 @@ const styles = StyleSheet.create({
 		marginRight: spacing.sm,
 	},
 	buttonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
@@ -122,11 +141,9 @@ const styles = StyleSheet.create({
 	featureTitle: {
 		fontSize: 18,
 		fontWeight: "600",
-		color: colors.text,
 	},
 	featureDescription: {
 		fontSize: 14,
-		color: colors.textMuted,
 		lineHeight: 20,
 	},
 });

@@ -19,8 +19,9 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export default function ListDetailScreen() {
 	const router = useRouter();
 	const { user, isAuthenticated } = useAuth();
 	const { showToast } = useToast();
+	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -116,15 +118,22 @@ export default function ListDetailScreen() {
 
 	if (!isAuthenticated) {
 		return (
-			<SafeAreaView style={styles.container} edges={["top"]}>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.text} />
+						<ArrowLeft size={24} color={colors.onBackground} />
 					</TouchableOpacity>
-					<Text style={styles.title}>List</Text>
+					<Text style={[styles.title, { color: colors.onBackground }]}>
+						List
+					</Text>
 				</View>
 				<View style={styles.centerContent}>
-					<Text style={styles.emptyText}>Please sign in to view lists</Text>
+					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
+						Please sign in to view lists
+					</Text>
 				</View>
 			</SafeAreaView>
 		);
@@ -132,16 +141,25 @@ export default function ListDetailScreen() {
 
 	if (isLoading) {
 		return (
-			<SafeAreaView style={styles.container} edges={["top"]}>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.text} />
+						<ArrowLeft size={24} color={colors.onBackground} />
 					</TouchableOpacity>
 					<Skeleton width={150} height={28} />
 				</View>
 				<View style={styles.skeletonContainer}>
 					{[1, 2, 3].map((i) => (
-						<View key={i} style={styles.skeletonRow}>
+						<View
+							key={i}
+							style={[
+								styles.skeletonRow,
+								{ backgroundColor: colors.surfaceContainer },
+							]}
+						>
 							<Skeleton width={80} height={120} />
 							<View style={styles.skeletonContent}>
 								<Skeleton width="70%" height={18} />
@@ -160,32 +178,51 @@ export default function ListDetailScreen() {
 
 	if (!list) {
 		return (
-			<SafeAreaView style={styles.container} edges={["top"]}>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.text} />
+						<ArrowLeft size={24} color={colors.onBackground} />
 					</TouchableOpacity>
-					<Text style={styles.title}>List not found</Text>
+					<Text style={[styles.title, { color: colors.onBackground }]}>
+						List not found
+					</Text>
 				</View>
 				<View style={styles.centerContent}>
 					<Card style={styles.emptyCard}>
 						<CardHeader style={styles.emptyCardHeader}>
 							<List
 								size={64}
-								color={colors.textSecondary}
+								color={colors.onSurfaceVariant}
 								style={styles.emptyIcon}
 							/>
-							<Text style={styles.emptyTitle}>List not found</Text>
-							<Text style={styles.emptyDescription}>
+							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+								List not found
+							</Text>
+							<Text
+								style={[
+									styles.emptyDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
 								This list doesn&apos;t exist or you don&apos;t have access
 							</Text>
 						</CardHeader>
 						<CardContent>
 							<TouchableOpacity
 								onPress={handleBack}
-								style={styles.backToListsButton}
+								style={[
+									styles.backToListsButton,
+									{ backgroundColor: colors.primary },
+								]}
 							>
-								<Text style={styles.backToListsText}>Back to lists</Text>
+								<Text
+									style={[styles.backToListsText, { color: colors.onPrimary }]}
+								>
+									Back to lists
+								</Text>
 							</TouchableOpacity>
 						</CardContent>
 					</Card>
@@ -197,19 +234,36 @@ export default function ListDetailScreen() {
 	const movies = list.items || [];
 
 	return (
-		<GestureHandlerRootView style={styles.container}>
-			<SafeAreaView style={styles.container} edges={["top"]}>
+		<GestureHandlerRootView
+			style={[styles.container, { backgroundColor: colors.background }]}
+		>
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
 				<View style={styles.header}>
 					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.text} />
+						<ArrowLeft size={24} color={colors.onBackground} />
 					</TouchableOpacity>
 					<View style={styles.headerContent}>
-						<Text style={styles.title} numberOfLines={1}>
+						<Text
+							style={[styles.title, { color: colors.onBackground }]}
+							numberOfLines={1}
+						>
 							{list.name}
 						</Text>
 						{list.isDefault && (
-							<View style={styles.defaultBadge}>
-								<Text style={styles.defaultBadgeText}>Default</Text>
+							<View
+								style={[
+									styles.defaultBadge,
+									{ backgroundColor: `${colors.primary}30` },
+								]}
+							>
+								<Text
+									style={[styles.defaultBadgeText, { color: colors.primary }]}
+								>
+									Default
+								</Text>
 							</View>
 						)}
 					</View>
@@ -219,7 +273,7 @@ export default function ListDetailScreen() {
 							disabled={deleteMutation.isPending}
 							style={styles.deleteButton}
 						>
-							<Text style={styles.deleteButtonText}>
+							<Text style={[styles.deleteButtonText, { color: colors.error }]}>
 								{deleteMutation.isPending ? "..." : "Delete"}
 							</Text>
 						</TouchableOpacity>
@@ -227,12 +281,18 @@ export default function ListDetailScreen() {
 				</View>
 
 				{list.description && (
-					<Text style={styles.description}>{list.description}</Text>
+					<Text
+						style={[styles.description, { color: colors.onSurfaceVariant }]}
+					>
+						{list.description}
+					</Text>
 				)}
 
 				{movies.length > 0 && (
 					<>
-						<Text style={styles.resultsCount}>
+						<Text
+							style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
+						>
 							{movies.length} movie{movies.length !== 1 ? "s" : ""}
 						</Text>
 						<FlashList
@@ -253,20 +313,37 @@ export default function ListDetailScreen() {
 							<CardHeader style={styles.emptyCardHeader}>
 								<List
 									size={64}
-									color={colors.textSecondary}
+									color={colors.onSurfaceVariant}
 									style={styles.emptyIcon}
 								/>
-								<Text style={styles.emptyTitle}>No movies yet</Text>
-								<Text style={styles.emptyDescription}>
+								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+									No movies yet
+								</Text>
+								<Text
+									style={[
+										styles.emptyDescription,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
 									Add movies to this list from the search page
 								</Text>
 							</CardHeader>
 							<CardContent>
 								<TouchableOpacity
 									onPress={() => router.push("/(tabs)/search")}
-									style={styles.searchButton}
+									style={[
+										styles.searchButton,
+										{ backgroundColor: colors.primary },
+									]}
 								>
-									<Text style={styles.searchButtonText}>Search for movies</Text>
+									<Text
+										style={[
+											styles.searchButtonText,
+											{ color: colors.onPrimary },
+										]}
+									>
+										Search for movies
+									</Text>
 								</TouchableOpacity>
 							</CardContent>
 						</Card>
@@ -303,6 +380,7 @@ function ListMovieItem({
 	onRemove,
 	isRemoving,
 }: ListMovieItemProps) {
+	const { colors } = useTheme();
 	const movie = item.movie;
 	const posterUrl = getTmdbPosterUrl(
 		movie.posterPath as string | null | undefined,
@@ -311,8 +389,21 @@ function ListMovieItem({
 	const releaseYear = movie.releaseYear as number | null | undefined;
 
 	return (
-		<View style={styles.card}>
-			<View style={styles.posterContainer}>
+		<View
+			style={[
+				styles.card,
+				{
+					backgroundColor: colors.surfaceContainer,
+					borderColor: colors.outline,
+				},
+			]}
+		>
+			<View
+				style={[
+					styles.posterContainer,
+					{ backgroundColor: colors.surfaceContainerHigh },
+				]}
+			>
 				{posterUrl ? (
 					<Image
 						source={{ uri: posterUrl }}
@@ -320,8 +411,18 @@ function ListMovieItem({
 						contentFit="cover"
 					/>
 				) : (
-					<View style={[styles.poster, styles.noPoster]}>
-						<Text style={styles.noPosterText}>No poster</Text>
+					<View
+						style={[
+							styles.poster,
+							styles.noPoster,
+							{ backgroundColor: colors.surfaceContainerHigh },
+						]}
+					>
+						<Text
+							style={[styles.noPosterText, { color: colors.onSurfaceVariant }]}
+						>
+							No poster
+						</Text>
 					</View>
 				)}
 			</View>
@@ -331,27 +432,44 @@ function ListMovieItem({
 				activeOpacity={0.8}
 			>
 				<View style={styles.info}>
-					<Text style={styles.movieTitle} numberOfLines={2}>
+					<Text
+						style={[styles.movieTitle, { color: colors.onSurface }]}
+						numberOfLines={2}
+					>
 						{movieTitle}
 					</Text>
-					{releaseYear && <Text style={styles.movieYear}>{releaseYear}</Text>}
+					{releaseYear && (
+						<Text
+							style={[styles.movieYear, { color: colors.onSurfaceVariant }]}
+						>
+							{releaseYear}
+						</Text>
+					)}
 				</View>
 
 				<TouchableOpacity
 					onPress={onRemove}
 					disabled={isRemoving}
-					style={styles.removeButton}
+					style={[styles.removeButton, { backgroundColor: colors.error }]}
 					activeOpacity={0.7}
 				>
 					{isRemoving ? (
 						<View style={styles.removeButtonContent}>
-							<SpinningLoader size={14} color={colors.text} />
-							<Text style={styles.removeButtonText}>Loading</Text>
+							<SpinningLoader size={14} color={colors.onError} />
+							<Text
+								style={[styles.removeButtonText, { color: colors.onError }]}
+							>
+								Loading
+							</Text>
 						</View>
 					) : (
 						<>
-							<Trash2 size={14} color={colors.text} />
-							<Text style={styles.removeButtonText}>Remove</Text>
+							<Trash2 size={14} color={colors.onError} />
+							<Text
+								style={[styles.removeButtonText, { color: colors.onError }]}
+							>
+								Remove
+							</Text>
 						</>
 					)}
 				</TouchableOpacity>
@@ -363,7 +481,6 @@ function ListMovieItem({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	header: {
 		paddingHorizontal: spacing.lg,
@@ -384,11 +501,9 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: 24,
 		fontWeight: "bold",
-		color: colors.text,
 		flex: 1,
 	},
 	defaultBadge: {
-		backgroundColor: `${colors.primary}30`,
 		paddingHorizontal: spacing.sm,
 		paddingVertical: 2,
 		borderRadius: borderRadius.sm,
@@ -396,7 +511,6 @@ const styles = StyleSheet.create({
 	defaultBadgeText: {
 		fontSize: 10,
 		fontWeight: "600",
-		color: colors.primary,
 	},
 	deleteButton: {
 		paddingHorizontal: spacing.md,
@@ -405,17 +519,14 @@ const styles = StyleSheet.create({
 	deleteButtonText: {
 		fontSize: 14,
 		fontWeight: "600",
-		color: colors.error,
 	},
 	description: {
 		fontSize: 14,
-		color: colors.textMuted,
 		paddingHorizontal: spacing.lg,
 		marginBottom: spacing.md,
 	},
 	resultsCount: {
 		fontSize: 14,
-		color: colors.textMuted,
 		paddingHorizontal: spacing.lg,
 		marginBottom: spacing.sm,
 	},
@@ -445,38 +556,31 @@ const styles = StyleSheet.create({
 	emptyTitle: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 		textAlign: "center",
 		marginBottom: spacing.sm,
 	},
 	emptyDescription: {
 		fontSize: 14,
-		color: colors.textMuted,
 		textAlign: "center",
 	},
 	emptyText: {
 		fontSize: 16,
-		color: colors.textMuted,
 	},
 	backToListsButton: {
-		backgroundColor: colors.primary,
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
 		borderRadius: borderRadius.md,
 	},
 	backToListsText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
 	searchButton: {
-		backgroundColor: colors.primary,
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
 		borderRadius: borderRadius.md,
 	},
 	searchButtonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
@@ -486,7 +590,6 @@ const styles = StyleSheet.create({
 	skeletonRow: {
 		flexDirection: "row",
 		marginBottom: spacing.md,
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
 	},
@@ -497,16 +600,13 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		flexDirection: "row",
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
 		borderWidth: 1,
-		borderColor: colors.border,
 	},
 	posterContainer: {
 		width: 80,
 		aspectRatio: 2 / 3,
-		backgroundColor: colors.cardMuted,
 	},
 	poster: {
 		width: "100%",
@@ -523,13 +623,11 @@ const styles = StyleSheet.create({
 	movieTitle: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: colors.text,
 		marginBottom: spacing.xs,
 		lineHeight: 22,
 	},
 	movieYear: {
 		fontSize: 14,
-		color: colors.textMuted,
 	},
 	removeButton: {
 		flexDirection: "row",
@@ -537,13 +635,11 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
-		backgroundColor: colors.error,
 		borderRadius: borderRadius.full,
 		alignSelf: "flex-start",
 		marginTop: spacing.sm,
 	},
 	removeButtonText: {
-		color: colors.text,
 		fontSize: 14,
 		fontWeight: "600",
 	},
@@ -555,10 +651,8 @@ const styles = StyleSheet.create({
 	noPoster: {
 		justifyContent: "center",
 		alignItems: "center",
-		backgroundColor: colors.cardMuted,
 	},
 	noPosterText: {
-		color: colors.textSecondary,
 		fontSize: 12,
 		fontWeight: "500",
 	},

@@ -1,23 +1,24 @@
 import {
-	authControllerMeOptions,
-	usersControllerGetMySettingsOptions,
-	usersControllerUpdateMySettingsMutation,
-} from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
 	createContext,
-	type ReactNode,
 	useCallback,
 	useContext,
 	useEffect,
 	useState,
+	type ReactNode,
 } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-	applyThemeToDocument,
 	DEFAULT_SEED_COLOR,
 	generateMaterialTheme,
 	type MaterialThemeColors,
-} from "@/lib/material-theme";
+} from "@/constants/material-theme";
+import {
+	authControllerMeOptions,
+	usersControllerGetMySettingsOptions,
+	usersControllerUpdateMySettingsMutation,
+	usersControllerGetMySettingsQueryKey,
+} from "@opnshelf/api";
 
 interface ThemeContextType {
 	seedColor: string;
@@ -27,6 +28,8 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
+
+const SEED_COLOR_KEY = "opnshelf-seed-color";
 
 interface ThemeProviderProps {
 	children: ReactNode;
@@ -41,7 +44,8 @@ export function ThemeProvider({
 	const [colors, setColors] = useState<MaterialThemeColors>(() =>
 		generateMaterialTheme(defaultSeedColor, true),
 	);
-	const isDark = true; // Always dark mode
+	const [isLoaded, setIsLoaded] = useState(false);
+	const isDark = true;
 	const queryClient = useQueryClient();
 
 	// Fetch user to check if logged in
@@ -51,7 +55,7 @@ export function ThemeProvider({
 		retry: false,
 	});
 
-	// Fetch user settings to get saved accent color
+	// Fetch user settings from API
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
@@ -62,32 +66,48 @@ export function ThemeProvider({
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: usersControllerGetMySettingsOptions().queryKey,
+				queryKey: usersControllerGetMySettingsQueryKey(),
 			});
 		},
 	});
 
-	// Apply saved accent color when settings are loaded
+	// Load color from SecureStore first (for offline support), then from API
 	useEffect(() => {
-		if (settings?.accentColor && settings.accentColor !== seedColor) {
-			setSeedColorState(settings.accentColor);
-			setColors(generateMaterialTheme(settings.accentColor, true));
+		const loadStoredColor = async () => {
+			const stored = await SecureStore.getItemAsync(SEED_COLOR_KEY);
+			if (stored) {
+				setSeedColorState(stored);
+				setColors(generateMaterialTheme(stored, true));
+			}
+			setIsLoaded(true);
+		};
+
+		loadStoredColor();
+	}, []);
+
+	// When API settings are loaded, update the color (prefer server value)
+	useEffect(() => {
+		if (settings?.accentColor && isLoaded) {
+			// Only update if different from current (to avoid overwriting user selection)
+			if (settings.accentColor !== seedColor) {
+				setSeedColorState(settings.accentColor);
+				setColors(generateMaterialTheme(settings.accentColor, true));
+				// Also update SecureStore to match server
+				SecureStore.setItemAsync(SEED_COLOR_KEY, settings.accentColor);
+			}
 		}
-	}, [settings?.accentColor, seedColor]);
+	}, [settings?.accentColor, isLoaded, seedColor]);
 
-	// Apply theme to document whenever colors change
-	useEffect(() => {
-		applyThemeToDocument(colors);
-	}, [colors]);
-
-	// Update colors when seed color changes and save to API
 	const setSeedColor = useCallback(
-		(color: string) => {
+		async (color: string) => {
 			setSeedColorState(color);
 			const newColors = generateMaterialTheme(color, true);
 			setColors(newColors);
 
-			// Save to API if user is logged in
+			// Always save to SecureStore for offline support
+			await SecureStore.setItemAsync(SEED_COLOR_KEY, color);
+
+			// If user is logged in, also save to API
 			if (user?.did) {
 				updateSettingsMutation.mutate({
 					body: { accentColor: color },

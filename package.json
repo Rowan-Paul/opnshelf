@@ -9,7 +9,8 @@
     "build": "turbo run build",
     "generate:api": "pnpm --filter @opnshelf/api exec openapi-ts",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
-    "prisma:migrate": "pnpm --filter backend exec prisma migrate dev"
+    "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
+    "check": "turbo run check"
   },
   "workspaces": [
     "apps/*",

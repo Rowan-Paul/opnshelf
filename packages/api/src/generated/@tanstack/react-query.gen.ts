@@ -111,11 +111,14 @@ export const moviesControllerGetUserMoviesOptions = (options: Options<MoviesCont
     queryKey: moviesControllerGetUserMoviesQueryKey(options)
 });
 
+export const moviesControllerMarkWatchedMutationKey = () => ['moviesControllerMarkWatched'] as const;
+
 /**
  * Mark a movie as watched
  */
 export const moviesControllerMarkWatchedMutation = (options?: Partial<Options<MoviesControllerMarkWatchedData>>): UseMutationOptions<MoviesControllerMarkWatchedResponse, DefaultError, Options<MoviesControllerMarkWatchedData>> => {
     const mutationOptions: UseMutationOptions<MoviesControllerMarkWatchedResponse, DefaultError, Options<MoviesControllerMarkWatchedData>> = {
+        mutationKey: moviesControllerMarkWatchedMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await moviesControllerMarkWatched({
                 ...options,
@@ -128,11 +131,14 @@ export const moviesControllerMarkWatchedMutation = (options?: Partial<Options<Mo
     return mutationOptions;
 };
 
+export const moviesControllerUnmarkWatchedMutationKey = () => ['moviesControllerUnmarkWatched'] as const;
+
 /**
  * Unmark a movie as watched
  */
 export const moviesControllerUnmarkWatchedMutation = (options?: Partial<Options<MoviesControllerUnmarkWatchedData>>): UseMutationOptions<MoviesControllerUnmarkWatchedResponse, DefaultError, Options<MoviesControllerUnmarkWatchedData>> => {
     const mutationOptions: UseMutationOptions<MoviesControllerUnmarkWatchedResponse, DefaultError, Options<MoviesControllerUnmarkWatchedData>> = {
+        mutationKey: moviesControllerUnmarkWatchedMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await moviesControllerUnmarkWatched({
                 ...options,
@@ -181,11 +187,14 @@ export const moviesControllerGetMovieWatchHistoryOptions = (options: Options<Mov
     queryKey: moviesControllerGetMovieWatchHistoryQueryKey(options)
 });
 
+export const moviesControllerDeleteWatchHistoryEntryMutationKey = () => ['moviesControllerDeleteWatchHistoryEntry'] as const;
+
 /**
  * Delete a specific watch history entry
  */
 export const moviesControllerDeleteWatchHistoryEntryMutation = (options?: Partial<Options<MoviesControllerDeleteWatchHistoryEntryData>>): UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> => {
     const mutationOptions: UseMutationOptions<MoviesControllerDeleteWatchHistoryEntryResponse, DefaultError, Options<MoviesControllerDeleteWatchHistoryEntryData>> = {
+        mutationKey: moviesControllerDeleteWatchHistoryEntryMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await moviesControllerDeleteWatchHistoryEntry({
                 ...options,
@@ -288,11 +297,14 @@ export const authControllerMeOptions = (options?: Options<AuthControllerMeData>)
     queryKey: authControllerMeQueryKey(options)
 });
 
+export const authControllerLogoutMutationKey = () => ['authControllerLogout'] as const;
+
 /**
  * Logout and clear session
  */
 export const authControllerLogoutMutation = (options?: Partial<Options<AuthControllerLogoutData>>): UseMutationOptions<unknown, DefaultError, Options<AuthControllerLogoutData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<AuthControllerLogoutData>> = {
+        mutationKey: authControllerLogoutMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await authControllerLogout({
                 ...options,
@@ -323,11 +335,14 @@ export const listsControllerGetUserListsOptions = (options?: Options<ListsContro
     queryKey: listsControllerGetUserListsQueryKey(options)
 });
 
+export const listsControllerCreateListMutationKey = () => ['listsControllerCreateList'] as const;
+
 /**
  * Create a new list
  */
 export const listsControllerCreateListMutation = (options?: Partial<Options<ListsControllerCreateListData>>): UseMutationOptions<ListsControllerCreateListResponse, DefaultError, Options<ListsControllerCreateListData>> => {
     const mutationOptions: UseMutationOptions<ListsControllerCreateListResponse, DefaultError, Options<ListsControllerCreateListData>> = {
+        mutationKey: listsControllerCreateListMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerCreateList({
                 ...options,
@@ -340,11 +355,14 @@ export const listsControllerCreateListMutation = (options?: Partial<Options<List
     return mutationOptions;
 };
 
+export const listsControllerInitDefaultListsMutationKey = () => ['listsControllerInitDefaultLists'] as const;
+
 /**
  * Initialize default lists (watchlist, favorites)
  */
 export const listsControllerInitDefaultListsMutation = (options?: Partial<Options<ListsControllerInitDefaultListsData>>): UseMutationOptions<ListsControllerInitDefaultListsResponse, DefaultError, Options<ListsControllerInitDefaultListsData>> => {
     const mutationOptions: UseMutationOptions<ListsControllerInitDefaultListsResponse, DefaultError, Options<ListsControllerInitDefaultListsData>> = {
+        mutationKey: listsControllerInitDefaultListsMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerInitDefaultLists({
                 ...options,
@@ -357,11 +375,14 @@ export const listsControllerInitDefaultListsMutation = (options?: Partial<Option
     return mutationOptions;
 };
 
+export const listsControllerDeleteListMutationKey = () => ['listsControllerDeleteList'] as const;
+
 /**
  * Delete a list (not allowed for default lists)
  */
 export const listsControllerDeleteListMutation = (options?: Partial<Options<ListsControllerDeleteListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerDeleteListData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerDeleteListData>> = {
+        mutationKey: listsControllerDeleteListMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerDeleteList({
                 ...options,
@@ -392,11 +413,14 @@ export const listsControllerGetListOptions = (options: Options<ListsControllerGe
     queryKey: listsControllerGetListQueryKey(options)
 });
 
+export const listsControllerUpdateListMutationKey = () => ['listsControllerUpdateList'] as const;
+
 /**
  * Update a list
  */
 export const listsControllerUpdateListMutation = (options?: Partial<Options<ListsControllerUpdateListData>>): UseMutationOptions<ListsControllerUpdateListResponse, DefaultError, Options<ListsControllerUpdateListData>> => {
     const mutationOptions: UseMutationOptions<ListsControllerUpdateListResponse, DefaultError, Options<ListsControllerUpdateListData>> = {
+        mutationKey: listsControllerUpdateListMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerUpdateList({
                 ...options,
@@ -409,11 +433,14 @@ export const listsControllerUpdateListMutation = (options?: Partial<Options<List
     return mutationOptions;
 };
 
+export const listsControllerAddToListMutationKey = () => ['listsControllerAddToList'] as const;
+
 /**
  * Add a movie to a list
  */
 export const listsControllerAddToListMutation = (options?: Partial<Options<ListsControllerAddToListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> = {
+        mutationKey: listsControllerAddToListMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerAddToList({
                 ...options,
@@ -426,11 +453,14 @@ export const listsControllerAddToListMutation = (options?: Partial<Options<Lists
     return mutationOptions;
 };
 
+export const listsControllerRemoveFromListMutationKey = () => ['listsControllerRemoveFromList'] as const;
+
 /**
  * Remove a movie from a list
  */
 export const listsControllerRemoveFromListMutation = (options?: Partial<Options<ListsControllerRemoveFromListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> = {
+        mutationKey: listsControllerRemoveFromListMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await listsControllerRemoveFromList({
                 ...options,
@@ -479,11 +509,14 @@ export const usersControllerGetMySettingsOptions = (options?: Options<UsersContr
     queryKey: usersControllerGetMySettingsQueryKey(options)
 });
 
+export const usersControllerUpdateMySettingsMutationKey = () => ['usersControllerUpdateMySettings'] as const;
+
 /**
  * Update current user's settings
  */
 export const usersControllerUpdateMySettingsMutation = (options?: Partial<Options<UsersControllerUpdateMySettingsData>>): UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> => {
     const mutationOptions: UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> = {
+        mutationKey: usersControllerUpdateMySettingsMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await usersControllerUpdateMySettings({
                 ...options,
@@ -496,11 +529,14 @@ export const usersControllerUpdateMySettingsMutation = (options?: Partial<Option
     return mutationOptions;
 };
 
+export const usersControllerDeleteMyAccountMutationKey = () => ['usersControllerDeleteMyAccount'] as const;
+
 /**
  * Delete current user's account
  */
 export const usersControllerDeleteMyAccountMutation = (options?: Partial<Options<UsersControllerDeleteMyAccountData>>): UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> => {
     const mutationOptions: UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> = {
+        mutationKey: usersControllerDeleteMyAccountMutationKey(),
         mutationFn: async (fnOptions) => {
             const { data } = await usersControllerDeleteMyAccount({
                 ...options,

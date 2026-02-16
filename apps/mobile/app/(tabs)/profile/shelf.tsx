@@ -15,8 +15,9 @@ import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { borderRadius, colors, spacing } from "@/constants/theme";
+import { borderRadius, spacing } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { createTitleSlug } from "@/lib/utils";
@@ -26,6 +27,7 @@ export default function ShelfScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 	const { timezone, is24Hour } = useUserSettings();
+	const { colors } = useTheme();
 
 	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
 		...moviesControllerGetUserMoviesOptions({
@@ -91,16 +93,22 @@ export default function ShelfScreen() {
 	if (isMoviesLoading) {
 		return (
 			<SafeAreaView
-				style={styles.container}
+				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["left", "right", "bottom"]}
 			>
 				<View style={styles.skeletonContainer}>
 					{[...Array(6)].map((_, i) => (
-						<View key={i} style={styles.skeleton}>
+						<View
+							key={i}
+							style={[
+								styles.skeleton,
+								{ backgroundColor: colors.surfaceContainer },
+							]}
+						>
 							<View
 								style={[
 									styles.skeletonPoster,
-									{ backgroundColor: colors.cardMuted },
+									{ backgroundColor: colors.surfaceContainerHigh },
 								]}
 							/>
 							<View style={styles.skeletonContent}>
@@ -119,10 +127,15 @@ export default function ShelfScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["left", "right", "bottom"]}
+		>
 			{trackedMovies && trackedMovies.length > 0 && (
 				<>
-					<Text style={styles.resultsCount}>
+					<Text
+						style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
+					>
 						{trackedMovies.length} movie{trackedMovies.length !== 1 ? "s" : ""}{" "}
 						watched
 					</Text>
@@ -142,17 +155,26 @@ export default function ShelfScreen() {
 						<CardHeader style={styles.emptyCardHeader}>
 							<BookOpen
 								size={64}
-								color={colors.textSecondary}
+								color={colors.onSurfaceVariant}
 								style={styles.emptyIcon}
 							/>
-							<Text style={styles.emptyTitle}>Your shelf is empty</Text>
-							<Text style={styles.emptyDescription}>
+							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+								Your shelf is empty
+							</Text>
+							<Text
+								style={[
+									styles.emptyDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
 								Start tracking movies you&apos;ve watched
 							</Text>
 						</CardHeader>
 						<CardContent>
 							<Button onPress={() => router.push("/(tabs)/search")}>
-								<Text style={styles.buttonText}>Search for movies</Text>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+									Search for movies
+								</Text>
 							</Button>
 						</CardContent>
 					</Card>
@@ -165,11 +187,9 @@ export default function ShelfScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.background,
 	},
 	resultsCount: {
 		fontSize: 14,
-		color: colors.textMuted,
 		marginHorizontal: spacing.lg,
 		marginBottom: spacing.sm,
 	},
@@ -199,17 +219,14 @@ const styles = StyleSheet.create({
 	emptyTitle: {
 		fontSize: 20,
 		fontWeight: "bold",
-		color: colors.text,
 		textAlign: "center",
 		marginBottom: spacing.sm,
 	},
 	emptyDescription: {
 		fontSize: 14,
-		color: colors.textMuted,
 		textAlign: "center",
 	},
 	buttonText: {
-		color: colors.text,
 		fontSize: 16,
 		fontWeight: "600",
 	},
@@ -219,7 +236,6 @@ const styles = StyleSheet.create({
 	skeleton: {
 		flexDirection: "row",
 		marginBottom: spacing.md,
-		backgroundColor: colors.card,
 		borderRadius: borderRadius.lg,
 		overflow: "hidden",
 	},

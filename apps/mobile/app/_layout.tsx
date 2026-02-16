@@ -3,9 +3,9 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { colors } from "@/constants/theme";
+import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
-import { ToastProvider } from "@/contexts/toast";
+import { ThemeProvider } from "@/contexts/theme";
 import { initializeApiClient } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 
@@ -17,18 +17,18 @@ function AppContent() {
 	}
 
 	return (
-		<ToastProvider>
+		<M3SnackbarProvider>
 			<Stack
 				screenOptions={{
 					headerStyle: {
-						backgroundColor: colors.background,
+						backgroundColor: "#030712",
 					},
-					headerTintColor: colors.text,
+					headerTintColor: "#f9fafb",
 					headerTitleStyle: {
-						color: colors.text,
+						color: "#f9fafb",
 					},
 					contentStyle: {
-						backgroundColor: colors.background,
+						backgroundColor: "#030712",
 					},
 				}}
 			>
@@ -38,7 +38,7 @@ function AppContent() {
 					options={{
 						title: "Movie Details",
 						headerTransparent: true,
-						headerTintColor: colors.text,
+						headerTintColor: "#f9fafb",
 					}}
 				/>
 				<Stack.Screen
@@ -70,7 +70,7 @@ function AppContent() {
 				/>
 			</Stack>
 			<StatusBar style="light" />
-		</ToastProvider>
+		</M3SnackbarProvider>
 	);
 }
 
@@ -81,9 +81,11 @@ export default function RootLayout() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<AuthProvider>
-				<AppContent />
-			</AuthProvider>
+			<ThemeProvider>
+				<AuthProvider>
+					<AppContent />
+				</AuthProvider>
+			</ThemeProvider>
 		</QueryClientProvider>
 	);
 }
