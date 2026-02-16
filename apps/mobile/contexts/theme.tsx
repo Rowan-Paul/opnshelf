@@ -89,15 +89,11 @@ export function ThemeProvider({
 	// When API settings are loaded, update the color (prefer server value)
 	useEffect(() => {
 		if (settings?.accentColor && isLoaded) {
-			// Only update if different from current (to avoid overwriting user selection)
-			if (settings.accentColor !== seedColor) {
-				setSeedColorState(settings.accentColor);
-				setColors(createExtendedColors(generateMaterialTheme(settings.accentColor, true)));
-				// Also update SecureStore to match server
-				SecureStore.setItemAsync(SEED_COLOR_KEY, settings.accentColor);
-			}
+			setSeedColorState(settings.accentColor);
+			setColors(createExtendedColors(generateMaterialTheme(settings.accentColor, true)));
+			SecureStore.setItemAsync(SEED_COLOR_KEY, settings.accentColor);
 		}
-	}, [settings?.accentColor, isLoaded, seedColor]);
+	}, [settings?.accentColor, isLoaded]);
 
 	const setSeedColor = useCallback(
 		async (color: string) => {

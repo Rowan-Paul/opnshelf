@@ -130,7 +130,7 @@ export function MovieCard({
 										className={`${
 											isWatched
 												? "bg-green-600 hover:bg-red-600"
-												: "bg-purple-600 hover:bg-purple-700 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+												: "bg-primary hover:bg-primary/80 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
 										} transition-opacity`}
 									>
 										{isPending ? (

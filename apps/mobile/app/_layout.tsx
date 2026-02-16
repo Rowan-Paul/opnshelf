@@ -1,13 +1,34 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeApiClient } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+
+function LocaleInitializer({ children }: { children: React.ReactNode }) {
+	const [isReady, setIsReady] = useState(false);
+
+	useEffect(() => {
+		async function setupLocale() {
+			const { registerTranslation, en } = await import(
+				"react-native-paper-dates"
+			);
+			registerTranslation("en", en);
+			setIsReady(true);
+		}
+		setupLocale();
+	}, []);
+
+	if (!isReady) {
+		return null;
+	}
+
+	return <>{children}</>;
+}
 
 function AppContent() {
 	const { isLoading } = useAuth();
@@ -83,7 +104,9 @@ export default function RootLayout() {
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider>
 				<AuthProvider>
-					<AppContent />
+					<LocaleInitializer>
+						<AppContent />
+					</LocaleInitializer>
 				</AuthProvider>
 			</ThemeProvider>
 		</QueryClientProvider>

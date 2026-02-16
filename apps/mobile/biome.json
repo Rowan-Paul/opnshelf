@@ -7,14 +7,14 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
+		"experimentalScannerIgnores": ["node_modules", ".expo", "dist", ".git"],
 		"includes": [
 			"app/**/*",
 			"*.ts",
 			"*.tsx",
 			"babel.config.js",
 			"metro.config.js"
-		],
-		"experimentalScannerIgnores": ["node_modules", ".expo", "dist", ".git"]
+		]
 	},
 	"formatter": {
 		"enabled": true,

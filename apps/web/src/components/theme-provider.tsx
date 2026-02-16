@@ -69,11 +69,11 @@ export function ThemeProvider({
 
 	// Apply saved accent color when settings are loaded
 	useEffect(() => {
-		if (settings?.accentColor && settings.accentColor !== seedColor) {
+		if (settings?.accentColor) {
 			setSeedColorState(settings.accentColor);
 			setColors(generateMaterialTheme(settings.accentColor, true));
 		}
-	}, [settings?.accentColor, seedColor]);
+	}, [settings?.accentColor]);
 
 	// Apply theme to document whenever colors change
 	useEffect(() => {

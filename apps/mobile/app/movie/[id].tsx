@@ -16,9 +16,6 @@ import {
 	moviesControllerUnmarkWatchedMutation,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
-import DateTimePicker, {
-	type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,6 +32,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import { Badge } from "@/components/ui/Badge";
@@ -80,7 +78,7 @@ export default function MovieDetailScreen() {
 	const router = useRouter();
 	const { user } = useAuth();
 	const { showToast } = useToast();
-	useTheme(); // Initialize theme context
+	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 
 	const [showHours, setShowHours] = useState(false);
@@ -260,34 +258,6 @@ export default function MovieDetailScreen() {
 			showToast("Failed to share", "error");
 		}
 	}, [movieId, title, showToast]);
-
-	const onDateChange = useCallback(
-		(_event: DateTimePickerEvent, selectedDate?: Date) => {
-			setShowDatePicker(false);
-			if (selectedDate) {
-				const newDate = new Date(customDate);
-				newDate.setFullYear(selectedDate.getFullYear());
-				newDate.setMonth(selectedDate.getMonth());
-				newDate.setDate(selectedDate.getDate());
-				setCustomDate(newDate);
-				setShowTimePicker(true);
-			}
-		},
-		[customDate],
-	);
-
-	const onTimeChange = useCallback(
-		(_event: DateTimePickerEvent, selectedTime?: Date) => {
-			setShowTimePicker(false);
-			if (selectedTime) {
-				const newDate = new Date(customDate);
-				newDate.setHours(selectedTime.getHours());
-				newDate.setMinutes(selectedTime.getMinutes());
-				setCustomDate(newDate);
-			}
-		},
-		[customDate],
-	);
 
 	const _openDateModal = useCallback(() => {
 		setCustomDate(new Date());
@@ -859,11 +829,7 @@ export default function MovieDetailScreen() {
 						<View style={styles.modalHeader}>
 							<Text style={styles.modalTitle}>Watch Again</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={staticColors.onSurface}
-								/>
+								<Ionicons name="close" size={24} color={colors.onSurface} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -879,7 +845,7 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="calendar-outline"
 									size={20}
-									color={staticColors.onSurfaceVariant}
+									color={colors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleDateString("en-US", {
@@ -897,33 +863,51 @@ export default function MovieDetailScreen() {
 								<Ionicons
 									name="time-outline"
 									size={20}
-									color={staticColors.onSurfaceVariant}
+									color={colors.onSurfaceVariant}
 								/>
 								<Text style={styles.dateTimeText}>
 									{customDate.toLocaleTimeString("en-US", {
 										hour: "2-digit",
 										minute: "2-digit",
-										hour12: false,
+										hour12: !is24Hour,
 									})}
 								</Text>
 							</TouchableOpacity>
 						</View>
 
-						{showDatePicker && (
-							<DateTimePicker
-								value={customDate}
-								mode="date"
-								onChange={onDateChange}
-							/>
-						)}
-						{showTimePicker && (
-							<DateTimePicker
-								value={customDate}
-								mode="time"
-								is24Hour={true}
-								onChange={onTimeChange}
-							/>
-						)}
+						<DatePickerModal
+							visible={showDatePicker}
+							mode="single"
+							date={customDate}
+							locale="en"
+							onDismiss={() => setShowDatePicker(false)}
+							onConfirm={(params) => {
+								setShowDatePicker(false);
+								if (params.date) {
+									const newDate = new Date(customDate);
+									newDate.setFullYear(params.date.getFullYear());
+									newDate.setMonth(params.date.getMonth());
+									newDate.setDate(params.date.getDate());
+									setCustomDate(newDate);
+									setShowTimePicker(true);
+								}
+							}}
+						/>
+						<TimePickerModal
+							visible={showTimePicker}
+							hours={customDate.getHours()}
+							minutes={customDate.getMinutes()}
+							locale="en"
+							use24HourClock={is24Hour}
+							onDismiss={() => setShowTimePicker(false)}
+							onConfirm={(params) => {
+								const newDate = new Date(customDate);
+								newDate.setHours(params.hours);
+								newDate.setMinutes(params.minutes);
+								setCustomDate(newDate);
+								setShowTimePicker(false);
+							}}
+						/>
 
 						<View style={styles.modalActionsSplit}>
 							<Button
@@ -935,7 +919,7 @@ export default function MovieDetailScreen() {
 							<Button
 								onPress={handleMarkWatchedWithDate}
 								isLoading={markMutation.isPending}
-								style={{ backgroundColor: staticColors.primary }}
+								style={{ backgroundColor: colors.primary }}
 							>
 								<Text style={styles.buttonText}>Add Play</Text>
 							</Button>
@@ -954,15 +938,11 @@ export default function MovieDetailScreen() {
 					<View style={styles.modalContent}>
 						<View style={styles.modalHeader}>
 							<View style={styles.modalTitleContainer}>
-								<Ionicons name="time" size={20} color={staticColors.primary} />
+								<Ionicons name="time" size={20} color={colors.primary} />
 								<Text style={styles.modalTitle}>Watch History</Text>
 							</View>
 							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={staticColors.onSurface}
-								/>
+								<Ionicons name="close" size={24} color={colors.onSurface} />
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
@@ -991,7 +971,7 @@ export default function MovieDetailScreen() {
 												?.trackedMovieId === watch.id ? (
 												<ActivityIndicator
 													size="small"
-													color={staticColors.onSurfaceVariant}
+													color={colors.onSurfaceVariant}
 												/>
 											) : (
 												<Ionicons

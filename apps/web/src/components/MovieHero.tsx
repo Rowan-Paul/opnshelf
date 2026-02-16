@@ -42,11 +42,11 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
 					<div className="container mx-auto max-w-6xl">
 						<div className="flex items-end gap-4 md:gap-8">
-							<div className="hidden md:block shrink-0">
-								<div className="w-48 lg:w-64 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-container)]" />
+							<div className="shrink-0">
+								<div className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-container)]" />
 							</div>
 							<div className="flex-1 pb-2">
-								<div className="h-12 w-64 md:h-16 md:w-96 bg-[var(--md-sys-color-surface-container)] rounded-lg animate-pulse" />
+								<div className="h-8 md:h-16 lg:w-96 bg-[var(--md-sys-color-surface-container)] rounded-lg animate-pulse" />
 							</div>
 						</div>
 					</div>
@@ -97,9 +97,9 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 			<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
 				<div className="container mx-auto max-w-6xl">
 					<div className="flex items-end gap-4 md:gap-8">
-						<div className="hidden md:block shrink-0">
+						<div className="shrink-0">
 							<div
-								className="w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
+								className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
 								style={{
 									boxShadow: `0 25px 50px -12px ${colors.primary}40`,
 								}}
@@ -120,7 +120,7 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 
 						<div className="flex-1 pb-2">
 							<h1
-								className="text-3xl md:text-5xl lg:text-6xl font-bold mb-2"
+								className="text-2xl md:text-5xl lg:text-6xl font-bold mb-2"
 								style={{
 									textShadow: `0 4px 30px ${colors.primary}60`,
 								}}

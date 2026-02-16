@@ -5,17 +5,18 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)]/50",
 	{
 		variants: {
 			variant: {
-				default: "bg-purple-600 text-white hover:bg-purple-700",
+				default:
+					"bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110",
 				destructive: "bg-red-600 text-white hover:bg-red-700",
 				outline:
 					"border border-gray-700 bg-gray-900 text-gray-50 hover:bg-gray-800 hover:text-white",
 				secondary: "bg-gray-800 text-gray-50 hover:bg-gray-700",
 				ghost: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-				link: "text-purple-400 underline-offset-4 hover:underline hover:text-purple-300",
+				link: "text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline hover:brightness-110",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",

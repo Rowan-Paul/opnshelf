@@ -124,7 +124,7 @@ export function M3Button({
 	};
 
 	const buttonStyles: ViewStyle = {
-		borderRadius: m3BorderRadius.full,
+		borderRadius: m3BorderRadius.none,
 		alignItems: "center",
 		justifyContent: "center",
 		flexDirection: "row",

@@ -7,6 +7,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+	--color-border: var(--border);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+}
+
 /* ============================================
    MATERIAL YOU DESIGN SYSTEM - CSS TOKENS
    ============================================ */
@@ -475,74 +481,6 @@ body {
 /* ============================================
    TAILWIND THEME CONFIGURATION
    ============================================ */
-
-@theme inline {
-	/* Material You Colors */
-	--color-md-primary: var(--md-sys-color-primary);
-	--color-md-on-primary: var(--md-sys-color-on-primary);
-	--color-md-primary-container: var(--md-sys-color-primary-container);
-	--color-md-on-primary-container: var(--md-sys-color-on-primary-container);
-
-	--color-md-secondary: var(--md-sys-color-secondary);
-	--color-md-on-secondary: var(--md-sys-color-on-secondary);
-	--color-md-secondary-container: var(--md-sys-color-secondary-container);
-	--color-md-on-secondary-container: var(--md-sys-color-on-secondary-container);
-
-	--color-md-tertiary: var(--md-sys-color-tertiary);
-	--color-md-on-tertiary: var(--md-sys-color-on-tertiary);
-	--color-md-tertiary-container: var(--md-sys-color-tertiary-container);
-	--color-md-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
-
-	--color-md-error: var(--md-sys-color-error);
-	--color-md-on-error: var(--md-sys-color-on-error);
-	--color-md-error-container: var(--md-sys-color-error-container);
-	--color-md-on-error-container: var(--md-sys-color-on-error-container);
-
-	--color-md-surface: var(--md-sys-color-surface);
-	--color-md-on-surface: var(--md-sys-color-on-surface);
-	--color-md-surface-variant: var(--md-sys-color-surface-variant);
-	--color-md-on-surface-variant: var(--md-sys-color-on-surface-variant);
-	--color-md-surface-container: var(--md-sys-color-surface-container);
-	--color-md-surface-container-low: var(--md-sys-color-surface-container-low);
-	--color-md-surface-container-high: var(--md-sys-color-surface-container-high);
-	--color-md-surface-container-highest: var(--md-sys-color-surface-container-highest);
-
-	--color-md-outline: var(--md-sys-color-outline);
-	--color-md-outline-variant: var(--md-sys-color-outline-variant);
-
-	--color-md-inverse-surface: var(--md-sys-color-inverse-surface);
-	--color-md-on-inverse-surface: var(--md-sys-color-on-inverse-surface);
-	--color-md-inverse-primary: var(--md-sys-color-inverse-primary);
-
-	/* Legacy shadcn/ui compatibility */
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--color-card: var(--card);
-	--color-card-foreground: var(--card-foreground);
-	--color-popover: var(--popover);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-primary: var(--primary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-muted: var(--muted);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-accent: var(--accent);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-destructive: var(--destructive);
-	--color-destructive-foreground: var(--destructive-foreground);
-	--color-border: var(--border);
-	--color-input: var(--input);
-	--color-ring: var(--ring);
-
-	/* Border Radius */
-	--radius-md: 12px;
-	--radius-lg: 16px;
-	--radius-xl: 28px;
-
-	/* Font Family */
-	--font-sans: var(--md-sys-font-family);
-}
 
 @layer base {
 	* {

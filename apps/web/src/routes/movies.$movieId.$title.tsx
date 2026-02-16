@@ -274,7 +274,7 @@ function MovieDetailPage() {
 		}
 	};
 
-	const posterUrl = getTmdbPosterUrl(movie?.poster_path, "w500");
+	const _posterUrl = getTmdbPosterUrl(movie?.poster_path, "w500");
 	const isPending =
 		markMutation.isPending && markMutation.variables?.body?.movieId === movieId;
 
@@ -292,20 +292,6 @@ function MovieDetailPage() {
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
 					<div className="md:hidden min-w-0">
 						<div className="flex gap-4">
-							{posterUrl && (
-								<div
-									className="w-32 shrink-0 rounded-lg overflow-hidden"
-									style={{
-										boxShadow: `0 20px 40px -10px ${colors.primary}40`,
-									}}
-								>
-									<img
-										src={posterUrl}
-										alt={movie?.title}
-										className="w-full aspect-2/3 object-cover"
-									/>
-								</div>
-							)}
 							<div className="flex-1 flex flex-col gap-2 justify-center">
 								{user ? (
 									!isWatched ? (
