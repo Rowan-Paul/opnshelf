@@ -282,3 +282,32 @@ export class EpisodeHistoryItemDto {
 	@ApiProperty()
 	episodeNumber: number;
 }
+
+export class PaginatedEpisodesQueryDto {
+	@ApiPropertyOptional({
+		description: "Number of items to return",
+		default: 20,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	limit?: number;
+
+	@ApiPropertyOptional({
+		description: "Cursor for pagination (last item ID from previous page)",
+	})
+	@IsOptional()
+	@IsString()
+	cursor?: string;
+}
+
+export class PaginatedEpisodesResponseDto {
+	@ApiProperty({ type: [TrackedEpisodeDto] })
+	items: TrackedEpisodeDto[];
+
+	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
+	nextCursor: string | null;
+
+	@ApiProperty({ description: "Total count of items" })
+	total: number;
+}

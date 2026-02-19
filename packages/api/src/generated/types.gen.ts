@@ -92,6 +92,20 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
+export type PaginatedMoviesResponseDto = {
+    items: Array<TrackedMovieDto>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: {
+        [key: string]: unknown;
+    };
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
 export type WatchHistoryItemDto = {
     id: string;
     watchedDate: string;
@@ -188,6 +202,36 @@ export type TrackedShowSummaryDto = {
     show: ShowDto;
 };
 
+export type TrackedEpisodeDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    cid: string;
+    userDid: string;
+    showId: string;
+    seasonNumber: number;
+    episodeNumber: number;
+    status: string;
+    watchedDate?: string;
+    createdAt: string;
+    updatedAt: string;
+    show: ShowDto;
+};
+
+export type PaginatedEpisodesResponseDto = {
+    items: Array<TrackedEpisodeDto>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: {
+        [key: string]: unknown;
+    };
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
 export type MarkEpisodeWatchedDto = {
     /**
      * TMDB show ID
@@ -205,22 +249,6 @@ export type MarkEpisodeWatchedDto = {
      * Custom watch datetime (ISO 8601). If not provided, current time is used.
      */
     watchedAt?: string;
-};
-
-export type TrackedEpisodeDto = {
-    id: string;
-    rkey: string;
-    uri: string;
-    cid: string;
-    userDid: string;
-    showId: string;
-    seasonNumber: number;
-    episodeNumber: number;
-    status: string;
-    watchedDate?: string;
-    createdAt: string;
-    updatedAt: string;
-    show: ShowDto;
 };
 
 export type EpisodeHistoryItemDto = {
@@ -367,6 +395,50 @@ export type DeleteUserAccountDto = {
     deletePDSData: boolean;
 };
 
+export type ShelfResponseDto = {
+    items: Array<{
+        id: string;
+        type: 'movie';
+        movieId: string;
+        title: string;
+        posterPath?: string;
+        backdropPath?: string;
+        releaseYear?: number;
+        overview?: string;
+        colors?: {
+            [key: string]: unknown;
+        };
+        watchedDate?: string;
+        createdAt: string;
+    } | {
+        id: string;
+        type: 'episode';
+        showId: string;
+        showTitle: string;
+        seasonNumber: number;
+        episodeNumber: number;
+        posterPath?: string;
+        backdropPath?: string;
+        firstAirYear?: number;
+        overview?: string;
+        colors?: {
+            [key: string]: unknown;
+        };
+        watchedDate?: string;
+        createdAt: string;
+    }>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: {
+        [key: string]: unknown;
+    };
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -427,6 +499,30 @@ export type MoviesControllerGetUserMoviesResponses = {
 };
 
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
+
+export type MoviesControllerGetUserMoviesPaginatedData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination (last item ID from previous page)
+         */
+        cursor?: string;
+    };
+    url: '/movies/user/{userDid}/paginated';
+};
+
+export type MoviesControllerGetUserMoviesPaginatedResponses = {
+    200: PaginatedMoviesResponseDto;
+};
+
+export type MoviesControllerGetUserMoviesPaginatedResponse = MoviesControllerGetUserMoviesPaginatedResponses[keyof MoviesControllerGetUserMoviesPaginatedResponses];
 
 export type MoviesControllerMarkWatchedData = {
     body: {
@@ -750,6 +846,30 @@ export type ShowsControllerGetUserShowsResponses = {
 };
 
 export type ShowsControllerGetUserShowsResponse = ShowsControllerGetUserShowsResponses[keyof ShowsControllerGetUserShowsResponses];
+
+export type ShowsControllerGetUserEpisodesPaginatedData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination (last item ID from previous page)
+         */
+        cursor?: string;
+    };
+    url: '/shows/user/{userDid}/episodes';
+};
+
+export type ShowsControllerGetUserEpisodesPaginatedResponses = {
+    200: PaginatedEpisodesResponseDto;
+};
+
+export type ShowsControllerGetUserEpisodesPaginatedResponse = ShowsControllerGetUserEpisodesPaginatedResponses[keyof ShowsControllerGetUserEpisodesPaginatedResponses];
 
 export type ShowsControllerMarkWatchedData = {
     body: MarkEpisodeWatchedDto;
@@ -1246,3 +1366,27 @@ export type UsersControllerDeleteMyAccountResponses = {
 };
 
 export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];
+
+export type ShelfControllerGetUserShelfData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination (last item watchedDate from previous page)
+         */
+        cursor?: string;
+    };
+    url: '/shelf/user/{userDid}';
+};
+
+export type ShelfControllerGetUserShelfResponses = {
+    200: ShelfResponseDto;
+};
+
+export type ShelfControllerGetUserShelfResponse = ShelfControllerGetUserShelfResponses[keyof ShelfControllerGetUserShelfResponses];

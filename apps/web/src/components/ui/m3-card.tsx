@@ -99,7 +99,7 @@ const M3CardTitle = React.forwardRef<
 	<h3
 		ref={ref}
 		className={cn(
-			"md-title-medium text-[var(--md-sys-color-on-surface)]",
+			"md-title-medium text-(--md-sys-color-on-surface)",
 			className,
 		)}
 		{...props}
@@ -117,7 +117,7 @@ const M3CardDescription = React.forwardRef<
 	<p
 		ref={ref}
 		className={cn(
-			"md-body-medium text-[var(--md-sys-color-on-surface-variant)]",
+			"md-body-medium text-(--md-sys-color-on-surface-variant)",
 			className,
 		)}
 		{...props}

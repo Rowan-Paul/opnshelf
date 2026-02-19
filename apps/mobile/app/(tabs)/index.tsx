@@ -1,7 +1,6 @@
 import {
 	listsControllerGetUserListsOptions,
-	moviesControllerGetUserMoviesOptions,
-	type TrackedMovieDto,
+	shelfControllerGetUserShelfOptions,
 	type UserDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -56,9 +55,10 @@ export default function HomeScreen() {
 	const [range, setRange] = useState<"week" | "month">("week");
 	const [showCreateModal, setShowCreateModal] = useState(false);
 
-	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
-		...moviesControllerGetUserMoviesOptions({
+	const { data: shelfData, isLoading: isShelfLoading } = useQuery({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid: user?.did || "" },
+			query: { limit: 20 },
 		}),
 		enabled: !!user?.did && isAuthenticated,
 	});
@@ -68,26 +68,36 @@ export default function HomeScreen() {
 		enabled: !!user?.did && isAuthenticated,
 	});
 
-	const { watchedInRangeCount, totalMoviesTracked, recentWatched } =
-		useMemo(() => {
-			const now = Date.now();
-			const days = range === "week" ? 7 : 30;
-			const cutoff = now - days * 24 * 60 * 60 * 1000;
+	const { watchedInRangeCount, totalTracked, recentWatched } = useMemo(() => {
+		const now = Date.now();
+		const days = range === "week" ? 7 : 30;
+		const cutoff = now - days * 24 * 60 * 60 * 1000;
 
-			const sorted = [...(trackedMovies ?? [])].sort((a, b) => {
-				return getTrackedMovieTimestamp(b) - getTrackedMovieTimestamp(a);
-			});
+		const items = shelfData?.items ?? [];
 
-			const inRange = sorted.filter((movie) => {
-				return getTrackedMovieTimestamp(movie) >= cutoff;
-			});
+		const sorted = items.sort((a, b) => {
+			const dateA = a.watchedDate
+				? new Date(a.watchedDate).getTime()
+				: new Date(a.createdAt).getTime();
+			const dateB = b.watchedDate
+				? new Date(b.watchedDate).getTime()
+				: new Date(b.createdAt).getTime();
+			return dateB - dateA;
+		});
 
-			return {
-				watchedInRangeCount: inRange.length,
-				totalMoviesTracked: sorted.length,
-				recentWatched: sorted.slice(0, 5),
-			};
-		}, [trackedMovies, range]);
+		const inRange = sorted.filter((item) => {
+			const date = item.watchedDate
+				? new Date(item.watchedDate).getTime()
+				: new Date(item.createdAt).getTime();
+			return date >= cutoff;
+		});
+
+		return {
+			watchedInRangeCount: inRange.length,
+			totalTracked: shelfData?.total ?? 0,
+			recentWatched: sorted.slice(0, 5),
+		};
+	}, [shelfData, range]);
 
 	const { listCount, totalMoviesInLists, recentLists } = useMemo(() => {
 		const items = lists ?? [];
@@ -259,7 +269,7 @@ export default function HomeScreen() {
 						</CardHeader>
 						<CardContent>
 							<Text style={[styles.metricValue, { color: colors.onSurface }]}>
-								{totalMoviesTracked}
+								{totalTracked}
 							</Text>
 						</CardContent>
 					</Card>
@@ -307,7 +317,7 @@ export default function HomeScreen() {
 							</Text>
 						</Pressable>
 					</View>
-					{isMoviesLoading ? (
+					{isShelfLoading ? (
 						<View style={styles.sectionSkeleton}>
 							{[1, 2, 3].map((i) => (
 								<Skeleton
@@ -325,19 +335,36 @@ export default function HomeScreen() {
 								const formattedDate = formatDate(watchDate, {
 									includeTime: false,
 								});
-								const posterUrl = getTmdbPosterUrl(tracked.movie.posterPath);
+								const posterUrl = getTmdbPosterUrl(tracked.posterPath);
+
+								const isEpisode = tracked.type === "episode";
 
 								return (
 									<Pressable
 										key={tracked.id}
 										onPress={() =>
-											router.push({
-												pathname: "/movie/[id]",
-												params: {
-													id: tracked.movieId,
-													title: createTitleSlug(tracked.movie.title),
-												},
-											})
+											isEpisode
+												? router.push({
+														pathname: "/episode/[id]",
+														params: {
+															id: tracked.showId,
+															seasonNumber: (
+																tracked as unknown as { seasonNumber: number }
+															).seasonNumber.toString(),
+															episodeNumber: (
+																tracked as unknown as { episodeNumber: number }
+															).episodeNumber.toString(),
+														},
+													})
+												: router.push({
+														pathname: "/movie/[id]",
+														params: {
+															id: tracked.movieId,
+															title: createTitleSlug(
+																(tracked as unknown as { title: string }).title,
+															),
+														},
+													})
 										}
 										style={[
 											styles.recentItem,
@@ -379,7 +406,10 @@ export default function HomeScreen() {
 												]}
 												numberOfLines={2}
 											>
-												{tracked.movie.title}
+												{isEpisode
+													? (tracked as unknown as { showTitle: string })
+															.showTitle
+													: (tracked as unknown as { title: string }).title}
 											</Text>
 											<Text
 												style={[
@@ -387,6 +417,9 @@ export default function HomeScreen() {
 													{ color: colors.onSurfaceVariant },
 												]}
 											>
+												{isEpisode
+													? `S${(tracked as unknown as { seasonNumber: number }).seasonNumber} E${(tracked as unknown as { episodeNumber: number }).episodeNumber} • `
+													: ""}
 												Watched {formattedDate}
 											</Text>
 										</View>
@@ -398,7 +431,7 @@ export default function HomeScreen() {
 						<Card>
 							<CardHeader>
 								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-									No movies watched yet
+									No items watched yet
 								</Text>
 							</CardHeader>
 							<CardContent>
@@ -408,7 +441,7 @@ export default function HomeScreen() {
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									Start adding watched movies and your activity appears here.
+									Start adding watched items and your activity appears here.
 								</Text>
 								<Button
 									onPress={() => router.push("/(tabs)/search")}
@@ -589,12 +622,6 @@ function UnauthenticatedHome() {
 			</ScrollView>
 		</SafeAreaView>
 	);
-}
-
-function getTrackedMovieTimestamp(tracked: TrackedMovieDto): number {
-	const dateValue = tracked.watchedDate ?? tracked.createdAt;
-	const parsed = new Date(dateValue).getTime();
-	return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function resolveDisplayName(user: UserDto): string {

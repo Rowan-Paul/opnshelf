@@ -1,18 +1,26 @@
-import type { TrackedMovieDto } from "@opnshelf/api";
 import {
-	moviesControllerGetUserMoviesOptions,
-	moviesControllerGetUserMoviesQueryKey,
-	moviesControllerUnmarkWatchedMutation,
-	showsControllerGetUserShowsOptions,
+	moviesControllerDeleteWatchHistoryEntryMutation,
+	shelfControllerGetUserShelfInfiniteOptions,
+	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image } from "expo-image";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { router } from "expo-router";
 import { ArrowLeft, BookOpen } from "lucide-react-native";
-import { useCallback, useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback } from "react";
+import {
+	ActivityIndicator,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { EpisodeCard } from "@/components/EpisodeCard";
 import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -22,7 +30,7 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useUserSettings } from "@/hooks/useUserSettings";
-import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
+import { createTitleSlug } from "@/lib/utils";
 
 export default function ShelfScreen() {
 	const { user } = useAuth();
@@ -31,85 +39,161 @@ export default function ShelfScreen() {
 	const { timezone, is24Hour } = useUserSettings();
 	const { colors } = useTheme();
 
-	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
-		...moviesControllerGetUserMoviesOptions({
-			path: { userDid: user?.did || "" },
+	const userDid = user?.did || "";
+
+	const shelfQuery = useInfiniteQuery({
+		...shelfControllerGetUserShelfInfiniteOptions({
+			path: { userDid },
+			query: { limit: 20 },
 		}),
-		enabled: !!user?.did,
-	});
-	const { data: trackedShows } = useQuery({
-		...showsControllerGetUserShowsOptions({
-			path: { userDid: user?.did || "" },
-		}),
-		enabled: !!user?.did,
+		enabled: !!userDid,
+		getNextPageParam: (lastPage) => {
+			const cursor = lastPage.nextCursor;
+			return cursor && typeof cursor === "string" ? cursor : undefined;
+		},
 	});
 
-	const unmarkMutation = useMutation({
-		...moviesControllerUnmarkWatchedMutation(),
+	const deleteMovieMutation = useMutation({
+		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: moviesControllerGetUserMoviesQueryKey({
-					path: { userDid: user?.did || "" },
-				}),
-			});
+			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });
 			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
-			showToast("Failed to remove from shelf. Please try again.", "error");
+			showToast("Failed to remove. Please try again.", "error");
 		},
 	});
 
-	const handleRemove = useCallback(
-		(movieId: string) => {
-			unmarkMutation.mutate({ path: { movieId } });
+	const deleteEpisodeMutation = useMutation({
+		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });
+			showToast("Episode removed from history", "success");
 		},
-		[unmarkMutation],
+		onError: () => {
+			showToast("Failed to remove episode. Please try again.", "error");
+		},
+	});
+
+	const handleMovieRemove = useCallback(
+		(movieId: string) => {
+			deleteMovieMutation.mutate({ path: { trackedMovieId: movieId } });
+		},
+		[deleteMovieMutation],
 	);
 
-	const handleMoviePress = useCallback((tracked: TrackedMovieDto) => {
-		router.push({
-			pathname: "/movie/[id]",
-			params: {
-				id: tracked.movieId,
-				title: createTitleSlug(tracked.movie.title),
-			},
-		});
-	}, []);
+	const handleEpisodeRemove = useCallback(
+		(episodeId: string) => {
+			deleteEpisodeMutation.mutate({ path: { trackedEpisodeId: episodeId } });
+		},
+		[deleteEpisodeMutation],
+	);
+
+	const handleMoviePress = useCallback(
+		(item: { movieId: string; title: string }) => {
+			router.push({
+				pathname: "/movie/[id]",
+				params: {
+					id: item.movieId,
+					title: createTitleSlug(item.title),
+				},
+			});
+		},
+		[],
+	);
+
+	const handleEpisodePress = useCallback(
+		(item: {
+			showId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+			showTitle: string;
+		}) => {
+			router.push({
+				pathname: "/show/[id]/season/[seasonNumber]/episode/[episodeNumber]",
+				params: {
+					id: item.showId,
+					seasonNumber: String(item.seasonNumber),
+					episodeNumber: String(item.episodeNumber),
+				},
+			});
+		},
+		[],
+	);
+
+	const items = shelfQuery.data?.pages.flatMap((page) => page.items) ?? [];
+	const totalCount = shelfQuery.data?.pages[0]?.total ?? 0;
+
+	const isLoading = shelfQuery.isLoading;
+	const isFetchingNextPage = shelfQuery.isFetchingNextPage;
 
 	const renderItem = useCallback(
-		({ item }: { item: TrackedMovieDto }) => {
+		({ item }: { item: (typeof items)[0] }) => {
+			if (item.type === "movie") {
+				const isRemoving =
+					deleteMovieMutation.isPending &&
+					deleteMovieMutation.variables?.path?.trackedMovieId === item.movieId;
+
+				return (
+					<MovieCard
+						tracked={item as never}
+						isRemoving={isRemoving}
+						onRemove={() => handleMovieRemove(item.movieId)}
+						onPress={() => handleMoviePress(item as never)}
+						timezone={timezone}
+						is24Hour={is24Hour}
+					/>
+				);
+			}
 			const isRemoving =
-				unmarkMutation.isPending &&
-				unmarkMutation.variables?.path?.movieId === item.movieId;
+				deleteEpisodeMutation.isPending &&
+				deleteEpisodeMutation.variables?.path?.trackedEpisodeId === item.id;
 
 			return (
-				<MovieCard
-					tracked={item}
+				<EpisodeCard
+					tracked={item as never}
 					isRemoving={isRemoving}
-					onRemove={handleRemove}
-					onPress={() => handleMoviePress(item)}
+					onRemove={() => handleEpisodeRemove(item.id)}
+					onPress={() => handleEpisodePress(item as never)}
 					timezone={timezone}
 					is24Hour={is24Hour}
 				/>
 			);
 		},
-		[unmarkMutation, handleRemove, handleMoviePress, timezone, is24Hour],
+		[
+			deleteMovieMutation,
+			deleteEpisodeMutation,
+			handleMovieRemove,
+			handleEpisodeRemove,
+			handleMoviePress,
+			handleEpisodePress,
+			timezone,
+			is24Hour,
+		],
 	);
 
-	const keyExtractor = useCallback((item: TrackedMovieDto) => item.id, []);
-	const trackedShowItems = useMemo(
-		() =>
-			(trackedShows ?? []).map((tracked) => ({
-				id: tracked.showId,
-				name: tracked.show.title,
-				posterPath: tracked.show.posterPath ?? null,
-				firstAirDate: tracked.show.firstAirDate ?? null,
-				watchCount: tracked.watchCount ?? 0,
-			})),
-		[trackedShows],
-	);
+	const keyExtractor = useCallback((item: (typeof items)[0]) => item.id, []);
 
-	if (isMoviesLoading) {
+	const onEndReached = useCallback(() => {
+		if (shelfQuery.hasNextPage && !shelfQuery.isFetchingNextPage) {
+			shelfQuery.fetchNextPage();
+		}
+	}, [
+		shelfQuery.hasNextPage,
+		shelfQuery.isFetchingNextPage,
+		shelfQuery.fetchNextPage,
+	]);
+
+	const renderFooter = useCallback(() => {
+		if (!isFetchingNextPage) return null;
+		return (
+			<View style={styles.footerLoader}>
+				<ActivityIndicator size="small" color={colors.primary} />
+			</View>
+		);
+	}, [isFetchingNextPage, colors.primary]);
+
+	if (isLoading) {
 		return (
 			<SafeAreaView
 				style={[styles.container, { backgroundColor: colors.background }]}
@@ -161,89 +245,56 @@ export default function ShelfScreen() {
 					My Shelf
 				</Text>
 			</View>
-			{trackedMovies && trackedMovies.length > 0 && (
+
+			{items.length > 0 ? (
 				<>
 					<Text
 						style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
 					>
-						{trackedMovies.length} movie{trackedMovies.length !== 1 ? "s" : ""}{" "}
-						watched
+						{totalCount} item{totalCount !== 1 ? "s" : ""} watched
 					</Text>
 					<FlashList
-						data={trackedMovies}
+						data={items}
 						renderItem={renderItem}
 						keyExtractor={keyExtractor}
 						contentContainerStyle={styles.listContent}
 						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+						onEndReached={onEndReached}
+						onEndReachedThreshold={0.5}
+						ListFooterComponent={renderFooter}
 					/>
 				</>
-			)}
-
-			{trackedShows && trackedShows.length > 0 && (
-				<View style={styles.showsSection}>
-					<Text
-						style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
-					>
-						{trackedShows.length} show{trackedShows.length !== 1 ? "s" : ""}{" "}
-						tracked
-					</Text>
-					<View style={styles.showGrid}>
-						{trackedShowItems.map((item) => (
-							<ShelfShowCard
-								key={item.id}
-								name={item.name}
-								posterPath={item.posterPath}
-								watchCount={item.watchCount}
-								onPress={() =>
-									router.push({
-										pathname: "/show/[id]",
-										params: {
-											id: item.id.toString(),
-											title: createTitleSlug(item.name),
-										},
-									})
-								}
+			) : (
+				<View style={styles.centerContent}>
+					<Card style={styles.emptyCard}>
+						<CardHeader style={styles.emptyCardHeader}>
+							<BookOpen
+								size={64}
+								color={colors.onSurfaceVariant}
+								style={styles.emptyIcon}
 							/>
-						))}
-					</View>
+							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+								Your shelf is empty
+							</Text>
+							<Text
+								style={[
+									styles.emptyDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Start tracking movies and shows you&apos;ve watched
+							</Text>
+						</CardHeader>
+						<CardContent>
+							<Button onPress={() => router.push("/(tabs)/search")}>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+									Search for movies or shows
+								</Text>
+							</Button>
+						</CardContent>
+					</Card>
 				</View>
 			)}
-
-			{trackedMovies &&
-				trackedMovies.length === 0 &&
-				(!trackedShows || trackedShows.length === 0) && (
-					<View style={styles.centerContent}>
-						<Card style={styles.emptyCard}>
-							<CardHeader style={styles.emptyCardHeader}>
-								<BookOpen
-									size={64}
-									color={colors.onSurfaceVariant}
-									style={styles.emptyIcon}
-								/>
-								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-									Your shelf is empty
-								</Text>
-								<Text
-									style={[
-										styles.emptyDescription,
-										{ color: colors.onSurfaceVariant },
-									]}
-								>
-									Start tracking movies and shows you&apos;ve watched
-								</Text>
-							</CardHeader>
-							<CardContent>
-								<Button onPress={() => router.push("/(tabs)/search")}>
-									<Text
-										style={[styles.buttonText, { color: colors.onPrimary }]}
-									>
-										Search for movies or shows
-									</Text>
-								</Button>
-							</CardContent>
-						</Card>
-					</View>
-				)}
 		</SafeAreaView>
 	);
 }
@@ -277,41 +328,9 @@ const styles = StyleSheet.create({
 	itemSeparator: {
 		height: spacing.md,
 	},
-	showsSection: {
-		paddingHorizontal: spacing.lg,
-		paddingBottom: spacing.lg,
-	},
-	showGrid: {
-		paddingTop: spacing.md,
-	},
-	showCard: {
-		flexDirection: "row",
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		borderWidth: 1,
-		marginBottom: spacing.md,
-	},
-	showPosterContainer: {
-		width: 80,
-		aspectRatio: 2 / 3,
-	},
-	showPoster: {
-		width: "100%",
-		height: "100%",
-	},
-	showCardContent: {
-		flex: 1,
-		padding: spacing.md,
-		justifyContent: "center",
-	},
-	showTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		marginBottom: spacing.xs,
-		lineHeight: 22,
-	},
-	showMeta: {
-		fontSize: 14,
+	footerLoader: {
+		paddingVertical: spacing.lg,
+		alignItems: "center",
 	},
 	centerContent: {
 		flex: 1,
@@ -362,78 +381,4 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		justifyContent: "center",
 	},
-	noPoster: {
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	noPosterText: {
-		fontSize: 12,
-		fontWeight: "500",
-	},
 });
-
-interface ShelfShowCardProps {
-	name: string;
-	posterPath?: string | null;
-	watchCount: number;
-	onPress: () => void;
-}
-
-function ShelfShowCard({
-	name,
-	posterPath,
-	watchCount,
-	onPress,
-}: ShelfShowCardProps) {
-	const { colors } = useTheme();
-	const posterUrl = getTmdbPosterUrl(posterPath);
-	const watchLabel = `${watchCount} watched episode${watchCount === 1 ? "" : "s"}`;
-
-	return (
-		<TouchableOpacity
-			onPress={onPress}
-			style={[
-				styles.showCard,
-				{
-					backgroundColor: colors.surfaceContainer,
-					borderColor: colors.outline,
-				},
-			]}
-			activeOpacity={0.8}
-		>
-			<View
-				style={[
-					styles.showPosterContainer,
-					{ backgroundColor: colors.surfaceContainerHigh },
-				]}
-			>
-				{posterUrl ? (
-					<Image
-						source={{ uri: posterUrl }}
-						style={styles.showPoster}
-						contentFit="cover"
-					/>
-				) : (
-					<View style={[styles.showPoster, styles.noPoster]}>
-						<Text
-							style={[styles.noPosterText, { color: colors.onSurfaceVariant }]}
-						>
-							No poster
-						</Text>
-					</View>
-				)}
-			</View>
-			<View style={styles.showCardContent}>
-				<Text
-					style={[styles.showTitle, { color: colors.onSurface }]}
-					numberOfLines={2}
-				>
-					{name}
-				</Text>
-				<Text style={[styles.showMeta, { color: colors.onSurfaceVariant }]}>
-					{watchLabel}
-				</Text>
-			</View>
-		</TouchableOpacity>
-	);
-}

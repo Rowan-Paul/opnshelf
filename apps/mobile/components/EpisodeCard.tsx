@@ -1,4 +1,4 @@
-import { CheckCircle2, Trash2 } from "lucide-react-native";
+import { Trash2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -6,37 +6,39 @@ import { useTheme } from "@/contexts/theme";
 import { getTmdbPosterUrl } from "@/lib/utils";
 import { SpinningLoader } from "./SpinningLoader";
 
-export interface ShelfMovieItem {
+export interface ShelfEpisodeItem {
 	id: string;
-	type: "movie";
-	movieId: string;
-	title: string;
+	type: "episode";
+	showId: string;
+	showTitle: string;
+	seasonNumber: number;
+	episodeNumber: number;
 	posterPath?: string;
 	backdropPath?: string;
-	releaseYear?: number;
+	firstAirYear?: number;
 	overview?: string;
 	colors?: unknown;
 	watchedDate?: string;
 	createdAt: string;
 }
 
-interface MovieCardProps {
-	tracked: ShelfMovieItem;
+interface EpisodeCardProps {
+	tracked: ShelfEpisodeItem;
 	isRemoving: boolean;
-	onRemove: (movieId: string) => void;
+	onRemove: (trackedEpisodeId: string) => void;
 	onPress: () => void;
 	timezone: string;
 	is24Hour: boolean;
 }
 
-export function MovieCard({
+export function EpisodeCard({
 	tracked,
 	isRemoving,
 	onRemove,
 	onPress,
 	timezone,
 	is24Hour,
-}: MovieCardProps) {
+}: EpisodeCardProps) {
 	const { colors } = useTheme();
 	const formattedWatchedDate = tracked.watchedDate
 		? new Date(tracked.watchedDate).toLocaleString("en-US", {
@@ -89,40 +91,43 @@ export function MovieCard({
 						</Text>
 					</View>
 				)}
+				<View style={[styles.episodeBadge, { backgroundColor: colors.primary }]}>
+					<Text style={[styles.episodeBadgeText, { color: colors.onPrimary }]}>
+						S{tracked.seasonNumber} E{tracked.episodeNumber}
+					</Text>
+				</View>
 			</View>
 
 			<View style={styles.cardContent}>
 				<View style={styles.info}>
 					<Text
-						style={[styles.movieTitle, { color: colors.onSurface }]}
+						style={[styles.showTitle, { color: colors.onSurface }]}
 						numberOfLines={2}
 					>
-						{tracked.title}
+						{tracked.showTitle}
 					</Text>
 					<View style={styles.meta}>
-						{tracked.releaseYear && (
-							<Text style={[styles.year, { color: colors.onSurfaceVariant }]}>
-								{tracked.releaseYear}
-							</Text>
-						)}
+						<Text style={[styles.episodeInfo, { color: colors.onSurfaceVariant }]}>
+							S{tracked.seasonNumber} E{tracked.episodeNumber}
+						</Text>
 						{formattedWatchedDate && (
 							<>
 								<Text
-									style={[styles.metaDot, { color: colors.onSurfaceVariant }]}
+									style={[
+										styles.metaDot,
+										{ color: colors.onSurfaceVariant },
+									]}
 								>
 									•
 								</Text>
-								<View style={styles.watchedRow}>
-									<CheckCircle2 size={12} color={colors.primary} />
-									<Text
-										style={[
-											styles.watchedDate,
-											{ color: colors.primary },
-										]}
-									>
-										{formattedWatchedDate}
-									</Text>
-								</View>
+								<Text
+									style={[
+										styles.watchedDate,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									{formattedWatchedDate}
+								</Text>
 							</>
 						)}
 					</View>
@@ -131,7 +136,7 @@ export function MovieCard({
 				<TouchableOpacity
 					onPress={(e) => {
 						e.stopPropagation();
-						onRemove(tracked.movieId);
+						onRemove(tracked.id);
 					}}
 					disabled={isRemoving}
 					style={[styles.removeButton, { backgroundColor: colors.error }]}
@@ -178,10 +183,23 @@ const styles = StyleSheet.create({
 	posterContainer: {
 		width: 80,
 		aspectRatio: 2 / 3,
+		position: "relative",
 	},
 	poster: {
 		width: "100%",
 		height: "100%",
+	},
+	episodeBadge: {
+		position: "absolute",
+		bottom: 0,
+		left: 0,
+		right: 0,
+		paddingVertical: 4,
+		alignItems: "center",
+	},
+	episodeBadgeText: {
+		fontSize: 11,
+		fontWeight: "600",
 	},
 	cardContent: {
 		flex: 1,
@@ -191,7 +209,7 @@ const styles = StyleSheet.create({
 	info: {
 		flex: 1,
 	},
-	movieTitle: {
+	showTitle: {
 		fontSize: 16,
 		fontWeight: "600",
 		marginBottom: spacing.xs,
@@ -203,17 +221,12 @@ const styles = StyleSheet.create({
 		flexWrap: "wrap",
 		gap: spacing.xs,
 	},
-	year: {
+	episodeInfo: {
 		fontSize: 14,
-	},
-	watchedRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
+		fontWeight: "500",
 	},
 	watchedDate: {
 		fontSize: 14,
-		fontWeight: "500",
 	},
 	removeButton: {
 		flexDirection: "row",

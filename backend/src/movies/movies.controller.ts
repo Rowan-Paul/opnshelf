@@ -25,6 +25,8 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	type DiscoverMoviesDto,
 	MovieDto,
+	PaginatedMoviesQueryDto,
+	PaginatedMoviesResponseDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
 	TrackedMovieDto,
@@ -104,6 +106,46 @@ export class MoviesController {
 		);
 
 		return moviesWithColors;
+	}
+
+	@Get("user/:userDid/paginated")
+	@ApiOperation({ summary: "Get paginated tracked movies for a user" })
+	@ApiResponse({ status: 200, type: PaginatedMoviesResponseDto })
+	async getUserMoviesPaginated(
+		@Param("userDid") userDid: string,
+		@Query() query: PaginatedMoviesQueryDto,
+	) {
+		const limit = query.limit ?? 20;
+		const result = await this.moviesService.getUserMoviesPaginated(
+			userDid,
+			limit,
+			query.cursor,
+		);
+
+		// Ensure colors for all movies
+		const itemsWithColors = await Promise.all(
+			result.items.map(async (item) => {
+				const colors = await this.moviesService.ensureMovieHasColors(
+					item.movieId,
+				);
+				return {
+					...item,
+					watchedDate: item.watchedDate?.toISOString(),
+					createdAt: item.createdAt.toISOString(),
+					updatedAt: item.updatedAt.toISOString(),
+					movie: {
+						...item.movie,
+						colors: colors ?? undefined,
+					},
+				};
+			}),
+		);
+
+		return {
+			items: itemsWithColors,
+			nextCursor: result.nextCursor,
+			total: result.total,
+		};
 	}
 
 	@Post("watched")

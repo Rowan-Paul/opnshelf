@@ -303,6 +303,40 @@ export class ShowsService {
 		return Array.from(showMap.values());
 	}
 
+	async getUserEpisodesPaginated(
+		userDid: string,
+		limit: number = 20,
+		cursor?: string,
+	) {
+		const take = limit + 1; // Take one extra to determine if there's a next page
+
+		const episodes = await this.prisma.trackedEpisode.findMany({
+			where: { userDid },
+			include: { show: true },
+			orderBy: { watchedDate: "desc" },
+			take,
+			...(cursor && {
+				skip: 1,
+				cursor: { id: cursor },
+			}),
+		});
+
+		const hasMore = episodes.length > limit;
+		const items = hasMore ? episodes.slice(0, limit) : episodes;
+		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+		// Get total count
+		const total = await this.prisma.trackedEpisode.count({
+			where: { userDid },
+		});
+
+		return {
+			items,
+			nextCursor,
+			total,
+		};
+	}
+
 	async getEpisodeWatchHistory(userDid: string, showId: string) {
 		return this.prisma.trackedEpisode.findMany({
 			where: { userDid, showId },

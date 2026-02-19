@@ -66,7 +66,7 @@ export function ListCard({ list }: ListCardProps) {
 						className="md-body-medium"
 						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 					>
-						{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
+						{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
 					</p>
 				</M3CardContent>
 			</M3Card>

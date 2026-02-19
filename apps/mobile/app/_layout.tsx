@@ -2,12 +2,16 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+
+import { DevToolsBubble } from "react-native-react-query-devtools";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeApiClient } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+
+const isDev = process.env.NODE_ENV === "development";
 
 function LocaleInitializer({ children }: { children: React.ReactNode }) {
 	const [isReady, setIsReady] = useState(false);
@@ -80,6 +84,7 @@ export default function RootLayout() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
+			{isDev && <DevToolsBubble queryClient={queryClient} />}
 			<ThemeProvider>
 				<AuthProvider>
 					<LocaleInitializer>

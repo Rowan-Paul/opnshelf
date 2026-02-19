@@ -280,3 +280,32 @@ export class WatchHistoryItemDto {
 	@ApiProperty()
 	watchedDate: string;
 }
+
+export class PaginatedMoviesQueryDto {
+	@ApiPropertyOptional({
+		description: "Number of items to return",
+		default: 20,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	limit?: number;
+
+	@ApiPropertyOptional({
+		description: "Cursor for pagination (last item ID from previous page)",
+	})
+	@IsOptional()
+	@IsString()
+	cursor?: string;
+}
+
+export class PaginatedMoviesResponseDto {
+	@ApiProperty({ type: [TrackedMovieDto] })
+	items: TrackedMovieDto[];
+
+	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
+	nextCursor: string | null;
+
+	@ApiProperty({ description: "Total count of items" })
+	total: number;
+}

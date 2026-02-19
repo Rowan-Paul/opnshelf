@@ -1,8 +1,7 @@
 import {
 	authControllerMeOptions,
 	listsControllerGetUserListsOptions,
-	moviesControllerGetUserMoviesOptions,
-	type TrackedMovieDto,
+	shelfControllerGetUserShelfOptions,
 	type UserDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +16,7 @@ import {
 import { useMemo, useState } from "react";
 import { CreateListDialog } from "@/components/CreateListDialog";
 import { ListCard } from "@/components/ListCard";
+import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
@@ -144,9 +144,10 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 		(user as unknown as { displayName?: string | null }).displayName ??
 		user.handle;
 
-	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
-		...moviesControllerGetUserMoviesOptions({
+	const { data: shelfData, isLoading } = useQuery({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid: user.did },
+			query: { limit: 20 },
 		}),
 		enabled: !!user.did,
 	});
@@ -156,26 +157,30 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
-	const { recentWatched, watchedInRangeCount, totalMoviesTracked } =
-		useMemo(() => {
-			const now = Date.now();
-			const days = range === "week" ? 7 : 30;
-			const cutoff = now - days * 24 * 60 * 60 * 1000;
+	const { recentWatched, watchedInRangeCount, totalTracked } = useMemo(() => {
+		const now = Date.now();
+		const days = range === "week" ? 7 : 30;
+		const cutoff = now - days * 24 * 60 * 60 * 1000;
 
-			const sorted = [...(trackedMovies ?? [])].sort((a, b) => {
-				return getTrackedMovieTimestamp(b) - getTrackedMovieTimestamp(a);
-			});
+		const items = shelfData?.items ?? [];
 
-			const inRange = sorted.filter((movie) => {
-				return getTrackedMovieTimestamp(movie) >= cutoff;
-			});
+		const sorted = items.sort((a, b) => {
+			const dateA = a.watchedDate ? new Date(a.watchedDate).getTime() : 0;
+			const dateB = b.watchedDate ? new Date(b.watchedDate).getTime() : 0;
+			return dateB - dateA;
+		});
 
-			return {
-				recentWatched: sorted.slice(0, 8),
-				watchedInRangeCount: inRange.length,
-				totalMoviesTracked: sorted.length,
-			};
-		}, [trackedMovies, range]);
+		const inRange = sorted.filter((item) => {
+			const date = item.watchedDate ? new Date(item.watchedDate).getTime() : 0;
+			return date >= cutoff;
+		});
+
+		return {
+			recentWatched: sorted.slice(0, 8),
+			watchedInRangeCount: inRange.length,
+			totalTracked: shelfData?.total ?? 0,
+		};
+	}, [shelfData, range]);
 
 	const { listCount, totalMoviesInLists, recentLists } = useMemo(() => {
 		const listItems = lists ?? [];
@@ -252,7 +257,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 						</M3CardTitle>
 					</M3CardHeader>
 					<M3CardContent>
-						<p className="md-display-small">{totalMoviesTracked}</p>
+						<p className="md-display-small">{totalTracked}</p>
 					</M3CardContent>
 				</M3Card>
 				<M3Card variant="elevated">
@@ -280,7 +285,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 							<Link to="/profile/shelf">View shelf</Link>
 						</M3Button>
 					</div>
-					{isMoviesLoading ? (
+					{isLoading ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 							{[1, 2, 3, 4, 5, 6].map((i) => (
 								<div
@@ -295,13 +300,21 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 						</div>
 					) : recentWatched.length > 0 ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-							{recentWatched.map((tracked) => (
-								<ShelfMovieCard
-									key={tracked.id}
-									tracked={tracked}
-									user={user}
-								/>
-							))}
+							{recentWatched.map((item) =>
+								item.type === "movie" ? (
+									<ShelfMovieCard
+										key={item.id}
+										tracked={item as never}
+										user={user}
+									/>
+								) : (
+									<ShelfEpisodeCard
+										key={item.id}
+										tracked={item as never}
+										user={user}
+									/>
+								),
+							)}
 						</div>
 					) : (
 						<M3Card variant="elevated">
@@ -365,15 +378,4 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 			</div>
 		</div>
 	);
-}
-
-function getTrackedMovieTimestamp(tracked: TrackedMovieDto): number {
-	const dateValue = tracked.watchedDate ?? tracked.createdAt;
-	const parsed = new Date(dateValue).getTime();
-
-	if (Number.isNaN(parsed)) {
-		return 0;
-	}
-
-	return parsed;
 }

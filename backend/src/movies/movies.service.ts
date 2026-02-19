@@ -174,6 +174,40 @@ export class MoviesService {
 		return Array.from(movieMap.values());
 	}
 
+	async getUserMoviesPaginated(
+		userDid: string,
+		limit: number = 20,
+		cursor?: string,
+	) {
+		const take = limit + 1; // Take one extra to determine if there's a next page
+
+		const movies = await this.prisma.trackedMovie.findMany({
+			where: { userDid },
+			include: { movie: true },
+			orderBy: { watchedDate: "desc" },
+			take,
+			...(cursor && {
+				skip: 1,
+				cursor: { id: cursor },
+			}),
+		});
+
+		const hasMore = movies.length > limit;
+		const items = hasMore ? movies.slice(0, limit) : movies;
+		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+		// Get total count
+		const total = await this.prisma.trackedMovie.count({
+			where: { userDid },
+		});
+
+		return {
+			items,
+			nextCursor,
+			total,
+		};
+	}
+
 	async getMovieWatchHistory(userDid: string, movieId: string) {
 		return this.prisma.trackedMovie.findMany({
 			where: { userDid, movieId },
