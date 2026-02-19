@@ -95,10 +95,10 @@ function Calendar({
 			)}
 			captionLayout={captionLayout}
 			formatters={{
-				formatMonthDropdown: (date) =>
+				formatMonthDropdown: (date: Date) =>
 					date.toLocaleString("default", { month: "short" }),
-				formatWeekdayShort: (date) =>
-					date.toLocaleString("default", { weekday: "narrow" }),
+				formatWeekdayName: (weekday: Date) =>
+					weekday.toLocaleString("default", { weekday: "narrow" }),
 				...formatters,
 			}}
 			classNames={{
