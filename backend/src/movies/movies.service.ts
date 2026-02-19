@@ -220,8 +220,8 @@ export class MoviesService {
 					? new Date(movieData.release_date)
 					: null,
 				overview: movieData.overview ?? null,
-				// Only update colors if they don't exist (lazy backfill)
-				colors: undefined,
+				// Keep palette in sync with current extraction algorithm.
+				colors: colors ?? undefined,
 			},
 		});
 	}

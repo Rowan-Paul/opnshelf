@@ -380,6 +380,43 @@ describe("MoviesService", () => {
 				}),
 			});
 		});
+
+		it("should update stored colors when extraction returns a new palette", async () => {
+			const movieData = {
+				id: 321,
+				title: "Color Refresh Movie",
+				poster_path: "/poster-refresh.jpg",
+				backdrop_path: null,
+				release_date: "2025-01-01",
+				overview: "Refresh colors",
+			};
+			const mockColors = {
+				primary: "#60a5fa",
+				secondary: "#818cf8",
+				accent: "#c084fc",
+				muted: "#94a3b8",
+			};
+
+			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+				mockColors,
+			);
+			mockPrismaService.movie.upsert.mockResolvedValue({
+				movieId: "321",
+				title: "Color Refresh Movie",
+			});
+
+			await service.upsertMovie(movieData);
+
+			expect(mockPrismaService.movie.upsert).toHaveBeenCalledWith({
+				where: { movieId: "321" },
+				create: expect.objectContaining({
+					colors: mockColors,
+				}),
+				update: expect.objectContaining({
+					colors: mockColors,
+				}),
+			});
+		});
 	});
 
 	describe("ensureMovieHasColors", () => {

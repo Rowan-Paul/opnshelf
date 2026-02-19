@@ -13,6 +13,7 @@ export interface ColorPalette {
 export class ColorExtractionService {
 	private readonly logger = new Logger(ColorExtractionService.name);
 	private readonly tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
+	private readonly uiDarkBackground = { r: 17, g: 24, b: 39 }; // #111827
 
 	async extractColorsFromPoster(
 		posterPath: string | null,
@@ -123,14 +124,21 @@ export class ColorExtractionService {
 
 			// Ensure we have at least 4 colors
 			while (adjustedColors.length < 4) {
-				adjustedColors.push({ r: 139, g: 92, b: 246 }); // Fallback purple
+				adjustedColors.push({ r: 96, g: 165, b: 250 }); // Accessible fallback blue
 			}
 
+			const normalizedPalette = this.normalizePaletteForDarkUi({
+				primary: adjustedColors[0],
+				secondary: adjustedColors[1],
+				accent: adjustedColors[2],
+				muted: adjustedColors[3],
+			});
+
 			return {
-				primary: this.rgbToHex(adjustedColors[0]),
-				secondary: this.rgbToHex(adjustedColors[1]),
-				accent: this.rgbToHex(adjustedColors[2]),
-				muted: this.rgbToHex(adjustedColors[3]),
+				primary: this.rgbToHex(normalizedPalette.primary),
+				secondary: this.rgbToHex(normalizedPalette.secondary),
+				accent: this.rgbToHex(normalizedPalette.accent),
+				muted: this.rgbToHex(normalizedPalette.muted),
 			};
 		} catch (error) {
 			this.logger.error(
@@ -200,6 +208,106 @@ export class ColorExtractionService {
 		}
 
 		return { r, g, b };
+	}
+
+	private normalizePaletteForDarkUi(palette: {
+		primary: { r: number; g: number; b: number };
+		secondary: { r: number; g: number; b: number };
+		accent: { r: number; g: number; b: number };
+		muted: { r: number; g: number; b: number };
+	}) {
+		return {
+			primary: this.ensureContrastAgainstBackground(
+				palette.primary,
+				this.uiDarkBackground,
+				4.5,
+			),
+			secondary: this.ensureContrastAgainstBackground(
+				palette.secondary,
+				this.uiDarkBackground,
+				4,
+			),
+			accent: this.ensureContrastAgainstBackground(
+				palette.accent,
+				this.uiDarkBackground,
+				4.5,
+			),
+			muted: this.ensureContrastAgainstBackground(
+				palette.muted,
+				this.uiDarkBackground,
+				3,
+			),
+		};
+	}
+
+	private ensureContrastAgainstBackground(
+		foreground: { r: number; g: number; b: number },
+		background: { r: number; g: number; b: number },
+		minContrastRatio: number,
+	): { r: number; g: number; b: number } {
+		if (this.getContrastRatio(foreground, background) >= minContrastRatio) {
+			return foreground;
+		}
+
+		// For dark UIs, blend toward white until minimum contrast is reached.
+		for (let step = 1; step <= 10; step += 1) {
+			const candidate = this.mixColor(
+				foreground,
+				{ r: 255, g: 255, b: 255 },
+				step / 10,
+			);
+			if (this.getContrastRatio(candidate, background) >= minContrastRatio) {
+				return candidate;
+			}
+		}
+
+		return foreground;
+	}
+
+	private getContrastRatio(
+		c1: { r: number; g: number; b: number },
+		c2: { r: number; g: number; b: number },
+	): number {
+		const luminance1 = this.getRelativeLuminance(c1);
+		const luminance2 = this.getRelativeLuminance(c2);
+		const lighter = Math.max(luminance1, luminance2);
+		const darker = Math.min(luminance1, luminance2);
+		return (lighter + 0.05) / (darker + 0.05);
+	}
+
+	private getRelativeLuminance(color: {
+		r: number;
+		g: number;
+		b: number;
+	}): number {
+		const toLinear = (value: number): number => {
+			const normalized = value / 255;
+			return normalized <= 0.03928
+				? normalized / 12.92
+				: ((normalized + 0.055) / 1.055) ** 2.4;
+		};
+
+		return (
+			0.2126 * toLinear(color.r) +
+			0.7152 * toLinear(color.g) +
+			0.0722 * toLinear(color.b)
+		);
+	}
+
+	private mixColor(
+		from: { r: number; g: number; b: number },
+		to: { r: number; g: number; b: number },
+		ratio: number,
+	): { r: number; g: number; b: number } {
+		const clampedRatio = Math.max(0, Math.min(1, ratio));
+		const mixChannel = (a: number, b: number) =>
+			Math.round(a + (b - a) * clampedRatio);
+
+		return {
+			r: mixChannel(from.r, to.r),
+			g: mixChannel(from.g, to.g),
+			b: mixChannel(from.b, to.b),
+		};
 	}
 
 	private rgbToHex(color: { r: number; g: number; b: number }): string {

@@ -11,6 +11,45 @@ jest.mock("jimp", () => ({
 
 import { Jimp } from "jimp";
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+	const cleanHex = hex.replace("#", "");
+	return {
+		r: Number.parseInt(cleanHex.slice(0, 2), 16),
+		g: Number.parseInt(cleanHex.slice(2, 4), 16),
+		b: Number.parseInt(cleanHex.slice(4, 6), 16),
+	};
+}
+
+function getRelativeLuminance(color: {
+	r: number;
+	g: number;
+	b: number;
+}): number {
+	const toLinear = (value: number): number => {
+		const normalized = value / 255;
+		return normalized <= 0.03928
+			? normalized / 12.92
+			: ((normalized + 0.055) / 1.055) ** 2.4;
+	};
+
+	return (
+		0.2126 * toLinear(color.r) +
+		0.7152 * toLinear(color.g) +
+		0.0722 * toLinear(color.b)
+	);
+}
+
+function getContrastRatio(
+	foregroundHex: string,
+	backgroundHex: string,
+): number {
+	const foregroundLuminance = getRelativeLuminance(hexToRgb(foregroundHex));
+	const backgroundLuminance = getRelativeLuminance(hexToRgb(backgroundHex));
+	const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+	const darker = Math.min(foregroundLuminance, backgroundLuminance);
+	return (lighter + 0.05) / (darker + 0.05);
+}
+
 describe("ColorExtractionService", () => {
 	let service: ColorExtractionService;
 
@@ -99,6 +138,20 @@ describe("ColorExtractionService", () => {
 			expect(result?.secondary).toMatch(/^#[0-9a-fA-F]{6}$/);
 			expect(result?.accent).toMatch(/^#[0-9a-fA-F]{6}$/);
 			expect(result?.muted).toMatch(/^#[0-9a-fA-F]{6}$/);
+
+			const background = "#111827";
+			expect(
+				getContrastRatio(result?.primary || "", background),
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				getContrastRatio(result?.secondary || "", background),
+			).toBeGreaterThanOrEqual(4);
+			expect(
+				getContrastRatio(result?.accent || "", background),
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				getContrastRatio(result?.muted || "", background),
+			).toBeGreaterThanOrEqual(3);
 		});
 
 		it("should handle image loading errors gracefully", async () => {
@@ -191,6 +244,31 @@ describe("ColorExtractionService", () => {
 
 			expect(result).toBeDefined();
 			expect(result).toHaveProperty("primary");
+		});
+	});
+
+	describe("normalizePaletteForDarkUi", () => {
+		it("should raise low contrast colors for dark UI backgrounds", () => {
+			const result = (service as any).normalizePaletteForDarkUi({
+				primary: { r: 40, g: 50, b: 70 },
+				secondary: { r: 45, g: 45, b: 45 },
+				accent: { r: 60, g: 35, b: 80 },
+				muted: { r: 50, g: 55, b: 65 },
+			});
+
+			const background = { r: 17, g: 24, b: 39 };
+			expect(
+				(service as any).getContrastRatio(result.primary, background),
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				(service as any).getContrastRatio(result.secondary, background),
+			).toBeGreaterThanOrEqual(4);
+			expect(
+				(service as any).getContrastRatio(result.accent, background),
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				(service as any).getContrastRatio(result.muted, background),
+			).toBeGreaterThanOrEqual(3);
 		});
 	});
 
