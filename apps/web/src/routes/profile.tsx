@@ -134,13 +134,13 @@ function ProfileLayout() {
 					</div>
 				</div>
 
-			{/* Navigation Tabs */}
-			<div
-				className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-8 pb-4"
-				style={{
-					borderBottom: "1px solid var(--md-sys-color-outline-variant)",
-				}}
-			>
+				{/* Navigation Tabs */}
+				<div
+					className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-8 pb-4"
+					style={{
+						borderBottom: "1px solid var(--md-sys-color-outline-variant)",
+					}}
+				>
 					<NavLink to="/profile/shelf" icon={BookOpen} label="My Shelf" />
 					<NavLink to="/profile/lists" icon={List} label="My Lists" />
 					<NavLink to="/profile/settings" icon={Settings} label="Settings" />

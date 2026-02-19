@@ -1,10 +1,9 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-
+import { useEffect, useState } from "react";
 import { DevToolsBubble } from "react-native-react-query-devtools";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
