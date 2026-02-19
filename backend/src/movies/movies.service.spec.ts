@@ -386,7 +386,7 @@ describe("MoviesService", () => {
 				id: 321,
 				title: "Color Refresh Movie",
 				poster_path: "/poster-refresh.jpg",
-				backdrop_path: null,
+				backdrop_path: undefined,
 				release_date: "2025-01-01",
 				overview: "Refresh colors",
 			};

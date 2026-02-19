@@ -1,11 +1,34 @@
+import {
+	listsControllerGetUserListsOptions,
+	moviesControllerGetUserMoviesOptions,
+	type TrackedMovieDto,
+	type UserDto,
+} from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Film, Search, Share2, Shield } from "lucide-react-native";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+	CalendarRange,
+	Film,
+	LayoutDashboard,
+	ListChecks,
+	ListPlus,
+	Search,
+	Share2,
+	Shield,
+} from "lucide-react-native";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { spacing } from "@/constants/spacing";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { borderRadius, spacing } from "@/constants/spacing";
+import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 const features = [
 	{
@@ -27,6 +50,480 @@ const features = [
 ];
 
 export default function HomeScreen() {
+	const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
+	const { colors } = useTheme();
+	const { formatDate } = useFormattedDate();
+	const [range, setRange] = useState<"week" | "month">("week");
+	const [showCreateModal, setShowCreateModal] = useState(false);
+
+	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
+		...moviesControllerGetUserMoviesOptions({
+			path: { userDid: user?.did || "" },
+		}),
+		enabled: !!user?.did && isAuthenticated,
+	});
+
+	const { data: lists, isLoading: isListsLoading } = useQuery({
+		...listsControllerGetUserListsOptions(),
+		enabled: !!user?.did && isAuthenticated,
+	});
+
+	const { watchedInRangeCount, totalMoviesTracked, recentWatched } =
+		useMemo(() => {
+			const now = Date.now();
+			const days = range === "week" ? 7 : 30;
+			const cutoff = now - days * 24 * 60 * 60 * 1000;
+
+			const sorted = [...(trackedMovies ?? [])].sort((a, b) => {
+				return getTrackedMovieTimestamp(b) - getTrackedMovieTimestamp(a);
+			});
+
+			const inRange = sorted.filter((movie) => {
+				return getTrackedMovieTimestamp(movie) >= cutoff;
+			});
+
+			return {
+				watchedInRangeCount: inRange.length,
+				totalMoviesTracked: sorted.length,
+				recentWatched: sorted.slice(0, 5),
+			};
+		}, [trackedMovies, range]);
+
+	const { listCount, totalMoviesInLists, recentLists } = useMemo(() => {
+		const items = lists ?? [];
+		const sorted = [...items].sort((a, b) => {
+			return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+		});
+
+		return {
+			listCount: items.length,
+			totalMoviesInLists: items.reduce((acc, list) => acc + list.movieCount, 0),
+			recentLists: sorted.slice(0, 4),
+		};
+	}, [lists]);
+
+	if (isAuthLoading) {
+		return (
+			<SafeAreaView
+				style={[styles.container, { backgroundColor: colors.background }]}
+				edges={["top"]}
+			>
+				<View style={styles.loadingContainer}>
+					<Skeleton
+						width="100%"
+						height={108}
+						style={{ marginBottom: spacing.md }}
+					/>
+					<Skeleton
+						width="100%"
+						height={108}
+						style={{ marginBottom: spacing.md }}
+					/>
+					<Skeleton width="100%" height={160} />
+				</View>
+			</SafeAreaView>
+		);
+	}
+
+	if (!isAuthenticated || !user) {
+		return <UnauthenticatedHome />;
+	}
+
+	return (
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["top"]}
+		>
+			<ScrollView contentContainerStyle={styles.scrollContent}>
+				<View style={styles.dashboardHeader}>
+					<View style={styles.dashboardTitleWrap}>
+						<LayoutDashboard size={28} color={colors.primary} />
+						<Text
+							style={[styles.dashboardTitle, { color: colors.onBackground }]}
+						>
+							Dashboard
+						</Text>
+					</View>
+					<Text style={[styles.greeting, { color: colors.onSurfaceVariant }]}>
+						Welcome back, {resolveDisplayName(user)}
+					</Text>
+					<Button
+						size="lg"
+						onPress={() => router.push("/(tabs)/search")}
+						style={styles.dashboardSearchButton}
+					>
+						<Search
+							size={20}
+							color={colors.onPrimary}
+							style={styles.buttonIcon}
+						/>
+						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+							Search Movies
+						</Text>
+					</Button>
+				</View>
+
+				<View style={styles.metricsGrid}>
+					<Card
+						style={{
+							borderRadius: borderRadius.lg,
+							borderWidth: 1,
+							backgroundColor: colors.surfaceContainerHigh,
+							borderColor: colors.outlineVariant,
+						}}
+					>
+						<CardHeader>
+							<View style={styles.metricTitleRow}>
+								<CalendarRange size={18} color={colors.primary} />
+								<Text style={[styles.metricTitle, { color: colors.onSurface }]}>
+									Watched ({range === "week" ? "7d" : "30d"})
+								</Text>
+							</View>
+						</CardHeader>
+						<CardContent>
+							<Text style={[styles.metricValue, { color: colors.onSurface }]}>
+								{watchedInRangeCount}
+							</Text>
+							<View style={styles.rangeToggle}>
+								<Pressable
+									onPress={() => setRange("week")}
+									style={[
+										styles.rangePill,
+										{
+											backgroundColor:
+												range === "week"
+													? colors.primaryContainer
+													: colors.surfaceContainerHigh,
+										},
+									]}
+								>
+									<Text
+										style={[
+											styles.rangePillText,
+											{
+												color:
+													range === "week"
+														? colors.onPrimaryContainer
+														: colors.onSurfaceVariant,
+											},
+										]}
+									>
+										Week
+									</Text>
+								</Pressable>
+								<Pressable
+									onPress={() => setRange("month")}
+									style={[
+										styles.rangePill,
+										{
+											backgroundColor:
+												range === "month"
+													? colors.primaryContainer
+													: colors.surfaceContainerHigh,
+										},
+									]}
+								>
+									<Text
+										style={[
+											styles.rangePillText,
+											{
+												color:
+													range === "month"
+														? colors.onPrimaryContainer
+														: colors.onSurfaceVariant,
+											},
+										]}
+									>
+										Month
+									</Text>
+								</Pressable>
+							</View>
+						</CardContent>
+					</Card>
+
+					<Card
+						style={{
+							borderRadius: borderRadius.lg,
+							borderWidth: 1,
+							backgroundColor: colors.surfaceContainerHigh,
+							borderColor: colors.outlineVariant,
+						}}
+					>
+						<CardHeader>
+							<View style={styles.metricTitleRow}>
+								<Film size={18} color={colors.primary} />
+								<Text style={[styles.metricTitle, { color: colors.onSurface }]}>
+									Total on Shelf
+								</Text>
+							</View>
+						</CardHeader>
+						<CardContent>
+							<Text style={[styles.metricValue, { color: colors.onSurface }]}>
+								{totalMoviesTracked}
+							</Text>
+						</CardContent>
+					</Card>
+
+					<Card
+						style={{
+							borderRadius: borderRadius.lg,
+							borderWidth: 1,
+							backgroundColor: colors.surfaceContainerHigh,
+							borderColor: colors.outlineVariant,
+						}}
+					>
+						<CardHeader>
+							<View style={styles.metricTitleRow}>
+								<ListChecks size={18} color={colors.primary} />
+								<Text style={[styles.metricTitle, { color: colors.onSurface }]}>
+									Your Lists
+								</Text>
+							</View>
+						</CardHeader>
+						<CardContent>
+							<Text style={[styles.metricValue, { color: colors.onSurface }]}>
+								{listCount}
+							</Text>
+							<Text
+								style={[
+									styles.metricCaption,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								{totalMoviesInLists} movies across lists
+							</Text>
+						</CardContent>
+					</Card>
+				</View>
+
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+							Recent Watched
+						</Text>
+						<Pressable onPress={() => router.push("/(tabs)/profile/shelf")}>
+							<Text style={[styles.sectionLink, { color: colors.primary }]}>
+								View shelf
+							</Text>
+						</Pressable>
+					</View>
+					{isMoviesLoading ? (
+						<View style={styles.sectionSkeleton}>
+							{[1, 2, 3].map((i) => (
+								<Skeleton
+									key={i}
+									width="100%"
+									height={100}
+									style={{ marginBottom: spacing.sm }}
+								/>
+							))}
+						</View>
+					) : recentWatched.length > 0 ? (
+						<View style={styles.recentList}>
+							{recentWatched.map((tracked) => {
+								const watchDate = tracked.watchedDate ?? tracked.createdAt;
+								const formattedDate = formatDate(watchDate, {
+									includeTime: false,
+								});
+								const posterUrl = getTmdbPosterUrl(tracked.movie.posterPath);
+
+								return (
+									<Pressable
+										key={tracked.id}
+										onPress={() =>
+											router.push({
+												pathname: "/movie/[id]",
+												params: {
+													id: tracked.movieId,
+													title: createTitleSlug(tracked.movie.title),
+												},
+											})
+										}
+										style={[
+											styles.recentItem,
+											{
+												backgroundColor: colors.surfaceContainer,
+												borderColor: colors.outline,
+											},
+										]}
+									>
+										<View
+											style={[
+												styles.recentPoster,
+												{ backgroundColor: colors.surfaceContainerHigh },
+											]}
+										>
+											{posterUrl ? (
+												<Image
+													source={{ uri: posterUrl }}
+													style={styles.recentPosterImage}
+													contentFit="cover"
+													transition={150}
+												/>
+											) : (
+												<Text
+													style={[
+														styles.recentPosterFallback,
+														{ color: colors.onSurfaceVariant },
+													]}
+												>
+													No poster
+												</Text>
+											)}
+										</View>
+										<View style={styles.recentMeta}>
+											<Text
+												style={[
+													styles.recentTitle,
+													{ color: colors.onSurface },
+												]}
+												numberOfLines={2}
+											>
+												{tracked.movie.title}
+											</Text>
+											<Text
+												style={[
+													styles.recentDate,
+													{ color: colors.onSurfaceVariant },
+												]}
+											>
+												Watched {formattedDate}
+											</Text>
+										</View>
+									</Pressable>
+								);
+							})}
+						</View>
+					) : (
+						<Card>
+							<CardHeader>
+								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+									No movies watched yet
+								</Text>
+							</CardHeader>
+							<CardContent>
+								<Text
+									style={[
+										styles.emptyDescription,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									Start adding watched movies and your activity appears here.
+								</Text>
+								<Button
+									onPress={() => router.push("/(tabs)/search")}
+									style={styles.emptyButton}
+								>
+									<Text
+										style={[styles.buttonText, { color: colors.onPrimary }]}
+									>
+										Search movies
+									</Text>
+								</Button>
+							</CardContent>
+						</Card>
+					)}
+				</View>
+
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+							Your Lists
+						</Text>
+						<Pressable onPress={() => router.push("/(tabs)/profile/lists")}>
+							<Text style={[styles.sectionLink, { color: colors.primary }]}>
+								All lists
+							</Text>
+						</Pressable>
+					</View>
+					<Button
+						variant="outlined"
+						onPress={() => setShowCreateModal(true)}
+						style={styles.createListButton}
+					>
+						<ListPlus
+							size={16}
+							color={colors.primary}
+							style={styles.buttonIcon}
+						/>
+						<Text style={[styles.createListText, { color: colors.primary }]}>
+							Create list
+						</Text>
+					</Button>
+					{isListsLoading ? (
+						<View style={styles.sectionSkeleton}>
+							{[1, 2].map((i) => (
+								<Skeleton
+									key={i}
+									width="100%"
+									height={96}
+									style={{ marginBottom: spacing.sm }}
+								/>
+							))}
+						</View>
+					) : recentLists.length > 0 ? (
+						<View style={styles.recentList}>
+							{recentLists.map((list) => (
+								<Pressable
+									key={list.id}
+									onPress={() => router.push(`/list/${list.slug}`)}
+									style={[
+										styles.listItem,
+										{
+											backgroundColor: colors.surfaceContainer,
+											borderColor: colors.outline,
+										},
+									]}
+								>
+									<View style={styles.listMeta}>
+										<Text
+											style={[styles.listName, { color: colors.onSurface }]}
+											numberOfLines={1}
+										>
+											{list.name}
+										</Text>
+										<Text
+											style={[
+												styles.listCount,
+												{ color: colors.onSurfaceVariant },
+											]}
+										>
+											{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
+										</Text>
+									</View>
+								</Pressable>
+							))}
+						</View>
+					) : (
+						<Card>
+							<CardHeader>
+								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+									No lists yet
+								</Text>
+							</CardHeader>
+							<CardContent>
+								<Text
+									style={[
+										styles.emptyDescription,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									Create your first list to organize movies.
+								</Text>
+							</CardContent>
+						</Card>
+					)}
+				</View>
+			</ScrollView>
+			<CreateListModal
+				visible={showCreateModal}
+				onClose={() => setShowCreateModal(false)}
+			/>
+		</SafeAreaView>
+	);
+}
+
+function UnauthenticatedHome() {
 	const { colors } = useTheme();
 
 	return (
@@ -94,11 +591,30 @@ export default function HomeScreen() {
 	);
 }
 
+function getTrackedMovieTimestamp(tracked: TrackedMovieDto): number {
+	const dateValue = tracked.watchedDate ?? tracked.createdAt;
+	const parsed = new Date(dateValue).getTime();
+	return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function resolveDisplayName(user: UserDto): string {
+	const rawDisplayName = (user as unknown as { displayName?: unknown })
+		.displayName;
+	if (typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0) {
+		return rawDisplayName;
+	}
+
+	return user.handle;
+}
+
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
 	scrollContent: {
+		padding: spacing.lg,
+	},
+	loadingContainer: {
 		padding: spacing.lg,
 	},
 	hero: {
@@ -131,6 +647,153 @@ const styles = StyleSheet.create({
 	},
 	features: {
 		gap: spacing.md,
+	},
+	dashboardHeader: {
+		marginBottom: spacing.lg,
+	},
+	dashboardTitleWrap: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.sm,
+		marginBottom: spacing.xs,
+	},
+	dashboardTitle: {
+		fontSize: 32,
+		fontWeight: "700",
+	},
+	greeting: {
+		fontSize: 15,
+		marginBottom: spacing.md,
+	},
+	dashboardSearchButton: {
+		alignSelf: "flex-start",
+	},
+	metricsGrid: {
+		gap: spacing.sm,
+		marginBottom: spacing.lg,
+	},
+	metricTitleRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	metricTitle: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	metricValue: {
+		fontSize: 30,
+		fontWeight: "700",
+	},
+	metricCaption: {
+		fontSize: 12,
+		marginTop: spacing.xs,
+	},
+	rangeToggle: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		marginTop: spacing.sm,
+	},
+	rangePill: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 6,
+		borderRadius: borderRadius.full,
+	},
+	rangePillText: {
+		fontSize: 12,
+		fontWeight: "600",
+	},
+	section: {
+		marginBottom: spacing.xl,
+	},
+	sectionHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: spacing.sm,
+	},
+	sectionTitle: {
+		fontSize: 22,
+		fontWeight: "700",
+	},
+	sectionLink: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	sectionSkeleton: {
+		marginTop: spacing.sm,
+	},
+	recentList: {
+		gap: spacing.sm,
+	},
+	recentItem: {
+		flexDirection: "row",
+		borderRadius: borderRadius.lg,
+		borderWidth: 1,
+		overflow: "hidden",
+	},
+	recentPoster: {
+		width: 68,
+		height: 100,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	recentPosterImage: {
+		width: "100%",
+		height: "100%",
+	},
+	recentPosterFallback: {
+		fontSize: 10,
+		fontWeight: "600",
+	},
+	recentMeta: {
+		flex: 1,
+		paddingVertical: spacing.sm,
+		paddingHorizontal: spacing.md,
+		justifyContent: "center",
+	},
+	recentTitle: {
+		fontSize: 15,
+		fontWeight: "600",
+		marginBottom: spacing.xs,
+	},
+	recentDate: {
+		fontSize: 12,
+	},
+	emptyTitle: {
+		fontSize: 18,
+		fontWeight: "700",
+	},
+	emptyDescription: {
+		fontSize: 14,
+		lineHeight: 20,
+	},
+	emptyButton: {
+		marginTop: spacing.md,
+		alignSelf: "flex-start",
+	},
+	createListButton: {
+		alignSelf: "flex-start",
+		marginBottom: spacing.sm,
+	},
+	createListText: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	listItem: {
+		borderWidth: 1,
+		borderRadius: borderRadius.lg,
+		padding: spacing.md,
+	},
+	listMeta: {
+		gap: spacing.xs,
+	},
+	listName: {
+		fontSize: 16,
+		fontWeight: "600",
+	},
+	listCount: {
+		fontSize: 13,
 	},
 	featureCard: {
 		marginBottom: spacing.md,
