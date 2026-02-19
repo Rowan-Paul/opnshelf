@@ -71,14 +71,14 @@ function AppContent() {
 					}}
 				/>
 				<Stack.Screen
-					name="show/[id]/season/[seasonNumber]"
+					name="show/[id]/season/[seasonNumber]/index"
 					options={{
 						title: "Season",
 						headerShown: true,
 					}}
 				/>
 				<Stack.Screen
-					name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]"
+					name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index"
 					options={{
 						title: "Episode",
 						headerShown: true,

@@ -16,8 +16,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import {
 	ArrowLeft,
+	ArrowRight,
 	Calendar,
 	Check,
+	CircleDot,
 	Eye,
 	Film,
 	History,
@@ -126,7 +128,8 @@ function ShowEpisodePage() {
 				)
 				.sort(
 					(a, b) =>
-						new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime(),
+						new Date(b.watchedDate).getTime() -
+						new Date(a.watchedDate).getTime(),
 				)[0] ?? null
 		);
 	}, [history, seasonNumber, episodeNumber]);
@@ -262,11 +265,21 @@ function ShowEpisodePage() {
 		}
 	};
 
-	const relatedEpisodes = useMemo(() => {
-		if (!season?.episodes?.length) return [];
-		return season.episodes
-			.filter((e) => e.episode_number !== Number(episodeNumber))
-			.slice(0, 4);
+	const seasonEpisodeContext = useMemo(() => {
+		if (!season?.episodes?.length)
+			return { previous: null, current: null, next: null };
+		const sortedEpisodes = [...season.episodes].sort(
+			(a, b) => a.episode_number - b.episode_number,
+		);
+		const currentIndex = sortedEpisodes.findIndex(
+			(e) => e.episode_number === Number(episodeNumber),
+		);
+		if (currentIndex < 0) return { previous: null, current: null, next: null };
+		return {
+			previous: sortedEpisodes[currentIndex - 1] ?? null,
+			current: sortedEpisodes[currentIndex] ?? null,
+			next: sortedEpisodes[currentIndex + 1] ?? null,
+		};
 	}, [season?.episodes, episodeNumber]);
 
 	return (
@@ -399,10 +412,13 @@ function ShowEpisodePage() {
 												}}
 											>
 												Watched on{" "}
-												{formatDateWithTimezone(latestEpisodeWatch.watchedDate, {
-													timezone: userTimezone,
-													is24Hour,
-												})}
+												{formatDateWithTimezone(
+													latestEpisodeWatch.watchedDate,
+													{
+														timezone: userTimezone,
+														is24Hour,
+													},
+												)}
 											</p>
 										)}
 										{episodeWatchHistory.length > 1 ? (
@@ -414,7 +430,9 @@ function ShowEpisodePage() {
 													}}
 												>
 													<History className="w-3 h-3" />
-													<span>{episodeWatchHistory.length} total watches</span>
+													<span>
+														{episodeWatchHistory.length} total watches
+													</span>
 												</div>
 												<button
 													type="button"
@@ -432,7 +450,8 @@ function ShowEpisodePage() {
 													onMouseLeave={(e) => {
 														e.currentTarget.style.color =
 															"var(--md-sys-color-on-surface-variant)";
-														e.currentTarget.style.backgroundColor = "transparent";
+														e.currentTarget.style.backgroundColor =
+															"transparent";
 													}}
 												>
 													<Eye className="w-4 h-4" />
@@ -518,6 +537,30 @@ function ShowEpisodePage() {
 					</div>
 
 					<div className="space-y-6 min-w-0">
+							<div className="flex flex-wrap gap-3">
+								<Link
+									to="/shows/$showId/$title/seasons/$seasonNumber"
+									params={{ showId, title, seasonNumber }}
+									className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2 hover:bg-gray-900/40 transition-colors"
+								>
+									<Layers className="w-4 h-4" />S{seasonNumber}
+								</Link>
+								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+									<Film className="w-4 h-4" />E{episodeNumber}
+								</div>
+								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+									<Calendar className="w-4 h-4" />
+									{episode?.air_date
+										? formatDateOnly(episode.air_date)
+										: "Air date unknown"}
+								</div>
+								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+									<Star className="w-4 h-4" />
+									{episode?.vote_average
+										? `${episode.vote_average.toFixed(1)}/10`
+										: "Not rated"}
+								</div>
+							</div>
 						<section>
 							<h2
 								className="text-xl font-semibold mb-3"
@@ -528,40 +571,9 @@ function ShowEpisodePage() {
 							<p className="text-gray-300 leading-relaxed mb-4">
 								{episode?.overview || "No overview available."}
 							</p>
-							<div className="flex flex-wrap gap-3">
-								<div className="rounded-full border border-[var(--md-sys-color-outline)] px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-									<Calendar className="w-4 h-4" />
-									{episode?.air_date ? formatDateOnly(episode.air_date) : "Air date unknown"}
-								</div>
-								<div className="rounded-full border border-[var(--md-sys-color-outline)] px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-									<Star className="w-4 h-4" />
-									{episode?.vote_average ? `${episode.vote_average.toFixed(1)}/10` : "Not rated"}
-								</div>
-							</div>
 						</section>
 
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-							<Link
-								to="/shows/$showId/$title/seasons/$seasonNumber"
-								params={{ showId, title, seasonNumber }}
-								className="p-4 rounded-lg bg-gray-900/40 border border-[var(--md-sys-color-outline)] hover:bg-gray-900/60 transition-colors"
-							>
-								<div className="text-sm text-gray-400 mb-1">Season</div>
-								<div className="font-medium flex items-center gap-2">
-									<Layers className="w-4 h-4" />
-									{seasonNumber}
-								</div>
-							</Link>
-							<div className="p-4 rounded-lg bg-gray-900/40 border border-[var(--md-sys-color-outline)]">
-								<div className="text-sm text-gray-400 mb-1">Episode</div>
-								<div className="font-medium flex items-center gap-2">
-									<Film className="w-4 h-4" />
-									{episodeNumber}
-								</div>
-							</div>
-						</div>
-
-						{relatedEpisodes.length ? (
+						{seasonEpisodeContext.current ? (
 							<section>
 								<h2
 									className="text-xl font-semibold mb-3"
@@ -569,27 +581,70 @@ function ShowEpisodePage() {
 								>
 									More In This Season
 								</h2>
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-									{relatedEpisodes.map((e) => (
-										<Link
-											key={e.id}
-											to="/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"
-											params={{
-												showId,
-												title,
-												seasonNumber,
-												episodeNumber: String(e.episode_number),
-											}}
-											className="rounded-lg border border-[var(--md-sys-color-outline)] p-3 bg-gray-900/30 hover:bg-gray-900/50 transition-colors"
-										>
-											<div className="font-medium text-sm">
-												E{e.episode_number}: {e.name}
-											</div>
-											<div className="text-xs text-gray-400 mt-1">
-												{e.air_date ? formatDateOnly(e.air_date) : "TBA"}
-											</div>
-										</Link>
-									))}
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+									{[
+										{
+											key: "previous",
+											label: "Previous Episode",
+											icon: <ArrowLeft className="w-4 h-4" />,
+											episode: seasonEpisodeContext.previous,
+											highlighted: false,
+										},
+										{
+											key: "current",
+											label: "Current Episode",
+											icon: <CircleDot className="w-4 h-4" />,
+											episode: seasonEpisodeContext.current,
+											highlighted: true,
+										},
+										{
+											key: "next",
+											label: "Next Episode",
+											icon: <ArrowRight className="w-4 h-4" />,
+											episode: seasonEpisodeContext.next,
+											highlighted: false,
+										},
+									].map((slot) => {
+										if (!slot.episode) return null;
+										return (
+											<Link
+												key={slot.key}
+												to="/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"
+												params={{
+													showId,
+													title,
+													seasonNumber,
+													episodeNumber: String(slot.episode.episode_number),
+												}}
+												className={`rounded-lg border p-3 transition-colors ${
+													slot.highlighted
+														? "bg-gray-900/60 border-(--md-sys-color-primary) hover:bg-gray-900/70"
+														: "bg-gray-900/30 border-(--md-sys-color-outline) hover:bg-gray-900/50"
+												}`}
+											>
+												<div className="text-xs uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-2">
+													{slot.icon}
+													{slot.label}
+												</div>
+												<div
+													className={`rounded-md px-2 py-2 ${
+														slot.highlighted
+															? "bg-(--md-sys-color-primary)/15"
+															: ""
+													}`}
+												>
+													<div className="font-medium text-sm">
+														E{slot.episode.episode_number}: {slot.episode.name}
+													</div>
+													<div className="text-xs text-gray-400 mt-1">
+														{slot.episode.air_date
+															? formatDateOnly(slot.episode.air_date)
+															: "TBA"}
+													</div>
+												</div>
+											</Link>
+										);
+									})}
 								</div>
 							</section>
 						) : null}
@@ -704,7 +759,10 @@ function ShowEpisodePage() {
 						)}
 					</div>
 					<div className="mt-4 flex justify-end">
-						<M3Button variant="outlined" onClick={() => setShowHistoryDialog(false)}>
+						<M3Button
+							variant="outlined"
+							onClick={() => setShowHistoryDialog(false)}
+						>
 							Close
 						</M3Button>
 					</div>
