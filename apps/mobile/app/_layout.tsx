@@ -2,8 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+import { MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { DevToolsBubble } from "react-native-react-query-devtools";
-import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
@@ -93,7 +93,7 @@ export default function RootLayout() {
 						</AuthProvider>
 					</ThemeProvider>
 				</PaperProvider>
-				{__DEV__ &&<DevToolsBubble queryClient={queryClient} />}
+				{__DEV__ && <DevToolsBubble queryClient={queryClient} />}
 			</QueryClientProvider>
 		</SafeAreaProvider>
 	);

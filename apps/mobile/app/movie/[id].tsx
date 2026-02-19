@@ -405,7 +405,7 @@ export default function MovieDetailScreen() {
 													</View>
 												) : (
 													<View style={styles.buttonContent}>
-																<Ionicons name="add" size={20} color="#1f2937" />
+														<Ionicons name="add" size={20} color="#1f2937" />
 														<Text style={styles.buttonText}>Add to Shelf</Text>
 													</View>
 												)}
@@ -497,11 +497,11 @@ export default function MovieDetailScreen() {
 													</View>
 												) : (
 													<View style={styles.buttonContent}>
-																							<Ionicons
-																								name="refresh"
-																								size={20}
-																								color="#1f2937"
-																							/>
+														<Ionicons
+															name="refresh"
+															size={20}
+															color="#1f2937"
+														/>
 														<Text style={styles.buttonText}>Watch Now</Text>
 													</View>
 												)}

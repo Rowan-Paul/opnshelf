@@ -154,10 +154,10 @@ export function DatePickerModal({
 					</button>
 				</div>
 				<div className="space-y-4">
-						<MaterialDatePicker
-							selected={customDate ? new Date(customDate) : new Date()}
-							onSelect={handleDateSelect}
-						/>
+					<MaterialDatePicker
+						selected={customDate ? new Date(customDate) : new Date()}
+						onSelect={handleDateSelect}
+					/>
 					<div>
 						<TimePicker date={timeDate} setDate={setTimeDate} />
 					</div>
