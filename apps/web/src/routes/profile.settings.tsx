@@ -20,7 +20,6 @@ import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
-import { ColorPicker } from "@/components/ui/color-picker";
 import {
 	Dialog,
 	DialogContent,
@@ -259,9 +258,6 @@ function SettingsPage() {
 					</div>
 					<h1 className="md-headline-medium">Settings</h1>
 				</div>
-
-				{/* Theme Color Settings */}
-				<ColorPicker />
 
 				{/* Time & Region Settings */}
 				<M3Card variant="elevated">

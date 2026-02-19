@@ -1,11 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-	IsBoolean,
-	IsHexColor,
-	IsIn,
-	IsOptional,
-	IsString,
-} from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserSettingsDto {
 	@ApiProperty({
@@ -25,15 +19,6 @@ export class UpdateUserSettingsDto {
 	@IsString()
 	@IsOptional()
 	timezone?: string;
-
-	@ApiProperty({
-		description: "Accent color for theming (hex format, e.g., #F59E0B)",
-		required: false,
-	})
-	@IsString()
-	@IsOptional()
-	@IsHexColor()
-	accentColor?: string;
 }
 
 export class DeleteUserAccountDto {
@@ -58,9 +43,4 @@ export class UserSettingsDto {
 		description: "IANA timezone identifier (e.g., America/New_York)",
 	})
 	timezone!: string;
-
-	@ApiProperty({
-		description: "Accent color for theming (hex format, e.g., #F59E0B)",
-	})
-	accentColor!: string;
 }

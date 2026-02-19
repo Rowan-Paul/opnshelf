@@ -19,7 +19,6 @@ export function useUserSettings() {
 	return {
 		timezone: settings?.timezone || "UTC",
 		is24Hour: settings?.timeFormat === "24h",
-		accentColor: settings?.accentColor,
 		isLoading,
 		user,
 	};

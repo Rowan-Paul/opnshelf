@@ -29,7 +29,6 @@ export class UsersService {
 			select: {
 				timezone: true,
 				timeFormat: true,
-				accentColor: true,
 			},
 		});
 
@@ -40,7 +39,6 @@ export class UsersService {
 		return {
 			timezone: user.timezone,
 			timeFormat: user.timeFormat,
-			accentColor: user.accentColor,
 		};
 	}
 
@@ -64,12 +62,10 @@ export class UsersService {
 			data: {
 				...(dto.timezone !== undefined && { timezone: dto.timezone }),
 				...(dto.timeFormat !== undefined && { timeFormat: dto.timeFormat }),
-				...(dto.accentColor !== undefined && { accentColor: dto.accentColor }),
 			},
 			select: {
 				timezone: true,
 				timeFormat: true,
-				accentColor: true,
 			},
 		});
 
@@ -78,7 +74,6 @@ export class UsersService {
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
-			accentColor: updatedUser.accentColor,
 		};
 	}
 

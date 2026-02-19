@@ -127,17 +127,3 @@ export function applyThemeToDocument(
 
 // Default amber seed color for OpnShelf
 export const DEFAULT_SEED_COLOR = "#F59E0B";
-
-// Predefined warm color suggestions for the color picker
-export const WARM_COLOR_PRESETS = [
-	{ name: "Amber", hex: "#F59E0B" },
-	{ name: "Orange", hex: "#F97316" },
-	{ name: "Coral", hex: "#FF6B6B" },
-	{ name: "Peach", hex: "#FB923C" },
-	{ name: "Rose", hex: "#F43F5E" },
-	{ name: "Purple", hex: "#9333EA" },
-	{ name: "Blue", hex: "#3B82F6" },
-	{ name: "Teal", hex: "#14B8A6" },
-	{ name: "Green", hex: "#22C55E" },
-	{ name: "Red", hex: "#EF4444" },
-];

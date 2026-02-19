@@ -26,7 +26,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { ColorPicker } from "@/components/ui/m3/ColorPicker";
 import { Switch } from "@/components/ui/Switch";
 import { defaultColors as staticColors } from "@/constants/extended-theme";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -257,10 +256,6 @@ export default function SettingsScreen() {
 						<Globe size={28} color={colors.warning} />
 						<Text style={styles.title}>Settings</Text>
 					</View>
-				</View>
-
-				<View style={styles.section}>
-					<ColorPicker />
 				</View>
 
 				<Card style={styles.card}>

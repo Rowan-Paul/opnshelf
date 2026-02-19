@@ -18,5 +18,3 @@ export { M3Chip, M3ChipGroup, type M3ChipProps, type M3ChipVariant, type M3ChipG
 export { M3Fab, type M3FabProps, type M3FabVariant, type M3FabSize } from "./M3Fab";
 
 export { M3SnackbarProvider, useSnackbar, type M3SnackbarProps } from "./M3Snackbar";
-
-export { ColorPicker } from "./ColorPicker";
