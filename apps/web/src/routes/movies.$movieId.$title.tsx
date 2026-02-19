@@ -29,6 +29,7 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
+import { AddToShelfButton } from "@/components/AddToShelfButton";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
 import { DatePickerModal } from "@/components/DatePickerModal";
@@ -295,29 +296,14 @@ function MovieDetailPage() {
 								{user ? (
 									!isWatched ? (
 										<>
-											<button
-												type="button"
+											<AddToShelfButton
 												onClick={handleMarkWatched}
-												disabled={isPending}
-												className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
-												style={{
-													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
-													color: "var(--md-sys-color-on-primary)",
-												}}
-											>
-												{isPending ? (
-													<>
-														<Loader2 className="w-5 h-5 animate-spin" />
-														Loading
-													</>
-												) : (
-													<>
-														<Calendar className="w-5 h-5" />
-														Add to Shelf
-													</>
-												)}
-											</button>
+												isPending={isPending}
+												label="Add to Shelf"
+												icon={<Calendar className="w-5 h-5" />}
+												colors={colors}
+												size="compact"
+											/>
 											<ActionButton
 												icon={<Calendar className="w-4 h-4" />}
 												label="Watch on different date"
@@ -343,29 +329,14 @@ function MovieDetailPage() {
 										</>
 									) : (
 										<>
-											<button
-												type="button"
+											<AddToShelfButton
 												onClick={handleMarkWatched}
-												disabled={isPending}
-												className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
-												style={{
-													background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-													boxShadow: `0 10px 30px -10px ${colors.primary}60`,
-													color: "var(--md-sys-color-on-primary)",
-												}}
-											>
-												{isPending ? (
-													<>
-														<Loader2 className="w-5 h-5 animate-spin" />
-														Loading
-													</>
-												) : (
-													<>
-														<RotateCcw className="w-4 h-4" />
-														Watch Now
-													</>
-												)}
-											</button>
+												isPending={isPending}
+												label="Watch Now"
+												icon={<RotateCcw className="w-4 h-4" />}
+												colors={colors}
+												size="compact"
+											/>
 											<ActionButton
 												icon={<Calendar className="w-4 h-4" />}
 												label="Watch on different date"
@@ -417,29 +388,13 @@ function MovieDetailPage() {
 						{user ? (
 							!isWatched ? (
 								<div className="space-y-3">
-									<button
-										type="button"
+									<AddToShelfButton
 										onClick={handleMarkWatched}
-										disabled={isPending}
-										className="w-full py-4 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 hover:scale-[1.02]"
-										style={{
-											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-											boxShadow: `0 15px 35px -10px ${colors.primary}60`,
-											color: "var(--md-sys-color-on-primary)",
-										}}
-									>
-										{isPending ? (
-											<>
-												<Loader2 className="w-5 h-5 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<Calendar className="w-5 h-5" />
-												Add to Shelf
-											</>
-										)}
-									</button>
+										isPending={isPending}
+										label="Add to Shelf"
+										icon={<Calendar className="w-5 h-5" />}
+										colors={colors}
+									/>
 									<ActionButton
 										icon={<Calendar className="w-4 h-4" />}
 										label="Watch on different date"
@@ -556,29 +511,14 @@ function MovieDetailPage() {
 											</button>
 										)}
 									</div>
-									<button
-										type="button"
+									<AddToShelfButton
 										onClick={handleMarkWatched}
-										disabled={isPending}
-										className="w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
-										style={{
-											background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-											boxShadow: `0 10px 30px -10px ${colors.primary}60`,
-											color: "var(--md-sys-color-on-primary)",
-										}}
-									>
-										{isPending ? (
-											<>
-												<Loader2 className="w-4 h-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<RotateCcw className="w-4 h-4" />
-												Watch Again
-											</>
-										)}
-									</button>
+										isPending={isPending}
+										label="Watch Again"
+										icon={<RotateCcw className="w-4 h-4" />}
+										colors={colors}
+										size="compact"
+									/>
 									<ActionButton
 										icon={<Calendar className="w-4 h-4" />}
 										label="Watch on different date"
@@ -751,8 +691,9 @@ function MovieDetailPage() {
 				<AddToListModal
 					open={showListModal}
 					onOpenChange={setShowListModal}
-					movieId={movieId}
-					movieTitle={movie?.title || ""}
+					mediaType="movie"
+					mediaId={movieId}
+					mediaTitle={movie?.title || ""}
 					user={user}
 				/>
 			)}

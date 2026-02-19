@@ -22,23 +22,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface AddToListModalProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	movieId: string;
-	movieTitle: string;
+	mediaType: "movie" | "show";
+	mediaId: string;
+	mediaTitle: string;
 	user: UserDto;
 }
 
 export function AddToListModal({
 	open,
 	onOpenChange,
-	movieId,
-	movieTitle,
+	mediaType,
+	mediaId,
+	mediaTitle,
 	user,
 }: AddToListModalProps) {
 	const queryClient = useQueryClient();
 
 	const { data: listsForMovie, isLoading } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "movie", mediaId: movieId },
+			path: { mediaType, mediaId },
 		}),
 		enabled: open && !!user?.did,
 	});
@@ -49,7 +51,7 @@ export function AddToListModal({
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListsForItemQueryKey({
-					path: { mediaType: "movie", mediaId: movieId },
+					path: { mediaType, mediaId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -68,7 +70,7 @@ export function AddToListModal({
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListsForItemQueryKey({
-					path: { mediaType: "movie", mediaId: movieId },
+					path: { mediaType, mediaId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -84,12 +86,12 @@ export function AddToListModal({
 	const handleToggleList = (slug: string, isInList: boolean) => {
 		if (isInList) {
 			removeMutation.mutate({
-				path: { slug, mediaType: "movie", mediaId: movieId },
+				path: { slug, mediaType, mediaId },
 			});
 		} else {
 			addMutation.mutate({
 				path: { slug },
-				body: { mediaType: "movie", mediaId: movieId },
+				body: { mediaType, mediaId },
 			});
 		}
 	};
@@ -102,7 +104,7 @@ export function AddToListModal({
 						Manage Lists
 					</DialogTitle>
 					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
-						Add or remove &quot;{movieTitle}&quot; from your lists
+						Add or remove &quot;{mediaTitle}&quot; from your lists
 					</DialogDescription>
 				</DialogHeader>
 				<ScrollArea className="max-h-[300px]">

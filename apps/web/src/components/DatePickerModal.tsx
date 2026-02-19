@@ -1,6 +1,9 @@
 import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
+	showsControllerGetShowWatchHistoryQueryKey,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -17,18 +20,30 @@ import {
 } from "@/components/ui/popover";
 import { TimePicker } from "@/components/ui/time-picker";
 
-interface DatePickerModalProps {
+type DatePickerModalProps = {
 	open: boolean;
 	onClose: () => void;
-	movieId: string;
 	userDid: string | undefined;
-}
+	modalTitle?: string;
+} & (
+	| {
+			mode?: "movie";
+			movieId: string;
+	  }
+	| {
+			mode: "episode";
+			showId: string;
+			seasonNumber: string;
+			episodeNumber: string;
+	  }
+);
 
 export function DatePickerModal({
 	open,
 	onClose,
-	movieId,
 	userDid,
+	modalTitle,
+	...target
 }: DatePickerModalProps) {
 	const queryClient = useQueryClient();
 	const [customDate, setCustomDate] = useState("");
@@ -45,16 +60,41 @@ export function DatePickerModal({
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
+			if (target.mode === "episode") {
+				return;
+			}
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetUserMoviesQueryKey({
 					path: { userDid: userDid || "" },
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["watchHistory", userDid, movieId],
+				queryKey: ["watchHistory", userDid, target.movieId],
 			});
 			toast.success("Added to your shelf");
 			onClose();
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+	const markEpisodeMutation = useMutation({
+		...showsControllerMarkWatchedMutation(),
+		onSuccess: () => {
+			if (target.mode === "episode") {
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetUserShowsQueryKey({
+						path: { userDid: userDid || "" },
+					}),
+				});
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetShowWatchHistoryQueryKey({
+						path: { userDid: userDid || "", showId: target.showId },
+					}),
+				});
+				toast.success("Added to your shelf");
+				onClose();
+			}
 		},
 		onError: () => {
 			toast.error("Failed to update. Please try again.");
@@ -77,9 +117,21 @@ export function DatePickerModal({
 			return;
 		}
 
+		if (target.mode === "episode") {
+			markEpisodeMutation.mutate({
+				body: {
+					showId: target.showId,
+					seasonNumber: Number(target.seasonNumber),
+					episodeNumber: Number(target.episodeNumber),
+					watchedAt: dateTime.toISOString(),
+				},
+			});
+			return;
+		}
+
 		markMutation.mutate({
 			body: {
-				movieId,
+				movieId: target.movieId,
 				watchedAt: dateTime.toISOString(),
 			},
 		});
@@ -92,7 +144,7 @@ export function DatePickerModal({
 			<div className="bg-[var(--md-sys-color-surface-container-high)] rounded-[1.75rem] p-6 max-w-md w-full">
 				<div className="flex justify-between items-center mb-6">
 					<h3 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">
-						Watch Again
+						{modalTitle || "Watch Again"}
 					</h3>
 					<button
 						type="button"
@@ -103,7 +155,7 @@ export function DatePickerModal({
 					</button>
 				</div>
 				<p className="text-[var(--md-sys-color-on-surface-variant)] mb-4">
-					When did you watch this movie?
+					When did you watch this?
 				</p>
 				<div className="space-y-4">
 					<div>
@@ -161,11 +213,17 @@ export function DatePickerModal({
 						<LoadingButton
 							type="button"
 							onClick={handleSubmit}
-							disabled={!customDate || markMutation.isPending}
+							disabled={
+								!customDate ||
+								markMutation.isPending ||
+								markEpisodeMutation.isPending
+							}
 							className="flex-1 bg-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/90"
-							isLoading={markMutation.isPending}
+							isLoading={
+								markMutation.isPending || markEpisodeMutation.isPending
+							}
 						>
-							Add Play
+							Add Watch
 						</LoadingButton>
 					</div>
 				</div>
