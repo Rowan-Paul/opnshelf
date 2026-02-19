@@ -9,7 +9,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { BookOpen } from "lucide-react-native";
+import { ArrowLeft, BookOpen } from "lucide-react-native";
 import { useCallback, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -148,8 +148,19 @@ export default function ShelfScreen() {
 	return (
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: colors.background }]}
-			edges={["left", "right", "bottom"]}
+			edges={["left", "right", "bottom", "top"]}
 		>
+			<View style={styles.header}>
+				<TouchableOpacity
+					onPress={() => router.back()}
+					style={styles.backButton}
+				>
+					<ArrowLeft size={24} color={colors.onBackground} />
+				</TouchableOpacity>
+				<Text style={[styles.headerTitle, { color: colors.onBackground }]}>
+					My Shelf
+				</Text>
+			</View>
 			{trackedMovies && trackedMovies.length > 0 && (
 				<>
 					<Text
@@ -240,6 +251,20 @@ export default function ShelfScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+	},
+	header: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingHorizontal: spacing.lg,
+		paddingVertical: spacing.md,
+		gap: spacing.md,
+	},
+	backButton: {
+		padding: spacing.sm,
+	},
+	headerTitle: {
+		fontSize: 28,
+		fontWeight: "bold",
 	},
 	resultsCount: {
 		fontSize: 14,

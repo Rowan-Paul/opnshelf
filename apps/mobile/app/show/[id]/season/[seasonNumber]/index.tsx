@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
 	},
 	backButton: {
 		position: "absolute",
-		top: 48,
+		top: 8,
 		left: 16,
 		zIndex: 10,
 		padding: 8,
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
 	},
 	episodeThumbnail: {
 		width: 120,
-		aspectRatio: 16 / 9,
+		height: 80,
 		backgroundColor: "#111827",
 	},
 	episodeImage: {

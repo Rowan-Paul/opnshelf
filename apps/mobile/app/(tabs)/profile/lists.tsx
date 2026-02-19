@@ -5,7 +5,7 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { List, ListPlus, Star } from "lucide-react-native";
+import { ArrowLeft, List, ListPlus, Star } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -63,9 +63,15 @@ export default function ListsScreen() {
 	return (
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: colors.background }]}
-			edges={["left", "right", "bottom"]}
+			edges={["left", "right", "bottom", "top"]}
 		>
 			<View style={styles.header}>
+				<TouchableOpacity
+					onPress={() => router.back()}
+					style={styles.backButton}
+				>
+					<ArrowLeft size={24} color={colors.onBackground} />
+				</TouchableOpacity>
 				<Text style={[styles.headerTitle, { color: colors.onBackground }]}>
 					My Lists
 				</Text>
@@ -212,10 +218,13 @@ const styles = StyleSheet.create({
 	},
 	header: {
 		flexDirection: "row",
-		justifyContent: "space-between",
 		alignItems: "center",
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
+		gap: spacing.md,
+	},
+	backButton: {
+		padding: spacing.sm,
 	},
 	headerTitle: {
 		fontSize: 28,
@@ -228,6 +237,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
 		borderRadius: borderRadius.md,
+		marginLeft: "auto",
 	},
 	createButtonText: {
 		fontSize: 14,

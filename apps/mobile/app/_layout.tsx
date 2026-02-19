@@ -45,76 +45,28 @@ function AppContent() {
 		<M3SnackbarProvider>
 			<Stack
 				screenOptions={{
-					headerStyle: {
-						backgroundColor: "#030712",
-					},
-					headerTintColor: "#f9fafb",
-					headerTitleStyle: {
-						color: "#f9fafb",
-					},
+					headerShown: false,
 					contentStyle: {
 						backgroundColor: "#030712",
 					},
 				}}
 			>
-				<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-				<Stack.Screen
-					name="movie/[id]"
-					options={{
-						title: "Movie Details",
-						headerTransparent: true,
-						headerTintColor: "#f9fafb",
-					}}
-				/>
-				<Stack.Screen
-					name="show/[id]"
-					options={{
-						title: "Show Details",
-						headerTransparent: true,
-						headerTintColor: "#f9fafb",
-					}}
-				/>
-				<Stack.Screen
-					name="show/[id]/season/[seasonNumber]/index"
-					options={{
-						title: "Season",
-						headerShown: true,
-					}}
-				/>
-				<Stack.Screen
-					name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index"
-					options={{
-						title: "Episode",
-						headerShown: true,
-					}}
-				/>
+				<Stack.Screen name="(tabs)" />
+				<Stack.Screen name="movie/[id]" />
+				<Stack.Screen name="show/[id]" />
+				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
+				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
 				<Stack.Screen
 					name="auth/callback"
-					options={{
-						presentation: "modal",
-						headerShown: false,
-					}}
+					options={{ presentation: "modal" }}
 				/>
 				<Stack.Screen
 					name="auth/complete"
-					options={{
-						presentation: "modal",
-						headerShown: false,
-					}}
+					options={{ presentation: "modal" }}
 				/>
-				<Stack.Screen
-					name="settings"
-					options={{
-						title: "Settings",
-						headerShown: true,
-					}}
-				/>
-				<Stack.Screen
-					name="list/[slug]"
-					options={{
-						headerShown: false,
-					}}
-				/>
+				<Stack.Screen name="settings" />
+				<Stack.Screen name="list/[slug]" />
+				<Stack.Screen name="login" />
 			</Stack>
 			<StatusBar style="light" />
 		</M3SnackbarProvider>

@@ -6,6 +6,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
+	ArrowLeft,
 	ChevronRight,
 	Clock,
 	Globe,
@@ -21,6 +22,7 @@ import {
 	StyleSheet,
 	Text,
 	TextInput,
+	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -252,6 +254,12 @@ export default function SettingsScreen() {
 		<SafeAreaView style={styles.container} edges={["top"]}>
 			<ScrollView style={styles.scrollView}>
 				<View style={styles.header}>
+					<TouchableOpacity
+						onPress={() => router.back()}
+						style={styles.backButton}
+					>
+						<ArrowLeft size={24} color={colors.onBackground} />
+					</TouchableOpacity>
 					<View style={styles.headerLeft}>
 						<Globe size={28} color={colors.warning} />
 						<Text style={styles.title}>Settings</Text>
@@ -568,8 +576,11 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.lg,
 		paddingVertical: spacing.md,
 		flexDirection: "row",
-		justifyContent: "space-between",
 		alignItems: "center",
+		gap: spacing.md,
+	},
+	backButton: {
+		padding: spacing.sm,
 	},
 	headerLeft: {
 		flexDirection: "row",

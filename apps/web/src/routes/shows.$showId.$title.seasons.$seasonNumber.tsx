@@ -233,7 +233,7 @@ function ShowSeasonPage() {
 													style={{ borderColor: "var(--md-sys-color-outline)" }}
 												>
 													<div className="grid grid-cols-[120px_1fr] gap-4">
-														<div className="aspect-video bg-gray-900">
+														<div className="h-full bg-gray-900">
 															{episode.still_path ? (
 																<img
 																	src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
