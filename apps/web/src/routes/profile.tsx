@@ -1,6 +1,11 @@
 import { authControllerMeOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	useMatchRoute,
+} from "@tanstack/react-router";
 import { BookOpen, List, Settings } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
@@ -158,29 +163,30 @@ function NavLink({
 	label: string;
 }) {
 	const { seedColor } = useTheme();
+	const matchRoute = useMatchRoute();
+	const isActive = Boolean(
+		matchRoute({
+			to,
+			fuzzy: false,
+		}),
+	);
 
 	return (
 		<Link
 			to={to}
-			className="flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] transition-colors md-label-large"
-			style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-			activeProps={{
-				className:
-					"flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] md-label-large",
-				style: {
-					backgroundColor: `${seedColor}20`,
-					color: seedColor,
-				},
-			}}
-			onMouseEnter={(e) => {
-				e.currentTarget.style.backgroundColor =
-					"var(--md-sys-color-surface-container)";
-				e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
-			}}
-			onMouseLeave={(e) => {
-				e.currentTarget.style.backgroundColor = "transparent";
-				e.currentTarget.style.color = "var(--md-sys-color-on-surface-variant)";
-			}}
+			className={`flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] transition-colors md-label-large ${
+				isActive
+					? ""
+					: "hover:bg-[var(--md-sys-color-surface-container)] hover:text-[var(--md-sys-color-on-surface)]"
+			}`}
+			style={
+				isActive
+					? {
+							backgroundColor: `${seedColor}20`,
+							color: seedColor,
+						}
+					: { color: "var(--md-sys-color-on-surface-variant)" }
+			}
 		>
 			<Icon className="w-5 h-5" />
 			<span>{label}</span>
