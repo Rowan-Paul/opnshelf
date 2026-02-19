@@ -8,7 +8,7 @@ const $nsid = 'app.opnshelf.listItem'
 
 export { $nsid }
 
-/** A movie item in a list for OpnShelf */
+/** A media item in a list for OpnShelf */
 type Main = {
   $type: 'app.opnshelf.listItem'
 
@@ -18,12 +18,17 @@ type Main = {
   listRkey: string
 
   /**
-   * TMDB movie ID
+   * Media type
    */
-  movieId: string
+  mediaType: 'movie' | 'show'
 
   /**
-   * Optional user notes about the movie in this list
+   * TMDB media ID
+   */
+  mediaId: string
+
+  /**
+   * Optional user notes about the media in this list
    */
   notes?: string
 
@@ -35,13 +40,14 @@ type Main = {
 
 export type { Main }
 
-/** A movie item in a list for OpnShelf */
+/** A media item in a list for OpnShelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
     listRkey: l.string(),
-    movieId: l.string(),
+    mediaType: l.enum(['movie', 'show']),
+    mediaId: l.string(),
     notes: l.optional(l.string()),
     createdAt: l.string({ format: 'datetime' }),
   }),

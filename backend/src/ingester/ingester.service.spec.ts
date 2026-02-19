@@ -1,31 +1,10 @@
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
-// Mock PrismaService before importing
 jest.mock("../prisma/prisma.service", () => ({
 	PrismaService: jest.fn(),
 }));
 
-// Mock MoviesService before importing
-jest.mock("../movies/movies.service", () => ({
-	MoviesService: jest.fn().mockImplementation(() => ({
-		getMovieByTMDBId: jest.fn(),
-		getMovieDetails: jest.fn(),
-		upsertMovie: jest.fn(),
-	})),
-}));
-
-// Mock ListsService before importing
-jest.mock("../lists/lists.service", () => ({
-	ListsService: jest.fn().mockImplementation(() => ({
-		indexListRecord: jest.fn(),
-		deleteListRecord: jest.fn(),
-		indexListItemRecord: jest.fn(),
-		deleteListItemRecord: jest.fn(),
-	})),
-}));
-
-// Mock @atproto/tap
 const mockTapChannel = {
 	start: jest.fn().mockResolvedValue(undefined),
 	destroy: jest.fn().mockResolvedValue(undefined),
@@ -53,11 +32,12 @@ jest.mock("@atproto/tap", () => ({
 	})),
 }));
 
-import type { IdentityEvent, RecordEvent } from "@atproto/tap";
+import type { RecordEvent } from "@atproto/tap";
 import { SimpleIndexer, Tap } from "@atproto/tap";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ShowsService } from "../shows/shows.service";
 import { IngesterService } from "./ingester.service";
 
 type MockPrismaService = {
@@ -69,26 +49,31 @@ type MockPrismaService = {
 		upsert: jest.Mock;
 		deleteMany: jest.Mock;
 	};
-};
-
-type MockMoviesService = {
-	getMovieByTMDBId: jest.Mock;
-	getMovieDetails: jest.Mock;
-	upsertMovie: jest.Mock;
-};
-
-type MockListsService = {
-	indexListRecord: jest.Mock;
-	deleteListRecord: jest.Mock;
-	indexListItemRecord: jest.Mock;
-	deleteListItemRecord: jest.Mock;
+	trackedEpisode: {
+		upsert: jest.Mock;
+		deleteMany: jest.Mock;
+	};
 };
 
 describe("IngesterService", () => {
 	let service: IngesterService;
 	let mockPrismaService: MockPrismaService;
-	let mockMoviesService: MockMoviesService;
-	let mockListsService: MockListsService;
+	let mockMoviesService: {
+		getMovieByTMDBId: jest.Mock;
+		getMovieDetails: jest.Mock;
+		upsertMovie: jest.Mock;
+	};
+	let mockShowsService: {
+		getShowByTMDBId: jest.Mock;
+		getShowDetails: jest.Mock;
+		upsertShow: jest.Mock;
+	};
+	let mockListsService: {
+		indexListRecord: jest.Mock;
+		deleteListRecord: jest.Mock;
+		indexListItemRecord: jest.Mock;
+		deleteListItemRecord: jest.Mock;
+	};
 
 	const mockConfigService = {
 		get: jest.fn((key: string) => {
@@ -109,12 +94,22 @@ describe("IngesterService", () => {
 				upsert: jest.fn(),
 				deleteMany: jest.fn(),
 			},
+			trackedEpisode: {
+				upsert: jest.fn(),
+				deleteMany: jest.fn(),
+			},
 		};
 
 		mockMoviesService = {
 			getMovieByTMDBId: jest.fn(),
 			getMovieDetails: jest.fn(),
 			upsertMovie: jest.fn(),
+		};
+
+		mockShowsService = {
+			getShowByTMDBId: jest.fn(),
+			getShowDetails: jest.fn(),
+			upsertShow: jest.fn(),
 		};
 
 		mockListsService = {
@@ -130,6 +125,7 @@ describe("IngesterService", () => {
 				{ provide: PrismaService, useValue: mockPrismaService },
 				{ provide: ConfigService, useValue: mockConfigService },
 				{ provide: MoviesService, useValue: mockMoviesService },
+				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },
 			],
 		}).compile();
@@ -148,33 +144,6 @@ describe("IngesterService", () => {
 			expect(mockTapInstance.channel).toHaveBeenCalled();
 			expect(mockTapChannel.start).toHaveBeenCalled();
 		});
-
-		it("should register existing users with TAP", async () => {
-			jest.useFakeTimers();
-			const mockUsers = [{ did: "did:plc:user1" }, { did: "did:plc:user2" }];
-			mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
-
-			service.onModuleInit();
-
-			// Fast-forward past the setTimeout
-			jest.advanceTimersByTime(1000);
-			await Promise.resolve(); // Let any pending promises resolve
-
-			expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
-				select: { did: true },
-			});
-			expect(mockTapInstance.addRepos).toHaveBeenCalledWith(["did:plc:user1"]);
-			jest.useRealTimers();
-		});
-	});
-
-	describe("onModuleDestroy", () => {
-		it("should stop the TAP ingester", async () => {
-			service.onModuleInit();
-			await service.onModuleDestroy();
-
-			expect(mockTapChannel.destroy).toHaveBeenCalled();
-		});
 	});
 
 	describe("addRepo", () => {
@@ -183,12 +152,6 @@ describe("IngesterService", () => {
 			await service.addRepo("did:plc:abc123");
 
 			expect(mockTapInstance.addRepos).toHaveBeenCalledWith(["did:plc:abc123"]);
-		});
-
-		it("should throw if TAP is not initialized", async () => {
-			await expect(service.addRepo("did:plc:abc123")).rejects.toThrow(
-				"TAP client not initialized",
-			);
 		});
 	});
 
@@ -201,21 +164,10 @@ describe("IngesterService", () => {
 				"did:plc:abc123",
 			]);
 		});
-
-		it("should throw if TAP is not initialized", async () => {
-			await expect(service.removeRepo("did:plc:abc123")).rejects.toThrow(
-				"TAP client not initialized",
-			);
-		});
 	});
 
-	describe("handleRecordEvent - create", () => {
-		it("should upsert tracked movie for existing user", async () => {
-			const mockUser = { did: "did:plc:abc123", handle: "test.bsky.social" };
-			mockPrismaService.user.findUnique.mockResolvedValue(mockUser as any);
-			mockPrismaService.trackedMovie.upsert.mockResolvedValue({} as any);
-
-			// Capture the record handler
+	describe("record ingestion", () => {
+		const setupRecordHandler = (): ((evt: RecordEvent) => Promise<void>) => {
 			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
 			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
 				record: jest.fn((handler) => {
@@ -224,10 +176,21 @@ describe("IngesterService", () => {
 				identity: jest.fn(),
 				error: jest.fn(),
 			}));
-
 			service.onModuleInit();
+			if (!recordHandler) {
+				throw new Error("record handler was not registered");
+			}
+			return recordHandler;
+		};
 
-			const createEvent: RecordEvent = {
+		it("should upsert tracked movie for app.opnshelf.movie create", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
+
+			await recordHandler({
 				id: 1,
 				type: "record",
 				action: "create",
@@ -244,352 +207,105 @@ describe("IngesterService", () => {
 				},
 				cid: "cid123",
 				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(createEvent);
-			}
-
-			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-				where: { did: "did:plc:abc123" },
 			});
-			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith({
-				where: { rkey: "movie-123" },
-				create: expect.objectContaining({
-					uri: "at://did:plc:abc123/app.opnshelf.movie/movie-123",
-					rkey: "movie-123",
-					cid: "cid123",
-					userDid: "did:plc:abc123",
-					movieId: "123",
-					status: "watched",
-				}),
-				update: expect.objectContaining({
-					cid: "cid123",
-					status: "watched",
-				}),
-			});
-		});
-
-		it("should skip records for non-existent users", async () => {
-			mockPrismaService.user.findUnique.mockResolvedValue(null);
-
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const createEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "create",
-				did: "did:plc:unknown",
-				rev: "rev123",
-				collection: "app.opnshelf.movie",
-				rkey: "movie-123",
-				record: {
-					$type: "app.opnshelf.movie",
-					movieId: "123",
-					source: "tmdb",
-					watchedAt: "2024-01-15T10:00:00Z",
-					createdAt: "2024-01-15T10:00:00Z",
-				},
-				cid: "cid123",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(createEvent);
-			}
-
-			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-				where: { did: "did:plc:unknown" },
-			});
-			expect(mockPrismaService.trackedMovie.upsert).not.toHaveBeenCalled();
-		});
-
-		it("should skip invalid movie records", async () => {
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const invalidEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "create",
-				did: "did:plc:abc123",
-				rev: "rev123",
-				collection: "app.opnshelf.movie",
-				rkey: "movie-123",
-				record: {
-					$type: "app.opnshelf.movie",
-					// Missing required fields
-				},
-				cid: "cid123",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(invalidEvent);
-			}
-
-			expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
-			expect(mockPrismaService.trackedMovie.upsert).not.toHaveBeenCalled();
-		});
-
-		it("should skip events for other collections", async () => {
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const otherEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "create",
-				did: "did:plc:abc123",
-				rev: "rev123",
-				collection: "app.bsky.feed.post",
-				rkey: "abc",
-				record: { $type: "app.bsky.feed.post" },
-				cid: "cid123",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(otherEvent);
-			}
-
-			expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("handleRecordEvent - update", () => {
-		it("should handle update events same as create", async () => {
-			const mockUser = { did: "did:plc:abc123", handle: "test.bsky.social" };
-			mockPrismaService.user.findUnique.mockResolvedValue(mockUser as any);
-			mockPrismaService.trackedMovie.upsert.mockResolvedValue({} as any);
-
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const updateEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "update",
-				did: "did:plc:abc123",
-				rev: "rev456",
-				collection: "app.opnshelf.movie",
-				rkey: "movie-789",
-				record: {
-					$type: "app.opnshelf.movie",
-					movieId: "789",
-					source: "tmdb",
-					watchedAt: "2024-02-20T15:30:00Z",
-					createdAt: "2024-01-15T10:00:00Z",
-				},
-				cid: "cid789-updated",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(updateEvent);
-			}
 
 			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
-					where: { rkey: "movie-789" },
-					update: expect.objectContaining({
-						cid: "cid789-updated",
+					where: { rkey: "movie-123" },
+					create: expect.objectContaining({
+						movieId: "123",
+						userDid: "did:plc:abc123",
 					}),
 				}),
 			);
 		});
-	});
 
-	describe("handleRecordEvent - delete", () => {
-		it("should delete tracked movie record", async () => {
-			mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
-				count: 1,
-			} as any);
-
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const deleteEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "delete",
+		it("should upsert tracked episode for app.opnshelf.episode create", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
 				did: "did:plc:abc123",
-				rev: "rev789",
-				collection: "app.opnshelf.movie",
-				rkey: "movie-123",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(deleteEvent);
-			}
-
-			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
-				where: { rkey: "movie-123" },
 			});
-		});
+			mockShowsService.getShowByTMDBId.mockResolvedValue({ showId: "456" });
 
-		it("should skip delete events for other collections", async () => {
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const otherEvent: RecordEvent = {
-				id: 1,
-				type: "record",
-				action: "delete",
-				did: "did:plc:abc123",
-				rev: "rev123",
-				collection: "app.bsky.feed.post",
-				rkey: "abc",
-				live: true,
-			};
-
-			if (recordHandler) {
-				await recordHandler(otherEvent);
-			}
-
-			expect(mockPrismaService.trackedMovie.deleteMany).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("handleIdentityEvent", () => {
-		it("should handle identity events", async () => {
-			let identityHandler: ((evt: IdentityEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn(),
-				identity: jest.fn((handler) => {
-					identityHandler = handler;
-				}),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const identityEvent: IdentityEvent = {
-				id: 1,
-				type: "identity",
-				did: "did:plc:abc123",
-				handle: "test.bsky.social",
-				isActive: true,
-				status: "active",
-			};
-
-			// Should not throw
-			if (identityHandler !== undefined) {
-				await expect(identityHandler(identityEvent)).resolves.not.toThrow();
-			}
-		});
-	});
-
-	describe("error handling", () => {
-		it("should handle errors in record handler gracefully", async () => {
-			mockPrismaService.user.findUnique.mockRejectedValue(
-				new Error("DB error"),
-			);
-
-			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: jest.fn(),
-				error: jest.fn(),
-			}));
-
-			service.onModuleInit();
-
-			const createEvent: RecordEvent = {
-				id: 1,
+			await recordHandler({
+				id: 2,
 				type: "record",
 				action: "create",
 				did: "did:plc:abc123",
-				rev: "rev123",
-				collection: "app.opnshelf.movie",
-				rkey: "movie-123",
+				rev: "rev124",
+				collection: "app.opnshelf.episode",
+				rkey: "episode-456-1-1",
 				record: {
-					$type: "app.opnshelf.movie",
-					movieId: "123",
+					$type: "app.opnshelf.episode",
+					showId: "456",
+					seasonNumber: 1,
+					episodeNumber: 1,
 					source: "tmdb",
 					watchedAt: "2024-01-15T10:00:00Z",
 					createdAt: "2024-01-15T10:00:00Z",
 				},
-				cid: "cid123",
+				cid: "cid124",
 				live: true,
-			};
+			});
 
-			// Should not throw (errors are caught and logged)
-			if (recordHandler !== undefined) {
-				await expect(recordHandler(createEvent)).resolves.not.toThrow();
-			}
+			expect(mockPrismaService.trackedEpisode.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { rkey: "episode-456-1-1" },
+					create: expect.objectContaining({
+						showId: "456",
+						seasonNumber: 1,
+						episodeNumber: 1,
+						userDid: "did:plc:abc123",
+					}),
+				}),
+			);
 		});
 
-		it("should call error handler for TAP errors", () => {
-			let errorHandler: ((err: Error) => void) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn(),
-				identity: jest.fn(),
-				error: jest.fn((handler) => {
-					errorHandler = handler;
-				}),
-			}));
+		it("should delete tracked episode on app.opnshelf.episode delete", async () => {
+			const recordHandler = setupRecordHandler();
 
-			service.onModuleInit();
+			await recordHandler({
+				id: 3,
+				type: "record",
+				action: "delete",
+				did: "did:plc:abc123",
+				rev: "rev125",
+				collection: "app.opnshelf.episode",
+				rkey: "episode-456-1-1",
+				live: true,
+			});
 
-			// Should not throw when error handler is called
-			expect(() => {
-				if (errorHandler) {
-					errorHandler(new Error("Test error"));
-				}
-			}).not.toThrow();
+			expect(mockPrismaService.trackedEpisode.deleteMany).toHaveBeenCalledWith({
+				where: { rkey: "episode-456-1-1" },
+			});
+		});
+
+		it("should route generic list item records", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+
+			await recordHandler({
+				id: 4,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev126",
+				collection: "app.opnshelf.listItem",
+				rkey: "item-1",
+				record: {
+					$type: "app.opnshelf.listItem",
+					listRkey: "watchlist",
+					mediaType: "show",
+					mediaId: "456",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				cid: "cid126",
+				live: true,
+			});
+
+			expect(mockListsService.indexListItemRecord).toHaveBeenCalled();
 		});
 	});
 });

@@ -22,6 +22,11 @@ import {
 } from "../lexicons/app/opnshelf/listItem";
 import type { Main as ListItemRecord } from "../lexicons/app/opnshelf/listItem.defs";
 import {
+	$nsid as EPISODE_COLLECTION,
+	main as episodeSchema,
+} from "../lexicons/app/opnshelf/episode";
+import type { Main as EpisodeRecord } from "../lexicons/app/opnshelf/episode.defs";
+import {
 	$nsid as MOVIE_COLLECTION,
 	main as movieSchema,
 } from "../lexicons/app/opnshelf/movie";
@@ -29,6 +34,7 @@ import type { Main as MovieRecord } from "../lexicons/app/opnshelf/movie.defs";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ShowsService } from "../shows/shows.service";
 
 @Injectable()
 export class IngesterService implements OnModuleInit, OnModuleDestroy {
@@ -42,6 +48,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly prisma: PrismaService,
 		private readonly config: ConfigService,
 		private readonly moviesService: MoviesService,
+		private readonly showsService: ShowsService,
 		private readonly listsService: ListsService,
 	) {
 		this.tapUrl = this.config.get<string>("TAP_URL") ?? "http://localhost:2480";
@@ -210,6 +217,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.collection === MOVIE_COLLECTION) {
 			await this.handleMovieEvent(evt, uri);
+		} else if (evt.collection === EPISODE_COLLECTION) {
+			await this.handleEpisodeEvent(evt, uri);
 		} else if (evt.collection === LIST_COLLECTION) {
 			await this.handleListEvent(evt, uri);
 		} else if (evt.collection === LIST_ITEM_COLLECTION) {
@@ -340,6 +349,83 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		if (evt.action === "delete") {
 			this.logger.log(`Removing list record: ${uri} (rkey: ${evt.rkey})`);
 			await this.listsService.deleteListRecord(evt.rkey);
+		}
+	}
+
+	private async handleEpisodeEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.warn(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let episodeRecord: EpisodeRecord;
+			try {
+				episodeRecord = episodeSchema.parse(evt.record);
+			} catch {
+				this.logger.debug("Received invalid episode record, skipping");
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				this.logger.debug(`User ${evt.did} not in database, skipping record`);
+				return;
+			}
+
+			this.logger.log(
+				`Indexing episode record (${evt.live ? "live" : "backfill"}): ${uri}`,
+			);
+
+			const existingShow = await this.showsService.getShowByTMDBId(
+				episodeRecord.showId,
+			);
+			if (!existingShow) {
+				try {
+					const showData = await this.showsService.getShowDetails(
+						episodeRecord.showId,
+					);
+					await this.showsService.upsertShow(showData);
+				} catch (err) {
+					this.logger.error(
+						`Failed to fetch show ${episodeRecord.showId} from TMDB, skipping record`,
+						err,
+					);
+					return;
+				}
+			}
+
+			await this.prisma.trackedEpisode.upsert({
+				where: { rkey: evt.rkey },
+				create: {
+					uri,
+					rkey: evt.rkey,
+					cid: evt.cid ?? "",
+					userDid: evt.did,
+					showId: episodeRecord.showId,
+					seasonNumber: episodeRecord.seasonNumber,
+					episodeNumber: episodeRecord.episodeNumber,
+					watchedDate: new Date(episodeRecord.watchedAt),
+					status: "watched",
+				},
+				update: {
+					cid: evt.cid ?? "",
+					seasonNumber: episodeRecord.seasonNumber,
+					episodeNumber: episodeRecord.episodeNumber,
+					watchedDate: new Date(episodeRecord.watchedAt),
+					status: "watched",
+				},
+			});
+		}
+
+		if (evt.action === "delete") {
+			this.logger.log(`Removing episode record: ${uri} (rkey: ${evt.rkey})`);
+			await this.prisma.trackedEpisode.deleteMany({
+				where: { rkey: evt.rkey },
+			});
 		}
 	}
 

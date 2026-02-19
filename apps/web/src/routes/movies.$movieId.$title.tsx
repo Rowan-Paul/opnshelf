@@ -1,6 +1,6 @@
 import {
 	authControllerMeOptions,
-	listsControllerGetListsForMovieOptions,
+	listsControllerGetListsForItemOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetMovieWatchHistoryOptions,
@@ -137,8 +137,8 @@ function MovieDetailPage() {
 	});
 
 	const { data: listsForMovie } = useQuery({
-		...listsControllerGetListsForMovieOptions({
-			path: { movieId },
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "movie", mediaId: movieId },
 		}),
 		enabled: !!user?.did,
 	});

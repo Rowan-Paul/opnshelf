@@ -5,6 +5,7 @@ import { IngesterModule } from "./ingester/ingester.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { ShowsModule } from "./shows/shows.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -16,6 +17,7 @@ import { UsersModule } from "./users/users.module";
 		IngesterModule,
 		UsersModule,
 		ListsModule,
+		ShowsModule,
 	],
 })
 export class AppModule {}

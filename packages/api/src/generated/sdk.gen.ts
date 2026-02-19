@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, ListsControllerAddToListData, ListsControllerAddToListErrors, ListsControllerAddToListResponses, ListsControllerCreateListData, ListsControllerCreateListErrors, ListsControllerCreateListResponses, ListsControllerDeleteListData, ListsControllerDeleteListErrors, ListsControllerDeleteListResponses, ListsControllerGetListData, ListsControllerGetListErrors, ListsControllerGetListResponses, ListsControllerGetListsForMovieData, ListsControllerGetListsForMovieErrors, ListsControllerGetListsForMovieResponses, ListsControllerGetUserListsData, ListsControllerGetUserListsErrors, ListsControllerGetUserListsResponses, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsErrors, ListsControllerInitDefaultListsResponses, ListsControllerRemoveFromListData, ListsControllerRemoveFromListErrors, ListsControllerRemoveFromListResponses, ListsControllerUpdateListData, ListsControllerUpdateListErrors, ListsControllerUpdateListResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, ListsControllerAddItemToListData, ListsControllerAddItemToListErrors, ListsControllerAddItemToListResponses, ListsControllerAddToListData, ListsControllerAddToListResponses, ListsControllerCreateListData, ListsControllerCreateListErrors, ListsControllerCreateListResponses, ListsControllerDeleteListData, ListsControllerDeleteListErrors, ListsControllerDeleteListResponses, ListsControllerGetListData, ListsControllerGetListErrors, ListsControllerGetListResponses, ListsControllerGetListsForItemData, ListsControllerGetListsForItemErrors, ListsControllerGetListsForItemResponses, ListsControllerGetListsForMovieData, ListsControllerGetListsForMovieResponses, ListsControllerGetUserListsData, ListsControllerGetUserListsErrors, ListsControllerGetUserListsResponses, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsErrors, ListsControllerInitDefaultListsResponses, ListsControllerRemoveFromListData, ListsControllerRemoveFromListResponses, ListsControllerRemoveItemFromListData, ListsControllerRemoveItemFromListErrors, ListsControllerRemoveItemFromListResponses, ListsControllerUpdateListData, ListsControllerUpdateListErrors, ListsControllerUpdateListResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryErrors, ShowsControllerDeleteEpisodeWatchHistoryEntryResponses, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponses, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponses, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponses, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponses, ShowsControllerGetShowResponses, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryErrors, ShowsControllerGetShowWatchHistoryResponses, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponses, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedErrors, ShowsControllerMarkWatchedResponses, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponses, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -101,6 +101,68 @@ export const authControllerMe = <ThrowOnError extends boolean = false>(options?:
 export const authControllerLogout = <ThrowOnError extends boolean = false>(options?: Options<AuthControllerLogoutData, ThrowOnError>) => (options?.client ?? client).post<AuthControllerLogoutResponses, unknown, ThrowOnError>({ url: '/auth/logout', ...options });
 
 /**
+ * Search shows from TMDB
+ */
+export const showsControllerSearchShows = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerSearchShowsData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerSearchShowsResponses, unknown, ThrowOnError>({ url: '/shows/search', ...options });
+
+/**
+ * Discover popular shows from TMDB
+ */
+export const showsControllerDiscoverShows = <ThrowOnError extends boolean = false>(options?: Options<ShowsControllerDiscoverShowsData, ThrowOnError>) => (options?.client ?? client).get<ShowsControllerDiscoverShowsResponses, unknown, ThrowOnError>({ url: '/shows/discover', ...options });
+
+/**
+ * Get show details from TMDB
+ */
+export const showsControllerGetShowDetails = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowDetailsData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowDetailsResponses, unknown, ThrowOnError>({ url: '/shows/tmdb/{showId}', ...options });
+
+/**
+ * Get season details from TMDB
+ */
+export const showsControllerGetSeasonDetails = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetSeasonDetailsData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetSeasonDetailsResponses, unknown, ThrowOnError>({ url: '/shows/tmdb/{showId}/season/{seasonNumber}', ...options });
+
+/**
+ * Get episode details from TMDB
+ */
+export const showsControllerGetEpisodeDetails = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetEpisodeDetailsData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetEpisodeDetailsResponses, unknown, ThrowOnError>({ url: '/shows/tmdb/{showId}/season/{seasonNumber}/episode/{episodeNumber}', ...options });
+
+/**
+ * Get tracked shows for a user
+ */
+export const showsControllerGetUserShows = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetUserShowsData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetUserShowsResponses, unknown, ThrowOnError>({ url: '/shows/user/{userDid}', ...options });
+
+/**
+ * Mark an episode as watched
+ */
+export const showsControllerMarkWatched = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerMarkWatchedData, ThrowOnError>) => (options.client ?? client).post<ShowsControllerMarkWatchedResponses, ShowsControllerMarkWatchedErrors, ThrowOnError>({
+    url: '/shows/watched',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Unmark episode(s) as watched
+ */
+export const showsControllerUnmarkWatched = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerUnmarkWatchedData, ThrowOnError>) => (options.client ?? client).delete<ShowsControllerUnmarkWatchedResponses, unknown, ThrowOnError>({ url: '/shows/watched/{showId}', ...options });
+
+/**
+ * Get show from database
+ */
+export const showsControllerGetShow = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowResponses, unknown, ThrowOnError>({ url: '/shows/{showId}', ...options });
+
+/**
+ * Get watch history for a specific show
+ */
+export const showsControllerGetShowWatchHistory = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowWatchHistoryData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowWatchHistoryResponses, ShowsControllerGetShowWatchHistoryErrors, ThrowOnError>({ url: '/shows/user/{userDid}/show/{showId}/history', ...options });
+
+/**
+ * Delete a specific episode watch history entry
+ */
+export const showsControllerDeleteEpisodeWatchHistoryEntry = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerDeleteEpisodeWatchHistoryEntryData, ThrowOnError>) => (options.client ?? client).delete<ShowsControllerDeleteEpisodeWatchHistoryEntryResponses, ShowsControllerDeleteEpisodeWatchHistoryEntryErrors, ThrowOnError>({ url: '/shows/history/{trackedEpisodeId}', ...options });
+
+/**
  * Get all lists for the authenticated user
  */
 export const listsControllerGetUserLists = <ThrowOnError extends boolean = false>(options?: Options<ListsControllerGetUserListsData, ThrowOnError>) => (options?.client ?? client).get<ListsControllerGetUserListsResponses, ListsControllerGetUserListsErrors, ThrowOnError>({ url: '/lists', ...options });
@@ -145,10 +207,10 @@ export const listsControllerUpdateList = <ThrowOnError extends boolean = false>(
 });
 
 /**
- * Add a movie to a list
+ * Add an item to a list
  */
-export const listsControllerAddToList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerAddToListData, ThrowOnError>) => (options.client ?? client).post<ListsControllerAddToListResponses, ListsControllerAddToListErrors, ThrowOnError>({
-    url: '/lists/{slug}/movies',
+export const listsControllerAddItemToList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerAddItemToListData, ThrowOnError>) => (options.client ?? client).post<ListsControllerAddItemToListResponses, ListsControllerAddItemToListErrors, ThrowOnError>({
+    url: '/lists/{slug}/items',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -157,14 +219,29 @@ export const listsControllerAddToList = <ThrowOnError extends boolean = false>(o
 });
 
 /**
- * Remove a movie from a list
+ * Add a movie to a list (legacy route)
  */
-export const listsControllerRemoveFromList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerRemoveFromListData, ThrowOnError>) => (options.client ?? client).delete<ListsControllerRemoveFromListResponses, ListsControllerRemoveFromListErrors, ThrowOnError>({ url: '/lists/{slug}/movies/{movieId}', ...options });
+export const listsControllerAddToList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerAddToListData, ThrowOnError>) => (options.client ?? client).post<ListsControllerAddToListResponses, unknown, ThrowOnError>({ url: '/lists/{slug}/movies', ...options });
 
 /**
- * Get all lists with membership status for a movie
+ * Remove an item from a list
  */
-export const listsControllerGetListsForMovie = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListsForMovieData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListsForMovieResponses, ListsControllerGetListsForMovieErrors, ThrowOnError>({ url: '/lists/for-movie/{movieId}', ...options });
+export const listsControllerRemoveItemFromList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerRemoveItemFromListData, ThrowOnError>) => (options.client ?? client).delete<ListsControllerRemoveItemFromListResponses, ListsControllerRemoveItemFromListErrors, ThrowOnError>({ url: '/lists/{slug}/items/{mediaType}/{mediaId}', ...options });
+
+/**
+ * Remove a movie from a list (legacy route)
+ */
+export const listsControllerRemoveFromList = <ThrowOnError extends boolean = false>(options: Options<ListsControllerRemoveFromListData, ThrowOnError>) => (options.client ?? client).delete<ListsControllerRemoveFromListResponses, unknown, ThrowOnError>({ url: '/lists/{slug}/movies/{movieId}', ...options });
+
+/**
+ * Get all lists with membership status for an item
+ */
+export const listsControllerGetListsForItem = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListsForItemData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListsForItemResponses, ListsControllerGetListsForItemErrors, ThrowOnError>({ url: '/lists/for-item/{mediaType}/{mediaId}', ...options });
+
+/**
+ * Get all lists with membership status for a movie (legacy route)
+ */
+export const listsControllerGetListsForMovie = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListsForMovieData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListsForMovieResponses, unknown, ThrowOnError>({ url: '/lists/for-movie/{movieId}', ...options });
 
 /**
  * Get current user's settings

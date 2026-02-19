@@ -388,9 +388,11 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   Movie: 'Movie',
+  Show: 'Show',
   TrackedMovie: 'TrackedMovie',
+  TrackedEpisode: 'TrackedEpisode',
   MovieList: 'MovieList',
-  MovieListItem: 'MovieListItem'
+  ListItem: 'ListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -406,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "authSession" | "authState" | "movie" | "trackedMovie" | "movieList" | "movieListItem"
+    modelProps: "user" | "authSession" | "authState" | "movie" | "show" | "trackedMovie" | "trackedEpisode" | "movieList" | "listItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -706,6 +708,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Show: {
+      payload: Prisma.$ShowPayload<ExtArgs>
+      fields: Prisma.ShowFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShowFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShowFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        findFirst: {
+          args: Prisma.ShowFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShowFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        findMany: {
+          args: Prisma.ShowFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>[]
+        }
+        create: {
+          args: Prisma.ShowCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        createMany: {
+          args: Prisma.ShowCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShowCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>[]
+        }
+        delete: {
+          args: Prisma.ShowDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        update: {
+          args: Prisma.ShowUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShowDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShowUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShowUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShowUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShowPayload>
+        }
+        aggregate: {
+          args: Prisma.ShowAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShow>
+        }
+        groupBy: {
+          args: Prisma.ShowGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShowGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShowCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShowCountAggregateOutputType> | number
+        }
+      }
+    }
     TrackedMovie: {
       payload: Prisma.$TrackedMoviePayload<ExtArgs>
       fields: Prisma.TrackedMovieFieldRefs
@@ -777,6 +853,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TrackedMovieCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TrackedMovieCountAggregateOutputType> | number
+        }
+      }
+    }
+    TrackedEpisode: {
+      payload: Prisma.$TrackedEpisodePayload<ExtArgs>
+      fields: Prisma.TrackedEpisodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TrackedEpisodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TrackedEpisodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        findFirst: {
+          args: Prisma.TrackedEpisodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TrackedEpisodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        findMany: {
+          args: Prisma.TrackedEpisodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>[]
+        }
+        create: {
+          args: Prisma.TrackedEpisodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        createMany: {
+          args: Prisma.TrackedEpisodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TrackedEpisodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>[]
+        }
+        delete: {
+          args: Prisma.TrackedEpisodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        update: {
+          args: Prisma.TrackedEpisodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        deleteMany: {
+          args: Prisma.TrackedEpisodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TrackedEpisodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TrackedEpisodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>[]
+        }
+        upsert: {
+          args: Prisma.TrackedEpisodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedEpisodePayload>
+        }
+        aggregate: {
+          args: Prisma.TrackedEpisodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTrackedEpisode>
+        }
+        groupBy: {
+          args: Prisma.TrackedEpisodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedEpisodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TrackedEpisodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedEpisodeCountAggregateOutputType> | number
         }
       }
     }
@@ -854,77 +1004,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    MovieListItem: {
-      payload: Prisma.$MovieListItemPayload<ExtArgs>
-      fields: Prisma.MovieListItemFieldRefs
+    ListItem: {
+      payload: Prisma.$ListItemPayload<ExtArgs>
+      fields: Prisma.ListItemFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.MovieListItemFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload> | null
+          args: Prisma.ListItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.MovieListItemFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         findFirst: {
-          args: Prisma.MovieListItemFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload> | null
+          args: Prisma.ListItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.MovieListItemFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         findMany: {
-          args: Prisma.MovieListItemFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+          args: Prisma.ListItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>[]
         }
         create: {
-          args: Prisma.MovieListItemCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         createMany: {
-          args: Prisma.MovieListItemCreateManyArgs<ExtArgs>
+          args: Prisma.ListItemCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.MovieListItemCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+          args: Prisma.ListItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>[]
         }
         delete: {
-          args: Prisma.MovieListItemDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         update: {
-          args: Prisma.MovieListItemUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         deleteMany: {
-          args: Prisma.MovieListItemDeleteManyArgs<ExtArgs>
+          args: Prisma.ListItemDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.MovieListItemUpdateManyArgs<ExtArgs>
+          args: Prisma.ListItemUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.MovieListItemUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>[]
+          args: Prisma.ListItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>[]
         }
         upsert: {
-          args: Prisma.MovieListItemUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MovieListItemPayload>
+          args: Prisma.ListItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ListItemPayload>
         }
         aggregate: {
-          args: Prisma.MovieListItemAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateMovieListItem>
+          args: Prisma.ListItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateListItem>
         }
         groupBy: {
-          args: Prisma.MovieListItemGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.MovieListItemGroupByOutputType>[]
+          args: Prisma.ListItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ListItemGroupByOutputType>[]
         }
         count: {
-          args: Prisma.MovieListItemCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.MovieListItemCountAggregateOutputType> | number
+          args: Prisma.ListItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ListItemCountAggregateOutputType> | number
         }
       }
     }
@@ -1018,6 +1168,22 @@ export const MovieScalarFieldEnum = {
 export type MovieScalarFieldEnum = (typeof MovieScalarFieldEnum)[keyof typeof MovieScalarFieldEnum]
 
 
+export const ShowScalarFieldEnum = {
+  showId: 'showId',
+  title: 'title',
+  posterPath: 'posterPath',
+  backdropPath: 'backdropPath',
+  firstAirYear: 'firstAirYear',
+  firstAirDate: 'firstAirDate',
+  overview: 'overview',
+  colors: 'colors',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShowScalarFieldEnum = (typeof ShowScalarFieldEnum)[keyof typeof ShowScalarFieldEnum]
+
+
 export const TrackedMovieScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
@@ -1032,6 +1198,24 @@ export const TrackedMovieScalarFieldEnum = {
 } as const
 
 export type TrackedMovieScalarFieldEnum = (typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum]
+
+
+export const TrackedEpisodeScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  showId: 'showId',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  status: 'status',
+  watchedDate: 'watchedDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackedEpisodeScalarFieldEnum = (typeof TrackedEpisodeScalarFieldEnum)[keyof typeof TrackedEpisodeScalarFieldEnum]
 
 
 export const MovieListScalarFieldEnum = {
@@ -1051,19 +1235,22 @@ export const MovieListScalarFieldEnum = {
 export type MovieListScalarFieldEnum = (typeof MovieListScalarFieldEnum)[keyof typeof MovieListScalarFieldEnum]
 
 
-export const MovieListItemScalarFieldEnum = {
+export const ListItemScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
   uri: 'uri',
   cid: 'cid',
   listId: 'listId',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
   movieId: 'movieId',
+  showId: 'showId',
   notes: 'notes',
   position: 'position',
   createdAt: 'createdAt'
 } as const
 
-export type MovieListItemScalarFieldEnum = (typeof MovieListItemScalarFieldEnum)[keyof typeof MovieListItemScalarFieldEnum]
+export type ListItemScalarFieldEnum = (typeof ListItemScalarFieldEnum)[keyof typeof ListItemScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1173,6 +1360,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'MediaType'
+ */
+export type EnumMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MediaType'>
+    
+
+
+/**
+ * Reference to a field of type 'MediaType[]'
+ */
+export type ListEnumMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MediaType[]'>
     
 
 
@@ -1288,9 +1489,11 @@ export type GlobalOmitConfig = {
   authSession?: Prisma.AuthSessionOmit
   authState?: Prisma.AuthStateOmit
   movie?: Prisma.MovieOmit
+  show?: Prisma.ShowOmit
   trackedMovie?: Prisma.TrackedMovieOmit
+  trackedEpisode?: Prisma.TrackedEpisodeOmit
   movieList?: Prisma.MovieListOmit
-  movieListItem?: Prisma.MovieListItemOmit
+  listItem?: Prisma.ListItemOmit
 }
 
 /* Types for Logging */

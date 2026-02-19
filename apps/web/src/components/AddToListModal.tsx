@@ -1,9 +1,9 @@
 import {
-	listsControllerAddToListMutation,
+	listsControllerAddItemToListMutation,
 	listsControllerGetListQueryKey,
-	listsControllerGetListsForMovieOptions,
-	listsControllerGetListsForMovieQueryKey,
-	listsControllerRemoveFromListMutation,
+	listsControllerGetListsForItemOptions,
+	listsControllerGetListsForItemQueryKey,
+	listsControllerRemoveItemFromListMutation,
 	type UserDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,19 +37,19 @@ export function AddToListModal({
 	const queryClient = useQueryClient();
 
 	const { data: listsForMovie, isLoading } = useQuery({
-		...listsControllerGetListsForMovieOptions({
-			path: { movieId },
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "movie", mediaId: movieId },
 		}),
 		enabled: open && !!user?.did,
 	});
 
 	const addMutation = useMutation({
-		...listsControllerAddToListMutation(),
+		...listsControllerAddItemToListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
-				queryKey: listsControllerGetListsForMovieQueryKey({
-					path: { movieId },
+				queryKey: listsControllerGetListsForItemQueryKey({
+					path: { mediaType: "movie", mediaId: movieId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -63,12 +63,12 @@ export function AddToListModal({
 	});
 
 	const removeMutation = useMutation({
-		...listsControllerRemoveFromListMutation(),
+		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
-				queryKey: listsControllerGetListsForMovieQueryKey({
-					path: { movieId },
+				queryKey: listsControllerGetListsForItemQueryKey({
+					path: { mediaType: "movie", mediaId: movieId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -84,12 +84,12 @@ export function AddToListModal({
 	const handleToggleList = (slug: string, isInList: boolean) => {
 		if (isInList) {
 			removeMutation.mutate({
-				path: { slug, movieId },
+				path: { slug, mediaType: "movie", mediaId: movieId },
 			});
 		} else {
 			addMutation.mutate({
 				path: { slug },
-				body: { movieId },
+				body: { mediaType: "movie", mediaId: movieId },
 			});
 		}
 	};

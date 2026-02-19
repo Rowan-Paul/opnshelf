@@ -26,7 +26,7 @@ import {
 	AddToListDto,
 	CreateListDto,
 	MovieListDto,
-	MovieListsForMovieDto,
+	MovieListsForItemDto,
 	MovieListSummaryDto,
 	MovieListWithMoviesDto,
 	UpdateListDto,
@@ -146,15 +146,15 @@ export class ListsController {
 		);
 	}
 
-	@Post(":slug/movies")
+	@Post(":slug/items")
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
-	@ApiOperation({ summary: "Add a movie to a list" })
+	@ApiOperation({ summary: "Add an item to a list" })
 	@ApiParam({ name: "slug", description: "List slug identifier" })
-	@ApiOkResponse({ description: "Movie added to list" })
-	@ApiNotFoundResponse({ description: "List or movie not found" })
+	@ApiOkResponse({ description: "Item added to list" })
+	@ApiNotFoundResponse({ description: "List or media item not found" })
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async addToList(
+	async addItemToList(
 		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
 		@Body() dto: AddToListDto,
@@ -168,15 +168,54 @@ export class ListsController {
 		return { success: true };
 	}
 
+	@Post(":slug/movies")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Add a movie to a list (legacy route)" })
+	async addToList(
+		@Req() req: AuthenticatedRequest,
+		@Param("slug") slug: string,
+		@Body() dto: { movieId: string; notes?: string },
+	): Promise<{ success: boolean }> {
+		await this.listsService.addToList(
+			req.user.did,
+			req.user.session as ATSession,
+			slug,
+			{ mediaType: "movie", mediaId: dto.movieId, notes: dto.notes },
+		);
+		return { success: true };
+	}
+
+	@Delete(":slug/items/:mediaType/:mediaId")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Remove an item from a list" })
+	@ApiParam({ name: "slug", description: "List slug identifier" })
+	@ApiParam({ name: "mediaType", description: "Media type (movie or show)" })
+	@ApiParam({ name: "mediaId", description: "TMDB media ID" })
+	@ApiOkResponse({ description: "Item removed from list" })
+	@ApiNotFoundResponse({ description: "List not found" })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async removeItemFromList(
+		@Req() req: AuthenticatedRequest,
+		@Param("slug") slug: string,
+		@Param("mediaType") mediaType: "movie" | "show",
+		@Param("mediaId") mediaId: string,
+	): Promise<{ success: boolean }> {
+		await this.listsService.removeFromList(
+			req.user.did,
+			req.user.session as ATSession,
+			slug,
+			mediaType,
+			mediaId,
+		);
+		return { success: true };
+	}
+
 	@Delete(":slug/movies/:movieId")
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
-	@ApiOperation({ summary: "Remove a movie from a list" })
-	@ApiParam({ name: "slug", description: "List slug identifier" })
-	@ApiParam({ name: "movieId", description: "TMDB movie ID" })
-	@ApiOkResponse({ description: "Movie removed from list" })
-	@ApiNotFoundResponse({ description: "List not found" })
-	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	@ApiOperation({ summary: "Remove a movie from a list (legacy route)" })
 	async removeFromList(
 		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
@@ -186,29 +225,49 @@ export class ListsController {
 			req.user.did,
 			req.user.session as ATSession,
 			slug,
+			"movie",
 			movieId,
 		);
 		return { success: true };
 	}
 
-	@Get("for-movie/:movieId")
+	@Get("for-item/:mediaType/:mediaId")
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
-	@ApiOperation({ summary: "Get all lists with membership status for a movie" })
-	@ApiParam({ name: "movieId", description: "TMDB movie ID" })
+	@ApiOperation({ summary: "Get all lists with membership status for an item" })
+	@ApiParam({ name: "mediaType", description: "Media type (movie or show)" })
+	@ApiParam({ name: "mediaId", description: "TMDB media ID" })
 	@ApiOkResponse({
 		description: "Lists with membership status",
-		type: [MovieListsForMovieDto],
+		type: [MovieListsForItemDto],
 	})
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async getListsForMovie(
+	async getListsForItem(
 		@Req() req: AuthenticatedRequest,
-		@Param("movieId") movieId: string,
-	): Promise<MovieListsForMovieDto[]> {
+		@Param("mediaType") mediaType: "movie" | "show",
+		@Param("mediaId") mediaId: string,
+	): Promise<MovieListsForItemDto[]> {
 		await this.listsService.ensureDefaultLists(
 			req.user.did,
 			req.user.session as ATSession,
 		);
-		return this.listsService.getListsForMovie(req.user.did, movieId);
+		return this.listsService.getListsForItem(req.user.did, mediaType, mediaId);
+	}
+
+	@Get("for-movie/:movieId")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: "Get all lists with membership status for a movie (legacy route)",
+	})
+	async getListsForMovie(
+		@Req() req: AuthenticatedRequest,
+		@Param("movieId") movieId: string,
+	): Promise<MovieListsForItemDto[]> {
+		await this.listsService.ensureDefaultLists(
+			req.user.did,
+			req.user.session as ATSession,
+		);
+		return this.listsService.getListsForItem(req.user.did, "movie", movieId);
 	}
 }

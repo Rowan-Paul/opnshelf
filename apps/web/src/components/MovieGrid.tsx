@@ -1,4 +1,5 @@
 import type { UserDto } from "@opnshelf/api";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MovieCardData } from "./MovieCard";
 import { MovieCard } from "./MovieCard";
@@ -8,6 +9,7 @@ interface MovieGridProps {
 	user: UserDto | null | undefined;
 	watchedMovieIds: Set<string>;
 	showActions?: boolean;
+	gridClassName?: string;
 }
 
 export function MovieGrid({
@@ -15,9 +17,15 @@ export function MovieGrid({
 	user,
 	watchedMovieIds,
 	showActions = true,
+	gridClassName,
 }: MovieGridProps) {
 	return (
-		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+		<div
+			className={cn(
+				"grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+				gridClassName,
+			)}
+		>
 			{movies.map((movie) => (
 				<MovieCard
 					key={movie.id}

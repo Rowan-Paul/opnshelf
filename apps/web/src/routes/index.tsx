@@ -91,7 +91,7 @@ function LandingHomePage() {
 						Your personal media tracker powered by AT Protocol
 					</p>
 					<M3Button variant="filled" size="lg" asChild>
-						<Link to="/search" search={{ q: "" }}>
+						<Link to="/search" search={{ q: "", type: "all" }}>
 							<Search className="w-5 h-5 mr-2" />
 							Search Movies
 						</Link>
@@ -209,7 +209,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 					</p>
 				</div>
 				<M3Button variant="filled" asChild>
-					<Link to="/search" search={{ q: "" }}>
+					<Link to="/search" search={{ q: "", type: "all" }}>
 						<Search className="w-5 h-5 mr-2" />
 						Search Movies
 					</Link>
@@ -313,7 +313,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 							</M3CardHeader>
 							<M3CardContent>
 								<M3Button variant="filled" asChild>
-									<Link to="/search" search={{ q: "" }}>
+									<Link to="/search" search={{ q: "", type: "all" }}>
 										Search movies
 									</Link>
 								</M3Button>

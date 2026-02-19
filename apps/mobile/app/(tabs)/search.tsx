@@ -5,13 +5,16 @@ import {
 	moviesControllerMarkWatchedMutation,
 	moviesControllerSearchMoviesOptions,
 	moviesControllerUnmarkWatchedMutation,
+	showsControllerDiscoverShowsOptions,
+	showsControllerSearchShowsOptions,
 	type TmdbMovieResultDto,
+	type TmdbShowResultDto,
 } from "@opnshelf/api";
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
 import { SearchInput } from "@/components/ui/Input";
@@ -26,6 +29,7 @@ const DEBOUNCE_MS = 300;
 
 export default function SearchScreen() {
 	const [query, setQuery] = useState("");
+	const [mediaType, setMediaType] = useState<"all" | "movies" | "shows">("all");
 	const [debouncedQuery, setDebouncedQuery] = useState("");
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const { user } = useAuth();
@@ -65,13 +69,38 @@ export default function SearchScreen() {
 		...moviesControllerSearchMoviesOptions({
 			query: { query: debouncedQuery },
 		}),
-		enabled: debouncedQuery.length > 0,
+		enabled:
+			debouncedQuery.length > 0 &&
+			(mediaType === "all" || mediaType === "movies"),
+	});
+
+	const {
+		data: showData,
+		isLoading: isShowLoading,
+		error: showError,
+	} = useQuery({
+		...showsControllerSearchShowsOptions({
+			query: { query: debouncedQuery },
+		}),
+		enabled:
+			debouncedQuery.length > 0 &&
+			(mediaType === "all" || mediaType === "shows"),
 	});
 
 	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
 		...moviesControllerDiscoverMoviesOptions({}),
-		enabled: debouncedQuery.length === 0,
+		enabled:
+			debouncedQuery.length === 0 &&
+			(mediaType === "all" || mediaType === "movies"),
 	});
+
+	const { data: discoverShowsData, isLoading: isDiscoverShowsLoading } =
+		useQuery({
+			...showsControllerDiscoverShowsOptions({}),
+			enabled:
+				debouncedQuery.length === 0 &&
+				(mediaType === "all" || mediaType === "shows"),
+		});
 
 	const markMutation = useMutation({
 		...moviesControllerMarkWatchedMutation(),
@@ -133,6 +162,16 @@ export default function SearchScreen() {
 		[],
 	);
 
+	const handleShowPress = useCallback((show: { id: number; name: string }) => {
+		router.push({
+			pathname: "/show/[id]",
+			params: {
+				id: show.id.toString(),
+				title: createTitleSlug(show.name),
+			},
+		});
+	}, []);
+
 	const renderMovieItem: ListRenderItem<TmdbMovieResultDto> = useCallback(
 		({ item }) => {
 			const movieId = item.id.toString();
@@ -185,6 +224,12 @@ export default function SearchScreen() {
 		</View>
 	);
 
+	const showResults = useMemo(() => showData?.results || [], [showData]);
+	const discoverShowResults = useMemo(
+		() => discoverShowsData?.results || [],
+		[discoverShowsData],
+	);
+
 	return (
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: colors.background }]}
@@ -204,12 +249,38 @@ export default function SearchScreen() {
 				onClear={() => setQuery("")}
 			/>
 
-			{isLoading && renderSkeleton()}
+			<View style={styles.filterRow}>
+				{(["all", "movies", "shows"] as const).map((tab) => (
+					<Pressable
+						key={tab}
+						onPress={() => setMediaType(tab)}
+						style={[
+							styles.filterButton,
+							{
+								backgroundColor:
+									mediaType === tab ? colors.primary : colors.surfaceContainer,
+							},
+						]}
+					>
+						<Text
+							style={{
+								color: mediaType === tab ? colors.onPrimary : colors.onSurface,
+								fontWeight: "600",
+								textTransform: "capitalize",
+							}}
+						>
+							{tab}
+						</Text>
+					</Pressable>
+				))}
+			</View>
 
-			{error && (
+			{(isLoading || isShowLoading) && renderSkeleton()}
+
+			{(error || showError) && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.errorText, { color: colors.error }]}>
-						Error: {error.message}
+						Error: {(error || showError)?.message}
 					</Text>
 				</View>
 			)}
@@ -229,6 +300,36 @@ export default function SearchScreen() {
 							Found {data.total_results.toLocaleString()} results
 						</Text>
 					}
+				/>
+			)}
+
+			{showData && showResults.length > 0 && (
+				<FlashList
+					data={showResults}
+					renderItem={({ item }) => (
+						<View style={styles.showRow}>
+							<Pressable
+								onPress={() => handleShowPress(item as TmdbShowResultDto)}
+								style={[
+									styles.showCard,
+									{ backgroundColor: colors.surfaceContainer },
+								]}
+							>
+								<Text style={[styles.showTitle, { color: colors.onSurface }]}>
+									{(item as TmdbShowResultDto).name}
+								</Text>
+								<Text
+									style={[styles.showMeta, { color: colors.onSurfaceVariant }]}
+								>
+									{(item as TmdbShowResultDto).first_air_date
+										? (item as TmdbShowResultDto).first_air_date?.split("-")[0]
+										: "Unknown year"}
+								</Text>
+							</Pressable>
+						</View>
+					)}
+					keyExtractor={(item) => `show-${item.id}`}
+					contentContainerStyle={styles.listContent}
 				/>
 			)}
 
@@ -258,6 +359,57 @@ export default function SearchScreen() {
 							extraData={watchedMovieIds}
 						/>
 					)}
+					{(mediaType === "all" || mediaType === "shows") && (
+						<>
+							<View style={styles.header}>
+								<Text style={[styles.title, { color: colors.onBackground }]}>
+									Popular Shows
+								</Text>
+							</View>
+							{isDiscoverShowsLoading && renderSkeleton()}
+							{discoverShowResults.length > 0 && (
+								<FlashList
+									data={discoverShowResults}
+									renderItem={({ item }) => (
+										<View style={styles.showRow}>
+											<Pressable
+												onPress={() =>
+													handleShowPress(item as TmdbShowResultDto)
+												}
+												style={[
+													styles.showCard,
+													{ backgroundColor: colors.surfaceContainer },
+												]}
+											>
+												<Text
+													style={[
+														styles.showTitle,
+														{ color: colors.onSurface },
+													]}
+												>
+													{(item as TmdbShowResultDto).name}
+												</Text>
+												<Text
+													style={[
+														styles.showMeta,
+														{ color: colors.onSurfaceVariant },
+													]}
+												>
+													{(item as TmdbShowResultDto).first_air_date
+														? (item as TmdbShowResultDto).first_air_date?.split(
+																"-",
+															)[0]
+														: "Unknown year"}
+												</Text>
+											</Pressable>
+										</View>
+									)}
+									keyExtractor={(item) => `discover-show-${item.id}`}
+									contentContainerStyle={styles.listContent}
+								/>
+							)}
+						</>
+					)}
 				</View>
 			)}
 		</SafeAreaView>
@@ -281,8 +433,34 @@ const styles = StyleSheet.create({
 		marginHorizontal: spacing.lg,
 		marginBottom: spacing.md,
 	},
+	filterRow: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		marginHorizontal: spacing.lg,
+		marginBottom: spacing.md,
+	},
+	filterButton: {
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+		borderRadius: borderRadius.full,
+	},
 	listContent: {
 		padding: spacing.lg,
+	},
+	showRow: {
+		marginBottom: spacing.sm,
+	},
+	showCard: {
+		borderRadius: borderRadius.md,
+		padding: spacing.md,
+	},
+	showTitle: {
+		fontSize: 16,
+		fontWeight: "600",
+	},
+	showMeta: {
+		fontSize: 13,
+		marginTop: spacing.xs,
 	},
 	resultsCount: {
 		fontSize: 14,

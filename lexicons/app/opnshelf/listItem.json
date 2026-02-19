@@ -4,23 +4,28 @@
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "A movie item in a list for OpnShelf",
+			"description": "A media item in a list for OpnShelf",
 			"key": "tid",
 			"record": {
 				"type": "object",
-				"required": ["listRkey", "movieId", "createdAt"],
+				"required": ["listRkey", "mediaType", "mediaId", "createdAt"],
 				"properties": {
 					"listRkey": {
 						"type": "string",
 						"description": "Rkey of the parent list"
 					},
-					"movieId": {
+					"mediaType": {
 						"type": "string",
-						"description": "TMDB movie ID"
+						"description": "Media type",
+						"enum": ["movie", "show"]
+					},
+					"mediaId": {
+						"type": "string",
+						"description": "TMDB media ID"
 					},
 					"notes": {
 						"type": "string",
-						"description": "Optional user notes about the movie in this list"
+						"description": "Optional user notes about the media in this list"
 					},
 					"createdAt": {
 						"type": "string",

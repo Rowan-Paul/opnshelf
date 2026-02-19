@@ -1,0 +1,50 @@
+{
+	"lexicon": 1,
+	"id": "app.opnshelf.episode",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A tracked show episode record for OpnShelf",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": [
+					"showId",
+					"seasonNumber",
+					"episodeNumber",
+					"source",
+					"watchedAt",
+					"createdAt"
+				],
+				"properties": {
+					"showId": {
+						"type": "string",
+						"description": "TMDB show ID"
+					},
+					"seasonNumber": {
+						"type": "integer",
+						"description": "TMDB season number"
+					},
+					"episodeNumber": {
+						"type": "integer",
+						"description": "TMDB episode number"
+					},
+					"source": {
+						"type": "string",
+						"description": "Source of the show data (e.g., tmdb)"
+					},
+					"watchedAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "When the episode was watched"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

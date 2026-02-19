@@ -4,8 +4,8 @@ import {
 	listsControllerGetListOptions,
 	listsControllerGetListQueryKey,
 	listsControllerGetUserListsQueryKey,
-	listsControllerRemoveFromListMutation,
-	type MovieInListDto,
+	listsControllerRemoveItemFromListMutation,
+	type MediaInListDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -54,7 +54,7 @@ function ListDetailPage() {
 	});
 
 	const removeMutation = useMutation({
-		...listsControllerRemoveFromListMutation(),
+		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
@@ -155,7 +155,7 @@ function ListDetailPage() {
 		);
 	}
 
-	const movies = list.items || [];
+	const items = list.items || [];
 
 	return (
 		<div
@@ -211,28 +211,28 @@ function ListDetailPage() {
 					</div>
 				</div>
 
-				{movies.length > 0 && (
+				{items.length > 0 && (
 					<>
 						<p
 							className="mb-6 md-body-large"
 							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
-							{movies.length} movie{movies.length !== 1 ? "s" : ""}
+							{items.length} item{items.length !== 1 ? "s" : ""}
 						</p>
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-							{movies.map((item) => (
-								<ListMovieCard
+							{items.map((item) => (
+								<ListMediaCard
 									key={item.id}
 									item={item}
-									slug={slug}
-									onRemove={(movieId) => {
+									onRemove={({ mediaType, mediaId }) => {
 										removeMutation.mutate({
-											path: { slug, movieId },
+											path: { slug, mediaType, mediaId },
 										});
 									}}
 									isRemoving={
 										removeMutation.isPending &&
-										removeMutation.variables?.path?.movieId === item.movieId
+										removeMutation.variables?.path?.mediaType === item.mediaType &&
+										removeMutation.variables?.path?.mediaId === item.mediaId
 									}
 								/>
 							))}
@@ -240,7 +240,7 @@ function ListDetailPage() {
 					</>
 				)}
 
-				{movies.length === 0 && (
+				{items.length === 0 && (
 					<M3Card variant="elevated" className="text-center max-w-md mx-auto">
 						<M3CardHeader>
 							<List
@@ -248,16 +248,16 @@ function ListDetailPage() {
 								style={{ color: "var(--md-sys-color-outline)" }}
 							/>
 							<M3CardTitle className="md-headline-small">
-								No movies yet
+								No items yet
 							</M3CardTitle>
 							<M3CardDescription>
-								Add movies to this list from the search page
+								Add movies or shows to this list from the search page
 							</M3CardDescription>
 						</M3CardHeader>
 						<M3CardContent>
 							<M3Button variant="filled" asChild>
-								<Link to="/search" search={{ q: "" }}>
-									Search for movies
+								<Link to="/search" search={{ q: "", type: "all" }}>
+									Search for media
 								</Link>
 							</M3Button>
 						</M3CardContent>
@@ -277,30 +277,36 @@ function ListDetailPage() {
 	);
 }
 
-interface ListMovieCardProps {
-	item: MovieInListDto;
-	slug: string;
-	onRemove: (movieId: string) => void;
+interface ListMediaCardProps {
+	item: MediaInListDto;
+	onRemove: (item: { mediaType: "movie" | "show"; mediaId: string }) => void;
 	isRemoving: boolean;
 }
 
-function ListMovieCard({ item, onRemove, isRemoving }: ListMovieCardProps) {
-	const movie = item.movie;
-	const posterUrl = getTmdbPosterUrl(
-		movie.posterPath as string | null | undefined,
-	);
-	const movieTitle = movie.title as string;
-	const releaseYear = movie.releaseYear as number | null | undefined;
+function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
+	const media = item.media as {
+		title?: string;
+		posterPath?: string | null;
+		releaseYear?: number | null;
+	};
+	const mediaType: "movie" | "show" =
+		item.mediaType === "show" ? "show" : "movie";
+	const posterUrl = getTmdbPosterUrl(media.posterPath ?? null);
+	const mediaTitle = media.title ?? "Untitled";
+	const releaseYear = media.releaseYear;
+	const mediaSlug = mediaTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+	const isMovie = mediaType === "movie";
 	const { seedColor } = useTheme();
 
 	return (
 		<div className="group">
 			<Link
-				to="/movies/$movieId/$title"
-				params={{
-					movieId: item.movieId,
-					title: movieTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-				}}
+				to={isMovie ? "/movies/$movieId/$title" : "/shows/$showId/$title"}
+				params={
+					isMovie
+						? { movieId: item.mediaId, title: mediaSlug }
+						: { showId: item.mediaId, title: mediaSlug }
+				}
 				className="block relative aspect-2/3 rounded-lg overflow-hidden mb-2"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-highest)",
@@ -309,7 +315,7 @@ function ListMovieCard({ item, onRemove, isRemoving }: ListMovieCardProps) {
 				{posterUrl ? (
 					<img
 						src={posterUrl}
-						alt={movieTitle}
+						alt={mediaTitle}
 						className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
 					/>
 				) : (
@@ -327,7 +333,7 @@ function ListMovieCard({ item, onRemove, isRemoving }: ListMovieCardProps) {
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
-						onRemove(item.movieId);
+						onRemove({ mediaType, mediaId: item.mediaId });
 					}}
 					disabled={isRemoving}
 					className="absolute top-2 right-2 z-10 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
@@ -344,11 +350,12 @@ function ListMovieCard({ item, onRemove, isRemoving }: ListMovieCardProps) {
 				</M3Button>
 			</Link>
 			<Link
-				to="/movies/$movieId/$title"
-				params={{
-					movieId: item.movieId,
-					title: movieTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-				}}
+				to={isMovie ? "/movies/$movieId/$title" : "/shows/$showId/$title"}
+				params={
+					isMovie
+						? { movieId: item.mediaId, title: mediaSlug }
+						: { showId: item.mediaId, title: mediaSlug }
+				}
 				className="block"
 			>
 				<h3
@@ -361,7 +368,7 @@ function ListMovieCard({ item, onRemove, isRemoving }: ListMovieCardProps) {
 						e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
 					}}
 				>
-					{movieTitle}
+					{mediaTitle}
 				</h3>
 				{releaseYear && (
 					<p

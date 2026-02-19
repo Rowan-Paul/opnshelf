@@ -63,6 +63,28 @@ function AppContent() {
 					}}
 				/>
 				<Stack.Screen
+					name="show/[id]"
+					options={{
+						title: "Show Details",
+						headerTransparent: true,
+						headerTintColor: "#f9fafb",
+					}}
+				/>
+				<Stack.Screen
+					name="show/[id]/season/[seasonNumber]"
+					options={{
+						title: "Season",
+						headerShown: true,
+					}}
+				/>
+				<Stack.Screen
+					name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]"
+					options={{
+						title: "Episode",
+						headerShown: true,
+					}}
+				/>
+				<Stack.Screen
 					name="auth/callback"
 					options={{
 						presentation: "modal",

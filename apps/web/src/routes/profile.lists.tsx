@@ -80,7 +80,7 @@ function ListsPage() {
 					</M3CardHeader>
 					<M3CardContent>
 						<M3Button variant="filled" asChild>
-							<Link to="/search" search={{ q: "" }}>
+							<Link to="/search" search={{ q: "", type: "all" }}>
 								Search for movies
 							</Link>
 						</M3Button>

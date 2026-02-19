@@ -3,6 +3,8 @@ import {
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
+	showsControllerGetUserShowsOptions,
+	type TrackedShowSummaryDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +33,12 @@ export default function ShelfScreen() {
 
 	const { data: trackedMovies, isLoading: isMoviesLoading } = useQuery({
 		...moviesControllerGetUserMoviesOptions({
+			path: { userDid: user?.did || "" },
+		}),
+		enabled: !!user?.did,
+	});
+	const { data: trackedShows } = useQuery({
+		...showsControllerGetUserShowsOptions({
 			path: { userDid: user?.did || "" },
 		}),
 		enabled: !!user?.did,
@@ -149,37 +157,73 @@ export default function ShelfScreen() {
 				</>
 			)}
 
-			{trackedMovies && trackedMovies.length === 0 && (
-				<View style={styles.centerContent}>
-					<Card style={styles.emptyCard}>
-						<CardHeader style={styles.emptyCardHeader}>
-							<BookOpen
-								size={64}
-								color={colors.onSurfaceVariant}
-								style={styles.emptyIcon}
-							/>
-							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-								Your shelf is empty
+			{trackedShows && trackedShows.length > 0 && (
+				<View style={styles.showsSection}>
+					<Text
+						style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
+					>
+						{trackedShows.length} show{trackedShows.length !== 1 ? "s" : ""}{" "}
+						tracked
+					</Text>
+					{trackedShows.map((show: TrackedShowSummaryDto) => (
+						<Button
+							key={show.showId}
+							variant="outlined"
+							style={styles.showButton}
+							onPress={() =>
+								router.push({
+									pathname: "/show/[id]",
+									params: {
+										id: show.showId,
+										title: createTitleSlug(show.show.title),
+									},
+								})
+							}
+						>
+							<Text style={{ color: colors.onBackground }}>
+								{show.show.title} ({show.watchCount} watched episode
+								{show.watchCount === 1 ? "" : "s"})
 							</Text>
-							<Text
-								style={[
-									styles.emptyDescription,
-									{ color: colors.onSurfaceVariant },
-								]}
-							>
-								Start tracking movies you&apos;ve watched
-							</Text>
-						</CardHeader>
-						<CardContent>
-							<Button onPress={() => router.push("/(tabs)/search")}>
-								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
-									Search for movies
-								</Text>
-							</Button>
-						</CardContent>
-					</Card>
+						</Button>
+					))}
 				</View>
 			)}
+
+			{trackedMovies &&
+				trackedMovies.length === 0 &&
+				(!trackedShows || trackedShows.length === 0) && (
+					<View style={styles.centerContent}>
+						<Card style={styles.emptyCard}>
+							<CardHeader style={styles.emptyCardHeader}>
+								<BookOpen
+									size={64}
+									color={colors.onSurfaceVariant}
+									style={styles.emptyIcon}
+								/>
+								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+									Your shelf is empty
+								</Text>
+								<Text
+									style={[
+										styles.emptyDescription,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									Start tracking movies and shows you&apos;ve watched
+								</Text>
+							</CardHeader>
+							<CardContent>
+								<Button onPress={() => router.push("/(tabs)/search")}>
+									<Text
+										style={[styles.buttonText, { color: colors.onPrimary }]}
+									>
+										Search for movies or shows
+									</Text>
+								</Button>
+							</CardContent>
+						</Card>
+					</View>
+				)}
 		</SafeAreaView>
 	);
 }
@@ -198,6 +242,14 @@ const styles = StyleSheet.create({
 	},
 	itemSeparator: {
 		height: spacing.md,
+	},
+	showsSection: {
+		paddingHorizontal: spacing.lg,
+		paddingBottom: spacing.lg,
+		gap: spacing.sm,
+	},
+	showButton: {
+		justifyContent: "flex-start",
 	},
 	centerContent: {
 		flex: 1,

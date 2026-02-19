@@ -7,6 +7,11 @@
 			"local": true
 		},
 		{
+			"id": "app.opnshelf.episode",
+			"path": "lexicons/app/opnshelf/episode.json",
+			"local": true
+		},
+		{
 			"id": "app.opnshelf.list",
 			"path": "lexicons/app/opnshelf/list.json",
 			"local": true

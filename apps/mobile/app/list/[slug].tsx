@@ -3,8 +3,8 @@ import {
 	listsControllerGetListOptions,
 	listsControllerGetListQueryKey,
 	listsControllerGetUserListsQueryKey,
-	listsControllerRemoveFromListMutation,
-	type MovieInListDto,
+	listsControllerRemoveItemFromListMutation,
+	type MediaInListDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,7 +42,7 @@ export default function ListDetailScreen() {
 	});
 
 	const removeMutation = useMutation({
-		...listsControllerRemoveFromListMutation(),
+		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({
@@ -75,38 +75,50 @@ export default function ListDetailScreen() {
 	}, [router]);
 
 	const handleMoviePress = useCallback(
-		(item: MovieInListDto) => {
-			const movieTitle = item.movie.title as string;
-			router.push({
-				pathname: "/movie/[id]",
-				params: {
-					id: item.movieId,
-					title: createTitleSlug(movieTitle),
-				},
-			});
+		(item: MediaInListDto) => {
+			const title = item.media.title as string;
+			if (item.mediaType === "show") {
+				router.push({
+					pathname: "/show/[id]",
+					params: {
+						id: item.mediaId,
+						title: createTitleSlug(title),
+					},
+				});
+			} else {
+				router.push({
+					pathname: "/movie/[id]",
+					params: {
+						id: item.mediaId,
+						title: createTitleSlug(title),
+					},
+				});
+			}
 		},
 		[router],
 	);
 
 	const handleRemove = useCallback(
-		(movieId: string) => {
+		(mediaType: "movie" | "show", mediaId: string) => {
 			removeMutation.mutate({
-				path: { slug: slug || "", movieId },
+				path: { slug: slug || "", mediaType, mediaId },
 			});
 		},
 		[removeMutation, slug],
 	);
 
 	const renderItem = useCallback(
-		({ item }: { item: MovieInListDto }) => {
+		({ item }: { item: MediaInListDto }) => {
 			const isRemoving =
 				removeMutation.isPending &&
-				removeMutation.variables?.path?.movieId === item.movieId;
+				removeMutation.variables?.path?.mediaId === item.mediaId;
 			return (
 				<ListMovieItem
 					item={item}
 					onPress={() => handleMoviePress(item)}
-					onRemove={() => handleRemove(item.movieId)}
+					onRemove={() =>
+						handleRemove(item.mediaType as "movie" | "show", item.mediaId)
+					}
 					isRemoving={isRemoving}
 				/>
 			);
@@ -114,7 +126,7 @@ export default function ListDetailScreen() {
 		[removeMutation, handleMoviePress, handleRemove],
 	);
 
-	const keyExtractor = useCallback((item: MovieInListDto) => item.id, []);
+	const keyExtractor = useCallback((item: MediaInListDto) => item.id, []);
 
 	if (!isAuthenticated) {
 		return (
@@ -368,7 +380,7 @@ export default function ListDetailScreen() {
 }
 
 interface ListMovieItemProps {
-	item: MovieInListDto;
+	item: MediaInListDto;
 	onPress: () => void;
 	onRemove: () => void;
 	isRemoving: boolean;
@@ -381,7 +393,7 @@ function ListMovieItem({
 	isRemoving,
 }: ListMovieItemProps) {
 	const { colors } = useTheme();
-	const movie = item.movie;
+	const movie = item.media;
 	const posterUrl = getTmdbPosterUrl(
 		movie.posterPath as string | null | undefined,
 	);

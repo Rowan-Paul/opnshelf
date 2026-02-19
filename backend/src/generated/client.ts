@@ -58,17 +58,27 @@ export type AuthState = Prisma.AuthStateModel
  */
 export type Movie = Prisma.MovieModel
 /**
+ * Model Show
+ * 
+ */
+export type Show = Prisma.ShowModel
+/**
  * Model TrackedMovie
  * 
  */
 export type TrackedMovie = Prisma.TrackedMovieModel
+/**
+ * Model TrackedEpisode
+ * 
+ */
+export type TrackedEpisode = Prisma.TrackedEpisodeModel
 /**
  * Model MovieList
  * 
  */
 export type MovieList = Prisma.MovieListModel
 /**
- * Model MovieListItem
+ * Model ListItem
  * 
  */
-export type MovieListItem = Prisma.MovieListItemModel
+export type ListItem = Prisma.ListItemModel

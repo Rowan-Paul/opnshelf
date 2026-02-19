@@ -1,6 +1,7 @@
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
+	showsControllerGetUserShowsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -36,6 +37,12 @@ function ShelfPage() {
 		}),
 		enabled: !!user?.did,
 	});
+	const { data: trackedShows } = useQuery({
+		...showsControllerGetUserShowsOptions({
+			path: { userDid: user?.did || "" },
+		}),
+		enabled: !!user?.did,
+	});
 
 	if (isMoviesLoading) {
 		return <MovieGridSkeleton />;
@@ -60,29 +67,68 @@ function ShelfPage() {
 				</div>
 			)}
 
-			{trackedMovies && trackedMovies.length === 0 && (
-				<M3Card variant="elevated" className="text-center max-w-md mx-auto">
-					<M3CardHeader>
-						<BookOpen
-							className="w-16 h-16 mx-auto mb-4"
-							style={{ color: "var(--md-sys-color-outline)" }}
-						/>
-						<M3CardTitle className="md-headline-small">
-							Your shelf is empty
-						</M3CardTitle>
-						<M3CardDescription>
-							Start tracking movies you&apos;ve watched
-						</M3CardDescription>
-					</M3CardHeader>
-					<M3CardContent>
-						<M3Button variant="filled" asChild>
-							<Link to="/search" search={{ q: "" }}>
-								Search for movies
+			{trackedShows && trackedShows.length > 0 && (
+				<div className="mt-10">
+					<p
+						className="mb-4 md-body-large"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						{trackedShows.length} show
+						{trackedShows.length !== 1 ? "s" : ""} tracked
+					</p>
+					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+						{trackedShows.map((tracked) => (
+							<Link
+								key={tracked.showId}
+								to="/shows/$showId/$title"
+								params={{
+									showId: tracked.showId,
+									title: tracked.show.title
+										.toLowerCase()
+										.replace(/[^a-z0-9]+/g, "-"),
+								}}
+								className="rounded-xl border p-4"
+								style={{ borderColor: "var(--md-sys-color-outline)" }}
+							>
+								<div className="font-semibold">{tracked.show.title}</div>
+								<div
+									className="text-sm mt-1"
+									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+								>
+									{tracked.watchCount} watched episode
+									{tracked.watchCount === 1 ? "" : "s"}
+								</div>
 							</Link>
-						</M3Button>
-					</M3CardContent>
-				</M3Card>
+						))}
+					</div>
+				</div>
 			)}
+
+			{trackedMovies &&
+				trackedMovies.length === 0 &&
+				(!trackedShows || trackedShows.length === 0) && (
+					<M3Card variant="elevated" className="text-center max-w-md mx-auto">
+						<M3CardHeader>
+							<BookOpen
+								className="w-16 h-16 mx-auto mb-4"
+								style={{ color: "var(--md-sys-color-outline)" }}
+							/>
+							<M3CardTitle className="md-headline-small">
+								Your shelf is empty
+							</M3CardTitle>
+							<M3CardDescription>
+								Start tracking movies and shows you&apos;ve watched
+							</M3CardDescription>
+						</M3CardHeader>
+						<M3CardContent>
+							<M3Button variant="filled" asChild>
+								<Link to="/search" search={{ q: "", type: "all" }}>
+									Search for movies or shows
+								</Link>
+							</M3Button>
+						</M3CardContent>
+					</M3Card>
+				)}
 		</div>
 	);
 }

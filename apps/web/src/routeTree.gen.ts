@@ -20,7 +20,10 @@ import { Route as ProfileSettingsRouteImport } from './routes/profile.settings'
 import { Route as ProfileListsRouteImport } from './routes/profile.lists'
 import { Route as ListsSlugRouteImport } from './routes/lists.$slug'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as ShowsShowIdTitleRouteImport } from './routes/shows.$showId.$title'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
+import { Route as ShowsShowIdTitleSeasonsSeasonNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber'
+import { Route as ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber.episodes.$episodeNumber'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -77,11 +80,28 @@ const AuthCompleteRoute = AuthCompleteRouteImport.update({
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowsShowIdTitleRoute = ShowsShowIdTitleRouteImport.update({
+  id: '/shows/$showId/$title',
+  path: '/shows/$showId/$title',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoviesMovieIdTitleRoute = MoviesMovieIdTitleRouteImport.update({
   id: '/movies/$movieId/$title',
   path: '/movies/$movieId/$title',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowsShowIdTitleSeasonsSeasonNumberRoute =
+  ShowsShowIdTitleSeasonsSeasonNumberRouteImport.update({
+    id: '/seasons/$seasonNumber',
+    path: '/seasons/$seasonNumber',
+    getParentRoute: () => ShowsShowIdTitleRoute,
+  } as any)
+const ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
+  ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport.update({
+    id: '/episodes/$episodeNumber',
+    path: '/episodes/$episodeNumber',
+    getParentRoute: () => ShowsShowIdTitleSeasonsSeasonNumberRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +116,9 @@ export interface FileRoutesByFullPath {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +133,9 @@ export interface FileRoutesByTo {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +151,9 @@ export interface FileRoutesById {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +170,9 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/movies/$movieId/$title'
+    | '/shows/$showId/$title'
+    | '/shows/$showId/$title/seasons/$seasonNumber'
+    | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +187,9 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/movies/$movieId/$title'
+    | '/shows/$showId/$title'
+    | '/shows/$showId/$title/seasons/$seasonNumber'
+    | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   id:
     | '__root__'
     | '/'
@@ -169,6 +204,9 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/movies/$movieId/$title'
+    | '/shows/$showId/$title'
+    | '/shows/$showId/$title/seasons/$seasonNumber'
+    | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,6 +218,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
+  ShowsShowIdTitleRoute: typeof ShowsShowIdTitleRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -261,12 +300,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shows/$showId/$title': {
+      id: '/shows/$showId/$title'
+      path: '/shows/$showId/$title'
+      fullPath: '/shows/$showId/$title'
+      preLoaderRoute: typeof ShowsShowIdTitleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/movies/$movieId/$title': {
       id: '/movies/$movieId/$title'
       path: '/movies/$movieId/$title'
       fullPath: '/movies/$movieId/$title'
       preLoaderRoute: typeof MoviesMovieIdTitleRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/shows/$showId/$title/seasons/$seasonNumber': {
+      id: '/shows/$showId/$title/seasons/$seasonNumber'
+      path: '/seasons/$seasonNumber'
+      fullPath: '/shows/$showId/$title/seasons/$seasonNumber'
+      preLoaderRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberRouteImport
+      parentRoute: typeof ShowsShowIdTitleRoute
+    }
+    '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': {
+      id: '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
+      path: '/episodes/$episodeNumber'
+      fullPath: '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
+      preLoaderRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport
+      parentRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberRoute
     }
   }
 }
@@ -296,6 +356,33 @@ const ProfileRouteChildren: ProfileRouteChildren = {
 const ProfileRouteWithChildren =
   ProfileRoute._addFileChildren(ProfileRouteChildren)
 
+interface ShowsShowIdTitleSeasonsSeasonNumberRouteChildren {
+  ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
+}
+
+const ShowsShowIdTitleSeasonsSeasonNumberRouteChildren: ShowsShowIdTitleSeasonsSeasonNumberRouteChildren =
+  {
+    ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute:
+      ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute,
+  }
+
+const ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren =
+  ShowsShowIdTitleSeasonsSeasonNumberRoute._addFileChildren(
+    ShowsShowIdTitleSeasonsSeasonNumberRouteChildren,
+  )
+
+interface ShowsShowIdTitleRouteChildren {
+  ShowsShowIdTitleSeasonsSeasonNumberRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
+}
+
+const ShowsShowIdTitleRouteChildren: ShowsShowIdTitleRouteChildren = {
+  ShowsShowIdTitleSeasonsSeasonNumberRoute:
+    ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren,
+}
+
+const ShowsShowIdTitleRouteWithChildren =
+  ShowsShowIdTitleRoute._addFileChildren(ShowsShowIdTitleRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ListsRoute: ListsRouteWithChildren,
@@ -305,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,
+  ShowsShowIdTitleRoute: ShowsShowIdTitleRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

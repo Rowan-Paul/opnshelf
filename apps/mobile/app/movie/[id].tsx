@@ -6,6 +6,7 @@ import type {
 } from "@opnshelf/api";
 import {
 	listsControllerGetListsForMovieOptions,
+	type MovieListsForItemDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetMovieWatchHistoryOptions,
@@ -136,7 +137,8 @@ export default function MovieDetailScreen() {
 		enabled: !!user?.did,
 	});
 
-	const listsCount = listsForMovie?.filter((l) => l.isInList).length ?? 0;
+	const listsForMovieTyped = (listsForMovie || []) as MovieListsForItemDto[];
+	const listsCount = listsForMovieTyped.filter((l) => l.isInList).length;
 	const isInAnyList = listsCount > 0;
 
 	const userTimezone = userSettings?.timezone || "UTC";

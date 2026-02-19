@@ -120,6 +120,116 @@ export type UserDto = {
     } | null;
 };
 
+export type TmdbShowResultDto = {
+    id: number;
+    name: string;
+    poster_path?: string;
+    backdrop_path?: string;
+    first_air_date?: string;
+    overview?: string;
+};
+
+export type SearchShowsResultsDto = {
+    results: Array<TmdbShowResultDto>;
+    total_results: number;
+    page: number;
+};
+
+export type TmdbShowDetailDto = {
+    id: number;
+    name: string;
+    poster_path?: string;
+    backdrop_path?: string;
+    first_air_date?: string;
+    overview?: string;
+    genres?: Array<TmdbGenreDto>;
+    number_of_seasons?: number;
+    number_of_episodes?: number;
+    colors?: MovieColorsDto;
+    credits?: TmdbCreditsDto;
+};
+
+export type TmdbEpisodeDto = {
+    id: number;
+    name: string;
+    episode_number: number;
+    season_number: number;
+    air_date?: string;
+    overview?: string;
+    still_path?: string;
+    vote_average?: number;
+};
+
+export type TmdbSeasonDetailDto = {
+    id: number;
+    name: string;
+    season_number: number;
+    overview?: string;
+    poster_path?: string;
+    air_date?: string;
+    episodes: Array<TmdbEpisodeDto>;
+};
+
+export type ShowDto = {
+    showId: string;
+    title: string;
+    posterPath?: string;
+    backdropPath?: string;
+    firstAirYear?: number;
+    firstAirDate?: string;
+    overview?: string;
+    colors?: MovieColorsDto;
+};
+
+export type TrackedShowSummaryDto = {
+    showId: string;
+    watchCount: number;
+    latestWatchedDate?: string;
+    show: ShowDto;
+};
+
+export type MarkEpisodeWatchedDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * TMDB season number
+     */
+    seasonNumber: number;
+    /**
+     * TMDB episode number
+     */
+    episodeNumber: number;
+    /**
+     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     */
+    watchedAt?: string;
+};
+
+export type TrackedEpisodeDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    cid: string;
+    userDid: string;
+    showId: string;
+    seasonNumber: number;
+    episodeNumber: number;
+    status: string;
+    watchedDate?: string;
+    createdAt: string;
+    updatedAt: string;
+    show: ShowDto;
+};
+
+export type EpisodeHistoryItemDto = {
+    id: string;
+    watchedDate: string;
+    seasonNumber: number;
+    episodeNumber: number;
+};
+
 export type MovieListSummaryDto = {
     id: string;
     rkey: string;
@@ -143,14 +253,25 @@ export type CreateListDto = {
     description?: string;
 };
 
-export type MovieInListDto = {
+export type MediaInListDto = {
     id: string;
     rkey: string;
-    movieId: string;
+    mediaType: string;
+    mediaId: string;
+    /**
+     * Legacy movieId field for movie items
+     */
+    movieId?: string;
     notes?: string;
     position: number;
     createdAt: string;
-    movie: {
+    media: {
+        [key: string]: unknown;
+    };
+    /**
+     * Legacy movie payload for movie items
+     */
+    movie?: {
         [key: string]: unknown;
     };
 };
@@ -166,7 +287,7 @@ export type MovieListDto = {
     isDefault: boolean;
     createdAt: string;
     updatedAt: string;
-    items?: Array<MovieInListDto>;
+    items?: Array<MediaInListDto>;
 };
 
 export type MovieListWithMoviesDto = {
@@ -180,7 +301,7 @@ export type MovieListWithMoviesDto = {
     isDefault: boolean;
     createdAt: string;
     updatedAt: string;
-    items: Array<MovieInListDto>;
+    items: Array<MediaInListDto>;
 };
 
 export type UpdateListDto = {
@@ -196,16 +317,20 @@ export type UpdateListDto = {
 
 export type AddToListDto = {
     /**
-     * TMDB movie ID
+     * Media type
      */
-    movieId: string;
+    mediaType: 'movie' | 'show';
     /**
-     * Optional notes about the movie
+     * TMDB media ID
+     */
+    mediaId: string;
+    /**
+     * Optional notes about the media
      */
     notes?: string;
 };
 
-export type MovieListsForMovieDto = {
+export type MovieListsForItemDto = {
     listId: string;
     listName: string;
     listSlug: string;
@@ -532,6 +657,230 @@ export type AuthControllerLogoutResponses = {
     200: unknown;
 };
 
+export type ShowsControllerSearchShowsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Search term
+         */
+        query: string;
+    };
+    url: '/shows/search';
+};
+
+export type ShowsControllerSearchShowsResponses = {
+    200: SearchShowsResultsDto;
+};
+
+export type ShowsControllerSearchShowsResponse = ShowsControllerSearchShowsResponses[keyof ShowsControllerSearchShowsResponses];
+
+export type ShowsControllerDiscoverShowsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/shows/discover';
+};
+
+export type ShowsControllerDiscoverShowsResponses = {
+    200: SearchShowsResultsDto;
+};
+
+export type ShowsControllerDiscoverShowsResponse = ShowsControllerDiscoverShowsResponses[keyof ShowsControllerDiscoverShowsResponses];
+
+export type ShowsControllerGetShowDetailsData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: never;
+    url: '/shows/tmdb/{showId}';
+};
+
+export type ShowsControllerGetShowDetailsResponses = {
+    200: TmdbShowDetailDto;
+};
+
+export type ShowsControllerGetShowDetailsResponse = ShowsControllerGetShowDetailsResponses[keyof ShowsControllerGetShowDetailsResponses];
+
+export type ShowsControllerGetSeasonDetailsData = {
+    body?: never;
+    path: {
+        showId: string;
+        seasonNumber: string;
+    };
+    query?: never;
+    url: '/shows/tmdb/{showId}/season/{seasonNumber}';
+};
+
+export type ShowsControllerGetSeasonDetailsResponses = {
+    200: TmdbSeasonDetailDto;
+};
+
+export type ShowsControllerGetSeasonDetailsResponse = ShowsControllerGetSeasonDetailsResponses[keyof ShowsControllerGetSeasonDetailsResponses];
+
+export type ShowsControllerGetEpisodeDetailsData = {
+    body?: never;
+    path: {
+        showId: string;
+        seasonNumber: string;
+        episodeNumber: string;
+    };
+    query?: never;
+    url: '/shows/tmdb/{showId}/season/{seasonNumber}/episode/{episodeNumber}';
+};
+
+export type ShowsControllerGetEpisodeDetailsResponses = {
+    200: TmdbEpisodeDto;
+};
+
+export type ShowsControllerGetEpisodeDetailsResponse = ShowsControllerGetEpisodeDetailsResponses[keyof ShowsControllerGetEpisodeDetailsResponses];
+
+export type ShowsControllerGetUserShowsData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/shows/user/{userDid}';
+};
+
+export type ShowsControllerGetUserShowsResponses = {
+    200: Array<TrackedShowSummaryDto>;
+};
+
+export type ShowsControllerGetUserShowsResponse = ShowsControllerGetUserShowsResponses[keyof ShowsControllerGetUserShowsResponses];
+
+export type ShowsControllerMarkWatchedData = {
+    body: MarkEpisodeWatchedDto;
+    path?: never;
+    query?: never;
+    url: '/shows/watched';
+};
+
+export type ShowsControllerMarkWatchedErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ShowsControllerMarkWatchedResponses = {
+    201: TrackedEpisodeDto;
+};
+
+export type ShowsControllerMarkWatchedResponse = ShowsControllerMarkWatchedResponses[keyof ShowsControllerMarkWatchedResponses];
+
+export type ShowsControllerUnmarkWatchedData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: {
+        /**
+         * Remove mode: latest (default) removes most recent, all removes all
+         */
+        mode?: 'latest' | 'all';
+        /**
+         * Optional filter by episode
+         */
+        episodeNumber?: unknown;
+        /**
+         * Optional filter by season
+         */
+        seasonNumber?: unknown;
+    };
+    url: '/shows/watched/{showId}';
+};
+
+export type ShowsControllerUnmarkWatchedResponses = {
+    /**
+     * Episode unmarked as watched
+     */
+    204: void;
+};
+
+export type ShowsControllerUnmarkWatchedResponse = ShowsControllerUnmarkWatchedResponses[keyof ShowsControllerUnmarkWatchedResponses];
+
+export type ShowsControllerGetShowData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: never;
+    url: '/shows/{showId}';
+};
+
+export type ShowsControllerGetShowResponses = {
+    200: TrackedShowSummaryDto;
+};
+
+export type ShowsControllerGetShowResponse = ShowsControllerGetShowResponses[keyof ShowsControllerGetShowResponses];
+
+export type ShowsControllerGetShowWatchHistoryData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+        /**
+         * TMDB show ID
+         */
+        showId: string;
+    };
+    query?: never;
+    url: '/shows/user/{userDid}/show/{showId}/history';
+};
+
+export type ShowsControllerGetShowWatchHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ShowsControllerGetShowWatchHistoryResponses = {
+    /**
+     * Watch history retrieved successfully
+     */
+    200: Array<EpisodeHistoryItemDto>;
+};
+
+export type ShowsControllerGetShowWatchHistoryResponse = ShowsControllerGetShowWatchHistoryResponses[keyof ShowsControllerGetShowWatchHistoryResponses];
+
+export type ShowsControllerDeleteEpisodeWatchHistoryEntryData = {
+    body?: never;
+    path: {
+        /**
+         * Tracked episode entry ID
+         */
+        trackedEpisodeId: string;
+    };
+    query?: never;
+    url: '/shows/history/{trackedEpisodeId}';
+};
+
+export type ShowsControllerDeleteEpisodeWatchHistoryEntryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Tracked episode entry not found
+     */
+    404: unknown;
+};
+
+export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponses = {
+    /**
+     * Watch history entry deleted
+     */
+    204: void;
+};
+
+export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponse = ShowsControllerDeleteEpisodeWatchHistoryEntryResponses[keyof ShowsControllerDeleteEpisodeWatchHistoryEntryResponses];
+
 export type ListsControllerGetUserListsData = {
     body?: never;
     path?: never;
@@ -695,7 +1044,7 @@ export type ListsControllerUpdateListResponses = {
 
 export type ListsControllerUpdateListResponse = ListsControllerUpdateListResponses[keyof ListsControllerUpdateListResponses];
 
-export type ListsControllerAddToListData = {
+export type ListsControllerAddItemToListData = {
     body: AddToListDto;
     path: {
         /**
@@ -704,28 +1053,41 @@ export type ListsControllerAddToListData = {
         slug: string;
     };
     query?: never;
-    url: '/lists/{slug}/movies';
+    url: '/lists/{slug}/items';
 };
 
-export type ListsControllerAddToListErrors = {
+export type ListsControllerAddItemToListErrors = {
     /**
      * Not authenticated
      */
     401: unknown;
     /**
-     * List or movie not found
+     * List or media item not found
      */
     404: unknown;
 };
 
-export type ListsControllerAddToListResponses = {
+export type ListsControllerAddItemToListResponses = {
     /**
-     * Movie added to list
+     * Item added to list
      */
     200: unknown;
 };
 
-export type ListsControllerRemoveFromListData = {
+export type ListsControllerAddToListData = {
+    body?: never;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}/movies';
+};
+
+export type ListsControllerAddToListResponses = {
+    201: unknown;
+};
+
+export type ListsControllerRemoveItemFromListData = {
     body?: never;
     path: {
         /**
@@ -733,15 +1095,19 @@ export type ListsControllerRemoveFromListData = {
          */
         slug: string;
         /**
-         * TMDB movie ID
+         * Media type (movie or show)
          */
-        movieId: string;
+        mediaType: string;
+        /**
+         * TMDB media ID
+         */
+        mediaId: string;
     };
     query?: never;
-    url: '/lists/{slug}/movies/{movieId}';
+    url: '/lists/{slug}/items/{mediaType}/{mediaId}';
 };
 
-export type ListsControllerRemoveFromListErrors = {
+export type ListsControllerRemoveItemFromListErrors = {
     /**
      * Not authenticated
      */
@@ -752,40 +1118,71 @@ export type ListsControllerRemoveFromListErrors = {
     404: unknown;
 };
 
-export type ListsControllerRemoveFromListResponses = {
+export type ListsControllerRemoveItemFromListResponses = {
     /**
-     * Movie removed from list
+     * Item removed from list
      */
     200: unknown;
 };
 
-export type ListsControllerGetListsForMovieData = {
+export type ListsControllerRemoveFromListData = {
     body?: never;
     path: {
-        /**
-         * TMDB movie ID
-         */
+        slug: string;
         movieId: string;
     };
     query?: never;
-    url: '/lists/for-movie/{movieId}';
+    url: '/lists/{slug}/movies/{movieId}';
 };
 
-export type ListsControllerGetListsForMovieErrors = {
+export type ListsControllerRemoveFromListResponses = {
+    200: unknown;
+};
+
+export type ListsControllerGetListsForItemData = {
+    body?: never;
+    path: {
+        /**
+         * Media type (movie or show)
+         */
+        mediaType: string;
+        /**
+         * TMDB media ID
+         */
+        mediaId: string;
+    };
+    query?: never;
+    url: '/lists/for-item/{mediaType}/{mediaId}';
+};
+
+export type ListsControllerGetListsForItemErrors = {
     /**
      * Not authenticated
      */
     401: unknown;
 };
 
-export type ListsControllerGetListsForMovieResponses = {
+export type ListsControllerGetListsForItemResponses = {
     /**
      * Lists with membership status
      */
-    200: Array<MovieListsForMovieDto>;
+    200: Array<MovieListsForItemDto>;
 };
 
-export type ListsControllerGetListsForMovieResponse = ListsControllerGetListsForMovieResponses[keyof ListsControllerGetListsForMovieResponses];
+export type ListsControllerGetListsForItemResponse = ListsControllerGetListsForItemResponses[keyof ListsControllerGetListsForItemResponses];
+
+export type ListsControllerGetListsForMovieData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: never;
+    url: '/lists/for-movie/{movieId}';
+};
+
+export type ListsControllerGetListsForMovieResponses = {
+    200: unknown;
+};
 
 export type UsersControllerGetMySettingsData = {
     body?: never;

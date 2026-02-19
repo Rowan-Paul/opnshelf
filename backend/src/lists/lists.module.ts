@@ -2,6 +2,7 @@ import { forwardRef, Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
+import { ShowsModule } from "../shows/shows.module";
 import { ListsController } from "./lists.controller";
 import { ListsService } from "./lists.service";
 
@@ -9,6 +10,7 @@ import { ListsService } from "./lists.service";
 	imports: [
 		PrismaModule,
 		forwardRef(() => MoviesModule),
+		forwardRef(() => ShowsModule),
 		forwardRef(() => AuthModule),
 	],
 	controllers: [ListsController],

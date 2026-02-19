@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSuggestions, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForMovie, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, usersControllerDeleteMyAccount, usersControllerGetMySettings, usersControllerUpdateMySettings } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSuggestionsData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForMovieData, ListsControllerGetListsForMovieResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSuggestions, listsControllerAddItemToList, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetListsForMovie, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserShows, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, usersControllerDeleteMyAccount, usersControllerGetMySettings, usersControllerUpdateMySettings } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetListsForMovieData, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -305,6 +305,201 @@ export const authControllerLogoutMutation = (options?: Partial<Options<AuthContr
     return mutationOptions;
 };
 
+export const showsControllerSearchShowsQueryKey = (options: Options<ShowsControllerSearchShowsData>) => createQueryKey('showsControllerSearchShows', options);
+
+/**
+ * Search shows from TMDB
+ */
+export const showsControllerSearchShowsOptions = (options: Options<ShowsControllerSearchShowsData>) => queryOptions<ShowsControllerSearchShowsResponse, DefaultError, ShowsControllerSearchShowsResponse, ReturnType<typeof showsControllerSearchShowsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerSearchShows({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerSearchShowsQueryKey(options)
+});
+
+export const showsControllerDiscoverShowsQueryKey = (options?: Options<ShowsControllerDiscoverShowsData>) => createQueryKey('showsControllerDiscoverShows', options);
+
+/**
+ * Discover popular shows from TMDB
+ */
+export const showsControllerDiscoverShowsOptions = (options?: Options<ShowsControllerDiscoverShowsData>) => queryOptions<ShowsControllerDiscoverShowsResponse, DefaultError, ShowsControllerDiscoverShowsResponse, ReturnType<typeof showsControllerDiscoverShowsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerDiscoverShows({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerDiscoverShowsQueryKey(options)
+});
+
+export const showsControllerGetShowDetailsQueryKey = (options: Options<ShowsControllerGetShowDetailsData>) => createQueryKey('showsControllerGetShowDetails', options);
+
+/**
+ * Get show details from TMDB
+ */
+export const showsControllerGetShowDetailsOptions = (options: Options<ShowsControllerGetShowDetailsData>) => queryOptions<ShowsControllerGetShowDetailsResponse, DefaultError, ShowsControllerGetShowDetailsResponse, ReturnType<typeof showsControllerGetShowDetailsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetShowDetails({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetShowDetailsQueryKey(options)
+});
+
+export const showsControllerGetSeasonDetailsQueryKey = (options: Options<ShowsControllerGetSeasonDetailsData>) => createQueryKey('showsControllerGetSeasonDetails', options);
+
+/**
+ * Get season details from TMDB
+ */
+export const showsControllerGetSeasonDetailsOptions = (options: Options<ShowsControllerGetSeasonDetailsData>) => queryOptions<ShowsControllerGetSeasonDetailsResponse, DefaultError, ShowsControllerGetSeasonDetailsResponse, ReturnType<typeof showsControllerGetSeasonDetailsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetSeasonDetails({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetSeasonDetailsQueryKey(options)
+});
+
+export const showsControllerGetEpisodeDetailsQueryKey = (options: Options<ShowsControllerGetEpisodeDetailsData>) => createQueryKey('showsControllerGetEpisodeDetails', options);
+
+/**
+ * Get episode details from TMDB
+ */
+export const showsControllerGetEpisodeDetailsOptions = (options: Options<ShowsControllerGetEpisodeDetailsData>) => queryOptions<ShowsControllerGetEpisodeDetailsResponse, DefaultError, ShowsControllerGetEpisodeDetailsResponse, ReturnType<typeof showsControllerGetEpisodeDetailsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetEpisodeDetails({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetEpisodeDetailsQueryKey(options)
+});
+
+export const showsControllerGetUserShowsQueryKey = (options: Options<ShowsControllerGetUserShowsData>) => createQueryKey('showsControllerGetUserShows', options);
+
+/**
+ * Get tracked shows for a user
+ */
+export const showsControllerGetUserShowsOptions = (options: Options<ShowsControllerGetUserShowsData>) => queryOptions<ShowsControllerGetUserShowsResponse, DefaultError, ShowsControllerGetUserShowsResponse, ReturnType<typeof showsControllerGetUserShowsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetUserShows({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetUserShowsQueryKey(options)
+});
+
+/**
+ * Mark an episode as watched
+ */
+export const showsControllerMarkWatchedMutation = (options?: Partial<Options<ShowsControllerMarkWatchedData>>): UseMutationOptions<ShowsControllerMarkWatchedResponse, DefaultError, Options<ShowsControllerMarkWatchedData>> => {
+    const mutationOptions: UseMutationOptions<ShowsControllerMarkWatchedResponse, DefaultError, Options<ShowsControllerMarkWatchedData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await showsControllerMarkWatched({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Unmark episode(s) as watched
+ */
+export const showsControllerUnmarkWatchedMutation = (options?: Partial<Options<ShowsControllerUnmarkWatchedData>>): UseMutationOptions<ShowsControllerUnmarkWatchedResponse, DefaultError, Options<ShowsControllerUnmarkWatchedData>> => {
+    const mutationOptions: UseMutationOptions<ShowsControllerUnmarkWatchedResponse, DefaultError, Options<ShowsControllerUnmarkWatchedData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await showsControllerUnmarkWatched({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const showsControllerGetShowQueryKey = (options: Options<ShowsControllerGetShowData>) => createQueryKey('showsControllerGetShow', options);
+
+/**
+ * Get show from database
+ */
+export const showsControllerGetShowOptions = (options: Options<ShowsControllerGetShowData>) => queryOptions<ShowsControllerGetShowResponse, DefaultError, ShowsControllerGetShowResponse, ReturnType<typeof showsControllerGetShowQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetShow({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetShowQueryKey(options)
+});
+
+export const showsControllerGetShowWatchHistoryQueryKey = (options: Options<ShowsControllerGetShowWatchHistoryData>) => createQueryKey('showsControllerGetShowWatchHistory', options);
+
+/**
+ * Get watch history for a specific show
+ */
+export const showsControllerGetShowWatchHistoryOptions = (options: Options<ShowsControllerGetShowWatchHistoryData>) => queryOptions<ShowsControllerGetShowWatchHistoryResponse, DefaultError, ShowsControllerGetShowWatchHistoryResponse, ReturnType<typeof showsControllerGetShowWatchHistoryQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetShowWatchHistory({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetShowWatchHistoryQueryKey(options)
+});
+
+/**
+ * Delete a specific episode watch history entry
+ */
+export const showsControllerDeleteEpisodeWatchHistoryEntryMutation = (options?: Partial<Options<ShowsControllerDeleteEpisodeWatchHistoryEntryData>>): UseMutationOptions<ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, DefaultError, Options<ShowsControllerDeleteEpisodeWatchHistoryEntryData>> => {
+    const mutationOptions: UseMutationOptions<ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, DefaultError, Options<ShowsControllerDeleteEpisodeWatchHistoryEntryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await showsControllerDeleteEpisodeWatchHistoryEntry({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const listsControllerGetUserListsQueryKey = (options?: Options<ListsControllerGetUserListsData>) => createQueryKey('listsControllerGetUserLists', options);
 
 /**
@@ -410,7 +605,24 @@ export const listsControllerUpdateListMutation = (options?: Partial<Options<List
 };
 
 /**
- * Add a movie to a list
+ * Add an item to a list
+ */
+export const listsControllerAddItemToListMutation = (options?: Partial<Options<ListsControllerAddItemToListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddItemToListData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddItemToListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerAddItemToList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Add a movie to a list (legacy route)
  */
 export const listsControllerAddToListMutation = (options?: Partial<Options<ListsControllerAddToListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerAddToListData>> = {
@@ -427,7 +639,24 @@ export const listsControllerAddToListMutation = (options?: Partial<Options<Lists
 };
 
 /**
- * Remove a movie from a list
+ * Remove an item from a list
+ */
+export const listsControllerRemoveItemFromListMutation = (options?: Partial<Options<ListsControllerRemoveItemFromListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveItemFromListData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveItemFromListData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await listsControllerRemoveItemFromList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Remove a movie from a list (legacy route)
  */
 export const listsControllerRemoveFromListMutation = (options?: Partial<Options<ListsControllerRemoveFromListData>>): UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ListsControllerRemoveFromListData>> = {
@@ -443,12 +672,30 @@ export const listsControllerRemoveFromListMutation = (options?: Partial<Options<
     return mutationOptions;
 };
 
+export const listsControllerGetListsForItemQueryKey = (options: Options<ListsControllerGetListsForItemData>) => createQueryKey('listsControllerGetListsForItem', options);
+
+/**
+ * Get all lists with membership status for an item
+ */
+export const listsControllerGetListsForItemOptions = (options: Options<ListsControllerGetListsForItemData>) => queryOptions<ListsControllerGetListsForItemResponse, DefaultError, ListsControllerGetListsForItemResponse, ReturnType<typeof listsControllerGetListsForItemQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listsControllerGetListsForItem({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listsControllerGetListsForItemQueryKey(options)
+});
+
 export const listsControllerGetListsForMovieQueryKey = (options: Options<ListsControllerGetListsForMovieData>) => createQueryKey('listsControllerGetListsForMovie', options);
 
 /**
- * Get all lists with membership status for a movie
+ * Get all lists with membership status for a movie (legacy route)
  */
-export const listsControllerGetListsForMovieOptions = (options: Options<ListsControllerGetListsForMovieData>) => queryOptions<ListsControllerGetListsForMovieResponse, DefaultError, ListsControllerGetListsForMovieResponse, ReturnType<typeof listsControllerGetListsForMovieQueryKey>>({
+export const listsControllerGetListsForMovieOptions = (options: Options<ListsControllerGetListsForMovieData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof listsControllerGetListsForMovieQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await listsControllerGetListsForMovie({
             ...options,

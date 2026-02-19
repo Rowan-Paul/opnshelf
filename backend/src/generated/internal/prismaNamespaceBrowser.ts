@@ -55,9 +55,11 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   Movie: 'Movie',
+  Show: 'Show',
   TrackedMovie: 'TrackedMovie',
+  TrackedEpisode: 'TrackedEpisode',
   MovieList: 'MovieList',
-  MovieListItem: 'MovieListItem'
+  ListItem: 'ListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -127,6 +129,22 @@ export const MovieScalarFieldEnum = {
 export type MovieScalarFieldEnum = (typeof MovieScalarFieldEnum)[keyof typeof MovieScalarFieldEnum]
 
 
+export const ShowScalarFieldEnum = {
+  showId: 'showId',
+  title: 'title',
+  posterPath: 'posterPath',
+  backdropPath: 'backdropPath',
+  firstAirYear: 'firstAirYear',
+  firstAirDate: 'firstAirDate',
+  overview: 'overview',
+  colors: 'colors',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShowScalarFieldEnum = (typeof ShowScalarFieldEnum)[keyof typeof ShowScalarFieldEnum]
+
+
 export const TrackedMovieScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
@@ -141,6 +159,24 @@ export const TrackedMovieScalarFieldEnum = {
 } as const
 
 export type TrackedMovieScalarFieldEnum = (typeof TrackedMovieScalarFieldEnum)[keyof typeof TrackedMovieScalarFieldEnum]
+
+
+export const TrackedEpisodeScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  showId: 'showId',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  status: 'status',
+  watchedDate: 'watchedDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackedEpisodeScalarFieldEnum = (typeof TrackedEpisodeScalarFieldEnum)[keyof typeof TrackedEpisodeScalarFieldEnum]
 
 
 export const MovieListScalarFieldEnum = {
@@ -160,19 +196,22 @@ export const MovieListScalarFieldEnum = {
 export type MovieListScalarFieldEnum = (typeof MovieListScalarFieldEnum)[keyof typeof MovieListScalarFieldEnum]
 
 
-export const MovieListItemScalarFieldEnum = {
+export const ListItemScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
   uri: 'uri',
   cid: 'cid',
   listId: 'listId',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
   movieId: 'movieId',
+  showId: 'showId',
   notes: 'notes',
   position: 'position',
   createdAt: 'createdAt'
 } as const
 
-export type MovieListItemScalarFieldEnum = (typeof MovieListItemScalarFieldEnum)[keyof typeof MovieListItemScalarFieldEnum]
+export type ListItemScalarFieldEnum = (typeof ListItemScalarFieldEnum)[keyof typeof ListItemScalarFieldEnum]
 
 
 export const SortOrder = {

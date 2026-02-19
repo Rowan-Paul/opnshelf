@@ -45,11 +45,15 @@ export class UpdateListDto {
 }
 
 export class AddToListDto {
-	@ApiProperty({ description: "TMDB movie ID" })
+	@ApiProperty({ description: "Media type", enum: ["movie", "show"] })
 	@IsString()
-	movieId: string;
+	mediaType: "movie" | "show";
 
-	@ApiPropertyOptional({ description: "Optional notes about the movie" })
+	@ApiProperty({ description: "TMDB media ID" })
+	@IsString()
+	mediaId: string;
+
+	@ApiPropertyOptional({ description: "Optional notes about the media" })
 	@IsOptional()
 	@IsString()
 	@MaxLength(1000)
@@ -57,12 +61,16 @@ export class AddToListDto {
 }
 
 export class RemoveFromListDto {
-	@ApiProperty({ description: "TMDB movie ID" })
+	@ApiProperty({ description: "Media type", enum: ["movie", "show"] })
 	@IsString()
-	movieId: string;
+	mediaType: "movie" | "show";
+
+	@ApiProperty({ description: "TMDB media ID" })
+	@IsString()
+	mediaId: string;
 }
 
-export class MovieInListDto {
+export class MediaInListDto {
 	@ApiProperty()
 	id: string;
 
@@ -70,7 +78,13 @@ export class MovieInListDto {
 	rkey: string;
 
 	@ApiProperty()
-	movieId: string;
+	mediaType: "movie" | "show";
+
+	@ApiProperty()
+	mediaId: string;
+
+	@ApiPropertyOptional({ description: "Legacy movieId field for movie items" })
+	movieId?: string;
 
 	@ApiPropertyOptional()
 	notes?: string;
@@ -82,7 +96,27 @@ export class MovieInListDto {
 	createdAt: string;
 
 	@ApiProperty()
-	movie: {
+	media: {
+		mediaType: "movie" | "show";
+		mediaId: string;
+		movieId?: string;
+		showId?: string;
+		title: string;
+		posterPath?: string;
+		backdropPath?: string;
+		releaseYear?: number;
+		releaseDate?: string;
+		overview?: string;
+		colors?: {
+			primary?: string;
+			secondary?: string;
+			accent?: string;
+			muted?: string;
+		};
+	};
+
+	@ApiPropertyOptional({ description: "Legacy movie payload for movie items" })
+	movie?: {
 		movieId: string;
 		title: string;
 		posterPath?: string;
@@ -130,8 +164,8 @@ export class MovieListDto {
 	@ApiProperty()
 	updatedAt: string;
 
-	@ApiPropertyOptional({ type: MovieInListDto, isArray: true })
-	items?: MovieInListDto[];
+	@ApiPropertyOptional({ type: MediaInListDto, isArray: true })
+	items?: MediaInListDto[];
 }
 
 export class MovieListSummaryDto {
@@ -194,11 +228,11 @@ export class MovieListWithMoviesDto {
 	@ApiProperty()
 	updatedAt: string;
 
-	@ApiProperty({ type: [MovieInListDto] })
-	items: MovieInListDto[];
+	@ApiProperty({ type: [MediaInListDto] })
+	items: MediaInListDto[];
 }
 
-export class MovieListsForMovieDto {
+export class MovieListsForItemDto {
 	@ApiProperty()
 	listId: string;
 

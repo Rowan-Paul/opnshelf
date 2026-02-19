@@ -13,13 +13,14 @@ import {
 import type { Main as ListItemRecord } from "../lexicons/app/opnshelf/listItem.defs";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ShowsService } from "../shows/shows.service";
 import type {
 	AddToListDto,
 	CreateListDto,
-	MovieInListDto,
+	MediaInListDto,
 	MovieListDto,
 	MovieListSummaryDto,
-	MovieListsForMovieDto,
+	MovieListsForItemDto,
 	UpdateListDto,
 } from "./dto/list.dto";
 
@@ -51,6 +52,7 @@ export class ListsService {
 	constructor(
 		private prisma: PrismaService,
 		private moviesService: MoviesService,
+		private showsService: ShowsService,
 	) {}
 
 	async getUserLists(userDid: string): Promise<MovieListSummaryDto[]> {
@@ -83,6 +85,7 @@ export class ListsService {
 					orderBy: { createdAt: "desc" },
 					include: {
 						movie: true,
+						show: true,
 					},
 				},
 			},
@@ -95,16 +98,17 @@ export class ListsService {
 		return this.mapListToDto(list);
 	}
 
-	async getListsForMovie(
+	async getListsForItem(
 		userDid: string,
-		movieId: string,
-	): Promise<MovieListsForMovieDto[]> {
+		mediaType: "movie" | "show",
+		mediaId: string,
+	): Promise<MovieListsForItemDto[]> {
 		const lists = await this.prisma.movieList.findMany({
 			where: { userDid },
 			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 			include: {
 				items: {
-					where: { movieId },
+					where: { mediaType, mediaId },
 					select: { id: true },
 				},
 			},
@@ -372,7 +376,7 @@ export class ListsService {
 		session: ATSession,
 		slug: string,
 		dto: AddToListDto,
-	): Promise<MovieInListDto> {
+	): Promise<MediaInListDto> {
 		const list = await this.prisma.movieList.findFirst({
 			where: { userDid, slug },
 		});
@@ -381,24 +385,36 @@ export class ListsService {
 			throw new NotFoundException("List not found");
 		}
 
-		const existing = await this.prisma.movieListItem.findUnique({
-			where: { listId_movieId: { listId: list.id, movieId: dto.movieId } },
-			include: { movie: true },
+		const existing = await this.prisma.listItem.findUnique({
+			where: {
+				listId_mediaType_mediaId: {
+					listId: list.id,
+					mediaType: dto.mediaType,
+					mediaId: dto.mediaId,
+				},
+			},
+			include: { movie: true, show: true },
 		});
 
 		if (existing) {
 			return this.mapItemToDto(existing);
 		}
 
-		const movieData = await this.moviesService.getMovieDetails(dto.movieId);
-		await this.moviesService.upsertMovie(movieData);
+		if (dto.mediaType === "movie") {
+			const movieData = await this.moviesService.getMovieDetails(dto.mediaId);
+			await this.moviesService.upsertMovie(movieData);
+		} else {
+			const showData = await this.showsService.getShowDetails(dto.mediaId);
+			await this.showsService.upsertShow(showData);
+		}
 
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
 
 		const record: ListItemRecord = listItemSchema.build({
 			listRkey: list.rkey,
-			movieId: dto.movieId,
+			mediaType: dto.mediaType,
+			mediaId: dto.mediaId,
 			notes: dto.notes,
 			createdAt: now,
 		});
@@ -414,23 +430,26 @@ export class ListsService {
 			validate: false,
 		});
 
-		this.logger.log(`Added movie ${dto.movieId} to list ${slug}`);
+		this.logger.log(`Added ${dto.mediaType} ${dto.mediaId} to list ${slug}`);
 
-		const itemCount = await this.prisma.movieListItem.count({
+		const itemCount = await this.prisma.listItem.count({
 			where: { listId: list.id },
 		});
 
-		const item = await this.prisma.movieListItem.create({
+		const item = await this.prisma.listItem.create({
 			data: {
 				rkey,
 				uri: response.data.uri,
 				cid: response.data.cid,
 				listId: list.id,
-				movieId: dto.movieId,
+				mediaType: dto.mediaType,
+				mediaId: dto.mediaId,
+				movieId: dto.mediaType === "movie" ? dto.mediaId : null,
+				showId: dto.mediaType === "show" ? dto.mediaId : null,
 				notes: dto.notes,
 				position: itemCount,
 			},
-			include: { movie: true },
+			include: { movie: true, show: true },
 		});
 
 		return this.mapItemToDto(item);
@@ -440,7 +459,8 @@ export class ListsService {
 		userDid: string,
 		session: ATSession,
 		slug: string,
-		movieId: string,
+		mediaType: "movie" | "show",
+		mediaId: string,
 	): Promise<void> {
 		const list = await this.prisma.movieList.findFirst({
 			where: { userDid, slug },
@@ -450,8 +470,14 @@ export class ListsService {
 			throw new NotFoundException("List not found");
 		}
 
-		const item = await this.prisma.movieListItem.findUnique({
-			where: { listId_movieId: { listId: list.id, movieId } },
+		const item = await this.prisma.listItem.findUnique({
+			where: {
+				listId_mediaType_mediaId: {
+					listId: list.id,
+					mediaType,
+					mediaId,
+				},
+			},
 		});
 
 		if (!item) {
@@ -467,11 +493,11 @@ export class ListsService {
 			rkey: item.rkey,
 		});
 
-		await this.prisma.movieListItem.delete({
+		await this.prisma.listItem.delete({
 			where: { id: item.id },
 		});
 
-		this.logger.log(`Removed movie ${movieId} from list ${slug}`);
+		this.logger.log(`Removed ${mediaType} ${mediaId} from list ${slug}`);
 	}
 
 	async indexListRecord(
@@ -531,36 +557,63 @@ export class ListsService {
 			return;
 		}
 
-		const existingMovie = await this.moviesService.getMovieByTMDBId(
-			record.movieId,
-		);
-		if (!existingMovie) {
-			try {
-				const movieData = await this.moviesService.getMovieDetails(
-					record.movieId,
-				);
-				await this.moviesService.upsertMovie(movieData);
-			} catch (err) {
-				this.logger.error(
-					`Failed to fetch movie ${record.movieId} from TMDB, skipping item`,
-					err,
-				);
-				return;
+		if (record.mediaType === "movie") {
+			const existingMovie = await this.moviesService.getMovieByTMDBId(
+				record.mediaId,
+			);
+			if (!existingMovie) {
+				try {
+					const movieData = await this.moviesService.getMovieDetails(
+						record.mediaId,
+					);
+					await this.moviesService.upsertMovie(movieData);
+				} catch (err) {
+					this.logger.error(
+						`Failed to fetch movie ${record.mediaId} from TMDB, skipping item`,
+						err,
+					);
+					return;
+				}
+			}
+		} else {
+			const existingShow = await this.showsService.getShowByTMDBId(
+				record.mediaId,
+			);
+			if (!existingShow) {
+				try {
+					const showData = await this.showsService.getShowDetails(
+						record.mediaId,
+					);
+					await this.showsService.upsertShow(showData);
+				} catch (err) {
+					this.logger.error(
+						`Failed to fetch show ${record.mediaId} from TMDB, skipping item`,
+						err,
+					);
+					return;
+				}
 			}
 		}
 
-		await this.prisma.movieListItem.upsert({
+		await this.prisma.listItem.upsert({
 			where: { rkey },
 			create: {
 				rkey,
 				uri,
 				cid,
 				listId: list.id,
-				movieId: record.movieId,
+				mediaType: record.mediaType,
+				mediaId: record.mediaId,
+				movieId: record.mediaType === "movie" ? record.mediaId : null,
+				showId: record.mediaType === "show" ? record.mediaId : null,
 				notes: record.notes,
 			},
 			update: {
 				cid,
+				mediaType: record.mediaType,
+				mediaId: record.mediaId,
+				movieId: record.mediaType === "movie" ? record.mediaId : null,
+				showId: record.mediaType === "show" ? record.mediaId : null,
 				notes: record.notes,
 			},
 		});
@@ -569,7 +622,7 @@ export class ListsService {
 	}
 
 	async deleteListItemRecord(rkey: string): Promise<void> {
-		await this.prisma.movieListItem.deleteMany({
+		await this.prisma.listItem.deleteMany({
 			where: { rkey },
 		});
 
@@ -601,7 +654,8 @@ export class ListsService {
 		items: Array<{
 			id: string;
 			rkey: string;
-			movieId: string;
+			mediaType: "movie" | "show";
+			mediaId: string;
 			notes: string | null;
 			position: number;
 			createdAt: Date;
@@ -614,7 +668,17 @@ export class ListsService {
 				releaseDate: Date | null;
 				overview: string | null;
 				colors: unknown;
-			};
+			} | null;
+			show: {
+				showId: string;
+				title: string;
+				posterPath: string | null;
+				backdropPath: string | null;
+				firstAirYear: number | null;
+				firstAirDate: Date | null;
+				overview: string | null;
+				colors: unknown;
+			} | null;
 		}>;
 	}): MovieListDto {
 		return {
@@ -635,7 +699,8 @@ export class ListsService {
 	private mapItemToDto(item: {
 		id: string;
 		rkey: string;
-		movieId: string;
+		mediaType: "movie" | "show";
+		mediaId: string;
 		notes: string | null;
 		position: number;
 		createdAt: Date;
@@ -648,26 +713,77 @@ export class ListsService {
 			releaseDate: Date | null;
 			overview: string | null;
 			colors: unknown;
-		};
-	}): MovieInListDto {
+		} | null;
+		show: {
+			showId: string;
+			title: string;
+			posterPath: string | null;
+			backdropPath: string | null;
+			firstAirYear: number | null;
+			firstAirDate: Date | null;
+			overview: string | null;
+			colors: unknown;
+		} | null;
+	}): MediaInListDto {
+		const mediaTitle =
+			item.mediaType === "movie" ? item.movie?.title : item.show?.title;
+		const mediaPosterPath =
+			item.mediaType === "movie"
+				? item.movie?.posterPath
+				: item.show?.posterPath;
+		const mediaBackdropPath =
+			item.mediaType === "movie"
+				? item.movie?.backdropPath
+				: item.show?.backdropPath;
+		const mediaReleaseYear =
+			item.mediaType === "movie"
+				? item.movie?.releaseYear
+				: item.show?.firstAirYear;
+		const mediaReleaseDate =
+			item.mediaType === "movie"
+				? item.movie?.releaseDate
+				: item.show?.firstAirDate;
+		const mediaOverview =
+			item.mediaType === "movie" ? item.movie?.overview : item.show?.overview;
+		const mediaColors =
+			item.mediaType === "movie" ? item.movie?.colors : item.show?.colors;
+
 		return {
 			id: item.id,
 			rkey: item.rkey,
-			movieId: item.movieId,
+			mediaType: item.mediaType,
+			mediaId: item.mediaId,
+			movieId: item.mediaType === "movie" ? item.mediaId : undefined,
 			notes: item.notes ?? undefined,
 			position: item.position,
 			createdAt: item.createdAt.toISOString(),
-			movie: {
-				movieId: item.movie.movieId,
-				title: item.movie.title,
-				posterPath: item.movie.posterPath ?? undefined,
-				backdropPath: item.movie.backdropPath ?? undefined,
-				releaseYear: item.movie.releaseYear ?? undefined,
-				releaseDate: item.movie.releaseDate?.toISOString() ?? undefined,
-				overview: item.movie.overview ?? undefined,
-				colors:
-					(item.movie.colors as MovieInListDto["movie"]["colors"]) ?? undefined,
+			media: {
+				mediaType: item.mediaType,
+				mediaId: item.mediaId,
+				movieId: item.movie?.movieId,
+				showId: item.show?.showId,
+				title: mediaTitle ?? "",
+				posterPath: mediaPosterPath ?? undefined,
+				backdropPath: mediaBackdropPath ?? undefined,
+				releaseYear: mediaReleaseYear ?? undefined,
+				releaseDate: mediaReleaseDate?.toISOString() ?? undefined,
+				overview: mediaOverview ?? undefined,
+				colors: (mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
 			},
+			movie:
+				item.mediaType === "movie"
+					? {
+							movieId: item.mediaId,
+							title: mediaTitle ?? "",
+							posterPath: mediaPosterPath ?? undefined,
+							backdropPath: mediaBackdropPath ?? undefined,
+							releaseYear: mediaReleaseYear ?? undefined,
+							releaseDate: mediaReleaseDate?.toISOString() ?? undefined,
+							overview: mediaOverview ?? undefined,
+							colors:
+								(mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
+						}
+					: undefined,
 		};
 	}
 }

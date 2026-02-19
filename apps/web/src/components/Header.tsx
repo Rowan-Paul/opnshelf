@@ -97,7 +97,7 @@ export default function Header() {
 					</Link>
 					<Link
 						to="/search"
-						search={{ q: "" }}
+						search={{ q: "", type: "all" }}
 						className="flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] transition-colors md-label-large"
 						style={{
 							color: "var(--md-sys-color-on-surface-variant)",
@@ -265,7 +265,7 @@ export default function Header() {
 
 					<Link
 						to="/search"
-						search={{ q: "" }}
+						search={{ q: "", type: "all" }}
 						onClick={() => setIsOpen(false)}
 						className="flex items-center gap-3 p-3 rounded-[var(--md-sys-shape-corner-large)] transition-colors mb-2 md-label-large"
 						style={{
