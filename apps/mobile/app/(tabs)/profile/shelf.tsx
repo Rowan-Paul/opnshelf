@@ -4,14 +4,14 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerUnmarkWatchedMutation,
 	showsControllerGetUserShowsOptions,
-	type TrackedShowSummaryDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { BookOpen } from "lucide-react-native";
-import { useCallback } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useUserSettings } from "@/hooks/useUserSettings";
-import { createTitleSlug } from "@/lib/utils";
+import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 export default function ShelfScreen() {
 	const { user } = useAuth();
@@ -97,6 +97,17 @@ export default function ShelfScreen() {
 	);
 
 	const keyExtractor = useCallback((item: TrackedMovieDto) => item.id, []);
+	const trackedShowItems = useMemo(
+		() =>
+			(trackedShows ?? []).map((tracked) => ({
+				id: tracked.showId,
+				name: tracked.show.title,
+				posterPath: tracked.show.posterPath ?? null,
+				firstAirDate: tracked.show.firstAirDate ?? null,
+				watchCount: tracked.watchCount ?? 0,
+			})),
+		[trackedShows],
+	);
 
 	if (isMoviesLoading) {
 		return (
@@ -165,27 +176,25 @@ export default function ShelfScreen() {
 						{trackedShows.length} show{trackedShows.length !== 1 ? "s" : ""}{" "}
 						tracked
 					</Text>
-					{trackedShows.map((show: TrackedShowSummaryDto) => (
-						<Button
-							key={show.showId}
-							variant="outlined"
-							style={styles.showButton}
-							onPress={() =>
-								router.push({
-									pathname: "/show/[id]",
-									params: {
-										id: show.showId,
-										title: createTitleSlug(show.show.title),
-									},
-								})
-							}
-						>
-							<Text style={{ color: colors.onBackground }}>
-								{show.show.title} ({show.watchCount} watched episode
-								{show.watchCount === 1 ? "" : "s"})
-							</Text>
-						</Button>
-					))}
+					<View style={styles.showGrid}>
+						{trackedShowItems.map((item) => (
+							<ShelfShowCard
+								key={item.id}
+								name={item.name}
+								posterPath={item.posterPath}
+								watchCount={item.watchCount}
+								onPress={() =>
+									router.push({
+										pathname: "/show/[id]",
+										params: {
+											id: item.id.toString(),
+											title: createTitleSlug(item.name),
+										},
+									})
+								}
+							/>
+						))}
+					</View>
 				</View>
 			)}
 
@@ -246,10 +255,38 @@ const styles = StyleSheet.create({
 	showsSection: {
 		paddingHorizontal: spacing.lg,
 		paddingBottom: spacing.lg,
-		gap: spacing.sm,
 	},
-	showButton: {
-		justifyContent: "flex-start",
+	showGrid: {
+		paddingTop: spacing.md,
+	},
+	showCard: {
+		flexDirection: "row",
+		borderRadius: borderRadius.lg,
+		overflow: "hidden",
+		borderWidth: 1,
+		marginBottom: spacing.md,
+	},
+	showPosterContainer: {
+		width: 80,
+		aspectRatio: 2 / 3,
+	},
+	showPoster: {
+		width: "100%",
+		height: "100%",
+	},
+	showCardContent: {
+		flex: 1,
+		padding: spacing.md,
+		justifyContent: "center",
+	},
+	showTitle: {
+		fontSize: 16,
+		fontWeight: "600",
+		marginBottom: spacing.xs,
+		lineHeight: 22,
+	},
+	showMeta: {
+		fontSize: 14,
 	},
 	centerContent: {
 		flex: 1,
@@ -300,4 +337,78 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		justifyContent: "center",
 	},
+	noPoster: {
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	noPosterText: {
+		fontSize: 12,
+		fontWeight: "500",
+	},
 });
+
+interface ShelfShowCardProps {
+	name: string;
+	posterPath?: string | null;
+	watchCount: number;
+	onPress: () => void;
+}
+
+function ShelfShowCard({
+	name,
+	posterPath,
+	watchCount,
+	onPress,
+}: ShelfShowCardProps) {
+	const { colors } = useTheme();
+	const posterUrl = getTmdbPosterUrl(posterPath);
+	const watchLabel = `${watchCount} watched episode${watchCount === 1 ? "" : "s"}`;
+
+	return (
+		<TouchableOpacity
+			onPress={onPress}
+			style={[
+				styles.showCard,
+				{
+					backgroundColor: colors.surfaceContainer,
+					borderColor: colors.outline,
+				},
+			]}
+			activeOpacity={0.8}
+		>
+			<View
+				style={[
+					styles.showPosterContainer,
+					{ backgroundColor: colors.surfaceContainerHigh },
+				]}
+			>
+				{posterUrl ? (
+					<Image
+						source={{ uri: posterUrl }}
+						style={styles.showPoster}
+						contentFit="cover"
+					/>
+				) : (
+					<View style={[styles.showPoster, styles.noPoster]}>
+						<Text
+							style={[styles.noPosterText, { color: colors.onSurfaceVariant }]}
+						>
+							No poster
+						</Text>
+					</View>
+				)}
+			</View>
+			<View style={styles.showCardContent}>
+				<Text
+					style={[styles.showTitle, { color: colors.onSurface }]}
+					numberOfLines={2}
+				>
+					{name}
+				</Text>
+				<Text style={[styles.showMeta, { color: colors.onSurfaceVariant }]}>
+					{watchLabel}
+				</Text>
+			</View>
+		</TouchableOpacity>
+	);
+}

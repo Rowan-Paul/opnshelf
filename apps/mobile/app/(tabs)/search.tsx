@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
+import { ShowItem } from "@/components/ShowItem";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -207,6 +208,20 @@ export default function SearchScreen() {
 		(item: TmdbMovieResultDto) => item.id.toString(),
 		[],
 	);
+	const showKeyExtractor = useCallback(
+		(item: TmdbShowResultDto) => item.id.toString(),
+		[],
+	);
+
+	const renderShowItem: ListRenderItem<TmdbShowResultDto> = useCallback(
+		({ item }) => (
+			<ShowItem
+				show={item}
+				onPress={() => handleShowPress(item as TmdbShowResultDto)}
+			/>
+		),
+		[handleShowPress],
+	);
 
 	const renderSkeleton = () => (
 		<View style={styles.skeletonGrid}>
@@ -306,29 +321,9 @@ export default function SearchScreen() {
 			{showData && showResults.length > 0 && (
 				<FlashList
 					data={showResults}
-					renderItem={({ item }) => (
-						<View style={styles.showRow}>
-							<Pressable
-								onPress={() => handleShowPress(item as TmdbShowResultDto)}
-								style={[
-									styles.showCard,
-									{ backgroundColor: colors.surfaceContainer },
-								]}
-							>
-								<Text style={[styles.showTitle, { color: colors.onSurface }]}>
-									{(item as TmdbShowResultDto).name}
-								</Text>
-								<Text
-									style={[styles.showMeta, { color: colors.onSurfaceVariant }]}
-								>
-									{(item as TmdbShowResultDto).first_air_date
-										? (item as TmdbShowResultDto).first_air_date?.split("-")[0]
-										: "Unknown year"}
-								</Text>
-							</Pressable>
-						</View>
-					)}
-					keyExtractor={(item) => `show-${item.id}`}
+					renderItem={renderShowItem}
+					keyExtractor={showKeyExtractor}
+					numColumns={2}
 					contentContainerStyle={styles.listContent}
 				/>
 			)}
@@ -370,41 +365,9 @@ export default function SearchScreen() {
 							{discoverShowResults.length > 0 && (
 								<FlashList
 									data={discoverShowResults}
-									renderItem={({ item }) => (
-										<View style={styles.showRow}>
-											<Pressable
-												onPress={() =>
-													handleShowPress(item as TmdbShowResultDto)
-												}
-												style={[
-													styles.showCard,
-													{ backgroundColor: colors.surfaceContainer },
-												]}
-											>
-												<Text
-													style={[
-														styles.showTitle,
-														{ color: colors.onSurface },
-													]}
-												>
-													{(item as TmdbShowResultDto).name}
-												</Text>
-												<Text
-													style={[
-														styles.showMeta,
-														{ color: colors.onSurfaceVariant },
-													]}
-												>
-													{(item as TmdbShowResultDto).first_air_date
-														? (item as TmdbShowResultDto).first_air_date?.split(
-																"-",
-															)[0]
-														: "Unknown year"}
-												</Text>
-											</Pressable>
-										</View>
-									)}
-									keyExtractor={(item) => `discover-show-${item.id}`}
+									renderItem={renderShowItem}
+									keyExtractor={showKeyExtractor}
+									numColumns={2}
 									contentContainerStyle={styles.listContent}
 								/>
 							)}
@@ -446,21 +409,6 @@ const styles = StyleSheet.create({
 	},
 	listContent: {
 		padding: spacing.lg,
-	},
-	showRow: {
-		marginBottom: spacing.sm,
-	},
-	showCard: {
-		borderRadius: borderRadius.md,
-		padding: spacing.md,
-	},
-	showTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-	},
-	showMeta: {
-		fontSize: 13,
-		marginTop: spacing.xs,
 	},
 	resultsCount: {
 		fontSize: 14,

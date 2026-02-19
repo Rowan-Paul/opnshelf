@@ -36,12 +36,12 @@ const DEFAULT_LISTS: Array<{
 	{
 		name: "Watchlist",
 		slug: "watchlist",
-		description: "Movies you want to watch",
+		description: "Items you want to watch",
 	},
 	{
 		name: "Favorites",
 		slug: "favorites",
-		description: "Your favorite movies",
+		description: "Your favorite items",
 	},
 ];
 

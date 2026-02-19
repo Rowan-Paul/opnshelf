@@ -71,7 +71,11 @@ function SearchPage() {
 		if (trimmed !== searchQuery) {
 			debounceRef.current = setTimeout(() => {
 				lastNavigatedQueryRef.current = trimmed;
-				navigate({ search: { q: trimmed, type } });
+				navigate({
+					search: { q: trimmed, type },
+					replace: true,
+					resetScroll: false,
+				});
 			}, DEBOUNCE_MS);
 		}
 
@@ -115,12 +119,11 @@ function SearchPage() {
 			enabled: !hasQuery && (isAll || isMovies),
 		});
 
-	const { data: discoverShowsData, isLoading: isDiscoverShowsLoading } = useQuery(
-		{
+	const { data: discoverShowsData, isLoading: isDiscoverShowsLoading } =
+		useQuery({
 			...showsControllerDiscoverShowsOptions({}),
 			enabled: !hasQuery && (isAll || isShows),
-		},
-	);
+		});
 
 	const movieResults: TmdbMovieResultDto[] = hasQuery
 		? (movieSearchData?.results ?? [])
@@ -136,14 +139,20 @@ function SearchPage() {
 		? (showSearchData?.total_results ?? showResults.length)
 		: showResults.length;
 
-	const movieLoading = hasQuery ? isMovieSearchLoading : isDiscoverMoviesLoading;
+	const movieLoading = hasQuery
+		? isMovieSearchLoading
+		: isDiscoverMoviesLoading;
 	const showLoading = hasQuery ? isShowSearchLoading : isDiscoverShowsLoading;
 	const primaryError = movieSearchError || showSearchError;
 
 	const switchType = (nextType: "all" | "movies" | "shows") => {
 		const trimmed = query.trim();
 		lastNavigatedQueryRef.current = trimmed;
-		navigate({ search: { q: trimmed, type: nextType } });
+		navigate({
+			search: { q: trimmed, type: nextType },
+			replace: true,
+			resetScroll: false,
+		});
 	};
 
 	return (
@@ -173,7 +182,11 @@ function SearchPage() {
 								onClick={() => {
 									setQuery("");
 									lastNavigatedQueryRef.current = "";
-									navigate({ search: { q: "", type } });
+									navigate({
+										search: { q: "", type },
+										replace: true,
+										resetScroll: false,
+									});
 								}}
 								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-[var(--md-sys-color-on-surface)]/10"
 								style={{ color: "var(--md-sys-color-on-surface-variant)" }}

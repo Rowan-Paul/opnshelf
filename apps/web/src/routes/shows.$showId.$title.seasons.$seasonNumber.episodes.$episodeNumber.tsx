@@ -56,6 +56,36 @@ import {
 export const Route = createFileRoute(
 	"/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber",
 )({
+	loader: async ({ params, context }) => {
+		const { showId, seasonNumber, episodeNumber } = params;
+		const { queryClient } = context;
+
+		const showData = await queryClient.fetchQuery({
+			...showsControllerGetShowDetailsOptions({
+				path: { showId },
+			}),
+		});
+
+		const episodeData = await queryClient.fetchQuery({
+			...showsControllerGetEpisodeDetailsOptions({
+				path: { showId, seasonNumber, episodeNumber },
+			}),
+		});
+
+		return { show: showData, episode: episodeData };
+	},
+	head: ({ loaderData }) => {
+		const showName = loaderData?.show?.name;
+		const episodeName = loaderData?.episode?.name;
+		const title =
+			showName && episodeName
+				? `${showName}: ${episodeName} | OpnShelf`
+				: "Episode | OpnShelf";
+
+		return {
+			meta: [{ title }],
+		};
+	},
 	component: ShowEpisodePage,
 });
 
@@ -320,8 +350,10 @@ function ShowEpisodePage() {
 				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
 					<div className="container mx-auto max-w-6xl">
 						<div className="flex items-end gap-4 md:gap-8">
-							<div
-								className="w-24 md:w-40 rounded-lg overflow-hidden shadow-2xl"
+							<Link
+								to="/shows/$showId/$title"
+								params={{ showId, title }}
+								className="w-24 md:w-40 rounded-lg overflow-hidden shadow-2xl cursor-pointer transition-transform hover:scale-105"
 								style={{ boxShadow: `0 25px 50px -12px ${colors.primary}40` }}
 							>
 								{showPoster ? (
@@ -335,7 +367,7 @@ function ShowEpisodePage() {
 										No poster
 									</div>
 								)}
-							</div>
+							</Link>
 							<div className="pb-2">
 								<h1
 									className="text-2xl md:text-5xl font-bold mb-2"
@@ -537,30 +569,32 @@ function ShowEpisodePage() {
 					</div>
 
 					<div className="space-y-6 min-w-0">
-							<div className="flex flex-wrap gap-3">
-								<Link
-									to="/shows/$showId/$title/seasons/$seasonNumber"
-									params={{ showId, title, seasonNumber }}
-									className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2 hover:bg-gray-900/40 transition-colors"
-								>
-									<Layers className="w-4 h-4" />S{seasonNumber}
-								</Link>
-								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-									<Film className="w-4 h-4" />E{episodeNumber}
-								</div>
-								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-									<Calendar className="w-4 h-4" />
-									{episode?.air_date
-										? formatDateOnly(episode.air_date)
-										: "Air date unknown"}
-								</div>
-								<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-									<Star className="w-4 h-4" />
-									{episode?.vote_average
-										? `${episode.vote_average.toFixed(1)}/10`
-										: "Not rated"}
-								</div>
+						<div className="flex flex-wrap gap-3">
+							<Link
+								to="/shows/$showId/$title/seasons/$seasonNumber"
+								params={{ showId, title, seasonNumber }}
+								className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2 hover:bg-gray-900/40 transition-colors"
+							>
+								<Layers className="w-4 h-4" />
+								Season {seasonNumber}
+							</Link>
+							<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+								<Film className="w-4 h-4" />
+								Episode {episodeNumber}
 							</div>
+							<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+								<Calendar className="w-4 h-4" />
+								{episode?.air_date
+									? formatDateOnly(episode.air_date)
+									: "Air date unknown"}
+							</div>
+							<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+								<Star className="w-4 h-4" />
+								{episode?.vote_average
+									? `${episode.vote_average.toFixed(1)}/10`
+									: "Not rated"}
+							</div>
+						</div>
 						<section>
 							<h2
 								className="text-xl font-semibold mb-3"

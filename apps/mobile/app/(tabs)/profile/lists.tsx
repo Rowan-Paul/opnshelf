@@ -107,13 +107,13 @@ export default function ListsScreen() {
 									{ color: colors.onSurfaceVariant },
 								]}
 							>
-								Your default lists will appear after you add movies
+								Your default lists will appear after you add items
 							</Text>
 						</CardHeader>
 						<CardContent>
 							<Button onPress={() => router.push("/(tabs)/search")}>
 								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
-									Search for movies
+									Search for items
 								</Text>
 							</Button>
 						</CardContent>
@@ -199,7 +199,7 @@ function ListCard({ list, onPress }: ListCardProps) {
 				<Text
 					style={[styles.listCardCount, { color: colors.onSurfaceVariant }]}
 				>
-					{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
+					{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
 				</Text>
 			</View>
 		</TouchableOpacity>

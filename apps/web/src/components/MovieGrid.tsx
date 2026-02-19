@@ -1,6 +1,6 @@
 import type { UserDto } from "@opnshelf/api";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { MovieCardData } from "./MovieCard";
 import { MovieCard } from "./MovieCard";
 

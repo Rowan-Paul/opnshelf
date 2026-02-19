@@ -93,7 +93,7 @@ function LandingHomePage() {
 					<M3Button variant="filled" size="lg" asChild>
 						<Link to="/search" search={{ q: "", type: "all" }}>
 							<Search className="w-5 h-5 mr-2" />
-							Search Movies
+							Search
 						</Link>
 					</M3Button>
 				</div>
@@ -211,7 +211,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 				<M3Button variant="filled" asChild>
 					<Link to="/search" search={{ q: "", type: "all" }}>
 						<Search className="w-5 h-5 mr-2" />
-						Search Movies
+						Search
 					</Link>
 				</M3Button>
 			</div>
@@ -265,7 +265,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 					<M3CardContent>
 						<p className="md-display-small">{listCount}</p>
 						<M3CardDescription>
-							{totalMoviesInLists} total movie
+							{totalMoviesInLists} total item
 							{totalMoviesInLists !== 1 ? "s" : ""} in lists
 						</M3CardDescription>
 					</M3CardContent>
@@ -306,15 +306,15 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 					) : (
 						<M3Card variant="elevated">
 							<M3CardHeader>
-								<M3CardTitle>No movies watched yet</M3CardTitle>
+								<M3CardTitle>No items watched yet</M3CardTitle>
 								<M3CardDescription>
-									Start adding watched movies and your activity appears here.
+									Start adding watched items and your activity appears here.
 								</M3CardDescription>
 							</M3CardHeader>
 							<M3CardContent>
 								<M3Button variant="filled" asChild>
 									<Link to="/search" search={{ q: "", type: "all" }}>
-										Search movies
+										Search
 									</Link>
 								</M3Button>
 							</M3CardContent>
@@ -356,7 +356,7 @@ function DashboardHomePage({ user }: { user: UserDto }) {
 							<M3CardHeader>
 								<M3CardTitle>No lists yet</M3CardTitle>
 								<M3CardDescription>
-									Create your first list to organize movies.
+									Create your first list to organize items.
 								</M3CardDescription>
 							</M3CardHeader>
 						</M3Card>

@@ -7,11 +7,16 @@ interface ShowCardProps {
 }
 
 export function ShowCard({ show }: ShowCardProps) {
+	const compatShow = show as TmdbShowResultDto & {
+		posterPath?: string | null;
+		firstAirDate?: string | null;
+	};
 	const showId = show.id.toString();
-	const posterUrl = getTmdbPosterUrl(show.poster_path);
-	const year = show.first_air_date
-		? show.first_air_date.split("-")[0]
-		: undefined;
+	const posterUrl = getTmdbPosterUrl(
+		show.poster_path ?? compatShow.posterPath ?? null,
+	);
+	const firstAirDate = show.first_air_date ?? compatShow.firstAirDate ?? null;
+	const year = firstAirDate ? firstAirDate.split("-")[0] : undefined;
 
 	return (
 		<div className="group">

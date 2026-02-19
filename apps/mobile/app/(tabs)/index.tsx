@@ -158,7 +158,7 @@ export default function HomeScreen() {
 							style={styles.buttonIcon}
 						/>
 						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
-							Search Movies
+							Search
 						</Text>
 					</Button>
 				</View>
@@ -290,7 +290,7 @@ export default function HomeScreen() {
 									{ color: colors.onSurfaceVariant },
 								]}
 							>
-								{totalMoviesInLists} movies across lists
+								{totalMoviesInLists} items across lists
 							</Text>
 						</CardContent>
 					</Card>
@@ -417,7 +417,7 @@ export default function HomeScreen() {
 									<Text
 										style={[styles.buttonText, { color: colors.onPrimary }]}
 									>
-										Search movies
+										Search
 									</Text>
 								</Button>
 							</CardContent>
@@ -488,7 +488,7 @@ export default function HomeScreen() {
 												{ color: colors.onSurfaceVariant },
 											]}
 										>
-											{list.movieCount} movie{list.movieCount !== 1 ? "s" : ""}
+											{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
 										</Text>
 									</View>
 								</Pressable>
@@ -508,7 +508,7 @@ export default function HomeScreen() {
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									Create your first list to organize movies.
+									Create your first list to organize items.
 								</Text>
 							</CardContent>
 						</Card>
@@ -553,7 +553,7 @@ function UnauthenticatedHome() {
 							style={styles.buttonIcon}
 						/>
 						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
-							Search Movies
+							Search
 						</Text>
 					</Button>
 				</View>

@@ -231,7 +231,8 @@ function ListDetailPage() {
 									}}
 									isRemoving={
 										removeMutation.isPending &&
-										removeMutation.variables?.path?.mediaType === item.mediaType &&
+										removeMutation.variables?.path?.mediaType ===
+											item.mediaType &&
 										removeMutation.variables?.path?.mediaId === item.mediaId
 									}
 								/>

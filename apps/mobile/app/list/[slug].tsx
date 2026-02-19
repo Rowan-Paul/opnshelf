@@ -305,7 +305,7 @@ export default function ListDetailScreen() {
 						<Text
 							style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
 						>
-							{movies.length} movie{movies.length !== 1 ? "s" : ""}
+							{movies.length} item{movies.length !== 1 ? "s" : ""}
 						</Text>
 						<FlashList
 							data={movies}
@@ -329,7 +329,7 @@ export default function ListDetailScreen() {
 									style={styles.emptyIcon}
 								/>
 								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-									No movies yet
+									No items yet
 								</Text>
 								<Text
 									style={[
@@ -337,7 +337,7 @@ export default function ListDetailScreen() {
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									Add movies to this list from the search page
+									Add items to this list from the search page
 								</Text>
 							</CardHeader>
 							<CardContent>
@@ -354,7 +354,7 @@ export default function ListDetailScreen() {
 											{ color: colors.onPrimary },
 										]}
 									>
-										Search for movies
+										Search for items
 									</Text>
 								</TouchableOpacity>
 							</CardContent>

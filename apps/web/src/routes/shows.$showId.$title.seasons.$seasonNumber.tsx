@@ -16,11 +16,44 @@ import {
 import { ArrowLeft, Calendar, Star } from "lucide-react";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
-import { formatDateOnly, getTmdbBackdropUrl, getTmdbPosterUrl } from "@/lib/utils";
+import {
+	formatDateOnly,
+	getTmdbBackdropUrl,
+	getTmdbPosterUrl,
+} from "@/lib/utils";
 
 export const Route = createFileRoute(
 	"/shows/$showId/$title/seasons/$seasonNumber",
 )({
+	loader: async ({ params, context }) => {
+		const { showId, seasonNumber } = params;
+		const { queryClient } = context;
+
+		const showData = await queryClient.fetchQuery({
+			...showsControllerGetShowDetailsOptions({
+				path: { showId },
+			}),
+		});
+
+		const seasonData = await queryClient.fetchQuery({
+			...showsControllerGetSeasonDetailsOptions({
+				path: { showId, seasonNumber },
+			}),
+		});
+
+		return { show: showData, season: seasonData };
+	},
+	head: ({ loaderData, params }) => {
+		const showName = loaderData?.show?.name;
+		const seasonNumber = params.seasonNumber;
+		const title = showName
+			? `${showName}: Season ${seasonNumber} | OpnShelf`
+			: `Season ${seasonNumber} | OpnShelf`;
+
+		return {
+			meta: [{ title }],
+		};
+	},
 	component: ShowSeasonPage,
 });
 
@@ -72,7 +105,11 @@ function ShowSeasonPage() {
 					<div className="relative h-[45vh] md:h-[55vh] overflow-hidden">
 						{backdropUrl ? (
 							<>
-								<img src={backdropUrl} alt="" className="w-full h-full object-cover" />
+								<img
+									src={backdropUrl}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
 								<div
 									className="absolute inset-0"
 									style={{
@@ -101,9 +138,13 @@ function ShowSeasonPage() {
 						<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
 							<div className="container mx-auto max-w-6xl">
 								<div className="flex items-end gap-4 md:gap-8">
-									<div
-										className="w-24 md:w-40 rounded-lg overflow-hidden shadow-2xl"
-										style={{ boxShadow: `0 25px 50px -12px ${colors.primary}40` }}
+									<Link
+										to="/shows/$showId/$title"
+										params={{ showId, title }}
+										className="w-24 md:w-40 rounded-lg overflow-hidden shadow-2xl cursor-pointer transition-transform hover:scale-105"
+										style={{
+											boxShadow: `0 25px 50px -12px ${colors.primary}40`,
+										}}
 									>
 										{seasonPoster ? (
 											<img
@@ -116,12 +157,17 @@ function ShowSeasonPage() {
 												No poster
 											</div>
 										)}
-									</div>
+									</Link>
 									<div className="pb-2">
-										<h1 className="text-2xl md:text-5xl font-bold mb-2" style={{ textShadow: `0 4px 30px ${colors.primary}60` }}>
+										<h1
+											className="text-2xl md:text-5xl font-bold mb-2"
+											style={{ textShadow: `0 4px 30px ${colors.primary}60` }}
+										>
 											{showData?.name || title.replace(/-/g, " ")}
 										</h1>
-										<h2 className="text-lg md:text-2xl text-gray-200">Season {seasonNumber}</h2>
+										<h2 className="text-lg md:text-2xl text-gray-200">
+											Season {seasonNumber}
+										</h2>
 									</div>
 								</div>
 							</div>
@@ -130,24 +176,26 @@ function ShowSeasonPage() {
 
 					<div className="container mx-auto px-4 py-6 max-w-6xl">
 						<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
-							<div className="space-y-4">
-								<div className="p-4 rounded-lg bg-gray-900/50">
-									<span className="text-gray-500 text-sm block mb-1">Air Date</span>
-									<span className="font-medium" style={{ color: colors.accent }}>
-										{season?.air_date ? formatDateOnly(season.air_date) : "Unknown"}
-									</span>
-								</div>
-								<div className="p-4 rounded-lg bg-gray-900/50">
-									<span className="text-gray-500 text-sm block mb-1">Episodes</span>
-									<span className="font-medium" style={{ color: colors.accent }}>
-										{seasonEpisodes.length}
-									</span>
-								</div>
-							</div>
+							<div className="space-y-4" />
 
 							<div className="space-y-6 min-w-0">
+								<div className="flex flex-wrap gap-3">
+									{season?.air_date && (
+										<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+											<Calendar className="w-4 h-4" />
+											{formatDateOnly(season.air_date)}
+										</div>
+									)}
+									<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+										<span>{seasonEpisodes.length} episodes</span>
+									</div>
+								</div>
+
 								<section>
-									<h2 className="text-xl font-semibold mb-3" style={{ color: colors.primary }}>
+									<h2
+										className="text-xl font-semibold mb-3"
+										style={{ color: colors.primary }}
+									>
 										Overview
 									</h2>
 									<p className="text-gray-300 leading-relaxed">
@@ -156,17 +204,20 @@ function ShowSeasonPage() {
 								</section>
 
 								<section>
-									<h2 className="text-xl font-semibold mb-4" style={{ color: colors.primary }}>
+									<h2
+										className="text-xl font-semibold mb-4"
+										style={{ color: colors.primary }}
+									>
 										Episodes
 									</h2>
 									<div className="grid grid-cols-1 gap-3">
 										{seasonEpisodes.map((episode) => {
 											const episodeWatches =
 												history?.filter(
-														(h) =>
-															h.seasonNumber === episode.season_number &&
-															h.episodeNumber === episode.episode_number,
-													).length || 0;
+													(h) =>
+														h.seasonNumber === episode.season_number &&
+														h.episodeNumber === episode.episode_number,
+												).length || 0;
 
 											return (
 												<Link
@@ -209,9 +260,13 @@ function ShowSeasonPage() {
 															<div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
 																<span className="flex items-center gap-1">
 																	<Calendar className="w-3 h-3" />
-																	{episode.air_date ? formatDateOnly(episode.air_date) : "TBA"}
+																	{episode.air_date
+																		? formatDateOnly(episode.air_date)
+																		: "TBA"}
 																</span>
-																{user ? <span>{episodeWatches} watched</span> : null}
+																{user ? (
+																	<span>{episodeWatches} watched</span>
+																) : null}
 															</div>
 														</div>
 													</div>

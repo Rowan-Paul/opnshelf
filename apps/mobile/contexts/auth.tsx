@@ -16,22 +16,77 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function isUnauthorizedError(error: unknown): boolean {
+	if (!error || typeof error !== "object") {
+		return false;
+	}
+
+	const statusCode = (error as { statusCode?: unknown }).statusCode;
+	return statusCode === 401;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isInitialized, setIsInitialized] = useState(false);
+	const [hasSessionToken, setHasSessionToken] = useState(false);
+	const [hasResolvedInitialAuth, setHasResolvedInitialAuth] = useState(false);
 	const queryClient = useQueryClient();
 
-	const { data: user, isLoading: isUserLoading } = useQuery({
+	const {
+		data: user,
+		isLoading: isUserLoading,
+		isError: isUserError,
+		error: userError,
+		status: userStatus,
+		fetchStatus: userFetchStatus,
+	} = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
-		enabled: isInitialized,
+		enabled: isInitialized && hasSessionToken,
+		refetchOnMount: false,
+		refetchOnReconnect: false,
+		refetchOnWindowFocus: false,
 	});
 
 	useEffect(() => {
-		loadSessionToken().then(() => {
+		loadSessionToken().then((token) => {
+			setHasSessionToken(!!token);
 			setIsInitialized(true);
 		});
 	}, []);
+
+	useEffect(() => {
+		if (user) {
+			setHasSessionToken(true);
+		}
+	}, [user]);
+
+	useEffect(() => {
+		if (!isInitialized) {
+			return;
+		}
+
+		if (!hasSessionToken) {
+			setHasResolvedInitialAuth(true);
+			return;
+		}
+
+		if (userStatus === "success" || userStatus === "error") {
+			setHasResolvedInitialAuth(true);
+		}
+	}, [isInitialized, hasSessionToken, userStatus]);
+
+	useEffect(() => {
+		if (isUserError) {
+			if (isUnauthorizedError(userError)) {
+				void saveSessionToken(null);
+				setHasSessionToken(false);
+				const meQueryKey = authControllerMeQueryKey();
+				queryClient.setQueryData(meQueryKey, null);
+				queryClient.removeQueries({ queryKey: meQueryKey });
+			}
+		}
+	}, [isUserError, queryClient, userError]);
 
 	const login = useCallback(async (handle?: string) => {
 		const loginUrl = getLoginUrl(handle);
@@ -51,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const logout = useCallback(async () => {
 		await saveSessionToken(null);
+		setHasSessionToken(false);
 		// Set user to null immediately to update UI, then remove queries
 		// Use the exact query key structure created by authControllerMeQueryKey()
 		const meQueryKey = authControllerMeQueryKey();
@@ -61,13 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const handleAuthCallback = useCallback(async (token: string) => {
 		await saveSessionToken(token);
+		setHasSessionToken(true);
 		// Refetch user to update auth state
 		await queryClient.invalidateQueries({ queryKey: authControllerMeQueryKey() });
 	}, [queryClient]);
 
+	const isLoading = !isInitialized || (hasSessionToken && !hasResolvedInitialAuth);
+
 	const value: AuthContextType = {
 		user: user ?? null,
-		isLoading: !isInitialized || isUserLoading,
+		isLoading,
 		isAuthenticated: !!user,
 		login,
 		logout,

@@ -14,11 +14,15 @@ function LocaleInitializer({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		async function setupLocale() {
-			const { registerTranslation, en } = await import(
-				"react-native-paper-dates"
-			);
-			registerTranslation("en", en);
-			setIsReady(true);
+			try {
+				const { registerTranslation, en } = await import(
+					"react-native-paper-dates"
+				);
+				registerTranslation("en", en);
+				setIsReady(true);
+			} catch (error) {
+				console.error("Failed to initialize locale:", error);
+			}
 		}
 		setupLocale();
 	}, []);

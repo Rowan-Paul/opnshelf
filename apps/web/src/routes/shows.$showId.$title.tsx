@@ -15,17 +15,30 @@ import { ArrowLeft, Calendar, Tv } from "lucide-react";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
 import { GenresSection } from "@/components/GenresSection";
-import { formatDateOnly, getTmdbBackdropUrl, getTmdbPosterUrl } from "@/lib/utils";
+import { getTmdbBackdropUrl, getTmdbPosterUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/shows/$showId/$title")({
+	loader: async ({ params, context }) => {
+		const { showId } = params;
+		const { queryClient } = context;
+
+		const showData = await queryClient.fetchQuery({
+			...showsControllerGetShowDetailsOptions({
+				path: { showId },
+			}),
+		});
+
+		return showData;
+	},
+	head: ({ loaderData }) => {
+		const showName = loaderData?.name;
+		const title = showName ? `${showName} | OpnShelf` : "Show | OpnShelf";
+
+		return {
+			meta: [{ title }],
+		};
+	},
 	component: ShowDetailPage,
-	head: ({ params }) => ({
-		meta: [
-			{
-				title: `${params.title.replace(/-/g, " ")} | OpnShelf`,
-			},
-		],
-	}),
 });
 
 function ShowDetailPage() {
@@ -64,7 +77,11 @@ function ShowDetailPage() {
 					<div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
 						{backdropUrl ? (
 							<>
-								<img src={backdropUrl} alt="" className="w-full h-full object-cover" />
+								<img
+									src={backdropUrl}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
 								<div
 									className="absolute inset-0"
 									style={{
@@ -103,7 +120,9 @@ function ShowDetailPage() {
 									<div className="shrink-0">
 										<div
 											className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
-											style={{ boxShadow: `0 25px 50px -12px ${colors.primary}40` }}
+											style={{
+												boxShadow: `0 25px 50px -12px ${colors.primary}40`,
+											}}
 										>
 											{posterUrl ? (
 												<img
@@ -124,20 +143,10 @@ function ShowDetailPage() {
 											className="text-2xl md:text-5xl lg:text-6xl font-bold mb-2"
 											style={{ textShadow: `0 4px 30px ${colors.primary}60` }}
 										>
-											{isLoading ? "Loading..." : (show?.name ?? title.replace(/-/g, " "))}
+											{isLoading
+												? "Loading..."
+												: (show?.name ?? title.replace(/-/g, " "))}
 										</h1>
-										<div className="flex flex-wrap items-center gap-4 text-sm md:text-base text-gray-300">
-											{show?.first_air_date && (
-												<span className="flex items-center gap-2">
-													<Calendar className="w-4 h-4" style={{ color: colors.accent }} />
-													{new Date(show.first_air_date).getFullYear()}
-												</span>
-											)}
-											<span className="flex items-center gap-2">
-												<Tv className="w-4 h-4" style={{ color: colors.accent }} />
-												{episodeCount} episodes
-											</span>
-										</div>
 									</div>
 								</div>
 							</div>
@@ -146,30 +155,32 @@ function ShowDetailPage() {
 
 					<div className="container mx-auto px-4 py-6 max-w-6xl">
 						<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
-							<div className="space-y-4">
-								<div className="p-4 rounded-lg bg-gray-900/50">
-									<span className="text-gray-500 text-sm block mb-1">First Air Date</span>
-									<span className="font-medium" style={{ color: colors.accent }}>
-										{show?.first_air_date ? formatDateOnly(show.first_air_date) : "Unknown"}
-									</span>
-								</div>
-								<div className="p-4 rounded-lg bg-gray-900/50">
-									<span className="text-gray-500 text-sm block mb-1">Seasons</span>
-									<span className="font-medium" style={{ color: colors.accent }}>
-										{seasonCount}
-									</span>
-								</div>
-								<div className="p-4 rounded-lg bg-gray-900/50">
-									<span className="text-gray-500 text-sm block mb-1">Episodes</span>
-									<span className="font-medium" style={{ color: colors.accent }}>
-										{episodeCount}
-									</span>
-								</div>
-							</div>
+							<div className="space-y-4" />
 
 							<div className="space-y-6 min-w-0">
+								<div className="flex flex-wrap gap-3">
+									{show?.first_air_date && (
+										<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+											<Calendar className="w-4 h-4" />
+											{new Date(show.first_air_date).getFullYear()}
+										</div>
+									)}
+									<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+										<Tv className="w-4 h-4" />
+										{episodeCount} episodes
+									</div>
+									<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
+										<span>
+											{seasonCount} season{seasonCount !== 1 ? "s" : ""}
+										</span>
+									</div>
+								</div>
+
 								<section>
-									<h2 className="text-xl font-semibold mb-3" style={{ color: colors.primary }}>
+									<h2
+										className="text-xl font-semibold mb-3"
+										style={{ color: colors.primary }}
+									>
 										Overview
 									</h2>
 									<p className="text-gray-300 leading-relaxed">
@@ -180,7 +191,10 @@ function ShowDetailPage() {
 								<GenresSection genres={show?.genres} colors={colors} />
 
 								<section className="pt-2">
-									<h2 className="text-xl font-semibold mb-4" style={{ color: colors.primary }}>
+									<h2
+										className="text-xl font-semibold mb-4"
+										style={{ color: colors.primary }}
+									>
 										Seasons
 									</h2>
 									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -198,9 +212,13 @@ function ShowDetailPage() {
 													className="rounded-xl p-4 border hover:bg-gray-900/40 transition-colors"
 													style={{ borderColor: "var(--md-sys-color-outline)" }}
 												>
-													<div className="font-medium">Season {seasonNumber}</div>
+													<div className="font-medium">
+														Season {seasonNumber}
+													</div>
 													{user && (
-														<div className="text-xs mt-1 text-gray-400">Open details</div>
+														<div className="text-xs mt-1 text-gray-400">
+															Open details
+														</div>
 													)}
 												</Link>
 											);

@@ -1,9 +1,9 @@
 import {
 	listsControllerAddItemToListMutation,
-	listsControllerGetListsForMovieOptions,
-	listsControllerGetListsForMovieQueryKey,
+	listsControllerGetListsForItemOptions,
+	listsControllerGetListsForItemQueryKey,
 	listsControllerGetListQueryKey,
-	listsControllerRemoveFromListMutation,
+	listsControllerRemoveItemFromListMutation,
 	type MovieListsForItemDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,22 +24,24 @@ import { useTheme } from "@/contexts/theme";
 interface AddToListModalProps {
 	visible: boolean;
 	onClose: () => void;
-	movieId: string;
-	movieTitle: string;
+	mediaType: "movie" | "show";
+	mediaId: string;
+	mediaTitle: string;
 }
 
 export const AddToListModal = memo(function AddToListModal({
 	visible,
 	onClose,
-	movieId,
-	movieTitle,
+	mediaType,
+	mediaId,
+	mediaTitle,
 }: AddToListModalProps) {
 	const queryClient = useQueryClient();
 	const { colors } = useTheme();
 
 	const { data: listsForMovie, isLoading } = useQuery({
-		...listsControllerGetListsForMovieOptions({
-			path: { movieId },
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType, mediaId },
 		}),
 		enabled: visible,
 	});
@@ -50,8 +52,8 @@ export const AddToListModal = memo(function AddToListModal({
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
-				queryKey: listsControllerGetListsForMovieQueryKey({
-					path: { movieId },
+				queryKey: listsControllerGetListsForItemQueryKey({
+					path: { mediaType, mediaId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -61,12 +63,12 @@ export const AddToListModal = memo(function AddToListModal({
 	});
 
 	const removeMutation = useMutation({
-		...listsControllerRemoveFromListMutation(),
+		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
 			queryClient.invalidateQueries({
-				queryKey: listsControllerGetListsForMovieQueryKey({
-					path: { movieId },
+				queryKey: listsControllerGetListsForItemQueryKey({
+					path: { mediaType, mediaId },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -79,16 +81,16 @@ export const AddToListModal = memo(function AddToListModal({
 		(slug: string, isInList: boolean) => {
 			if (isInList) {
 				removeMutation.mutate({
-					path: { slug, movieId },
+					path: { slug, mediaType, mediaId },
 				});
 			} else {
 				addMutation.mutate({
 					path: { slug },
-					body: { mediaType: "movie", mediaId: movieId },
+					body: { mediaType, mediaId },
 				});
 			}
 		},
-		[addMutation, removeMutation, movieId],
+		[addMutation, removeMutation, mediaType, mediaId],
 	);
 
 	return (
@@ -107,7 +109,7 @@ export const AddToListModal = memo(function AddToListModal({
 						</Pressable>
 					</View>
 					<Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
-						Add or remove "{movieTitle}" from your lists
+						Add or remove "{mediaTitle}" from your lists
 					</Text>
 
 					<ScrollView style={styles.listContainer}>

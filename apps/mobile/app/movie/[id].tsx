@@ -5,7 +5,7 @@ import type {
 	TmdbMovieDetailDto,
 } from "@opnshelf/api";
 import {
-	listsControllerGetListsForMovieOptions,
+	listsControllerGetListsForItemOptions,
 	type MovieListsForItemDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
@@ -131,8 +131,8 @@ export default function MovieDetailScreen() {
 
 	// Fetch lists for this movie
 	const { data: listsForMovie } = useQuery({
-		...listsControllerGetListsForMovieOptions({
-			path: { movieId },
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "movie", mediaId: movieId },
 		}),
 		enabled: !!user?.did,
 	});
@@ -835,7 +835,7 @@ export default function MovieDetailScreen() {
 							</Pressable>
 						</View>
 						<Text style={styles.modalDescription}>
-							When did you watch this movie?
+							When did you watch this?
 						</Text>
 
 						<View style={styles.dateTimeContainer}>
@@ -923,7 +923,7 @@ export default function MovieDetailScreen() {
 								isLoading={markMutation.isPending}
 								style={{ backgroundColor: colors.primary }}
 							>
-								<Text style={styles.buttonText}>Add Play</Text>
+								<Text style={styles.buttonText}>Add Watch</Text>
 							</Button>
 						</View>
 					</View>
@@ -1003,8 +1003,9 @@ export default function MovieDetailScreen() {
 			<AddToListModal
 				visible={showAddToListModal}
 				onClose={() => setShowAddToListModal(false)}
-				movieId={movieId}
-				movieTitle={movie?.title || title || ""}
+				mediaType="movie"
+				mediaId={movieId}
+				mediaTitle={movie?.title || title || ""}
 			/>
 		</>
 	);
