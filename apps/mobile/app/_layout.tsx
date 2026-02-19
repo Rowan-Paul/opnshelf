@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -81,15 +82,17 @@ export default function RootLayout() {
 	}, []);
 
 	return (
-		<QueryClientProvider client={queryClient}>
-			<ThemeProvider>
-				<AuthProvider>
-					<LocaleInitializer>
-						<AppContent />
-					</LocaleInitializer>
-				</AuthProvider>
-			</ThemeProvider>
-			<DevToolsBubble queryClient={queryClient} />
-		</QueryClientProvider>
+		<SafeAreaProvider>
+			<QueryClientProvider client={queryClient}>
+				<ThemeProvider>
+					<AuthProvider>
+						<LocaleInitializer>
+							<AppContent />
+						</LocaleInitializer>
+					</AuthProvider>
+				</ThemeProvider>
+				<DevToolsBubble queryClient={queryClient} />
+			</QueryClientProvider>
+		</SafeAreaProvider>
 	);
 }
