@@ -534,71 +534,67 @@ export default function ShowEpisodeScreen() {
 						<View style={styles.actions}>
 							{user ? (
 								<>
-									<TouchableOpacity
-										onPress={handleMarkWatched}
-										disabled={isPending}
-										activeOpacity={0.8}
-										style={{ opacity: isPending ? 0.7 : 1 }}
-									>
-										<LinearGradient
-											colors={[
-												showColors.primary || colors.primary,
-												showColors.secondary || colors.primary,
-											]}
-											start={{ x: 0, y: 0 }}
-											end={{ x: 1, y: 1 }}
-											style={styles.primaryAction}
+									<View style={styles.primaryActionRow}>
+										<TouchableOpacity
+											onPress={handleMarkWatched}
+											disabled={isPending}
+											activeOpacity={0.8}
+											style={{ flex: 1, opacity: isPending ? 0.7 : 1 }}
 										>
-											{isPending ? (
-												<ActivityIndicator
-													size="small"
-													color={colors.onPrimary}
-												/>
-											) : (
-												<>
-													<Ionicons
-														name={isWatchedEpisode ? "refresh" : "add"}
-														size={18}
+											<LinearGradient
+												colors={[
+													showColors.primary || colors.primary,
+													showColors.secondary || colors.primary,
+												]}
+												start={{ x: 0, y: 0 }}
+												end={{ x: 1, y: 1 }}
+												style={styles.primaryAction}
+											>
+												{isPending ? (
+													<ActivityIndicator
+														size="small"
 														color={colors.onPrimary}
 													/>
-													<Text
-														style={[
-															styles.primaryActionText,
-															{ color: colors.onPrimary },
-														]}
-													>
-														{isWatchedEpisode ? "Watch Again" : "Add to Shelf"}
-													</Text>
-												</>
-											)}
-										</LinearGradient>
-									</TouchableOpacity>
+												) : (
+													<>
+														<Ionicons
+															name={isWatchedEpisode ? "refresh" : "add"}
+															size={18}
+															color={colors.onPrimary}
+														/>
+														<Text
+															style={[
+																styles.primaryActionText,
+																{ color: colors.onPrimary },
+															]}
+														>
+															{isWatchedEpisode
+																? "Watch Again"
+																: "Add to Shelf"}
+														</Text>
+													</>
+												)}
+											</LinearGradient>
+										</TouchableOpacity>
 
-									<TouchableOpacity
-										onPress={handleOpenDateModal}
-										activeOpacity={0.8}
-										style={[
-											styles.secondaryAction,
-											{
-												backgroundColor: colors.surfaceContainer,
-												borderColor: colors.outline,
-											},
-										]}
-									>
-										<Ionicons
-											name="calendar-outline"
-											size={18}
-											color={colors.onSurfaceVariant}
-										/>
-										<Text
+										<TouchableOpacity
+											onPress={handleOpenDateModal}
+											activeOpacity={0.8}
 											style={[
-												styles.secondaryActionText,
-												{ color: colors.onSurfaceVariant },
+												styles.calendarAction,
+												{
+													backgroundColor: colors.surfaceContainer,
+													borderColor: colors.outline,
+												},
 											]}
 										>
-											Watch on different date
-										</Text>
-									</TouchableOpacity>
+											<Ionicons
+												name="calendar-outline"
+												size={22}
+												color={colors.onSurfaceVariant}
+											/>
+										</TouchableOpacity>
+									</View>
 
 									<TouchableOpacity
 										onPress={() => setShowAddToListModal(true)}
@@ -1265,6 +1261,11 @@ const styles = StyleSheet.create({
 	actions: {
 		gap: spacing.sm,
 	},
+	primaryActionRow: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		alignItems: "stretch",
+	},
 	primaryAction: {
 		borderRadius: borderRadius.md,
 		paddingVertical: 14,
@@ -1291,6 +1292,14 @@ const styles = StyleSheet.create({
 	secondaryActionText: {
 		fontSize: 15,
 		fontWeight: "500",
+	},
+	calendarAction: {
+		borderRadius: borderRadius.md,
+		borderWidth: 1,
+		paddingVertical: 14,
+		paddingHorizontal: 14,
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	watchedCard: {
 		marginTop: spacing.sm,

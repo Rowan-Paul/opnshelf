@@ -29,7 +29,7 @@ export function ActionButton({
 			type="button"
 			onClick={onClick}
 			disabled={disabled}
-			className={`w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 border focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/50 ${className}`}
+			className={`w-full py-3 px-6 rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 border focus:outline-none focus:ring-2 focus:ring-(--md-sys-color-primary)/50 ${className}`}
 			style={
 				isActive
 					? {

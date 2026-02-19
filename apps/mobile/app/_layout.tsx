@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { DevToolsBubble } from "react-native-react-query-devtools";
+import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
@@ -83,14 +84,16 @@ export default function RootLayout() {
 	return (
 		<SafeAreaProvider>
 			<QueryClientProvider client={queryClient}>
-				<ThemeProvider>
-					<AuthProvider>
-						<LocaleInitializer>
-							<AppContent />
-						</LocaleInitializer>
-					</AuthProvider>
-				</ThemeProvider>
-				<DevToolsBubble queryClient={queryClient} />
+				<PaperProvider theme={MD3DarkTheme}>
+					<ThemeProvider>
+						<AuthProvider>
+							<LocaleInitializer>
+								<AppContent />
+							</LocaleInitializer>
+						</AuthProvider>
+					</ThemeProvider>
+				</PaperProvider>
+				{__DEV__ &&<DevToolsBubble queryClient={queryClient} />}
 			</QueryClientProvider>
 		</SafeAreaProvider>
 	);

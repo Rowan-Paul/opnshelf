@@ -7,17 +7,12 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { M3Button } from "@/components/ui/m3-button";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
 
 type DatePickerModalProps = {
@@ -137,67 +132,32 @@ export function DatePickerModal({
 		});
 	};
 
+	const handleDateSelect = (date: Date) => {
+		setCustomDate(format(date, "yyyy-MM-dd"));
+	};
+
 	if (!open) return null;
 
 	return (
 		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-			<div className="bg-[var(--md-sys-color-surface-container-high)] rounded-[1.75rem] p-6 max-w-md w-full">
+			<div className="bg-(--md-sys-color-surface-container-high) rounded-[1.75rem] p-6 max-w-sm w-full">
 				<div className="flex justify-between items-center mb-6">
-					<h3 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">
-						{modalTitle || "Watch Again"}
+					<h3 className="text-xl font-semibold text-(--md-sys-color-on-surface)">
+						{modalTitle || "Select date"}
 					</h3>
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-colors text-[var(--md-sys-color-on-surface-variant)]"
+						className="p-2 hover:bg-(--md-sys-color-surface-container-highest) rounded-full transition-colors text-(--md-sys-color-on-surface-variant)"
 					>
 						<X className="w-5 h-5" />
 					</button>
 				</div>
-				<p className="text-[var(--md-sys-color-on-surface-variant)] mb-4">
-					When did you watch this?
-				</p>
 				<div className="space-y-4">
-					<div>
-						<label
-							htmlFor="date-picker"
-							className="block text-sm text-[var(--md-sys-color-on-surface-variant)] mb-2 cursor-pointer"
-						>
-							Date
-						</label>
-						<Popover>
-							<PopoverTrigger asChild>
-								<M3Button
-									variant="outlined"
-									className="w-full px-4 py-3 h-auto mt-2 bg-[var(--md-sys-color-surface-container-high)] rounded-xl border border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)] justify-start text-left font-normal"
-								>
-									<Calendar className="mr-2 h-4 w-4 text-[var(--md-sys-color-on-surface-variant)]" />
-									{customDate ? (
-										format(new Date(customDate), "PPP")
-									) : (
-										<span className="text-[var(--md-sys-color-on-surface-variant)]">
-											Pick a date
-										</span>
-									)}
-								</M3Button>
-							</PopoverTrigger>
-							<PopoverContent
-								className="w-auto p-0 bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)]"
-								align="start"
-							>
-								<CalendarComponent
-									mode="single"
-									selected={customDate ? new Date(customDate) : undefined}
-									onSelect={(date) => {
-										if (date) {
-											setCustomDate(format(date, "yyyy-MM-dd"));
-										}
-									}}
-									autoFocus
-								/>
-							</PopoverContent>
-						</Popover>
-					</div>
+						<MaterialDatePicker
+							selected={customDate ? new Date(customDate) : new Date()}
+							onSelect={handleDateSelect}
+						/>
 					<div>
 						<TimePicker date={timeDate} setDate={setTimeDate} />
 					</div>
@@ -206,7 +166,7 @@ export function DatePickerModal({
 							type="button"
 							variant="outlined"
 							onClick={onClose}
-							className="flex-1 border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)]"
+							className="flex-1 border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-highest)"
 						>
 							Cancel
 						</M3Button>
@@ -218,7 +178,7 @@ export function DatePickerModal({
 								markMutation.isPending ||
 								markEpisodeMutation.isPending
 							}
-							className="flex-1 bg-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/90"
+							className="flex-1 bg-(--md-sys-color-primary) hover:bg-(--md-sys-color-primary)/90"
 							isLoading={
 								markMutation.isPending || markEpisodeMutation.isPending
 							}

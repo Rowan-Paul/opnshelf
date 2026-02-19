@@ -98,19 +98,19 @@ export function AddToListModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-[var(--md-sys-color-surface-container-high)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] max-w-md rounded-[1.75rem]">
+			<DialogContent className="bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) max-w-md rounded-[1.75rem]">
 				<DialogHeader>
-					<DialogTitle className="text-[var(--md-sys-color-on-surface)]">
+					<DialogTitle className="text-(--md-sys-color-on-surface)">
 						Manage Lists
 					</DialogTitle>
-					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
+					<DialogDescription className="text-(--md-sys-color-on-surface-variant)">
 						Add or remove &quot;{mediaTitle}&quot; from your lists
 					</DialogDescription>
 				</DialogHeader>
 				<ScrollArea className="max-h-[300px]">
 					{isLoading && (
 						<div className="flex items-center justify-center py-8">
-							<Loader2 className="w-6 h-6 animate-spin text-[var(--md-sys-color-primary)]" />
+							<Loader2 className="w-6 h-6 animate-spin text-(--md-sys-color-primary)" />
 						</div>
 					)}
 					{listsForMovie && (
@@ -131,8 +131,8 @@ export function AddToListModal({
 										variant="outlined"
 										className={`w-full justify-between py-6 ${
 											isInList
-												? "bg-[var(--md-sys-color-secondary-container)] border-[var(--md-sys-color-secondary)] text-[var(--md-sys-color-on-secondary-container)] hover:bg-[var(--md-sys-color-secondary-container)]/80"
-												: "bg-transparent border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container-high)]"
+												? "bg-(--md-sys-color-secondary-container) border-(--md-sys-color-secondary) text-(--md-sys-color-on-secondary-container) hover:bg-(--md-sys-color-secondary-container)/80"
+												: "bg-transparent border-(--md-sys-color-outline) text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-high)"
 										}`}
 										onClick={() => handleToggleList(list.listSlug, isInList)}
 										disabled={isPending}
@@ -140,7 +140,7 @@ export function AddToListModal({
 										<span className="flex items-center gap-2">
 											<span>{list.listName}</span>
 											{list.isDefault && (
-												<span className="text-xs text-[var(--md-sys-color-on-secondary-container)]/70">
+												<span className="text-xs text-(--md-sys-color-on-secondary-container)/70">
 													Default
 												</span>
 											)}

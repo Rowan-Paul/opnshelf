@@ -38,12 +38,12 @@ export function ConfirmDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-[var(--md-sys-color-surface-container-high)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] rounded-[1.75rem]">
+			<DialogContent className="bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) rounded-[1.75rem]">
 				<DialogHeader>
-					<DialogTitle className="text-[var(--md-sys-color-on-surface)]">
+					<DialogTitle className="text-(--md-sys-color-on-surface)">
 						{title}
 					</DialogTitle>
-					<DialogDescription className="text-[var(--md-sys-color-on-surface-variant)]">
+					<DialogDescription className="text-(--md-sys-color-on-surface-variant)">
 						{description}
 					</DialogDescription>
 				</DialogHeader>
@@ -52,7 +52,7 @@ export function ConfirmDialog({
 						variant="outlined"
 						onClick={() => onOpenChange(false)}
 						disabled={isLoading}
-						className="border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)]"
+						className="border-(--md-sys-color-outline) text-(--md-sys-color-on-surface)"
 					>
 						{cancelText}
 					</M3Button>

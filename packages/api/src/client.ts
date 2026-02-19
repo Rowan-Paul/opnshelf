@@ -70,10 +70,11 @@ export interface AuthUser {
 }
 
 // Simple URL helper for login (not an API call)
-export function getLoginUrl(handle?: string, timezone?: string): string {
+export function getLoginUrl(handle?: string, timezone?: string, platform?: string): string {
 	const params = new URLSearchParams();
 	if (handle) params.set("handle", handle);
 	if (timezone) params.set("timezone", timezone);
+	if (platform) params.set("platform", platform);
 	const queryString = params.toString();
 	return `${baseUrl}/auth/login${queryString ? `?${queryString}` : ""}`;
 }

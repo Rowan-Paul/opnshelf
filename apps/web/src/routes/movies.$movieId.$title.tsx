@@ -296,19 +296,41 @@ function MovieDetailPage() {
 								{user ? (
 									!isWatched ? (
 										<>
-											<AddToShelfButton
-												onClick={handleMarkWatched}
-												isPending={isPending}
-												label="Add to Shelf"
-												icon={<Calendar className="w-5 h-5" />}
-												colors={colors}
-												size="compact"
-											/>
-											<ActionButton
-												icon={<Calendar className="w-4 h-4" />}
-												label="Watch on different date"
-												onClick={() => setShowDateModal(true)}
-											/>
+											<div className="flex gap-2">
+												<AddToShelfButton
+													onClick={handleMarkWatched}
+													isPending={isPending}
+													label="Add to Shelf"
+													icon={<Calendar className="w-5 h-5" />}
+													colors={colors}
+													size="compact"
+													className="flex-1"
+												/>
+												<button
+													type="button"
+													onClick={() => setShowDateModal(true)}
+													title="Watch movie"
+													className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
+													style={{
+														backgroundColor: "transparent",
+														borderColor: "var(--md-sys-color-outline)",
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.backgroundColor =
+															"var(--md-sys-color-surface-container)";
+														e.currentTarget.style.borderColor =
+															"var(--md-sys-color-primary)";
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.backgroundColor =
+															"transparent";
+														e.currentTarget.style.borderColor =
+															"var(--md-sys-color-outline)";
+													}}
+												>
+													<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
+												</button>
+											</div>
 											<ActionButton
 												icon={
 													isInAnyList ? (
@@ -329,19 +351,41 @@ function MovieDetailPage() {
 										</>
 									) : (
 										<>
-											<AddToShelfButton
-												onClick={handleMarkWatched}
-												isPending={isPending}
-												label="Watch Now"
-												icon={<RotateCcw className="w-4 h-4" />}
-												colors={colors}
-												size="compact"
-											/>
-											<ActionButton
-												icon={<Calendar className="w-4 h-4" />}
-												label="Watch on different date"
-												onClick={() => setShowDateModal(true)}
-											/>
+											<div className="flex gap-2">
+												<AddToShelfButton
+													onClick={handleMarkWatched}
+													isPending={isPending}
+													label="Watch Now"
+													icon={<RotateCcw className="w-4 h-4" />}
+													colors={colors}
+													size="compact"
+													className="flex-1"
+												/>
+												<button
+													type="button"
+													onClick={() => setShowDateModal(true)}
+													title="Watch movie"
+													className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
+													style={{
+														backgroundColor: "transparent",
+														borderColor: "var(--md-sys-color-outline)",
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.backgroundColor =
+															"var(--md-sys-color-surface-container)";
+														e.currentTarget.style.borderColor =
+															"var(--md-sys-color-primary)";
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.backgroundColor =
+															"transparent";
+														e.currentTarget.style.borderColor =
+															"var(--md-sys-color-outline)";
+													}}
+												>
+													<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
+												</button>
+											</div>
 											<ActionButton
 												icon={
 													isInAnyList ? (
@@ -388,18 +432,39 @@ function MovieDetailPage() {
 						{user ? (
 							!isWatched ? (
 								<div className="space-y-3">
-									<AddToShelfButton
-										onClick={handleMarkWatched}
-										isPending={isPending}
-										label="Add to Shelf"
-										icon={<Calendar className="w-5 h-5" />}
-										colors={colors}
-									/>
-									<ActionButton
-										icon={<Calendar className="w-4 h-4" />}
-										label="Watch on different date"
-										onClick={() => setShowDateModal(true)}
-									/>
+									<div className="flex gap-2">
+										<AddToShelfButton
+											onClick={handleMarkWatched}
+											isPending={isPending}
+											label="Add to Shelf"
+											icon={<Calendar className="w-5 h-5" />}
+											colors={colors}
+											className="flex-1"
+										/>
+										<button
+											type="button"
+											onClick={() => setShowDateModal(true)}
+											title="Watch movie"
+											className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
+											style={{
+												backgroundColor: "transparent",
+												borderColor: "var(--md-sys-color-outline)",
+											}}
+											onMouseEnter={(e) => {
+												e.currentTarget.style.backgroundColor =
+													"var(--md-sys-color-surface-container)";
+												e.currentTarget.style.borderColor =
+													"var(--md-sys-color-primary)";
+											}}
+											onMouseLeave={(e) => {
+												e.currentTarget.style.backgroundColor = "transparent";
+												e.currentTarget.style.borderColor =
+													"var(--md-sys-color-outline)";
+											}}
+										>
+											<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
+										</button>
+									</div>
 									<ActionButton
 										icon={
 											isInAnyList ? (
@@ -511,19 +576,40 @@ function MovieDetailPage() {
 											</button>
 										)}
 									</div>
-									<AddToShelfButton
-										onClick={handleMarkWatched}
-										isPending={isPending}
-										label="Watch Again"
-										icon={<RotateCcw className="w-4 h-4" />}
-										colors={colors}
-										size="compact"
-									/>
-									<ActionButton
-										icon={<Calendar className="w-4 h-4" />}
-										label="Watch on different date"
-										onClick={() => setShowDateModal(true)}
-									/>
+									<div className="flex gap-2">
+										<AddToShelfButton
+											onClick={handleMarkWatched}
+											isPending={isPending}
+											label="Watch Again"
+											icon={<RotateCcw className="w-4 h-4" />}
+											colors={colors}
+											size="compact"
+											className="flex-1"
+										/>
+										<button
+											type="button"
+											onClick={() => setShowDateModal(true)}
+											title="Watch movie"
+											className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
+											style={{
+												backgroundColor: "transparent",
+												borderColor: "var(--md-sys-color-outline)",
+											}}
+											onMouseEnter={(e) => {
+												e.currentTarget.style.backgroundColor =
+													"var(--md-sys-color-surface-container)";
+												e.currentTarget.style.borderColor =
+													"var(--md-sys-color-primary)";
+											}}
+											onMouseLeave={(e) => {
+												e.currentTarget.style.backgroundColor = "transparent";
+												e.currentTarget.style.borderColor =
+													"var(--md-sys-color-outline)";
+											}}
+										>
+											<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
+										</button>
+									</div>
 									<ActionButton
 										icon={
 											isInAnyList ? (

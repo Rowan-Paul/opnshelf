@@ -156,7 +156,7 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 				>
 					{/* Leading Icon */}
 					{leadingIcon && (
-						<div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--md-sys-color-on-surface-variant)]">
+						<div className="absolute left-4 top-1/2 -translate-y-1/2 text-(--md-sys-color-on-surface-variant)">
 							{leadingIcon}
 						</div>
 					)}
@@ -173,14 +173,14 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 									"md-label-small",
 									variant === "filled" && "top-2",
 									variant === "outlined" &&
-										"top-0 -translate-y-1/2 bg-[var(--md-sys-color-surface)] px-1",
+										"top-0 -translate-y-1/2 bg-(--md-sys-color-surface) px-1",
 								],
 								!isLabelFloating &&
-									"md-body-large text-[var(--md-sys-color-on-surface-variant)]",
+									"md-body-large text-(--md-sys-color-on-surface-variant)",
 								isLabelFloating &&
 									(error
-										? "text-[var(--md-sys-color-error)]"
-										: "text-[var(--md-sys-color-primary)]"),
+										? "text-(--md-sys-color-error)"
+										: "text-(--md-sys-color-primary)"),
 								leadingIcon && !isLabelFloating && "left-12",
 							)}
 						>
@@ -228,7 +228,7 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 										onClear();
 									}
 								}}
-								className="text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]"
+								className="text-(--md-sys-color-on-surface-variant) hover:text-(--md-sys-color-on-surface)"
 							>
 								<X className="w-5 h-5" />
 							</button>
@@ -239,7 +239,7 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 							<button
 								type="button"
 								onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-								className="text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]"
+								className="text-(--md-sys-color-on-surface-variant) hover:text-(--md-sys-color-on-surface)"
 							>
 								{isPasswordVisible ? (
 									<EyeOff className="w-5 h-5" />
@@ -251,7 +251,7 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 
 						{/* Custom Trailing Icon */}
 						{trailingIcon && type !== "password" && !showClearButton && (
-							<span className="text-[var(--md-sys-color-on-surface-variant)]">
+							<span className="text-(--md-sys-color-on-surface-variant)">
 								{trailingIcon}
 							</span>
 						)}
@@ -264,8 +264,8 @@ const M3TextField = React.forwardRef<HTMLInputElement, M3TextFieldProps>(
 						className={cn(
 							"mt-1 ml-4 md-body-small",
 							errorMessage
-								? "text-[var(--md-sys-color-error)]"
-								: "text-[var(--md-sys-color-on-surface-variant)]",
+								? "text-(--md-sys-color-error)"
+								: "text-(--md-sys-color-on-surface-variant)",
 						)}
 					>
 						{errorMessage || supportingText}

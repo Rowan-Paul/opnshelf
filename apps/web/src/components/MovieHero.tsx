@@ -43,10 +43,10 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 					<div className="container mx-auto max-w-6xl">
 						<div className="flex items-end gap-4 md:gap-8">
 							<div className="shrink-0">
-								<div className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-container)]" />
+								<div className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden bg-(--md-sys-color-surface-container)" />
 							</div>
 							<div className="flex-1 pb-2">
-								<div className="h-8 md:h-16 lg:w-96 bg-[var(--md-sys-color-surface-container)] rounded-lg animate-pulse" />
+								<div className="h-8 md:h-16 lg:w-96 bg-(--md-sys-color-surface-container) rounded-lg animate-pulse" />
 							</div>
 						</div>
 					</div>

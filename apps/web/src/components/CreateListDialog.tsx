@@ -114,7 +114,7 @@ export function CreateListDialog() {
 							onChange={(e) => setDescription(e.target.value)}
 							maxLength={500}
 							rows={3}
-							className="bg-[var(--md-sys-color-surface-container-highest)] border-[var(--md-sys-color-outline)] text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)]"
+							className="bg-(--md-sys-color-surface-container-highest) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) placeholder:text-(--md-sys-color-on-surface-variant)"
 						/>
 					</div>
 					<div className="flex justify-end gap-2">

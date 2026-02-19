@@ -379,54 +379,51 @@ export default function MovieDetailScreen() {
 						{user ? (
 							!isWatched ? (
 								<>
-									<TouchableOpacity
-										onPress={handleMarkWatched}
-										disabled={isPending}
-										style={[
-											styles.primaryButton,
-											{ opacity: isPending ? 0.7 : 1 },
-										]}
-										activeOpacity={0.8}
-									>
-										<LinearGradient
-											colors={[
-												movieColors.primary || "#8b5cf6",
-												movieColors.secondary || "#6366f1",
+									<View style={styles.primaryButtonRow}>
+										<TouchableOpacity
+											onPress={handleMarkWatched}
+											disabled={isPending}
+											style={[
+												styles.primaryButton,
+												{ flex: 1, opacity: isPending ? 0.7 : 1 },
 											]}
-											start={{ x: 0, y: 0 }}
-											end={{ x: 1, y: 1 }}
-											style={styles.gradientButton}
+											activeOpacity={0.8}
 										>
-											{isPending ? (
-												<View style={styles.buttonContent}>
-													<ActivityIndicator color="#f9fafb" />
-													<Text style={styles.buttonText}>Loading</Text>
-												</View>
-											) : (
-												<View style={styles.buttonContent}>
-													<Ionicons name="add" size={20} color="#f9fafb" />
-													<Text style={styles.buttonText}>Add to Shelf</Text>
-												</View>
-											)}
-										</LinearGradient>
-									</TouchableOpacity>
+											<LinearGradient
+												colors={[
+													movieColors.primary || "#8b5cf6",
+													movieColors.secondary || "#6366f1",
+												]}
+												start={{ x: 0, y: 0 }}
+												end={{ x: 1, y: 1 }}
+												style={styles.gradientButton}
+											>
+												{isPending ? (
+													<View style={styles.buttonContent}>
+														<ActivityIndicator color="#f9fafb" />
+														<Text style={styles.buttonText}>Loading</Text>
+													</View>
+												) : (
+													<View style={styles.buttonContent}>
+																<Ionicons name="add" size={20} color="#1f2937" />
+														<Text style={styles.buttonText}>Add to Shelf</Text>
+													</View>
+												)}
+											</LinearGradient>
+										</TouchableOpacity>
 
-									<TouchableOpacity
-										onPress={_openDateModal}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
-										<View style={styles.buttonContent}>
+										<TouchableOpacity
+											onPress={_openDateModal}
+											style={styles.calendarButton}
+											activeOpacity={0.8}
+										>
 											<Ionicons
 												name="calendar-outline"
-												size={18}
+												size={22}
 												color="#9ca3af"
 											/>
-											<Text style={styles.secondaryButtonText}>
-												Watch on different date
-											</Text>
-										</View>
-									</TouchableOpacity>
+										</TouchableOpacity>
+									</View>
 
 									<TouchableOpacity
 										onPress={() => setShowAddToListModal(true)}
@@ -474,54 +471,55 @@ export default function MovieDetailScreen() {
 								</>
 							) : (
 								<>
-									<TouchableOpacity
-										onPress={handleMarkWatched}
-										disabled={isPending}
-										style={[
-											styles.primaryButton,
-											{ opacity: isPending ? 0.7 : 1 },
-										]}
-										activeOpacity={0.8}
-									>
-										<LinearGradient
-											colors={[
-												movieColors.primary || "#8b5cf6",
-												movieColors.secondary || "#6366f1",
+									<View style={styles.primaryButtonRow}>
+										<TouchableOpacity
+											onPress={handleMarkWatched}
+											disabled={isPending}
+											style={[
+												styles.primaryButton,
+												{ flex: 1, opacity: isPending ? 0.7 : 1 },
 											]}
-											start={{ x: 0, y: 0 }}
-											end={{ x: 1, y: 1 }}
-											style={styles.gradientButton}
+											activeOpacity={0.8}
 										>
-											{isPending ? (
-												<View style={styles.buttonContent}>
-													<ActivityIndicator color="#f9fafb" />
-													<Text style={styles.buttonText}>Loading</Text>
-												</View>
-											) : (
-												<View style={styles.buttonContent}>
-													<Ionicons name="refresh" size={20} color="#f9fafb" />
-													<Text style={styles.buttonText}>Watch Now</Text>
-												</View>
-											)}
-										</LinearGradient>
-									</TouchableOpacity>
+											<LinearGradient
+												colors={[
+													movieColors.primary || "#8b5cf6",
+													movieColors.secondary || "#6366f1",
+												]}
+												start={{ x: 0, y: 0 }}
+												end={{ x: 1, y: 1 }}
+												style={styles.gradientButton}
+											>
+												{isPending ? (
+													<View style={styles.buttonContent}>
+														<ActivityIndicator color="#f9fafb" />
+														<Text style={styles.buttonText}>Loading</Text>
+													</View>
+												) : (
+													<View style={styles.buttonContent}>
+																							<Ionicons
+																								name="refresh"
+																								size={20}
+																								color="#1f2937"
+																							/>
+														<Text style={styles.buttonText}>Watch Now</Text>
+													</View>
+												)}
+											</LinearGradient>
+										</TouchableOpacity>
 
-									<TouchableOpacity
-										onPress={_openDateModal}
-										style={styles.secondaryButton}
-										activeOpacity={0.8}
-									>
-										<View style={styles.buttonContent}>
+										<TouchableOpacity
+											onPress={_openDateModal}
+											style={styles.calendarButton}
+											activeOpacity={0.8}
+										>
 											<Ionicons
 												name="calendar-outline"
-												size={18}
+												size={22}
 												color="#9ca3af"
 											/>
-											<Text style={styles.secondaryButtonText}>
-												Watch on different date
-											</Text>
-										</View>
-									</TouchableOpacity>
+										</TouchableOpacity>
+									</View>
 
 									<TouchableOpacity
 										onPress={() => setShowAddToListModal(true)}
@@ -829,7 +827,7 @@ export default function MovieDetailScreen() {
 				<View style={styles.modalOverlay}>
 					<View style={styles.modalContent}>
 						<View style={styles.modalHeader}>
-							<Text style={styles.modalTitle}>Watch Again</Text>
+							<Text style={styles.modalTitle}>Watch movie</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
 								<Ionicons name="close" size={24} color={colors.onSurface} />
 							</Pressable>
@@ -1106,9 +1104,23 @@ const styles = StyleSheet.create({
 		gap: 12,
 		marginBottom: 24,
 	},
+	primaryButtonRow: {
+		flexDirection: "row",
+		gap: 12,
+		alignItems: "stretch",
+	},
 	primaryButton: {
 		borderRadius: 12,
 		overflow: "hidden",
+	},
+	calendarButton: {
+		borderRadius: 12,
+		paddingVertical: 16,
+		paddingHorizontal: 16,
+		alignItems: "center",
+		justifyContent: "center",
+		borderWidth: 1,
+		borderColor: "#374151",
 	},
 	gradientButton: {
 		paddingVertical: 16,
@@ -1132,7 +1144,7 @@ const styles = StyleSheet.create({
 		gap: 8,
 	},
 	buttonText: {
-		color: "#f9fafb",
+		color: "#1f2937",
 		fontSize: 18,
 		fontWeight: "600",
 	},

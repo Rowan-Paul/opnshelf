@@ -76,7 +76,7 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 						No poster
 					</div>
 				)}
-				<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+				<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-3">
 					<div className="text-white text-sm font-medium">
 						S{tracked.seasonNumber} E{tracked.episodeNumber}
 					</div>

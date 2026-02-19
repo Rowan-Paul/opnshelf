@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [isUserError, queryClient, userError]);
 
 	const login = useCallback(async (handle?: string) => {
-		const loginUrl = getLoginUrl(handle);
+		const loginUrl = getLoginUrl(handle, undefined, "mobile");
 		const result = await WebBrowser.openAuthSessionAsync(
 			loginUrl,
 			"opnshelf://auth/callback"
