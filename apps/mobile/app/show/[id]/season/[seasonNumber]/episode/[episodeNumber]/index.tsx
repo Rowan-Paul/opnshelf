@@ -538,34 +538,40 @@ export default function ShowEpisodeScreen() {
 										onPress={handleMarkWatched}
 										disabled={isPending}
 										activeOpacity={0.8}
-										style={[
-											styles.primaryAction,
-											{
-												backgroundColor: colors.primary,
-												opacity: isPending ? 0.7 : 1,
-											},
-										]}
+										style={{ opacity: isPending ? 0.7 : 1 }}
 									>
-										{isPending ? (
-											<ActivityIndicator
-												size="small"
-												color={colors.onPrimary}
-											/>
-										) : (
-											<Ionicons
-												name={isWatchedEpisode ? "refresh" : "add"}
-												size={18}
-												color={colors.onPrimary}
-											/>
-										)}
-										<Text
-											style={[
-												styles.primaryActionText,
-												{ color: colors.onPrimary },
+										<LinearGradient
+											colors={[
+												showColors.primary || colors.primary,
+												showColors.secondary || colors.primary,
 											]}
+											start={{ x: 0, y: 0 }}
+											end={{ x: 1, y: 1 }}
+											style={styles.primaryAction}
 										>
-											{isWatchedEpisode ? "Watch Again" : "Add to Shelf"}
-										</Text>
+											{isPending ? (
+												<ActivityIndicator
+													size="small"
+													color={colors.onPrimary}
+												/>
+											) : (
+												<>
+													<Ionicons
+														name={isWatchedEpisode ? "refresh" : "add"}
+														size={18}
+														color={colors.onPrimary}
+													/>
+													<Text
+														style={[
+															styles.primaryActionText,
+															{ color: colors.onPrimary },
+														]}
+													>
+														{isWatchedEpisode ? "Watch Again" : "Add to Shelf"}
+													</Text>
+												</>
+											)}
+										</LinearGradient>
 									</TouchableOpacity>
 
 									<TouchableOpacity

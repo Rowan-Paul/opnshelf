@@ -345,7 +345,8 @@ export default function HomeScreen() {
 										onPress={() =>
 											isEpisode
 												? router.push({
-														pathname: "/episode/[id]",
+														pathname:
+															"/show/[id]/season/[seasonNumber]/episode/[episodeNumber]",
 														params: {
 															id: tracked.showId,
 															seasonNumber: (
