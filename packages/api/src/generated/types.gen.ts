@@ -175,6 +175,13 @@ export type TmdbShowDetailDto = {
     credits?: TmdbCreditsDto;
 };
 
+export type TmdbNetworkDto = {
+    id: number;
+    name: string;
+    logo_path?: string;
+    origin_country?: string;
+};
+
 export type TmdbEpisodeDto = {
     id: number;
     name: string;
@@ -184,15 +191,25 @@ export type TmdbEpisodeDto = {
     overview?: string;
     still_path?: string;
     vote_average?: number;
+    vote_count?: number;
+    runtime?: number;
+    episode_type?: string;
+    production_code?: string;
+    show_id?: number;
+    crew?: Array<TmdbCrewDto>;
+    guest_stars?: Array<TmdbCastDto>;
 };
 
 export type TmdbSeasonDetailDto = {
     id: number;
+    _id?: string;
     name: string;
     season_number: number;
     overview?: string;
     poster_path?: string;
     air_date?: string;
+    vote_average?: number;
+    networks?: Array<TmdbNetworkDto>;
     episodes: Array<TmdbEpisodeDto>;
 };
 

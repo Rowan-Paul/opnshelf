@@ -191,7 +191,7 @@ function ShowSeasonPage() {
 			});
 		}
 		return items;
-	}, [show, season?.air_date, seasonEpisodes.length, showId, title]);
+	}, [season?.air_date, seasonEpisodes.length]);
 
 	return (
 		<div>

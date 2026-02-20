@@ -15,7 +15,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Calendar, Film, History, Layers, Star } from "lucide-react";
+import { Calendar, Clock, Film, History, Layers, Star } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ import { M3Button } from "@/components/ui/m3-button";
 import {
 	formatDateOnly,
 	formatDateWithTimezone,
+	formatRuntime,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 } from "@/lib/utils";
@@ -319,6 +320,12 @@ function ShowEpisodePage() {
 			items.push({
 				icon: <Star className="w-4 h-4" />,
 				label: `${episode.vote_average.toFixed(1)}/10`,
+			});
+		}
+		if (episode?.runtime) {
+			items.push({
+				icon: <Clock className="w-4 h-4" />,
+				label: formatRuntime(episode.runtime, false),
 			});
 		}
 		return items;

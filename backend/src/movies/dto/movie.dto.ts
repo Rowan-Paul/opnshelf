@@ -201,6 +201,20 @@ export class TMDBCrewDto {
 	profile_path?: string;
 }
 
+export class TMDBNetworkDto {
+	@ApiProperty()
+	id: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiPropertyOptional()
+	logo_path?: string;
+
+	@ApiPropertyOptional()
+	origin_country?: string;
+}
+
 export class TMDBCreditsDto {
 	@ApiProperty({ type: [TMDBCastDto] })
 	cast: TMDBCastDto[];

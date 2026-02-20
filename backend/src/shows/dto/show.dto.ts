@@ -7,6 +7,7 @@ import {
 	TMDBCrewDto,
 	TMDBCreditsDto,
 	TMDBGenreDto,
+	TMDBNetworkDto,
 } from "../../movies/dto/movie.dto";
 
 export class ShowDto {
@@ -188,11 +189,35 @@ export class TMDBEpisodeDto {
 
 	@ApiPropertyOptional()
 	vote_average?: number;
+
+	@ApiPropertyOptional()
+	vote_count?: number;
+
+	@ApiPropertyOptional()
+	runtime?: number;
+
+	@ApiPropertyOptional()
+	episode_type?: string;
+
+	@ApiPropertyOptional()
+	production_code?: string;
+
+	@ApiPropertyOptional()
+	show_id?: number;
+
+	@ApiPropertyOptional({ type: [TMDBCrewDto] })
+	crew?: TMDBCrewDto[];
+
+	@ApiPropertyOptional({ type: [TMDBCastDto] })
+	guest_stars?: TMDBCastDto[];
 }
 
 export class TMDBSeasonDetailDto {
 	@ApiProperty()
 	id: number;
+
+	@ApiPropertyOptional()
+	_id?: string;
 
 	@ApiProperty()
 	name: string;
@@ -208,6 +233,12 @@ export class TMDBSeasonDetailDto {
 
 	@ApiPropertyOptional()
 	air_date?: string;
+
+	@ApiPropertyOptional()
+	vote_average?: number;
+
+	@ApiPropertyOptional({ type: [TMDBNetworkDto] })
+	networks?: TMDBNetworkDto[];
 
 	@ApiProperty({ type: [TMDBEpisodeDto] })
 	episodes: TMDBEpisodeDto[];
