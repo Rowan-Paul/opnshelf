@@ -1,28 +1,42 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
 	authControllerMeOptions,
+	listsControllerGetListsForItemOptions,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
-	type TmdbEpisodeDto,
+	showsControllerGetShowWatchHistoryQueryKey,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkSeasonWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type TmdbSeasonDetailDto,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
 	ScrollView,
+	Share,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+	DetailActions,
+	DetailHero,
+	EpisodeCard,
+	type EpisodeSummary,
+	MetadataPills,
+	SeasonNav,
+} from "@/components/detail";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
+import { useToast } from "@/contexts/toast";
 import {
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
@@ -45,7 +59,11 @@ export default function ShowSeasonScreen() {
 		title?: string;
 	}>();
 	const router = useRouter();
-	const { colors } = useTheme();
+	const { colors: themeColors } = useTheme();
+	const { showToast } = useToast();
+	const queryClient = useQueryClient();
+
+	const [_showListModal, setShowListModal] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -61,12 +79,12 @@ export default function ShowSeasonScreen() {
 	});
 	const show = showData as TmdbShowDetailDto | undefined;
 
-	const { data } = useQuery({
+	const { data: seasonData } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
 			path: { showId: id, seasonNumber },
 		}),
 	});
-	const season = data as TmdbSeasonDetailDto | undefined;
+	const season = seasonData as TmdbSeasonDetailDto | undefined;
 
 	const { data: history } = useQuery({
 		...showsControllerGetShowWatchHistoryOptions({
@@ -75,183 +93,274 @@ export default function ShowSeasonScreen() {
 		enabled: !!resolvedUserDid,
 	});
 
+	const { data: listsForShow } = useQuery({
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "show", mediaId: id },
+		}),
+		enabled: !!resolvedUserDid,
+	});
+
+	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
+
 	const showColors = show?.colors || {
-		primary: colors.primary,
-		secondary: colors.secondary,
-		accent: colors.tertiary,
-		muted: colors.surfaceContainer,
+		primary: themeColors.primary,
+		secondary: themeColors.secondary,
+		accent: themeColors.tertiary,
+		muted: themeColors.surfaceContainerHighest,
 	};
 
 	const backdropUrl = getTmdbBackdropUrl(show?.backdrop_path);
-	const posterUrl = season?.poster_path
-		? getTmdbPosterUrl(season.poster_path, "w500")
-		: getTmdbPosterUrl(show?.poster_path, "w500");
+	const seasonPoster = getTmdbPosterUrl(season?.poster_path, "w500");
+	const seasonEpisodes = season?.episodes || [];
 
-	const episodeWatchCounts = useMemo(() => {
-		if (!history?.length) return new Map<number, number>();
+	const markSeasonWatchedMutation = useMutation({
+		...showsControllerMarkSeasonWatchedMutation(),
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: resolvedUserDid },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["showsControllerGetShowWatchHistory"],
+			});
+			showToast(`Marked ${data.count} episodes as watched`);
+		},
+		onError: () => {
+			showToast("Failed to mark season as watched. Please try again.", "error");
+		},
+	});
+
+	const handleMarkWatched = () => {
+		markSeasonWatchedMutation.mutate({
+			body: {
+				showId: id,
+				seasonNumber: Number(seasonNumber),
+			},
+		});
+	};
+
+	const unmarkSeasonWatchedMutation = useMutation({
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: resolvedUserDid },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: resolvedUserDid, showId: id },
+				}),
+			});
+			showToast("Removed season from your shelf");
+		},
+		onError: () => {
+			showToast("Failed to remove from shelf. Please try again.", "error");
+		},
+	});
+
+	const handleUnmarkWatched = () => {
+		unmarkSeasonWatchedMutation.mutate({
+			path: { showId: id },
+			query: { mode: "all", seasonNumber: Number(seasonNumber) },
+		});
+	};
+
+	const handleShare = async () => {
+		const shareUrl = `https://opnshelf.app/show/${id}/season/${seasonNumber}`;
+		try {
+			await Share.share({
+				message: `Check out ${show?.name} Season ${seasonNumber} on OpnShelf!\n\n${shareUrl}`,
+				title: `${show?.name} Season ${seasonNumber}`,
+			});
+		} catch {
+			// User cancelled or error
+		}
+	};
+
+	const watchedEpisodeCount = useMemo(() => {
+		if (!history) return 0;
+		return history.filter((h) => h.seasonNumber === Number(seasonNumber))
+			.length;
+	}, [history, seasonNumber]);
+
+	const episodeWatchedCounts = useMemo(() => {
+		if (!history) return new Map<number, number>();
 		const counts = new Map<number, number>();
-		for (const item of history) {
-			if (item.seasonNumber === Number(seasonNumber)) {
-				const current = counts.get(item.episodeNumber) || 0;
-				counts.set(item.episodeNumber, current + 1);
+		for (const h of history) {
+			if (h.seasonNumber === Number(seasonNumber)) {
+				const current = counts.get(h.episodeNumber) ?? 0;
+				counts.set(h.episodeNumber, current + 1);
 			}
 		}
 		return counts;
 	}, [history, seasonNumber]);
 
+	const metadataItems = useMemo(() => {
+		const items = [];
+		if (season?.air_date) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="calendar-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: formatDateOnly(season.air_date),
+			});
+		}
+		if (seasonEpisodes.length > 0) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="film-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: `${seasonEpisodes.length} episodes`,
+			});
+		}
+		return items;
+	}, [season, seasonEpisodes.length, themeColors]);
+
 	return (
 		<SafeAreaView
-			style={[styles.container, { backgroundColor: colors.background }]}
+			style={[styles.container, { backgroundColor: themeColors.background }]}
 		>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
-				<View style={styles.heroWrapper}>
-					{backdropUrl ? (
-						<Image
-							source={{ uri: backdropUrl }}
-							style={styles.backdrop}
-							contentFit="cover"
-						/>
-					) : (
-						<View
-							style={[
-								styles.backdrop,
-								{
-									backgroundColor: showColors.muted || colors.surfaceVariant,
-								},
-							]}
-						/>
-					)}
-					<LinearGradient
-						colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.75)", colors.background]}
-						style={styles.backdropOverlay}
-					/>
-					<TouchableOpacity
-						onPress={() => router.back()}
-						style={styles.backButton}
-						activeOpacity={0.8}
-					>
-						<Ionicons name="arrow-back" size={24} color="#f9fafb" />
-					</TouchableOpacity>
-					<View style={styles.heroOverlay}>
-						<TouchableOpacity
-							style={[
-								styles.posterWrapper,
-								{ shadowColor: showColors.primary || colors.primary },
-							]}
-							onPress={() =>
-								router.push({ pathname: "/show/[id]", params: { id } })
-							}
-							activeOpacity={0.8}
-						>
-							{posterUrl ? (
-								<Image
-									source={{ uri: posterUrl }}
-									style={styles.poster}
-									contentFit="cover"
-								/>
-							) : (
-								<View
-									style={[
-										styles.poster,
-										styles.noPoster,
-										{ backgroundColor: colors.surfaceContainer },
-									]}
-								>
-									<Text
-										style={[
-											styles.noPosterText,
-											{ color: colors.onSurfaceVariant },
-										]}
-									>
-										No poster
-									</Text>
-								</View>
-							)}
-						</TouchableOpacity>
-						<View style={styles.titleWrapper}>
-							<Text
-								style={[styles.title, { textShadowColor: showColors.primary }]}
-								numberOfLines={2}
-							>
-								{show?.name || title || "Show"}
-							</Text>
-							<Text style={styles.subtitle}>Season {seasonNumber}</Text>
-						</View>
-					</View>
-				</View>
+				<DetailHero
+					title={show?.name || title || "Show"}
+					subtitle={`Season ${seasonNumber}`}
+					backdropUrl={backdropUrl}
+					posterUrl={seasonPoster}
+					colors={showColors}
+					onBack={() => router.back()}
+					posterLinkTo={{
+						onPress: () =>
+							router.push({ pathname: "/show/[id]", params: { id } }),
+					}}
+				/>
 
 				<View style={styles.content}>
-					<View style={styles.infoCards}>
-						<View
-							style={[
-								styles.infoCard,
-								{ backgroundColor: colors.surfaceContainer },
-							]}
-						>
-							<Text
-								style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}
-							>
-								Air Date
-							</Text>
-							<Text style={[styles.infoValue, { color: colors.onSurface }]}>
-								{formatDateOnly(season?.air_date)}
-							</Text>
-						</View>
-						<View
-							style={[
-								styles.infoCard,
-								{ backgroundColor: colors.surfaceContainer },
-							]}
-						>
-							<Text
-								style={[styles.infoLabel, { color: colors.onSurfaceVariant }]}
-							>
-								Episodes
-							</Text>
-							<Text style={[styles.infoValue, { color: colors.onSurface }]}>
-								{season?.episodes?.length || 0}
-							</Text>
-						</View>
-					</View>
+					<DetailActions
+						mediaType="season"
+						mediaId={id}
+						seasonNumber={seasonNumber}
+						colors={showColors}
+						isWatched={watchedEpisodeCount > 0}
+						watchedDate={null}
+						totalWatches={watchedEpisodeCount}
+						onMarkWatched={handleMarkWatched}
+						onUnmarkWatched={handleUnmarkWatched}
+						onShowDatePicker={() => {}}
+						isMarkingPending={markSeasonWatchedMutation.isPending}
+						isUnmarkingPending={unmarkSeasonWatchedMutation.isPending}
+						listsCount={listsCount}
+						onShowListModal={() => setShowListModal(true)}
+						isLoggedIn={!!user}
+						onLogin={() => router.push("/login")}
+						onShare={handleShare}
+					/>
+
+					{(show?.number_of_seasons ?? 0) > 1 && (
+						<SeasonNav
+							currentSeason={Number(seasonNumber)}
+							totalSeasons={show?.number_of_seasons ?? 1}
+							onPreviousSeason={() =>
+								router.push({
+									pathname: "/show/[id]/season/[seasonNumber]",
+									params: {
+										id,
+										seasonNumber: String(Number(seasonNumber) - 1),
+										title: show?.name || title || "",
+									},
+								})
+							}
+							onNextSeason={() =>
+								router.push({
+									pathname: "/show/[id]/season/[seasonNumber]",
+									params: {
+										id,
+										seasonNumber: String(Number(seasonNumber) + 1),
+										title: show?.name || title || "",
+									},
+								})
+							}
+						/>
+					)}
+
+					<MetadataPills items={metadataItems} />
 
 					{season?.overview && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Overview
 							</Text>
 							<Text
-								style={[styles.overview, { color: colors.onSurfaceVariant }]}
+								style={[
+									styles.overview,
+									{ color: themeColors.onSurfaceVariant },
+								]}
 							>
 								{season.overview}
 							</Text>
 						</View>
 					)}
 
-					<View style={styles.section}>
-						<Text
-							style={[
-								styles.sectionTitle,
-								{ color: showColors.primary || colors.primary },
-							]}
-						>
-							Episodes
-						</Text>
-						<View style={styles.episodesList}>
-							{(season?.episodes || [])
-								.sort((a, b) => a.episode_number - b.episode_number)
-								.map((episode) => (
+					{show?.genres && show.genres.length > 0 && (
+						<View style={styles.section}>
+							<Text
+								style={[styles.sectionTitle, { color: showColors.primary }]}
+							>
+								Genres
+							</Text>
+							<View style={styles.genresContainer}>
+								{show.genres.map((genre) => (
+									<View
+										key={genre.id}
+										style={[
+											styles.genreBadge,
+											{
+												backgroundColor: `${showColors.primary}20`,
+												borderColor: `${showColors.primary}40`,
+											},
+										]}
+									>
+										<Text
+											style={[styles.genreText, { color: showColors.primary }]}
+										>
+											{genre.name}
+										</Text>
+									</View>
+								))}
+							</View>
+						</View>
+					)}
+
+					{seasonEpisodes.length > 0 && (
+						<View style={styles.section}>
+							<Text
+								style={[styles.sectionTitle, { color: showColors.primary }]}
+							>
+								Episodes
+							</Text>
+							<View style={styles.episodesList}>
+								{seasonEpisodes.map((episode) => (
 									<EpisodeCard
 										key={episode.id}
-										episode={episode}
-										watchCount={
-											episodeWatchCounts.get(episode.episode_number) || 0
+										showId={id}
+										seasonNumber={seasonNumber}
+										episode={episode as EpisodeSummary}
+										watchedCount={
+											episodeWatchedCounts.get(episode.episode_number) ?? 0
 										}
-										isAuthenticated={!!resolvedUserDid}
+										colors={showColors}
+										userDid={user?.did}
 										onPress={() =>
 											router.push({
 												pathname:
@@ -266,16 +375,14 @@ export default function ShowSeasonScreen() {
 										}
 									/>
 								))}
+							</View>
 						</View>
-					</View>
+					)}
 
-					{show?.credits?.cast && show.credits.cast.length > 0 ? (
+					{show?.credits?.cast && show.credits.cast.length > 0 && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Cast
 							</Text>
@@ -304,13 +411,15 @@ export default function ShowSeasonScreen() {
 														<View
 															style={[
 																styles.castImagePlaceholder,
-																{ backgroundColor: colors.surfaceContainer },
+																{
+																	backgroundColor: themeColors.surfaceContainer,
+																},
 															]}
 														>
 															<Text
 																style={[
 																	styles.castImagePlaceholderText,
-																	{ color: colors.onSurfaceVariant },
+																	{ color: themeColors.onSurfaceVariant },
 																]}
 															>
 																No photo
@@ -319,7 +428,10 @@ export default function ShowSeasonScreen() {
 													)}
 												</View>
 												<Text
-													style={[styles.castName, { color: colors.onSurface }]}
+													style={[
+														styles.castName,
+														{ color: themeColors.onSurface },
+													]}
 													numberOfLines={2}
 												>
 													{person.name}
@@ -328,7 +440,7 @@ export default function ShowSeasonScreen() {
 													<Text
 														style={[
 															styles.castCharacter,
-															{ color: colors.onSurfaceVariant },
+															{ color: themeColors.onSurfaceVariant },
 														]}
 														numberOfLines={2}
 													>
@@ -347,15 +459,12 @@ export default function ShowSeasonScreen() {
 								/>
 							</View>
 						</View>
-					) : null}
+					)}
 
-					{show?.credits?.crew && show.credits.crew.length > 0 ? (
+					{show?.credits?.crew && show.credits.crew.length > 0 && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Crew
 							</Text>
@@ -365,12 +474,15 @@ export default function ShowSeasonScreen() {
 										key={`${person.id}-${person.job || "crew"}`}
 										style={[
 											styles.crewCard,
-											{ backgroundColor: colors.surfaceContainer },
+											{ backgroundColor: themeColors.surfaceContainer },
 										]}
 										activeOpacity={0.8}
 									>
 										<Text
-											style={[styles.crewName, { color: colors.onSurface }]}
+											style={[
+												styles.crewName,
+												{ color: themeColors.onSurface },
+											]}
 											numberOfLines={1}
 										>
 											{person.name}
@@ -378,7 +490,7 @@ export default function ShowSeasonScreen() {
 										<Text
 											style={[
 												styles.crewJob,
-												{ color: colors.onSurfaceVariant },
+												{ color: themeColors.onSurfaceVariant },
 											]}
 											numberOfLines={1}
 										>
@@ -388,104 +500,10 @@ export default function ShowSeasonScreen() {
 								))}
 							</View>
 						</View>
-					) : null}
+					)}
 				</View>
 			</ScrollView>
 		</SafeAreaView>
-	);
-}
-
-interface EpisodeCardProps {
-	episode: TmdbEpisodeDto;
-	watchCount: number;
-	isAuthenticated: boolean;
-	onPress: () => void;
-}
-
-function EpisodeCard({
-	episode,
-	watchCount,
-	isAuthenticated,
-	onPress,
-}: EpisodeCardProps) {
-	const { colors } = useTheme();
-
-	const stillUrl = episode.still_path
-		? `https://image.tmdb.org/t/p/w300${episode.still_path}`
-		: null;
-
-	return (
-		<TouchableOpacity
-			style={[
-				styles.episodeCard,
-				{
-					borderColor: colors.outline,
-					backgroundColor: `${colors.surfaceContainer}50`,
-				},
-			]}
-			onPress={onPress}
-			activeOpacity={0.8}
-		>
-			<View style={styles.episodeRow}>
-				<View style={styles.episodeThumbnail}>
-					{stillUrl ? (
-						<Image
-							source={{ uri: stillUrl }}
-							style={styles.episodeImage}
-							contentFit="cover"
-						/>
-					) : (
-						<View
-							style={[
-								styles.episodeImage,
-								{ backgroundColor: colors.surfaceVariant },
-							]}
-						/>
-					)}
-				</View>
-				<View style={styles.episodeInfo}>
-					<View style={styles.episodeHeader}>
-						<Text
-							style={[styles.episodeTitle, { color: colors.onSurface }]}
-							numberOfLines={1}
-						>
-							E{episode.episode_number} · {episode.name}
-						</Text>
-						<View style={styles.episodeMeta}>
-							{episode.vote_average ? (
-								<View style={styles.ratingBadge}>
-									<Ionicons name="star" size={12} color="#fbbf24" />
-									<Text style={styles.ratingText}>
-										{episode.vote_average.toFixed(1)}
-									</Text>
-								</View>
-							) : null}
-							{isAuthenticated && watchCount > 0 && (
-								<View style={styles.watchedBadge}>
-									<Ionicons name="checkmark-circle" size={12} color="#22c55e" />
-									<Text style={styles.watchedText}>{watchCount}x</Text>
-								</View>
-							)}
-						</View>
-					</View>
-					<Text
-						style={[styles.episodeOverview, { color: colors.onSurfaceVariant }]}
-						numberOfLines={2}
-					>
-						{episode.overview || "No overview available."}
-					</Text>
-					<View style={styles.episodeFooter}>
-						{episode.air_date && (
-							<Text
-								style={[styles.episodeDate, { color: colors.onSurfaceVariant }]}
-							>
-								{formatDateOnly(episode.air_date)}
-							</Text>
-						)}
-					</View>
-				</View>
-			</View>
-		</TouchableOpacity>
 	);
 }
 
@@ -494,187 +512,45 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		paddingBottom: spacing.xxl,
 	},
-	heroWrapper: {
-		height: 280,
-		position: "relative",
-	},
-	backdrop: {
-		width: "100%",
-		height: "100%",
-	},
-	backdropOverlay: {
-		...StyleSheet.absoluteFillObject,
-	},
-	backButton: {
-		position: "absolute",
-		top: 8,
-		left: 16,
-		zIndex: 10,
-		padding: 8,
-		borderRadius: borderRadius.full,
-		backgroundColor: "rgba(0, 0, 0, 0.5)",
-	},
-	heroOverlay: {
-		position: "absolute",
-		bottom: -52,
-		left: 16,
-		right: 16,
-		flexDirection: "row",
-		alignItems: "flex-end",
-	},
-	posterWrapper: {
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.35,
-		shadowRadius: 8,
-		elevation: 8,
-	},
-	poster: {
-		width: 96,
-		height: 144,
-	},
-	noPoster: {
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	noPosterText: {
-		fontSize: 11,
-	},
-	titleWrapper: {
-		marginLeft: spacing.md,
-		marginBottom: spacing.sm,
-		flex: 1,
-	},
-	title: {
-		fontSize: 28,
-		fontWeight: "700",
-		color: "#f9fafb",
-		textShadowOffset: { width: 0, height: 2 },
-		textShadowRadius: 10,
-	},
-	subtitle: {
-		fontSize: 17,
-		fontWeight: "600",
-		color: "#d1d5db",
-		marginTop: 4,
-	},
 	content: {
-		marginTop: 64,
-		paddingHorizontal: 16,
-		gap: spacing.md,
-	},
-	infoCards: {
-		flexDirection: "row",
-		gap: spacing.sm,
-	},
-	infoCard: {
-		flex: 1,
-		padding: spacing.md,
-		borderRadius: borderRadius.md,
-		alignItems: "center",
-	},
-	infoLabel: {
-		fontSize: 11,
-		textTransform: "uppercase",
-		letterSpacing: 0.5,
-		marginBottom: 4,
-	},
-	infoValue: {
-		fontSize: 16,
-		fontWeight: "600",
+		paddingHorizontal: spacing.md,
+		paddingTop: spacing.lg,
+		gap: spacing.lg,
 	},
 	section: {
-		marginTop: spacing.sm,
+		gap: spacing.md,
 	},
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: "600",
-		marginBottom: spacing.md,
 	},
 	overview: {
 		fontSize: 15,
 		lineHeight: 22,
 	},
-	episodesList: {
+	genresContainer: {
+		flexDirection: "row",
+		flexWrap: "wrap",
 		gap: spacing.sm,
 	},
-	episodeCard: {
-		borderWidth: 1,
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-	},
-	episodeRow: {
-		flexDirection: "row",
-		gap: spacing.md,
-	},
-	episodeThumbnail: {
-		width: 120,
-		height: 80,
-		backgroundColor: "#111827",
-	},
-	episodeImage: {
-		width: "100%",
-		height: "100%",
-	},
-	episodeInfo: {
-		flex: 1,
+	genreBadge: {
+		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.sm,
-		paddingRight: spacing.sm,
-		justifyContent: "center",
+		borderRadius: borderRadius.full,
+		borderWidth: 1,
 	},
-	episodeHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "flex-start",
-		gap: spacing.sm,
-	},
-	episodeTitle: {
+	genreText: {
 		fontSize: 14,
 		fontWeight: "500",
-		flex: 1,
 	},
-	episodeMeta: {
-		flexDirection: "row",
-		gap: spacing.sm,
-	},
-	ratingBadge: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 2,
-	},
-	ratingText: {
-		fontSize: 11,
-		color: "#fbbf24",
-		fontWeight: "600",
-	},
-	watchedBadge: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 2,
-	},
-	watchedText: {
-		fontSize: 11,
-		color: "#22c55e",
-		fontWeight: "600",
-	},
-	episodeOverview: {
-		fontSize: 12,
-		marginTop: 4,
-		lineHeight: 16,
-	},
-	episodeFooter: {
-		flexDirection: "row",
-		marginTop: 4,
-	},
-	episodeDate: {
-		fontSize: 11,
+	episodesList: {
+		gap: spacing.md,
 	},
 	castContainer: {
 		position: "relative",
 	},
 	castScrollContent: {
-		gap: 12,
+		gap: spacing.md,
 	},
 	castGradient: {
 		position: "absolute",
@@ -690,7 +566,7 @@ const styles = StyleSheet.create({
 	castImageContainer: {
 		borderRadius: borderRadius.md,
 		overflow: "hidden",
-		marginBottom: 8,
+		marginBottom: spacing.sm,
 	},
 	castImage: {
 		width: 100,
@@ -718,7 +594,7 @@ const styles = StyleSheet.create({
 	crewGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 8,
+		gap: spacing.sm,
 	},
 	crewCard: {
 		padding: spacing.md,

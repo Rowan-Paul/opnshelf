@@ -1,208 +1,271 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { TmdbShowDetailDto } from "@opnshelf/api";
 import {
+	authControllerMeOptions,
+	listsControllerGetListsForItemOptions,
 	showsControllerGetShowDetailsOptions,
-	type TmdbShowDetailDto,
+	showsControllerGetShowWatchHistoryOptions,
+	showsControllerGetShowWatchHistoryQueryKey,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
 	ScrollView,
+	Share,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+	DetailActions,
+	DetailHero,
+	MetadataPills,
+	SeasonCard,
+} from "@/components/detail";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
+import { useToast } from "@/contexts/toast";
 import {
-	getReleaseYear,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 	getTmdbProfileUrl,
 } from "@/lib/utils";
 
+function formatDateOnly(dateString?: string): string {
+	if (!dateString) return "Unknown";
+	return new Date(dateString).toLocaleDateString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+}
+
 export default function ShowDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const { colors } = useTheme();
+	const { colors: themeColors } = useTheme();
+	const { showToast } = useToast();
+	const queryClient = useQueryClient();
 
-	const { data } = useQuery({
+	const [_showListModal, setShowListModal] = useState(false);
+
+	const { data: user } = useQuery({
+		...authControllerMeOptions(),
+		staleTime: 5 * 60 * 1000,
+		retry: false,
+	});
+
+	const { data: showData, isLoading } = useQuery({
 		...showsControllerGetShowDetailsOptions({
 			path: { showId: id },
 		}),
 	});
 
-	const show = data as TmdbShowDetailDto | undefined;
-	const seasonCount = show?.number_of_seasons || 0;
+	const show = showData as TmdbShowDetailDto | undefined;
+
+	const { data: history } = useQuery({
+		...showsControllerGetShowWatchHistoryOptions({
+			path: { userDid: user?.did || "", showId: id },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const { data: listsForShow } = useQuery({
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "show", mediaId: id },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
+	const watchedEpisodeCount = history?.length ?? 0;
 
 	const showColors = show?.colors || {
-		primary: colors.primary,
-		secondary: colors.secondary,
-		accent: colors.tertiary,
-		muted: colors.surfaceContainer,
+		primary: themeColors.primary,
+		secondary: themeColors.secondary,
+		accent: themeColors.tertiary,
+		muted: themeColors.surfaceContainerHighest,
 	};
 
 	const backdropUrl = getTmdbBackdropUrl(show?.backdrop_path);
 	const posterUrl = getTmdbPosterUrl(show?.poster_path, "w500");
-	const releaseYear = getReleaseYear(show?.first_air_date);
+	const seasonCount = show?.number_of_seasons || 0;
+
+	const markShowWatchedMutation = useMutation({
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["showsControllerGetShowWatchHistory"],
+			});
+			showToast(`Marked ${data.count} episodes as watched`);
+		},
+		onError: () => {
+			showToast("Failed to mark show as watched. Please try again.", "error");
+		},
+	});
+
+	const handleMarkWatched = () => {
+		markShowWatchedMutation.mutate({
+			body: { showId: id },
+		});
+	};
+
+	const unmarkShowWatchedMutation = useMutation({
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", showId: id },
+				}),
+			});
+			showToast("Removed all episodes from your shelf");
+		},
+		onError: () => {
+			showToast("Failed to remove from shelf. Please try again.", "error");
+		},
+	});
+
+	const handleUnmarkWatched = () => {
+		unmarkShowWatchedMutation.mutate({
+			path: { showId: id },
+			query: { mode: "all" },
+		});
+	};
+
+	const handleShare = async () => {
+		const shareUrl = `https://opnshelf.app/show/${id}`;
+		try {
+			await Share.share({
+				message: `Check out ${show?.name} on OpnShelf!\n\n${shareUrl}`,
+				title: show?.name,
+			});
+		} catch {
+			// User cancelled or error
+		}
+	};
+
+	const seasonWatchedCounts = useMemo(() => {
+		if (!history) return new Map<number, number>();
+		const counts = new Map<number, number>();
+		for (const h of history) {
+			const current = counts.get(h.seasonNumber) ?? 0;
+			counts.set(h.seasonNumber, current + 1);
+		}
+		return counts;
+	}, [history]);
+
+	const metadataItems = useMemo(() => {
+		const items = [];
+		if (show?.first_air_date) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="calendar-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: formatDateOnly(show.first_air_date),
+			});
+		}
+		if (seasonCount > 0) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="tv-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: `${seasonCount} season${seasonCount !== 1 ? "s" : ""}`,
+			});
+		}
+		if (show?.number_of_episodes) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="film-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: `${show.number_of_episodes} episodes`,
+			});
+		}
+		return items;
+	}, [show, seasonCount, themeColors]);
+
+	const seasonList = useMemo(() => {
+		if (!show?.seasons) return [];
+		return show.seasons.filter((s) => s.season_number > 0);
+	}, [show?.seasons]);
 
 	return (
 		<SafeAreaView
-			style={[styles.container, { backgroundColor: colors.background }]}
+			style={[styles.container, { backgroundColor: themeColors.background }]}
 		>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
-				<View style={styles.heroWrapper}>
-					{backdropUrl ? (
-						<Image
-							source={{ uri: backdropUrl }}
-							style={styles.backdrop}
-							contentFit="cover"
-						/>
-					) : (
-						<View
-							style={[
-								styles.backdrop,
-								{
-									backgroundColor: showColors.muted || colors.surfaceVariant,
-								},
-							]}
-						/>
-					)}
-					<LinearGradient
-						colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.75)", colors.background]}
-						style={styles.backdropOverlay}
-					/>
-					<TouchableOpacity
-						onPress={() => router.back()}
-						style={styles.backButton}
-						activeOpacity={0.8}
-					>
-						<Ionicons name="arrow-back" size={24} color="#f9fafb" />
-					</TouchableOpacity>
-					<View style={styles.heroOverlay}>
-						<View
-							style={[
-								styles.posterWrapper,
-								{ shadowColor: showColors.primary || colors.primary },
-							]}
-						>
-							{posterUrl ? (
-								<Image
-									source={{ uri: posterUrl }}
-									style={styles.poster}
-									contentFit="cover"
-								/>
-							) : (
-								<View
-									style={[
-										styles.poster,
-										styles.noPoster,
-										{ backgroundColor: colors.surfaceContainer },
-									]}
-								>
-									<Text
-										style={[
-											styles.noPosterText,
-											{ color: colors.onSurfaceVariant },
-										]}
-									>
-										No poster
-									</Text>
-								</View>
-							)}
-						</View>
-						<View style={styles.titleWrapper}>
-							<Text
-								style={[styles.title, { textShadowColor: showColors.primary }]}
-								numberOfLines={2}
-							>
-								{show?.name || "Show"}
-							</Text>
-							<View style={styles.metaRow}>
-								{releaseYear && (
-									<View style={styles.metaItem}>
-										<Ionicons
-											name="calendar-outline"
-											size={14}
-											color="#d1d5db"
-										/>
-										<Text style={styles.metaText}>{releaseYear}</Text>
-									</View>
-								)}
-								{show?.number_of_episodes && (
-									<View style={styles.metaItem}>
-										<Ionicons name="tv-outline" size={14} color="#d1d5db" />
-										<Text style={styles.metaText}>
-											{show.number_of_episodes} episodes
-										</Text>
-									</View>
-								)}
-							</View>
-						</View>
-					</View>
-				</View>
+				<DetailHero
+					title={show?.name || "Show"}
+					backdropUrl={backdropUrl}
+					posterUrl={posterUrl}
+					colors={showColors}
+					onBack={() => router.back()}
+					isLoading={isLoading}
+				/>
 
 				<View style={styles.content}>
-					<View style={styles.metaPills}>
-						{show?.first_air_date && (
-							<View style={[styles.metaPill, { borderColor: colors.outline }]}>
-								<Ionicons
-									name="calendar-outline"
-									size={14}
-									color={colors.onSurfaceVariant}
-								/>
-								<Text
-									style={[
-										styles.metaPillText,
-										{ color: colors.onSurfaceVariant },
-									]}
-								>
-									{releaseYear}
-								</Text>
-							</View>
-						)}
-						<View style={[styles.metaPill, { borderColor: colors.outline }]}>
-							<Ionicons
-								name="tv-outline"
-								size={14}
-								color={colors.onSurfaceVariant}
-							/>
-							<Text
-								style={[
-									styles.metaPillText,
-									{ color: colors.onSurfaceVariant },
-								]}
-							>
-								{show?.number_of_episodes || 0} episodes
-							</Text>
-						</View>
-						<View style={[styles.metaPill, { borderColor: colors.outline }]}>
-							<Text
-								style={[
-									styles.metaPillText,
-									{ color: colors.onSurfaceVariant },
-								]}
-							>
-								{seasonCount} season{seasonCount !== 1 ? "s" : ""}
-							</Text>
-						</View>
-					</View>
+					<DetailActions
+						mediaType="show"
+						mediaId={id}
+						colors={showColors}
+						isWatched={watchedEpisodeCount > 0}
+						watchedDate={null}
+						totalWatches={watchedEpisodeCount}
+						onMarkWatched={handleMarkWatched}
+						onUnmarkWatched={handleUnmarkWatched}
+						onShowDatePicker={() => {}}
+						isMarkingPending={markShowWatchedMutation.isPending}
+						isUnmarkingPending={unmarkShowWatchedMutation.isPending}
+						listsCount={listsCount}
+						onShowListModal={() => setShowListModal(true)}
+						isLoggedIn={!!user}
+						onLogin={() => router.push("/login")}
+						onShare={handleShare}
+					/>
+
+					<MetadataPills items={metadataItems} />
 
 					{show?.overview && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Overview
 							</Text>
 							<Text
-								style={[styles.overview, { color: colors.onSurfaceVariant }]}
+								style={[
+									styles.overview,
+									{ color: themeColors.onSurfaceVariant },
+								]}
 							>
 								{show.overview}
 							</Text>
@@ -212,10 +275,7 @@ export default function ShowDetailScreen() {
 					{show?.genres && show.genres.length > 0 && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Genres
 							</Text>
@@ -226,16 +286,13 @@ export default function ShowDetailScreen() {
 										style={[
 											styles.genreBadge,
 											{
-												backgroundColor: `${showColors.primary || colors.primary}20`,
-												borderColor: `${showColors.primary || colors.primary}40`,
+												backgroundColor: `${showColors.primary}20`,
+												borderColor: `${showColors.primary}40`,
 											},
 										]}
 									>
 										<Text
-											style={[
-												styles.genreText,
-												{ color: showColors.primary || colors.primary },
-											]}
+											style={[styles.genreText, { color: showColors.primary }]}
 										>
 											{genre.name}
 										</Text>
@@ -245,58 +302,50 @@ export default function ShowDetailScreen() {
 						</View>
 					)}
 
-					<View style={styles.section}>
-						<Text
-							style={[
-								styles.sectionTitle,
-								{ color: showColors.primary || colors.primary },
-							]}
-						>
-							Seasons
-						</Text>
-						<View style={styles.seasonsGrid}>
-							{Array.from({ length: seasonCount }).map((_, index) => {
-								const seasonNumber = index + 1;
-								return (
-									<TouchableOpacity
-										key={seasonNumber}
-										style={[
-											styles.seasonCard,
-											{
-												borderColor: colors.outline,
-												backgroundColor: colors.surfaceContainer,
-											},
-										]}
-										onPress={() =>
-											router.push({
-												pathname: "/show/[id]/season/[seasonNumber]",
-												params: {
-													id,
-													seasonNumber: String(seasonNumber),
-													title: show?.name || "",
-												},
-											})
-										}
-										activeOpacity={0.8}
-									>
-										<Text
-											style={[styles.seasonText, { color: colors.onSurface }]}
-										>
-											Season {seasonNumber}
-										</Text>
-									</TouchableOpacity>
-								);
-							})}
-						</View>
-					</View>
-
-					{show?.credits?.cast && show.credits.cast.length > 0 ? (
+					{seasonList.length > 0 && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
+							>
+								Seasons
+							</Text>
+							<View style={styles.seasonsList}>
+								{seasonList.map((season) => {
+									const watchedCount =
+										seasonWatchedCounts.get(season.season_number) ?? 0;
+									return (
+										<SeasonCard
+											key={season.id}
+											showId={id}
+											seasonNumber={season.season_number}
+											posterUrl={season.poster_path}
+											airDate={season.air_date}
+											episodeCount={season.episode_count ?? 0}
+											watchedCount={watchedCount}
+											overview={season.overview}
+											colors={showColors}
+											userDid={user?.did}
+											onPress={() =>
+												router.push({
+													pathname: "/show/[id]/season/[seasonNumber]",
+													params: {
+														id,
+														seasonNumber: String(season.season_number),
+														title: show?.name || "",
+													},
+												})
+											}
+										/>
+									);
+								})}
+							</View>
+						</View>
+					)}
+
+					{show?.credits?.cast && show.credits.cast.length > 0 && (
+						<View style={styles.section}>
+							<Text
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Cast
 							</Text>
@@ -325,13 +374,15 @@ export default function ShowDetailScreen() {
 														<View
 															style={[
 																styles.castImagePlaceholder,
-																{ backgroundColor: colors.surfaceContainer },
+																{
+																	backgroundColor: themeColors.surfaceContainer,
+																},
 															]}
 														>
 															<Text
 																style={[
 																	styles.castImagePlaceholderText,
-																	{ color: colors.onSurfaceVariant },
+																	{ color: themeColors.onSurfaceVariant },
 																]}
 															>
 																No photo
@@ -340,7 +391,10 @@ export default function ShowDetailScreen() {
 													)}
 												</View>
 												<Text
-													style={[styles.castName, { color: colors.onSurface }]}
+													style={[
+														styles.castName,
+														{ color: themeColors.onSurface },
+													]}
 													numberOfLines={2}
 												>
 													{person.name}
@@ -349,7 +403,7 @@ export default function ShowDetailScreen() {
 													<Text
 														style={[
 															styles.castCharacter,
-															{ color: colors.onSurfaceVariant },
+															{ color: themeColors.onSurfaceVariant },
 														]}
 														numberOfLines={2}
 													>
@@ -368,15 +422,12 @@ export default function ShowDetailScreen() {
 								/>
 							</View>
 						</View>
-					) : null}
+					)}
 
-					{show?.credits?.crew && show.credits.crew.length > 0 ? (
+					{show?.credits?.crew && show.credits.crew.length > 0 && (
 						<View style={styles.section}>
 							<Text
-								style={[
-									styles.sectionTitle,
-									{ color: showColors.primary || colors.primary },
-								]}
+								style={[styles.sectionTitle, { color: showColors.primary }]}
 							>
 								Crew
 							</Text>
@@ -386,12 +437,15 @@ export default function ShowDetailScreen() {
 										key={`${person.id}-${person.job || "crew"}`}
 										style={[
 											styles.crewCard,
-											{ backgroundColor: colors.surfaceContainer },
+											{ backgroundColor: themeColors.surfaceContainer },
 										]}
 										activeOpacity={0.8}
 									>
 										<Text
-											style={[styles.crewName, { color: colors.onSurface }]}
+											style={[
+												styles.crewName,
+												{ color: themeColors.onSurface },
+											]}
 											numberOfLines={1}
 										>
 											{person.name}
@@ -399,7 +453,7 @@ export default function ShowDetailScreen() {
 										<Text
 											style={[
 												styles.crewJob,
-												{ color: colors.onSurfaceVariant },
+												{ color: themeColors.onSurfaceVariant },
 											]}
 											numberOfLines={1}
 										>
@@ -409,7 +463,7 @@ export default function ShowDetailScreen() {
 								))}
 							</View>
 						</View>
-					) : null}
+					)}
 				</View>
 			</ScrollView>
 		</SafeAreaView>
@@ -421,108 +475,17 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		paddingBottom: spacing.xxl,
 	},
-	heroWrapper: {
-		height: 280,
-		position: "relative",
-	},
-	backdrop: {
-		width: "100%",
-		height: "100%",
-	},
-	backdropOverlay: {
-		...StyleSheet.absoluteFillObject,
-	},
-	backButton: {
-		position: "absolute",
-		top: 8,
-		left: 16,
-		zIndex: 10,
-		padding: 8,
-		borderRadius: borderRadius.full,
-		backgroundColor: "rgba(0, 0, 0, 0.5)",
-	},
-	heroOverlay: {
-		position: "absolute",
-		bottom: -52,
-		left: 16,
-		right: 16,
-		flexDirection: "row",
-		alignItems: "flex-end",
-	},
-	posterWrapper: {
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.35,
-		shadowRadius: 8,
-		elevation: 8,
-	},
-	poster: {
-		width: 96,
-		height: 144,
-	},
-	noPoster: {
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	noPosterText: {
-		fontSize: 11,
-	},
-	titleWrapper: {
-		marginLeft: spacing.md,
-		marginBottom: spacing.sm,
-		flex: 1,
-	},
-	title: {
-		fontSize: 28,
-		fontWeight: "700",
-		color: "#f9fafb",
-		textShadowOffset: { width: 0, height: 2 },
-		textShadowRadius: 10,
-	},
-	metaRow: {
-		flexDirection: "row",
-		gap: spacing.md,
-		marginTop: spacing.xs,
-	},
-	metaItem: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 4,
-	},
-	metaText: {
-		fontSize: 14,
-		color: "#d1d5db",
-	},
 	content: {
-		marginTop: 64,
-		paddingHorizontal: 16,
-		gap: spacing.md,
-	},
-	metaPills: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: spacing.sm,
-	},
-	metaPill: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 6,
-		borderWidth: 1,
-		borderRadius: borderRadius.full,
 		paddingHorizontal: spacing.md,
-		paddingVertical: 6,
-	},
-	metaPillText: {
-		fontSize: 13,
+		paddingTop: spacing.lg,
+		gap: spacing.lg,
 	},
 	section: {
-		marginTop: spacing.sm,
+		gap: spacing.md,
 	},
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: "600",
-		marginBottom: spacing.md,
 	},
 	overview: {
 		fontSize: 15,
@@ -543,28 +506,14 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontWeight: "500",
 	},
-	seasonsGrid: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: spacing.sm,
-	},
-	seasonCard: {
-		borderWidth: 1,
-		borderRadius: borderRadius.lg,
-		padding: spacing.md,
-		flex: 1,
-		minWidth: 120,
-		alignItems: "center",
-	},
-	seasonText: {
-		fontSize: 14,
-		fontWeight: "500",
+	seasonsList: {
+		gap: spacing.md,
 	},
 	castContainer: {
 		position: "relative",
 	},
 	castScrollContent: {
-		gap: 12,
+		gap: spacing.md,
 	},
 	castGradient: {
 		position: "absolute",
@@ -580,7 +529,7 @@ const styles = StyleSheet.create({
 	castImageContainer: {
 		borderRadius: borderRadius.md,
 		overflow: "hidden",
-		marginBottom: 8,
+		marginBottom: spacing.sm,
 	},
 	castImage: {
 		width: 100,
@@ -608,7 +557,7 @@ const styles = StyleSheet.create({
 	crewGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 8,
+		gap: spacing.sm,
 	},
 	crewCard: {
 		padding: spacing.md,

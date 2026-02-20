@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { TmdbShowDetailDto } from "@opnshelf/api";
 import {
 	authControllerMeOptions,
 	type EpisodeHistoryItemDto,
@@ -35,6 +36,13 @@ import {
 import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
+import {
+	DetailActions,
+	DetailHero,
+	EpisodeNav,
+	type EpisodeSummary,
+	MetadataPills,
+} from "@/components/detail";
 import { Button } from "@/components/ui/Button";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -78,7 +86,7 @@ export default function ShowEpisodeScreen() {
 		title?: string;
 	}>();
 	const router = useRouter();
-	const { colors } = useTheme();
+	const { colors: themeColors } = useTheme();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
@@ -102,12 +110,11 @@ export default function ShowEpisodeScreen() {
 		}),
 	});
 
-	const { data } = useQuery({
+	const { data: episode } = useQuery({
 		...showsControllerGetEpisodeDetailsOptions({
 			path: { showId: id, seasonNumber, episodeNumber },
 		}),
 	});
-	const episode = data as TmdbEpisodeDto | undefined;
 
 	const { data: seasonData } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -135,21 +142,22 @@ export default function ShowEpisodeScreen() {
 		enabled: !!resolvedUserDid,
 	});
 
-	const showColors = showData?.colors || {
-		primary: colors.primary,
-		secondary: colors.secondary,
-		accent: colors.tertiary,
-		muted: colors.surfaceContainer,
+	const show = showData as TmdbShowDetailDto | undefined;
+
+	const showColors = show?.colors || {
+		primary: themeColors.primary,
+		secondary: themeColors.secondary,
+		accent: themeColors.tertiary,
+		muted: themeColors.surfaceContainerHighest,
 	};
 	const backdropUrl = getTmdbBackdropUrl(
-		episode?.still_path || showData?.backdrop_path,
+		(episode as TmdbEpisodeDto)?.still_path || show?.backdrop_path,
 	);
-	const posterUrl = getTmdbPosterUrl(showData?.poster_path, "w500");
+	const posterUrl = getTmdbPosterUrl(show?.poster_path, "w500");
 
 	const userTimezone = userSettings?.timezone || "UTC";
 	const is24Hour = userSettings?.timeFormat === "24h";
 	const listsCount = listsForShow?.filter((list) => list.isInList).length ?? 0;
-	const isInAnyList = listsCount > 0;
 
 	const episodeWatchHistory = useMemo(() => {
 		if (!history?.length) return [];
@@ -251,12 +259,6 @@ export default function ShowEpisodeScreen() {
 		},
 	});
 
-	const isPending =
-		markMutation.isPending &&
-		markMutation.variables?.body?.showId === id &&
-		markMutation.variables?.body?.seasonNumber === Number(seasonNumber) &&
-		markMutation.variables?.body?.episodeNumber === Number(episodeNumber);
-
 	const handleMarkWatched = () => {
 		markMutation.mutate({
 			body: {
@@ -290,10 +292,11 @@ export default function ShowEpisodeScreen() {
 	};
 
 	const handleShare = async () => {
+		const shareUrl = `https://opnshelf.app/show/${id}/season/${seasonNumber}/episode/${episodeNumber}`;
 		try {
 			await Share.share({
-				title: `Check out S${seasonNumber}E${episodeNumber} of ${showData?.name || title || "this show"}`,
-				url: `https://opnshelf.xyz/show/${id}/${seasonNumber}/${episodeNumber}`,
+				message: `Check out S${seasonNumber}E${episodeNumber} of ${show?.name || title || "this show"} on OpnShelf!\n\n${shareUrl}`,
+				title: `Check out S${seasonNumber}E${episodeNumber} of ${show?.name || title || "this show"}`,
 			});
 		} catch {
 			showToast("Failed to share", "error");
@@ -317,514 +320,159 @@ export default function ShowEpisodeScreen() {
 		});
 	};
 
-	const contextCards: Array<{
-		key: string;
-		label: string;
-		episode: TmdbEpisodeDto | null;
-		highlighted: boolean;
-		iconName: "arrow-back" | "radio-button-on" | "arrow-forward";
-	}> = [
-		{
-			key: "previous",
-			label: "Previous Episode",
-			episode: seasonEpisodeContext.previous,
-			highlighted: false,
-			iconName: "arrow-back",
-		},
-		{
-			key: "current",
-			label: "Current Episode",
-			episode: seasonEpisodeContext.current,
-			highlighted: true,
-			iconName: "radio-button-on",
-		},
-		{
-			key: "next",
-			label: "Next Episode",
-			episode: seasonEpisodeContext.next,
-			highlighted: false,
-			iconName: "arrow-forward",
-		},
-	];
+	const formattedWatchedDate = useMemo(() => {
+		if (!latestEpisodeWatch) return null;
+		return formatWatchDate(
+			latestEpisodeWatch.watchedDate,
+			userTimezone,
+			is24Hour,
+		);
+	}, [latestEpisodeWatch, userTimezone, is24Hour]);
+
+	const metadataItems = useMemo(() => {
+		const items = [];
+		items.push({
+			icon: (
+				<Ionicons
+					name="layers-outline"
+					size={14}
+					color={themeColors.onSurfaceVariant}
+				/>
+			),
+			label: `Season ${seasonNumber}`,
+			onPress: () =>
+				router.push({
+					pathname: "/show/[id]/season/[seasonNumber]",
+					params: { id, seasonNumber, title: title || "" },
+				}),
+		});
+		items.push({
+			icon: (
+				<Ionicons
+					name="film-outline"
+					size={14}
+					color={themeColors.onSurfaceVariant}
+				/>
+			),
+			label: `Episode ${episodeNumber}`,
+		});
+		if ((episode as TmdbEpisodeDto)?.air_date) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="calendar-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: formatDateOnly((episode as TmdbEpisodeDto).air_date),
+			});
+		}
+		if ((episode as TmdbEpisodeDto)?.vote_average) {
+			items.push({
+				icon: (
+					<Ionicons
+						name="star-outline"
+						size={14}
+						color={themeColors.onSurfaceVariant}
+					/>
+				),
+				label: `${(episode as TmdbEpisodeDto).vote_average?.toFixed(1)}/10`,
+			});
+		}
+		return items;
+	}, [episode, seasonNumber, episodeNumber, id, title, router, themeColors]);
+
+	const isPending =
+		markMutation.isPending &&
+		markMutation.variables?.body?.showId === id &&
+		markMutation.variables?.body?.seasonNumber === Number(seasonNumber) &&
+		markMutation.variables?.body?.episodeNumber === Number(episodeNumber);
 
 	return (
 		<>
 			<SafeAreaView
-				style={[styles.container, { backgroundColor: colors.background }]}
+				style={[styles.container, { backgroundColor: themeColors.background }]}
 			>
 				<ScrollView contentContainerStyle={styles.scrollContent}>
-					<View style={styles.heroWrapper}>
-						{backdropUrl ? (
-							<Image
-								source={{ uri: backdropUrl }}
-								style={styles.backdrop}
-								contentFit="cover"
-							/>
-						) : (
-							<View
-								style={[
-									styles.backdrop,
-									{
-										backgroundColor: showColors.muted || colors.surfaceVariant,
-									},
-								]}
-							/>
-						)}
-						<LinearGradient
-							colors={[
-								"rgba(0,0,0,0.2)",
-								"rgba(0,0,0,0.75)",
-								colors.background,
-							]}
-							style={styles.backdropOverlay}
-						/>
-						<TouchableOpacity
-							onPress={() => router.back()}
-							style={styles.backButton}
-							activeOpacity={0.8}
-						>
-							<Ionicons name="arrow-back" size={24} color="#f9fafb" />
-						</TouchableOpacity>
-						<View style={styles.heroOverlay}>
-							<TouchableOpacity
-								style={[
-									styles.posterWrapper,
-									{ shadowColor: showColors.primary || colors.primary },
-								]}
-								onPress={() =>
-									router.push({ pathname: "/show/[id]", params: { id } })
-								}
-								activeOpacity={0.8}
-							>
-								{posterUrl ? (
-									<Image
-										source={{ uri: posterUrl }}
-										style={styles.poster}
-										contentFit="cover"
-									/>
-								) : (
-									<View
-										style={[
-											styles.poster,
-											styles.noPoster,
-											{ backgroundColor: colors.surfaceContainer },
-										]}
-									>
-										<Text
-											style={[
-												styles.noPosterText,
-												{ color: colors.onSurfaceVariant },
-											]}
-										>
-											No poster
-										</Text>
-									</View>
-								)}
-							</TouchableOpacity>
-							<View style={styles.titleWrapper}>
-								<Text
-									style={[
-										styles.title,
-										{ textShadowColor: showColors.primary },
-									]}
-									numberOfLines={2}
-								>
-									{showData?.name || title || "Show"}
-								</Text>
-								<Text style={[styles.subtitle, { color: "#f9fafb" }]}>
-									S{seasonNumber} · E{episodeNumber}
-								</Text>
-								<Text style={[styles.heroEpisodeName, { color: "#d1d5db" }]}>
-									{episode?.name}
-								</Text>
-							</View>
-						</View>
-					</View>
+					<DetailHero
+						title={show?.name || title || "Show"}
+						subtitle={`S${seasonNumber} · E${episodeNumber}: ${(episode as TmdbEpisodeDto)?.name || ""}`}
+						backdropUrl={backdropUrl}
+						posterUrl={posterUrl}
+						colors={showColors}
+						onBack={() => router.back()}
+						posterLinkTo={{
+							onPress: () =>
+								router.push({ pathname: "/show/[id]", params: { id } }),
+						}}
+					/>
 
 					<View style={styles.content}>
-						<View style={styles.metaRow}>
-							<View
-								style={[
-									styles.metaPill,
-									{
-										borderColor: colors.outline,
-										backgroundColor: colors.surfaceContainer,
-									},
-								]}
-							>
-								<Ionicons
-									name="layers-outline"
-									size={14}
-									color={colors.onSurfaceVariant}
-								/>
+						<MetadataPills items={metadataItems} />
+
+						<DetailActions
+							mediaType="episode"
+							mediaId={id}
+							seasonNumber={seasonNumber}
+							episodeNumber={episodeNumber}
+							colors={showColors}
+							isWatched={isWatchedEpisode}
+							watchedDate={formattedWatchedDate}
+							totalWatches={episodeWatchHistory.length}
+							onMarkWatched={handleMarkWatched}
+							onUnmarkWatched={handleUnmarkWatched}
+							onShowDatePicker={handleOpenDateModal}
+							isMarkingPending={isPending}
+							isUnmarkingPending={unmarkMutation.isPending}
+							listsCount={listsCount}
+							onShowListModal={() => setShowAddToListModal(true)}
+							onViewHistory={() => setShowHistoryModal(true)}
+							onShare={handleShare}
+						/>
+
+						{seasonEpisodeContext.current && (
+							<EpisodeNav
+								previousEpisode={
+									seasonEpisodeContext.previous as EpisodeSummary | null
+								}
+								currentEpisode={seasonEpisodeContext.current as EpisodeSummary}
+								nextEpisode={seasonEpisodeContext.next as EpisodeSummary | null}
+								colors={showColors}
+								variant="sidebar"
+								onPreviousPress={() =>
+									navigateToEpisode(
+										seasonEpisodeContext.previous as TmdbEpisodeDto,
+									)
+								}
+								onNextPress={() =>
+									navigateToEpisode(seasonEpisodeContext.next as TmdbEpisodeDto)
+								}
+							/>
+						)}
+
+						{(episode as TmdbEpisodeDto)?.overview && (
+							<View style={styles.section}>
 								<Text
-									style={[styles.metaText, { color: colors.onSurfaceVariant }]}
+									style={[styles.sectionTitle, { color: showColors.primary }]}
 								>
-									S{seasonNumber}
+									Overview
 								</Text>
-							</View>
-							<View
-								style={[
-									styles.metaPill,
-									{
-										borderColor: colors.outline,
-										backgroundColor: colors.surfaceContainer,
-									},
-								]}
-							>
-								<Ionicons
-									name="film-outline"
-									size={14}
-									color={colors.onSurfaceVariant}
-								/>
-								<Text
-									style={[styles.metaText, { color: colors.onSurfaceVariant }]}
-								>
-									E{episodeNumber}
-								</Text>
-							</View>
-							<View
-								style={[
-									styles.metaPill,
-									{
-										borderColor: colors.outline,
-										backgroundColor: colors.surfaceContainer,
-									},
-								]}
-							>
-								<Ionicons
-									name="calendar-outline"
-									size={14}
-									color={colors.onSurfaceVariant}
-								/>
-								<Text
-									style={[styles.metaText, { color: colors.onSurfaceVariant }]}
-								>
-									{formatDateOnly(episode?.air_date)}
-								</Text>
-							</View>
-							<View
-								style={[
-									styles.metaPill,
-									{
-										borderColor: colors.outline,
-										backgroundColor: colors.surfaceContainer,
-									},
-								]}
-							>
-								<Ionicons
-									name="star-outline"
-									size={14}
-									color={colors.onSurfaceVariant}
-								/>
-								<Text
-									style={[styles.metaText, { color: colors.onSurfaceVariant }]}
-								>
-									{episode?.vote_average
-										? `${episode.vote_average.toFixed(1)}/10`
-										: "Not rated"}
-								</Text>
-							</View>
-						</View>
-
-						<Text style={[styles.overview, { color: colors.onSurfaceVariant }]}>
-							{episode?.overview || "No overview available."}
-						</Text>
-
-						<View style={styles.actions}>
-							{user ? (
-								<>
-									<View style={styles.primaryActionRow}>
-										<TouchableOpacity
-											onPress={handleMarkWatched}
-											disabled={isPending}
-											activeOpacity={0.8}
-											style={{ flex: 1, opacity: isPending ? 0.7 : 1 }}
-										>
-											<LinearGradient
-												colors={[
-													showColors.primary || colors.primary,
-													showColors.secondary || colors.primary,
-												]}
-												start={{ x: 0, y: 0 }}
-												end={{ x: 1, y: 1 }}
-												style={styles.primaryAction}
-											>
-												{isPending ? (
-													<ActivityIndicator
-														size="small"
-														color={colors.onPrimary}
-													/>
-												) : (
-													<>
-														<Ionicons
-															name={isWatchedEpisode ? "refresh" : "add"}
-															size={18}
-															color={colors.onPrimary}
-														/>
-														<Text
-															style={[
-																styles.primaryActionText,
-																{ color: colors.onPrimary },
-															]}
-														>
-															{isWatchedEpisode
-																? "Watch Again"
-																: "Add to Shelf"}
-														</Text>
-													</>
-												)}
-											</LinearGradient>
-										</TouchableOpacity>
-
-										<TouchableOpacity
-											onPress={handleOpenDateModal}
-											activeOpacity={0.8}
-											style={[
-												styles.calendarAction,
-												{
-													backgroundColor: colors.surfaceContainer,
-													borderColor: colors.outline,
-												},
-											]}
-										>
-											<Ionicons
-												name="calendar-outline"
-												size={22}
-												color={colors.onSurfaceVariant}
-											/>
-										</TouchableOpacity>
-									</View>
-
-									<TouchableOpacity
-										onPress={() => setShowAddToListModal(true)}
-										activeOpacity={0.8}
-										style={[
-											styles.secondaryAction,
-											{
-												backgroundColor: isInAnyList
-													? `${colors.primary}20`
-													: colors.surfaceContainer,
-												borderColor: isInAnyList
-													? colors.primary
-													: colors.outline,
-											},
-										]}
-									>
-										<Ionicons
-											name={isInAnyList ? "checkmark" : "list-outline"}
-											size={18}
-											color={
-												isInAnyList ? colors.primary : colors.onSurfaceVariant
-											}
-										/>
-										<Text
-											style={[
-												styles.secondaryActionText,
-												{
-													color: isInAnyList
-														? colors.primary
-														: colors.onSurfaceVariant,
-												},
-											]}
-										>
-											{isInAnyList
-												? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-												: "Add to List"}
-										</Text>
-									</TouchableOpacity>
-								</>
-							) : (
-								<Button onPress={() => router.push("/login")}>
-									<Text style={{ color: colors.onPrimary }}>
-										Sign in to Track
-									</Text>
-								</Button>
-							)}
-
-							<TouchableOpacity
-								onPress={handleShare}
-								activeOpacity={0.8}
-								style={[
-									styles.secondaryAction,
-									{
-										backgroundColor: colors.surfaceContainer,
-										borderColor: colors.outline,
-									},
-								]}
-							>
-								<Ionicons
-									name="share-outline"
-									size={18}
-									color={colors.onSurfaceVariant}
-								/>
 								<Text
 									style={[
-										styles.secondaryActionText,
-										{ color: colors.onSurfaceVariant },
+										styles.overview,
+										{ color: themeColors.onSurfaceVariant },
 									]}
 								>
-									Share
+									{(episode as TmdbEpisodeDto).overview}
 								</Text>
-							</TouchableOpacity>
-						</View>
-
-						{isWatchedEpisode && (
-							<View
-								style={[
-									styles.watchedCard,
-									{
-										backgroundColor: colors.surfaceContainer,
-										borderColor: colors.outline,
-									},
-								]}
-							>
-								<View style={styles.watchedHeader}>
-									<Ionicons
-										name="checkmark-circle"
-										size={20}
-										color={colors.primary}
-									/>
-									<Text
-										style={[styles.watchedTitle, { color: colors.primary }]}
-									>
-										On Your Shelf
-									</Text>
-								</View>
-								{latestEpisodeWatch && (
-									<Text
-										style={[
-											styles.watchedDate,
-											{ color: colors.onSurfaceVariant },
-										]}
-									>
-										Watched on{" "}
-										{formatWatchDate(
-											latestEpisodeWatch.watchedDate,
-											userTimezone,
-											is24Hour,
-										)}
-									</Text>
-								)}
-								{watchedCount > 1 ? (
-									<TouchableOpacity
-										onPress={() => setShowHistoryModal(true)}
-										activeOpacity={0.7}
-										style={styles.linkRow}
-									>
-										<Ionicons
-											name="eye-outline"
-											size={16}
-											color={colors.onSurfaceVariant}
-										/>
-										<Text
-											style={[
-												styles.linkText,
-												{ color: colors.onSurfaceVariant },
-											]}
-										>
-											View all watches ({watchedCount})
-										</Text>
-									</TouchableOpacity>
-								) : (
-									<TouchableOpacity
-										onPress={handleUnmarkWatched}
-										disabled={unmarkMutation.isPending}
-										activeOpacity={0.7}
-										style={styles.linkRow}
-									>
-										{unmarkMutation.isPending ? (
-											<ActivityIndicator size="small" color={colors.error} />
-										) : (
-											<Ionicons
-												name="trash-outline"
-												size={16}
-												color={colors.error}
-											/>
-										)}
-										<Text style={[styles.linkText, { color: colors.error }]}>
-											Remove from shelf
-										</Text>
-									</TouchableOpacity>
-								)}
 							</View>
 						)}
 
-						{seasonEpisodeContext.current ? (
-							<View style={styles.contextSection}>
-								<Text
-									style={[styles.sectionTitle, { color: colors.onSurface }]}
-								>
-									More In This Season
-								</Text>
-								<View style={styles.contextList}>
-									{contextCards.map((slot) => {
-										if (!slot.episode) return null;
-										return (
-											<TouchableOpacity
-												key={slot.key}
-												onPress={() =>
-													navigateToEpisode(slot.episode as TmdbEpisodeDto)
-												}
-												activeOpacity={0.8}
-												style={[
-													styles.contextCard,
-													{
-														backgroundColor: slot.highlighted
-															? `${colors.primary}20`
-															: colors.surfaceContainer,
-														borderColor: slot.highlighted
-															? colors.primary
-															: colors.outline,
-													},
-												]}
-											>
-												<View style={styles.contextLabelRow}>
-													<Ionicons
-														name={slot.iconName}
-														size={14}
-														color={colors.onSurfaceVariant}
-													/>
-													<Text
-														style={[
-															styles.contextLabel,
-															{ color: colors.onSurfaceVariant },
-														]}
-													>
-														{slot.label}
-													</Text>
-												</View>
-												<Text
-													style={[
-														styles.contextTitle,
-														{ color: colors.onSurface },
-													]}
-													numberOfLines={1}
-												>
-													E{slot.episode.episode_number}: {slot.episode.name}
-												</Text>
-												<Text
-													style={[
-														styles.contextDate,
-														{ color: colors.onSurfaceVariant },
-													]}
-												>
-													{formatDateOnly(slot.episode.air_date)}
-												</Text>
-											</TouchableOpacity>
-										);
-									})}
-								</View>
-							</View>
-						) : null}
-
-						{showData?.credits?.cast && showData.credits.cast.length > 0 ? (
+						{show?.credits?.cast && show.credits.cast.length > 0 && (
 							<View style={styles.section}>
 								<Text
-									style={[
-										styles.sectionTitle,
-										{ color: showColors.primary || colors.primary },
-									]}
+									style={[styles.sectionTitle, { color: showColors.primary }]}
 								>
 									Cast
 								</Text>
@@ -834,7 +482,7 @@ export default function ShowEpisodeScreen() {
 										showsHorizontalScrollIndicator={false}
 										contentContainerStyle={styles.castScrollContent}
 									>
-										{showData.credits.cast.map((person) => {
+										{show.credits.cast.map((person) => {
 											const profileUrl = getTmdbProfileUrl(person.profile_path);
 											return (
 												<TouchableOpacity
@@ -880,20 +528,17 @@ export default function ShowEpisodeScreen() {
 									/>
 								</View>
 							</View>
-						) : null}
+						)}
 
-						{showData?.credits?.crew && showData.credits.crew.length > 0 ? (
+						{show?.credits?.crew && show.credits.crew.length > 0 && (
 							<View style={styles.section}>
 								<Text
-									style={[
-										styles.sectionTitle,
-										{ color: showColors.primary || colors.primary },
-									]}
+									style={[styles.sectionTitle, { color: showColors.primary }]}
 								>
 									Crew
 								</Text>
 								<View style={styles.crewGrid}>
-									{showData.credits.crew.map((person) => (
+									{show.credits.crew.map((person) => (
 										<TouchableOpacity
 											key={`${person.id}-${person.job || "crew"}`}
 											style={styles.crewCard}
@@ -909,7 +554,7 @@ export default function ShowEpisodeScreen() {
 									))}
 								</View>
 							</View>
-						) : null}
+						)}
 					</View>
 				</ScrollView>
 			</SafeAreaView>
@@ -924,21 +569,27 @@ export default function ShowEpisodeScreen() {
 					<View
 						style={[
 							styles.modalContent,
-							{ backgroundColor: colors.surfaceContainerHigh },
+							{ backgroundColor: themeColors.surfaceContainerHigh },
 						]}
 					>
 						<View style={styles.modalHeader}>
-							<Text style={[styles.modalTitle, { color: colors.onSurface }]}>
+							<Text
+								style={[styles.modalTitle, { color: themeColors.onSurface }]}
+							>
 								Watch Again
 							</Text>
 							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons name="close" size={24} color={colors.onSurface} />
+								<Ionicons
+									name="close"
+									size={24}
+									color={themeColors.onSurface}
+								/>
 							</Pressable>
 						</View>
 						<Text
 							style={[
 								styles.modalDescription,
-								{ color: colors.onSurfaceVariant },
+								{ color: themeColors.onSurfaceVariant },
 							]}
 						>
 							When did you watch this?
@@ -953,10 +604,13 @@ export default function ShowEpisodeScreen() {
 								<Ionicons
 									name="calendar-outline"
 									size={20}
-									color={colors.onSurfaceVariant}
+									color={themeColors.onSurfaceVariant}
 								/>
 								<Text
-									style={[styles.dateTimeText, { color: colors.onSurface }]}
+									style={[
+										styles.dateTimeText,
+										{ color: themeColors.onSurface },
+									]}
 								>
 									{customDate.toLocaleDateString("en-US", {
 										year: "numeric",
@@ -974,10 +628,13 @@ export default function ShowEpisodeScreen() {
 								<Ionicons
 									name="time-outline"
 									size={20}
-									color={colors.onSurfaceVariant}
+									color={themeColors.onSurfaceVariant}
 								/>
 								<Text
-									style={[styles.dateTimeText, { color: colors.onSurface }]}
+									style={[
+										styles.dateTimeText,
+										{ color: themeColors.onSurface },
+									]}
 								>
 									{customDate.toLocaleTimeString("en-US", {
 										hour: "2-digit",
@@ -1031,7 +688,7 @@ export default function ShowEpisodeScreen() {
 								<Text
 									style={[
 										styles.modalCancelText,
-										{ color: colors.onSurfaceVariant },
+										{ color: themeColors.onSurfaceVariant },
 									]}
 								>
 									Cancel
@@ -1040,10 +697,13 @@ export default function ShowEpisodeScreen() {
 							<Button
 								onPress={handleMarkWatchedWithDate}
 								isLoading={markMutation.isPending}
-								style={{ backgroundColor: colors.primary }}
+								style={{ backgroundColor: themeColors.primary }}
 							>
 								<Text
-									style={[styles.modalConfirmText, { color: colors.onPrimary }]}
+									style={[
+										styles.modalConfirmText,
+										{ color: themeColors.onPrimary },
+									]}
 								>
 									Add Watch
 								</Text>
@@ -1063,41 +723,50 @@ export default function ShowEpisodeScreen() {
 					<View
 						style={[
 							styles.modalContent,
-							{ backgroundColor: colors.surfaceContainerHigh },
+							{ backgroundColor: themeColors.surfaceContainerHigh },
 						]}
 					>
 						<View style={styles.modalHeader}>
-							<Text style={[styles.modalTitle, { color: colors.onSurface }]}>
+							<Text
+								style={[styles.modalTitle, { color: themeColors.onSurface }]}
+							>
 								Watch History
 							</Text>
 							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons name="close" size={24} color={colors.onSurface} />
+								<Ionicons
+									name="close"
+									size={24}
+									color={themeColors.onSurface}
+								/>
 							</Pressable>
 						</View>
 						<Text
 							style={[
 								styles.modalDescription,
-								{ color: colors.onSurfaceVariant },
+								{ color: themeColors.onSurfaceVariant },
 							]}
 						>
 							All watches for this episode
 						</Text>
 
 						<ScrollView style={styles.historyList}>
-							{episodeWatchHistory.length ? (
+							{episodeWatchHistory.length > 0 ? (
 								episodeWatchHistory.map((watch: EpisodeHistoryItemDto) => (
 									<View
 										key={watch.id}
 										style={[
 											styles.historyItem,
 											{
-												backgroundColor: colors.surfaceContainer,
-												borderColor: colors.outline,
+												backgroundColor: themeColors.surfaceContainer,
+												borderColor: themeColors.outline,
 											},
 										]}
 									>
 										<Text
-											style={[styles.historyDate, { color: colors.onSurface }]}
+											style={[
+												styles.historyDate,
+												{ color: themeColors.onSurface },
+											]}
 										>
 											{formatWatchDate(
 												watch.watchedDate,
@@ -1119,13 +788,13 @@ export default function ShowEpisodeScreen() {
 												?.trackedEpisodeId === watch.id ? (
 												<ActivityIndicator
 													size="small"
-													color={colors.onSurfaceVariant}
+													color={themeColors.onSurfaceVariant}
 												/>
 											) : (
 												<Ionicons
 													name="trash-outline"
 													size={18}
-													color={colors.error}
+													color="#ef4444"
 												/>
 											)}
 										</TouchableOpacity>
@@ -1135,7 +804,7 @@ export default function ShowEpisodeScreen() {
 								<Text
 									style={[
 										styles.emptyHistory,
-										{ color: colors.onSurfaceVariant },
+										{ color: themeColors.onSurfaceVariant },
 									]}
 								>
 									No watch history found
@@ -1150,7 +819,7 @@ export default function ShowEpisodeScreen() {
 							<Text
 								style={[
 									styles.modalCancelText,
-									{ color: colors.onSurfaceVariant },
+									{ color: themeColors.onSurfaceVariant },
 								]}
 							>
 								Close
@@ -1165,7 +834,7 @@ export default function ShowEpisodeScreen() {
 				onClose={() => setShowAddToListModal(false)}
 				mediaType="show"
 				mediaId={id}
-				mediaTitle={showData?.name || title || "Show"}
+				mediaTitle={show?.name || title || "Show"}
 			/>
 		</>
 	);
@@ -1176,262 +845,27 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		paddingBottom: spacing.xxl,
 	},
-	heroWrapper: {
-		height: 280,
-		position: "relative",
-	},
-	backdrop: {
-		width: "100%",
-		height: "100%",
-	},
-	backdropOverlay: {
-		...StyleSheet.absoluteFillObject,
-	},
-	backButton: {
-		position: "absolute",
-		top: 8,
-		left: 16,
-		zIndex: 10,
-		padding: 8,
-		borderRadius: borderRadius.full,
-		backgroundColor: "rgba(0, 0, 0, 0.5)",
-	},
-	heroOverlay: {
-		position: "absolute",
-		bottom: -52,
-		left: 16,
-		right: 16,
-		flexDirection: "row",
-		alignItems: "flex-end",
-	},
-	posterWrapper: {
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.35,
-		shadowRadius: 8,
-		elevation: 8,
-	},
-	poster: {
-		width: 96,
-		height: 144,
-	},
-	noPoster: {
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	noPosterText: {
-		fontSize: 11,
-	},
-	titleWrapper: {
-		marginLeft: spacing.md,
-		marginBottom: spacing.sm,
-		flex: 1,
-	},
 	content: {
-		marginTop: 80,
-		paddingHorizontal: 16,
-		gap: spacing.md,
-	},
-	title: {
-		fontSize: 28,
-		fontWeight: "700",
-		color: "#f9fafb",
-		textShadowOffset: { width: 0, height: 2 },
-		textShadowRadius: 10,
-	},
-	subtitle: { fontSize: 17, fontWeight: "700" },
-	heroEpisodeName: { fontSize: 14, marginTop: 2 },
-	metaRow: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: spacing.sm,
-	},
-	metaPill: {
-		borderWidth: 1,
-		borderRadius: borderRadius.full,
-		paddingHorizontal: spacing.sm,
-		paddingVertical: 6,
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 6,
-	},
-	metaText: { fontSize: 13 },
-	overview: { fontSize: 15, lineHeight: 22 },
-	actions: {
-		gap: spacing.sm,
-	},
-	primaryActionRow: {
-		flexDirection: "row",
-		gap: spacing.sm,
-		alignItems: "stretch",
-	},
-	primaryAction: {
-		borderRadius: borderRadius.md,
-		paddingVertical: 14,
 		paddingHorizontal: spacing.md,
-		alignItems: "center",
-		justifyContent: "center",
-		flexDirection: "row",
-		gap: spacing.xs,
-	},
-	primaryActionText: {
-		fontSize: 16,
-		fontWeight: "600",
-	},
-	secondaryAction: {
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		paddingVertical: 12,
-		paddingHorizontal: spacing.md,
-		alignItems: "center",
-		justifyContent: "center",
-		flexDirection: "row",
-		gap: spacing.xs,
-	},
-	secondaryActionText: {
-		fontSize: 15,
-		fontWeight: "500",
-	},
-	calendarAction: {
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		paddingVertical: 14,
-		paddingHorizontal: 14,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	watchedCard: {
-		marginTop: spacing.sm,
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		padding: spacing.md,
-		gap: spacing.xs,
-	},
-	watchedHeader: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-	},
-	watchedTitle: { fontSize: 16, fontWeight: "600" },
-	watchedDate: { fontSize: 14 },
-	linkRow: {
-		marginTop: spacing.xs,
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-	},
-	linkText: { fontSize: 14, fontWeight: "500" },
-	contextSection: { marginTop: spacing.sm, gap: spacing.sm },
-	sectionTitle: { fontSize: 18, fontWeight: "600" },
-	contextList: { gap: spacing.sm },
-	contextCard: {
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		padding: spacing.md,
-		gap: 6,
-	},
-	contextLabelRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 6,
-	},
-	contextLabel: {
-		fontSize: 11,
-		textTransform: "uppercase",
-		letterSpacing: 0.3,
-	},
-	contextTitle: {
-		fontSize: 15,
-		fontWeight: "600",
-	},
-	contextDate: { fontSize: 13 },
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: "rgba(0, 0, 0, 0.7)",
-		justifyContent: "center",
-		padding: spacing.lg,
-	},
-	modalContent: {
-		borderRadius: borderRadius.lg,
-		padding: spacing.md,
-		maxHeight: "80%",
-	},
-	modalHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		marginBottom: spacing.sm,
-	},
-	modalTitle: {
-		fontSize: 20,
-		fontWeight: "700",
-	},
-	modalDescription: {
-		fontSize: 14,
-		marginBottom: spacing.md,
-	},
-	dateTimeContainer: {
-		gap: spacing.sm,
-		marginBottom: spacing.md,
-	},
-	dateTimeButton: {
-		padding: spacing.md,
-		borderRadius: borderRadius.md,
-		backgroundColor: "rgba(255, 255, 255, 0.05)",
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.sm,
-	},
-	dateTimeText: {
-		fontSize: 15,
-		fontWeight: "500",
-	},
-	modalActionsSplit: {
-		flexDirection: "row",
-		gap: spacing.sm,
-		justifyContent: "space-between",
-	},
-	modalCancelText: {
-		fontSize: 14,
-		fontWeight: "600",
-	},
-	modalConfirmText: {
-		fontSize: 14,
-		fontWeight: "600",
-	},
-	historyList: {
-		maxHeight: 320,
-		marginBottom: spacing.md,
-	},
-	historyItem: {
-		padding: spacing.md,
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		marginBottom: spacing.sm,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "space-between",
-		gap: spacing.sm,
-	},
-	historyDate: {
-		fontSize: 14,
-		flex: 1,
-	},
-	emptyHistory: {
-		fontSize: 14,
-		textAlign: "center",
-		paddingVertical: spacing.xl,
+		paddingTop: spacing.lg,
+		gap: spacing.lg,
 	},
 	section: {
-		marginBottom: 24,
+		gap: spacing.md,
+	},
+	sectionTitle: {
+		fontSize: 18,
+		fontWeight: "600",
+	},
+	overview: {
+		fontSize: 15,
+		lineHeight: 22,
 	},
 	castContainer: {
 		position: "relative",
 	},
 	castScrollContent: {
-		paddingRight: 16,
-		gap: 12,
+		gap: spacing.md,
 	},
 	castGradient: {
 		position: "absolute",
@@ -1447,7 +881,7 @@ const styles = StyleSheet.create({
 	castImageContainer: {
 		borderRadius: borderRadius.md,
 		overflow: "hidden",
-		marginBottom: 8,
+		marginBottom: spacing.sm,
 		backgroundColor: "#1f2937",
 	},
 	castImage: {
@@ -1480,12 +914,12 @@ const styles = StyleSheet.create({
 	crewGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 8,
+		gap: spacing.sm,
 	},
 	crewCard: {
 		backgroundColor: "#111827",
 		borderRadius: borderRadius.md,
-		padding: 12,
+		padding: spacing.md,
 		flex: 1,
 		minWidth: "45%",
 	},
@@ -1498,5 +932,78 @@ const styles = StyleSheet.create({
 	crewJob: {
 		fontSize: 12,
 		color: "#6b7280",
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.7)",
+		justifyContent: "center",
+		padding: spacing.lg,
+	},
+	modalContent: {
+		borderRadius: borderRadius.lg,
+		padding: spacing.md,
+		gap: spacing.md,
+	},
+	modalHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+	},
+	modalTitle: {
+		fontSize: 20,
+		fontWeight: "700",
+	},
+	modalDescription: {
+		fontSize: 14,
+	},
+	dateTimeContainer: {
+		gap: spacing.sm,
+	},
+	dateTimeButton: {
+		padding: spacing.md,
+		borderRadius: borderRadius.md,
+		backgroundColor: "rgba(255, 255, 255, 0.05)",
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.sm,
+	},
+	dateTimeText: {
+		fontSize: 15,
+		fontWeight: "500",
+	},
+	modalActionsSplit: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		justifyContent: "space-between",
+	},
+	modalCancelText: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	modalConfirmText: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	historyList: {
+		maxHeight: 320,
+	},
+	historyItem: {
+		padding: spacing.md,
+		borderRadius: borderRadius.md,
+		borderWidth: 1,
+		marginBottom: spacing.sm,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		gap: spacing.sm,
+	},
+	historyDate: {
+		fontSize: 14,
+		flex: 1,
+	},
+	emptyHistory: {
+		fontSize: 14,
+		textAlign: "center",
+		paddingVertical: spacing.xl,
 	},
 });
