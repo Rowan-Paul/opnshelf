@@ -25,7 +25,10 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	type DiscoverShowsDto,
 	EpisodeHistoryItemDto,
+	MarkedEpisodesResponseDto,
 	MarkEpisodeWatchedDto,
+	MarkSeasonWatchedDto,
+	MarkShowWatchedDto,
 	PaginatedEpisodesQueryDto,
 	PaginatedEpisodesResponseDto,
 	SearchShowsResultsDto,
@@ -336,5 +339,64 @@ export class ShowsController {
 			req.user.session as ATSession,
 			trackedEpisodeId,
 		);
+	}
+
+	@Post("season/watched")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Mark all episodes in a season as watched" })
+	@ApiBody({ type: MarkSeasonWatchedDto })
+	@ApiResponse({ status: 201, type: MarkedEpisodesResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async markSeasonWatched(
+		@Body() dto: MarkSeasonWatchedDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		const user = req.user;
+		const result = await this.showsService.markSeasonWatched(
+			user.did,
+			user.session as ATSession,
+			dto.showId,
+			dto.seasonNumber,
+			dto.watchedAt,
+		);
+
+		return {
+			episodes: result.episodes.map((ep) => ({
+				...ep,
+				watchedDate: ep.watchedDate?.toISOString(),
+				createdAt: ep.createdAt.toISOString(),
+				updatedAt: ep.updatedAt.toISOString(),
+			})),
+			count: result.count,
+		};
+	}
+
+	@Post("show/watched")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Mark all episodes in a show as watched" })
+	@ApiBody({ type: MarkShowWatchedDto })
+	@ApiResponse({ status: 201, type: MarkedEpisodesResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async markShowWatched(
+		@Body() dto: MarkShowWatchedDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		const user = req.user;
+		const result = await this.showsService.markShowWatched(
+			user.did,
+			user.session as ATSession,
+			dto.showId,
+			dto.watchedAt,
+		);
+
+		return {
+			episodes: result.episodes.map((ep) => ({
+				...ep,
+				watchedDate: ep.watchedDate?.toISOString(),
+				createdAt: ep.createdAt.toISOString(),
+				updatedAt: ep.updatedAt.toISOString(),
+			})),
+			count: result.count,
+		};
 	}
 }

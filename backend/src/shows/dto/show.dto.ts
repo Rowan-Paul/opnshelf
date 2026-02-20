@@ -213,6 +213,32 @@ export class TMDBSeasonDetailDto {
 	episodes: TMDBEpisodeDto[];
 }
 
+export class TMDBSeasonSummaryDto {
+	@ApiProperty()
+	id: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiProperty()
+	season_number: number;
+
+	@ApiPropertyOptional()
+	overview?: string;
+
+	@ApiPropertyOptional()
+	poster_path?: string;
+
+	@ApiPropertyOptional()
+	air_date?: string;
+
+	@ApiPropertyOptional()
+	episode_count?: number;
+
+	@ApiPropertyOptional()
+	vote_average?: number;
+}
+
 export class TMDBShowDetailDto extends TMDBShowResultDto {
 	@ApiPropertyOptional({ type: [TMDBGenreDto] })
 	genres?: TMDBGenreDto[];
@@ -222,6 +248,9 @@ export class TMDBShowDetailDto extends TMDBShowResultDto {
 
 	@ApiPropertyOptional()
 	number_of_episodes?: number;
+
+	@ApiPropertyOptional({ type: [TMDBSeasonSummaryDto] })
+	seasons?: TMDBSeasonSummaryDto[];
 
 	@ApiPropertyOptional({ type: MovieColorsDto })
 	@IsOptional()
@@ -310,4 +339,45 @@ export class PaginatedEpisodesResponseDto {
 
 	@ApiProperty({ description: "Total count of items" })
 	total: number;
+}
+
+export class MarkSeasonWatchedDto {
+	@ApiProperty({ description: "TMDB show ID" })
+	@IsString()
+	showId: string;
+
+	@ApiProperty({ description: "TMDB season number" })
+	@Type(() => Number)
+	@IsInt()
+	seasonNumber: number;
+
+	@ApiPropertyOptional({
+		description:
+			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+	})
+	@IsOptional()
+	@IsDateString()
+	watchedAt?: string;
+}
+
+export class MarkShowWatchedDto {
+	@ApiProperty({ description: "TMDB show ID" })
+	@IsString()
+	showId: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+	})
+	@IsOptional()
+	@IsDateString()
+	watchedAt?: string;
+}
+
+export class MarkedEpisodesResponseDto {
+	@ApiProperty({ type: [TrackedEpisodeDto] })
+	episodes: TrackedEpisodeDto[];
+
+	@ApiProperty({ description: "Number of episodes marked as watched" })
+	count: number;
 }

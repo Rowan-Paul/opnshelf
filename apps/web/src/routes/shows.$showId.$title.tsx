@@ -1,21 +1,39 @@
 import {
 	authControllerMeOptions,
+	listsControllerGetListsForItemOptions,
 	showsControllerGetShowDetailsOptions,
+	showsControllerGetShowWatchHistoryOptions,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
-	Link,
 	Outlet,
 	useMatches,
 	useRouter,
 } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Tv } from "lucide-react";
+import { Calendar, Tv } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { AddToListModal } from "@/components/AddToListModal";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
+import {
+	type ColorTheme,
+	DetailActions,
+	DetailHero,
+	MetadataPills,
+	SeasonCard,
+} from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
-import { getTmdbBackdropUrl, getTmdbPosterUrl } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
+import {
+	formatDateOnly,
+	getTmdbBackdropUrl,
+	getTmdbPosterUrl,
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/shows/$showId/$title")({
 	loader: async ({ params, context }) => {
@@ -46,12 +64,17 @@ function ShowDetailPage() {
 	const matches = useMatches();
 	const isLeafRoute = matches[matches.length - 1]?.routeId === Route.id;
 	const router = useRouter();
+	const queryClient = useQueryClient();
+	const { seedColor } = useTheme();
+
+	const [showListModal, setShowListModal] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
+
 	const { data: showData, isLoading } = useQuery({
 		...showsControllerGetShowDetailsOptions({
 			path: { showId },
@@ -59,122 +82,128 @@ function ShowDetailPage() {
 	});
 
 	const show = showData as TmdbShowDetailDto | undefined;
+
+	const { data: history } = useQuery({
+		...showsControllerGetShowWatchHistoryOptions({
+			path: { userDid: user?.did || "", showId },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const { data: listsForShow } = useQuery({
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "show", mediaId: showId },
+		}),
+		enabled: !!user?.did,
+	});
+
+	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
+	const watchedEpisodeCount = history?.length ?? 0;
+
+	const colors: ColorTheme = {
+		primary: show?.colors?.primary || seedColor,
+		secondary: show?.colors?.secondary || seedColor,
+		accent: show?.colors?.accent || seedColor,
+		muted: show?.colors?.muted || "#6b7280",
+	};
+
 	const backdropUrl = getTmdbBackdropUrl(show?.backdrop_path);
 	const posterUrl = getTmdbPosterUrl(show?.poster_path, "w500");
 	const seasonCount = show?.number_of_seasons || 0;
 	const episodeCount = show?.number_of_episodes || 0;
-	const colors = show?.colors || {
-		primary: "#F59E0B",
-		secondary: "#D97706",
-		accent: "#FBBF24",
-		muted: "#6b7280",
+
+	const markShowWatchedMutation = useMutation({
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["showsControllerGetShowWatchHistory"],
+			});
+			toast.success(`Marked ${data.count} episodes as watched`);
+		},
+		onError: () => {
+			toast.error("Failed to mark show as watched. Please try again.");
+		},
+	});
+
+	const handleMarkWatched = () => {
+		markShowWatchedMutation.mutate({
+			body: { showId },
+		});
 	};
+
+	const metadataItems = useMemo(() => {
+		const items = [];
+		if (show?.first_air_date) {
+			items.push({
+				icon: <Calendar className="w-4 h-4" />,
+				label: formatDateOnly(show.first_air_date),
+			});
+		}
+		if (seasonCount > 0) {
+			items.push({
+				icon: <Tv className="w-4 h-4" />,
+				label: `${seasonCount} season${seasonCount !== 1 ? "s" : ""}`,
+			});
+		}
+		if (episodeCount > 0) {
+			items.push({
+				icon: <Tv className="w-4 h-4" />,
+				label: `${episodeCount} episodes`,
+			});
+		}
+		return items;
+	}, [show?.first_air_date, episodeCount, seasonCount]);
+
+	const seasonWatchedCounts = useMemo(() => {
+		if (!history) return new Map<number, number>();
+		const counts = new Map<number, number>();
+		for (const h of history) {
+			const current = counts.get(h.seasonNumber) ?? 0;
+			counts.set(h.seasonNumber, current + 1);
+		}
+		return counts;
+	}, [history]);
 
 	return (
 		<div>
 			{isLeafRoute && (
 				<>
-					<div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-						{backdropUrl ? (
-							<>
-								<img
-									src={backdropUrl}
-									alt=""
-									className="w-full h-full object-cover"
-								/>
-								<div
-									className="absolute inset-0"
-									style={{
-										background:
-											"linear-gradient(to bottom, transparent 0%, rgba(3, 7, 18, 0.6) 60%, rgb(3, 7, 18) 100%)",
-									}}
-								/>
-								<div
-									className="absolute inset-0"
-									style={{
-										background:
-											"linear-gradient(to right, rgba(3, 7, 18, 0.8) 0%, transparent 50%)",
-									}}
-								/>
-							</>
-						) : (
-							<div
-								className="w-full h-full"
-								style={{
-									background: `linear-gradient(135deg, ${colors.muted} 0%, rgb(3, 7, 18) 100%)`,
-								}}
-							/>
-						)}
-
-						<button
-							type="button"
-							onClick={() => router.history.back()}
-							className="absolute top-4 left-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors cursor-pointer"
-						>
-							<ArrowLeft className="w-5 h-5" />
-						</button>
-
-						<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
-							<div className="container mx-auto max-w-6xl">
-								<div className="flex items-end gap-4 md:gap-8">
-									<div className="shrink-0">
-										<div
-											className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
-											style={{
-												boxShadow: `0 25px 50px -12px ${colors.primary}40`,
-											}}
-										>
-											{posterUrl ? (
-												<img
-													src={posterUrl}
-													alt={show?.name || title}
-													className="w-full aspect-2/3 object-cover"
-												/>
-											) : (
-												<div className="w-full aspect-2/3 bg-gray-900 flex items-center justify-center">
-													<span className="text-gray-600">No poster</span>
-												</div>
-											)}
-										</div>
-									</div>
-
-									<div className="flex-1 pb-2">
-										<h1
-											className="text-2xl md:text-5xl lg:text-6xl font-bold mb-2"
-											style={{ textShadow: `0 4px 30px ${colors.primary}60` }}
-										>
-											{isLoading
-												? "Loading..."
-												: (show?.name ?? title.replace(/-/g, " "))}
-										</h1>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+					<DetailHero
+						title={show?.name || title.replace(/-/g, " ")}
+						backdropUrl={backdropUrl}
+						posterUrl={posterUrl}
+						colors={colors}
+						isLoading={isLoading}
+						onBack={() => router.history.back()}
+					/>
 
 					<div className="container mx-auto px-4 py-6 max-w-6xl">
 						<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
-							<div className="space-y-4" />
+							<div className="space-y-4 min-w-0">
+								<DetailActions
+									mediaType="show"
+									mediaId={showId}
+									colors={colors}
+									isWatched={watchedEpisodeCount > 0}
+									watchedDate={null}
+									totalWatches={watchedEpisodeCount}
+									onMarkWatched={handleMarkWatched}
+									onShowDatePicker={() => {}}
+									isMarkingPending={markShowWatchedMutation.isPending}
+									listsCount={listsCount}
+									onShowListModal={() => setShowListModal(true)}
+									isLoggedIn={!!user}
+									onLogin={() => router.navigate({ to: "/login" })}
+								/>
+							</div>
 
 							<div className="space-y-6 min-w-0">
-								<div className="flex flex-wrap gap-3">
-									{show?.first_air_date && (
-										<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-											<Calendar className="w-4 h-4" />
-											{new Date(show.first_air_date).getFullYear()}
-										</div>
-									)}
-									<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-										<Tv className="w-4 h-4" />
-										{episodeCount} episodes
-									</div>
-									<div className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2">
-										<span>
-											{seasonCount} season{seasonCount !== 1 ? "s" : ""}
-										</span>
-									</div>
-								</div>
+								<MetadataPills items={metadataItems} />
 
 								<section>
 									<h2
@@ -190,41 +219,39 @@ function ShowDetailPage() {
 
 								<GenresSection genres={show?.genres} colors={colors} />
 
-								<section className="pt-2">
-									<h2
-										className="text-xl font-semibold mb-4"
-										style={{ color: colors.primary }}
-									>
-										Seasons
-									</h2>
-									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-										{Array.from({ length: seasonCount }).map((_, idx) => {
-											const seasonNumber = idx + 1;
-											return (
-												<Link
-													key={seasonNumber}
-													to="/shows/$showId/$title/seasons/$seasonNumber"
-													params={{
-														showId,
-														title,
-														seasonNumber: String(seasonNumber),
-													}}
-													className="rounded-xl p-4 border hover:bg-gray-900/40 transition-colors"
-													style={{ borderColor: "var(--md-sys-color-outline)" }}
-												>
-													<div className="font-medium">
-														Season {seasonNumber}
-													</div>
-													{user && (
-														<div className="text-xs mt-1 text-gray-400">
-															Open details
-														</div>
-													)}
-												</Link>
-											);
-										})}
-									</div>
-								</section>
+								{seasonCount > 0 && (
+									<section>
+										<h2
+											className="text-xl font-semibold mb-4"
+											style={{ color: colors.primary }}
+										>
+											Seasons
+										</h2>
+										<div className="space-y-3">
+											{show?.seasons?.map((season) => {
+												const watchedCount =
+													seasonWatchedCounts.get(season.season_number) ?? 0;
+
+												return (
+													<SeasonCard
+														key={season.id}
+														showId={showId}
+														title={title}
+														seasonNumber={season.season_number}
+														airDate={season.air_date}
+														episodeCount={season.episode_count ?? 0}
+														watchedCount={watchedCount}
+														colors={colors}
+														posterUrl={getTmdbPosterUrl(
+															season.poster_path,
+															"w500",
+														)}
+													/>
+												);
+											})}
+										</div>
+									</section>
+								)}
 
 								<CastSection cast={show?.credits?.cast} colors={colors} />
 								<CrewSection crew={show?.credits?.crew} colors={colors} />
@@ -234,6 +261,17 @@ function ShowDetailPage() {
 				</>
 			)}
 			<Outlet />
+
+			{user && (
+				<AddToListModal
+					open={showListModal}
+					onOpenChange={setShowListModal}
+					mediaType="show"
+					mediaId={showId}
+					mediaTitle={show?.name || ""}
+					user={user}
+				/>
+			)}
 		</div>
 	);
 }

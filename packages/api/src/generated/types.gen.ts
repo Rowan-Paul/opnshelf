@@ -149,6 +149,17 @@ export type SearchShowsResultsDto = {
     page: number;
 };
 
+export type TmdbSeasonSummaryDto = {
+    id: number;
+    name: string;
+    season_number: number;
+    overview?: string;
+    poster_path?: string;
+    air_date?: string;
+    episode_count?: number;
+    vote_average?: number;
+};
+
 export type TmdbShowDetailDto = {
     id: number;
     name: string;
@@ -159,6 +170,7 @@ export type TmdbShowDetailDto = {
     genres?: Array<TmdbGenreDto>;
     number_of_seasons?: number;
     number_of_episodes?: number;
+    seasons?: Array<TmdbSeasonSummaryDto>;
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
 };
@@ -256,6 +268,40 @@ export type EpisodeHistoryItemDto = {
     watchedDate: string;
     seasonNumber: number;
     episodeNumber: number;
+};
+
+export type MarkSeasonWatchedDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * TMDB season number
+     */
+    seasonNumber: number;
+    /**
+     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     */
+    watchedAt?: string;
+};
+
+export type MarkedEpisodesResponseDto = {
+    episodes: Array<TrackedEpisodeDto>;
+    /**
+     * Number of episodes marked as watched
+     */
+    count: number;
+};
+
+export type MarkShowWatchedDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     */
+    watchedAt?: string;
 };
 
 export type MovieListSummaryDto = {
@@ -1000,6 +1046,46 @@ export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponses = {
 };
 
 export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponse = ShowsControllerDeleteEpisodeWatchHistoryEntryResponses[keyof ShowsControllerDeleteEpisodeWatchHistoryEntryResponses];
+
+export type ShowsControllerMarkSeasonWatchedData = {
+    body: MarkSeasonWatchedDto;
+    path?: never;
+    query?: never;
+    url: '/shows/season/watched';
+};
+
+export type ShowsControllerMarkSeasonWatchedErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ShowsControllerMarkSeasonWatchedResponses = {
+    201: MarkedEpisodesResponseDto;
+};
+
+export type ShowsControllerMarkSeasonWatchedResponse = ShowsControllerMarkSeasonWatchedResponses[keyof ShowsControllerMarkSeasonWatchedResponses];
+
+export type ShowsControllerMarkShowWatchedData = {
+    body: MarkShowWatchedDto;
+    path?: never;
+    query?: never;
+    url: '/shows/show/watched';
+};
+
+export type ShowsControllerMarkShowWatchedErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ShowsControllerMarkShowWatchedResponses = {
+    201: MarkedEpisodesResponseDto;
+};
+
+export type ShowsControllerMarkShowWatchedResponse = ShowsControllerMarkShowWatchedResponses[keyof ShowsControllerMarkShowWatchedResponses];
 
 export type ListsControllerGetUserListsData = {
     body?: never;

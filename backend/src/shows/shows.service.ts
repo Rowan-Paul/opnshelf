@@ -548,4 +548,241 @@ export class ShowsService {
 			},
 		});
 	}
+
+	async markSeasonWatched(
+		userDid: string,
+		session: ATSession,
+		showId: string,
+		seasonNumber: number,
+		customWatchedAt?: string,
+	) {
+		const season = await this.getSeasonDetails(showId, seasonNumber);
+		const episodes = season.episodes || [];
+
+		if (episodes.length === 0) {
+			return { episodes: [], count: 0 };
+		}
+
+		const watchedAt = customWatchedAt
+			? new Date(customWatchedAt).toISOString()
+			: new Date().toISOString();
+		const now = new Date().toISOString();
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const results: Array<{
+			uri: string;
+			cid: string;
+			rkey: string;
+			record: EpisodeRecord;
+			seasonNumber: number;
+			episodeNumber: number;
+		}> = [];
+
+		for (const episode of episodes) {
+			const rkey = TID.nextStr();
+			const record: EpisodeRecord = episodeSchema.build({
+				showId,
+				seasonNumber,
+				episodeNumber: episode.episode_number,
+				source: "tmdb",
+				watchedAt,
+				createdAt: now,
+			});
+
+			const response = await agent.com.atproto.repo.putRecord({
+				repo: session.did,
+				collection: COLLECTION,
+				rkey,
+				record,
+				validate: false,
+			});
+
+			results.push({
+				uri: response.data.uri,
+				cid: response.data.cid,
+				rkey,
+				record,
+				seasonNumber,
+				episodeNumber: episode.episode_number,
+			});
+		}
+
+		const showData = await this.getShowDetails(showId);
+		await this.upsertShow(showData);
+
+		const trackedEpisodes: Array<{
+			id: string;
+			rkey: string;
+			uri: string;
+			cid: string;
+			userDid: string;
+			showId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+			status: string;
+			watchedDate: Date | null;
+			createdAt: Date;
+			updatedAt: Date;
+			show: {
+				showId: string;
+				title: string;
+				posterPath: string | null;
+				backdropPath: string | null;
+				firstAirYear: number | null;
+				firstAirDate: Date | null;
+				overview: string | null;
+				colors: unknown;
+				createdAt: Date;
+				updatedAt: Date;
+			};
+		}> = [];
+		for (const result of results) {
+			try {
+				const tracked = await this.prisma.trackedEpisode.create({
+					data: {
+						uri: result.uri,
+						rkey: result.rkey,
+						cid: result.cid,
+						userDid,
+						showId,
+						seasonNumber: result.seasonNumber,
+						episodeNumber: result.episodeNumber,
+						watchedDate: new Date(watchedAt),
+						status: "watched",
+					},
+					include: { show: true },
+				});
+				trackedEpisodes.push(tracked);
+			} catch (err: unknown) {
+				this.logger.warn(
+					{ err: err instanceof Error ? err.message : String(err) },
+					"Failed to index episode, firehose will catch it",
+				);
+			}
+		}
+
+		return { episodes: trackedEpisodes, count: results.length };
+	}
+
+	async markShowWatched(
+		userDid: string,
+		session: ATSession,
+		showId: string,
+		customWatchedAt?: string,
+	) {
+		const show = await this.getShowDetails(showId);
+		const numberOfSeasons = show.number_of_seasons || 1;
+
+		const watchedAt = customWatchedAt
+			? new Date(customWatchedAt).toISOString()
+			: new Date().toISOString();
+
+		const allResults: Array<{
+			uri: string;
+			cid: string;
+			rkey: string;
+			record: EpisodeRecord;
+			seasonNumber: number;
+			episodeNumber: number;
+		}> = [];
+
+		for (let seasonNum = 1; seasonNum <= numberOfSeasons; seasonNum++) {
+			const season = await this.getSeasonDetails(showId, seasonNum);
+			const episodes = season.episodes || [];
+
+			const now = new Date().toISOString();
+
+			const agent = new Agent(
+				session as unknown as ConstructorParameters<typeof Agent>[0],
+			);
+
+			for (const episode of episodes) {
+				const rkey = TID.nextStr();
+				const record: EpisodeRecord = episodeSchema.build({
+					showId,
+					seasonNumber: seasonNum,
+					episodeNumber: episode.episode_number,
+					source: "tmdb",
+					watchedAt,
+					createdAt: now,
+				});
+
+				const response = await agent.com.atproto.repo.putRecord({
+					repo: session.did,
+					collection: COLLECTION,
+					rkey,
+					record,
+					validate: false,
+				});
+
+				allResults.push({
+					uri: response.data.uri,
+					cid: response.data.cid,
+					rkey,
+					record,
+					seasonNumber: seasonNum,
+					episodeNumber: episode.episode_number,
+				});
+			}
+		}
+
+		const showData = await this.getShowDetails(showId);
+		await this.upsertShow(showData);
+
+		const trackedEpisodes: Array<{
+			id: string;
+			rkey: string;
+			uri: string;
+			cid: string;
+			userDid: string;
+			showId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+			status: string;
+			watchedDate: Date | null;
+			createdAt: Date;
+			updatedAt: Date;
+			show: {
+				showId: string;
+				title: string;
+				posterPath: string | null;
+				backdropPath: string | null;
+				firstAirYear: number | null;
+				firstAirDate: Date | null;
+				overview: string | null;
+				colors: unknown;
+				createdAt: Date;
+				updatedAt: Date;
+			};
+		}> = [];
+		for (const result of allResults) {
+			try {
+				const tracked = await this.prisma.trackedEpisode.create({
+					data: {
+						uri: result.uri,
+						rkey: result.rkey,
+						cid: result.cid,
+						userDid,
+						showId,
+						seasonNumber: result.seasonNumber,
+						episodeNumber: result.episodeNumber,
+						watchedDate: new Date(watchedAt),
+						status: "watched",
+					},
+					include: { show: true },
+				});
+				trackedEpisodes.push(tracked);
+			} catch (err: unknown) {
+				this.logger.warn(
+					{ err: err instanceof Error ? err.message : String(err) },
+					"Failed to index episode, firehose will catch it",
+				);
+			}
+		}
+
+		return { episodes: trackedEpisodes, count: allResults.length };
+	}
 }
