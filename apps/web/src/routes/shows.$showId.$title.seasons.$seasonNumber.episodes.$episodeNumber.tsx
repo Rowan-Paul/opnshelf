@@ -240,9 +240,9 @@ function ShowEpisodePage() {
 	});
 
 	const colors = showData?.colors || {
-		primary: "#8b5cf6",
-		secondary: "#6366f1",
-		accent: "#a855f7",
+		primary: "#F59E0B",
+		secondary: "#D97706",
+		accent: "#FBBF24",
 		muted: "#6b7280",
 	};
 

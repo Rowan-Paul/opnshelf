@@ -113,7 +113,7 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 				}}
 				className="block"
 			>
-				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">
+				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-amber-400 transition-colors">
 					{tracked.showTitle}
 				</h3>
 				<p className="text-gray-500 text-sm">

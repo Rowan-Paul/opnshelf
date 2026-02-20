@@ -23,10 +23,10 @@ export function MovieActions({
 	onMarkWatched,
 }: MovieActionsProps) {
 	const movieColors = movie?.colors || {
-		primary: "#8b5cf6",
-		secondary: "#6366f1",
-		accent: "#a855f7",
-		muted: "#4c1d95",
+		primary: "#F59E0B",
+		secondary: "#D97706",
+		accent: "#FBBF24",
+		muted: "#92400E",
 	};
 
 	if (!user) {
@@ -35,8 +35,8 @@ export function MovieActions({
 				<TouchableOpacity style={styles.button} activeOpacity={0.8}>
 				<LinearGradient
 					colors={[
-						movieColors.primary || "#8b5cf6",
-						movieColors.secondary || "#6366f1",
+						movieColors.primary || "#F59E0B",
+						movieColors.secondary || "#D97706",
 					]}
 					start={{ x: 0, y: 0 }}
 					end={{ x: 1, y: 1 }}
@@ -60,8 +60,8 @@ export function MovieActions({
 				>
 				<LinearGradient
 					colors={[
-						movieColors.primary || "#8b5cf6",
-						movieColors.secondary || "#6366f1",
+						movieColors.primary || "#F59E0B",
+						movieColors.secondary || "#D97706",
 					]}
 					start={{ x: 0, y: 0 }}
 					end={{ x: 1, y: 1 }}
@@ -94,8 +94,8 @@ export function MovieActions({
 			>
 			<LinearGradient
 				colors={[
-					movieColors.primary || "#8b5cf6",
-					movieColors.secondary || "#6366f1",
+					movieColors.primary || "#F59E0B",
+					movieColors.secondary || "#D97706",
 				]}
 				start={{ x: 0, y: 0 }}
 				end={{ x: 1, y: 1 }}

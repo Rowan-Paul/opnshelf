@@ -158,7 +158,7 @@ export function MovieCard({
 				}}
 				className="block"
 			>
-				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">
+				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-amber-400 transition-colors">
 					{movie.title}
 				</h3>
 				{releaseYear && <p className="text-gray-500 text-sm">{releaseYear}</p>}

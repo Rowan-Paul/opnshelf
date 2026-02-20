@@ -26,7 +26,7 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
 					setDate={setDate}
 					ref={hourRef}
 					onRightFocus={() => minuteRef.current?.focus()}
-					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-purple-500"
+					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-amber-500"
 				/>
 			</div>
 			<span className="text-gray-400 mt-5">:</span>
@@ -40,7 +40,7 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
 					setDate={setDate}
 					ref={minuteRef}
 					onLeftFocus={() => hourRef.current?.focus()}
-					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-purple-500"
+					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-amber-500"
 				/>
 			</div>
 			<div className="flex h-10 items-center mt-4">

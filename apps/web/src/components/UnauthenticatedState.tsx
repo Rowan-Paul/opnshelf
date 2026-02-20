@@ -21,7 +21,7 @@ export function UnauthenticatedState({
 	icon = "shelf",
 }: UnauthenticatedStateProps) {
 	const Icon = icon === "settings" ? Settings2 : BookOpen;
-	const iconColor = icon === "settings" ? "text-amber-500" : "text-purple-500";
+	const iconColor = icon === "settings" ? "text-amber-500" : "text-amber-500";
 
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-50">

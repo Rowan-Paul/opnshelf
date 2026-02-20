@@ -106,7 +106,7 @@ export function ShelfMovieCard({ tracked, user }: ShelfMovieCardProps) {
 				}}
 				className="block"
 			>
-				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-purple-400 transition-colors">
+				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-amber-400 transition-colors">
 					{tracked.title}
 				</h3>
 				{tracked.releaseYear && (

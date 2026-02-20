@@ -41,10 +41,10 @@ export default function AuthCompleteScreen() {
 				padding: 16,
 			}}
 		>
-			<Ionicons name="film" size={48} color="#a855f7" />
+			<Ionicons name="film" size={48} color="#F59E0B" />
 			<ActivityIndicator
 				size="large"
-				color="#a855f7"
+				color="#F59E0B"
 				style={{ marginVertical: 16 }}
 			/>
 			<Text style={{ color: "#9ca3af" }}>Completing sign-in...</Text>
