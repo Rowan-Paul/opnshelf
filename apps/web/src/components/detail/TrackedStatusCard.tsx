@@ -81,7 +81,7 @@ export function TrackedStatusCard({
 				</>
 			)}
 
-			{totalWatches <= 1 && onRemove && (
+			{totalWatches >= 1 && onRemove && (
 				<button
 					type="button"
 					onClick={onRemove}

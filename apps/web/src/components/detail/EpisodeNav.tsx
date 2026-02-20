@@ -3,6 +3,11 @@ import { ArrowLeft, ArrowRight, CircleDot } from "lucide-react";
 import { formatDateOnly } from "@/lib/utils";
 import type { ColorTheme, EpisodeSummary } from "./types";
 
+type EpisodeContext = {
+	seasonNumber: number;
+	episodeNumber: number;
+};
+
 type EpisodeNavProps = {
 	showId: string;
 	title: string;
@@ -12,6 +17,8 @@ type EpisodeNavProps = {
 	nextEpisode: EpisodeSummary | null;
 	colors: ColorTheme;
 	variant?: "sidebar" | "full";
+	previousContext?: EpisodeContext | null;
+	nextContext?: EpisodeContext | null;
 };
 
 export function EpisodeNav({
@@ -23,6 +30,8 @@ export function EpisodeNav({
 	nextEpisode,
 	colors,
 	variant = "full",
+	previousContext,
+	nextContext,
 }: EpisodeNavProps) {
 	if (variant === "sidebar") {
 		const hasPrev = previousEpisode !== null;
@@ -40,7 +49,9 @@ export function EpisodeNav({
 						params={{
 							showId,
 							title,
-							seasonNumber,
+							seasonNumber: String(
+								previousContext?.seasonNumber ?? seasonNumber,
+							),
 							episodeNumber: String(previousEpisode.episode_number),
 						}}
 						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
@@ -58,7 +69,7 @@ export function EpisodeNav({
 						params={{
 							showId,
 							title,
-							seasonNumber,
+							seasonNumber: String(nextContext?.seasonNumber ?? seasonNumber),
 							episodeNumber: String(nextEpisode.episode_number),
 						}}
 						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
@@ -78,6 +89,7 @@ export function EpisodeNav({
 			label: "Previous Episode",
 			icon: <ArrowLeft className="w-4 h-4" />,
 			episode: previousEpisode,
+			context: previousContext,
 			highlighted: false,
 		},
 		{
@@ -85,6 +97,10 @@ export function EpisodeNav({
 			label: "Current Episode",
 			icon: <CircleDot className="w-4 h-4" />,
 			episode: currentEpisode,
+			context: {
+				seasonNumber: Number(seasonNumber),
+				episodeNumber: currentEpisode.episode_number,
+			},
 			highlighted: true,
 		},
 		{
@@ -92,6 +108,7 @@ export function EpisodeNav({
 			label: "Next Episode",
 			icon: <ArrowRight className="w-4 h-4" />,
 			episode: nextEpisode,
+			context: nextContext,
 			highlighted: false,
 		},
 	];
@@ -131,7 +148,9 @@ export function EpisodeNav({
 							params={{
 								showId,
 								title,
-								seasonNumber,
+								seasonNumber: String(
+									slot.context?.seasonNumber ?? seasonNumber,
+								),
 								episodeNumber: String(slot.episode.episode_number),
 							}}
 							className={`rounded-lg border p-3 transition-colors ${

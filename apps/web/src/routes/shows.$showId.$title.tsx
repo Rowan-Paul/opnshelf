@@ -3,8 +3,10 @@ import {
 	listsControllerGetListsForItemOptions,
 	showsControllerGetShowDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
+	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -121,7 +123,9 @@ function ShowDetailPage() {
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["showsControllerGetShowWatchHistory"],
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", showId },
+				}),
 			});
 			toast.success(`Marked ${data.count} episodes as watched`);
 		},
@@ -130,9 +134,36 @@ function ShowDetailPage() {
 		},
 	});
 
+	const unmarkShowWatchedMutation = useMutation({
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", showId },
+				}),
+			});
+			toast.success("Removed all episodes from your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to remove from shelf. Please try again.");
+		},
+	});
+
 	const handleMarkWatched = () => {
 		markShowWatchedMutation.mutate({
 			body: { showId },
+		});
+	};
+
+	const handleUnmarkWatched = () => {
+		unmarkShowWatchedMutation.mutate({
+			path: { showId },
+			query: { mode: "all" },
 		});
 	};
 
@@ -193,8 +224,10 @@ function ShowDetailPage() {
 									watchedDate={null}
 									totalWatches={watchedEpisodeCount}
 									onMarkWatched={handleMarkWatched}
+									onUnmarkWatched={handleUnmarkWatched}
 									onShowDatePicker={() => {}}
 									isMarkingPending={markShowWatchedMutation.isPending}
+									isUnmarkingPending={unmarkShowWatchedMutation.isPending}
 									listsCount={listsCount}
 									onShowListModal={() => setShowListModal(true)}
 									isLoggedIn={!!user}
@@ -246,6 +279,7 @@ function ShowDetailPage() {
 															season.poster_path,
 															"w500",
 														)}
+														userDid={user?.did}
 													/>
 												);
 											})}

@@ -269,20 +269,48 @@ function ShowEpisodePage() {
 
 	const seasonEpisodeContext = useMemo(() => {
 		if (!season?.episodes?.length)
-			return { previous: null, current: null, next: null };
+			return {
+				previous: null,
+				current: null,
+				next: null,
+				previousContext: null,
+				nextContext: null,
+			};
 		const sortedEpisodes = [...season.episodes].sort(
 			(a, b) => a.episode_number - b.episode_number,
 		);
 		const currentIndex = sortedEpisodes.findIndex(
 			(e) => e.episode_number === Number(episodeNumber),
 		);
-		if (currentIndex < 0) return { previous: null, current: null, next: null };
+		if (currentIndex < 0)
+			return {
+				previous: null,
+				current: null,
+				next: null,
+				previousContext: null,
+				nextContext: null,
+			};
+
+		const previousEp = sortedEpisodes[currentIndex - 1] ?? null;
+		const nextEp = sortedEpisodes[currentIndex + 1] ?? null;
+
+		const apiContext = (
+			episode as {
+				_context?: {
+					previous: { seasonNumber: number; episodeNumber: number } | null;
+					next: { seasonNumber: number; episodeNumber: number } | null;
+				};
+			}
+		)?._context;
+
 		return {
-			previous: sortedEpisodes[currentIndex - 1] ?? null,
+			previous: previousEp,
 			current: sortedEpisodes[currentIndex] ?? null,
-			next: sortedEpisodes[currentIndex + 1] ?? null,
+			next: nextEp,
+			previousContext: apiContext?.previous ?? null,
+			nextContext: apiContext?.next ?? null,
 		};
-	}, [season?.episodes, episodeNumber]);
+	}, [season?.episodes, episodeNumber, episode]);
 
 	const formattedWatchedDate = useMemo(() => {
 		if (!latestEpisodeWatch) return null;
@@ -378,6 +406,8 @@ function ShowEpisodePage() {
 								previousEpisode={seasonEpisodeContext.previous}
 								currentEpisode={seasonEpisodeContext.current}
 								nextEpisode={seasonEpisodeContext.next}
+								previousContext={seasonEpisodeContext.previousContext}
+								nextContext={seasonEpisodeContext.nextContext}
 								colors={colors}
 								variant="sidebar"
 							/>
@@ -399,7 +429,11 @@ function ShowEpisodePage() {
 							</p>
 						</section>
 
-						<CastSection cast={show?.credits?.cast} colors={colors} />
+						<CastSection
+							cast={show?.credits?.cast}
+							guestStars={episode?.guest_stars}
+							colors={colors}
+						/>
 						<CrewSection crew={show?.credits?.crew} colors={colors} />
 					</div>
 				</div>

@@ -193,6 +193,79 @@ export class ShowsService {
 		return response.json() as Promise<TMDBEpisode>;
 	}
 
+	async getEpisodeContext(
+		showId: string,
+		seasonNumber: number,
+		episodeNumber: number,
+	): Promise<{
+		previous: { seasonNumber: number; episodeNumber: number } | null;
+		next: { seasonNumber: number; episodeNumber: number } | null;
+	}> {
+		const show = await this.getShowDetails(showId);
+		const numberOfSeasons = show.number_of_seasons || 1;
+
+		let previous: { seasonNumber: number; episodeNumber: number } | null = null;
+		let next: { seasonNumber: number; episodeNumber: number } | null = null;
+
+		// Try to find previous episode
+		// First check current season for previous episode
+		const currentSeason = await this.getSeasonDetails(showId, seasonNumber);
+		const currentEpisodes = currentSeason.episodes || [];
+
+		const prevInCurrentSeason = currentEpisodes.find(
+			(e) => e.episode_number === episodeNumber - 1,
+		);
+		if (prevInCurrentSeason) {
+			previous = { seasonNumber, episodeNumber: episodeNumber - 1 };
+		} else if (seasonNumber > 1) {
+			// Look in previous seasons
+			for (let s = seasonNumber - 1; s >= 1; s--) {
+				const prevSeason = await this.getSeasonDetails(showId, s);
+				const prevEpisodes = prevSeason.episodes || [];
+				if (prevEpisodes.length > 0) {
+					const lastEpisode = prevEpisodes.reduce((max, ep) =>
+						ep.episode_number > max.episode_number ? ep : max,
+					);
+					if (lastEpisode) {
+						previous = {
+							seasonNumber: s,
+							episodeNumber: lastEpisode.episode_number,
+						};
+						break;
+					}
+				}
+			}
+		}
+
+		// Try to find next episode
+		const nextInCurrentSeason = currentEpisodes.find(
+			(e) => e.episode_number === episodeNumber + 1,
+		);
+		if (nextInCurrentSeason) {
+			next = { seasonNumber, episodeNumber: episodeNumber + 1 };
+		} else {
+			// Look in next seasons
+			for (let s = seasonNumber + 1; s <= numberOfSeasons; s++) {
+				const nextSeason = await this.getSeasonDetails(showId, s);
+				const nextEpisodes = nextSeason.episodes || [];
+				if (nextEpisodes.length > 0) {
+					const firstEpisode = nextEpisodes.reduce((min, ep) =>
+						ep.episode_number < min.episode_number ? ep : min,
+					);
+					if (firstEpisode) {
+						next = {
+							seasonNumber: s,
+							episodeNumber: firstEpisode.episode_number,
+						};
+						break;
+					}
+				}
+			}
+		}
+
+		return { previous, next };
+	}
+
 	async getShowByTMDBId(showId: string) {
 		return this.prisma.show.findUnique({
 			where: { showId },

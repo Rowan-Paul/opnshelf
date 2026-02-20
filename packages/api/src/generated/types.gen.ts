@@ -182,6 +182,16 @@ export type TmdbNetworkDto = {
     origin_country?: string;
 };
 
+export type EpisodeReferenceDto = {
+    seasonNumber: number;
+    episodeNumber: number;
+};
+
+export type EpisodeContextDto = {
+    previous?: EpisodeReferenceDto;
+    next?: EpisodeReferenceDto;
+};
+
 export type TmdbEpisodeDto = {
     id: number;
     name: string;
@@ -198,6 +208,7 @@ export type TmdbEpisodeDto = {
     show_id?: number;
     crew?: Array<TmdbCrewDto>;
     guest_stars?: Array<TmdbCastDto>;
+    _context?: EpisodeContextDto;
 };
 
 export type TmdbSeasonDetailDto = {

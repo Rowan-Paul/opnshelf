@@ -100,11 +100,21 @@ export class ShowsController {
 		@Param("seasonNumber") seasonNumber: string,
 		@Param("episodeNumber") episodeNumber: string,
 	) {
-		return this.showsService.getEpisodeDetails(
+		const episode = await this.showsService.getEpisodeDetails(
 			showId,
 			Number(seasonNumber),
 			Number(episodeNumber),
 		);
+		const context = await this.showsService.getEpisodeContext(
+			showId,
+			Number(seasonNumber),
+			Number(episodeNumber),
+		);
+
+		return {
+			...episode,
+			_context: context,
+		};
 	}
 
 	@Get("user/:userDid")

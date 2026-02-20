@@ -165,6 +165,22 @@ export class TMDBShowResultDto {
 	overview?: string;
 }
 
+export class EpisodeReferenceDto {
+	@ApiProperty()
+	seasonNumber: number;
+
+	@ApiProperty()
+	episodeNumber: number;
+}
+
+export class EpisodeContextDto {
+	@ApiPropertyOptional({ type: EpisodeReferenceDto })
+	previous: EpisodeReferenceDto | null;
+
+	@ApiPropertyOptional({ type: EpisodeReferenceDto })
+	next: EpisodeReferenceDto | null;
+}
+
 export class TMDBEpisodeDto {
 	@ApiProperty()
 	id: number;
@@ -210,6 +226,9 @@ export class TMDBEpisodeDto {
 
 	@ApiPropertyOptional({ type: [TMDBCastDto] })
 	guest_stars?: TMDBCastDto[];
+
+	@ApiPropertyOptional({ type: EpisodeContextDto })
+	_context?: EpisodeContextDto;
 }
 
 export class TMDBSeasonDetailDto {

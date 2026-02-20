@@ -4,8 +4,10 @@ import {
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
+	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type TmdbSeasonDetailDto,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
@@ -140,7 +142,9 @@ function ShowSeasonPage() {
 				}),
 			});
 			queryClient.invalidateQueries({
-				queryKey: ["showsControllerGetShowWatchHistory"],
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", showId },
+				}),
 			});
 			toast.success(`Marked ${data.count} episodes as watched`);
 		},
@@ -149,11 +153,41 @@ function ShowSeasonPage() {
 		},
 	});
 
+	const unmarkSeasonWatchedMutation = useMutation({
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: user?.did || "", showId },
+				}),
+			});
+			toast.success("Removed season from your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to remove from shelf. Please try again.");
+		},
+	});
+
 	const handleMarkWatched = () => {
 		markSeasonWatchedMutation.mutate({
 			body: {
 				showId,
 				seasonNumber: Number(seasonNumber),
+			},
+		});
+	};
+
+	const handleUnmarkWatched = () => {
+		unmarkSeasonWatchedMutation.mutate({
+			path: { showId },
+			query: {
+				mode: "all",
+				seasonNumber: seasonNumber,
 			},
 		});
 	};
@@ -222,8 +256,10 @@ function ShowSeasonPage() {
 									watchedDate={null}
 									totalWatches={watchedEpisodeCount}
 									onMarkWatched={handleMarkWatched}
+									onUnmarkWatched={handleUnmarkWatched}
 									onShowDatePicker={() => {}}
 									isMarkingPending={markSeasonWatchedMutation.isPending}
+									isUnmarkingPending={unmarkSeasonWatchedMutation.isPending}
 									listsCount={listsCount}
 									onShowListModal={() => setShowListModal(true)}
 									isLoggedIn={!!user}
@@ -278,6 +314,7 @@ function ShowSeasonPage() {
 														0
 													}
 													colors={colors}
+													userDid={user?.did}
 												/>
 											))}
 										</div>
