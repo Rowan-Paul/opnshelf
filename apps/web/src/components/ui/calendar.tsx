@@ -86,7 +86,7 @@ function Calendar({
 	return (
 		<DayPicker
 			showOutsideDays={showOutsideDays}
-			weekStartsOn={1}
+			weekStartsOn={0}
 			className={cn(
 				"bg-background group/calendar p-0 in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent font-normal",
 				String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,

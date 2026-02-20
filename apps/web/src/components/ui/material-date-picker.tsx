@@ -54,8 +54,8 @@ export function MaterialDatePicker({
 	// Generate calendar days
 	const monthStart = startOfMonth(currentMonth);
 	const monthEnd = endOfMonth(monthStart);
-	const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
-	const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+	const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+	const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
 	const days: Date[] = [];
 	let day = calendarStart;
@@ -65,13 +65,13 @@ export function MaterialDatePicker({
 	}
 
 	const weekDays = [
-		{ label: "S", id: "sun" },
 		{ label: "M", id: "mon" },
 		{ label: "T", id: "tue" },
 		{ label: "W", id: "wed" },
 		{ label: "T", id: "thu" },
 		{ label: "F", id: "fri" },
 		{ label: "S", id: "sat" },
+		{ label: "S", id: "sun" },
 	];
 
 	// Generate years for year picker (100 years back, 50 years forward)
@@ -105,6 +105,7 @@ export function MaterialDatePicker({
 		const newDate = new Date(currentMonth);
 		newDate.setMonth(monthIndex);
 		setCurrentMonth(newDate);
+		setSelectingYear(false);
 	};
 
 	return (

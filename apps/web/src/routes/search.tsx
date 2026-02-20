@@ -188,14 +188,14 @@ function SearchPage() {
 										resetScroll: false,
 									});
 								}}
-								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-[var(--md-sys-color-on-surface)]/10"
+								className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-(--md-sys-color-on-surface)/10"
 								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 							>
 								<X className="w-4 h-4" />
 							</button>
 						)}
 					</div>
-					<div className="mt-4 inline-flex rounded-full p-1 bg-[var(--md-sys-color-surface-container-high)]">
+					<div className="mt-4 inline-flex rounded-full p-1 bg-(--md-sys-color-surface-container-high)">
 						{(["all", "movies", "shows"] as const).map((tab) => (
 							<button
 								key={tab}
@@ -238,7 +238,7 @@ function SearchPage() {
 						<section>
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="md-title-large">Movies</h2>
-								<span className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+								<span className="text-sm text-(--md-sys-color-on-surface-variant)">
 									{movieTotal.toLocaleString()}
 								</span>
 							</div>
@@ -252,7 +252,7 @@ function SearchPage() {
 									gridClassName="grid-cols-2 md:grid-cols-3"
 								/>
 							) : (
-								<p className="text-sm text-[var(--md-sys-color-on-surface-variant)] py-4">
+								<p className="text-sm text-(--md-sys-color-on-surface-variant) py-4">
 									No movie results.
 								</p>
 							)}
@@ -261,7 +261,7 @@ function SearchPage() {
 						<section>
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="md-title-large">Shows</h2>
-								<span className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+								<span className="text-sm text-(--md-sys-color-on-surface-variant)">
 									{showTotal.toLocaleString()}
 								</span>
 							</div>
@@ -273,7 +273,7 @@ function SearchPage() {
 									gridClassName="grid-cols-2 md:grid-cols-3"
 								/>
 							) : (
-								<p className="text-sm text-[var(--md-sys-color-on-surface-variant)] py-4">
+								<p className="text-sm text-(--md-sys-color-on-surface-variant) py-4">
 									No show results.
 								</p>
 							)}
@@ -287,7 +287,7 @@ function SearchPage() {
 							<h2 className="md-title-large">
 								{hasQuery ? "Movie Results" : "Popular Movies"}
 							</h2>
-							<span className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+							<span className="text-sm text-(--md-sys-color-on-surface-variant)">
 								{movieTotal.toLocaleString()}
 							</span>
 						</div>
@@ -300,7 +300,7 @@ function SearchPage() {
 								watchedMovieIds={watchedMovieIds}
 							/>
 						) : (
-							<div className="text-center py-12 text-[var(--md-sys-color-on-surface-variant)]">
+							<div className="text-center py-12 text-(--md-sys-color-on-surface-variant)">
 								No movie results found for &quot;{searchQuery}&quot;
 							</div>
 						)}
@@ -313,7 +313,7 @@ function SearchPage() {
 							<h2 className="md-title-large">
 								{hasQuery ? "Show Results" : "Popular Shows"}
 							</h2>
-							<span className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+							<span className="text-sm text-(--md-sys-color-on-surface-variant)">
 								{showTotal.toLocaleString()}
 							</span>
 						</div>
@@ -322,7 +322,7 @@ function SearchPage() {
 						) : showResults.length > 0 ? (
 							<ShowGrid shows={showResults} />
 						) : (
-							<div className="text-center py-12 text-[var(--md-sys-color-on-surface-variant)]">
+							<div className="text-center py-12 text-(--md-sys-color-on-surface-variant)">
 								No show results found for &quot;{searchQuery}&quot;
 							</div>
 						)}
