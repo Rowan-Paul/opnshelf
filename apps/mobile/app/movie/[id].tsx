@@ -246,7 +246,7 @@ export default function MovieDetailScreen() {
 	);
 
 	const handleShare = useCallback(async () => {
-		const shareUrl = `https://opnshelf.app/movie/${movieId}/${title || ""}`;
+		const shareUrl = `https://opnshelf.xyz/movies/${movieId}/${title || ""}`;
 		try {
 			await Share.share({
 				message: `Check out ${title} on OpnShelf!\n\n${shareUrl}`,

@@ -292,7 +292,7 @@ export default function ShowEpisodeScreen() {
 	};
 
 	const handleShare = async () => {
-		const shareUrl = `https://opnshelf.app/show/${id}/season/${seasonNumber}/episode/${episodeNumber}`;
+		const shareUrl = `https://opnshelf.xyz/shows/${id}/season/${seasonNumber}/episode/${episodeNumber}`;
 		try {
 			await Share.share({
 				message: `Check out S${seasonNumber}E${episodeNumber} of ${show?.name || title || "this show"} on OpnShelf!\n\n${shareUrl}`,

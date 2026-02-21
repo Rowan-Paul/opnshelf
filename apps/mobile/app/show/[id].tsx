@@ -168,7 +168,7 @@ export default function ShowDetailScreen() {
 	};
 
 	const handleShare = async () => {
-		const shareUrl = `https://opnshelf.app/show/${id}`;
+		const shareUrl = `https://opnshelf.xyz/shows/${id}`;
 		try {
 			await Share.share({
 				message: `Check out ${show?.name} on OpnShelf!\n\n${shareUrl}`,
