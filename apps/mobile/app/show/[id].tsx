@@ -9,6 +9,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -30,6 +31,7 @@ import {
 	MetadataPills,
 	SeasonCard,
 } from "@/components/detail";
+import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -56,6 +58,7 @@ export default function ShowDetailScreen() {
 	const queryClient = useQueryClient();
 
 	const [_showListModal, setShowListModal] = useState(false);
+	const [showDateModal, setShowDateModal] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -85,8 +88,14 @@ export default function ShowDetailScreen() {
 		enabled: !!user?.did,
 	});
 
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user?.did,
+	});
+
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
 	const watchedEpisodeCount = history?.length ?? 0;
+	const is24Hour = userSettings?.timeFormat === "24h";
 
 	const showColors = show?.colors || {
 		primary: themeColors.primary,
@@ -120,6 +129,12 @@ export default function ShowDetailScreen() {
 	const handleMarkWatched = () => {
 		markShowWatchedMutation.mutate({
 			body: { showId: id },
+		});
+	};
+
+	const handleMarkWatchedWithDate = (date: Date) => {
+		markShowWatchedMutation.mutate({
+			body: { showId: id, watchedAt: date.toISOString() },
 		});
 	};
 
@@ -242,7 +257,7 @@ export default function ShowDetailScreen() {
 						totalWatches={watchedEpisodeCount}
 						onMarkWatched={handleMarkWatched}
 						onUnmarkWatched={handleUnmarkWatched}
-						onShowDatePicker={() => {}}
+						onShowDatePicker={() => setShowDateModal(true)}
 						isMarkingPending={markShowWatchedMutation.isPending}
 						isUnmarkingPending={unmarkShowWatchedMutation.isPending}
 						listsCount={listsCount}
@@ -466,6 +481,14 @@ export default function ShowDetailScreen() {
 					)}
 				</View>
 			</ScrollView>
+
+			<WatchDatePickerModal
+				visible={showDateModal}
+				onDismiss={() => setShowDateModal(false)}
+				onConfirm={handleMarkWatchedWithDate}
+				isLoading={markShowWatchedMutation.isPending}
+				is24Hour={is24Hour}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -572,5 +595,72 @@ const styles = StyleSheet.create({
 	},
 	crewJob: {
 		fontSize: 12,
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.7)",
+		justifyContent: "center",
+		alignItems: "center",
+		padding: spacing.lg,
+	},
+	modalContent: {
+		borderRadius: 28,
+		padding: spacing.lg,
+		width: "100%",
+		maxWidth: 340,
+	},
+	modalHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: spacing.sm,
+	},
+	modalTitle: {
+		fontSize: 22,
+		fontWeight: "600",
+	},
+	modalDescription: {
+		fontSize: 14,
+		marginBottom: spacing.lg,
+	},
+	dateTimeContainer: {
+		gap: spacing.sm,
+	},
+	dateTimeButton: {
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: spacing.sm,
+		padding: spacing.md,
+		borderRadius: borderRadius.md,
+		borderWidth: 1,
+	},
+	dateTimeText: {
+		fontSize: 14,
+		fontWeight: "500",
+	},
+	modalButtons: {
+		flexDirection: "row",
+		gap: spacing.md,
+	},
+	modalButton: {
+		flex: 1,
+		padding: spacing.md,
+		borderRadius: borderRadius.md,
+		alignItems: "center",
+	},
+	modalButtonOutline: {
+		borderWidth: 1,
+	},
+	modalButtonPrimary: {},
+	modalButtonText: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	modalButtonTextPrimary: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: "#fff",
 	},
 });

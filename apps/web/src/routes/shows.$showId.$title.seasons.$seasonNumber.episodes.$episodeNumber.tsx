@@ -447,7 +447,7 @@ function ShowEpisodePage() {
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
 				userDid={user?.did}
-				modalTitle="Watch Again"
+				modalTitle="Select Watch Date"
 			/>
 
 			{user && (

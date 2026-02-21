@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
+import { DatePickerModal } from "@/components/DatePickerModal";
 import {
 	type ColorTheme,
 	DetailActions,
@@ -84,6 +85,7 @@ function ShowSeasonPage() {
 	const { seedColor } = useTheme();
 
 	const [showListModal, setShowListModal] = useState(false);
+	const [showDateModal, setShowDateModal] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -257,7 +259,7 @@ function ShowSeasonPage() {
 									totalWatches={watchedEpisodeCount}
 									onMarkWatched={handleMarkWatched}
 									onUnmarkWatched={handleUnmarkWatched}
-									onShowDatePicker={() => {}}
+									onShowDatePicker={() => setShowDateModal(true)}
 									isMarkingPending={markSeasonWatchedMutation.isPending}
 									isUnmarkingPending={unmarkSeasonWatchedMutation.isPending}
 									listsCount={listsCount}
@@ -340,6 +342,16 @@ function ShowSeasonPage() {
 					user={user}
 				/>
 			)}
+
+			<DatePickerModal
+				open={showDateModal}
+				onClose={() => setShowDateModal(false)}
+				mode="season"
+				showId={showId}
+				seasonNumber={seasonNumber}
+				userDid={user?.did}
+				modalTitle="Select Watch Date"
+			/>
 		</div>
 	);
 }

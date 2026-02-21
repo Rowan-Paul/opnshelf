@@ -3,6 +3,8 @@ import {
 	moviesControllerMarkWatchedMutation,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkSeasonWatchedMutation,
+	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +32,15 @@ type DatePickerModalProps = {
 			showId: string;
 			seasonNumber: string;
 			episodeNumber: string;
+	  }
+	| {
+			mode: "season";
+			showId: string;
+			seasonNumber: string;
+	  }
+	| {
+			mode: "show";
+			showId: string;
 	  }
 );
 
@@ -95,6 +106,50 @@ export function DatePickerModal({
 			toast.error("Failed to update. Please try again.");
 		},
 	});
+	const markSeasonMutation = useMutation({
+		...showsControllerMarkSeasonWatchedMutation(),
+		onSuccess: () => {
+			if (target.mode === "season") {
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetUserShowsQueryKey({
+						path: { userDid: userDid || "" },
+					}),
+				});
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetShowWatchHistoryQueryKey({
+						path: { userDid: userDid || "", showId: target.showId },
+					}),
+				});
+				toast.success("Added to your shelf");
+				onClose();
+			}
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+	const markShowMutation = useMutation({
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			if (target.mode === "show") {
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetUserShowsQueryKey({
+						path: { userDid: userDid || "" },
+					}),
+				});
+				queryClient.invalidateQueries({
+					queryKey: showsControllerGetShowWatchHistoryQueryKey({
+						path: { userDid: userDid || "", showId: target.showId },
+					}),
+				});
+				toast.success("Added to your shelf");
+				onClose();
+			}
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
 
 	const handleSubmit = () => {
 		if (!customDate) return;
@@ -118,6 +173,27 @@ export function DatePickerModal({
 					showId: target.showId,
 					seasonNumber: Number(target.seasonNumber),
 					episodeNumber: Number(target.episodeNumber),
+					watchedAt: dateTime.toISOString(),
+				},
+			});
+			return;
+		}
+
+		if (target.mode === "season") {
+			markSeasonMutation.mutate({
+				body: {
+					showId: target.showId,
+					seasonNumber: Number(target.seasonNumber),
+					watchedAt: dateTime.toISOString(),
+				},
+			});
+			return;
+		}
+
+		if (target.mode === "show") {
+			markShowMutation.mutate({
+				body: {
+					showId: target.showId,
 					watchedAt: dateTime.toISOString(),
 				},
 			});

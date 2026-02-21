@@ -33,7 +33,6 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import {
@@ -44,6 +43,7 @@ import {
 	MetadataPills,
 } from "@/components/detail";
 import { Button } from "@/components/ui/Button";
+import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -91,9 +91,6 @@ export default function ShowEpisodeScreen() {
 	const queryClient = useQueryClient();
 
 	const [showDateModal, setShowDateModal] = useState(false);
-	const [showDatePicker, setShowDatePicker] = useState(false);
-	const [showTimePicker, setShowTimePicker] = useState(false);
-	const [customDate, setCustomDate] = useState(new Date());
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
 
@@ -269,13 +266,13 @@ export default function ShowEpisodeScreen() {
 		});
 	};
 
-	const handleMarkWatchedWithDate = () => {
+	const handleMarkWatchedWithDate = (date: Date) => {
 		markMutation.mutate({
 			body: {
 				showId: id,
 				seasonNumber: Number(seasonNumber),
 				episodeNumber: Number(episodeNumber),
-				watchedAt: customDate.toISOString(),
+				watchedAt: date.toISOString(),
 			},
 		});
 	};
@@ -304,7 +301,6 @@ export default function ShowEpisodeScreen() {
 	};
 
 	const handleOpenDateModal = () => {
-		setCustomDate(new Date());
 		setShowDateModal(true);
 	};
 
@@ -559,159 +555,13 @@ export default function ShowEpisodeScreen() {
 				</ScrollView>
 			</SafeAreaView>
 
-			<Modal
+			<WatchDatePickerModal
 				visible={showDateModal}
-				animationType="fade"
-				transparent={true}
-				onRequestClose={() => setShowDateModal(false)}
-			>
-				<View style={styles.modalOverlay}>
-					<View
-						style={[
-							styles.modalContent,
-							{ backgroundColor: themeColors.surfaceContainerHigh },
-						]}
-					>
-						<View style={styles.modalHeader}>
-							<Text
-								style={[styles.modalTitle, { color: themeColors.onSurface }]}
-							>
-								Watch Again
-							</Text>
-							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={themeColors.onSurface}
-								/>
-							</Pressable>
-						</View>
-						<Text
-							style={[
-								styles.modalDescription,
-								{ color: themeColors.onSurfaceVariant },
-							]}
-						>
-							When did you watch this?
-						</Text>
-
-						<View style={styles.dateTimeContainer}>
-							<TouchableOpacity
-								onPress={() => setShowDatePicker(true)}
-								style={styles.dateTimeButton}
-								activeOpacity={0.7}
-							>
-								<Ionicons
-									name="calendar-outline"
-									size={20}
-									color={themeColors.onSurfaceVariant}
-								/>
-								<Text
-									style={[
-										styles.dateTimeText,
-										{ color: themeColors.onSurface },
-									]}
-								>
-									{customDate.toLocaleDateString("en-US", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-									})}
-								</Text>
-							</TouchableOpacity>
-
-							<TouchableOpacity
-								onPress={() => setShowTimePicker(true)}
-								style={styles.dateTimeButton}
-								activeOpacity={0.7}
-							>
-								<Ionicons
-									name="time-outline"
-									size={20}
-									color={themeColors.onSurfaceVariant}
-								/>
-								<Text
-									style={[
-										styles.dateTimeText,
-										{ color: themeColors.onSurface },
-									]}
-								>
-									{customDate.toLocaleTimeString("en-US", {
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: !is24Hour,
-									})}
-								</Text>
-							</TouchableOpacity>
-						</View>
-
-						<DatePickerModal
-							visible={showDatePicker}
-							mode="single"
-							date={customDate}
-							locale="en"
-							onDismiss={() => setShowDatePicker(false)}
-							onConfirm={(params) => {
-								setShowDatePicker(false);
-								if (params.date) {
-									const newDate = new Date(customDate);
-									newDate.setFullYear(params.date.getFullYear());
-									newDate.setMonth(params.date.getMonth());
-									newDate.setDate(params.date.getDate());
-									setCustomDate(newDate);
-									setShowTimePicker(true);
-								}
-							}}
-						/>
-
-						<TimePickerModal
-							visible={showTimePicker}
-							hours={customDate.getHours()}
-							minutes={customDate.getMinutes()}
-							locale="en"
-							use24HourClock={is24Hour}
-							onDismiss={() => setShowTimePicker(false)}
-							onConfirm={(params) => {
-								const newDate = new Date(customDate);
-								newDate.setHours(params.hours);
-								newDate.setMinutes(params.minutes);
-								setCustomDate(newDate);
-								setShowTimePicker(false);
-							}}
-						/>
-
-						<View style={styles.modalActionsSplit}>
-							<Button
-								variant="outlined"
-								onPress={() => setShowDateModal(false)}
-							>
-								<Text
-									style={[
-										styles.modalCancelText,
-										{ color: themeColors.onSurfaceVariant },
-									]}
-								>
-									Cancel
-								</Text>
-							</Button>
-							<Button
-								onPress={handleMarkWatchedWithDate}
-								isLoading={markMutation.isPending}
-								style={{ backgroundColor: themeColors.primary }}
-							>
-								<Text
-									style={[
-										styles.modalConfirmText,
-										{ color: themeColors.onPrimary },
-									]}
-								>
-									Add Watch
-								</Text>
-							</Button>
-						</View>
-					</View>
-				</View>
-			</Modal>
+				onDismiss={() => setShowDateModal(false)}
+				onConfirm={handleMarkWatchedWithDate}
+				isLoading={markMutation.isPending}
+				is24Hour={is24Hour}
+			/>
 
 			<Modal
 				visible={showHistoryModal}
@@ -956,31 +806,7 @@ const styles = StyleSheet.create({
 	modalDescription: {
 		fontSize: 14,
 	},
-	dateTimeContainer: {
-		gap: spacing.sm,
-	},
-	dateTimeButton: {
-		padding: spacing.md,
-		borderRadius: borderRadius.md,
-		backgroundColor: "rgba(255, 255, 255, 0.05)",
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.sm,
-	},
-	dateTimeText: {
-		fontSize: 15,
-		fontWeight: "500",
-	},
-	modalActionsSplit: {
-		flexDirection: "row",
-		gap: spacing.sm,
-		justifyContent: "space-between",
-	},
 	modalCancelText: {
-		fontSize: 14,
-		fontWeight: "600",
-	},
-	modalConfirmText: {
 		fontSize: 14,
 		fontWeight: "600",
 	},
