@@ -157,6 +157,7 @@ export default function MovieDetailScreen() {
 	}, [trackedMovie, userTimezone, is24Hour]);
 
 	const markMutation = useMutation({
+		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -178,6 +179,7 @@ export default function MovieDetailScreen() {
 	});
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -198,6 +200,7 @@ export default function MovieDetailScreen() {
 	});
 
 	const deleteWatchEntryMutation = useMutation({
+		mutationKey: ["movies", movieId, "deleteWatchEntry"],
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

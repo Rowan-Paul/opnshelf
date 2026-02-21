@@ -163,6 +163,7 @@ function SettingsPage() {
 	}, [settings]);
 
 	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -176,6 +177,7 @@ function SettingsPage() {
 	});
 
 	const deleteAccountMutation = useMutation({
+		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: () => {
 			setShowDeleteDialog(false);

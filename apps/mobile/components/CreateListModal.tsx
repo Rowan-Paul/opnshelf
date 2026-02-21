@@ -33,6 +33,7 @@ export const CreateListModal = memo(function CreateListModal({
 	const { colors } = useTheme();
 
 	const createListMutation = useMutation({
+		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

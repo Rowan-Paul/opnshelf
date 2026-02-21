@@ -28,6 +28,7 @@ export function CreateListDialog() {
 	const { seedColor } = useTheme();
 
 	const createListMutation = useMutation({
+		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

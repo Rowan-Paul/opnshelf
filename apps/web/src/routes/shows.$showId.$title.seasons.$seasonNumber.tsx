@@ -136,6 +136,13 @@ function ShowSeasonPage() {
 	const seasonEpisodes = season?.episodes || [];
 
 	const markSeasonWatchedMutation = useMutation({
+		mutationKey: [
+			"shows",
+			showId,
+			"seasons",
+			seasonNumber,
+			"markSeasonWatched",
+		],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({
@@ -156,6 +163,13 @@ function ShowSeasonPage() {
 	});
 
 	const unmarkSeasonWatchedMutation = useMutation({
+		mutationKey: [
+			"shows",
+			showId,
+			"seasons",
+			seasonNumber,
+			"unmarkSeasonWatched",
+		],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

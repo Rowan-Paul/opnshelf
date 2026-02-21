@@ -64,6 +64,7 @@ export function DatePickerModal({
 	}, [open]);
 
 	const markMutation = useMutation({
+		mutationKey: ["movies", target.movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			if (target.mode === "episode") {
@@ -85,6 +86,13 @@ export function DatePickerModal({
 		},
 	});
 	const markEpisodeMutation = useMutation({
+		mutationKey: [
+			"shows",
+			target.showId,
+			"episodes",
+			target.episodeNumber,
+			"markWatched",
+		],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			if (target.mode === "episode") {
@@ -107,6 +115,13 @@ export function DatePickerModal({
 		},
 	});
 	const markSeasonMutation = useMutation({
+		mutationKey: [
+			"shows",
+			target.showId,
+			"seasons",
+			target.seasonNumber,
+			"markSeasonWatched",
+		],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: () => {
 			if (target.mode === "season") {
@@ -129,6 +144,7 @@ export function DatePickerModal({
 		},
 	});
 	const markShowMutation = useMutation({
+		mutationKey: ["shows", target.showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
 			if (target.mode === "show") {

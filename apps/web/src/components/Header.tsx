@@ -22,6 +22,7 @@ export default function Header() {
 	});
 
 	const logoutMutation = useMutation({
+		mutationKey: ["auth", "logout"],
 		...authControllerLogoutMutation(),
 		onSuccess: () => {
 			queryClient.removeQueries(authControllerMeOptions());

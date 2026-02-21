@@ -123,6 +123,7 @@ export default function ShowSeasonScreen() {
 	const seasonEpisodes = season?.episodes || [];
 
 	const markSeasonWatchedMutation = useMutation({
+		mutationKey: ["shows", id, "seasons", seasonNumber, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({
@@ -160,6 +161,7 @@ export default function ShowSeasonScreen() {
 	};
 
 	const unmarkSeasonWatchedMutation = useMutation({
+		mutationKey: ["shows", id, "seasons", seasonNumber, "unmarkSeasonWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

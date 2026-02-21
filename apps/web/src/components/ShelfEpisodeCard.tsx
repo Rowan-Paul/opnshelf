@@ -37,6 +37,13 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 	const { formatDate } = useFormattedDate();
 
 	const deleteMutation = useMutation({
+		mutationKey: [
+			"shows",
+			tracked.showId,
+			"episodes",
+			tracked.episodeNumber,
+			"deleteWatchEntry",
+		],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shelf", "user", user?.did] });

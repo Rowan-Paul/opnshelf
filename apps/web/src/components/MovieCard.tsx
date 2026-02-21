@@ -42,6 +42,7 @@ export function MovieCard({
 	const movieId = movie.id.toString();
 
 	const markMutation = useMutation({
+		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -57,6 +58,7 @@ export function MovieCard({
 	});
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

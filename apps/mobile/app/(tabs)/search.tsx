@@ -104,6 +104,7 @@ export default function SearchScreen() {
 		});
 
 	const markMutation = useMutation({
+		mutationKey: ["movies", "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -119,6 +120,7 @@ export default function SearchScreen() {
 	});
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["movies", "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

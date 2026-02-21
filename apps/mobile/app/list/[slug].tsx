@@ -42,6 +42,7 @@ export default function ListDetailScreen() {
 	});
 
 	const removeMutation = useMutation({
+		mutationKey: ["lists", slug, "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -57,6 +58,7 @@ export default function ListDetailScreen() {
 	});
 
 	const deleteMutation = useMutation({
+		mutationKey: ["lists", slug, "delete"],
 		...listsControllerDeleteListMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

@@ -35,6 +35,7 @@ export function ShelfMovieCard({ tracked, user }: ShelfMovieCardProps) {
 	const { formatDate } = useFormattedDate();
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["movies", tracked.movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shelf", "user", user?.did] });

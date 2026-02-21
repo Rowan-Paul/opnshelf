@@ -48,6 +48,7 @@ export const AddToListModal = memo(function AddToListModal({
 	const typedListsForMovie = (listsForMovie || []) as MovieListsForItemDto[];
 
 	const addMutation = useMutation({
+		mutationKey: ["lists", "addItem", mediaType, mediaId],
 		...listsControllerAddItemToListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
@@ -63,6 +64,7 @@ export const AddToListModal = memo(function AddToListModal({
 	});
 
 	const removeMutation = useMutation({
+		mutationKey: ["lists", "removeItem", mediaType, mediaId],
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;

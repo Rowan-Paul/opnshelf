@@ -117,6 +117,7 @@ function ShowDetailPage() {
 	const episodeCount = show?.number_of_episodes || 0;
 
 	const markShowWatchedMutation = useMutation({
+		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({
@@ -137,6 +138,7 @@ function ShowDetailPage() {
 	});
 
 	const unmarkShowWatchedMutation = useMutation({
+		mutationKey: ["shows", showId, "unmarkShowWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

@@ -151,6 +151,7 @@ export default function SettingsScreen() {
 
 	// Mutation for updating settings
 	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -165,6 +166,7 @@ export default function SettingsScreen() {
 
 	// Mutation for deleting account
 	const deleteAccountMutation = useMutation({
+		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: async () => {
 			showToast("Account deleted", "success");

@@ -183,6 +183,7 @@ function MovieDetailPage() {
 	};
 
 	const markMutation = useMutation({
+		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -204,6 +205,7 @@ function MovieDetailPage() {
 	});
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -224,6 +226,7 @@ function MovieDetailPage() {
 	});
 
 	const deleteWatchEntryMutation = useMutation({
+		mutationKey: ["movies", movieId, "deleteWatchEntry"],
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

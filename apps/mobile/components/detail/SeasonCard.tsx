@@ -54,6 +54,7 @@ export function SeasonCard({
   const hasWatchedEpisodes = watchedCount > 0;
 
   const markMutation = useMutation({
+    mutationKey: ["shows", showId, "seasons", seasonNumber, "markSeasonWatched"],
     ...showsControllerMarkSeasonWatchedMutation(),
     onSuccess: (data) => {
       if (userDid) {
@@ -76,6 +77,7 @@ export function SeasonCard({
   });
 
   const unmarkMutation = useMutation({
+    mutationKey: ["shows", showId, "seasons", seasonNumber, "unmarkSeasonWatched"],
     ...showsControllerUnmarkWatchedMutation(),
     onSuccess: () => {
       if (userDid) {

@@ -46,6 +46,7 @@ export function AddToListModal({
 	});
 
 	const addMutation = useMutation({
+		mutationKey: ["lists", "addItem", mediaType, mediaId],
 		...listsControllerAddItemToListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;
@@ -65,6 +66,7 @@ export function AddToListModal({
 	});
 
 	const removeMutation = useMutation({
+		mutationKey: ["lists", "removeItem", mediaType, mediaId],
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: (_, variables) => {
 			const slug = variables.path.slug;

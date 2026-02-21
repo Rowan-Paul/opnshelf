@@ -196,6 +196,7 @@ export default function ShowEpisodeScreen() {
 	}, [season?.episodes, episodeNumber]);
 
 	const markMutation = useMutation({
+		mutationKey: ["shows", id, "episodes", episodeNumber, "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -217,6 +218,7 @@ export default function ShowEpisodeScreen() {
 	});
 
 	const unmarkMutation = useMutation({
+		mutationKey: ["shows", id, "episodes", episodeNumber, "unmarkWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -237,6 +239,7 @@ export default function ShowEpisodeScreen() {
 	});
 
 	const deleteWatchEntryMutation = useMutation({
+		mutationKey: ["shows", id, "episodes", episodeNumber, "deleteWatchEntry"],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

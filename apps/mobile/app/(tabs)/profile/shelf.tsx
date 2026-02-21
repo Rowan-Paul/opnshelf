@@ -54,6 +54,7 @@ export default function ShelfScreen() {
 	});
 
 	const deleteMovieMutation = useMutation({
+		mutationKey: ["shelf", "movies", "delete"],
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });
@@ -65,6 +66,7 @@ export default function ShelfScreen() {
 	});
 
 	const deleteEpisodeMutation = useMutation({
+		mutationKey: ["shelf", "episodes", "delete"],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });

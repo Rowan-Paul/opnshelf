@@ -177,6 +177,7 @@ function ShowEpisodePage() {
 	const is24Hour = userSettings?.timeFormat === "24h";
 
 	const markMutation = useMutation({
+		mutationKey: ["shows", showId, "episodes", episodeNumber, "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -196,6 +197,7 @@ function ShowEpisodePage() {
 		},
 	});
 	const unmarkMutation = useMutation({
+		mutationKey: ["shows", showId, "episodes", episodeNumber, "unmarkWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -215,6 +217,13 @@ function ShowEpisodePage() {
 		},
 	});
 	const deleteWatchEntryMutation = useMutation({
+		mutationKey: [
+			"shows",
+			showId,
+			"episodes",
+			episodeNumber,
+			"deleteWatchEntry",
+		],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

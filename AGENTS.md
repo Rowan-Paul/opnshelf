@@ -188,6 +188,29 @@ pnpm dlx shadcn@latest add button
 - TanStack Query for server state
 - Sonner for toast notifications (web)
 
+## TanStack Query
+
+**Always use `mutationKey`** on all `useMutation` calls. This enables better debugging, caching, and mutation state tracking.
+
+```typescript
+const mutation = useMutation({
+  mutationKey: ["shows", showId, "markWatched"],
+  ...showsControllerMarkWatchedMutation(),
+  onSuccess: () => { /* ... */ },
+});
+```
+
+**Mutation key pattern:** Use resource-based hierarchy following TanStack best practices:
+- `['resource', resourceId?, 'subResource'?, 'action']`
+
+Examples:
+- `['shows', showId, 'markWatched']`
+- `['shows', showId, 'seasons', seasonNumber, 'markSeasonWatched']`
+- `['movies', movieId, 'markWatched']`
+- `['lists', 'create']`
+- `['auth', 'logout']`
+- `['users', 'settings', 'update']`
+
 ## Testing Best Practices
 
 **Backend:**
