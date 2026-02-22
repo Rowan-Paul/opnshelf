@@ -190,6 +190,20 @@ pnpm dlx shadcn@latest add button
 
 ## TanStack Query
 
+**Always use the generated query options from `@opnshelf/api`** - never use raw `fetch()`. The API client is pre-configured with the base URL and handles authentication automatically.
+
+```typescript
+// ✅ Correct - use generated options
+const { data } = useQuery({
+  ...searchControllerSearchAllOptions({
+    query: { query: searchTerm },
+  }),
+});
+
+// ❌ Wrong - don't use fetch directly
+const response = await fetch(`${API_URL}/search/all?query=...`);
+```
+
 **Always use `mutationKey`** on all `useMutation` calls. This enables better debugging, caching, and mutation state tracking.
 
 ```typescript

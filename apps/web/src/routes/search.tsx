@@ -1,19 +1,18 @@
 import {
 	authControllerMeOptions,
-	moviesControllerDiscoverMoviesOptions,
 	moviesControllerGetUserMoviesOptions,
-	moviesControllerSearchMoviesOptions,
-	showsControllerDiscoverShowsOptions,
-	showsControllerSearchShowsOptions,
+	searchControllerDiscoverAllOptions,
+	searchControllerSearchAllOptions,
+	showsControllerGetUserShowsOptions,
 	type TmdbMovieResultDto,
-	type TmdbShowResultDto,
+	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MovieGrid, MovieGridSkeleton } from "@/components/MovieGrid";
-import { ShowGrid } from "@/components/ShowGrid";
+import { MovieCard } from "@/components/MovieCard";
+import { ShowCard } from "@/components/ShowCard";
 import { M3TextField } from "@/components/ui/m3-text-field";
 
 export const Route = createFileRoute("/search")({
@@ -28,7 +27,6 @@ export const Route = createFileRoute("/search")({
 });
 
 const DEBOUNCE_MS = 300;
-const ALL_PREVIEW_LIMIT = 12;
 
 function SearchPage() {
 	const { q: searchQuery, type } = Route.useSearch();
@@ -50,10 +48,22 @@ function SearchPage() {
 		enabled: !!user?.did,
 	});
 
+	const { data: trackedShows } = useQuery({
+		...showsControllerGetUserShowsOptions({
+			path: { userDid: user?.did || "" },
+		}),
+		enabled: !!user?.did,
+	});
+
 	const watchedMovieIds = useMemo(() => {
 		if (!trackedMovies) return new Set<string>();
 		return new Set(trackedMovies.map((m: { movieId: string }) => m.movieId));
 	}, [trackedMovies]);
+
+	const watchedShowIds = useMemo(() => {
+		if (!trackedShows) return new Set<string>();
+		return new Set(trackedShows.map((s: { showId: string }) => s.showId));
+	}, [trackedShows]);
 
 	useEffect(() => {
 		if (searchQuery !== lastNavigatedQueryRef.current) {
@@ -87,63 +97,37 @@ function SearchPage() {
 	}, [query, searchQuery, type, navigate]);
 
 	const hasQuery = searchQuery.length > 0;
-	const isAll = type === "all";
+	const _isAll = type === "all";
 	const isMovies = type === "movies";
 	const isShows = type === "shows";
 
 	const {
-		data: movieSearchData,
-		isLoading: isMovieSearchLoading,
-		error: movieSearchError,
+		data: searchData,
+		isLoading: isSearchLoading,
+		error: searchError,
 	} = useQuery({
-		...moviesControllerSearchMoviesOptions({
+		...searchControllerSearchAllOptions({
 			query: { query: searchQuery },
 		}),
-		enabled: hasQuery && (isAll || isMovies),
+		enabled: hasQuery,
 	});
 
-	const {
-		data: showSearchData,
-		isLoading: isShowSearchLoading,
-		error: showSearchError,
-	} = useQuery({
-		...showsControllerSearchShowsOptions({
-			query: { query: searchQuery },
-		}),
-		enabled: hasQuery && (isAll || isShows),
+	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
+		...searchControllerDiscoverAllOptions({}),
+		enabled: !hasQuery,
 	});
 
-	const { data: discoverMoviesData, isLoading: isDiscoverMoviesLoading } =
-		useQuery({
-			...moviesControllerDiscoverMoviesOptions({}),
-			enabled: !hasQuery && (isAll || isMovies),
-		});
+	const results: UnifiedSearchResultDto[] = hasQuery
+		? (searchData?.results ?? [])
+		: (discoverData?.results ?? []);
 
-	const { data: discoverShowsData, isLoading: isDiscoverShowsLoading } =
-		useQuery({
-			...showsControllerDiscoverShowsOptions({}),
-			enabled: !hasQuery && (isAll || isShows),
-		});
+	const total = hasQuery
+		? (searchData?.total_results ?? results.length)
+		: results.length;
 
-	const movieResults: TmdbMovieResultDto[] = hasQuery
-		? (movieSearchData?.results ?? [])
-		: (discoverMoviesData?.results ?? []);
-	const showResults: TmdbShowResultDto[] = hasQuery
-		? (showSearchData?.results ?? [])
-		: (discoverShowsData?.results ?? []);
+	const showTotal = hasQuery && total > 0;
 
-	const movieTotal = hasQuery
-		? (movieSearchData?.total_results ?? movieResults.length)
-		: movieResults.length;
-	const showTotal = hasQuery
-		? (showSearchData?.total_results ?? showResults.length)
-		: showResults.length;
-
-	const movieLoading = hasQuery
-		? isMovieSearchLoading
-		: isDiscoverMoviesLoading;
-	const showLoading = hasQuery ? isShowSearchLoading : isDiscoverShowsLoading;
-	const primaryError = movieSearchError || showSearchError;
+	const loading = hasQuery ? isSearchLoading : isDiscoverLoading;
 
 	const switchType = (nextType: "all" | "movies" | "shows") => {
 		const trimmed = query.trim();
@@ -154,6 +138,22 @@ function SearchPage() {
 			resetScroll: false,
 		});
 	};
+
+	const movieResults = useMemo(() => {
+		if (isShows) return [];
+		return results.filter((r) => r.media_type === "movie");
+	}, [results, isShows]);
+
+	const showResults = useMemo(() => {
+		if (isMovies) return [];
+		return results.filter((r) => r.media_type === "tv");
+	}, [results, isMovies]);
+
+	const combinedResults = useMemo(() => {
+		if (isMovies) return movieResults;
+		if (isShows) return showResults;
+		return results;
+	}, [isMovies, isShows, movieResults, showResults, results]);
 
 	return (
 		<div
@@ -219,7 +219,7 @@ function SearchPage() {
 					</div>
 				</div>
 
-				{primaryError && (
+				{searchError && (
 					<div
 						className="max-w-2xl p-4 rounded-lg mb-4"
 						style={{
@@ -228,105 +228,78 @@ function SearchPage() {
 						}}
 					>
 						<p style={{ color: "var(--md-sys-color-on-error-container)" }}>
-							Error: {primaryError.message}
+							Error: {(searchError as Error).message}
 						</p>
 					</div>
 				)}
 
-				{isAll && (
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-						<section>
-							<div className="flex items-center justify-between mb-4">
-								<h2 className="md-title-large">Movies</h2>
-								<span className="text-sm text-(--md-sys-color-on-surface-variant)">
-									{movieTotal.toLocaleString()}
-								</span>
-							</div>
-							{movieLoading ? (
-								<MovieGridSkeleton count={6} />
-							) : movieResults.length > 0 ? (
-								<MovieGrid
-									movies={movieResults.slice(0, ALL_PREVIEW_LIMIT)}
-									user={user}
-									watchedMovieIds={watchedMovieIds}
-									gridClassName="grid-cols-2 md:grid-cols-3"
-								/>
-							) : (
-								<p className="text-sm text-(--md-sys-color-on-surface-variant) py-4">
-									No movie results.
-								</p>
-							)}
-						</section>
-
-						<section>
-							<div className="flex items-center justify-between mb-4">
-								<h2 className="md-title-large">Shows</h2>
-								<span className="text-sm text-(--md-sys-color-on-surface-variant)">
-									{showTotal.toLocaleString()}
-								</span>
-							</div>
-							{showLoading ? (
-								<MovieGridSkeleton count={6} />
-							) : showResults.length > 0 ? (
-								<ShowGrid
-									shows={showResults.slice(0, ALL_PREVIEW_LIMIT)}
-									gridClassName="grid-cols-2 md:grid-cols-3"
-								/>
-							) : (
-								<p className="text-sm text-(--md-sys-color-on-surface-variant) py-4">
-									No show results.
-								</p>
-							)}
-						</section>
-					</div>
-				)}
-
-				{isMovies && (
-					<section>
-						<div className="flex items-center justify-between mb-4">
-							<h2 className="md-title-large">
-								{hasQuery ? "Movie Results" : "Popular Movies"}
-							</h2>
-							<span className="text-sm text-(--md-sys-color-on-surface-variant)">
-								{movieTotal.toLocaleString()}
-							</span>
-						</div>
-						{movieLoading ? (
-							<MovieGridSkeleton />
-						) : movieResults.length > 0 ? (
-							<MovieGrid
-								movies={movieResults}
-								user={user}
-								watchedMovieIds={watchedMovieIds}
+				{loading ? (
+					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+						{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+							<div
+								key={i}
+								className="aspect-2/3 bg-gray-800 rounded-lg animate-pulse"
 							/>
-						) : (
-							<div className="text-center py-12 text-(--md-sys-color-on-surface-variant)">
-								No movie results found for &quot;{searchQuery}&quot;
-							</div>
-						)}
-					</section>
-				)}
-
-				{isShows && (
-					<section>
+						))}
+					</div>
+				) : combinedResults.length > 0 ? (
+					<>
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="md-title-large">
-								{hasQuery ? "Show Results" : "Popular Shows"}
+								{hasQuery ? "Results" : "Popular"}
 							</h2>
-							<span className="text-sm text-(--md-sys-color-on-surface-variant)">
-								{showTotal.toLocaleString()}
-							</span>
+							{showTotal && (
+								<span className="text-sm text-(--md-sys-color-on-surface-variant)">
+									{total.toLocaleString()} results
+								</span>
+							)}
 						</div>
-						{showLoading ? (
-							<MovieGridSkeleton />
-						) : showResults.length > 0 ? (
-							<ShowGrid shows={showResults} />
-						) : (
-							<div className="text-center py-12 text-(--md-sys-color-on-surface-variant)">
-								No show results found for &quot;{searchQuery}&quot;
-							</div>
-						)}
-					</section>
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+							{combinedResults.map((item) => {
+								if (item.media_type === "movie") {
+									const movie: TmdbMovieResultDto = {
+										id: item.id,
+										title: item.title ?? "",
+										poster_path: item.poster_path,
+										backdrop_path: item.backdrop_path,
+										release_date: item.release_date,
+										overview: item.overview,
+									};
+									return (
+										<MovieCard
+											key={`movie-${item.id}`}
+											movie={movie}
+											user={user}
+											isWatched={watchedMovieIds.has(item.id.toString())}
+										/>
+									);
+								} else {
+									const show = {
+										id: item.id,
+										name: item.name ?? "",
+										poster_path: item.poster_path,
+										backdrop_path: item.backdrop_path,
+										first_air_date: item.first_air_date,
+										overview: item.overview,
+									};
+									return (
+										<ShowCard
+											key={`show-${item.id}`}
+											show={show}
+											user={user}
+											isWatched={watchedShowIds.has(item.id.toString())}
+										/>
+									);
+								}
+							})}
+						</div>
+					</>
+				) : (
+					<div className="text-center py-12 text-(--md-sys-color-on-surface-variant)">
+						{hasQuery
+							? `No results found for "${searchQuery}"`
+							: "No popular content available"}
+					</div>
 				)}
 			</div>
 		</div>

@@ -1,17 +1,82 @@
-import type { TmdbShowResultDto } from "@opnshelf/api";
+import {
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
+	type TmdbShowResultDto,
+	type UserDto,
+} from "@opnshelf/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Check, Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 interface ShowCardProps {
 	show: TmdbShowResultDto;
+	user: UserDto | null | undefined;
+	isWatched: boolean;
+	showActions?: boolean;
 }
 
-export function ShowCard({ show }: ShowCardProps) {
+export function ShowCard({
+	show,
+	user,
+	isWatched,
+	showActions = true,
+}: ShowCardProps) {
+	const queryClient = useQueryClient();
+	const showId = show.id.toString();
+
+	const markMutation = useMutation({
+		mutationKey: ["shows", showId, "markShowWatched"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			toast.success("Added to your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	const unmarkMutation = useMutation({
+		mutationKey: ["shows", showId, "unmarkWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			toast.success("Removed from your shelf");
+		},
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	const isMarkPending =
+		markMutation.isPending && markMutation.variables?.body?.showId === showId;
+	const isUnmarkPending =
+		unmarkMutation.isPending &&
+		unmarkMutation.variables?.path?.showId === showId;
+	const isPending = isMarkPending || isUnmarkPending;
+
 	const compatShow = show as TmdbShowResultDto & {
 		posterPath?: string | null;
 		firstAirDate?: string | null;
 	};
-	const showId = show.id.toString();
 	const posterUrl = getTmdbPosterUrl(
 		show.poster_path ?? compatShow.posterPath ?? null,
 	);
@@ -34,6 +99,52 @@ export function ShowCard({ show }: ShowCardProps) {
 				) : (
 					<div className="w-full h-full flex items-center justify-center text-gray-600">
 						No poster
+					</div>
+				)}
+				{showActions && user && (
+					<div className="absolute top-2 right-2 z-10">
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										type="button"
+										size="icon"
+										variant="default"
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											if (isWatched) {
+												unmarkMutation.mutate({
+													path: { showId },
+													query: { mode: "all" },
+												});
+											} else {
+												markMutation.mutate({
+													body: { showId },
+												});
+											}
+										}}
+										disabled={isPending}
+										className={`${
+											isWatched
+												? "bg-green-600 hover:bg-red-600"
+												: "bg-primary hover:bg-primary/80 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+										} transition-opacity`}
+									>
+										{isPending ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : isWatched ? (
+											<Check className="w-4 h-4" />
+										) : (
+											<Plus className="w-4 h-4" />
+										)}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>{isWatched ? "Remove from shelf" : "Mark as watched"}</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
 					</div>
 				)}
 			</Link>

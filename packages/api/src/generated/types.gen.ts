@@ -513,6 +513,39 @@ export type ShelfResponseDto = {
     total: number;
 };
 
+export type UnifiedSearchResultDto = {
+    id: number;
+    media_type: 'movie' | 'tv';
+    title?: string;
+    name?: string;
+    poster_path?: string;
+    backdrop_path?: string;
+    release_date?: string;
+    first_air_date?: string;
+    overview?: string;
+    popularity: number;
+    vote_average: number;
+    vote_count: number;
+    original_language?: string;
+    genre_ids?: Array<string>;
+    original_title?: string;
+    original_name?: string;
+    adult?: boolean;
+    video?: boolean;
+};
+
+export type UnifiedSearchResponseDto = {
+    results: Array<UnifiedSearchResultDto>;
+    total_results: number;
+    page: number;
+};
+
+export type UnifiedDiscoverResponseDto = {
+    results: Array<UnifiedSearchResultDto>;
+    total_results: number;
+    page: number;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -1504,3 +1537,51 @@ export type ShelfControllerGetUserShelfResponses = {
 };
 
 export type ShelfControllerGetUserShelfResponse = ShelfControllerGetUserShelfResponses[keyof ShelfControllerGetUserShelfResponses];
+
+export type SearchControllerSearchAllData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Search term
+         */
+        query: string;
+        /**
+         * Page number
+         */
+        page?: number;
+    };
+    url: '/search/all';
+};
+
+export type SearchControllerSearchAllResponses = {
+    200: UnifiedSearchResponseDto;
+};
+
+export type SearchControllerSearchAllResponse = SearchControllerSearchAllResponses[keyof SearchControllerSearchAllResponses];
+
+export type SearchControllerDiscoverAllData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Year filter
+         */
+        year?: unknown;
+        /**
+         * Page number
+         */
+        page?: unknown;
+        /**
+         * Sort by
+         */
+        sortBy?: unknown;
+    };
+    url: '/search/discover';
+};
+
+export type SearchControllerDiscoverAllResponses = {
+    200: UnifiedDiscoverResponseDto;
+};
+
+export type SearchControllerDiscoverAllResponse = SearchControllerDiscoverAllResponses[keyof SearchControllerDiscoverAllResponses];

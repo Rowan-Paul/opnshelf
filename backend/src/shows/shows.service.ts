@@ -24,6 +24,9 @@ export interface TMDBShow {
 	genres?: Array<{ id: number; name: string }>;
 	number_of_seasons?: number;
 	number_of_episodes?: number;
+	popularity: number;
+	vote_average: number;
+	vote_count: number;
 }
 
 export interface TMDBSearchResponse {

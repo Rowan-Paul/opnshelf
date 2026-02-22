@@ -17,6 +17,9 @@ export interface TMDBMovie {
 	backdrop_path?: string;
 	release_date?: string;
 	overview?: string;
+	popularity: number;
+	vote_average: number;
+	vote_count: number;
 }
 
 export interface TMDBSearchResponse {

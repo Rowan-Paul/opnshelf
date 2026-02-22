@@ -30,6 +30,7 @@ interface MovieItemProps {
 	isUnmarking: boolean;
 	onToggle: (movieId: string, isWatched: boolean) => void;
 	onPress: () => void;
+	width?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -61,6 +62,7 @@ export function MovieItem({
 	isUnmarking,
 	onToggle,
 	onPress,
+	width,
 }: MovieItemProps) {
 	const { colors } = useTheme();
 	const scale = useSharedValue(1);
@@ -101,11 +103,9 @@ export function MovieItem({
 		() =>
 			StyleSheet.create({
 				movieItem: {
-					flex: 1,
+					width: width,
 					marginBottom: spacing.lg,
-					marginHorizontal: spacing.sm,
-					minWidth: 140,
-					maxWidth: "47%",
+					marginHorizontal: spacing.xs,
 				},
 				posterContainer: {
 					aspectRatio: 2 / 3,
@@ -181,6 +181,7 @@ export function MovieItem({
 				},
 			}),
 		[
+			width,
 			colors.surfaceContainer,
 			colors.surfaceContainerHigh,
 			colors.onSurfaceVariant,

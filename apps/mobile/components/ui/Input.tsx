@@ -17,7 +17,7 @@ export function Input({ icon, containerStyle, style, ...props }: InputProps) {
 			{icon ? <View style={styles.icon}>{icon}</View> : null}
 			<TextInput
 				style={[styles.input, icon ? styles.inputWithIcon : undefined, { color: colors.onSurface }, style]}
-				placeholderTextColor={colors.onSurfaceVariant}
+				placeholderTextColor="#e5e7eb"
 				{...props}
 			/>
 		</View>
@@ -42,14 +42,9 @@ export function SearchInput({ containerStyle, onClear, value, ...props }: Search
 		[colors.surfaceContainer, colors.outline, containerStyle],
 	);
 
-	const inputStyles = useMemo(
-		() => [
-			styles.input,
-			styles.inputWithIcon,
-			{ color: colors.onSurface, placeholderTextColor: colors.onSurfaceVariant },
-			hasValue ? styles.inputWithClear : null,
-		],
-		[colors.onSurface, colors.onSurfaceVariant, hasValue],
+	const inputTextStyle = useMemo(
+		() => [styles.input, styles.inputWithIcon, hasValue ? styles.inputWithClear : null],
+		[hasValue],
 	);
 
 	return (
@@ -57,7 +52,13 @@ export function SearchInput({ containerStyle, onClear, value, ...props }: Search
 			<View style={styles.icon}>
 				<Search size={20} color={colors.onSurfaceVariant} />
 			</View>
-			<TextInput style={inputStyles} value={value} {...props} />
+			<TextInput
+				style={inputTextStyle}
+				value={value}
+				placeholderTextColor={colors.onSurfaceVariant}
+				color={colors.onSurface}
+				{...props}
+			/>
 			{hasValue && onClear && (
 				<TouchableOpacity style={styles.clearButton} onPress={onClear}>
 					<X size={20} color={colors.onSurfaceVariant} />

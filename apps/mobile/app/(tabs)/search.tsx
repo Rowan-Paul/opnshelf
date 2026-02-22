@@ -1,20 +1,20 @@
 import {
-	moviesControllerDiscoverMoviesOptions,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
-	moviesControllerSearchMoviesOptions,
 	moviesControllerUnmarkWatchedMutation,
-	showsControllerDiscoverShowsOptions,
-	showsControllerSearchShowsOptions,
+	showsControllerGetUserShowsOptions,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type TmdbMovieResultDto,
-	type TmdbShowResultDto,
+	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
 import { ShowItem } from "@/components/ShowItem";
@@ -27,6 +27,13 @@ import { useToast } from "@/contexts/toast";
 import { createTitleSlug } from "@/lib/utils";
 
 const DEBOUNCE_MS = 300;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001";
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const GAP = spacing.md;
+const H_PADDING = spacing.lg;
+const COLUMNS = 2;
+const ITEM_MARGIN = GAP / 2;
+const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING * 2) / COLUMNS - ITEM_MARGIN * 2;
 
 export default function SearchScreen() {
 	const [query, setQuery] = useState("");
@@ -61,47 +68,78 @@ export default function SearchScreen() {
 		enabled: !!user?.did,
 	});
 
+	const { data: trackedShows } = useQuery({
+		...showsControllerGetUserShowsOptions({
+			path: { userDid: user?.did || "" },
+		}),
+		enabled: !!user?.did,
+	});
+
 	const watchedMovieIds = useMemo(() => {
 		if (!trackedMovies) return new Set<string>();
 		return new Set(trackedMovies.map((m) => m.movieId));
 	}, [trackedMovies]);
 
-	const { data, isLoading, error } = useQuery({
-		...moviesControllerSearchMoviesOptions({
-			query: { query: debouncedQuery },
-		}),
-		enabled:
-			debouncedQuery.length > 0 &&
-			(mediaType === "all" || mediaType === "movies"),
+	const watchedShowIds = useMemo(() => {
+		if (!trackedShows) return new Set<string>();
+		return new Set(trackedShows.map((s) => s.showId));
+	}, [trackedShows]);
+
+	const {
+		data: searchData,
+		isLoading: isSearchLoading,
+		error: searchError,
+	} = useQuery({
+		queryKey: ["search", "all", debouncedQuery],
+		queryFn: async () => {
+			const response = await fetch(
+				`${API_URL}/search/all?query=${encodeURIComponent(debouncedQuery)}`,
+			);
+			if (!response.ok) throw new Error("Search failed");
+			return response.json();
+		},
+		enabled: debouncedQuery.length > 0,
 	});
 
 	const {
-		data: showData,
-		isLoading: isShowLoading,
-		error: showError,
+		data: discoverData,
+		isLoading: isDiscoverLoading,
+		error: discoverError,
 	} = useQuery({
-		...showsControllerSearchShowsOptions({
-			query: { query: debouncedQuery },
-		}),
-		enabled:
-			debouncedQuery.length > 0 &&
-			(mediaType === "all" || mediaType === "shows"),
+		queryKey: ["search", "discover"],
+		queryFn: async () => {
+			const response = await fetch(`${API_URL}/search/discover`);
+			if (!response.ok) throw new Error("Discover failed");
+			return response.json();
+		},
+		enabled: debouncedQuery.length === 0,
 	});
 
-	const { data: discoverData, isLoading: isDiscoverLoading } = useQuery({
-		...moviesControllerDiscoverMoviesOptions({}),
-		enabled:
-			debouncedQuery.length === 0 &&
-			(mediaType === "all" || mediaType === "movies"),
-	});
+	const results: UnifiedSearchResultDto[] = useMemo(() => {
+		const data = debouncedQuery.length > 0 ? searchData : discoverData;
+		return data?.results ?? [];
+	}, [debouncedQuery, searchData, discoverData]);
 
-	const { data: discoverShowsData, isLoading: isDiscoverShowsLoading } =
-		useQuery({
-			...showsControllerDiscoverShowsOptions({}),
-			enabled:
-				debouncedQuery.length === 0 &&
-				(mediaType === "all" || mediaType === "shows"),
-		});
+	const total = useMemo(() => {
+		const data = debouncedQuery.length > 0 ? searchData : discoverData;
+		return data?.total_results ?? results.length;
+	}, [debouncedQuery, searchData, discoverData, results.length]);
+
+	const showTotal = debouncedQuery.length > 0 && total > 0;
+
+	const isLoading =
+		debouncedQuery.length > 0 ? isSearchLoading : isDiscoverLoading;
+	const error = debouncedQuery.length > 0 ? searchError : discoverError;
+
+	const filteredResults = useMemo(() => {
+		if (mediaType === "movies") {
+			return results.filter((r) => r.media_type === "movie");
+		}
+		if (mediaType === "shows") {
+			return results.filter((r) => r.media_type === "tv");
+		}
+		return results;
+	}, [results, mediaType]);
 
 	const markMutation = useMutation({
 		mutationKey: ["movies", "markWatched"],
@@ -135,6 +173,38 @@ export default function SearchScreen() {
 		},
 	});
 
+	const markShowMutation = useMutation({
+		mutationKey: ["shows", "markShowWatched"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			showToast("Added to your shelf", "success");
+		},
+		onError: () => {
+			showToast("Failed to add to shelf. Please try again.", "error");
+		},
+	});
+
+	const unmarkShowMutation = useMutation({
+		mutationKey: ["shows", "unmarkWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did || "" },
+				}),
+			});
+			showToast("Removed from your shelf", "success");
+		},
+		onError: () => {
+			showToast("Failed to remove from shelf. Please try again.", "error");
+		},
+	});
+
 	const handleToggleWatched = useCallback(
 		(movieId: string, isWatched: boolean) => {
 			if (!user) {
@@ -150,6 +220,23 @@ export default function SearchScreen() {
 			}
 		},
 		[user, markMutation, unmarkMutation, showToast],
+	);
+
+	const handleToggleShowWatched = useCallback(
+		(showId: string, isWatched: boolean) => {
+			if (!user) {
+				showToast("Sign in to track shows", "info");
+				router.push("/login");
+				return;
+			}
+
+			if (isWatched) {
+				unmarkShowMutation.mutate({ path: { showId }, query: { mode: "all" } });
+			} else {
+				markShowMutation.mutate({ body: { showId } });
+			}
+		},
+		[user, markShowMutation, unmarkShowMutation, showToast],
 	);
 
 	const handleMoviePress = useCallback(
@@ -175,76 +262,126 @@ export default function SearchScreen() {
 		});
 	}, []);
 
-	const renderMovieItem: ListRenderItem<TmdbMovieResultDto> = useCallback(
+	const renderItem: ListRenderItem<UnifiedSearchResultDto> = useCallback(
 		({ item }) => {
-			const movieId = item.id.toString();
-			const isWatched = watchedMovieIds.has(movieId);
-			const isMarking =
-				markMutation.isPending &&
-				markMutation.variables?.body?.movieId === movieId;
-			const isUnmarking =
-				unmarkMutation.isPending &&
-				unmarkMutation.variables?.path?.movieId === movieId;
+			if (item.media_type === "movie") {
+				const movie: TmdbMovieResultDto = {
+					id: item.id,
+					title: item.title ?? "",
+					poster_path: item.poster_path,
+					backdrop_path: item.backdrop_path,
+					release_date: item.release_date,
+					overview: item.overview,
+				};
+				const movieId = item.id.toString();
+				const isWatched = watchedMovieIds.has(movieId);
+				const isMarking =
+					markMutation.isPending &&
+					markMutation.variables?.body?.movieId === movieId;
+				const isUnmarking =
+					unmarkMutation.isPending &&
+					unmarkMutation.variables?.path?.movieId === movieId;
 
-			return (
-				<MovieItem
-					movie={item}
-					isWatched={isWatched}
-					isMarking={isMarking}
-					isUnmarking={isUnmarking}
-					onToggle={handleToggleWatched}
-					onPress={() => handleMoviePress(item)}
-				/>
-			);
+				return (
+					<MovieItem
+						movie={movie}
+						isWatched={isWatched}
+						isMarking={isMarking}
+						isUnmarking={isUnmarking}
+						onToggle={handleToggleWatched}
+						onPress={() => handleMoviePress(movie)}
+						width={ITEM_WIDTH}
+					/>
+				);
+			} else {
+				const show = {
+					id: item.id,
+					name: item.name ?? "",
+					poster_path: item.poster_path,
+					backdrop_path: item.backdrop_path,
+					first_air_date: item.first_air_date,
+					overview: item.overview,
+				};
+				const showId = item.id.toString();
+				const isWatched = watchedShowIds.has(showId);
+				const isMarking =
+					markShowMutation.isPending &&
+					markShowMutation.variables?.body?.showId === showId;
+				const isUnmarking =
+					unmarkShowMutation.isPending &&
+					unmarkShowMutation.variables?.path?.showId === showId;
+
+				return (
+					<ShowItem
+						show={show}
+						isWatched={isWatched}
+						isMarking={isMarking}
+						isUnmarking={isUnmarking}
+						onToggle={handleToggleShowWatched}
+						onPress={() =>
+							handleShowPress(show as { id: number; name: string })
+						}
+						width={ITEM_WIDTH}
+					/>
+				);
+			}
 		},
 		[
 			watchedMovieIds,
 			markMutation,
 			unmarkMutation,
+			watchedShowIds,
+			markShowMutation,
+			unmarkShowMutation,
 			handleToggleWatched,
+			handleToggleShowWatched,
 			handleMoviePress,
+			handleShowPress,
 		],
 	);
 
 	const keyExtractor = useCallback(
-		(item: TmdbMovieResultDto) => item.id.toString(),
+		(item: UnifiedSearchResultDto) => `${item.media_type}-${item.id}`,
 		[],
-	);
-	const showKeyExtractor = useCallback(
-		(item: TmdbShowResultDto) => item.id.toString(),
-		[],
-	);
-
-	const renderShowItem: ListRenderItem<TmdbShowResultDto> = useCallback(
-		({ item }) => (
-			<ShowItem
-				show={item}
-				onPress={() => handleShowPress(item as TmdbShowResultDto)}
-			/>
-		),
-		[handleShowPress],
 	);
 
 	const renderSkeleton = () => (
-		<View style={styles.skeletonGrid}>
-			{[...Array(10)].map((_, i) => (
-				<View key={i} style={styles.skeletonItem}>
-					<Skeleton width="100%" height={210} borderRadius={borderRadius.lg} />
-					<View style={{ marginTop: spacing.sm }}>
-						<Skeleton width="80%" height={16} />
+		<View style={styles.skeletonContainer}>
+			<View style={styles.skeletonRow}>
+				{[...Array(2)].map((_, i) => (
+					<View key={i} style={styles.skeletonItem}>
+						<Skeleton
+							width="100%"
+							height={210}
+							borderRadius={borderRadius.lg}
+						/>
+						<View style={{ marginTop: spacing.sm }}>
+							<Skeleton width="80%" height={16} />
+						</View>
+						<View style={{ marginTop: spacing.xs }}>
+							<Skeleton width="50%" height={14} />
+						</View>
 					</View>
-					<View style={{ marginTop: spacing.xs }}>
-						<Skeleton width="50%" height={14} />
+				))}
+			</View>
+			<View style={styles.skeletonRow}>
+				{[...Array(2)].map((_, i) => (
+					<View key={i} style={styles.skeletonItem}>
+						<Skeleton
+							width="100%"
+							height={210}
+							borderRadius={borderRadius.lg}
+						/>
+						<View style={{ marginTop: spacing.sm }}>
+							<Skeleton width="80%" height={16} />
+						</View>
+						<View style={{ marginTop: spacing.xs }}>
+							<Skeleton width="50%" height={14} />
+						</View>
 					</View>
-				</View>
-			))}
+				))}
+			</View>
 		</View>
-	);
-
-	const showResults = useMemo(() => showData?.results || [], [showData]);
-	const discoverShowResults = useMemo(
-		() => discoverShowsData?.results || [],
-		[discoverShowsData],
 	);
 
 	return (
@@ -254,14 +391,14 @@ export default function SearchScreen() {
 		>
 			<View style={styles.header}>
 				<Text style={[styles.title, { color: colors.onBackground }]}>
-					Search Movies
+					Search
 				</Text>
 			</View>
 
 			<SearchInput
 				value={query}
 				onChangeText={setQuery}
-				placeholder="Search for a movie..."
+				placeholder="Search movies and shows..."
 				containerStyle={styles.searchInput}
 				onClear={() => setQuery("")}
 			/>
@@ -292,45 +429,47 @@ export default function SearchScreen() {
 				))}
 			</View>
 
-			{(isLoading || isShowLoading) && renderSkeleton()}
+			{isLoading && renderSkeleton()}
 
-			{(error || showError) && (
+			{error && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.errorText, { color: colors.error }]}>
-						Error: {(error || showError)?.message}
+						Error: {(error as Error).message}
 					</Text>
 				</View>
 			)}
 
-			{data && data.results.length > 0 && (
+			{!isLoading && filteredResults.length > 0 && (
 				<FlashList
-					data={data.results}
-					renderItem={renderMovieItem}
+					data={filteredResults}
+					renderItem={renderItem}
 					keyExtractor={keyExtractor}
 					numColumns={2}
 					contentContainerStyle={styles.listContent}
-					extraData={watchedMovieIds}
+					extraData={{
+						watchedMovieIds,
+						watchedShowIds,
+						markMutation,
+						unmarkMutation,
+						markShowMutation,
+						unmarkShowMutation,
+					}}
 					ListHeaderComponent={
-						<Text
-							style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
-						>
-							Found {data.total_results.toLocaleString()} results
-						</Text>
+						showTotal ? (
+							<Text
+								style={[
+									styles.resultsCount,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Found {total.toLocaleString()} results
+							</Text>
+						) : null
 					}
 				/>
 			)}
 
-			{showData && showResults.length > 0 && (
-				<FlashList
-					data={showResults}
-					renderItem={renderShowItem}
-					keyExtractor={showKeyExtractor}
-					numColumns={2}
-					contentContainerStyle={styles.listContent}
-				/>
-			)}
-
-			{data && data.results.length === 0 && debouncedQuery && (
+			{!isLoading && filteredResults.length === 0 && debouncedQuery && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
 						No results found for &quot;{debouncedQuery}&quot;
@@ -338,43 +477,11 @@ export default function SearchScreen() {
 				</View>
 			)}
 
-			{!debouncedQuery && (
-				<View style={{ flex: 1 }}>
-					<View style={styles.header}>
-						<Text style={[styles.title, { color: colors.onBackground }]}>
-							Popular Movies
-						</Text>
-					</View>
-					{isDiscoverLoading && renderSkeleton()}
-					{discoverData && discoverData.results.length > 0 && (
-						<FlashList
-							data={discoverData.results}
-							renderItem={renderMovieItem}
-							keyExtractor={keyExtractor}
-							numColumns={2}
-							contentContainerStyle={styles.listContent}
-							extraData={watchedMovieIds}
-						/>
-					)}
-					{(mediaType === "all" || mediaType === "shows") && (
-						<>
-							<View style={styles.header}>
-								<Text style={[styles.title, { color: colors.onBackground }]}>
-									Popular Shows
-								</Text>
-							</View>
-							{isDiscoverShowsLoading && renderSkeleton()}
-							{discoverShowResults.length > 0 && (
-								<FlashList
-									data={discoverShowResults}
-									renderItem={renderShowItem}
-									keyExtractor={showKeyExtractor}
-									numColumns={2}
-									contentContainerStyle={styles.listContent}
-								/>
-							)}
-						</>
-					)}
+			{!isLoading && !debouncedQuery && filteredResults.length === 0 && (
+				<View style={styles.centerContent}>
+					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
+						No popular content available
+					</Text>
 				</View>
 			)}
 		</SafeAreaView>
@@ -410,11 +517,13 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.full,
 	},
 	listContent: {
-		padding: spacing.lg,
+		paddingVertical: spacing.lg,
+		paddingHorizontal: H_PADDING,
 	},
 	resultsCount: {
 		fontSize: 14,
 		marginBottom: spacing.md,
+		paddingHorizontal: spacing.sm,
 	},
 	centerContent: {
 		flex: 1,
@@ -430,17 +539,15 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		textAlign: "center",
 	},
-	skeletonGrid: {
+	skeletonContainer: {
+		paddingHorizontal: H_PADDING,
+	},
+	skeletonRow: {
 		flexDirection: "row",
-		flexWrap: "wrap",
-		padding: spacing.lg,
-		paddingTop: 0,
+		gap: GAP,
 	},
 	skeletonItem: {
 		flex: 1,
 		marginBottom: spacing.lg,
-		marginHorizontal: spacing.sm,
-		minWidth: 140,
-		maxWidth: "47%",
 	},
 });
