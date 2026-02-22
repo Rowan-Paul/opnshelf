@@ -3,7 +3,6 @@ import { MoviesService } from "../movies/movies.service";
 import { ShowsService } from "../shows/shows.service";
 import {
 	type DiscoverQueryDto,
-	type MediaType,
 	type UnifiedDiscoverResponseDto,
 	type UnifiedSearchResponseDto,
 	type UnifiedSearchResultDto,

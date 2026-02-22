@@ -53,10 +53,9 @@ export function SearchInput({ containerStyle, onClear, value, ...props }: Search
 				<Search size={20} color={colors.onSurfaceVariant} />
 			</View>
 			<TextInput
-				style={inputTextStyle}
+				style={[inputTextStyle, { color: colors.onSurface }]}
 				value={value}
 				placeholderTextColor={colors.onSurfaceVariant}
-				color={colors.onSurface}
 				{...props}
 			/>
 			{hasValue && onClear && (

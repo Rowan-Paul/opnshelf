@@ -223,13 +223,13 @@ Before committing, ensure code quality:
 
 ```bash
 # Web
-cd apps/web && pnpm check && npx tsc --noEmit
+cd apps/web && pnpm check && pnpm tsc --noEmit
 
 # Backend
-cd backend && pnpm lint
+cd backend && pnpm check && pnpm tsc --noEmit
 
 # Mobile
-cd apps/mobile && pnpm typecheck
+cd apps/mobile && pnpm check && pnpm tsc --noEmit
 ```
 
 ## License

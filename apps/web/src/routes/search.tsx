@@ -97,7 +97,6 @@ function SearchPage() {
 	}, [query, searchQuery, type, navigate]);
 
 	const hasQuery = searchQuery.length > 0;
-	const _isAll = type === "all";
 	const isMovies = type === "movies";
 	const isShows = type === "shows";
 

@@ -1,13 +1,20 @@
-import type { TmdbShowResultDto } from "@opnshelf/api";
+import type { TmdbShowResultDto, UserDto } from "@opnshelf/api";
 import { cn } from "@/lib/utils";
 import { ShowCard } from "./ShowCard";
 
 interface ShowGridProps {
 	shows: TmdbShowResultDto[];
+	user: UserDto | null | undefined;
+	watchedShowIds: Set<string>;
 	gridClassName?: string;
 }
 
-export function ShowGrid({ shows, gridClassName }: ShowGridProps) {
+export function ShowGrid({
+	shows,
+	user,
+	watchedShowIds,
+	gridClassName,
+}: ShowGridProps) {
 	return (
 		<div
 			className={cn(
@@ -16,7 +23,12 @@ export function ShowGrid({ shows, gridClassName }: ShowGridProps) {
 			)}
 		>
 			{shows.map((show) => (
-				<ShowCard key={show.id} show={show} />
+				<ShowCard
+					key={show.id}
+					show={show}
+					user={user}
+					isWatched={watchedShowIds.has(show.id.toString())}
+				/>
 			))}
 		</div>
 	);

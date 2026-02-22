@@ -261,6 +261,9 @@ describe("MoviesService", () => {
 				backdrop_path: "/backdrop.jpg",
 				release_date: "2024-06-15",
 				overview: "A great test movie",
+				popularity: 100.5,
+				vote_average: 8.5,
+				vote_count: 1500,
 			};
 			const mockUpsertedMovie = {
 				movieId: "123",
@@ -317,6 +320,9 @@ describe("MoviesService", () => {
 				backdrop_path: undefined,
 				release_date: undefined,
 				overview: "No release date",
+				popularity: 50.0,
+				vote_average: 7.0,
+				vote_count: 100,
 			};
 			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
 				null,
@@ -357,6 +363,9 @@ describe("MoviesService", () => {
 				backdrop_path: undefined,
 				release_date: "",
 				overview: undefined,
+				popularity: 25.0,
+				vote_average: 6.5,
+				vote_count: 50,
 			};
 			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
 				null,
@@ -389,6 +398,9 @@ describe("MoviesService", () => {
 				backdrop_path: undefined,
 				release_date: "2025-01-01",
 				overview: "Refresh colors",
+				popularity: 75.0,
+				vote_average: 7.8,
+				vote_count: 500,
 			};
 			const mockColors = {
 				primary: "#60a5fa",

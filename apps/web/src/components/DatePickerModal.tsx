@@ -63,11 +63,16 @@ export function DatePickerModal({
 		}
 	}, [open]);
 
+	const isMovieMode = target.mode === undefined || target.mode === "movie";
+	const isEpisodeMode = target.mode === "episode";
+	const isSeasonMode = target.mode === "season";
+	const isShowMode = target.mode === "show";
+
 	const markMutation = useMutation({
-		mutationKey: ["movies", target.movieId, "markWatched"],
+		mutationKey: ["movies", isMovieMode ? target.movieId : "", "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onSuccess: () => {
-			if (target.mode === "episode") {
+			if (isEpisodeMode) {
 				return;
 			}
 			queryClient.invalidateQueries({
@@ -75,9 +80,11 @@ export function DatePickerModal({
 					path: { userDid: userDid || "" },
 				}),
 			});
-			queryClient.invalidateQueries({
-				queryKey: ["watchHistory", userDid, target.movieId],
-			});
+			if (isMovieMode) {
+				queryClient.invalidateQueries({
+					queryKey: ["watchHistory", userDid, target.movieId],
+				});
+			}
 			toast.success("Added to your shelf");
 			onClose();
 		},
@@ -88,14 +95,14 @@ export function DatePickerModal({
 	const markEpisodeMutation = useMutation({
 		mutationKey: [
 			"shows",
-			target.showId,
+			isEpisodeMode ? target.showId : "",
 			"episodes",
-			target.episodeNumber,
+			isEpisodeMode ? target.episodeNumber : "",
 			"markWatched",
 		],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
-			if (target.mode === "episode") {
+			if (isEpisodeMode) {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetUserShowsQueryKey({
 						path: { userDid: userDid || "" },
@@ -117,14 +124,14 @@ export function DatePickerModal({
 	const markSeasonMutation = useMutation({
 		mutationKey: [
 			"shows",
-			target.showId,
+			isSeasonMode ? target.showId : "",
 			"seasons",
-			target.seasonNumber,
+			isSeasonMode ? target.seasonNumber : "",
 			"markSeasonWatched",
 		],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: () => {
-			if (target.mode === "season") {
+			if (isSeasonMode) {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetUserShowsQueryKey({
 						path: { userDid: userDid || "" },
@@ -144,10 +151,10 @@ export function DatePickerModal({
 		},
 	});
 	const markShowMutation = useMutation({
-		mutationKey: ["shows", target.showId, "markShowWatched"],
+		mutationKey: ["shows", isShowMode ? target.showId : "", "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
-			if (target.mode === "show") {
+			if (isShowMode) {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetUserShowsQueryKey({
 						path: { userDid: userDid || "" },
@@ -183,7 +190,7 @@ export function DatePickerModal({
 			return;
 		}
 
-		if (target.mode === "episode") {
+		if (isEpisodeMode) {
 			markEpisodeMutation.mutate({
 				body: {
 					showId: target.showId,
@@ -195,7 +202,7 @@ export function DatePickerModal({
 			return;
 		}
 
-		if (target.mode === "season") {
+		if (isSeasonMode) {
 			markSeasonMutation.mutate({
 				body: {
 					showId: target.showId,
@@ -206,7 +213,7 @@ export function DatePickerModal({
 			return;
 		}
 
-		if (target.mode === "show") {
+		if (isShowMode) {
 			markShowMutation.mutate({
 				body: {
 					showId: target.showId,
