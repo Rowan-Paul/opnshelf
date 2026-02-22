@@ -109,7 +109,7 @@ export function DetailActions({
 						<AddToShelfButton
 							onClick={onMarkWatched}
 							isPending={isMarkingPending}
-							label="Select Watch Date"
+							label="Watch Again"
 							icon={<RotateCcw className="w-4 h-4" />}
 							colors={colors}
 							size="compact"

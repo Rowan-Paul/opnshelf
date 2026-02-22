@@ -121,7 +121,7 @@ export function DetailActions({
 								) : (
 									<View style={styles.buttonContent}>
 										<Ionicons name="refresh" size={18} color="#f9fafb" />
-										<Text style={styles.primaryButtonText}>Select Watch Date</Text>
+										<Text style={styles.primaryButtonText}>Watch Again</Text>
 									</View>
 								)}
 							</LinearGradient>

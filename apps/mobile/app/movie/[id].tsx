@@ -5,6 +5,7 @@ import type {
 	TmdbMovieDetailDto,
 } from "@opnshelf/api";
 import {
+	authControllerMeOptions,
 	listsControllerGetListsForItemOptions,
 	type MovieListsForItemDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
@@ -87,6 +88,12 @@ export default function MovieDetailScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
+	const { data: user } = useQuery({
+		...authControllerMeOptions(),
+		staleTime: 5 * 60 * 1000,
+		retry: false,
+	});
+
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [customDate, setCustomDate] = useState<Date>(new Date());
@@ -111,28 +118,28 @@ export default function MovieDetailScreen() {
 
 	const { data: trackedMovies } = useQuery({
 		...moviesControllerGetUserMoviesOptions({
-			path: { userDid: "" },
+			path: { userDid: user?.did || "" },
 		}),
-		enabled: false,
+		enabled: !!user?.did,
 	});
 
 	const { data: watchHistory } = useQuery({
 		...moviesControllerGetMovieWatchHistoryOptions({
-			path: { userDid: "", movieId },
+			path: { userDid: user?.did || "", movieId },
 		}),
-		enabled: false,
+		enabled: !!user?.did,
 	});
 
 	const { data: userSettings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
-		enabled: false,
+		enabled: !!user?.did,
 	});
 
 	const { data: listsForMovie } = useQuery({
 		...listsControllerGetListsForItemOptions({
 			path: { mediaType: "movie", mediaId: movieId },
 		}),
-		enabled: false,
+		enabled: !!user?.did,
 	});
 
 	const listsForMovieTyped = (listsForMovie || []) as MovieListsForItemDto[];
@@ -162,12 +169,12 @@ export default function MovieDetailScreen() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetUserMoviesQueryKey({
-					path: { userDid: "" },
+					path: { userDid: user?.did || "" },
 				}),
 			});
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-					path: { userDid: "", movieId },
+					path: { userDid: user?.did || "", movieId },
 				}),
 			});
 			setShowDateModal(false);
@@ -184,12 +191,12 @@ export default function MovieDetailScreen() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetUserMoviesQueryKey({
-					path: { userDid: "" },
+					path: { userDid: user?.did || "" },
 				}),
 			});
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-					path: { userDid: "", movieId },
+					path: { userDid: user?.did || "", movieId },
 				}),
 			});
 			showToast("Removed from your shelf", "success");
@@ -205,12 +212,12 @@ export default function MovieDetailScreen() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetUserMoviesQueryKey({
-					path: { userDid: "" },
+					path: { userDid: user?.did || "" },
 				}),
 			});
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-					path: { userDid: "", movieId },
+					path: { userDid: user?.did || "", movieId },
 				}),
 			});
 			showToast("Watch entry removed", "success");
