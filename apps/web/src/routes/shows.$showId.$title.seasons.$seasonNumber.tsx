@@ -80,12 +80,18 @@ export const Route = createFileRoute(
 				{ title },
 				{
 					name: "description",
-					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						season?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				{ property: "og:title", content: title },
 				{
 					property: "og:description",
-					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						season?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				{ property: "og:type", content: "video.tv" },
 				{ property: "og:url", content: url },
@@ -96,7 +102,10 @@ export const Route = createFileRoute(
 				{ name: "twitter:title", content: title },
 				{
 					name: "twitter:description",
-					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						season?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				...(posterUrl ? [{ name: "twitter:image", content: posterUrl }] : []),
 				{ name: "twitter:url", content: url },

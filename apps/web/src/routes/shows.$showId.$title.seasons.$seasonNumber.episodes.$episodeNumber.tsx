@@ -77,12 +77,11 @@ export const Route = createFileRoute(
 			showName && episodeName
 				? `${showName}: ${episodeName} | OpnShelf`
 				: "Episode | OpnShelf";
-		const posterUrl =
-			episode?.still_path
-				? `https://image.tmdb.org/t/p/w780${episode.still_path}`
-				: show?.poster_path
-					? `https://image.tmdb.org/t/p/w780${show.poster_path}`
-					: null;
+		const posterUrl = episode?.still_path
+			? `https://image.tmdb.org/t/p/w780${episode.still_path}`
+			: show?.poster_path
+				? `https://image.tmdb.org/t/p/w780${show.poster_path}`
+				: null;
 		const url = typeof window !== "undefined" ? window.location.href : "";
 
 		return {
@@ -90,12 +89,18 @@ export const Route = createFileRoute(
 				{ title },
 				{
 					name: "description",
-					content: episode?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						episode?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				{ property: "og:title", content: title },
 				{
 					property: "og:description",
-					content: episode?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						episode?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				{ property: "og:type", content: "video.episode" },
 				{ property: "og:url", content: url },
@@ -106,7 +111,10 @@ export const Route = createFileRoute(
 				{ name: "twitter:title", content: title },
 				{
 					name: "twitter:description",
-					content: episode?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+					content:
+						episode?.overview?.slice(0, 160) ||
+						show?.overview?.slice(0, 160) ||
+						"",
 				},
 				...(posterUrl ? [{ name: "twitter:image", content: posterUrl }] : []),
 				{ name: "twitter:url", content: url },
