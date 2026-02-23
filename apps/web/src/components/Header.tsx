@@ -58,9 +58,10 @@ export default function Header() {
 						<Menu size={24} />
 					</M3Button>
 					<Link to="/" className="flex items-center gap-2 group">
-						<Film
-							className="w-8 h-8 transition-transform group-hover:scale-110"
-							style={{ color: seedColor }}
+						<img
+							src="/icon.png"
+							alt="OpnShelf"
+							className="w-8 h-8 rounded-md transition-transform group-hover:scale-110"
 						/>
 						<span className="md-title-large">OpnShelf</span>
 					</Link>

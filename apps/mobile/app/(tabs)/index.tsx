@@ -568,7 +568,10 @@ function UnauthenticatedHome() {
 			<ScrollView contentContainerStyle={styles.scrollContent}>
 				<View style={styles.hero}>
 					<View style={styles.logoContainer}>
-						<Film size={64} color={colors.primary} />
+						<Image
+							source={require("@/assets/images/icon.png")}
+							style={styles.logo}
+						/>
 					</View>
 					<Text style={[styles.title, { color: colors.onBackground }]}>
 						OpnShelf
@@ -651,6 +654,11 @@ const styles = StyleSheet.create({
 	},
 	logoContainer: {
 		marginBottom: spacing.lg,
+	},
+	logo: {
+		width: 100,
+		height: 100,
+		borderRadius: 20,
 	},
 	title: {
 		fontSize: 40,
