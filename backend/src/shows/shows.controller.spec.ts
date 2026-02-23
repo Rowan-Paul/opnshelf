@@ -91,7 +91,7 @@ describe("ShowsController", () => {
 			session: { did: "did:plc:abc123" },
 		};
 		const mockMarkResult = {
-			uri: "at://did:plc:abc123/app.opnshelf.episode/abc",
+			uri: "at://did:plc:abc123/xyz.opnshelf.episode/abc",
 			cid: "cid1",
 			rkey: "rk1",
 			record: { watchedAt: "2024-01-01T00:00:00Z" },

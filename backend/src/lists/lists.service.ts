@@ -4,13 +4,13 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import {
 	$nsid as LIST_COLLECTION,
 	main as listSchema,
-} from "../lexicons/app/opnshelf/list";
-import type { Main as ListRecord } from "../lexicons/app/opnshelf/list.defs";
+} from "../lexicons/xyz/opnshelf/list";
+import type { Main as ListRecord } from "../lexicons/xyz/opnshelf/list.defs";
 import {
 	$nsid as LIST_ITEM_COLLECTION,
 	main as listItemSchema,
-} from "../lexicons/app/opnshelf/listItem";
-import type { Main as ListItemRecord } from "../lexicons/app/opnshelf/listItem.defs";
+} from "../lexicons/xyz/opnshelf/listItem";
+import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/listItem.defs";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";

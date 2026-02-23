@@ -1,6 +1,6 @@
 {
 	"lexicon": 1,
-	"id": "app.opnshelf.list",
+	"id": "xyz.opnshelf.list",
 	"defs": {
 		"main": {
 			"type": "record",

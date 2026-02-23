@@ -2,22 +2,22 @@
 	"version": 1,
 	"lexicons": [
 		{
-			"id": "app.opnshelf.movie",
+			"id": "xyz.opnshelf.movie",
 			"path": "lexicons/app/opnshelf/movie.json",
 			"local": true
 		},
 		{
-			"id": "app.opnshelf.episode",
+			"id": "xyz.opnshelf.episode",
 			"path": "lexicons/app/opnshelf/episode.json",
 			"local": true
 		},
 		{
-			"id": "app.opnshelf.list",
+			"id": "xyz.opnshelf.list",
 			"path": "lexicons/app/opnshelf/list.json",
 			"local": true
 		},
 		{
-			"id": "app.opnshelf.listItem",
+			"id": "xyz.opnshelf.listItem",
 			"path": "lexicons/app/opnshelf/listItem.json",
 			"local": true
 		}

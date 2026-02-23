@@ -189,7 +189,7 @@ pnpm --filter @opnshelf/api <command>
 
 ## Architecture
 
-Users track movies which are stored as AT Protocol records in their personal data repository (`app.opnshelf.movie` lexicon). The backend subscribes to the AT Protocol firehose via TAP to index public records, enabling discovery and social features while users maintain ownership of their data.
+Users track movies which are stored as AT Protocol records in their personal data repository (`xyz.opnshelf.movie` lexicon). The backend subscribes to the AT Protocol firehose via TAP to index public records, enabling discovery and social features while users maintain ownership of their data.
 
 ### Database Schema
 

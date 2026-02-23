@@ -243,7 +243,7 @@ describe("MoviesController", () => {
 				session: { did: "did:plc:abc123" },
 			};
 			const mockMarkWatchedResult = {
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-456-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-456-1234567890",
 				cid: "cid456",
 				rkey: "movie-456-1234567890",
 				record: {
@@ -252,7 +252,7 @@ describe("MoviesController", () => {
 			};
 			const mockTrackedMovie = {
 				id: "tracked-1",
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-456-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-456-1234567890",
 				rkey: "movie-456-1234567890",
 				cid: "cid456",
 				userDid: "did:plc:abc123",
@@ -278,7 +278,7 @@ describe("MoviesController", () => {
 				undefined,
 			);
 			expect(mockMoviesService.indexTrackedMovie).toHaveBeenCalledWith(
-				"at://did:plc:abc123/app.opnshelf.movie/movie-456-1234567890",
+				"at://did:plc:abc123/xyz.opnshelf.movie/movie-456-1234567890",
 				"cid456",
 				"movie-456-1234567890",
 				"did:plc:abc123",
@@ -295,7 +295,7 @@ describe("MoviesController", () => {
 			};
 			const customDate = "2024-01-10T08:30:00Z";
 			const mockMarkWatchedResult = {
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-456-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-456-1234567890",
 				cid: "cid456",
 				rkey: "movie-456-1234567890",
 				record: {
@@ -304,7 +304,7 @@ describe("MoviesController", () => {
 			};
 			const mockTrackedMovie = {
 				id: "tracked-1",
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-456-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-456-1234567890",
 				rkey: "movie-456-1234567890",
 				cid: "cid456",
 				userDid: "did:plc:abc123",
@@ -338,7 +338,7 @@ describe("MoviesController", () => {
 				session: { did: "did:plc:abc123" },
 			};
 			const mockMarkWatchedResult = {
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-789-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-789-1234567890",
 				cid: "cid789",
 				rkey: "movie-789-1234567890",
 				record: {
@@ -355,7 +355,7 @@ describe("MoviesController", () => {
 			const result = await controller.markWatched("789", undefined, req);
 
 			expect(result).toEqual({
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-789-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-789-1234567890",
 				cid: "cid789",
 				rkey: "movie-789-1234567890",
 				movieId: "789",
@@ -369,7 +369,7 @@ describe("MoviesController", () => {
 				session: { did: "did:plc:abc123" },
 			};
 			const mockMarkWatchedResult = {
-				uri: "at://did:plc:abc123/app.opnshelf.movie/test-rkey",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/test-rkey",
 				cid: "test-cid",
 				rkey: "test-rkey",
 				record: {

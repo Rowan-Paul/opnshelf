@@ -4,33 +4,33 @@
 
 import { l } from '@atproto/lex'
 
-const $nsid = 'app.opnshelf.listItem'
+const $nsid = 'xyz.opnshelf.list'
 
 export { $nsid }
 
-/** A media item in a list for OpnShelf */
+/** A movie list for OpnShelf */
 type Main = {
-  $type: 'app.opnshelf.listItem'
+  $type: 'xyz.opnshelf.list'
 
   /**
-   * Rkey of the parent list
+   * Display name of the list
    */
-  listRkey: string
+  name: string
 
   /**
-   * Media type
+   * Optional description of the list
    */
-  mediaType: 'movie' | 'show'
+  description?: string
 
   /**
-   * TMDB media ID
+   * URL-friendly identifier
    */
-  mediaId: string
+  slug: string
 
   /**
-   * Optional user notes about the media in this list
+   * Whether this is a default list (watchlist/favorites)
    */
-  notes?: string
+  isDefault: boolean
 
   /**
    * Record creation timestamp
@@ -40,15 +40,15 @@ type Main = {
 
 export type { Main }
 
-/** A media item in a list for OpnShelf */
+/** A movie list for OpnShelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
-    listRkey: l.string(),
-    mediaType: l.enum(['movie', 'show']),
-    mediaId: l.string(),
-    notes: l.optional(l.string()),
+    name: l.string(),
+    description: l.optional(l.string()),
+    slug: l.string(),
+    isDefault: l.boolean(),
     createdAt: l.string({ format: 'datetime' }),
   }),
 )

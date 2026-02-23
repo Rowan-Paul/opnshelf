@@ -4,36 +4,26 @@
 
 import { l } from '@atproto/lex'
 
-const $nsid = 'app.opnshelf.episode'
+const $nsid = 'xyz.opnshelf.movie'
 
 export { $nsid }
 
-/** A tracked show episode record for OpnShelf */
+/** A tracked movie record for OpnShelf */
 type Main = {
-  $type: 'app.opnshelf.episode'
+  $type: 'xyz.opnshelf.movie'
 
   /**
-   * TMDB show ID
+   * TMDB movie ID
    */
-  showId: string
+  movieId: string
 
   /**
-   * TMDB season number
-   */
-  seasonNumber: number
-
-  /**
-   * TMDB episode number
-   */
-  episodeNumber: number
-
-  /**
-   * Source of the show data (e.g., tmdb)
+   * Source of the movie data (e.g., tmdb)
    */
   source: string
 
   /**
-   * When the episode was watched
+   * When the movie was watched
    */
   watchedAt: l.DatetimeString
 
@@ -45,14 +35,12 @@ type Main = {
 
 export type { Main }
 
-/** A tracked show episode record for OpnShelf */
+/** A tracked movie record for OpnShelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
-    showId: l.string(),
-    seasonNumber: l.integer(),
-    episodeNumber: l.integer(),
+    movieId: l.string(),
     source: l.string(),
     watchedAt: l.string({ format: 'datetime' }),
     createdAt: l.string({ format: 'datetime' }),

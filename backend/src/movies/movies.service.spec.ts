@@ -24,14 +24,14 @@ jest.mock("@atproto/api", () => ({
 
 // Mock lexicon module
 const mockValidateMovieRecord = jest.fn();
-jest.mock("../lexicons/app/opnshelf/movie", () => ({
+jest.mock("../lexicons/xyz/opnshelf/movie", () => ({
 	main: {
 		build: jest.fn((data: Record<string, unknown>) => ({
-			$type: "app.opnshelf.movie",
+			$type: "xyz.opnshelf.movie",
 			...data,
 		})),
 	},
-	$nsid: "app.opnshelf.movie",
+	$nsid: "xyz.opnshelf.movie",
 	$validate: mockValidateMovieRecord,
 }));
 
@@ -503,7 +503,7 @@ describe("MoviesService", () => {
 			const mockSession = { did: "did:plc:abc123" };
 			const mockPutRecordResponse = {
 				data: {
-					uri: "at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					cid: "cid123",
 				},
 			};
@@ -518,10 +518,10 @@ describe("MoviesService", () => {
 
 			expect(mockPutRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
-				collection: "app.opnshelf.movie",
+				collection: "xyz.opnshelf.movie",
 				rkey: expect.stringMatching(/^[a-z0-9]+$/),
 				record: expect.objectContaining({
-					$type: "app.opnshelf.movie",
+					$type: "xyz.opnshelf.movie",
 					movieId: "123",
 					source: "tmdb",
 				}),
@@ -529,7 +529,7 @@ describe("MoviesService", () => {
 			});
 			expect(result.rkey).toMatch(/^[a-z0-9]+$/);
 			expect(result.record).toMatchObject({
-				$type: "app.opnshelf.movie",
+				$type: "xyz.opnshelf.movie",
 				movieId: "123",
 				source: "tmdb",
 			});
@@ -540,7 +540,7 @@ describe("MoviesService", () => {
 			const customDate = "2024-01-15T10:30:00Z";
 			const mockPutRecordResponse = {
 				data: {
-					uri: "at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					cid: "cid123",
 				},
 			};
@@ -594,7 +594,7 @@ describe("MoviesService", () => {
 			});
 			expect(mockDeleteRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
-				collection: "app.opnshelf.movie",
+				collection: "xyz.opnshelf.movie",
 				rkey: "movie-123-1234567890",
 			});
 			expect(result).toEqual({
@@ -628,12 +628,12 @@ describe("MoviesService", () => {
 			expect(mockDeleteRecord).toHaveBeenCalledTimes(2);
 			expect(mockDeleteRecord).toHaveBeenNthCalledWith(1, {
 				repo: "did:plc:abc123",
-				collection: "app.opnshelf.movie",
+				collection: "xyz.opnshelf.movie",
 				rkey: "movie-123-1234567890",
 			});
 			expect(mockDeleteRecord).toHaveBeenNthCalledWith(2, {
 				repo: "did:plc:abc123",
-				collection: "app.opnshelf.movie",
+				collection: "xyz.opnshelf.movie",
 				rkey: "movie-123-1234567880",
 			});
 			expect(result).toEqual({
@@ -680,7 +680,7 @@ describe("MoviesService", () => {
 			};
 			const mockTrackedMovie = {
 				id: "tracked-1",
-				uri: "at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 				rkey: "movie-123-1234567890",
 				cid: "cid123",
 				userDid: "did:plc:abc123",
@@ -698,7 +698,7 @@ describe("MoviesService", () => {
 			mockPrismaService.trackedMovie.create.mockResolvedValue(mockTrackedMovie);
 
 			const result = await service.indexTrackedMovie(
-				"at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+				"at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 				"cid123",
 				"movie-123-1234567890",
 				"did:plc:abc123",
@@ -712,7 +712,7 @@ describe("MoviesService", () => {
 			expect(mockPrismaService.movie.upsert).toHaveBeenCalled();
 			expect(mockPrismaService.trackedMovie.create).toHaveBeenCalledWith({
 				data: expect.objectContaining({
-					uri: "at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					rkey: "movie-123-1234567890",
 					cid: "cid123",
 					userDid: "did:plc:abc123",
@@ -732,7 +732,7 @@ describe("MoviesService", () => {
 
 			await expect(
 				service.indexTrackedMovie(
-					"at://did:plc:abc123/app.opnshelf.movie/movie-123-1234567890",
+					"at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					"cid123",
 					"movie-123-1234567890",
 					"did:plc:abc123",

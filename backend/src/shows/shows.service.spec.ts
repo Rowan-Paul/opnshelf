@@ -20,14 +20,14 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("../lexicons/app/opnshelf/episode", () => ({
+jest.mock("../lexicons/xyz/opnshelf/episode", () => ({
 	main: {
 		build: jest.fn((data: Record<string, unknown>) => ({
-			$type: "app.opnshelf.episode",
+			$type: "xyz.opnshelf.episode",
 			...data,
 		})),
 	},
-	$nsid: "app.opnshelf.episode",
+	$nsid: "xyz.opnshelf.episode",
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -137,7 +137,7 @@ describe("ShowsService", () => {
 			const mockSession = { did: "did:plc:abc123" };
 			mockPutRecord.mockResolvedValue({
 				data: {
-					uri: "at://did:plc:abc123/app.opnshelf.episode/abc",
+					uri: "at://did:plc:abc123/xyz.opnshelf.episode/abc",
 					cid: "cid123",
 				},
 			});
@@ -152,9 +152,9 @@ describe("ShowsService", () => {
 
 			expect(mockPutRecord).toHaveBeenCalledWith(
 				expect.objectContaining({
-					collection: "app.opnshelf.episode",
+					collection: "xyz.opnshelf.episode",
 					record: expect.objectContaining({
-						$type: "app.opnshelf.episode",
+						$type: "xyz.opnshelf.episode",
 						showId: "123",
 						seasonNumber: 1,
 						episodeNumber: 2,
@@ -182,7 +182,7 @@ describe("ShowsService", () => {
 
 			expect(mockDeleteRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
-				collection: "app.opnshelf.episode",
+				collection: "xyz.opnshelf.episode",
 				rkey: "rk1",
 			});
 		});

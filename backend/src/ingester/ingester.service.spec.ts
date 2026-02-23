@@ -183,7 +183,7 @@ describe("IngesterService", () => {
 			return recordHandler;
 		};
 
-		it("should upsert tracked movie for app.opnshelf.movie create", async () => {
+		it("should upsert tracked movie for xyz.opnshelf.movie create", async () => {
 			const recordHandler = setupRecordHandler();
 			mockPrismaService.user.findUnique.mockResolvedValue({
 				did: "did:plc:abc123",
@@ -196,10 +196,10 @@ describe("IngesterService", () => {
 				action: "create",
 				did: "did:plc:abc123",
 				rev: "rev123",
-				collection: "app.opnshelf.movie",
+				collection: "xyz.opnshelf.movie",
 				rkey: "movie-123",
 				record: {
-					$type: "app.opnshelf.movie",
+					$type: "xyz.opnshelf.movie",
 					movieId: "123",
 					source: "tmdb",
 					watchedAt: "2024-01-15T10:00:00Z",
@@ -220,7 +220,7 @@ describe("IngesterService", () => {
 			);
 		});
 
-		it("should upsert tracked episode for app.opnshelf.episode create", async () => {
+		it("should upsert tracked episode for xyz.opnshelf.episode create", async () => {
 			const recordHandler = setupRecordHandler();
 			mockPrismaService.user.findUnique.mockResolvedValue({
 				did: "did:plc:abc123",
@@ -233,10 +233,10 @@ describe("IngesterService", () => {
 				action: "create",
 				did: "did:plc:abc123",
 				rev: "rev124",
-				collection: "app.opnshelf.episode",
+				collection: "xyz.opnshelf.episode",
 				rkey: "episode-456-1-1",
 				record: {
-					$type: "app.opnshelf.episode",
+					$type: "xyz.opnshelf.episode",
 					showId: "456",
 					seasonNumber: 1,
 					episodeNumber: 1,
@@ -261,7 +261,7 @@ describe("IngesterService", () => {
 			);
 		});
 
-		it("should delete tracked episode on app.opnshelf.episode delete", async () => {
+		it("should delete tracked episode on xyz.opnshelf.episode delete", async () => {
 			const recordHandler = setupRecordHandler();
 
 			await recordHandler({
@@ -270,7 +270,7 @@ describe("IngesterService", () => {
 				action: "delete",
 				did: "did:plc:abc123",
 				rev: "rev125",
-				collection: "app.opnshelf.episode",
+				collection: "xyz.opnshelf.episode",
 				rkey: "episode-456-1-1",
 				live: true,
 			});
@@ -292,10 +292,10 @@ describe("IngesterService", () => {
 				action: "create",
 				did: "did:plc:abc123",
 				rev: "rev126",
-				collection: "app.opnshelf.listItem",
+				collection: "xyz.opnshelf.listItem",
 				rkey: "item-1",
 				record: {
-					$type: "app.opnshelf.listItem",
+					$type: "xyz.opnshelf.listItem",
 					listRkey: "watchlist",
 					mediaType: "show",
 					mediaId: "456",

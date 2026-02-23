@@ -1,15 +1,14 @@
 import { Agent } from "@atproto/api";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { $nsid as EPISODE_COLLECTION } from "../lexicons/app/opnshelf/episode";
-import { $nsid as LIST_COLLECTION } from "../lexicons/app/opnshelf/list";
-import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/app/opnshelf/listItem";
+import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
+import { $nsid as LIST_COLLECTION } from "../lexicons/xyz/opnshelf/list";
+import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/listItem";
+import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	UpdateUserSettingsDto,
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
-
-const MOVIE_COLLECTION = "app.opnshelf.movie";
 
 interface ATSession {
 	did: string;

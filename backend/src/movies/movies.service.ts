@@ -5,8 +5,8 @@ import { ConfigService } from "@nestjs/config";
 import {
 	$nsid as COLLECTION,
 	main as movieSchema,
-} from "../lexicons/app/opnshelf/movie";
-import type { Main as MovieRecord } from "../lexicons/app/opnshelf/movie.defs";
+} from "../lexicons/xyz/opnshelf/movie";
+import type { Main as MovieRecord } from "../lexicons/xyz/opnshelf/movie.defs";
 import { PrismaService } from "../prisma/prisma.service";
 import { ColorExtractionService } from "./color-extraction.service";
 
@@ -346,7 +346,7 @@ export class MoviesService {
 			collection: COLLECTION,
 			rkey,
 			record,
-			validate: false, // PDS may not have app.opnshelf.movie lexicon
+			validate: false, // PDS may not have xyz.opnshelf.movie lexicon
 		});
 
 		this.logger.log(

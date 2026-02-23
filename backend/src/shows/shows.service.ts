@@ -5,8 +5,8 @@ import { ConfigService } from "@nestjs/config";
 import {
 	$nsid as COLLECTION,
 	main as episodeSchema,
-} from "../lexicons/app/opnshelf/episode";
-import type { Main as EpisodeRecord } from "../lexicons/app/opnshelf/episode.defs";
+} from "../lexicons/xyz/opnshelf/episode";
+import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
 
