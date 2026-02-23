@@ -1,7 +1,7 @@
 import { authControllerMeOptions, getLoginUrl } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Film, LogIn } from "lucide-react";
+import { AlertCircle, LogIn } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import { useTheme } from "@/components/theme-provider";
@@ -170,7 +170,11 @@ function LoginPage() {
 				<div className="w-full max-w-md">
 					<div className="text-center mb-8">
 						<div className="flex justify-center mb-4">
-							<Film className="w-12 h-12" style={{ color: seedColor }} />
+							<img
+								src="/icon.png"
+								alt="OpnShelf"
+								className="w-16 h-16 rounded-xl"
+							/>
 						</div>
 						<h1 className="md-headline-medium mb-2">Sign in to OpnShelf</h1>
 						<p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>

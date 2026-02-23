@@ -115,12 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		queryClient.removeQueries({ queryKey: ["moviesControllerGetUserMovies"] });
 	}, [queryClient]);
 
-	const handleAuthCallback = useCallback(async (token: string) => {
-		await saveSessionToken(token);
-		setHasSessionToken(true);
-		// Refetch user to update auth state
-		await queryClient.invalidateQueries({ queryKey: authControllerMeQueryKey() });
-	}, [queryClient]);
+	const handleAuthCallback = useCallback(
+		async (token: string) => {
+			await saveSessionToken(token);
+			setHasSessionToken(true);
+			await queryClient.invalidateQueries({ queryKey: authControllerMeQueryKey() });
+		},
+		[queryClient]
+	);
 
 	const isLoading = !isInitialized || (hasSessionToken && !hasResolvedInitialAuth);
 

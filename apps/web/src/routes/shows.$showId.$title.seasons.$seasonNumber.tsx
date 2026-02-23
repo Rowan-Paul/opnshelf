@@ -63,14 +63,44 @@ export const Route = createFileRoute(
 		return { show: showData, season: seasonData };
 	},
 	head: ({ loaderData, params }) => {
-		const showName = loaderData?.show?.name;
+		const show = loaderData?.show as TmdbShowDetailDto | undefined;
+		const season = loaderData?.season as TmdbSeasonDetailDto | undefined;
+		const showName = show?.name;
 		const seasonNumber = params.seasonNumber;
 		const title = showName
 			? `${showName}: Season ${seasonNumber} | OpnShelf`
 			: `Season ${seasonNumber} | OpnShelf`;
+		const posterUrl = show?.poster_path
+			? `https://image.tmdb.org/t/p/w780${show.poster_path}`
+			: null;
+		const url = typeof window !== "undefined" ? window.location.href : "";
 
 		return {
-			meta: [{ title }],
+			meta: [
+				{ title },
+				{
+					name: "description",
+					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+				},
+				{ property: "og:title", content: title },
+				{
+					property: "og:description",
+					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+				},
+				{ property: "og:type", content: "video.tv" },
+				{ property: "og:url", content: url },
+				...(posterUrl ? [{ property: "og:image", content: posterUrl }] : []),
+				{ property: "og:image:width", content: "780" },
+				{ property: "og:image:height", content: "1170" },
+				{ name: "twitter:card", content: "summary_large_image" },
+				{ name: "twitter:title", content: title },
+				{
+					name: "twitter:description",
+					content: season?.overview?.slice(0, 160) || show?.overview?.slice(0, 160) || "",
+				},
+				...(posterUrl ? [{ name: "twitter:image", content: posterUrl }] : []),
+				{ name: "twitter:url", content: url },
+			],
 		};
 	},
 	component: ShowSeasonPage,

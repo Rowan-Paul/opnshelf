@@ -115,12 +115,12 @@ export function DetailActions({
 							>
 								{isPending ? (
 									<View style={styles.buttonContent}>
-										<ActivityIndicator color="#f9fafb" size="small" />
+										<ActivityIndicator color="#3f2e00" size="small" />
 										<Text style={styles.primaryButtonText}>Loading</Text>
 									</View>
 								) : (
 									<View style={styles.buttonContent}>
-										<Ionicons name="refresh" size={18} color="#f9fafb" />
+										<Ionicons name="refresh" size={18} color="#3f2e00" />
 										<Text style={styles.primaryButtonText}>Watch Again</Text>
 									</View>
 								)}
@@ -156,12 +156,12 @@ export function DetailActions({
 						>
 							{isPending ? (
 								<View style={styles.buttonContent}>
-									<ActivityIndicator color="#f9fafb" size="small" />
+									<ActivityIndicator color="#3f2e00" size="small" />
 									<Text style={styles.primaryButtonText}>Loading</Text>
 								</View>
 							) : (
 								<View style={styles.buttonContent}>
-									<Ionicons name="add" size={20} color="#f9fafb" />
+									<Ionicons name="add" size={20} color="#3f2e00" />
 									<Text style={styles.primaryButtonText}>Add to Shelf</Text>
 								</View>
 							)}
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	primaryButtonText: {
-		color: "#f9fafb",
+		color: "#3f2e00",
 		fontSize: 16,
 		fontWeight: "600",
 	},

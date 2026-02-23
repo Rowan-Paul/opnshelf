@@ -228,7 +228,7 @@ export default function ProfileScreen() {
 								{ color: colors.onSurfaceVariant },
 							]}
 						>
-							Movies you&apos;ve watched
+							Items added to your shelf
 						</Text>
 					</View>
 					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
@@ -264,7 +264,7 @@ export default function ProfileScreen() {
 								{ color: colors.onSurfaceVariant },
 							]}
 						>
-							Custom movie collections
+							Custom lists of items
 						</Text>
 					</View>
 					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>

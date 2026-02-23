@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Film } from "lucide-react";
 import { useEffect } from "react";
 import { useTheme } from "@/components/theme-provider";
 
@@ -43,7 +42,11 @@ function AuthCompletePage() {
 			}}
 		>
 			<div className="flex-1 flex flex-col items-center justify-center p-4">
-				<Film className="w-12 h-12 mb-4" style={{ color: seedColor }} />
+				<img
+					src="/icon.png"
+					alt="OpnShelf"
+					className="w-16 h-16 rounded-xl mb-4"
+				/>
 				<div
 					className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin mb-4"
 					style={{ borderColor: seedColor }}

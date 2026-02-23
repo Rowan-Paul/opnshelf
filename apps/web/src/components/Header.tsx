@@ -25,7 +25,7 @@ export default function Header() {
 		mutationKey: ["auth", "logout"],
 		...authControllerLogoutMutation(),
 		onSuccess: () => {
-			queryClient.removeQueries(authControllerMeOptions());
+			queryClient.clear();
 			navigate({ to: "/" });
 		},
 	});

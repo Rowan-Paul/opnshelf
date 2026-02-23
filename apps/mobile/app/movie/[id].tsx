@@ -253,16 +253,17 @@ export default function MovieDetailScreen() {
 	);
 
 	const handleShare = useCallback(async () => {
+		const displayTitle = movie?.title || title;
 		const shareUrl = `https://opnshelf.xyz/movies/${movieId}/${title || ""}`;
 		try {
 			await Share.share({
-				message: `Check out ${title} on OpnShelf!\n\n${shareUrl}`,
-				title: `Check out ${title} on OpnShelf`,
+				message: `Check out ${displayTitle} on OpnShelf!\n\n${shareUrl}`,
+				title: `Check out ${displayTitle} on OpnShelf`,
 			});
 		} catch {
 			showToast("Failed to share", "error");
 		}
-	}, [movieId, title, showToast]);
+	}, [movie?.title, movieId, title, showToast]);
 
 	const openDateModal = useCallback(() => {
 		setCustomDate(new Date());
@@ -336,11 +337,10 @@ export default function MovieDetailScreen() {
 	}
 
 	return (
-		<>
-			<ScrollView
-				style={[styles.container, { backgroundColor: themeColors.background }]}
-				contentContainerStyle={styles.scrollContent}
-			>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: themeColors.background }]}
+		>
+			<ScrollView contentContainerStyle={styles.scrollContent}>
 				<DetailHero
 					title={movie?.title || title || ""}
 					subtitle={releaseYear ? String(releaseYear) : undefined}
@@ -368,6 +368,8 @@ export default function MovieDetailScreen() {
 						onShowListModal={() => setShowAddToListModal(true)}
 						onViewHistory={() => setShowHistoryModal(true)}
 						onShare={handleShare}
+						isLoggedIn={!!user}
+						onLogin={() => router.push("/login")}
 					/>
 
 					<MetadataPills items={metadataItems} />
@@ -756,7 +758,7 @@ export default function MovieDetailScreen() {
 				mediaId={movieId}
 				mediaTitle={movie?.title || title || ""}
 			/>
-		</>
+		</SafeAreaView>
 	);
 }
 

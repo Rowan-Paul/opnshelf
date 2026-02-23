@@ -18,7 +18,6 @@ import { CreateListDialog } from "@/components/CreateListDialog";
 import { ListCard } from "@/components/ListCard";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
-import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -68,8 +67,6 @@ function HomePage() {
 }
 
 function LandingHomePage() {
-	const { seedColor } = useTheme();
-
 	return (
 		<div
 			className="min-h-screen"
@@ -81,7 +78,11 @@ function LandingHomePage() {
 			<div className="container mx-auto px-4 py-16 max-w-4xl">
 				<div className="text-center mb-12">
 					<div className="flex justify-center mb-6">
-						<Film className="w-16 h-16" style={{ color: seedColor }} />
+						<img
+							src="/icon.png"
+							alt="OpnShelf"
+							className="w-24 h-24 rounded-2xl"
+						/>
 					</div>
 					<h1 className="md-display-large mb-4">OpnShelf</h1>
 					<p

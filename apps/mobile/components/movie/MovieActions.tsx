@@ -69,12 +69,12 @@ export function MovieActions({
 				>
 					{isPending ? (
 						<View style={styles.buttonContent}>
-							<ActivityIndicator color="#f9fafb" />
+							<ActivityIndicator color="#3f2e00" />
 							<Text style={styles.buttonText}>Loading</Text>
 						</View>
 					) : (
 						<View style={styles.buttonContent}>
-							<Ionicons name="add" size={20} color="#f9fafb" />
+							<Ionicons name="add" size={20} color="#3f2e00" />
 							<Text style={styles.buttonText}>Add to Shelf</Text>
 						</View>
 					)}
@@ -103,12 +103,12 @@ export function MovieActions({
 			>
 				{isPending ? (
 					<View style={styles.buttonContent}>
-						<ActivityIndicator color="#f9fafb" />
+						<ActivityIndicator color="#3f2e00" />
 						<Text style={styles.buttonText}>Loading</Text>
 					</View>
 				) : (
 					<View style={styles.buttonContent}>
-						<Ionicons name="checkmark" size={20} color="#f9fafb" />
+						<Ionicons name="checkmark" size={20} color="#3f2e00" />
 						<Text style={styles.buttonText}>On Your Shelf</Text>
 					</View>
 				)}
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	buttonText: {
-		color: "#f9fafb",
+		color: "#3f2e00",
 		fontSize: 16,
 		fontWeight: "600",
 	},

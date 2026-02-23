@@ -216,7 +216,10 @@ export default function LoginScreen() {
 				<View style={{ flex: 1, justifyContent: "center" }}>
 					<View style={{ alignItems: "center", marginBottom: 32 }}>
 						<View style={{ marginBottom: 16 }}>
-							<Ionicons name="film" size={48} color={colors.primary} />
+							<Image
+								source={require("@/assets/images/icon.png")}
+								style={{ width: 64, height: 64, borderRadius: 16 }}
+							/>
 						</View>
 						<Text
 							style={{

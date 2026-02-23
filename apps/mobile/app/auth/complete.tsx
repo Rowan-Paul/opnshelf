@@ -1,9 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
 import { authControllerMeOptions } from "@opnshelf/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Image, Text, View } from "react-native";
+import { useToast } from "@/contexts/toast";
 import { saveSessionToken } from "@/lib/api";
 
 export default function AuthCompleteScreen() {
@@ -11,25 +11,32 @@ export default function AuthCompleteScreen() {
 	const router = useRouter();
 	const params = useLocalSearchParams<{ session?: string }>();
 	const { session } = params;
+	const { showToast } = useToast();
 
 	useEffect(() => {
 		async function completeAuth() {
-			if (session) {
-				await saveSessionToken(session);
+			try {
+				if (session) {
+					await saveSessionToken(session);
+				}
+
+				await queryClient.fetchQuery({
+					...authControllerMeOptions(),
+					staleTime: 0,
+				});
+
+				await new Promise((resolve) => setTimeout(resolve, 100));
+
+				router.replace("/(tabs)");
+			} catch (error) {
+				console.error("Auth complete failed:", error);
+				showToast("Sign in failed. Please try again.");
+				router.replace("/login");
 			}
-
-			await queryClient.fetchQuery({
-				...authControllerMeOptions(),
-				staleTime: 0,
-			});
-
-			await new Promise((resolve) => setTimeout(resolve, 100));
-
-			router.replace("/(tabs)");
 		}
 
 		completeAuth();
-	}, [router, queryClient, session]);
+	}, [router, queryClient, session, showToast]);
 
 	return (
 		<View
@@ -41,7 +48,10 @@ export default function AuthCompleteScreen() {
 				padding: 16,
 			}}
 		>
-			<Ionicons name="film" size={48} color="#F59E0B" />
+			<Image
+				source={require("@/assets/images/icon.png")}
+				style={{ width: 64, height: 64, borderRadius: 16, marginBottom: 16 }}
+			/>
 			<ActivityIndicator
 				size="large"
 				color="#F59E0B"
