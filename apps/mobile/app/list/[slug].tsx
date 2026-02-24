@@ -16,6 +16,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { MediaCard } from "@/components/MediaCard";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -421,22 +422,17 @@ function ListMovieItem({
 	const releaseYear = movie.releaseYear as number | null | undefined;
 
 	return (
-		<View
-			style={[
-				styles.card,
-				{
-					backgroundColor: colors.surfaceContainer,
-					borderColor: colors.outline,
-				},
-			]}
-		>
-			<View
-				style={[
-					styles.posterContainer,
-					{ backgroundColor: colors.surfaceContainerHigh },
-				]}
-			>
-				{posterUrl ? (
+		<MediaCard
+			onPress={onPress}
+			cardStyle={{
+				backgroundColor: colors.surfaceContainer,
+				borderColor: colors.outline,
+			}}
+			mediaContainerStyle={{
+				backgroundColor: colors.surfaceContainerHigh,
+			}}
+			media={
+				posterUrl ? (
 					<Image
 						source={{ uri: posterUrl }}
 						style={styles.poster}
@@ -456,57 +452,49 @@ function ListMovieItem({
 							No poster
 						</Text>
 					</View>
+				)
+			}
+		>
+			<View style={styles.info}>
+				<Text
+					style={[styles.movieTitle, { color: colors.onSurface }]}
+					numberOfLines={2}
+				>
+					{movieTitle}
+				</Text>
+				{releaseYear && (
+					<Text style={[styles.movieYear, { color: colors.onSurfaceVariant }]}>
+						{releaseYear}
+					</Text>
 				)}
 			</View>
-			<TouchableOpacity
-				onPress={onPress}
-				style={styles.cardContent}
-				activeOpacity={0.8}
-			>
-				<View style={styles.info}>
-					<Text
-						style={[styles.movieTitle, { color: colors.onSurface }]}
-						numberOfLines={2}
-					>
-						{movieTitle}
-					</Text>
-					{releaseYear && (
-						<Text
-							style={[styles.movieYear, { color: colors.onSurfaceVariant }]}
-						>
-							{releaseYear}
-						</Text>
-					)}
-				</View>
 
-				<TouchableOpacity
-					onPress={onRemove}
-					disabled={isRemoving}
-					style={[styles.removeButton, { backgroundColor: colors.error }]}
-					activeOpacity={0.7}
-				>
-					{isRemoving ? (
-						<View style={styles.removeButtonContent}>
-							<SpinningLoader size={14} color={colors.onError} />
-							<Text
-								style={[styles.removeButtonText, { color: colors.onError }]}
-							>
-								Loading
-							</Text>
-						</View>
-					) : (
-						<>
-							<Trash2 size={14} color={colors.onError} />
-							<Text
-								style={[styles.removeButtonText, { color: colors.onError }]}
-							>
-								Remove
-							</Text>
-						</>
-					)}
-				</TouchableOpacity>
+			<TouchableOpacity
+				onPress={(e) => {
+					e.stopPropagation();
+					onRemove();
+				}}
+				disabled={isRemoving}
+				style={[styles.removeButton, { backgroundColor: colors.error }]}
+				activeOpacity={0.7}
+			>
+				{isRemoving ? (
+					<View style={styles.removeButtonContent}>
+						<SpinningLoader size={14} color={colors.onError} />
+						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
+							Loading
+						</Text>
+					</View>
+				) : (
+					<>
+						<Trash2 size={14} color={colors.onError} />
+						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
+							Remove
+						</Text>
+					</>
+				)}
 			</TouchableOpacity>
-		</View>
+		</MediaCard>
 	);
 }
 
@@ -630,36 +618,21 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		justifyContent: "center",
 	},
-	card: {
-		flexDirection: "row",
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		borderWidth: 1,
-	},
-	posterContainer: {
-		width: 80,
-		aspectRatio: 2 / 3,
-	},
 	poster: {
 		width: "100%",
 		height: "100%",
-	},
-	cardContent: {
-		flex: 1,
-		padding: spacing.md,
-		justifyContent: "space-between",
 	},
 	info: {
 		flex: 1,
 	},
 	movieTitle: {
-		fontSize: 16,
+		fontSize: 14,
 		fontWeight: "600",
 		marginBottom: spacing.xs,
-		lineHeight: 22,
+		lineHeight: 19,
 	},
 	movieYear: {
-		fontSize: 14,
+		fontSize: 12,
 	},
 	removeButton: {
 		flexDirection: "row",
@@ -672,7 +645,7 @@ const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 	},
 	removeButtonText: {
-		fontSize: 14,
+		fontSize: 12,
 		fontWeight: "600",
 	},
 	removeButtonContent: {

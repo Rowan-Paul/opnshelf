@@ -9,6 +9,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { MediaCard } from "@/components/MediaCard";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -125,137 +126,134 @@ export function EpisodeCard({
 	};
 
 	return (
-		<TouchableOpacity
+		<MediaCard
 			onPress={onPress}
-			style={[
-				styles.container,
-				{
-					borderColor: hasWatchedEpisodes ? `${colors.primary}40` : themeColors.outline,
-					backgroundColor: `${themeColors.surfaceContainer}50`,
-				},
-			]}
-			activeOpacity={0.8}
+			cardStyle={{
+				borderColor: hasWatchedEpisodes ? `${colors.primary}40` : themeColors.outline,
+				backgroundColor: `${themeColors.surfaceContainer}50`,
+			}}
+			mediaContainerStyle={{
+				width: 100,
+				minHeight: 100,
+				backgroundColor: "#1f2937",
+			}}
+			media={
+				stillUrl ? (
+					<Image
+						source={{ uri: stillUrl }}
+						style={styles.still}
+						contentFit="cover"
+					/>
+				) : (
+					<View style={[styles.still, styles.noStill]}>
+						<Ionicons name="film-outline" size={20} color="#6b7280" />
+					</View>
+				)
+			}
+			contentStyle={styles.content}
 		>
-			<View style={styles.row}>
-				<View style={styles.thumbnail}>
-					{stillUrl ? (
-						<Image
-							source={{ uri: stillUrl }}
-							style={styles.still}
-							contentFit="cover"
-						/>
-					) : (
-						<View style={[styles.still, styles.noStill]}>
-							<Ionicons name="film-outline" size={20} color="#6b7280" />
-						</View>
-					)}
-				</View>
-
-				<View style={styles.content}>
-					<View style={styles.header}>
-						<Text style={[styles.title, { color: themeColors.onSurface }]} numberOfLines={1}>
-							E{episode.episode_number} · {episode.name}
+			<View style={styles.header}>
+				<Text style={[styles.title, { color: themeColors.onSurface }]} numberOfLines={1}>
+					E{episode.episode_number} · {episode.name}
+				</Text>
+				{episode.vote_average ? (
+					<View style={styles.rating}>
+						<Ionicons name="star" size={12} color="#fbbf24" />
+						<Text style={styles.ratingText}>
+							{episode.vote_average.toFixed(1)}
 						</Text>
-						{episode.vote_average ? (
-							<View style={styles.rating}>
-								<Ionicons name="star" size={12} color="#fbbf24" />
-								<Text style={styles.ratingText}>
-									{episode.vote_average.toFixed(1)}
-								</Text>
-							</View>
-						) : null}
 					</View>
-
-					<Text
-						style={[styles.overview, { color: themeColors.onSurfaceVariant }]}
-						numberOfLines={2}
-					>
-						{episode.overview || "No overview available."}
-					</Text>
-
-					<View style={styles.footer}>
-						<View style={styles.dateRow}>
-							<Ionicons
-								name="calendar-outline"
-								size={12}
-								color={themeColors.onSurfaceVariant}
-							/>
-							<Text style={[styles.date, { color: themeColors.onSurfaceVariant }]}>
-								{formatDateOnly(episode.air_date)}
-							</Text>
-						</View>
-						{watchedCount > 0 && (
-							<View style={styles.watchedBadge}>
-								<Ionicons name="checkmark-circle" size={12} color={colors.primary} />
-								<Text style={[styles.watchedText, { color: colors.primary }]}>
-									{watchedCount} watched
-								</Text>
-							</View>
-						)}
-					</View>
-
-					{userDid && (
-						<TouchableOpacity
-							onPress={handleToggleWatched}
-							disabled={isPending}
-							style={[
-								styles.addButton,
-								{
-									backgroundColor: hasWatchedEpisodes
-										? `${themeColors.error}20`
-										: `${colors.primary}20`,
-									borderColor: hasWatchedEpisodes
-										? themeColors.error
-										: colors.primary,
-								},
-							]}
-							activeOpacity={0.7}
-						>
-							{isPending ? (
-								<><ActivityIndicator
-									size="small"
-									color={hasWatchedEpisodes ? themeColors.error : colors.primary}
-								/>
-								<Text style={[styles.addButtonText, { color: hasWatchedEpisodes ? themeColors.error : colors.primary }]}>Loading</Text>
-								</>
-							) : (
-								<>
-									<Ionicons
-										name={hasWatchedEpisodes ? "trash-outline" : "add"}
-										size={14}
-										color={hasWatchedEpisodes ? themeColors.error : colors.primary}
-									/>
-									<Text
-										style={[
-											styles.addButtonText,
-											{ color: hasWatchedEpisodes ? themeColors.error : colors.primary },
-										]}
-									>
-										{hasWatchedEpisodes ? "Remove from Shelf" : "Add to Shelf"}
-									</Text>
-								</>
-							)}
-						</TouchableOpacity>
-					)}
-				</View>
+				) : null}
 			</View>
-		</TouchableOpacity>
+
+			<Text
+				style={[styles.overview, { color: themeColors.onSurfaceVariant }]}
+				numberOfLines={2}
+			>
+				{episode.overview || "No overview available."}
+			</Text>
+
+			<View style={styles.footer}>
+				<View style={styles.dateRow}>
+					<Ionicons
+						name="calendar-outline"
+						size={12}
+						color={themeColors.onSurfaceVariant}
+					/>
+					<Text style={[styles.date, { color: themeColors.onSurfaceVariant }]}>
+						{formatDateOnly(episode.air_date)}
+					</Text>
+				</View>
+				{watchedCount > 0 && (
+					<View style={styles.watchedBadge}>
+						<Ionicons name="checkmark-circle" size={12} color={colors.primary} />
+						<Text style={[styles.watchedText, { color: colors.primary }]}>
+							{watchedCount} watched
+						</Text>
+					</View>
+				)}
+			</View>
+
+			{userDid && (
+				<TouchableOpacity
+					onPress={handleToggleWatched}
+					disabled={isPending}
+					style={[
+						styles.addButton,
+						{
+							backgroundColor: hasWatchedEpisodes
+								? `${themeColors.error}20`
+								: `${colors.primary}20`,
+							borderColor: hasWatchedEpisodes
+								? themeColors.error
+								: colors.primary,
+						},
+					]}
+					activeOpacity={0.7}
+				>
+					{isPending ? (
+						<>
+							<ActivityIndicator
+								size="small"
+								color={hasWatchedEpisodes ? themeColors.error : colors.primary}
+							/>
+							<Text
+								style={[
+									styles.addButtonText,
+									{
+										color: hasWatchedEpisodes ? themeColors.error : colors.primary,
+									},
+								]}
+							>
+								Loading
+							</Text>
+						</>
+					) : (
+						<>
+							<Ionicons
+								name={hasWatchedEpisodes ? "trash-outline" : "add"}
+								size={14}
+								color={hasWatchedEpisodes ? themeColors.error : colors.primary}
+							/>
+							<Text
+								style={[
+									styles.addButtonText,
+									{
+										color: hasWatchedEpisodes ? themeColors.error : colors.primary,
+									},
+								]}
+							>
+								{hasWatchedEpisodes ? "Remove from Shelf" : "Add to Shelf"}
+							</Text>
+						</>
+					)}
+				</TouchableOpacity>
+			)}
+		</MediaCard>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		borderRadius: borderRadius.lg,
-		borderWidth: 1,
-	},
-	row: {
-		flexDirection: "row",
-		gap: spacing.md,
-	},
-	thumbnail: {
-		width: 100,
-		height: 100,
-	},
 	still: {
 		width: "100%",
 		height: "100%",
@@ -266,7 +264,6 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	content: {
-		flex: 1,
 		paddingVertical: spacing.sm,
 		paddingRight: spacing.sm,
 	},

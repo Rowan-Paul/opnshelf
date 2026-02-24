@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { getTmdbPosterUrl } from "@/lib/utils";
+import { MediaCard } from "./MediaCard";
 import { SpinningLoader } from "./SpinningLoader";
 
 export interface ShelfMovieItem {
@@ -53,21 +54,17 @@ export function MovieCard({
 	const posterUrl = getTmdbPosterUrl(tracked.posterPath);
 
 	return (
-		<TouchableOpacity
+		<MediaCard
 			onPress={onPress}
-			style={[
-				styles.card,
-				{ backgroundColor: colors.surfaceContainer, borderColor: colors.outline },
-			]}
-			activeOpacity={0.8}
-		>
-			<View
-				style={[
-					styles.posterContainer,
-					{ backgroundColor: colors.surfaceContainerHigh },
-				]}
-			>
-				{posterUrl ? (
+			cardStyle={{
+				backgroundColor: colors.surfaceContainer,
+				borderColor: colors.outline,
+			}}
+			mediaContainerStyle={{
+				backgroundColor: colors.surfaceContainerHigh,
+			}}
+			media={
+				posterUrl ? (
 					<Image
 						source={{ uri: posterUrl }}
 						style={styles.poster}
@@ -88,114 +85,82 @@ export function MovieCard({
 							No poster
 						</Text>
 					</View>
-				)}
-			</View>
-
-			<View style={styles.cardContent}>
-				<View style={styles.info}>
-					<Text
-						style={[styles.movieTitle, { color: colors.onSurface }]}
-						numberOfLines={2}
-					>
-						{tracked.title}
-					</Text>
-					<View style={styles.meta}>
-						{tracked.releaseYear && (
-							<Text style={[styles.year, { color: colors.onSurfaceVariant }]}>
-								{tracked.releaseYear}
-							</Text>
-						)}
-						{formattedWatchedDate && (
-							<>
-								<Text
-									style={[styles.metaDot, { color: colors.onSurfaceVariant }]}
-								>
+				)
+			}
+		>
+			<View style={styles.info}>
+				<Text
+					style={[styles.movieTitle, { color: colors.onSurface }]}
+					numberOfLines={2}
+				>
+					{tracked.title}
+				</Text>
+				<View style={styles.meta}>
+					{tracked.releaseYear && (
+						<Text style={[styles.year, { color: colors.onSurfaceVariant }]}>
+							{tracked.releaseYear}
+						</Text>
+					)}
+					{formattedWatchedDate && (
+						<View style={styles.metaWatched}>
+							{tracked.releaseYear ? (
+								<Text style={[styles.metaDot, { color: colors.onSurfaceVariant }]}>
 									•
 								</Text>
-								<View style={styles.watchedRow}>
-									<CheckCircle2 size={12} color={colors.primary} />
-									<Text
-										style={[
-											styles.watchedDate,
-											{ color: colors.primary },
-										]}
-									>
-										{formattedWatchedDate}
-									</Text>
-								</View>
-							</>
-						)}
-					</View>
-				</View>
-
-				<TouchableOpacity
-					onPress={(e) => {
-						e.stopPropagation();
-						onRemove(tracked.movieId);
-					}}
-					disabled={isRemoving}
-					style={[styles.removeButton, { backgroundColor: colors.error }]}
-					activeOpacity={0.7}
-				>
-					{isRemoving ? (
-						<View style={styles.removeButtonContent}>
-							<SpinningLoader size={14} color={colors.onError} />
-							<Text
-								style={[
-									styles.removeButtonText,
-									{ color: colors.onError },
-								]}
-							>
-								Loading
-							</Text>
+							) : null}
+							<View style={styles.watchedRow}>
+								<CheckCircle2 size={12} color={colors.primary} />
+								<Text style={[styles.watchedDate, { color: colors.primary }]}>
+									{formattedWatchedDate}
+								</Text>
+							</View>
 						</View>
-					) : (
-						<>
-							<Trash2 size={14} color={colors.onError} />
-							<Text
-								style={[
-									styles.removeButtonText,
-									{ color: colors.onError },
-								]}
-							>
-								Remove
-							</Text>
-						</>
 					)}
-				</TouchableOpacity>
+				</View>
 			</View>
-		</TouchableOpacity>
+
+			<TouchableOpacity
+				onPress={(e) => {
+					e.stopPropagation();
+					onRemove(tracked.movieId);
+				}}
+				disabled={isRemoving}
+				style={[styles.removeButton, { backgroundColor: colors.error }]}
+				activeOpacity={0.7}
+			>
+				{isRemoving ? (
+					<View style={styles.removeButtonContent}>
+						<SpinningLoader size={14} color={colors.onError} />
+						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
+							Loading
+						</Text>
+					</View>
+				) : (
+					<>
+						<Trash2 size={14} color={colors.onError} />
+						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
+							Remove
+						</Text>
+					</>
+				)}
+			</TouchableOpacity>
+		</MediaCard>
 	);
 }
 
 const styles = StyleSheet.create({
-	card: {
-		flexDirection: "row",
-		borderRadius: borderRadius.lg,
-		overflow: "hidden",
-		borderWidth: 1,
-	},
-	posterContainer: {
-		width: 80,
-		aspectRatio: 2 / 3,
-	},
 	poster: {
 		width: "100%",
 		height: "100%",
-	},
-	cardContent: {
-		flex: 1,
-		padding: spacing.md,
-		justifyContent: "space-between",
 	},
 	info: {
 		flex: 1,
 	},
 	movieTitle: {
-		fontSize: 16,
+		fontSize: 14,
 		fontWeight: "600",
 		marginBottom: spacing.xs,
-		lineHeight: 22,
+		lineHeight: 19,
 	},
 	meta: {
 		flexDirection: "row",
@@ -204,7 +169,7 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 	},
 	year: {
-		fontSize: 14,
+		fontSize: 12,
 	},
 	watchedRow: {
 		flexDirection: "row",
@@ -212,7 +177,7 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 	},
 	watchedDate: {
-		fontSize: 14,
+		fontSize: 12,
 		fontWeight: "500",
 	},
 	removeButton: {
@@ -226,13 +191,18 @@ const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 	},
 	removeButtonText: {
-		fontSize: 14,
+		fontSize: 12,
 		fontWeight: "600",
 	},
 	removeButtonContent: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 6,
+	},
+	metaWatched: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
 	},
 	metaDot: {
 		fontSize: 12,

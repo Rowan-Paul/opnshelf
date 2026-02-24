@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { MediaCard } from "@/components/MediaCard";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -126,187 +127,156 @@ export function SeasonCard({
   const year = airDate ? new Date(airDate).getFullYear() : null;
 
   return (
-    <TouchableOpacity
+    <MediaCard
       onPress={onPress}
-      style={[
-        styles.container,
-        {
-          borderColor: hasWatchedEpisodes
-            ? `${colors.primary}40`
-            : themeColors.outline,
-          backgroundColor: `${themeColors.surfaceContainer}50`,
-        },
-      ]}
-      activeOpacity={0.8}
-    >
-      <View style={styles.row}>
-        <View style={styles.posterWrapper}>
-          {fullPosterUrl ? (
-            <Image
-              source={{ uri: fullPosterUrl }}
-              style={styles.poster}
-              contentFit="cover"
-            />
-          ) : (
-            <View style={[styles.poster, styles.noPoster]}>
-              <Ionicons name="film-outline" size={24} color="#6b7280" />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.primary }]}>
-              Season {seasonNumber}
-            </Text>
-            {year && (
-              <Text
-                style={[styles.year, { color: themeColors.onSurfaceVariant }]}
-              >
-                {year}
-              </Text>
-            )}
+      cardStyle={{
+        borderColor: hasWatchedEpisodes
+          ? `${colors.primary}40`
+          : themeColors.outline,
+        backgroundColor: `${themeColors.surfaceContainer}50`,
+      }}
+      mediaContainerStyle={{
+        width: 80,
+        minHeight: 120,
+      }}
+      media={
+        fullPosterUrl ? (
+          <Image
+            source={{ uri: fullPosterUrl }}
+            style={styles.poster}
+            contentFit="cover"
+          />
+        ) : (
+          <View style={[styles.poster, styles.noPoster]}>
+            <Ionicons name="film-outline" size={24} color="#6b7280" />
           </View>
+        )
+      }
+      contentStyle={styles.content}
+    >
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.primary }]}>
+          Season {seasonNumber}
+        </Text>
+        {year && (
+          <Text style={[styles.year, { color: themeColors.onSurfaceVariant }]}>
+            {year}
+          </Text>
+        )}
+      </View>
 
-          <View style={styles.meta}>
-            <View style={styles.metaItem}>
-              <Ionicons
-                name="film-outline"
-                size={12}
-                color={themeColors.onSurfaceVariant}
+      <View style={styles.meta}>
+        <View style={styles.metaItem}>
+          <Ionicons
+            name="film-outline"
+            size={12}
+            color={themeColors.onSurfaceVariant}
+          />
+          <Text style={[styles.metaText, { color: themeColors.onSurfaceVariant }]}>
+            {episodeCount} episodes
+          </Text>
+        </View>
+        {watchedCount > 0 && (
+          <Text style={[styles.watchedText, { color: themeColors.onSurface }]}>
+            {watchedCount} watched
+          </Text>
+        )}
+      </View>
+
+      {overview && (
+        <Text
+          style={[styles.overview, { color: themeColors.onSurfaceVariant }]}
+          numberOfLines={2}
+        >
+          {overview}
+        </Text>
+      )}
+
+      {episodeCount > 0 && (
+        <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressTrack,
+              { backgroundColor: themeColors.surfaceVariant },
+            ]}
+          >
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  width: `${progress}%`,
+                  backgroundColor: colors.primary,
+                },
+              ]}
+            />
+          </View>
+        </View>
+      )}
+
+      {userDid && (
+        <TouchableOpacity
+          onPress={handleToggleWatched}
+          disabled={isPending}
+          style={[
+            styles.addButton,
+            {
+              backgroundColor: hasWatchedEpisodes
+                ? `${themeColors.error}20`
+                : `${colors.primary}20`,
+              borderColor: hasWatchedEpisodes
+                ? themeColors.error
+                : colors.primary,
+            },
+          ]}
+          activeOpacity={0.7}
+        >
+          {isPending ? (
+            <>
+              <ActivityIndicator
+                size="small"
+                color={hasWatchedEpisodes ? themeColors.error : colors.primary}
               />
               <Text
                 style={[
-                  styles.metaText,
-                  { color: themeColors.onSurfaceVariant },
+                  styles.addButtonText,
+                  {
+                    color: hasWatchedEpisodes
+                      ? themeColors.error
+                      : colors.primary,
+                  },
                 ]}
               >
-                {episodeCount} episodes
+                Loading
               </Text>
-            </View>
-            {watchedCount > 0 && (
+            </>
+          ) : (
+            <>
+              <Ionicons
+                name={hasWatchedEpisodes ? "trash-outline" : "add"}
+                size={14}
+                color={hasWatchedEpisodes ? themeColors.error : colors.primary}
+              />
               <Text
-                style={[styles.watchedText, { color: themeColors.onSurface }]}
-              >
-                {watchedCount} watched
-              </Text>
-            )}
-          </View>
-
-          {overview && (
-            <Text
-              style={[styles.overview, { color: themeColors.onSurfaceVariant }]}
-              numberOfLines={2}
-            >
-              {overview}
-            </Text>
-          )}
-
-          {episodeCount > 0 && (
-            <View style={styles.progressContainer}>
-              <View
                 style={[
-                  styles.progressTrack,
-                  { backgroundColor: themeColors.surfaceVariant },
+                  styles.addButtonText,
+                  {
+                    color: hasWatchedEpisodes
+                      ? themeColors.error
+                      : colors.primary,
+                  },
                 ]}
               >
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      width: `${progress}%`,
-                      backgroundColor: colors.primary,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
+                {hasWatchedEpisodes ? "Remove from Shelf" : "Add to Shelf"}
+              </Text>
+            </>
           )}
-
-          {userDid && (
-            <TouchableOpacity
-              onPress={handleToggleWatched}
-              disabled={isPending}
-              style={[
-                styles.addButton,
-                {
-                  backgroundColor: hasWatchedEpisodes
-                    ? `${themeColors.error}20`
-                    : `${colors.primary}20`,
-                  borderColor: hasWatchedEpisodes
-                    ? themeColors.error
-                    : colors.primary,
-                },
-              ]}
-              activeOpacity={0.7}
-            >
-              {isPending ? (
-                <>
-                  <ActivityIndicator
-                    size="small"
-                    color={
-                      hasWatchedEpisodes ? themeColors.error : colors.primary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.addButtonText,
-                      {
-                        color: hasWatchedEpisodes
-                          ? themeColors.error
-                          : colors.primary,
-                      },
-                    ]}
-                  >
-                    Loading
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons
-                    name={hasWatchedEpisodes ? "trash-outline" : "add"}
-                    size={14}
-                    color={
-                      hasWatchedEpisodes ? themeColors.error : colors.primary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.addButtonText,
-                      {
-                        color: hasWatchedEpisodes
-                          ? themeColors.error
-                          : colors.primary,
-                      },
-                    ]}
-                  >
-                    {hasWatchedEpisodes ? "Remove from Shelf" : "Add to Shelf"}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
+        </TouchableOpacity>
+      )}
+    </MediaCard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  row: {
-    flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "center",
-  },
-  posterWrapper: {
-    width: 80,
-    height: 120,
-  },
   poster: {
     width: "100%",
     height: "100%",
@@ -317,20 +287,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   content: {
-    flex: 1,
     paddingVertical: spacing.sm,
     paddingRight: spacing.sm,
-    justifyContent: "center",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 4,
+    gap: spacing.sm,
   },
   title: {
     fontSize: 16,
     fontWeight: "600",
+    flexShrink: 1,
   },
   year: {
     fontSize: 12,
