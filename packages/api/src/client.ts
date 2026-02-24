@@ -34,15 +34,13 @@ function updateClientConfig() {
 	client.setConfig({
 		baseUrl,
 		credentials: 'include',
+		headers: sessionToken
+			? {
+					Authorization: `Bearer ${sessionToken}`,
+				}
+			: undefined,
 	});
 }
-
-client.interceptors.request.use(async (request) => {
-	if (sessionToken) {
-		request.headers.set('Authorization', `Bearer ${sessionToken}`);
-	}
-	return request;
-});
 
 client.interceptors.response.use(async (response) => {
 	if (response.status === 401) {

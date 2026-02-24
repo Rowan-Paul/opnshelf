@@ -13,6 +13,7 @@ import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -22,10 +23,21 @@ export default function ListsScreen() {
 	const { colors } = useTheme();
 	const [showCreateModal, setShowCreateModal] = useState(false);
 
-	const { data: lists, isLoading: isListsLoading } = useQuery({
+	const {
+		data: lists,
+		isLoading: isListsLoading,
+		isRefetching: isListsRefetching,
+		refetch: refetchLists,
+	} = useQuery({
 		...listsControllerGetUserListsOptions(),
 		enabled: !!user?.did,
 	});
+
+	const isRefreshing = isListsRefetching && !isListsLoading;
+
+	const handleRefresh = useCallback(async () => {
+		await refetchLists();
+	}, [refetchLists]);
 
 	const handleListPress = useCallback((slug: string) => {
 		router.push(`/list/${slug}`);
@@ -92,6 +104,12 @@ export default function ListsScreen() {
 					keyExtractor={keyExtractor}
 					contentContainerStyle={styles.listContent}
 					ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+					refreshControl={
+						<ThemedRefreshControl
+							refreshing={isRefreshing}
+							onRefresh={handleRefresh}
+						/>
+					}
 				/>
 			)}
 

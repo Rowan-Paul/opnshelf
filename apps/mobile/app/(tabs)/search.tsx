@@ -20,6 +20,7 @@ import { MovieItem } from "@/components/MovieItem";
 import { ShowItem } from "@/components/ShowItem";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -61,14 +62,22 @@ export default function SearchScreen() {
 		};
 	}, [query]);
 
-	const { data: trackedMovies } = useQuery({
+	const {
+		data: trackedMovies,
+		isRefetching: isTrackedMoviesRefetching,
+		refetch: refetchTrackedMovies,
+	} = useQuery({
 		...moviesControllerGetUserMoviesOptions({
 			path: { userDid: user?.did || "" },
 		}),
 		enabled: !!user?.did,
 	});
 
-	const { data: trackedShows } = useQuery({
+	const {
+		data: trackedShows,
+		isRefetching: isTrackedShowsRefetching,
+		refetch: refetchTrackedShows,
+	} = useQuery({
 		...showsControllerGetUserShowsOptions({
 			path: { userDid: user?.did || "" },
 		}),
@@ -88,7 +97,9 @@ export default function SearchScreen() {
 	const {
 		data: searchData,
 		isLoading: isSearchLoading,
+		isRefetching: isSearchRefetching,
 		error: searchError,
+		refetch: refetchSearch,
 	} = useQuery({
 		queryKey: ["search", "all", debouncedQuery],
 		queryFn: async () => {
@@ -104,7 +115,9 @@ export default function SearchScreen() {
 	const {
 		data: discoverData,
 		isLoading: isDiscoverLoading,
+		isRefetching: isDiscoverRefetching,
 		error: discoverError,
+		refetch: refetchDiscover,
 	} = useQuery({
 		queryKey: ["search", "discover"],
 		queryFn: async () => {
@@ -129,7 +142,34 @@ export default function SearchScreen() {
 
 	const isLoading =
 		debouncedQuery.length > 0 ? isSearchLoading : isDiscoverLoading;
+	const isRefreshing =
+		(isTrackedMoviesRefetching ||
+			isTrackedShowsRefetching ||
+			(debouncedQuery.length > 0
+				? isSearchRefetching
+				: isDiscoverRefetching)) &&
+		!isLoading;
 	const error = debouncedQuery.length > 0 ? searchError : discoverError;
+
+	const handleRefresh = useCallback(async () => {
+		const refetchPromises: Promise<unknown>[] = [];
+		if (user?.did) {
+			refetchPromises.push(refetchTrackedMovies(), refetchTrackedShows());
+		}
+		if (debouncedQuery.length > 0) {
+			refetchPromises.push(refetchSearch());
+		} else {
+			refetchPromises.push(refetchDiscover());
+		}
+		await Promise.all(refetchPromises);
+	}, [
+		user?.did,
+		debouncedQuery,
+		refetchTrackedMovies,
+		refetchTrackedShows,
+		refetchSearch,
+		refetchDiscover,
+	]);
 
 	const filteredResults = useMemo(() => {
 		if (mediaType === "movies") {
@@ -465,6 +505,12 @@ export default function SearchScreen() {
 								Found {total.toLocaleString()} results
 							</Text>
 						) : null
+					}
+					refreshControl={
+						<ThemedRefreshControl
+							refreshing={isRefreshing}
+							onRefresh={handleRefresh}
+						/>
 					}
 				/>
 			)}

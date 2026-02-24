@@ -25,6 +25,7 @@ import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -128,6 +129,7 @@ export default function ShelfScreen() {
 
 	const isLoading = shelfQuery.isLoading;
 	const isFetchingNextPage = shelfQuery.isFetchingNextPage;
+	const isRefreshing = shelfQuery.isRefetching && !shelfQuery.isLoading;
 
 	const renderItem = useCallback(
 		({ item }: { item: (typeof items)[0] }) => {
@@ -185,6 +187,10 @@ export default function ShelfScreen() {
 		shelfQuery.isFetchingNextPage,
 		shelfQuery.fetchNextPage,
 	]);
+
+	const handleRefresh = useCallback(async () => {
+		await shelfQuery.refetch();
+	}, [shelfQuery.refetch]);
 
 	const renderFooter = useCallback(() => {
 		if (!isFetchingNextPage) return null;
@@ -264,6 +270,12 @@ export default function ShelfScreen() {
 						onEndReached={onEndReached}
 						onEndReachedThreshold={0.5}
 						ListFooterComponent={renderFooter}
+						refreshControl={
+							<ThemedRefreshControl
+								refreshing={isRefreshing}
+								onRefresh={handleRefresh}
+							/>
+						}
 					/>
 				</>
 			) : (

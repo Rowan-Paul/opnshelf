@@ -39,6 +39,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import { DetailActions, DetailHero, MetadataPills } from "@/components/detail";
 import { Button } from "@/components/ui/Button";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -88,7 +89,7 @@ export default function MovieDetailScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
-	const { data: user } = useQuery({
+	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
@@ -101,7 +102,12 @@ export default function MovieDetailScreen() {
 	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-	const { data: movieData, isLoading: isMovieLoading } = useQuery({
+	const {
+		data: movieData,
+		isLoading: isMovieLoading,
+		isRefetching: isMovieRefetching,
+		refetch: refetchMovie,
+	} = useQuery({
 		...moviesControllerGetMovieDetailsOptions({
 			path: { movieId },
 		}),
@@ -116,31 +122,76 @@ export default function MovieDetailScreen() {
 		muted: "#92400E",
 	};
 
-	const { data: trackedMovies } = useQuery({
+	const {
+		data: trackedMovies,
+		isRefetching: isTrackedMoviesRefetching,
+		refetch: refetchTrackedMovies,
+	} = useQuery({
 		...moviesControllerGetUserMoviesOptions({
 			path: { userDid: user?.did || "" },
 		}),
 		enabled: !!user?.did,
 	});
 
-	const { data: watchHistory } = useQuery({
+	const {
+		data: watchHistory,
+		isRefetching: isWatchHistoryRefetching,
+		refetch: refetchWatchHistory,
+	} = useQuery({
 		...moviesControllerGetMovieWatchHistoryOptions({
 			path: { userDid: user?.did || "", movieId },
 		}),
 		enabled: !!user?.did,
 	});
 
-	const { data: userSettings } = useQuery({
+	const {
+		data: userSettings,
+		isRefetching: isUserSettingsRefetching,
+		refetch: refetchUserSettings,
+	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
 	});
 
-	const { data: listsForMovie } = useQuery({
+	const {
+		data: listsForMovie,
+		isRefetching: isListsRefetching,
+		refetch: refetchListsForMovie,
+	} = useQuery({
 		...listsControllerGetListsForItemOptions({
 			path: { mediaType: "movie", mediaId: movieId },
 		}),
 		enabled: !!user?.did,
 	});
+
+	const isRefreshing =
+		(isMovieRefetching ||
+			isTrackedMoviesRefetching ||
+			isWatchHistoryRefetching ||
+			isUserSettingsRefetching ||
+			isListsRefetching) &&
+		!isMovieLoading;
+
+	const handleRefresh = useCallback(async () => {
+		const refetchPromises: Promise<unknown>[] = [refetchMovie(), refetchUser()];
+		if (user?.did) {
+			refetchPromises.push(
+				refetchTrackedMovies(),
+				refetchWatchHistory(),
+				refetchUserSettings(),
+				refetchListsForMovie(),
+			);
+		}
+		await Promise.all(refetchPromises);
+	}, [
+		user?.did,
+		refetchMovie,
+		refetchUser,
+		refetchTrackedMovies,
+		refetchWatchHistory,
+		refetchUserSettings,
+		refetchListsForMovie,
+	]);
 
 	const listsForMovieTyped = (listsForMovie || []) as MovieListsForItemDto[];
 	const listsCount = listsForMovieTyped.filter((l) => l.isInList).length;
@@ -340,7 +391,15 @@ export default function MovieDetailScreen() {
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: themeColors.background }]}
 		>
-			<ScrollView contentContainerStyle={styles.scrollContent}>
+			<ScrollView
+				contentContainerStyle={styles.scrollContent}
+				refreshControl={
+					<ThemedRefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+					/>
+				}
+			>
 				<DetailHero
 					title={movie?.title || title || ""}
 					subtitle={releaseYear ? String(releaseYear) : undefined}

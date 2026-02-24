@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	ScrollView,
 	Share,
@@ -31,6 +31,7 @@ import {
 	MetadataPills,
 	SeasonCard,
 } from "@/components/detail";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -60,13 +61,18 @@ export default function ShowDetailScreen() {
 	const [_showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
 
-	const { data: user } = useQuery({
+	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
 		staleTime: 5 * 60 * 1000,
 		retry: false,
 	});
 
-	const { data: showData, isLoading } = useQuery({
+	const {
+		data: showData,
+		isLoading,
+		isRefetching: isShowRefetching,
+		refetch: refetchShow,
+	} = useQuery({
 		...showsControllerGetShowDetailsOptions({
 			path: { showId: id },
 		}),
@@ -74,24 +80,62 @@ export default function ShowDetailScreen() {
 
 	const show = showData as TmdbShowDetailDto | undefined;
 
-	const { data: history } = useQuery({
+	const {
+		data: history,
+		isRefetching: isHistoryRefetching,
+		refetch: refetchHistory,
+	} = useQuery({
 		...showsControllerGetShowWatchHistoryOptions({
 			path: { userDid: user?.did || "", showId: id },
 		}),
 		enabled: !!user?.did,
 	});
 
-	const { data: listsForShow } = useQuery({
+	const {
+		data: listsForShow,
+		isRefetching: isListsRefetching,
+		refetch: refetchLists,
+	} = useQuery({
 		...listsControllerGetListsForItemOptions({
 			path: { mediaType: "show", mediaId: id },
 		}),
 		enabled: !!user?.did,
 	});
 
-	const { data: userSettings } = useQuery({
+	const {
+		data: userSettings,
+		isRefetching: isUserSettingsRefetching,
+		refetch: refetchUserSettings,
+	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
 	});
+
+	const isRefreshing =
+		(isShowRefetching ||
+			isHistoryRefetching ||
+			isListsRefetching ||
+			isUserSettingsRefetching) &&
+		!isLoading;
+
+	const handleRefresh = useCallback(async () => {
+		const refetchPromises: Promise<unknown>[] = [refetchShow(), refetchUser()];
+		if (user?.did) {
+			refetchPromises.push(
+				refetchHistory(),
+				refetchLists(),
+				refetchUserSettings(),
+			);
+		}
+		await Promise.all(refetchPromises);
+	}, [
+		user?.did,
+		refetchShow,
+		refetchUser,
+		refetchHistory,
+		refetchLists,
+		refetchUserSettings,
+	]);
 
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
 	const watchedEpisodeCount = history?.length ?? 0;
@@ -239,7 +283,15 @@ export default function ShowDetailScreen() {
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: themeColors.background }]}
 		>
-			<ScrollView contentContainerStyle={styles.scrollContent}>
+			<ScrollView
+				contentContainerStyle={styles.scrollContent}
+				refreshControl={
+					<ThemedRefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+					/>
+				}
+			>
 				<DetailHero
 					title={show?.name || "Show"}
 					backdropUrl={backdropUrl}

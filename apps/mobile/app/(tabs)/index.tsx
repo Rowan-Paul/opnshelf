@@ -16,13 +16,14 @@ import {
 	Share2,
 	Shield,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -55,7 +56,12 @@ export default function HomeScreen() {
 	const [range, setRange] = useState<"week" | "month">("week");
 	const [showCreateModal, setShowCreateModal] = useState(false);
 
-	const { data: shelfData, isLoading: isShelfLoading } = useQuery({
+	const {
+		data: shelfData,
+		isLoading: isShelfLoading,
+		isRefetching: isShelfRefetching,
+		refetch: refetchShelf,
+	} = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid: user?.did || "" },
 			query: { limit: 20 },
@@ -63,10 +69,21 @@ export default function HomeScreen() {
 		enabled: !!user?.did && isAuthenticated,
 	});
 
-	const { data: lists, isLoading: isListsLoading } = useQuery({
+	const {
+		data: lists,
+		isLoading: isListsLoading,
+		isRefetching: isListsRefetching,
+		refetch: refetchLists,
+	} = useQuery({
 		...listsControllerGetUserListsOptions(),
 		enabled: !!user?.did && isAuthenticated,
 	});
+
+	const isRefreshing = isShelfRefetching || isListsRefetching;
+
+	const handleRefresh = useCallback(async () => {
+		await Promise.all([refetchShelf(), refetchLists()]);
+	}, [refetchShelf, refetchLists]);
 
 	const { watchedInRangeCount, totalTracked, recentWatched } = useMemo(() => {
 		const now = Date.now();
@@ -144,7 +161,15 @@ export default function HomeScreen() {
 			style={[styles.container, { backgroundColor: colors.background }]}
 			edges={["top"]}
 		>
-			<ScrollView contentContainerStyle={styles.scrollContent}>
+			<ScrollView
+				contentContainerStyle={styles.scrollContent}
+				refreshControl={
+					<ThemedRefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+					/>
+				}
+			>
 				<View style={styles.dashboardHeader}>
 					<View style={styles.dashboardTitleWrap}>
 						<LayoutDashboard size={28} color={colors.primary} />
