@@ -25,6 +25,8 @@ import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Modal,
+	type NativeScrollEvent,
+	type NativeSyntheticEvent,
 	Pressable,
 	ScrollView,
 	Share,
@@ -42,6 +44,7 @@ import {
 	type EpisodeSummary,
 	MetadataPills,
 } from "@/components/detail";
+import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { Button } from "@/components/ui/Button";
 import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
@@ -94,6 +97,7 @@ export default function ShowEpisodeScreen() {
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
+	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
 	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
@@ -447,6 +451,18 @@ export default function ShowEpisodeScreen() {
 		markMutation.variables?.body?.seasonNumber === Number(seasonNumber) &&
 		markMutation.variables?.body?.episodeNumber === Number(episodeNumber);
 
+	const handleScroll = useCallback(
+		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
+			setShowCompactHeader((prev) =>
+				prev === shouldShowHeader ? prev : shouldShowHeader,
+			);
+		},
+		[],
+	);
+
+	const compactHeaderTitle = `${show?.name || title || "Show"} · S${seasonNumber}E${episodeNumber}`;
+
 	return (
 		<>
 			<SafeAreaView
@@ -454,6 +470,8 @@ export default function ShowEpisodeScreen() {
 			>
 				<ScrollView
 					contentContainerStyle={styles.scrollContent}
+					onScroll={handleScroll}
+					scrollEventThrottle={16}
 					refreshControl={
 						<ThemedRefreshControl
 							refreshing={isRefreshing}
@@ -623,6 +641,12 @@ export default function ShowEpisodeScreen() {
 						)}
 					</View>
 				</ScrollView>
+
+				<ScrollRevealHeader
+					visible={showCompactHeader}
+					onBack={() => router.back()}
+					title={compactHeaderTitle}
+				/>
 			</SafeAreaView>
 
 			<WatchDatePickerModal

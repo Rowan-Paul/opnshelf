@@ -12,11 +12,19 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, List, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+	type NativeScrollEvent,
+	type NativeSyntheticEvent,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { MediaCard } from "@/components/MediaCard";
+import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -35,6 +43,7 @@ export default function ListDetailScreen() {
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
 	const {
 		data: list,
@@ -142,6 +151,16 @@ export default function ListDetailScreen() {
 	);
 
 	const keyExtractor = useCallback((item: MediaInListDto) => item.id, []);
+
+	const handleListScroll = useCallback(
+		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+			const shouldShowHeader = event.nativeEvent.contentOffset.y > 100;
+			setShowCompactHeader((prev) =>
+				prev === shouldShowHeader ? prev : shouldShowHeader,
+			);
+		},
+		[],
+	);
 
 	if (!isAuthenticated) {
 		return (
@@ -268,46 +287,50 @@ export default function ListDetailScreen() {
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				<View style={styles.header}>
-					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.onBackground} />
-					</TouchableOpacity>
-					<View style={styles.headerContent}>
-						<Text
-							style={[styles.title, { color: colors.onBackground }]}
-							numberOfLines={1}
-						>
-							{list.name}
-						</Text>
-						{list.isDefault && (
-							<View
-								style={[
-									styles.defaultBadge,
-									{ backgroundColor: `${colors.primary}30` },
-								]}
+				{movies.length === 0 && (
+					<View style={styles.header}>
+						<TouchableOpacity onPress={handleBack} style={styles.backButton}>
+							<ArrowLeft size={24} color={colors.onBackground} />
+						</TouchableOpacity>
+						<View style={styles.headerContent}>
+							<Text
+								style={[styles.title, { color: colors.onBackground }]}
+								numberOfLines={1}
+							>
+								{list.name}
+							</Text>
+							{list.isDefault && (
+								<View
+									style={[
+										styles.defaultBadge,
+										{ backgroundColor: `${colors.primary}30` },
+									]}
+								>
+									<Text
+										style={[styles.defaultBadgeText, { color: colors.primary }]}
+									>
+										Default
+									</Text>
+								</View>
+							)}
+						</View>
+						{!list.isDefault && (
+							<TouchableOpacity
+								onPress={() => setShowDeleteConfirm(true)}
+								disabled={deleteMutation.isPending}
+								style={styles.deleteButton}
 							>
 								<Text
-									style={[styles.defaultBadgeText, { color: colors.primary }]}
+									style={[styles.deleteButtonText, { color: colors.error }]}
 								>
-									Default
+									{deleteMutation.isPending ? "..." : "Delete"}
 								</Text>
-							</View>
+							</TouchableOpacity>
 						)}
 					</View>
-					{!list.isDefault && (
-						<TouchableOpacity
-							onPress={() => setShowDeleteConfirm(true)}
-							disabled={deleteMutation.isPending}
-							style={styles.deleteButton}
-						>
-							<Text style={[styles.deleteButtonText, { color: colors.error }]}>
-								{deleteMutation.isPending ? "..." : "Delete"}
-							</Text>
-						</TouchableOpacity>
-					)}
-				</View>
+				)}
 
-				{list.description && (
+				{movies.length === 0 && list.description && (
 					<Text
 						style={[styles.description, { color: colors.onSurfaceVariant }]}
 					>
@@ -316,28 +339,92 @@ export default function ListDetailScreen() {
 				)}
 
 				{movies.length > 0 && (
-					<>
-						<Text
-							style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
-						>
-							{movies.length} item{movies.length !== 1 ? "s" : ""}
-						</Text>
-						<FlashList
-							data={movies}
-							renderItem={renderItem}
-							keyExtractor={keyExtractor}
-							contentContainerStyle={styles.listContent}
-							ItemSeparatorComponent={() => (
-								<View style={styles.itemSeparator} />
-							)}
-							refreshControl={
-								<ThemedRefreshControl
-									refreshing={isRefreshing}
-									onRefresh={handleRefresh}
-								/>
-							}
-						/>
-					</>
+					<FlashList
+						data={movies}
+						renderItem={renderItem}
+						keyExtractor={keyExtractor}
+						contentContainerStyle={styles.listContent}
+						onScroll={handleListScroll}
+						scrollEventThrottle={16}
+						ListHeaderComponent={
+							<View style={styles.listHeader}>
+								<View style={styles.header}>
+									<TouchableOpacity
+										onPress={handleBack}
+										style={styles.backButton}
+									>
+										<ArrowLeft size={24} color={colors.onBackground} />
+									</TouchableOpacity>
+									<View style={styles.headerContent}>
+										<Text
+											style={[styles.title, { color: colors.onBackground }]}
+											numberOfLines={1}
+										>
+											{list.name}
+										</Text>
+										{list.isDefault && (
+											<View
+												style={[
+													styles.defaultBadge,
+													{ backgroundColor: `${colors.primary}30` },
+												]}
+											>
+												<Text
+													style={[
+														styles.defaultBadgeText,
+														{ color: colors.primary },
+													]}
+												>
+													Default
+												</Text>
+											</View>
+										)}
+									</View>
+									{!list.isDefault && (
+										<TouchableOpacity
+											onPress={() => setShowDeleteConfirm(true)}
+											disabled={deleteMutation.isPending}
+											style={styles.deleteButton}
+										>
+											<Text
+												style={[
+													styles.deleteButtonText,
+													{ color: colors.error },
+												]}
+											>
+												{deleteMutation.isPending ? "..." : "Delete"}
+											</Text>
+										</TouchableOpacity>
+									)}
+								</View>
+								{list.description && (
+									<Text
+										style={[
+											styles.description,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										{list.description}
+									</Text>
+								)}
+								<Text
+									style={[
+										styles.resultsCount,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									{movies.length} item{movies.length !== 1 ? "s" : ""}
+								</Text>
+							</View>
+						}
+						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+						refreshControl={
+							<ThemedRefreshControl
+								refreshing={isRefreshing}
+								onRefresh={handleRefresh}
+							/>
+						}
+					/>
 				)}
 
 				{movies.length === 0 && (
@@ -382,6 +469,12 @@ export default function ListDetailScreen() {
 						</Card>
 					</View>
 				)}
+
+				<ScrollRevealHeader
+					visible={showCompactHeader}
+					onBack={handleBack}
+					title={list.name}
+				/>
 			</SafeAreaView>
 
 			<ConfirmModal
@@ -549,6 +642,9 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		paddingHorizontal: spacing.lg,
 		marginBottom: spacing.sm,
+	},
+	listHeader: {
+		marginHorizontal: -spacing.lg,
 	},
 	listContent: {
 		padding: spacing.lg,

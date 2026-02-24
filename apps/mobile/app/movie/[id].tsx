@@ -26,6 +26,8 @@ import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Modal,
+	type NativeScrollEvent,
+	type NativeSyntheticEvent,
 	Pressable,
 	ScrollView,
 	Share,
@@ -38,6 +40,7 @@ import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import { DetailActions, DetailHero, MetadataPills } from "@/components/detail";
+import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { Button } from "@/components/ui/Button";
 import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -101,6 +104,7 @@ export default function MovieDetailScreen() {
 	const [showDatePicker, setShowDatePicker] = useState(false);
 	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
+	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
 	const {
 		data: movieData,
@@ -377,6 +381,16 @@ export default function MovieDetailScreen() {
 		return items;
 	}, [movie, themeColors]);
 
+	const handleScroll = useCallback(
+		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
+			setShowCompactHeader((prev) =>
+				prev === shouldShowHeader ? prev : shouldShowHeader,
+			);
+		},
+		[],
+	);
+
 	if (isMovieLoading) {
 		return (
 			<SafeAreaView style={styles.container}>
@@ -393,6 +407,8 @@ export default function MovieDetailScreen() {
 		>
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
+				onScroll={handleScroll}
+				scrollEventThrottle={16}
 				refreshControl={
 					<ThemedRefreshControl
 						refreshing={isRefreshing}
@@ -816,6 +832,12 @@ export default function MovieDetailScreen() {
 				mediaType="movie"
 				mediaId={movieId}
 				mediaTitle={movie?.title || title || ""}
+			/>
+
+			<ScrollRevealHeader
+				visible={showCompactHeader}
+				onBack={() => router.back()}
+				title={movie?.title || title || "Movie"}
 			/>
 		</SafeAreaView>
 	);

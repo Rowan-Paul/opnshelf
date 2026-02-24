@@ -1,4 +1,4 @@
-import { CheckCircle2, Trash2 } from "lucide-react-native";
+import { Trash2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -102,19 +102,16 @@ export function MovieCard({
 						</Text>
 					)}
 					{formattedWatchedDate && (
-						<View style={styles.metaWatched}>
+						<>
 							{tracked.releaseYear ? (
 								<Text style={[styles.metaDot, { color: colors.onSurfaceVariant }]}>
 									•
 								</Text>
 							) : null}
-							<View style={styles.watchedRow}>
-								<CheckCircle2 size={12} color={colors.primary} />
-								<Text style={[styles.watchedDate, { color: colors.primary }]}>
-									{formattedWatchedDate}
-								</Text>
-							</View>
-						</View>
+							<Text style={[styles.watchedDate, { color: colors.onSurfaceVariant }]}>
+								{formattedWatchedDate}
+							</Text>
+						</>
 					)}
 				</View>
 			</View>
@@ -171,14 +168,8 @@ const styles = StyleSheet.create({
 	year: {
 		fontSize: 12,
 	},
-	watchedRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-	},
 	watchedDate: {
 		fontSize: 12,
-		fontWeight: "500",
 	},
 	removeButton: {
 		flexDirection: "row",
@@ -198,11 +189,6 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 6,
-	},
-	metaWatched: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
 	},
 	metaDot: {
 		fontSize: 12,

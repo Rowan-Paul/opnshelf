@@ -19,6 +19,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
+	type NativeScrollEvent,
+	type NativeSyntheticEvent,
 	ScrollView,
 	Share,
 	StyleSheet,
@@ -35,6 +37,7 @@ import {
 	MetadataPills,
 	SeasonNav,
 } from "@/components/detail";
+import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -68,6 +71,7 @@ export default function ShowSeasonScreen() {
 
 	const [_showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
+	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
 	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
@@ -299,12 +303,26 @@ export default function ShowSeasonScreen() {
 		return items;
 	}, [season, seasonEpisodes.length, themeColors]);
 
+	const handleScroll = useCallback(
+		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
+			setShowCompactHeader((prev) =>
+				prev === shouldShowHeader ? prev : shouldShowHeader,
+			);
+		},
+		[],
+	);
+
+	const compactHeaderTitle = `${show?.name || title || "Show"} · Season ${seasonNumber}`;
+
 	return (
 		<SafeAreaView
 			style={[styles.container, { backgroundColor: themeColors.background }]}
 		>
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
+				onScroll={handleScroll}
+				scrollEventThrottle={16}
 				refreshControl={
 					<ThemedRefreshControl
 						refreshing={isRefreshing}
@@ -591,6 +609,12 @@ export default function ShowSeasonScreen() {
 				onConfirm={handleMarkWatchedWithDate}
 				isLoading={markSeasonWatchedMutation.isPending}
 				is24Hour={is24Hour}
+			/>
+
+			<ScrollRevealHeader
+				visible={showCompactHeader}
+				onBack={() => router.back()}
+				title={compactHeaderTitle}
 			/>
 		</SafeAreaView>
 	);
