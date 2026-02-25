@@ -3,6 +3,8 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	searchControllerDiscoverAll,
+	searchControllerSearchAll,
 	showsControllerGetUserShowsOptions,
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkShowWatchedMutation,
@@ -14,7 +16,14 @@ import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	Dimensions,
+	Pressable,
+	StyleSheet,
+	Text,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
 import { ShowItem } from "@/components/ShowItem";
@@ -28,7 +37,6 @@ import { useToast } from "@/contexts/toast";
 import { createTitleSlug } from "@/lib/utils";
 
 const DEBOUNCE_MS = 300;
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const GAP = spacing.md;
 const H_PADDING = spacing.lg;
@@ -103,11 +111,11 @@ export default function SearchScreen() {
 	} = useQuery({
 		queryKey: ["search", "all", debouncedQuery],
 		queryFn: async () => {
-			const response = await fetch(
-				`${API_URL}/search/all?query=${encodeURIComponent(debouncedQuery)}`,
-			);
-			if (!response.ok) throw new Error("Search failed");
-			return response.json();
+			const { data } = await searchControllerSearchAll({
+				query: { query: debouncedQuery },
+				throwOnError: true,
+			});
+			return data;
 		},
 		enabled: debouncedQuery.length > 0,
 	});
@@ -121,9 +129,10 @@ export default function SearchScreen() {
 	} = useQuery({
 		queryKey: ["search", "discover"],
 		queryFn: async () => {
-			const response = await fetch(`${API_URL}/search/discover`);
-			if (!response.ok) throw new Error("Discover failed");
-			return response.json();
+			const { data } = await searchControllerDiscoverAll({
+				throwOnError: true,
+			});
+			return data;
 		},
 		enabled: debouncedQuery.length === 0,
 	});
@@ -139,6 +148,7 @@ export default function SearchScreen() {
 	}, [debouncedQuery, searchData, discoverData, results.length]);
 
 	const showTotal = debouncedQuery.length > 0 && total > 0;
+	const isDiscoverMode = debouncedQuery.length === 0;
 
 	const isLoading =
 		debouncedQuery.length > 0 ? isSearchLoading : isDiscoverLoading;
@@ -150,6 +160,7 @@ export default function SearchScreen() {
 				: isDiscoverRefetching)) &&
 		!isLoading;
 	const error = debouncedQuery.length > 0 ? searchError : discoverError;
+	const showError = !isLoading && !!error;
 
 	const handleRefresh = useCallback(async () => {
 		const refetchPromises: Promise<unknown>[] = [];
@@ -180,6 +191,7 @@ export default function SearchScreen() {
 		}
 		return results;
 	}, [results, mediaType]);
+	const showNoResults = !isLoading && !error && filteredResults.length === 0;
 
 	const markMutation = useMutation({
 		mutationKey: ["movies", "markWatched"],
@@ -469,9 +481,16 @@ export default function SearchScreen() {
 				))}
 			</View>
 
-			{isLoading && renderSkeleton()}
+			{isLoading &&
+				(isDiscoverMode ? (
+					<View style={styles.centerContent}>
+						<ActivityIndicator size="large" color={colors.primary} />
+					</View>
+				) : (
+					renderSkeleton()
+				))}
 
-			{error && (
+			{showError && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.errorText, { color: colors.error }]}>
 						Error: {(error as Error).message}
@@ -515,7 +534,7 @@ export default function SearchScreen() {
 				/>
 			)}
 
-			{!isLoading && filteredResults.length === 0 && debouncedQuery && (
+			{showNoResults && debouncedQuery && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
 						No results found for &quot;{debouncedQuery}&quot;
@@ -523,7 +542,7 @@ export default function SearchScreen() {
 				</View>
 			)}
 
-			{!isLoading && !debouncedQuery && filteredResults.length === 0 && (
+			{showNoResults && !debouncedQuery && (
 				<View style={styles.centerContent}>
 					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
 						No popular content available

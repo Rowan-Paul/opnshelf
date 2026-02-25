@@ -1,19 +1,15 @@
 import {
-	authControllerMeOptions,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/auth";
 
 export function useUserSettings() {
-	const { data: user } = useQuery({
-		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
+	const { user, isAuthenticated } = useAuth();
 
 	const { data: settings, isLoading } = useQuery({
 		...usersControllerGetMySettingsOptions(),
-		enabled: !!user?.did,
+		enabled: !!user?.did && isAuthenticated,
 	});
 
 	return {

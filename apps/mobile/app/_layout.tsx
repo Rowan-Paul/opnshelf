@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+import { LogBox } from "react-native";
 import { MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -11,6 +12,12 @@ import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeApiClient } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+
+if (__DEV__) {
+	LogBox.ignoreLogs([
+		"SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead.",
+	]);
+}
 
 function LocaleInitializer({ children }: { children: React.ReactNode }) {
 	const [isReady, setIsReady] = useState(false);

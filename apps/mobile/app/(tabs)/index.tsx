@@ -91,8 +91,7 @@ export default function HomeScreen() {
 		const cutoff = now - days * 24 * 60 * 60 * 1000;
 
 		const items = shelfData?.items ?? [];
-
-		const sorted = items.sort((a, b) => {
+		const sorted = [...items].sort((a, b) => {
 			const dateA = a.watchedDate
 				? new Date(a.watchedDate).getTime()
 				: new Date(a.createdAt).getTime();
