@@ -14,6 +14,7 @@ import { ArrowLeft, BookOpen } from "lucide-react-native";
 import { useCallback } from "react";
 import {
 	ActivityIndicator,
+	RefreshControl,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -25,7 +26,6 @@ import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -271,9 +271,12 @@ export default function ShelfScreen() {
 						onEndReachedThreshold={0.5}
 						ListFooterComponent={renderFooter}
 						refreshControl={
-							<ThemedRefreshControl
+							<RefreshControl
 								refreshing={isRefreshing}
 								onRefresh={handleRefresh}
+								tintColor={colors.primary}
+								colors={[colors.primary]}
+								progressBackgroundColor={colors.surfaceContainerHigh}
 							/>
 						}
 					/>

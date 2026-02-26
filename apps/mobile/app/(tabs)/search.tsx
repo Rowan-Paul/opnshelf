@@ -29,7 +29,6 @@ import { MovieItem } from "@/components/MovieItem";
 import { ShowItem } from "@/components/ShowItem";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -525,12 +524,8 @@ export default function SearchScreen() {
 							</Text>
 						) : null
 					}
-					refreshControl={
-						<ThemedRefreshControl
-							refreshing={isRefreshing}
-							onRefresh={handleRefresh}
-						/>
-					}
+					refreshing={isRefreshing}
+					onRefresh={handleRefresh}
 				/>
 			)}
 

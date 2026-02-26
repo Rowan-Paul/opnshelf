@@ -7,13 +7,18 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { ArrowLeft, List, ListPlus, Star } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+	RefreshControl,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -105,9 +110,12 @@ export default function ListsScreen() {
 					contentContainerStyle={styles.listContent}
 					ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
 					refreshControl={
-						<ThemedRefreshControl
+						<RefreshControl
 							refreshing={isRefreshing}
 							onRefresh={handleRefresh}
+							tintColor={colors.primary}
+							colors={[colors.primary]}
+							progressBackgroundColor={colors.surfaceContainerHigh}
 						/>
 					}
 				/>

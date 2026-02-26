@@ -28,6 +28,7 @@ import {
 	type NativeScrollEvent,
 	type NativeSyntheticEvent,
 	Pressable,
+	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
@@ -46,7 +47,6 @@ import {
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { Button } from "@/components/ui/Button";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -473,9 +473,12 @@ export default function ShowEpisodeScreen() {
 					onScroll={handleScroll}
 					scrollEventThrottle={16}
 					refreshControl={
-						<ThemedRefreshControl
+						<RefreshControl
 							refreshing={isRefreshing}
 							onRefresh={handleRefresh}
+							tintColor={themeColors.primary}
+							colors={[themeColors.primary]}
+							progressBackgroundColor={themeColors.surfaceContainerHigh}
 						/>
 					}
 				>

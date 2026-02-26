@@ -29,6 +29,7 @@ import {
 	type NativeScrollEvent,
 	type NativeSyntheticEvent,
 	Pressable,
+	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
@@ -42,7 +43,6 @@ import { AddToListModal } from "@/components/AddToListModal";
 import { DetailActions, DetailHero, MetadataPills } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { Button } from "@/components/ui/Button";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -410,9 +410,12 @@ export default function MovieDetailScreen() {
 				onScroll={handleScroll}
 				scrollEventThrottle={16}
 				refreshControl={
-					<ThemedRefreshControl
+					<RefreshControl
 						refreshing={isRefreshing}
 						onRefresh={handleRefresh}
+						tintColor={themeColors.primary}
+						colors={[themeColors.primary]}
+						progressBackgroundColor={themeColors.surfaceContainerHigh}
 					/>
 				}
 			>

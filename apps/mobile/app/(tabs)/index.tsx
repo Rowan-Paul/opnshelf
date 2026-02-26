@@ -17,13 +17,19 @@ import {
 	Shield,
 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+	Pressable,
+	RefreshControl,
+	ScrollView,
+	StyleSheet,
+	Text,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CreateListModal } from "@/components/CreateListModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -163,9 +169,12 @@ export default function HomeScreen() {
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
 				refreshControl={
-					<ThemedRefreshControl
+					<RefreshControl
 						refreshing={isRefreshing}
 						onRefresh={handleRefresh}
+						tintColor={colors.primary}
+						colors={[colors.primary]}
+						progressBackgroundColor={colors.surfaceContainerHigh}
 					/>
 				}
 			>

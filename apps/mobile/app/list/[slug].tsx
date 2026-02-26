@@ -15,6 +15,7 @@ import { useCallback, useState } from "react";
 import {
 	type NativeScrollEvent,
 	type NativeSyntheticEvent,
+	RefreshControl,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -28,7 +29,6 @@ import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { SpinningLoader } from "@/components/SpinningLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -416,16 +416,19 @@ export default function ListDetailScreen() {
 									{movies.length} item{movies.length !== 1 ? "s" : ""}
 								</Text>
 							</View>
-						}
-						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-						refreshControl={
-							<ThemedRefreshControl
-								refreshing={isRefreshing}
-								onRefresh={handleRefresh}
-							/>
-						}
-					/>
-				)}
+							}
+							ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+							refreshControl={
+								<RefreshControl
+									refreshing={isRefreshing}
+									onRefresh={handleRefresh}
+									tintColor={colors.primary}
+									colors={[colors.primary]}
+									progressBackgroundColor={colors.surfaceContainerHigh}
+								/>
+							}
+						/>
+					)}
 
 				{movies.length === 0 && (
 					<View style={styles.centerContent}>

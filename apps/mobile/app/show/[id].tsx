@@ -19,6 +19,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
 	type NativeScrollEvent,
 	type NativeSyntheticEvent,
+	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
@@ -34,7 +35,6 @@ import {
 	SeasonCard,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
-import { ThemedRefreshControl } from "@/components/ui/ThemedRefreshControl";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -302,9 +302,12 @@ export default function ShowDetailScreen() {
 				onScroll={handleScroll}
 				scrollEventThrottle={16}
 				refreshControl={
-					<ThemedRefreshControl
+					<RefreshControl
 						refreshing={isRefreshing}
 						onRefresh={handleRefresh}
+						tintColor={themeColors.primary}
+						colors={[themeColors.primary]}
+						progressBackgroundColor={themeColors.surfaceContainerHigh}
 					/>
 				}
 			>
