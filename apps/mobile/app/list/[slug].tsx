@@ -416,19 +416,19 @@ export default function ListDetailScreen() {
 									{movies.length} item{movies.length !== 1 ? "s" : ""}
 								</Text>
 							</View>
-							}
-							ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-							refreshControl={
-								<RefreshControl
-									refreshing={isRefreshing}
-									onRefresh={handleRefresh}
-									tintColor={colors.primary}
-									colors={[colors.primary]}
-									progressBackgroundColor={colors.surfaceContainerHigh}
-								/>
-							}
-						/>
-					)}
+						}
+						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+						refreshControl={
+							<RefreshControl
+								refreshing={isRefreshing}
+								onRefresh={handleRefresh}
+								tintColor={colors.primary}
+								colors={[colors.primary]}
+								progressBackgroundColor={colors.surfaceContainerHigh}
+							/>
+						}
+					/>
+				)}
 
 				{movies.length === 0 && (
 					<View style={styles.centerContent}>
