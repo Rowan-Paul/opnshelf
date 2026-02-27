@@ -169,6 +169,7 @@ function SearchPage() {
 					<div className="relative max-w-2xl">
 						<M3TextField
 							type="text"
+							label="Search"
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 							placeholder="Search movies and shows..."

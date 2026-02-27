@@ -13,11 +13,11 @@ import {
 	Pressable,
 	ScrollView,
 	Text,
-	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { M3TextField } from "@/components/ui/m3";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -582,25 +582,16 @@ export default function LoginScreen() {
 							</View>
 
 							<View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
-								<TextInput
-									style={{
-										width: "100%",
-										paddingHorizontal: 14,
-										paddingVertical: 12,
-										backgroundColor: colors.surfaceContainer,
-										borderWidth: 1,
-										borderColor: colors.outline,
-										borderRadius: 10,
-										color: colors.onSurface,
-										fontSize: 16,
-									}}
+								<M3TextField
+									label="Handle"
+									containerStyle={{ width: "100%" }}
 									value={suggestionQuery}
 									onChangeText={setSuggestionQuery}
 									placeholder="Search by handle"
-									placeholderTextColor={colors.onSurfaceVariant}
 									autoCapitalize="none"
 									autoCorrect={false}
 									autoFocus
+									variant="outlined"
 								/>
 							</View>
 

@@ -11,12 +11,12 @@ import {
 	Pressable,
 	StyleSheet,
 	Text,
-	TextInput,
 	View,
 } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { Button } from "@/components/ui/Button";
+import { M3TextField } from "@/components/ui/m3";
 
 interface CreateListModalProps {
 	visible: boolean;
@@ -83,29 +83,21 @@ export const CreateListModal = memo(function CreateListModal({
 
 					<View style={styles.form}>
 						<View style={styles.inputContainer}>
-							<Text style={[styles.label, { color: colors.onSurface }]}>Name</Text>
-							<TextInput
-								style={[styles.input, { 
-									backgroundColor: colors.background, 
-									borderColor: colors.outline,
-									color: colors.onSurface 
-								}]}
+							<M3TextField
+								label="Name"
 								placeholder="My Awesome List"
 								placeholderTextColor={colors.onSurfaceVariant}
 								value={name}
 								onChangeText={setName}
 								maxLength={100}
+								variant="outlined"
 							/>
 						</View>
 
 						<View style={styles.inputContainer}>
-							<Text style={[styles.label, { color: colors.onSurface }]}>Description (optional)</Text>
-							<TextInput
-								style={[styles.input, styles.textArea, { 
-									backgroundColor: colors.background, 
-									borderColor: colors.outline,
-									color: colors.onSurface 
-								}]}
+							<M3TextField
+								label="Description (optional)"
+								style={styles.textArea}
 								placeholder="What's this list about?"
 								placeholderTextColor={colors.onSurfaceVariant}
 								value={description}
@@ -173,21 +165,11 @@ const styles = StyleSheet.create({
 		gap: spacing.md,
 	},
 	inputContainer: {
-		gap: spacing.xs,
-	},
-	label: {
-		fontSize: 14,
-		fontWeight: "500",
-	},
-	input: {
-		borderRadius: borderRadius.md,
-		borderWidth: 1,
-		padding: spacing.md,
-		fontSize: 16,
+		gap: spacing.sm,
 	},
 	textArea: {
-		minHeight: 80,
-		paddingTop: spacing.md,
+		minHeight: 90,
+		paddingTop: 20,
 	},
 	buttons: {
 		flexDirection: "row",

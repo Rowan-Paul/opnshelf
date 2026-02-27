@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+	Pressable,
 	StyleSheet,
 	View,
 	TextInput,
@@ -19,6 +20,9 @@ export interface M3TextFieldProps extends TextInputProps {
 	error?: string;
 	variant?: M3TextFieldVariant;
 	containerStyle?: StyleProp<ViewStyle>;
+	leadingIcon?: React.ReactNode;
+	trailingIcon?: React.ReactNode;
+	onPressTrailingIcon?: () => void;
 }
 
 export function M3TextField({
@@ -27,6 +31,12 @@ export function M3TextField({
 	error,
 	variant = "outlined",
 	containerStyle,
+	style,
+	value,
+	defaultValue,
+	leadingIcon,
+	trailingIcon,
+	onPressTrailingIcon,
 	...props
 }: M3TextFieldProps) {
 	const { colors } = useTheme();
@@ -67,44 +77,60 @@ export function M3TextField({
 		}
 	};
 
-	const getLabelPosition = () => {
-		if (props.value || isFocused || props.placeholder) {
-			return "top";
-		}
-		return "center";
-	};
+	const hasValue = value !== undefined
+		? String(value).length > 0
+		: defaultValue !== undefined
+			? String(defaultValue).length > 0
+			: false;
+	const isLabelFloating = hasValue || isFocused || !!props.placeholder;
 
 	return (
 		<View style={[styles.container, containerStyle]}>
-			{label && (
-				<View
-					style={[
-						styles.labelContainer,
-						getLabelPosition() === "top" ? styles.labelTop : styles.labelCenter,
-					]}
-				>
-					<Text
+			<View style={[styles.inputContainer, getVariantStyles()]}>
+				{label && (
+					<View
+						pointerEvents="none"
 						style={[
-							styles.label,
-							{
-								color: getLabelColor(),
-								fontSize: getLabelPosition() === "top" ? 12 : 16,
+							styles.labelContainer,
+							isLabelFloating ? styles.labelTop : styles.labelCenter,
+							variant === "outlined" && {
+								backgroundColor: colors.surface,
 							},
 						]}
 					>
-						{label}
-					</Text>
-				</View>
-			)}
-			<View style={[styles.inputContainer, getVariantStyles()]}>
+						<Text
+							style={[
+								styles.label,
+								{
+									color: getLabelColor(),
+									fontSize: isLabelFloating ? 12 : 16,
+								},
+							]}
+						>
+							{label}
+						</Text>
+					</View>
+				)}
+				{leadingIcon && (
+					<View
+						pointerEvents="none"
+						style={[styles.iconContainer, styles.leadingIconContainer]}
+					>
+						{leadingIcon}
+					</View>
+				)}
 				<TextInput
 					{...props}
+					value={value}
+					defaultValue={defaultValue}
 					style={[
 						styles.input,
+						!!leadingIcon && styles.inputWithLeadingIcon,
+						!!trailingIcon && styles.inputWithTrailingIcon,
 						{
 							color: colors.onSurface,
 						},
-						props.style,
+						style,
 					]}
 					placeholderTextColor={colors.onSurfaceVariant}
 					onFocus={(e) => {
@@ -116,6 +142,22 @@ export function M3TextField({
 						props.onBlur?.(e);
 					}}
 				/>
+				{trailingIcon &&
+					(onPressTrailingIcon ? (
+						<Pressable
+							onPress={onPressTrailingIcon}
+							style={[styles.iconContainer, styles.trailingIconContainer]}
+						>
+							{trailingIcon}
+						</Pressable>
+					) : (
+						<View
+							pointerEvents="none"
+							style={[styles.iconContainer, styles.trailingIconContainer]}
+						>
+							{trailingIcon}
+						</View>
+					))}
 			</View>
 			{(helperText || error) && (
 				<View style={styles.helperContainer}>
@@ -138,17 +180,18 @@ const styles = StyleSheet.create({
 		width: "100%",
 	},
 	labelContainer: {
-		marginBottom: 4,
+		position: "absolute",
+		left: 12,
+		zIndex: 2,
+		paddingHorizontal: 4,
 	},
 	labelTop: {
-		marginBottom: 4,
+		top: 0,
+		transform: [{ translateY: -8 }],
 	},
 	labelCenter: {
-		position: "absolute",
-		top: 0,
-		bottom: 0,
-		left: 16,
-		justifyContent: "center",
+		top: "50%",
+		transform: [{ translateY: -10 }],
 	},
 	label: {
 		fontWeight: "500",
@@ -162,6 +205,24 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 12,
 		fontSize: 16,
+	},
+	inputWithLeadingIcon: {
+		paddingLeft: 48,
+	},
+	inputWithTrailingIcon: {
+		paddingRight: 48,
+	},
+	iconContainer: {
+		position: "absolute",
+		top: 0,
+		bottom: 0,
+		justifyContent: "center",
+	},
+	leadingIconContainer: {
+		left: 14,
+	},
+	trailingIconContainer: {
+		right: 14,
 	},
 	helperContainer: {
 		marginTop: 4,

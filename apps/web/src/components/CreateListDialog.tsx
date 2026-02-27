@@ -14,15 +14,14 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { M3Button } from "@/components/ui/m3-button";
 import { M3TextField } from "@/components/ui/m3-text-field";
-import { Textarea } from "@/components/ui/textarea";
 
 export function CreateListDialog() {
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
+	const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
 	const queryClient = useQueryClient();
 	const id = useId();
 	const { seedColor } = useTheme();
@@ -83,15 +82,9 @@ export function CreateListDialog() {
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-2">
-						<Label
-							htmlFor={`${id}-name`}
-							className="md-label-large"
-							style={{ color: "var(--md-sys-color-on-surface)" }}
-						>
-							Name
-						</Label>
 						<M3TextField
 							id={`${id}-name`}
+							label="Name"
 							placeholder="My Awesome List"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
@@ -101,22 +94,39 @@ export function CreateListDialog() {
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label
-							htmlFor={`${id}-description`}
-							className="md-label-large"
-							style={{ color: "var(--md-sys-color-on-surface)" }}
+						<div
+							className="relative rounded-[var(--md-sys-shape-corner-extra-small)] border bg-transparent transition-all duration-200"
+							style={{
+								borderColor: isDescriptionFocused
+									? "var(--md-sys-color-primary)"
+									: "var(--md-sys-color-outline)",
+								borderWidth: isDescriptionFocused ? 2 : 1,
+							}}
 						>
-							Description (optional)
-						</Label>
-						<Textarea
-							id={`${id}-description`}
-							placeholder="What's this list about?"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							maxLength={500}
-							rows={3}
-							className="bg-(--md-sys-color-surface-container-highest) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) placeholder:text-(--md-sys-color-on-surface-variant)"
-						/>
+							<label
+								htmlFor={`${id}-description`}
+								className="absolute left-4 top-0 -translate-y-1/2 px-1 md-label-small pointer-events-none"
+								style={{
+									backgroundColor: "var(--md-sys-color-surface)",
+									color: isDescriptionFocused
+										? "var(--md-sys-color-primary)"
+										: "var(--md-sys-color-on-surface-variant)",
+								}}
+							>
+								Description (optional)
+							</label>
+							<textarea
+								id={`${id}-description`}
+								placeholder="What's this list about?"
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								onFocus={() => setIsDescriptionFocused(true)}
+								onBlur={() => setIsDescriptionFocused(false)}
+								maxLength={500}
+								rows={3}
+								className="w-full resize-none bg-transparent py-4 px-4 text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)] outline-none md-body-large"
+							/>
+						</div>
 					</div>
 					<div className="flex justify-end gap-2">
 						<M3Button

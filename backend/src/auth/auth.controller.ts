@@ -162,7 +162,9 @@ export class AuthController {
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth authorization failed", error);
-			return res.redirect(this.resolveErrorRedirect("auth_failed", mobilePlatform));
+			return res.redirect(
+				this.resolveErrorRedirect("auth_failed", mobilePlatform),
+			);
 		}
 	}
 
@@ -221,7 +223,9 @@ export class AuthController {
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth PDS signup authorization failed", error);
-			return res.redirect(this.resolveErrorRedirect("auth_failed", mobilePlatform));
+			return res.redirect(
+				this.resolveErrorRedirect("auth_failed", mobilePlatform),
+			);
 		}
 	}
 
@@ -353,10 +357,14 @@ export class AuthController {
 				statePayload.platform ||
 				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
 			if (platform === "mobile") {
-				return res.redirect(this.resolveErrorRedirect("callback_failed", platform));
+				return res.redirect(
+					this.resolveErrorRedirect("callback_failed", platform),
+				);
 			}
 
-			return res.redirect(this.resolveErrorRedirect("callback_failed", platform));
+			return res.redirect(
+				this.resolveErrorRedirect("callback_failed", platform),
+			);
 		}
 	}
 

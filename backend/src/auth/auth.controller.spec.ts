@@ -138,9 +138,7 @@ describe("AuthController", () => {
 			await controller.login(undefined, undefined, undefined, res);
 
 			expect(mockAuthService.authorize).not.toHaveBeenCalled();
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
 
 		it("should redirect to mobile login when handle is not provided on mobile", async () => {
@@ -149,9 +147,7 @@ describe("AuthController", () => {
 			await controller.login(undefined, "mobile", undefined, res);
 
 			expect(mockAuthService.authorize).not.toHaveBeenCalled();
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 
 		it("should set platform cookie when platform=mobile", async () => {
@@ -213,9 +209,7 @@ describe("AuthController", () => {
 
 			await controller.login("user.bsky.social", undefined, undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
 
 		it("should redirect to mobile login on failure when platform is mobile", async () => {
@@ -224,33 +218,31 @@ describe("AuthController", () => {
 
 			await controller.login("user.bsky.social", "mobile", undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 	});
 
 	describe("signup", () => {
 		it("should redirect to frontend with error on signup failure", async () => {
-			mockAuthService.authorizeWithPds.mockRejectedValue(new Error("OAuth error"));
+			mockAuthService.authorizeWithPds.mockRejectedValue(
+				new Error("OAuth error"),
+			);
 			const res = createMockResponse();
 
 			await controller.signup(undefined, undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
 
 		it("should redirect to mobile login on signup failure when platform is mobile", async () => {
-			mockAuthService.authorizeWithPds.mockRejectedValue(new Error("OAuth error"));
+			mockAuthService.authorizeWithPds.mockRejectedValue(
+				new Error("OAuth error"),
+			);
 			const res = createMockResponse();
 
 			await controller.signup("mobile", undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 	});
 
@@ -470,9 +462,7 @@ describe("AuthController", () => {
 				mockProfile,
 				undefined,
 			);
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
 
 		it("should redirect to mobile login when session record not found for mobile state", async () => {
@@ -502,9 +492,7 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 
 		it("should redirect with error on callback failure", async () => {
@@ -517,9 +505,7 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
 
 		it("should redirect to mobile deep link on callback failure when error state is mobile", async () => {
@@ -537,9 +523,7 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 
 		it("should redirect to mobile login on callback failure when mobile cookie is set", async () => {
@@ -553,9 +537,7 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/callback",
-			);
+			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
 		});
 	});
 

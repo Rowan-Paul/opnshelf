@@ -21,13 +21,13 @@ import {
 	ScrollView,
 	StyleSheet,
 	Text,
-	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { M3TextField } from "@/components/ui/m3";
 import { Switch } from "@/components/ui/Switch";
 import { defaultColors as staticColors } from "@/constants/extended-theme";
 import { borderRadius, spacing } from "@/constants/spacing";
@@ -446,12 +446,13 @@ export default function SettingsScreen() {
 						</Button>
 					</View>
 
-					<TextInput
-						style={styles.searchInput}
+					<M3TextField
+						label="Timezone"
+						containerStyle={styles.searchInput}
 						placeholder="Search timezones..."
-						placeholderTextColor={colors.textMuted}
 						value={timezoneSearch}
 						onChangeText={setTimezoneSearch}
+						variant="outlined"
 					/>
 
 					<ScrollView style={styles.modalScroll}>
@@ -732,14 +733,6 @@ const styles = StyleSheet.create({
 	searchInput: {
 		marginHorizontal: spacing.lg,
 		marginVertical: spacing.md,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-		backgroundColor: colors.card,
-		borderRadius: borderRadius.lg,
-		borderWidth: 1,
-		borderColor: colors.border,
-		color: colors.text,
-		fontSize: 16,
 	},
 	modalScroll: {
 		flex: 1,

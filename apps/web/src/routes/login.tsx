@@ -259,14 +259,9 @@ function LoginPage() {
 
 					<form onSubmit={handleSubmit} className="space-y-5">
 						<div ref={inputAreaRef} className="relative">
-							<label
-								htmlFor={handleId}
-								className="mb-2 block md-label-large tracking-[0.08em] uppercase text-(--md-sys-color-on-surface-variant)"
-							>
-								Handle
-							</label>
 							<M3TextField
 								id={handleId}
+								label="Handle"
 								value={handle}
 								onChange={(e) => {
 									setHandle(e.target.value);
