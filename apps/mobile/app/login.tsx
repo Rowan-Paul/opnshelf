@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
+import { useToast } from "@/contexts/toast";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:3001";
 
@@ -47,7 +48,9 @@ export default function LoginScreen() {
 	}>();
 	const { error, redirect, reason } = params;
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const shownErrorRef = useRef<string | null>(null);
 	const { colors } = useTheme();
+	const { showToast } = useToast();
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -143,6 +146,7 @@ export default function LoginScreen() {
 
 		if (result.type !== "success") {
 			setIsSubmitting(false);
+			showToast("Sign in failed. Please try again.");
 			return;
 		}
 
@@ -150,6 +154,7 @@ export default function LoginScreen() {
 		const session = url.searchParams.get("session");
 		if (!session) {
 			setIsSubmitting(false);
+			showToast("Sign in failed. Please try again.");
 			return;
 		}
 
@@ -195,6 +200,18 @@ export default function LoginScreen() {
 		auth_failed: "Authentication failed. Please try again.",
 		callback_failed: "Something went wrong during sign in. Please try again.",
 	};
+
+	useEffect(() => {
+		if (!error) {
+			shownErrorRef.current = null;
+			return;
+		}
+		if (shownErrorRef.current === error) {
+			return;
+		}
+		shownErrorRef.current = error;
+		showToast(errorMessages[error] || "An error occurred. Please try again.");
+	}, [error, showToast]);
 
 	if (isAuthLoading) {
 		return (

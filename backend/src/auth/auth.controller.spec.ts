@@ -139,7 +139,18 @@ describe("AuthController", () => {
 
 			expect(mockAuthService.authorize).not.toHaveBeenCalled();
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000?error=handle_required",
+				"http://127.0.0.1:3000/login",
+			);
+		});
+
+		it("should redirect to mobile login when handle is not provided on mobile", async () => {
+			const res = createMockResponse();
+
+			await controller.login(undefined, "mobile", undefined, res);
+
+			expect(mockAuthService.authorize).not.toHaveBeenCalled();
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/callback",
 			);
 		});
 
@@ -203,7 +214,42 @@ describe("AuthController", () => {
 			await controller.login("user.bsky.social", undefined, undefined, res);
 
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000?error=auth_failed",
+				"http://127.0.0.1:3000/login",
+			);
+		});
+
+		it("should redirect to mobile login on failure when platform is mobile", async () => {
+			mockAuthService.authorize.mockRejectedValue(new Error("OAuth error"));
+			const res = createMockResponse();
+
+			await controller.login("user.bsky.social", "mobile", undefined, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/callback",
+			);
+		});
+	});
+
+	describe("signup", () => {
+		it("should redirect to frontend with error on signup failure", async () => {
+			mockAuthService.authorizeWithPds.mockRejectedValue(new Error("OAuth error"));
+			const res = createMockResponse();
+
+			await controller.signup(undefined, undefined, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login",
+			);
+		});
+
+		it("should redirect to mobile login on signup failure when platform is mobile", async () => {
+			mockAuthService.authorizeWithPds.mockRejectedValue(new Error("OAuth error"));
+			const res = createMockResponse();
+
+			await controller.signup("mobile", undefined, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/callback",
 			);
 		});
 	});
@@ -425,7 +471,39 @@ describe("AuthController", () => {
 				undefined,
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000?error=callback_failed",
+				"http://127.0.0.1:3000/login",
+			);
+		});
+
+		it("should redirect to mobile login when session record not found for mobile state", async () => {
+			const mockSession = { did: "did:plc:abc123" };
+			const mockProfile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+			};
+
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				state: '{"platform":"mobile"}',
+			});
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				platform: "mobile",
+			});
+			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+			mockAuthService.getSessionByUserDid.mockResolvedValue(null);
+
+			const req = createMockRequest({
+				url: "/auth/callback?code=abc&state=xyz",
+			});
+			const res = createMockResponse();
+
+			await controller.callback(req, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/callback",
 			);
 		});
 
@@ -440,7 +518,7 @@ describe("AuthController", () => {
 			await controller.callback(req, res);
 
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000?error=callback_failed",
+				"http://127.0.0.1:3000/login",
 			);
 		});
 
@@ -460,7 +538,23 @@ describe("AuthController", () => {
 			await controller.callback(req, res);
 
 			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/complete?error=callback_failed",
+				"opnshelf://auth/callback",
+			);
+		});
+
+		it("should redirect to mobile login on callback failure when mobile cookie is set", async () => {
+			mockAuthService.callback.mockRejectedValue(new Error("OAuth error"));
+
+			const req = createMockRequest({
+				url: "/auth/callback?code=abc&state=xyz",
+				cookies: { auth_platform: "mobile" },
+			});
+			const res = createMockResponse();
+
+			await controller.callback(req, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/callback",
 			);
 		});
 	});

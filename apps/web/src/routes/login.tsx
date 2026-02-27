@@ -7,11 +7,14 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { useTheme } from "@/components/theme-provider";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { M3TextField } from "@/components/ui/m3-text-field";
 import { env } from "@/env";
+
+const OAUTH_PENDING_KEY = "oauth_pending";
 
 const loginSearchSchema = z.object({
 	error: z.enum(["auth_failed", "callback_failed"]).optional(),
@@ -46,6 +49,7 @@ function LoginPage() {
 	const handleId = useId();
 	const inputAreaRef = useRef<HTMLDivElement>(null);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const shownErrorRef = useRef<string | null>(null);
 	const { seedColor } = useTheme();
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
@@ -125,6 +129,7 @@ function LoginPage() {
 
 	const performLogin = (loginHandle: string) => {
 		setIsSubmitting(true);
+		sessionStorage.setItem(OAUTH_PENDING_KEY, "1");
 
 		if (redirect) {
 			sessionStorage.setItem("auth_redirect", redirect);
@@ -148,6 +153,25 @@ function LoginPage() {
 		callback_failed: "Something went wrong during sign in. Please try again.",
 		handle_required: "Please enter your handle (e.g., username.bsky.social).",
 	};
+
+	useEffect(() => {
+		if (!error) {
+			shownErrorRef.current = null;
+
+			const hadPendingOAuth = sessionStorage.getItem(OAUTH_PENDING_KEY) === "1";
+			if (hadPendingOAuth) {
+				sessionStorage.removeItem(OAUTH_PENDING_KEY);
+				toast.error("Sign in failed. Please try again.");
+			}
+			return;
+		}
+		if (shownErrorRef.current === error) {
+			return;
+		}
+		shownErrorRef.current = error;
+		sessionStorage.removeItem(OAUTH_PENDING_KEY);
+		toast.error(errorMessages[error] || "An error occurred. Please try again.");
+	}, [error]);
 
 	const shouldShowSuggestions = showSuggestions && handle.trim().length >= 2;
 

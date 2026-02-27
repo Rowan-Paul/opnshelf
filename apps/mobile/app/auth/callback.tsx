@@ -22,7 +22,11 @@ export default function AuthCallbackScreen() {
 					showToast("Sign in failed. Please try again.");
 					router.replace("/login");
 				});
+			return;
 		}
+
+		showToast("Sign in failed. Please try again.");
+		router.replace("/login");
 	}, [token, handleAuthCallback, router, showToast]);
 
 	return (

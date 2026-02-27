@@ -22,6 +22,7 @@ function AuthCompletePage() {
 
 	useEffect(() => {
 		queryClient.invalidateQueries({ queryKey: ["auth"] });
+		sessionStorage.removeItem("oauth_pending");
 
 		const storedRedirect = sessionStorage.getItem("auth_redirect");
 		sessionStorage.removeItem("auth_redirect");

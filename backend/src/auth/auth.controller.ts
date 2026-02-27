@@ -22,6 +22,9 @@ import type { AuthenticatedRequest } from "./types";
 const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
 const TIMEZONE_COOKIE_NAME = "auth_timezone";
+const MOBILE_FAILURE_DEEP_LINK = "opnshelf://auth/callback";
+type OAuthErrorCode = "handle_required" | "auth_failed" | "callback_failed";
+type AuthPlatform = "mobile" | undefined;
 
 @ApiTags("auth")
 @Controller()
@@ -53,6 +56,30 @@ export class AuthController {
 			// ignore invalid FRONTEND_URL
 		}
 		return undefined;
+	}
+
+	private buildWebErrorUrl(errorCode: OAuthErrorCode): string {
+		const frontendUrl =
+			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
+		// Redirect to clean login route; frontend will show a friendly toast.
+		void errorCode;
+		return new URL("/login", frontendUrl).toString();
+	}
+
+	private buildMobileErrorUrl(errorCode: OAuthErrorCode): string {
+		// Use auth callback deep link so WebBrowser auth session can close reliably.
+		void errorCode;
+		return MOBILE_FAILURE_DEEP_LINK;
+	}
+
+	private resolveErrorRedirect(
+		errorCode: OAuthErrorCode,
+		platform: AuthPlatform,
+	): string {
+		if (platform === "mobile") {
+			return this.buildMobileErrorUrl(errorCode);
+		}
+		return this.buildWebErrorUrl(errorCode);
 	}
 
 	/**
@@ -91,17 +118,17 @@ export class AuthController {
 		@Query("timezone") timezone: string | undefined,
 		@Res() res: Response,
 	) {
+		const mobilePlatform: "mobile" | undefined =
+			platform === "mobile" ? "mobile" : undefined;
+
 		// Require handle to be provided
 		if (!handle || handle.trim() === "") {
-			const frontendUrl =
-				this.configService.get<string>("FRONTEND_URL") ||
-				"http://127.0.0.1:3000";
-			return res.redirect(`${frontendUrl}?error=handle_required`);
+			return res.redirect(
+				this.resolveErrorRedirect("handle_required", mobilePlatform),
+			);
 		}
 
 		const userHandle = handle.trim();
-		const mobilePlatform: "mobile" | undefined =
-			platform === "mobile" ? "mobile" : undefined;
 		const oauthAppState = {
 			platform: mobilePlatform,
 			timezone,
@@ -135,10 +162,7 @@ export class AuthController {
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth authorization failed", error);
-			const frontendUrl =
-				this.configService.get<string>("FRONTEND_URL") ||
-				"http://127.0.0.1:3000";
-			return res.redirect(`${frontendUrl}?error=auth_failed`);
+			return res.redirect(this.resolveErrorRedirect("auth_failed", mobilePlatform));
 		}
 	}
 
@@ -197,10 +221,7 @@ export class AuthController {
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth PDS signup authorization failed", error);
-			const frontendUrl =
-				this.configService.get<string>("FRONTEND_URL") ||
-				"http://127.0.0.1:3000";
-			return res.redirect(`${frontendUrl}/login?error=auth_failed`);
+			return res.redirect(this.resolveErrorRedirect("auth_failed", mobilePlatform));
 		}
 	}
 
@@ -284,7 +305,9 @@ export class AuthController {
 			);
 			if (!sessionRecord) {
 				this.logger.error("AuthSession not found after callback");
-				return res.redirect(`${frontendUrl}?error=callback_failed`);
+				return res.redirect(
+					this.resolveErrorRedirect("callback_failed", statePayload.platform),
+				);
 			}
 
 			// Set session cookie with opaque id (domain set so frontend at opnshelf.xyz receives it)
@@ -330,10 +353,10 @@ export class AuthController {
 				statePayload.platform ||
 				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
 			if (platform === "mobile") {
-				return res.redirect("opnshelf://auth/complete?error=callback_failed");
+				return res.redirect(this.resolveErrorRedirect("callback_failed", platform));
 			}
 
-			return res.redirect(`${frontendUrl}?error=callback_failed`);
+			return res.redirect(this.resolveErrorRedirect("callback_failed", platform));
 		}
 	}
 
