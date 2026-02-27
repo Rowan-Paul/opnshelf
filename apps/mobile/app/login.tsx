@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { getLoginUrl } from "@opnshelf/api";
+import { getLoginUrl, getSignupUrl } from "@opnshelf/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
@@ -128,7 +128,11 @@ export default function LoginScreen() {
 		const submitWithHandle = async () => {
 			try {
 				const timezone = detectUserTimezone();
-				const loginUrl = `${getLoginUrl(actor.handle, timezone || undefined)}&platform=mobile`;
+				const loginUrl = getLoginUrl(
+					actor.handle,
+					timezone || undefined,
+					"mobile",
+				);
 
 				const result = await WebBrowser.openAuthSessionAsync(
 					loginUrl,
@@ -158,7 +162,11 @@ export default function LoginScreen() {
 
 		try {
 			const timezone = detectUserTimezone();
-			const loginUrl = `${getLoginUrl(handle || undefined, timezone || undefined)}&platform=mobile`;
+			const loginUrl = getLoginUrl(
+				handle || undefined,
+				timezone || undefined,
+				"mobile",
+			);
 
 			const result = await WebBrowser.openAuthSessionAsync(
 				loginUrl,
@@ -394,9 +402,39 @@ export default function LoginScreen() {
 									color: colors.primary,
 									textDecorationLine: "underline",
 								}}
-								onPress={() => {}}
+								onPress={async () => {
+									setIsSubmitting(true);
+									try {
+										const timezone = detectUserTimezone();
+										const signupUrl = getSignupUrl(
+											timezone || undefined,
+											"mobile",
+										);
+
+										const result = await WebBrowser.openAuthSessionAsync(
+											signupUrl,
+											"opnshelf://auth/callback",
+										);
+
+										if (result.type === "success") {
+											const url = new URL(result.url);
+											const session = url.searchParams.get("session");
+											if (session) {
+												router.replace({
+													pathname: "/auth/complete",
+													params: { session },
+												});
+											}
+										} else {
+											setIsSubmitting(false);
+										}
+									} catch (err) {
+										console.error("Signup auth error:", err);
+										setIsSubmitting(false);
+									}
+								}}
 							>
-								Sign up on Bluesky
+								Create an account
 							</Text>
 						</Text>
 					</View>

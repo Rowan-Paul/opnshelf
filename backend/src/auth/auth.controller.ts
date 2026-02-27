@@ -100,9 +100,15 @@ export class AuthController {
 		}
 
 		const userHandle = handle.trim();
+		const mobilePlatform: "mobile" | undefined =
+			platform === "mobile" ? "mobile" : undefined;
+		const oauthAppState = {
+			platform: mobilePlatform,
+			timezone,
+		};
 
 		// Set platform cookie if mobile, so callback knows where to redirect
-		if (platform === "mobile") {
+		if (mobilePlatform) {
 			res.cookie(PLATFORM_COOKIE_NAME, "mobile", {
 				httpOnly: true,
 				maxAge: 5 * 60 * 1000, // 5 minutes
@@ -121,7 +127,10 @@ export class AuthController {
 
 		try {
 			this.logger.log(`Starting OAuth flow for handle: ${userHandle}`);
-			const authUrl = await this.authService.authorize(userHandle);
+			const authUrl = await this.authService.authorize(
+				userHandle,
+				oauthAppState,
+			);
 			this.logger.log(`Redirecting to: ${authUrl}`);
 			return res.redirect(authUrl);
 		} catch (error) {
@@ -130,6 +139,68 @@ export class AuthController {
 				this.configService.get<string>("FRONTEND_URL") ||
 				"http://127.0.0.1:3000";
 			return res.redirect(`${frontendUrl}?error=auth_failed`);
+		}
+	}
+
+	/**
+	 * Start OAuth signup flow via the configured PDS.
+	 * Redirects to the PDS's built-in authorization page which supports account creation.
+	 */
+	@Get("auth/signup")
+	@ApiOperation({ summary: "Start AT Protocol OAuth signup via PDS" })
+	@ApiQuery({
+		name: "platform",
+		required: false,
+		description: 'Platform identifier (e.g., "mobile") for redirect handling',
+	})
+	@ApiQuery({
+		name: "timezone",
+		required: false,
+		description: "User's IANA timezone (e.g., Europe/London)",
+	})
+	@ApiResponse({
+		status: 302,
+		description: "Redirect to PDS authorization server",
+	})
+	async signup(
+		@Query("platform") platform: string | undefined,
+		@Query("timezone") timezone: string | undefined,
+		@Res() res: Response,
+	) {
+		const mobilePlatform: "mobile" | undefined =
+			platform === "mobile" ? "mobile" : undefined;
+		const oauthAppState = {
+			platform: mobilePlatform,
+			timezone,
+		};
+
+		if (mobilePlatform) {
+			res.cookie(PLATFORM_COOKIE_NAME, "mobile", {
+				httpOnly: true,
+				maxAge: 5 * 60 * 1000,
+				sameSite: "lax",
+			});
+		}
+
+		if (timezone) {
+			res.cookie(TIMEZONE_COOKIE_NAME, timezone, {
+				httpOnly: true,
+				maxAge: 5 * 60 * 1000,
+				sameSite: "lax",
+			});
+		}
+
+		try {
+			this.logger.log("Starting OAuth signup flow via PDS");
+			const authUrl = await this.authService.authorizeWithPds(oauthAppState);
+			this.logger.log(`Redirecting to PDS: ${authUrl}`);
+			return res.redirect(authUrl);
+		} catch (error) {
+			this.logger.error("OAuth PDS signup authorization failed", error);
+			const frontendUrl =
+				this.configService.get<string>("FRONTEND_URL") ||
+				"http://127.0.0.1:3000";
+			return res.redirect(`${frontendUrl}/login?error=auth_failed`);
 		}
 	}
 
@@ -169,19 +240,20 @@ export class AuthController {
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
 		const cookieDomain = this.getCookieDomain();
+		const cookies = req.cookies as Record<string, string | undefined>;
 
 		try {
 			// Parse callback query params
 			const params = new URLSearchParams(req.url.split("?")[1] || "");
 
 			this.logger.log("Processing OAuth callback");
-			const { session } = await this.authService.callback(params);
+			const { session, state } = await this.authService.callback(params);
+			const statePayload = this.authService.parseOAuthAppState(state);
 
 			this.logger.log(`OAuth callback successful for DID: ${session.did}`);
 
-			// Get timezone from cookie (set during login) - only used for new users
-			const cookies = req.cookies as Record<string, string | undefined>;
-			const timezone = cookies?.[TIMEZONE_COOKIE_NAME];
+			// Prefer OAuth state (survives iOS auth sessions), then cookie fallback.
+			const timezone = statePayload.timezone || cookies?.[TIMEZONE_COOKIE_NAME];
 
 			// Fetch user profile and upsert in database (timezone only set for new users)
 			const profile = await this.authService.fetchProfile(session);
@@ -226,7 +298,9 @@ export class AuthController {
 			});
 
 			// Check if request originated from mobile app (reuse cookies variable)
-			const platform = cookies?.[PLATFORM_COOKIE_NAME];
+			const platform =
+				statePayload.platform ||
+				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
 
 			// Clear platform cookie after use
 			if (platform) {
@@ -243,6 +317,22 @@ export class AuthController {
 			return res.redirect(completeUrl);
 		} catch (error) {
 			this.logger.error("OAuth callback failed", error);
+
+			const stateFromError =
+				typeof error === "object" &&
+				error &&
+				"state" in error &&
+				typeof (error as { state?: unknown }).state === "string"
+					? (error as { state: string }).state
+					: undefined;
+			const statePayload = this.authService.parseOAuthAppState(stateFromError);
+			const platform =
+				statePayload.platform ||
+				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
+			if (platform === "mobile") {
+				return res.redirect("opnshelf://auth/complete?error=callback_failed");
+			}
+
 			return res.redirect(`${frontendUrl}?error=callback_failed`);
 		}
 	}

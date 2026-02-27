@@ -16,5 +16,6 @@ export {
 	getSessionToken,
 	configureApiClient,
 	getLoginUrl,
+	getSignupUrl,
 	type AuthUser,
 } from './client';

@@ -26,7 +26,9 @@ describe("AuthController", () => {
 	const mockAuthService: {
 		getClientMetadata: jest.Mock;
 		authorize: jest.Mock;
+		authorizeWithPds: jest.Mock;
 		callback: jest.Mock;
+		parseOAuthAppState: jest.Mock;
 		fetchProfile: jest.Mock;
 		upsertUser: jest.Mock;
 		getSessionByUserDid: jest.Mock;
@@ -35,7 +37,9 @@ describe("AuthController", () => {
 	} = {
 		getClientMetadata: jest.fn(),
 		authorize: jest.fn(),
+		authorizeWithPds: jest.fn(),
 		callback: jest.fn(),
+		parseOAuthAppState: jest.fn().mockReturnValue({}),
 		fetchProfile: jest.fn(),
 		upsertUser: jest.fn(),
 		getSessionByUserDid: jest.fn(),
@@ -80,6 +84,7 @@ describe("AuthController", () => {
 
 	beforeEach(async () => {
 		jest.clearAllMocks();
+		mockAuthService.parseOAuthAppState.mockReturnValue({});
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [AuthController],
@@ -119,6 +124,10 @@ describe("AuthController", () => {
 
 			expect(mockAuthService.authorize).toHaveBeenCalledWith(
 				"user.bsky.social",
+				{
+					platform: undefined,
+					timezone: undefined,
+				},
 			);
 			expect(res.redirect).toHaveBeenCalledWith(authUrl);
 		});
@@ -141,6 +150,13 @@ describe("AuthController", () => {
 
 			await controller.login("user.bsky.social", "mobile", undefined, res);
 
+			expect(mockAuthService.authorize).toHaveBeenCalledWith(
+				"user.bsky.social",
+				{
+					platform: "mobile",
+					timezone: undefined,
+				},
+			);
 			expect(res.cookie).toHaveBeenCalledWith("auth_platform", "mobile", {
 				httpOnly: true,
 				maxAge: 5 * 60 * 1000,
@@ -161,6 +177,13 @@ describe("AuthController", () => {
 				res,
 			);
 
+			expect(mockAuthService.authorize).toHaveBeenCalledWith(
+				"user.bsky.social",
+				{
+					platform: undefined,
+					timezone: "Europe/London",
+				},
+			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"auth_timezone",
 				"Europe/London",
@@ -336,6 +359,46 @@ describe("AuthController", () => {
 			);
 		});
 
+		it("should redirect to mobile deep link when state contains mobile platform", async () => {
+			const mockSession = { did: "did:plc:abc123" };
+			const mockProfile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: "Test User",
+				avatar: "https://example.com/avatar.jpg",
+			};
+			const mockSessionRecord = {
+				id: "session-123",
+				userDid: "did:plc:abc123",
+			};
+
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				state: '{"platform":"mobile"}',
+			});
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				platform: "mobile",
+			});
+			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
+
+			const req = createMockRequest({
+				url: "/auth/callback?code=abc&state=xyz",
+				cookies: {},
+			});
+			const res = createMockResponse();
+
+			await controller.callback(req, res);
+
+			expect(mockAuthService.parseOAuthAppState).toHaveBeenCalledWith(
+				'{"platform":"mobile"}',
+			);
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?session=session-123",
+			);
+		});
+
 		it("should redirect with error when session record not found", async () => {
 			const mockSession = { did: "did:plc:abc123" };
 			const mockProfile = {
@@ -378,6 +441,26 @@ describe("AuthController", () => {
 
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000?error=callback_failed",
+			);
+		});
+
+		it("should redirect to mobile deep link on callback failure when error state is mobile", async () => {
+			const error = new Error("OAuth error") as Error & { state?: string };
+			error.state = '{"platform":"mobile"}';
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				platform: "mobile",
+			});
+
+			const req = createMockRequest({
+				url: "/auth/callback?code=abc&state=xyz",
+			});
+			const res = createMockResponse();
+
+			await controller.callback(req, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=callback_failed",
 			);
 		});
 	});

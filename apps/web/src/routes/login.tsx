@@ -1,4 +1,4 @@
-import { authControllerMeOptions, getLoginUrl } from "@opnshelf/api";
+import { authControllerMeOptions, getLoginUrl, getSignupUrl } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, LogIn } from "lucide-react";
@@ -340,21 +340,23 @@ function LoginPage() {
 							Sign in
 						</LoadingButton>
 
-						<p
-							className="text-center md-body-medium"
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					<p
+						className="text-center md-body-medium"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Don&apos;t have an account?{" "}
+						<button
+							type="button"
+							onClick={() => {
+								const timezone = detectUserTimezone();
+								window.location.href = getSignupUrl(timezone || undefined);
+							}}
+							className="underline underline-offset-2 transition-colors cursor-pointer"
+							style={{ color: seedColor }}
 						>
-							Don&apos;t have an account?{" "}
-							<a
-								href="https://bsky.app/"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="underline underline-offset-2 transition-colors"
-								style={{ color: seedColor }}
-							>
-								Sign up on Bluesky
-							</a>
-						</p>
+							Create an account
+						</button>
+					</p>
 					</form>
 				</div>
 			</div>

@@ -76,3 +76,12 @@ export function getLoginUrl(handle?: string, timezone?: string, platform?: strin
 	const queryString = params.toString();
 	return `${baseUrl}/auth/login${queryString ? `?${queryString}` : ""}`;
 }
+
+// URL helper for PDS signup (redirects to the PDS's built-in account creation page)
+export function getSignupUrl(timezone?: string, platform?: string): string {
+	const params = new URLSearchParams();
+	if (timezone) params.set("timezone", timezone);
+	if (platform) params.set("platform", platform);
+	const queryString = params.toString();
+	return `${baseUrl}/auth/signup${queryString ? `?${queryString}` : ""}`;
+}

@@ -4,6 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 // Mock PrismaService before importing AuthService
 jest.mock("../prisma/prisma.service", () => ({
 	PrismaService: jest.fn().mockImplementation(() => ({
+		$transaction: jest.fn(),
 		authSession: {
 			findUnique: jest.fn(),
 			upsert: jest.fn(),
@@ -17,6 +18,7 @@ jest.mock("../prisma/prisma.service", () => ({
 		},
 		user: {
 			findUnique: jest.fn(),
+			update: jest.fn(),
 			upsert: jest.fn(),
 		},
 	})),
@@ -47,6 +49,7 @@ describe("AuthService", () => {
 	let configService: jest.Mocked<ConfigService>;
 
 	const mockPrismaService = {
+		$transaction: jest.fn(),
 		authSession: {
 			findUnique: jest.fn(),
 			upsert: jest.fn(),
@@ -60,6 +63,7 @@ describe("AuthService", () => {
 		},
 		user: {
 			findUnique: jest.fn(),
+			update: jest.fn(),
 			upsert: jest.fn(),
 		},
 	};
@@ -259,6 +263,87 @@ describe("AuthService", () => {
 					timezone: "UTC",
 				},
 			});
+		});
+
+		it("should recover from handle uniqueness conflicts by reassigning stale handle owner", async () => {
+			const profile = {
+				did: "did:plc:new123",
+				handle: "user.bsky.social",
+				displayName: "New User",
+				avatar: "https://example.com/avatar.jpg",
+			};
+			const mockUser = {
+				...profile,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			const handleConflictError = {
+				code: "P2002",
+				meta: {
+					constraint: {
+						fields: ["handle"],
+					},
+				},
+			};
+
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: typeof mockPrismaService) => unknown) =>
+					fn(mockPrismaService),
+			);
+			mockPrismaService.user.upsert
+				.mockRejectedValueOnce(handleConflictError)
+				.mockResolvedValueOnce(mockUser);
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:old123",
+				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+				timezone: "UTC",
+				timeFormat: "24h",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+			mockPrismaService.user.update.mockResolvedValue({
+				did: "did:plc:old123",
+				handle: "legacy-did-plc-old123-1234",
+				displayName: null,
+				avatar: null,
+				timezone: "UTC",
+				timeFormat: "24h",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+
+			const result = await service.upsertUser(profile);
+
+			expect(result).toEqual(mockUser);
+			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+				where: { handle: profile.handle },
+			});
+			expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { did: "did:plc:old123" },
+				}),
+			);
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe("parseOAuthAppState", () => {
+		it("should parse valid state payload", () => {
+			expect(
+				service.parseOAuthAppState(
+					'{"platform":"mobile","timezone":"Europe/London"}',
+				),
+			).toEqual({
+				platform: "mobile",
+				timezone: "Europe/London",
+			});
+		});
+
+		it("should return empty state for invalid payload", () => {
+			expect(service.parseOAuthAppState("not-json")).toEqual({});
 		});
 	});
 

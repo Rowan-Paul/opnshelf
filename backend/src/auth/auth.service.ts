@@ -13,6 +13,11 @@ const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
 export const OAUTH_SCOPE =
 	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
+export interface OAuthAppState {
+	platform?: "mobile";
+	timezone?: string;
+}
+
 @Injectable()
 export class AuthService implements OnModuleInit {
 	private readonly logger = new Logger(AuthService.name);
@@ -150,10 +155,30 @@ export class AuthService implements OnModuleInit {
 	 * @param handle - User's AT Protocol handle (e.g., user.bsky.social)
 	 * @returns The authorization URL to redirect the user to
 	 */
-	async authorize(handle: string): Promise<string> {
+	async authorize(handle: string, appState?: OAuthAppState): Promise<string> {
 		const client = this.getOAuthClient();
 		const url = await client.authorize(handle, {
 			scope: OAUTH_SCOPE,
+			state: this.serializeOAuthAppState(appState),
+		});
+		return url.toString();
+	}
+
+	/**
+	 * Start the OAuth flow targeting a specific PDS directly.
+	 * The PDS's built-in authorization page supports both sign-in and account creation.
+	 * @returns The authorization URL to redirect the user to the PDS
+	 */
+	async authorizeWithPds(appState?: OAuthAppState): Promise<string> {
+		const client = this.getOAuthClient();
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
+		const url = await client.authorize(pdsUrl, {
+			scope: OAUTH_SCOPE,
+			prompt: "create",
+			state: this.serializeOAuthAppState(appState),
 		});
 		return url.toString();
 	}
@@ -167,6 +192,29 @@ export class AuthService implements OnModuleInit {
 		const client = this.getOAuthClient();
 		const result = await client.callback(params);
 		return result;
+	}
+
+	parseOAuthAppState(rawState: string | null | undefined): OAuthAppState {
+		if (!rawState) {
+			return {};
+		}
+
+		try {
+			const parsed = JSON.parse(rawState) as {
+				platform?: unknown;
+				timezone?: unknown;
+			};
+
+			const platform = parsed.platform === "mobile" ? "mobile" : undefined;
+			const timezone =
+				typeof parsed.timezone === "string" && parsed.timezone.trim() !== ""
+					? parsed.timezone
+					: undefined;
+
+			return { platform, timezone };
+		} catch {
+			return {};
+		}
 	}
 
 	/**
@@ -259,21 +307,119 @@ export class AuthService implements OnModuleInit {
 		},
 		timezone?: string,
 	) {
-		return this.prisma.user.upsert({
-			where: { did: profile.did },
-			update: {
-				handle: profile.handle,
-				displayName: profile.displayName,
-				avatar: profile.avatar,
-			},
-			create: {
-				did: profile.did,
-				handle: profile.handle,
-				displayName: profile.displayName,
-				avatar: profile.avatar,
-				timezone: timezone || "UTC",
-			},
-		});
+		try {
+			return await this.prisma.user.upsert({
+				where: { did: profile.did },
+				update: {
+					handle: profile.handle,
+					displayName: profile.displayName,
+					avatar: profile.avatar,
+				},
+				create: {
+					did: profile.did,
+					handle: profile.handle,
+					displayName: profile.displayName,
+					avatar: profile.avatar,
+					timezone: timezone || "UTC",
+				},
+			});
+		} catch (error) {
+			// Handle stale handle collisions (e.g. handle transfer between DIDs).
+			if (!this.isHandleUniqueConstraintError(error)) {
+				throw error;
+			}
+
+			this.logger.warn(
+				`Handle collision detected for ${profile.handle}. Reassigning stale owner and retrying.`,
+			);
+
+			return this.prisma.$transaction(async (tx) => {
+				const existingHandleOwner = await tx.user.findUnique({
+					where: { handle: profile.handle },
+				});
+
+				if (existingHandleOwner && existingHandleOwner.did !== profile.did) {
+					const fallbackHandle = this.buildLegacyHandle(
+						existingHandleOwner.did,
+					);
+					await tx.user.update({
+						where: { did: existingHandleOwner.did },
+						data: {
+							handle: fallbackHandle,
+						},
+					});
+					this.logger.warn(
+						`Reassigned stale handle owner ${existingHandleOwner.did} to ${fallbackHandle}`,
+					);
+				}
+
+				return tx.user.upsert({
+					where: { did: profile.did },
+					update: {
+						handle: profile.handle,
+						displayName: profile.displayName,
+						avatar: profile.avatar,
+					},
+					create: {
+						did: profile.did,
+						handle: profile.handle,
+						displayName: profile.displayName,
+						avatar: profile.avatar,
+						timezone: timezone || "UTC",
+					},
+				});
+			});
+		}
+	}
+
+	private serializeOAuthAppState(appState?: OAuthAppState): string | undefined {
+		if (!appState) {
+			return undefined;
+		}
+		const payload: OAuthAppState = {};
+		if (appState.platform === "mobile") {
+			payload.platform = "mobile";
+		}
+		if (appState.timezone && appState.timezone.trim() !== "") {
+			payload.timezone = appState.timezone;
+		}
+		if (!payload.platform && !payload.timezone) {
+			return undefined;
+		}
+		return JSON.stringify(payload);
+	}
+
+	private isHandleUniqueConstraintError(error: unknown): boolean {
+		if (
+			!error ||
+			typeof error !== "object" ||
+			!("code" in error) ||
+			(error as { code?: unknown }).code !== "P2002"
+		) {
+			return false;
+		}
+
+		const meta = (error as { meta?: unknown }).meta;
+		if (!meta || typeof meta !== "object") {
+			return false;
+		}
+
+		const metaFields = (meta as { target?: unknown; constraint?: unknown })
+			.target;
+		if (Array.isArray(metaFields)) {
+			return metaFields.includes("handle");
+		}
+
+		const constraintFields = (meta as { constraint?: { fields?: unknown } })
+			.constraint?.fields;
+		return Array.isArray(constraintFields)
+			? constraintFields.includes("handle")
+			: false;
+	}
+
+	private buildLegacyHandle(did: string): string {
+		const didSlug = did.toLowerCase().replace(/[^a-z0-9]/g, "-");
+		return `legacy-${didSlug}-${Date.now()}`;
 	}
 
 	/**
