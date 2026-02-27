@@ -6,9 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Image,
+	Keyboard,
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
+	Pressable,
 	ScrollView,
 	Text,
 	TextInput,
@@ -33,8 +35,10 @@ export default function LoginScreen() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [suggestions, setSuggestions] = useState<ActorSuggestion[]>([]);
 	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-	const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
-	const [modalInputValue, setModalInputValue] = useState("");
+	const [showSuggestionsSheet, setShowSuggestionsSheet] = useState(false);
+	const [suggestionQuery, setSuggestionQuery] = useState("");
+	const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	const router = useRouter();
 	const params = useLocalSearchParams<{
 		error?: "auth_failed" | "callback_failed";
@@ -47,25 +51,13 @@ export default function LoginScreen() {
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
-	// Open modal when user starts typing
-	const handleInputChange = (text: string) => {
-		setHandle(text);
-		setModalInputValue(text);
-	};
-
-	// Close modal and keep current handle value
-	const handleCloseModal = () => {
-		setShowSuggestionsModal(false);
-		setSuggestions([]);
-		setIsLoadingSuggestions(false);
-	};
-
-	// Fetch suggestions when modalInputValue changes (while modal is open)
 	useEffect(() => {
-		if (!showSuggestionsModal) return;
+		if (!showSuggestionsSheet) {
+			return;
+		}
 
 		const fetchSuggestions = async () => {
-			if (modalInputValue.trim().length < 1) {
+			if (suggestionQuery.trim().length < 2) {
 				setSuggestions([]);
 				return;
 			}
@@ -73,7 +65,7 @@ export default function LoginScreen() {
 			setIsLoadingSuggestions(true);
 			try {
 				const response = await fetch(
-					`${API_URL}/auth/suggestions?q=${encodeURIComponent(modalInputValue.trim())}`,
+					`${API_URL}/auth/suggestions?q=${encodeURIComponent(suggestionQuery.trim())}`,
 				);
 				if (response.ok) {
 					const data = (await response.json()) as ActorSuggestion[];
@@ -97,7 +89,31 @@ export default function LoginScreen() {
 				clearTimeout(debounceRef.current);
 			}
 		};
-	}, [modalInputValue, showSuggestionsModal]);
+	}, [showSuggestionsSheet, suggestionQuery]);
+
+	useEffect(() => {
+		if (!showSuggestionsSheet) {
+			setKeyboardHeight(0);
+			return;
+		}
+
+		const showEvent =
+			Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+		const hideEvent =
+			Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+		const showSubscription = Keyboard.addListener(showEvent, (event) => {
+			setKeyboardHeight(event.endCoordinates.height);
+		});
+		const hideSubscription = Keyboard.addListener(hideEvent, () => {
+			setKeyboardHeight(0);
+		});
+
+		return () => {
+			showSubscription.remove();
+			hideSubscription.remove();
+		};
+	}, [showSuggestionsSheet]);
 
 	useEffect(() => {
 		if (user && !isAuthLoading) {
@@ -119,71 +135,58 @@ export default function LoginScreen() {
 		}
 	};
 
-	const handleSelectSuggestion = (actor: ActorSuggestion) => {
-		setHandle(actor.handle);
-		setShowSuggestionsModal(false);
-		setSuggestions([]);
-		setIsSubmitting(true);
+	const completeAuthSession = async (authUrl: string) => {
+		const result = await WebBrowser.openAuthSessionAsync(
+			authUrl,
+			"opnshelf://auth/callback",
+		);
 
-		const submitWithHandle = async () => {
-			try {
-				const timezone = detectUserTimezone();
-				const loginUrl = getLoginUrl(
-					actor.handle,
-					timezone || undefined,
-					"mobile",
-				);
+		if (result.type !== "success") {
+			setIsSubmitting(false);
+			return;
+		}
 
-				const result = await WebBrowser.openAuthSessionAsync(
-					loginUrl,
-					"opnshelf://auth/callback",
-				);
+		const url = new URL(result.url);
+		const session = url.searchParams.get("session");
+		if (!session) {
+			setIsSubmitting(false);
+			return;
+		}
 
-				if (result.type === "success") {
-					const url = new URL(result.url);
-					const session = url.searchParams.get("session");
-					if (session) {
-						router.replace({ pathname: "/auth/complete", params: { session } });
-					}
-				} else {
-					setIsSubmitting(false);
-				}
-			} catch (err) {
-				console.error("Auth error:", err);
-				setIsSubmitting(false);
-			}
-		};
-
-		submitWithHandle();
+		router.replace({ pathname: "/auth/complete", params: { session } });
 	};
 
-	const handleSubmit = async () => {
+	const startLogin = async (loginHandle?: string) => {
 		setIsSubmitting(true);
+		setShowSuggestionsSheet(false);
 
 		try {
 			const timezone = detectUserTimezone();
 			const loginUrl = getLoginUrl(
-				handle || undefined,
+				loginHandle || undefined,
 				timezone || undefined,
 				"mobile",
 			);
-
-			const result = await WebBrowser.openAuthSessionAsync(
-				loginUrl,
-				"opnshelf://auth/callback",
-			);
-
-			if (result.type === "success") {
-				const url = new URL(result.url);
-				const session = url.searchParams.get("session");
-				if (session) {
-					router.replace({ pathname: "/auth/complete", params: { session } });
-				}
-			} else {
-				setIsSubmitting(false);
-			}
+			await completeAuthSession(loginUrl);
 		} catch (err) {
 			console.error("Auth error:", err);
+			setIsSubmitting(false);
+		}
+	};
+
+	const openSuggestionsSheet = () => {
+		setSuggestionQuery(handle);
+		setShowSuggestionsSheet(true);
+	};
+
+	const handleSignup = async () => {
+		setIsSubmitting(true);
+		try {
+			const timezone = detectUserTimezone();
+			const signupUrl = getSignupUrl(timezone || undefined, "mobile");
+			await completeAuthSession(signupUrl);
+		} catch (err) {
+			console.error("Signup auth error:", err);
 			setIsSubmitting(false);
 		}
 	};
@@ -213,402 +216,542 @@ export default function LoginScreen() {
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={{ flex: 1, backgroundColor: colors.background }}
 		>
-			<View
-				style={{
-					flex: 1,
-					paddingHorizontal: 16,
-					paddingTop: 48,
-					paddingBottom: 24,
-				}}
-			>
-				<View style={{ flex: 1, justifyContent: "center" }}>
-					<View style={{ alignItems: "center", marginBottom: 32 }}>
-						<View style={{ marginBottom: 16 }}>
-							<Image
-								source={require("@/assets/images/icon.png")}
-								style={{ width: 64, height: 64, borderRadius: 16 }}
-							/>
-						</View>
-						<Text
-							style={{
-								fontSize: 28,
-								fontWeight: "bold",
-								color: colors.onSurface,
-								marginBottom: 8,
-							}}
-						>
-							Sign in to OpnShelf
-						</Text>
-						<Text
-							style={{
-								fontSize: 16,
-								color: colors.onSurfaceVariant,
-								textAlign: "center",
-							}}
-						>
-							Use your ATProto account to sign in
-						</Text>
-					</View>
-
-					{reason === "session_expired" && (
-						<View
-							style={{
-								marginBottom: 24,
-								padding: 16,
-								backgroundColor: `${colors.tertiary}15`,
-								borderWidth: 1,
-								borderColor: `${colors.tertiary}40`,
-								borderRadius: 8,
-							}}
-						>
-							<Text
-								style={{
-									color: colors.tertiary,
-									fontWeight: "600",
-									marginBottom: 4,
-								}}
-							>
-								You have been logged out
-							</Text>
-							<Text style={{ color: `${colors.tertiary}cc`, fontSize: 14 }}>
-								Your session has expired. Please sign in again to continue.
-							</Text>
-						</View>
-					)}
-
-					{error && (
-						<View
-							style={{
-								marginBottom: 24,
-								padding: 16,
-								backgroundColor: `${colors.error}15`,
-								borderWidth: 1,
-								borderColor: `${colors.error}40`,
-								borderRadius: 8,
-								flexDirection: "row",
-								alignItems: "flex-start",
-								gap: 12,
-							}}
-						>
-							<Ionicons name="alert-circle" size={20} color={colors.error} />
-							<Text
-								style={{
-									color: `${colors.error}dd`,
-									fontSize: 14,
-									flex: 1,
-								}}
-							>
-								{errorMessages[error] || "An error occurred. Please try again."}
-							</Text>
-						</View>
-					)}
-
-					<View style={{ gap: 24 }}>
-						<View>
-							<Text
-								style={{
-									fontSize: 14,
-									fontWeight: "500",
-									color: colors.onSurface,
-									marginBottom: 8,
-								}}
-							>
-								Handle
-							</Text>
-							<TextInput
-								style={{
-									width: "100%",
-									paddingHorizontal: 16,
-									paddingVertical: 12,
-									backgroundColor: colors.surfaceContainer,
-									borderWidth: 1,
-									borderColor: colors.outline,
-									borderRadius: 8,
-									color: colors.onSurface,
-									fontSize: 16,
-								}}
-								value={handle}
-								onChangeText={handleInputChange}
-								onFocus={() => {
-									setModalInputValue(handle);
-									setShowSuggestionsModal(true);
-								}}
-								placeholder="username.bsky.social"
-								placeholderTextColor={colors.onSurfaceVariant}
-								autoCapitalize="none"
-								autoCorrect={false}
-								keyboardType="email-address"
-								editable={!isSubmitting}
-							/>
-						</View>
-
-						<TouchableOpacity
-							style={{
-								flexDirection: "row",
-								alignItems: "center",
-								justifyContent: "center",
-								gap: 8,
-								paddingHorizontal: 16,
-								paddingVertical: 12,
-								backgroundColor: isSubmitting
-									? `${colors.primary}cc`
-									: colors.primary,
-								borderRadius: 8,
-								opacity: isSubmitting ? 0.7 : 1,
-							}}
-							onPress={handleSubmit}
-							disabled={isSubmitting}
-							activeOpacity={0.8}
-						>
-							{isSubmitting ? (
-								<>
-									<ActivityIndicator size="small" color={colors.onPrimary} />
-									<Text
-										style={{
-											color: colors.onPrimary,
-											fontWeight: "600",
-											fontSize: 16,
-										}}
-									>
-										Loading
-									</Text>
-								</>
-							) : (
-								<>
-									<Ionicons name="log-in" size={20} color={colors.onPrimary} />
-									<Text
-										style={{
-											color: colors.onPrimary,
-											fontWeight: "600",
-											fontSize: 16,
-										}}
-									>
-										Sign in
-									</Text>
-								</>
-							)}
-						</TouchableOpacity>
-
-						<Text
-							style={{
-								textAlign: "center",
-								fontSize: 14,
-								color: colors.onSurfaceVariant,
-							}}
-						>
-							Don&apos;t have an account?{" "}
-							<Text
-								style={{
-									color: colors.primary,
-									textDecorationLine: "underline",
-								}}
-								onPress={async () => {
-									setIsSubmitting(true);
-									try {
-										const timezone = detectUserTimezone();
-										const signupUrl = getSignupUrl(
-											timezone || undefined,
-											"mobile",
-										);
-
-										const result = await WebBrowser.openAuthSessionAsync(
-											signupUrl,
-											"opnshelf://auth/callback",
-										);
-
-										if (result.type === "success") {
-											const url = new URL(result.url);
-											const session = url.searchParams.get("session");
-											if (session) {
-												router.replace({
-													pathname: "/auth/complete",
-													params: { session },
-												});
-											}
-										} else {
-											setIsSubmitting(false);
-										}
-									} catch (err) {
-										console.error("Signup auth error:", err);
-										setIsSubmitting(false);
-									}
-								}}
-							>
-								Create an account
-							</Text>
-						</Text>
-					</View>
-				</View>
-			</View>
-
-			<Modal
-				visible={showSuggestionsModal}
-				animationType="slide"
-				presentationStyle="pageSheet"
-				onRequestClose={handleCloseModal}
-			>
-				<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+			<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+				<View
+					style={{
+						flex: 1,
+						paddingHorizontal: 16,
+						paddingTop: 24,
+						paddingBottom: 24,
+						justifyContent: "center",
+					}}
+				>
 					<View
 						style={{
-							flexDirection: "row",
-							justifyContent: "space-between",
-							alignItems: "center",
-							paddingHorizontal: 16,
-							paddingVertical: 16,
-							borderBottomWidth: 1,
-							borderBottomColor: colors.outline,
+							borderRadius: 16,
+							padding: 20,
+							borderWidth: 1,
+							borderColor: colors.outlineVariant,
+							backgroundColor: colors.surface,
 						}}
 					>
-						<Text
-							style={{
-								fontSize: 18,
-								fontWeight: "600",
-								color: colors.onSurface,
-							}}
-						>
-							Find your handle
-						</Text>
-						<TouchableOpacity onPress={handleCloseModal}>
+						<View style={{ marginBottom: 24 }}>
 							<Text
 								style={{
-									fontSize: 16,
-									fontWeight: "500",
-									color: colors.primary,
+									fontSize: 32,
+									fontWeight: "700",
+									color: colors.onSurface,
+									marginBottom: 12,
 								}}
 							>
-								Close
+								Login
 							</Text>
-						</TouchableOpacity>
-					</View>
+							<Text
+								style={{
+									fontSize: 18,
+									lineHeight: 26,
+									color: colors.onSurfaceVariant,
+								}}
+							>
+								Connect with your Atmosphere account
+							</Text>
+						</View>
 
-					<View
-						style={{
-							paddingHorizontal: 16,
-							paddingVertical: 12,
-							borderBottomWidth: 1,
-							borderBottomColor: colors.outline,
-						}}
-					>
-						<TextInput
-							style={{
-								width: "100%",
-								paddingHorizontal: 16,
-								paddingVertical: 12,
-								backgroundColor: colors.surfaceContainer,
-								borderWidth: 1,
-								borderColor: colors.outline,
-								borderRadius: 8,
-								color: colors.onSurface,
-								fontSize: 16,
-							}}
-							value={modalInputValue}
-							onChangeText={setModalInputValue}
-							placeholder="Search for your handle..."
-							placeholderTextColor={colors.onSurfaceVariant}
-							autoCapitalize="none"
-							autoCorrect={false}
-							autoFocus
-						/>
-					</View>
-
-					<ScrollView
-						style={{
-							flex: 1,
-							paddingHorizontal: 16,
-						}}
-					>
-						{isLoadingSuggestions ? (
+						{reason === "session_expired" && (
 							<View
+								style={{
+									marginBottom: 18,
+									padding: 14,
+									backgroundColor: `${colors.tertiary}15`,
+									borderWidth: 1,
+									borderColor: `${colors.tertiary}40`,
+									borderRadius: 10,
+								}}
+							>
+								<Text
+									style={{
+										color: colors.tertiary,
+										fontWeight: "600",
+										marginBottom: 4,
+									}}
+								>
+									You have been logged out
+								</Text>
+								<Text style={{ color: `${colors.tertiary}cc`, fontSize: 14 }}>
+									Your session has expired. Please sign in again to continue.
+								</Text>
+							</View>
+						)}
+
+						{error && (
+							<View
+								style={{
+									marginBottom: 18,
+									padding: 14,
+									backgroundColor: `${colors.error}15`,
+									borderWidth: 1,
+									borderColor: `${colors.error}40`,
+									borderRadius: 10,
+									flexDirection: "row",
+									alignItems: "flex-start",
+									gap: 10,
+								}}
+							>
+								<Ionicons name="alert-circle" size={18} color={colors.error} />
+								<Text
+									style={{
+										color: `${colors.error}dd`,
+										fontSize: 14,
+										lineHeight: 20,
+										flex: 1,
+									}}
+								>
+									{errorMessages[error] ||
+										"An error occurred. Please try again."}
+								</Text>
+							</View>
+						)}
+
+						<View style={{ gap: 14 }}>
+							<View>
+								<Text
+									style={{
+										fontSize: 12,
+										fontWeight: "600",
+										letterSpacing: 1.2,
+										textTransform: "uppercase",
+										color: colors.onSurfaceVariant,
+										marginBottom: 8,
+									}}
+								>
+									Handle
+								</Text>
+								<TouchableOpacity
+									onPress={openSuggestionsSheet}
+									disabled={isSubmitting}
+									activeOpacity={0.8}
+									style={{
+										width: "100%",
+										paddingHorizontal: 14,
+										paddingVertical: 13,
+										backgroundColor: colors.surfaceContainer,
+										borderWidth: 1,
+										borderColor: colors.outline,
+										borderRadius: 10,
+										flexDirection: "row",
+										alignItems: "center",
+										justifyContent: "space-between",
+									}}
+								>
+									<Text
+										style={{
+											color:
+												handle.trim().length > 0
+													? colors.onSurface
+													: colors.onSurfaceVariant,
+											fontSize: 17,
+										}}
+									>
+										{handle.trim().length > 0 ? handle : "alice.example.com"}
+									</Text>
+									<Ionicons
+										name="chevron-down"
+										size={18}
+										color={colors.onSurfaceVariant}
+									/>
+								</TouchableOpacity>
+							</View>
+
+							<View
+								style={{
+									borderRadius: 10,
+									borderWidth: 1,
+									borderColor: colors.outlineVariant,
+									backgroundColor: colors.surfaceContainerLow,
+									paddingHorizontal: 12,
+									paddingVertical: 10,
+								}}
+							>
+								<TouchableOpacity
+									onPress={() => setIsAboutExpanded((value) => !value)}
+									activeOpacity={0.8}
+									style={{
+										flexDirection: "row",
+										justifyContent: "space-between",
+										alignItems: "center",
+									}}
+								>
+									<Text
+										style={{
+											fontSize: 16,
+											color: colors.onSurface,
+										}}
+									>
+										What is an Atmosphere account?
+									</Text>
+									<Ionicons
+										name={isAboutExpanded ? "chevron-up" : "chevron-down"}
+										size={18}
+										color={colors.onSurfaceVariant}
+									/>
+								</TouchableOpacity>
+								{isAboutExpanded && (
+									<Text
+										style={{
+											marginTop: 10,
+											fontSize: 14,
+											lineHeight: 20,
+											color: colors.onSurfaceVariant,
+										}}
+									>
+										Atmosphere uses the AT Protocol, so your account can move
+										with you. You can sign in across compatible apps while
+										keeping control of your identity and data. For example, you
+										can sign in to Bluesky with your OpnShelf account and vice
+										versa.
+									</Text>
+								)}
+							</View>
+
+							<TouchableOpacity
 								style={{
 									flexDirection: "row",
 									alignItems: "center",
 									justifyContent: "center",
 									gap: 8,
-									padding: 24,
+									paddingHorizontal: 16,
+									paddingVertical: 12,
+									backgroundColor: isSubmitting
+										? `${colors.primary}cc`
+										: colors.primary,
+									borderRadius: 10,
+									opacity: isSubmitting ? 0.7 : 1,
 								}}
+								onPress={() => {
+									void startLogin(handle || undefined);
+								}}
+								disabled={isSubmitting}
+								activeOpacity={0.8}
 							>
-								<ActivityIndicator
-									size="small"
-									color={colors.onSurfaceVariant}
-								/>
-								<Text style={{ color: colors.onSurfaceVariant, fontSize: 14 }}>
-									Searching...
-								</Text>
-							</View>
-						) : suggestions.length > 0 ? (
-							suggestions.map((item) => (
-								<TouchableOpacity
-									key={item.did}
-									style={{
-										flexDirection: "row",
-										alignItems: "center",
-										gap: 12,
-										padding: 12,
-										borderBottomWidth: 1,
-										borderBottomColor: colors.outline,
-									}}
-									onPress={() => handleSelectSuggestion(item)}
-								>
-									{item.avatar ? (
-										<Image
-											source={{ uri: item.avatar }}
-											style={{ width: 40, height: 40, borderRadius: 20 }}
-										/>
-									) : (
-										<View
-											style={{
-												width: 40,
-												height: 40,
-												borderRadius: 20,
-												backgroundColor: colors.surfaceContainerHigh,
-												alignItems: "center",
-												justifyContent: "center",
-											}}
-										>
-											<Text
-												style={{
-													color: colors.onSurface,
-													fontSize: 16,
-													fontWeight: "500",
-												}}
-											>
-												{item.handle[0]?.toUpperCase() ?? ""}
-											</Text>
-										</View>
-									)}
-									<View style={{ flex: 1 }}>
+								{isSubmitting ? (
+									<>
+										<ActivityIndicator size="small" color={colors.onPrimary} />
 										<Text
 											style={{
-												color: colors.onSurface,
-												fontWeight: "500",
+												color: colors.onPrimary,
+												fontWeight: "600",
 												fontSize: 16,
 											}}
-											numberOfLines={1}
 										>
-											{item.displayName || item.handle}
+											Connecting
 										</Text>
+									</>
+								) : (
+									<Text
+										style={{
+											color: colors.onPrimary,
+											fontWeight: "600",
+											fontSize: 16,
+										}}
+									>
+										Connect
+									</Text>
+								)}
+							</TouchableOpacity>
+
+							<TouchableOpacity
+								onPress={() => {
+									void handleSignup();
+								}}
+								disabled={isSubmitting}
+								activeOpacity={0.8}
+								style={{
+									paddingHorizontal: 16,
+									paddingVertical: 12,
+									borderRadius: 10,
+									borderWidth: 1,
+									borderColor: colors.outlineVariant,
+									alignItems: "center",
+								}}
+							>
+								<Text
+									style={{
+										color: colors.primary,
+										fontWeight: "600",
+										fontSize: 16,
+									}}
+								>
+									Create a new account
+								</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				</View>
+			</SafeAreaView>
+
+			<Modal
+				visible={showSuggestionsSheet}
+				animationType="slide"
+				transparent
+				onRequestClose={() => setShowSuggestionsSheet(false)}
+			>
+				<KeyboardAvoidingView
+					style={{ flex: 1 }}
+					behavior={Platform.OS === "ios" ? "padding" : undefined}
+				>
+					<Pressable
+						style={{
+							flex: 1,
+							backgroundColor: "rgba(0, 0, 0, 0.45)",
+							justifyContent: "flex-end",
+						}}
+						onPress={() => setShowSuggestionsSheet(false)}
+					>
+						<Pressable
+							onPress={(event) => event.stopPropagation()}
+							style={{
+								maxHeight: keyboardHeight > 0 ? "80%" : "60%",
+								marginBottom: Platform.OS === "android" ? keyboardHeight : 0,
+								borderTopLeftRadius: 20,
+								borderTopRightRadius: 20,
+								backgroundColor: colors.surface,
+								paddingTop: 12,
+								paddingBottom: 24,
+								borderTopWidth: 1,
+								borderColor: colors.outlineVariant,
+							}}
+						>
+							<View
+								style={{
+									alignItems: "center",
+									marginBottom: 14,
+								}}
+							>
+								<View
+									style={{
+										width: 40,
+										height: 4,
+										borderRadius: 999,
+										backgroundColor: colors.outline,
+									}}
+								/>
+							</View>
+
+							<View
+								style={{
+									paddingHorizontal: 16,
+									marginBottom: 10,
+									flexDirection: "row",
+									justifyContent: "space-between",
+									alignItems: "center",
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 18,
+										fontWeight: "600",
+										color: colors.onSurface,
+									}}
+								>
+									Account suggestions
+								</Text>
+								<TouchableOpacity
+									onPress={() => setShowSuggestionsSheet(false)}
+								>
+									<Text style={{ color: colors.primary, fontSize: 15 }}>
+										Done
+									</Text>
+								</TouchableOpacity>
+							</View>
+
+							<View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+								<TextInput
+									style={{
+										width: "100%",
+										paddingHorizontal: 14,
+										paddingVertical: 12,
+										backgroundColor: colors.surfaceContainer,
+										borderWidth: 1,
+										borderColor: colors.outline,
+										borderRadius: 10,
+										color: colors.onSurface,
+										fontSize: 16,
+									}}
+									value={suggestionQuery}
+									onChangeText={setSuggestionQuery}
+									placeholder="Search by handle"
+									placeholderTextColor={colors.onSurfaceVariant}
+									autoCapitalize="none"
+									autoCorrect={false}
+									autoFocus
+								/>
+							</View>
+
+							<ScrollView
+								style={{ paddingHorizontal: 16 }}
+								contentContainerStyle={{ paddingBottom: 12 }}
+								keyboardShouldPersistTaps="handled"
+							>
+								{isLoadingSuggestions ? (
+									<View
+										style={{
+											flexDirection: "row",
+											alignItems: "center",
+											justifyContent: "center",
+											gap: 8,
+											paddingVertical: 20,
+										}}
+									>
+										<ActivityIndicator
+											size="small"
+											color={colors.onSurfaceVariant}
+										/>
+										<Text
+											style={{ color: colors.onSurfaceVariant, fontSize: 14 }}
+										>
+											Searching...
+										</Text>
+									</View>
+								) : suggestions.length > 0 ? (
+									suggestions.map((item) => (
+										<TouchableOpacity
+											key={item.did}
+											style={{
+												flexDirection: "row",
+												alignItems: "center",
+												gap: 12,
+												paddingVertical: 12,
+												borderBottomWidth: 1,
+												borderBottomColor: colors.outlineVariant,
+											}}
+											onPress={() => {
+												setHandle(item.handle);
+												void startLogin(item.handle);
+											}}
+										>
+											{item.avatar ? (
+												<Image
+													source={{ uri: item.avatar }}
+													style={{ width: 38, height: 38, borderRadius: 19 }}
+												/>
+											) : (
+												<View
+													style={{
+														width: 38,
+														height: 38,
+														borderRadius: 19,
+														backgroundColor: colors.surfaceContainerHigh,
+														alignItems: "center",
+														justifyContent: "center",
+													}}
+												>
+													<Text
+														style={{
+															color: colors.onSurface,
+															fontWeight: "600",
+														}}
+													>
+														{item.handle[0]?.toUpperCase() ?? ""}
+													</Text>
+												</View>
+											)}
+											<View style={{ flex: 1 }}>
+												<Text
+													style={{
+														color: colors.onSurface,
+														fontSize: 16,
+														fontWeight: "500",
+													}}
+													numberOfLines={1}
+												>
+													{item.displayName || item.handle}
+												</Text>
+												<Text
+													style={{
+														color: colors.onSurfaceVariant,
+														fontSize: 13,
+														marginTop: 2,
+													}}
+													numberOfLines={1}
+												>
+													{item.handle}
+												</Text>
+											</View>
+										</TouchableOpacity>
+									))
+								) : suggestionQuery.trim().length >= 2 ? (
+									<View style={{ paddingVertical: 18 }}>
 										<Text
 											style={{
 												color: colors.onSurfaceVariant,
 												fontSize: 14,
-												marginTop: 2,
+												textAlign: "center",
 											}}
-											numberOfLines={1}
 										>
-											{item.handle}
+											No accounts found. Keep typing or enter your handle
+											manually.
 										</Text>
 									</View>
+								) : (
+									<View style={{ paddingVertical: 18 }}>
+										<Text
+											style={{
+												color: colors.onSurfaceVariant,
+												fontSize: 14,
+												textAlign: "center",
+											}}
+										>
+											Type at least 2 characters to see suggestions.
+										</Text>
+									</View>
+								)}
+							</ScrollView>
+
+							<View
+								style={{
+									paddingHorizontal: 16,
+									paddingTop: 10,
+									borderTopWidth: 1,
+									borderTopColor: colors.outlineVariant,
+								}}
+							>
+								<TouchableOpacity
+									onPress={() => {
+										if (!suggestionQuery.trim()) {
+											return;
+										}
+										const selectedHandle = suggestionQuery.trim();
+										setHandle(selectedHandle);
+										void startLogin(selectedHandle);
+									}}
+									disabled={!suggestionQuery.trim()}
+									style={{
+										paddingVertical: 12,
+										paddingHorizontal: 12,
+										borderWidth: 1,
+										borderColor: colors.outlineVariant,
+										borderRadius: 10,
+										backgroundColor: colors.surfaceContainerLow,
+										opacity: suggestionQuery.trim() ? 1 : 0.6,
+									}}
+									activeOpacity={0.8}
+								>
+									<Text
+										style={{
+											color: colors.primary,
+											fontSize: 15,
+											fontWeight: "600",
+										}}
+									>
+										{suggestionQuery.trim()
+											? `Use "${suggestionQuery.trim()}" as my handle`
+											: "Type a handle to continue"}
+									</Text>
 								</TouchableOpacity>
-							))
-						) : modalInputValue.trim().length >= 1 ? (
-							<View style={{ padding: 24, alignItems: "center" }}>
-								<Text style={{ color: colors.onSurfaceVariant, fontSize: 14 }}>
-									No handles found
-								</Text>
 							</View>
-						) : null}
-					</ScrollView>
-				</SafeAreaView>
+						</Pressable>
+					</Pressable>
+				</KeyboardAvoidingView>
 			</Modal>
 		</KeyboardAvoidingView>
 	);

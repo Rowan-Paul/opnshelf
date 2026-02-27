@@ -1,7 +1,11 @@
-import { authControllerMeOptions, getLoginUrl, getSignupUrl } from "@opnshelf/api";
+import {
+	authControllerMeOptions,
+	getLoginUrl,
+	getSignupUrl,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, LogIn } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import { useTheme } from "@/components/theme-provider";
@@ -26,6 +30,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isAboutExpanded, setIsAboutExpanded] = useState(false);
 	const [suggestions, setSuggestions] = useState<
 		Array<{
 			did: string;
@@ -39,7 +44,7 @@ function LoginPage() {
 	const navigate = useNavigate();
 	const { error, redirect, reason } = Route.useSearch();
 	const handleId = useId();
-	const suggestionsRef = useRef<HTMLDivElement>(null);
+	const inputAreaRef = useRef<HTMLDivElement>(null);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const { seedColor } = useTheme();
 
@@ -99,8 +104,8 @@ function LoginPage() {
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
 			if (
-				suggestionsRef.current &&
-				!suggestionsRef.current.contains(e.target as Node)
+				inputAreaRef.current &&
+				!inputAreaRef.current.contains(e.target as Node)
 			) {
 				setShowSuggestions(false);
 			}
@@ -144,6 +149,8 @@ function LoginPage() {
 		handle_required: "Please enter your handle (e.g., username.bsky.social).",
 	};
 
+	const shouldShowSuggestions = showSuggestions && handle.trim().length >= 2;
+
 	if (isAuthLoading) {
 		return (
 			<div
@@ -167,18 +174,17 @@ function LoginPage() {
 			}}
 		>
 			<div className="flex-1 flex items-center justify-center p-4">
-				<div className="w-full max-w-md">
-					<div className="text-center mb-8">
-						<div className="flex justify-center mb-4">
-							<img
-								src="/icon.png"
-								alt="OpnShelf"
-								className="w-16 h-16 rounded-xl"
-							/>
-						</div>
-						<h1 className="md-headline-medium mb-2">Sign in to OpnShelf</h1>
-						<p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
-							Use your ATProto account to sign in
+				<div
+					className="w-full max-w-2xl rounded-(--md-sys-shape-corner-large) border p-6 md:p-8"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface)",
+						borderColor: "var(--md-sys-color-outline-variant)",
+					}}
+				>
+					<div className="mb-8">
+						<h1 className="md-headline-large mb-3">Login</h1>
+						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
+							Connect with your Atmosphere account
 						</p>
 					</div>
 
@@ -227,25 +233,34 @@ function LoginPage() {
 						</div>
 					)}
 
-					<form onSubmit={handleSubmit} className="space-y-6">
-						<div className="relative">
+					<form onSubmit={handleSubmit} className="space-y-5">
+						<div ref={inputAreaRef} className="relative">
+							<label
+								htmlFor={handleId}
+								className="mb-2 block md-label-large tracking-[0.08em] uppercase text-(--md-sys-color-on-surface-variant)"
+							>
+								Handle
+							</label>
 							<M3TextField
 								id={handleId}
-								label="Handle"
 								value={handle}
 								onChange={(e) => {
 									setHandle(e.target.value);
 									setShowSuggestions(true);
 								}}
 								onFocus={() => setShowSuggestions(true)}
+								onKeyDown={(e) => {
+									if (e.key === "Escape") {
+										setShowSuggestions(false);
+									}
+								}}
 								placeholder="username.bsky.social"
 								disabled={isSubmitting}
 								variant="outlined"
 							/>
-							{showSuggestions && suggestions.length > 0 && (
+							{shouldShowSuggestions && suggestions.length > 0 && (
 								<div
-									ref={suggestionsRef}
-									className="absolute z-10 w-full mt-1 overflow-y-auto max-h-60 md-elevation-2 rounded-[var(--md-sys-shape-corner-small)]"
+									className="absolute z-10 w-full mt-1 overflow-y-auto max-h-60 md-elevation-2 rounded-(--md-sys-shape-corner-small)"
 									style={{
 										backgroundColor: "var(--md-sys-color-surface-container)",
 										border: "1px solid var(--md-sys-color-outline-variant)",
@@ -261,7 +276,7 @@ function LoginPage() {
 												setSuggestions([]);
 												performLogin(actor.handle);
 											}}
-											className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors hover:bg-[var(--md-sys-color-surface-container-high)]"
+											className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-high)"
 										>
 											{actor.avatar ? (
 												<img
@@ -303,10 +318,9 @@ function LoginPage() {
 									))}
 								</div>
 							)}
-							{showSuggestions && isLoadingSuggestions && (
+							{shouldShowSuggestions && isLoadingSuggestions && (
 								<div
-									ref={suggestionsRef}
-									className="absolute z-10 w-full mt-1 p-4 md-elevation-2 rounded-[var(--md-sys-shape-corner-small)]"
+									className="absolute z-10 w-full mt-1 p-4 md-elevation-2 rounded-(--md-sys-shape-corner-small)"
 									style={{
 										backgroundColor: "var(--md-sys-color-surface-container)",
 										border: "1px solid var(--md-sys-color-outline-variant)",
@@ -326,37 +340,74 @@ function LoginPage() {
 							)}
 						</div>
 
+						<div
+							className="rounded-(--md-sys-shape-corner-medium) border px-3 py-2"
+							style={{
+								borderColor: "var(--md-sys-color-outline-variant)",
+								backgroundColor: "var(--md-sys-color-surface-container-low)",
+							}}
+						>
+							<button
+								type="button"
+								onClick={() => setIsAboutExpanded((value) => !value)}
+								className="w-full flex items-center justify-between gap-2 py-1 text-left"
+								aria-expanded={isAboutExpanded}
+							>
+								<span className="md-body-large text-(--md-sys-color-on-surface)">
+									What is an Atmosphere account?
+								</span>
+								{isAboutExpanded ? (
+									<ChevronUp
+										size={18}
+										className="text-(--md-sys-color-on-surface-variant)"
+									/>
+								) : (
+									<ChevronDown
+										size={18}
+										className="text-(--md-sys-color-on-surface-variant)"
+									/>
+								)}
+							</button>
+							{isAboutExpanded && (
+								<p
+									className="md-body-medium pt-2"
+									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+								>
+									Atmosphere uses the AT Protocol so your account is portable.
+									You can keep one identity across compatible apps while staying
+									in control of your data. For example, you can sign in to
+									Bluesky with your OpnShelf account and vice versa.
+								</p>
+							)}
+						</div>
+
 						<LoadingButton
 							type="submit"
 							disabled={isSubmitting}
 							isLoading={isSubmitting}
-							className="w-full flex items-center justify-center gap-2 px-4 py-3 font-semibold rounded-[var(--md-sys-shape-corner-large)] transition-colors"
+							className="w-full flex items-center justify-center px-4 py-3 font-semibold rounded-(--md-sys-shape-corner-large) transition-colors"
 							style={{
 								backgroundColor: "var(--md-sys-color-primary)",
 								color: "var(--md-sys-color-on-primary)",
 							}}
 						>
-							<LogIn size={20} />
-							Sign in
+							Connect
 						</LoadingButton>
 
-					<p
-						className="text-center md-body-medium"
-						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-					>
-						Don&apos;t have an account?{" "}
 						<button
 							type="button"
 							onClick={() => {
 								const timezone = detectUserTimezone();
 								window.location.href = getSignupUrl(timezone || undefined);
 							}}
-							className="underline underline-offset-2 transition-colors cursor-pointer"
-							style={{ color: seedColor }}
+							className="w-full px-4 py-3 rounded-(--md-sys-shape-corner-large) border transition-colors md-title-medium"
+							style={{
+								borderColor: "var(--md-sys-color-outline-variant)",
+								color: seedColor,
+							}}
 						>
-							Create an account
+							Create a new account
 						</button>
-					</p>
 					</form>
 				</div>
 			</div>
