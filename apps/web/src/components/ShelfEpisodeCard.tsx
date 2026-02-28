@@ -46,7 +46,20 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 		],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf", "user", user?.did] });
+			const userDid = user?.did;
+			if (userDid) {
+				queryClient.invalidateQueries({
+					predicate: (query) => {
+						const key = query.queryKey[0] as
+							| { _id?: string; path?: { userDid?: string } }
+							| undefined;
+						return (
+							key?._id === "shelfControllerGetUserShelf" &&
+							key.path?.userDid === userDid
+						);
+					},
+				});
+			}
 			toast.success("Episode removed from history");
 		},
 		onError: () => {

@@ -177,7 +177,8 @@ export function M3TextField({
 
 const styles = StyleSheet.create({
 	container: {
-		width: "100%",
+		alignSelf: "stretch",
+		minWidth: 0,
 	},
 	labelContainer: {
 		position: "absolute",
