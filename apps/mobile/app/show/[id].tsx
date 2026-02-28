@@ -28,6 +28,7 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AddToListModal } from "@/components/AddToListModal";
 import {
 	DetailActions,
 	DetailHero,
@@ -61,7 +62,7 @@ export default function ShowDetailScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
-	const [_showListModal, setShowListModal] = useState(false);
+	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
@@ -561,6 +562,14 @@ export default function ShowDetailScreen() {
 				onConfirm={handleMarkWatchedWithDate}
 				isLoading={markShowWatchedMutation.isPending}
 				is24Hour={is24Hour}
+			/>
+
+			<AddToListModal
+				visible={showListModal}
+				onClose={() => setShowListModal(false)}
+				mediaType="show"
+				mediaId={id}
+				mediaTitle={show?.name || "Show"}
 			/>
 
 			<ScrollRevealHeader

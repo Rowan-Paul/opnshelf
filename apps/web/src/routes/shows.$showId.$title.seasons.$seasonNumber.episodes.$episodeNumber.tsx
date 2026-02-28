@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { M3Button } from "@/components/ui/m3-button";
 import {
+	buildScopedShowMediaId,
 	formatDateOnly,
 	formatDateWithTimezone,
 	formatRuntime,
@@ -168,10 +169,15 @@ function ShowEpisodePage() {
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user?.did,
 	});
+	const scopedEpisodeMediaId = buildScopedShowMediaId(
+		showId,
+		Number(seasonNumber),
+		Number(episodeNumber),
+	);
 
 	const { data: listsForShow } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "show", mediaId: showId },
+			path: { mediaType: "show", mediaId: scopedEpisodeMediaId },
 		}),
 		enabled: !!user?.did,
 	});
@@ -506,7 +512,7 @@ function ShowEpisodePage() {
 					open={showListModal}
 					onOpenChange={setShowListModal}
 					mediaType="show"
-					mediaId={showId}
+					mediaId={scopedEpisodeMediaId}
 					mediaTitle={show?.name || "Show"}
 					user={user}
 				/>

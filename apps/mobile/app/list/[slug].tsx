@@ -33,7 +33,11 @@ import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
-import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
+import {
+	createTitleSlug,
+	getTmdbPosterUrl,
+	parseScopedShowMediaId,
+} from "@/lib/utils";
 
 export default function ListDetailScreen() {
 	const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -102,10 +106,40 @@ export default function ListDetailScreen() {
 		(item: MediaInListDto) => {
 			const title = item.media.title as string;
 			if (item.mediaType === "show") {
+				const scoped = parseScopedShowMediaId(item.mediaId);
+				const showId =
+					(item.media as { showId?: string }).showId ?? scoped.showId ?? item.mediaId;
+				if (
+					typeof scoped.seasonNumber === "number" &&
+					typeof scoped.episodeNumber === "number"
+				) {
+					router.push({
+						pathname:
+							"/show/[id]/season/[seasonNumber]/episode/[episodeNumber]",
+						params: {
+							id: showId,
+							seasonNumber: String(scoped.seasonNumber),
+							episodeNumber: String(scoped.episodeNumber),
+							title: createTitleSlug(title),
+						},
+					});
+					return;
+				}
+				if (typeof scoped.seasonNumber === "number") {
+					router.push({
+						pathname: "/show/[id]/season/[seasonNumber]",
+						params: {
+							id: showId,
+							seasonNumber: String(scoped.seasonNumber),
+							title: createTitleSlug(title),
+						},
+					});
+					return;
+				}
 				router.push({
 					pathname: "/show/[id]",
 					params: {
-						id: item.mediaId,
+						id: showId,
 						title: createTitleSlug(title),
 					},
 				});
@@ -516,6 +550,15 @@ function ListMovieItem({
 	);
 	const movieTitle = movie.title as string;
 	const releaseYear = movie.releaseYear as number | null | undefined;
+	const scopedShow =
+		item.mediaType === "show" ? parseScopedShowMediaId(item.mediaId) : null;
+	const listContext =
+		typeof scopedShow?.seasonNumber === "number" &&
+		typeof scopedShow?.episodeNumber === "number"
+			? `S${scopedShow.seasonNumber} E${scopedShow.episodeNumber}`
+			: typeof scopedShow?.seasonNumber === "number"
+				? `Season ${scopedShow.seasonNumber}`
+				: null;
 
 	return (
 		<MediaCard
@@ -561,6 +604,11 @@ function ListMovieItem({
 				{releaseYear && (
 					<Text style={[styles.movieYear, { color: colors.onSurfaceVariant }]}>
 						{releaseYear}
+					</Text>
+				)}
+				{listContext && (
+					<Text style={[styles.movieYear, { color: colors.onSurfaceVariant }]}>
+						{listContext}
 					</Text>
 				)}
 			</View>

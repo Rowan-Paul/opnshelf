@@ -83,6 +83,12 @@ export class MediaInListDto {
 	@ApiProperty()
 	mediaId: string;
 
+	@ApiPropertyOptional({ description: "Season number for season/episode show items" })
+	seasonNumber?: number;
+
+	@ApiPropertyOptional({ description: "Episode number for episode show items" })
+	episodeNumber?: number;
+
 	@ApiPropertyOptional({ description: "Legacy movieId field for movie items" })
 	movieId?: string;
 
@@ -101,6 +107,8 @@ export class MediaInListDto {
 		mediaId: string;
 		movieId?: string;
 		showId?: string;
+		seasonNumber?: number;
+		episodeNumber?: number;
 		title: string;
 		posterPath?: string;
 		backdropPath?: string;

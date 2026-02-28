@@ -30,6 +30,7 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AddToListModal } from "@/components/AddToListModal";
 import {
 	DetailActions,
 	DetailHero,
@@ -44,6 +45,7 @@ import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import {
+	buildScopedShowMediaId,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 	getTmdbProfileUrl,
@@ -69,7 +71,7 @@ export default function ShowSeasonScreen() {
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
 
-	const [_showListModal, setShowListModal] = useState(false);
+	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
@@ -101,6 +103,10 @@ export default function ShowSeasonScreen() {
 		}),
 	});
 	const season = seasonData as TmdbSeasonDetailDto | undefined;
+	const scopedSeasonMediaId = buildScopedShowMediaId(
+		id,
+		Number(seasonNumber),
+	);
 
 	const {
 		data: history,
@@ -119,7 +125,7 @@ export default function ShowSeasonScreen() {
 		refetch: refetchLists,
 	} = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "show", mediaId: id },
+			path: { mediaType: "show", mediaId: scopedSeasonMediaId },
 		}),
 		enabled: !!resolvedUserDid,
 	});
@@ -612,6 +618,14 @@ export default function ShowSeasonScreen() {
 				onConfirm={handleMarkWatchedWithDate}
 				isLoading={markSeasonWatchedMutation.isPending}
 				is24Hour={is24Hour}
+			/>
+
+			<AddToListModal
+				visible={showListModal}
+				onClose={() => setShowListModal(false)}
+				mediaType="show"
+				mediaId={scopedSeasonMediaId}
+				mediaTitle={show?.name || title || "Show"}
 			/>
 
 			<ScrollRevealHeader

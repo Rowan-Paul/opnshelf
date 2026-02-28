@@ -52,6 +52,7 @@ import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import {
+	buildScopedShowMediaId,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 	getTmdbProfileUrl,
@@ -98,6 +99,11 @@ export default function ShowEpisodeScreen() {
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
 	const [showCompactHeader, setShowCompactHeader] = useState(false);
+	const scopedEpisodeMediaId = buildScopedShowMediaId(
+		id,
+		Number(seasonNumber),
+		Number(episodeNumber),
+	);
 
 	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
@@ -163,7 +169,7 @@ export default function ShowEpisodeScreen() {
 		refetch: refetchLists,
 	} = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "show", mediaId: id },
+			path: { mediaType: "show", mediaId: scopedEpisodeMediaId },
 		}),
 		enabled: !!resolvedUserDid,
 	});
@@ -780,7 +786,7 @@ export default function ShowEpisodeScreen() {
 				visible={showAddToListModal}
 				onClose={() => setShowAddToListModal(false)}
 				mediaType="show"
-				mediaId={id}
+				mediaId={scopedEpisodeMediaId}
 				mediaTitle={show?.name || title || "Show"}
 			/>
 		</>

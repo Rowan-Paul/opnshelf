@@ -36,6 +36,7 @@ import {
 import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
 import {
+	buildScopedShowMediaId,
 	formatDateOnly,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
@@ -146,6 +147,10 @@ function ShowSeasonPage() {
 
 	const show = showData as TmdbShowDetailDto | undefined;
 	const season = seasonData as TmdbSeasonDetailDto | undefined;
+	const scopedSeasonMediaId = buildScopedShowMediaId(
+		showId,
+		Number(seasonNumber),
+	);
 
 	const { data: history } = useQuery({
 		...showsControllerGetShowWatchHistoryOptions({
@@ -156,7 +161,7 @@ function ShowSeasonPage() {
 
 	const { data: listsForShow } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "show", mediaId: showId },
+			path: { mediaType: "show", mediaId: scopedSeasonMediaId },
 		}),
 		enabled: !!user?.did,
 	});
@@ -390,7 +395,7 @@ function ShowSeasonPage() {
 					open={showListModal}
 					onOpenChange={setShowListModal}
 					mediaType="show"
-					mediaId={showId}
+					mediaId={scopedSeasonMediaId}
 					mediaTitle={show?.name || ""}
 					user={user}
 				/>

@@ -24,7 +24,7 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { getTmdbPosterUrl } from "@/lib/utils";
+import { getTmdbPosterUrl, parseScopedShowMediaId } from "@/lib/utils";
 
 export const Route = createFileRoute("/lists/$slug")({
 	head: ({ params }) => ({
@@ -291,25 +291,55 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 		title?: string;
 		posterPath?: string | null;
 		releaseYear?: number | null;
+		showId?: string;
 	};
 	const mediaType: "movie" | "show" =
 		item.mediaType === "show" ? "show" : "movie";
-	const posterUrl = getTmdbPosterUrl(media.posterPath ?? null);
+	const scopedShow = mediaType === "show" ? parseScopedShowMediaId(item.mediaId) : null;
+	const showIdForNav = media.showId ?? scopedShow?.showId ?? item.mediaId;
+	const seasonNumber = scopedShow?.seasonNumber;
+	const episodeNumber = scopedShow?.episodeNumber;
 	const mediaTitle = media.title ?? "Untitled";
-	const releaseYear = media.releaseYear;
 	const mediaSlug = mediaTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 	const isMovie = mediaType === "movie";
+	const listContext =
+		typeof seasonNumber === "number" && typeof episodeNumber === "number"
+			? `S${seasonNumber} E${episodeNumber}`
+			: typeof seasonNumber === "number"
+				? `Season ${seasonNumber}`
+				: null;
+	const linkTo = isMovie
+		? "/movies/$movieId/$title"
+		: typeof seasonNumber === "number" && typeof episodeNumber === "number"
+			? "/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"
+			: typeof seasonNumber === "number"
+				? "/shows/$showId/$title/seasons/$seasonNumber"
+				: "/shows/$showId/$title";
+	const linkParams = isMovie
+		? { movieId: item.mediaId, title: mediaSlug }
+		: typeof seasonNumber === "number" && typeof episodeNumber === "number"
+			? {
+					showId: showIdForNav,
+					title: mediaSlug,
+					seasonNumber: String(seasonNumber),
+					episodeNumber: String(episodeNumber),
+				}
+			: typeof seasonNumber === "number"
+				? {
+						showId: showIdForNav,
+						title: mediaSlug,
+						seasonNumber: String(seasonNumber),
+					}
+				: { showId: showIdForNav, title: mediaSlug };
+	const posterUrl = getTmdbPosterUrl(media.posterPath ?? null);
+	const releaseYear = media.releaseYear;
 	const { seedColor } = useTheme();
 
 	return (
 		<div className="group">
 			<Link
-				to={isMovie ? "/movies/$movieId/$title" : "/shows/$showId/$title"}
-				params={
-					isMovie
-						? { movieId: item.mediaId, title: mediaSlug }
-						: { showId: item.mediaId, title: mediaSlug }
-				}
+				to={linkTo as never}
+				params={linkParams as never}
 				className="block relative aspect-2/3 rounded-lg overflow-hidden mb-2"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-highest)",
@@ -353,12 +383,8 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 				</M3Button>
 			</Link>
 			<Link
-				to={isMovie ? "/movies/$movieId/$title" : "/shows/$showId/$title"}
-				params={
-					isMovie
-						? { movieId: item.mediaId, title: mediaSlug }
-						: { showId: item.mediaId, title: mediaSlug }
-				}
+				to={linkTo as never}
+				params={linkParams as never}
 				className="block"
 			>
 				<h3
@@ -379,6 +405,22 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 					>
 						{releaseYear}
+					</p>
+				)}
+				{!releaseYear && listContext && (
+					<p
+						className="text-sm"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						{listContext}
+					</p>
+				)}
+				{releaseYear && listContext && (
+					<p
+						className="text-sm"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						{listContext}
 					</p>
 				)}
 			</Link>
