@@ -12,7 +12,6 @@ import { z } from "zod";
 import { useTheme } from "@/components/theme-provider";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { M3TextField } from "@/components/ui/m3-text-field";
-import { env } from "@/env";
 
 const OAUTH_PENDING_KEY = "oauth_pending";
 
@@ -34,21 +33,9 @@ function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isAboutExpanded, setIsAboutExpanded] = useState(false);
-	const [suggestions, setSuggestions] = useState<
-		Array<{
-			did: string;
-			handle: string;
-			displayName: string | null;
-			avatar: string | null;
-		}>
-	>([]);
-	const [showSuggestions, setShowSuggestions] = useState(false);
-	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const navigate = useNavigate();
 	const { error, redirect, reason } = Route.useSearch();
 	const handleId = useId();
-	const inputAreaRef = useRef<HTMLDivElement>(null);
-	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const shownErrorRef = useRef<string | null>(null);
 	const { seedColor } = useTheme();
 
@@ -63,61 +50,6 @@ function LoginPage() {
 			navigate({ to: redirect || "/shelf" });
 		}
 	}, [user, isAuthLoading, navigate, redirect]);
-
-	useEffect(() => {
-		const fetchSuggestions = async () => {
-			if (handle.trim().length < 2) {
-				setSuggestions([]);
-				return;
-			}
-
-			setIsLoadingSuggestions(true);
-			try {
-				const response = await fetch(
-					`${env.VITE_API_URL}/auth/suggestions?q=${encodeURIComponent(handle.trim())}`,
-				);
-				if (response.ok) {
-					const data = (await response.json()) as Array<{
-						did: string;
-						handle: string;
-						displayName: string | null;
-						avatar: string | null;
-					}>;
-					setSuggestions(data);
-				}
-			} catch {
-				setSuggestions([]);
-			} finally {
-				setIsLoadingSuggestions(false);
-			}
-		};
-
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current);
-		}
-
-		debounceRef.current = setTimeout(fetchSuggestions, 300);
-
-		return () => {
-			if (debounceRef.current) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [handle]);
-
-	useEffect(() => {
-		const handleClickOutside = (e: MouseEvent) => {
-			if (
-				inputAreaRef.current &&
-				!inputAreaRef.current.contains(e.target as Node)
-			) {
-				setShowSuggestions(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
 
 	const detectUserTimezone = (): string => {
 		try {
@@ -172,8 +104,6 @@ function LoginPage() {
 		sessionStorage.removeItem(OAUTH_PENDING_KEY);
 		toast.error(errorMessages[error] || "An error occurred. Please try again.");
 	}, [error]);
-
-	const shouldShowSuggestions = showSuggestions && handle.trim().length >= 2;
 
 	if (isAuthLoading) {
 		return (
@@ -258,105 +188,16 @@ function LoginPage() {
 					)}
 
 					<form onSubmit={handleSubmit} className="space-y-5">
-						<div ref={inputAreaRef} className="relative">
+						<div>
 							<M3TextField
 								id={handleId}
 								label="Handle"
 								value={handle}
-								onChange={(e) => {
-									setHandle(e.target.value);
-									setShowSuggestions(true);
-								}}
-								onFocus={() => setShowSuggestions(true)}
-								onKeyDown={(e) => {
-									if (e.key === "Escape") {
-										setShowSuggestions(false);
-									}
-								}}
+								onChange={(e) => setHandle(e.target.value)}
 								placeholder="username.bsky.social"
 								disabled={isSubmitting}
 								variant="outlined"
 							/>
-							{shouldShowSuggestions && suggestions.length > 0 && (
-								<div
-									className="absolute z-10 w-full mt-1 overflow-y-auto max-h-60 md-elevation-2 rounded-(--md-sys-shape-corner-small)"
-									style={{
-										backgroundColor: "var(--md-sys-color-surface-container)",
-										border: "1px solid var(--md-sys-color-outline-variant)",
-									}}
-								>
-									{suggestions.map((actor) => (
-										<button
-											key={actor.did}
-											type="button"
-											onClick={() => {
-												setHandle(actor.handle);
-												setShowSuggestions(false);
-												setSuggestions([]);
-												performLogin(actor.handle);
-											}}
-											className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-high)"
-										>
-											{actor.avatar ? (
-												<img
-													src={actor.avatar}
-													alt=""
-													className="w-8 h-8 rounded-full object-cover"
-												/>
-											) : (
-												<div
-													className="w-8 h-8 rounded-full flex items-center justify-center"
-													style={{
-														backgroundColor:
-															"var(--md-sys-color-surface-container-highest)",
-														color: "var(--md-sys-color-on-surface)",
-													}}
-												>
-													<span className="text-sm">
-														{actor.handle[0]?.toUpperCase()}
-													</span>
-												</div>
-											)}
-											<div className="flex-1 min-w-0">
-												<div
-													className="font-medium truncate md-body-large"
-													style={{ color: "var(--md-sys-color-on-surface)" }}
-												>
-													{actor.displayName || actor.handle}
-												</div>
-												<div
-													className="text-sm truncate md-body-medium"
-													style={{
-														color: "var(--md-sys-color-on-surface-variant)",
-													}}
-												>
-													{actor.handle}
-												</div>
-											</div>
-										</button>
-									))}
-								</div>
-							)}
-							{shouldShowSuggestions && isLoadingSuggestions && (
-								<div
-									className="absolute z-10 w-full mt-1 p-4 md-elevation-2 rounded-(--md-sys-shape-corner-small)"
-									style={{
-										backgroundColor: "var(--md-sys-color-surface-container)",
-										border: "1px solid var(--md-sys-color-outline-variant)",
-									}}
-								>
-									<div
-										className="flex items-center justify-center gap-2"
-										style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-									>
-										<div
-											className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
-											style={{ borderColor: "var(--md-sys-color-outline)" }}
-										/>
-										<span className="md-body-medium">Searching...</span>
-									</div>
-								</div>
-							)}
 						</div>
 
 						<div

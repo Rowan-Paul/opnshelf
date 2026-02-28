@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import {
 	Pressable,
 	StyleSheet,
@@ -25,22 +25,26 @@ export interface M3TextFieldProps extends TextInputProps {
 	onPressTrailingIcon?: () => void;
 }
 
-export function M3TextField({
-	label,
-	helperText,
-	error,
-	variant = "outlined",
-	containerStyle,
-	style,
-	value,
-	defaultValue,
-	leadingIcon,
-	trailingIcon,
-	onPressTrailingIcon,
-	...props
-}: M3TextFieldProps) {
-	const { colors } = useTheme();
-	const [isFocused, setIsFocused] = useState(false);
+export const M3TextField = forwardRef<TextInput, M3TextFieldProps>(
+	function M3TextField(
+		{
+			label,
+			helperText,
+			error,
+			variant = "outlined",
+			containerStyle,
+			style,
+			value,
+			defaultValue,
+			leadingIcon,
+			trailingIcon,
+			onPressTrailingIcon,
+			...props
+		},
+		ref,
+	) {
+		const { colors } = useTheme();
+		const [isFocused, setIsFocused] = useState(false);
 
 	const getBorderColor = () => {
 		if (error) return colors.error;
@@ -84,96 +88,98 @@ export function M3TextField({
 			: false;
 	const isLabelFloating = hasValue || isFocused || !!props.placeholder;
 
-	return (
-		<View style={[styles.container, containerStyle]}>
-			<View style={[styles.inputContainer, getVariantStyles()]}>
-				{label && (
-					<View
-						pointerEvents="none"
-						style={[
-							styles.labelContainer,
-							isLabelFloating ? styles.labelTop : styles.labelCenter,
-							variant === "outlined" && {
-								backgroundColor: colors.surface,
-							},
-						]}
-					>
-						<Text
+		return (
+			<View style={[styles.container, containerStyle]}>
+				<View style={[styles.inputContainer, getVariantStyles()]}>
+					{label && (
+						<View
+							pointerEvents="none"
 							style={[
-								styles.label,
-								{
-									color: getLabelColor(),
-									fontSize: isLabelFloating ? 12 : 16,
+								styles.labelContainer,
+								isLabelFloating ? styles.labelTop : styles.labelCenter,
+								variant === "outlined" && {
+									backgroundColor: colors.surface,
 								},
 							]}
 						>
-							{label}
+							<Text
+								style={[
+									styles.label,
+									{
+										color: getLabelColor(),
+										fontSize: isLabelFloating ? 12 : 16,
+									},
+								]}
+							>
+								{label}
+							</Text>
+						</View>
+					)}
+					{leadingIcon && (
+						<View
+							pointerEvents="none"
+							style={[styles.iconContainer, styles.leadingIconContainer]}
+						>
+							{leadingIcon}
+						</View>
+					)}
+					<TextInput
+						ref={ref}
+						{...props}
+						value={value}
+						defaultValue={defaultValue}
+						style={[
+							styles.input,
+							!!leadingIcon && styles.inputWithLeadingIcon,
+							!!trailingIcon && styles.inputWithTrailingIcon,
+							{
+								color: colors.onSurface,
+							},
+							style,
+						]}
+						placeholderTextColor={colors.onSurfaceVariant}
+						onFocus={(e) => {
+							setIsFocused(true);
+							props.onFocus?.(e);
+						}}
+						onBlur={(e) => {
+							setIsFocused(false);
+							props.onBlur?.(e);
+						}}
+					/>
+					{trailingIcon &&
+						(onPressTrailingIcon ? (
+							<Pressable
+								onPress={onPressTrailingIcon}
+								style={[styles.iconContainer, styles.trailingIconContainer]}
+							>
+								{trailingIcon}
+							</Pressable>
+						) : (
+							<View
+								pointerEvents="none"
+								style={[styles.iconContainer, styles.trailingIconContainer]}
+							>
+								{trailingIcon}
+							</View>
+						))}
+				</View>
+				{(helperText || error) && (
+					<View style={styles.helperContainer}>
+						<Text
+							style={[
+								styles.helperText,
+								{ color: error ? colors.error : colors.onSurfaceVariant },
+							]}
+						>
+							{error || helperText}
 						</Text>
 					</View>
 				)}
-				{leadingIcon && (
-					<View
-						pointerEvents="none"
-						style={[styles.iconContainer, styles.leadingIconContainer]}
-					>
-						{leadingIcon}
-					</View>
-				)}
-				<TextInput
-					{...props}
-					value={value}
-					defaultValue={defaultValue}
-					style={[
-						styles.input,
-						!!leadingIcon && styles.inputWithLeadingIcon,
-						!!trailingIcon && styles.inputWithTrailingIcon,
-						{
-							color: colors.onSurface,
-						},
-						style,
-					]}
-					placeholderTextColor={colors.onSurfaceVariant}
-					onFocus={(e) => {
-						setIsFocused(true);
-						props.onFocus?.(e);
-					}}
-					onBlur={(e) => {
-						setIsFocused(false);
-						props.onBlur?.(e);
-					}}
-				/>
-				{trailingIcon &&
-					(onPressTrailingIcon ? (
-						<Pressable
-							onPress={onPressTrailingIcon}
-							style={[styles.iconContainer, styles.trailingIconContainer]}
-						>
-							{trailingIcon}
-						</Pressable>
-					) : (
-						<View
-							pointerEvents="none"
-							style={[styles.iconContainer, styles.trailingIconContainer]}
-						>
-							{trailingIcon}
-						</View>
-					))}
 			</View>
-			{(helperText || error) && (
-				<View style={styles.helperContainer}>
-					<Text
-						style={[
-							styles.helperText,
-							{ color: error ? colors.error : colors.onSurfaceVariant },
-						]}
-					>
-						{error || helperText}
-					</Text>
-				</View>
-			)}
-		</View>
-	);
-}
+		);
+	},
+);
 
 const styles = StyleSheet.create({
 	container: {
