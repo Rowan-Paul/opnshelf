@@ -122,12 +122,15 @@ function ProfileLayout() {
 							</span>
 						</div>
 					)}
-					<div>
-						<h1 className="md-headline-medium">
+					<div className="min-w-0 flex-1">
+						<h1 className="md-headline-medium [overflow-wrap:anywhere]">
 							{String(user.displayName || user.handle)}
 						</h1>
 						{user.displayName && (
-							<p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+							<p
+								className="[overflow-wrap:anywhere]"
+								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+							>
 								@{user.handle}
 							</p>
 						)}
