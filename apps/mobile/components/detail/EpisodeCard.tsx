@@ -13,6 +13,7 @@ import { MediaCard } from "@/components/MediaCard";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 const STILL_BASE_URL = "https://image.tmdb.org/t/p/w300";
 
@@ -69,6 +70,7 @@ export function EpisodeCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			showToast("Episode marked watched");
 		},
@@ -92,6 +94,7 @@ export function EpisodeCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			showToast("Removed from your shelf");
 		},

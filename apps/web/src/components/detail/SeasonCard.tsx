@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Calendar, Film, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import type { ColorTheme } from "./types";
 
 type SeasonCardProps = {
@@ -63,6 +64,7 @@ export function SeasonCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			toast.success(`Marked ${data.count} episodes as watched`);
 		},
@@ -92,6 +94,7 @@ export function SeasonCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			toast.success("Removed season from your shelf");
 		},

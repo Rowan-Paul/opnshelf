@@ -96,6 +96,11 @@ export default function LoginScreen() {
 		}
 	};
 
+	const handleConnect = () => {
+		if (isSubmitting) return;
+		void startLogin(handle.trim() || undefined);
+	};
+
 	const handleSignup = async () => {
 		setIsSubmitting(true);
 		posthog.capture("user_signed_up", {
@@ -251,9 +256,12 @@ export default function LoginScreen() {
 									containerStyle={{ width: "100%" }}
 									value={handle}
 									onChangeText={setHandle}
+									onSubmitEditing={handleConnect}
 									placeholder="alice.example.com"
 									autoCapitalize="none"
 									autoCorrect={false}
+									returnKeyType="go"
+									enablesReturnKeyAutomatically
 									editable={!isSubmitting}
 									variant="outlined"
 								/>
@@ -324,9 +332,7 @@ export default function LoginScreen() {
 									borderRadius: 10,
 									opacity: isSubmitting ? 0.7 : 1,
 								}}
-								onPress={() => {
-									void startLogin(handle || undefined);
-								}}
+								onPress={handleConnect}
 								disabled={isSubmitting}
 								activeOpacity={0.8}
 							>

@@ -47,6 +47,7 @@ import { Button } from "@/components/ui/Button";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
 const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";
@@ -229,6 +230,7 @@ export default function MovieDetailScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },
@@ -258,6 +260,7 @@ export default function MovieDetailScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },
@@ -283,6 +286,7 @@ export default function MovieDetailScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },

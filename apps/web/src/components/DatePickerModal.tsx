@@ -16,6 +16,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { M3Button } from "@/components/ui/m3-button";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 type DatePickerModalProps = {
 	open: boolean;
@@ -80,6 +81,7 @@ export function DatePickerModal({
 					path: { userDid: userDid || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, userDid);
 			if (isMovieMode) {
 				queryClient.invalidateQueries({
 					queryKey: ["watchHistory", userDid, target.movieId],
@@ -108,6 +110,7 @@ export function DatePickerModal({
 						path: { userDid: userDid || "" },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetShowWatchHistoryQueryKey({
 						path: { userDid: userDid || "", showId: target.showId },
@@ -137,6 +140,7 @@ export function DatePickerModal({
 						path: { userDid: userDid || "" },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetShowWatchHistoryQueryKey({
 						path: { userDid: userDid || "", showId: target.showId },
@@ -160,6 +164,7 @@ export function DatePickerModal({
 						path: { userDid: userDid || "" },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetShowWatchHistoryQueryKey({
 						path: { userDid: userDid || "", showId: target.showId },

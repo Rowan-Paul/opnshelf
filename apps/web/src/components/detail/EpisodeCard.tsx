@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Calendar, Loader2, Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import { formatDateOnly } from "@/lib/utils";
 import type { ColorTheme, EpisodeSummary } from "./types";
 
@@ -53,6 +54,7 @@ export function EpisodeCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			toast.success("Episode marked watched");
 		},
@@ -82,6 +84,7 @@ export function EpisodeCard({
 						path: { userDid, showId },
 					}),
 				});
+				invalidateUserShelfQueries(queryClient, userDid);
 			}
 			toast.success("Removed from your shelf");
 		},

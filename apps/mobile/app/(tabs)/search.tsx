@@ -34,6 +34,7 @@ import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import { createTitleSlug } from "@/lib/utils";
 
 const DEBOUNCE_MS = 300;
@@ -213,6 +214,7 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			showToast("Added to your shelf", "success");
 		},
 		onError: () => {
@@ -229,6 +231,7 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
@@ -245,6 +248,7 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			showToast("Added to your shelf", "success");
 		},
 		onError: () => {
@@ -261,6 +265,7 @@ export default function SearchScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {

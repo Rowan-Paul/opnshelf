@@ -16,6 +16,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 interface ShowCardProps {
@@ -43,6 +44,7 @@ export function ShowCard({
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			toast.success("Added to your shelf");
 		},
 		onError: () => {
@@ -59,6 +61,7 @@ export function ShowCard({
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			toast.success("Removed from your shelf");
 		},
 		onError: () => {

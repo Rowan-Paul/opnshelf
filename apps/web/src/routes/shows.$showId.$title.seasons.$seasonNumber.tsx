@@ -35,6 +35,7 @@ import {
 } from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
 	formatDateOnly,
@@ -194,6 +195,7 @@ function ShowSeasonPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId },
@@ -221,6 +223,7 @@ function ShowSeasonPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId },

@@ -41,6 +41,7 @@ import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
@@ -168,6 +169,7 @@ export default function ShowDetailScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: ["showsControllerGetShowWatchHistory"],
 			});
@@ -207,6 +209,7 @@ export default function ShowDetailScreen() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId: id },

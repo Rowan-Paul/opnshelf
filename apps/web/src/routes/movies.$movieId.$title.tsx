@@ -39,6 +39,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { M3Button } from "@/components/ui/m3-button";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	formatDateOnly,
 	formatDateWithTimezone,
@@ -193,6 +194,7 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },
@@ -222,6 +224,7 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },
@@ -247,6 +250,7 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },

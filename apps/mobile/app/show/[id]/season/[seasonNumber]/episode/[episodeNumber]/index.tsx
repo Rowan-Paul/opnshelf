@@ -51,6 +51,7 @@ import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
 	getTmdbBackdropUrl,
@@ -273,6 +274,7 @@ export default function ShowEpisodeScreen() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId: id },
@@ -295,6 +297,7 @@ export default function ShowEpisodeScreen() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId: id },
@@ -316,6 +319,7 @@ export default function ShowEpisodeScreen() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId: id },

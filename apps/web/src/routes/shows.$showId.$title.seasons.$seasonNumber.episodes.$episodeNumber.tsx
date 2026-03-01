@@ -39,6 +39,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { M3Button } from "@/components/ui/m3-button";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
 	formatDateOnly,
@@ -233,6 +234,7 @@ function ShowEpisodePage() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId },
@@ -253,6 +255,7 @@ function ShowEpisodePage() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId },
@@ -279,6 +282,7 @@ function ShowEpisodePage() {
 					path: { userDid: resolvedUserDid },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, resolvedUserDid);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: resolvedUserDid, showId },

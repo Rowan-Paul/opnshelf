@@ -33,6 +33,7 @@ import {
 } from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	formatDateOnly,
 	getTmdbBackdropUrl,
@@ -156,6 +157,7 @@ function ShowDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId },
@@ -183,6 +185,7 @@ function ShowDetailPage() {
 					path: { userDid: user?.did || "" },
 				}),
 			});
+			invalidateUserShelfQueries(queryClient, user?.did);
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId },

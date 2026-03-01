@@ -19,6 +19,7 @@ import { MediaCard } from "@/components/MediaCard";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
@@ -69,6 +70,7 @@ export function SeasonCard({
             path: { userDid, showId },
           }),
         });
+        invalidateUserShelfQueries(queryClient, userDid);
       }
       showToast(`Marked ${data.count} episodes as watched`);
     },
@@ -92,6 +94,7 @@ export function SeasonCard({
             path: { userDid, showId },
           }),
         });
+        invalidateUserShelfQueries(queryClient, userDid);
       }
       showToast("Removed season from your shelf");
     },
