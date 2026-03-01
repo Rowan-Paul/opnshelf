@@ -1,9 +1,13 @@
-import { Tabs } from "expo-router";
+import { router, Tabs, usePathname } from "expo-router";
 import { Home, Search, User } from "lucide-react-native";
 import { useTheme } from "@/contexts/theme";
 
 export default function TabLayout() {
 	const { colors } = useTheme();
+	const pathname = usePathname();
+
+	const normalizedPath = pathname.replace(/^\/\(tabs\)/, "");
+	const isOnNestedProfileRoute = normalizedPath.startsWith("/profile/");
 
 	return (
 		<Tabs
@@ -38,6 +42,14 @@ export default function TabLayout() {
 			/>
 			<Tabs.Screen
 				name="profile"
+				listeners={{
+					tabPress: (event) => {
+						if (isOnNestedProfileRoute) {
+							event.preventDefault();
+							router.navigate("/(tabs)/profile");
+						}
+					},
+				}}
 				options={{
 					title: "Profile",
 					tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
