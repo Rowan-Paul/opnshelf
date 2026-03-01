@@ -295,7 +295,8 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 	};
 	const mediaType: "movie" | "show" =
 		item.mediaType === "show" ? "show" : "movie";
-	const scopedShow = mediaType === "show" ? parseScopedShowMediaId(item.mediaId) : null;
+	const scopedShow =
+		mediaType === "show" ? parseScopedShowMediaId(item.mediaId) : null;
 	const showIdForNav = media.showId ?? scopedShow?.showId ?? item.mediaId;
 	const seasonNumber = scopedShow?.seasonNumber;
 	const episodeNumber = scopedShow?.episodeNumber;
@@ -382,11 +383,7 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 					)}
 				</M3Button>
 			</Link>
-			<Link
-				to={linkTo as never}
-				params={linkParams as never}
-				className="block"
-			>
+			<Link to={linkTo as never} params={linkParams as never} className="block">
 				<h3
 					className="font-semibold text-sm line-clamp-2 mb-1 transition-colors"
 					style={{ color: "var(--md-sys-color-on-surface)" }}

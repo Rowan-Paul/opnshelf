@@ -83,7 +83,9 @@ export class MediaInListDto {
 	@ApiProperty()
 	mediaId: string;
 
-	@ApiPropertyOptional({ description: "Season number for season/episode show items" })
+	@ApiPropertyOptional({
+		description: "Season number for season/episode show items",
+	})
 	seasonNumber?: number;
 
 	@ApiPropertyOptional({ description: "Episode number for episode show items" })

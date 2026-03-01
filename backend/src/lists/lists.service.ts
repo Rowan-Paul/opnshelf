@@ -110,7 +110,10 @@ export class ListsService {
 			where: { userDid },
 			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 			include: {
-				items: { where: { mediaType, mediaId: scopedMediaId }, select: { id: true } },
+				items: {
+					where: { mediaType, mediaId: scopedMediaId },
+					select: { id: true },
+				},
 			},
 		});
 
@@ -413,7 +416,9 @@ export class ListsService {
 			const movieData = await this.moviesService.getMovieDetails(dto.mediaId);
 			await this.moviesService.upsertMovie(movieData);
 		} else {
-			const showData = await this.showsService.getShowDetails(showScope?.showId ?? dto.mediaId);
+			const showData = await this.showsService.getShowDetails(
+				showScope?.showId ?? dto.mediaId,
+			);
 			await this.showsService.upsertShow(showData);
 		}
 
@@ -454,7 +459,8 @@ export class ListsService {
 				mediaType: dto.mediaType,
 				mediaId: scopedMediaId,
 				movieId: dto.mediaType === "movie" ? dto.mediaId : null,
-				showId: dto.mediaType === "show" ? (showScope?.showId ?? dto.mediaId) : null,
+				showId:
+					dto.mediaType === "show" ? (showScope?.showId ?? dto.mediaId) : null,
 				notes: dto.notes,
 				position: itemCount,
 			},
@@ -617,7 +623,8 @@ export class ListsService {
 				movieId: record.mediaType === "movie" ? record.mediaId : null,
 				showId:
 					record.mediaType === "show"
-						? (this.parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
+						? (this.parseScopedShowMediaId(record.mediaId)?.showId ??
+							record.mediaId)
 						: null,
 				notes: record.notes,
 			},
@@ -628,7 +635,8 @@ export class ListsService {
 				movieId: record.mediaType === "movie" ? record.mediaId : null,
 				showId:
 					record.mediaType === "show"
-						? (this.parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
+						? (this.parseScopedShowMediaId(record.mediaId)?.showId ??
+							record.mediaId)
 						: null,
 				notes: record.notes,
 			},
@@ -747,7 +755,7 @@ export class ListsService {
 				: undefined;
 		const baseMediaId =
 			item.mediaType === "show"
-				? parsedShowScope?.showId ?? item.mediaId
+				? (parsedShowScope?.showId ?? item.mediaId)
 				: item.mediaId;
 		const mediaTitle =
 			item.mediaType === "movie" ? item.movie?.title : item.show?.title;
@@ -826,10 +834,7 @@ export class ListsService {
 		}
 
 		if (typeof seasonNumber === "number" && Number.isFinite(seasonNumber)) {
-			if (
-				typeof episodeNumber === "number" &&
-				Number.isFinite(episodeNumber)
-			) {
+			if (typeof episodeNumber === "number" && Number.isFinite(episodeNumber)) {
 				return `${mediaId}:season:${seasonNumber}:episode:${episodeNumber}`;
 			}
 			return `${mediaId}:season:${seasonNumber}`;
@@ -838,18 +843,14 @@ export class ListsService {
 		return mediaId;
 	}
 
-	private parseScopedShowMediaId(
-		mediaId: string,
-	):
+	private parseScopedShowMediaId(mediaId: string):
 		| {
 				showId: string;
 				seasonNumber?: number;
 				episodeNumber?: number;
 		  }
 		| undefined {
-		const episodeMatch = mediaId.match(
-			/^([^:]+):season:(\d+):episode:(\d+)$/,
-		);
+		const episodeMatch = mediaId.match(/^([^:]+):season:(\d+):episode:(\d+)$/);
 		if (episodeMatch) {
 			return {
 				showId: episodeMatch[1],

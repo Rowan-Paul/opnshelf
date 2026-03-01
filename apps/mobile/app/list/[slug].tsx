@@ -108,7 +108,9 @@ export default function ListDetailScreen() {
 			if (item.mediaType === "show") {
 				const scoped = parseScopedShowMediaId(item.mediaId);
 				const showId =
-					(item.media as { showId?: string }).showId ?? scoped.showId ?? item.mediaId;
+					(item.media as { showId?: string }).showId ??
+					scoped.showId ??
+					item.mediaId;
 				if (
 					typeof scoped.seasonNumber === "number" &&
 					typeof scoped.episodeNumber === "number"

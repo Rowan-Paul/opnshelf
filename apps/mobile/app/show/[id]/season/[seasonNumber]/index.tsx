@@ -103,10 +103,7 @@ export default function ShowSeasonScreen() {
 		}),
 	});
 	const season = seasonData as TmdbSeasonDetailDto | undefined;
-	const scopedSeasonMediaId = buildScopedShowMediaId(
-		id,
-		Number(seasonNumber),
-	);
+	const scopedSeasonMediaId = buildScopedShowMediaId(id, Number(seasonNumber));
 
 	const {
 		data: history,
