@@ -54,7 +54,8 @@ export function DetailActions({
 		posthog.capture("content_shared", {
 			media_type: mediaType,
 			media_id: mediaId,
-			share_method: navigator.share ? "native" : "clipboard",
+			share_method:
+				typeof navigator.share === "function" ? "native" : "clipboard",
 			url,
 		});
 		if (navigator.share) {
