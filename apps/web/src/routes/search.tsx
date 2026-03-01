@@ -7,6 +7,7 @@ import {
 	type TmdbMovieResultDto,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
@@ -34,6 +35,7 @@ function SearchPage() {
 	const [query, setQuery] = useState(searchQuery);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const lastNavigatedQueryRef = useRef<string>(searchQuery);
+	const posthog = usePostHog();
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -81,6 +83,12 @@ function SearchPage() {
 		if (trimmed !== searchQuery) {
 			debounceRef.current = setTimeout(() => {
 				lastNavigatedQueryRef.current = trimmed;
+				if (trimmed.length > 0) {
+					posthog.capture("search_performed", {
+						query: trimmed,
+						filter_type: type,
+					});
+				}
 				navigate({
 					search: { q: trimmed, type },
 					replace: true,
@@ -94,7 +102,7 @@ function SearchPage() {
 				clearTimeout(debounceRef.current);
 			}
 		};
-	}, [query, searchQuery, type, navigate]);
+	}, [query, searchQuery, type, navigate, posthog.capture]);
 
 	const hasQuery = searchQuery.length > 0;
 	const isMovies = type === "movies";

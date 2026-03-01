@@ -15,6 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useCallback, useMemo, useState } from "react";
 import {
 	type NativeScrollEvent,
@@ -61,6 +62,7 @@ export default function ShowDetailScreen() {
 	const { colors: themeColors } = useTheme();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
@@ -170,6 +172,14 @@ export default function ShowDetailScreen() {
 				queryKey: ["showsControllerGetShowWatchHistory"],
 			});
 			showToast(`Marked ${data.count} episodes as watched`);
+			posthog.capture("show_marked_watched", {
+				show_id: id,
+				episode_count: data.count,
+				...(show?.name ? { show_name: show.name } : {}),
+				...(show?.first_air_date
+					? { show_year: new Date(show.first_air_date).getFullYear() }
+					: {}),
+			});
 		},
 		onError: () => {
 			showToast("Failed to mark show as watched. Please try again.", "error");
@@ -203,6 +213,10 @@ export default function ShowDetailScreen() {
 				}),
 			});
 			showToast("Removed all episodes from your shelf");
+			posthog.capture("show_unmarked_watched", {
+				show_id: id,
+				...(show?.name ? { show_name: show.name } : {}),
+			});
 		},
 		onError: () => {
 			showToast("Failed to remove from shelf. Please try again.", "error");
@@ -222,6 +236,10 @@ export default function ShowDetailScreen() {
 			await Share.share({
 				message: `Check out ${show?.name} on OpnShelf!\n\n${shareUrl}`,
 				title: show?.name,
+			});
+			posthog.capture("show_shared", {
+				show_id: id,
+				...(show?.name ? { show_name: show.name } : {}),
 			});
 		} catch {
 			// User cancelled or error

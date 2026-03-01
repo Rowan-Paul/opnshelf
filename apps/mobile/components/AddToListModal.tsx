@@ -18,6 +18,7 @@ import {
 	Text,
 	View,
 } from "react-native";
+import { usePostHog } from "posthog-react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 
@@ -38,6 +39,7 @@ export const AddToListModal = memo(function AddToListModal({
 }: AddToListModalProps) {
 	const queryClient = useQueryClient();
 	const { colors } = useTheme();
+	const posthog = usePostHog();
 
 	const { data: listsForMovie, isLoading } = useQuery({
 		...listsControllerGetListsForItemOptions({
@@ -59,6 +61,12 @@ export const AddToListModal = memo(function AddToListModal({
 			});
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+			posthog.capture("media_added_to_list", {
+				list_slug: slug,
+				media_type: mediaType,
+				media_id: mediaId,
+				media_title: mediaTitle,
 			});
 		},
 	});

@@ -22,6 +22,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
@@ -91,6 +92,7 @@ export default function MovieDetailScreen() {
 	const { colors: themeColors } = useTheme();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
@@ -234,6 +236,13 @@ export default function MovieDetailScreen() {
 			});
 			setShowDateModal(false);
 			showToast("Added to your shelf", "success");
+			posthog.capture("movie_marked_watched", {
+				movie_id: movieId,
+				...(movie?.title ? { movie_title: movie.title } : {}),
+				...(movie?.release_date
+					? { movie_year: new Date(movie.release_date).getFullYear() }
+					: {}),
+			});
 		},
 		onError: () => {
 			showToast("Failed to add. Please try again.", "error");
@@ -255,6 +264,10 @@ export default function MovieDetailScreen() {
 				}),
 			});
 			showToast("Removed from your shelf", "success");
+			posthog.capture("movie_unmarked_watched", {
+				movie_id: movieId,
+				...(movie?.title ? { movie_title: movie.title } : {}),
+			});
 		},
 		onError: () => {
 			showToast("Failed to remove. Please try again.", "error");
@@ -315,10 +328,14 @@ export default function MovieDetailScreen() {
 				message: `Check out ${displayTitle} on OpnShelf!\n\n${shareUrl}`,
 				title: `Check out ${displayTitle} on OpnShelf`,
 			});
+			posthog.capture("movie_shared", {
+				movie_id: movieId,
+				...(displayTitle ? { movie_title: displayTitle } : {}),
+			});
 		} catch {
 			showToast("Failed to share", "error");
 		}
-	}, [movie?.title, movieId, title, showToast]);
+	}, [movie?.title, movieId, title, showToast, posthog]);
 
 	const openDateModal = useCallback(() => {
 		setCustomDate(new Date());

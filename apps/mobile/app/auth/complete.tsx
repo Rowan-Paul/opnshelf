@@ -1,6 +1,7 @@
 import { authControllerMeOptions } from "@opnshelf/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useEffect } from "react";
 import { ActivityIndicator, Image, Text, View } from "react-native";
 import { useToast } from "@/contexts/toast";
@@ -12,6 +13,7 @@ export default function AuthCompleteScreen() {
 	const params = useLocalSearchParams<{ session?: string }>();
 	const { session } = params;
 	const { showToast } = useToast();
+	const posthog = usePostHog();
 
 	useEffect(() => {
 		async function completeAuth() {
@@ -20,23 +22,53 @@ export default function AuthCompleteScreen() {
 					await saveSessionToken(session);
 				}
 
-				await queryClient.fetchQuery({
+				const user = await queryClient.fetchQuery({
 					...authControllerMeOptions(),
 					staleTime: 0,
 				});
+
+				// Identify the user in PostHog after successful login
+				if (user) {
+					posthog.identify(user.did, {
+						$set: {
+							handle: user.handle,
+							did: user.did,
+						},
+						$set_once: {
+							first_login_date: new Date().toISOString(),
+						},
+					});
+					posthog.capture("user_logged_in", {
+						handle: user.handle,
+					});
+				}
 
 				await new Promise((resolve) => setTimeout(resolve, 100));
 
 				router.replace("/(tabs)");
 			} catch (error) {
 				console.error("Auth complete failed:", error);
+				posthog.capture("$exception", {
+					$exception_list: [
+						{
+							type: error instanceof Error ? error.name : "Error",
+							value:
+								error instanceof Error ? error.message : "Auth complete failed",
+							stacktrace: {
+								type: "raw",
+								frames: error instanceof Error ? (error.stack ?? "") : "",
+							},
+						},
+					],
+					$exception_source: "auth_complete",
+				});
 				showToast("Sign in failed. Please try again.");
 				router.replace("/login");
 			}
 		}
 
 		completeAuth();
-	}, [router, queryClient, session, showToast]);
+	}, [router, queryClient, session, showToast, posthog]);
 
 	return (
 		<View

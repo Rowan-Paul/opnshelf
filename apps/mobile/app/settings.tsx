@@ -14,6 +14,7 @@ import {
 	Trash2,
 	User,
 } from "lucide-react-native";
+import { usePostHog } from "posthog-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
 	Modal,
@@ -126,6 +127,7 @@ export default function SettingsScreen() {
 	const { user, logout } = useAuth();
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -170,6 +172,8 @@ export default function SettingsScreen() {
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: async () => {
 			showToast("Account deleted", "success");
+			posthog.capture("account_deleted");
+			posthog.reset();
 			await logout();
 			router.replace("/");
 		},

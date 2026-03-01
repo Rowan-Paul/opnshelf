@@ -1,7 +1,8 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { PostHogProvider } from "posthog-react-native";
+import { useEffect, useRef, useState } from "react";
 import { LogBox } from "react-native";
 import { MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -11,6 +12,7 @@ import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeApiClient } from "@/lib/api";
+import { posthog } from "@/lib/posthog";
 import { queryClient } from "@/lib/query-client";
 
 if (__DEV__) {
@@ -83,6 +85,26 @@ function AppContent() {
 	);
 }
 
+function ScreenTracker() {
+	const pathname = usePathname();
+	const params = useGlobalSearchParams();
+	const previousPathname = useRef<string | undefined>(undefined);
+
+	// Manual screen tracking for Expo Router
+	// @see https://docs.expo.dev/router/reference/screen-tracking/
+	useEffect(() => {
+		if (previousPathname.current !== pathname) {
+			posthog.screen(pathname, {
+				previous_screen: previousPathname.current ?? null,
+				...params,
+			});
+			previousPathname.current = pathname;
+		}
+	}, [pathname, params]);
+
+	return null;
+}
+
 export default function RootLayout() {
 	useEffect(() => {
 		initializeApiClient();
@@ -90,18 +112,29 @@ export default function RootLayout() {
 
 	return (
 		<SafeAreaProvider>
-			<QueryClientProvider client={queryClient}>
-				<PaperProvider theme={MD3DarkTheme}>
-					<ThemeProvider>
-						<AuthProvider>
-							<LocaleInitializer>
-								<AppContent />
-							</LocaleInitializer>
-						</AuthProvider>
-					</ThemeProvider>
-				</PaperProvider>
-				{__DEV__ && <DevToolsBubble queryClient={queryClient} />}
-			</QueryClientProvider>
+			<PostHogProvider
+				client={posthog}
+				autocapture={{
+					captureScreens: false, // Manual tracking with Expo Router
+					captureTouches: true,
+					propsToCapture: ["testID"],
+					maxElementsCaptured: 20,
+				}}
+			>
+				<QueryClientProvider client={queryClient}>
+					<PaperProvider theme={MD3DarkTheme}>
+						<ThemeProvider>
+							<AuthProvider>
+								<LocaleInitializer>
+									<ScreenTracker />
+									<AppContent />
+								</LocaleInitializer>
+							</AuthProvider>
+						</ThemeProvider>
+					</PaperProvider>
+					{__DEV__ && <DevToolsBubble queryClient={queryClient} />}
+				</QueryClientProvider>
+			</PostHogProvider>
 		</SafeAreaProvider>
 	);
 }

@@ -1,3 +1,4 @@
+import { usePostHog } from "@posthog/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
@@ -19,10 +20,13 @@ function AuthCompletePage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { seedColor } = useTheme();
+	const posthog = usePostHog();
 
 	useEffect(() => {
 		queryClient.invalidateQueries({ queryKey: ["auth"] });
 		sessionStorage.removeItem("oauth_pending");
+
+		posthog.capture("auth_completed");
 
 		const storedRedirect = sessionStorage.getItem("auth_redirect");
 		sessionStorage.removeItem("auth_redirect");
@@ -32,7 +36,7 @@ function AuthCompletePage() {
 		} else {
 			navigate({ to: "/profile/shelf" });
 		}
-	}, [navigate, queryClient]);
+	}, [navigate, queryClient, posthog]);
 
 	return (
 		<div

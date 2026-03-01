@@ -13,6 +13,7 @@ import {
 	type TrackedMovieDto,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Calendar, Clock, History, Loader2, Star, Trash2 } from "lucide-react";
@@ -104,6 +105,7 @@ function MovieDetailPage() {
 	const queryClient = useQueryClient();
 	const router = useRouter();
 	const { seedColor } = useTheme();
+	const posthog = usePostHog();
 
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -196,6 +198,13 @@ function MovieDetailPage() {
 					path: { userDid: user?.did || "", movieId },
 				}),
 			});
+			posthog.capture("movie_marked_watched", {
+				movie_id: movieId,
+				movie_title: movie?.title,
+				release_year: movie?.release_date
+					? new Date(movie.release_date).getFullYear()
+					: undefined,
+			});
 			toast.success("Added to your shelf");
 			setShowDateModal(false);
 		},
@@ -217,6 +226,10 @@ function MovieDetailPage() {
 				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", movieId },
 				}),
+			});
+			posthog.capture("movie_unmarked_watched", {
+				movie_id: movieId,
+				movie_title: movie?.title,
 			});
 			toast.success("Removed from your shelf");
 		},

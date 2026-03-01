@@ -3,6 +3,7 @@ import {
 	getLoginUrl,
 	getSignupUrl,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
@@ -38,6 +39,7 @@ function LoginPage() {
 	const handleId = useId();
 	const shownErrorRef = useRef<string | null>(null);
 	const { seedColor } = useTheme();
+	const posthog = usePostHog();
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -66,6 +68,11 @@ function LoginPage() {
 		if (redirect) {
 			sessionStorage.setItem("auth_redirect", redirect);
 		}
+
+		posthog.capture("login_initiated", {
+			handle: loginHandle || undefined,
+			has_redirect: !!redirect,
+		});
 
 		const timezone = detectUserTimezone();
 		const loginUrl = getLoginUrl(
@@ -257,6 +264,7 @@ function LoginPage() {
 						<button
 							type="button"
 							onClick={() => {
+								posthog.capture("signup_initiated");
 								const timezone = detectUserTimezone();
 								window.location.href = getSignupUrl(timezone || undefined);
 							}}

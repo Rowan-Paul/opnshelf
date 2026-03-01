@@ -1,3 +1,4 @@
+import { usePostHog } from "@posthog/react";
 import { Calendar, Check, ListPlus, RotateCcw, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ type DetailActionsProps = {
 
 export function DetailActions({
 	mediaType,
+	mediaId,
 	colors,
 	isWatched,
 	watchedDate,
@@ -45,9 +47,16 @@ export function DetailActions({
 	onLogin,
 }: DetailActionsProps) {
 	const [copied, setCopied] = useState(false);
+	const posthog = usePostHog();
 
 	const handleShare = async () => {
 		const url = window.location.href;
+		posthog.capture("content_shared", {
+			media_type: mediaType,
+			media_id: mediaId,
+			share_method: navigator.share ? "native" : "clipboard",
+			url,
+		});
 		if (navigator.share) {
 			try {
 				await navigator.share({ url });
@@ -64,6 +73,15 @@ export function DetailActions({
 				toast.error("Failed to copy link");
 			}
 		}
+	};
+
+	const handleShowListModal = () => {
+		posthog.capture("add_to_list_opened", {
+			media_type: mediaType,
+			media_id: mediaId,
+			already_in_lists: listsCount,
+		});
+		onShowListModal?.();
 	};
 
 	const isInAnyList = listsCount > 0;
@@ -188,7 +206,7 @@ export function DetailActions({
 							? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
 							: "Add to List"
 					}
-					onClick={onShowListModal}
+					onClick={handleShowListModal}
 					isActive={isInAnyList}
 					activeColor={colors.primary}
 				/>

@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, List, Trash2 } from "lucide-react-native";
+import { usePostHog } from "posthog-react-native";
 import { useCallback, useState } from "react";
 import {
 	type NativeScrollEvent,
@@ -46,6 +47,7 @@ export default function ListDetailScreen() {
 	const { showToast } = useToast();
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [showCompactHeader, setShowCompactHeader] = useState(false);
 
@@ -70,13 +72,19 @@ export default function ListDetailScreen() {
 	const removeMutation = useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
-		onSuccess: () => {
+		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({
 					path: { slug: slug || "" },
 				}),
 			});
 			showToast("Removed from list", "success");
+			posthog.capture("media_removed_from_list", {
+				media_type: variables.path.mediaType,
+				media_id: variables.path.mediaId,
+				...(slug ? { list_slug: slug } : {}),
+				...(list?.name ? { list_name: list.name } : {}),
+			});
 		},
 		onError: () => {
 			showToast("Failed to remove. Please try again.", "error");
@@ -91,6 +99,10 @@ export default function ListDetailScreen() {
 				queryKey: listsControllerGetUserListsQueryKey(),
 			});
 			showToast("List deleted", "success");
+			posthog.capture("list_deleted", {
+				...(slug ? { list_slug: slug } : {}),
+				...(list?.name ? { list_name: list.name } : {}),
+			});
 			router.push("/(tabs)/profile/lists");
 		},
 		onError: () => {

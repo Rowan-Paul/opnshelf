@@ -13,6 +13,7 @@ import {
 	Text,
 	View,
 } from "react-native";
+import { usePostHog } from "posthog-react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { Button } from "@/components/ui/Button";
@@ -31,13 +32,18 @@ export const CreateListModal = memo(function CreateListModal({
 	const [description, setDescription] = useState("");
 	const queryClient = useQueryClient();
 	const { colors } = useTheme();
+	const posthog = usePostHog();
 
 	const createListMutation = useMutation({
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
-		onSuccess: () => {
+		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+			posthog.capture("list_created", {
+				list_name: variables.body.name,
+				has_description: !!variables.body.description,
 			});
 			setName("");
 			setDescription("");

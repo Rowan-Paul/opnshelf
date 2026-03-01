@@ -15,6 +15,7 @@ import {
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
@@ -52,6 +53,7 @@ export default function SearchScreen() {
 	const { showToast } = useToast();
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
+	const posthog = usePostHog();
 
 	useEffect(() => {
 		if (debounceRef.current) {
@@ -68,6 +70,16 @@ export default function SearchScreen() {
 			}
 		};
 	}, [query]);
+
+	// Track search events when the debounced query changes
+	useEffect(() => {
+		if (debouncedQuery.length > 0) {
+			posthog.capture("media_searched", {
+				query: debouncedQuery,
+				media_type: mediaType,
+			});
+		}
+	}, [debouncedQuery, posthog, mediaType]);
 
 	const {
 		data: trackedMovies,

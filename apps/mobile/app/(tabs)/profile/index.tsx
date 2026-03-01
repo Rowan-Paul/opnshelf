@@ -10,6 +10,7 @@ import {
 	Settings,
 	User,
 } from "lucide-react-native";
+import { usePostHog } from "posthog-react-native";
 import { useCallback } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
 	const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth();
 	const { showToast } = useToast();
 	const { colors } = useTheme();
+	const posthog = usePostHog();
 
 	const { data: profile } = useQuery({
 		...authControllerMeOptions(),
@@ -33,12 +35,14 @@ export default function ProfileScreen() {
 
 	const handleAuthAction = useCallback(async () => {
 		if (isAuthenticated) {
+			posthog.capture("user_logged_out");
+			posthog.reset();
 			await logout();
 			showToast("Logged out successfully", "success");
 		} else {
 			router.push("/login");
 		}
-	}, [isAuthenticated, logout, showToast]);
+	}, [isAuthenticated, logout, showToast, posthog]);
 
 	if (isAuthLoading) {
 		return (

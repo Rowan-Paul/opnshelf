@@ -5,6 +5,7 @@ import {
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -138,6 +139,7 @@ function SettingsPage() {
 	const { seedColor } = useTheme();
 	const timezoneId = useId();
 	const deletePdsId = useId();
+	const posthog = usePostHog();
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -180,6 +182,10 @@ function SettingsPage() {
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: () => {
+			posthog.capture("account_deleted", {
+				deleted_pds_data: deletePDSData,
+			});
+			posthog.reset();
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
 			queryClient.setQueryData(authControllerMeQueryKey(), null);

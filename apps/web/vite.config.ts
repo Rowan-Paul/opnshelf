@@ -11,6 +11,14 @@ const config = defineConfig({
 	server: {
 		port: 3000,
 		host: true, // listen on 0.0.0.0 so both localhost and 127.0.0.1 work
+		proxy: {
+			"/ingest": {
+				target: "https://eu.i.posthog.com",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/ingest/, ""),
+				secure: false,
+			},
+		},
 	},
 	resolve: {
 		alias: {

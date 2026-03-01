@@ -1,4 +1,5 @@
 import { configureApiClient } from "@opnshelf/api";
+import { PostHogProvider } from "@posthog/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -86,7 +87,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				{children}
+				<PostHogProvider
+					apiKey={env.VITE_PUBLIC_POSTHOG_KEY ?? ""}
+					options={{
+						api_host: "/ingest",
+						ui_host: env.VITE_PUBLIC_POSTHOG_HOST || "https://eu.posthog.com",
+						defaults: "2025-05-24",
+						capture_exceptions: true,
+						debug: import.meta.env.DEV,
+					}}
+				>
+					{children}
+				</PostHogProvider>
 				<Scripts />
 			</body>
 		</html>

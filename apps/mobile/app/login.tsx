@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { getLoginUrl, getSignupUrl } from "@opnshelf/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { usePostHog } from "posthog-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
 	ActivityIndicator,
@@ -31,6 +32,7 @@ export default function LoginScreen() {
 	const shownErrorRef = useRef<string | null>(null);
 	const { colors } = useTheme();
 	const { showToast } = useToast();
+	const posthog = usePostHog();
 
 	const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -96,6 +98,9 @@ export default function LoginScreen() {
 
 	const handleSignup = async () => {
 		setIsSubmitting(true);
+		posthog.capture("user_signed_up", {
+			method: "atmosphere",
+		});
 		try {
 			const timezone = detectUserTimezone();
 			const signupUrl = getSignupUrl(timezone || undefined, "mobile");

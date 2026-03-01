@@ -9,6 +9,7 @@ import {
 	showsControllerUnmarkWatchedMutation,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
@@ -98,6 +99,7 @@ function ShowDetailPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { seedColor } = useTheme();
+	const posthog = usePostHog();
 
 	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
@@ -159,6 +161,12 @@ function ShowDetailPage() {
 					path: { userDid: user?.did || "", showId },
 				}),
 			});
+			posthog.capture("show_marked_watched", {
+				show_id: showId,
+				show_name: show?.name,
+				episodes_marked: data.count,
+				season_count: show?.number_of_seasons,
+			});
 			toast.success(`Marked ${data.count} episodes as watched`);
 		},
 		onError: () => {
@@ -179,6 +187,10 @@ function ShowDetailPage() {
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: user?.did || "", showId },
 				}),
+			});
+			posthog.capture("show_unmarked_watched", {
+				show_id: showId,
+				show_name: show?.name,
 			});
 			toast.success("Removed all episodes from your shelf");
 		},

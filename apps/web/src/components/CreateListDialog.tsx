@@ -2,6 +2,7 @@ import {
 	listsControllerCreateListMutation,
 	listsControllerGetUserListsQueryKey,
 } from "@opnshelf/api";
+import { usePostHog } from "@posthog/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ListPlus } from "lucide-react";
 import { useId, useState } from "react";
@@ -25,13 +26,19 @@ export function CreateListDialog() {
 	const queryClient = useQueryClient();
 	const id = useId();
 	const { seedColor } = useTheme();
+	const posthog = usePostHog();
 
 	const createListMutation = useMutation({
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
-		onSuccess: () => {
+		onSuccess: (data) => {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+			posthog.capture("list_created", {
+				list_name: name.trim(),
+				has_description: !!description.trim(),
+				list_id: (data as { id?: string })?.id,
 			});
 			setOpen(false);
 			setName("");
