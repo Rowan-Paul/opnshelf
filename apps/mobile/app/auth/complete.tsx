@@ -48,20 +48,6 @@ export default function AuthCompleteScreen() {
 				router.replace("/(tabs)");
 			} catch (error) {
 				console.error("Auth complete failed:", error);
-				posthog.capture("$exception", {
-					$exception_list: [
-						{
-							type: error instanceof Error ? error.name : "Error",
-							value:
-								error instanceof Error ? error.message : "Auth complete failed",
-							stacktrace: {
-								type: "raw",
-								frames: error instanceof Error ? (error.stack ?? "") : "",
-							},
-						},
-					],
-					$exception_source: "auth_complete",
-				});
 				showToast("Sign in failed. Please try again.");
 				router.replace("/login");
 			}

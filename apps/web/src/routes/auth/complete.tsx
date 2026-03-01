@@ -1,3 +1,4 @@
+import { authControllerMeOptions } from "@opnshelf/api";
 import { usePostHog } from "@posthog/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -23,19 +24,52 @@ function AuthCompletePage() {
 	const posthog = usePostHog();
 
 	useEffect(() => {
-		queryClient.invalidateQueries({ queryKey: ["auth"] });
-		sessionStorage.removeItem("oauth_pending");
+		async function completeAuth() {
+			try {
+				queryClient.invalidateQueries({ queryKey: ["auth"] });
+				sessionStorage.removeItem("oauth_pending");
 
-		posthog.capture("auth_completed");
+				const user = await queryClient.fetchQuery({
+					...authControllerMeOptions(),
+					staleTime: 0,
+				});
 
-		const storedRedirect = sessionStorage.getItem("auth_redirect");
-		sessionStorage.removeItem("auth_redirect");
+				if (user) {
+					posthog.identify(user.did, {
+						$set: {
+							handle: user.handle,
+							did: user.did,
+						},
+						$set_once: {
+							first_login_date: new Date().toISOString(),
+						},
+					});
+					posthog.capture("user_logged_in", {
+						handle: user.handle,
+					});
+				}
 
-		if (storedRedirect && isValidRedirectPath(storedRedirect)) {
-			navigate({ to: storedRedirect });
-		} else {
-			navigate({ to: "/profile/shelf" });
+				posthog.capture("auth_completed");
+
+				const storedRedirect = sessionStorage.getItem("auth_redirect");
+				sessionStorage.removeItem("auth_redirect");
+
+				if (storedRedirect && isValidRedirectPath(storedRedirect)) {
+					navigate({ to: storedRedirect });
+				} else {
+					navigate({ to: "/profile/shelf" });
+				}
+			} catch (error) {
+				console.error("Auth complete failed:", error);
+				posthog.capture("auth_completed", {
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+				navigate({ to: "/login" });
+			}
 		}
+
+		completeAuth();
 	}, [navigate, queryClient, posthog]);
 
 	return (
