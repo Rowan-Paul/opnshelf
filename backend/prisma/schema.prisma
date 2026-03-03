@@ -15,6 +15,7 @@ model User {
   avatar      String?
   timezone    String   @default("UTC")
   timeFormat  String   @default("24h")
+  onboardingCompletedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

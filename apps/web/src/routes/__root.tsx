@@ -1,13 +1,19 @@
 import { configureApiClient } from "@opnshelf/api";
 import { PostHogProvider, usePostHog } from "@posthog/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { authControllerMeOptions } from "@opnshelf/api";
+import {
+	type QueryClient,
+	QueryClientProvider,
+	useQuery,
+} from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
 	Outlet,
 	Scripts,
 	useLocation,
+	useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import React from "react";
@@ -77,6 +83,7 @@ function RootComponent() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider>
+				<OnboardingGate />
 				<ScreenTracker />
 				<div className="min-h-screen flex flex-col">
 					<Header />
@@ -101,6 +108,36 @@ function RootComponent() {
 			</ThemeProvider>
 		</QueryClientProvider>
 	);
+}
+
+function OnboardingGate() {
+	const location = useLocation();
+	const navigate = useNavigate();
+	const { data: user } = useQuery({
+		...authControllerMeOptions(),
+		retry: false,
+		staleTime: 60_000,
+	});
+
+	React.useEffect(() => {
+		if (!user) {
+			return;
+		}
+
+		const pathname = location.pathname;
+		const isAuthRoute = pathname === "/login" || pathname.startsWith("/auth/");
+
+		if (user.needsOnboarding && pathname !== "/onboarding" && !isAuthRoute) {
+			navigate({ to: "/onboarding", replace: true });
+			return;
+		}
+
+		if (!user.needsOnboarding && pathname === "/onboarding") {
+			navigate({ to: "/profile/shelf", replace: true });
+		}
+	}, [location.pathname, navigate, user]);
+
+	return null;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {

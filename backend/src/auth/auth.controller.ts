@@ -392,6 +392,10 @@ export class AuthController {
 			handle: user.handle,
 			displayName: user.displayName,
 			avatar: user.avatar,
+			onboardingCompletedAt: user.onboardingCompletedAt
+				? user.onboardingCompletedAt.toISOString()
+				: null,
+			needsOnboarding: user.onboardingCompletedAt === null,
 		};
 	}
 

@@ -1,0 +1,160 @@
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import {
+	ArrayMaxSize,
+	IsArray,
+	IsDateString,
+	IsIn,
+	IsInt,
+	IsOptional,
+	IsString,
+	Min,
+	ValidateIf,
+	ValidateNested,
+} from "class-validator";
+
+export class NormalizedImportItemDto {
+	@ApiProperty({ enum: ["movie", "episode"] })
+	@IsString()
+	@IsIn(["movie", "episode"])
+	type: "movie" | "episode";
+
+	@ApiProperty({ description: "UTC datetime in ISO-8601 format" })
+	@IsDateString()
+	watchedAt: string;
+
+	@ApiPropertyOptional({ description: "TMDB movie id", type: Number })
+	@ValidateIf((item: NormalizedImportItemDto) => item.type === "movie")
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	movieTmdbId?: number;
+
+	@ApiPropertyOptional({ description: "TMDB show id", type: Number })
+	@ValidateIf((item: NormalizedImportItemDto) => item.type === "episode")
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	showTmdbId?: number;
+
+	@ApiPropertyOptional({ type: Number })
+	@ValidateIf((item: NormalizedImportItemDto) => item.type === "episode")
+	@Type(() => Number)
+	@IsInt()
+	@Min(0)
+	seasonNumber?: number;
+
+	@ApiPropertyOptional({ type: Number })
+	@ValidateIf((item: NormalizedImportItemDto) => item.type === "episode")
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	episodeNumber?: number;
+
+	@ApiPropertyOptional({ enum: ["watch", "scrobble", "checkin"] })
+	@IsOptional()
+	@IsString()
+	@IsIn(["watch", "scrobble", "checkin"])
+	action?: "watch" | "scrobble" | "checkin";
+}
+
+export class ImportSkipDto {
+	@ApiProperty({ description: "1-based item index from source payload" })
+	index: number;
+
+	@ApiProperty({
+		enum: [
+			"unsupported_type",
+			"unsupported_action",
+			"missing_tmdb_id",
+			"missing_episode_ref",
+			"invalid_watched_at",
+		],
+	})
+	reason:
+		| "unsupported_type"
+		| "unsupported_action"
+		| "missing_tmdb_id"
+		| "missing_episode_ref"
+		| "invalid_watched_at";
+
+	@ApiPropertyOptional()
+	message?: string;
+}
+
+export class ImportErrorDto {
+	@ApiProperty({ description: "1-based item index from request payload" })
+	index: number;
+
+	@ApiProperty({
+		enum: [
+			"invalid_item",
+			"already_exists",
+			"write_failed",
+			"duplicate_in_request",
+		],
+	})
+	code: "invalid_item" | "already_exists" | "write_failed" | "duplicate_in_request";
+
+	@ApiProperty()
+	message: string;
+}
+
+export class FetchTraktPublicHistoryDto {
+	@ApiProperty({ description: "Trakt username or slug" })
+	@IsString()
+	username: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Maximum items to fetch. If omitted, fetches full available history via pagination.",
+		minimum: 1,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	maxItems?: number;
+}
+
+export class FetchTraktPublicHistoryResponseDto {
+	@ApiProperty({ type: [NormalizedImportItemDto] })
+	items: NormalizedImportItemDto[];
+
+	@ApiProperty({ type: [ImportSkipDto] })
+	skipped: ImportSkipDto[];
+
+	@ApiProperty({ description: "Count of rows returned by Trakt before filtering" })
+	sourceCount: number;
+}
+
+export class ImportHistoryDto {
+	@ApiProperty({ type: [NormalizedImportItemDto], maxItems: 100 })
+	@IsArray()
+	@ArrayMaxSize(100)
+	@ValidateNested({ each: true })
+	@Type(() => NormalizedImportItemDto)
+	items: NormalizedImportItemDto[];
+}
+
+export class ImportHistoryResponseDto {
+	@ApiProperty()
+	imported: number;
+
+	@ApiProperty()
+	skipped: number;
+
+	@ApiProperty()
+	failed: number;
+
+	@ApiProperty({ type: [ImportErrorDto] })
+	errors: ImportErrorDto[];
+}
+
+export class CompleteOnboardingResponseDto {
+	@ApiProperty({ description: "Timestamp when onboarding was completed" })
+	onboardingCompletedAt: string;
+
+	@ApiProperty({ default: false })
+	needsOnboarding: boolean;
+}

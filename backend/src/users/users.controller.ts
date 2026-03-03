@@ -1,15 +1,24 @@
 import {
 	Body,
+	BadRequestException,
 	Controller,
 	Delete,
 	Get,
 	Patch,
+	Post,
 	Req,
 	UseGuards,
 } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
+import {
+	CompleteOnboardingResponseDto,
+	FetchTraktPublicHistoryDto,
+	FetchTraktPublicHistoryResponseDto,
+	ImportHistoryDto,
+	ImportHistoryResponseDto,
+} from "./dto/import-history.dto";
 import {
 	DeleteUserAccountDto,
 	UpdateUserSettingsDto,
@@ -89,5 +98,57 @@ export class UsersController {
 			session,
 			dto.deletePDSData ?? false,
 		);
+	}
+
+	@Post("me/onboarding/complete")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Complete onboarding for the current user" })
+	@ApiResponse({ status: 200, type: CompleteOnboardingResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async completeOnboarding(
+		@Req() req: AuthenticatedRequest,
+	): Promise<CompleteOnboardingResponseDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		return this.usersService.completeOnboarding(did);
+	}
+
+	@Post("me/import/trakt/public/fetch")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Fetch normalized history from a public Trakt profile" })
+	@ApiResponse({ status: 200, type: FetchTraktPublicHistoryResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async fetchMyTraktPublicHistory(
+		@Body() dto: FetchTraktPublicHistoryDto,
+	): Promise<FetchTraktPublicHistoryResponseDto> {
+		return this.usersService.fetchTraktPublicHistory(
+			dto.username,
+			dto.maxItems,
+		);
+	}
+
+	@Post("me/import/history")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Import normalized watch history items" })
+	@ApiResponse({ status: 200, type: ImportHistoryResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async importMyHistory(
+		@Body() dto: ImportHistoryDto,
+		@Req() req: AuthenticatedRequest,
+	): Promise<ImportHistoryResponseDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const session = req.user?.session as ATSession | undefined;
+		if (!session || !session.did) {
+			throw new BadRequestException("Session not found in request");
+		}
+
+		return this.usersService.importNormalizedItems(did, session, dto.items);
 	}
 }

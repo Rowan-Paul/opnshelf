@@ -55,9 +55,15 @@ function AuthCompletePage() {
 				sessionStorage.removeItem("auth_redirect");
 
 				if (storedRedirect && isValidRedirectPath(storedRedirect)) {
-					navigate({ to: storedRedirect });
+					if (user?.needsOnboarding) {
+						navigate({ to: "/onboarding" });
+					} else {
+						navigate({ to: storedRedirect });
+					}
 				} else {
-					navigate({ to: "/profile/shelf" });
+					navigate({
+						to: user?.needsOnboarding ? "/onboarding" : "/profile/shelf",
+					});
 				}
 			} catch (error) {
 				console.error("Auth complete failed:", error);

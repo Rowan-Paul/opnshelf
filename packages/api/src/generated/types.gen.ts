@@ -132,6 +132,16 @@ export type UserDto = {
     avatar: {
         [key: string]: unknown;
     } | null;
+    /**
+     * When onboarding was completed
+     */
+    onboardingCompletedAt: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Whether this user should complete onboarding
+     */
+    needsOnboarding: boolean;
 };
 
 export type TmdbShowResultDto = {
@@ -361,6 +371,14 @@ export type MediaInListDto = {
     mediaType: string;
     mediaId: string;
     /**
+     * Season number for season/episode show items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode show items
+     */
+    episodeNumber?: number;
+    /**
      * Legacy movieId field for movie items
      */
     movieId?: string;
@@ -467,6 +485,82 @@ export type DeleteUserAccountDto = {
      * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
      */
     deletePDSData: boolean;
+};
+
+export type CompleteOnboardingResponseDto = {
+    /**
+     * Timestamp when onboarding was completed
+     */
+    onboardingCompletedAt: string;
+    needsOnboarding: boolean;
+};
+
+export type FetchTraktPublicHistoryDto = {
+    /**
+     * Trakt username or slug
+     */
+    username: string;
+    /**
+     * Maximum items to fetch. If omitted, fetches full available history via pagination.
+     */
+    maxItems?: number;
+};
+
+export type NormalizedImportItemDto = {
+    type: 'movie' | 'episode';
+    /**
+     * UTC datetime in ISO-8601 format
+     */
+    watchedAt: string;
+    /**
+     * TMDB movie id
+     */
+    movieTmdbId?: number;
+    /**
+     * TMDB show id
+     */
+    showTmdbId?: number;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    action?: 'watch' | 'scrobble' | 'checkin';
+};
+
+export type ImportSkipDto = {
+    /**
+     * 1-based item index from source payload
+     */
+    index: number;
+    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
+    message?: string;
+};
+
+export type FetchTraktPublicHistoryResponseDto = {
+    items: Array<NormalizedImportItemDto>;
+    skipped: Array<ImportSkipDto>;
+    /**
+     * Count of rows returned by Trakt before filtering
+     */
+    sourceCount: number;
+};
+
+export type ImportHistoryDto = {
+    items: Array<NormalizedImportItemDto>;
+};
+
+export type ImportErrorDto = {
+    /**
+     * 1-based item index from request payload
+     */
+    index: number;
+    code: 'invalid_item' | 'already_exists' | 'write_failed' | 'duplicate_in_request';
+    message: string;
+};
+
+export type ImportHistoryResponseDto = {
+    imported: number;
+    skipped: number;
+    failed: number;
+    errors: Array<ImportErrorDto>;
 };
 
 export type ShelfResponseDto = {
@@ -798,6 +892,22 @@ export type AuthControllerLoginData = {
         handle: unknown;
     };
     url: '/auth/login';
+};
+
+export type AuthControllerSignupData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * User's IANA timezone (e.g., Europe/London)
+         */
+        timezone?: unknown;
+        /**
+         * Platform identifier (e.g., "mobile") for redirect handling
+         */
+        platform?: unknown;
+    };
+    url: '/auth/signup';
 };
 
 export type AuthControllerSuggestionsData = {
@@ -1513,6 +1623,66 @@ export type UsersControllerDeleteMyAccountResponses = {
 };
 
 export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];
+
+export type UsersControllerCompleteOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/onboarding/complete';
+};
+
+export type UsersControllerCompleteOnboardingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerCompleteOnboardingResponses = {
+    200: CompleteOnboardingResponseDto;
+};
+
+export type UsersControllerCompleteOnboardingResponse = UsersControllerCompleteOnboardingResponses[keyof UsersControllerCompleteOnboardingResponses];
+
+export type UsersControllerFetchMyTraktPublicHistoryData = {
+    body: FetchTraktPublicHistoryDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/fetch';
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryResponses = {
+    200: FetchTraktPublicHistoryResponseDto;
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryResponse = UsersControllerFetchMyTraktPublicHistoryResponses[keyof UsersControllerFetchMyTraktPublicHistoryResponses];
+
+export type UsersControllerImportMyHistoryData = {
+    body: ImportHistoryDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/history';
+};
+
+export type UsersControllerImportMyHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerImportMyHistoryResponses = {
+    200: ImportHistoryResponseDto;
+};
+
+export type UsersControllerImportMyHistoryResponse = UsersControllerImportMyHistoryResponses[keyof UsersControllerImportMyHistoryResponses];
 
 export type ShelfControllerGetUserShelfData = {
     body?: never;

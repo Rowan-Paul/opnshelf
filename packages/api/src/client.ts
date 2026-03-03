@@ -65,6 +65,8 @@ export interface AuthUser {
 	handle: string;
 	displayName: string | null;
 	avatar: string | null;
+	onboardingCompletedAt: string | null;
+	needsOnboarding: boolean;
 }
 
 // Simple URL helper for login (not an API call)

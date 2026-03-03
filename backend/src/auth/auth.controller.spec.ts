@@ -548,6 +548,7 @@ describe("AuthController", () => {
 				handle: "user.bsky.social",
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
+				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
 			};
 			mockAuthService.getUser.mockResolvedValue(mockUser);
 
@@ -559,7 +560,14 @@ describe("AuthController", () => {
 				req as unknown as import("../auth/types").AuthenticatedRequest,
 			);
 
-			expect(result).toEqual(mockUser);
+			expect(result).toEqual({
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: "Test User",
+				avatar: "https://example.com/avatar.jpg",
+				onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
+				needsOnboarding: false,
+			});
 			expect(mockAuthService.getUser).toHaveBeenCalledWith("did:plc:abc123");
 		});
 

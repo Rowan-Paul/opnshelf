@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListsRouteImport } from './routes/lists'
 import { Route as IndexRouteImport } from './routes/index'
@@ -38,6 +39,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/'
     | '/lists'
     | '/login'
+    | '/onboarding'
     | '/privacy'
     | '/profile'
     | '/search'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/'
     | '/lists'
     | '/login'
+    | '/onboarding'
     | '/privacy'
     | '/profile'
     | '/search'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/lists'
     | '/login'
+    | '/onboarding'
     | '/privacy'
     | '/profile'
     | '/search'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ListsRoute: typeof ListsRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   SearchRoute: typeof SearchRoute
@@ -242,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -387,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ListsRoute: ListsRouteWithChildren,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
   SearchRoute: SearchRoute,

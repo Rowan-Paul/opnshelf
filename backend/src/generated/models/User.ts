@@ -31,6 +31,7 @@ export type UserMinAggregateOutputType = {
   avatar: string | null
   timezone: string | null
   timeFormat: string | null
+  onboardingCompletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +43,7 @@ export type UserMaxAggregateOutputType = {
   avatar: string | null
   timezone: string | null
   timeFormat: string | null
+  onboardingCompletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +55,7 @@ export type UserCountAggregateOutputType = {
   avatar: number
   timezone: number
   timeFormat: number
+  onboardingCompletedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -66,6 +69,7 @@ export type UserMinAggregateInputType = {
   avatar?: true
   timezone?: true
   timeFormat?: true
+  onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -77,6 +81,7 @@ export type UserMaxAggregateInputType = {
   avatar?: true
   timezone?: true
   timeFormat?: true
+  onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,6 +93,7 @@ export type UserCountAggregateInputType = {
   avatar?: true
   timezone?: true
   timeFormat?: true
+  onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -172,6 +178,7 @@ export type UserGroupByOutputType = {
   avatar: string | null
   timezone: string
   timeFormat: string
+  onboardingCompletedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -204,6 +211,7 @@ export type UserWhereInput = {
   avatar?: Prisma.StringNullableFilter<"User"> | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
+  onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -218,6 +226,7 @@ export type UserOrderByWithRelationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
@@ -235,6 +244,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   avatar?: Prisma.StringNullableFilter<"User"> | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
+  onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -249,6 +259,7 @@ export type UserOrderByWithAggregationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -266,6 +277,7 @@ export type UserScalarWhereWithAggregatesInput = {
   avatar?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
+  onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -277,6 +289,7 @@ export type UserCreateInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -291,6 +304,7 @@ export type UserUncheckedCreateInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -305,6 +319,7 @@ export type UserUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -319,6 +334,7 @@ export type UserUncheckedUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -333,6 +349,7 @@ export type UserCreateManyInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -344,6 +361,7 @@ export type UserUpdateManyMutationInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -355,6 +373,7 @@ export type UserUncheckedUpdateManyInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -366,6 +385,7 @@ export type UserCountOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -377,6 +397,7 @@ export type UserMaxOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -388,6 +409,7 @@ export type UserMinOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -403,6 +425,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -458,6 +484,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -471,6 +498,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -500,6 +528,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -513,6 +542,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -526,6 +556,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -539,6 +570,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -568,6 +600,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -581,6 +614,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -594,6 +628,7 @@ export type UserCreateWithoutListsInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -607,6 +642,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   avatar?: string | null
   timezone?: string
   timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -636,6 +672,7 @@ export type UserUpdateWithoutListsInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -649,6 +686,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -711,6 +749,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   avatar?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
@@ -726,6 +765,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   avatar?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -737,6 +777,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   avatar?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -748,11 +789,12 @@ export type UserSelectScalar = {
   avatar?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "timezone" | "timeFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "timezone" | "timeFormat" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -776,6 +818,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     avatar: string | null
     timezone: string
     timeFormat: string
+    onboardingCompletedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1210,6 +1253,7 @@ export interface UserFieldRefs {
   readonly avatar: Prisma.FieldRef<"User", 'String'>
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
+  readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

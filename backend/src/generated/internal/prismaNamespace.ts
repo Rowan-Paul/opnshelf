@@ -1124,6 +1124,7 @@ export const UserScalarFieldEnum = {
   avatar: 'avatar',
   timezone: 'timezone',
   timeFormat: 'timeFormat',
+  onboardingCompletedAt: 'onboardingCompletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

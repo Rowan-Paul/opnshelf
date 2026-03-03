@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSuggestions, listsControllerAddItemToList, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetListsForMovie, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserShows, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, usersControllerDeleteMyAccount, usersControllerGetMySettings, usersControllerUpdateMySettings } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetListsForMovieData, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, listsControllerAddItemToList, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetListsForMovie, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserShows, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerFetchMyTraktPublicHistory, usersControllerGetMySettings, usersControllerImportMyHistory, usersControllerUpdateMySettings } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetListsForMovieData, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -306,6 +306,24 @@ export const authControllerLoginOptions = (options: Options<AuthControllerLoginD
         return data;
     },
     queryKey: authControllerLoginQueryKey(options)
+});
+
+export const authControllerSignupQueryKey = (options?: Options<AuthControllerSignupData>) => createQueryKey('authControllerSignup', options);
+
+/**
+ * Start AT Protocol OAuth signup via PDS
+ */
+export const authControllerSignupOptions = (options?: Options<AuthControllerSignupData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof authControllerSignupQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await authControllerSignup({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: authControllerSignupQueryKey(options)
 });
 
 export const authControllerSuggestionsQueryKey = (options: Options<AuthControllerSuggestionsData>) => createQueryKey('authControllerSuggestions', options);
@@ -903,6 +921,57 @@ export const usersControllerDeleteMyAccountMutation = (options?: Partial<Options
     const mutationOptions: UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await usersControllerDeleteMyAccount({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Complete onboarding for the current user
+ */
+export const usersControllerCompleteOnboardingMutation = (options?: Partial<Options<UsersControllerCompleteOnboardingData>>): UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerCompleteOnboarding({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Fetch normalized history from a public Trakt profile
+ */
+export const usersControllerFetchMyTraktPublicHistoryMutation = (options?: Partial<Options<UsersControllerFetchMyTraktPublicHistoryData>>): UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerFetchMyTraktPublicHistory({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Import normalized watch history items
+ */
+export const usersControllerImportMyHistoryMutation = (options?: Partial<Options<UsersControllerImportMyHistoryData>>): UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerImportMyHistory({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

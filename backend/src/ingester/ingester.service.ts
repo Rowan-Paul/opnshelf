@@ -137,10 +137,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			throw new Error("TAP client not initialized");
 		}
 
-		this.logger.log(`Registering repo with TAP: ${did}`);
 		try {
 			await this.tap.addRepos([did]);
-			this.logger.log(`Successfully registered repo: ${did}`);
 
 			// Check repo info to verify it's being tracked
 			try {
@@ -165,9 +163,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			throw new Error("TAP client not initialized");
 		}
 
-		this.logger.log(`Unregistering repo from TAP: ${did}`);
 		await this.tap.removeRepos([did]);
-		this.logger.debug(`Successfully unregistered repo: ${did}`);
 	}
 
 	/**
@@ -181,12 +177,10 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (users.length === 0) {
-				this.logger.log("No existing users to register with TAP");
 				return;
 			}
 
 			const dids = users.map((u) => u.did);
-			this.logger.log(`Registering ${dids.length} existing users with TAP`);
 
 			// Register each user individually to handle partial failures
 			let successCount = 0;
@@ -199,20 +193,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					// Continue with next user even if one fails
 				}
 			}
-
-			this.logger.log(
-				`Successfully registered ${successCount}/${dids.length} repos with TAP`,
-			);
 		} catch (err) {
 			this.logger.error("Failed to register existing users with TAP", err);
 		}
 	}
 
 	private async handleRecordEvent(evt: RecordEvent) {
-		this.logger.debug(
-			`Received TAP event: ${evt.action} ${evt.collection} for ${evt.did} (live: ${evt.live})`,
-		);
-
 		const uri = `at://${evt.did}/${evt.collection}/${evt.rkey}`;
 
 		if (evt.collection === MOVIE_COLLECTION) {
@@ -252,10 +238,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			this.logger.log(
-				`Indexing movie record (${evt.live ? "live" : "backfill"}): ${uri}`,
-			);
-
 			const existingMovie = await this.moviesService.getMovieByTMDBId(
 				movieRecord.movieId,
 			);
@@ -265,7 +247,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 						movieRecord.movieId,
 					);
 					await this.moviesService.upsertMovie(movieData);
-					this.logger.debug(`Created movie ${movieRecord.movieId} from TMDB`);
 				} catch (err) {
 					this.logger.error(
 						`Failed to fetch movie ${movieRecord.movieId} from TMDB, skipping record`,
@@ -292,20 +273,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					status: "watched",
 				},
 			});
-
-			this.logger.debug(
-				`Indexed movie ${movieRecord.movieId} for user ${evt.did}`,
-			);
 		}
 
 		if (evt.action === "delete") {
-			this.logger.log(`Removing movie record: ${uri} (rkey: ${evt.rkey})`);
-
 			await this.prisma.trackedMovie.deleteMany({
 				where: { rkey: evt.rkey },
 			});
-
-			this.logger.debug(`Removed record with rkey ${evt.rkey}`);
 		}
 	}
 
@@ -333,10 +306,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			this.logger.log(
-				`Indexing list record (${evt.live ? "live" : "backfill"}): ${uri}`,
-			);
-
 			await this.listsService.indexListRecord(
 				uri,
 				evt.cid ?? "",
@@ -347,7 +316,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			this.logger.log(`Removing list record: ${uri} (rkey: ${evt.rkey})`);
 			await this.listsService.deleteListRecord(evt.rkey);
 		}
 	}
@@ -375,10 +343,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
-
-			this.logger.log(
-				`Indexing episode record (${evt.live ? "live" : "backfill"}): ${uri}`,
-			);
 
 			const existingShow = await this.showsService.getShowByTMDBId(
 				episodeRecord.showId,
@@ -422,7 +386,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			this.logger.log(`Removing episode record: ${uri} (rkey: ${evt.rkey})`);
 			await this.prisma.trackedEpisode.deleteMany({
 				where: { rkey: evt.rkey },
 			});
@@ -453,10 +416,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			this.logger.log(
-				`Indexing list item record (${evt.live ? "live" : "backfill"}): ${uri}`,
-			);
-
 			await this.listsService.indexListItemRecord(
 				uri,
 				evt.cid ?? "",
@@ -467,7 +426,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			this.logger.log(`Removing list item record: ${uri} (rkey: ${evt.rkey})`);
 			await this.listsService.deleteListItemRecord(evt.rkey);
 		}
 	}

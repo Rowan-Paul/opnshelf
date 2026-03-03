@@ -12,4 +12,13 @@ export class UserDto {
 
 	@ApiProperty({ description: "Avatar URL", nullable: true })
 	avatar: string | null;
+
+	@ApiProperty({
+		description: "When onboarding was completed",
+		nullable: true,
+	})
+	onboardingCompletedAt: string | null;
+
+	@ApiProperty({ description: "Whether this user should complete onboarding" })
+	needsOnboarding: boolean;
 }
