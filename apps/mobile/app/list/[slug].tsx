@@ -78,6 +78,9 @@ export default function ListDetailScreen() {
 					path: { slug: slug || "" },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
 			showToast("Removed from list", "success");
 			posthog.capture("media_removed_from_list", {
 				media_type: variables.path.mediaType,

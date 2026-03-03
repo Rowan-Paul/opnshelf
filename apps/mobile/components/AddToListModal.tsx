@@ -3,6 +3,7 @@ import {
 	listsControllerGetListsForItemOptions,
 	listsControllerGetListsForItemQueryKey,
 	listsControllerGetListQueryKey,
+	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	type MovieListsForItemDto,
 } from "@opnshelf/api";
@@ -62,6 +63,9 @@ export const AddToListModal = memo(function AddToListModal({
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
 			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
 			posthog.capture("media_added_to_list", {
 				list_slug: slug,
 				media_type: mediaType,
@@ -83,6 +87,9 @@ export const AddToListModal = memo(function AddToListModal({
 			});
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
 			});
 		},
 	});

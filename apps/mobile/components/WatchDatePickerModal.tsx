@@ -151,6 +151,7 @@ export function WatchDatePickerModal({
 							mode="single"
 							date={customDate}
 							locale="en"
+							startWeekOnMonday
 							onDismiss={() => setShowDatePicker(false)}
 							onConfirm={handleDateConfirm}
 						/>

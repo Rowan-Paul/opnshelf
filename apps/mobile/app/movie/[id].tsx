@@ -703,6 +703,7 @@ export default function MovieDetailScreen() {
 							mode="single"
 							date={customDate}
 							locale="en"
+							startWeekOnMonday
 							onDismiss={() => setShowDatePicker(false)}
 							onConfirm={(params) => {
 								setShowDatePicker(false);
