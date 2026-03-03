@@ -56,7 +56,10 @@ export class UpdateUserProfileDto {
 }
 
 export class UserProfileDto {
-	@ApiProperty({ description: "Display name shown in OpnShelf", nullable: true })
+	@ApiProperty({
+		description: "Display name shown in OpnShelf",
+		nullable: true,
+	})
 	displayName!: string | null;
 
 	@ApiProperty({

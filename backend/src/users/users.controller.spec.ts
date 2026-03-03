@@ -62,7 +62,10 @@ describe("UsersController", () => {
 		await expect(
 			controller.fetchMyTraktPublicHistory({ username: "alice", maxItems: 10 }),
 		).resolves.toEqual({ items: [], skipped: [], sourceCount: 0 });
-		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith("alice", 10);
+		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith(
+			"alice",
+			10,
+		);
 	});
 
 	it("updates profile for authenticated requests", async () => {

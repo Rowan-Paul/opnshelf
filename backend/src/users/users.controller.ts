@@ -140,7 +140,9 @@ export class UsersController {
 
 	@Post("me/import/trakt/public/fetch")
 	@UseGuards(AuthGuard)
-	@ApiOperation({ summary: "Fetch normalized history from a public Trakt profile" })
+	@ApiOperation({
+		summary: "Fetch normalized history from a public Trakt profile",
+	})
 	@ApiResponse({ status: 200, type: FetchTraktPublicHistoryResponseDto })
 	@ApiResponse({ status: 401, description: "Not authenticated" })
 	async fetchMyTraktPublicHistory(

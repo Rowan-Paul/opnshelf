@@ -144,7 +144,9 @@ function OnboardingPage() {
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
 	const importPercent =
 		importProgress.totalItems > 0
-			? Math.round((importProgress.processedItems / importProgress.totalItems) * 100)
+			? Math.round(
+					(importProgress.processedItems / importProgress.totalItems) * 100,
+				)
 			: 0;
 	const userAvatarUrl = typeof user?.avatar === "string" ? user.avatar : "";
 	const userDisplayName =
@@ -218,19 +220,24 @@ function OnboardingPage() {
 
 	const completeOnboardingAndRedirect = async () => {
 		await completeOnboardingMutation.mutateAsync({});
-		queryClient.setQueryData(authControllerMeOptions().queryKey, (previousUser) => {
-			if (!previousUser) {
-				return previousUser;
-			}
+		queryClient.setQueryData(
+			authControllerMeOptions().queryKey,
+			(previousUser) => {
+				if (!previousUser) {
+					return previousUser;
+				}
 
-			return {
-				...previousUser,
-				needsOnboarding: false,
-			};
-		});
+				return {
+					...previousUser,
+					needsOnboarding: false,
+				};
+			},
+		);
 
 		navigate({ to: "/profile/shelf", replace: true });
-		void queryClient.invalidateQueries({ queryKey: authControllerMeOptions().queryKey });
+		void queryClient.invalidateQueries({
+			queryKey: authControllerMeOptions().queryKey,
+		});
 	};
 
 	const handleTraktImport = async () => {
@@ -370,9 +377,7 @@ function OnboardingPage() {
 			setStep(4);
 		} catch (error) {
 			const message =
-				error instanceof Error
-					? error.message
-					: "Unable to parse CSV file";
+				error instanceof Error ? error.message : "Unable to parse CSV file";
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "error",
@@ -403,8 +408,8 @@ function OnboardingPage() {
 				{step === 1 && (
 					<div className="space-y-5">
 						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
-							Step 1 of 4: Set your profile and time preferences, then import watch
-							history from Trakt or CSV.
+							Step 1 of 4: Set your profile and time preferences, then import
+							watch history from Trakt or CSV.
 						</p>
 						<div className="flex gap-3">
 							<M3Button variant="filled" onClick={() => setStep(2)}>
@@ -456,12 +461,12 @@ function OnboardingPage() {
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
-							<label className="md-label-large" htmlFor={displayNameId}>
-								Display name
-							</label>
-							<input
-								id={displayNameId}
-								type="text"
+								<label className="md-label-large" htmlFor={displayNameId}>
+									Display name
+								</label>
+								<input
+									id={displayNameId}
+									type="text"
 									value={displayName}
 									onChange={(event) => setDisplayName(event.target.value)}
 									placeholder="How your name appears"
@@ -470,12 +475,12 @@ function OnboardingPage() {
 							</div>
 
 							<div className="space-y-2">
-							<label className="md-label-large" htmlFor={timezoneId}>
-								Timezone
-							</label>
-							<select
-								id={timezoneId}
-								value={timezone}
+								<label className="md-label-large" htmlFor={timezoneId}>
+									Timezone
+								</label>
+								<select
+									id={timezoneId}
+									value={timezone}
 									onChange={(event) => setTimezone(event.target.value)}
 									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2 bg-(--md-sys-color-surface)"
 								>
@@ -525,7 +530,11 @@ function OnboardingPage() {
 						</div>
 
 						<div className="flex gap-3">
-							<M3Button variant="text" onClick={() => setStep(1)} disabled={isSavingProfile}>
+							<M3Button
+								variant="text"
+								onClick={() => setStep(1)}
+								disabled={isSavingProfile}
+							>
 								Back
 							</M3Button>
 							<M3Button
@@ -558,12 +567,13 @@ function OnboardingPage() {
 											/>
 										</div>
 										<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-											{importProgress.processedItems} / {importProgress.totalItems} items
-											 ({importPercent}%)
+											{importProgress.processedItems} /{" "}
+											{importProgress.totalItems} items ({importPercent}%)
 										</p>
 										<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-											Batch {importProgress.currentBatch} / {importProgress.totalBatches}
-											 · Imported {importProgress.imported} · Skipped{" "}
+											Batch {importProgress.currentBatch} /{" "}
+											{importProgress.totalBatches}· Imported{" "}
+											{importProgress.imported} · Skipped{" "}
 											{importProgress.skipped} · Failed {importProgress.failed}
 										</p>
 									</>
@@ -635,13 +645,18 @@ function OnboardingPage() {
 									disabled={isImportBusy}
 								/>
 								<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-									Upload a Trakt history CSV export using the standard Trakt columns.
+									Upload a Trakt history CSV export using the standard Trakt
+									columns.
 								</p>
 							</div>
 						)}
 
 						<div className="flex gap-3">
-							<M3Button variant="text" onClick={() => setStep(2)} disabled={isImportBusy}>
+							<M3Button
+								variant="text"
+								onClick={() => setStep(2)}
+								disabled={isImportBusy}
+							>
 								Back
 							</M3Button>
 							<M3Button
@@ -659,17 +674,17 @@ function OnboardingPage() {
 					<div className="space-y-4">
 						<h2 className="md-title-large">You&apos;re all set</h2>
 						<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
-							Imported: {importResult.imported} | Skipped: {importResult.skipped} |
-							 Failed: {importResult.failed}
+							Imported: {importResult.imported} | Skipped:{" "}
+							{importResult.skipped} | Failed: {importResult.failed}
 						</p>
 						{importResult.errors.length > 0 && (
 							<div className="rounded-(--md-sys-shape-corner-medium) border p-3 max-h-56 overflow-auto">
-							<p className="md-label-large mb-2">Errors</p>
-							<ul className="space-y-1">
-								{importResult.errors.map((error) => (
-									<li key={error} className="md-body-small">
-										{error}
-									</li>
+								<p className="md-label-large mb-2">Errors</p>
+								<ul className="space-y-1">
+									{importResult.errors.map((error) => (
+										<li key={error} className="md-body-small">
+											{error}
+										</li>
 									))}
 								</ul>
 							</div>
@@ -822,20 +837,28 @@ function normalizeCsvRow(
 		return {
 			error: {
 				row: rowNumber,
-				message: `Row ${rowNumber}: unsupported action \"${actionRaw || "unknown"}\"`,
+				message: `Row ${rowNumber}: unsupported action "${actionRaw || "unknown"}"`,
 			},
 		};
 	}
 
 	if (!watchedAt) {
-		return { error: { row: rowNumber, message: `Row ${rowNumber}: invalid watched_at` } };
+		return {
+			error: {
+				row: rowNumber,
+				message: `Row ${rowNumber}: invalid watched_at`,
+			},
+		};
 	}
 
 	if (type === "movie") {
 		const movieTmdbId = Number.parseInt(getCsvValue(row, "tmdb_id"), 10);
 		if (!Number.isInteger(movieTmdbId) || movieTmdbId < 1) {
 			return {
-				error: { row: rowNumber, message: `Row ${rowNumber}: missing movie TMDB id` },
+				error: {
+					row: rowNumber,
+					message: `Row ${rowNumber}: missing movie TMDB id`,
+				},
 			};
 		}
 
@@ -859,7 +882,10 @@ function normalizeCsvRow(
 
 		if (!Number.isInteger(showTmdbId) || showTmdbId < 1) {
 			return {
-				error: { row: rowNumber, message: `Row ${rowNumber}: missing show TMDB id` },
+				error: {
+					row: rowNumber,
+					message: `Row ${rowNumber}: missing show TMDB id`,
+				},
 			};
 		}
 
@@ -892,7 +918,7 @@ function normalizeCsvRow(
 	return {
 		error: {
 			row: rowNumber,
-			message: `Row ${rowNumber}: unsupported type \"${type || "unknown"}\"`,
+			message: `Row ${rowNumber}: unsupported type "${type || "unknown"}"`,
 		},
 	};
 }

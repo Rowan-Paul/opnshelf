@@ -21,7 +21,6 @@ import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
-import { TIMEZONE_GROUPS } from "@/lib/timezones";
 import {
 	Dialog,
 	DialogContent,
@@ -49,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { TIMEZONE_GROUPS } from "@/lib/timezones";
 
 export const Route = createFileRoute("/profile/settings")({
 	head: () => ({
@@ -226,7 +226,7 @@ function SettingsPage() {
 										<SelectValue placeholder="Select timezone" />
 									</SelectTrigger>
 									<SelectContent className="bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)] max-h-80">
-									{TIMEZONE_GROUPS.map((group) => (
+										{TIMEZONE_GROUPS.map((group) => (
 											<div key={group.region}>
 												<div className="px-2 py-1.5 text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">
 													{group.region}

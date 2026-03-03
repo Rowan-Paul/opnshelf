@@ -40,11 +40,18 @@ describe("UsersService", () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		service = new UsersService(prisma, moviesService, showsService, configService);
+		service = new UsersService(
+			prisma,
+			moviesService,
+			showsService,
+			configService,
+		);
 	});
 
 	it("completes onboarding for an existing user", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:123" });
 		prisma.user.update = jest.fn().mockResolvedValue({
 			onboardingCompletedAt: new Date("2026-03-03T12:00:00.000Z"),
 		});
@@ -64,7 +71,9 @@ describe("UsersService", () => {
 	});
 
 	it("updates user profile display name", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:123" });
 		prisma.user.update = jest.fn().mockResolvedValue({
 			displayName: "Updated User",
 			avatar: "https://example.com/avatar.jpg",
@@ -169,7 +178,9 @@ describe("UsersService", () => {
 
 	it("continues when a write fails", async () => {
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		moviesService.markWatched = jest.fn().mockRejectedValue(new Error("write failed"));
+		moviesService.markWatched = jest
+			.fn()
+			.mockRejectedValue(new Error("write failed"));
 
 		const result = await service.importNormalizedItems(
 			"did:plc:abc",

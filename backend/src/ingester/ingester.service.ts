@@ -183,11 +183,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			const dids = users.map((u) => u.did);
 
 			// Register each user individually to handle partial failures
-			let successCount = 0;
 			for (const did of dids) {
 				try {
 					await this.addRepo(did);
-					successCount++;
 				} catch (err) {
 					this.logger.error(`Failed to register repo ${did} with TAP`, err);
 					// Continue with next user even if one fails

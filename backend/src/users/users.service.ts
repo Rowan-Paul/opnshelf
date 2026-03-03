@@ -140,7 +140,9 @@ export class UsersService {
 		};
 	}
 
-	async completeOnboarding(did: string): Promise<CompleteOnboardingResponseDto> {
+	async completeOnboarding(
+		did: string,
+	): Promise<CompleteOnboardingResponseDto> {
 		const user = await this.prisma.user.findUnique({ where: { did } });
 		if (!user) {
 			throw new NotFoundException("User not found");
@@ -158,7 +160,8 @@ export class UsersService {
 
 		return {
 			onboardingCompletedAt:
-				updated.onboardingCompletedAt?.toISOString() ?? new Date().toISOString(),
+				updated.onboardingCompletedAt?.toISOString() ??
+				new Date().toISOString(),
 			needsOnboarding: false,
 		};
 	}
@@ -179,7 +182,9 @@ export class UsersService {
 		}
 
 		const safeMaxItems =
-			typeof maxItems === "number" ? Math.max(Math.floor(maxItems), 1) : Number.POSITIVE_INFINITY;
+			typeof maxItems === "number"
+				? Math.max(Math.floor(maxItems), 1)
+				: Number.POSITIVE_INFINITY;
 		const pageSize = 100;
 		let page = 1;
 		let sourceCount = 0;
@@ -236,7 +241,10 @@ export class UsersService {
 				if (items.length >= safeMaxItems) {
 					break;
 				}
-				const result = this.normalizeTraktApiItem(payload[i], sourceCount - payload.length + i + 1);
+				const result = this.normalizeTraktApiItem(
+					payload[i],
+					sourceCount - payload.length + i + 1,
+				);
 				if (result.item) {
 					items.push(result.item);
 				} else if (result.skip) {
@@ -264,7 +272,9 @@ export class UsersService {
 		items: NormalizedImportItemDto[],
 	): Promise<ImportHistoryResponseDto> {
 		if (items.length > 100) {
-			throw new BadRequestException("A maximum of 100 items can be imported per request");
+			throw new BadRequestException(
+				"A maximum of 100 items can be imported per request",
+			);
 		}
 
 		let imported = 0;
@@ -347,7 +357,9 @@ export class UsersService {
 				failed += 1;
 				const itemContext = this.describeImportItem(item);
 				const rawMessage =
-					error instanceof Error ? error.message : "Failed to import watch item";
+					error instanceof Error
+						? error.message
+						: "Failed to import watch item";
 				this.logger.warn(
 					`Failed to import item at index ${index + 1}: ${error instanceof Error ? error.message : String(error)}`,
 				);
@@ -404,7 +416,10 @@ export class UsersService {
 
 		const normalizedAction = action as "watch" | "scrobble" | "checkin";
 
-		if (typeof item.watched_at !== "string" || Number.isNaN(Date.parse(item.watched_at))) {
+		if (
+			typeof item.watched_at !== "string" ||
+			Number.isNaN(Date.parse(item.watched_at))
+		) {
 			return {
 				skip: {
 					index,
@@ -418,7 +433,11 @@ export class UsersService {
 
 		if (item.type === "movie") {
 			const tmdbId = item.movie?.ids?.tmdb;
-			if (typeof tmdbId !== "number" || !Number.isInteger(tmdbId) || tmdbId < 1) {
+			if (
+				typeof tmdbId !== "number" ||
+				!Number.isInteger(tmdbId) ||
+				tmdbId < 1
+			) {
 				return {
 					skip: {
 						index,
@@ -443,7 +462,11 @@ export class UsersService {
 			const seasonNumber = item.episode?.season;
 			const episodeNumber = item.episode?.number;
 
-			if (typeof tmdbId !== "number" || !Number.isInteger(tmdbId) || tmdbId < 1) {
+			if (
+				typeof tmdbId !== "number" ||
+				!Number.isInteger(tmdbId) ||
+				tmdbId < 1
+			) {
 				return {
 					skip: {
 						index,

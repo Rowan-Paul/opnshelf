@@ -1,7 +1,6 @@
-import { configureApiClient } from "@opnshelf/api";
+import { authControllerMeOptions, configureApiClient } from "@opnshelf/api";
 import { PostHogProvider, usePostHog } from "@posthog/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { authControllerMeOptions } from "@opnshelf/api";
 import {
 	type QueryClient,
 	QueryClientProvider,

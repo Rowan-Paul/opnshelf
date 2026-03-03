@@ -94,7 +94,11 @@ export class ImportErrorDto {
 			"duplicate_in_request",
 		],
 	})
-	code: "invalid_item" | "already_exists" | "write_failed" | "duplicate_in_request";
+	code:
+		| "invalid_item"
+		| "already_exists"
+		| "write_failed"
+		| "duplicate_in_request";
 
 	@ApiProperty()
 	message: string;
@@ -124,7 +128,9 @@ export class FetchTraktPublicHistoryResponseDto {
 	@ApiProperty({ type: [ImportSkipDto] })
 	skipped: ImportSkipDto[];
 
-	@ApiProperty({ description: "Count of rows returned by Trakt before filtering" })
+	@ApiProperty({
+		description: "Count of rows returned by Trakt before filtering",
+	})
 	sourceCount: number;
 }
 
