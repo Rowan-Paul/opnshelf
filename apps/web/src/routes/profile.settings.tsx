@@ -21,6 +21,7 @@ import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
+import { TIMEZONE_GROUPS } from "@/lib/timezones";
 import {
 	Dialog,
 	DialogContent,
@@ -48,83 +49,6 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-
-const TIMEZONES = [
-	{ region: "UTC", zones: ["UTC"] },
-	{
-		region: "Americas",
-		zones: [
-			"America/New_York",
-			"America/Chicago",
-			"America/Denver",
-			"America/Los_Angeles",
-			"America/Toronto",
-			"America/Vancouver",
-			"America/Mexico_City",
-			"America/Sao_Paulo",
-			"America/Buenos_Aires",
-		],
-	},
-	{
-		region: "Europe",
-		zones: [
-			"Europe/London",
-			"Europe/Paris",
-			"Europe/Berlin",
-			"Europe/Rome",
-			"Europe/Madrid",
-			"Europe/Amsterdam",
-			"Europe/Zurich",
-			"Europe/Stockholm",
-			"Europe/Oslo",
-			"Europe/Copenhagen",
-			"Europe/Helsinki",
-			"Europe/Warsaw",
-			"Europe/Prague",
-			"Europe/Vienna",
-			"Europe/Budapest",
-			"Europe/Moscow",
-			"Europe/Istanbul",
-		],
-	},
-	{
-		region: "Asia & Pacific",
-		zones: [
-			"Asia/Tokyo",
-			"Asia/Seoul",
-			"Asia/Shanghai",
-			"Asia/Hong_Kong",
-			"Asia/Singapore",
-			"Asia/Taipei",
-			"Asia/Manila",
-			"Asia/Bangkok",
-			"Asia/Jakarta",
-			"Asia/Kuala_Lumpur",
-			"Asia/Ho_Chi_Minh",
-			"Asia/Dubai",
-			"Asia/Mumbai",
-			"Asia/Kolkata",
-			"Asia/Dhaka",
-			"Asia/Karachi",
-			"Pacific/Auckland",
-			"Pacific/Sydney",
-			"Pacific/Melbourne",
-			"Pacific/Perth",
-		],
-	},
-	{
-		region: "Middle East & Africa",
-		zones: [
-			"Africa/Cairo",
-			"Africa/Johannesburg",
-			"Africa/Lagos",
-			"Africa/Nairobi",
-			"Asia/Jerusalem",
-			"Asia/Riyadh",
-			"Asia/Tehran",
-		],
-	},
-];
 
 export const Route = createFileRoute("/profile/settings")({
 	head: () => ({
@@ -302,7 +226,7 @@ function SettingsPage() {
 										<SelectValue placeholder="Select timezone" />
 									</SelectTrigger>
 									<SelectContent className="bg-[var(--md-sys-color-surface-container)] border-[var(--md-sys-color-outline)] max-h-80">
-										{TIMEZONES.map((group) => (
+									{TIMEZONE_GROUPS.map((group) => (
 											<div key={group.region}>
 												<div className="px-2 py-1.5 text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">
 													{group.region}

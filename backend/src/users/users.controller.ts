@@ -21,7 +21,9 @@ import {
 } from "./dto/import-history.dto";
 import {
 	DeleteUserAccountDto,
+	UpdateUserProfileDto,
 	UpdateUserSettingsDto,
+	UserProfileDto,
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
 import { UsersService } from "./users.service";
@@ -69,6 +71,26 @@ export class UsersController {
 		}
 
 		return this.usersService.updateUserSettings(did, dto);
+	}
+
+	/**
+	 * Update current user's profile details
+	 */
+	@Patch("me/profile")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Update current user's profile" })
+	@ApiResponse({ status: 200, type: UserProfileDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async updateMyProfile(
+		@Body() dto: UpdateUserProfileDto,
+		@Req() req: AuthenticatedRequest,
+	): Promise<UserProfileDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new Error("User not found in request");
+		}
+
+		return this.usersService.updateUserProfile(did, dto);
 	}
 
 	/**

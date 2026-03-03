@@ -21,6 +21,7 @@ describe("UsersController", () => {
 		importNormalizedItems: jest.fn(),
 		getUserSettings: jest.fn(),
 		updateUserSettings: jest.fn(),
+		updateUserProfile: jest.fn(),
 		deleteUser: jest.fn(),
 	};
 
@@ -62,6 +63,27 @@ describe("UsersController", () => {
 			controller.fetchMyTraktPublicHistory({ username: "alice", maxItems: 10 }),
 		).resolves.toEqual({ items: [], skipped: [], sourceCount: 0 });
 		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith("alice", 10);
+	});
+
+	it("updates profile for authenticated requests", async () => {
+		usersService.updateUserProfile.mockResolvedValue({
+			displayName: "New Name",
+			avatar: "https://example.com/avatar.jpg",
+		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(
+			controller.updateMyProfile({ displayName: "New Name" }, req),
+		).resolves.toEqual({
+			displayName: "New Name",
+			avatar: "https://example.com/avatar.jpg",
+		});
+		expect(usersService.updateUserProfile).toHaveBeenCalledWith("did:plc:abc", {
+			displayName: "New Name",
+		});
 	});
 
 	it("imports normalized items for authenticated requests", async () => {

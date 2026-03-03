@@ -63,6 +63,29 @@ describe("UsersService", () => {
 		);
 	});
 
+	it("updates user profile display name", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.update = jest.fn().mockResolvedValue({
+			displayName: "Updated User",
+			avatar: "https://example.com/avatar.jpg",
+		});
+
+		await expect(
+			service.updateUserProfile("did:plc:123", { displayName: "Updated User" }),
+		).resolves.toEqual({
+			displayName: "Updated User",
+			avatar: "https://example.com/avatar.jpg",
+		});
+	});
+
+	it("throws when updating profile for missing user", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+
+		await expect(
+			service.updateUserProfile("did:plc:missing", { displayName: "Nope" }),
+		).rejects.toThrow(NotFoundException);
+	});
+
 	it("normalizes Trakt movie/episode items and skips unsupported action", async () => {
 		const payload = [
 			{

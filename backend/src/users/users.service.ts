@@ -25,7 +25,9 @@ import type {
 	NormalizedImportItemDto,
 } from "./dto/import-history.dto";
 import type {
+	UserProfileDto,
 	UpdateUserSettingsDto,
+	UpdateUserProfileDto,
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
 
@@ -104,6 +106,37 @@ export class UsersService {
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
+		};
+	}
+
+	async updateUserProfile(
+		did: string,
+		dto: UpdateUserProfileDto,
+	): Promise<UserProfileDto> {
+		const user = await this.prisma.user.findUnique({ where: { did } });
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		const updatedUser = await this.prisma.user.update({
+			where: { did },
+			data: {
+				...(dto.displayName !== undefined && {
+					displayName: dto.displayName.trim() || null,
+				}),
+			},
+			select: {
+				displayName: true,
+				avatar: true,
+			},
+		});
+
+		this.logger.log(`Updated profile for user ${did}`);
+
+		return {
+			displayName: updatedUser.displayName,
+			avatar: updatedUser.avatar,
 		};
 	}
 

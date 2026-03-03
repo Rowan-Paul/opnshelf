@@ -480,6 +480,28 @@ export type UpdateUserSettingsDto = {
     timezone?: string;
 };
 
+export type UpdateUserProfileDto = {
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName?: string;
+};
+
+export type UserProfileDto = {
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Avatar URL imported from BlueSky
+     */
+    avatar: {
+        [key: string]: unknown;
+    } | null;
+};
+
 export type DeleteUserAccountDto = {
     /**
      * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
@@ -1600,6 +1622,26 @@ export type UsersControllerUpdateMySettingsResponses = {
 };
 
 export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
+
+export type UsersControllerUpdateMyProfileData = {
+    body: UpdateUserProfileDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile';
+};
+
+export type UsersControllerUpdateMyProfileErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerUpdateMyProfileResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerUpdateMyProfileResponse = UsersControllerUpdateMyProfileResponses[keyof UsersControllerUpdateMyProfileResponses];
 
 export type UsersControllerDeleteMyAccountData = {
     body: DeleteUserAccountDto;

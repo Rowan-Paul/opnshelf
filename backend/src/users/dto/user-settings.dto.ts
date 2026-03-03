@@ -44,3 +44,24 @@ export class UserSettingsDto {
 	})
 	timezone!: string;
 }
+
+export class UpdateUserProfileDto {
+	@ApiProperty({
+		description: "Display name shown in OpnShelf",
+		required: false,
+	})
+	@IsString()
+	@IsOptional()
+	displayName?: string;
+}
+
+export class UserProfileDto {
+	@ApiProperty({ description: "Display name shown in OpnShelf", nullable: true })
+	displayName!: string | null;
+
+	@ApiProperty({
+		description: "Avatar URL imported from BlueSky",
+		nullable: true,
+	})
+	avatar!: string | null;
+}

@@ -3,14 +3,18 @@ import {
 	type NormalizedImportItemDto,
 	usersControllerCompleteOnboardingMutation,
 	usersControllerFetchMyTraktPublicHistoryMutation,
+	usersControllerGetMySettingsOptions,
 	usersControllerImportMyHistoryMutation,
+	usersControllerUpdateMyProfileMutation,
+	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import Papa from "papaparse";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { M3Button } from "@/components/ui/m3-button";
+import { TIMEZONE_GROUPS } from "@/lib/timezones";
 
 type TabValue = "trakt" | "csv";
 type CsvParseError = { row: number; message: string };
@@ -46,6 +50,7 @@ type ImportProgressUpdate = {
 };
 
 const MAX_BATCH_SIZE = 25;
+const ONBOARDING_STEPS = 4;
 const CSV_HEADERS = [
 	"watched_at",
 	"action",
@@ -68,6 +73,11 @@ function OnboardingPage() {
 	const [step, setStep] = useState(1);
 	const [activeTab, setActiveTab] = useState<TabValue>("trakt");
 	const [traktUsername, setTraktUsername] = useState("");
+	const [displayName, setDisplayName] = useState("");
+	const [timezone, setTimezone] = useState("UTC");
+	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
+	const displayNameId = useId();
+	const timezoneId = useId();
 	const [importResult, setImportResult] = useState({
 		imported: 0,
 		skipped: 0,
@@ -93,6 +103,12 @@ function OnboardingPage() {
 		staleTime: 0,
 	});
 
+	const { data: settings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user,
+		staleTime: 60_000,
+	});
+
 	const completeOnboardingMutation = useMutation({
 		...usersControllerCompleteOnboardingMutation(),
 		onError: () => {
@@ -104,11 +120,25 @@ function OnboardingPage() {
 		...usersControllerFetchMyTraktPublicHistoryMutation(),
 	});
 
+	const updateProfileMutation = useMutation({
+		...usersControllerUpdateMyProfileMutation(),
+		onError: () => {
+			toast.error("Could not save profile details");
+		},
+	});
+
+	const updateSettingsMutation = useMutation({
+		...usersControllerUpdateMySettingsMutation(),
+		onError: () => {
+			toast.error("Could not save time settings");
+		},
+	});
+
 	const importHistoryMutation = useMutation({
 		...usersControllerImportMyHistoryMutation(),
 	});
 
-	const progress = useMemo(() => (step / 3) * 100, [step]);
+	const progress = useMemo(() => (step / ONBOARDING_STEPS) * 100, [step]);
 	const isImporting =
 		fetchTraktMutation.isPending || importHistoryMutation.isPending;
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
@@ -116,7 +146,13 @@ function OnboardingPage() {
 		importProgress.totalItems > 0
 			? Math.round((importProgress.processedItems / importProgress.totalItems) * 100)
 			: 0;
+	const userAvatarUrl = typeof user?.avatar === "string" ? user.avatar : "";
+	const userDisplayName =
+		typeof user?.displayName === "string" ? user.displayName : "";
+	const userHandle = typeof user?.handle === "string" ? user.handle : "";
 	const isCompleting = completeOnboardingMutation.isPending;
+	const isSavingProfile =
+		updateProfileMutation.isPending || updateSettingsMutation.isPending;
 	const needsAuthRedirect = !isAuthLoading && !user;
 	const needsShelfRedirect = !isAuthLoading && !!user && !user.needsOnboarding;
 
@@ -130,6 +166,21 @@ function OnboardingPage() {
 			navigate({ to: "/profile/shelf" });
 		}
 	}, [navigate, needsAuthRedirect, needsShelfRedirect]);
+
+	useEffect(() => {
+		if (!user) {
+			return;
+		}
+		setDisplayName(userDisplayName || userHandle);
+	}, [user, userDisplayName, userHandle]);
+
+	useEffect(() => {
+		if (!settings) {
+			return;
+		}
+		setTimezone(settings.timezone);
+		setTimeFormat(settings.timeFormat === "12h" ? "12h" : "24h");
+	}, [settings]);
 
 	if (isAuthLoading) {
 		return (
@@ -145,6 +196,24 @@ function OnboardingPage() {
 
 	const handleSkip = async () => {
 		await completeOnboardingAndRedirect();
+	};
+
+	const handleSaveProfileAndContinue = async () => {
+		await updateProfileMutation.mutateAsync({
+			body: {
+				displayName: displayName.trim() || undefined,
+			},
+		});
+
+		await updateSettingsMutation.mutateAsync({
+			body: {
+				timezone,
+				timeFormat,
+			},
+		});
+
+		toast.success("Profile and time preferences saved");
+		setStep(3);
 	};
 
 	const completeOnboardingAndRedirect = async () => {
@@ -225,7 +294,7 @@ function OnboardingPage() {
 				phase: "done",
 				message: "Import complete.",
 			}));
-			setStep(3);
+			setStep(4);
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -298,7 +367,7 @@ function OnboardingPage() {
 				failed: imported.failed + errors.length,
 				message: "Import complete.",
 			}));
-			setStep(3);
+			setStep(4);
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -334,12 +403,12 @@ function OnboardingPage() {
 				{step === 1 && (
 					<div className="space-y-5">
 						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
-							Step 1 of 3: We can import your existing watches from Trakt or from
-							 a CSV export.
+							Step 1 of 4: Set your profile and time preferences, then import watch
+							history from Trakt or CSV.
 						</p>
 						<div className="flex gap-3">
 							<M3Button variant="filled" onClick={() => setStep(2)}>
-								Start import
+								Set up profile
 							</M3Button>
 							<M3Button
 								variant="text"
@@ -353,6 +422,126 @@ function OnboardingPage() {
 				)}
 
 				{step === 2 && (
+					<div className="space-y-6">
+						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
+							Step 2 of 4: personalize your profile and how times are shown.
+						</p>
+
+						<div className="rounded-(--md-sys-shape-corner-large) border p-4 md:p-5 bg-(--md-sys-color-surface-container-low)">
+							<div className="flex items-center gap-4">
+								<div className="w-16 h-16 rounded-full overflow-hidden border bg-(--md-sys-color-surface-container-high)">
+									{userAvatarUrl ? (
+										<img
+											src={userAvatarUrl}
+											alt="BlueSky avatar"
+											className="w-full h-full object-cover"
+										/>
+									) : (
+										<div className="w-full h-full flex items-center justify-center text-sm text-(--md-sys-color-on-surface-variant)">
+											No avatar
+										</div>
+									)}
+								</div>
+								<div className="flex-1 min-w-0">
+									<p className="md-title-medium">BlueSky avatar</p>
+									<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
+										Imported from BlueSky. Avatar upload coming soon.
+									</p>
+								</div>
+								<M3Button variant="outlined" disabled>
+									Upload coming soon
+								</M3Button>
+							</div>
+						</div>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="space-y-2">
+							<label className="md-label-large" htmlFor={displayNameId}>
+								Display name
+							</label>
+							<input
+								id={displayNameId}
+								type="text"
+									value={displayName}
+									onChange={(event) => setDisplayName(event.target.value)}
+									placeholder="How your name appears"
+									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2"
+								/>
+							</div>
+
+							<div className="space-y-2">
+							<label className="md-label-large" htmlFor={timezoneId}>
+								Timezone
+							</label>
+							<select
+								id={timezoneId}
+								value={timezone}
+									onChange={(event) => setTimezone(event.target.value)}
+									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2 bg-(--md-sys-color-surface)"
+								>
+									{TIMEZONE_GROUPS.map((group) => (
+										<optgroup key={group.region} label={group.region}>
+											{group.zones.map((zone) => (
+												<option key={zone} value={zone}>
+													{zone}
+												</option>
+											))}
+										</optgroup>
+									))}
+								</select>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<p className="md-label-large">Time format</p>
+							<div className="inline-flex rounded-(--md-sys-shape-corner-large) border overflow-hidden">
+								<button
+									type="button"
+									onClick={() => setTimeFormat("12h")}
+									className="px-4 py-2"
+									style={{
+										backgroundColor:
+											timeFormat === "12h"
+												? "var(--md-sys-color-secondary-container)"
+												: "transparent",
+									}}
+								>
+									12h
+								</button>
+								<button
+									type="button"
+									onClick={() => setTimeFormat("24h")}
+									className="px-4 py-2"
+									style={{
+										backgroundColor:
+											timeFormat === "24h"
+												? "var(--md-sys-color-secondary-container)"
+												: "transparent",
+									}}
+								>
+									24h
+								</button>
+							</div>
+						</div>
+
+						<div className="flex gap-3">
+							<M3Button variant="text" onClick={() => setStep(1)} disabled={isSavingProfile}>
+								Back
+							</M3Button>
+							<M3Button
+								variant="filled"
+								onClick={() => {
+									void handleSaveProfileAndContinue();
+								}}
+								disabled={isSavingProfile}
+							>
+								{isSavingProfile ? "Saving..." : "Save and continue"}
+							</M3Button>
+						</div>
+					</div>
+				)}
+
+				{step === 3 && (
 					<div className="space-y-4">
 						{importProgress.phase !== "idle" && (
 							<div className="rounded-(--md-sys-shape-corner-medium) border p-3 space-y-2 bg-(--md-sys-color-surface-container-low)">
@@ -452,7 +641,7 @@ function OnboardingPage() {
 						)}
 
 						<div className="flex gap-3">
-							<M3Button variant="text" onClick={() => setStep(1)} disabled={isImportBusy}>
+							<M3Button variant="text" onClick={() => setStep(2)} disabled={isImportBusy}>
 								Back
 							</M3Button>
 							<M3Button
@@ -466,7 +655,7 @@ function OnboardingPage() {
 					</div>
 				)}
 
-				{step === 3 && (
+				{step === 4 && (
 					<div className="space-y-4">
 						<h2 className="md-title-large">You&apos;re all set</h2>
 						<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
