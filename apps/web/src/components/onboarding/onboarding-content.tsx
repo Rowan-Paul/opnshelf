@@ -109,14 +109,14 @@ export function OnboardingContent({
 		ONBOARDING_STEP_DETAILS[step - 1] ?? ONBOARDING_STEP_DETAILS[0];
 
 	return (
-		<div className="flex flex-1 justify-center bg-[var(--md-sys-color-surface)] p-4 md:p-6">
+		<div className="flex flex-1 justify-center bg-(--md-sys-color-surface) p-4 md:p-6">
 			<div className="grid w-full max-w-6xl gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-				<aside className="flex flex-col gap-5 rounded-(--md-sys-shape-corner-extra-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] p-5">
-					<p className="md-label-small m-0 uppercase tracking-[0.14em] text-[var(--md-sys-color-primary)]">
+				<aside className="flex flex-col gap-5 rounded-(--md-sys-shape-corner-extra-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-low) p-5">
+					<p className="md-label-small m-0 uppercase tracking-[0.14em] text-(--md-sys-color-primary)">
 						Onboarding
 					</p>
 					<h1 className="md-headline-medium m-0">Welcome to OpnShelf</h1>
-					<p className="md-body-medium m-0 text-[var(--md-sys-color-on-surface-variant)]">
+					<p className="md-body-medium m-0 text-(--md-sys-color-on-surface-variant)">
 						This setup turns a blank profile into a ready-to-track shelf with
 						your preferred timezone and imported watch history.
 					</p>
@@ -136,24 +136,24 @@ export function OnboardingContent({
 									key={item.title}
 									className={`flex items-start gap-3 rounded-(--md-sys-shape-corner-large) border p-3 ${
 										isActive
-											? "border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)]"
+											? "border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container)"
 											: "border-transparent"
 									}`}
 								>
 									<span
 										className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
 											isComplete
-												? "bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]"
-												: "bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]"
+												? "bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)"
+												: "bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container)"
 										}`}
 									>
 										{isComplete ? <Check size={16} /> : <StepIcon size={16} />}
 									</span>
 									<span className="grid gap-0.5">
-										<strong className="md-label-large text-[var(--md-sys-color-on-surface)]">
+										<strong className="md-label-large text-(--md-sys-color-on-surface)">
 											{item.title}
 										</strong>
-										<small className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
+										<small className="md-body-small text-(--md-sys-color-on-surface-variant)">
 											{item.description}
 										</small>
 									</span>
@@ -163,38 +163,38 @@ export function OnboardingContent({
 					</ol>
 				</aside>
 
-				<section className="flex flex-col gap-4 rounded-(--md-sys-shape-corner-extra-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] p-4 md:p-6">
+				<section className="flex flex-col gap-4 rounded-(--md-sys-shape-corner-extra-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-low) p-4 md:p-6">
 					<header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 						<div>
-							<p className="md-label-small m-0 uppercase text-[var(--md-sys-color-primary)]">
+							<p className="md-label-small m-0 uppercase text-(--md-sys-color-primary)">
 								Step {step} of {ONBOARDING_STEPS}
 							</p>
 							<h2 className="md-title-large m-0 mt-1">
 								{currentStepDetail.title}
 							</h2>
-							<p className="md-body-medium m-0 text-[var(--md-sys-color-on-surface-variant)]">
+							<p className="md-body-medium m-0 text-(--md-sys-color-on-surface-variant)">
 								{currentStepDetail.description}
 							</p>
 						</div>
-						<p className="md-title-medium m-0 text-[var(--md-sys-color-primary)]">
+						<p className="md-title-medium m-0 text-(--md-sys-color-primary)">
 							{progress}%
 						</p>
 					</header>
 
-					<div className="h-2 overflow-hidden rounded-full bg-[var(--md-sys-color-surface-container-high)]">
+					<div className="h-2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-high)">
 						<div
-							className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-[width] duration-300"
+							className="h-full rounded-full bg-(--md-sys-color-primary) transition-[width] duration-300"
 							style={{ width: `${progress}%` }}
 						/>
 					</div>
 
 					{step === 1 && (
-						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 duration-300">
+						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							<p className="md-body-medium m-0">
 								You can finish in under two minutes. We will save your display
 								name, timezone, and optionally import your viewing history.
 							</p>
-							<ul className="md-body-medium m-0 grid list-disc gap-2 pl-5 text-[var(--md-sys-color-on-surface-variant)]">
+							<ul className="md-body-medium m-0 grid list-disc gap-2 pl-5 text-(--md-sys-color-on-surface-variant)">
 								<li>Profile and timezone come first.</li>
 								<li>Import from Trakt username or CSV export.</li>
 								<li>You can skip import and start tracking instantly.</li>
@@ -215,9 +215,9 @@ export function OnboardingContent({
 					)}
 
 					{step === 2 && (
-						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 duration-300">
-							<div className="grid grid-cols-[auto_1fr] items-center gap-4 rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">
-								<div className="h-13 w-13 overflow-hidden rounded-full border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-highest)]">
+						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
+							<div className="grid grid-cols-[auto_1fr] items-center gap-4 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
+								<div className="h-13 w-13 overflow-hidden rounded-full border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container-highest)">
 									{userAvatarUrl ? (
 										<img
 											src={userAvatarUrl}
@@ -225,14 +225,14 @@ export function OnboardingContent({
 											className="h-full w-full object-cover"
 										/>
 									) : (
-										<div className="md-body-small grid h-full w-full place-items-center text-[var(--md-sys-color-on-surface-variant)]">
+										<div className="md-body-small grid h-full w-full place-items-center text-(--md-sys-color-on-surface-variant)">
 											No avatar
 										</div>
 									)}
 								</div>
 								<div>
 									<p className="md-title-small m-0">BlueSky profile linked</p>
-									<p className="md-body-small m-0 mt-1 text-[var(--md-sys-color-on-surface-variant)]">
+									<p className="md-body-small m-0 mt-1 text-(--md-sys-color-on-surface-variant)">
 										Avatar sync is active. Manual uploads will be added soon.
 									</p>
 								</div>
@@ -240,7 +240,7 @@ export function OnboardingContent({
 
 							<div className="grid gap-3 md:grid-cols-2">
 								<label className="grid gap-1.5" htmlFor={displayNameId}>
-									<span className="md-label-small uppercase text-[var(--md-sys-color-on-surface-variant)]">
+									<span className="md-label-small uppercase text-(--md-sys-color-on-surface-variant)">
 										Display name
 									</span>
 									<input
@@ -256,7 +256,7 @@ export function OnboardingContent({
 								</label>
 
 								<label className="grid gap-1.5" htmlFor={timezoneId}>
-									<span className="md-label-small uppercase text-[var(--md-sys-color-on-surface-variant)]">
+									<span className="md-label-small uppercase text-(--md-sys-color-on-surface-variant)">
 										Timezone
 									</span>
 									<select
@@ -279,16 +279,16 @@ export function OnboardingContent({
 							</div>
 
 							<div className="grid gap-1.5">
-								<p className="md-label-small m-0 uppercase text-[var(--md-sys-color-on-surface-variant)]">
+								<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
 									Clock style
 								</p>
-								<div className="inline-flex w-fit gap-1 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-1">
+								<div className="inline-flex w-fit gap-1 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-1">
 									<button
 										type="button"
 										className={`rounded-(--md-sys-shape-corner-medium) px-3.5 py-2 md-label-large ${
 											timeFormat === "12h"
-												? "bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]"
-												: "text-[var(--md-sys-color-on-surface-variant)]"
+												? "bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container)"
+												: "text-(--md-sys-color-on-surface-variant)"
 										}`}
 										onClick={() => onTimeFormatChange("12h")}
 									>
@@ -298,8 +298,8 @@ export function OnboardingContent({
 										type="button"
 										className={`rounded-(--md-sys-shape-corner-medium) px-3.5 py-2 md-label-large ${
 											timeFormat === "24h"
-												? "bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]"
-												: "text-[var(--md-sys-color-on-surface-variant)]"
+												? "bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container)"
+												: "text-(--md-sys-color-on-surface-variant)"
 										}`}
 										onClick={() => onTimeFormatChange("24h")}
 									>
@@ -328,23 +328,23 @@ export function OnboardingContent({
 					)}
 
 					{step === 3 && (
-						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 duration-300">
+						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							{importProgress.phase !== "idle" && (
-								<div className="grid gap-2 rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">
+								<div className="grid gap-2 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
 									<p className="md-label-large m-0">{importProgress.message}</p>
 									{importProgress.phase === "importing" ? (
 										<>
-											<div className="h-2 overflow-hidden rounded-full bg-[var(--md-sys-color-surface-container-highest)]">
+											<div className="h-2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-highest)">
 												<div
-													className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-[width] duration-300"
+													className="h-full rounded-full bg-(--md-sys-color-primary) transition-[width] duration-300"
 													style={{ width: `${importPercent}%` }}
 												/>
 											</div>
-											<p className="md-body-small m-0 text-[var(--md-sys-color-on-surface-variant)]">
+											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 												{importProgress.processedItems} /{" "}
 												{importProgress.totalItems} items ({importPercent}%)
 											</p>
-											<p className="md-body-small m-0 text-[var(--md-sys-color-on-surface-variant)]">
+											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 												Batch {importProgress.currentBatch} of{" "}
 												{importProgress.totalBatches}. Imported{" "}
 												{importProgress.imported}, skipped{" "}
@@ -353,7 +353,7 @@ export function OnboardingContent({
 											</p>
 										</>
 									) : (
-										<p className="md-body-small m-0 text-[var(--md-sys-color-on-surface-variant)]">
+										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 											Preparing data for import...
 										</p>
 									)}
@@ -361,7 +361,7 @@ export function OnboardingContent({
 							)}
 
 							<div
-								className="inline-flex w-fit gap-1 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-1"
+								className="inline-flex w-fit gap-1 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-1"
 								role="tablist"
 								aria-label="Import source"
 							>
@@ -371,8 +371,8 @@ export function OnboardingContent({
 									aria-selected={activeTab === "trakt"}
 									className={`rounded-(--md-sys-shape-corner-medium) px-3 py-2 md-label-large ${
 										activeTab === "trakt"
-											? "bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]"
-											: "text-[var(--md-sys-color-on-surface-variant)]"
+											? "bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container)"
+											: "text-(--md-sys-color-on-surface-variant)"
 									}`}
 									onClick={() => onActiveTabChange("trakt")}
 								>
@@ -384,8 +384,8 @@ export function OnboardingContent({
 									aria-selected={activeTab === "csv"}
 									className={`rounded-(--md-sys-shape-corner-medium) px-3 py-2 md-label-large ${
 										activeTab === "csv"
-											? "bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]"
-											: "text-[var(--md-sys-color-on-surface-variant)]"
+											? "bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container)"
+											: "text-(--md-sys-color-on-surface-variant)"
 									}`}
 									onClick={() => onActiveTabChange("csv")}
 								>
@@ -396,7 +396,7 @@ export function OnboardingContent({
 							{activeTab === "trakt" ? (
 								<div className="grid gap-3" role="tabpanel">
 									<label className="grid gap-1.5">
-										<span className="md-label-small uppercase text-[var(--md-sys-color-on-surface-variant)]">
+										<span className="md-label-small uppercase text-(--md-sys-color-on-surface-variant)">
 											Trakt username
 										</span>
 										<input
@@ -421,10 +421,10 @@ export function OnboardingContent({
 								<div className="grid gap-3" role="tabpanel">
 									<label
 										htmlFor={fileInputId}
-										className={`inline-flex w-fit items-center gap-2 rounded-(--md-sys-shape-corner-medium) border border-dashed border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface)] px-3 py-2 md-label-large ${
+										className={`inline-flex w-fit items-center gap-2 rounded-(--md-sys-shape-corner-medium) border border-dashed border-(--md-sys-color-outline) bg-(--md-sys-color-surface) px-3 py-2 md-label-large ${
 											isImportBusy
 												? "pointer-events-none opacity-55"
-												: "hover:bg-[var(--md-sys-color-surface-container-high)]"
+												: "hover:bg-(--md-sys-color-surface-container-high)"
 										}`}
 									>
 										<FileSpreadsheet size={18} />
@@ -448,7 +448,7 @@ export function OnboardingContent({
 										}}
 										disabled={isImportBusy}
 									/>
-									<p className="md-body-small m-0 text-[var(--md-sys-color-on-surface-variant)]">
+									<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 										Use the standard Trakt export columns: watched_at, action,
 										type, tmdb_id, season_number, episode_number.
 									</p>
@@ -475,45 +475,45 @@ export function OnboardingContent({
 					)}
 
 					{step === 4 && (
-						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 duration-300">
+						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							<h3 className="md-title-large m-0">You are all set.</h3>
 							<p className="md-body-medium m-0">
 								Your profile is ready and your shelf can start collecting watch
 								history.
 							</p>
 							<div className="grid gap-3 sm:grid-cols-3">
-								<div className="rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">
-									<p className="md-label-small m-0 uppercase text-[var(--md-sys-color-on-surface-variant)]">
+								<div className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
+									<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
 										Imported
 									</p>
-									<strong className="md-headline-small mt-1 block text-[var(--md-sys-color-primary)]">
+									<strong className="md-headline-small mt-1 block text-(--md-sys-color-primary)">
 										{importResult.imported}
 									</strong>
 								</div>
-								<div className="rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">
-									<p className="md-label-small m-0 uppercase text-[var(--md-sys-color-on-surface-variant)]">
+								<div className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
+									<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
 										Skipped
 									</p>
-									<strong className="md-headline-small mt-1 block text-[var(--md-sys-color-primary)]">
+									<strong className="md-headline-small mt-1 block text-(--md-sys-color-primary)">
 										{importResult.skipped}
 									</strong>
 								</div>
-								<div className="rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">
-									<p className="md-label-small m-0 uppercase text-[var(--md-sys-color-on-surface-variant)]">
+								<div className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
+									<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
 										Failed
 									</p>
-									<strong className="md-headline-small mt-1 block text-[var(--md-sys-color-primary)]">
+									<strong className="md-headline-small mt-1 block text-(--md-sys-color-primary)">
 										{importResult.failed}
 									</strong>
 								</div>
 							</div>
 
 							{importResult.errors.length > 0 && (
-								<div className="max-h-[220px] overflow-auto rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)]/20 p-3">
-									<p className="md-label-large m-0 mb-2 text-[var(--md-sys-color-error)]">
+								<div className="max-h-[220px] overflow-auto rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-error) bg-(--md-sys-color-error-container)/20 p-3">
+									<p className="md-label-large m-0 mb-2 text-(--md-sys-color-error)">
 										Import errors
 									</p>
-									<ul className="md-body-small m-0 grid list-disc gap-1 pl-4 text-[var(--md-sys-color-error)]">
+									<ul className="md-body-small m-0 grid list-disc gap-1 pl-4 text-(--md-sys-color-error)">
 										{importResult.errors.map((error) => (
 											<li key={error}>{error}</li>
 										))}
