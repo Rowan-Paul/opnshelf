@@ -1,6 +1,5 @@
 import {
 	authControllerMeOptions,
-	type NormalizedImportItemDto,
 	usersControllerCompleteOnboardingMutation,
 	usersControllerFetchMyTraktPublicHistoryMutation,
 	usersControllerGetMySettingsOptions,
@@ -10,55 +9,18 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import Papa from "papaparse";
 import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { M3Button } from "@/components/ui/m3-button";
-import { TIMEZONE_GROUPS } from "@/lib/timezones";
-
-type TabValue = "trakt" | "csv";
-type CsvParseError = { row: number; message: string };
-type ImportPhase =
-	| "idle"
-	| "fetching_trakt"
-	| "parsing_csv"
-	| "importing"
-	| "done"
-	| "error";
-
-type ImportProgressState = {
-	phase: ImportPhase;
-	totalItems: number;
-	processedItems: number;
-	currentBatch: number;
-	totalBatches: number;
-	imported: number;
-	skipped: number;
-	failed: number;
-	startedAt: number | null;
-	message: string;
-};
-
-type ImportProgressUpdate = {
-	totalItems: number;
-	processedItems: number;
-	currentBatch: number;
-	totalBatches: number;
-	imported: number;
-	skipped: number;
-	failed: number;
-};
-
-const MAX_BATCH_SIZE = 25;
-const ONBOARDING_STEPS = 4;
-const CSV_HEADERS = [
-	"watched_at",
-	"action",
-	"type",
-	"tmdb_id",
-	"season_number",
-	"episode_number",
-] as const;
+import {
+	ONBOARDING_STEPS,
+	OnboardingContent,
+} from "@/components/onboarding/onboarding-content";
+import type {
+	ImportProgressState,
+	OnboardingImportResult,
+	TabValue,
+} from "@/components/onboarding/types";
+import { parseCsvFile, runImportInChunks } from "@/lib/onboarding-import";
 
 export const Route = createFileRoute("/onboarding")({
 	head: () => ({
@@ -78,11 +40,12 @@ function OnboardingPage() {
 	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
 	const displayNameId = useId();
 	const timezoneId = useId();
-	const [importResult, setImportResult] = useState({
+	const fileInputId = useId();
+	const [importResult, setImportResult] = useState<OnboardingImportResult>({
 		imported: 0,
 		skipped: 0,
 		failed: 0,
-		errors: [] as string[],
+		errors: [],
 	});
 	const [importProgress, setImportProgress] = useState<ImportProgressState>({
 		phase: "idle",
@@ -195,10 +158,6 @@ function OnboardingPage() {
 	if (needsAuthRedirect || needsShelfRedirect || !user) {
 		return null;
 	}
-
-	const handleSkip = async () => {
-		await completeOnboardingAndRedirect();
-	};
 
 	const handleSaveProfileAndContinue = async () => {
 		await updateProfileMutation.mutateAsync({
@@ -388,545 +347,45 @@ function OnboardingPage() {
 	};
 
 	return (
-		<div className="flex-1 flex items-center justify-center p-4">
-			<div className="w-full max-w-3xl rounded-(--md-sys-shape-corner-large) border p-6 md:p-8 bg-(--md-sys-color-surface)">
-				<h1 className="md-headline-large mb-2">Welcome to OpnShelf</h1>
-				<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
-					Bring your watch history over, or skip and start tracking now.
-				</p>
-
-				<div className="h-2 rounded-full mt-6 mb-8 bg-(--md-sys-color-surface-container)">
-					<div
-						className="h-2 rounded-full transition-all"
-						style={{
-							width: `${progress}%`,
-							backgroundColor: "var(--md-sys-color-primary)",
-						}}
-					/>
-				</div>
-
-				{step === 1 && (
-					<div className="space-y-5">
-						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
-							Step 1 of 4: Set your profile and time preferences, then import
-							watch history from Trakt or CSV.
-						</p>
-						<div className="flex gap-3">
-							<M3Button variant="filled" onClick={() => setStep(2)}>
-								Set up profile
-							</M3Button>
-							<M3Button
-								variant="text"
-								onClick={handleSkip}
-								disabled={isCompleting}
-							>
-								{isCompleting ? "Finishing..." : "Skip for now"}
-							</M3Button>
-						</div>
-					</div>
-				)}
-
-				{step === 2 && (
-					<div className="space-y-6">
-						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
-							Step 2 of 4: personalize your profile and how times are shown.
-						</p>
-
-						<div className="rounded-(--md-sys-shape-corner-large) border p-4 md:p-5 bg-(--md-sys-color-surface-container-low)">
-							<div className="flex items-center gap-4">
-								<div className="w-16 h-16 rounded-full overflow-hidden border bg-(--md-sys-color-surface-container-high)">
-									{userAvatarUrl ? (
-										<img
-											src={userAvatarUrl}
-											alt="BlueSky avatar"
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<div className="w-full h-full flex items-center justify-center text-sm text-(--md-sys-color-on-surface-variant)">
-											No avatar
-										</div>
-									)}
-								</div>
-								<div className="flex-1 min-w-0">
-									<p className="md-title-medium">BlueSky avatar</p>
-									<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-										Imported from BlueSky. Avatar upload coming soon.
-									</p>
-								</div>
-								<M3Button variant="outlined" disabled>
-									Upload coming soon
-								</M3Button>
-							</div>
-						</div>
-
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<label className="md-label-large" htmlFor={displayNameId}>
-									Display name
-								</label>
-								<input
-									id={displayNameId}
-									type="text"
-									value={displayName}
-									onChange={(event) => setDisplayName(event.target.value)}
-									placeholder="How your name appears"
-									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2"
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="md-label-large" htmlFor={timezoneId}>
-									Timezone
-								</label>
-								<select
-									id={timezoneId}
-									value={timezone}
-									onChange={(event) => setTimezone(event.target.value)}
-									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2 bg-(--md-sys-color-surface)"
-								>
-									{TIMEZONE_GROUPS.map((group) => (
-										<optgroup key={group.region} label={group.region}>
-											{group.zones.map((zone) => (
-												<option key={zone} value={zone}>
-													{zone}
-												</option>
-											))}
-										</optgroup>
-									))}
-								</select>
-							</div>
-						</div>
-
-						<div className="space-y-2">
-							<p className="md-label-large">Time format</p>
-							<div className="inline-flex rounded-(--md-sys-shape-corner-large) border overflow-hidden">
-								<button
-									type="button"
-									onClick={() => setTimeFormat("12h")}
-									className="px-4 py-2"
-									style={{
-										backgroundColor:
-											timeFormat === "12h"
-												? "var(--md-sys-color-secondary-container)"
-												: "transparent",
-									}}
-								>
-									12h
-								</button>
-								<button
-									type="button"
-									onClick={() => setTimeFormat("24h")}
-									className="px-4 py-2"
-									style={{
-										backgroundColor:
-											timeFormat === "24h"
-												? "var(--md-sys-color-secondary-container)"
-												: "transparent",
-									}}
-								>
-									24h
-								</button>
-							</div>
-						</div>
-
-						<div className="flex gap-3">
-							<M3Button
-								variant="text"
-								onClick={() => setStep(1)}
-								disabled={isSavingProfile}
-							>
-								Back
-							</M3Button>
-							<M3Button
-								variant="filled"
-								onClick={() => {
-									void handleSaveProfileAndContinue();
-								}}
-								disabled={isSavingProfile}
-							>
-								{isSavingProfile ? "Saving..." : "Save and continue"}
-							</M3Button>
-						</div>
-					</div>
-				)}
-
-				{step === 3 && (
-					<div className="space-y-4">
-						{importProgress.phase !== "idle" && (
-							<div className="rounded-(--md-sys-shape-corner-medium) border p-3 space-y-2 bg-(--md-sys-color-surface-container-low)">
-								<p className="md-label-large">{importProgress.message}</p>
-								{importProgress.phase === "importing" ? (
-									<>
-										<div className="h-2 rounded-full bg-(--md-sys-color-surface-container)">
-											<div
-												className="h-2 rounded-full transition-all"
-												style={{
-													width: `${importPercent}%`,
-													backgroundColor: "var(--md-sys-color-primary)",
-												}}
-											/>
-										</div>
-										<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-											{importProgress.processedItems} /{" "}
-											{importProgress.totalItems} items ({importPercent}%)
-										</p>
-										<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-											Batch {importProgress.currentBatch} /{" "}
-											{importProgress.totalBatches}· Imported{" "}
-											{importProgress.imported} · Skipped{" "}
-											{importProgress.skipped} · Failed {importProgress.failed}
-										</p>
-									</>
-								) : (
-									<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-										Preparing import...
-									</p>
-								)}
-							</div>
-						)}
-
-						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={() => setActiveTab("trakt")}
-								className="px-3 py-2 rounded-(--md-sys-shape-corner-medium)"
-								style={{
-									backgroundColor:
-										activeTab === "trakt"
-											? "var(--md-sys-color-secondary-container)"
-											: "var(--md-sys-color-surface-container)",
-								}}
-							>
-								Trakt username
-							</button>
-							<button
-								type="button"
-								onClick={() => setActiveTab("csv")}
-								className="px-3 py-2 rounded-(--md-sys-shape-corner-medium)"
-								style={{
-									backgroundColor:
-										activeTab === "csv"
-											? "var(--md-sys-color-secondary-container)"
-											: "var(--md-sys-color-surface-container)",
-								}}
-							>
-								CSV upload
-							</button>
-						</div>
-
-						{activeTab === "trakt" ? (
-							<div className="space-y-3">
-								<input
-									type="text"
-									value={traktUsername}
-									onChange={(event) => setTraktUsername(event.target.value)}
-									placeholder="Trakt username"
-									className="w-full rounded-(--md-sys-shape-corner-medium) border px-3 py-2"
-								/>
-								<M3Button
-									variant="filled"
-									onClick={handleTraktImport}
-									disabled={isImportBusy}
-								>
-									Fetch and import
-								</M3Button>
-							</div>
-						) : (
-							<div className="space-y-3">
-								<input
-									type="file"
-									accept=".csv,text/csv"
-									onChange={(event) => {
-										const file = event.target.files?.[0];
-										if (file) {
-											void handleCsvUpload(file);
-										}
-									}}
-									disabled={isImportBusy}
-								/>
-								<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
-									Upload a Trakt history CSV export using the standard Trakt
-									columns.
-								</p>
-							</div>
-						)}
-
-						<div className="flex gap-3">
-							<M3Button
-								variant="text"
-								onClick={() => setStep(2)}
-								disabled={isImportBusy}
-							>
-								Back
-							</M3Button>
-							<M3Button
-								variant="text"
-								onClick={handleSkip}
-								disabled={isCompleting || isImportBusy}
-							>
-								{isCompleting ? "Finishing..." : "Skip for now"}
-							</M3Button>
-						</div>
-					</div>
-				)}
-
-				{step === 4 && (
-					<div className="space-y-4">
-						<h2 className="md-title-large">You&apos;re all set</h2>
-						<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
-							Imported: {importResult.imported} | Skipped:{" "}
-							{importResult.skipped} | Failed: {importResult.failed}
-						</p>
-						{importResult.errors.length > 0 && (
-							<div className="rounded-(--md-sys-shape-corner-medium) border p-3 max-h-56 overflow-auto">
-								<p className="md-label-large mb-2">Errors</p>
-								<ul className="space-y-1">
-									{importResult.errors.map((error) => (
-										<li key={error} className="md-body-small">
-											{error}
-										</li>
-									))}
-								</ul>
-							</div>
-						)}
-						<M3Button
-							variant="filled"
-							onClick={() => {
-								void completeOnboardingAndRedirect();
-							}}
-							disabled={isCompleting}
-						>
-							{isCompleting ? "Finishing..." : "Finish"}
-						</M3Button>
-					</div>
-				)}
-			</div>
-		</div>
+		<OnboardingContent
+			step={step}
+			progress={progress}
+			activeTab={activeTab}
+			traktUsername={traktUsername}
+			displayName={displayName}
+			timezone={timezone}
+			timeFormat={timeFormat}
+			displayNameId={displayNameId}
+			timezoneId={timezoneId}
+			fileInputId={fileInputId}
+			userAvatarUrl={userAvatarUrl}
+			importProgress={importProgress}
+			importPercent={importPercent}
+			importResult={importResult}
+			isCompleting={isCompleting}
+			isSavingProfile={isSavingProfile}
+			isImportBusy={isImportBusy}
+			onStepChange={setStep}
+			onActiveTabChange={setActiveTab}
+			onTraktUsernameChange={setTraktUsername}
+			onDisplayNameChange={setDisplayName}
+			onTimezoneChange={setTimezone}
+			onTimeFormatChange={setTimeFormat}
+			onSkip={() => {
+				void completeOnboardingAndRedirect();
+			}}
+			onSaveProfileAndContinue={() => {
+				void handleSaveProfileAndContinue();
+			}}
+			onTraktImport={() => {
+				void handleTraktImport();
+			}}
+			onCsvUpload={(file) => {
+				void handleCsvUpload(file);
+			}}
+			onComplete={() => {
+				void completeOnboardingAndRedirect();
+			}}
+		/>
 	);
-}
-
-async function runImportInChunks(
-	items: NormalizedImportItemDto[],
-	importMutate: (payload: {
-		body: { items: NormalizedImportItemDto[] };
-	}) => Promise<{
-		imported: number;
-		skipped: number;
-		failed: number;
-		errors: Array<{ message: string }>;
-	}>,
-	onProgress?: (update: ImportProgressUpdate) => void,
-) {
-	let imported = 0;
-	let skipped = 0;
-	let failed = 0;
-	const errors: string[] = [];
-	const totalItems = items.length;
-	const totalBatches = Math.ceil(totalItems / MAX_BATCH_SIZE);
-
-	onProgress?.({
-		totalItems,
-		processedItems: 0,
-		currentBatch: 0,
-		totalBatches,
-		imported,
-		skipped,
-		failed,
-	});
-
-	for (let start = 0; start < totalItems; start += MAX_BATCH_SIZE) {
-		const currentBatch = Math.floor(start / MAX_BATCH_SIZE) + 1;
-		const chunk = items.slice(start, start + MAX_BATCH_SIZE);
-
-		onProgress?.({
-			totalItems,
-			processedItems: start,
-			currentBatch,
-			totalBatches,
-			imported,
-			skipped,
-			failed,
-		});
-
-		const result = await importMutate({ body: { items: chunk } });
-		imported += result.imported;
-		skipped += result.skipped;
-		failed += result.failed;
-		errors.push(...result.errors.map((error) => error.message));
-
-		onProgress?.({
-			totalItems,
-			processedItems: Math.min(start + chunk.length, totalItems),
-			currentBatch,
-			totalBatches,
-			imported,
-			skipped,
-			failed,
-		});
-	}
-
-	return {
-		imported,
-		skipped,
-		failed,
-		errors,
-	};
-}
-
-async function parseCsvFile(file: File): Promise<{
-	items: NormalizedImportItemDto[];
-	errors: CsvParseError[];
-}> {
-	return new Promise((resolve, reject) => {
-		Papa.parse<Record<string, string>>(file, {
-			header: true,
-			skipEmptyLines: true,
-			complete: (results) => {
-				const items: NormalizedImportItemDto[] = [];
-				const errors: CsvParseError[] = [];
-				const headers = (results.meta.fields ?? []).map((header) =>
-					header.trim(),
-				);
-
-				for (const expectedHeader of CSV_HEADERS) {
-					if (!headers.includes(expectedHeader)) {
-						errors.push({
-							row: 1,
-							message: `Missing required header: ${expectedHeader}`,
-						});
-					}
-				}
-
-				if (errors.length > 0) {
-					resolve({ items, errors });
-					return;
-				}
-
-				for (let rowIndex = 0; rowIndex < results.data.length; rowIndex++) {
-					const row = results.data[rowIndex] ?? {};
-					const normalized = normalizeCsvRow(row, rowIndex + 2);
-					if (normalized.item) {
-						items.push(normalized.item);
-					} else if (normalized.error) {
-						errors.push(normalized.error);
-					}
-				}
-
-				resolve({ items, errors });
-			},
-			error: (error) => {
-				reject(error);
-			},
-		});
-	});
-}
-
-function normalizeCsvRow(
-	row: Record<string, string>,
-	rowNumber: number,
-): { item?: NormalizedImportItemDto; error?: CsvParseError } {
-	const type = getCsvValue(row, "type").toLowerCase();
-	const watchedAtRaw = getCsvValue(row, "watched_at");
-	const watchedAt = Number.isNaN(Date.parse(watchedAtRaw))
-		? ""
-		: new Date(watchedAtRaw).toISOString();
-	const actionRaw = getCsvValue(row, "action").toLowerCase();
-	const action = actionRaw || "watch";
-
-	if (!["watch", "scrobble", "checkin"].includes(action)) {
-		return {
-			error: {
-				row: rowNumber,
-				message: `Row ${rowNumber}: unsupported action "${actionRaw || "unknown"}"`,
-			},
-		};
-	}
-
-	if (!watchedAt) {
-		return {
-			error: {
-				row: rowNumber,
-				message: `Row ${rowNumber}: invalid watched_at`,
-			},
-		};
-	}
-
-	if (type === "movie") {
-		const movieTmdbId = Number.parseInt(getCsvValue(row, "tmdb_id"), 10);
-		if (!Number.isInteger(movieTmdbId) || movieTmdbId < 1) {
-			return {
-				error: {
-					row: rowNumber,
-					message: `Row ${rowNumber}: missing movie TMDB id`,
-				},
-			};
-		}
-
-		return {
-			item: {
-				type: "movie",
-				movieTmdbId,
-				action: action as "watch" | "scrobble" | "checkin",
-				watchedAt,
-			},
-		};
-	}
-
-	if (type === "episode") {
-		const showTmdbId = Number.parseInt(getCsvValue(row, "tmdb_id"), 10);
-		const seasonNumber = Number.parseInt(getCsvValue(row, "season_number"), 10);
-		const episodeNumber = Number.parseInt(
-			getCsvValue(row, "episode_number"),
-			10,
-		);
-
-		if (!Number.isInteger(showTmdbId) || showTmdbId < 1) {
-			return {
-				error: {
-					row: rowNumber,
-					message: `Row ${rowNumber}: missing show TMDB id`,
-				},
-			};
-		}
-
-		if (
-			!Number.isInteger(seasonNumber) ||
-			seasonNumber < 0 ||
-			!Number.isInteger(episodeNumber) ||
-			episodeNumber < 1
-		) {
-			return {
-				error: {
-					row: rowNumber,
-					message: `Row ${rowNumber}: invalid season/episode values`,
-				},
-			};
-		}
-
-		return {
-			item: {
-				type: "episode",
-				showTmdbId,
-				seasonNumber,
-				episodeNumber,
-				action: action as "watch" | "scrobble" | "checkin",
-				watchedAt,
-			},
-		};
-	}
-
-	return {
-		error: {
-			row: rowNumber,
-			message: `Row ${rowNumber}: unsupported type "${type || "unknown"}"`,
-		},
-	};
-}
-
-function getCsvValue(row: Record<string, string>, key: string): string {
-	const value = row[key];
-	if (typeof value === "string" && value.trim()) {
-		return value.trim();
-	}
-	return "";
 }
