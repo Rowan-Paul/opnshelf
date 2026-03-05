@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { ArrowLeft, BookOpen } from "lucide-react-native";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
 	ActivityIndicator,
 	RefreshControl,
@@ -31,7 +31,11 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useUserSettings } from "@/hooks/useUserSettings";
-import { createTitleSlug } from "@/lib/utils";
+import {
+	createTitleSlug,
+	getDayKeyInTimezone,
+	getShelfDayLabel,
+} from "@/lib/utils";
 
 export default function ShelfScreen() {
 	const { user } = useAuth();
@@ -127,44 +131,158 @@ export default function ShelfScreen() {
 	const items = shelfQuery.data?.pages.flatMap((page) => page.items) ?? [];
 	const totalCount = shelfQuery.data?.pages[0]?.total ?? 0;
 
+	type ShelfItem = (typeof items)[number];
+	type ShelfRow =
+		| {
+				kind: "header";
+				id: string;
+				label: string;
+				count: number;
+		  }
+		| {
+				kind: "item";
+				id: string;
+				item: ShelfItem;
+		  };
+
+	const { rows, stickyHeaderIndices } = useMemo(() => {
+		const groups = new Map<string, ShelfItem[]>();
+
+		for (const item of items) {
+			const watchedAt = item.watchedDate ?? item.createdAt;
+			const dayKey = getDayKeyInTimezone(watchedAt, timezone);
+			const existingGroup = groups.get(dayKey);
+
+			if (existingGroup) {
+				existingGroup.push(item);
+				continue;
+			}
+
+			groups.set(dayKey, [item]);
+		}
+
+		const nextRows: ShelfRow[] = [];
+		const nextStickyHeaderIndices: number[] = [];
+
+		for (const [dayKey, dayItems] of groups) {
+			nextStickyHeaderIndices.push(nextRows.length);
+			nextRows.push({
+				kind: "header",
+				id: `header-${dayKey}`,
+				label: getShelfDayLabel(dayKey, timezone),
+				count: dayItems.length,
+			});
+
+			for (const item of dayItems) {
+				nextRows.push({
+					kind: "item",
+					id: item.id,
+					item,
+				});
+			}
+		}
+
+		return {
+			rows: nextRows,
+			stickyHeaderIndices: nextStickyHeaderIndices,
+		};
+	}, [items, timezone]);
+
 	const isLoading = shelfQuery.isLoading;
 	const isFetchingNextPage = shelfQuery.isFetchingNextPage;
 	const isRefreshing = shelfQuery.isRefetching && !shelfQuery.isLoading;
 
 	const renderItem = useCallback(
-		({ item }: { item: (typeof items)[0] }) => {
-			if (item.type === "movie") {
-				const isRemoving =
-					deleteMovieMutation.isPending &&
-					deleteMovieMutation.variables?.path?.trackedMovieId === item.movieId;
+		({ item, index }: { item: ShelfRow; index: number }) => {
+			if (item.kind === "header") {
+				const isFirstHeader = index === 0;
 
 				return (
-					<MovieCard
-						tracked={item as never}
-						isRemoving={isRemoving}
-						onRemove={() => handleMovieRemove(item.movieId)}
-						onPress={() => handleMoviePress(item as never)}
-						timezone={timezone}
-						is24Hour={is24Hour}
-					/>
+					<View
+						style={[
+							styles.stickyHeaderRow,
+							{
+								backgroundColor: colors.background,
+								borderBottomColor: colors.outlineVariant,
+							},
+						]}
+					>
+						<View
+							style={[
+								styles.dayHeader,
+								{
+									borderBottomColor: colors.outlineVariant,
+									paddingTop: isFirstHeader ? 0 : spacing.md,
+								},
+							]}
+						>
+							<Text
+								style={[styles.dayHeaderTitle, { color: colors.onBackground }]}
+							>
+								{item.label}
+							</Text>
+							<Text
+								style={[
+									styles.dayHeaderCount,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								{item.count} item{item.count !== 1 ? "s" : ""}
+							</Text>
+						</View>
+					</View>
 				);
 			}
+
+			const shelfItem = item.item;
+
+			if (shelfItem.type === "movie") {
+				const isRemoving =
+					deleteMovieMutation.isPending &&
+					deleteMovieMutation.variables?.path?.trackedMovieId ===
+						shelfItem.movieId;
+
+				return (
+					<View style={styles.rowContainer}>
+						<View style={styles.itemRow}>
+							<MovieCard
+								tracked={shelfItem as never}
+								isRemoving={isRemoving}
+								onRemove={() => handleMovieRemove(shelfItem.movieId)}
+								onPress={() => handleMoviePress(shelfItem as never)}
+								timezone={timezone}
+								is24Hour={is24Hour}
+							/>
+						</View>
+					</View>
+				);
+			}
+
 			const isRemoving =
 				deleteEpisodeMutation.isPending &&
-				deleteEpisodeMutation.variables?.path?.trackedEpisodeId === item.id;
+				deleteEpisodeMutation.variables?.path?.trackedEpisodeId ===
+					shelfItem.id;
 
 			return (
-				<EpisodeCard
-					tracked={item as never}
-					isRemoving={isRemoving}
-					onRemove={() => handleEpisodeRemove(item.id)}
-					onPress={() => handleEpisodePress(item as never)}
-					timezone={timezone}
-					is24Hour={is24Hour}
-				/>
+				<View style={styles.rowContainer}>
+					<View style={styles.itemRow}>
+						<EpisodeCard
+							tracked={shelfItem as never}
+							isRemoving={isRemoving}
+							onRemove={() => handleEpisodeRemove(shelfItem.id)}
+							onPress={() => handleEpisodePress(shelfItem as never)}
+							timezone={timezone}
+							is24Hour={is24Hour}
+						/>
+					</View>
+				</View>
 			);
 		},
 		[
+			colors.background,
+			colors.onBackground,
+			colors.onSurfaceVariant,
+			colors.outlineVariant,
 			deleteMovieMutation,
 			deleteEpisodeMutation,
 			handleMovieRemove,
@@ -176,7 +294,7 @@ export default function ShelfScreen() {
 		],
 	);
 
-	const keyExtractor = useCallback((item: (typeof items)[0]) => item.id, []);
+	const keyExtractor = useCallback((item: ShelfRow) => item.id, []);
 
 	const onEndReached = useCallback(() => {
 		if (shelfQuery.hasNextPage && !shelfQuery.isFetchingNextPage) {
@@ -262,11 +380,11 @@ export default function ShelfScreen() {
 						{totalCount} item{totalCount !== 1 ? "s" : ""} watched
 					</Text>
 					<FlashList
-						data={items}
+						data={rows}
 						renderItem={renderItem}
 						keyExtractor={keyExtractor}
 						contentContainerStyle={styles.listContent}
-						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+						stickyHeaderIndices={stickyHeaderIndices}
 						onEndReached={onEndReached}
 						onEndReachedThreshold={0.5}
 						ListFooterComponent={renderFooter}
@@ -340,10 +458,33 @@ const styles = StyleSheet.create({
 		marginBottom: spacing.sm,
 	},
 	listContent: {
-		padding: spacing.lg,
+		paddingBottom: spacing.lg,
 	},
-	itemSeparator: {
-		height: spacing.md,
+	rowContainer: {
+		paddingHorizontal: spacing.lg,
+	},
+	stickyHeaderRow: {
+		paddingHorizontal: spacing.lg,
+		zIndex: 1,
+	},
+	dayHeader: {
+		paddingBottom: spacing.xs,
+		marginBottom: spacing.sm,
+		borderBottomWidth: StyleSheet.hairlineWidth,
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+	},
+	dayHeaderTitle: {
+		fontSize: 18,
+		fontWeight: "700",
+	},
+	dayHeaderCount: {
+		fontSize: 12,
+		fontWeight: "500",
+	},
+	itemRow: {
+		marginBottom: spacing.md,
 	},
 	footerLoader: {
 		paddingVertical: spacing.lg,

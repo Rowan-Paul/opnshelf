@@ -87,6 +87,53 @@ export interface DateFormatOptions {
 	includeTime?: boolean;
 }
 
+export function getDayKeyInTimezone(
+	dateString: string | Date,
+	timezone: string,
+): string {
+	const date =
+		typeof dateString === "string" ? new Date(dateString) : dateString;
+
+	try {
+		const formatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: timezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+		const parts = formatter.formatToParts(date);
+		const year = parts.find((part) => part.type === "year")?.value ?? "0000";
+		const month = parts.find((part) => part.type === "month")?.value ?? "01";
+		const day = parts.find((part) => part.type === "day")?.value ?? "01";
+		return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+	} catch {
+		return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+	}
+}
+
+export function getShelfDayLabel(dayKey: string, timezone: string): string {
+	const now = new Date();
+	const todayKey = getDayKeyInTimezone(now, timezone);
+	const yesterdayKey = getDayKeyInTimezone(
+		new Date(now.getTime() - 24 * 60 * 60 * 1000),
+		timezone,
+	);
+
+	if (dayKey === todayKey) return "Today";
+	if (dayKey === yesterdayKey) return "Yesterday";
+
+	const [year, month, day] = dayKey.split("-").map(Number);
+	const safeDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+	const currentYear = Number(todayKey.split("-")[0] ?? now.getUTCFullYear());
+
+	return safeDate.toLocaleDateString("en-US", {
+		weekday: "long",
+		month: "long",
+		day: "numeric",
+		...(year !== currentYear ? { year: "numeric" } : {}),
+	});
+}
+
 export function formatDateWithTimezone(
 	dateString: string | Date,
 	options: DateFormatOptions,
