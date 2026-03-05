@@ -31,7 +31,7 @@ export function Switch({ value, onValueChange, disabled = false }: SwitchProps) 
 			disabled={disabled}
 			style={[
 				styles.container,
-				{ backgroundColor: value ? colors.tertiary : colors.surfaceContainerHigh },
+				{ backgroundColor: value ? colors.primary : colors.surfaceContainerHigh },
 				disabled && styles.disabled,
 			]}
 		>
@@ -39,7 +39,7 @@ export function Switch({ value, onValueChange, disabled = false }: SwitchProps) 
 				style={[
 					styles.thumb,
 					translateX,
-					{ backgroundColor: colors.onTertiary },
+					{ backgroundColor: value ? colors.onPrimary : colors.onSurfaceVariant },
 				]}
 			/>
 		</Pressable>

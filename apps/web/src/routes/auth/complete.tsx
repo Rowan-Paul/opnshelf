@@ -62,7 +62,7 @@ function AuthCompletePage() {
 					}
 				} else {
 					navigate({
-						to: user?.needsOnboarding ? "/onboarding" : "/profile/shelf",
+						to: user?.needsOnboarding ? "/onboarding" : "/",
 					});
 				}
 			} catch (error) {

@@ -8,13 +8,16 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import {
 	CalendarRange,
+	Clock3,
+	Database,
 	Film,
 	LayoutDashboard,
 	ListChecks,
 	ListPlus,
+	LogIn,
 	Search,
-	Share2,
-	Shield,
+	ShieldCheck,
+	Tv,
 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -36,22 +39,58 @@ import { useTheme } from "@/contexts/theme";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
-const features = [
+const featureCards = [
 	{
-		icon: Film,
-		title: "Track Your Media",
+		icon: Tv,
+		title: "Movie, show, season, episode",
 		description:
-			"Keep track of movies, shows, and games you've watched and played",
+			"Track at exactly the level you want, from full-series completion down to single episodes.",
 	},
 	{
-		icon: Shield,
-		title: "Own Your Data",
-		description: "Built on AT Protocol - your data belongs to you",
+		icon: Clock3,
+		title: "Full watch history",
+		description:
+			"Log rewatches, keep each watch date, and build a complete timeline of your viewing activity.",
 	},
 	{
-		icon: Share2,
-		title: "Discover & Share",
-		description: "See what others are watching and share your favorites",
+		icon: ListChecks,
+		title: "Powerful list workflows",
+		description:
+			"Use default lists and custom lists to organize favorites, queues, themes, and deep cuts.",
+	},
+	{
+		icon: Database,
+		title: "Import your history",
+		description:
+			"Import history from a public Trakt username or CSV to start with real data instead of a blank slate.",
+	},
+	{
+		icon: CalendarRange,
+		title: "Timezone-aware activity",
+		description:
+			"Keep your watch dates accurate with timezone and 12h/24h preferences built into your profile.",
+	},
+	{
+		icon: ShieldCheck,
+		title: "AT Protocol identity",
+		description:
+			"Sign in with your Atmosphere account and keep your identity and data model portable across apps.",
+	},
+];
+
+const valuePoints = [
+	{
+		title: "Granular tracking",
+		description:
+			"Track movies, shows, seasons, and episodes as separate items.",
+	},
+	{
+		title: "Real watch history",
+		description: "Keep every watch date and rewatch, not just a binary status.",
+	},
+	{
+		title: "Lists that stay useful",
+		description: "Combine default lists with your own lists for any workflow.",
 	},
 ];
 
@@ -606,34 +645,140 @@ function UnauthenticatedHome() {
 							style={styles.logo}
 						/>
 					</View>
+					<View
+						style={[
+							styles.heroBadge,
+							{ backgroundColor: colors.secondaryContainer },
+						]}
+					>
+						<Text
+							style={[
+								styles.heroBadgeText,
+								{ color: colors.onSecondaryContainer },
+							]}
+						>
+							Built for serious tracking
+						</Text>
+					</View>
 					<Text style={[styles.title, { color: colors.onBackground }]}>
-						OpnShelf
+						Track every watch. Organize every obsession.
 					</Text>
 					<Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-						Your personal media tracker powered by AT Protocol
+						OpnShelf gives you movie and show tracking down to season and
+						episode level, complete watch history, list organization, and a
+						portable AT Protocol account.
 					</Text>
-					<Button
-						size="lg"
-						onPress={() => router.push("/(tabs)/search")}
-						style={styles.searchButton}
-					>
-						<Search
-							size={20}
-							color={colors.onPrimary}
-							style={styles.buttonIcon}
-						/>
-						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
-							Search
+					<View style={styles.heroActions}>
+						<Button
+							size="lg"
+							onPress={() => router.push("/login")}
+							style={styles.heroActionButton}
+						>
+							<LogIn
+								size={20}
+								color={colors.onPrimary}
+								style={styles.buttonIcon}
+							/>
+							<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+								Sign in to start tracking
+							</Text>
+						</Button>
+						<Button
+							size="lg"
+							variant="outlined"
+							onPress={() => router.push("/(tabs)/search")}
+							style={styles.heroActionButton}
+						>
+							<Search
+								size={20}
+								color={colors.primary}
+								style={styles.buttonIcon}
+							/>
+							<Text style={[styles.buttonText, { color: colors.primary }]}>
+								Browse catalog
+							</Text>
+						</Button>
+					</View>
+				</View>
+
+				<Card
+					style={{
+						...styles.valueCard,
+						backgroundColor: colors.surfaceContainerLow,
+						borderColor: colors.outlineVariant,
+					}}
+				>
+					<CardHeader>
+						<Text style={[styles.valueCardTitle, { color: colors.onSurface }]}>
+							Why people use OpnShelf
 						</Text>
-					</Button>
+						<Text
+							style={[
+								styles.valueCardDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							Built for people who want more than a single watched toggle.
+						</Text>
+					</CardHeader>
+					<CardContent style={styles.valuePoints}>
+						{valuePoints.map((point, index) => (
+							<View key={point.title} style={styles.valuePointRow}>
+								<View
+									style={[
+										styles.valuePointNumber,
+										{ backgroundColor: colors.primaryContainer },
+									]}
+								>
+									<Text
+										style={[
+											styles.valuePointNumberText,
+											{ color: colors.onPrimaryContainer },
+										]}
+									>
+										{index + 1}
+									</Text>
+								</View>
+								<View style={styles.valuePointCopy}>
+									<Text
+										style={[
+											styles.valuePointTitle,
+											{ color: colors.onSurface },
+										]}
+									>
+										{point.title}
+									</Text>
+									<Text
+										style={[
+											styles.valuePointDescription,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										{point.description}
+									</Text>
+								</View>
+							</View>
+						))}
+					</CardContent>
+				</Card>
+
+				<View style={styles.featuresIntro}>
+					<Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+						Features
+					</Text>
+					<Text
+						style={[styles.sectionSubtitle, { color: colors.onSurfaceVariant }]}
+					>
+						Everything you need to track and organize what you watch.
+					</Text>
 				</View>
 
 				<View style={styles.features}>
-					{features.map((feature, index) => (
-						<Card key={index} style={styles.featureCard}>
+					{featureCards.map((feature) => (
+						<Card key={feature.title} style={styles.featureCard}>
 							<CardHeader>
 								<feature.icon
-									size={32}
+									size={28}
 									color={colors.primary}
 									style={styles.featureIcon}
 								/>
@@ -656,6 +801,59 @@ function UnauthenticatedHome() {
 						</Card>
 					))}
 				</View>
+
+				<Card style={styles.exploreCard}>
+					<CardHeader>
+						<Text style={[styles.featureTitle, { color: colors.onSurface }]}>
+							Explore without signing in
+						</Text>
+					</CardHeader>
+					<CardContent>
+						<Text
+							style={[
+								styles.featureDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							Explore movies and shows right away, then sign in when you are
+							ready to track.
+						</Text>
+						<View style={styles.exploreActions}>
+							<Button
+								variant="filled-tonal"
+								onPress={() => router.push("/(tabs)/search")}
+								style={styles.exploreActionButton}
+							>
+								<Search
+									size={18}
+									color={colors.onSecondaryContainer}
+									style={styles.buttonIcon}
+								/>
+								<Text
+									style={[
+										styles.buttonText,
+										{ color: colors.onSecondaryContainer },
+									]}
+								>
+									Start searching
+								</Text>
+							</Button>
+							<Button
+								onPress={() => router.push("/login")}
+								style={styles.exploreActionButton}
+							>
+								<LogIn
+									size={18}
+									color={colors.onPrimary}
+									style={styles.buttonIcon}
+								/>
+								<Text style={[styles.buttonText, { color: colors.onPrimary }]}>
+									Unlock full tracking
+								</Text>
+							</Button>
+						</View>
+					</CardContent>
+				</Card>
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -683,10 +881,22 @@ const styles = StyleSheet.create({
 	},
 	hero: {
 		alignItems: "center",
-		paddingVertical: spacing.xxl,
+		paddingTop: spacing.xl,
+		paddingBottom: spacing.lg,
 	},
 	logoContainer: {
-		marginBottom: spacing.lg,
+		marginBottom: spacing.md,
+	},
+	heroBadge: {
+		borderRadius: borderRadius.full,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.xs,
+		marginBottom: spacing.md,
+	},
+	heroBadgeText: {
+		fontSize: 12,
+		fontWeight: "600",
+		letterSpacing: 0.2,
 	},
 	logo: {
 		width: 100,
@@ -694,15 +904,24 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 	},
 	title: {
-		fontSize: 40,
-		fontWeight: "bold",
+		fontSize: 34,
+		fontWeight: "700",
 		marginBottom: spacing.sm,
+		textAlign: "center",
 	},
 	subtitle: {
 		fontSize: 16,
 		textAlign: "center",
 		marginBottom: spacing.xl,
-		paddingHorizontal: spacing.lg,
+		paddingHorizontal: spacing.md,
+		lineHeight: 24,
+	},
+	heroActions: {
+		width: "100%",
+		gap: spacing.sm,
+	},
+	heroActionButton: {
+		width: "100%",
 	},
 	searchButton: {
 		minWidth: 200,
@@ -716,6 +935,70 @@ const styles = StyleSheet.create({
 	},
 	features: {
 		gap: spacing.md,
+	},
+	featuresIntro: {
+		marginTop: spacing.xl,
+		marginBottom: spacing.sm,
+		gap: spacing.xs,
+	},
+	sectionSubtitle: {
+		fontSize: 14,
+		lineHeight: 20,
+	},
+	valueCard: {
+		borderWidth: 1,
+		marginTop: spacing.md,
+		marginBottom: spacing.xl,
+	},
+	valueCardTitle: {
+		fontSize: 20,
+		fontWeight: "700",
+		marginBottom: spacing.xs,
+	},
+	valueCardDescription: {
+		fontSize: 14,
+		lineHeight: 20,
+	},
+	valuePoints: {
+		gap: spacing.md,
+	},
+	valuePointRow: {
+		flexDirection: "row",
+		gap: spacing.sm,
+	},
+	valuePointNumber: {
+		width: 28,
+		height: 28,
+		borderRadius: borderRadius.full,
+		alignItems: "center",
+		justifyContent: "center",
+		marginTop: 2,
+	},
+	valuePointNumberText: {
+		fontSize: 12,
+		fontWeight: "700",
+	},
+	valuePointCopy: {
+		flex: 1,
+		gap: spacing.xs,
+	},
+	valuePointTitle: {
+		fontSize: 16,
+		fontWeight: "600",
+	},
+	valuePointDescription: {
+		fontSize: 13,
+		lineHeight: 19,
+	},
+	exploreCard: {
+		marginTop: spacing.lg,
+	},
+	exploreActions: {
+		marginTop: spacing.md,
+		gap: spacing.sm,
+	},
+	exploreActionButton: {
+		width: "100%",
 	},
 	dashboardHeader: {
 		marginBottom: spacing.lg,

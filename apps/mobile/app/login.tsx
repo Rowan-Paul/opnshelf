@@ -38,6 +38,11 @@ export default function LoginScreen() {
 
 	useEffect(() => {
 		if (user && !isAuthLoading) {
+			if (user.needsOnboarding) {
+				router.replace("/onboarding");
+				return;
+			}
+
 			if (redirect === "shelf") {
 				router.replace("/(tabs)");
 			} else if (redirect === "search") {

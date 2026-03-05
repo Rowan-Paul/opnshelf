@@ -45,6 +45,11 @@ export default function AuthCompleteScreen() {
 
 				await new Promise((resolve) => setTimeout(resolve, 100));
 
+				if (user?.needsOnboarding) {
+					router.replace("/onboarding");
+					return;
+				}
+
 				router.replace("/(tabs)");
 			} catch (error) {
 				console.error("Auth complete failed:", error);

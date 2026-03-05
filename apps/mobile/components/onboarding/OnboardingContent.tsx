@@ -1,0 +1,143 @@
+import { useState } from "react";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/contexts/theme";
+import { OnboardingProgressCard } from "./OnboardingProgressCard";
+import {
+	BriefingStepCard,
+	IdentityStepCard,
+	ImportStepCard,
+	LaunchStepCard,
+} from "./OnboardingStepCards";
+import { OnboardingTimezoneModal } from "./OnboardingTimezoneModal";
+import type {
+	ImportProgressState,
+	OnboardingImportResult,
+	TabValue,
+} from "./types";
+import { styles } from "./styles";
+
+type OnboardingContentProps = {
+	step: number;
+	progressPercent: number;
+	activeTab: TabValue;
+	traktUsername: string;
+	displayName: string;
+	timezone: string;
+	timeFormat: "12h" | "24h";
+	csvFileName: string | null;
+	importProgress: ImportProgressState;
+	importPercent: number;
+	importResult: OnboardingImportResult;
+	isCompleting: boolean;
+	isSavingProfile: boolean;
+	isImportBusy: boolean;
+	onStepChange: (step: number) => void;
+	onActiveTabChange: (tab: TabValue) => void;
+	onTraktUsernameChange: (value: string) => void;
+	onDisplayNameChange: (value: string) => void;
+	onTimezoneChange: (value: string) => void;
+	onTimeFormatChange: (value: "12h" | "24h") => void;
+	onSkip: () => void;
+	onSaveProfileAndContinue: () => void;
+	onTraktImport: () => void;
+	onCsvImport: () => void;
+	onComplete: () => void;
+};
+
+export function OnboardingContent({
+	step,
+	progressPercent,
+	activeTab,
+	traktUsername,
+	displayName,
+	timezone,
+	timeFormat,
+	csvFileName,
+	importProgress,
+	importPercent,
+	importResult,
+	isCompleting,
+	isSavingProfile,
+	isImportBusy,
+	onStepChange,
+	onActiveTabChange,
+	onTraktUsernameChange,
+	onDisplayNameChange,
+	onTimezoneChange,
+	onTimeFormatChange,
+	onSkip,
+	onSaveProfileAndContinue,
+	onTraktImport,
+	onCsvImport,
+	onComplete,
+}: OnboardingContentProps) {
+	const { colors } = useTheme();
+	const [isTimezoneModalOpen, setIsTimezoneModalOpen] = useState(false);
+
+	return (
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+			edges={["top", "left", "right", "bottom"]}
+		>
+			<ScrollView contentContainerStyle={styles.scrollContent}>
+				<OnboardingProgressCard step={step} progressPercent={progressPercent} />
+
+				{step === 1 && (
+					<BriefingStepCard
+						onStart={() => onStepChange(2)}
+						onSkip={onSkip}
+						isCompleting={isCompleting}
+					/>
+				)}
+
+				{step === 2 && (
+					<IdentityStepCard
+						displayName={displayName}
+						timezone={timezone}
+						timeFormat={timeFormat}
+						isSavingProfile={isSavingProfile}
+						onDisplayNameChange={onDisplayNameChange}
+						onOpenTimezonePicker={() => setIsTimezoneModalOpen(true)}
+						onTimeFormatChange={onTimeFormatChange}
+						onBack={() => onStepChange(1)}
+						onSave={onSaveProfileAndContinue}
+					/>
+				)}
+
+				{step === 3 && (
+					<ImportStepCard
+						activeTab={activeTab}
+						traktUsername={traktUsername}
+						csvFileName={csvFileName}
+						importProgress={importProgress}
+						importPercent={importPercent}
+						isImportBusy={isImportBusy}
+						isCompleting={isCompleting}
+						onActiveTabChange={onActiveTabChange}
+						onTraktUsernameChange={onTraktUsernameChange}
+						onTraktImport={onTraktImport}
+						onCsvImport={onCsvImport}
+						onBack={() => onStepChange(2)}
+						onSkip={onSkip}
+					/>
+				)}
+
+				{step === 4 && (
+					<LaunchStepCard
+						importResult={importResult}
+						isCompleting={isCompleting}
+						onComplete={onComplete}
+					/>
+				)}
+			</ScrollView>
+
+			<OnboardingTimezoneModal
+				visible={isTimezoneModalOpen}
+				timezone={timezone}
+				onClose={() => setIsTimezoneModalOpen(false)}
+				onSelect={onTimezoneChange}
+			/>
+		</SafeAreaView>
+	);
+}

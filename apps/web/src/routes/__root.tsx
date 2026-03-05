@@ -132,7 +132,7 @@ function OnboardingGate() {
 		}
 
 		if (!user.needsOnboarding && pathname === "/onboarding") {
-			navigate({ to: "/profile/shelf", replace: true });
+			navigate({ to: "/", replace: true });
 		}
 	}, [location.pathname, navigate, user]);
 

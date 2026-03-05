@@ -1,5 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
+import {
+	Stack,
+	useGlobalSearchParams,
+	usePathname,
+	useRouter,
+} from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PostHogProvider } from "posthog-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -55,6 +60,7 @@ function AppContent() {
 
 	return (
 		<M3SnackbarProvider>
+			<OnboardingGate />
 			<Stack
 				screenOptions={{
 					headerShown: false,
@@ -79,10 +85,37 @@ function AppContent() {
 				<Stack.Screen name="settings" />
 				<Stack.Screen name="list/[slug]" />
 				<Stack.Screen name="login" />
+				<Stack.Screen name="onboarding" />
 			</Stack>
 			<StatusBar style="light" />
 		</M3SnackbarProvider>
 	);
+}
+
+function OnboardingGate() {
+	const { user, isLoading, isAuthenticated } = useAuth();
+	const pathname = usePathname();
+	const router = useRouter();
+
+	useEffect(() => {
+		if (isLoading || !user || !isAuthenticated) {
+			return;
+		}
+
+		const isAuthRoute = pathname === "/login" || pathname.startsWith("/auth/");
+		const isOnboardingRoute = pathname === "/onboarding";
+
+		if (user.needsOnboarding && !isOnboardingRoute && !isAuthRoute) {
+			router.replace("/onboarding");
+			return;
+		}
+
+		if (!user.needsOnboarding && isOnboardingRoute) {
+			router.replace("/(tabs)");
+		}
+	}, [isLoading, user, isAuthenticated, pathname, router]);
+
+	return null;
 }
 
 function ScreenTracker() {

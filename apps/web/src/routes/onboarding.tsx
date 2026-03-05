@@ -1,5 +1,7 @@
 import {
 	authControllerMeOptions,
+	listsControllerGetUserListsOptions,
+	shelfControllerGetUserShelfOptions,
 	usersControllerCompleteOnboardingMutation,
 	usersControllerFetchMyTraktPublicHistoryMutation,
 	usersControllerGetMySettingsOptions,
@@ -128,7 +130,7 @@ function OnboardingPage() {
 		}
 
 		if (needsShelfRedirect) {
-			navigate({ to: "/profile/shelf" });
+			navigate({ to: "/" });
 		}
 	}, [navigate, needsAuthRedirect, needsShelfRedirect]);
 
@@ -150,7 +152,7 @@ function OnboardingPage() {
 	if (isAuthLoading) {
 		return (
 			<div className="flex-1 flex items-center justify-center">
-				<div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin border-[var(--md-sys-color-primary)]" />
+				<div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin border-(--md-sys-color-primary)" />
 			</div>
 		);
 	}
@@ -193,7 +195,29 @@ function OnboardingPage() {
 			},
 		);
 
-		navigate({ to: "/profile/shelf", replace: true });
+		await queryClient.invalidateQueries({
+			predicate: (query) => {
+				const key = query.queryKey[0] as { _id?: string } | undefined;
+				return (
+					key?._id === "shelfControllerGetUserShelf" ||
+					key?._id === "listsControllerGetUserLists"
+				);
+			},
+		});
+
+		if (user?.did) {
+			await Promise.all([
+				queryClient.prefetchQuery(
+					shelfControllerGetUserShelfOptions({
+						path: { userDid: user.did },
+						query: { limit: 6 },
+					}),
+				),
+				queryClient.prefetchQuery(listsControllerGetUserListsOptions()),
+			]);
+		}
+
+		navigate({ to: "/", replace: true });
 		void queryClient.invalidateQueries({
 			queryKey: authControllerMeOptions().queryKey,
 		});
