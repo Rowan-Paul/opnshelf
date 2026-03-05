@@ -16,34 +16,21 @@ import {
 import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Calendar, Clock, History, Loader2, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
-import { CastSection } from "@/components/CastSection";
-import { CrewSection } from "@/components/CrewSection";
 import { DatePickerModal } from "@/components/DatePickerModal";
+import { MovieDetailContent } from "@/components/movie-detail/MovieDetailContent";
 import {
 	type ColorTheme,
 	DetailActions,
 	DetailHero,
-	MetadataPills,
+	WatchHistoryDialog,
 } from "@/components/detail";
-import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import { M3Button } from "@/components/ui/m3-button";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
-	formatDateOnly,
 	formatDateWithTimezone,
-	formatRuntime,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 } from "@/lib/utils";
@@ -289,29 +276,6 @@ function MovieDetailPage() {
 		return null;
 	}, [releaseYear]);
 
-	const metadataItems = useMemo(() => {
-		const items = [];
-		if (movie?.release_date) {
-			items.push({
-				icon: <Calendar className="w-4 h-4" />,
-				label: formatDateOnly(movie.release_date),
-			});
-		}
-		if (movie?.runtime) {
-			items.push({
-				icon: <Clock className="w-4 h-4" />,
-				label: formatRuntime(movie.runtime, false),
-			});
-		}
-		if (movie?.vote_average) {
-			items.push({
-				icon: <Star className="w-4 h-4" />,
-				label: `${movie.vote_average.toFixed(1)}/10`,
-			});
-		}
-		return items;
-	}, [movie]);
-
 	return (
 		<div
 			className="min-h-screen m3-background m3-on-background"
@@ -353,122 +317,23 @@ function MovieDetailPage() {
 						/>
 					</div>
 
-					<div className="space-y-6 min-w-0 w-full">
-						<MetadataPills items={metadataItems} />
-
-						<section>
-							<h2
-								className="m3-title-large mb-3"
-								style={{ color: colors.primary }}
-							>
-								Overview
-							</h2>
-							<p
-								className="m3-body-large leading-relaxed wrap-break-word"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								{movie?.overview || "No overview available."}
-							</p>
-						</section>
-
-						<GenresSection genres={movie?.genres} colors={colors} />
-						<CastSection cast={movie?.credits?.cast} colors={colors} />
-						<CrewSection crew={movie?.credits?.crew} colors={colors} />
-					</div>
+					<MovieDetailContent movie={movie} colors={colors} />
 				</div>
 			</div>
 
-			<Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-				<DialogContent
-					className="max-w-md"
-					style={{
-						backgroundColor: "var(--md-sys-color-surface-container-highest)",
-						borderColor: "var(--md-sys-color-outline)",
-						color: "var(--md-sys-color-on-surface)",
-					}}
-				>
-					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2">
-							<History className="w-5 h-5" />
-							Watch History
-						</DialogTitle>
-						<DialogDescription
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-						>
-							All the times you&apos;ve watched {movie?.title}
-						</DialogDescription>
-					</DialogHeader>
-					<div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-						{(watchHistory?.length ?? 0) > 0 ? (
-							watchHistory?.map((watch) => (
-								<div
-									key={watch.id}
-									className="flex items-center gap-3 p-3 rounded-lg"
-									style={{
-										backgroundColor: "var(--md-sys-color-surface-container)",
-									}}
-								>
-									<div className="flex-1">
-										<p
-											className="m3-body-medium"
-											style={{ color: "var(--md-sys-color-on-surface)" }}
-										>
-											{formatDateWithTimezone(watch.watchedDate, {
-												timezone: userTimezone,
-												is24Hour,
-											})}
-										</p>
-									</div>
-									<button
-										type="button"
-										onClick={() =>
-											deleteWatchEntryMutation.mutate({
-												path: { trackedMovieId: watch.id },
-											})
-										}
-										disabled={deleteWatchEntryMutation.isPending}
-										className="shrink-0 p-2 rounded-lg transition-colors disabled:opacity-50"
-										style={{
-											color: "var(--md-sys-color-on-surface-variant)",
-										}}
-										onMouseEnter={(e) => {
-											e.currentTarget.style.color = "var(--md-sys-color-error)";
-											e.currentTarget.style.backgroundColor =
-												"var(--md-sys-color-error-container)";
-										}}
-										onMouseLeave={(e) => {
-											e.currentTarget.style.color =
-												"var(--md-sys-color-on-surface-variant)";
-											e.currentTarget.style.backgroundColor = "transparent";
-										}}
-									>
-										{deleteWatchEntryMutation.isPending ? (
-											<Loader2 className="w-4 h-4 animate-spin" />
-										) : (
-											<Trash2 className="w-4 h-4" />
-										)}
-									</button>
-								</div>
-							))
-						) : (
-							<div
-								className="text-center py-8 m3-body-large"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								No watch history found
-							</div>
-						)}
-					</div>
-					<div className="mt-4 flex justify-end">
-						<M3Button
-							variant="outlined"
-							onClick={() => setShowHistoryDialog(false)}
-						>
-							Close
-						</M3Button>
-					</div>
-				</DialogContent>
-			</Dialog>
+			<WatchHistoryDialog
+				open={showHistoryDialog}
+				onOpenChange={setShowHistoryDialog}
+				description={`All the times you've watched ${movie?.title}`}
+				watchHistory={watchHistory ?? []}
+				userTimezone={userTimezone}
+				is24Hour={is24Hour}
+				onDelete={(trackedMovieId) =>
+					deleteWatchEntryMutation.mutate({ path: { trackedMovieId } })
+				}
+				isDeleting={deleteWatchEntryMutation.isPending}
+				onClose={() => setShowHistoryDialog(false)}
+			/>
 
 			<DatePickerModal
 				open={showDateModal}

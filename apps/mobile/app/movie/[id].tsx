@@ -1,9 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type {
-	TmdbCastDto,
-	TmdbCrewDto,
-	TmdbMovieDetailDto,
-} from "@opnshelf/api";
+import type { TmdbMovieDetailDto } from "@opnshelf/api";
 import {
 	authControllerMeOptions,
 	listsControllerGetListsForItemOptions,
@@ -19,34 +15,35 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
 import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
-	Modal,
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
-	Pressable,
 	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
-	Text,
-	TouchableOpacity,
 	View,
 } from "react-native";
-import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
-import { DetailActions, DetailHero, MetadataPills } from "@/components/detail";
+import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
+import {
+	CastSection,
+	CrewSection,
+	DetailActions,
+	DetailHero,
+	GenresSection,
+	MetadataPills,
+	OverviewSection,
+	WatchHistoryModal,
+} from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
-import { Button } from "@/components/ui/Button";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -103,11 +100,8 @@ export default function MovieDetailScreen() {
 
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
-	const [customDate, setCustomDate] = useState<Date>(new Date());
-	const [showDatePicker, setShowDatePicker] = useState(false);
-	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
-	const [showCompactHeader, setShowCompactHeader] = useState(false);
+	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 
 	const {
 		data: movieData,
@@ -303,12 +297,12 @@ export default function MovieDetailScreen() {
 		markMutation.mutate({ body: { movieId } });
 	}, [markMutation, movieId]);
 
-	const handleMarkWatchedWithDate = useCallback(() => {
-		const watchedAt = customDate.toISOString();
+	const handleMarkWatchedWithDate = useCallback((date: Date) => {
+		const watchedAt = date.toISOString();
 		markMutation.mutate({
 			body: { movieId, watchedAt },
 		});
-	}, [markMutation, movieId, customDate]);
+	}, [markMutation, movieId]);
 
 	const handleUnmarkWatched = useCallback(() => {
 		unmarkMutation.mutate({
@@ -342,7 +336,6 @@ export default function MovieDetailScreen() {
 	}, [movie?.title, movieId, title, showToast, posthog]);
 
 	const openDateModal = useCallback(() => {
-		setCustomDate(new Date());
 		setShowDateModal(true);
 	}, []);
 
@@ -402,16 +395,6 @@ export default function MovieDetailScreen() {
 		return items;
 	}, [movie, themeColors]);
 
-	const handleScroll = useCallback(
-		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
-			setShowCompactHeader((prev) =>
-				prev === shouldShowHeader ? prev : shouldShowHeader,
-			);
-		},
-		[],
-	);
-
 	if (isMovieLoading) {
 		return (
 			<SafeAreaView style={styles.container}>
@@ -428,7 +411,7 @@ export default function MovieDetailScreen() {
 		>
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
-				onScroll={handleScroll}
+				onScroll={onScroll}
 				scrollEventThrottle={16}
 				refreshControl={
 					<RefreshControl
@@ -473,383 +456,40 @@ export default function MovieDetailScreen() {
 
 					<MetadataPills items={metadataItems} />
 
-					{movie?.overview && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: movieColors.primary }]}
-							>
-								Overview
-							</Text>
-							<Text
-								style={[
-									styles.overview,
-									{ color: themeColors.onSurfaceVariant },
-								]}
-							>
-								{movie.overview}
-							</Text>
-						</View>
-					)}
-
-					{movie?.genres && movie.genres.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: movieColors.primary }]}
-							>
-								Genres
-							</Text>
-							<View style={styles.genresContainer}>
-								{movie.genres.map((genre) => (
-									<View
-										key={genre.id}
-										style={[
-											styles.genreBadge,
-											{
-												backgroundColor: `${movieColors.primary}20`,
-												borderColor: `${movieColors.primary}40`,
-											},
-										]}
-									>
-										<Text
-											style={[styles.genreText, { color: movieColors.accent }]}
-										>
-											{genre.name}
-										</Text>
-									</View>
-								))}
-							</View>
-						</View>
-					)}
-
-					{movie?.credits?.cast && movie.credits.cast.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: movieColors.primary }]}
-							>
-								Cast
-							</Text>
-							<View style={styles.castContainer}>
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={styles.castScrollContent}
-								>
-									{movie.credits.cast.map((person: TmdbCastDto) => (
-										<TouchableOpacity
-											key={person.id}
-											style={styles.castCard}
-											activeOpacity={0.8}
-										>
-											<View style={styles.castImageContainer}>
-												{person.profile_path ? (
-													<Image
-														source={{
-															uri: `https://image.tmdb.org/t/p/w185${person.profile_path}`,
-														}}
-														style={styles.castImage}
-														contentFit="cover"
-													/>
-												) : (
-													<View style={styles.castImagePlaceholder}>
-														<Text style={styles.castImagePlaceholderText}>
-															No photo
-														</Text>
-													</View>
-												)}
-											</View>
-											<Text style={styles.castName} numberOfLines={2}>
-												{person.name}
-											</Text>
-											{person.character && (
-												<Text
-													style={[
-														styles.castCharacter,
-														{ color: movieColors.muted },
-													]}
-												>
-													as {person.character}
-												</Text>
-											)}
-										</TouchableOpacity>
-									))}
-								</ScrollView>
-								<LinearGradient
-									colors={["rgba(3, 7, 18, 0)", "rgba(3, 7, 18, 1)"]}
-									start={{ x: 0, y: 0.5 }}
-									end={{ x: 1, y: 0.5 }}
-									style={styles.castGradient}
-								/>
-							</View>
-						</View>
-					)}
-
-					{movie?.credits?.crew && movie.credits.crew.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: movieColors.primary }]}
-							>
-								Crew
-							</Text>
-							<View style={styles.crewGrid}>
-								{movie.credits.crew.map((person: TmdbCrewDto) => (
-									<TouchableOpacity
-										key={`${person.id}-${person.job}`}
-										style={styles.crewCard}
-										activeOpacity={0.8}
-									>
-										<Text style={styles.crewName} numberOfLines={1}>
-											{person.name}
-										</Text>
-										<Text
-											style={[styles.crewJob, { color: movieColors.muted }]}
-										>
-											{person.job}
-										</Text>
-									</TouchableOpacity>
-								))}
-							</View>
-						</View>
-					)}
+					<OverviewSection
+						titleColor={movieColors.primary}
+						content={movie?.overview || ""}
+					/>
+					<GenresSection
+						titleColor={movieColors.primary}
+						textColor={movieColors.accent}
+						genres={movie?.genres}
+					/>
+					<CastSection titleColor={movieColors.primary} cast={movie?.credits?.cast} />
+					<CrewSection titleColor={movieColors.primary} crew={movie?.credits?.crew} />
 				</View>
 			</ScrollView>
 
-			<Modal
+			<WatchDatePickerModal
 				visible={showDateModal}
-				animationType="fade"
-				transparent={true}
-				onRequestClose={() => setShowDateModal(false)}
-			>
-				<View style={styles.modalOverlay}>
-					<View
-						style={[
-							styles.modalContent,
-							{ backgroundColor: themeColors.surfaceContainerHighest },
-						]}
-					>
-						<View style={styles.modalHeader}>
-							<Text
-								style={[styles.modalTitle, { color: themeColors.onSurface }]}
-							>
-								Watch movie
-							</Text>
-							<Pressable onPress={() => setShowDateModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={themeColors.onSurface}
-								/>
-							</Pressable>
-						</View>
-						<Text
-							style={[
-								styles.modalDescription,
-								{ color: themeColors.onSurfaceVariant },
-							]}
-						>
-							When did you watch this?
-						</Text>
+				onDismiss={() => setShowDateModal(false)}
+				onConfirm={handleMarkWatchedWithDate}
+				isLoading={markMutation.isPending}
+				is24Hour={is24Hour}
+			/>
 
-						<View style={styles.dateTimeContainer}>
-							<TouchableOpacity
-								onPress={() => setShowDatePicker(true)}
-								style={styles.dateTimeButton}
-								activeOpacity={0.7}
-							>
-								<Ionicons
-									name="calendar-outline"
-									size={20}
-									color={themeColors.onSurfaceVariant}
-								/>
-								<Text
-									style={[
-										styles.dateTimeText,
-										{ color: themeColors.onSurface },
-									]}
-								>
-									{customDate.toLocaleDateString("en-US", {
-										year: "numeric",
-										month: "short",
-										day: "numeric",
-									})}
-								</Text>
-							</TouchableOpacity>
-							<TouchableOpacity
-								onPress={() => setShowTimePicker(true)}
-								style={styles.dateTimeButton}
-								activeOpacity={0.7}
-							>
-								<Ionicons
-									name="time-outline"
-									size={20}
-									color={themeColors.onSurfaceVariant}
-								/>
-								<Text
-									style={[
-										styles.dateTimeText,
-										{ color: themeColors.onSurface },
-									]}
-								>
-									{customDate.toLocaleTimeString("en-US", {
-										hour: "2-digit",
-										minute: "2-digit",
-										hour12: !is24Hour,
-									})}
-								</Text>
-							</TouchableOpacity>
-						</View>
-
-						<DatePickerModal
-							visible={showDatePicker}
-							mode="single"
-							date={customDate}
-							locale="en"
-							startWeekOnMonday
-							onDismiss={() => setShowDatePicker(false)}
-							onConfirm={(params) => {
-								setShowDatePicker(false);
-								if (params.date) {
-									const newDate = new Date(customDate);
-									newDate.setFullYear(params.date.getFullYear());
-									newDate.setMonth(params.date.getMonth());
-									newDate.setDate(params.date.getDate());
-									setCustomDate(newDate);
-									setShowTimePicker(true);
-								}
-							}}
-						/>
-						<TimePickerModal
-							visible={showTimePicker}
-							hours={customDate.getHours()}
-							minutes={customDate.getMinutes()}
-							locale="en"
-							use24HourClock={is24Hour}
-							onDismiss={() => setShowTimePicker(false)}
-							onConfirm={(params) => {
-								const newDate = new Date(customDate);
-								newDate.setHours(params.hours);
-								newDate.setMinutes(params.minutes);
-								setCustomDate(newDate);
-								setShowTimePicker(false);
-							}}
-						/>
-
-						<View style={styles.modalActionsSplit}>
-							<Button
-								variant="outlined"
-								onPress={() => setShowDateModal(false)}
-							>
-								<Text style={styles.secondaryButtonText}>Cancel</Text>
-							</Button>
-							<Button
-								onPress={handleMarkWatchedWithDate}
-								isLoading={markMutation.isPending}
-								style={{ backgroundColor: themeColors.primary }}
-							>
-								<Text style={styles.buttonText}>Add Watch</Text>
-							</Button>
-						</View>
-					</View>
-				</View>
-			</Modal>
-
-			<Modal
+			<WatchHistoryModal
 				visible={showHistoryModal}
-				animationType="fade"
-				transparent={true}
-				onRequestClose={() => setShowHistoryModal(false)}
-			>
-				<View style={styles.modalOverlay}>
-					<View
-						style={[
-							styles.modalContent,
-							{ backgroundColor: themeColors.surfaceContainerHighest },
-						]}
-					>
-						<View style={styles.modalHeader}>
-							<View style={styles.modalTitleContainer}>
-								<Ionicons name="time" size={20} color={themeColors.primary} />
-								<Text
-									style={[styles.modalTitle, { color: themeColors.onSurface }]}
-								>
-									Watch History
-								</Text>
-							</View>
-							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={themeColors.onSurface}
-								/>
-							</Pressable>
-						</View>
-						<Text
-							style={[
-								styles.modalDescription,
-								{ color: themeColors.onSurfaceVariant },
-							]}
-						>
-							All the times you&apos;ve watched {movie?.title}
-						</Text>
-
-						<ScrollView style={styles.historyList}>
-							{watchHistory && watchHistory.length > 0 ? (
-								watchHistory.map((watch) => (
-									<View
-										key={watch.id}
-										style={[
-											styles.historyItem,
-											{ backgroundColor: themeColors.surfaceContainer },
-										]}
-									>
-										<Text
-											style={[
-												styles.historyDate,
-												{ color: themeColors.onSurface },
-											]}
-										>
-											{formatWatchDate(
-												watch.watchedDate,
-												userTimezone,
-												is24Hour,
-											)}
-										</Text>
-										<TouchableOpacity
-											onPress={() => handleDeleteWatchEntry(watch.id)}
-											disabled={deleteWatchEntryMutation.isPending}
-											style={styles.historyDeleteButton}
-											activeOpacity={0.7}
-										>
-											{deleteWatchEntryMutation.isPending &&
-											deleteWatchEntryMutation.variables?.path
-												?.trackedMovieId === watch.id ? (
-												<ActivityIndicator
-													size="small"
-													color={themeColors.onSurfaceVariant}
-												/>
-											) : (
-												<Ionicons
-													name="trash-outline"
-													size={18}
-													color="#ef4444"
-												/>
-											)}
-										</TouchableOpacity>
-									</View>
-								))
-							) : (
-								<Text style={styles.emptyHistory}>No watch history found</Text>
-							)}
-						</ScrollView>
-
-						<Button
-							variant="outlined"
-							onPress={() => setShowHistoryModal(false)}
-						>
-							<Text style={styles.secondaryButtonText}>Close</Text>
-						</Button>
-					</View>
-				</View>
-			</Modal>
+				onClose={() => setShowHistoryModal(false)}
+				description={`All the times you've watched ${movie?.title || "this movie"}`}
+				items={watchHistory ?? []}
+				formatWatchDate={(watchedDate) =>
+					formatWatchDate(watchedDate, userTimezone, is24Hour)
+				}
+				onDelete={handleDeleteWatchEntry}
+				isDeleting={deleteWatchEntryMutation.isPending}
+				deletingId={deleteWatchEntryMutation.variables?.path?.trackedMovieId}
+			/>
 
 			<AddToListModal
 				visible={showAddToListModal}

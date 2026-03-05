@@ -7,6 +7,7 @@ export { MetadataPills } from "./MetadataPills";
 export { SeasonCard } from "./SeasonCard";
 export { SeasonNav } from "./SeasonNav";
 export { TrackedStatusCard } from "./TrackedStatusCard";
+export { WatchHistoryDialog } from "./WatchHistoryDialog";
 export type {
 	BreadcrumbItem,
 	ColorTheme,

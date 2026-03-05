@@ -14,29 +14,28 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
 	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
 	Text,
-	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import {
+	CastSection,
+	CrewSection,
 	DetailActions,
 	DetailHero,
 	EpisodeCard,
 	type EpisodeSummary,
+	GenresSection,
 	MetadataPills,
+	OverviewSection,
 	SeasonNav,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
@@ -44,12 +43,12 @@ import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
-	getTmdbProfileUrl,
 } from "@/lib/utils";
 
 function formatDateOnly(dateString?: string): string {
@@ -74,7 +73,7 @@ export default function ShowSeasonScreen() {
 
 	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
-	const [showCompactHeader, setShowCompactHeader] = useState(false);
+	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 
 	const { data: user, refetch: refetchUser } = useQuery({
 		...authControllerMeOptions(),
@@ -309,16 +308,6 @@ export default function ShowSeasonScreen() {
 		return items;
 	}, [season, seasonEpisodes.length, themeColors]);
 
-	const handleScroll = useCallback(
-		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
-			setShowCompactHeader((prev) =>
-				prev === shouldShowHeader ? prev : shouldShowHeader,
-			);
-		},
-		[],
-	);
-
 	const compactHeaderTitle = `${show?.name || title || "Show"} · Season ${seasonNumber}`;
 
 	return (
@@ -327,7 +316,7 @@ export default function ShowSeasonScreen() {
 		>
 			<ScrollView
 				contentContainerStyle={styles.scrollContent}
-				onScroll={handleScroll}
+				onScroll={onScroll}
 				scrollEventThrottle={16}
 				refreshControl={
 					<RefreshControl
@@ -402,53 +391,15 @@ export default function ShowSeasonScreen() {
 
 					<MetadataPills items={metadataItems} />
 
-					{season?.overview && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: showColors.primary }]}
-							>
-								Overview
-							</Text>
-							<Text
-								style={[
-									styles.overview,
-									{ color: themeColors.onSurfaceVariant },
-								]}
-							>
-								{season.overview}
-							</Text>
-						</View>
-					)}
-
-					{show?.genres && show.genres.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: showColors.primary }]}
-							>
-								Genres
-							</Text>
-							<View style={styles.genresContainer}>
-								{show.genres.map((genre) => (
-									<View
-										key={genre.id}
-										style={[
-											styles.genreBadge,
-											{
-												backgroundColor: `${showColors.primary}20`,
-												borderColor: `${showColors.primary}40`,
-											},
-										]}
-									>
-										<Text
-											style={[styles.genreText, { color: showColors.primary }]}
-										>
-											{genre.name}
-										</Text>
-									</View>
-								))}
-							</View>
-						</View>
-					)}
+					<OverviewSection
+						titleColor={showColors.primary}
+						content={season?.overview || ""}
+					/>
+					<GenresSection
+						titleColor={showColors.primary}
+						textColor={showColors.primary}
+						genres={show?.genres}
+					/>
 
 					{seasonEpisodes.length > 0 && (
 						<View style={styles.section}>
@@ -487,128 +438,9 @@ export default function ShowSeasonScreen() {
 						</View>
 					)}
 
-					{show?.credits?.cast && show.credits.cast.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: showColors.primary }]}
-							>
-								Cast
-							</Text>
-							<View style={styles.castContainer}>
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={styles.castScrollContent}
-								>
-									{show.credits.cast.map((person) => {
-										const profileUrl = getTmdbProfileUrl(person.profile_path);
-										return (
-											<TouchableOpacity
-												key={person.id}
-												style={styles.castCard}
-												activeOpacity={0.8}
-											>
-												<View style={styles.castImageContainer}>
-													{profileUrl ? (
-														<Image
-															source={{ uri: profileUrl }}
-															style={styles.castImage}
-															contentFit="cover"
-														/>
-													) : (
-														<View
-															style={[
-																styles.castImagePlaceholder,
-																{
-																	backgroundColor: themeColors.surfaceContainer,
-																},
-															]}
-														>
-															<Text
-																style={[
-																	styles.castImagePlaceholderText,
-																	{ color: themeColors.onSurfaceVariant },
-																]}
-															>
-																No photo
-															</Text>
-														</View>
-													)}
-												</View>
-												<Text
-													style={[
-														styles.castName,
-														{ color: themeColors.onSurface },
-													]}
-													numberOfLines={2}
-												>
-													{person.name}
-												</Text>
-												{person.character ? (
-													<Text
-														style={[
-															styles.castCharacter,
-															{ color: themeColors.onSurfaceVariant },
-														]}
-														numberOfLines={2}
-													>
-														as {person.character}
-													</Text>
-												) : null}
-											</TouchableOpacity>
-										);
-									})}
-								</ScrollView>
-								<LinearGradient
-									colors={["rgba(3, 7, 18, 0)", "rgba(3, 7, 18, 1)"]}
-									start={{ x: 0, y: 0.5 }}
-									end={{ x: 1, y: 0.5 }}
-									style={styles.castGradient}
-								/>
-							</View>
-						</View>
-					)}
 
-					{show?.credits?.crew && show.credits.crew.length > 0 && (
-						<View style={styles.section}>
-							<Text
-								style={[styles.sectionTitle, { color: showColors.primary }]}
-							>
-								Crew
-							</Text>
-							<View style={styles.crewGrid}>
-								{show.credits.crew.map((person) => (
-									<TouchableOpacity
-										key={`${person.id}-${person.job || "crew"}`}
-										style={[
-											styles.crewCard,
-											{ backgroundColor: themeColors.surfaceContainer },
-										]}
-										activeOpacity={0.8}
-									>
-										<Text
-											style={[
-												styles.crewName,
-												{ color: themeColors.onSurface },
-											]}
-											numberOfLines={1}
-										>
-											{person.name}
-										</Text>
-										<Text
-											style={[
-												styles.crewJob,
-												{ color: themeColors.onSurfaceVariant },
-											]}
-											numberOfLines={1}
-										>
-											{person.job || person.department || "Crew"}
-										</Text>
-									</TouchableOpacity>
-								))}
-							</View>
-						</View>
-					)}
+					<CastSection titleColor={showColors.primary} cast={show?.credits?.cast} />
+					<CrewSection titleColor={showColors.primary} crew={show?.credits?.crew} />
 				</View>
 			</ScrollView>
 

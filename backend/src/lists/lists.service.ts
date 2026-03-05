@@ -23,6 +23,11 @@ import type {
 	MovieListsForItemDto,
 	UpdateListDto,
 } from "./dto/list.dto";
+import { mapItemToDto, mapListToDto } from "./list-mappers";
+import {
+	buildScopedShowMediaId,
+	parseScopedShowMediaId,
+} from "./list-media-id.util";
 
 export interface ATSession {
 	did: string;
@@ -95,7 +100,7 @@ export class ListsService {
 			return null;
 		}
 
-		return this.mapListToDto(list);
+		return mapListToDto(list);
 	}
 
 	async getListsForItem(
@@ -104,7 +109,7 @@ export class ListsService {
 		mediaId: string,
 	): Promise<MovieListsForItemDto[]> {
 		const scopedMediaId =
-			mediaType === "show" ? this.buildScopedShowMediaId(mediaId) : mediaId;
+			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
 
 		const lists = await this.prisma.movieList.findMany({
 			where: { userDid },
@@ -390,11 +395,11 @@ export class ListsService {
 
 		const scopedMediaId =
 			dto.mediaType === "show"
-				? this.buildScopedShowMediaId(dto.mediaId)
+				? buildScopedShowMediaId(dto.mediaId)
 				: dto.mediaId;
 		const showScope =
 			dto.mediaType === "show"
-				? this.parseScopedShowMediaId(scopedMediaId)
+				? parseScopedShowMediaId(scopedMediaId)
 				: undefined;
 
 		const existing = await this.prisma.listItem.findUnique({
@@ -409,7 +414,7 @@ export class ListsService {
 		});
 
 		if (existing) {
-			return this.mapItemToDto(existing);
+			return mapItemToDto(existing);
 		}
 
 		if (dto.mediaType === "movie") {
@@ -467,7 +472,7 @@ export class ListsService {
 			include: { movie: true, show: true },
 		});
 
-		return this.mapItemToDto(item);
+		return mapItemToDto(item);
 	}
 
 	async removeFromList(
@@ -478,7 +483,7 @@ export class ListsService {
 		mediaId: string,
 	): Promise<void> {
 		const scopedMediaId =
-			mediaType === "show" ? this.buildScopedShowMediaId(mediaId) : mediaId;
+			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
 
 		const list = await this.prisma.movieList.findFirst({
 			where: { userDid, slug },
@@ -594,7 +599,7 @@ export class ListsService {
 				}
 			}
 		} else {
-			const scopedShow = this.parseScopedShowMediaId(record.mediaId);
+			const scopedShow = parseScopedShowMediaId(record.mediaId);
 			const baseShowId = scopedShow?.showId ?? record.mediaId;
 			const existingShow = await this.showsService.getShowByTMDBId(baseShowId);
 			if (!existingShow) {
@@ -623,8 +628,7 @@ export class ListsService {
 				movieId: record.mediaType === "movie" ? record.mediaId : null,
 				showId:
 					record.mediaType === "show"
-						? (this.parseScopedShowMediaId(record.mediaId)?.showId ??
-							record.mediaId)
+						? (parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
 						: null,
 				notes: record.notes,
 			},
@@ -635,8 +639,7 @@ export class ListsService {
 				movieId: record.mediaType === "movie" ? record.mediaId : null,
 				showId:
 					record.mediaType === "show"
-						? (this.parseScopedShowMediaId(record.mediaId)?.showId ??
-							record.mediaId)
+						? (parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
 						: null,
 				notes: record.notes,
 			},
@@ -662,211 +665,5 @@ export class ListsService {
 		const uniqueSuffix = userDid.slice(-6);
 
 		return `${baseSlug}-${uniqueSuffix}`;
-	}
-
-	private mapListToDto(list: {
-		id: string;
-		rkey: string;
-		uri: string;
-		userDid: string;
-		name: string;
-		description: string | null;
-		slug: string;
-		isDefault: boolean;
-		createdAt: Date;
-		updatedAt: Date;
-		items: Array<{
-			id: string;
-			rkey: string;
-			mediaType: "movie" | "show";
-			mediaId: string;
-			notes: string | null;
-			position: number;
-			createdAt: Date;
-			movie: {
-				movieId: string;
-				title: string;
-				posterPath: string | null;
-				backdropPath: string | null;
-				releaseYear: number | null;
-				releaseDate: Date | null;
-				overview: string | null;
-				colors: unknown;
-			} | null;
-			show: {
-				showId: string;
-				title: string;
-				posterPath: string | null;
-				backdropPath: string | null;
-				firstAirYear: number | null;
-				firstAirDate: Date | null;
-				overview: string | null;
-				colors: unknown;
-			} | null;
-		}>;
-	}): MovieListDto {
-		return {
-			id: list.id,
-			rkey: list.rkey,
-			uri: list.uri,
-			userDid: list.userDid,
-			name: list.name,
-			description: list.description ?? undefined,
-			slug: list.slug,
-			isDefault: list.isDefault,
-			createdAt: list.createdAt.toISOString(),
-			updatedAt: list.updatedAt.toISOString(),
-			items: list.items.map((item) => this.mapItemToDto(item)),
-		};
-	}
-
-	private mapItemToDto(item: {
-		id: string;
-		rkey: string;
-		mediaType: "movie" | "show";
-		mediaId: string;
-		notes: string | null;
-		position: number;
-		createdAt: Date;
-		movie: {
-			movieId: string;
-			title: string;
-			posterPath: string | null;
-			backdropPath: string | null;
-			releaseYear: number | null;
-			releaseDate: Date | null;
-			overview: string | null;
-			colors: unknown;
-		} | null;
-		show: {
-			showId: string;
-			title: string;
-			posterPath: string | null;
-			backdropPath: string | null;
-			firstAirYear: number | null;
-			firstAirDate: Date | null;
-			overview: string | null;
-			colors: unknown;
-		} | null;
-	}): MediaInListDto {
-		const parsedShowScope =
-			item.mediaType === "show"
-				? this.parseScopedShowMediaId(item.mediaId)
-				: undefined;
-		const baseMediaId =
-			item.mediaType === "show"
-				? (parsedShowScope?.showId ?? item.mediaId)
-				: item.mediaId;
-		const mediaTitle =
-			item.mediaType === "movie" ? item.movie?.title : item.show?.title;
-		const mediaPosterPath =
-			item.mediaType === "movie"
-				? item.movie?.posterPath
-				: item.show?.posterPath;
-		const mediaBackdropPath =
-			item.mediaType === "movie"
-				? item.movie?.backdropPath
-				: item.show?.backdropPath;
-		const mediaReleaseYear =
-			item.mediaType === "movie"
-				? item.movie?.releaseYear
-				: item.show?.firstAirYear;
-		const mediaReleaseDate =
-			item.mediaType === "movie"
-				? item.movie?.releaseDate
-				: item.show?.firstAirDate;
-		const mediaOverview =
-			item.mediaType === "movie" ? item.movie?.overview : item.show?.overview;
-		const mediaColors =
-			item.mediaType === "movie" ? item.movie?.colors : item.show?.colors;
-
-		return {
-			id: item.id,
-			rkey: item.rkey,
-			mediaType: item.mediaType,
-			mediaId: item.mediaId,
-			seasonNumber: parsedShowScope?.seasonNumber,
-			episodeNumber: parsedShowScope?.episodeNumber,
-			movieId: item.mediaType === "movie" ? item.mediaId : undefined,
-			notes: item.notes ?? undefined,
-			position: item.position,
-			createdAt: item.createdAt.toISOString(),
-			media: {
-				mediaType: item.mediaType,
-				mediaId: baseMediaId,
-				movieId: item.movie?.movieId,
-				showId: item.show?.showId ?? parsedShowScope?.showId,
-				seasonNumber: parsedShowScope?.seasonNumber,
-				episodeNumber: parsedShowScope?.episodeNumber,
-				title: mediaTitle ?? "",
-				posterPath: mediaPosterPath ?? undefined,
-				backdropPath: mediaBackdropPath ?? undefined,
-				releaseYear: mediaReleaseYear ?? undefined,
-				releaseDate: mediaReleaseDate?.toISOString() ?? undefined,
-				overview: mediaOverview ?? undefined,
-				colors: (mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
-			},
-			movie:
-				item.mediaType === "movie"
-					? {
-							movieId: item.mediaId,
-							title: mediaTitle ?? "",
-							posterPath: mediaPosterPath ?? undefined,
-							backdropPath: mediaBackdropPath ?? undefined,
-							releaseYear: mediaReleaseYear ?? undefined,
-							releaseDate: mediaReleaseDate?.toISOString() ?? undefined,
-							overview: mediaOverview ?? undefined,
-							colors:
-								(mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
-						}
-					: undefined,
-		};
-	}
-
-	private buildScopedShowMediaId(
-		mediaId: string,
-		seasonNumber?: number,
-		episodeNumber?: number,
-	): string {
-		const parsed = this.parseScopedShowMediaId(mediaId);
-		if (parsed) {
-			return mediaId;
-		}
-
-		if (typeof seasonNumber === "number" && Number.isFinite(seasonNumber)) {
-			if (typeof episodeNumber === "number" && Number.isFinite(episodeNumber)) {
-				return `${mediaId}:season:${seasonNumber}:episode:${episodeNumber}`;
-			}
-			return `${mediaId}:season:${seasonNumber}`;
-		}
-
-		return mediaId;
-	}
-
-	private parseScopedShowMediaId(mediaId: string):
-		| {
-				showId: string;
-				seasonNumber?: number;
-				episodeNumber?: number;
-		  }
-		| undefined {
-		const episodeMatch = mediaId.match(/^([^:]+):season:(\d+):episode:(\d+)$/);
-		if (episodeMatch) {
-			return {
-				showId: episodeMatch[1],
-				seasonNumber: Number(episodeMatch[2]),
-				episodeNumber: Number(episodeMatch[3]),
-			};
-		}
-
-		const seasonMatch = mediaId.match(/^([^:]+):season:(\d+)$/);
-		if (seasonMatch) {
-			return {
-				showId: seasonMatch[1],
-				seasonNumber: Number(seasonMatch[2]),
-			};
-		}
-
-		return undefined;
 	}
 }

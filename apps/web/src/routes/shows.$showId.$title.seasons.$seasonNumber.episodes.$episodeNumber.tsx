@@ -16,35 +16,22 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Calendar, Clock, Film, History, Layers, Star } from "lucide-react";
-import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
-import { CastSection } from "@/components/CastSection";
-import { CrewSection } from "@/components/CrewSection";
 import { DatePickerModal } from "@/components/DatePickerModal";
+import { ShowEpisodeContent } from "@/components/show-episode-detail/ShowEpisodeContent";
 import {
 	type ColorTheme,
 	DetailActions,
 	DetailHero,
 	EpisodeNav,
-	MetadataPills,
+	WatchHistoryDialog,
 } from "@/components/detail";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import { M3Button } from "@/components/ui/m3-button";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
-	formatDateOnly,
 	formatDateWithTimezone,
-	formatRuntime,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
 } from "@/lib/utils";
@@ -381,45 +368,6 @@ function ShowEpisodePage() {
 		});
 	}, [latestEpisodeWatch, userTimezone, is24Hour]);
 
-	const metadataItems = useMemo(() => {
-		const items: Array<{
-			icon?: ReactNode;
-			label: string;
-			linkTo?: { to: string; params: Record<string, string> };
-		}> = [];
-		items.push({
-			icon: <Layers className="w-4 h-4" />,
-			label: `Season ${seasonNumber}`,
-			linkTo: {
-				to: "/shows/$showId/$title/seasons/$seasonNumber",
-				params: { showId, title, seasonNumber },
-			},
-		});
-		items.push({
-			icon: <Film className="w-4 h-4" />,
-			label: `Episode ${episodeNumber}`,
-		});
-		if (episode?.air_date) {
-			items.push({
-				icon: <Calendar className="w-4 h-4" />,
-				label: formatDateOnly(episode.air_date),
-			});
-		}
-		if (episode?.vote_average) {
-			items.push({
-				icon: <Star className="w-4 h-4" />,
-				label: `${episode.vote_average.toFixed(1)}/10`,
-			});
-		}
-		if (episode?.runtime) {
-			items.push({
-				icon: <Clock className="w-4 h-4" />,
-				label: formatRuntime(episode.runtime, false),
-			});
-		}
-		return items;
-	}, [episode, seasonNumber, episodeNumber, showId, title]);
-
 	return (
 		<div>
 			<DetailHero
@@ -437,7 +385,7 @@ function ShowEpisodePage() {
 
 			<div className="container mx-auto px-4 py-6 max-w-6xl">
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
-					<div className="space-y-4 min-w-0">
+					<div className="space-y-4 min-w-0 max-w-[300px]">
 						<DetailActions
 							mediaType="episode"
 							mediaId={showId}
@@ -459,7 +407,7 @@ function ShowEpisodePage() {
 							onLogin={() => router.navigate({ to: "/login" })}
 						/>
 
-						{seasonEpisodeContext.current && (
+						{seasonEpisodeContext.current ? (
 							<EpisodeNav
 								showId={showId}
 								title={title}
@@ -472,31 +420,18 @@ function ShowEpisodePage() {
 								colors={colors}
 								variant="sidebar"
 							/>
-						)}
+						) : null}
 					</div>
 
-					<div className="space-y-6 min-w-0">
-						<MetadataPills items={metadataItems} />
-
-						<section>
-							<h2
-								className="text-xl font-semibold mb-3"
-								style={{ color: colors.primary }}
-							>
-								Overview
-							</h2>
-							<p className="text-gray-300 leading-relaxed mb-4">
-								{episode?.overview || "No overview available."}
-							</p>
-						</section>
-
-						<CastSection
-							cast={show?.credits?.cast}
-							guestStars={episode?.guest_stars}
-							colors={colors}
-						/>
-						<CrewSection crew={show?.credits?.crew} colors={colors} />
-					</div>
+					<ShowEpisodeContent
+						show={show}
+						episode={episode}
+						showId={showId}
+						title={title}
+						seasonNumber={seasonNumber}
+						episodeNumber={episodeNumber}
+						colors={colors}
+					/>
 				</div>
 			</div>
 
@@ -522,97 +457,19 @@ function ShowEpisodePage() {
 				/>
 			)}
 
-			<Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-				<DialogContent
-					className="max-w-md"
-					style={{
-						backgroundColor: "var(--md-sys-color-surface-container-highest)",
-						borderColor: "var(--md-sys-color-outline)",
-						color: "var(--md-sys-color-on-surface)",
-					}}
-				>
-					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2">
-							<History className="w-5 h-5" />
-							Watch History
-						</DialogTitle>
-						<DialogDescription
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-						>
-							All watches for this episode
-						</DialogDescription>
-					</DialogHeader>
-					<div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-						{episodeWatchHistory.length > 0 ? (
-							episodeWatchHistory.map((watch) => (
-								<div
-									key={watch.id}
-									className="flex items-center gap-3 p-3 rounded-lg"
-									style={{
-										backgroundColor: "var(--md-sys-color-surface-container)",
-									}}
-								>
-									<div className="flex-1">
-										<p
-											className="m3-body-medium"
-											style={{ color: "var(--md-sys-color-on-surface)" }}
-										>
-											{formatDateWithTimezone(watch.watchedDate, {
-												timezone: userTimezone,
-												is24Hour,
-											})}
-										</p>
-									</div>
-									<button
-										type="button"
-										onClick={() =>
-											deleteWatchEntryMutation.mutate({
-												path: { trackedEpisodeId: watch.id },
-											})
-										}
-										disabled={deleteWatchEntryMutation.isPending}
-										className="shrink-0 p-2 rounded-lg transition-colors disabled:opacity-50"
-										style={{
-											color: "var(--md-sys-color-on-surface-variant)",
-										}}
-										onMouseEnter={(e) => {
-											e.currentTarget.style.color = "var(--md-sys-color-error)";
-											e.currentTarget.style.backgroundColor =
-												"var(--md-sys-color-error-container)";
-										}}
-										onMouseLeave={(e) => {
-											e.currentTarget.style.color =
-												"var(--md-sys-color-on-surface-variant)";
-											e.currentTarget.style.backgroundColor = "transparent";
-										}}
-									>
-										{deleteWatchEntryMutation.isPending ? (
-											<span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block" />
-										) : (
-											<History className="w-4 h-4" />
-										)}
-									</button>
-								</div>
-							))
-						) : (
-							<div
-								className="text-center py-8 m3-body-large"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								No watch history found
-							</div>
-						)}
-					</div>
-					<div className="mt-4 flex justify-end">
-						<M3Button
-							variant="outlined"
-							onClick={() => setShowHistoryDialog(false)}
-						>
-							Close
-						</M3Button>
-					</div>
-				</DialogContent>
-			</Dialog>
+			<WatchHistoryDialog
+				open={showHistoryDialog}
+				onOpenChange={setShowHistoryDialog}
+				description="All watches for this episode"
+				watchHistory={episodeWatchHistory}
+				userTimezone={userTimezone}
+				is24Hour={is24Hour}
+				onDelete={(trackedEpisodeId) =>
+					deleteWatchEntryMutation.mutate({ path: { trackedEpisodeId } })
+				}
+				isDeleting={deleteWatchEntryMutation.isPending}
+				onClose={() => setShowHistoryDialog(false)}
+			/>
 		</div>
 	);
 }

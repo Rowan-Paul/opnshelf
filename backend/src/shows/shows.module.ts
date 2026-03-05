@@ -4,11 +4,12 @@ import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ShowsController } from "./shows.controller";
 import { ShowsService } from "./shows.service";
+import { ShowsTmdbService } from "./shows-tmdb.service";
 
 @Module({
 	imports: [PrismaModule, MoviesModule, forwardRef(() => AuthModule)],
 	controllers: [ShowsController],
-	providers: [ShowsService],
-	exports: [ShowsService],
+	providers: [ShowsService, ShowsTmdbService],
+	exports: [ShowsService, ShowsTmdbService],
 })
 export class ShowsModule {}

@@ -16,11 +16,10 @@ import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { usePostHog } from "posthog-react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Dimensions,
-	Pressable,
 	StyleSheet,
 	Text,
 	View,
@@ -28,12 +27,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MovieItem } from "@/components/MovieItem";
 import { ShowItem } from "@/components/ShowItem";
+import { SearchFilters } from "@/components/search/SearchFilters";
 import { SearchInput } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { useTrackedMediaState } from "@/hooks/useTrackedMediaState";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import { createTitleSlug } from "@/lib/utils";
 
@@ -48,29 +50,12 @@ const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING * 2) / COLUMNS - ITEM_MARGIN * 2;
 export default function SearchScreen() {
 	const [query, setQuery] = useState("");
 	const [mediaType, setMediaType] = useState<"all" | "movies" | "shows">("all");
-	const [debouncedQuery, setDebouncedQuery] = useState("");
-	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const debouncedQuery = useDebouncedSearch(query, DEBOUNCE_MS);
 	const { user } = useAuth();
 	const { showToast } = useToast();
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
 	const posthog = usePostHog();
-
-	useEffect(() => {
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current);
-		}
-
-		debounceRef.current = setTimeout(() => {
-			setDebouncedQuery(query.trim());
-		}, DEBOUNCE_MS);
-
-		return () => {
-			if (debounceRef.current) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [query]);
 
 	// Track search events when the debounced query changes
 	useEffect(() => {
@@ -104,15 +89,10 @@ export default function SearchScreen() {
 		enabled: !!user?.did,
 	});
 
-	const watchedMovieIds = useMemo(() => {
-		if (!trackedMovies) return new Set<string>();
-		return new Set(trackedMovies.map((m) => m.movieId));
-	}, [trackedMovies]);
-
-	const watchedShowIds = useMemo(() => {
-		if (!trackedShows) return new Set<string>();
-		return new Set(trackedShows.map((s) => s.showId));
-	}, [trackedShows]);
+	const { watchedMovieIds, watchedShowIds } = useTrackedMediaState(
+		trackedMovies,
+		trackedShows,
+	);
 
 	const {
 		data: searchData,
@@ -471,31 +451,7 @@ export default function SearchScreen() {
 				onClear={() => setQuery("")}
 			/>
 
-			<View style={styles.filterRow}>
-				{(["all", "movies", "shows"] as const).map((tab) => (
-					<Pressable
-						key={tab}
-						onPress={() => setMediaType(tab)}
-						style={[
-							styles.filterButton,
-							{
-								backgroundColor:
-									mediaType === tab ? colors.primary : colors.surfaceContainer,
-							},
-						]}
-					>
-						<Text
-							style={{
-								color: mediaType === tab ? colors.onPrimary : colors.onSurface,
-								fontWeight: "600",
-								textTransform: "capitalize",
-							}}
-						>
-							{tab}
-						</Text>
-					</Pressable>
-				))}
-			</View>
+			<SearchFilters mediaType={mediaType} onChange={setMediaType} />
 
 			{isLoading &&
 				(isDiscoverMode ? (
@@ -581,17 +537,6 @@ const styles = StyleSheet.create({
 	searchInput: {
 		marginHorizontal: spacing.lg,
 		marginBottom: spacing.md,
-	},
-	filterRow: {
-		flexDirection: "row",
-		gap: spacing.sm,
-		marginHorizontal: spacing.lg,
-		marginBottom: spacing.md,
-	},
-	filterButton: {
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-		borderRadius: borderRadius.full,
 	},
 	listContent: {
 		paddingVertical: spacing.lg,

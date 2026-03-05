@@ -37,6 +37,7 @@ jest.mock("../lexicons/xyz/opnshelf/movie", () => ({
 
 import { PrismaService } from "../prisma/prisma.service";
 import { ColorExtractionService } from "./color-extraction.service";
+import { MoviesTmdbService } from "./movies-tmdb.service";
 import { MoviesService } from "./movies.service";
 
 // Mock global fetch
@@ -82,6 +83,7 @@ describe("MoviesService", () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				MoviesService,
+				MoviesTmdbService,
 				{ provide: PrismaService, useValue: mockPrismaService },
 				{ provide: ConfigService, useValue: mockConfigService },
 				{

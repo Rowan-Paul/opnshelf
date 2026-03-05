@@ -6,6 +6,11 @@ export { SeasonCard } from "./SeasonCard";
 export { SeasonNav } from "./SeasonNav";
 export { EpisodeCard } from "./EpisodeCard";
 export { EpisodeNav } from "./EpisodeNav";
+export { OverviewSection } from "./sections/OverviewSection";
+export { GenresSection } from "./sections/GenresSection";
+export { CastSection } from "./sections/CastSection";
+export { CrewSection } from "./sections/CrewSection";
+export { WatchHistoryModal } from "./modals/WatchHistoryModal";
 export type {
 	ColorTheme,
 	EpisodeSummary,

@@ -18,45 +18,40 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
-	Modal,
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
-	Pressable,
 	RefreshControl,
 	ScrollView,
 	Share,
 	StyleSheet,
-	Text,
-	TouchableOpacity,
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
 import {
+	CastSection,
+	CrewSection,
 	DetailActions,
 	DetailHero,
 	EpisodeNav,
 	type EpisodeSummary,
 	MetadataPills,
+	OverviewSection,
+	WatchHistoryModal,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
-import { Button } from "@/components/ui/Button";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,
 	getTmdbBackdropUrl,
 	getTmdbPosterUrl,
-	getTmdbProfileUrl,
 } from "@/lib/utils";
 
 function formatWatchDate(
@@ -99,7 +94,7 @@ export default function ShowEpisodeScreen() {
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
-	const [showCompactHeader, setShowCompactHeader] = useState(false);
+	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 	const scopedEpisodeMediaId = buildScopedShowMediaId(
 		id,
 		Number(seasonNumber),
@@ -461,16 +456,6 @@ export default function ShowEpisodeScreen() {
 		markMutation.variables?.body?.seasonNumber === Number(seasonNumber) &&
 		markMutation.variables?.body?.episodeNumber === Number(episodeNumber);
 
-	const handleScroll = useCallback(
-		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-			const shouldShowHeader = event.nativeEvent.contentOffset.y > 120;
-			setShowCompactHeader((prev) =>
-				prev === shouldShowHeader ? prev : shouldShowHeader,
-			);
-		},
-		[],
-	);
-
 	const compactHeaderTitle = `${show?.name || title || "Show"} · S${seasonNumber}E${episodeNumber}`;
 
 	return (
@@ -480,7 +465,7 @@ export default function ShowEpisodeScreen() {
 			>
 				<ScrollView
 					contentContainerStyle={styles.scrollContent}
-					onScroll={handleScroll}
+					onScroll={onScroll}
 					scrollEventThrottle={16}
 					refreshControl={
 						<RefreshControl
@@ -548,110 +533,12 @@ export default function ShowEpisodeScreen() {
 							/>
 						)}
 
-						{(episode as TmdbEpisodeDto)?.overview && (
-							<View style={styles.section}>
-								<Text
-									style={[styles.sectionTitle, { color: showColors.primary }]}
-								>
-									Overview
-								</Text>
-								<Text
-									style={[
-										styles.overview,
-										{ color: themeColors.onSurfaceVariant },
-									]}
-								>
-									{(episode as TmdbEpisodeDto).overview}
-								</Text>
-							</View>
-						)}
-
-						{show?.credits?.cast && show.credits.cast.length > 0 && (
-							<View style={styles.section}>
-								<Text
-									style={[styles.sectionTitle, { color: showColors.primary }]}
-								>
-									Cast
-								</Text>
-								<View style={styles.castContainer}>
-									<ScrollView
-										horizontal
-										showsHorizontalScrollIndicator={false}
-										contentContainerStyle={styles.castScrollContent}
-									>
-										{show.credits.cast.map((person) => {
-											const profileUrl = getTmdbProfileUrl(person.profile_path);
-											return (
-												<TouchableOpacity
-													key={person.id}
-													style={styles.castCard}
-													activeOpacity={0.8}
-												>
-													<View style={styles.castImageContainer}>
-														{profileUrl ? (
-															<Image
-																source={{ uri: profileUrl }}
-																style={styles.castImage}
-																contentFit="cover"
-															/>
-														) : (
-															<View style={styles.castImagePlaceholder}>
-																<Text style={styles.castImagePlaceholderText}>
-																	No photo
-																</Text>
-															</View>
-														)}
-													</View>
-													<Text style={styles.castName} numberOfLines={2}>
-														{person.name}
-													</Text>
-													{person.character ? (
-														<Text
-															style={styles.castCharacter}
-															numberOfLines={2}
-														>
-															as {person.character}
-														</Text>
-													) : null}
-												</TouchableOpacity>
-											);
-										})}
-									</ScrollView>
-									<LinearGradient
-										colors={["rgba(3, 7, 18, 0)", "rgba(3, 7, 18, 1)"]}
-										start={{ x: 0, y: 0.5 }}
-										end={{ x: 1, y: 0.5 }}
-										style={styles.castGradient}
-									/>
-								</View>
-							</View>
-						)}
-
-						{show?.credits?.crew && show.credits.crew.length > 0 && (
-							<View style={styles.section}>
-								<Text
-									style={[styles.sectionTitle, { color: showColors.primary }]}
-								>
-									Crew
-								</Text>
-								<View style={styles.crewGrid}>
-									{show.credits.crew.map((person) => (
-										<TouchableOpacity
-											key={`${person.id}-${person.job || "crew"}`}
-											style={styles.crewCard}
-											activeOpacity={0.8}
-										>
-											<Text style={styles.crewName} numberOfLines={1}>
-												{person.name}
-											</Text>
-											<Text style={styles.crewJob} numberOfLines={1}>
-												{person.job || person.department || "Crew"}
-											</Text>
-										</TouchableOpacity>
-									))}
-								</View>
-							</View>
-						)}
+						<OverviewSection
+							titleColor={showColors.primary}
+							content={(episode as TmdbEpisodeDto)?.overview || ""}
+						/>
+						<CastSection titleColor={showColors.primary} cast={show?.credits?.cast} />
+						<CrewSection titleColor={showColors.primary} crew={show?.credits?.crew} />
 					</View>
 				</ScrollView>
 
@@ -670,121 +557,20 @@ export default function ShowEpisodeScreen() {
 				is24Hour={is24Hour}
 			/>
 
-			<Modal
+			<WatchHistoryModal
 				visible={showHistoryModal}
-				animationType="fade"
-				transparent={true}
-				onRequestClose={() => setShowHistoryModal(false)}
-			>
-				<View style={styles.modalOverlay}>
-					<View
-						style={[
-							styles.modalContent,
-							{ backgroundColor: themeColors.surfaceContainerHigh },
-						]}
-					>
-						<View style={styles.modalHeader}>
-							<Text
-								style={[styles.modalTitle, { color: themeColors.onSurface }]}
-							>
-								Watch History
-							</Text>
-							<Pressable onPress={() => setShowHistoryModal(false)}>
-								<Ionicons
-									name="close"
-									size={24}
-									color={themeColors.onSurface}
-								/>
-							</Pressable>
-						</View>
-						<Text
-							style={[
-								styles.modalDescription,
-								{ color: themeColors.onSurfaceVariant },
-							]}
-						>
-							All watches for this episode
-						</Text>
-
-						<ScrollView style={styles.historyList}>
-							{episodeWatchHistory.length > 0 ? (
-								episodeWatchHistory.map((watch: EpisodeHistoryItemDto) => (
-									<View
-										key={watch.id}
-										style={[
-											styles.historyItem,
-											{
-												backgroundColor: themeColors.surfaceContainer,
-												borderColor: themeColors.outline,
-											},
-										]}
-									>
-										<Text
-											style={[
-												styles.historyDate,
-												{ color: themeColors.onSurface },
-											]}
-										>
-											{formatWatchDate(
-												watch.watchedDate,
-												userTimezone,
-												is24Hour,
-											)}
-										</Text>
-										<TouchableOpacity
-											onPress={() =>
-												deleteWatchEntryMutation.mutate({
-													path: { trackedEpisodeId: watch.id },
-												})
-											}
-											disabled={deleteWatchEntryMutation.isPending}
-											activeOpacity={0.7}
-										>
-											{deleteWatchEntryMutation.isPending &&
-											deleteWatchEntryMutation.variables?.path
-												?.trackedEpisodeId === watch.id ? (
-												<ActivityIndicator
-													size="small"
-													color={themeColors.onSurfaceVariant}
-												/>
-											) : (
-												<Ionicons
-													name="trash-outline"
-													size={18}
-													color="#ef4444"
-												/>
-											)}
-										</TouchableOpacity>
-									</View>
-								))
-							) : (
-								<Text
-									style={[
-										styles.emptyHistory,
-										{ color: themeColors.onSurfaceVariant },
-									]}
-								>
-									No watch history found
-								</Text>
-							)}
-						</ScrollView>
-
-						<Button
-							variant="outlined"
-							onPress={() => setShowHistoryModal(false)}
-						>
-							<Text
-								style={[
-									styles.modalCancelText,
-									{ color: themeColors.onSurfaceVariant },
-								]}
-							>
-								Close
-							</Text>
-						</Button>
-					</View>
-				</View>
-			</Modal>
+				onClose={() => setShowHistoryModal(false)}
+				description="All watches for this episode"
+				items={episodeWatchHistory as EpisodeHistoryItemDto[]}
+				formatWatchDate={(watchedDate) =>
+					formatWatchDate(watchedDate, userTimezone, is24Hour)
+				}
+				onDelete={(trackedEpisodeId) =>
+					deleteWatchEntryMutation.mutate({ path: { trackedEpisodeId } })
+				}
+				isDeleting={deleteWatchEntryMutation.isPending}
+				deletingId={deleteWatchEntryMutation.variables?.path?.trackedEpisodeId}
+			/>
 
 			<AddToListModal
 				visible={showAddToListModal}

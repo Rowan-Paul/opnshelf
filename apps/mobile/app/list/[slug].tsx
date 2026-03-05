@@ -10,12 +10,10 @@ import { FlashList } from "@shopify/flash-list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, List, Trash2 } from "lucide-react-native";
+import { Trash2 } from "lucide-react-native";
 import { usePostHog } from "posthog-react-native";
 import { useCallback, useState } from "react";
 import {
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
 	RefreshControl,
 	StyleSheet,
 	Text,
@@ -25,15 +23,17 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ListHeader } from "@/components/lists/ListHeader";
+import { ListStateView } from "@/components/lists/ListStateView";
 import { MediaCard } from "@/components/MediaCard";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { SpinningLoader } from "@/components/SpinningLoader";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import {
 	createTitleSlug,
 	getTmdbPosterUrl,
@@ -49,7 +49,7 @@ export default function ListDetailScreen() {
 	const queryClient = useQueryClient();
 	const posthog = usePostHog();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-	const [showCompactHeader, setShowCompactHeader] = useState(false);
+	const { showCompactHeader, onScroll } = useScrollRevealHeader(100);
 
 	const {
 		data: list,
@@ -203,30 +203,13 @@ export default function ListDetailScreen() {
 
 	const keyExtractor = useCallback((item: MediaInListDto) => item.id, []);
 
-	const handleListScroll = useCallback(
-		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-			const shouldShowHeader = event.nativeEvent.contentOffset.y > 100;
-			setShowCompactHeader((prev) =>
-				prev === shouldShowHeader ? prev : shouldShowHeader,
-			);
-		},
-		[],
-	);
-
 	if (!isAuthenticated) {
 		return (
 			<SafeAreaView
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				<View style={styles.header}>
-					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.onBackground} />
-					</TouchableOpacity>
-					<Text style={[styles.title, { color: colors.onBackground }]}>
-						List
-					</Text>
-				</View>
+				<ListHeader title="List" isDefault={false} onBack={handleBack} />
 				<View style={styles.centerContent}>
 					<Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
 						Please sign in to view lists
@@ -242,10 +225,8 @@ export default function ListDetailScreen() {
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				<View style={styles.header}>
-					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.onBackground} />
-					</TouchableOpacity>
+				<ListHeader title="" isDefault={false} onBack={handleBack} />
+				<View style={styles.loadingTitleSkeleton}>
 					<Skeleton width={150} height={28} />
 				</View>
 				<View style={styles.skeletonContainer}>
@@ -279,51 +260,13 @@ export default function ListDetailScreen() {
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				<View style={styles.header}>
-					<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-						<ArrowLeft size={24} color={colors.onBackground} />
-					</TouchableOpacity>
-					<Text style={[styles.title, { color: colors.onBackground }]}>
-						List not found
-					</Text>
-				</View>
-				<View style={styles.centerContent}>
-					<Card style={styles.emptyCard}>
-						<CardHeader style={styles.emptyCardHeader}>
-							<List
-								size={64}
-								color={colors.onSurfaceVariant}
-								style={styles.emptyIcon}
-							/>
-							<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-								List not found
-							</Text>
-							<Text
-								style={[
-									styles.emptyDescription,
-									{ color: colors.onSurfaceVariant },
-								]}
-							>
-								This list doesn&apos;t exist or you don&apos;t have access
-							</Text>
-						</CardHeader>
-						<CardContent>
-							<TouchableOpacity
-								onPress={handleBack}
-								style={[
-									styles.backToListsButton,
-									{ backgroundColor: colors.primary },
-								]}
-							>
-								<Text
-									style={[styles.backToListsText, { color: colors.onPrimary }]}
-								>
-									Back to lists
-								</Text>
-							</TouchableOpacity>
-						</CardContent>
-					</Card>
-				</View>
+				<ListHeader title="List not found" isDefault={false} onBack={handleBack} />
+				<ListStateView
+					title="List not found"
+					description="This list doesn't exist or you don't have access"
+					actionText="Back to lists"
+					onAction={handleBack}
+				/>
 			</SafeAreaView>
 		);
 	}
@@ -338,48 +281,15 @@ export default function ListDetailScreen() {
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				{movies.length === 0 && (
-					<View style={styles.header}>
-						<TouchableOpacity onPress={handleBack} style={styles.backButton}>
-							<ArrowLeft size={24} color={colors.onBackground} />
-						</TouchableOpacity>
-						<View style={styles.headerContent}>
-							<Text
-								style={[styles.title, { color: colors.onBackground }]}
-								numberOfLines={1}
-							>
-								{list.name}
-							</Text>
-							{list.isDefault && (
-								<View
-									style={[
-										styles.defaultBadge,
-										{ backgroundColor: `${colors.primary}30` },
-									]}
-								>
-									<Text
-										style={[styles.defaultBadgeText, { color: colors.primary }]}
-									>
-										Default
-									</Text>
-								</View>
-							)}
-						</View>
-						{!list.isDefault && (
-							<TouchableOpacity
-								onPress={() => setShowDeleteConfirm(true)}
-								disabled={deleteMutation.isPending}
-								style={styles.deleteButton}
-							>
-								<Text
-									style={[styles.deleteButtonText, { color: colors.error }]}
-								>
-									{deleteMutation.isPending ? "..." : "Delete"}
-								</Text>
-							</TouchableOpacity>
-						)}
-					</View>
-				)}
+				{movies.length === 0 ? (
+					<ListHeader
+						title={list.name}
+						isDefault={list.isDefault}
+						onBack={handleBack}
+						onDelete={() => setShowDeleteConfirm(true)}
+						isDeleting={deleteMutation.isPending}
+					/>
+				) : null}
 
 				{movies.length === 0 && list.description && (
 					<Text
@@ -395,59 +305,17 @@ export default function ListDetailScreen() {
 						renderItem={renderItem}
 						keyExtractor={keyExtractor}
 						contentContainerStyle={styles.listContent}
-						onScroll={handleListScroll}
+						onScroll={onScroll}
 						scrollEventThrottle={16}
 						ListHeaderComponent={
 							<View style={styles.listHeader}>
-								<View style={styles.header}>
-									<TouchableOpacity
-										onPress={handleBack}
-										style={styles.backButton}
-									>
-										<ArrowLeft size={24} color={colors.onBackground} />
-									</TouchableOpacity>
-									<View style={styles.headerContent}>
-										<Text
-											style={[styles.title, { color: colors.onBackground }]}
-											numberOfLines={1}
-										>
-											{list.name}
-										</Text>
-										{list.isDefault && (
-											<View
-												style={[
-													styles.defaultBadge,
-													{ backgroundColor: `${colors.primary}30` },
-												]}
-											>
-												<Text
-													style={[
-														styles.defaultBadgeText,
-														{ color: colors.primary },
-													]}
-												>
-													Default
-												</Text>
-											</View>
-										)}
-									</View>
-									{!list.isDefault && (
-										<TouchableOpacity
-											onPress={() => setShowDeleteConfirm(true)}
-											disabled={deleteMutation.isPending}
-											style={styles.deleteButton}
-										>
-											<Text
-												style={[
-													styles.deleteButtonText,
-													{ color: colors.error },
-												]}
-											>
-												{deleteMutation.isPending ? "..." : "Delete"}
-											</Text>
-										</TouchableOpacity>
-									)}
-								</View>
+								<ListHeader
+									title={list.name}
+									isDefault={list.isDefault}
+									onBack={handleBack}
+									onDelete={() => setShowDeleteConfirm(true)}
+									isDeleting={deleteMutation.isPending}
+								/>
 								{list.description && (
 									<Text
 										style={[
@@ -481,48 +349,14 @@ export default function ListDetailScreen() {
 					/>
 				)}
 
-				{movies.length === 0 && (
-					<View style={styles.centerContent}>
-						<Card style={styles.emptyCard}>
-							<CardHeader style={styles.emptyCardHeader}>
-								<List
-									size={64}
-									color={colors.onSurfaceVariant}
-									style={styles.emptyIcon}
-								/>
-								<Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
-									No items yet
-								</Text>
-								<Text
-									style={[
-										styles.emptyDescription,
-										{ color: colors.onSurfaceVariant },
-									]}
-								>
-									Add items to this list from the search page
-								</Text>
-							</CardHeader>
-							<CardContent>
-								<TouchableOpacity
-									onPress={() => router.push("/(tabs)/search")}
-									style={[
-										styles.searchButton,
-										{ backgroundColor: colors.primary },
-									]}
-								>
-									<Text
-										style={[
-											styles.searchButtonText,
-											{ color: colors.onPrimary },
-										]}
-									>
-										Search for items
-									</Text>
-								</TouchableOpacity>
-							</CardContent>
-						</Card>
-					</View>
-				)}
+				{movies.length === 0 ? (
+					<ListStateView
+						title="No items yet"
+						description="Add items to this list from the search page"
+						actionText="Search for items"
+						onAction={() => router.push("/(tabs)/search")}
+					/>
+				) : null}
 
 				<ScrollRevealHeader
 					visible={showCompactHeader}
@@ -662,6 +496,11 @@ function ListMovieItem({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+	},
+	loadingTitleSkeleton: {
+		paddingHorizontal: spacing.lg,
+		marginTop: -spacing.md,
+		marginBottom: spacing.sm,
 	},
 	header: {
 		paddingHorizontal: spacing.lg,

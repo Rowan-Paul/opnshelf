@@ -3,6 +3,8 @@ import { ConfigService } from "@nestjs/config";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
+import { ImportHistoryService } from "./import-history.service";
+import type { UserDeletionService } from "./user-deletion.service";
 import { UsersService } from "./users.service";
 
 describe("UsersService", () => {
@@ -38,13 +40,22 @@ describe("UsersService", () => {
 		}),
 	} as unknown as ConfigService;
 
+	const userDeletionService = {
+		deleteUser: jest.fn(),
+	} as unknown as UserDeletionService;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
-		service = new UsersService(
+		const importHistoryService = new ImportHistoryService(
 			prisma,
 			moviesService,
 			showsService,
 			configService,
+		);
+		service = new UsersService(
+			prisma,
+			importHistoryService,
+			userDeletionService,
 		);
 	});
 
