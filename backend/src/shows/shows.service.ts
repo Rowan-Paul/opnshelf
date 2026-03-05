@@ -66,7 +66,11 @@ export class ShowsService {
 		seasonNumber: number,
 		episodeNumber: number,
 	): Promise<TMDBEpisode> {
-		return this.showsTmdb.getEpisodeDetails(showId, seasonNumber, episodeNumber);
+		return this.showsTmdb.getEpisodeDetails(
+			showId,
+			seasonNumber,
+			episodeNumber,
+		);
 	}
 
 	async getEpisodeContext(
@@ -77,7 +81,11 @@ export class ShowsService {
 		previous: { seasonNumber: number; episodeNumber: number } | null;
 		next: { seasonNumber: number; episodeNumber: number } | null;
 	}> {
-		return this.showsTmdb.getEpisodeContext(showId, seasonNumber, episodeNumber);
+		return this.showsTmdb.getEpisodeContext(
+			showId,
+			seasonNumber,
+			episodeNumber,
+		);
 	}
 
 	async getShowByTMDBId(showId: string) {

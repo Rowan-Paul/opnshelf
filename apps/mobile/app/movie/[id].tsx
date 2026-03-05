@@ -28,7 +28,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AddToListModal } from "@/components/AddToListModal";
-import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import {
 	CastSection,
 	CrewSection,
@@ -40,6 +39,7 @@ import {
 	WatchHistoryModal,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
+import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -297,12 +297,15 @@ export default function MovieDetailScreen() {
 		markMutation.mutate({ body: { movieId } });
 	}, [markMutation, movieId]);
 
-	const handleMarkWatchedWithDate = useCallback((date: Date) => {
-		const watchedAt = date.toISOString();
-		markMutation.mutate({
-			body: { movieId, watchedAt },
-		});
-	}, [markMutation, movieId]);
+	const handleMarkWatchedWithDate = useCallback(
+		(date: Date) => {
+			const watchedAt = date.toISOString();
+			markMutation.mutate({
+				body: { movieId, watchedAt },
+			});
+		},
+		[markMutation, movieId],
+	);
 
 	const handleUnmarkWatched = useCallback(() => {
 		unmarkMutation.mutate({
@@ -465,8 +468,14 @@ export default function MovieDetailScreen() {
 						textColor={movieColors.accent}
 						genres={movie?.genres}
 					/>
-					<CastSection titleColor={movieColors.primary} cast={movie?.credits?.cast} />
-					<CrewSection titleColor={movieColors.primary} crew={movie?.credits?.crew} />
+					<CastSection
+						titleColor={movieColors.primary}
+						cast={movie?.credits?.cast}
+					/>
+					<CrewSection
+						titleColor={movieColors.primary}
+						crew={movie?.credits?.crew}
+					/>
 				</View>
 			</ScrollView>
 

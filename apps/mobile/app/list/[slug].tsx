@@ -260,7 +260,11 @@ export default function ListDetailScreen() {
 				style={[styles.container, { backgroundColor: colors.background }]}
 				edges={["top"]}
 			>
-				<ListHeader title="List not found" isDefault={false} onBack={handleBack} />
+				<ListHeader
+					title="List not found"
+					isDefault={false}
+					onBack={handleBack}
+				/>
 				<ListStateView
 					title="List not found"
 					description="This list doesn't exist or you don't have access"

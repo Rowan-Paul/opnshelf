@@ -20,13 +20,13 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
 import { DatePickerModal } from "@/components/DatePickerModal";
-import { MovieDetailContent } from "@/components/movie-detail/MovieDetailContent";
 import {
 	type ColorTheme,
 	DetailActions,
 	DetailHero,
 	WatchHistoryDialog,
 } from "@/components/detail";
+import { MovieDetailContent } from "@/components/movie-detail/MovieDetailContent";
 import { useTheme } from "@/components/theme-provider";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {

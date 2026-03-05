@@ -18,8 +18,16 @@ export default function HomeScreen() {
 				edges={["top"]}
 			>
 				<View style={styles.loadingContainer}>
-					<Skeleton width="100%" height={108} style={{ marginBottom: spacing.md }} />
-					<Skeleton width="100%" height={108} style={{ marginBottom: spacing.md }} />
+					<Skeleton
+						width="100%"
+						height={108}
+						style={{ marginBottom: spacing.md }}
+					/>
+					<Skeleton
+						width="100%"
+						height={108}
+						style={{ marginBottom: spacing.md }}
+					/>
 					<Skeleton width="100%" height={160} />
 				</View>
 			</SafeAreaView>

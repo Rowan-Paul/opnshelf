@@ -21,7 +21,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
-	ActivityIndicator,
 	RefreshControl,
 	ScrollView,
 	Share,
@@ -537,8 +536,14 @@ export default function ShowEpisodeScreen() {
 							titleColor={showColors.primary}
 							content={(episode as TmdbEpisodeDto)?.overview || ""}
 						/>
-						<CastSection titleColor={showColors.primary} cast={show?.credits?.cast} />
-						<CrewSection titleColor={showColors.primary} crew={show?.credits?.crew} />
+						<CastSection
+							titleColor={showColors.primary}
+							cast={show?.credits?.cast}
+						/>
+						<CrewSection
+							titleColor={showColors.primary}
+							crew={show?.credits?.crew}
+						/>
 					</View>
 				</ScrollView>
 

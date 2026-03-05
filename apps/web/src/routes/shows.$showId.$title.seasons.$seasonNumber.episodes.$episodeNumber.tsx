@@ -20,7 +20,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddToListModal } from "@/components/AddToListModal";
 import { DatePickerModal } from "@/components/DatePickerModal";
-import { ShowEpisodeContent } from "@/components/show-episode-detail/ShowEpisodeContent";
 import {
 	type ColorTheme,
 	DetailActions,
@@ -28,6 +27,7 @@ import {
 	EpisodeNav,
 	WatchHistoryDialog,
 } from "@/components/detail";
+import { ShowEpisodeContent } from "@/components/show-episode-detail/ShowEpisodeContent";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 import {
 	buildScopedShowMediaId,

@@ -438,9 +438,14 @@ export default function ShowSeasonScreen() {
 						</View>
 					)}
 
-
-					<CastSection titleColor={showColors.primary} cast={show?.credits?.cast} />
-					<CrewSection titleColor={showColors.primary} crew={show?.credits?.crew} />
+					<CastSection
+						titleColor={showColors.primary}
+						cast={show?.credits?.cast}
+					/>
+					<CrewSection
+						titleColor={showColors.primary}
+						crew={show?.credits?.crew}
+					/>
 				</View>
 			</ScrollView>
 

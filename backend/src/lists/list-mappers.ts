@@ -54,18 +54,26 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 		item.mediaType === "show"
 			? (parsedShowScope?.showId ?? item.mediaId)
 			: item.mediaId;
-	const mediaTitle = item.mediaType === "movie" ? item.movie?.title : item.show?.title;
+	const mediaTitle =
+		item.mediaType === "movie" ? item.movie?.title : item.show?.title;
 	const mediaPosterPath =
 		item.mediaType === "movie" ? item.movie?.posterPath : item.show?.posterPath;
 	const mediaBackdropPath =
-		item.mediaType === "movie" ? item.movie?.backdropPath : item.show?.backdropPath;
+		item.mediaType === "movie"
+			? item.movie?.backdropPath
+			: item.show?.backdropPath;
 	const mediaReleaseYear =
-		item.mediaType === "movie" ? item.movie?.releaseYear : item.show?.firstAirYear;
+		item.mediaType === "movie"
+			? item.movie?.releaseYear
+			: item.show?.firstAirYear;
 	const mediaReleaseDate =
-		item.mediaType === "movie" ? item.movie?.releaseDate : item.show?.firstAirDate;
+		item.mediaType === "movie"
+			? item.movie?.releaseDate
+			: item.show?.firstAirDate;
 	const mediaOverview =
 		item.mediaType === "movie" ? item.movie?.overview : item.show?.overview;
-	const mediaColors = item.mediaType === "movie" ? item.movie?.colors : item.show?.colors;
+	const mediaColors =
+		item.mediaType === "movie" ? item.movie?.colors : item.show?.colors;
 
 	return {
 		id: item.id,
@@ -105,7 +113,7 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 						overview: mediaOverview ?? undefined,
 						colors:
 							(mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
-				  }
+					}
 				: undefined,
 	};
 }

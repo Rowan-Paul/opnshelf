@@ -70,14 +70,17 @@ export function ShowEpisodeContent({
 		<div className="space-y-6 min-w-0">
 			<MetadataPills items={metadataItems} />
 
-				<section>
-					<h2 className="text-xl font-semibold mb-3" style={{ color: colors.primary }}>
-						Overview
-					</h2>
-					<p className="text-gray-300 leading-relaxed mb-4">
-						{episode?.overview || "No overview available."}
-					</p>
-				</section>
+			<section>
+				<h2
+					className="text-xl font-semibold mb-3"
+					style={{ color: colors.primary }}
+				>
+					Overview
+				</h2>
+				<p className="text-gray-300 leading-relaxed mb-4">
+					{episode?.overview || "No overview available."}
+				</p>
+			</section>
 
 			<CastSection
 				cast={show?.credits?.cast}

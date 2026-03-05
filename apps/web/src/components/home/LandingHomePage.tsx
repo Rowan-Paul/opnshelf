@@ -83,8 +83,7 @@ export function LandingHomePage() {
 								<span
 									className="md-label-large px-3 py-1 rounded-full"
 									style={{
-										backgroundColor:
-											"var(--md-sys-color-secondary-container)",
+										backgroundColor: "var(--md-sys-color-secondary-container)",
 										color: "var(--md-sys-color-on-secondary-container)",
 									}}
 								>

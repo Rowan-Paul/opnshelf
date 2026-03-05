@@ -1,8 +1,4 @@
-import {
-	Injectable,
-	Logger,
-	NotFoundException,
-} from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	CompleteOnboardingResponseDto,
@@ -151,7 +147,10 @@ export class UsersService {
 		username: string,
 		maxItems?: number,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
-		return this.importHistoryService.fetchTraktPublicHistory(username, maxItems);
+		return this.importHistoryService.fetchTraktPublicHistory(
+			username,
+			maxItems,
+		);
 	}
 
 	async importNormalizedItems(
@@ -159,7 +158,11 @@ export class UsersService {
 		session: ATSession,
 		items: NormalizedImportItemDto[],
 	): Promise<ImportHistoryResponseDto> {
-		return this.importHistoryService.importNormalizedItems(userDid, session, items);
+		return this.importHistoryService.importNormalizedItems(
+			userDid,
+			session,
+			items,
+		);
 	}
 
 	/**
