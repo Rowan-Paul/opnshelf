@@ -21,6 +21,25 @@ export interface ATSession {
 	did: string;
 }
 
+type TrackedEpisodeWithShow = {
+	id: string;
+	showId: string;
+	seasonNumber: number;
+	episodeNumber: number;
+	watchedDate: Date | null;
+	createdAt: Date;
+	show: {
+		showId: string;
+		title: string;
+		posterPath: string | null;
+		backdropPath: string | null;
+		firstAirYear: number | null;
+		firstAirDate: Date | null;
+		overview: string | null;
+		colors: unknown;
+	};
+};
+
 @Injectable()
 export class ShowsService {
 	private readonly logger = new Logger(ShowsService.name);
@@ -196,6 +215,101 @@ export class ShowsService {
 		}
 
 		return Array.from(showMap.values());
+	}
+
+	async getUserUpNext(userDid: string) {
+		const trackedEpisodes = (await this.prisma.trackedEpisode.findMany({
+			where: { userDid },
+			include: { show: true },
+			orderBy: [{ watchedDate: "desc" }, { createdAt: "desc" }],
+		})) as TrackedEpisodeWithShow[];
+
+		const showMap = new Map<
+			string,
+			{
+				latest: TrackedEpisodeWithShow;
+				watchCount: number;
+				latestWatchedDate: Date;
+			}
+		>();
+
+		for (const tracked of trackedEpisodes) {
+			const latestWatchedDate = tracked.watchedDate ?? tracked.createdAt;
+			const existing = showMap.get(tracked.showId);
+
+			if (!existing) {
+				showMap.set(tracked.showId, {
+					latest: tracked,
+					watchCount: 1,
+					latestWatchedDate,
+				});
+				continue;
+			}
+
+			existing.watchCount += 1;
+		}
+
+		const items = await Promise.all(
+			Array.from(showMap.values()).map(
+				async ({ latest, watchCount, latestWatchedDate }) => {
+					try {
+						const context = await this.showsTmdb.getEpisodeContext(
+							latest.showId,
+							latest.seasonNumber,
+							latest.episodeNumber,
+						);
+
+						if (!context.next) {
+							return null;
+						}
+
+						const nextEpisode = await this.showsTmdb.getEpisodeDetails(
+							latest.showId,
+							context.next.seasonNumber,
+							context.next.episodeNumber,
+						);
+						const colors = await this.ensureShowHasColors(latest.showId);
+
+						return {
+							showId: latest.showId,
+							watchCount,
+							latestWatchedDate: latestWatchedDate.toISOString(),
+							lastWatched: {
+								seasonNumber: latest.seasonNumber,
+								episodeNumber: latest.episodeNumber,
+							},
+							nextEpisode: {
+								seasonNumber: nextEpisode.season_number,
+								episodeNumber: nextEpisode.episode_number,
+								name: nextEpisode.name,
+								airDate: nextEpisode.air_date,
+								overview: nextEpisode.overview,
+								stillPath: nextEpisode.still_path,
+							},
+							show: {
+								showId: latest.show.showId,
+								title: latest.show.title,
+								posterPath: latest.show.posterPath ?? undefined,
+								backdropPath: latest.show.backdropPath ?? undefined,
+								firstAirYear: latest.show.firstAirYear ?? undefined,
+								firstAirDate: latest.show.firstAirDate?.toISOString(),
+								overview: latest.show.overview ?? undefined,
+								colors: colors ?? undefined,
+							},
+						};
+					} catch (error) {
+						this.logger.warn(
+							`Failed to compute up next for show ${latest.showId}: ${error instanceof Error ? error.message : String(error)}`,
+						);
+						return null;
+					}
+				},
+			),
+		);
+
+		return items.filter(
+			(item): item is NonNullable<typeof item> => item !== null,
+		);
 	}
 
 	async getUserEpisodesPaginated(

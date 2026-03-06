@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { Loader2, Trash2 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -13,12 +14,20 @@ type RecentWatchedSectionProps = {
 	isLoading: boolean;
 	recentWatched: DashboardShelfItem[];
 	formatDate: (date: string, opts?: { includeTime?: boolean }) => string;
+	onRemoveMovie: (trackedMovieId: string) => void;
+	onRemoveEpisode: (trackedEpisodeId: string) => void;
+	deletingMovieId?: string;
+	deletingEpisodeId?: string;
 };
 
 export function RecentWatchedSection({
 	isLoading,
 	recentWatched,
 	formatDate,
+	onRemoveMovie,
+	onRemoveEpisode,
+	deletingMovieId,
+	deletingEpisodeId,
 }: RecentWatchedSectionProps) {
 	const { colors } = useTheme();
 
@@ -43,6 +52,9 @@ export function RecentWatchedSection({
 						const formattedDate = formatDate(watchDate, { includeTime: false });
 						const posterUrl = getTmdbPosterUrl(tracked.posterPath);
 						const isEpisode = tracked.type === "episode";
+						const isDeleting = isEpisode
+							? deletingEpisodeId === tracked.id
+							: deletingMovieId === tracked.id;
 
 						return (
 							<Pressable
@@ -84,10 +96,32 @@ export function RecentWatchedSection({
 									<Text style={[styles.recentTitle, { color: colors.onSurface }]} numberOfLines={2}>
 										{isEpisode ? tracked.showTitle : tracked.title}
 									</Text>
-									<Text style={[styles.recentDate, { color: colors.onSurfaceVariant }]}> 
+									<Text style={[styles.recentDate, { color: colors.onSurfaceVariant }]}>
 										{isEpisode ? `S${tracked.seasonNumber} E${tracked.episodeNumber} • ` : ""}
 										Watched {formattedDate}
 									</Text>
+									<Pressable
+										onPress={(event) => {
+											event.stopPropagation();
+											if (isEpisode) {
+												onRemoveEpisode(tracked.id);
+											} else {
+												onRemoveMovie(tracked.id);
+											}
+										}}
+										disabled={isDeleting}
+										style={[
+											styles.removeButton,
+											{ backgroundColor: colors.errorContainer },
+										]}
+									>
+										{isDeleting ? (
+											<Loader2 size={14} color={colors.onErrorContainer} />
+										) : (
+											<Trash2 size={14} color={colors.onErrorContainer} />
+										)}
+										<Text style={[styles.removeButtonText, { color: colors.onErrorContainer }]}>Remove</Text>
+									</Pressable>
 								</View>
 							</Pressable>
 						);
@@ -169,6 +203,20 @@ const styles = StyleSheet.create({
 	},
 	recentDate: {
 		fontSize: 12,
+		marginBottom: spacing.sm,
+	},
+	removeButton: {
+		alignSelf: "flex-start",
+		borderRadius: borderRadius.full,
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 6,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	removeButtonText: {
+		fontSize: 12,
+		fontWeight: "700",
 	},
 	emptyTitle: {
 		fontSize: 18,

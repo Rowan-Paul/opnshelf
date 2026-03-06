@@ -37,6 +37,7 @@ import {
 	TMDBShowDetailDto,
 	TrackedEpisodeDto,
 	TrackedShowSummaryDto,
+	UpNextShowDto,
 } from "./dto/show.dto";
 import type { ATSession } from "./shows.service";
 import { ShowsService } from "./shows.service";
@@ -139,6 +140,13 @@ export class ShowsController {
 			}),
 		);
 		return showsWithColors;
+	}
+
+	@Get("user/:userDid/up-next")
+	@ApiOperation({ summary: "Get up next episodes for a user" })
+	@ApiResponse({ status: 200, type: [UpNextShowDto] })
+	async getUserUpNext(@Param("userDid") userDid: string) {
+		return this.showsService.getUserUpNext(userDid);
 	}
 
 	@Get("user/:userDid/episodes")

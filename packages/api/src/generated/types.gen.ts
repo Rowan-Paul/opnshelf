@@ -252,6 +252,24 @@ export type TrackedShowSummaryDto = {
     show: ShowDto;
 };
 
+export type UpNextEpisodeDto = {
+    seasonNumber: number;
+    episodeNumber: number;
+    name: string;
+    airDate?: string;
+    overview?: string;
+    stillPath?: string;
+};
+
+export type UpNextShowDto = {
+    showId: string;
+    watchCount: number;
+    latestWatchedDate: string;
+    lastWatched: EpisodeReferenceDto;
+    nextEpisode: UpNextEpisodeDto;
+    show: ShowDto;
+};
+
 export type TrackedEpisodeDto = {
     id: string;
     rkey: string;
@@ -1085,6 +1103,21 @@ export type ShowsControllerGetUserShowsResponses = {
 };
 
 export type ShowsControllerGetUserShowsResponse = ShowsControllerGetUserShowsResponses[keyof ShowsControllerGetUserShowsResponses];
+
+export type ShowsControllerGetUserUpNextData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/shows/user/{userDid}/up-next';
+};
+
+export type ShowsControllerGetUserUpNextResponses = {
+    200: Array<UpNextShowDto>;
+};
+
+export type ShowsControllerGetUserUpNextResponse = ShowsControllerGetUserUpNextResponses[keyof ShowsControllerGetUserUpNextResponses];
 
 export type ShowsControllerGetUserEpisodesPaginatedData = {
     body?: never;

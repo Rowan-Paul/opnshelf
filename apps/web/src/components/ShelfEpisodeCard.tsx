@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { invalidateUserUpNextQueries } from "@/lib/invalidate-shelf";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 export interface ShelfEpisodeItem {
@@ -59,6 +60,7 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 						);
 					},
 				});
+				invalidateUserUpNextQueries(queryClient, userDid);
 			}
 			toast.success("Episode removed from history");
 		},

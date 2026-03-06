@@ -194,17 +194,24 @@ export class ShowsTmdbService {
 		let next: { seasonNumber: number; episodeNumber: number } | null = null;
 
 		const currentSeason = await this.getSeasonDetails(showId, seasonNumber);
-		const currentEpisodes = currentSeason.episodes || [];
-
-		const prevInCurrentSeason = currentEpisodes.find(
-			(e) => e.episode_number === episodeNumber - 1,
+		const currentEpisodes = this.getNavigableEpisodes(
+			currentSeason.episodes || [],
 		);
+
+		const prevInCurrentSeason = [...currentEpisodes]
+			.filter((episode) => episode.episode_number < episodeNumber)
+			.sort((a, b) => b.episode_number - a.episode_number)[0];
 		if (prevInCurrentSeason) {
-			previous = { seasonNumber, episodeNumber: episodeNumber - 1 };
+			previous = {
+				seasonNumber,
+				episodeNumber: prevInCurrentSeason.episode_number,
+			};
 		} else if (seasonNumber > 1) {
 			for (let s = seasonNumber - 1; s >= 1; s--) {
 				const prevSeason = await this.getSeasonDetails(showId, s);
-				const prevEpisodes = prevSeason.episodes || [];
+				const prevEpisodes = this.getNavigableEpisodes(
+					prevSeason.episodes || [],
+				);
 				if (prevEpisodes.length > 0) {
 					const lastEpisode = prevEpisodes.reduce((max, ep) =>
 						ep.episode_number > max.episode_number ? ep : max,
@@ -220,15 +227,24 @@ export class ShowsTmdbService {
 			}
 		}
 
-		const nextInCurrentSeason = currentEpisodes.find(
-			(e) => e.episode_number === episodeNumber + 1,
-		);
+		const nextInCurrentSeason = currentEpisodes
+			.filter((episode) => episode.episode_number > episodeNumber)
+			.sort((a, b) => a.episode_number - b.episode_number)[0];
 		if (nextInCurrentSeason) {
-			next = { seasonNumber, episodeNumber: episodeNumber + 1 };
+			next = {
+				seasonNumber,
+				episodeNumber: nextInCurrentSeason.episode_number,
+			};
 		} else {
 			for (let s = seasonNumber + 1; s <= numberOfSeasons; s++) {
+				if (s === 0) {
+					continue;
+				}
+
 				const nextSeason = await this.getSeasonDetails(showId, s);
-				const nextEpisodes = nextSeason.episodes || [];
+				const nextEpisodes = this.getNavigableEpisodes(
+					nextSeason.episodes || [],
+				);
 				if (nextEpisodes.length > 0) {
 					const firstEpisode = nextEpisodes.reduce((min, ep) =>
 						ep.episode_number < min.episode_number ? ep : min,
@@ -245,5 +261,21 @@ export class ShowsTmdbService {
 		}
 
 		return { previous, next };
+	}
+
+	private getNavigableEpisodes(episodes: TMDBEpisode[]): TMDBEpisode[] {
+		return episodes.filter((episode) => this.isNavigableEpisode(episode));
+	}
+
+	private isNavigableEpisode(episode: TMDBEpisode): boolean {
+		if (episode.season_number === 0) {
+			return false;
+		}
+
+		if (!episode.air_date) {
+			return true;
+		}
+
+		return new Date(episode.air_date).getTime() <= Date.now();
 	}
 }

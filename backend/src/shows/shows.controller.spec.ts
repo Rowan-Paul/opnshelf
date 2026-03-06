@@ -24,6 +24,7 @@ describe("ShowsController", () => {
 		getSeasonDetails: jest.fn(),
 		getEpisodeDetails: jest.fn(),
 		getUserShows: jest.fn(),
+		getUserUpNext: jest.fn(),
 		ensureShowHasColors: jest.fn(),
 		markEpisodeWatched: jest.fn(),
 		indexTrackedEpisode: jest.fn(),
@@ -167,5 +168,30 @@ describe("ShowsController", () => {
 		);
 
 		expect(result).toEqual(mockHistory);
+	});
+
+	it("should return up next episodes for user", async () => {
+		const mockUpNext = [
+			{
+				showId: "123",
+				watchCount: 4,
+				latestWatchedDate: "2024-01-01T00:00:00.000Z",
+				lastWatched: { seasonNumber: 1, episodeNumber: 4 },
+				nextEpisode: {
+					seasonNumber: 1,
+					episodeNumber: 5,
+					name: "Next Episode",
+				},
+				show: { showId: "123", title: "Test Show" },
+			},
+		];
+		mockShowsService.getUserUpNext.mockResolvedValue(mockUpNext);
+
+		const result = await controller.getUserUpNext("did:plc:abc123");
+
+		expect(result).toEqual(mockUpNext);
+		expect(mockShowsService.getUserUpNext).toHaveBeenCalledWith(
+			"did:plc:abc123",
+		);
 	});
 });

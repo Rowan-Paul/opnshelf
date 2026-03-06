@@ -22,3 +22,20 @@ export function invalidateUserShelfQueries(
 		},
 	});
 }
+
+export function invalidateUserUpNextQueries(
+	queryClient: QueryClient,
+	userDid?: string,
+) {
+	if (!userDid) return;
+
+	queryClient.invalidateQueries({
+		predicate: (query) => {
+			const key = query.queryKey[0] as QueryKeyRoot | undefined;
+			return (
+				key?._id === "showsControllerGetUserUpNext" &&
+				key.path?.userDid === userDid
+			);
+		},
+	});
+}

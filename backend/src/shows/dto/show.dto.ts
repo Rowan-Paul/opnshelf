@@ -173,6 +173,46 @@ export class EpisodeReferenceDto {
 	episodeNumber: number;
 }
 
+export class UpNextEpisodeDto {
+	@ApiProperty()
+	seasonNumber: number;
+
+	@ApiProperty()
+	episodeNumber: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiPropertyOptional()
+	airDate?: string;
+
+	@ApiPropertyOptional()
+	overview?: string;
+
+	@ApiPropertyOptional()
+	stillPath?: string;
+}
+
+export class UpNextShowDto {
+	@ApiProperty()
+	showId: string;
+
+	@ApiProperty()
+	watchCount: number;
+
+	@ApiProperty()
+	latestWatchedDate: string;
+
+	@ApiProperty({ type: EpisodeReferenceDto })
+	lastWatched: EpisodeReferenceDto;
+
+	@ApiProperty({ type: UpNextEpisodeDto })
+	nextEpisode: UpNextEpisodeDto;
+
+	@ApiProperty({ type: ShowDto })
+	show: ShowDto;
+}
+
 export class EpisodeContextDto {
 	@ApiPropertyOptional({ type: EpisodeReferenceDto })
 	previous: EpisodeReferenceDto | null;

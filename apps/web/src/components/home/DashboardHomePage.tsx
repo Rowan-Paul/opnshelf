@@ -1,6 +1,7 @@
 import {
 	listsControllerGetUserListsOptions,
 	shelfControllerGetUserShelfOptions,
+	showsControllerGetUserUpNextOptions,
 	type UserDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CreateListDialog } from "@/components/CreateListDialog";
+import { UpNextSection } from "@/components/home/UpNextSection";
 import { ListCard } from "@/components/ListCard";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
@@ -44,6 +46,13 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 
 	const { data: lists, isLoading: isListsLoading } = useQuery({
 		...listsControllerGetUserListsOptions(),
+		enabled: !!user.did,
+	});
+
+	const { data: upNext, isLoading: isUpNextLoading } = useQuery({
+		...showsControllerGetUserUpNextOptions({
+			path: { userDid: user.did },
+		}),
 		enabled: !!user.did,
 	});
 
@@ -111,63 +120,93 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 				</M3Button>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-				<M3Card variant="elevated">
-					<M3CardHeader className="pb-2">
-						<M3CardTitle className="md-title-large flex items-center gap-2">
-							<CalendarRange className="h-5 w-5" />
-							Watched ({range === "week" ? "7 days" : "30 days"})
-						</M3CardTitle>
-					</M3CardHeader>
-					<M3CardContent>
-						<p className="md-display-small">{watchedInRangeCount}</p>
-						<div className="flex gap-2 mt-3">
-							<M3Button
-								size="sm"
-								variant={range === "week" ? "filled-tonal" : "text"}
-								onClick={() => setRange("week")}
-							>
-								Week
-							</M3Button>
-							<M3Button
-								size="sm"
-								variant={range === "month" ? "filled-tonal" : "text"}
-								onClick={() => setRange("month")}
-							>
-								Month
-							</M3Button>
-						</div>
-					</M3CardContent>
-				</M3Card>
-				<M3Card variant="elevated">
-					<M3CardHeader className="pb-2">
-						<M3CardTitle className="md-title-large flex items-center gap-2">
-							<Film className="h-5 w-5" />
-							Total on Shelf
-						</M3CardTitle>
-					</M3CardHeader>
-					<M3CardContent>
-						<p className="md-display-small">{totalTracked}</p>
-					</M3CardContent>
-				</M3Card>
-				<M3Card variant="elevated">
-					<M3CardHeader className="pb-2">
-						<M3CardTitle className="md-title-large flex items-center gap-2">
-							<ListChecks className="h-5 w-5" />
-							Your Lists
-						</M3CardTitle>
-					</M3CardHeader>
-					<M3CardContent>
-						<p className="md-display-small">{listCount}</p>
-						<M3CardDescription>
-							{totalMoviesInLists} total item
-							{totalMoviesInLists !== 1 ? "s" : ""} in lists
-						</M3CardDescription>
-					</M3CardContent>
-				</M3Card>
+			<div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+				<div className="lg:col-span-3">
+					<UpNextSection
+						isLoading={isUpNextLoading}
+						upNext={upNext ?? []}
+						userDid={user.did}
+					/>
+				</div>
+
+				<div className="lg:col-span-2">
+					<M3Card variant="elevated" className="h-full">
+						<M3CardHeader>
+							<M3CardTitle className="md-title-large">At a glance</M3CardTitle>
+							<M3CardDescription>
+								A lighter read on your recent momentum.
+							</M3CardDescription>
+						</M3CardHeader>
+						<M3CardContent className="space-y-5">
+							<div className="flex gap-2">
+								<M3Button
+									size="sm"
+									variant={range === "week" ? "filled-tonal" : "text"}
+									onClick={() => setRange("week")}
+								>
+									Week
+								</M3Button>
+								<M3Button
+									size="sm"
+									variant={range === "month" ? "filled-tonal" : "text"}
+									onClick={() => setRange("month")}
+								>
+									Month
+								</M3Button>
+							</div>
+							<div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
+								<div
+									className="rounded-2xl p-4"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-high)",
+									}}
+								>
+									<div className="flex items-center gap-2 mb-2 text-sm text-gray-400">
+										<CalendarRange className="h-4 w-4" />
+										Watched ({range === "week" ? "7 days" : "30 days"})
+									</div>
+									<p className="text-3xl font-semibold">
+										{watchedInRangeCount}
+									</p>
+								</div>
+								<div
+									className="rounded-2xl p-4"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-high)",
+									}}
+								>
+									<div className="flex items-center gap-2 mb-2 text-sm text-gray-400">
+										<Film className="h-4 w-4" />
+										Total on shelf
+									</div>
+									<p className="text-3xl font-semibold">{totalTracked}</p>
+								</div>
+								<div
+									className="rounded-2xl p-4"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-high)",
+									}}
+								>
+									<div className="flex items-center gap-2 mb-2 text-sm text-gray-400">
+										<ListChecks className="h-4 w-4" />
+										Your lists
+									</div>
+									<p className="text-3xl font-semibold">{listCount}</p>
+									<p className="text-sm text-gray-400 mt-1">
+										{totalMoviesInLists} total item
+										{totalMoviesInLists !== 1 ? "s" : ""}
+									</p>
+								</div>
+							</div>
+						</M3CardContent>
+					</M3Card>
+				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+			<div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-8">
 				<div className="lg:col-span-3">
 					<div className="flex items-center justify-between mb-4">
 						<h2 className="md-headline-small">Recent Watched</h2>
