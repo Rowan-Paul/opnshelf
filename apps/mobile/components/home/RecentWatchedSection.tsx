@@ -35,7 +35,10 @@ export function RecentWatchedSection({
 		<View style={styles.section}>
 			<View style={styles.sectionHeader}>
 				<Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Recent Watched</Text>
-				<Pressable onPress={() => router.push("/(tabs)/profile/shelf")}>
+				<Pressable
+					onPress={() => router.push("/(tabs)/profile/shelf")}
+					style={[styles.headerAction, { backgroundColor: colors.surfaceContainerHigh }]}
+				>
 					<Text style={[styles.sectionLink, { color: colors.primary }]}>View shelf</Text>
 				</Pressable>
 			</View>
@@ -154,6 +157,8 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
+		gap: spacing.sm,
+		flexWrap: "wrap",
 		marginBottom: spacing.sm,
 	},
 	sectionTitle: {
@@ -163,6 +168,11 @@ const styles = StyleSheet.create({
 	sectionLink: {
 		fontSize: 14,
 		fontWeight: "600",
+	},
+	headerAction: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 8,
+		borderRadius: borderRadius.full,
 	},
 	sectionSkeleton: {
 		marginTop: spacing.sm,
@@ -228,7 +238,8 @@ const styles = StyleSheet.create({
 	},
 	emptyButton: {
 		marginTop: spacing.md,
-		alignSelf: "flex-start",
+		alignSelf: "stretch",
+		borderRadius: borderRadius.full,
 	},
 	buttonText: {
 		fontSize: 16,

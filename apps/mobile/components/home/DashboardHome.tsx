@@ -7,7 +7,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { CalendarRange, Film, LayoutDashboard, ListChecks, Search } from "lucide-react-native";
+import { CalendarRange, LayoutDashboard, Search } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -83,10 +83,8 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 
 	const {
 		watchedInRangeCount,
-		totalTracked,
 		recentWatched,
-		listCount,
-		totalMoviesInLists,
+		activityBars,
 		recentLists,
 	} = useHomeMetrics(
 		shelfData?.items,
@@ -96,6 +94,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 	);
 
 	const displayName = resolveDisplayName(user);
+	const maxActivityValue = Math.max(...activityBars.map((bar) => bar.value), 1);
 
 	const deleteMovieMutation = useMutation({
 		mutationKey: ["dashboard", "movies", "delete"],
@@ -150,12 +149,24 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 					/>
 				}
 			>
-				<View style={styles.dashboardHeader}>
+				<View
+					style={[
+						styles.dashboardHeader,
+						{
+							backgroundColor: colors.surfaceContainerHigh,
+							borderColor: colors.outlineVariant,
+						},
+					]}
+				>
 					<View style={styles.dashboardTitleWrap}>
-						<LayoutDashboard size={28} color={colors.primary} />
-						<Text style={[styles.dashboardTitle, { color: colors.onBackground }]}>Dashboard</Text>
+						<View style={[styles.dashboardIconBadge, { backgroundColor: colors.primaryContainer }]}>
+							<LayoutDashboard size={24} color={colors.primary} />
+						</View>
+						<View style={styles.dashboardHeadingCopy}>
+							<Text style={[styles.dashboardTitle, { color: colors.onBackground }]}>Dashboard</Text>
+							<Text style={[styles.greeting, { color: colors.onSurfaceVariant }]}>Welcome back, {displayName}</Text>
+						</View>
 					</View>
-					<Text style={[styles.greeting, { color: colors.onSurfaceVariant }]}>Welcome back, {displayName}</Text>
 					<Button size="lg" onPress={() => router.push("/(tabs)/search")} style={styles.dashboardSearchButton}>
 						<Search size={20} color={colors.onPrimary} style={styles.buttonIcon} />
 						<Text style={[styles.buttonText, { color: colors.onPrimary }]}>Search</Text>
@@ -186,14 +197,16 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 									<Pressable
 										key={tab}
 										onPress={() => setRange(tab)}
-										style={[
-											styles.rangePill,
-											{
-												backgroundColor:
-													range === tab ? colors.primaryContainer : colors.surfaceContainer,
-											},
-										]}
-									>
+									style={[
+										styles.rangePill,
+										{
+											backgroundColor:
+												range === tab ? colors.primaryContainer : colors.surfaceContainer,
+											borderColor:
+												range === tab ? colors.primaryContainer : colors.outlineVariant,
+										},
+									]}
+								>
 										<Text
 											style={[
 												styles.rangePillText,
@@ -208,6 +221,38 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 						</View>
 					</CardHeader>
 					<CardContent>
+						<View
+							style={[
+								styles.activityCard,
+								{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
+							]}
+						>
+							<View style={styles.activityHeaderRow}>
+								<Text style={[styles.activityTitle, { color: colors.onSurface }]}>Viewing rhythm</Text>
+								<Text style={[styles.activitySubtitle, { color: colors.onSurfaceVariant }]}> 
+									{range === "week" ? "Last 7 days" : "Weekly activity"}
+								</Text>
+							</View>
+							<View style={styles.activityBarsRow}>
+								{activityBars.map((bar) => (
+									<View key={bar.label} style={styles.activityBarItem}>
+										<View style={styles.activityBarTrack}>
+											<View
+												style={[
+													styles.activityBarFill,
+													{
+														backgroundColor: colors.primary,
+														height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
+													},
+												]}
+											/>
+										</View>
+										<Text style={[styles.activityValue, { color: colors.onSurface }]}>{bar.value}</Text>
+										<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>{bar.label}</Text>
+									</View>
+								))}
+							</View>
+						</View>
 						<View style={styles.metricsGrid}>
 							<View
 								style={[
@@ -220,33 +265,6 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 									<Text style={[styles.metricTitle, { color: colors.onSurface }]}>Watched {range === "week" ? "7d" : "30d"}</Text>
 								</View>
 								<Text style={[styles.metricValue, { color: colors.onSurface }]}>{watchedInRangeCount}</Text>
-							</View>
-							<View
-								style={[
-									styles.metricTile,
-									{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
-								]}
-							>
-								<View style={styles.metricTitleRow}>
-									<Film size={16} color={colors.primary} />
-									<Text style={[styles.metricTitle, { color: colors.onSurface }]}>On shelf</Text>
-								</View>
-								<Text style={[styles.metricValue, { color: colors.onSurface }]}>{totalTracked}</Text>
-							</View>
-							<View
-								style={[
-									styles.metricTile,
-									{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
-								]}
-							>
-								<View style={styles.metricTitleRow}>
-									<ListChecks size={16} color={colors.primary} />
-									<Text style={[styles.metricTitle, { color: colors.onSurface }]}>Lists</Text>
-								</View>
-								<Text style={[styles.metricValue, { color: colors.onSurface }]}>{listCount}</Text>
-								<Text style={[styles.metricCaption, { color: colors.onSurfaceVariant }]}>
-									{totalMoviesInLists} items total
-								</Text>
 							</View>
 						</View>
 					</CardContent>
@@ -285,12 +303,26 @@ function resolveDisplayName(user: DashboardUser): string {
 
 const styles = StyleSheet.create({
 	container: { flex: 1 },
-	scrollContent: { padding: spacing.lg },
-	dashboardHeader: { marginBottom: spacing.lg },
-	dashboardTitleWrap: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.xs },
-	dashboardTitle: { fontSize: 32, fontWeight: "700" },
-	greeting: { fontSize: 15, marginBottom: spacing.md },
-	dashboardSearchButton: { alignSelf: "flex-start" },
+	scrollContent: { padding: spacing.lg, paddingBottom: spacing.xxl },
+	dashboardHeader: {
+		marginBottom: spacing.lg,
+		padding: spacing.md,
+		borderRadius: borderRadius.xl,
+		borderWidth: 1,
+		gap: spacing.md,
+	},
+	dashboardTitleWrap: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+	dashboardIconBadge: {
+		width: 48,
+		height: 48,
+		borderRadius: borderRadius.full,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	dashboardHeadingCopy: { flex: 1, gap: spacing.xs },
+	dashboardTitle: { fontSize: 30, fontWeight: "700" },
+	greeting: { fontSize: 15, lineHeight: 21 },
+	dashboardSearchButton: { width: "100%", borderRadius: borderRadius.full },
 	buttonIcon: { marginRight: spacing.sm },
 	buttonText: { fontSize: 16, fontWeight: "600" },
 	metricsCard: {
@@ -313,6 +345,48 @@ const styles = StyleSheet.create({
 	metricsGrid: {
 		gap: spacing.sm,
 	},
+	activityCard: {
+		borderRadius: borderRadius.lg,
+		borderWidth: 1,
+		padding: spacing.md,
+		marginBottom: spacing.sm,
+	},
+	activityHeaderRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: spacing.md,
+		gap: spacing.sm,
+	},
+	activityTitle: { fontSize: 14, fontWeight: "700" },
+	activitySubtitle: { fontSize: 12 },
+	activityBarsRow: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+		justifyContent: "space-between",
+		gap: spacing.xs,
+		minHeight: 132,
+	},
+	activityBarItem: {
+		flex: 1,
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	activityBarTrack: {
+		height: 84,
+		width: "100%",
+		borderRadius: borderRadius.md,
+		justifyContent: "flex-end",
+		overflow: "hidden",
+		backgroundColor: "rgba(127,127,127,0.14)",
+	},
+	activityBarFill: {
+		width: "100%",
+		borderRadius: borderRadius.md,
+		minHeight: 0,
+	},
+	activityValue: { fontSize: 12, fontWeight: "700" },
+	activityLabel: { fontSize: 11 },
 	metricTile: {
 		borderRadius: borderRadius.lg,
 		borderWidth: 1,
@@ -327,6 +401,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.sm,
 		paddingVertical: 6,
 		borderRadius: borderRadius.full,
+		borderWidth: 1,
 	},
 	rangePillText: { fontSize: 12, fontWeight: "600" },
 });

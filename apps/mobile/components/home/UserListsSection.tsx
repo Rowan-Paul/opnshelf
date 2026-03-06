@@ -25,7 +25,10 @@ export function UserListsSection({
 		<View style={styles.section}>
 			<View style={styles.sectionHeader}>
 				<Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Your Lists</Text>
-				<Pressable onPress={() => router.push("/(tabs)/profile/lists")}>
+				<Pressable
+					onPress={() => router.push("/(tabs)/profile/lists")}
+					style={[styles.headerAction, { backgroundColor: colors.surfaceContainerHigh }]}
+				>
 					<Text style={[styles.sectionLink, { color: colors.primary }]}>All lists</Text>
 				</Pressable>
 			</View>
@@ -88,6 +91,8 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
+		gap: spacing.sm,
+		flexWrap: "wrap",
 		marginBottom: spacing.sm,
 	},
 	sectionTitle: {
@@ -98,9 +103,15 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontWeight: "600",
 	},
+	headerAction: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 8,
+		borderRadius: borderRadius.full,
+	},
 	createListButton: {
-		alignSelf: "flex-start",
+		alignSelf: "stretch",
 		marginBottom: spacing.sm,
+		borderRadius: borderRadius.full,
 	},
 	createListText: {
 		fontSize: 14,

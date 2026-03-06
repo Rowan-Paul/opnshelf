@@ -17,8 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { M3Button } from "@/components/ui/m3-button";
 import { M3TextField } from "@/components/ui/m3-text-field";
+import { cn } from "@/lib/utils";
 
-export function CreateListDialog() {
+type CreateListDialogProps = {
+	triggerClassName?: string;
+};
+
+export function CreateListDialog({ triggerClassName }: CreateListDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
@@ -61,7 +66,10 @@ export function CreateListDialog() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<M3Button variant="filled" className="gap-2 ml-auto">
+				<M3Button
+					variant="filled"
+					className={cn("gap-2 ml-auto", triggerClassName)}
+				>
 					<ListPlus className="size-4" />
 					Create List
 				</M3Button>
