@@ -64,6 +64,7 @@ describe("ListsService", () => {
 			upsert: jest.fn(),
 		},
 		listItem: {
+			findMany: jest.fn(),
 			findUnique: jest.fn(),
 			create: jest.fn(),
 			delete: jest.fn(),
@@ -157,6 +158,146 @@ describe("ListsService", () => {
 			expect(result).toHaveLength(2);
 			expect(result[0].isInList).toBe(true);
 			expect(result[1].isInList).toBe(false);
+		});
+	});
+
+	describe("getList", () => {
+		it("should return all items when pagination is not requested", async () => {
+			mockPrismaService.movieList.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "favorites",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites",
+				userDid: "did:plc:abc123",
+				name: "Favorites",
+				description: "Best of the best",
+				slug: "favorites",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 2 },
+			});
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{
+					id: "item-1",
+					rkey: "item-1",
+					mediaType: "movie",
+					mediaId: "123",
+					notes: null,
+					position: 0,
+					createdAt: new Date("2024-01-03"),
+					movie: {
+						movieId: "123",
+						title: "Movie One",
+						posterPath: "/one.jpg",
+						backdropPath: null,
+						releaseYear: 2024,
+						releaseDate: new Date("2024-01-01"),
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+				{
+					id: "item-2",
+					rkey: "item-2",
+					mediaType: "movie",
+					mediaId: "456",
+					notes: null,
+					position: 1,
+					createdAt: new Date("2024-01-02"),
+					movie: {
+						movieId: "456",
+						title: "Movie Two",
+						posterPath: "/two.jpg",
+						backdropPath: null,
+						releaseYear: 2023,
+						releaseDate: new Date("2023-01-01"),
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+			]);
+
+			const result = await service.getList("did:plc:abc123", "favorites");
+
+			expect(result).toMatchObject({
+				slug: "favorites",
+				total: 2,
+				page: 1,
+				pageSize: 2,
+				totalPages: 1,
+				hasPreviousPage: false,
+				hasNextPage: false,
+			});
+			expect(result?.items).toHaveLength(2);
+			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
+				where: { listId: "list-1" },
+				orderBy: { createdAt: "desc" },
+				include: {
+					movie: true,
+					show: true,
+				},
+			});
+		});
+
+		it("should clamp paginated requests to the last available page", async () => {
+			mockPrismaService.movieList.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "watchlist",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist",
+				userDid: "did:plc:abc123",
+				name: "Watchlist",
+				description: "Things to watch",
+				slug: "watchlist",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 5 },
+			});
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{
+					id: "item-5",
+					rkey: "item-5",
+					mediaType: "movie",
+					mediaId: "999",
+					notes: null,
+					position: 4,
+					createdAt: new Date("2024-01-01"),
+					movie: {
+						movieId: "999",
+						title: "Last Movie",
+						posterPath: "/last.jpg",
+						backdropPath: null,
+						releaseYear: 2022,
+						releaseDate: new Date("2022-01-01"),
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+			]);
+
+			const result = await service.getList("did:plc:abc123", "watchlist", 9, 2);
+
+			expect(result).toMatchObject({
+				total: 5,
+				page: 3,
+				pageSize: 2,
+				totalPages: 3,
+				hasPreviousPage: true,
+				hasNextPage: false,
+			});
+			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
+				where: { listId: "list-1" },
+				orderBy: { createdAt: "desc" },
+				include: {
+					movie: true,
+					show: true,
+				},
+				skip: 4,
+				take: 2,
+			});
 		});
 	});
 

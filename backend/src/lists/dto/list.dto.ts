@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { Type } from "class-transformer";
+import {
+	IsInt,
+	IsOptional,
+	IsString,
+	Max,
+	MaxLength,
+	Min,
+	MinLength,
+} from "class-validator";
 
 export class CreateListDto {
 	@ApiProperty({
@@ -58,6 +67,29 @@ export class AddToListDto {
 	@IsString()
 	@MaxLength(1000)
 	notes?: string;
+}
+
+export class GetListQueryDto {
+	@ApiPropertyOptional({
+		description: "Page number to return",
+		default: 1,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	page?: number;
+
+	@ApiPropertyOptional({
+		description: "Number of items to return per page",
+		default: 20,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(50)
+	pageSize?: number;
 }
 
 export class RemoveFromListDto {
@@ -240,6 +272,26 @@ export class MovieListWithMoviesDto {
 
 	@ApiProperty({ type: [MediaInListDto] })
 	items: MediaInListDto[];
+
+	@ApiProperty({ description: "Total count of items" })
+	total: number;
+
+	@ApiProperty({
+		description: "Current page number after server-side clamping",
+	})
+	page: number;
+
+	@ApiProperty({ description: "Number of items returned per page" })
+	pageSize: number;
+
+	@ApiProperty({ description: "Total number of available pages" })
+	totalPages: number;
+
+	@ApiProperty({ description: "Whether a previous page exists" })
+	hasPreviousPage: boolean;
+
+	@ApiProperty({ description: "Whether a next page exists" })
+	hasNextPage: boolean;
 }
 
 export class MovieListsForItemDto {

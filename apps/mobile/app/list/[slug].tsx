@@ -1,16 +1,24 @@
 import {
 	listsControllerDeleteListMutation,
-	listsControllerGetListOptions,
+	listsControllerGetList,
 	listsControllerGetListQueryKey,
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	type MediaInListDto,
+	moviesControllerMarkWatchedMutation,
+	showsControllerMarkSeasonWatchedMutation,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Trash2 } from "lucide-react-native";
+import { Check, Trash2 } from "lucide-react-native";
 import { usePostHog } from "posthog-react-native";
 import { useCallback, useState } from "react";
 import {
@@ -35,10 +43,16 @@ import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import {
+	invalidateUserShelfQueries,
+	invalidateUserUpNextQueries,
+} from "@/lib/invalidate-shelf";
+import {
 	createTitleSlug,
 	getTmdbPosterUrl,
 	parseScopedShowMediaId,
 } from "@/lib/utils";
+
+const PAGE_SIZE = 20;
 
 export default function ListDetailScreen() {
 	const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -52,22 +66,48 @@ export default function ListDetailScreen() {
 	const { showCompactHeader, onScroll } = useScrollRevealHeader(100);
 
 	const {
-		data: list,
+		data,
 		isLoading,
-		isRefetching: isListRefetching,
-		refetch: refetchList,
-	} = useQuery({
-		...listsControllerGetListOptions({
+		isFetchingNextPage,
+		isRefetching,
+		hasNextPage,
+		refetch,
+		fetchNextPage,
+	} = useInfiniteQuery({
+		queryKey: listsControllerGetListQueryKey({
 			path: { slug: slug || "" },
+			query: { pageSize: PAGE_SIZE },
 		}),
+		queryFn: async ({ pageParam }) => {
+			const response = await listsControllerGetList({
+				path: { slug: slug || "" },
+				query: { page: pageParam as number, pageSize: PAGE_SIZE },
+				throwOnError: true,
+			});
+			return response.data;
+		},
 		enabled: !!user?.did && !!slug,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 	});
 
-	const isRefreshing = isListRefetching && !isLoading;
+	const pages = data?.pages ?? [];
+	const list = pages[0];
+	const movies = pages.flatMap((page) => page.items ?? []);
+	const latestPage = pages[pages.length - 1];
+	const totalCount = list?.total ?? 0;
+	const isRefreshing = isRefetching && !isLoading && !isFetchingNextPage;
+
+	const handleWatchSuccess = useCallback(() => {
+		invalidateUserShelfQueries(queryClient, user?.did);
+		invalidateUserUpNextQueries(queryClient, user?.did);
+		showToast("Added to your shelf", "success");
+	}, [queryClient, showToast, user?.did]);
 
 	const handleRefresh = useCallback(async () => {
-		await refetchList();
-	}, [refetchList]);
+		await refetch();
+	}, [refetch]);
 
 	const removeMutation = useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
@@ -76,6 +116,7 @@ export default function ListDetailScreen() {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({
 					path: { slug: slug || "" },
+					query: { pageSize: PAGE_SIZE },
 				}),
 			});
 			queryClient.invalidateQueries({
@@ -91,6 +132,42 @@ export default function ListDetailScreen() {
 		},
 		onError: () => {
 			showToast("Failed to remove. Please try again.", "error");
+		},
+	});
+
+	const markMovieWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "movie"],
+		...moviesControllerMarkWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			showToast("Failed to update. Please try again.", "error");
+		},
+	});
+
+	const markShowWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "show"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			showToast("Failed to update. Please try again.", "error");
+		},
+	});
+
+	const markSeasonWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "season"],
+		...showsControllerMarkSeasonWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			showToast("Failed to update. Please try again.", "error");
+		},
+	});
+
+	const markEpisodeWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "episode"],
+		...showsControllerMarkWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			showToast("Failed to update. Please try again.", "error");
 		},
 	});
 
@@ -182,6 +259,120 @@ export default function ListDetailScreen() {
 		[removeMutation, slug],
 	);
 
+	const handleEndReached = useCallback(() => {
+		if (!(hasNextPage ?? latestPage?.hasNextPage) || isFetchingNextPage) {
+			return;
+		}
+
+		void fetchNextPage();
+	}, [fetchNextPage, hasNextPage, isFetchingNextPage, latestPage?.hasNextPage]);
+
+	const handleQuickWatch = useCallback(
+		(item: MediaInListDto) => {
+			if (item.mediaType === "movie") {
+				markMovieWatchedMutation.mutate({
+					body: { movieId: item.mediaId },
+				});
+				return;
+			}
+
+			const scopedShow = parseScopedShowMediaId(item.mediaId);
+			const showId =
+				(item.media as { showId?: string }).showId ??
+				scopedShow.showId ??
+				item.mediaId;
+
+			if (
+				typeof scopedShow.seasonNumber === "number" &&
+				typeof scopedShow.episodeNumber === "number"
+			) {
+				markEpisodeWatchedMutation.mutate({
+					body: {
+						showId,
+						seasonNumber: scopedShow.seasonNumber,
+						episodeNumber: scopedShow.episodeNumber,
+					},
+				});
+				return;
+			}
+
+			if (typeof scopedShow.seasonNumber === "number") {
+				markSeasonWatchedMutation.mutate({
+					body: {
+						showId,
+						seasonNumber: scopedShow.seasonNumber,
+					},
+				});
+				return;
+			}
+
+			markShowWatchedMutation.mutate({
+				body: { showId },
+			});
+		},
+		[
+			markEpisodeWatchedMutation,
+			markMovieWatchedMutation,
+			markSeasonWatchedMutation,
+			markShowWatchedMutation,
+		],
+	);
+
+	const isQuickWatchPending = useCallback(
+		(item: MediaInListDto) => {
+			if (item.mediaType === "movie") {
+				return (
+					markMovieWatchedMutation.isPending &&
+					markMovieWatchedMutation.variables?.body?.movieId === item.mediaId
+				);
+			}
+
+			const scopedShow = parseScopedShowMediaId(item.mediaId);
+			const showId =
+				(item.media as { showId?: string }).showId ??
+				scopedShow.showId ??
+				item.mediaId;
+
+			if (
+				typeof scopedShow.seasonNumber === "number" &&
+				typeof scopedShow.episodeNumber === "number"
+			) {
+				return (
+					markEpisodeWatchedMutation.isPending &&
+					markEpisodeWatchedMutation.variables?.body?.showId === showId &&
+					markEpisodeWatchedMutation.variables?.body?.seasonNumber ===
+						scopedShow.seasonNumber &&
+					markEpisodeWatchedMutation.variables?.body?.episodeNumber ===
+						scopedShow.episodeNumber
+				);
+			}
+
+			if (typeof scopedShow.seasonNumber === "number") {
+				return (
+					markSeasonWatchedMutation.isPending &&
+					markSeasonWatchedMutation.variables?.body?.showId === showId &&
+					markSeasonWatchedMutation.variables?.body?.seasonNumber ===
+						scopedShow.seasonNumber
+				);
+			}
+
+			return (
+				markShowWatchedMutation.isPending &&
+				markShowWatchedMutation.variables?.body?.showId === showId
+			);
+		},
+		[
+			markEpisodeWatchedMutation.isPending,
+			markEpisodeWatchedMutation.variables,
+			markMovieWatchedMutation.isPending,
+			markMovieWatchedMutation.variables,
+			markSeasonWatchedMutation.isPending,
+			markSeasonWatchedMutation.variables,
+			markShowWatchedMutation.isPending,
+			markShowWatchedMutation.variables,
+		],
+	);
+
 	const renderItem = useCallback(
 		({ item }: { item: MediaInListDto }) => {
 			const isRemoving =
@@ -191,14 +382,22 @@ export default function ListDetailScreen() {
 				<ListMovieItem
 					item={item}
 					onPress={() => handleMoviePress(item)}
+					onWatch={() => handleQuickWatch(item)}
 					onRemove={() =>
 						handleRemove(item.mediaType as "movie" | "show", item.mediaId)
 					}
+					isWatching={isQuickWatchPending(item)}
 					isRemoving={isRemoving}
 				/>
 			);
 		},
-		[removeMutation, handleMoviePress, handleRemove],
+		[
+			handleMoviePress,
+			handleQuickWatch,
+			handleRemove,
+			isQuickWatchPending,
+			removeMutation,
+		],
 	);
 
 	const keyExtractor = useCallback((item: MediaInListDto) => item.id, []);
@@ -275,8 +474,6 @@ export default function ListDetailScreen() {
 		);
 	}
 
-	const movies = list.items || [];
-
 	return (
 		<GestureHandlerRootView
 			style={[styles.container, { backgroundColor: colors.background }]}
@@ -336,11 +533,13 @@ export default function ListDetailScreen() {
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									{movies.length} item{movies.length !== 1 ? "s" : ""}
+									{totalCount} item{totalCount !== 1 ? "s" : ""}
 								</Text>
 							</View>
 						}
 						ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+						onEndReached={handleEndReached}
+						onEndReachedThreshold={0.35}
 						refreshControl={
 							<RefreshControl
 								refreshing={isRefreshing}
@@ -349,6 +548,31 @@ export default function ListDetailScreen() {
 								colors={[colors.primary]}
 								progressBackgroundColor={colors.surfaceContainerHigh}
 							/>
+						}
+						ListFooterComponent={
+							isFetchingNextPage ? (
+								<View style={styles.listFooter}>
+									{[0, 1].map((index) => (
+										<View
+											key={index}
+											style={[
+												styles.skeletonRow,
+												{ backgroundColor: colors.surfaceContainer },
+											]}
+										>
+											<Skeleton width={80} height={120} />
+											<View style={styles.skeletonContent}>
+												<Skeleton width="70%" height={18} />
+												<Skeleton
+													width="40%"
+													height={14}
+													style={{ marginTop: spacing.sm }}
+												/>
+											</View>
+										</View>
+									))}
+								</View>
+							) : null
 						}
 					/>
 				)}
@@ -388,14 +612,18 @@ export default function ListDetailScreen() {
 interface ListMovieItemProps {
 	item: MediaInListDto;
 	onPress: () => void;
+	onWatch: () => void;
 	onRemove: () => void;
+	isWatching: boolean;
 	isRemoving: boolean;
 }
 
 function ListMovieItem({
 	item,
 	onPress,
+	onWatch,
 	onRemove,
+	isWatching,
 	isRemoving,
 }: ListMovieItemProps) {
 	const { colors } = useTheme();
@@ -468,31 +696,76 @@ function ListMovieItem({
 				)}
 			</View>
 
-			<TouchableOpacity
-				onPress={(e) => {
-					e.stopPropagation();
-					onRemove();
-				}}
-				disabled={isRemoving}
-				style={[styles.removeButton, { backgroundColor: colors.error }]}
-				activeOpacity={0.7}
-			>
-				{isRemoving ? (
-					<View style={styles.removeButtonContent}>
-						<SpinningLoader size={14} color={colors.onError} />
-						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
-							Loading
-						</Text>
-					</View>
-				) : (
-					<>
-						<Trash2 size={14} color={colors.onError} />
-						<Text style={[styles.removeButtonText, { color: colors.onError }]}>
-							Remove
-						</Text>
-					</>
-				)}
-			</TouchableOpacity>
+			<View style={styles.actionRow}>
+				<TouchableOpacity
+					onPress={(e) => {
+						e.stopPropagation();
+						onWatch();
+					}}
+					disabled={isWatching}
+					style={[
+						styles.actionButton,
+						{ backgroundColor: colors.primaryContainer },
+					]}
+					activeOpacity={0.7}
+				>
+					{isWatching ? (
+						<View style={styles.removeButtonContent}>
+							<SpinningLoader size={14} color={colors.onPrimaryContainer} />
+							<Text
+								style={[
+									styles.actionButtonText,
+									{ color: colors.onPrimaryContainer },
+								]}
+							>
+								Loading
+							</Text>
+						</View>
+					) : (
+						<>
+							<Check size={14} color={colors.onPrimaryContainer} />
+							<Text
+								style={[
+									styles.actionButtonText,
+									{ color: colors.onPrimaryContainer },
+								]}
+							>
+								Watch
+							</Text>
+						</>
+					)}
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					onPress={(e) => {
+						e.stopPropagation();
+						onRemove();
+					}}
+					disabled={isRemoving}
+					style={[styles.actionButton, { backgroundColor: colors.error }]}
+					activeOpacity={0.7}
+				>
+					{isRemoving ? (
+						<View style={styles.removeButtonContent}>
+							<SpinningLoader size={14} color={colors.onError} />
+							<Text
+								style={[styles.actionButtonText, { color: colors.onError }]}
+							>
+								Loading
+							</Text>
+						</View>
+					) : (
+						<>
+							<Trash2 size={14} color={colors.onError} />
+							<Text
+								style={[styles.actionButtonText, { color: colors.onError }]}
+							>
+								Remove
+							</Text>
+						</>
+					)}
+				</TouchableOpacity>
+			</View>
 		</MediaCard>
 	);
 }
@@ -625,6 +898,10 @@ const styles = StyleSheet.create({
 		padding: spacing.md,
 		justifyContent: "center",
 	},
+	listFooter: {
+		paddingTop: spacing.sm,
+		paddingBottom: spacing.xl,
+	},
 	poster: {
 		width: "100%",
 		height: "100%",
@@ -641,7 +918,12 @@ const styles = StyleSheet.create({
 	movieYear: {
 		fontSize: 12,
 	},
-	removeButton: {
+	actionRow: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		marginTop: spacing.sm,
+	},
+	actionButton: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
@@ -649,9 +931,8 @@ const styles = StyleSheet.create({
 		paddingVertical: spacing.sm,
 		borderRadius: borderRadius.full,
 		alignSelf: "flex-start",
-		marginTop: spacing.sm,
 	},
-	removeButtonText: {
+	actionButtonText: {
 		fontSize: 12,
 		fontWeight: "600",
 	},

@@ -6,6 +6,7 @@ import {
 	Param,
 	Post,
 	Put,
+	Query,
 	Req,
 	UseGuards,
 } from "@nestjs/common";
@@ -25,6 +26,7 @@ import { ListsService, type ATSession } from "./lists.service";
 import {
 	AddToListDto,
 	CreateListDto,
+	GetListQueryDto,
 	MovieListDto,
 	MovieListsForItemDto,
 	MovieListSummaryDto,
@@ -102,8 +104,14 @@ export class ListsController {
 	async getList(
 		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
-	): Promise<MovieListDto | null> {
-		return this.listsService.getList(req.user.did, slug);
+		@Query() query: GetListQueryDto,
+	): Promise<MovieListWithMoviesDto | null> {
+		return this.listsService.getList(
+			req.user.did,
+			slug,
+			query.page,
+			query.pageSize,
+		);
 	}
 
 	@Put(":slug")

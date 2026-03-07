@@ -440,6 +440,12 @@ export type MovieListWithMoviesDto = {
     createdAt: string;
     updatedAt: string;
     items: Array<MediaInListDto>;
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
 };
 
 export type UpdateListDto = {
@@ -1434,7 +1440,16 @@ export type ListsControllerGetListData = {
          */
         slug: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
     url: '/lists/{slug}';
 };
 

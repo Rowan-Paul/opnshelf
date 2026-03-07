@@ -1,8 +1,9 @@
 import { shelfControllerGetUserShelfOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { PaginationControls } from "@/components/PaginationControls";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
 import { M3Button } from "@/components/ui/m3-button";
@@ -14,6 +15,7 @@ import {
 	M3CardTitle,
 } from "@/components/ui/m3-card";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
 import { getDayKeyInTimezone, getShelfDayLabel } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
@@ -209,175 +211,4 @@ function ShelfPage() {
 			/>
 		</div>
 	);
-}
-
-function PaginationControls({
-	currentPage,
-	totalPages,
-	pageNumbers,
-	isFetching,
-	onPageChange,
-}: {
-	currentPage: number;
-	totalPages: number;
-	pageNumbers: Array<number | "ellipsis">;
-	isFetching: boolean;
-	onPageChange: (page: number) => void;
-}) {
-	if (totalPages <= 1) {
-		return null;
-	}
-
-	return (
-		<div
-			className="grid gap-3 rounded-[28px] border px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
-			style={{
-				backgroundColor: "var(--md-sys-color-surface-container)",
-				borderColor: "var(--md-sys-color-outline-variant)",
-			}}
-		>
-			<div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 md:hidden">
-				{pageNumbers.map((pageNumber, index) =>
-					pageNumber === "ellipsis" ? (
-						<span
-							key={`mobile-ellipsis-${pageNumbers[index - 1]}-${pageNumbers[index + 1]}`}
-							className="px-1 text-sm"
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-						>
-							...
-						</span>
-					) : (
-						<M3Button
-							key={`mobile-${pageNumber}`}
-							variant={pageNumber === currentPage ? "filled-tonal" : "text"}
-							size="sm"
-							onClick={() => onPageChange(pageNumber)}
-							disabled={isFetching && pageNumber === currentPage}
-							aria-current={pageNumber === currentPage ? "page" : undefined}
-						>
-							{pageNumber}
-						</M3Button>
-					),
-				)}
-			</div>
-
-			<div className="grid grid-cols-2 gap-3 md:hidden">
-				<M3Button
-					variant="outlined"
-					size="sm"
-					className="w-full justify-center"
-					disabled={currentPage <= 1 || isFetching}
-					onClick={() => onPageChange(currentPage - 1)}
-				>
-					<ChevronLeft className="size-4" />
-					Previous
-				</M3Button>
-				<M3Button
-					variant="outlined"
-					size="sm"
-					className="w-full justify-center"
-					disabled={currentPage >= totalPages || isFetching}
-					onClick={() => onPageChange(currentPage + 1)}
-				>
-					Next
-					<ChevronRight className="size-4" />
-				</M3Button>
-			</div>
-
-			<div className="hidden items-center gap-2 md:flex md:justify-self-start">
-				<M3Button
-					variant="outlined"
-					size="sm"
-					disabled={currentPage <= 1 || isFetching}
-					onClick={() => onPageChange(currentPage - 1)}
-				>
-					<ChevronLeft className="size-4" />
-					Previous
-				</M3Button>
-			</div>
-
-			<div className="hidden flex-wrap items-center justify-center gap-2 md:flex md:justify-self-center">
-				{pageNumbers.map((pageNumber, index) =>
-					pageNumber === "ellipsis" ? (
-						<span
-							key={`ellipsis-${pageNumbers[index - 1]}-${pageNumbers[index + 1]}`}
-							className="px-1 text-sm"
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-						>
-							...
-						</span>
-					) : (
-						<M3Button
-							key={pageNumber}
-							variant={pageNumber === currentPage ? "filled-tonal" : "text"}
-							size="sm"
-							onClick={() => onPageChange(pageNumber)}
-							disabled={isFetching && pageNumber === currentPage}
-							aria-current={pageNumber === currentPage ? "page" : undefined}
-						>
-							{pageNumber}
-						</M3Button>
-					),
-				)}
-			</div>
-
-			<div className="hidden items-center gap-2 md:flex md:justify-self-end">
-				<M3Button
-					variant="outlined"
-					size="sm"
-					disabled={currentPage >= totalPages || isFetching}
-					onClick={() => onPageChange(currentPage + 1)}
-				>
-					Next
-					<ChevronRight className="size-4" />
-				</M3Button>
-			</div>
-		</div>
-	);
-}
-
-function parsePageNumber(input: unknown) {
-	const parsed = Number(input);
-	if (!Number.isInteger(parsed) || parsed < 1) {
-		return 1;
-	}
-
-	return parsed;
-}
-
-function getVisiblePages(currentPage: number, totalPages: number) {
-	if (totalPages <= 0) {
-		return [];
-	}
-
-	if (totalPages <= 5) {
-		return Array.from({ length: totalPages }, (_, index) => index + 1);
-	}
-
-	const pages = new Set<number>([
-		1,
-		Math.max(currentPage - 1, 1),
-		currentPage,
-		Math.min(currentPage + 1, totalPages),
-		totalPages,
-	]);
-
-	const orderedPages = [...pages]
-		.filter((page) => page >= 1 && page <= totalPages)
-		.sort((a, b) => a - b);
-
-	const visiblePages: Array<number | "ellipsis"> = [];
-
-	for (let index = 0; index < orderedPages.length; index += 1) {
-		const page = orderedPages[index];
-		const previousPage = orderedPages[index - 1];
-
-		if (previousPage && page - previousPage > 1) {
-			visiblePages.push("ellipsis");
-		}
-
-		visiblePages.push(page);
-	}
-
-	return visiblePages;
 }

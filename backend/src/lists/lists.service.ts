@@ -20,10 +20,11 @@ import type {
 	MediaInListDto,
 	MovieListDto,
 	MovieListSummaryDto,
+	MovieListWithMoviesDto,
 	MovieListsForItemDto,
 	UpdateListDto,
 } from "./dto/list.dto";
-import { mapItemToDto, mapListToDto } from "./list-mappers";
+import { mapItemToDto } from "./list-mappers";
 import {
 	buildScopedShowMediaId,
 	parseScopedShowMediaId,
@@ -82,16 +83,23 @@ export class ListsService {
 		}));
 	}
 
-	async getList(userDid: string, slug: string): Promise<MovieListDto | null> {
+	async getList(
+		userDid: string,
+		slug: string,
+		page?: number,
+		pageSize?: number,
+	): Promise<MovieListWithMoviesDto | null> {
+		const shouldPaginate = page !== undefined || pageSize !== undefined;
+		const safePageSize = shouldPaginate
+			? Math.min(Math.max(pageSize ?? 20, 1), 50)
+			: undefined;
+		const requestedPage = Math.max(page ?? 1, 1);
+
 		const list = await this.prisma.movieList.findFirst({
 			where: { userDid, slug },
 			include: {
-				items: {
-					orderBy: { createdAt: "desc" },
-					include: {
-						movie: true,
-						show: true,
-					},
+				_count: {
+					select: { items: true },
 				},
 			},
 		});
@@ -100,7 +108,56 @@ export class ListsService {
 			return null;
 		}
 
-		return mapListToDto(list);
+		const total = list._count.items;
+		const totalPages =
+			shouldPaginate && safePageSize
+				? total > 0
+					? Math.ceil(total / safePageSize)
+					: 0
+				: total > 0
+					? 1
+					: 0;
+		const currentPage =
+			shouldPaginate && totalPages > 0
+				? Math.min(requestedPage, totalPages)
+				: 1;
+		const offset =
+			shouldPaginate && safePageSize ? (currentPage - 1) * safePageSize : 0;
+
+		const items =
+			total === 0
+				? []
+				: await this.prisma.listItem.findMany({
+						where: { listId: list.id },
+						orderBy: { createdAt: "desc" },
+						include: {
+							movie: true,
+							show: true,
+						},
+						...(shouldPaginate && safePageSize
+							? { skip: offset, take: safePageSize }
+							: {}),
+					});
+
+		return {
+			id: list.id,
+			rkey: list.rkey,
+			uri: list.uri,
+			userDid: list.userDid,
+			name: list.name,
+			description: list.description ?? undefined,
+			slug: list.slug,
+			isDefault: list.isDefault,
+			createdAt: list.createdAt.toISOString(),
+			updatedAt: list.updatedAt.toISOString(),
+			items: items.map((item) => mapItemToDto(item)),
+			total,
+			page: currentPage,
+			pageSize: shouldPaginate && safePageSize ? safePageSize : total,
+			totalPages,
+			hasPreviousPage: shouldPaginate && totalPages > 0 && currentPage > 1,
+			hasNextPage: shouldPaginate && totalPages > 0 && currentPage < totalPages,
+		};
 	}
 
 	async getListsForItem(

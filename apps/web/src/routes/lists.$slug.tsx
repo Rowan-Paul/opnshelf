@@ -6,16 +6,22 @@ import {
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	type MediaInListDto,
+	moviesControllerMarkWatchedMutation,
+	showsControllerMarkSeasonWatchedMutation,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, List, Loader2, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Check, List, Loader2, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MovieGridSkeleton } from "@/components/MovieGrid";
+import { PaginationControls } from "@/components/PaginationControls";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
+import { Button } from "@/components/ui/button";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -24,9 +30,19 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
+import {
+	invalidateUserShelfQueries,
+	invalidateUserUpNextQueries,
+} from "@/lib/invalidate-shelf";
+import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
 import { getTmdbPosterUrl, parseScopedShowMediaId } from "@/lib/utils";
 
+const PAGE_SIZE = 24;
+
 export const Route = createFileRoute("/lists/$slug")({
+	validateSearch: (search: Record<string, unknown>) => ({
+		page: parsePageNumber(search.page),
+	}),
 	head: ({ params }) => ({
 		meta: [{ title: `${params.slug} | OpnShelf` }],
 	}),
@@ -35,7 +51,8 @@ export const Route = createFileRoute("/lists/$slug")({
 
 function ListDetailPage() {
 	const { slug } = Route.useParams();
-	const navigate = useNavigate();
+	const { page } = Route.useSearch();
+	const navigate = useNavigate({ from: Route.fullPath });
 	const queryClient = useQueryClient();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const { seedColor } = useTheme();
@@ -46,12 +63,32 @@ function ListDetailPage() {
 		retry: false,
 	});
 
-	const { data: list, isLoading: isListLoading } = useQuery({
+	const {
+		data: list,
+		isLoading: isListLoading,
+		isFetching: isListFetching,
+	} = useQuery({
 		...listsControllerGetListOptions({
 			path: { slug },
+			query: { page, pageSize: PAGE_SIZE },
 		}),
 		enabled: !!user?.did,
 	});
+
+	const items = list?.items ?? [];
+	const currentPage = list?.page ?? page;
+	const totalPages = list?.totalPages ?? 0;
+	const totalItems = list?.total ?? 0;
+	const pageNumbers = useMemo(
+		() => getVisiblePages(currentPage, totalPages),
+		[currentPage, totalPages],
+	);
+
+	const handleWatchSuccess = () => {
+		invalidateUserShelfQueries(queryClient, user?.did);
+		invalidateUserUpNextQueries(queryClient, user?.did);
+		toast.success("Added to your shelf");
+	};
 
 	const removeMutation = useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
@@ -60,12 +97,65 @@ function ListDetailPage() {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
 			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
 			toast.success("Removed from list");
 		},
 		onError: () => {
 			toast.error("Failed to remove. Please try again.");
 		},
 	});
+
+	const markMovieWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "movie"],
+		...moviesControllerMarkWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	const markShowWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "show"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	const markSeasonWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "season"],
+		...showsControllerMarkSeasonWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	const markEpisodeWatchedMutation = useMutation({
+		mutationKey: ["lists", slug, "watch", "episode"],
+		...showsControllerMarkWatchedMutation(),
+		onSuccess: handleWatchSuccess,
+		onError: () => {
+			toast.error("Failed to update. Please try again.");
+		},
+	});
+
+	useEffect(() => {
+		if (!list) {
+			return;
+		}
+
+		if (list.page !== page) {
+			navigate({
+				search: { page: list.page },
+				replace: true,
+				resetScroll: false,
+			});
+		}
+	}, [list, navigate, page]);
 
 	const deleteMutation = useMutation({
 		mutationKey: ["lists", slug, "delete"],
@@ -157,7 +247,85 @@ function ListDetailPage() {
 		);
 	}
 
-	const items = list.items || [];
+	const handleQuickWatch = (item: MediaInListDto) => {
+		if (item.mediaType === "movie") {
+			markMovieWatchedMutation.mutate({
+				body: { movieId: item.mediaId },
+			});
+			return;
+		}
+
+		const scopedShow = parseScopedShowMediaId(item.mediaId);
+		const showId = item.media.showId ?? scopedShow?.showId ?? item.mediaId;
+
+		if (
+			typeof scopedShow?.seasonNumber === "number" &&
+			typeof scopedShow?.episodeNumber === "number"
+		) {
+			markEpisodeWatchedMutation.mutate({
+				body: {
+					showId,
+					seasonNumber: scopedShow.seasonNumber,
+					episodeNumber: scopedShow.episodeNumber,
+				},
+			});
+			return;
+		}
+
+		if (typeof scopedShow?.seasonNumber === "number") {
+			markSeasonWatchedMutation.mutate({
+				body: {
+					showId,
+					seasonNumber: scopedShow.seasonNumber,
+				},
+			});
+			return;
+		}
+
+		markShowWatchedMutation.mutate({
+			body: { showId },
+		});
+	};
+
+	const isQuickWatchPending = (item: MediaInListDto) => {
+		if (item.mediaType === "movie") {
+			return (
+				markMovieWatchedMutation.isPending &&
+				markMovieWatchedMutation.variables?.body?.movieId === item.mediaId
+			);
+		}
+
+		const scopedShow = parseScopedShowMediaId(item.mediaId);
+		const showId = item.media.showId ?? scopedShow?.showId ?? item.mediaId;
+
+		if (
+			typeof scopedShow?.seasonNumber === "number" &&
+			typeof scopedShow?.episodeNumber === "number"
+		) {
+			return (
+				markEpisodeWatchedMutation.isPending &&
+				markEpisodeWatchedMutation.variables?.body?.showId === showId &&
+				markEpisodeWatchedMutation.variables?.body?.seasonNumber ===
+					scopedShow.seasonNumber &&
+				markEpisodeWatchedMutation.variables?.body?.episodeNumber ===
+					scopedShow.episodeNumber
+			);
+		}
+
+		if (typeof scopedShow?.seasonNumber === "number") {
+			return (
+				markSeasonWatchedMutation.isPending &&
+				markSeasonWatchedMutation.variables?.body?.showId === showId &&
+				markSeasonWatchedMutation.variables?.body?.seasonNumber ===
+					scopedShow.seasonNumber
+			);
+		}
+
+		return (
+			markShowWatchedMutation.isPending &&
+			markShowWatchedMutation.variables?.body?.showId === showId
+		);
+	};
 
 	return (
 		<div
@@ -213,24 +381,35 @@ function ListDetailPage() {
 					</div>
 				</div>
 
-				{items.length > 0 && (
+				{totalItems > 0 && (
 					<>
+						<PaginationControls
+							currentPage={currentPage}
+							totalPages={totalPages}
+							pageNumbers={pageNumbers}
+							isFetching={isListFetching || removeMutation.isPending}
+							onPageChange={(nextPage) => {
+								navigate({ search: { page: nextPage }, resetScroll: false });
+							}}
+						/>
 						<p
-							className="mb-6 md-body-large"
+							className="mb-6 mt-6 md-body-large"
 							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
-							{items.length} item{items.length !== 1 ? "s" : ""}
+							{totalItems} item{totalItems !== 1 ? "s" : ""}
 						</p>
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 							{items.map((item) => (
 								<ListMediaCard
 									key={item.id}
 									item={item}
+									onWatch={() => handleQuickWatch(item)}
 									onRemove={({ mediaType, mediaId }) => {
 										removeMutation.mutate({
 											path: { slug, mediaType, mediaId },
 										});
 									}}
+									isWatching={isQuickWatchPending(item)}
 									isRemoving={
 										removeMutation.isPending &&
 										removeMutation.variables?.path?.mediaType ===
@@ -240,10 +419,21 @@ function ListDetailPage() {
 								/>
 							))}
 						</div>
+						<div className="mt-6">
+							<PaginationControls
+								currentPage={currentPage}
+								totalPages={totalPages}
+								pageNumbers={pageNumbers}
+								isFetching={isListFetching || removeMutation.isPending}
+								onPageChange={(nextPage) => {
+									navigate({ search: { page: nextPage }, resetScroll: false });
+								}}
+							/>
+						</div>
 					</>
 				)}
 
-				{items.length === 0 && (
+				{totalItems === 0 && (
 					<M3Card variant="elevated" className="text-center max-w-md mx-auto">
 						<M3CardHeader>
 							<List
@@ -282,11 +472,19 @@ function ListDetailPage() {
 
 interface ListMediaCardProps {
 	item: MediaInListDto;
+	onWatch: () => void;
 	onRemove: (item: { mediaType: "movie" | "show"; mediaId: string }) => void;
+	isWatching: boolean;
 	isRemoving: boolean;
 }
 
-function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
+function ListMediaCard({
+	item,
+	onWatch,
+	onRemove,
+	isWatching,
+	isRemoving,
+}: ListMediaCardProps) {
 	const media = item.media as {
 		title?: string;
 		posterPath?: string | null;
@@ -360,28 +558,46 @@ function ListMediaCard({ item, onRemove, isRemoving }: ListMediaCardProps) {
 						No poster
 					</div>
 				)}
-				<M3Button
-					type="button"
-					size="icon-sm"
-					variant="filled"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onRemove({ mediaType, mediaId: item.mediaId });
-					}}
-					disabled={isRemoving}
-					className="absolute top-2 right-2 z-10 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
-					style={{
-						backgroundColor: "var(--md-sys-color-error-container)",
-						color: "var(--md-sys-color-error)",
-					}}
-				>
-					{isRemoving ? (
-						<Loader2 className="w-4 h-4 animate-spin" />
-					) : (
-						<X className="w-4 h-4" />
-					)}
-				</M3Button>
+				<div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+					<Button
+						type="button"
+						size="icon-sm"
+						variant="default"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							onWatch();
+						}}
+						disabled={isWatching}
+						className="bg-primary hover:bg-primary/80 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity focus-visible:opacity-100 group-focus-within:opacity-100"
+						title="Mark as watched"
+					>
+						{isWatching ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<Check className="w-4 h-4" />
+						)}
+					</Button>
+					<Button
+						type="button"
+						size="icon-sm"
+						variant="destructive"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							onRemove({ mediaType, mediaId: item.mediaId });
+						}}
+						disabled={isRemoving}
+						className="[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity focus-visible:opacity-100 group-focus-within:opacity-100"
+						title="Remove from list"
+					>
+						{isRemoving ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<X className="w-4 h-4" />
+						)}
+					</Button>
+				</div>
 			</Link>
 			<Link to={linkTo as never} params={linkParams as never} className="block">
 				<h3
