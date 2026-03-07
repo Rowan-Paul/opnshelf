@@ -160,7 +160,7 @@ function ShelfPage() {
 						}}
 					>
 						<div
-							className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border px-4 py-3"
+							className="mb-4 flex flex-col gap-1 rounded-[22px] border px-4 py-3 md:flex-row md:items-center md:justify-between md:gap-3"
 							style={{
 								backgroundColor:
 									"var(--md-sys-color-surface-container-highest)",
@@ -230,13 +230,61 @@ function PaginationControls({
 
 	return (
 		<div
-			className="grid gap-3 rounded-[28px] border px-4 py-4 md:grid-cols-[1fr_auto_1fr] md:items-center"
+			className="grid gap-3 rounded-[28px] border px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
 			style={{
 				backgroundColor: "var(--md-sys-color-surface-container)",
 				borderColor: "var(--md-sys-color-outline-variant)",
 			}}
 		>
-			<div className="flex items-center gap-2 md:justify-self-start">
+			<div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 md:hidden">
+				{pageNumbers.map((pageNumber, index) =>
+					pageNumber === "ellipsis" ? (
+						<span
+							key={`mobile-ellipsis-${pageNumbers[index - 1]}-${pageNumbers[index + 1]}`}
+							className="px-1 text-sm"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
+							...
+						</span>
+					) : (
+						<M3Button
+							key={`mobile-${pageNumber}`}
+							variant={pageNumber === currentPage ? "filled-tonal" : "text"}
+							size="sm"
+							onClick={() => onPageChange(pageNumber)}
+							disabled={isFetching && pageNumber === currentPage}
+							aria-current={pageNumber === currentPage ? "page" : undefined}
+						>
+							{pageNumber}
+						</M3Button>
+					),
+				)}
+			</div>
+
+			<div className="grid grid-cols-2 gap-3 md:hidden">
+				<M3Button
+					variant="outlined"
+					size="sm"
+					className="w-full justify-center"
+					disabled={currentPage <= 1 || isFetching}
+					onClick={() => onPageChange(currentPage - 1)}
+				>
+					<ChevronLeft className="size-4" />
+					Previous
+				</M3Button>
+				<M3Button
+					variant="outlined"
+					size="sm"
+					className="w-full justify-center"
+					disabled={currentPage >= totalPages || isFetching}
+					onClick={() => onPageChange(currentPage + 1)}
+				>
+					Next
+					<ChevronRight className="size-4" />
+				</M3Button>
+			</div>
+
+			<div className="hidden items-center gap-2 md:flex md:justify-self-start">
 				<M3Button
 					variant="outlined"
 					size="sm"
@@ -248,7 +296,7 @@ function PaginationControls({
 				</M3Button>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-center gap-2 md:justify-self-center">
+			<div className="hidden flex-wrap items-center justify-center gap-2 md:flex md:justify-self-center">
 				{pageNumbers.map((pageNumber, index) =>
 					pageNumber === "ellipsis" ? (
 						<span
@@ -273,7 +321,7 @@ function PaginationControls({
 				)}
 			</div>
 
-			<div className="flex items-center gap-2 md:justify-self-end">
+			<div className="hidden items-center gap-2 md:flex md:justify-self-end">
 				<M3Button
 					variant="outlined"
 					size="sm"
