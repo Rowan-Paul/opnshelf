@@ -8,6 +8,13 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { ShelfService } from "./shelf.service";
 
+type ShelfServiceInternals = {
+	ensureMovieHasColors: (
+		movieId: string,
+	) => Promise<{ primary?: string } | null>;
+	ensureShowHasColors: (showId: string) => Promise<{ primary?: string } | null>;
+};
+
 describe("ShelfService", () => {
 	let service: ShelfService;
 
@@ -92,10 +99,13 @@ describe("ShelfService", () => {
 			},
 		]);
 		jest
-			.spyOn(service as never, "ensureMovieHasColors")
+			.spyOn(
+				service as unknown as ShelfServiceInternals,
+				"ensureMovieHasColors",
+			)
 			.mockResolvedValue({ primary: "#111111" });
 		jest
-			.spyOn(service as never, "ensureShowHasColors")
+			.spyOn(service as unknown as ShelfServiceInternals, "ensureShowHasColors")
 			.mockResolvedValue({ primary: "#222222" });
 
 		const result = await service.getUserShelf("did:plc:test", 1, 20);

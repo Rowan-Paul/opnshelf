@@ -44,10 +44,8 @@ function ShelfPage() {
 	});
 
 	const items = shelfQuery.data?.items ?? [];
-	const totalCount = shelfQuery.data?.total ?? 0;
 	const currentPage = shelfQuery.data?.page ?? page;
 	const totalPages = shelfQuery.data?.totalPages ?? 0;
-	const pageSize = shelfQuery.data?.pageSize ?? PAGE_SIZE;
 	const pageNumbers = useMemo(
 		() => getVisiblePages(currentPage, totalPages),
 		[currentPage, totalPages],
@@ -254,7 +252,7 @@ function PaginationControls({
 				{pageNumbers.map((pageNumber, index) =>
 					pageNumber === "ellipsis" ? (
 						<span
-							key={`ellipsis-${index}`}
+							key={`ellipsis-${pageNumbers[index - 1]}-${pageNumbers[index + 1]}`}
 							className="px-1 text-sm"
 							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>

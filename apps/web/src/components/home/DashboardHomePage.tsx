@@ -88,14 +88,20 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		};
 	}, [lists]);
 
-	const metricCards = [
+	const metricCards: Array<{
+		key: "watched";
+		icon: typeof CalendarRange;
+		label: string;
+		value: number;
+		caption?: string;
+	}> = [
 		{
 			key: "watched",
 			icon: CalendarRange,
 			label: `Watched ${range === "week" ? "7 days" : "30 days"}`,
 			value: watchedInRangeCount,
 		},
-	] as const;
+	];
 
 	return (
 		<div className="container mx-auto max-w-6xl px-4 py-8 md:py-10">
@@ -280,7 +286,9 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 						<h2 className="md-headline-small">Recent Watched</h2>
 						<M3Button variant="text" className="rounded-full px-4" asChild>
-							<Link to="/profile/shelf">View shelf</Link>
+							<Link to="/profile/shelf" search={{ page: 1 }}>
+								View shelf
+							</Link>
 						</M3Button>
 					</div>
 					{isLoading ? (
