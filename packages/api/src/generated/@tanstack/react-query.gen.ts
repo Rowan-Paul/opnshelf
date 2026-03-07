@@ -1040,14 +1040,14 @@ export const shelfControllerGetUserShelfInfiniteQueryKey = (options: Options<She
 /**
  * Get paginated shelf items for a user (movies and episodes)
  */
-export const shelfControllerGetUserShelfInfiniteOptions = (options: Options<ShelfControllerGetUserShelfData>) => infiniteQueryOptions<ShelfControllerGetUserShelfResponse, DefaultError, InfiniteData<ShelfControllerGetUserShelfResponse>, QueryKey<Options<ShelfControllerGetUserShelfData>>, string | Pick<QueryKey<Options<ShelfControllerGetUserShelfData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+export const shelfControllerGetUserShelfInfiniteOptions = (options: Options<ShelfControllerGetUserShelfData>) => infiniteQueryOptions<ShelfControllerGetUserShelfResponse, DefaultError, InfiniteData<ShelfControllerGetUserShelfResponse>, QueryKey<Options<ShelfControllerGetUserShelfData>>, number | Pick<QueryKey<Options<ShelfControllerGetUserShelfData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
 // @ts-ignore
 {
     queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<QueryKey<Options<ShelfControllerGetUserShelfData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
             query: {
-                cursor: pageParam
+                page: pageParam
             }
         };
         const params = createInfiniteParams(queryKey, page);

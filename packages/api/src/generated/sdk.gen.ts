@@ -360,7 +360,7 @@ export const usersControllerImportMyHistory = <ThrowOnError extends boolean = fa
 /**
  * Get paginated shelf items for a user (movies and episodes)
  */
-export const shelfControllerGetUserShelf = <ThrowOnError extends boolean = false>(options: Options<ShelfControllerGetUserShelfData, ThrowOnError>) => (options.client ?? client).get<ShelfControllerGetUserShelfResponses, unknown, ThrowOnError>({ url: '/shelf/user/{userDid}', ...options });
+export const shelfControllerGetUserShelf = <ThrowOnError extends boolean = false>(options: Options<ShelfControllerGetUserShelfData, ThrowOnError>) => (options.client ?? client).get<ShelfControllerGetUserShelfResponses, unknown, ThrowOnError>({ url: '/users/{userDid}/shelf', ...options });
 
 /**
  * Search movies and shows from TMDB

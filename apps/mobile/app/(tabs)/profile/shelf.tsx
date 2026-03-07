@@ -13,7 +13,6 @@ import { router } from "expo-router";
 import { ArrowLeft, BookOpen } from "lucide-react-native";
 import { useCallback, useMemo } from "react";
 import {
-	ActivityIndicator,
 	RefreshControl,
 	StyleSheet,
 	Text,
@@ -32,10 +31,16 @@ import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import {
+	invalidateUserShelfQueries,
+	invalidateUserUpNextQueries,
+} from "@/lib/invalidate-shelf";
+import {
 	createTitleSlug,
 	getDayKeyInTimezone,
 	getShelfDayLabel,
 } from "@/lib/utils";
+
+const PAGE_SIZE = 20;
 
 export default function ShelfScreen() {
 	const { user } = useAuth();
@@ -49,20 +54,19 @@ export default function ShelfScreen() {
 	const shelfQuery = useInfiniteQuery({
 		...shelfControllerGetUserShelfInfiniteOptions({
 			path: { userDid },
-			query: { limit: 20 },
+			query: { pageSize: PAGE_SIZE },
 		}),
 		enabled: !!userDid,
-		getNextPageParam: (lastPage) => {
-			const cursor = lastPage.nextCursor;
-			return cursor && typeof cursor === "string" ? cursor : undefined;
-		},
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 	});
 
 	const deleteMovieMutation = useMutation({
 		mutationKey: ["shelf", "movies", "delete"],
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });
+			invalidateUserShelfQueries(queryClient, userDid);
 			showToast("Removed from your shelf", "success");
 		},
 		onError: () => {
@@ -74,7 +78,8 @@ export default function ShelfScreen() {
 		mutationKey: ["shelf", "episodes", "delete"],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["shelf", "user", userDid] });
+			invalidateUserShelfQueries(queryClient, userDid);
+			invalidateUserUpNextQueries(queryClient, userDid);
 			showToast("Episode removed from history", "success");
 		},
 		onError: () => {
@@ -128,8 +133,17 @@ export default function ShelfScreen() {
 		[],
 	);
 
-	const items = shelfQuery.data?.pages.flatMap((page) => page.items) ?? [];
-	const totalCount = shelfQuery.data?.pages[0]?.total ?? 0;
+	const pages = shelfQuery.data?.pages ?? [];
+	const items = useMemo(
+		() => pages.flatMap((resultPage) => resultPage.items),
+		[pages],
+	);
+	const firstPage = pages[0];
+	const latestPage = pages[pages.length - 1];
+	const totalCount = firstPage?.total ?? 0;
+	const isFetchingNextPage = shelfQuery.isFetchingNextPage;
+	const hasNextPage =
+		shelfQuery.hasNextPage ?? latestPage?.hasNextPage ?? false;
 
 	type ShelfItem = (typeof items)[number];
 	type ShelfRow =
@@ -188,9 +202,9 @@ export default function ShelfScreen() {
 		};
 	}, [items, timezone]);
 
-	const isLoading = shelfQuery.isLoading;
-	const isFetchingNextPage = shelfQuery.isFetchingNextPage;
-	const isRefreshing = shelfQuery.isRefetching && !shelfQuery.isLoading;
+	const isLoading = shelfQuery.isLoading && items.length === 0;
+	const isRefreshing =
+		shelfQuery.isRefetching && !shelfQuery.isLoading && !isFetchingNextPage;
 
 	const renderItem = useCallback(
 		({ item, index }: { item: ShelfRow; index: number }) => {
@@ -296,28 +310,17 @@ export default function ShelfScreen() {
 
 	const keyExtractor = useCallback((item: ShelfRow) => item.id, []);
 
-	const onEndReached = useCallback(() => {
-		if (shelfQuery.hasNextPage && !shelfQuery.isFetchingNextPage) {
-			shelfQuery.fetchNextPage();
-		}
-	}, [
-		shelfQuery.hasNextPage,
-		shelfQuery.isFetchingNextPage,
-		shelfQuery.fetchNextPage,
-	]);
-
 	const handleRefresh = useCallback(async () => {
 		await shelfQuery.refetch();
 	}, [shelfQuery.refetch]);
 
-	const renderFooter = useCallback(() => {
-		if (!isFetchingNextPage) return null;
-		return (
-			<View style={styles.footerLoader}>
-				<ActivityIndicator size="small" color={colors.primary} />
-			</View>
-		);
-	}, [isFetchingNextPage, colors.primary]);
+	const handleEndReached = useCallback(() => {
+		if (!hasNextPage || isFetchingNextPage) {
+			return;
+		}
+
+		void shelfQuery.fetchNextPage();
+	}, [hasNextPage, isFetchingNextPage, shelfQuery]);
 
 	if (isLoading) {
 		return (
@@ -377,7 +380,7 @@ export default function ShelfScreen() {
 					<Text
 						style={[styles.resultsCount, { color: colors.onSurfaceVariant }]}
 					>
-						{totalCount} item{totalCount !== 1 ? "s" : ""} watched
+						Watched {totalCount} item{totalCount !== 1 ? "s" : ""}
 					</Text>
 					<FlashList
 						data={rows}
@@ -385,9 +388,8 @@ export default function ShelfScreen() {
 						keyExtractor={keyExtractor}
 						contentContainerStyle={styles.listContent}
 						stickyHeaderIndices={stickyHeaderIndices}
-						onEndReached={onEndReached}
-						onEndReachedThreshold={0.5}
-						ListFooterComponent={renderFooter}
+						onEndReached={handleEndReached}
+						onEndReachedThreshold={0.35}
 						refreshControl={
 							<RefreshControl
 								refreshing={isRefreshing}
@@ -396,6 +398,36 @@ export default function ShelfScreen() {
 								colors={[colors.primary]}
 								progressBackgroundColor={colors.surfaceContainerHigh}
 							/>
+						}
+						ListFooterComponent={
+							isFetchingNextPage ? (
+								<View style={styles.listFooter}>
+									{[0, 1].map((index) => (
+										<View
+											key={index}
+											style={[
+												styles.skeleton,
+												{ backgroundColor: colors.surfaceContainer },
+											]}
+										>
+											<View
+												style={[
+													styles.skeletonPoster,
+													{ backgroundColor: colors.surfaceContainerHigh },
+												]}
+											/>
+											<View style={styles.skeletonContent}>
+												<Skeleton width="70%" height={18} />
+												<Skeleton
+													width="40%"
+													height={14}
+													style={{ marginTop: spacing.sm }}
+												/>
+											</View>
+										</View>
+									))}
+								</View>
+							) : null
 						}
 					/>
 				</>
@@ -455,7 +487,7 @@ const styles = StyleSheet.create({
 	resultsCount: {
 		fontSize: 14,
 		marginHorizontal: spacing.lg,
-		marginBottom: spacing.sm,
+		marginBottom: spacing.md,
 	},
 	listContent: {
 		paddingBottom: spacing.lg,
@@ -486,9 +518,10 @@ const styles = StyleSheet.create({
 	itemRow: {
 		marginBottom: spacing.md,
 	},
-	footerLoader: {
-		paddingVertical: spacing.lg,
-		alignItems: "center",
+	listFooter: {
+		paddingHorizontal: spacing.lg,
+		paddingTop: spacing.sm,
+		paddingBottom: spacing.xl,
 	},
 	centerContent: {
 		flex: 1,

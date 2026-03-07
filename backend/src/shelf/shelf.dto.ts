@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString } from "class-validator";
+import { IsInt, IsOptional, Max, Min } from "class-validator";
 import { MovieColorsDto } from "../movies/dto/movie.dto";
 
 export class ShelfItemMovieDto {
@@ -127,21 +127,25 @@ export const SHELF_ITEM_EPISODE_SCHEMA = {
 
 export class ShelfQueryDto {
 	@ApiPropertyOptional({
-		description: "Number of items to return",
+		description: "Page number to return",
+		default: 1,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	page?: number;
+
+	@ApiPropertyOptional({
+		description: "Number of items to return per page",
 		default: 20,
 	})
 	@IsOptional()
 	@Type(() => Number)
 	@IsInt()
-	limit?: number;
-
-	@ApiPropertyOptional({
-		description:
-			"Cursor for pagination (last item watchedDate from previous page)",
-	})
-	@IsOptional()
-	@IsString()
-	cursor?: string;
+	@Min(1)
+	@Max(50)
+	pageSize?: number;
 }
 
 export class ShelfResponseDto {
@@ -153,9 +157,23 @@ export class ShelfResponseDto {
 	})
 	items: Array<ShelfItemMovieDto | ShelfItemEpisodeDto>;
 
-	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
-	nextCursor: string | null;
-
 	@ApiProperty({ description: "Total count of items" })
 	total: number;
+
+	@ApiProperty({
+		description: "Current page number after server-side clamping",
+	})
+	page: number;
+
+	@ApiProperty({ description: "Number of items returned per page" })
+	pageSize: number;
+
+	@ApiProperty({ description: "Total number of available pages" })
+	totalPages: number;
+
+	@ApiProperty({ description: "Whether a previous page exists" })
+	hasPreviousPage: boolean;
+
+	@ApiProperty({ description: "Whether a next page exists" })
+	hasNextPage: boolean;
 }

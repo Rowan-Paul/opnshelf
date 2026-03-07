@@ -9,7 +9,10 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { invalidateUserUpNextQueries } from "@/lib/invalidate-shelf";
+import {
+	invalidateUserShelfQueries,
+	invalidateUserUpNextQueries,
+} from "@/lib/invalidate-shelf";
 import { createTitleSlug, getTmdbPosterUrl } from "@/lib/utils";
 
 export interface ShelfEpisodeItem {
@@ -49,17 +52,7 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 		onSuccess: () => {
 			const userDid = user?.did;
 			if (userDid) {
-				queryClient.invalidateQueries({
-					predicate: (query) => {
-						const key = query.queryKey[0] as
-							| { _id?: string; path?: { userDid?: string } }
-							| undefined;
-						return (
-							key?._id === "shelfControllerGetUserShelf" &&
-							key.path?.userDid === userDid
-						);
-					},
-				});
+				invalidateUserShelfQueries(queryClient, userDid);
 				invalidateUserUpNextQueries(queryClient, userDid);
 			}
 			toast.success("Episode removed from history");
@@ -76,7 +69,13 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 	}, [tracked.watchedDate, formatDate]);
 
 	return (
-		<div className="group relative">
+		<div
+			className="group rounded-[24px] border p-3 transition-transform duration-200 hover:-translate-y-1"
+			style={{
+				backgroundColor: "var(--md-sys-color-surface-container-low)",
+				borderColor: "var(--md-sys-color-outline-variant)",
+			}}
+		>
 			<Link
 				to="/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"
 				params={{
@@ -85,19 +84,29 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 					seasonNumber: String(tracked.seasonNumber),
 					episodeNumber: String(tracked.episodeNumber),
 				}}
-				className="block relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2"
+				className="block relative mb-3 overflow-hidden rounded-[20px]"
 			>
-				{posterUrl ? (
-					<img
-						src={posterUrl}
-						alt={tracked.showTitle}
-						className="w-full h-full object-cover"
-					/>
-				) : (
-					<div className="w-full h-full flex items-center justify-center text-gray-600">
-						No poster
-					</div>
-				)}
+				<div
+					className="aspect-2/3"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container-highest)",
+					}}
+				>
+					{posterUrl ? (
+						<img
+							src={posterUrl}
+							alt={tracked.showTitle}
+							className="h-full w-full object-cover"
+						/>
+					) : (
+						<div
+							className="flex h-full w-full items-center justify-center px-4 text-center text-sm"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
+							No poster available
+						</div>
+					)}
+				</div>
 				<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-3">
 					<div className="text-white text-sm font-medium">
 						S{tracked.seasonNumber} E{tracked.episodeNumber}
@@ -133,16 +142,24 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 					seasonNumber: String(tracked.seasonNumber),
 					episodeNumber: String(tracked.episodeNumber),
 				}}
-				className="block"
+				className="block rounded-[20px] px-1 pb-1"
 			>
-				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-amber-400 transition-colors">
+				<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-[var(--md-sys-color-primary)]">
 					{tracked.showTitle}
 				</h3>
-				<p className="text-gray-500 text-sm">
+				<p
+					className="text-sm"
+					style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+				>
 					S{tracked.seasonNumber} E{tracked.episodeNumber}
 				</p>
 				{formattedDate && (
-					<p className="text-gray-400 text-xs mt-1">Watched {formattedDate}</p>
+					<p
+						className="mt-2 text-xs"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Watched {formattedDate}
+					</p>
 				)}
 			</Link>
 		</div>

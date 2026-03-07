@@ -48,7 +48,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 	} = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid: user.did },
-			query: { limit: 20 },
+			query: { page: 1, pageSize: 20 },
 		}),
 		enabled: !!user.did,
 	});

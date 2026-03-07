@@ -636,15 +636,29 @@ export type ShelfResponseDto = {
         createdAt: string;
     }>;
     /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: {
-        [key: string]: unknown;
-    };
-    /**
      * Total count of items
      */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items returned per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
 };
 
 export type UnifiedSearchResultDto = {
@@ -1766,15 +1780,15 @@ export type ShelfControllerGetUserShelfData = {
     };
     query?: {
         /**
-         * Number of items to return
+         * Page number to return
          */
-        limit?: number;
+        page?: number;
         /**
-         * Cursor for pagination (last item watchedDate from previous page)
+         * Number of items to return per page
          */
-        cursor?: string;
+        pageSize?: number;
     };
-    url: '/shelf/user/{userDid}';
+    url: '/users/{userDid}/shelf';
 };
 
 export type ShelfControllerGetUserShelfResponses = {

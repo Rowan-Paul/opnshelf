@@ -4,11 +4,11 @@ import { ShelfQueryDto, ShelfResponseDto } from "./shelf.dto";
 import { ShelfService } from "./shelf.service";
 
 @ApiTags("shelf")
-@Controller("shelf")
+@Controller("users/:userDid/shelf")
 export class ShelfController {
 	constructor(private readonly shelfService: ShelfService) {}
 
-	@Get("user/:userDid")
+	@Get()
 	@ApiOperation({
 		summary: "Get paginated shelf items for a user (movies and episodes)",
 	})
@@ -17,11 +17,12 @@ export class ShelfController {
 		@Param("userDid") userDid: string,
 		@Query() query: ShelfQueryDto,
 	): Promise<ShelfResponseDto> {
-		const limit = query.limit ?? 20;
+		const page = query.page ?? 1;
+		const pageSize = query.pageSize ?? 20;
 		const result = await this.shelfService.getUserShelf(
 			userDid,
-			limit,
-			query.cursor,
+			page,
+			pageSize,
 		);
 
 		// Transform items to DTO format
@@ -100,8 +101,12 @@ export class ShelfController {
 
 		return {
 			items,
-			nextCursor: result.nextCursor,
 			total: result.total,
+			page: result.page,
+			pageSize: result.pageSize,
+			totalPages: result.totalPages,
+			hasPreviousPage: result.hasPreviousPage,
+			hasNextPage: result.hasNextPage,
 		};
 	}
 }

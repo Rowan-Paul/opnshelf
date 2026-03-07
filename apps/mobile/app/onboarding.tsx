@@ -223,7 +223,7 @@ export default function OnboardingScreen() {
 					queryClient.prefetchQuery(
 						shelfControllerGetUserShelfOptions({
 							path: { userDid: user.did },
-							query: { limit: 20 },
+							query: { page: 1, pageSize: 20 },
 						}),
 					),
 					queryClient.prefetchQuery(listsControllerGetUserListsOptions()),

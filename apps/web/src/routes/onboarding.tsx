@@ -210,7 +210,7 @@ function OnboardingPage() {
 				queryClient.prefetchQuery(
 					shelfControllerGetUserShelfOptions({
 						path: { userDid: user.did },
-						query: { limit: 6 },
+						query: { page: 1, pageSize: 6 },
 					}),
 				),
 				queryClient.prefetchQuery(listsControllerGetUserListsOptions()),

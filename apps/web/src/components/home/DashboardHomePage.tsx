@@ -33,7 +33,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 	const { data: shelfData, isLoading } = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid: user.did },
-			query: { limit: 6 },
+			query: { page: 1, pageSize: 6 },
 		}),
 		enabled: !!user.did,
 	});
