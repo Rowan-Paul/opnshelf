@@ -120,7 +120,7 @@ export class AuthService implements OnModuleInit {
 			this.oauthClient = new NodeOAuthClient({
 				clientMetadata: {
 					client_id: clientId,
-					client_name: "OpnShelf",
+					client_name: "opnshelf.xyz",
 					client_uri: isLocalhost ? `http://127.0.0.1:${port}` : backendUrl,
 					redirect_uris: [redirectUri],
 					scope: OAUTH_SCOPE,
