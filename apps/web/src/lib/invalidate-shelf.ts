@@ -17,7 +17,8 @@ export function invalidateUserShelfQueries(
 		predicate: (query) => {
 			const key = query.queryKey[0] as QueryKeyRoot | undefined;
 			return (
-				key?._id === "shelfControllerGetUserShelf" &&
+				(key?._id === "shelfControllerGetUserShelf" ||
+					key?._id === "shelfControllerGetUserActivitySummary") &&
 				key.path?.userDid === userDid
 			);
 		},

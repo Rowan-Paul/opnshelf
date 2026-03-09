@@ -1,6 +1,7 @@
 import {
 	listsControllerGetUserListsOptions,
 	moviesControllerDeleteWatchHistoryEntryMutation,
+	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetUserUpNextOptions,
@@ -54,6 +55,18 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 	});
 
 	const {
+		data: activitySummary,
+		isLoading: isActivitySummaryLoading,
+		isRefetching: isActivitySummaryRefetching,
+		refetch: refetchActivitySummary,
+	} = useQuery({
+		...shelfControllerGetUserActivitySummaryOptions({
+			path: { userDid: user.did },
+		}),
+		enabled: !!user.did,
+	});
+
+	const {
 		data: lists,
 		isLoading: isListsLoading,
 		isRefetching: isListsRefetching,
@@ -76,11 +89,20 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 		enabled: !!user.did,
 	});
 
-	const isRefreshing = isShelfRefetching || isListsRefetching || isUpNextRefetching;
+	const isRefreshing =
+		isShelfRefetching ||
+		isActivitySummaryRefetching ||
+		isListsRefetching ||
+		isUpNextRefetching;
 
 	const handleRefresh = useCallback(async () => {
-		await Promise.all([refetchShelf(), refetchLists(), refetchUpNext()]);
-	}, [refetchShelf, refetchLists, refetchUpNext]);
+		await Promise.all([
+			refetchShelf(),
+			refetchActivitySummary(),
+			refetchLists(),
+			refetchUpNext(),
+		]);
+	}, [refetchActivitySummary, refetchLists, refetchShelf, refetchUpNext]);
 
 	const {
 		watchedInRangeCount,
@@ -89,9 +111,9 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 		recentLists,
 	} = useHomeMetrics(
 		shelfData?.items,
-		shelfData?.total,
 		lists,
 		range,
+		activitySummary,
 	);
 
 	const displayName = resolveDisplayName(user);
@@ -230,29 +252,65 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 						>
 							<View style={styles.activityHeaderRow}>
 								<Text style={[styles.activityTitle, { color: colors.onSurface }]}>Viewing rhythm</Text>
-								<Text style={[styles.activitySubtitle, { color: colors.onSurfaceVariant }]}> 
-									{range === "week" ? "Last 7 days" : "Weekly activity"}
+								<Text style={[styles.activitySubtitle, { color: colors.onSurfaceVariant }]}>
+									{range === "week" ? "Last 7 days" : "Past 30 days"}
 								</Text>
 							</View>
-							<View style={styles.activityBarsRow}>
-								{activityBars.map((bar) => (
-									<View key={bar.label} style={styles.activityBarItem}>
-										<View style={styles.activityBarTrack}>
-											<View
-												style={[
-													styles.activityBarFill,
-													{
-														backgroundColor: colors.primary,
-														height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
-													},
-												]}
-											/>
-										</View>
-										<Text style={[styles.activityValue, { color: colors.onSurface }]}>{bar.value}</Text>
-										<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>{bar.label}</Text>
+							{range === "month" ? (
+								<ScrollView
+									horizontal
+									showsHorizontalScrollIndicator={false}
+									contentContainerStyle={styles.activityBarsScrollContent}
+								>
+									<View style={styles.activityBarsRowMonth}>
+										{activityBars.map((bar) => (
+											<View key={bar.key} style={styles.activityBarItemMonth}>
+												<View style={styles.activityBarTrack}>
+													<View
+														style={[
+															styles.activityBarFill,
+															{
+																backgroundColor: colors.primary,
+																height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
+															},
+														]}
+													/>
+												</View>
+												<Text style={[styles.activityValue, { color: colors.onSurface }]}>
+													{bar.value}
+												</Text>
+												<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>
+													{bar.showLabel ? bar.label : ""}
+												</Text>
+											</View>
+										))}
 									</View>
-								))}
-							</View>
+								</ScrollView>
+							) : (
+								<View style={styles.activityBarsRow}>
+									{activityBars.map((bar) => (
+										<View key={bar.key} style={styles.activityBarItem}>
+											<View style={styles.activityBarTrack}>
+												<View
+													style={[
+														styles.activityBarFill,
+														{
+															backgroundColor: colors.primary,
+															height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
+														},
+													]}
+												/>
+											</View>
+											<Text style={[styles.activityValue, { color: colors.onSurface }]}>
+												{bar.value}
+											</Text>
+											<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>
+												{bar.label}
+											</Text>
+										</View>
+									))}
+								</View>
+							)}
 						</View>
 					</CardContent>
 				</Card>
@@ -354,8 +412,23 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 		minHeight: 132,
 	},
+	activityBarsScrollContent: {
+		paddingBottom: spacing.xs,
+	},
+	activityBarsRowMonth: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+		gap: spacing.xs,
+		minHeight: 132,
+		minWidth: 720,
+	},
 	activityBarItem: {
 		flex: 1,
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	activityBarItemMonth: {
+		width: 22,
 		alignItems: "center",
 		gap: spacing.xs,
 	},

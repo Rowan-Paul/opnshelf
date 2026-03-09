@@ -270,6 +270,34 @@ export type UpNextShowDto = {
     show: ShowDto;
 };
 
+export type PaginatedUpNextResponseDto = {
+    items: Array<UpNextShowDto>;
+    /**
+     * Total count of items
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items returned per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+};
+
 export type TrackedEpisodeDto = {
     id: string;
     rkey: string;
@@ -440,11 +468,29 @@ export type MovieListWithMoviesDto = {
     createdAt: string;
     updatedAt: string;
     items: Array<MediaInListDto>;
+    /**
+     * Total count of items
+     */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items returned per page
+     */
     pageSize: number;
+    /**
+     * Total number of available pages
+     */
     totalPages: number;
+    /**
+     * Whether a previous page exists
+     */
     hasPreviousPage: boolean;
+    /**
+     * Whether a next page exists
+     */
     hasNextPage: boolean;
 };
 
@@ -665,6 +711,29 @@ export type ShelfResponseDto = {
      * Whether a next page exists
      */
     hasNextPage: boolean;
+};
+
+export type ShelfActivityBucketDto = {
+    /**
+     * Local day key in YYYY-MM-DD format
+     */
+    date: string;
+    /**
+     * Number of items watched on that local day
+     */
+    count: number;
+};
+
+export type ShelfActivitySummaryDto = {
+    /**
+     * Total watched in the last 7 days
+     */
+    watchedLast7Days: number;
+    /**
+     * Total watched in the last 30 days
+     */
+    watchedLast30Days: number;
+    dailyActivity: Array<ShelfActivityBucketDto>;
 };
 
 export type UnifiedSearchResultDto = {
@@ -1130,22 +1199,20 @@ export type ShowsControllerGetUserUpNextData = {
         userDid: string;
     };
     query?: {
+        /**
+         * Page number to return
+         */
         page?: number;
+        /**
+         * Number of items to return per page
+         */
         pageSize?: number;
     };
     url: '/shows/user/{userDid}/up-next';
 };
 
 export type ShowsControllerGetUserUpNextResponses = {
-    200: {
-        items: Array<UpNextShowDto>;
-        total: number;
-        page: number;
-        pageSize: number;
-        totalPages: number;
-        hasPreviousPage: boolean;
-        hasNextPage: boolean;
-    };
+    200: PaginatedUpNextResponseDto;
 };
 
 export type ShowsControllerGetUserUpNextResponse = ShowsControllerGetUserUpNextResponses[keyof ShowsControllerGetUserUpNextResponses];
@@ -1822,6 +1889,21 @@ export type ShelfControllerGetUserShelfResponses = {
 };
 
 export type ShelfControllerGetUserShelfResponse = ShelfControllerGetUserShelfResponses[keyof ShelfControllerGetUserShelfResponses];
+
+export type ShelfControllerGetUserActivitySummaryData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/users/{userDid}/shelf/activity-summary';
+};
+
+export type ShelfControllerGetUserActivitySummaryResponses = {
+    200: ShelfActivitySummaryDto;
+};
+
+export type ShelfControllerGetUserActivitySummaryResponse = ShelfControllerGetUserActivitySummaryResponses[keyof ShelfControllerGetUserActivitySummaryResponses];
 
 export type SearchControllerSearchAllData = {
     body?: never;

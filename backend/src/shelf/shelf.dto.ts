@@ -177,3 +177,22 @@ export class ShelfResponseDto {
 	@ApiProperty({ description: "Whether a next page exists" })
 	hasNextPage: boolean;
 }
+
+export class ShelfActivityBucketDto {
+	@ApiProperty({ description: "Local day key in YYYY-MM-DD format" })
+	date: string;
+
+	@ApiProperty({ description: "Number of items watched on that local day" })
+	count: number;
+}
+
+export class ShelfActivitySummaryDto {
+	@ApiProperty({ description: "Total watched in the last 7 days" })
+	watchedLast7Days: number;
+
+	@ApiProperty({ description: "Total watched in the last 30 days" })
+	watchedLast30Days: number;
+
+	@ApiProperty({ type: [ShelfActivityBucketDto] })
+	dailyActivity: ShelfActivityBucketDto[];
+}

@@ -8,6 +8,7 @@ describe("ShelfController", () => {
 
 	const mockShelfService = {
 		getUserShelf: jest.fn(),
+		getUserActivitySummary: jest.fn(),
 	};
 
 	beforeEach(async () => {
@@ -77,5 +78,39 @@ describe("ShelfController", () => {
 			hasNextPage: true,
 		});
 		expect(result).not.toHaveProperty("nextCursor");
+	});
+
+	it("should expose the activity summary route", () => {
+		expect(
+			Reflect.getMetadata(
+				PATH_METADATA,
+				ShelfController.prototype.getUserActivitySummary,
+			),
+		).toBe("activity-summary");
+	});
+
+	it("should return the activity summary DTO", async () => {
+		mockShelfService.getUserActivitySummary.mockResolvedValue({
+			watchedLast7Days: 4,
+			watchedLast30Days: 12,
+			dailyActivity: [
+				{ date: "2024-03-08", count: 1 },
+				{ date: "2024-03-09", count: 3 },
+			],
+		});
+
+		const result = await controller.getUserActivitySummary("did:plc:test");
+
+		expect(mockShelfService.getUserActivitySummary).toHaveBeenCalledWith(
+			"did:plc:test",
+		);
+		expect(result).toEqual({
+			watchedLast7Days: 4,
+			watchedLast30Days: 12,
+			dailyActivity: [
+				{ date: "2024-03-08", count: 1 },
+				{ date: "2024-03-09", count: 3 },
+			],
+		});
 	});
 });

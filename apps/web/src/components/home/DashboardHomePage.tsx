@@ -1,5 +1,8 @@
 import {
 	listsControllerGetUserListsOptions,
+	type ShelfActivityBucketDto,
+	type ShelfActivitySummaryDto,
+	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerGetUserUpNextOptions,
 	type UserDto,
@@ -38,6 +41,14 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
+	const { data: activitySummary } =
+		useQuery({
+			...shelfControllerGetUserActivitySummaryOptions({
+				path: { userDid: user.did },
+			}),
+			enabled: !!user.did,
+		});
+
 	const { data: lists, isLoading: isListsLoading } = useQuery({
 		...listsControllerGetUserListsOptions(),
 		enabled: !!user.did,
@@ -51,11 +62,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
-	const { recentWatched, activityBars } = useMemo(() => {
-		const now = Date.now();
-		const days = range === "week" ? 7 : 30;
-		const cutoff = now - days * 24 * 60 * 60 * 1000;
-
+	const { recentWatched } = useMemo(() => {
 		const items = shelfData?.items ?? [];
 
 		const sorted = [...items].sort((a, b) => {
@@ -64,17 +71,19 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 			return dateB - dateA;
 		});
 
-		const inRange = sorted.filter((item) => {
-			const date = new Date(item.watchedDate ?? item.createdAt).getTime();
-			return date >= cutoff;
-		});
-
 		return {
 			recentWatched: sorted.slice(0, 8),
-			watchedInRangeCount: inRange.length,
-			activityBars: buildActivityBars(sorted, range),
 		};
-	}, [shelfData, range]);
+	}, [shelfData]);
+
+	const activityBars = useMemo(
+		() => buildActivityBars(activitySummary?.dailyActivity, range),
+		[activitySummary?.dailyActivity, range],
+	);
+	const watchedInRangeCount =
+		range === "week"
+			? (activitySummary?.watchedLast7Days ?? 0)
+			: (activitySummary?.watchedLast30Days ?? 0);
 
 	const maxActivityValue = Math.max(...activityBars.map((bar) => bar.value), 1);
 
@@ -190,36 +199,47 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 											Viewing rhythm
 										</p>
 										<p className="text-xs text-(--md-sys-color-on-surface-variant)">
-											{range === "week" ? "Last 7 days" : "Weekly activity"}
+											{range === "week" ? "Last 7 days" : "Past 30 days"}
 										</p>
 									</div>
 									<p className="text-xs text-(--md-sys-color-on-surface-variant)">
-										{activityBars.reduce((sum, bar) => sum + bar.value, 0)}{" "}
-										watched
+										{watchedInRangeCount} watched
 									</p>
 								</div>
-								<div className="grid grid-cols-7 gap-2">
-									{activityBars.map((bar) => (
-										<div
-											key={bar.label}
-											className="flex min-w-0 flex-col items-center gap-2"
-										>
-											<div className="flex h-24 w-full items-end overflow-hidden rounded-2xl bg-[rgba(127,127,127,0.14)] px-1 py-1">
-												<div
-													className="w-full rounded-xl bg-(--md-sys-color-primary)"
-													style={{
-														height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
-													}}
-												/>
+								<div
+									className={range === "month" ? "overflow-x-auto pb-2" : ""}
+								>
+									<div
+										className={
+											range === "month"
+												? "flex min-w-[720px] gap-2"
+												: "grid grid-cols-7 gap-2"
+										}
+									>
+										{activityBars.map((bar) => (
+											<div
+												key={bar.key}
+												className={`flex min-w-0 flex-col items-center gap-2 ${
+													range === "month" ? "w-5 shrink-0" : ""
+												}`}
+											>
+												<div className="flex h-24 w-full items-end overflow-hidden rounded-2xl bg-[rgba(127,127,127,0.14)] px-1 py-1">
+													<div
+														className="w-full rounded-xl bg-(--md-sys-color-primary)"
+														style={{
+															height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
+														}}
+													/>
+												</div>
+												<span className="text-xs font-semibold text-(--md-sys-color-on-surface)">
+													{bar.value}
+												</span>
+												<span className="min-h-4 text-center text-[11px] text-(--md-sys-color-on-surface-variant)">
+													{bar.showLabel ? bar.label : ""}
+												</span>
 											</div>
-											<span className="text-xs font-semibold text-(--md-sys-color-on-surface)">
-												{bar.value}
-											</span>
-											<span className="text-[11px] text-(--md-sys-color-on-surface-variant)">
-												{bar.label}
-											</span>
-										</div>
-									))}
+										))}
+									</div>
 								</div>
 							</div>
 						</M3CardContent>
@@ -345,41 +365,42 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 }
 
 function buildActivityBars(
-	items: Array<{ watchedDate?: string | null; createdAt: string }>,
+	dailyActivity: ShelfActivitySummaryDto["dailyActivity"] | undefined,
 	range: DashboardRange,
 ) {
-	const bucketSize = range === "week" ? 1 : 7;
-	const bucketCount = 7;
-	const endOfToday = new Date();
-	endOfToday.setHours(23, 59, 59, 999);
+	const visibleBuckets =
+		range === "week" ? (dailyActivity?.slice(-7) ?? []) : (dailyActivity ?? []);
 
-	const start = new Date(endOfToday);
-	start.setDate(start.getDate() - (bucketSize * bucketCount - 1));
-	start.setHours(0, 0, 0, 0);
+	if (visibleBuckets.length === 0) {
+		return Array.from({ length: range === "week" ? 7 : 30 }, (_, index) => ({
+			key: `placeholder-${range}-${index}`,
+			value: 0,
+			label: "",
+			showLabel: false,
+		}));
+	}
 
-	return Array.from({ length: bucketCount }, (_, index) => {
-		const bucketStart = new Date(start);
-		bucketStart.setDate(start.getDate() + index * bucketSize);
+	return visibleBuckets.map((bucket, index) => ({
+		key: bucket.date,
+		value: bucket.count,
+		label:
+			range === "week"
+				? formatDayKey(bucket, { weekday: "short" }).slice(0, 3)
+				: formatDayKey(bucket, { month: "short", day: "numeric" }),
+		showLabel:
+			range === "week" ||
+			index % 5 === 0 ||
+			index === visibleBuckets.length - 1,
+	}));
+}
 
-		const bucketEnd = new Date(bucketStart);
-		bucketEnd.setDate(bucketStart.getDate() + bucketSize - 1);
-		bucketEnd.setHours(23, 59, 59, 999);
-
-		const value = items.filter((item) => {
-			const watchedAt = new Date(item.watchedDate ?? item.createdAt).getTime();
-			return (
-				watchedAt >= bucketStart.getTime() && watchedAt <= bucketEnd.getTime()
-			);
-		}).length;
-
-		return {
-			label:
-				range === "week"
-					? bucketStart
-							.toLocaleDateString(undefined, { weekday: "short" })
-							.slice(0, 3)
-					: `W${index + 1}`,
-			value,
-		};
-	});
+function formatDayKey(
+	bucket: ShelfActivityBucketDto,
+	options: Intl.DateTimeFormatOptions,
+) {
+	const [year, month, day] = bucket.date.split("-").map(Number);
+	return new Intl.DateTimeFormat(undefined, {
+		...options,
+		timeZone: "UTC",
+	}).format(new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)));
 }

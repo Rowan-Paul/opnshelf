@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 import type {
+	DashboardActivityBar,
+	DashboardActivityBucket,
+	DashboardActivitySummary,
 	DashboardListItem,
 	DashboardRange,
 	DashboardShelfItem,
@@ -7,14 +10,12 @@ import type {
 
 export function useHomeMetrics(
 	shelfItems: DashboardShelfItem[] | undefined,
-	totalTrackedValue: number | undefined,
 	lists: DashboardListItem[] | undefined,
 	range: DashboardRange,
+	activitySummary: DashboardActivitySummary | undefined,
 ) {
-	const { watchedInRangeCount, totalTracked, recentWatched, activityBars } = useMemo(() => {
+	const { watchedInRangeCount, recentWatched, activityBars } = useMemo(() => {
 		const now = Date.now();
-		const days = range === "week" ? 7 : 30;
-		const cutoff = now - days * 24 * 60 * 60 * 1000;
 
 		const items = shelfItems ?? [];
 		const sorted = [...items].sort((a, b) => {
@@ -27,20 +28,15 @@ export function useHomeMetrics(
 			return dateB - dateA;
 		});
 
-		const inRange = sorted.filter((item) => {
-			const date = item.watchedDate
-				? new Date(item.watchedDate).getTime()
-				: new Date(item.createdAt).getTime();
-			return date >= cutoff;
-		});
-
 		return {
-			watchedInRangeCount: inRange.length,
-			totalTracked: totalTrackedValue ?? 0,
+			watchedInRangeCount:
+				range === "week"
+					? activitySummary?.watchedLast7Days ?? 0
+					: activitySummary?.watchedLast30Days ?? 0,
 			recentWatched: sorted.slice(0, 5),
-			activityBars: buildActivityBars(sorted, range),
+			activityBars: buildActivityBars(activitySummary?.dailyActivity, range, now),
 		};
-	}, [shelfItems, totalTrackedValue, range]);
+	}, [activitySummary, range, shelfItems]);
 
 	const { listCount, totalMoviesInLists, recentLists } = useMemo(() => {
 		const items = lists ?? [];
@@ -57,7 +53,6 @@ export function useHomeMetrics(
 
 	return {
 		watchedInRangeCount,
-		totalTracked,
 		recentWatched,
 		activityBars,
 		listCount,
@@ -66,36 +61,46 @@ export function useHomeMetrics(
 	};
 }
 
-function buildActivityBars(items: DashboardShelfItem[], range: DashboardRange) {
-	const bucketSize = range === "week" ? 1 : 7;
-	const bucketCount = 7;
-	const endOfToday = new Date();
-	endOfToday.setHours(23, 59, 59, 999);
+function buildActivityBars(
+	dailyActivity: DashboardActivityBucket[] | undefined,
+	range: DashboardRange,
+	now: number,
+): DashboardActivityBar[] {
+	const visibleBuckets =
+		range === "week"
+			? (dailyActivity?.slice(-7) ?? [])
+			: (dailyActivity ?? []);
 
-	const start = new Date(endOfToday);
-	start.setDate(start.getDate() - (bucketSize * bucketCount - 1));
-	start.setHours(0, 0, 0, 0);
+	if (visibleBuckets.length === 0) {
+		return Array.from({ length: range === "week" ? 7 : 30 }, (_, index) => ({
+			key: `placeholder-${range}-${now}-${index}`,
+			value: 0,
+			label: "",
+			showLabel: false,
+		}));
+	}
 
-	return Array.from({ length: bucketCount }, (_, index) => {
-		const bucketStart = new Date(start);
-		bucketStart.setDate(start.getDate() + index * bucketSize);
+	return visibleBuckets.map((bucket, index) => ({
+		key: bucket.date,
+		value: bucket.count,
+		label:
+			range === "week"
+				? formatDayKey(bucket.date, { weekday: "short" }).slice(0, 3)
+				: formatDayKey(bucket.date, { month: "short", day: "numeric" }),
+		showLabel:
+			range === "week" ||
+			index % 5 === 0 ||
+			index === visibleBuckets.length - 1,
+	}));
+}
 
-		const bucketEnd = new Date(bucketStart);
-		bucketEnd.setDate(bucketStart.getDate() + bucketSize - 1);
-		bucketEnd.setHours(23, 59, 59, 999);
-
-		const value = items.filter((item) => {
-			const sourceDate = item.watchedDate ?? item.createdAt;
-			const watchedAt = new Date(sourceDate).getTime();
-			return watchedAt >= bucketStart.getTime() && watchedAt <= bucketEnd.getTime();
-		}).length;
-
-		return {
-			label:
-				range === "week"
-					? bucketStart.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3)
-					: `W${index + 1}`,
-			value,
-		};
-	});
+function formatDayKey(
+	dayKey: string,
+	options: Intl.DateTimeFormatOptions,
+) {
+	const [year, month, day] = dayKey.split("-").map(Number);
+	return new Intl.DateTimeFormat(undefined, {
+		...options,
+		timeZone: "UTC",
+	}).format(new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)));
 }

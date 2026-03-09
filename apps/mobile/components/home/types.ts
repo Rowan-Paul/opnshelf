@@ -1,4 +1,8 @@
-import type { UserDto } from "@opnshelf/api";
+import type {
+	ShelfActivityBucketDto,
+	ShelfActivitySummaryDto,
+	UserDto,
+} from "@opnshelf/api";
 
 export type DashboardRange = "week" | "month";
 
@@ -22,6 +26,15 @@ export type DashboardListItem = {
 	slug: string;
 	movieCount: number;
 	updatedAt: string;
+};
+
+export type DashboardActivitySummary = ShelfActivitySummaryDto;
+export type DashboardActivityBucket = ShelfActivityBucketDto;
+export type DashboardActivityBar = {
+	key: string;
+	value: number;
+	label: string;
+	showLabel: boolean;
 };
 
 export type DashboardUser = UserDto;

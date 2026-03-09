@@ -1,6 +1,10 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { ShelfQueryDto, ShelfResponseDto } from "./shelf.dto";
+import {
+	ShelfActivitySummaryDto,
+	ShelfQueryDto,
+	ShelfResponseDto,
+} from "./shelf.dto";
 import { ShelfService } from "./shelf.service";
 
 @ApiTags("shelf")
@@ -108,5 +112,16 @@ export class ShelfController {
 			hasPreviousPage: result.hasPreviousPage,
 			hasNextPage: result.hasNextPage,
 		};
+	}
+
+	@Get("activity-summary")
+	@ApiOperation({
+		summary: "Get timezone-aware activity summary for a user's dashboard",
+	})
+	@ApiResponse({ status: 200, type: ShelfActivitySummaryDto })
+	async getUserActivitySummary(
+		@Param("userDid") userDid: string,
+	): Promise<ShelfActivitySummaryDto> {
+		return this.shelfService.getUserActivitySummary(userDid);
 	}
 }

@@ -19,6 +19,9 @@ describe("ShelfService", () => {
 	let service: ShelfService;
 
 	const mockPrismaService = {
+		user: {
+			findUnique: jest.fn(),
+		},
 		trackedMovie: {
 			count: jest.fn(),
 		},
@@ -55,6 +58,10 @@ describe("ShelfService", () => {
 		}).compile();
 
 		service = module.get<ShelfService>(ShelfService);
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it("should return mixed shelf items with page metadata", async () => {
@@ -173,5 +180,68 @@ describe("ShelfService", () => {
 		expect(queryText).toContain("LIMIT");
 		expect(sql.values.at(-2)).toBe(3);
 		expect(sql.values.at(-1)).toBe(3);
+	});
+
+	it("should return a 30-day activity summary with zero-filled days and matching totals", async () => {
+		jest.useFakeTimers().setSystemTime(new Date("2024-03-10T12:00:00.000Z"));
+		mockPrismaService.user.findUnique.mockResolvedValue({
+			timezone: "America/New_York",
+		});
+		mockPrismaService.$queryRaw.mockResolvedValue([
+			{ dayKey: "2024-02-10", count: 1 },
+			{ dayKey: "2024-03-08", count: 2 },
+			{ dayKey: "2024-03-09", count: 3 },
+			{ dayKey: "2024-03-10", count: 4 },
+		]);
+
+		const result = await service.getUserActivitySummary("did:plc:test");
+
+		expect(result.dailyActivity).toHaveLength(30);
+		expect(result.dailyActivity[0]).toEqual({
+			date: "2024-02-10",
+			count: 1,
+		});
+		expect(result.dailyActivity[1]).toEqual({
+			date: "2024-02-11",
+			count: 0,
+		});
+		expect(result.dailyActivity.at(-1)).toEqual({
+			date: "2024-03-10",
+			count: 4,
+		});
+		expect(result.watchedLast30Days).toBe(10);
+		expect(result.watchedLast7Days).toBe(9);
+	});
+
+	it("should use the saved timezone when building the 30-day window", async () => {
+		jest.useFakeTimers().setSystemTime(new Date("2024-03-10T01:30:00.000Z"));
+		mockPrismaService.user.findUnique.mockResolvedValue({
+			timezone: "America/Los_Angeles",
+		});
+		mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+		await service.getUserActivitySummary("did:plc:test");
+
+		const sql = mockPrismaService.$queryRaw.mock.calls.at(-1)?.[0];
+		const queryText = Array.isArray(sql?.strings)
+			? sql.strings.join(" ")
+			: String(sql);
+
+		expect(queryText).toContain('COALESCE(tm."watchedDate", tm."createdAt")');
+		expect(queryText).toContain('COALESCE(te."watchedDate", te."createdAt")');
+		expect(queryText).toContain("AT TIME ZONE");
+		expect(queryText).toContain("BETWEEN CAST(");
+		expect(mockPrismaService.$queryRaw).toHaveBeenCalledWith(
+			expect.objectContaining({
+				values: [
+					"America/Los_Angeles",
+					"did:plc:test",
+					"America/Los_Angeles",
+					"did:plc:test",
+					"2024-02-09",
+					"2024-03-09",
+				],
+			}),
+		);
 	});
 });
