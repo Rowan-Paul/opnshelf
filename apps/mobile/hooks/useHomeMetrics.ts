@@ -86,7 +86,7 @@ function buildActivityBars(
 		label:
 			range === "week"
 				? formatDayKey(bucket.date, { weekday: "short" }).slice(0, 3)
-				: formatDayKey(bucket.date, { month: "short", day: "numeric" }),
+				: formatMonthDayLabel(bucket.date),
 		showLabel:
 			range === "week" ||
 			index % 5 === 0 ||
@@ -103,4 +103,10 @@ function formatDayKey(
 		...options,
 		timeZone: "UTC",
 	}).format(new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)));
+}
+
+function formatMonthDayLabel(dayKey: string) {
+	const day = formatDayKey(dayKey, { day: "numeric" });
+	const month = formatDayKey(dayKey, { month: "short" });
+	return `${day}\n${month}`;
 }

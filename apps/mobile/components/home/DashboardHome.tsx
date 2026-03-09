@@ -279,7 +279,13 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 												<Text style={[styles.activityValue, { color: colors.onSurface }]}>
 													{bar.value}
 												</Text>
-												<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>
+												<Text
+													style={[
+														styles.activityLabel,
+														styles.activityLabelMonth,
+														{ color: colors.onSurfaceVariant },
+													]}
+												>
 													{bar.showLabel ? bar.label : ""}
 												</Text>
 											</View>
@@ -428,9 +434,10 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 	},
 	activityBarItemMonth: {
-		width: 22,
+		width: 30,
 		alignItems: "center",
 		gap: spacing.xs,
+		justifyContent: "flex-end",
 	},
 	activityBarTrack: {
 		height: 84,
@@ -445,8 +452,15 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.md,
 		minHeight: 0,
 	},
-	activityValue: { fontSize: 12, fontWeight: "700" },
+	activityValue: { fontSize: 12, fontWeight: "700", minHeight: 16 },
 	activityLabel: { fontSize: 11 },
+	activityLabelMonth: {
+		width: "100%",
+		minHeight: 28,
+		lineHeight: 13,
+		textAlign: "center",
+		textAlignVertical: "top",
+	},
 	metricTile: {
 		borderRadius: borderRadius.lg,
 		borderWidth: 1,
