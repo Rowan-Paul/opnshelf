@@ -71,6 +71,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 	} = useQuery({
 		...showsControllerGetUserUpNextOptions({
 			path: { userDid: user.did },
+			query: { page: 1, pageSize: 4 },
 		}),
 		enabled: !!user.did,
 	});
@@ -175,7 +176,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 
 				<UpNextSection
 					isLoading={isUpNextLoading}
-					items={upNext ?? []}
+					items={upNext?.items ?? []}
 					userDid={user.did}
 				/>
 
@@ -251,20 +252,6 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 										<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>{bar.label}</Text>
 									</View>
 								))}
-							</View>
-						</View>
-						<View style={styles.metricsGrid}>
-							<View
-								style={[
-									styles.metricTile,
-									{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
-								]}
-							>
-								<View style={styles.metricTitleRow}>
-									<CalendarRange size={16} color={colors.primary} />
-									<Text style={[styles.metricTitle, { color: colors.onSurface }]}>Watched {range === "week" ? "7d" : "30d"}</Text>
-								</View>
-								<Text style={[styles.metricValue, { color: colors.onSurface }]}>{watchedInRangeCount}</Text>
 							</View>
 						</View>
 					</CardContent>

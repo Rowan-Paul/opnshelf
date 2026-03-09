@@ -16,6 +16,7 @@ export default function ProfileLayout() {
 			<Stack.Screen name="index" />
 			<Stack.Screen name="shelf" />
 			<Stack.Screen name="lists" />
+			<Stack.Screen name="up-next" />
 		</Stack>
 	);
 }

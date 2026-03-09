@@ -8,6 +8,7 @@ import {
 	LogIn,
 	LogOut,
 	Settings,
+	Tv,
 	User,
 } from "lucide-react-native";
 import { usePostHog } from "posthog-react-native";
@@ -16,14 +17,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 
 export default function ProfileScreen() {
-	const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth();
+	const { user, isAuthenticated, logout } = useAuth();
 	const { showToast } = useToast();
 	const { colors } = useTheme();
 	const posthog = usePostHog();
@@ -43,37 +43,6 @@ export default function ProfileScreen() {
 			router.push("/login");
 		}
 	}, [isAuthenticated, logout, showToast, posthog]);
-
-	if (isAuthLoading) {
-		return (
-			<SafeAreaView
-				style={[styles.container, { backgroundColor: colors.background }]}
-				edges={["top"]}
-			>
-				<View style={styles.header}>
-					<View style={styles.headerLeft}>
-						<User size={32} color={colors.primary} />
-						<Text style={[styles.title, { color: colors.onBackground }]}>
-							Profile
-						</Text>
-					</View>
-				</View>
-				<View style={styles.skeletonContainer}>
-					<Skeleton
-						width="100%"
-						height={120}
-						style={{ marginBottom: spacing.lg }}
-					/>
-					<Skeleton
-						width="100%"
-						height={80}
-						style={{ marginBottom: spacing.md }}
-					/>
-					<Skeleton width="100%" height={80} />
-				</View>
-			</SafeAreaView>
-		);
-	}
 
 	if (!isAuthenticated) {
 		return (
@@ -204,6 +173,42 @@ export default function ProfileScreen() {
 
 			{/* Navigation Links */}
 			<View style={styles.linksContainer}>
+				<TouchableOpacity
+					style={[
+						styles.linkCard,
+						{
+							backgroundColor: colors.surfaceContainer,
+							borderColor: colors.outline,
+						},
+					]}
+					onPress={() => router.push("/(tabs)/profile/up-next")}
+				>
+					<View
+						style={[
+							styles.linkIconContainer,
+							{ backgroundColor: `${colors.primary}20` },
+						]}
+					>
+						<Tv size={24} color={colors.primary} />
+					</View>
+					<View style={styles.linkContent}>
+						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+							Up Next
+						</Text>
+						<Text
+							style={[
+								styles.linkDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							The next episodes in your queue
+						</Text>
+					</View>
+					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
+						→
+					</Text>
+				</TouchableOpacity>
+
 				<TouchableOpacity
 					style={[
 						styles.linkCard,
@@ -354,9 +359,6 @@ const styles = StyleSheet.create({
 	buttonText: {
 		fontSize: 16,
 		fontWeight: "600",
-	},
-	skeletonContainer: {
-		padding: spacing.lg,
 	},
 	profileCard: {
 		marginHorizontal: spacing.lg,

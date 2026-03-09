@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
+import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import {
@@ -154,17 +155,7 @@ function SettingsPage() {
 	};
 
 	if (isAuthLoading) {
-		return (
-			<div className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-				<div className="container mx-auto px-4 py-8 max-w-3xl">
-					<div className="flex items-center gap-3 mb-8">
-						<Skeleton className="w-8 h-8 rounded" />
-						<Skeleton className="w-32 h-8 rounded" />
-					</div>
-					<Skeleton className="h-64 rounded-xl" />
-				</div>
-			</div>
-		);
+		return <AuthLoadingState className="max-w-3xl py-8" />;
 	}
 
 	if (!user) {

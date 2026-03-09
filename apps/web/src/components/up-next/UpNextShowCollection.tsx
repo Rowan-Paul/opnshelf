@@ -200,7 +200,7 @@ export function UpNextShowCollection({
 														</p>
 														{item.nextEpisode.airDate ? (
 															<p>
-																Airs {formatDateOnly(item.nextEpisode.airDate)}
+																Aired {formatDateOnly(item.nextEpisode.airDate)}
 															</p>
 														) : null}
 													</div>

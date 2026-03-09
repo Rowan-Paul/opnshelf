@@ -7,6 +7,7 @@ import {
 	useMatchRoute,
 } from "@tanstack/react-router";
 import { BookOpen, List, Settings, Tv } from "lucide-react";
+import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 
@@ -26,61 +27,7 @@ function ProfileLayout() {
 	const { seedColor } = useTheme();
 
 	if (isAuthLoading) {
-		return (
-			<div
-				className="min-h-screen"
-				style={{
-					backgroundColor: "var(--md-sys-color-background)",
-					color: "var(--md-sys-color-on-background)",
-				}}
-			>
-				<div className="container mx-auto px-4 py-4 max-w-7xl">
-					<div className="animate-pulse space-y-8">
-						<div className="flex items-center gap-4">
-							<div
-								className="w-16 h-16 rounded-full"
-								style={{
-									backgroundColor:
-										"var(--md-sys-color-surface-container-highest)",
-								}}
-							/>
-							<div className="space-y-2">
-								<div
-									className="h-6 w-32 rounded"
-									style={{
-										backgroundColor:
-											"var(--md-sys-color-surface-container-highest)",
-									}}
-								/>
-								<div
-									className="h-4 w-48 rounded"
-									style={{
-										backgroundColor:
-											"var(--md-sys-color-surface-container-highest)",
-									}}
-								/>
-							</div>
-						</div>
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<div
-								className="h-24 rounded-lg"
-								style={{
-									backgroundColor:
-										"var(--md-sys-color-surface-container-highest)",
-								}}
-							/>
-							<div
-								className="h-24 rounded-lg"
-								style={{
-									backgroundColor:
-										"var(--md-sys-color-surface-container-highest)",
-								}}
-							/>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
+		return <AuthLoadingState className="max-w-7xl py-4" />;
 	}
 
 	if (!user) {

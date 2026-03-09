@@ -16,6 +16,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Check, List, Loader2, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MovieGridSkeleton } from "@/components/MovieGrid";
 import { PaginationControls } from "@/components/PaginationControls";
@@ -173,19 +174,7 @@ function ListDetailPage() {
 	});
 
 	if (isAuthLoading) {
-		return (
-			<div
-				className="min-h-screen"
-				style={{
-					backgroundColor: "var(--md-sys-color-background)",
-					color: "var(--md-sys-color-on-background)",
-				}}
-			>
-				<div className="container mx-auto px-4 py-4 max-w-7xl">
-					<MovieGridSkeleton />
-				</div>
-			</div>
-		);
+		return <AuthLoadingState className="max-w-7xl py-4" />;
 	}
 
 	if (!user) {

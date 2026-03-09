@@ -6,7 +6,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { CalendarRange, LayoutDashboard, Search } from "lucide-react";
+import { LayoutDashboard, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CreateListDialog } from "@/components/CreateListDialog";
 import { UpNextSection } from "@/components/home/UpNextSection";
@@ -51,7 +51,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
-	const { recentWatched, watchedInRangeCount, activityBars } = useMemo(() => {
+	const { recentWatched, activityBars } = useMemo(() => {
 		const now = Date.now();
 		const days = range === "week" ? 7 : 30;
 		const cutoff = now - days * 24 * 60 * 60 * 1000;
@@ -89,21 +89,6 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		};
 	}, [lists]);
 
-	const metricCards: Array<{
-		key: "watched";
-		icon: typeof CalendarRange;
-		label: string;
-		value: number;
-		caption?: string;
-	}> = [
-		{
-			key: "watched",
-			icon: CalendarRange,
-			label: `Watched ${range === "week" ? "7 days" : "30 days"}`,
-			value: watchedInRangeCount,
-		},
-	];
-
 	return (
 		<div className="container mx-auto max-w-6xl px-4 py-8 md:py-10">
 			<div
@@ -121,7 +106,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 								backgroundColor: "var(--md-sys-color-primary-container)",
 							}}
 						>
-							<LayoutDashboard className="h-7 w-7 text-[var(--md-sys-color-primary)]" />
+							<LayoutDashboard className="h-7 w-7 text-(--md-sys-color-primary)" />
 						</div>
 						<div className="min-w-0">
 							<h1 className="md-display-small mb-1">Dashboard</h1>
@@ -201,14 +186,14 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 							>
 								<div className="mb-4 flex items-center justify-between gap-3">
 									<div>
-										<p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+										<p className="text-sm font-semibold text-(--md-sys-color-on-surface)">
 											Viewing rhythm
 										</p>
-										<p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+										<p className="text-xs text-(--md-sys-color-on-surface-variant)">
 											{range === "week" ? "Last 7 days" : "Weekly activity"}
 										</p>
 									</div>
-									<p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+									<p className="text-xs text-(--md-sys-color-on-surface-variant)">
 										{activityBars.reduce((sum, bar) => sum + bar.value, 0)}{" "}
 										watched
 									</p>
@@ -219,63 +204,23 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 											key={bar.label}
 											className="flex min-w-0 flex-col items-center gap-2"
 										>
-											<div className="flex h-24 w-full items-end overflow-hidden rounded-2xl bg-[color:rgba(127,127,127,0.14)] px-1 py-1">
+											<div className="flex h-24 w-full items-end overflow-hidden rounded-2xl bg-[rgba(127,127,127,0.14)] px-1 py-1">
 												<div
-													className="w-full rounded-xl bg-[var(--md-sys-color-primary)]"
+													className="w-full rounded-xl bg-(--md-sys-color-primary)"
 													style={{
 														height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
 													}}
 												/>
 											</div>
-											<span className="text-xs font-semibold text-[var(--md-sys-color-on-surface)]">
+											<span className="text-xs font-semibold text-(--md-sys-color-on-surface)">
 												{bar.value}
 											</span>
-											<span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+											<span className="text-[11px] text-(--md-sys-color-on-surface-variant)">
 												{bar.label}
 											</span>
 										</div>
 									))}
 								</div>
-							</div>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1">
-								{metricCards.map((metric) => {
-									const Icon = metric.icon;
-
-									return (
-										<div
-											key={metric.key}
-											className="rounded-[24px] border p-4"
-											style={{
-												backgroundColor:
-													"var(--md-sys-color-surface-container)",
-												borderColor: "var(--md-sys-color-outline-variant)",
-											}}
-										>
-											<div
-												className="mb-3 flex items-center gap-2 text-sm font-medium"
-												style={{
-													color: "var(--md-sys-color-on-surface-variant)",
-												}}
-											>
-												<Icon className="h-4 w-4 text-[var(--md-sys-color-primary)]" />
-												<span>{metric.label}</span>
-											</div>
-											<p className="text-3xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
-												{metric.value}
-											</p>
-											{metric.caption ? (
-												<p
-													className="mt-1 text-sm"
-													style={{
-														color: "var(--md-sys-color-on-surface-variant)",
-													}}
-												>
-													{metric.caption}
-												</p>
-											) : null}
-										</div>
-									);
-								})}
 							</div>
 						</M3CardContent>
 					</M3Card>
