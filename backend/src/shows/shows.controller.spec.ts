@@ -171,27 +171,40 @@ describe("ShowsController", () => {
 	});
 
 	it("should return up next episodes for user", async () => {
-		const mockUpNext = [
-			{
-				showId: "123",
-				watchCount: 4,
-				latestWatchedDate: "2024-01-01T00:00:00.000Z",
-				lastWatched: { seasonNumber: 1, episodeNumber: 4 },
-				nextEpisode: {
-					seasonNumber: 1,
-					episodeNumber: 5,
-					name: "Next Episode",
+		const mockUpNext = {
+			items: [
+				{
+					showId: "123",
+					watchCount: 4,
+					latestWatchedDate: "2024-01-01T00:00:00.000Z",
+					lastWatched: { seasonNumber: 1, episodeNumber: 4 },
+					nextEpisode: {
+						seasonNumber: 1,
+						episodeNumber: 5,
+						name: "Next Episode",
+					},
+					show: { showId: "123", title: "Test Show" },
 				},
-				show: { showId: "123", title: "Test Show" },
-			},
-		];
+			],
+			total: 1,
+			page: 2,
+			pageSize: 8,
+			totalPages: 1,
+			hasPreviousPage: false,
+			hasNextPage: false,
+		};
 		mockShowsService.getUserUpNext.mockResolvedValue(mockUpNext);
 
-		const result = await controller.getUserUpNext("did:plc:abc123");
+		const result = await controller.getUserUpNext("did:plc:abc123", {
+			page: 2,
+			pageSize: 8,
+		});
 
 		expect(result).toEqual(mockUpNext);
 		expect(mockShowsService.getUserUpNext).toHaveBeenCalledWith(
 			"did:plc:abc123",
+			2,
+			8,
 		);
 	});
 });

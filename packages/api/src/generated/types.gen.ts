@@ -1129,12 +1129,23 @@ export type ShowsControllerGetUserUpNextData = {
     path: {
         userDid: string;
     };
-    query?: never;
+    query?: {
+        page?: number;
+        pageSize?: number;
+    };
     url: '/shows/user/{userDid}/up-next';
 };
 
 export type ShowsControllerGetUserUpNextResponses = {
-    200: Array<UpNextShowDto>;
+    200: {
+        items: Array<UpNextShowDto>;
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+    };
 };
 
 export type ShowsControllerGetUserUpNextResponse = ShowsControllerGetUserUpNextResponses[keyof ShowsControllerGetUserUpNextResponses];

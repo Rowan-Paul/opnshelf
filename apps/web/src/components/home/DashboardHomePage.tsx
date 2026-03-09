@@ -46,6 +46,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 	const { data: upNext, isLoading: isUpNextLoading } = useQuery({
 		...showsControllerGetUserUpNextOptions({
 			path: { userDid: user.did },
+			query: { page: 1, pageSize: 4 },
 		}),
 		enabled: !!user.did,
 	});
@@ -149,7 +150,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 				<div className="lg:col-span-3">
 					<UpNextSection
 						isLoading={isUpNextLoading}
-						upNext={upNext ?? []}
+						upNext={upNext?.items ?? []}
 						userDid={user.did}
 					/>
 				</div>

@@ -28,7 +28,7 @@ export function ListCard({ list }: ListCardProps) {
 	};
 
 	return (
-		<Link to="/lists/$slug" params={{ slug: list.slug }}>
+		<Link to="/lists/$slug" params={{ slug: list.slug }} search={{ page: 1 }}>
 			<M3Card
 				variant="elevated"
 				className="cursor-pointer h-full transition-all hover:md-elevation-2"

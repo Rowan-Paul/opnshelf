@@ -280,32 +280,40 @@ describe("ShowsService", () => {
 
 			const result = await service.getUserUpNext("did:plc:abc123");
 
-			expect(result).toEqual([
-				{
-					showId: "show-1",
-					watchCount: 2,
-					latestWatchedDate: "2024-01-10T00:00:00.000Z",
-					lastWatched: { seasonNumber: 1, episodeNumber: 2 },
-					nextEpisode: {
-						seasonNumber: 1,
-						episodeNumber: 3,
-						name: "Episode 3",
-						airDate: "2024-01-11",
-						overview: "Next up",
-						stillPath: "/still-3.jpg",
-					},
-					show: {
+			expect(result).toEqual({
+				items: [
+					{
 						showId: "show-1",
-						title: "Show One",
-						posterPath: "/show-one.jpg",
-						backdropPath: undefined,
-						firstAirYear: 2024,
-						firstAirDate: "2024-01-01T00:00:00.000Z",
-						overview: "Overview 1",
-						colors: { primary: "#111111" },
+						watchCount: 2,
+						latestWatchedDate: "2024-01-10T00:00:00.000Z",
+						lastWatched: { seasonNumber: 1, episodeNumber: 2 },
+						nextEpisode: {
+							seasonNumber: 1,
+							episodeNumber: 3,
+							name: "Episode 3",
+							airDate: "2024-01-11",
+							overview: "Next up",
+							stillPath: "/still-3.jpg",
+						},
+						show: {
+							showId: "show-1",
+							title: "Show One",
+							posterPath: "/show-one.jpg",
+							backdropPath: undefined,
+							firstAirYear: 2024,
+							firstAirDate: "2024-01-01T00:00:00.000Z",
+							overview: "Overview 1",
+							colors: { primary: "#111111" },
+						},
 					},
-				},
-			]);
+				],
+				total: 1,
+				page: 1,
+				pageSize: 8,
+				totalPages: 1,
+				hasPreviousPage: false,
+				hasNextPage: false,
+			});
 		});
 	});
 

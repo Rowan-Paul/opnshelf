@@ -31,13 +31,14 @@ import {
 	MarkShowWatchedDto,
 	PaginatedEpisodesQueryDto,
 	PaginatedEpisodesResponseDto,
+	PaginatedUpNextQueryDto,
+	PaginatedUpNextResponseDto,
 	SearchShowsResultsDto,
 	TMDBEpisodeDto,
 	TMDBSeasonDetailDto,
 	TMDBShowDetailDto,
 	TrackedEpisodeDto,
 	TrackedShowSummaryDto,
-	UpNextShowDto,
 } from "./dto/show.dto";
 import type { ATSession } from "./shows.service";
 import { ShowsService } from "./shows.service";
@@ -144,9 +145,12 @@ export class ShowsController {
 
 	@Get("user/:userDid/up-next")
 	@ApiOperation({ summary: "Get up next episodes for a user" })
-	@ApiResponse({ status: 200, type: [UpNextShowDto] })
-	async getUserUpNext(@Param("userDid") userDid: string) {
-		return this.showsService.getUserUpNext(userDid);
+	@ApiResponse({ status: 200, type: PaginatedUpNextResponseDto })
+	async getUserUpNext(
+		@Param("userDid") userDid: string,
+		@Query() query: PaginatedUpNextQueryDto,
+	) {
+		return this.showsService.getUserUpNext(userDid, query.page, query.pageSize);
 	}
 
 	@Get("user/:userDid/episodes")

@@ -217,7 +217,7 @@ export class ShowsService {
 		return Array.from(showMap.values());
 	}
 
-	async getUserUpNext(userDid: string) {
+	async getUserUpNext(userDid: string, page: number = 1, pageSize: number = 8) {
 		const trackedEpisodes = (await this.prisma.trackedEpisode.findMany({
 			where: { userDid },
 			include: { show: true },
@@ -249,7 +249,7 @@ export class ShowsService {
 			existing.watchCount += 1;
 		}
 
-		const items = await Promise.all(
+		const allItems = await Promise.all(
 			Array.from(showMap.values()).map(
 				async ({ latest, watchCount, latestWatchedDate }) => {
 					try {
@@ -307,9 +307,28 @@ export class ShowsService {
 			),
 		);
 
-		return items.filter(
+		const items = allItems.filter(
 			(item): item is NonNullable<typeof item> => item !== null,
 		);
+		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+		const total = items.length;
+		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
+		const requestedPage = Math.max(page, 1);
+		const currentPage =
+			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+		const start = (currentPage - 1) * safePageSize;
+		const pagedItems =
+			totalPages > 0 ? items.slice(start, start + safePageSize) : [];
+
+		return {
+			items: pagedItems,
+			total,
+			page: currentPage,
+			pageSize: safePageSize,
+			totalPages,
+			hasPreviousPage: totalPages > 0 && currentPage > 1,
+			hasNextPage: totalPages > 0 && currentPage < totalPages,
+		};
 	}
 
 	async getUserEpisodesPaginated(

@@ -16,6 +16,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListsRouteImport } from './routes/lists'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileUpNextRouteImport } from './routes/profile.up-next'
 import { Route as ProfileShelfRouteImport } from './routes/profile.shelf'
 import { Route as ProfileSettingsRouteImport } from './routes/profile.settings'
 import { Route as ProfileListsRouteImport } from './routes/profile.lists'
@@ -60,6 +61,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUpNextRoute = ProfileUpNextRouteImport.update({
+  id: '/up-next',
+  path: '/up-next',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const ProfileShelfRoute = ProfileShelfRouteImport.update({
   id: '/shelf',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
+  '/profile/up-next': typeof ProfileUpNextRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
+  '/profile/up-next': typeof ProfileUpNextRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
+  '/profile/up-next': typeof ProfileUpNextRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
+    | '/profile/up-next'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
     | '/shows/$showId/$title/seasons/$seasonNumber'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
+    | '/profile/up-next'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
     | '/shows/$showId/$title/seasons/$seasonNumber'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
+    | '/profile/up-next'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
     | '/shows/$showId/$title/seasons/$seasonNumber'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/profile/up-next': {
+      id: '/profile/up-next'
+      path: '/up-next'
+      fullPath: '/profile/up-next'
+      preLoaderRoute: typeof ProfileUpNextRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/profile/shelf': {
       id: '/profile/shelf'
@@ -365,12 +384,14 @@ interface ProfileRouteChildren {
   ProfileListsRoute: typeof ProfileListsRoute
   ProfileSettingsRoute: typeof ProfileSettingsRoute
   ProfileShelfRoute: typeof ProfileShelfRoute
+  ProfileUpNextRoute: typeof ProfileUpNextRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileListsRoute: ProfileListsRoute,
   ProfileSettingsRoute: ProfileSettingsRoute,
   ProfileShelfRoute: ProfileShelfRoute,
+  ProfileUpNextRoute: ProfileUpNextRoute,
 }
 
 const ProfileRouteWithChildren =

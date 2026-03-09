@@ -256,7 +256,9 @@ function ListDetailPage() {
 		}
 
 		const scopedShow = parseScopedShowMediaId(item.mediaId);
-		const showId = item.media.showId ?? scopedShow?.showId ?? item.mediaId;
+		const showId = String(
+			item.media.showId ?? scopedShow?.showId ?? item.mediaId,
+		);
 
 		if (
 			typeof scopedShow?.seasonNumber === "number" &&
@@ -296,7 +298,9 @@ function ListDetailPage() {
 		}
 
 		const scopedShow = parseScopedShowMediaId(item.mediaId);
-		const showId = item.media.showId ?? scopedShow?.showId ?? item.mediaId;
+		const showId = String(
+			item.media.showId ?? scopedShow?.showId ?? item.mediaId,
+		);
 
 		if (
 			typeof scopedShow?.seasonNumber === "number" &&
