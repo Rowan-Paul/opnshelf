@@ -41,13 +41,12 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
-	const { data: activitySummary } =
-		useQuery({
-			...shelfControllerGetUserActivitySummaryOptions({
-				path: { userDid: user.did },
-			}),
-			enabled: !!user.did,
-		});
+	const { data: activitySummary } = useQuery({
+		...shelfControllerGetUserActivitySummaryOptions({
+			path: { userDid: user.did },
+		}),
+		enabled: !!user.did,
+	});
 
 	const { data: lists, isLoading: isListsLoading } = useQuery({
 		...listsControllerGetUserListsOptions(),
