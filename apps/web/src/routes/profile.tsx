@@ -78,7 +78,9 @@ function ProfileLayout() {
 								className="[overflow-wrap:anywhere]"
 								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 							>
-								@{user.handle}
+								<Link to="/u/$handle/shelf" params={{ handle: user.handle }} search={{ page: 1 }}>
+									@{user.handle}
+								</Link>
 							</p>
 						)}
 					</div>

@@ -16,12 +16,16 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListsRouteImport } from './routes/lists'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as ProfileUpNextRouteImport } from './routes/profile.up-next'
 import { Route as ProfileShelfRouteImport } from './routes/profile.shelf'
 import { Route as ProfileSettingsRouteImport } from './routes/profile.settings'
 import { Route as ProfileListsRouteImport } from './routes/profile.lists'
 import { Route as ListsSlugRouteImport } from './routes/lists.$slug'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as UHandleUpNextRouteImport } from './routes/u.$handle.up-next'
+import { Route as UHandleShelfRouteImport } from './routes/u.$handle.shelf'
+import { Route as UHandleListsRouteImport } from './routes/u.$handle.lists'
 import { Route as ShowsShowIdTitleRouteImport } from './routes/shows.$showId.$title'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
 import { Route as ShowsShowIdTitleSeasonsSeasonNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber'
@@ -62,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileUpNextRoute = ProfileUpNextRouteImport.update({
   id: '/up-next',
   path: '/up-next',
@@ -91,6 +100,21 @@ const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
+} as any)
+const UHandleUpNextRoute = UHandleUpNextRouteImport.update({
+  id: '/up-next',
+  path: '/up-next',
+  getParentRoute: () => UHandleRoute,
+} as any)
+const UHandleShelfRoute = UHandleShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => UHandleRoute,
+} as any)
+const UHandleListsRoute = UHandleListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => UHandleRoute,
 } as any)
 const ShowsShowIdTitleRoute = ShowsShowIdTitleRouteImport.update({
   id: '/shows/$showId/$title',
@@ -129,8 +153,12 @@ export interface FileRoutesByFullPath {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/profile/up-next': typeof ProfileUpNextRoute
+  '/u/$handle': typeof UHandleRouteWithChildren
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/u/$handle/lists': typeof UHandleListsRoute
+  '/u/$handle/shelf': typeof UHandleShelfRoute
+  '/u/$handle/up-next': typeof UHandleUpNextRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
@@ -148,8 +176,12 @@ export interface FileRoutesByTo {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/profile/up-next': typeof ProfileUpNextRoute
+  '/u/$handle': typeof UHandleRouteWithChildren
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/u/$handle/lists': typeof UHandleListsRoute
+  '/u/$handle/shelf': typeof UHandleShelfRoute
+  '/u/$handle/up-next': typeof UHandleUpNextRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
@@ -168,8 +200,12 @@ export interface FileRoutesById {
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
   '/profile/up-next': typeof ProfileUpNextRoute
+  '/u/$handle': typeof UHandleRouteWithChildren
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
+  '/u/$handle/lists': typeof UHandleListsRoute
+  '/u/$handle/shelf': typeof UHandleShelfRoute
+  '/u/$handle/up-next': typeof UHandleUpNextRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
@@ -189,8 +225,12 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/profile/up-next'
+    | '/u/$handle'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
+    | '/u/$handle/lists'
+    | '/u/$handle/shelf'
+    | '/u/$handle/up-next'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
@@ -208,8 +248,12 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/profile/up-next'
+    | '/u/$handle'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
+    | '/u/$handle/lists'
+    | '/u/$handle/shelf'
+    | '/u/$handle/up-next'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   id:
@@ -227,8 +271,12 @@ export interface FileRouteTypes {
     | '/profile/settings'
     | '/profile/shelf'
     | '/profile/up-next'
+    | '/u/$handle'
     | '/movies/$movieId/$title'
     | '/shows/$showId/$title'
+    | '/u/$handle/lists'
+    | '/u/$handle/shelf'
+    | '/u/$handle/up-next'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesById: FileRoutesById
@@ -242,6 +290,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   SearchRoute: typeof SearchRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
+  UHandleRoute: typeof UHandleRouteWithChildren
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
   ShowsShowIdTitleRoute: typeof ShowsShowIdTitleRouteWithChildren
 }
@@ -297,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/up-next': {
       id: '/profile/up-next'
       path: '/up-next'
@@ -338,6 +394,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/complete'
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/u/$handle/up-next': {
+      id: '/u/$handle/up-next'
+      path: '/up-next'
+      fullPath: '/u/$handle/up-next'
+      preLoaderRoute: typeof UHandleUpNextRouteImport
+      parentRoute: typeof UHandleRoute
+    }
+    '/u/$handle/shelf': {
+      id: '/u/$handle/shelf'
+      path: '/shelf'
+      fullPath: '/u/$handle/shelf'
+      preLoaderRoute: typeof UHandleShelfRouteImport
+      parentRoute: typeof UHandleRoute
+    }
+    '/u/$handle/lists': {
+      id: '/u/$handle/lists'
+      path: '/lists'
+      fullPath: '/u/$handle/lists'
+      preLoaderRoute: typeof UHandleListsRouteImport
+      parentRoute: typeof UHandleRoute
     }
     '/shows/$showId/$title': {
       id: '/shows/$showId/$title'
@@ -397,6 +474,21 @@ const ProfileRouteChildren: ProfileRouteChildren = {
 const ProfileRouteWithChildren =
   ProfileRoute._addFileChildren(ProfileRouteChildren)
 
+interface UHandleRouteChildren {
+  UHandleListsRoute: typeof UHandleListsRoute
+  UHandleShelfRoute: typeof UHandleShelfRoute
+  UHandleUpNextRoute: typeof UHandleUpNextRoute
+}
+
+const UHandleRouteChildren: UHandleRouteChildren = {
+  UHandleListsRoute: UHandleListsRoute,
+  UHandleShelfRoute: UHandleShelfRoute,
+  UHandleUpNextRoute: UHandleUpNextRoute,
+}
+
+const UHandleRouteWithChildren =
+  UHandleRoute._addFileChildren(UHandleRouteChildren)
+
 interface ShowsShowIdTitleSeasonsSeasonNumberRouteChildren {
   ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
@@ -433,6 +525,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   SearchRoute: SearchRoute,
   AuthCompleteRoute: AuthCompleteRoute,
+  UHandleRoute: UHandleRouteWithChildren,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,
   ShowsShowIdTitleRoute: ShowsShowIdTitleRouteWithChildren,
 }

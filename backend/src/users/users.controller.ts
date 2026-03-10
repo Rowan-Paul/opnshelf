@@ -4,6 +4,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Param,
 	Patch,
 	Post,
 	Req,
@@ -21,6 +22,7 @@ import {
 } from "./dto/import-history.dto";
 import {
 	DeleteUserAccountDto,
+	PublicUserProfileDto,
 	UpdateUserProfileDto,
 	UpdateUserSettingsDto,
 	UserProfileDto,
@@ -33,6 +35,16 @@ import type { ATSession } from "../movies/movies.service";
 @Controller("users")
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
+
+	@Get(":handle/profile")
+	@ApiOperation({ summary: "Get a public user profile by handle" })
+	@ApiResponse({ status: 200, type: PublicUserProfileDto })
+	@ApiResponse({ status: 404, description: "User not found" })
+	async getPublicProfile(
+		@Param("handle") handle: string,
+	): Promise<PublicUserProfileDto> {
+		return this.usersService.getPublicProfileByHandle(handle);
+	}
 
 	/**
 	 * Get current user's settings

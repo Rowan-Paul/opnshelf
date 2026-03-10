@@ -19,6 +19,7 @@ describe("UsersController", () => {
 		completeOnboarding: jest.fn(),
 		fetchTraktPublicHistory: jest.fn(),
 		importNormalizedItems: jest.fn(),
+		getPublicProfileByHandle: jest.fn(),
 		getUserSettings: jest.fn(),
 		updateUserSettings: jest.fn(),
 		updateUserProfile: jest.fn(),
@@ -65,6 +66,27 @@ describe("UsersController", () => {
 		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith(
 			"alice",
 			10,
+		);
+	});
+
+	it("returns a public profile by handle", async () => {
+		usersService.getPublicProfileByHandle.mockResolvedValue({
+			did: "did:plc:abc",
+			handle: "alice.bsky.social",
+			displayName: "Alice",
+			avatar: "https://example.com/alice.jpg",
+		});
+
+		await expect(
+			controller.getPublicProfile("@alice.bsky.social"),
+		).resolves.toEqual({
+			did: "did:plc:abc",
+			handle: "alice.bsky.social",
+			displayName: "Alice",
+			avatar: "https://example.com/alice.jpg",
+		});
+		expect(usersService.getPublicProfileByHandle).toHaveBeenCalledWith(
+			"@alice.bsky.social",
 		);
 	});
 

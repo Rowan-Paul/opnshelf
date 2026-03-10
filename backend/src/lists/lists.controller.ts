@@ -90,6 +90,19 @@ export class ListsController {
 		);
 	}
 
+	@Get("user/:userDid")
+	@ApiOperation({ summary: "Get public list summaries for a user" })
+	@ApiParam({ name: "userDid", description: "User DID" })
+	@ApiOkResponse({
+		description: "Public list summaries for the user",
+		type: [MovieListSummaryDto],
+	})
+	async getPublicUserLists(
+		@Param("userDid") userDid: string,
+	): Promise<MovieListSummaryDto[]> {
+		return this.listsService.getPublicUserLists(userDid);
+	}
+
 	@Get(":slug")
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
