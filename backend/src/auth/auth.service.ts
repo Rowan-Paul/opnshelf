@@ -18,6 +18,28 @@ export interface OAuthAppState {
 	timezone?: string;
 }
 
+interface OAuthClientConfig {
+	redirectUri: string;
+	clientUri: string;
+	runtimeClientId: string;
+	metadataClientId: string;
+	applicationType: "native" | "web";
+	allowHttp: boolean;
+}
+
+interface OAuthClientMetadata {
+	client_id: string;
+	client_name: string;
+	client_uri: string;
+	redirect_uris: string[];
+	scope: string;
+	grant_types: string[];
+	response_types: string[];
+	application_type: "native" | "web";
+	token_endpoint_auth_method: "none";
+	dpop_bound_access_tokens: boolean;
+}
+
 @Injectable()
 export class AuthService implements OnModuleInit {
 	private readonly logger = new Logger(AuthService.name);
@@ -33,26 +55,15 @@ export class AuthService implements OnModuleInit {
 	}
 
 	private initializeOAuthClient() {
-		const backendUrl =
-			this.configService.get<string>("BACKEND_PUBLIC_URL") ||
-			"http://127.0.0.1:3001";
-		const isLocalhost =
-			backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1");
-		const port = this.configService.get<number>("PORT") || 3001;
+		const oauthClientConfig = this.getOAuthClientConfig();
+		const clientMetadata = this.buildClientMetadata(
+			oauthClientConfig,
+			oauthClientConfig.runtimeClientId,
+		);
 
-		// For localhost development:
-		// - client_id must be http://localhost (no port) with redirect_uri as query param
-		// - redirect_uri must use 127.0.0.1 (loopback IP), not localhost
-		// For production: use the full URL to our client metadata
-		const redirectUri = isLocalhost
-			? `http://127.0.0.1:${port}/auth/callback`
-			: `${backendUrl}/auth/callback`;
-
-		const clientId = isLocalhost
-			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(OAUTH_SCOPE)}`
-			: `${backendUrl}/.well-known/oauth-client-metadata.json`;
-
-		this.logger.log(`Initializing OAuth client with client_id: ${clientId}`);
+		this.logger.log(
+			`Initializing OAuth client with client_id: ${clientMetadata.client_id}`,
+		);
 
 		// Create Prisma-backed state store
 		const stateStore = {
@@ -118,23 +129,11 @@ export class AuthService implements OnModuleInit {
 			// Public client configuration (no keyset for localhost/dev)
 			// The client_id is either http://localhost (dev) or the URL to our client-metadata.json (prod)
 			this.oauthClient = new NodeOAuthClient({
-				clientMetadata: {
-					client_id: clientId,
-					client_name: "opnshelf.xyz",
-					client_uri: isLocalhost ? `http://127.0.0.1:${port}` : backendUrl,
-					redirect_uris: [redirectUri],
-					scope: OAUTH_SCOPE,
-					grant_types: ["authorization_code", "refresh_token"],
-					response_types: ["code"],
-					// For localhost: application_type must be 'native' per AT Protocol spec
-					application_type: isLocalhost ? "native" : "web",
-					token_endpoint_auth_method: "none", // Public client
-					dpop_bound_access_tokens: true,
-				},
+				clientMetadata,
 				stateStore,
 				sessionStore,
 				// Allow HTTP for localhost development
-				allowHttp: isLocalhost,
+				allowHttp: oauthClientConfig.allowHttp,
 			});
 			this.logger.log("OAuth client initialized successfully");
 		} catch (error) {
@@ -433,31 +432,12 @@ export class AuthService implements OnModuleInit {
 	 * Get OAuth client metadata for the well-known endpoint (production use)
 	 * For localhost development, the Authorization Server generates virtual metadata
 	 */
-	getClientMetadata() {
-		const backendUrl =
-			this.configService.get<string>("BACKEND_PUBLIC_URL") ||
-			"http://127.0.0.1:3001";
-		const isLocalhost =
-			backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1");
-		const port = new URL(backendUrl).port || "3001";
-
-		// For localhost, use 127.0.0.1 in redirect_uri
-		const redirectUri = isLocalhost
-			? `http://127.0.0.1:${port}/auth/callback`
-			: `${backendUrl}/auth/callback`;
-
-		return {
-			client_id: `${backendUrl}/.well-known/oauth-client-metadata.json`,
-			client_name: "opnshelf.xyz",
-			client_uri: isLocalhost ? `http://127.0.0.1:${port}` : backendUrl,
-			redirect_uris: [redirectUri],
-			scope: OAUTH_SCOPE,
-			grant_types: ["authorization_code", "refresh_token"],
-			response_types: ["code"],
-			application_type: isLocalhost ? "native" : "web",
-			token_endpoint_auth_method: "none",
-			dpop_bound_access_tokens: true,
-		};
+	getClientMetadata(): OAuthClientMetadata {
+		const oauthClientConfig = this.getOAuthClientConfig();
+		return this.buildClientMetadata(
+			oauthClientConfig,
+			oauthClientConfig.metadataClientId,
+		);
 	}
 
 	/**
@@ -528,5 +508,54 @@ export class AuthService implements OnModuleInit {
 			this.logger.warn(`Failed to search actors: ${error}`);
 			return [];
 		}
+	}
+
+	private getOAuthClientConfig(): OAuthClientConfig {
+		const backendUrl =
+			this.configService.get<string>("BACKEND_PUBLIC_URL") ||
+			"http://127.0.0.1:3001";
+		const isLocalhost =
+			backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1");
+		const configuredPort = this.configService.get<number>("PORT");
+		const derivedPort = new URL(backendUrl).port;
+		const port = configuredPort || Number(derivedPort || 3001);
+
+		// For localhost development:
+		// - client_id must be http://localhost (no port) with redirect_uri as query param
+		// - redirect_uri must use 127.0.0.1 (loopback IP), not localhost
+		// For production: use the full URL to our client metadata
+		const clientUri = isLocalhost ? `http://127.0.0.1:${port}` : backendUrl;
+		const redirectUri = `${clientUri}/auth/callback`;
+		const metadataClientId = `${backendUrl}/.well-known/oauth-client-metadata.json`;
+		const runtimeClientId = isLocalhost
+			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(OAUTH_SCOPE)}`
+			: metadataClientId;
+
+		return {
+			redirectUri,
+			clientUri,
+			runtimeClientId,
+			metadataClientId,
+			applicationType: isLocalhost ? "native" : "web",
+			allowHttp: isLocalhost,
+		};
+	}
+
+	private buildClientMetadata(
+		oauthClientConfig: OAuthClientConfig,
+		clientId: string,
+	): OAuthClientMetadata {
+		return {
+			client_id: clientId,
+			client_name: "OpnShelf",
+			client_uri: oauthClientConfig.clientUri,
+			redirect_uris: [oauthClientConfig.redirectUri],
+			scope: OAUTH_SCOPE,
+			grant_types: ["authorization_code", "refresh_token"],
+			response_types: ["code"],
+			application_type: oauthClientConfig.applicationType,
+			token_endpoint_auth_method: "none",
+			dpop_bound_access_tokens: true,
+		};
 	}
 }

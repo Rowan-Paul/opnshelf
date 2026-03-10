@@ -1,3 +1,4 @@
+import { NodeOAuthClient } from "@atproto/oauth-client-node";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
@@ -41,7 +42,7 @@ jest.mock("@atproto/api", () => ({
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
-import { AuthService } from "./auth.service";
+import { AuthService, OAUTH_SCOPE } from "./auth.service";
 
 describe("AuthService", () => {
 	let service: AuthService;
@@ -96,6 +97,28 @@ describe("AuthService", () => {
 
 		// Initialize the OAuth client
 		service.onModuleInit();
+	});
+
+	describe("onModuleInit", () => {
+		it("should initialize the OAuth client with shared metadata", () => {
+			expect(NodeOAuthClient).toHaveBeenCalledWith({
+				clientMetadata: {
+					client_id: `http://localhost?redirect_uri=${encodeURIComponent("http://127.0.0.1:3001/auth/callback")}&scope=${encodeURIComponent(OAUTH_SCOPE)}`,
+					client_name: "OpnShelf",
+					client_uri: "http://127.0.0.1:3001",
+					redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
+					scope: OAUTH_SCOPE,
+					grant_types: ["authorization_code", "refresh_token"],
+					response_types: ["code"],
+					application_type: "native",
+					token_endpoint_auth_method: "none",
+					dpop_bound_access_tokens: true,
+				},
+				stateStore: expect.any(Object),
+				sessionStore: expect.any(Object),
+				allowHttp: true,
+			});
+		});
 	});
 
 	describe("getSessionById", () => {
