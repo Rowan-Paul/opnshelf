@@ -11,7 +11,7 @@
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
     "check": "turbo run check",
-    "check:write": "turbo run check -- --write --unsafe",
+    "check:write": "sh ./scripts/biome-check-write.sh",
     "prepare": "husky"
   },
   "workspaces": [
