@@ -298,6 +298,34 @@ export type PaginatedUpNextResponseDto = {
     hasNextPage: boolean;
 };
 
+export type ReleaseCalendarItemDto = {
+    source: 'watching' | 'watchlist';
+    mediaType: 'movie' | 'show';
+    releaseKind: 'movie' | 'show' | 'episode';
+    /**
+     * Upcoming release date
+     */
+    releaseDate: string;
+    title: string;
+    subtitle?: string;
+    overview?: string;
+    posterPath?: string;
+    backdropPath?: string;
+    showId?: string;
+    movieId?: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    colors?: MovieColorsDto;
+};
+
+export type ReleaseCalendarResponseDto = {
+    items: Array<ReleaseCalendarItemDto>;
+    /**
+     * Total count of upcoming release items
+     */
+    total: number;
+};
+
 export type TrackedEpisodeDto = {
     id: string;
     rkey: string;
@@ -528,6 +556,29 @@ export type MovieListsForItemDto = {
     isInList: boolean;
 };
 
+export type PublicUserProfileDto = {
+    /**
+     * Stable DID for the user
+     */
+    did: string;
+    /**
+     * AT Protocol handle
+     */
+    handle: string;
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Avatar URL imported from BlueSky
+     */
+    avatar: {
+        [key: string]: unknown;
+    } | null;
+};
+
 export type UserSettingsDto = {
     /**
      * Time format preference
@@ -572,29 +623,6 @@ export type UserProfileDto = {
     } | null;
 };
 
-export type PublicUserProfileDto = {
-    /**
-     * Stable DID for the user
-     */
-    did: string;
-    /**
-     * AT Protocol handle
-     */
-    handle: string;
-    /**
-     * Display name shown in OpnShelf
-     */
-    displayName: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Avatar URL imported from BlueSky
-     */
-    avatar: {
-        [key: string]: unknown;
-    } | null;
-};
-
 export type DeleteUserAccountDto = {
     /**
      * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
@@ -619,34 +647,6 @@ export type FetchTraktPublicHistoryDto = {
      * Maximum items to fetch. If omitted, fetches full available history via pagination.
      */
     maxItems?: number;
-};
-
-export type NormalizedImportItemDto = {
-    type: 'movie' | 'episode';
-    /**
-     * UTC datetime in ISO-8601 format
-     */
-    watchedAt: string;
-    /**
-     * TMDB movie id
-     */
-    movieTmdbId?: number;
-    /**
-     * TMDB show id
-     */
-    showTmdbId?: number;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    action?: 'watch' | 'scrobble' | 'checkin';
-};
-
-export type ImportSkipDto = {
-    /**
-     * 1-based item index from source payload
-     */
-    index: number;
-    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
-    message?: string;
 };
 
 export type TraktPublicProfileDto = {
@@ -690,6 +690,34 @@ export type TraktHistoryPreviewItemDto = {
      * UTC datetime in ISO-8601 format
      */
     watchedAt: string;
+};
+
+export type NormalizedImportItemDto = {
+    type: 'movie' | 'episode';
+    /**
+     * UTC datetime in ISO-8601 format
+     */
+    watchedAt: string;
+    /**
+     * TMDB movie id
+     */
+    movieTmdbId?: number;
+    /**
+     * TMDB show id
+     */
+    showTmdbId?: number;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    action?: 'watch' | 'scrobble' | 'checkin';
+};
+
+export type ImportSkipDto = {
+    /**
+     * 1-based item index from source payload
+     */
+    index: number;
+    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
+    message?: string;
 };
 
 export type FetchTraktPublicHistoryResponseDto = {
@@ -1289,6 +1317,21 @@ export type ShowsControllerGetUserUpNextResponses = {
 
 export type ShowsControllerGetUserUpNextResponse = ShowsControllerGetUserUpNextResponses[keyof ShowsControllerGetUserUpNextResponses];
 
+export type ShowsControllerGetUserReleaseCalendarData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/shows/user/{userDid}/release-calendar';
+};
+
+export type ShowsControllerGetUserReleaseCalendarResponses = {
+    200: ReleaseCalendarResponseDto;
+};
+
+export type ShowsControllerGetUserReleaseCalendarResponse = ShowsControllerGetUserReleaseCalendarResponses[keyof ShowsControllerGetUserReleaseCalendarResponses];
+
 export type ShowsControllerGetUserEpisodesPaginatedData = {
     body?: never;
     path: {
@@ -1506,27 +1549,6 @@ export type ListsControllerGetUserListsResponses = {
 
 export type ListsControllerGetUserListsResponse = ListsControllerGetUserListsResponses[keyof ListsControllerGetUserListsResponses];
 
-export type ListsControllerGetPublicUserListsData = {
-    body?: never;
-    path: {
-        /**
-         * User DID
-         */
-        userDid: string;
-    };
-    query?: never;
-    url: '/lists/user/{userDid}';
-};
-
-export type ListsControllerGetPublicUserListsResponses = {
-    /**
-     * Public list summaries for the user
-     */
-    200: Array<MovieListSummaryDto>;
-};
-
-export type ListsControllerGetPublicUserListsResponse = ListsControllerGetPublicUserListsResponses[keyof ListsControllerGetPublicUserListsResponses];
-
 export type ListsControllerCreateListData = {
     body: CreateListDto;
     path?: never;
@@ -1572,6 +1594,27 @@ export type ListsControllerInitDefaultListsResponses = {
 };
 
 export type ListsControllerInitDefaultListsResponse = ListsControllerInitDefaultListsResponses[keyof ListsControllerInitDefaultListsResponses];
+
+export type ListsControllerGetPublicUserListsData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+    };
+    query?: never;
+    url: '/lists/user/{userDid}';
+};
+
+export type ListsControllerGetPublicUserListsResponses = {
+    /**
+     * Public list summaries for the user
+     */
+    200: Array<MovieListSummaryDto>;
+};
+
+export type ListsControllerGetPublicUserListsResponse = ListsControllerGetPublicUserListsResponses[keyof ListsControllerGetPublicUserListsResponses];
 
 export type ListsControllerDeleteListData = {
     body?: never;
@@ -1816,26 +1859,6 @@ export type ListsControllerGetListsForMovieResponses = {
     200: unknown;
 };
 
-export type UsersControllerGetMySettingsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/settings';
-};
-
-export type UsersControllerGetMySettingsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerGetMySettingsResponses = {
-    200: UserSettingsDto;
-};
-
-export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
-
 export type UsersControllerGetPublicProfileData = {
     body?: never;
     path: {
@@ -1857,6 +1880,26 @@ export type UsersControllerGetPublicProfileResponses = {
 };
 
 export type UsersControllerGetPublicProfileResponse = UsersControllerGetPublicProfileResponses[keyof UsersControllerGetPublicProfileResponses];
+
+export type UsersControllerGetMySettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings';
+};
+
+export type UsersControllerGetMySettingsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerGetMySettingsResponses = {
+    200: UserSettingsDto;
+};
+
+export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
 
 export type UsersControllerUpdateMySettingsData = {
     body: UpdateUserSettingsDto;

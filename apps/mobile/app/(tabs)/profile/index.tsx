@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import {
 	BookOpen,
+	Calendar,
 	List,
 	LogIn,
 	LogOut,
@@ -202,6 +203,42 @@ export default function ProfileScreen() {
 							]}
 						>
 							Items added to your shelf
+						</Text>
+					</View>
+					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
+						→
+					</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					style={[
+						styles.linkCard,
+						{
+							backgroundColor: colors.surfaceContainer,
+							borderColor: colors.outline,
+						},
+					]}
+					onPress={() => router.push("/(tabs)/profile/calendar")}
+				>
+					<View
+						style={[
+							styles.linkIconContainer,
+							{ backgroundColor: `${colors.primary}20` },
+						]}
+					>
+						<Calendar size={24} color={colors.primary} />
+					</View>
+					<View style={styles.linkContent}>
+						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+							Calendar
+						</Text>
+						<Text
+							style={[
+								styles.linkDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							Upcoming releases from your queue and watchlist
 						</Text>
 					</View>
 					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
