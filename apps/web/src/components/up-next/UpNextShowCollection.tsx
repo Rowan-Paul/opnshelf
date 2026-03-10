@@ -44,6 +44,7 @@ export function UpNextShowCollection({
 }: UpNextShowCollectionProps) {
 	const queryClient = useQueryClient();
 	const markMutation = useMutation({
+		mutationKey: ["shows", "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

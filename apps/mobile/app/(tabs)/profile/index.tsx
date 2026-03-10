@@ -181,42 +181,6 @@ export default function ProfileScreen() {
 							borderColor: colors.outline,
 						},
 					]}
-					onPress={() => router.push("/(tabs)/profile/up-next")}
-				>
-					<View
-						style={[
-							styles.linkIconContainer,
-							{ backgroundColor: `${colors.primary}20` },
-						]}
-					>
-						<Tv size={24} color={colors.primary} />
-					</View>
-					<View style={styles.linkContent}>
-						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
-							Up Next
-						</Text>
-						<Text
-							style={[
-								styles.linkDescription,
-								{ color: colors.onSurfaceVariant },
-							]}
-						>
-							The next episodes in your queue
-						</Text>
-					</View>
-					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
-						→
-					</Text>
-				</TouchableOpacity>
-
-				<TouchableOpacity
-					style={[
-						styles.linkCard,
-						{
-							backgroundColor: colors.surfaceContainer,
-							borderColor: colors.outline,
-						},
-					]}
 					onPress={() => router.push("/(tabs)/profile/shelf")}
 				>
 					<View
@@ -238,6 +202,42 @@ export default function ProfileScreen() {
 							]}
 						>
 							Items added to your shelf
+						</Text>
+					</View>
+					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
+						→
+					</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					style={[
+						styles.linkCard,
+						{
+							backgroundColor: colors.surfaceContainer,
+							borderColor: colors.outline,
+						},
+					]}
+					onPress={() => router.push("/(tabs)/profile/up-next")}
+				>
+					<View
+						style={[
+							styles.linkIconContainer,
+							{ backgroundColor: `${colors.primary}20` },
+						]}
+					>
+						<Tv size={24} color={colors.primary} />
+					</View>
+					<View style={styles.linkContent}>
+						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+							Up Next
+						</Text>
+						<Text
+							style={[
+								styles.linkDescription,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							The next episodes in your queue
 						</Text>
 					</View>
 					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>

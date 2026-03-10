@@ -82,6 +82,7 @@ function OnboardingPage() {
 	});
 
 	const completeOnboardingMutation = useMutation({
+		mutationKey: ["users", "onboarding", "complete"],
 		...usersControllerCompleteOnboardingMutation(),
 		onError: () => {
 			toast.error("Could not complete onboarding");
@@ -89,10 +90,12 @@ function OnboardingPage() {
 	});
 
 	const fetchTraktMutation = useMutation({
+		mutationKey: ["users", "trakt", "history", "fetch"],
 		...usersControllerFetchMyTraktPublicHistoryMutation(),
 	});
 
 	const updateProfileMutation = useMutation({
+		mutationKey: ["users", "profile", "update"],
 		...usersControllerUpdateMyProfileMutation(),
 		onError: () => {
 			toast.error("Could not save profile details");
@@ -100,6 +103,7 @@ function OnboardingPage() {
 	});
 
 	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onError: () => {
 			toast.error("Could not save time settings");
@@ -107,6 +111,7 @@ function OnboardingPage() {
 	});
 
 	const importHistoryMutation = useMutation({
+		mutationKey: ["users", "history", "import"],
 		...usersControllerImportMyHistoryMutation(),
 	});
 

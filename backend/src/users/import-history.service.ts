@@ -119,9 +119,8 @@ export class ImportHistoryService {
 			url.searchParams.set("page", String(page));
 			url.searchParams.set("limit", String(pageSize));
 
-			const { data: payload, headers } = await this.fetchTraktJsonWithHeaders<unknown>(
-				url,
-			);
+			const { data: payload, headers } =
+				await this.fetchTraktJsonWithHeaders<unknown>(url);
 			if (!Array.isArray(payload)) {
 				throw new BadRequestException("Unexpected Trakt response format");
 			}
@@ -583,11 +582,15 @@ export class ImportHistoryService {
 		return trimmed ? trimmed : undefined;
 	}
 
-	private resolveTraktAvatarUrl(avatar: {
-		full?: unknown;
-		medium?: unknown;
-		thumb?: unknown;
-	} | undefined): string | undefined {
+	private resolveTraktAvatarUrl(
+		avatar:
+			| {
+					full?: unknown;
+					medium?: unknown;
+					thumb?: unknown;
+			  }
+			| undefined,
+	): string | undefined {
 		const candidate =
 			this.getOptionalStringValue(avatar?.full) ??
 			this.getOptionalStringValue(avatar?.medium) ??

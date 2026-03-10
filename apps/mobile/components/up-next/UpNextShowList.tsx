@@ -66,6 +66,7 @@ export function UpNextShowList({
 	const visibleItems = isFull ? items : items.slice(0, DASHBOARD_LIMIT);
 
 	const markMutation = useMutation({
+		mutationKey: ["shows", "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

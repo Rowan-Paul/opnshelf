@@ -79,6 +79,7 @@ export default function OnboardingScreen() {
 	});
 
 	const completeOnboardingMutation = useMutation({
+		mutationKey: ["users", "onboarding", "complete"],
 		...usersControllerCompleteOnboardingMutation(),
 		onError: () => {
 			showToast("Could not complete onboarding", "error");
@@ -86,10 +87,12 @@ export default function OnboardingScreen() {
 	});
 
 	const fetchTraktMutation = useMutation({
+		mutationKey: ["users", "trakt", "history", "fetch"],
 		...usersControllerFetchMyTraktPublicHistoryMutation(),
 	});
 
 	const updateProfileMutation = useMutation({
+		mutationKey: ["users", "profile", "update"],
 		...usersControllerUpdateMyProfileMutation(),
 		onError: () => {
 			showToast("Could not save profile details", "error");
@@ -97,6 +100,7 @@ export default function OnboardingScreen() {
 	});
 
 	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onError: () => {
 			showToast("Could not save time settings", "error");
@@ -104,6 +108,7 @@ export default function OnboardingScreen() {
 	});
 
 	const importHistoryMutation = useMutation({
+		mutationKey: ["users", "history", "import"],
 		...usersControllerImportMyHistoryMutation(),
 	});
 
