@@ -1,6 +1,7 @@
 import { Agent } from "@atproto/api";
 import {
 	NodeOAuthClient,
+	type OAuthClientMetadataInput,
 	type NodeSavedSession,
 	type NodeSavedState,
 } from "@atproto/oauth-client-node";
@@ -25,19 +26,6 @@ interface OAuthClientConfig {
 	metadataClientId: string;
 	applicationType: "native" | "web";
 	allowHttp: boolean;
-}
-
-interface OAuthClientMetadata {
-	client_id: string;
-	client_name: string;
-	client_uri: string;
-	redirect_uris: string[];
-	scope: string;
-	grant_types: string[];
-	response_types: string[];
-	application_type: "native" | "web";
-	token_endpoint_auth_method: "none";
-	dpop_bound_access_tokens: boolean;
 }
 
 @Injectable()
@@ -432,7 +420,7 @@ export class AuthService implements OnModuleInit {
 	 * Get OAuth client metadata for the well-known endpoint (production use)
 	 * For localhost development, the Authorization Server generates virtual metadata
 	 */
-	getClientMetadata(): OAuthClientMetadata {
+	getClientMetadata(): OAuthClientMetadataInput {
 		const oauthClientConfig = this.getOAuthClientConfig();
 		return this.buildClientMetadata(
 			oauthClientConfig,
@@ -544,7 +532,7 @@ export class AuthService implements OnModuleInit {
 	private buildClientMetadata(
 		oauthClientConfig: OAuthClientConfig,
 		clientId: string,
-	): OAuthClientMetadata {
+	): OAuthClientMetadataInput {
 		return {
 			client_id: clientId,
 			client_name: "OpnShelf",

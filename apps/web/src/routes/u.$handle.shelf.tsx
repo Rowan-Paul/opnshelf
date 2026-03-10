@@ -12,8 +12,8 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { useUserSettings } from "@/hooks/useUserSettings";
 import { usePublicProfile } from "@/hooks/usePublicProfile";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
 import { getDayKeyInTimezone, getShelfDayLabel } from "@/lib/utils";
 
@@ -37,7 +37,9 @@ function PublicShelfPage() {
 	const { timezone } = useUserSettings();
 
 	const userDid = profile?.did ?? "";
-	const displayName = String(profile?.displayName || profile?.handle || "This user");
+	const displayName = String(
+		profile?.displayName || profile?.handle || "This user",
+	);
 	const shelfQuery = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },

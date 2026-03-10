@@ -136,9 +136,9 @@ describe("UsersService", () => {
 	it("throws when public profile handle is missing", async () => {
 		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
 
-		await expect(service.getPublicProfileByHandle("nobody.bsky.social")).rejects.toThrow(
-			NotFoundException,
-		);
+		await expect(
+			service.getPublicProfileByHandle("nobody.bsky.social"),
+		).rejects.toThrow(NotFoundException);
 	});
 
 	it("normalizes Trakt movie/episode items and skips unsupported action", async () => {

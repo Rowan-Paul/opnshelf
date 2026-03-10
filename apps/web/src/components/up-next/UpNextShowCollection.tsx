@@ -223,7 +223,8 @@ export function UpNextShowCollection({
 																	body: {
 																		showId: item.showId,
 																		seasonNumber: item.nextEpisode.seasonNumber,
-																		episodeNumber: item.nextEpisode.episodeNumber,
+																		episodeNumber:
+																			item.nextEpisode.episodeNumber,
 																	},
 																});
 															}}

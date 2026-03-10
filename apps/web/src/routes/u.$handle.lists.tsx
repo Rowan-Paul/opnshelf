@@ -28,7 +28,9 @@ function PublicListsPage() {
 	const { seedColor } = useTheme();
 
 	const userDid = profile?.did ?? "";
-	const displayName = String(profile?.displayName || profile?.handle || "This user");
+	const displayName = String(
+		profile?.displayName || profile?.handle || "This user",
+	);
 	const { data: lists, isLoading } = useQuery({
 		...listsControllerGetPublicUserListsOptions({
 			path: { userDid },
@@ -64,9 +66,7 @@ function PublicListsPage() {
 						className="mx-auto mb-4 h-16 w-16"
 						style={{ color: "var(--md-sys-color-outline)" }}
 					/>
-					<M3CardTitle className="md-headline-small">
-						No lists yet
-					</M3CardTitle>
+					<M3CardTitle className="md-headline-small">No lists yet</M3CardTitle>
 					<M3CardDescription>
 						{displayName} hasn&apos;t published any list summaries yet.
 					</M3CardDescription>

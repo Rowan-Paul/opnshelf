@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, Film, List, Loader2, Tv } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -10,7 +11,7 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { UnauthenticatedState } from "@/components/UnauthenticatedState";
+import { env } from "@/env";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import {
 	createTitleSlug,
@@ -18,7 +19,6 @@ import {
 	getDayKeyInTimezone,
 	getTmdbPosterUrl,
 } from "@/lib/utils";
-import { env } from "@/env";
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -80,7 +80,9 @@ export const Route = createFileRoute("/profile/calendar")({
 
 function ProfileCalendarPage() {
 	const { user, timezone } = useUserSettings();
-	const [sourceFilter, setSourceFilter] = useState<ReleaseSource | "all">("all");
+	const [sourceFilter, setSourceFilter] = useState<ReleaseSource | "all">(
+		"all",
+	);
 	const [selectedMonthKey, setSelectedMonthKey] = useState<string | null>(null);
 	const userDid = user?.did ?? "";
 
@@ -150,7 +152,9 @@ function ProfileCalendarPage() {
 			return [];
 		}
 
-		return filteredEvents.filter((event) => event.monthKey === selectedMonthKey);
+		return filteredEvents.filter(
+			(event) => event.monthKey === selectedMonthKey,
+		);
 	}, [filteredEvents, selectedMonthKey]);
 
 	const daySections = useMemo(() => {
@@ -229,7 +233,10 @@ function ProfileCalendarPage() {
 					</M3CardDescription>
 				</M3CardHeader>
 				<M3CardContent>
-					<M3Button variant="filled-tonal" onClick={() => releaseCalendarQuery.refetch()}>
+					<M3Button
+						variant="filled-tonal"
+						onClick={() => releaseCalendarQuery.refetch()}
+					>
 						Try again
 					</M3Button>
 				</M3CardContent>
@@ -343,8 +350,7 @@ function ProfileCalendarPage() {
 									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 								>
 									{monthOptions.length} month
-									{monthOptions.length !== 1 ? "s" : ""} with upcoming
-									releases
+									{monthOptions.length !== 1 ? "s" : ""} with upcoming releases
 								</p>
 							</div>
 
@@ -363,8 +369,7 @@ function ProfileCalendarPage() {
 															backgroundColor:
 																"var(--md-sys-color-primary-container)",
 															borderColor: "var(--md-sys-color-primary)",
-															color:
-																"var(--md-sys-color-on-primary-container)",
+															color: "var(--md-sys-color-on-primary-container)",
 														}
 													: {
 															backgroundColor:
@@ -478,7 +483,11 @@ function ReleaseEventCard({ event }: { event: ReleaseCalendarEvent }) {
 			: "color-mix(in srgb, var(--md-sys-color-tertiary) 16%, transparent)";
 
 	return (
-		<Link to={event.to as never} params={event.params as never} className="block">
+		<Link
+			to={event.to as never}
+			params={event.params as never}
+			className="block"
+		>
 			<div
 				className="group flex h-full gap-3 rounded-[24px] border p-3 transition-transform hover:-translate-y-0.5"
 				style={{

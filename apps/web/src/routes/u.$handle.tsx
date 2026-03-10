@@ -1,10 +1,10 @@
 import { authControllerMeOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import {
-	redirect,
 	createFileRoute,
 	Link,
 	Outlet,
+	redirect,
 	useMatchRoute,
 } from "@tanstack/react-router";
 import { BookOpen, List, Settings, Tv } from "lucide-react";

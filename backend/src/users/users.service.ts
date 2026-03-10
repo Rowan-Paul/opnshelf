@@ -118,7 +118,9 @@ export class UsersService {
 		};
 	}
 
-	async getPublicProfileByHandle(handle: string): Promise<PublicUserProfileDto> {
+	async getPublicProfileByHandle(
+		handle: string,
+	): Promise<PublicUserProfileDto> {
 		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
 		const user = await this.prisma.user.findUnique({
 			where: { handle: normalizedHandle },

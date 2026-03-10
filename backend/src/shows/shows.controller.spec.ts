@@ -222,7 +222,9 @@ describe("ShowsController", () => {
 			],
 			total: 1,
 		};
-		mockShowsService.getUserReleaseCalendar.mockResolvedValue(mockReleaseCalendar);
+		mockShowsService.getUserReleaseCalendar.mockResolvedValue(
+			mockReleaseCalendar,
+		);
 
 		const result = await controller.getUserReleaseCalendar("did:plc:abc123");
 

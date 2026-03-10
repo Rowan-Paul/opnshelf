@@ -401,7 +401,6 @@ export class ShowsService {
 					showId: tracked.showId,
 					show: tracked.show,
 				});
-				continue;
 			}
 		}
 
@@ -411,7 +410,10 @@ export class ShowsService {
 					const showDetails = await this.showsTmdb.getShowDetails(showId);
 					const nextEpisode = showDetails.next_episode_to_air;
 
-					if (!nextEpisode?.air_date || !this.isUpcomingDate(nextEpisode.air_date)) {
+					if (
+						!nextEpisode?.air_date ||
+						!this.isUpcomingDate(nextEpisode.air_date)
+					) {
 						return null;
 					}
 
@@ -478,8 +480,9 @@ export class ShowsService {
 			},
 		});
 
-		const watchlistItems: ReleaseCalendarItem[] = (watchlist?.items ?? []).flatMap(
-			(item): ReleaseCalendarItem[] => {
+		const watchlistItems: ReleaseCalendarItem[] = (
+			watchlist?.items ?? []
+		).flatMap((item): ReleaseCalendarItem[] => {
 			const watchlistItem = item as WatchlistReleaseItem;
 
 			if (watchlistItem.mediaType === "movie") {
@@ -533,8 +536,7 @@ export class ShowsService {
 						| undefined,
 				},
 			];
-			},
-		);
+		});
 
 		const items: ReleaseCalendarItem[] = [...watchingItems, ...watchlistItems]
 			.filter((item): item is ReleaseCalendarItem => item !== null)
