@@ -55,6 +55,9 @@ describe("ShowsService", () => {
 			upsert: jest.fn(),
 			update: jest.fn(),
 		},
+		movieList: {
+			findFirst: jest.fn(),
+		},
 	};
 
 	const mockConfigService = {
@@ -313,6 +316,157 @@ describe("ShowsService", () => {
 				totalPages: 1,
 				hasPreviousPage: false,
 				hasNextPage: false,
+			});
+		});
+	});
+
+	describe("getUserReleaseCalendar", () => {
+		it("should return upcoming tracked-show airings and future watchlist releases", async () => {
+			const showsTmdb = (
+				service as unknown as {
+					showsTmdb: {
+						getShowDetails: (showId: string) => Promise<unknown>;
+					};
+				}
+			).showsTmdb;
+			const getShowDetailsSpy = jest.spyOn(showsTmdb, "getShowDetails");
+
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{
+					id: "tracked-1",
+					showId: "show-1",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					watchedDate: new Date("2024-01-10T00:00:00.000Z"),
+					createdAt: new Date("2024-01-10T00:00:00.000Z"),
+					show: {
+						showId: "show-1",
+						title: "Tracked Show",
+						posterPath: "/tracked-show.jpg",
+						backdropPath: "/tracked-show-backdrop.jpg",
+						firstAirYear: 2024,
+						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
+						overview: "Tracked show overview",
+						colors: { primary: "#111111" },
+					},
+				},
+			]);
+
+			getShowDetailsSpy.mockResolvedValue({
+				id: 1,
+				name: "Tracked Show",
+				popularity: 1,
+				vote_average: 1,
+				vote_count: 1,
+				next_episode_to_air: {
+					id: 101,
+					name: "Broadcast Episode",
+					season_number: 2,
+					episode_number: 5,
+					air_date: "2099-01-12",
+					overview: "Broadcast overview",
+				},
+			});
+
+			mockPrismaService.show.findUnique.mockResolvedValue({
+				posterPath: "/tracked-show.jpg",
+				colors: { primary: "#111111" },
+			});
+
+			mockPrismaService.movieList.findFirst.mockResolvedValue({
+				items: [
+					{
+						mediaType: "movie",
+						mediaId: "movie-1",
+						movie: {
+							movieId: "movie-1",
+							title: "Future Movie",
+							posterPath: "/future-movie.jpg",
+							backdropPath: "/future-movie-backdrop.jpg",
+							releaseDate: new Date("2099-01-10T00:00:00.000Z"),
+							overview: "Movie overview",
+							colors: { primary: "#222222" },
+						},
+						show: null,
+					},
+					{
+						mediaType: "show",
+						mediaId: "show-2",
+						movie: null,
+						show: {
+							showId: "show-2",
+							title: "Future Show",
+							posterPath: "/future-show.jpg",
+							backdropPath: "/future-show-backdrop.jpg",
+							firstAirDate: new Date("2099-01-11T00:00:00.000Z"),
+							overview: "Show overview",
+							colors: { primary: "#333333" },
+						},
+					},
+					{
+						mediaType: "show",
+						mediaId: "show-3:season:1",
+						movie: null,
+						show: {
+							showId: "show-3",
+							title: "Scoped Show",
+							posterPath: "/scoped-show.jpg",
+							backdropPath: "/scoped-show-backdrop.jpg",
+							firstAirDate: new Date("2099-01-13T00:00:00.000Z"),
+							overview: "Scoped show overview",
+							colors: { primary: "#444444" },
+						},
+					},
+				],
+			});
+
+			const result = await service.getUserReleaseCalendar("did:plc:abc123");
+
+			expect(result).toEqual({
+				items: [
+					{
+						source: "watchlist",
+						mediaType: "movie",
+						releaseKind: "movie",
+						releaseDate: "2099-01-10T00:00:00.000Z",
+						title: "Future Movie",
+						subtitle: "Watchlist movie release",
+						overview: "Movie overview",
+						posterPath: "/future-movie.jpg",
+						backdropPath: "/future-movie-backdrop.jpg",
+						movieId: "movie-1",
+						colors: { primary: "#222222" },
+					},
+					{
+						source: "watchlist",
+						mediaType: "show",
+						releaseKind: "show",
+						releaseDate: "2099-01-11T00:00:00.000Z",
+						title: "Future Show",
+						subtitle: "Watchlist series release",
+						overview: "Show overview",
+						posterPath: "/future-show.jpg",
+						backdropPath: "/future-show-backdrop.jpg",
+						showId: "show-2",
+						colors: { primary: "#333333" },
+					},
+					{
+						source: "watching",
+						mediaType: "show",
+						releaseKind: "episode",
+						releaseDate: "2099-01-12",
+						title: "Tracked Show",
+						subtitle: "S2 E5 · Broadcast Episode",
+						overview: "Broadcast overview",
+						posterPath: "/tracked-show.jpg",
+						backdropPath: "/tracked-show-backdrop.jpg",
+						showId: "show-1",
+						seasonNumber: 2,
+						episodeNumber: 5,
+						colors: { primary: "#111111" },
+					},
+				],
+				total: 3,
 			});
 		});
 	});

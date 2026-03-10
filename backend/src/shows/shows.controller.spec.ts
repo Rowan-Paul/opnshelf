@@ -25,6 +25,7 @@ describe("ShowsController", () => {
 		getEpisodeDetails: jest.fn(),
 		getUserShows: jest.fn(),
 		getUserUpNext: jest.fn(),
+		getUserReleaseCalendar: jest.fn(),
 		ensureShowHasColors: jest.fn(),
 		markEpisodeWatched: jest.fn(),
 		indexTrackedEpisode: jest.fn(),
@@ -205,6 +206,29 @@ describe("ShowsController", () => {
 			"did:plc:abc123",
 			2,
 			8,
+		);
+	});
+
+	it("should return release calendar items for user", async () => {
+		const mockReleaseCalendar = {
+			items: [
+				{
+					source: "watching",
+					mediaType: "show",
+					releaseKind: "episode",
+					releaseDate: "2099-01-12",
+					title: "Tracked Show",
+				},
+			],
+			total: 1,
+		};
+		mockShowsService.getUserReleaseCalendar.mockResolvedValue(mockReleaseCalendar);
+
+		const result = await controller.getUserReleaseCalendar("did:plc:abc123");
+
+		expect(result).toEqual(mockReleaseCalendar);
+		expect(mockShowsService.getUserReleaseCalendar).toHaveBeenCalledWith(
+			"did:plc:abc123",
 		);
 	});
 });
