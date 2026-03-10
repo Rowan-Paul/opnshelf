@@ -6,7 +6,7 @@ import {
 	Outlet,
 	useMatchRoute,
 } from "@tanstack/react-router";
-import { BookOpen, List, Settings, Tv } from "lucide-react";
+import { BookOpen, Calendar, List, Settings, Tv } from "lucide-react";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
@@ -93,6 +93,7 @@ function ProfileLayout() {
 				>
 					<NavLink to="/profile/shelf" icon={BookOpen} label="My Shelf" />
 					<NavLink to="/profile/up-next" icon={Tv} label="Up Next" />
+					<NavLink to="/profile/calendar" icon={Calendar} label="Calendar" />
 					<NavLink to="/profile/lists" icon={List} label="My Lists" />
 					<NavLink to="/profile/settings" icon={Settings} label="Settings" />
 				</div>

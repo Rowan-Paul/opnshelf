@@ -1,6 +1,7 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
+import { parseScopedShowMediaId } from "../lists/list-media-id.util";
 import {
 	$nsid as COLLECTION,
 	main as episodeSchema,
@@ -38,6 +39,53 @@ type TrackedEpisodeWithShow = {
 		overview: string | null;
 		colors: unknown;
 	};
+};
+
+type WatchlistReleaseItem = {
+	mediaType: "movie" | "show";
+	mediaId: string;
+	movie: {
+		movieId: string;
+		title: string;
+		posterPath: string | null;
+		backdropPath: string | null;
+		releaseDate: Date | null;
+		overview: string | null;
+		colors: unknown;
+	} | null;
+	show: {
+		showId: string;
+		title: string;
+		posterPath: string | null;
+		backdropPath: string | null;
+		firstAirDate: Date | null;
+		overview: string | null;
+		colors: unknown;
+	} | null;
+};
+
+type ReleaseCalendarColors = {
+	primary?: string;
+	secondary?: string;
+	accent?: string;
+	muted?: string;
+};
+
+type ReleaseCalendarItem = {
+	source: "watching" | "watchlist";
+	mediaType: "movie" | "show";
+	releaseKind: "movie" | "show" | "episode";
+	releaseDate: string;
+	title: string;
+	subtitle?: string;
+	overview?: string;
+	posterPath?: string;
+	backdropPath?: string;
+	showId?: string;
+	movieId?: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
+	colors?: ReleaseCalendarColors;
 };
 
 @Injectable()
@@ -328,6 +376,182 @@ export class ShowsService {
 			totalPages,
 			hasPreviousPage: totalPages > 0 && currentPage > 1,
 			hasNextPage: totalPages > 0 && currentPage < totalPages,
+		};
+	}
+
+	async getUserReleaseCalendar(userDid: string) {
+		const trackedEpisodes = (await this.prisma.trackedEpisode.findMany({
+			where: { userDid },
+			include: { show: true },
+			orderBy: [{ watchedDate: "desc" }, { createdAt: "desc" }],
+		})) as TrackedEpisodeWithShow[];
+
+		const trackedShows = new Map<
+			string,
+			{
+				showId: string;
+				show: TrackedEpisodeWithShow["show"];
+			}
+		>();
+
+		for (const tracked of trackedEpisodes) {
+			const existing = trackedShows.get(tracked.showId);
+			if (!existing) {
+				trackedShows.set(tracked.showId, {
+					showId: tracked.showId,
+					show: tracked.show,
+				});
+				continue;
+			}
+		}
+
+		const watchingItems: Array<ReleaseCalendarItem | null> = await Promise.all(
+			Array.from(trackedShows.values()).map(async ({ showId, show }) => {
+				try {
+					const showDetails = await this.showsTmdb.getShowDetails(showId);
+					const nextEpisode = showDetails.next_episode_to_air;
+
+					if (!nextEpisode?.air_date || !this.isUpcomingDate(nextEpisode.air_date)) {
+						return null;
+					}
+
+					const colors = await this.ensureShowHasColors(showId);
+
+					return {
+						source: "watching" as const,
+						mediaType: "show" as const,
+						releaseKind: "episode" as const,
+						releaseDate: nextEpisode.air_date,
+						title: show.title,
+						subtitle: `S${nextEpisode.season_number} E${nextEpisode.episode_number} · ${nextEpisode.name || "Next airing episode"}`,
+						overview: nextEpisode.overview ?? show.overview ?? undefined,
+						posterPath: show.posterPath ?? undefined,
+						backdropPath: show.backdropPath ?? undefined,
+						showId,
+						seasonNumber: nextEpisode.season_number,
+						episodeNumber: nextEpisode.episode_number,
+						colors: (colors ?? show.colors ?? undefined) as
+							| ReleaseCalendarColors
+							| undefined,
+					};
+				} catch (error) {
+					this.logger.warn(
+						`Failed to compute release calendar entry for show ${showId}: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					return null;
+				}
+			}),
+		);
+
+		const watchlist = await this.prisma.movieList.findFirst({
+			where: { userDid, slug: "watchlist" },
+			select: {
+				items: {
+					orderBy: { createdAt: "desc" },
+					select: {
+						mediaType: true,
+						mediaId: true,
+						movie: {
+							select: {
+								movieId: true,
+								title: true,
+								posterPath: true,
+								backdropPath: true,
+								releaseDate: true,
+								overview: true,
+								colors: true,
+							},
+						},
+						show: {
+							select: {
+								showId: true,
+								title: true,
+								posterPath: true,
+								backdropPath: true,
+								firstAirDate: true,
+								overview: true,
+								colors: true,
+							},
+						},
+					},
+				},
+			},
+		});
+
+		const watchlistItems: ReleaseCalendarItem[] = (watchlist?.items ?? []).flatMap(
+			(item): ReleaseCalendarItem[] => {
+			const watchlistItem = item as WatchlistReleaseItem;
+
+			if (watchlistItem.mediaType === "movie") {
+				const releaseDate = watchlistItem.movie?.releaseDate;
+				if (!releaseDate || !this.isUpcomingDate(releaseDate)) {
+					return [];
+				}
+
+				return [
+					{
+						source: "watchlist" as const,
+						mediaType: "movie" as const,
+						releaseKind: "movie" as const,
+						releaseDate: releaseDate.toISOString(),
+						title: watchlistItem.movie?.title ?? "Untitled",
+						subtitle: "Watchlist movie release",
+						overview: watchlistItem.movie?.overview ?? undefined,
+						posterPath: watchlistItem.movie?.posterPath ?? undefined,
+						backdropPath: watchlistItem.movie?.backdropPath ?? undefined,
+						movieId: watchlistItem.movie?.movieId ?? watchlistItem.mediaId,
+						colors: watchlistItem.movie?.colors as
+							| ReleaseCalendarColors
+							| undefined,
+					},
+				];
+			}
+
+			if (parseScopedShowMediaId(watchlistItem.mediaId)) {
+				return [];
+			}
+
+			const releaseDate = watchlistItem.show?.firstAirDate;
+			if (!releaseDate || !this.isUpcomingDate(releaseDate)) {
+				return [];
+			}
+
+			return [
+				{
+					source: "watchlist" as const,
+					mediaType: "show" as const,
+					releaseKind: "show" as const,
+					releaseDate: releaseDate.toISOString(),
+					title: watchlistItem.show?.title ?? "Untitled",
+					subtitle: "Watchlist series release",
+					overview: watchlistItem.show?.overview ?? undefined,
+					posterPath: watchlistItem.show?.posterPath ?? undefined,
+					backdropPath: watchlistItem.show?.backdropPath ?? undefined,
+					showId: watchlistItem.show?.showId ?? watchlistItem.mediaId,
+					colors: watchlistItem.show?.colors as
+						| ReleaseCalendarColors
+						| undefined,
+				},
+			];
+			},
+		);
+
+		const items: ReleaseCalendarItem[] = [...watchingItems, ...watchlistItems]
+			.filter((item): item is ReleaseCalendarItem => item !== null)
+			.sort((left, right) => {
+				const releaseDateCompare =
+					this.parseReleaseDate(left.releaseDate).getTime() -
+					this.parseReleaseDate(right.releaseDate).getTime();
+				if (releaseDateCompare !== 0) {
+					return releaseDateCompare;
+				}
+
+				return left.title.localeCompare(right.title);
+			});
+
+		return {
+			items,
+			total: items.length,
 		};
 	}
 
@@ -812,5 +1036,24 @@ export class ShowsService {
 		}
 
 		return { episodes: trackedEpisodes, count: allResults.length };
+	}
+
+	private parseReleaseDate(value: string | Date) {
+		if (value instanceof Date) {
+			return value;
+		}
+
+		if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+			return new Date(`${value}T12:00:00Z`);
+		}
+
+		return new Date(value);
+	}
+
+	private isUpcomingDate(value: string | Date) {
+		const releaseDate = this.parseReleaseDate(value);
+		const today = new Date();
+		today.setUTCHours(0, 0, 0, 0);
+		return releaseDate.getTime() >= today.getTime();
 	}
 }

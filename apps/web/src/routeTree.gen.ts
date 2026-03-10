@@ -20,6 +20,7 @@ import { Route as ProfileUpNextRouteImport } from './routes/profile.up-next'
 import { Route as ProfileShelfRouteImport } from './routes/profile.shelf'
 import { Route as ProfileSettingsRouteImport } from './routes/profile.settings'
 import { Route as ProfileListsRouteImport } from './routes/profile.lists'
+import { Route as ProfileCalendarRouteImport } from './routes/profile.calendar'
 import { Route as ListsSlugRouteImport } from './routes/lists.$slug'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as ShowsShowIdTitleRouteImport } from './routes/shows.$showId.$title'
@@ -82,6 +83,11 @@ const ProfileListsRoute = ProfileListsRouteImport.update({
   path: '/lists',
   getParentRoute: () => ProfileRoute,
 } as any)
+const ProfileCalendarRoute = ProfileCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ListsSlugRoute = ListsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/lists/$slug': typeof ListsSlugRoute
+  '/profile/calendar': typeof ProfileCalendarRoute
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/lists/$slug': typeof ListsSlugRoute
+  '/profile/calendar': typeof ProfileCalendarRoute
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/lists/$slug': typeof ListsSlugRoute
+  '/profile/calendar': typeof ProfileCalendarRoute
   '/profile/lists': typeof ProfileListsRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/profile/shelf': typeof ProfileShelfRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/auth/complete'
     | '/lists/$slug'
+    | '/profile/calendar'
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/auth/complete'
     | '/lists/$slug'
+    | '/profile/calendar'
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/auth/complete'
     | '/lists/$slug'
+    | '/profile/calendar'
     | '/profile/lists'
     | '/profile/settings'
     | '/profile/shelf'
@@ -325,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileListsRouteImport
       parentRoute: typeof ProfileRoute
     }
+    '/profile/calendar': {
+      id: '/profile/calendar'
+      path: '/calendar'
+      fullPath: '/profile/calendar'
+      preLoaderRoute: typeof ProfileCalendarRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/lists/$slug': {
       id: '/lists/$slug'
       path: '/$slug'
@@ -381,6 +400,7 @@ const ListsRouteChildren: ListsRouteChildren = {
 const ListsRouteWithChildren = ListsRoute._addFileChildren(ListsRouteChildren)
 
 interface ProfileRouteChildren {
+  ProfileCalendarRoute: typeof ProfileCalendarRoute
   ProfileListsRoute: typeof ProfileListsRoute
   ProfileSettingsRoute: typeof ProfileSettingsRoute
   ProfileShelfRoute: typeof ProfileShelfRoute
@@ -388,6 +408,7 @@ interface ProfileRouteChildren {
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileCalendarRoute: ProfileCalendarRoute,
   ProfileListsRoute: ProfileListsRoute,
   ProfileSettingsRoute: ProfileSettingsRoute,
   ProfileShelfRoute: ProfileShelfRoute,

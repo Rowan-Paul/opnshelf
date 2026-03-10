@@ -33,6 +33,7 @@ import {
 	PaginatedEpisodesResponseDto,
 	PaginatedUpNextQueryDto,
 	PaginatedUpNextResponseDto,
+	ReleaseCalendarResponseDto,
 	SearchShowsResultsDto,
 	TMDBEpisodeDto,
 	TMDBSeasonDetailDto,
@@ -151,6 +152,16 @@ export class ShowsController {
 		@Query() query: PaginatedUpNextQueryDto,
 	) {
 		return this.showsService.getUserUpNext(userDid, query.page, query.pageSize);
+	}
+
+	@Get("user/:userDid/release-calendar")
+	@ApiOperation({
+		summary:
+			"Get upcoming releases for watched shows and future-dated watchlist items",
+	})
+	@ApiResponse({ status: 200, type: ReleaseCalendarResponseDto })
+	async getUserReleaseCalendar(@Param("userDid") userDid: string) {
+		return this.showsService.getUserReleaseCalendar(userDid);
 	}
 
 	@Get("user/:userDid/episodes")

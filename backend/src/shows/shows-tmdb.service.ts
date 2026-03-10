@@ -14,6 +14,7 @@ export interface TMDBShow {
 	popularity: number;
 	vote_average: number;
 	vote_count: number;
+	next_episode_to_air?: TMDBEpisode | null;
 }
 
 export interface TMDBSearchResponse {

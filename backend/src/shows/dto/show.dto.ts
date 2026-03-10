@@ -486,6 +486,58 @@ export class PaginatedUpNextResponseDto {
 	hasNextPage: boolean;
 }
 
+export class ReleaseCalendarItemDto {
+	@ApiProperty({ enum: ["watching", "watchlist"] })
+	source: "watching" | "watchlist";
+
+	@ApiProperty({ enum: ["movie", "show"] })
+	mediaType: "movie" | "show";
+
+	@ApiProperty({ enum: ["movie", "show", "episode"] })
+	releaseKind: "movie" | "show" | "episode";
+
+	@ApiProperty({ description: "Upcoming release date" })
+	releaseDate: string;
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	subtitle?: string;
+
+	@ApiPropertyOptional()
+	overview?: string;
+
+	@ApiPropertyOptional()
+	posterPath?: string;
+
+	@ApiPropertyOptional()
+	backdropPath?: string;
+
+	@ApiPropertyOptional()
+	showId?: string;
+
+	@ApiPropertyOptional()
+	movieId?: string;
+
+	@ApiPropertyOptional()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional()
+	episodeNumber?: number;
+
+	@ApiPropertyOptional({ type: MovieColorsDto })
+	colors?: MovieColorsDto;
+}
+
+export class ReleaseCalendarResponseDto {
+	@ApiProperty({ type: [ReleaseCalendarItemDto] })
+	items: ReleaseCalendarItemDto[];
+
+	@ApiProperty({ description: "Total count of upcoming release items" })
+	total: number;
+}
+
 export class MarkSeasonWatchedDto {
 	@ApiProperty({ description: "TMDB show ID" })
 	@IsString()
