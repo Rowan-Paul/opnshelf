@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Calendar, Film, List, Loader2, Tv } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -66,6 +66,11 @@ type MonthOption = {
 	count: number;
 };
 
+type ReleaseCalendarLink = {
+	to: string;
+	params: Record<string, string>;
+};
+
 export const Route = createFileRoute("/profile/calendar")({
 	head: () => ({
 		meta: [{ title: "Release Calendar | OpnShelf" }],
@@ -115,6 +120,10 @@ function ProfileCalendarPage() {
 
 		return releaseEvents.filter((event) => event.source === sourceFilter);
 	}, [releaseEvents, sourceFilter]);
+
+	const isInitialLoading = releaseCalendarQuery.isLoading;
+	const isFetchingMore =
+		releaseCalendarQuery.isFetching && !releaseCalendarQuery.isLoading;
 
 	const monthOptions = useMemo(() => {
 		const months = new Map<string, MonthOption>();
@@ -170,17 +179,6 @@ function ProfileCalendarPage() {
 
 		return Array.from(sections.values());
 	}, [selectedMonthEvents, timezone]);
-
-	const watchingCount = releaseEvents.filter(
-		(event) => event.source === "watching",
-	).length;
-	const watchlistCount = releaseEvents.filter(
-		(event) => event.source === "watchlist",
-	).length;
-	const nextRelease = releaseEvents[0];
-	const isInitialLoading = releaseCalendarQuery.isLoading;
-	const isFetchingMore =
-		releaseCalendarQuery.isFetching && !releaseCalendarQuery.isLoading;
 
 	useEffect(() => {
 		if (monthOptions.length === 0) {
@@ -268,85 +266,6 @@ function ProfileCalendarPage() {
 
 	return (
 		<div className="space-y-6">
-			<section
-				className="relative overflow-hidden rounded-[32px] border p-5 md:p-6"
-				style={{
-					background:
-						"linear-gradient(135deg, color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent), color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent) 52%, var(--md-sys-color-surface-container-high))",
-					borderColor: "var(--md-sys-color-outline-variant)",
-				}}
-			>
-				<div className="relative flex flex-col gap-6">
-					<div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-						<div className="max-w-2xl">
-							<div
-								className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5"
-								style={{
-									backgroundColor:
-										"color-mix(in srgb, var(--md-sys-color-surface) 72%, transparent)",
-									borderColor: "var(--md-sys-color-outline-variant)",
-								}}
-							>
-								<Calendar className="h-4 w-4" />
-								<span className="md-label-large">Release Calendar</span>
-							</div>
-							<h1 className="md-headline-large mb-2">What lands next</h1>
-							<p
-								className="md-body-large max-w-xl"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								Upcoming episode drops from the shows you&apos;re actively
-								watching, plus future-dated titles from your watchlist.
-							</p>
-						</div>
-
-						<div
-							className="min-w-0 rounded-[24px] border px-4 py-3"
-							style={{
-								backgroundColor:
-									"color-mix(in srgb, var(--md-sys-color-surface) 82%, transparent)",
-								borderColor: "var(--md-sys-color-outline-variant)",
-							}}
-						>
-							<p
-								className="mb-1 text-xs uppercase tracking-[0.18em]"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								Next release
-							</p>
-							<p className="md-title-large line-clamp-1">{nextRelease.title}</p>
-							<p
-								className="md-body-small line-clamp-2"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								{nextRelease.subtitle}
-							</p>
-							<p className="mt-2 text-sm font-semibold">
-								{formatDateOnly(getDateFromDayKey(nextRelease.dayKey), timezone)}
-							</p>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-						<StatCard
-							icon={<Calendar className="h-4 w-4" />}
-							label="Upcoming releases"
-							value={String(releaseEvents.length)}
-						/>
-						<StatCard
-							icon={<Tv className="h-4 w-4" />}
-							label="Watching"
-							value={String(watchingCount)}
-						/>
-						<StatCard
-							icon={<List className="h-4 w-4" />}
-							label="Watchlist"
-							value={String(watchlistCount)}
-						/>
-					</div>
-				</div>
-			</section>
-
 			<div className="flex flex-wrap items-center gap-2">
 				<FilterButton
 					isActive={sourceFilter === "all"}
@@ -526,38 +445,6 @@ function ProfileCalendarPage() {
 	);
 }
 
-function StatCard({
-	icon,
-	label,
-	value,
-}: {
-	icon: ReactNode;
-	label: string;
-	value: string;
-}) {
-	return (
-		<div
-			className="rounded-[24px] border p-4"
-			style={{
-				backgroundColor:
-					"color-mix(in srgb, var(--md-sys-color-surface) 82%, transparent)",
-				borderColor: "var(--md-sys-color-outline-variant)",
-			}}
-		>
-			<div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]">
-				{icon}
-			</div>
-			<p
-				className="text-sm"
-				style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-			>
-				{label}
-			</p>
-			<p className="md-headline-small">{value}</p>
-		</div>
-	);
-}
-
 function FilterButton({
 	isActive,
 	label,
@@ -722,7 +609,9 @@ function buildReleaseCalendarEvents({
 	});
 }
 
-function getReleaseCalendarLink(item: ApiReleaseCalendarItem) {
+function getReleaseCalendarLink(
+	item: ApiReleaseCalendarItem,
+): ReleaseCalendarLink | null {
 	const titleSlug = createTitleSlug(item.title);
 
 	if (item.mediaType === "movie" && item.movieId) {
