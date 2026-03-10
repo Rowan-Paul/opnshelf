@@ -649,7 +649,56 @@ export type ImportSkipDto = {
     message?: string;
 };
 
+export type TraktPublicProfileDto = {
+    /**
+     * Trakt username
+     */
+    username: string;
+    /**
+     * Trakt profile slug
+     */
+    slug: string;
+    /**
+     * Trakt display name
+     */
+    name?: string;
+    /**
+     * Whether the profile is private
+     */
+    isPrivate: boolean;
+    /**
+     * Whether the profile has Trakt VIP
+     */
+    isVip: boolean;
+    /**
+     * Profile avatar URL
+     */
+    avatarUrl?: string;
+};
+
+export type TraktHistoryPreviewItemDto = {
+    type: 'movie' | 'episode';
+    /**
+     * Primary display title for this watch item
+     */
+    title: string;
+    /**
+     * Secondary context for this watch item
+     */
+    subtitle?: string;
+    /**
+     * UTC datetime in ISO-8601 format
+     */
+    watchedAt: string;
+};
+
 export type FetchTraktPublicHistoryResponseDto = {
+    profile: TraktPublicProfileDto;
+    /**
+     * Count of importable rows after normalization
+     */
+    importableCount: number;
+    previewItems: Array<TraktHistoryPreviewItemDto>;
     items: Array<NormalizedImportItemDto>;
     skipped: Array<ImportSkipDto>;
     /**

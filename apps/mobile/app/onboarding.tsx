@@ -21,6 +21,7 @@ import type {
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
+	TraktImportPreview,
 } from "@/components/onboarding/types";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -36,10 +37,25 @@ export default function OnboardingScreen() {
 	const { colors } = useTheme();
 	const { showToast } = useToast();
 	const queryClient = useQueryClient();
+	const createIdleImportProgress = (): ImportProgressState => ({
+		phase: "idle",
+		totalItems: 0,
+		processedItems: 0,
+		currentBatch: 0,
+		totalBatches: 0,
+		imported: 0,
+		skipped: 0,
+		failed: 0,
+		startedAt: null,
+		message: "",
+	});
 
 	const [step, setStep] = useState(1);
 	const [activeTab, setActiveTab] = useState<TabValue>("trakt");
 	const [traktUsername, setTraktUsername] = useState("");
+	const [traktPreview, setTraktPreview] = useState<TraktImportPreview | null>(
+		null,
+	);
 	const [displayName, setDisplayName] = useState("");
 	const [timezone, setTimezone] = useState("UTC");
 	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
@@ -52,18 +68,9 @@ export default function OnboardingScreen() {
 		errors: [],
 	});
 
-	const [importProgress, setImportProgress] = useState<ImportProgressState>({
-		phase: "idle",
-		totalItems: 0,
-		processedItems: 0,
-		currentBatch: 0,
-		totalBatches: 0,
-		imported: 0,
-		skipped: 0,
-		failed: 0,
-		startedAt: null,
-		message: "",
-	});
+	const [importProgress, setImportProgress] = useState<ImportProgressState>(
+		createIdleImportProgress(),
+	);
 
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -247,6 +254,7 @@ export default function OnboardingScreen() {
 		}
 
 		try {
+			setTraktPreview(null);
 			setImportProgress({
 				phase: "fetching_trakt",
 				totalItems: 0,
@@ -263,30 +271,53 @@ export default function OnboardingScreen() {
 			const fetched = await fetchTraktMutation.mutateAsync({
 				body: { username },
 			});
+			setTraktPreview(fetched);
 
-			if (!fetched.items.length) {
-				setImportResult({
-					imported: 0,
-					skipped: fetched.skipped.length,
-					failed: 0,
-					errors: [],
-				});
-				setImportProgress((previous) => ({
-					...previous,
-					phase: "done",
-					message: "No importable items found.",
-				}));
+			setImportProgress((previous) => ({
+				...previous,
+				phase: "preview_ready",
+				totalItems: fetched.importableCount,
+				message:
+					fetched.importableCount > 0
+						? `Preview ready for @${fetched.profile.username}`
+						: `No importable items found for @${fetched.profile.username}`,
+			}));
+
+			if (!fetched.importableCount) {
 				showToast("No supported watch history items found", "info");
-				return;
 			}
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Unable to fetch Trakt history right now";
+			setImportProgress((previous) => ({
+				...previous,
+				phase: "error",
+				message,
+			}));
+			showToast(message, "error");
+		}
+	};
 
+	const handleConfirmTraktImport = async () => {
+		if (!traktPreview || traktPreview.importableCount < 1) {
+			return;
+		}
+
+		try {
 			const result = await runImportInChunks(
-				fetched.items,
+				traktPreview.items,
 				importHistoryMutation.mutateAsync,
 				updateImportProgress,
 			);
 
-			setImportResult(result);
+			setImportResult({
+				imported: result.imported,
+				skipped: result.skipped + traktPreview.skipped.length,
+				failed: result.failed,
+				errors: result.errors,
+			});
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "done",
@@ -297,7 +328,7 @@ export default function OnboardingScreen() {
 			const message =
 				error instanceof Error
 					? error.message
-					: "Unable to fetch Trakt history right now";
+					: "Unable to import Trakt history right now";
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "error",
@@ -424,6 +455,7 @@ export default function OnboardingScreen() {
 			progressPercent={progressPercent}
 			activeTab={activeTab}
 			traktUsername={traktUsername}
+			traktPreview={traktPreview}
 			displayName={displayName}
 			timezone={timezone}
 			timeFormat={timeFormat}
@@ -435,8 +467,28 @@ export default function OnboardingScreen() {
 			isSavingProfile={isSavingProfile}
 			isImportBusy={isImportBusy}
 			onStepChange={setStep}
-			onActiveTabChange={setActiveTab}
-			onTraktUsernameChange={setTraktUsername}
+			onActiveTabChange={(tab) => {
+				setActiveTab(tab);
+				if (tab !== "trakt") {
+					setTraktPreview(null);
+					setImportProgress((previous) =>
+						previous.phase === "preview_ready"
+							? createIdleImportProgress()
+							: previous,
+					);
+				}
+			}}
+			onTraktUsernameChange={(value) => {
+				setTraktUsername(value);
+				if (traktPreview) {
+					setTraktPreview(null);
+					setImportProgress((previous) =>
+						previous.phase === "preview_ready"
+							? createIdleImportProgress()
+							: previous,
+					);
+				}
+			}}
 			onDisplayNameChange={setDisplayName}
 			onTimezoneChange={setTimezone}
 			onTimeFormatChange={setTimeFormat}
@@ -448,6 +500,9 @@ export default function OnboardingScreen() {
 			}}
 			onTraktImport={() => {
 				void handleTraktImport();
+			}}
+			onTraktImportConfirm={() => {
+				void handleConfirmTraktImport();
 			}}
 			onCsvImport={() => {
 				void handleCsvImport();

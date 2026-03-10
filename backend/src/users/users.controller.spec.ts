@@ -55,6 +55,15 @@ describe("UsersController", () => {
 
 	it("fetches public Trakt history", async () => {
 		usersService.fetchTraktPublicHistory.mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: true,
+			},
+			importableCount: 0,
+			previewItems: [],
 			items: [],
 			skipped: [],
 			sourceCount: 0,
@@ -62,7 +71,20 @@ describe("UsersController", () => {
 
 		await expect(
 			controller.fetchMyTraktPublicHistory({ username: "alice", maxItems: 10 }),
-		).resolves.toEqual({ items: [], skipped: [], sourceCount: 0 });
+		).resolves.toEqual({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: true,
+			},
+			importableCount: 0,
+			previewItems: [],
+			items: [],
+			skipped: [],
+			sourceCount: 0,
+		});
 		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith(
 			"alice",
 			10,

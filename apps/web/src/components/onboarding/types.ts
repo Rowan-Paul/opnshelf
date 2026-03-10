@@ -1,9 +1,12 @@
+import type { FetchTraktPublicHistoryResponseDto } from "@opnshelf/api";
+
 export type TabValue = "trakt" | "csv";
 
 export type ImportPhase =
 	| "idle"
 	| "fetching_trakt"
 	| "parsing_csv"
+	| "preview_ready"
 	| "importing"
 	| "done"
 	| "error";
@@ -27,3 +30,5 @@ export type OnboardingImportResult = {
 	failed: number;
 	errors: string[];
 };
+
+export type TraktImportPreview = FetchTraktPublicHistoryResponseDto;

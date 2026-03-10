@@ -362,7 +362,7 @@ function ProfileCalendarPage() {
 									))}
 								</div>
 
-								<div className="hidden divide-y divide-[var(--md-sys-color-outline-variant)] lg:block">
+								<div className="hidden divide-y divide-(--md-sys-color-outline-variant) lg:block">
 									{selectedMonthView.weeks.map((week) => (
 										<div key={week[0]?.dayKey} className="grid grid-cols-7">
 											{week.map((day) => (

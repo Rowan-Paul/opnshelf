@@ -21,6 +21,7 @@ import type {
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
+	TraktImportPreview,
 } from "@/components/onboarding/types";
 import { parseCsvFile, runImportInChunks } from "@/lib/onboarding-import";
 
@@ -34,9 +35,24 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const createIdleImportProgress = (): ImportProgressState => ({
+		phase: "idle",
+		totalItems: 0,
+		processedItems: 0,
+		currentBatch: 0,
+		totalBatches: 0,
+		imported: 0,
+		skipped: 0,
+		failed: 0,
+		startedAt: null,
+		message: "",
+	});
 	const [step, setStep] = useState(1);
 	const [activeTab, setActiveTab] = useState<TabValue>("trakt");
 	const [traktUsername, setTraktUsername] = useState("");
+	const [traktPreview, setTraktPreview] = useState<TraktImportPreview | null>(
+		null,
+	);
 	const [displayName, setDisplayName] = useState("");
 	const [timezone, setTimezone] = useState("UTC");
 	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
@@ -49,18 +65,9 @@ function OnboardingPage() {
 		failed: 0,
 		errors: [],
 	});
-	const [importProgress, setImportProgress] = useState<ImportProgressState>({
-		phase: "idle",
-		totalItems: 0,
-		processedItems: 0,
-		currentBatch: 0,
-		totalBatches: 0,
-		imported: 0,
-		skipped: 0,
-		failed: 0,
-		startedAt: null,
-		message: "",
-	});
+	const [importProgress, setImportProgress] = useState<ImportProgressState>(
+		createIdleImportProgress(),
+	);
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -231,6 +238,7 @@ function OnboardingPage() {
 		}
 
 		try {
+			setTraktPreview(null);
 			setImportProgress({
 				phase: "fetching_trakt",
 				totalItems: 0,
@@ -249,25 +257,43 @@ function OnboardingPage() {
 					username,
 				},
 			});
+			setTraktPreview(fetched);
 
-			if (!fetched.items.length) {
-				setImportResult({
-					imported: 0,
-					skipped: fetched.skipped.length,
-					failed: 0,
-					errors: [],
-				});
-				setImportProgress((prev) => ({
-					...prev,
-					phase: "done",
-					message: "No importable items found.",
-				}));
+			setImportProgress((prev) => ({
+				...prev,
+				phase: "preview_ready",
+				totalItems: fetched.importableCount,
+				message:
+					fetched.importableCount > 0
+						? `Preview ready for @${fetched.profile.username}`
+						: `No importable items found for @${fetched.profile.username}`,
+			}));
+
+			if (!fetched.importableCount) {
 				toast.message("No supported watch history items found");
-				return;
 			}
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Unable to fetch Trakt history right now";
+			setImportProgress((prev) => ({
+				...prev,
+				phase: "error",
+				message,
+			}));
+			toast.error(message);
+		}
+	};
 
+	const handleConfirmTraktImport = async () => {
+		if (!traktPreview || traktPreview.importableCount < 1) {
+			return;
+		}
+
+		try {
 			const result = await runImportInChunks(
-				fetched.items,
+				traktPreview.items,
 				importHistoryMutation.mutateAsync,
 				(update) => {
 					setImportProgress((prev) => ({
@@ -278,7 +304,13 @@ function OnboardingPage() {
 					}));
 				},
 			);
-			setImportResult(result);
+
+			setImportResult({
+				imported: result.imported,
+				skipped: result.skipped + traktPreview.skipped.length,
+				failed: result.failed,
+				errors: result.errors,
+			});
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "done",
@@ -289,7 +321,7 @@ function OnboardingPage() {
 			const message =
 				error instanceof Error
 					? error.message
-					: "Unable to fetch Trakt history right now";
+					: "Unable to import Trakt history right now";
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "error",
@@ -376,6 +408,7 @@ function OnboardingPage() {
 			progress={progress}
 			activeTab={activeTab}
 			traktUsername={traktUsername}
+			traktPreview={traktPreview}
 			displayName={displayName}
 			timezone={timezone}
 			timeFormat={timeFormat}
@@ -390,8 +423,24 @@ function OnboardingPage() {
 			isSavingProfile={isSavingProfile}
 			isImportBusy={isImportBusy}
 			onStepChange={setStep}
-			onActiveTabChange={setActiveTab}
-			onTraktUsernameChange={setTraktUsername}
+			onActiveTabChange={(tab) => {
+				setActiveTab(tab);
+				if (tab !== "trakt") {
+					setTraktPreview(null);
+					setImportProgress((prev) =>
+						prev.phase === "preview_ready" ? createIdleImportProgress() : prev,
+					);
+				}
+			}}
+			onTraktUsernameChange={(value) => {
+				setTraktUsername(value);
+				if (traktPreview) {
+					setTraktPreview(null);
+					setImportProgress((prev) =>
+						prev.phase === "preview_ready" ? createIdleImportProgress() : prev,
+					);
+				}
+			}}
 			onDisplayNameChange={setDisplayName}
 			onTimezoneChange={setTimezone}
 			onTimeFormatChange={setTimeFormat}
@@ -403,6 +452,9 @@ function OnboardingPage() {
 			}}
 			onTraktImport={() => {
 				void handleTraktImport();
+			}}
+			onTraktImportConfirm={() => {
+				void handleConfirmTraktImport();
 			}}
 			onCsvUpload={(file) => {
 				void handleCsvUpload(file);

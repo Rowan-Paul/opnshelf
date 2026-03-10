@@ -17,11 +17,55 @@ import type {
 	ImportHistoryResponseDto,
 	ImportSkipDto,
 	NormalizedImportItemDto,
+	TraktHistoryPreviewItemDto,
+	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
 
 interface ATSession {
 	did: string;
 }
+
+type TraktProfilePayload = {
+	username?: unknown;
+	name?: unknown;
+	private?: unknown;
+	vip?: unknown;
+	ids?: {
+		slug?: unknown;
+	};
+	images?: {
+		avatar?: {
+			full?: unknown;
+			medium?: unknown;
+			thumb?: unknown;
+		};
+	};
+};
+
+type TraktHistoryPayloadItem = {
+	type?: unknown;
+	action?: unknown;
+	watched_at?: unknown;
+	movie?: {
+		title?: unknown;
+		year?: unknown;
+		ids?: {
+			tmdb?: unknown;
+		};
+	};
+	show?: {
+		title?: unknown;
+		year?: unknown;
+		ids?: {
+			tmdb?: unknown;
+		};
+	};
+	episode?: {
+		season?: unknown;
+		number?: unknown;
+		title?: unknown;
+	};
+};
 
 @Injectable()
 export class ImportHistoryService {
@@ -59,56 +103,29 @@ export class ImportHistoryService {
 			typeof maxItems === "number"
 				? Math.max(Math.floor(maxItems), 1)
 				: Number.POSITIVE_INFINITY;
+		const profile = await this.fetchTraktPublicProfile(normalizedUsername);
 		const pageSize = 100;
 		let page = 1;
+		let pageCount = Number.POSITIVE_INFINITY;
 		let sourceCount = 0;
 		const items: NormalizedImportItemDto[] = [];
 		const skipped: ImportSkipDto[] = [];
+		const previewItems: TraktHistoryPreviewItemDto[] = [];
 
-		while (items.length < safeMaxItems) {
-			const url = new URL(
+		while (items.length < safeMaxItems && page <= pageCount) {
+			const url = this.createTraktUrl(
 				`/users/${encodeURIComponent(normalizedUsername)}/history`,
-				this.traktBaseUrl,
 			);
 			url.searchParams.set("page", String(page));
 			url.searchParams.set("limit", String(pageSize));
 
-			const response = await fetch(url.toString(), {
-				headers: {
-					"trakt-api-key": this.traktApiKey,
-					"trakt-api-version": "2",
-					"User-Agent": this.traktUserAgent,
-				},
-				signal: AbortSignal.timeout(12_000),
-			});
-
-			if (response.status === 404) {
-				throw new NotFoundException("Trakt user not found");
-			}
-			if (response.status === 401 || response.status === 403) {
-				throw new BadRequestException(
-					"Trakt profile is private or unavailable. Try CSV import instead.",
-				);
-			}
-			if (response.status === 429) {
-				throw new HttpException(
-					"Trakt rate limit reached. Please retry in a few minutes or use CSV import.",
-					HttpStatus.TOO_MANY_REQUESTS,
-				);
-			}
-			if (response.status >= 500) {
-				throw new ServiceUnavailableException(
-					"Trakt is temporarily unavailable. Please retry later or use CSV import.",
-				);
-			}
-			if (!response.ok) {
-				throw new BadRequestException("Failed to fetch Trakt public history");
-			}
-
-			const payload = (await response.json()) as unknown;
+			const { data: payload, headers } = await this.fetchTraktJsonWithHeaders<unknown>(
+				url,
+			);
 			if (!Array.isArray(payload)) {
 				throw new BadRequestException("Unexpected Trakt response format");
 			}
+			pageCount = this.parsePaginationPageCount(headers) ?? pageCount;
 
 			sourceCount += payload.length;
 			for (let i = 0; i < payload.length; i++) {
@@ -121,19 +138,27 @@ export class ImportHistoryService {
 				);
 				if (result.item) {
 					items.push(result.item);
+					if (result.previewItem && previewItems.length < 5) {
+						previewItems.push(result.previewItem);
+					}
 				} else if (result.skip) {
 					skipped.push(result.skip);
 				}
 			}
 
 			if (payload.length < pageSize) {
-				break;
+				if (!Number.isFinite(pageCount)) {
+					break;
+				}
 			}
 
 			page += 1;
 		}
 
 		return {
+			profile,
+			importableCount: items.length,
+			previewItems,
 			items,
 			skipped,
 			sourceCount,
@@ -256,7 +281,11 @@ export class ImportHistoryService {
 	private normalizeTraktApiItem(
 		rawItem: unknown,
 		index: number,
-	): { item?: NormalizedImportItemDto; skip?: ImportSkipDto } {
+	): {
+		item?: NormalizedImportItemDto;
+		skip?: ImportSkipDto;
+		previewItem?: TraktHistoryPreviewItemDto;
+	} {
 		if (!rawItem || typeof rawItem !== "object") {
 			return {
 				skip: {
@@ -267,14 +296,7 @@ export class ImportHistoryService {
 			};
 		}
 
-		const item = rawItem as {
-			type?: unknown;
-			action?: unknown;
-			watched_at?: unknown;
-			movie?: { ids?: { tmdb?: unknown } };
-			show?: { ids?: { tmdb?: unknown } };
-			episode?: { season?: unknown; number?: unknown };
-		};
+		const item = rawItem as TraktHistoryPayloadItem;
 
 		const action =
 			typeof item.action === "string" ? (item.action as string) : "watch";
@@ -328,6 +350,12 @@ export class ImportHistoryService {
 					action: normalizedAction,
 					watchedAt,
 				},
+				previewItem: {
+					type: "movie",
+					title: this.getStringValue(item.movie?.title, "Untitled movie"),
+					subtitle: this.buildMovieSubtitle(item.movie?.year),
+					watchedAt,
+				},
 			};
 		}
 
@@ -374,6 +402,16 @@ export class ImportHistoryService {
 					seasonNumber,
 					episodeNumber,
 					action: normalizedAction,
+					watchedAt,
+				},
+				previewItem: {
+					type: "episode",
+					title: this.getStringValue(item.show?.title, "Untitled show"),
+					subtitle: this.buildEpisodeSubtitle(
+						seasonNumber,
+						episodeNumber,
+						item.episode?.title,
+					),
 					watchedAt,
 				},
 			};
@@ -444,5 +482,146 @@ export class ImportHistoryService {
 		}
 
 		return `episode showTmdb=${item.showTmdbId ?? "unknown"}, season=${item.seasonNumber ?? "unknown"}, episode=${item.episodeNumber ?? "unknown"}, watchedAt=${watchedAt}, action=${action}`;
+	}
+
+	private createTraktUrl(pathname: string): URL {
+		return new URL(pathname, this.traktBaseUrl);
+	}
+
+	private async fetchTraktPublicProfile(
+		username: string,
+	): Promise<TraktPublicProfileDto> {
+		const url = this.createTraktUrl(
+			`/users/${encodeURIComponent(username)}?extended=full`,
+		);
+		const payload = await this.fetchTraktJson<unknown>(url);
+
+		if (!payload || typeof payload !== "object") {
+			throw new BadRequestException("Unexpected Trakt profile format");
+		}
+
+		const profile = payload as TraktProfilePayload;
+		return {
+			username: this.getStringValue(profile.username, username),
+			slug: this.getStringValue(profile.ids?.slug, username),
+			name: this.getOptionalStringValue(profile.name),
+			isPrivate: profile.private === true,
+			isVip: profile.vip === true,
+			avatarUrl: this.resolveTraktAvatarUrl(profile.images?.avatar),
+		};
+	}
+
+	private async fetchTraktJson<T>(url: URL): Promise<T> {
+		const { data } = await this.fetchTraktJsonWithHeaders<T>(url);
+		return data;
+	}
+
+	private async fetchTraktJsonWithHeaders<T>(
+		url: URL,
+	): Promise<{ data: T; headers: Headers }> {
+		const response = await fetch(url.toString(), {
+			headers: {
+				"trakt-api-key": this.traktApiKey,
+				"trakt-api-version": "2",
+				"User-Agent": this.traktUserAgent,
+			},
+			signal: AbortSignal.timeout(12_000),
+		});
+
+		if (response.status === 404) {
+			throw new NotFoundException("Trakt user not found");
+		}
+		if (response.status === 401 || response.status === 403) {
+			throw new BadRequestException(
+				"Trakt profile is private or unavailable. Try CSV import instead.",
+			);
+		}
+		if (response.status === 429) {
+			throw new HttpException(
+				"Trakt rate limit reached. Please retry in a few minutes or use CSV import.",
+				HttpStatus.TOO_MANY_REQUESTS,
+			);
+		}
+		if (response.status >= 500) {
+			throw new ServiceUnavailableException(
+				"Trakt is temporarily unavailable. Please retry later or use CSV import.",
+			);
+		}
+		if (!response.ok) {
+			throw new BadRequestException("Failed to fetch Trakt public history");
+		}
+
+		return {
+			data: (await response.json()) as T,
+			headers: response.headers ?? new Headers(),
+		};
+	}
+
+	private parsePaginationPageCount(headers: Headers): number | undefined {
+		const rawValue = headers.get("x-pagination-page-count");
+		if (!rawValue) {
+			return undefined;
+		}
+
+		const parsed = Number.parseInt(rawValue, 10);
+		if (!Number.isInteger(parsed) || parsed < 1) {
+			return undefined;
+		}
+
+		return parsed;
+	}
+
+	private getStringValue(value: unknown, fallback: string): string {
+		return typeof value === "string" && value.trim() ? value.trim() : fallback;
+	}
+
+	private getOptionalStringValue(value: unknown): string | undefined {
+		if (typeof value !== "string") {
+			return undefined;
+		}
+		const trimmed = value.trim();
+		return trimmed ? trimmed : undefined;
+	}
+
+	private resolveTraktAvatarUrl(avatar: {
+		full?: unknown;
+		medium?: unknown;
+		thumb?: unknown;
+	} | undefined): string | undefined {
+		const candidate =
+			this.getOptionalStringValue(avatar?.full) ??
+			this.getOptionalStringValue(avatar?.medium) ??
+			this.getOptionalStringValue(avatar?.thumb);
+
+		if (!candidate) {
+			return undefined;
+		}
+
+		if (candidate.startsWith("//")) {
+			return `https:${candidate}`;
+		}
+
+		if (candidate.startsWith("http://")) {
+			return `https://${candidate.slice("http://".length)}`;
+		}
+
+		return candidate;
+	}
+
+	private buildMovieSubtitle(year: unknown): string {
+		if (typeof year === "number" && Number.isInteger(year) && year > 1800) {
+			return `Movie • ${year}`;
+		}
+		return "Movie";
+	}
+
+	private buildEpisodeSubtitle(
+		seasonNumber: number,
+		episodeNumber: number,
+		episodeTitle: unknown,
+	): string {
+		const episodeCode = `S${String(seasonNumber).padStart(2, "0")}E${String(episodeNumber).padStart(2, "0")}`;
+		const title = this.getOptionalStringValue(episodeTitle);
+		return title ? `${episodeCode} • ${title}` : episodeCode;
 	}
 }

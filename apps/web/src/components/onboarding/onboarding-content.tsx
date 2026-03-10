@@ -12,6 +12,7 @@ import type {
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
+	TraktImportPreview,
 } from "./types";
 
 const ONBOARDING_STEP_DETAILS = [
@@ -49,6 +50,7 @@ type OnboardingContentProps = {
 	progress: number;
 	activeTab: TabValue;
 	traktUsername: string;
+	traktPreview: TraktImportPreview | null;
 	displayName: string;
 	timezone: string;
 	timeFormat: "12h" | "24h";
@@ -71,6 +73,7 @@ type OnboardingContentProps = {
 	onSkip: () => void;
 	onSaveProfileAndContinue: () => void;
 	onTraktImport: () => void;
+	onTraktImportConfirm: () => void;
 	onCsvUpload: (file: File) => void;
 	onComplete: () => void;
 };
@@ -80,6 +83,7 @@ export function OnboardingContent({
 	progress,
 	activeTab,
 	traktUsername,
+	traktPreview,
 	displayName,
 	timezone,
 	timeFormat,
@@ -102,11 +106,16 @@ export function OnboardingContent({
 	onSkip,
 	onSaveProfileAndContinue,
 	onTraktImport,
+	onTraktImportConfirm,
 	onCsvUpload,
 	onComplete,
 }: OnboardingContentProps) {
 	const currentStepDetail =
 		ONBOARDING_STEP_DETAILS[step - 1] ?? ONBOARDING_STEP_DETAILS[0];
+	const isTraktImporting =
+		activeTab === "trakt" && importProgress.phase === "importing";
+	const showImportStatusAboveInput =
+		importProgress.phase !== "idle" && !isTraktImporting;
 
 	return (
 		<div className="flex flex-1 justify-center bg-(--md-sys-color-surface) p-4 md:p-6">
@@ -329,29 +338,14 @@ export function OnboardingContent({
 
 					{step === 3 && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
-							{importProgress.phase !== "idle" && (
+							{showImportStatusAboveInput && (
 								<div className="grid gap-2 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
 									<p className="md-label-large m-0">{importProgress.message}</p>
-									{importProgress.phase === "importing" ? (
-										<>
-											<div className="h-2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-highest)">
-												<div
-													className="h-full rounded-full bg-(--md-sys-color-primary) transition-[width] duration-300"
-													style={{ width: `${importPercent}%` }}
-												/>
-											</div>
-											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-												{importProgress.processedItems} /{" "}
-												{importProgress.totalItems} items ({importPercent}%)
-											</p>
-											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-												Batch {importProgress.currentBatch} of{" "}
-												{importProgress.totalBatches}. Imported{" "}
-												{importProgress.imported}, skipped{" "}
-												{importProgress.skipped}, failed {importProgress.failed}
-												.
-											</p>
-										</>
+									{importProgress.phase === "preview_ready" && traktPreview ? (
+										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+											{traktPreview.importableCount} importable items found from{" "}
+											{traktPreview.sourceCount} Trakt history rows.
+										</p>
 									) : (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 											Preparing data for import...
@@ -407,15 +401,119 @@ export function OnboardingContent({
 											}
 											placeholder="your-trakt-handle"
 											className={INPUT_CLASS}
+											disabled={isTraktImporting}
 										/>
 									</label>
+									<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+										We fetch the Trakt profile and recent plays first so you can
+										confirm the account before importing.
+									</p>
 									<M3Button
 										variant="filled"
 										onClick={onTraktImport}
 										disabled={isImportBusy}
 									>
-										Fetch and import
+										{traktPreview ? "Refresh preview" : "Fetch preview"}
 									</M3Button>
+									{isTraktImporting ? (
+										<div className="grid gap-3 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
+											<p className="md-label-large m-0">
+												{importProgress.message}
+											</p>
+											<div className="h-2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-highest)">
+												<div
+													className="h-full rounded-full bg-(--md-sys-color-primary) transition-[width] duration-300"
+													style={{ width: `${importPercent}%` }}
+												/>
+											</div>
+											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+												{importProgress.processedItems} /{" "}
+												{importProgress.totalItems} items ({importPercent}%)
+											</p>
+											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+												Batch {importProgress.currentBatch} of{" "}
+												{importProgress.totalBatches}. Imported{" "}
+												{importProgress.imported}, skipped{" "}
+												{importProgress.skipped}, failed {importProgress.failed}
+												.
+											</p>
+										</div>
+									) : traktPreview ? (
+										<div className="grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
+											<div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+												<div className="grid gap-1">
+													<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
+														Trakt profile
+													</p>
+													<h3 className="md-title-large m-0">
+														{traktPreview.profile.name ??
+															`@${traktPreview.profile.username}`}
+													</h3>
+													<p className="md-body-medium m-0 text-(--md-sys-color-on-surface-variant)">
+														@{traktPreview.profile.username}
+														{traktPreview.profile.isVip ? " • VIP" : ""}
+														{traktPreview.profile.isPrivate ? " • Private" : ""}
+													</p>
+												</div>
+												<div className="grid gap-2 text-right">
+													<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
+														Ready to import
+													</p>
+													<p className="md-headline-small m-0 text-(--md-sys-color-primary)">
+														{traktPreview.importableCount}
+													</p>
+												</div>
+											</div>
+
+											<div className="grid gap-2">
+												<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
+													Last played items
+												</p>
+												{traktPreview.previewItems.length > 0 ? (
+													<ul className="m-0 grid list-none gap-2 p-0">
+														{traktPreview.previewItems.map((item) => (
+															<li
+																key={`${item.type}-${item.watchedAt}-${item.title}`}
+																className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface) p-3"
+															>
+																<div className="flex items-start justify-between gap-3">
+																	<div className="grid gap-1">
+																		<p className="md-title-small m-0">
+																			{item.title}
+																		</p>
+																		{item.subtitle ? (
+																			<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+																				{item.subtitle}
+																			</p>
+																		) : null}
+																	</div>
+																	<p className="md-body-small m-0 whitespace-nowrap text-(--md-sys-color-on-surface-variant)">
+																		{formatPreviewDate(item.watchedAt)}
+																	</p>
+																</div>
+															</li>
+														))}
+													</ul>
+												) : (
+													<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+														No importable watch items were found for this
+														profile.
+													</p>
+												)}
+											</div>
+
+											<M3Button
+												variant="filled"
+												onClick={onTraktImportConfirm}
+												disabled={
+													isImportBusy || traktPreview.importableCount < 1
+												}
+											>
+												Import {traktPreview.importableCount} item
+												{traktPreview.importableCount === 1 ? "" : "s"}
+											</M3Button>
+										</div>
+									) : null}
 								</div>
 							) : (
 								<div className="grid gap-3" role="tabpanel">
@@ -536,4 +634,14 @@ export function OnboardingContent({
 			</div>
 		</div>
 	);
+}
+
+function formatPreviewDate(value: string): string {
+	return new Intl.DateTimeFormat(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	}).format(new Date(value));
 }

@@ -14,6 +14,7 @@ import type {
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
+	TraktImportPreview,
 } from "./types";
 import { styles } from "./styles";
 
@@ -22,6 +23,7 @@ type OnboardingContentProps = {
 	progressPercent: number;
 	activeTab: TabValue;
 	traktUsername: string;
+	traktPreview: TraktImportPreview | null;
 	displayName: string;
 	timezone: string;
 	timeFormat: "12h" | "24h";
@@ -41,6 +43,7 @@ type OnboardingContentProps = {
 	onSkip: () => void;
 	onSaveProfileAndContinue: () => void;
 	onTraktImport: () => void;
+	onTraktImportConfirm: () => void;
 	onCsvImport: () => void;
 	onComplete: () => void;
 };
@@ -50,6 +53,7 @@ export function OnboardingContent({
 	progressPercent,
 	activeTab,
 	traktUsername,
+	traktPreview,
 	displayName,
 	timezone,
 	timeFormat,
@@ -69,6 +73,7 @@ export function OnboardingContent({
 	onSkip,
 	onSaveProfileAndContinue,
 	onTraktImport,
+	onTraktImportConfirm,
 	onCsvImport,
 	onComplete,
 }: OnboardingContentProps) {
@@ -109,6 +114,7 @@ export function OnboardingContent({
 					<ImportStepCard
 						activeTab={activeTab}
 						traktUsername={traktUsername}
+						traktPreview={traktPreview}
 						csvFileName={csvFileName}
 						importProgress={importProgress}
 						importPercent={importPercent}
@@ -117,6 +123,7 @@ export function OnboardingContent({
 						onActiveTabChange={onActiveTabChange}
 						onTraktUsernameChange={onTraktUsernameChange}
 						onTraktImport={onTraktImport}
+						onTraktImportConfirm={onTraktImportConfirm}
 						onCsvImport={onCsvImport}
 						onBack={() => onStepChange(2)}
 						onSkip={onSkip}

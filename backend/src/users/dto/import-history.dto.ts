@@ -121,7 +121,52 @@ export class FetchTraktPublicHistoryDto {
 	maxItems?: number;
 }
 
+export class TraktPublicProfileDto {
+	@ApiProperty({ description: "Trakt username" })
+	username: string;
+
+	@ApiProperty({ description: "Trakt profile slug" })
+	slug: string;
+
+	@ApiPropertyOptional({ description: "Trakt display name" })
+	name?: string;
+
+	@ApiProperty({ description: "Whether the profile is private" })
+	isPrivate: boolean;
+
+	@ApiProperty({ description: "Whether the profile has Trakt VIP" })
+	isVip: boolean;
+
+	@ApiPropertyOptional({ description: "Profile avatar URL" })
+	avatarUrl?: string;
+}
+
+export class TraktHistoryPreviewItemDto {
+	@ApiProperty({ enum: ["movie", "episode"] })
+	type: "movie" | "episode";
+
+	@ApiProperty({ description: "Primary display title for this watch item" })
+	title: string;
+
+	@ApiPropertyOptional({ description: "Secondary context for this watch item" })
+	subtitle?: string;
+
+	@ApiProperty({ description: "UTC datetime in ISO-8601 format" })
+	watchedAt: string;
+}
+
 export class FetchTraktPublicHistoryResponseDto {
+	@ApiProperty({ type: TraktPublicProfileDto })
+	profile: TraktPublicProfileDto;
+
+	@ApiProperty({
+		description: "Count of importable rows after normalization",
+	})
+	importableCount: number;
+
+	@ApiProperty({ type: [TraktHistoryPreviewItemDto] })
+	previewItems: TraktHistoryPreviewItemDto[];
+
 	@ApiProperty({ type: [NormalizedImportItemDto] })
 	items: NormalizedImportItemDto[];
 

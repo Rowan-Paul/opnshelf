@@ -8,6 +8,7 @@ import type {
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
+	TraktImportPreview,
 } from "./types";
 import { styles } from "./styles";
 
@@ -176,6 +177,7 @@ export function IdentityStepCard({
 type ImportStepCardProps = {
 	activeTab: TabValue;
 	traktUsername: string;
+	traktPreview: TraktImportPreview | null;
 	csvFileName: string | null;
 	importProgress: ImportProgressState;
 	importPercent: number;
@@ -184,6 +186,7 @@ type ImportStepCardProps = {
 	onActiveTabChange: (tab: TabValue) => void;
 	onTraktUsernameChange: (value: string) => void;
 	onTraktImport: () => void;
+	onTraktImportConfirm: () => void;
 	onCsvImport: () => void;
 	onBack: () => void;
 	onSkip: () => void;
@@ -192,6 +195,7 @@ type ImportStepCardProps = {
 export function ImportStepCard({
 	activeTab,
 	traktUsername,
+	traktPreview,
 	csvFileName,
 	importProgress,
 	importPercent,
@@ -200,11 +204,16 @@ export function ImportStepCard({
 	onActiveTabChange,
 	onTraktUsernameChange,
 	onTraktImport,
+	onTraktImportConfirm,
 	onCsvImport,
 	onBack,
 	onSkip,
 }: ImportStepCardProps) {
 	const { colors } = useTheme();
+	const isTraktImporting =
+		activeTab === "trakt" && importProgress.phase === "importing";
+	const showImportStatusAboveInput =
+		importProgress.phase !== "idle" && !isTraktImporting;
 
 	return (
 		<Card>
@@ -214,7 +223,7 @@ export function ImportStepCard({
 			</CardHeader>
 			<CardContent>
 				<View style={styles.importFormStack}>
-					{importProgress.phase !== "idle" && (
+					{showImportStatusAboveInput && (
 						<View
 							style={[
 								styles.importStatusBox,
@@ -240,32 +249,17 @@ export function ImportStepCard({
 							>
 								{importProgress.message}
 							</Text>
-							{importProgress.phase === "importing" && (
-								<>
-									<View
-										style={[
-											styles.progressTrack,
-											{ backgroundColor: colors.surfaceContainerHighest },
-										]}
-									>
-										<View
-											style={[
-												styles.progressFill,
-												{
-													backgroundColor: colors.primary,
-													width: `${importPercent}%`,
-												},
-											]}
-										/>
-									</View>
-									<Text style={[styles.importStatusMeta, { color: colors.onSurfaceVariant }]}> 
-										{importProgress.processedItems} / {importProgress.totalItems} items ({importPercent}%)
-									</Text>
-									<Text style={[styles.importStatusMeta, { color: colors.onSurfaceVariant }]}> 
-										Batch {importProgress.currentBatch} of {importProgress.totalBatches}. Imported {importProgress.imported}, skipped {importProgress.skipped}, failed {importProgress.failed}.
-									</Text>
-								</>
-							)}
+							{importProgress.phase === "preview_ready" && traktPreview ? (
+								<Text
+									style={[
+										styles.importStatusMeta,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									{traktPreview.importableCount} importable items found from{" "}
+									{traktPreview.sourceCount} Trakt history rows.
+								</Text>
+							) : null}
 						</View>
 					)}
 
@@ -329,10 +323,207 @@ export function ImportStepCard({
 								placeholder="your-trakt-handle"
 								containerStyle={{ width: "100%" }}
 								variant="outlined"
+								editable={!isTraktImporting}
 							/>
+							<Text style={[styles.csvHelp, { color: colors.onSurfaceVariant }]}>
+								We fetch the Trakt profile and recent plays first so you can
+								confirm the account before importing.
+							</Text>
 							<Button onPress={onTraktImport} disabled={isImportBusy}>
-								{isImportBusy ? "Working..." : "Fetch and import"}
+								{isImportBusy
+									? "Working..."
+									: traktPreview
+										? "Refresh preview"
+										: "Fetch preview"}
 							</Button>
+							{isTraktImporting ? (
+								<View
+									style={[
+										styles.previewCard,
+										{
+											backgroundColor: colors.surfaceContainerHigh,
+											borderColor: colors.outlineVariant,
+										},
+									]}
+								>
+									<Text
+										style={[
+											styles.importStatusText,
+											{ color: colors.onSurface },
+										]}
+									>
+										{importProgress.message}
+									</Text>
+									<View
+										style={[
+											styles.progressTrack,
+											{ backgroundColor: colors.surfaceContainerHighest },
+										]}
+									>
+										<View
+											style={[
+												styles.progressFill,
+												{
+													backgroundColor: colors.primary,
+													width: `${importPercent}%`,
+												},
+											]}
+										/>
+									</View>
+									<Text
+										style={[
+											styles.importStatusMeta,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										{importProgress.processedItems} / {importProgress.totalItems}{" "}
+										items ({importPercent}%)
+									</Text>
+									<Text
+										style={[
+											styles.importStatusMeta,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										Batch {importProgress.currentBatch} of{" "}
+										{importProgress.totalBatches}. Imported{" "}
+										{importProgress.imported}, skipped{" "}
+										{importProgress.skipped}, failed {importProgress.failed}.
+									</Text>
+								</View>
+							) : traktPreview ? (
+								<View
+									style={[
+										styles.previewCard,
+										{
+											backgroundColor: colors.surfaceContainerHigh,
+											borderColor: colors.outlineVariant,
+										},
+									]}
+								>
+									<View style={styles.previewHeaderRow}>
+										<View style={styles.previewHeaderText}>
+											<Text
+												style={[
+													styles.previewKicker,
+													{ color: colors.primary },
+												]}
+											>
+												Trakt profile
+											</Text>
+											<Text
+												style={[
+													styles.previewTitle,
+													{ color: colors.onSurface },
+												]}
+											>
+												{traktPreview.profile.name ??
+													`@${traktPreview.profile.username}`}
+											</Text>
+											<Text
+												style={[
+													styles.previewSubtitle,
+													{ color: colors.onSurfaceVariant },
+												]}
+											>
+												@{traktPreview.profile.username}
+												{traktPreview.profile.isVip ? " • VIP" : ""}
+												{traktPreview.profile.isPrivate
+													? " • Private"
+													: ""}
+											</Text>
+										</View>
+										<View style={styles.previewCountWrap}>
+											<Text
+												style={[
+													styles.previewCountLabel,
+													{ color: colors.onSurfaceVariant },
+												]}
+											>
+												Ready to import
+											</Text>
+											<Text
+												style={[
+													styles.previewCountValue,
+													{ color: colors.primary },
+												]}
+											>
+												{traktPreview.importableCount}
+											</Text>
+										</View>
+									</View>
+
+									<View style={styles.previewListWrap}>
+										<Text
+											style={[
+												styles.previewSectionLabel,
+												{ color: colors.onSurfaceVariant },
+											]}
+										>
+											Last played items
+										</Text>
+										{traktPreview.previewItems.length > 0 ? (
+											traktPreview.previewItems.map((item) => (
+												<View
+													key={`${item.type}-${item.watchedAt}-${item.title}`}
+													style={[
+														styles.previewItem,
+														{
+															backgroundColor: colors.surface,
+															borderColor: colors.outlineVariant,
+														},
+													]}
+												>
+													<View style={styles.previewItemText}>
+														<Text
+															style={[
+																styles.previewItemTitle,
+																{ color: colors.onSurface },
+															]}
+														>
+															{item.title}
+														</Text>
+														{item.subtitle ? (
+															<Text
+																style={[
+																	styles.previewItemSubtitle,
+																	{ color: colors.onSurfaceVariant },
+																]}
+															>
+																{item.subtitle}
+															</Text>
+														) : null}
+													</View>
+													<Text
+														style={[
+															styles.previewItemDate,
+															{ color: colors.onSurfaceVariant },
+														]}
+													>
+														{formatPreviewDate(item.watchedAt)}
+													</Text>
+												</View>
+											))
+										) : (
+											<Text
+												style={[
+													styles.csvHelp,
+													{ color: colors.onSurfaceVariant },
+												]}
+											>
+												No importable watch items were found for this profile.
+											</Text>
+										)}
+									</View>
+
+										<Button
+											onPress={onTraktImportConfirm}
+											disabled={isImportBusy || traktPreview.importableCount < 1}
+										>
+											{`Import ${traktPreview.importableCount} item${traktPreview.importableCount === 1 ? "" : "s"}`}
+										</Button>
+								</View>
+							) : null}
 						</View>
 					) : (
 						<View style={styles.formStack}>
@@ -372,6 +563,16 @@ export function ImportStepCard({
 			</CardContent>
 		</Card>
 	);
+}
+
+function formatPreviewDate(value: string): string {
+	return new Intl.DateTimeFormat(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	}).format(new Date(value));
 }
 
 export function LaunchStepCard({

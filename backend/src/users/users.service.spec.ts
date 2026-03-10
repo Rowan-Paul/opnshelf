@@ -142,19 +142,31 @@ describe("UsersService", () => {
 	});
 
 	it("normalizes Trakt movie/episode items and skips unsupported action", async () => {
+		const profilePayload = {
+			username: "alice",
+			name: "Alice Example",
+			private: false,
+			vip: true,
+			ids: { slug: "alice" },
+			images: {
+				avatar: {
+					medium: "//example.com/avatar-medium.jpg",
+				},
+			},
+		};
 		const payload = [
 			{
 				type: "movie",
 				action: "watch",
 				watched_at: "2026-01-01T01:00:00.000Z",
-				movie: { ids: { tmdb: 100 } },
+				movie: { title: "Past Lives", year: 2023, ids: { tmdb: 100 } },
 			},
 			{
 				type: "episode",
 				action: "scrobble",
 				watched_at: "2026-01-02T02:00:00.000Z",
-				show: { ids: { tmdb: 200 } },
-				episode: { season: 1, number: 2 },
+				show: { title: "Severance", ids: { tmdb: 200 } },
+				episode: { season: 1, number: 2, title: "Half Loop" },
 			},
 			{
 				type: "movie",
@@ -164,14 +176,44 @@ describe("UsersService", () => {
 			},
 		];
 
-		global.fetch = jest.fn().mockResolvedValue({
-			ok: true,
-			status: 200,
-			json: async () => payload,
-		}) as unknown as typeof fetch;
+		global.fetch = jest
+			.fn()
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => profilePayload,
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => payload,
+			}) as unknown as typeof fetch;
 
 		const result = await service.fetchTraktPublicHistory("alice", 100);
 
+		expect(result.profile).toEqual({
+			username: "alice",
+			slug: "alice",
+			name: "Alice Example",
+			isPrivate: false,
+			isVip: true,
+			avatarUrl: "https://example.com/avatar-medium.jpg",
+		});
+		expect(result.importableCount).toBe(2);
+		expect(result.previewItems).toEqual([
+			{
+				type: "movie",
+				title: "Past Lives",
+				subtitle: "Movie • 2023",
+				watchedAt: "2026-01-01T01:00:00.000Z",
+			},
+			{
+				type: "episode",
+				title: "Severance",
+				subtitle: "S01E02 • Half Loop",
+				watchedAt: "2026-01-02T02:00:00.000Z",
+			},
+		]);
 		expect(result.items).toHaveLength(2);
 		expect(result.items[0]).toMatchObject({ type: "movie", movieTmdbId: 100 });
 		expect(result.items[1]).toMatchObject({
@@ -182,6 +224,66 @@ describe("UsersService", () => {
 		});
 		expect(result.skipped).toHaveLength(1);
 		expect(result.skipped[0]?.reason).toBe("unsupported_action");
+	});
+
+	it("continues paging when Trakt returns short pages before the last page", async () => {
+		const profilePayload = {
+			username: "rpf_2001",
+			private: false,
+			vip: false,
+			ids: { slug: "rpf_2001" },
+		};
+		const firstPage = Array.from({ length: 99 }, (_, index) => ({
+			type: "movie",
+			action: "watch",
+			watched_at: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+			movie: {
+				title: `Movie ${index + 1}`,
+				ids: { tmdb: index + 1 },
+			},
+		}));
+		const secondPage = [
+			{
+				type: "movie",
+				action: "watch",
+				watched_at: "2026-04-15T00:00:00.000Z",
+				movie: { title: "Movie 100", ids: { tmdb: 100 } },
+			},
+		];
+
+		global.fetch = jest
+			.fn()
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				headers: new Headers(),
+				json: async () => profilePayload,
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				headers: new Headers({
+					"x-pagination-page-count": "2",
+				}),
+				json: async () => firstPage,
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				headers: new Headers({
+					"x-pagination-page-count": "2",
+				}),
+				json: async () => secondPage,
+			}) as unknown as typeof fetch;
+
+		const result = await service.fetchTraktPublicHistory("rpf_2001");
+
+		expect(result.importableCount).toBe(100);
+		expect(result.items).toHaveLength(100);
+		expect(result.items[result.items.length - 1]).toMatchObject({
+			type: "movie",
+			movieTmdbId: 100,
+		});
 	});
 
 	it("returns dedupe skips without dropping rewatches", async () => {

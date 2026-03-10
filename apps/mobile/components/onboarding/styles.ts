@@ -146,6 +146,82 @@ export const styles = StyleSheet.create({
 	importStatusMeta: {
 		fontSize: 11,
 	},
+	previewCard: {
+		borderRadius: borderRadius.md,
+		borderWidth: 1,
+		padding: spacing.md,
+		gap: spacing.md,
+	},
+	previewHeaderRow: {
+		flexDirection: "row",
+		gap: spacing.sm,
+		justifyContent: "space-between",
+		alignItems: "flex-start",
+	},
+	previewHeaderText: {
+		flex: 1,
+		gap: 2,
+	},
+	previewKicker: {
+		fontSize: 11,
+		fontWeight: "700",
+		textTransform: "uppercase",
+		letterSpacing: 0.8,
+	},
+	previewTitle: {
+		fontSize: 18,
+		fontWeight: "700",
+	},
+	previewSubtitle: {
+		fontSize: 12,
+		lineHeight: 18,
+	},
+	previewCountWrap: {
+		alignItems: "flex-end",
+		gap: 2,
+	},
+	previewCountLabel: {
+		fontSize: 11,
+		fontWeight: "600",
+		textTransform: "uppercase",
+	},
+	previewCountValue: {
+		fontSize: 26,
+		fontWeight: "700",
+	},
+	previewListWrap: {
+		gap: spacing.sm,
+	},
+	previewSectionLabel: {
+		fontSize: 11,
+		fontWeight: "700",
+		textTransform: "uppercase",
+	},
+	previewItem: {
+		borderRadius: borderRadius.md,
+		borderWidth: 1,
+		padding: spacing.sm,
+		flexDirection: "row",
+		gap: spacing.sm,
+		justifyContent: "space-between",
+	},
+	previewItemText: {
+		flex: 1,
+		gap: 2,
+	},
+	previewItemTitle: {
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	previewItemSubtitle: {
+		fontSize: 12,
+		lineHeight: 18,
+	},
+	previewItemDate: {
+		fontSize: 11,
+		textAlign: "right",
+		maxWidth: 110,
+	},
 	tabRow: {
 		flexDirection: "row",
 		gap: spacing.sm,
