@@ -10,7 +10,9 @@
     "generate:api": "pnpm --filter @opnshelf/api exec openapi-ts",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
-    "check": "turbo run check"
+    "check": "turbo run check",
+    "check:write": "turbo run check -- --write --unsafe",
+    "prepare": "husky"
   },
   "workspaces": [
     "apps/*",
@@ -18,6 +20,7 @@
     "backend"
   ],
   "devDependencies": {
+    "husky": "^9.1.7",
     "turbo": "^2.8.14"
   },
   "packageManager": "pnpm@10.30.2+sha512.36cdc707e7b7940a988c9c1ecf88d084f8514b5c3f085f53a2e244c2921d3b2545bc20dd4ebe1fc245feec463bb298aecea7a63ed1f7680b877dc6379d8d0cb4"
