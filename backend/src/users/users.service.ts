@@ -7,6 +7,7 @@ import type {
 	NormalizedImportItemDto,
 } from "./dto/import-history.dto";
 import type {
+	PublicUserProfileDto,
 	UserProfileDto,
 	UpdateUserSettingsDto,
 	UpdateUserProfileDto,
@@ -115,6 +116,25 @@ export class UsersService {
 			displayName: updatedUser.displayName,
 			avatar: updatedUser.avatar,
 		};
+	}
+
+	async getPublicProfileByHandle(handle: string): Promise<PublicUserProfileDto> {
+		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
+		const user = await this.prisma.user.findUnique({
+			where: { handle: normalizedHandle },
+			select: {
+				did: true,
+				handle: true,
+				displayName: true,
+				avatar: true,
+			},
+		});
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		return user;
 	}
 
 	async completeOnboarding(

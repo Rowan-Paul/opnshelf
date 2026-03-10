@@ -29,9 +29,14 @@ export interface ShelfMovieItem {
 interface ShelfMovieCardProps {
 	tracked: ShelfMovieItem;
 	user: UserDto | undefined;
+	readOnly?: boolean;
 }
 
-export function ShelfMovieCard({ tracked, user }: ShelfMovieCardProps) {
+export function ShelfMovieCard({
+	tracked,
+	user,
+	readOnly = false,
+}: ShelfMovieCardProps) {
 	const queryClient = useQueryClient();
 	const { formatDate } = useFormattedDate();
 
@@ -93,31 +98,33 @@ export function ShelfMovieCard({ tracked, user }: ShelfMovieCardProps) {
 						</div>
 					)}
 				</div>
-				<Button
-					type="button"
-					size="icon"
-					variant="destructive"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						unmarkMutation.mutate({
-							path: { movieId: tracked.movieId },
-						});
-					}}
-					disabled={
-						unmarkMutation.isPending &&
-						unmarkMutation.variables?.path?.movieId === tracked.movieId
-					}
-					className="absolute top-2 right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
-					title="Remove from shelf"
-				>
-					{unmarkMutation.isPending &&
-					unmarkMutation.variables?.path?.movieId === tracked.movieId ? (
-						<Loader2 className="w-4 h-4 animate-spin" />
-					) : (
-						<Trash2 className="w-4 h-4" />
-					)}
-				</Button>
+				{readOnly ? null : (
+					<Button
+						type="button"
+						size="icon"
+						variant="destructive"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							unmarkMutation.mutate({
+								path: { movieId: tracked.movieId },
+							});
+						}}
+						disabled={
+							unmarkMutation.isPending &&
+							unmarkMutation.variables?.path?.movieId === tracked.movieId
+						}
+						className="absolute top-2 right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
+						title="Remove from shelf"
+					>
+						{unmarkMutation.isPending &&
+						unmarkMutation.variables?.path?.movieId === tracked.movieId ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<Trash2 className="w-4 h-4" />
+						)}
+					</Button>
+				)}
 			</Link>
 			<Link
 				to="/movies/$movieId/$title"

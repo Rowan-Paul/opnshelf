@@ -128,6 +128,31 @@ describe("ListsService", () => {
 				include: { _count: { select: { items: true } } },
 			});
 		});
+
+		it("should expose public list summaries via the same ordering", async () => {
+			mockPrismaService.movieList.findMany.mockResolvedValue([
+				{
+					id: "list-1",
+					rkey: "favorites",
+					name: "Favorites",
+					description: "Best of the best",
+					slug: "favorites",
+					isDefault: true,
+					_count: { items: 2 },
+					createdAt: new Date("2024-01-01"),
+					updatedAt: new Date("2024-01-02"),
+				},
+			]);
+
+			await expect(
+				service.getPublicUserLists("did:plc:public123"),
+			).resolves.toMatchObject([
+				{
+					slug: "favorites",
+					movieCount: 2,
+				},
+			]);
+		});
 	});
 
 	describe("getListsForItem", () => {

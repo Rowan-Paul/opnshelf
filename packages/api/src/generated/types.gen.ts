@@ -572,6 +572,29 @@ export type UserProfileDto = {
     } | null;
 };
 
+export type PublicUserProfileDto = {
+    /**
+     * Stable DID for the user
+     */
+    did: string;
+    /**
+     * AT Protocol handle
+     */
+    handle: string;
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Avatar URL imported from BlueSky
+     */
+    avatar: {
+        [key: string]: unknown;
+    } | null;
+};
+
 export type DeleteUserAccountDto = {
     /**
      * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
@@ -1434,6 +1457,27 @@ export type ListsControllerGetUserListsResponses = {
 
 export type ListsControllerGetUserListsResponse = ListsControllerGetUserListsResponses[keyof ListsControllerGetUserListsResponses];
 
+export type ListsControllerGetPublicUserListsData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+    };
+    query?: never;
+    url: '/lists/user/{userDid}';
+};
+
+export type ListsControllerGetPublicUserListsResponses = {
+    /**
+     * Public list summaries for the user
+     */
+    200: Array<MovieListSummaryDto>;
+};
+
+export type ListsControllerGetPublicUserListsResponse = ListsControllerGetPublicUserListsResponses[keyof ListsControllerGetPublicUserListsResponses];
+
 export type ListsControllerCreateListData = {
     body: CreateListDto;
     path?: never;
@@ -1742,6 +1786,28 @@ export type UsersControllerGetMySettingsResponses = {
 };
 
 export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
+
+export type UsersControllerGetPublicProfileData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: never;
+    url: '/users/{handle}/profile';
+};
+
+export type UsersControllerGetPublicProfileErrors = {
+    /**
+     * User not found
+     */
+    404: unknown;
+};
+
+export type UsersControllerGetPublicProfileResponses = {
+    200: PublicUserProfileDto;
+};
+
+export type UsersControllerGetPublicProfileResponse = UsersControllerGetPublicProfileResponses[keyof UsersControllerGetPublicProfileResponses];
 
 export type UsersControllerUpdateMySettingsData = {
     body: UpdateUserSettingsDto;

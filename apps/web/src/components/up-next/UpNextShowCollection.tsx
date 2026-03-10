@@ -28,6 +28,7 @@ export interface UpNextShowCollectionProps {
 	upNext: UpNextShowDto[];
 	userDid: string;
 	limit?: number;
+	readOnly?: boolean;
 	showHeader?: boolean;
 	variant: "dashboard" | "profile";
 }
@@ -37,6 +38,7 @@ export function UpNextShowCollection({
 	upNext,
 	userDid,
 	limit,
+	readOnly = false,
 	showHeader = true,
 	variant,
 }: UpNextShowCollectionProps) {
@@ -207,33 +209,35 @@ export function UpNextShowCollection({
 												) : null}
 											</div>
 
-											<M3CardContent className="flex justify-end p-0 pt-4">
-												<div className="shrink-0 self-end">
-													<M3Button
-														size="sm"
-														variant="filled-tonal"
-														disabled={isPending}
-														onClick={(event) => {
-															event.preventDefault();
-															event.stopPropagation();
-															markMutation.mutate({
-																body: {
-																	showId: item.showId,
-																	seasonNumber: item.nextEpisode.seasonNumber,
-																	episodeNumber: item.nextEpisode.episodeNumber,
-																},
-															});
-														}}
-													>
-														{isPending ? (
-															<Loader2 className="h-4 w-4 animate-spin" />
-														) : (
-															<Check className="h-4 w-4" />
-														)}
-														Watch
-													</M3Button>
-												</div>
-											</M3CardContent>
+											{readOnly ? null : (
+												<M3CardContent className="flex justify-end p-0 pt-4">
+													<div className="shrink-0 self-end">
+														<M3Button
+															size="sm"
+															variant="filled-tonal"
+															disabled={isPending}
+															onClick={(event) => {
+																event.preventDefault();
+																event.stopPropagation();
+																markMutation.mutate({
+																	body: {
+																		showId: item.showId,
+																		seasonNumber: item.nextEpisode.seasonNumber,
+																		episodeNumber: item.nextEpisode.episodeNumber,
+																	},
+																});
+															}}
+														>
+															{isPending ? (
+																<Loader2 className="h-4 w-4 animate-spin" />
+															) : (
+																<Check className="h-4 w-4" />
+															)}
+															Watch
+														</M3Button>
+													</div>
+												</M3CardContent>
+											)}
 										</div>
 									</div>
 								</M3Card>

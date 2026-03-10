@@ -106,6 +106,41 @@ describe("UsersService", () => {
 		).rejects.toThrow(NotFoundException);
 	});
 
+	it("returns a public profile by normalized handle", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue({
+			did: "did:plc:123",
+			handle: "alice.bsky.social",
+			displayName: "Alice",
+			avatar: "https://example.com/alice.jpg",
+		});
+
+		await expect(
+			service.getPublicProfileByHandle(" @Alice.Bsky.Social "),
+		).resolves.toEqual({
+			did: "did:plc:123",
+			handle: "alice.bsky.social",
+			displayName: "Alice",
+			avatar: "https://example.com/alice.jpg",
+		});
+		expect(prisma.user.findUnique).toHaveBeenCalledWith({
+			where: { handle: "alice.bsky.social" },
+			select: {
+				did: true,
+				handle: true,
+				displayName: true,
+				avatar: true,
+			},
+		});
+	});
+
+	it("throws when public profile handle is missing", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+
+		await expect(service.getPublicProfileByHandle("nobody.bsky.social")).rejects.toThrow(
+			NotFoundException,
+		);
+	});
+
 	it("normalizes Trakt movie/episode items and skips unsupported action", async () => {
 		const payload = [
 			{

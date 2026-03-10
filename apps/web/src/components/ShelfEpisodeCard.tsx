@@ -34,9 +34,14 @@ export interface ShelfEpisodeItem {
 interface ShelfEpisodeCardProps {
 	tracked: ShelfEpisodeItem;
 	user: UserDto | undefined;
+	readOnly?: boolean;
 }
 
-export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
+export function ShelfEpisodeCard({
+	tracked,
+	user,
+	readOnly = false,
+}: ShelfEpisodeCardProps) {
 	const queryClient = useQueryClient();
 	const { formatDate } = useFormattedDate();
 
@@ -112,27 +117,29 @@ export function ShelfEpisodeCard({ tracked, user }: ShelfEpisodeCardProps) {
 						S{tracked.seasonNumber} E{tracked.episodeNumber}
 					</div>
 				</div>
-				<Button
-					type="button"
-					size="icon"
-					variant="destructive"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						deleteMutation.mutate({
-							path: { trackedEpisodeId: tracked.id },
-						});
-					}}
-					disabled={deleteMutation.isPending}
-					className="absolute top-2 right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
-					title="Remove from history"
-				>
-					{deleteMutation.isPending ? (
-						<Loader2 className="w-4 h-4 animate-spin" />
-					) : (
-						<Trash2 className="w-4 h-4" />
-					)}
-				</Button>
+				{readOnly ? null : (
+					<Button
+						type="button"
+						size="icon"
+						variant="destructive"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							deleteMutation.mutate({
+								path: { trackedEpisodeId: tracked.id },
+							});
+						}}
+						disabled={deleteMutation.isPending}
+						className="absolute top-2 right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity"
+						title="Remove from history"
+					>
+						{deleteMutation.isPending ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<Trash2 className="w-4 h-4" />
+						)}
+					</Button>
+				)}
 			</Link>
 			<Link
 				to="/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"

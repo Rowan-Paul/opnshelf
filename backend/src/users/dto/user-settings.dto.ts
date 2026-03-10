@@ -68,3 +68,27 @@ export class UserProfileDto {
 	})
 	avatar!: string | null;
 }
+
+export class PublicUserProfileDto {
+	@ApiProperty({
+		description: "Stable DID for the user",
+	})
+	did!: string;
+
+	@ApiProperty({
+		description: "AT Protocol handle",
+	})
+	handle!: string;
+
+	@ApiProperty({
+		description: "Display name shown in OpnShelf",
+		nullable: true,
+	})
+	displayName!: string | null;
+
+	@ApiProperty({
+		description: "Avatar URL imported from BlueSky",
+		nullable: true,
+	})
+	avatar!: string | null;
+}

@@ -83,6 +83,10 @@ export class ListsService {
 		}));
 	}
 
+	async getPublicUserLists(userDid: string): Promise<MovieListSummaryDto[]> {
+		return this.getUserLists(userDid);
+	}
+
 	async getList(
 		userDid: string,
 		slug: string,
