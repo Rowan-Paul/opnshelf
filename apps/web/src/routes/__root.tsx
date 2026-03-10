@@ -155,8 +155,8 @@ function OnboardingGate() {
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const posthogApiKey = env.VITE_PUBLIC_POSTHOG_KEY;
 	const posthogOptions = {
-		api_host: "/ingest",
-		ui_host: env.VITE_PUBLIC_POSTHOG_HOST || "https://eu.posthog.com",
+		api_host: env.VITE_PUBLIC_POSTHOG_HOST,
+		ui_host: env.VITE_PUBLIC_POSTHOG_HOST,
 		defaults: "2025-05-24" as const,
 		capture_exceptions: true,
 		debug: import.meta.env.DEV,
