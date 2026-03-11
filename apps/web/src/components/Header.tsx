@@ -1,27 +1,66 @@
+import { authControllerLogoutMutation, type UserDto } from "@opnshelf/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-	authControllerLogoutMutation,
-	authControllerMeOptions,
-} from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Film, Home, LogIn, LogOut, Menu, Search, User, X } from "lucide-react";
+	BookOpen,
+	ChevronDown,
+	Home,
+	LogIn,
+	LogOut,
+	Search,
+	Settings,
+	User,
+} from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
-import { getProfileRoute } from "@/lib/profile-routes";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import {
+	type GlobalNavItem,
+	getHomeRoute,
+	getMyShelfRoute,
+	getSearchRoute,
+	getSettingsRoute,
+	getSignedInPrimaryNav,
+	getSignedOutPrimaryNav,
+	isGlobalNavItemActive,
+} from "@/lib/web-navigation";
 
-export default function Header() {
-	const [isOpen, setIsOpen] = useState(false);
+interface HeaderProps {
+	user: UserDto | null | undefined;
+	isAuthLoading: boolean;
+	showMobileBottomNav: boolean;
+}
+
+type NavLinkTarget =
+	| ReturnType<typeof getHomeRoute>
+	| ReturnType<typeof getSearchRoute>
+	| ReturnType<typeof getMyShelfRoute>
+	| ReturnType<typeof getSettingsRoute>;
+
+const navIcons = {
+	home: Home,
+	search: Search,
+	"my-shelf": BookOpen,
+} satisfies Record<GlobalNavItem["id"], typeof Home>;
+
+export default function Header({
+	user,
+	isAuthLoading,
+	showMobileBottomNav,
+}: HeaderProps) {
+	const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { seedColor } = useTheme();
 
-	const { data: user, isLoading: isAuthLoading } = useQuery({
-		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
-
+	const primaryNav = user ? getSignedInPrimaryNav() : getSignedOutPrimaryNav();
 	const logoutMutation = useMutation({
 		mutationKey: ["auth", "logout"],
 		...authControllerLogoutMutation(),
@@ -32,348 +71,457 @@ export default function Header() {
 	});
 
 	const handleLogout = async () => {
+		setIsAccountMenuOpen(false);
 		await logoutMutation.mutateAsync({});
 	};
-
-	const handleLogin = () => {
-		navigate({ to: "/login" });
-	};
-	const profileShelfRoute = getProfileRoute(user?.handle ?? "", "shelf", {
-		page: 1,
-	});
 
 	return (
 		<>
 			<header
-				className="px-4 py-3 flex items-center justify-between md-elevation-1 sticky top-0 z-30"
+				className="sticky top-0 z-40 border-b"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface)",
-					color: "var(--md-sys-color-on-surface)",
+					borderColor: "var(--md-sys-color-outline-variant)",
+					boxShadow:
+						"0 18px 40px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.02)",
 				}}
 			>
-				<div className="flex items-center gap-3">
-					<M3Button
-						variant="text"
-						size="icon"
-						onClick={() => setIsOpen(true)}
-						className="md:hidden"
-						aria-label="Open menu"
-					>
-						<Menu size={24} />
-					</M3Button>
-					<Link to="/" className="flex items-center gap-2 group">
-						<img
-							src="/icon.png"
-							alt="OpnShelf"
-							className="w-8 h-8 rounded-md transition-transform group-hover:scale-110"
-						/>
-						<span className="md-title-large">OpnShelf</span>
-					</Link>
-				</div>
+				<div
+					className="absolute inset-x-0 top-0 h-px"
+					style={{
+						background: `linear-gradient(90deg, transparent, ${seedColor}, transparent)`,
+						opacity: 0.45,
+					}}
+				/>
 
-				<nav className="hidden md:flex items-center gap-1">
-					<Link
-						to="/"
-						className="flex items-center gap-2 px-4 py-2 rounded-(--md-sys-shape-corner-large) transition-colors md-label-large"
-						style={{
-							color: "var(--md-sys-color-on-surface-variant)",
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor =
-								"var(--md-sys-color-surface-container)";
-							e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "transparent";
-							e.currentTarget.style.color =
-								"var(--md-sys-color-on-surface-variant)";
-						}}
-						activeProps={{
-							className:
-								"flex items-center gap-2 px-4 py-2 rounded-[var(--md-sys-shape-corner-large)] md-label-large",
-							style: {
-								backgroundColor: "var(--md-sys-color-secondary-container)",
-								color: "var(--md-sys-color-on-secondary-container)",
-							},
-						}}
-						activeOptions={{ exact: true }}
-					>
-						<Home size={18} />
-						<span>Home</span>
-					</Link>
-					<Link
-						to="/search"
-						search={{ q: "", type: "all" }}
-						className="flex items-center gap-2 px-4 py-2 rounded-(--md-sys-shape-corner-large) transition-colors md-label-large"
-						style={{
-							color: "var(--md-sys-color-on-surface-variant)",
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor =
-								"var(--md-sys-color-surface-container)";
-							e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "transparent";
-							e.currentTarget.style.color =
-								"var(--md-sys-color-on-surface-variant)";
-						}}
-					>
-						<Search size={18} />
-						<span>Search</span>
-					</Link>
-					<div
-						className="ml-4 pl-4"
-						style={{
-							borderLeft: "1px solid var(--md-sys-color-outline-variant)",
-						}}
-					>
-						{isAuthLoading ? (
-							<div
-								className="w-8 h-8 rounded-full animate-pulse"
-								style={{
-									backgroundColor: "var(--md-sys-color-surface-container)",
-								}}
+				<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[4.5rem]">
+					<Brand seedColor={seedColor} />
+
+					<nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
+						{primaryNav.map((item) => (
+							<PrimaryNavLink
+								key={item.id}
+								item={item}
+								currentPath={location.pathname}
+								currentUserHandle={user?.handle}
+								seedColor={seedColor}
 							/>
+						))}
+					</nav>
+
+					<div className="flex items-center gap-2">
+						{isAuthLoading ? (
+							<AuthActionsSkeleton />
 						) : user ? (
-							<div className="flex items-center gap-3">
-								<Link
-									{...profileShelfRoute}
-									className="flex items-center gap-3 rounded-(--md-sys-shape-corner-large) px-2 py-1.5 transition-colors"
-									style={{
-										color: "var(--md-sys-color-on-surface-variant)",
-									}}
-									onMouseEnter={(e) => {
-										e.currentTarget.style.backgroundColor =
-											"var(--md-sys-color-surface-container)";
-										e.currentTarget.style.color =
-											"var(--md-sys-color-on-surface)";
-									}}
-									onMouseLeave={(e) => {
-										e.currentTarget.style.backgroundColor = "transparent";
-										e.currentTarget.style.color =
-											"var(--md-sys-color-on-surface-variant)";
-									}}
-								>
-									{user.avatar ? (
-										<img
-											src={String(user.avatar)}
-											alt={String(user.displayName || user.handle)}
-											className="w-8 h-8 rounded-full"
-										/>
-									) : (
-										<div
-											className="w-8 h-8 rounded-full flex items-center justify-center"
-											style={{
-												backgroundColor: seedColor,
-												color: "var(--md-sys-color-on-primary)",
-											}}
-										>
-											<User size={16} />
-										</div>
-									)}
-									<span className="md-body-medium">
-										{user.displayName
-											? String(user.displayName)
-											: `@${user.handle}`}
-									</span>
-								</Link>
-								<M3Button
-									variant="text"
-									size="icon-sm"
-									onClick={handleLogout}
-									disabled={logoutMutation.isPending}
-									title="Sign out"
-								>
-									<LogOut size={16} />
-								</M3Button>
-							</div>
+							<AccountMenu
+								user={user}
+								seedColor={seedColor}
+								isOpen={isAccountMenuOpen}
+								onOpenChange={setIsAccountMenuOpen}
+								onLogout={handleLogout}
+								isLoggingOut={logoutMutation.isPending}
+							/>
 						) : (
-							<M3Button variant="filled" onClick={handleLogin} size="sm">
-								<LogIn size={16} />
-								<span>Sign in</span>
-							</M3Button>
+							<SignedOutActions />
 						)}
 					</div>
-				</nav>
+				</div>
 			</header>
 
-			{isOpen && (
-				<button
-					type="button"
-					className="fixed inset-0 z-40 md:hidden"
-					style={{ backgroundColor: "var(--md-sys-color-scrim)" }}
-					onClick={() => setIsOpen(false)}
-					aria-label="Close menu overlay"
+			{showMobileBottomNav && user ? (
+				<MobileBottomNav
+					currentPath={location.pathname}
+					currentUserHandle={user.handle}
+					seedColor={seedColor}
 				/>
-			)}
+			) : null}
+		</>
+	);
+}
 
-			<aside
-				className={`fixed top-0 left-0 h-full w-72 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col md:hidden ${
-					isOpen ? "translate-x-0" : "-translate-x-full"
-				}`}
+function Brand({ seedColor }: { seedColor: string }) {
+	return (
+		<Link to="/" className="group flex items-center gap-3">
+			<div
+				className="flex size-10 items-center justify-center rounded-[18px] border transition-transform duration-300 group-hover:scale-[1.04]"
+				style={{
+					backgroundColor: "var(--md-sys-color-surface-container-high)",
+					borderColor: "var(--md-sys-color-outline-variant)",
+					boxShadow: `0 0 0 1px ${seedColor}24 inset`,
+				}}
+			>
+				<img src="/icon.png" alt="OpnShelf" className="size-7 rounded-xl" />
+			</div>
+
+			<div className="min-w-0">
+				<div className="md-title-large leading-none">OpnShelf</div>
+				<p
+					className="hidden text-[11px] font-semibold uppercase tracking-[0.24em] md:block"
+					style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+				>
+					Track your cinema
+				</p>
+			</div>
+		</Link>
+	);
+}
+
+function SignedOutActions() {
+	return (
+		<>
+			<Link
+				{...getSearchRoute()}
+				className="inline-flex size-10 items-center justify-center rounded-full border transition-colors md:hidden"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container)",
+					borderColor: "var(--md-sys-color-outline-variant)",
 					color: "var(--md-sys-color-on-surface)",
+				}}
+				aria-label="Search"
+			>
+				<Search className="size-4" />
+			</Link>
+
+			<M3Button
+				variant="filled"
+				size="sm"
+				asChild
+				className="rounded-full px-4"
+			>
+				<Link to="/login">
+					<LogIn className="size-4" />
+					<span className="hidden sm:inline">Sign in</span>
+				</Link>
+			</M3Button>
+		</>
+	);
+}
+
+function AuthActionsSkeleton() {
+	return (
+		<div className="flex items-center gap-2">
+			<div
+				className="hidden h-10 w-28 animate-pulse rounded-full md:block"
+				style={{
+					backgroundColor: "var(--md-sys-color-surface-container-high)",
+				}}
+			/>
+			<div
+				className="size-10 animate-pulse rounded-full"
+				style={{
+					backgroundColor: "var(--md-sys-color-surface-container-high)",
+				}}
+			/>
+		</div>
+	);
+}
+
+function PrimaryNavLink({
+	item,
+	currentPath,
+	currentUserHandle,
+	seedColor,
+}: {
+	item: GlobalNavItem;
+	currentPath: string;
+	currentUserHandle?: string;
+	seedColor: string;
+}) {
+	const Icon = navIcons[item.id];
+	const isActive = isGlobalNavItemActive(
+		item.id,
+		currentPath,
+		currentUserHandle,
+	);
+	const target = getNavTarget(item.id, currentUserHandle);
+
+	if (!target) {
+		return null;
+	}
+
+	return (
+		<Link
+			{...target}
+			className={cn(
+				"inline-flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-200",
+				"hover:-translate-y-0.5 hover:bg-[var(--md-sys-color-surface-container-high)] hover:text-[var(--md-sys-color-on-surface)]",
+			)}
+			style={
+				isActive
+					? {
+							backgroundColor: `${seedColor}22`,
+							borderColor: `${seedColor}55`,
+							color: seedColor,
+							boxShadow: `0 10px 24px ${seedColor}14`,
+						}
+					: {
+							backgroundColor: "var(--md-sys-color-surface-container-low)",
+							borderColor: "var(--md-sys-color-outline-variant)",
+							color: "var(--md-sys-color-on-surface-variant)",
+						}
+			}
+		>
+			<Icon className="size-4" />
+			<span className="md-label-large">{item.label}</span>
+		</Link>
+	);
+}
+
+function MobileBottomNav({
+	currentPath,
+	currentUserHandle,
+	seedColor,
+}: {
+	currentPath: string;
+	currentUserHandle: string;
+	seedColor: string;
+}) {
+	return (
+		<div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-2 md:hidden">
+			<nav
+				className="pointer-events-auto mx-auto flex max-w-md items-stretch gap-2 rounded-[28px] border px-2 pt-2 shadow-[0_-16px_32px_rgba(0,0,0,0.36)] backdrop-blur-xl"
+				style={{
+					backgroundColor: "rgba(20, 18, 24, 0.94)",
+					borderColor: "rgba(255, 255, 255, 0.08)",
+					paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))",
+				}}
+			>
+				{getSignedInPrimaryNav().map((item) => (
+					<MobileBottomNavLink
+						key={item.id}
+						item={item}
+						currentPath={currentPath}
+						currentUserHandle={currentUserHandle}
+						seedColor={seedColor}
+					/>
+				))}
+			</nav>
+		</div>
+	);
+}
+
+function MobileBottomNavLink({
+	item,
+	currentPath,
+	currentUserHandle,
+	seedColor,
+}: {
+	item: GlobalNavItem;
+	currentPath: string;
+	currentUserHandle: string;
+	seedColor: string;
+}) {
+	const Icon = navIcons[item.id];
+	const isActive = isGlobalNavItemActive(
+		item.id,
+		currentPath,
+		currentUserHandle,
+	);
+	const target = getNavTarget(item.id, currentUserHandle);
+
+	if (!target) {
+		return null;
+	}
+
+	return (
+		<Link
+			{...target}
+			className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[22px] px-3 py-2 text-center transition-all duration-200"
+			style={
+				isActive
+					? {
+							backgroundColor: `${seedColor}24`,
+							color: seedColor,
+							boxShadow: `inset 0 0 0 1px ${seedColor}40`,
+						}
+					: {
+							color: "var(--md-sys-color-on-surface-variant)",
+						}
+			}
+		>
+			<Icon className="size-[1.15rem]" />
+			<span className="text-[11px] font-semibold tracking-[0.02em]">
+				{item.label}
+			</span>
+		</Link>
+	);
+}
+
+function AccountMenu({
+	user,
+	seedColor,
+	isOpen,
+	onOpenChange,
+	onLogout,
+	isLoggingOut,
+}: {
+	user: UserDto;
+	seedColor: string;
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+	onLogout: () => Promise<void>;
+	isLoggingOut: boolean;
+}) {
+	const displayName = user.displayName
+		? String(user.displayName)
+		: `@${user.handle}`;
+	const avatar = user.avatar ? String(user.avatar) : null;
+
+	return (
+		<Popover open={isOpen} onOpenChange={onOpenChange}>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					className="inline-flex size-10 items-center justify-center rounded-full border transition-transform duration-200 hover:scale-[1.02] md:size-auto md:gap-2 md:px-2.5"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container)",
+						borderColor: "var(--md-sys-color-outline-variant)",
+						color: "var(--md-sys-color-on-surface)",
+					}}
+					aria-label="Open account menu"
+				>
+					<Avatar user={user} seedColor={seedColor} className="size-8" />
+					<ChevronDown className="hidden size-4 md:block" />
+				</button>
+			</PopoverTrigger>
+
+			<PopoverContent
+				align="end"
+				sideOffset={10}
+				className="w-[20rem] rounded-[24px] border p-2"
+				style={{
+					backgroundColor: "var(--md-sys-color-surface-container-high)",
+					borderColor: "var(--md-sys-color-outline-variant)",
 				}}
 			>
 				<div
-					className="flex items-center justify-between p-4"
+					className="mb-2 flex items-center gap-3 rounded-[18px] border px-3 py-3"
 					style={{
-						borderBottom: "1px solid var(--md-sys-color-outline-variant)",
+						backgroundColor: "var(--md-sys-color-surface-container-low)",
+						borderColor: "var(--md-sys-color-outline-variant)",
 					}}
 				>
-					<div className="flex items-center gap-2">
-						<Film className="w-6 h-6" style={{ color: seedColor }} />
-						<span className="md-title-medium">OpnShelf</span>
-					</div>
-					<M3Button
-						variant="text"
-						size="icon-sm"
-						onClick={() => setIsOpen(false)}
-						aria-label="Close menu"
-					>
-						<X size={24} />
-					</M3Button>
-				</div>
-
-				<nav className="flex-1 p-4 overflow-y-auto">
-					<Link
-						to="/"
-						onClick={() => setIsOpen(false)}
-						className="flex items-center gap-3 p-3 rounded-(--md-sys-shape-corner-large) transition-colors mb-2 md-label-large"
-						style={{
-							color: "var(--md-sys-color-on-surface-variant)",
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor =
-								"var(--md-sys-color-surface-container-highest)";
-							e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "transparent";
-							e.currentTarget.style.color =
-								"var(--md-sys-color-on-surface-variant)";
-						}}
-						activeProps={{
-							className:
-								"flex items-center gap-3 p-3 rounded-[var(--md-sys-shape-corner-large)] mb-2 md-label-large",
-							style: {
-								backgroundColor: "var(--md-sys-color-secondary-container)",
-								color: "var(--md-sys-color-on-secondary-container)",
-							},
-						}}
-						activeOptions={{ exact: true }}
-					>
-						<Home size={20} />
-						<span>Home</span>
-					</Link>
-
-					<Link
-						to="/search"
-						search={{ q: "", type: "all" }}
-						onClick={() => setIsOpen(false)}
-						className="flex items-center gap-3 p-3 rounded-(--md-sys-shape-corner-large) transition-colors mb-2 md-label-large"
-						style={{
-							color: "var(--md-sys-color-on-surface-variant)",
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor =
-								"var(--md-sys-color-surface-container-highest)";
-							e.currentTarget.style.color = "var(--md-sys-color-on-surface)";
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "transparent";
-							e.currentTarget.style.color =
-								"var(--md-sys-color-on-surface-variant)";
-						}}
-					>
-						<Search size={20} />
-						<span>Search</span>
-					</Link>
-				</nav>
-
-				<div
-					className="p-4"
-					style={{ borderTop: "1px solid var(--md-sys-color-outline-variant)" }}
-				>
-					{isAuthLoading ? (
-						<div
-							className="h-12 rounded-lg animate-pulse"
-							style={{
-								backgroundColor: "var(--md-sys-color-surface-container-high)",
-							}}
+					{avatar ? (
+						<img
+							src={avatar}
+							alt={displayName}
+							className="size-11 rounded-full object-cover"
 						/>
-					) : user ? (
-						<div className="space-y-3">
-							<Link
-								{...profileShelfRoute}
-								onClick={() => setIsOpen(false)}
-								className="flex items-center gap-3"
-							>
-								<div className="flex items-center gap-3">
-									{user.avatar ? (
-										<img
-											src={String(user.avatar)}
-											alt={String(user.displayName || user.handle)}
-											className="w-10 h-10 rounded-full"
-										/>
-									) : (
-										<div
-											className="w-10 h-10 rounded-full flex items-center justify-center"
-											style={{
-												backgroundColor: seedColor,
-												color: "var(--md-sys-color-on-primary)",
-											}}
-										>
-											<User size={20} />
-										</div>
-									)}
-									<div>
-										<div className="md-body-large">
-											{user.displayName
-												? String(user.displayName)
-												: user.handle}
-										</div>
-										<div
-											className="md-body-small"
-											style={{
-												color: "var(--md-sys-color-on-surface-variant)",
-											}}
-										>
-											@{user.handle}
-										</div>
-									</div>
-								</div>
-							</Link>
-							<M3Button
-								variant="outlined"
-								onClick={() => {
-									handleLogout();
-									setIsOpen(false);
-								}}
-								disabled={logoutMutation.isPending}
-								className="w-full"
-							>
-								<LogOut size={18} />
-								<span>Sign out</span>
-							</M3Button>
-						</div>
 					) : (
-						<M3Button
-							variant="filled"
-							onClick={() => {
-								handleLogin();
-								setIsOpen(false);
-							}}
-							className="w-full"
-						>
-							<LogIn size={18} />
-							<span>Sign in</span>
-						</M3Button>
+						<Avatar user={user} seedColor={seedColor} className="size-11" />
 					)}
+					<div className="min-w-0">
+						<p className="truncate md-title-medium">{displayName}</p>
+						<p
+							className="truncate md-body-small"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
+							@{user.handle}
+						</p>
+					</div>
 				</div>
-			</aside>
-		</>
+
+				<div className="space-y-1">
+					<MenuLink
+						target={getMyShelfRoute(user.handle)}
+						icon={User}
+						label="My Profile"
+						onSelect={() => onOpenChange(false)}
+					/>
+					<MenuLink
+						target={getSettingsRoute(user.handle)}
+						icon={Settings}
+						label="Settings"
+						onSelect={() => onOpenChange(false)}
+					/>
+					<button
+						type="button"
+						onClick={onLogout}
+						disabled={isLoggingOut}
+						className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left transition-colors hover:bg-[var(--md-sys-color-surface-container-low)] disabled:opacity-60"
+						style={{ color: "var(--md-sys-color-on-surface)" }}
+					>
+						<LogOut className="size-4" />
+						<span className="md-label-large">Sign out</span>
+					</button>
+				</div>
+			</PopoverContent>
+		</Popover>
 	);
+}
+
+function MenuLink({
+	target,
+	icon: Icon,
+	label,
+	onSelect,
+}: {
+	target: NavLinkTarget;
+	icon: typeof User;
+	label: string;
+	onSelect: () => void;
+}) {
+	return (
+		<Link
+			{...target}
+			onClick={onSelect}
+			className="flex items-center gap-3 rounded-[18px] px-3 py-3 transition-colors hover:bg-[var(--md-sys-color-surface-container-low)]"
+			style={{ color: "var(--md-sys-color-on-surface)" }}
+		>
+			<Icon className="size-4" />
+			<span className="md-label-large">{label}</span>
+		</Link>
+	);
+}
+
+function Avatar({
+	user,
+	seedColor,
+	className,
+}: {
+	user: UserDto;
+	seedColor: string;
+	className?: string;
+}) {
+	if (user.avatar) {
+		return (
+			<img
+				src={String(user.avatar)}
+				alt={user.displayName ? String(user.displayName) : user.handle}
+				className={cn("rounded-full object-cover", className)}
+			/>
+		);
+	}
+
+	return (
+		<div
+			className={cn(
+				"flex items-center justify-center rounded-full text-(--md-sys-color-on-primary)",
+				className,
+			)}
+			style={{ backgroundColor: seedColor }}
+		>
+			{user.displayName ? (
+				<span className="text-sm font-bold uppercase">
+					{String(user.displayName).charAt(0)}
+				</span>
+			) : (
+				<User className="size-4" />
+			)}
+		</div>
+	);
+}
+
+function getNavTarget(
+	itemId: GlobalNavItem["id"],
+	currentUserHandle?: string,
+): NavLinkTarget | null {
+	switch (itemId) {
+		case "home":
+			return getHomeRoute();
+		case "search":
+			return getSearchRoute();
+		case "my-shelf":
+			return currentUserHandle ? getMyShelfRoute(currentUserHandle) : null;
+	}
 }
