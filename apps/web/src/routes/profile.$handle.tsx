@@ -1,8 +1,8 @@
 import {
-	redirect,
 	createFileRoute,
 	Link,
 	Outlet,
+	redirect,
 	useLocation,
 	useMatchRoute,
 } from "@tanstack/react-router";
@@ -107,7 +107,9 @@ function ProfileLayout() {
 								color: "var(--md-sys-color-on-primary)",
 							}}
 						>
-							<span className="text-2xl font-bold">{displayName[0] || "?"}</span>
+							<span className="text-2xl font-bold">
+								{displayName[0] || "?"}
+							</span>
 						</div>
 					)}
 					<div className="min-w-0 flex-1">

@@ -3,10 +3,7 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import {
-	isOwnerProfile,
-	normalizeProfileHandle,
-} from "@/lib/profile-routes";
+import { isOwnerProfile, normalizeProfileHandle } from "@/lib/profile-routes";
 
 export function useProfileRouteState(handleInput: string) {
 	const handle = normalizeProfileHandle(handleInput);

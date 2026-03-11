@@ -142,12 +142,12 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 
 			<div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 				<div className="lg:col-span-3">
-		<UpNextSection
-			isLoading={isUpNextLoading}
-			upNext={upNext?.items ?? []}
-			userDid={user.did}
-			userHandle={user.handle}
-		/>
+					<UpNextSection
+						isLoading={isUpNextLoading}
+						upNext={upNext?.items ?? []}
+						userDid={user.did}
+						userHandle={user.handle}
+					/>
 				</div>
 
 				<div className="lg:col-span-2">
@@ -253,9 +253,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 						<h2 className="md-headline-small">Recent Watched</h2>
 						<M3Button variant="text" className="rounded-full px-4" asChild>
-							<Link
-								{...getProfileRoute(user.handle, "shelf", { page: 1 })}
-							>
+							<Link {...getProfileRoute(user.handle, "shelf", { page: 1 })}>
 								View shelf
 							</Link>
 						</M3Button>

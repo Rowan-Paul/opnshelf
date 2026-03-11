@@ -17,10 +17,10 @@ import { ArrowLeft, List, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { ListMediaCard } from "@/components/lists/ListMediaCard";
 import { MovieGridSkeleton } from "@/components/MovieGrid";
 import { PaginationControls } from "@/components/PaginationControls";
 import { useTheme } from "@/components/theme-provider";
-import { ListMediaCard } from "@/components/lists/ListMediaCard";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -56,7 +56,8 @@ function ProfileListDetailPage() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const queryClient = useQueryClient();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-	const { profile, currentUser, isOwner, isLoading } = useProfileRouteState(handle);
+	const { profile, currentUser, isOwner, isLoading } =
+		useProfileRouteState(handle);
 	const { seedColor } = useTheme();
 
 	const userDid = profile?.did ?? "";
@@ -202,9 +203,12 @@ function ProfileListDetailPage() {
 						className="mx-auto mb-4 h-16 w-16"
 						style={{ color: "var(--md-sys-color-outline)" }}
 					/>
-					<M3CardTitle className="md-headline-small">List not found</M3CardTitle>
+					<M3CardTitle className="md-headline-small">
+						List not found
+					</M3CardTitle>
 					<M3CardDescription>
-						This list doesn&apos;t exist or isn&apos;t available on this profile.
+						This list doesn&apos;t exist or isn&apos;t available on this
+						profile.
 					</M3CardDescription>
 				</M3CardHeader>
 				<M3CardContent>
@@ -370,9 +374,7 @@ function ProfileListDetailPage() {
 								key={item.id}
 								item={item}
 								readOnly={!isOwner}
-								onWatch={
-									isOwner ? () => handleQuickWatch(item) : undefined
-								}
+								onWatch={isOwner ? () => handleQuickWatch(item) : undefined}
 								onRemove={
 									isOwner
 										? ({ mediaType, mediaId }) => {
@@ -412,7 +414,9 @@ function ProfileListDetailPage() {
 							className="mx-auto mb-4 h-16 w-16"
 							style={{ color: "var(--md-sys-color-outline)" }}
 						/>
-						<M3CardTitle className="md-headline-small">No items yet</M3CardTitle>
+						<M3CardTitle className="md-headline-small">
+							No items yet
+						</M3CardTitle>
 						<M3CardDescription>
 							{isOwner
 								? "Add movies or shows to this list from the search page"

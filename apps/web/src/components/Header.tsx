@@ -6,9 +6,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Film, Home, LogIn, LogOut, Menu, Search, User, X } from "lucide-react";
 import { useState } from "react";
-import { getProfileRoute } from "@/lib/profile-routes";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
+import { getProfileRoute } from "@/lib/profile-routes";
 
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -38,11 +38,9 @@ export default function Header() {
 	const handleLogin = () => {
 		navigate({ to: "/login" });
 	};
-	const profileShelfRoute = getProfileRoute(
-		user?.handle ?? "",
-		"shelf",
-		{ page: 1 },
-	);
+	const profileShelfRoute = getProfileRoute(user?.handle ?? "", "shelf", {
+		page: 1,
+	});
 
 	return (
 		<>

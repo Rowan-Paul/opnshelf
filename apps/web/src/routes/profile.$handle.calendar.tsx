@@ -1,17 +1,12 @@
 import {
 	authControllerMeOptions,
+	type ReleaseCalendarItemDto,
 	showsControllerGetUserReleaseCalendarOptions,
 	usersControllerGetPublicProfileOptions,
-	type ReleaseCalendarItemDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import {
-	Calendar,
-	ChevronLeft,
-	ChevronRight,
-	Loader2,
-} from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { M3Button } from "@/components/ui/m3-button";
 import {
@@ -99,7 +94,9 @@ export const Route = createFileRoute("/profile/$handle/calendar")({
 		}
 	},
 	head: ({ params }) => ({
-		meta: [{ title: `@${params.handle.replace(/^@/, "")} Calendar | OpnShelf` }],
+		meta: [
+			{ title: `@${params.handle.replace(/^@/, "")} Calendar | OpnShelf` },
+		],
 	}),
 	component: ProfileCalendarPage,
 });

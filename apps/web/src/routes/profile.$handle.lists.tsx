@@ -51,7 +51,9 @@ function ProfileListsPage() {
 	}
 
 	const lists = isOwner ? ownerListsQuery.data : publicListsQuery.data;
-	const isLoading = isOwner ? ownerListsQuery.isLoading : publicListsQuery.isLoading;
+	const isLoading = isOwner
+		? ownerListsQuery.isLoading
+		: publicListsQuery.isLoading;
 
 	if (isLoading) {
 		return (
@@ -83,7 +85,9 @@ function ProfileListsPage() {
 							className="mx-auto mb-4 h-16 w-16"
 							style={{ color: "var(--md-sys-color-outline)" }}
 						/>
-						<M3CardTitle className="md-headline-small">No lists yet</M3CardTitle>
+						<M3CardTitle className="md-headline-small">
+							No lists yet
+						</M3CardTitle>
 						<M3CardDescription>
 							{isOwner
 								? "Your default lists will appear after you add movies"

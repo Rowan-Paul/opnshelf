@@ -140,7 +140,9 @@ function ProfileShelfPage() {
 						style={{ color: "var(--md-sys-color-outline)" }}
 					/>
 					<M3CardTitle className="md-headline-small">
-						{isOwner ? "Your shelf is empty" : `${displayName}'s shelf is empty`}
+						{isOwner
+							? "Your shelf is empty"
+							: `${displayName}'s shelf is empty`}
 					</M3CardTitle>
 					<M3CardDescription>
 						{isOwner
@@ -207,14 +209,14 @@ function ProfileShelfPage() {
 									<ShelfMovieCard
 										key={item.id}
 										tracked={item as never}
-										user={isOwner ? currentUser ?? undefined : undefined}
+										user={isOwner ? (currentUser ?? undefined) : undefined}
 										readOnly={!isOwner}
 									/>
 								) : (
 									<ShelfEpisodeCard
 										key={item.id}
 										tracked={item as never}
-										user={isOwner ? currentUser ?? undefined : undefined}
+										user={isOwner ? (currentUser ?? undefined) : undefined}
 										readOnly={!isOwner}
 									/>
 								),

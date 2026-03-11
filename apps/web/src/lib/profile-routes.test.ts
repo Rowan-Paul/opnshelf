@@ -8,9 +8,7 @@ import {
 
 describe("profile-routes", () => {
 	it("normalizes handles", () => {
-		expect(normalizeProfileHandle(" @RowanPaulFlynn ")).toBe(
-			"rowanpaulflynn",
-		);
+		expect(normalizeProfileHandle(" @RowanPaulFlynn ")).toBe("rowanpaulflynn");
 	});
 
 	it("builds canonical profile routes", () => {

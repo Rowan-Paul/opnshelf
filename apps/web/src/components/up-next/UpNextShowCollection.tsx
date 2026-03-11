@@ -88,9 +88,7 @@ export function UpNextShowCollection({
 					</div>
 					{profileHandle ? (
 						<M3Button variant="text" className="rounded-full px-4" asChild>
-							<Link
-								{...getProfileRoute(profileHandle, "up-next", { page: 1 })}
-							>
+							<Link {...getProfileRoute(profileHandle, "up-next", { page: 1 })}>
 								View all
 							</Link>
 						</M3Button>
