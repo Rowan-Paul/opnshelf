@@ -1,1 +1,16 @@
-pnpm check:write
+#!/usr/bin/env sh
+
+staged_files=$(mktemp)
+
+git diff --cached --name-only --diff-filter=ACMR -z >"$staged_files"
+
+pnpm check:write || {
+  rm -f "$staged_files"
+  exit 1
+}
+
+if [ -s "$staged_files" ]; then
+  xargs -0 git add -- <"$staged_files"
+fi
+
+rm -f "$staged_files"
