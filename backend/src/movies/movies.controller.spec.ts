@@ -101,7 +101,7 @@ describe("MoviesController", () => {
 	});
 
 	describe("getMovieDetails", () => {
-		it("should return movie details from TMDB with colors", async () => {
+		it("should return movie details from TMDB with colors and trailer", async () => {
 			const mockMovie = {
 				id: 123,
 				title: "Test Movie",
@@ -111,6 +111,14 @@ describe("MoviesController", () => {
 				backdrop_path: "/backdrop.jpg",
 				runtime: 120,
 				vote_average: 7.5,
+				trailer: {
+					id: "trailer-1",
+					key: "abc123",
+					name: "Official Trailer",
+					site: "YouTube",
+					type: "Trailer",
+					sourceMediaType: "movie",
+				},
 			};
 			const mockUpsertedMovie = {
 				movieId: "123",

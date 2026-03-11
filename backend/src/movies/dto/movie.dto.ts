@@ -223,6 +223,32 @@ export class TMDBCreditsDto {
 	crew: TMDBCrewDto[];
 }
 
+export class TMDBTrailerDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	key: string;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiProperty()
+	site: string;
+
+	@ApiProperty()
+	type: string;
+
+	@ApiPropertyOptional()
+	official?: boolean;
+
+	@ApiPropertyOptional()
+	published_at?: string;
+
+	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
+	sourceMediaType: "movie" | "show" | "season" | "episode";
+}
+
 export class TMDBMovieDetailDto extends TMDBMovieResultDto {
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -244,6 +270,9 @@ export class TMDBMovieDetailDto extends TMDBMovieResultDto {
 
 	@ApiPropertyOptional({ type: TMDBCreditsDto })
 	credits?: TMDBCreditsDto;
+
+	@ApiPropertyOptional({ type: TMDBTrailerDto })
+	trailer?: TMDBTrailerDto;
 }
 
 export class SearchResultsDto {

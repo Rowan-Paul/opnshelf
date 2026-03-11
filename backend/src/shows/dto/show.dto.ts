@@ -15,6 +15,7 @@ import {
 	TMDBCreditsDto,
 	TMDBGenreDto,
 	TMDBNetworkDto,
+	TMDBTrailerDto,
 } from "../../movies/dto/movie.dto";
 
 export class ShowDto {
@@ -276,6 +277,9 @@ export class TMDBEpisodeDto {
 
 	@ApiPropertyOptional({ type: EpisodeContextDto })
 	_context?: EpisodeContextDto;
+
+	@ApiPropertyOptional({ type: TMDBTrailerDto })
+	trailer?: TMDBTrailerDto;
 }
 
 export class TMDBSeasonDetailDto {
@@ -308,6 +312,9 @@ export class TMDBSeasonDetailDto {
 
 	@ApiProperty({ type: [TMDBEpisodeDto] })
 	episodes: TMDBEpisodeDto[];
+
+	@ApiPropertyOptional({ type: TMDBTrailerDto })
+	trailer?: TMDBTrailerDto;
 }
 
 export class TMDBSeasonSummaryDto {
@@ -358,6 +365,9 @@ export class TMDBShowDetailDto extends TMDBShowResultDto {
 		cast: TMDBCastDto[];
 		crew: TMDBCrewDto[];
 	};
+
+	@ApiPropertyOptional({ type: TMDBTrailerDto })
+	trailer?: TMDBTrailerDto;
 }
 
 export class SearchShowsResultsDto {

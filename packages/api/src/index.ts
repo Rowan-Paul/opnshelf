@@ -8,6 +8,11 @@ export * from './generated/@tanstack/react-query.gen';
 export { client } from './generated/client.gen';
 export { createClient, createConfig } from './generated/client/index';
 export type { Client, ClientOptions, Config, Options } from './generated/client/index';
+export {
+	getYouTubeEmbedUrl,
+	getYouTubeThumbnailUrl,
+	resolveDetailTrailer,
+} from './trailer';
 
 // Re-export auth utilities from custom client wrapper
 export {

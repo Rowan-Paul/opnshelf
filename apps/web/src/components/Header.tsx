@@ -164,12 +164,6 @@ function Brand({ seedColor }: { seedColor: string }) {
 
 			<div className="min-w-0">
 				<div className="md-title-large leading-none">OpnShelf</div>
-				<p
-					className="hidden text-[11px] font-semibold uppercase tracking-[0.24em] md:block"
-					style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-				>
-					Track your cinema
-				</p>
 			</div>
 		</Link>
 	);

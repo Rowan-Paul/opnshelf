@@ -117,24 +117,133 @@ describe("ShowsService", () => {
 	});
 
 	describe("getShowDetails", () => {
-		it("should get show details from TMDB", async () => {
+		it("should get show details from TMDB with ranked trailer", async () => {
 			const mockShow = {
 				id: 123,
 				name: "Test Show",
 				overview: "A test show",
 				first_air_date: "2024-01-01",
 			};
-			mockFetch.mockResolvedValue({
-				ok: true,
-				json: () => Promise.resolve(mockShow),
-			});
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve(mockShow),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							results: [
+								{
+									id: "clip-1",
+									key: "clip-key",
+									name: "Clip",
+									site: "YouTube",
+									type: "Clip",
+								},
+								{
+									id: "trailer-1",
+									key: "show-trailer",
+									name: "Main Trailer",
+									site: "YouTube",
+									type: "Trailer",
+									official: false,
+								},
+							],
+						}),
+				});
 
 			const result = await service.getShowDetails("123");
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/tv/123?api_key=test-api-key"),
 			);
-			expect(result).toEqual(mockShow);
+			expect(mockFetch).toHaveBeenCalledWith(
+				expect.stringContaining("/tv/123/videos?api_key=test-api-key"),
+			);
+			expect(result).toEqual({
+				...mockShow,
+				trailer: {
+					id: "trailer-1",
+					key: "show-trailer",
+					name: "Main Trailer",
+					site: "YouTube",
+					type: "Trailer",
+					official: false,
+					published_at: undefined,
+					sourceMediaType: "show",
+				},
+			});
+		});
+
+		it("should get season details with trailer", async () => {
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 10,
+							name: "Season 1",
+							season_number: 1,
+							episodes: [],
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							results: [
+								{
+									id: "season-trailer",
+									key: "season-key",
+									name: "Season Trailer",
+									site: "YouTube",
+									type: "Trailer",
+									official: true,
+								},
+							],
+						}),
+				});
+
+			const result = await service.getSeasonDetails("123", 1);
+
+			expect(result.trailer?.key).toBe("season-key");
+			expect(result.trailer?.sourceMediaType).toBe("season");
+		});
+
+		it("should get episode details with trailer", async () => {
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 25,
+							name: "Episode 2",
+							episode_number: 2,
+							season_number: 1,
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							results: [
+								{
+									id: "episode-teaser",
+									key: "episode-key",
+									name: "Episode Teaser",
+									site: "YouTube",
+									type: "Teaser",
+									official: true,
+								},
+							],
+						}),
+				});
+
+			const result = await service.getEpisodeDetails("123", 1, 2);
+
+			expect(result.trailer?.key).toBe("episode-key");
+			expect(result.trailer?.sourceMediaType).toBe("episode");
 		});
 	});
 
@@ -147,6 +256,10 @@ describe("ShowsService", () => {
 				})
 				.mockResolvedValueOnce({
 					ok: true,
+					json: () => Promise.resolve({ results: [] }),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
 					json: () =>
 						Promise.resolve({
 							episodes: [{ episode_number: 10, season_number: 1 }],
@@ -154,7 +267,15 @@ describe("ShowsService", () => {
 				})
 				.mockResolvedValueOnce({
 					ok: true,
+					json: () => Promise.resolve({ results: [] }),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
 					json: () => Promise.resolve({ episodes: [] }),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve({ results: [] }),
 				})
 				.mockResolvedValueOnce({
 					ok: true,
@@ -168,6 +289,10 @@ describe("ShowsService", () => {
 								},
 							],
 						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve({ results: [] }),
 				});
 
 			const result = await service.getEpisodeContext("123", 1, 10);

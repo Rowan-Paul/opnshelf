@@ -158,7 +158,7 @@ describe("MoviesService", () => {
 	});
 
 	describe("getMovieDetails", () => {
-		it("should get movie details from TMDB API", async () => {
+		it("should get movie details from TMDB API with ranked trailer", async () => {
 			const mockMovie = {
 				id: 123,
 				title: "Test Movie",
@@ -166,28 +166,105 @@ describe("MoviesService", () => {
 				release_date: "2024-01-01",
 				poster_path: "/poster.jpg",
 			};
-			mockFetch.mockResolvedValue({
-				ok: true,
-				json: () => Promise.resolve(mockMovie),
-			});
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve(mockMovie),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							results: [
+								{
+									id: "teaser-1",
+									key: "teaser-key",
+									name: "Teaser",
+									site: "YouTube",
+									type: "Teaser",
+									official: true,
+								},
+								{
+									id: "trailer-1",
+									key: "trailer-key",
+									name: "Official Trailer",
+									site: "YouTube",
+									type: "Trailer",
+									official: true,
+									published_at: "2024-01-02T00:00:00.000Z",
+								},
+							],
+						}),
+				});
 
 			const result = await service.getMovieDetails("123");
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/movie/123?api_key=test-api-key"),
 			);
-			expect(result).toEqual(mockMovie);
+			expect(mockFetch).toHaveBeenCalledWith(
+				expect.stringContaining("/movie/123/videos?api_key=test-api-key"),
+			);
+			expect(result).toEqual({
+				...mockMovie,
+				trailer: {
+					id: "trailer-1",
+					key: "trailer-key",
+					name: "Official Trailer",
+					site: "YouTube",
+					type: "Trailer",
+					official: true,
+					published_at: "2024-01-02T00:00:00.000Z",
+					sourceMediaType: "movie",
+				},
+			});
 		});
 
 		it("should throw error when movie not found", async () => {
-			mockFetch.mockResolvedValue({
-				ok: false,
-				status: 404,
-			});
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: false,
+					status: 404,
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve({ results: [] }),
+				});
 
 			await expect(service.getMovieDetails("999999")).rejects.toThrow(
 				"Movie not found",
 			);
+		});
+
+		it("should ignore non-youtube videos", async () => {
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 123,
+							title: "Test Movie",
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							results: [
+								{
+									id: "vimeo-1",
+									key: "vimeo-key",
+									name: "Vimeo Trailer",
+									site: "Vimeo",
+									type: "Trailer",
+								},
+							],
+						}),
+				});
+
+			const result = await service.getMovieDetails("123");
+
+			expect(result.trailer).toBeUndefined();
 		});
 	});
 

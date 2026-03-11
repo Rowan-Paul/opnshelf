@@ -4,7 +4,11 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
-import { type ColorTheme, MetadataPills } from "@/components/detail";
+import {
+	type ColorTheme,
+	MetadataPills,
+	TrailerSection,
+} from "@/components/detail";
 import { formatDateOnly, formatRuntime } from "@/lib/utils";
 
 type ShowEpisodeContentProps = {
@@ -82,6 +86,12 @@ export function ShowEpisodeContent({
 				</p>
 			</section>
 
+			<TrailerSection
+				mediaType="episode"
+				detailTrailer={episode?.trailer}
+				showTrailer={show?.trailer}
+				titleColor={colors.primary}
+			/>
 			<CastSection
 				cast={show?.credits?.cast}
 				guestStars={episode?.guest_stars}

@@ -1,5 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import {
+	selectBestTMDBTrailer,
+	type TMDBTrailer,
+	type TMDBVideo,
+} from "../tmdb/tmdb-trailer.util";
 
 export interface TMDBMovie {
 	id: number;
@@ -11,6 +16,7 @@ export interface TMDBMovie {
 	popularity: number;
 	vote_average: number;
 	vote_count: number;
+	trailer?: TMDBTrailer;
 }
 
 export interface TMDBSearchResponse {
@@ -36,6 +42,10 @@ export interface TMDBCredits {
 		profile_path?: string;
 	}[];
 }
+
+type TMDBVideosResponse = {
+	results?: TMDBVideo[];
+};
 
 @Injectable()
 export class MoviesTmdbService {
@@ -83,15 +93,26 @@ export class MoviesTmdbService {
 	}
 
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {
-		const response = await fetch(
-			`${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,
-		);
+		const [detailResponse, videosResponse] = await Promise.all([
+			fetch(`${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`),
+			fetch(
+				`${this.tmdbBaseUrl}/movie/${movieId}/videos?api_key=${this.tmdbApiKey}`,
+			),
+		]);
 
-		if (!response.ok) {
+		if (!detailResponse.ok) {
 			throw new Error("Movie not found");
 		}
 
-		return response.json() as Promise<TMDBMovie>;
+		const movie = (await detailResponse.json()) as TMDBMovie;
+		const videosData = videosResponse.ok
+			? ((await videosResponse.json()) as TMDBVideosResponse)
+			: undefined;
+
+		return {
+			...movie,
+			trailer: selectBestTMDBTrailer(videosData?.results, "movie"),
+		};
 	}
 
 	async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {

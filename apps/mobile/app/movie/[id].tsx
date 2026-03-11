@@ -36,6 +36,8 @@ import {
 	GenresSection,
 	MetadataPills,
 	OverviewSection,
+	TrailerPlayerModal,
+	TrailerSection,
 	WatchHistoryModal,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
@@ -101,6 +103,9 @@ export default function MovieDetailScreen() {
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
+	const [activeTrailer, setActiveTrailer] = useState<
+		TmdbMovieDetailDto["trailer"] | null
+	>(null);
 	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 
 	const {
@@ -463,6 +468,12 @@ export default function MovieDetailScreen() {
 						titleColor={movieColors.primary}
 						content={movie?.overview || ""}
 					/>
+					<TrailerSection
+						mediaType="movie"
+						detailTrailer={movie?.trailer}
+						titleColor={movieColors.primary}
+						onPress={setActiveTrailer}
+					/>
 					<GenresSection
 						titleColor={movieColors.primary}
 						textColor={movieColors.accent}
@@ -512,6 +523,12 @@ export default function MovieDetailScreen() {
 				visible={showCompactHeader}
 				onBack={() => router.back()}
 				title={movie?.title || title || "Movie"}
+			/>
+
+			<TrailerPlayerModal
+				visible={!!activeTrailer}
+				trailer={activeTrailer ?? null}
+				onClose={() => setActiveTrailer(null)}
 			/>
 		</SafeAreaView>
 	);

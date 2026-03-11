@@ -11,6 +11,7 @@ import {
 	showsControllerUnmarkWatchedMutation,
 	type TmdbSeasonDetailDto,
 	type TmdbShowDetailDto,
+	type TmdbTrailerDto,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,8 @@ import {
 	MetadataPills,
 	OverviewSection,
 	SeasonNav,
+	TrailerPlayerModal,
+	TrailerSection,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
@@ -73,6 +76,9 @@ export default function ShowSeasonScreen() {
 
 	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
+	const [activeTrailer, setActiveTrailer] = useState<TmdbTrailerDto | null>(
+		null,
+	);
 	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 
 	const { data: user, refetch: refetchUser } = useQuery({
@@ -395,6 +401,13 @@ export default function ShowSeasonScreen() {
 						titleColor={showColors.primary}
 						content={season?.overview || ""}
 					/>
+					<TrailerSection
+						mediaType="season"
+						detailTrailer={season?.trailer}
+						showTrailer={show?.trailer}
+						titleColor={showColors.primary}
+						onPress={setActiveTrailer}
+					/>
 					<GenresSection
 						titleColor={showColors.primary}
 						textColor={showColors.primary}
@@ -469,6 +482,12 @@ export default function ShowSeasonScreen() {
 				visible={showCompactHeader}
 				onBack={() => router.back()}
 				title={compactHeaderTitle}
+			/>
+
+			<TrailerPlayerModal
+				visible={!!activeTrailer}
+				trailer={activeTrailer}
+				onClose={() => setActiveTrailer(null)}
 			/>
 		</SafeAreaView>
 	);

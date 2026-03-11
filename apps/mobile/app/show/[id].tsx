@@ -34,6 +34,8 @@ import {
 	MetadataPills,
 	OverviewSection,
 	SeasonCard,
+	TrailerPlayerModal,
+	TrailerSection,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
 import { WatchDatePickerModal } from "@/components/WatchDatePickerModal";
@@ -63,6 +65,9 @@ export default function ShowDetailScreen() {
 
 	const [showListModal, setShowListModal] = useState(false);
 	const [showDateModal, setShowDateModal] = useState(false);
+	const [activeTrailer, setActiveTrailer] = useState<
+		TmdbShowDetailDto["trailer"] | null
+	>(null);
 	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 
 	const { data: user, refetch: refetchUser } = useQuery({
@@ -354,6 +359,12 @@ export default function ShowDetailScreen() {
 						titleColor={showColors.primary}
 						content={show?.overview || ""}
 					/>
+					<TrailerSection
+						mediaType="show"
+						detailTrailer={show?.trailer}
+						titleColor={showColors.primary}
+						onPress={setActiveTrailer}
+					/>
 					<GenresSection
 						titleColor={showColors.primary}
 						textColor={showColors.primary}
@@ -431,6 +442,12 @@ export default function ShowDetailScreen() {
 				visible={showCompactHeader}
 				onBack={() => router.back()}
 				title={show?.name || "Show"}
+			/>
+
+			<TrailerPlayerModal
+				visible={!!activeTrailer}
+				trailer={activeTrailer ?? null}
+				onClose={() => setActiveTrailer(null)}
 			/>
 		</SafeAreaView>
 	);

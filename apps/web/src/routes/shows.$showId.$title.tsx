@@ -30,6 +30,7 @@ import {
 	DetailHero,
 	MetadataPills,
 	SeasonCard,
+	TrailerSection,
 } from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
@@ -298,6 +299,11 @@ function ShowDetailPage() {
 									</p>
 								</section>
 
+								<TrailerSection
+									mediaType="show"
+									detailTrailer={show?.trailer}
+									titleColor={colors.primary}
+								/>
 								<GenresSection genres={show?.genres} colors={colors} />
 
 								{seasonCount > 0 && (

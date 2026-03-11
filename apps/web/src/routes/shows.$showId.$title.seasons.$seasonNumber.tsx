@@ -32,6 +32,7 @@ import {
 	EpisodeCard,
 	MetadataPills,
 	SeasonNav,
+	TrailerSection,
 } from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
 import { useTheme } from "@/components/theme-provider";
@@ -354,6 +355,12 @@ function ShowSeasonPage() {
 									</p>
 								</section>
 
+								<TrailerSection
+									mediaType="season"
+									detailTrailer={season?.trailer}
+									showTrailer={show?.trailer}
+									titleColor={colors.primary}
+								/>
 								<GenresSection genres={show?.genres} colors={colors} />
 
 								{seasonEpisodes.length > 0 && (

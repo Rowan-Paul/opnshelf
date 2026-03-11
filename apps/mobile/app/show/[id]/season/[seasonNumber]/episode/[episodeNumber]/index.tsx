@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { TmdbShowDetailDto } from "@opnshelf/api";
+import type { TmdbShowDetailDto, TmdbTrailerDto } from "@opnshelf/api";
 import {
 	authControllerMeOptions,
 	type EpisodeHistoryItemDto,
@@ -38,6 +38,8 @@ import {
 	type EpisodeSummary,
 	MetadataPills,
 	OverviewSection,
+	TrailerPlayerModal,
+	TrailerSection,
 	WatchHistoryModal,
 } from "@/components/detail";
 import { ScrollRevealHeader } from "@/components/ScrollRevealHeader";
@@ -93,6 +95,9 @@ export default function ShowEpisodeScreen() {
 	const [showDateModal, setShowDateModal] = useState(false);
 	const [showAddToListModal, setShowAddToListModal] = useState(false);
 	const [showHistoryModal, setShowHistoryModal] = useState(false);
+	const [activeTrailer, setActiveTrailer] = useState<TmdbTrailerDto | null>(
+		null,
+	);
 	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 	const scopedEpisodeMediaId = buildScopedShowMediaId(
 		id,
@@ -536,6 +541,13 @@ export default function ShowEpisodeScreen() {
 							titleColor={showColors.primary}
 							content={(episode as TmdbEpisodeDto)?.overview || ""}
 						/>
+						<TrailerSection
+							mediaType="episode"
+							detailTrailer={(episode as TmdbEpisodeDto)?.trailer}
+							showTrailer={show?.trailer}
+							titleColor={showColors.primary}
+							onPress={setActiveTrailer}
+						/>
 						<CastSection
 							titleColor={showColors.primary}
 							cast={show?.credits?.cast}
@@ -583,6 +595,12 @@ export default function ShowEpisodeScreen() {
 				mediaType="show"
 				mediaId={scopedEpisodeMediaId}
 				mediaTitle={show?.name || title || "Show"}
+			/>
+
+			<TrailerPlayerModal
+				visible={!!activeTrailer}
+				trailer={activeTrailer}
+				onClose={() => setActiveTrailer(null)}
 			/>
 		</>
 	);

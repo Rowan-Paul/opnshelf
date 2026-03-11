@@ -10,6 +10,8 @@ export { OverviewSection } from "./sections/OverviewSection";
 export { GenresSection } from "./sections/GenresSection";
 export { CastSection } from "./sections/CastSection";
 export { CrewSection } from "./sections/CrewSection";
+export { TrailerSection } from "./sections/TrailerSection";
+export { TrailerPlayerModal } from "./modals/TrailerPlayerModal";
 export { WatchHistoryModal } from "./modals/WatchHistoryModal";
 export type {
 	ColorTheme,

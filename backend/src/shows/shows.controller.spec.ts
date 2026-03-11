@@ -77,6 +77,51 @@ describe("ShowsController", () => {
 		expect(mockShowsService.searchShows).toHaveBeenCalledWith("show");
 	});
 
+	it("should get show details with trailer and colors", async () => {
+		const mockShow = {
+			id: 123,
+			name: "Test Show",
+			trailer: {
+				id: "trailer-1",
+				key: "show-key",
+				name: "Main Trailer",
+				site: "YouTube",
+				type: "Trailer",
+				sourceMediaType: "show",
+			},
+		};
+		mockShowsService.getShowDetails.mockResolvedValue(mockShow);
+		mockShowsService.upsertShow.mockResolvedValue({
+			showId: "123",
+			colors: {
+				primary: "#111111",
+				secondary: "#222222",
+				accent: "#333333",
+				muted: "#444444",
+			},
+		});
+		mockShowsService.getShowCredits.mockResolvedValue({
+			cast: [],
+			crew: [],
+		});
+
+		const result = await controller.getShowDetails("123");
+
+		expect(result).toEqual({
+			...mockShow,
+			colors: {
+				primary: "#111111",
+				secondary: "#222222",
+				accent: "#333333",
+				muted: "#444444",
+			},
+			credits: {
+				cast: [],
+				crew: [],
+			},
+		});
+	});
+
 	it("should get season details", async () => {
 		const mockSeason = { id: 1, season_number: 1, episodes: [] };
 		mockShowsService.getSeasonDetails.mockResolvedValue(mockSeason);

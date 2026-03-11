@@ -52,6 +52,17 @@ export type TmdbCreditsDto = {
     crew: Array<TmdbCrewDto>;
 };
 
+export type TmdbTrailerDto = {
+    id: string;
+    key: string;
+    name: string;
+    site: string;
+    type: string;
+    official?: boolean;
+    published_at?: string;
+    sourceMediaType: 'movie' | 'show' | 'season' | 'episode';
+};
+
 export type TmdbMovieDetailDto = {
     id: number;
     title: string;
@@ -65,6 +76,7 @@ export type TmdbMovieDetailDto = {
     genres?: Array<TmdbGenreDto>;
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
+    trailer?: TmdbTrailerDto;
 };
 
 export type MovieDto = {
@@ -183,6 +195,7 @@ export type TmdbShowDetailDto = {
     seasons?: Array<TmdbSeasonSummaryDto>;
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
+    trailer?: TmdbTrailerDto;
 };
 
 export type TmdbNetworkDto = {
@@ -219,6 +232,7 @@ export type TmdbEpisodeDto = {
     crew?: Array<TmdbCrewDto>;
     guest_stars?: Array<TmdbCastDto>;
     _context?: EpisodeContextDto;
+    trailer?: TmdbTrailerDto;
 };
 
 export type TmdbSeasonDetailDto = {
@@ -232,6 +246,7 @@ export type TmdbSeasonDetailDto = {
     vote_average?: number;
     networks?: Array<TmdbNetworkDto>;
     episodes: Array<TmdbEpisodeDto>;
+    trailer?: TmdbTrailerDto;
 };
 
 export type ShowDto = {

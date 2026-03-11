@@ -3,7 +3,11 @@ import { Calendar, Clock, Star } from "lucide-react";
 import { useMemo } from "react";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
-import { type ColorTheme, MetadataPills } from "@/components/detail";
+import {
+	type ColorTheme,
+	MetadataPills,
+	TrailerSection,
+} from "@/components/detail";
 import { GenresSection } from "@/components/GenresSection";
 import { formatDateOnly, formatRuntime } from "@/lib/utils";
 
@@ -52,6 +56,11 @@ export function MovieDetailContent({ movie, colors }: MovieDetailContentProps) {
 				</p>
 			</section>
 
+			<TrailerSection
+				mediaType="movie"
+				detailTrailer={movie?.trailer}
+				titleColor={colors.primary}
+			/>
 			<GenresSection genres={movie?.genres} colors={colors} />
 			<CastSection cast={movie?.credits?.cast} colors={colors} />
 			<CrewSection crew={movie?.credits?.crew} colors={colors} />

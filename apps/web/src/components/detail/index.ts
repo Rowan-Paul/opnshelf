@@ -7,6 +7,7 @@ export { MetadataPills } from "./MetadataPills";
 export { SeasonCard } from "./SeasonCard";
 export { SeasonNav } from "./SeasonNav";
 export { TrackedStatusCard } from "./TrackedStatusCard";
+export { TrailerSection } from "./TrailerSection";
 export type {
 	BreadcrumbItem,
 	ColorTheme,
