@@ -1,14 +1,18 @@
+import {
+	authControllerMeOptions,
+	showsControllerGetUserReleaseCalendarOptions,
+	usersControllerGetPublicProfileOptions,
+	type ReleaseCalendarItemDto,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
 	Calendar,
 	ChevronLeft,
 	ChevronRight,
-	Film,
 	Loader2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -17,8 +21,9 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { env } from "@/env";
+import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
 import {
 	createTitleSlug,
 	formatDateOnly,
@@ -30,27 +35,6 @@ const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 type ReleaseSource = "watching" | "watchlist";
 type ReleaseKind = "episode" | "movie" | "show" | "season";
-
-type ApiReleaseCalendarItem = {
-	source: ReleaseSource;
-	mediaType: "movie" | "show";
-	releaseKind: "movie" | "show" | "episode";
-	releaseDate: string;
-	title: string;
-	subtitle?: string;
-	overview?: string;
-	posterPath?: string;
-	backdropPath?: string;
-	showId?: string;
-	movieId?: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-};
-
-type ApiReleaseCalendarResponse = {
-	items: ApiReleaseCalendarItem[];
-	total: number;
-};
 
 type ReleaseCalendarEvent = {
 	id: string;
@@ -87,38 +71,51 @@ type CalendarMonthView = {
 	weeks: CalendarDayCell[][];
 };
 
-export const Route = createFileRoute("/profile/calendar")({
-	head: () => ({
-		meta: [{ title: "Release Calendar | OpnShelf" }],
+export const Route = createFileRoute("/profile/$handle/calendar")({
+	beforeLoad: async ({ context, params }) => {
+		const handle = params.handle.trim().replace(/^@/, "").toLowerCase();
+		const [currentUser, profile] = await Promise.all([
+			context.queryClient
+				.ensureQueryData({
+					...authControllerMeOptions(),
+					staleTime: 5 * 60 * 1000,
+					retry: false,
+				})
+				.catch(() => null),
+			context.queryClient
+				.ensureQueryData({
+					...usersControllerGetPublicProfileOptions({
+						path: { handle },
+					}),
+					retry: false,
+				})
+				.catch(() => null),
+		]);
+
+		if (!profile || !isOwnerProfile(currentUser?.did, profile.did)) {
+			throw redirect({
+				...getProfileRoute(handle, "shelf", { page: 1 }),
+			});
+		}
+	},
+	head: ({ params }) => ({
+		meta: [{ title: `@${params.handle.replace(/^@/, "")} Calendar | OpnShelf` }],
 	}),
 	component: ProfileCalendarPage,
 });
 
 function ProfileCalendarPage() {
-	const { user, timezone } = useUserSettings();
+	const { handle } = Route.useParams();
+	const { profile } = useProfileRouteState(handle);
+	const { timezone } = useUserSettings();
 	const [selectedMonthKey, setSelectedMonthKey] = useState<string | null>(null);
-	const userDid = user?.did ?? "";
+	const userDid = profile?.did ?? "";
 
 	const releaseCalendarQuery = useQuery({
-		queryKey: ["shows", "release-calendar", userDid],
+		...showsControllerGetUserReleaseCalendarOptions({
+			path: { userDid },
+		}),
 		enabled: !!userDid,
-		queryFn: async () => {
-			const response = await fetch(
-				`${env.VITE_API_URL}/shows/user/${userDid}/release-calendar`,
-				{
-					credentials: "include",
-					headers: {
-						Accept: "application/json",
-					},
-				},
-			);
-
-			if (!response.ok) {
-				throw new Error("Failed to load release calendar");
-			}
-
-			return (await response.json()) as ApiReleaseCalendarResponse;
-		},
 	});
 
 	const releaseEvents = useMemo(() => {
@@ -187,13 +184,8 @@ function ProfileCalendarPage() {
 		}
 	}, [currentMonthKey, selectedMonthKey]);
 
-	if (!user) {
-		return (
-			<UnauthenticatedState
-				title="Release Calendar"
-				description="Sign in to see upcoming episodes and watchlist releases"
-			/>
-		);
+	if (!profile) {
+		return null;
 	}
 
 	if (isInitialLoading) {
@@ -602,7 +594,7 @@ function buildReleaseCalendarEvents({
 	items,
 }: {
 	timezone: string;
-	items: ApiReleaseCalendarItem[];
+	items: ReleaseCalendarItemDto[];
 }) {
 	const todayKey = getDayKeyInTimezone(new Date(), timezone);
 	const dedupe = new Set<string>();
@@ -660,7 +652,7 @@ function buildReleaseCalendarEvents({
 }
 
 function getReleaseCalendarLink(
-	item: ApiReleaseCalendarItem,
+	item: ReleaseCalendarItemDto,
 ): ReleaseCalendarLink | null {
 	const titleSlug = createTitleSlug(item.title);
 

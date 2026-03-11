@@ -103,6 +103,28 @@ export class ListsController {
 		return this.listsService.getPublicUserLists(userDid);
 	}
 
+	@Get("user/:userDid/:slug")
+	@ApiOperation({ summary: "Get a public list with its movies for a user" })
+	@ApiParam({ name: "userDid", description: "User DID" })
+	@ApiParam({ name: "slug", description: "List slug identifier" })
+	@ApiOkResponse({
+		description: "Public list details with movies",
+		type: MovieListWithMoviesDto,
+	})
+	@ApiNotFoundResponse({ description: "List not found" })
+	async getPublicUserList(
+		@Param("userDid") userDid: string,
+		@Param("slug") slug: string,
+		@Query() query: GetListQueryDto,
+	): Promise<MovieListWithMoviesDto | null> {
+		return this.listsService.getPublicList(
+			userDid,
+			slug,
+			query.page,
+			query.pageSize,
+		);
+	}
+
 	@Get(":slug")
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()

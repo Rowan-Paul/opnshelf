@@ -87,6 +87,15 @@ export class ListsService {
 		return this.getUserLists(userDid);
 	}
 
+	async getPublicList(
+		userDid: string,
+		slug: string,
+		page?: number,
+		pageSize?: number,
+	): Promise<MovieListWithMoviesDto | null> {
+		return this.getList(userDid, slug, page, pageSize);
+	}
+
 	async getList(
 		userDid: string,
 		slug: string,

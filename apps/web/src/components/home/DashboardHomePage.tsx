@@ -24,6 +24,7 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
+import { getProfileRoute } from "@/lib/profile-routes";
 
 type DashboardRange = "week" | "month";
 
@@ -141,11 +142,12 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 
 			<div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 				<div className="lg:col-span-3">
-					<UpNextSection
-						isLoading={isUpNextLoading}
-						upNext={upNext?.items ?? []}
-						userDid={user.did}
-					/>
+		<UpNextSection
+			isLoading={isUpNextLoading}
+			upNext={upNext?.items ?? []}
+			userDid={user.did}
+			userHandle={user.handle}
+		/>
 				</div>
 
 				<div className="lg:col-span-2">
@@ -251,7 +253,9 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 						<h2 className="md-headline-small">Recent Watched</h2>
 						<M3Button variant="text" className="rounded-full px-4" asChild>
-							<Link to="/profile/shelf" search={{ page: 1 }}>
+							<Link
+								{...getProfileRoute(user.handle, "shelf", { page: 1 })}
+							>
 								View shelf
 							</Link>
 						</M3Button>
@@ -318,7 +322,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 						<h2 className="md-headline-small">Your Lists</h2>
 						<M3Button variant="text" className="rounded-full px-4" asChild>
-							<Link to="/profile/lists">All lists</Link>
+							<Link {...getProfileRoute(user.handle, "lists")}>All lists</Link>
 						</M3Button>
 					</div>
 					<div className="mb-4">
@@ -340,7 +344,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					) : recentLists.length > 0 ? (
 						<div className="grid grid-cols-1 gap-4">
 							{recentLists.map((list) => (
-								<ListCard key={list.id} list={list} />
+								<ListCard key={list.id} handle={user.handle} list={list} />
 							))}
 						</div>
 					) : (

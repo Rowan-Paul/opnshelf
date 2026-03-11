@@ -153,6 +153,37 @@ describe("ListsService", () => {
 				},
 			]);
 		});
+
+		it("should expose public list details for a user's slug", async () => {
+			mockPrismaService.movieList.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "favorites",
+				uri: "at://did:plc:public123/xyz.opnshelf.list/favorites",
+				userDid: "did:plc:public123",
+				name: "Favorites",
+				description: "Best of the best",
+				slug: "favorites",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 0 },
+			});
+
+			await expect(
+				service.getPublicList("did:plc:public123", "favorites"),
+			).resolves.toMatchObject({
+				slug: "favorites",
+				userDid: "did:plc:public123",
+			});
+			expect(mockPrismaService.movieList.findFirst).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:public123", slug: "favorites" },
+				include: {
+					_count: {
+						select: { items: true },
+					},
+				},
+			});
+		});
 	});
 
 	describe("getListsForItem", () => {

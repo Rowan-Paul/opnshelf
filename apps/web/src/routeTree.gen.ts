@@ -16,19 +16,17 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListsRouteImport } from './routes/lists'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as UHandleRouteImport } from './routes/u.$handle'
-import { Route as ProfileUpNextRouteImport } from './routes/profile.up-next'
-import { Route as ProfileShelfRouteImport } from './routes/profile.shelf'
-import { Route as ProfileSettingsRouteImport } from './routes/profile.settings'
-import { Route as ProfileListsRouteImport } from './routes/profile.lists'
-import { Route as ProfileCalendarRouteImport } from './routes/profile.calendar'
-import { Route as ListsSlugRouteImport } from './routes/lists.$slug'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
-import { Route as UHandleUpNextRouteImport } from './routes/u.$handle.up-next'
-import { Route as UHandleShelfRouteImport } from './routes/u.$handle.shelf'
-import { Route as UHandleListsRouteImport } from './routes/u.$handle.lists'
 import { Route as ShowsShowIdTitleRouteImport } from './routes/shows.$showId.$title'
+import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle.up-next'
+import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle.shelf'
+import { Route as ProfileHandleSettingsRouteImport } from './routes/profile.$handle.settings'
+import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle.lists'
+import { Route as ProfileHandleCalendarRouteImport } from './routes/profile.$handle.calendar'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
+import { Route as ProfileHandleListSlugRouteImport } from './routes/profile.$handle.list.$slug'
 import { Route as ShowsShowIdTitleSeasonsSeasonNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber'
 import { Route as ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber.episodes.$episodeNumber'
 
@@ -67,70 +65,60 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UHandleRoute = UHandleRouteImport.update({
-  id: '/u/$handle',
-  path: '/u/$handle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileUpNextRoute = ProfileUpNextRouteImport.update({
-  id: '/up-next',
-  path: '/up-next',
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => ProfileRoute,
 } as any)
-const ProfileShelfRoute = ProfileShelfRouteImport.update({
-  id: '/shelf',
-  path: '/shelf',
+const ProfileHandleRoute = ProfileHandleRouteImport.update({
+  id: '/$handle',
+  path: '/$handle',
   getParentRoute: () => ProfileRoute,
-} as any)
-const ProfileSettingsRoute = ProfileSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => ProfileRoute,
-} as any)
-const ProfileListsRoute = ProfileListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => ProfileRoute,
-} as any)
-const ProfileCalendarRoute = ProfileCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => ProfileRoute,
-} as any)
-const ListsSlugRoute = ListsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ListsRoute,
 } as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UHandleUpNextRoute = UHandleUpNextRouteImport.update({
-  id: '/up-next',
-  path: '/up-next',
-  getParentRoute: () => UHandleRoute,
-} as any)
-const UHandleShelfRoute = UHandleShelfRouteImport.update({
-  id: '/shelf',
-  path: '/shelf',
-  getParentRoute: () => UHandleRoute,
-} as any)
-const UHandleListsRoute = UHandleListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => UHandleRoute,
-} as any)
 const ShowsShowIdTitleRoute = ShowsShowIdTitleRouteImport.update({
   id: '/shows/$showId/$title',
   path: '/shows/$showId/$title',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileHandleUpNextRoute = ProfileHandleUpNextRouteImport.update({
+  id: '/up-next',
+  path: '/up-next',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleShelfRoute = ProfileHandleShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleSettingsRoute = ProfileHandleSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleListsRoute = ProfileHandleListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleCalendarRoute = ProfileHandleCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
 const MoviesMovieIdTitleRoute = MoviesMovieIdTitleRouteImport.update({
   id: '/movies/$movieId/$title',
   path: '/movies/$movieId/$title',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileHandleListSlugRoute = ProfileHandleListSlugRouteImport.update({
+  id: '/list/$slug',
+  path: '/list/$slug',
+  getParentRoute: () => ProfileHandleRoute,
 } as any)
 const ShowsShowIdTitleSeasonsSeasonNumberRoute =
   ShowsShowIdTitleSeasonsSeasonNumberRouteImport.update({
@@ -147,74 +135,67 @@ const ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/lists': typeof ListsRouteWithChildren
+  '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/lists/$slug': typeof ListsSlugRoute
-  '/profile/calendar': typeof ProfileCalendarRoute
-  '/profile/lists': typeof ProfileListsRoute
-  '/profile/settings': typeof ProfileSettingsRoute
-  '/profile/shelf': typeof ProfileShelfRoute
-  '/profile/up-next': typeof ProfileUpNextRoute
-  '/u/$handle': typeof UHandleRouteWithChildren
+  '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
+  '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
+  '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
-  '/u/$handle/lists': typeof UHandleListsRoute
-  '/u/$handle/shelf': typeof UHandleShelfRoute
-  '/u/$handle/up-next': typeof UHandleUpNextRoute
+  '/profile/$handle/list/$slug': typeof ProfileHandleListSlugRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/lists': typeof ListsRouteWithChildren
+  '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
-  '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/lists/$slug': typeof ListsSlugRoute
-  '/profile/calendar': typeof ProfileCalendarRoute
-  '/profile/lists': typeof ProfileListsRoute
-  '/profile/settings': typeof ProfileSettingsRoute
-  '/profile/shelf': typeof ProfileShelfRoute
-  '/profile/up-next': typeof ProfileUpNextRoute
-  '/u/$handle': typeof UHandleRouteWithChildren
+  '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/profile': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
+  '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
+  '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
-  '/u/$handle/lists': typeof UHandleListsRoute
-  '/u/$handle/shelf': typeof UHandleShelfRoute
-  '/u/$handle/up-next': typeof UHandleUpNextRoute
+  '/profile/$handle/list/$slug': typeof ProfileHandleListSlugRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/lists': typeof ListsRouteWithChildren
+  '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/lists/$slug': typeof ListsSlugRoute
-  '/profile/calendar': typeof ProfileCalendarRoute
-  '/profile/lists': typeof ProfileListsRoute
-  '/profile/settings': typeof ProfileSettingsRoute
-  '/profile/shelf': typeof ProfileShelfRoute
-  '/profile/up-next': typeof ProfileUpNextRoute
-  '/u/$handle': typeof UHandleRouteWithChildren
+  '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
+  '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
+  '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/shows/$showId/$title': typeof ShowsShowIdTitleRouteWithChildren
-  '/u/$handle/lists': typeof UHandleListsRoute
-  '/u/$handle/shelf': typeof UHandleShelfRoute
-  '/u/$handle/up-next': typeof UHandleUpNextRoute
+  '/profile/$handle/list/$slug': typeof ProfileHandleListSlugRoute
   '/shows/$showId/$title/seasons/$seasonNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberRouteWithChildren
   '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
@@ -229,18 +210,16 @@ export interface FileRouteTypes {
     | '/profile'
     | '/search'
     | '/auth/complete'
-    | '/lists/$slug'
-    | '/profile/calendar'
-    | '/profile/lists'
-    | '/profile/settings'
-    | '/profile/shelf'
-    | '/profile/up-next'
-    | '/u/$handle'
+    | '/profile/$handle'
+    | '/profile/'
     | '/movies/$movieId/$title'
+    | '/profile/$handle/calendar'
+    | '/profile/$handle/lists'
+    | '/profile/$handle/settings'
+    | '/profile/$handle/shelf'
+    | '/profile/$handle/up-next'
     | '/shows/$showId/$title'
-    | '/u/$handle/lists'
-    | '/u/$handle/shelf'
-    | '/u/$handle/up-next'
+    | '/profile/$handle/list/$slug'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
@@ -250,21 +229,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/privacy'
-    | '/profile'
     | '/search'
     | '/auth/complete'
-    | '/lists/$slug'
-    | '/profile/calendar'
-    | '/profile/lists'
-    | '/profile/settings'
-    | '/profile/shelf'
-    | '/profile/up-next'
-    | '/u/$handle'
+    | '/profile/$handle'
+    | '/profile'
     | '/movies/$movieId/$title'
+    | '/profile/$handle/calendar'
+    | '/profile/$handle/lists'
+    | '/profile/$handle/settings'
+    | '/profile/$handle/shelf'
+    | '/profile/$handle/up-next'
     | '/shows/$showId/$title'
-    | '/u/$handle/lists'
-    | '/u/$handle/shelf'
-    | '/u/$handle/up-next'
+    | '/profile/$handle/list/$slug'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   id:
@@ -277,32 +253,29 @@ export interface FileRouteTypes {
     | '/profile'
     | '/search'
     | '/auth/complete'
-    | '/lists/$slug'
-    | '/profile/calendar'
-    | '/profile/lists'
-    | '/profile/settings'
-    | '/profile/shelf'
-    | '/profile/up-next'
-    | '/u/$handle'
+    | '/profile/$handle'
+    | '/profile/'
     | '/movies/$movieId/$title'
+    | '/profile/$handle/calendar'
+    | '/profile/$handle/lists'
+    | '/profile/$handle/settings'
+    | '/profile/$handle/shelf'
+    | '/profile/$handle/up-next'
     | '/shows/$showId/$title'
-    | '/u/$handle/lists'
-    | '/u/$handle/shelf'
-    | '/u/$handle/up-next'
+    | '/profile/$handle/list/$slug'
     | '/shows/$showId/$title/seasons/$seasonNumber'
     | '/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ListsRoute: typeof ListsRouteWithChildren
+  ListsRoute: typeof ListsRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   SearchRoute: typeof SearchRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
-  UHandleRoute: typeof UHandleRouteWithChildren
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
   ShowsShowIdTitleRoute: typeof ShowsShowIdTitleRouteWithChildren
 }
@@ -358,54 +331,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$handle': {
-      id: '/u/$handle'
-      path: '/u/$handle'
-      fullPath: '/u/$handle'
-      preLoaderRoute: typeof UHandleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile/up-next': {
-      id: '/profile/up-next'
-      path: '/up-next'
-      fullPath: '/profile/up-next'
-      preLoaderRoute: typeof ProfileUpNextRouteImport
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof ProfileRoute
     }
-    '/profile/shelf': {
-      id: '/profile/shelf'
-      path: '/shelf'
-      fullPath: '/profile/shelf'
-      preLoaderRoute: typeof ProfileShelfRouteImport
+    '/profile/$handle': {
+      id: '/profile/$handle'
+      path: '/$handle'
+      fullPath: '/profile/$handle'
+      preLoaderRoute: typeof ProfileHandleRouteImport
       parentRoute: typeof ProfileRoute
-    }
-    '/profile/settings': {
-      id: '/profile/settings'
-      path: '/settings'
-      fullPath: '/profile/settings'
-      preLoaderRoute: typeof ProfileSettingsRouteImport
-      parentRoute: typeof ProfileRoute
-    }
-    '/profile/lists': {
-      id: '/profile/lists'
-      path: '/lists'
-      fullPath: '/profile/lists'
-      preLoaderRoute: typeof ProfileListsRouteImport
-      parentRoute: typeof ProfileRoute
-    }
-    '/profile/calendar': {
-      id: '/profile/calendar'
-      path: '/calendar'
-      fullPath: '/profile/calendar'
-      preLoaderRoute: typeof ProfileCalendarRouteImport
-      parentRoute: typeof ProfileRoute
-    }
-    '/lists/$slug': {
-      id: '/lists/$slug'
-      path: '/$slug'
-      fullPath: '/lists/$slug'
-      preLoaderRoute: typeof ListsSlugRouteImport
-      parentRoute: typeof ListsRoute
     }
     '/auth/complete': {
       id: '/auth/complete'
@@ -414,27 +352,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$handle/up-next': {
-      id: '/u/$handle/up-next'
-      path: '/up-next'
-      fullPath: '/u/$handle/up-next'
-      preLoaderRoute: typeof UHandleUpNextRouteImport
-      parentRoute: typeof UHandleRoute
-    }
-    '/u/$handle/shelf': {
-      id: '/u/$handle/shelf'
-      path: '/shelf'
-      fullPath: '/u/$handle/shelf'
-      preLoaderRoute: typeof UHandleShelfRouteImport
-      parentRoute: typeof UHandleRoute
-    }
-    '/u/$handle/lists': {
-      id: '/u/$handle/lists'
-      path: '/lists'
-      fullPath: '/u/$handle/lists'
-      preLoaderRoute: typeof UHandleListsRouteImport
-      parentRoute: typeof UHandleRoute
-    }
     '/shows/$showId/$title': {
       id: '/shows/$showId/$title'
       path: '/shows/$showId/$title'
@@ -442,12 +359,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShowsShowIdTitleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$handle/up-next': {
+      id: '/profile/$handle/up-next'
+      path: '/up-next'
+      fullPath: '/profile/$handle/up-next'
+      preLoaderRoute: typeof ProfileHandleUpNextRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/shelf': {
+      id: '/profile/$handle/shelf'
+      path: '/shelf'
+      fullPath: '/profile/$handle/shelf'
+      preLoaderRoute: typeof ProfileHandleShelfRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/settings': {
+      id: '/profile/$handle/settings'
+      path: '/settings'
+      fullPath: '/profile/$handle/settings'
+      preLoaderRoute: typeof ProfileHandleSettingsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/lists': {
+      id: '/profile/$handle/lists'
+      path: '/lists'
+      fullPath: '/profile/$handle/lists'
+      preLoaderRoute: typeof ProfileHandleListsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/calendar': {
+      id: '/profile/$handle/calendar'
+      path: '/calendar'
+      fullPath: '/profile/$handle/calendar'
+      preLoaderRoute: typeof ProfileHandleCalendarRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
     '/movies/$movieId/$title': {
       id: '/movies/$movieId/$title'
       path: '/movies/$movieId/$title'
       fullPath: '/movies/$movieId/$title'
       preLoaderRoute: typeof MoviesMovieIdTitleRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/profile/$handle/list/$slug': {
+      id: '/profile/$handle/list/$slug'
+      path: '/list/$slug'
+      fullPath: '/profile/$handle/list/$slug'
+      preLoaderRoute: typeof ProfileHandleListSlugRouteImport
+      parentRoute: typeof ProfileHandleRoute
     }
     '/shows/$showId/$title/seasons/$seasonNumber': {
       id: '/shows/$showId/$title/seasons/$seasonNumber'
@@ -466,49 +425,40 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ListsRouteChildren {
-  ListsSlugRoute: typeof ListsSlugRoute
+interface ProfileHandleRouteChildren {
+  ProfileHandleCalendarRoute: typeof ProfileHandleCalendarRoute
+  ProfileHandleListsRoute: typeof ProfileHandleListsRoute
+  ProfileHandleSettingsRoute: typeof ProfileHandleSettingsRoute
+  ProfileHandleShelfRoute: typeof ProfileHandleShelfRoute
+  ProfileHandleUpNextRoute: typeof ProfileHandleUpNextRoute
+  ProfileHandleListSlugRoute: typeof ProfileHandleListSlugRoute
 }
 
-const ListsRouteChildren: ListsRouteChildren = {
-  ListsSlugRoute: ListsSlugRoute,
+const ProfileHandleRouteChildren: ProfileHandleRouteChildren = {
+  ProfileHandleCalendarRoute: ProfileHandleCalendarRoute,
+  ProfileHandleListsRoute: ProfileHandleListsRoute,
+  ProfileHandleSettingsRoute: ProfileHandleSettingsRoute,
+  ProfileHandleShelfRoute: ProfileHandleShelfRoute,
+  ProfileHandleUpNextRoute: ProfileHandleUpNextRoute,
+  ProfileHandleListSlugRoute: ProfileHandleListSlugRoute,
 }
 
-const ListsRouteWithChildren = ListsRoute._addFileChildren(ListsRouteChildren)
+const ProfileHandleRouteWithChildren = ProfileHandleRoute._addFileChildren(
+  ProfileHandleRouteChildren,
+)
 
 interface ProfileRouteChildren {
-  ProfileCalendarRoute: typeof ProfileCalendarRoute
-  ProfileListsRoute: typeof ProfileListsRoute
-  ProfileSettingsRoute: typeof ProfileSettingsRoute
-  ProfileShelfRoute: typeof ProfileShelfRoute
-  ProfileUpNextRoute: typeof ProfileUpNextRoute
+  ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
-  ProfileCalendarRoute: ProfileCalendarRoute,
-  ProfileListsRoute: ProfileListsRoute,
-  ProfileSettingsRoute: ProfileSettingsRoute,
-  ProfileShelfRoute: ProfileShelfRoute,
-  ProfileUpNextRoute: ProfileUpNextRoute,
+  ProfileHandleRoute: ProfileHandleRouteWithChildren,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 
 const ProfileRouteWithChildren =
   ProfileRoute._addFileChildren(ProfileRouteChildren)
-
-interface UHandleRouteChildren {
-  UHandleListsRoute: typeof UHandleListsRoute
-  UHandleShelfRoute: typeof UHandleShelfRoute
-  UHandleUpNextRoute: typeof UHandleUpNextRoute
-}
-
-const UHandleRouteChildren: UHandleRouteChildren = {
-  UHandleListsRoute: UHandleListsRoute,
-  UHandleShelfRoute: UHandleShelfRoute,
-  UHandleUpNextRoute: UHandleUpNextRoute,
-}
-
-const UHandleRouteWithChildren =
-  UHandleRoute._addFileChildren(UHandleRouteChildren)
 
 interface ShowsShowIdTitleSeasonsSeasonNumberRouteChildren {
   ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute: typeof ShowsShowIdTitleSeasonsSeasonNumberEpisodesEpisodeNumberRoute
@@ -539,14 +489,13 @@ const ShowsShowIdTitleRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ListsRoute: ListsRouteWithChildren,
+  ListsRoute: ListsRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
   SearchRoute: SearchRoute,
   AuthCompleteRoute: AuthCompleteRoute,
-  UHandleRoute: UHandleRouteWithChildren,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,
   ShowsShowIdTitleRoute: ShowsShowIdTitleRouteWithChildren,
 }

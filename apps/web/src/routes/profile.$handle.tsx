@@ -1,13 +1,12 @@
-import { authControllerMeOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
 import {
+	redirect,
 	createFileRoute,
 	Link,
 	Outlet,
-	redirect,
+	useLocation,
 	useMatchRoute,
 } from "@tanstack/react-router";
-import { BookOpen, List, Settings, Tv } from "lucide-react";
+import { BookOpen, Calendar, List, Settings, Tv } from "lucide-react";
 import type { ComponentType } from "react";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
@@ -19,32 +18,33 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { usePublicProfile } from "@/hooks/usePublicProfile";
+import { useProfileRouteState } from "@/hooks/useProfileRouteState";
+import {
+	getProfileRoute,
+	normalizeProfileHandle,
+	type ProfileSection,
+} from "@/lib/profile-routes";
 
-export const Route = createFileRoute("/u/$handle")({
+export const Route = createFileRoute("/profile/$handle")({
 	beforeLoad: ({ location, params }) => {
-		if (location.pathname === `/u/${params.handle}`) {
+		if (
+			location.pathname === `/profile/${params.handle}` ||
+			location.pathname === `/profile/${params.handle}/`
+		) {
 			throw redirect({
-				to: "/u/$handle/shelf",
-				params,
-				search: { page: 1 },
+				...getProfileRoute(params.handle, "shelf", { page: 1 }),
 			});
 		}
 	},
 	head: ({ params }) => ({
 		meta: [{ title: `@${params.handle.replace(/^@/, "")} | OpnShelf` }],
 	}),
-	component: PublicProfileLayout,
+	component: ProfileLayout,
 });
 
-function PublicProfileLayout() {
+function ProfileLayout() {
 	const { handle } = Route.useParams();
-	const { data: profile, isLoading } = usePublicProfile(handle);
-	const { data: currentUser } = useQuery({
-		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
+	const { profile, isOwner, isLoading } = useProfileRouteState(handle);
 	const { seedColor } = useTheme();
 
 	if (isLoading) {
@@ -82,7 +82,6 @@ function PublicProfileLayout() {
 	}
 
 	const displayName = String(profile.displayName || profile.handle);
-	const isOwner = currentUser?.did === profile.did;
 
 	return (
 		<div
@@ -93,48 +92,35 @@ function PublicProfileLayout() {
 			}}
 		>
 			<div className="container mx-auto px-4 py-4 max-w-7xl">
-				<div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-					<div className="flex items-center gap-4">
-						{profile.avatar ? (
-							<img
-								src={String(profile.avatar)}
-								alt={displayName}
-								className="h-16 w-16 rounded-full object-cover"
-							/>
-						) : (
-							<div
-								className="flex h-16 w-16 items-center justify-center rounded-full"
-								style={{
-									backgroundColor: seedColor,
-									color: "var(--md-sys-color-on-primary)",
-								}}
-							>
-								<span className="text-2xl font-bold">
-									{displayName[0] || "?"}
-								</span>
-							</div>
-						)}
-						<div className="min-w-0 flex-1">
-							<h1 className="md-headline-medium [overflow-wrap:anywhere]">
-								{displayName}
-							</h1>
-							<p
-								className="[overflow-wrap:anywhere]"
-								style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-							>
-								@{profile.handle}
-							</p>
+				<div className="mb-8 flex items-center gap-4">
+					{profile.avatar ? (
+						<img
+							src={String(profile.avatar)}
+							alt={displayName}
+							className="h-16 w-16 rounded-full object-cover"
+						/>
+					) : (
+						<div
+							className="flex h-16 w-16 items-center justify-center rounded-full"
+							style={{
+								backgroundColor: seedColor,
+								color: "var(--md-sys-color-on-primary)",
+							}}
+						>
+							<span className="text-2xl font-bold">{displayName[0] || "?"}</span>
 						</div>
+					)}
+					<div className="min-w-0 flex-1">
+						<h1 className="md-headline-medium [overflow-wrap:anywhere]">
+							{displayName}
+						</h1>
+						<p
+							className="[overflow-wrap:anywhere]"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
+							@{profile.handle}
+						</p>
 					</div>
-
-					{isOwner ? (
-						<M3Button variant="outlined" asChild>
-							<Link to="/profile/shelf" search={{ page: 1 }}>
-								<Settings className="mr-2 h-4 w-4" />
-								Manage profile
-							</Link>
-						</M3Button>
-					) : null}
 				</div>
 
 				<div
@@ -143,24 +129,40 @@ function PublicProfileLayout() {
 						borderBottom: "1px solid var(--md-sys-color-outline-variant)",
 					}}
 				>
-					<PublicNavLink
+					<ProfileNavLink
 						handle={profile.handle}
 						icon={BookOpen}
 						label="Shelf"
-						to="/u/$handle/shelf"
+						section="shelf"
 					/>
-					<PublicNavLink
+					<ProfileNavLink
 						handle={profile.handle}
 						icon={Tv}
 						label="Up Next"
-						to="/u/$handle/up-next"
+						section="up-next"
 					/>
-					<PublicNavLink
+					<ProfileNavLink
 						handle={profile.handle}
 						icon={List}
 						label="Lists"
-						to="/u/$handle/lists"
+						section="lists"
 					/>
+					{isOwner ? (
+						<>
+							<ProfileNavLink
+								handle={profile.handle}
+								icon={Calendar}
+								label="Calendar"
+								section="calendar"
+							/>
+							<ProfileNavLink
+								handle={profile.handle}
+								icon={Settings}
+								label="Settings"
+								section="settings"
+							/>
+						</>
+					) : null}
 				</div>
 
 				<Outlet />
@@ -169,31 +171,42 @@ function PublicProfileLayout() {
 	);
 }
 
-function PublicNavLink({
+function ProfileNavLink({
 	handle,
 	icon: Icon,
 	label,
-	to,
+	section,
 }: {
 	handle: string;
 	icon: ComponentType<{ className?: string }>;
 	label: string;
-	to: "/u/$handle/shelf" | "/u/$handle/up-next" | "/u/$handle/lists";
+	section: ProfileSection;
 }) {
 	const { seedColor } = useTheme();
 	const matchRoute = useMatchRoute();
-	const isActive = Boolean(
-		matchRoute({
-			to,
-			params: { handle },
-			fuzzy: false,
-		}),
+	const location = useLocation();
+	const route = getProfileRoute(
+		handle,
+		section,
+		section === "shelf" || section === "up-next" ? { page: 1 } : undefined,
 	);
+	const normalizedHandle = normalizeProfileHandle(handle);
+	const isPublicListDetailRoute =
+		section === "lists" &&
+		location.pathname.startsWith(`/profile/${normalizedHandle}/list/`);
+	const isActive =
+		isPublicListDetailRoute ||
+		Boolean(
+			matchRoute({
+				to: route.to,
+				params: route.params,
+				fuzzy: false,
+			}),
+		);
 
 	return (
 		<Link
-			to={to}
-			params={{ handle }}
+			{...route}
 			className={`flex items-center gap-2 rounded-[var(--md-sys-shape-corner-large)] px-4 py-2 transition-colors md-label-large ${
 				isActive
 					? ""

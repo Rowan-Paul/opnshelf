@@ -1,40 +1,51 @@
-import { shelfControllerGetUserShelfOptions } from "@opnshelf/api";
+import {
+	shelfControllerGetUserShelfOptions,
+	usersControllerGetMySettingsOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { PaginationControls } from "@/components/PaginationControls";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
+import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
+	M3CardContent,
 	M3CardDescription,
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
-import { usePublicProfile } from "@/hooks/usePublicProfile";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
 import { getDayKeyInTimezone, getShelfDayLabel } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
-export const Route = createFileRoute("/u/$handle/shelf")({
+export const Route = createFileRoute("/profile/$handle/shelf")({
 	validateSearch: (search: Record<string, unknown>) => ({
 		page: parsePageNumber(search.page),
 	}),
 	head: ({ params }) => ({
 		meta: [{ title: `@${params.handle.replace(/^@/, "")} Shelf | OpnShelf` }],
 	}),
-	component: PublicShelfPage,
+	component: ProfileShelfPage,
 });
 
-function PublicShelfPage() {
+function ProfileShelfPage() {
 	const { handle } = Route.useParams();
 	const { page } = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
-	const { data: profile } = usePublicProfile(handle);
-	const { timezone } = useUserSettings();
+	const { profile, currentUser, isOwner } = useProfileRouteState(handle);
+	const { data: viewerSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!currentUser?.did,
+	});
+	const timezone =
+		viewerSettings?.timezone ||
+		Intl.DateTimeFormat().resolvedOptions().timeZone ||
+		"UTC";
 
 	const userDid = profile?.did ?? "";
 	const displayName = String(
@@ -129,12 +140,23 @@ function PublicShelfPage() {
 						style={{ color: "var(--md-sys-color-outline)" }}
 					/>
 					<M3CardTitle className="md-headline-small">
-						{displayName}&apos;s shelf is empty
+						{isOwner ? "Your shelf is empty" : `${displayName}'s shelf is empty`}
 					</M3CardTitle>
 					<M3CardDescription>
-						No watched movies or episodes have been added yet.
+						{isOwner
+							? "Start tracking movies and shows you've watched"
+							: "No watched movies or episodes have been added yet."}
 					</M3CardDescription>
 				</M3CardHeader>
+				{isOwner ? (
+					<M3CardContent>
+						<M3Button variant="filled" asChild>
+							<Link to="/search" search={{ q: "", type: "all" }}>
+								Search for movies or shows
+							</Link>
+						</M3Button>
+					</M3CardContent>
+				) : null}
 			</M3Card>
 		);
 	}
@@ -185,15 +207,15 @@ function PublicShelfPage() {
 									<ShelfMovieCard
 										key={item.id}
 										tracked={item as never}
-										user={undefined}
-										readOnly
+										user={isOwner ? currentUser ?? undefined : undefined}
+										readOnly={!isOwner}
 									/>
 								) : (
 									<ShelfEpisodeCard
 										key={item.id}
 										tracked={item as never}
-										user={undefined}
-										readOnly
+										user={isOwner ? currentUser ?? undefined : undefined}
+										readOnly={!isOwner}
 									/>
 								),
 							)}

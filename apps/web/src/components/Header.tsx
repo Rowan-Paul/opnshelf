@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Film, Home, LogIn, LogOut, Menu, Search, User, X } from "lucide-react";
 import { useState } from "react";
+import { getProfileRoute } from "@/lib/profile-routes";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
 
@@ -37,6 +38,11 @@ export default function Header() {
 	const handleLogin = () => {
 		navigate({ to: "/login" });
 	};
+	const profileShelfRoute = getProfileRoute(
+		user?.handle ?? "",
+		"shelf",
+		{ page: 1 },
+	);
 
 	return (
 		<>
@@ -134,8 +140,7 @@ export default function Header() {
 						) : user ? (
 							<div className="flex items-center gap-3">
 								<Link
-									to="/profile/shelf"
-									search={{ page: 1 }}
+									{...profileShelfRoute}
 									className="flex items-center gap-3 rounded-(--md-sys-shape-corner-large) px-2 py-1.5 transition-colors"
 									style={{
 										color: "var(--md-sys-color-on-surface-variant)",
@@ -304,8 +309,7 @@ export default function Header() {
 					) : user ? (
 						<div className="space-y-3">
 							<Link
-								to="/profile/shelf"
-								search={{ page: 1 }}
+								{...profileShelfRoute}
 								onClick={() => setIsOpen(false)}
 								className="flex items-center gap-3"
 							>

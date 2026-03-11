@@ -21,12 +21,14 @@ import {
 	invalidateUserShelfQueries,
 	invalidateUserUpNextQueries,
 } from "@/lib/invalidate-shelf";
+import { getProfileRoute } from "@/lib/profile-routes";
 import { createTitleSlug, formatDateOnly, getTmdbPosterUrl } from "@/lib/utils";
 
 export interface UpNextShowCollectionProps {
 	isLoading: boolean;
 	upNext: UpNextShowDto[];
 	userDid: string;
+	profileHandle?: string;
 	limit?: number;
 	readOnly?: boolean;
 	showHeader?: boolean;
@@ -37,6 +39,7 @@ export function UpNextShowCollection({
 	isLoading,
 	upNext,
 	userDid,
+	profileHandle,
 	limit,
 	readOnly = false,
 	showHeader = true,
@@ -83,11 +86,15 @@ export function UpNextShowCollection({
 							Pick up exactly where you left off.
 						</p>
 					</div>
-					<M3Button variant="text" className="rounded-full px-4" asChild>
-						<Link to="/profile/up-next" search={{ page: 1 }}>
-							View all
-						</Link>
-					</M3Button>
+					{profileHandle ? (
+						<M3Button variant="text" className="rounded-full px-4" asChild>
+							<Link
+								{...getProfileRoute(profileHandle, "up-next", { page: 1 })}
+							>
+								View all
+							</Link>
+						</M3Button>
+					) : null}
 				</div>
 			) : null}
 

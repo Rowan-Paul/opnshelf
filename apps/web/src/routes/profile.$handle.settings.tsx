@@ -1,13 +1,14 @@
 import {
 	authControllerMeOptions,
 	authControllerMeQueryKey,
+	usersControllerGetPublicProfileOptions,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	Clock,
@@ -21,7 +22,6 @@ import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
-import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import {
 	Dialog,
 	DialogContent,
@@ -49,11 +49,38 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
 
-export const Route = createFileRoute("/profile/settings")({
-	head: () => ({
-		meta: [{ title: "Settings | OpnShelf" }],
+export const Route = createFileRoute("/profile/$handle/settings")({
+	beforeLoad: async ({ context, params }) => {
+		const handle = params.handle.trim().replace(/^@/, "").toLowerCase();
+		const [currentUser, profile] = await Promise.all([
+			context.queryClient
+				.ensureQueryData({
+					...authControllerMeOptions(),
+					staleTime: 5 * 60 * 1000,
+					retry: false,
+				})
+				.catch(() => null),
+			context.queryClient
+				.ensureQueryData({
+					...usersControllerGetPublicProfileOptions({
+						path: { handle },
+					}),
+					retry: false,
+				})
+				.catch(() => null),
+		]);
+
+		if (!profile || !isOwnerProfile(currentUser?.did, profile.did)) {
+			throw redirect({
+				...getProfileRoute(handle, "shelf", { page: 1 }),
+			});
+		}
+	},
+	head: ({ params }) => ({
+		meta: [{ title: `@${params.handle.replace(/^@/, "")} Settings | OpnShelf` }],
 	}),
 	component: SettingsPage,
 });
@@ -155,32 +182,24 @@ function SettingsPage() {
 	};
 
 	if (isAuthLoading) {
-		return <AuthLoadingState className="max-w-3xl py-8" />;
+		return <AuthLoadingState className="max-w-3xl py-4" />;
 	}
 
 	if (!user) {
-		return (
-			<UnauthenticatedState
-				title="Settings"
-				description="Sign in to customize your preferences"
-				icon="settings"
-			/>
-		);
+		return null;
 	}
 
 	return (
-		<div className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-			<div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
-				{/* Page Header */}
-				<div className="flex items-center gap-3 mb-2">
-					<div
-						className="p-2 rounded-lg"
-						style={{ backgroundColor: `${seedColor}20` }}
-					>
-						<Palette className="w-6 h-6" style={{ color: seedColor }} />
-					</div>
-					<h1 className="md-headline-medium">Settings</h1>
+		<div className="max-w-3xl space-y-6 text-[var(--md-sys-color-on-surface)]">
+			<div className="mb-2 flex items-center gap-3">
+				<div
+					className="rounded-lg p-2"
+					style={{ backgroundColor: `${seedColor}20` }}
+				>
+					<Palette className="h-6 w-6" style={{ color: seedColor }} />
 				</div>
+				<h1 className="md-headline-medium">Settings</h1>
+			</div>
 
 				{/* Time & Region Settings */}
 				<M3Card variant="elevated">
@@ -342,7 +361,6 @@ function SettingsPage() {
 						</div>
 					</M3CardContent>
 				</M3Card>
-			</div>
 
 			{/* Delete Account Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

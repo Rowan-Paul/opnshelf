@@ -9,12 +9,14 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
+import { getProfileListDetailRoute } from "@/lib/profile-routes";
 
 interface ListCardProps {
+	handle: string;
 	list: MovieListSummaryDto;
 }
 
-export function ListCard({ list }: ListCardProps) {
+export function ListCard({ handle, list }: ListCardProps) {
 	const { seedColor } = useTheme();
 
 	const getIcon = () => {
@@ -28,7 +30,10 @@ export function ListCard({ list }: ListCardProps) {
 	};
 
 	return (
-		<Link to="/lists/$slug" params={{ slug: list.slug }} search={{ page: 1 }}>
+		<Link
+			{...getProfileListDetailRoute(handle, list.slug)}
+			search={{ page: 1 }}
+		>
 			<M3Card
 				variant="elevated"
 				className="cursor-pointer h-full transition-all hover:md-elevation-2"

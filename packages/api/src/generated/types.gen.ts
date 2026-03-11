@@ -1616,6 +1616,47 @@ export type ListsControllerGetPublicUserListsResponses = {
 
 export type ListsControllerGetPublicUserListsResponse = ListsControllerGetPublicUserListsResponses[keyof ListsControllerGetPublicUserListsResponses];
 
+export type ListsControllerGetPublicUserListData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/lists/user/{userDid}/{slug}';
+};
+
+export type ListsControllerGetPublicUserListErrors = {
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerGetPublicUserListResponses = {
+    /**
+     * Public list details with movies
+     */
+    200: MovieListWithMoviesDto;
+};
+
+export type ListsControllerGetPublicUserListResponse = ListsControllerGetPublicUserListResponses[keyof ListsControllerGetPublicUserListResponses];
+
 export type ListsControllerDeleteListData = {
     body?: never;
     path: {
