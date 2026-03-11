@@ -159,7 +159,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		ui_host: env.VITE_PUBLIC_POSTHOG_HOST,
 		defaults: "2025-05-24" as const,
 		capture_exceptions: true,
-		debug: import.meta.env.DEV,
 	};
 
 	return (

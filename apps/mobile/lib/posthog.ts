@@ -9,14 +9,6 @@ const host =
 	"https://eu.i.posthog.com";
 const isPostHogConfigured = !!apiKey && apiKey !== "phc_your_api_key_here";
 
-if (__DEV__) {
-	console.log("PostHog config:", {
-		apiKey: apiKey ? "SET" : "NOT SET",
-		host,
-		isConfigured: isPostHogConfigured,
-	});
-}
-
 if (!isPostHogConfigured) {
 	console.warn(
 		"PostHog API key not configured. Analytics will be disabled. " +
@@ -61,10 +53,5 @@ export const posthog = new PostHog(apiKey || "placeholder_key", {
 	fetchRetryCount: 3,
 	fetchRetryDelay: 3000,
 });
-
-// Enable debug mode in development for verbose logging
-if (__DEV__) {
-	posthog.debug(true);
-}
 
 export const isPostHogEnabled = isPostHogConfigured;
