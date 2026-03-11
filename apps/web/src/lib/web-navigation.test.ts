@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+	getCalendarRoute,
+	getListsRoute,
 	getMyShelfRoute,
 	getSignedInPrimaryNav,
 	getSignedOutPrimaryNav,
+	getUpNextRoute,
 	isGlobalNavItemActive,
 	shouldHideMobileBottomNav,
 } from "@/lib/web-navigation";
@@ -23,11 +26,24 @@ describe("web-navigation", () => {
 		]);
 	});
 
-	it("builds the canonical my shelf route", () => {
+	it("builds the canonical signed-in profile routes", () => {
 		expect(getMyShelfRoute("@Rowan")).toEqual({
 			to: "/profile/$handle/shelf",
 			params: { handle: "rowan" },
 			search: { page: 1 },
+		});
+		expect(getUpNextRoute("@Rowan")).toEqual({
+			to: "/profile/$handle/up-next",
+			params: { handle: "rowan" },
+			search: { page: 1 },
+		});
+		expect(getListsRoute("@Rowan")).toEqual({
+			to: "/profile/$handle/lists",
+			params: { handle: "rowan" },
+		});
+		expect(getCalendarRoute("@Rowan")).toEqual({
+			to: "/profile/$handle/calendar",
+			params: { handle: "rowan" },
 		});
 	});
 

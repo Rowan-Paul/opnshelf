@@ -42,6 +42,18 @@ export function getMyShelfRoute(handle: string) {
 	return getProfileRoute(handle, "shelf", { page: 1 });
 }
 
+export function getUpNextRoute(handle: string) {
+	return getProfileRoute(handle, "up-next", { page: 1 });
+}
+
+export function getListsRoute(handle: string) {
+	return getProfileRoute(handle, "lists");
+}
+
+export function getCalendarRoute(handle: string) {
+	return getProfileRoute(handle, "calendar");
+}
+
 export function getSettingsRoute(handle: string) {
 	return getProfileRoute(handle, "settings");
 }

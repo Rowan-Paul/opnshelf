@@ -3,12 +3,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
 	BookOpen,
+	CalendarDays,
 	ChevronDown,
 	Home,
+	List,
 	LogIn,
 	LogOut,
 	Search,
 	Settings,
+	Tv,
 	User,
 } from "lucide-react";
 import { useState } from "react";
@@ -22,12 +25,15 @@ import {
 import { cn } from "@/lib/utils";
 import {
 	type GlobalNavItem,
+	getCalendarRoute,
 	getHomeRoute,
+	getListsRoute,
 	getMyShelfRoute,
 	getSearchRoute,
 	getSettingsRoute,
 	getSignedInPrimaryNav,
 	getSignedOutPrimaryNav,
+	getUpNextRoute,
 	isGlobalNavItemActive,
 } from "@/lib/web-navigation";
 
@@ -41,6 +47,9 @@ type NavLinkTarget =
 	| ReturnType<typeof getHomeRoute>
 	| ReturnType<typeof getSearchRoute>
 	| ReturnType<typeof getMyShelfRoute>
+	| ReturnType<typeof getUpNextRoute>
+	| ReturnType<typeof getListsRoute>
+	| ReturnType<typeof getCalendarRoute>
 	| ReturnType<typeof getSettingsRoute>;
 
 const navIcons = {
@@ -429,6 +438,24 @@ function AccountMenu({
 						onSelect={() => onOpenChange(false)}
 					/>
 					<MenuLink
+						target={getUpNextRoute(user.handle)}
+						icon={Tv}
+						label="Up Next"
+						onSelect={() => onOpenChange(false)}
+					/>
+					<MenuLink
+						target={getListsRoute(user.handle)}
+						icon={List}
+						label="Lists"
+						onSelect={() => onOpenChange(false)}
+					/>
+					<MenuLink
+						target={getCalendarRoute(user.handle)}
+						icon={CalendarDays}
+						label="Calendar"
+						onSelect={() => onOpenChange(false)}
+					/>
+					<MenuLink
 						target={getSettingsRoute(user.handle)}
 						icon={Settings}
 						label="Settings"
@@ -523,5 +550,11 @@ function getNavTarget(
 			return getSearchRoute();
 		case "my-shelf":
 			return currentUserHandle ? getMyShelfRoute(currentUserHandle) : null;
+		case "up-next":
+			return currentUserHandle ? getUpNextRoute(currentUserHandle) : null;
+		case "lists":
+			return currentUserHandle ? getListsRoute(currentUserHandle) : null;
+		case "calendar":
+			return currentUserHandle ? getCalendarRoute(currentUserHandle) : null;
 	}
 }
