@@ -19,6 +19,7 @@ import { UserListsSection } from "@/components/home/UserListsSection";
 import type { DashboardUser } from "@/components/home/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -118,6 +119,11 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 
 	const displayName = resolveDisplayName(user);
 	const maxActivityValue = Math.max(...activityBars.map((bar) => bar.value), 1);
+	const isShelfInitialLoading = isShelfLoading && !shelfData;
+	const isActivityInitialLoading =
+		isActivitySummaryLoading && !activitySummary;
+	const isListsInitialLoading = isListsLoading && !lists;
+	const isUpNextInitialLoading = isUpNextLoading && !upNext;
 
 	const deleteMovieMutation = useMutation({
 		mutationKey: ["dashboard", "movies", "delete"],
@@ -197,7 +203,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 				</View>
 
 				<UpNextSection
-					isLoading={isUpNextLoading}
+					isLoading={isUpNextInitialLoading}
 					items={upNext?.items ?? []}
 					userDid={user.did}
 				/>
@@ -244,27 +250,61 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 						</View>
 					</CardHeader>
 					<CardContent>
-						<View
-							style={[
-								styles.activityCard,
-								{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
-							]}
-						>
-							<View style={styles.activityHeaderRow}>
-								<Text style={[styles.activityTitle, { color: colors.onSurface }]}>Viewing rhythm</Text>
-								<Text style={[styles.activitySubtitle, { color: colors.onSurfaceVariant }]}>
-									{range === "week" ? "Last 7 days" : "Past 30 days"}
-								</Text>
-							</View>
-							{range === "month" ? (
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={styles.activityBarsScrollContent}
-								>
-									<View style={styles.activityBarsRowMonth}>
+						{isActivityInitialLoading ? (
+							<DashboardMetricsSkeleton />
+						) : (
+							<View
+								style={[
+									styles.activityCard,
+									{ backgroundColor: colors.surfaceContainer, borderColor: colors.outlineVariant },
+								]}
+							>
+								<View style={styles.activityHeaderRow}>
+									<Text style={[styles.activityTitle, { color: colors.onSurface }]}>Viewing rhythm</Text>
+									<Text style={[styles.activitySubtitle, { color: colors.onSurfaceVariant }]}>
+										{range === "week" ? "Last 7 days" : "Past 30 days"}
+									</Text>
+								</View>
+								{range === "month" ? (
+									<ScrollView
+										horizontal
+										showsHorizontalScrollIndicator={false}
+										contentContainerStyle={styles.activityBarsScrollContent}
+									>
+										<View style={styles.activityBarsRowMonth}>
+											{activityBars.map((bar) => (
+												<View key={bar.key} style={styles.activityBarItemMonth}>
+													<View style={styles.activityBarTrack}>
+														<View
+															style={[
+																styles.activityBarFill,
+																{
+																	backgroundColor: colors.primary,
+																	height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
+																},
+															]}
+														/>
+													</View>
+													<Text style={[styles.activityValue, { color: colors.onSurface }]}>
+														{bar.value}
+													</Text>
+													<Text
+														style={[
+															styles.activityLabel,
+															styles.activityLabelMonth,
+															{ color: colors.onSurfaceVariant },
+														]}
+													>
+														{bar.showLabel ? bar.label : ""}
+													</Text>
+												</View>
+											))}
+										</View>
+									</ScrollView>
+								) : (
+									<View style={styles.activityBarsRow}>
 										{activityBars.map((bar) => (
-											<View key={bar.key} style={styles.activityBarItemMonth}>
+											<View key={bar.key} style={styles.activityBarItem}>
 												<View style={styles.activityBarTrack}>
 													<View
 														style={[
@@ -279,50 +319,20 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 												<Text style={[styles.activityValue, { color: colors.onSurface }]}>
 													{bar.value}
 												</Text>
-												<Text
-													style={[
-														styles.activityLabel,
-														styles.activityLabelMonth,
-														{ color: colors.onSurfaceVariant },
-													]}
-												>
-													{bar.showLabel ? bar.label : ""}
+												<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>
+													{bar.label}
 												</Text>
 											</View>
 										))}
 									</View>
-								</ScrollView>
-							) : (
-								<View style={styles.activityBarsRow}>
-									{activityBars.map((bar) => (
-										<View key={bar.key} style={styles.activityBarItem}>
-											<View style={styles.activityBarTrack}>
-												<View
-													style={[
-														styles.activityBarFill,
-														{
-															backgroundColor: colors.primary,
-															height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
-														},
-													]}
-												/>
-											</View>
-											<Text style={[styles.activityValue, { color: colors.onSurface }]}>
-												{bar.value}
-											</Text>
-											<Text style={[styles.activityLabel, { color: colors.onSurfaceVariant }]}>
-												{bar.label}
-											</Text>
-										</View>
-									))}
-								</View>
-							)}
-						</View>
+								)}
+							</View>
+						)}
 					</CardContent>
 				</Card>
 
 				<RecentWatchedSection
-					isLoading={isShelfLoading}
+					isLoading={isShelfInitialLoading}
 					recentWatched={recentWatched}
 					formatDate={formatDate}
 					onRemoveMovie={handleRemoveMovie}
@@ -332,7 +342,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 				/>
 
 				<UserListsSection
-					isLoading={isListsLoading}
+					isLoading={isListsInitialLoading}
 					recentLists={recentLists}
 					onCreateList={() => setShowCreateModal(true)}
 				/>
@@ -350,6 +360,35 @@ function resolveDisplayName(user: DashboardUser): string {
 	}
 
 	return user.handle;
+}
+
+function DashboardMetricsSkeleton() {
+	return (
+		<View style={styles.metricsSkeleton}>
+			<View style={styles.metricsSkeletonCard}>
+				<View style={styles.metricsSkeletonHeader}>
+					<Skeleton width="42%" height={14} />
+					<Skeleton width={72} height={12} />
+				</View>
+				<View style={styles.metricsSkeletonBars}>
+					{[48, 78, 58, 90, 62, 84, 54].map((height, index) => (
+						<View key={`dashboard-bar-skeleton-${index + 1}`} style={styles.metricsSkeletonBarItem}>
+							<View style={styles.metricsSkeletonTrack}>
+								<Skeleton
+									width="100%"
+									height={height}
+									borderRadius={borderRadius.md}
+									style={styles.metricsSkeletonFill}
+								/>
+							</View>
+							<Skeleton width={18} height={12} />
+							<Skeleton width={22} height={10} />
+						</View>
+					))}
+				</View>
+			</View>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
@@ -380,6 +419,47 @@ const styles = StyleSheet.create({
 		marginBottom: spacing.lg,
 		borderRadius: borderRadius.lg,
 		borderWidth: 1,
+	},
+	metricsSkeleton: {
+		gap: spacing.sm,
+	},
+	metricsSkeletonCard: {
+		borderRadius: borderRadius.lg,
+		borderWidth: 1,
+		borderColor: "rgba(127,127,127,0.12)",
+		padding: spacing.md,
+		gap: spacing.md,
+	},
+	metricsSkeletonHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		gap: spacing.sm,
+	},
+	metricsSkeletonBars: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+		justifyContent: "space-between",
+		gap: spacing.xs,
+		minHeight: 132,
+	},
+	metricsSkeletonBarItem: {
+		flex: 1,
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	metricsSkeletonTrack: {
+		width: "100%",
+		height: 84,
+		borderRadius: borderRadius.md,
+		justifyContent: "flex-end",
+		overflow: "hidden",
+		backgroundColor: "rgba(127,127,127,0.1)",
+		padding: 4,
+	},
+	metricsSkeletonFill: {
+		alignSelf: "stretch",
+		marginTop: "auto",
 	},
 	metricsHeaderRow: {
 		gap: spacing.sm,

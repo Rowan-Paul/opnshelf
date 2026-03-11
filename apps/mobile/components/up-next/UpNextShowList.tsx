@@ -294,11 +294,9 @@ export function UpNextShowList({
 				) : null}
 				<View style={styles.sectionSkeleton}>
 					{Array.from({ length: skeletonCount }, (_, index) => (
-						<Skeleton
+						<UpNextSkeletonCard
 							key={`up-next-skeleton-${variant}-${index + 1}`}
-							width="100%"
-							height={isFull ? 168 : 148}
-							style={{ marginBottom: spacing.sm }}
+							isFull={isFull}
 						/>
 					))}
 				</View>
@@ -402,6 +400,129 @@ function SectionHeader({
 	);
 }
 
+function UpNextSkeletonCard({ isFull }: { isFull: boolean }) {
+	const { colors } = useTheme();
+
+	return (
+		<View
+			style={[
+				styles.upNextCard,
+				styles.loadingCard,
+				{
+					backgroundColor: colors.surfaceContainer,
+					borderColor: colors.outline,
+				},
+			]}
+		>
+			<View style={styles.posterColumn}>
+				<Skeleton
+					width={84}
+					height={126}
+					borderRadius={borderRadius.md}
+					style={{
+						backgroundColor: colors.surfaceContainerHighest,
+						borderColor: "transparent",
+					}}
+				/>
+			</View>
+			<View style={styles.upNextMeta}>
+				<View style={styles.metaTop}>
+					<View style={styles.pillRow}>
+						<View
+							style={[
+								styles.pill,
+								{
+									backgroundColor: withAlpha(colors.primaryContainer, 0.72),
+								},
+							]}
+						>
+							<Skeleton
+								width={50}
+								height={11}
+								borderRadius={borderRadius.full}
+								style={styles.loadingPillText}
+							/>
+						</View>
+						<View
+							style={[
+								styles.pill,
+								{
+									backgroundColor: withAlpha(colors.secondaryContainer, 0.76),
+								},
+							]}
+						>
+							<Skeleton
+								width={42}
+								height={11}
+								borderRadius={borderRadius.full}
+								style={styles.loadingPillText}
+							/>
+						</View>
+					</View>
+					<View style={styles.loadingTitleStack}>
+						<Skeleton
+							width="88%"
+							height={18}
+							style={styles.loadingTextBlock}
+						/>
+						<Skeleton
+							width="74%"
+							height={18}
+							style={styles.loadingTextBlock}
+						/>
+						<Skeleton
+							width="58%"
+							height={14}
+							style={styles.loadingSubtextBlock}
+						/>
+					</View>
+					{isFull ? (
+						<View style={styles.loadingMetadataGroup}>
+							<Skeleton width="56%" height={12} />
+							<Skeleton width="44%" height={12} />
+						</View>
+					) : null}
+				</View>
+				<View
+					style={[
+						styles.watchButton,
+						styles.loadingWatchButton,
+						{
+							backgroundColor: withAlpha(colors.primaryContainer, 0.82),
+						},
+					]}
+				>
+					<Skeleton
+						width={14}
+						height={14}
+						borderRadius={borderRadius.full}
+						style={styles.loadingWatchIcon}
+					/>
+					<Skeleton
+						width={40}
+						height={12}
+						borderRadius={borderRadius.full}
+						style={styles.loadingWatchLabel}
+					/>
+				</View>
+			</View>
+		</View>
+	);
+}
+
+function withAlpha(hex: string, alpha: number): string {
+	const normalized = hex.replace("#", "");
+	if (normalized.length !== 6) {
+		return hex;
+	}
+
+	const red = Number.parseInt(normalized.slice(0, 2), 16);
+	const green = Number.parseInt(normalized.slice(2, 4), 16);
+	const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+	return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 const styles = StyleSheet.create({
 	section: {
 		marginBottom: spacing.xl,
@@ -439,7 +560,40 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.full,
 	},
 	sectionSkeleton: {
+		gap: spacing.sm,
+	},
+	loadingCard: {
+		marginBottom: spacing.sm,
+		minHeight: 158,
+	},
+	loadingMetadataGroup: {
 		marginTop: spacing.sm,
+		gap: spacing.xs,
+	},
+	loadingTitleStack: {
+		gap: spacing.xs,
+		marginTop: 2,
+	},
+	loadingPillText: {
+		borderColor: "transparent",
+	},
+	loadingTextBlock: {
+		borderColor: "transparent",
+	},
+	loadingSubtextBlock: {
+		marginTop: spacing.xs,
+		borderColor: "transparent",
+	},
+	loadingWatchButton: {
+		alignSelf: "flex-end",
+		paddingHorizontal: spacing.md,
+		paddingVertical: 8,
+	},
+	loadingWatchIcon: {
+		borderColor: "transparent",
+	},
+	loadingWatchLabel: {
+		borderColor: "transparent",
 	},
 	upNextList: {
 		gap: spacing.sm,

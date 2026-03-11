@@ -45,7 +45,55 @@ export function RecentWatchedSection({
 			{isLoading ? (
 				<View style={styles.sectionSkeleton}>
 					{[1, 2, 3].map((i) => (
-						<Skeleton key={i} width="100%" height={100} style={{ marginBottom: spacing.sm }} />
+						<View
+							key={i}
+							style={[
+								styles.recentItem,
+								styles.loadingItem,
+								{
+									backgroundColor: colors.surfaceContainer,
+									borderColor: colors.outline,
+								},
+							]}
+						>
+							<View
+								style={[
+									styles.recentPoster,
+									{ backgroundColor: colors.surfaceContainerHigh },
+								]}
+							>
+								<Skeleton
+									width={68}
+									height={100}
+									borderRadius={0}
+									style={styles.loadingPoster}
+								/>
+							</View>
+							<View style={styles.loadingMeta}>
+								<Skeleton width="64%" height={16} style={styles.loadingTitle} />
+								<Skeleton width="52%" height={12} style={styles.loadingDate} />
+								<View
+									style={[
+										styles.removeButton,
+										styles.loadingRemoveButton,
+										{ backgroundColor: colors.errorContainer },
+									]}
+								>
+									<Skeleton
+										width={14}
+										height={14}
+										borderRadius={borderRadius.full}
+										style={styles.loadingRemoveIcon}
+									/>
+									<Skeleton
+										width={42}
+										height={12}
+										borderRadius={borderRadius.full}
+										style={styles.loadingRemoveLabel}
+									/>
+								</View>
+							</View>
+						</View>
 					))}
 				</View>
 			) : recentWatched.length > 0 ? (
@@ -175,10 +223,30 @@ const styles = StyleSheet.create({
 		borderRadius: borderRadius.full,
 	},
 	sectionSkeleton: {
-		marginTop: spacing.sm,
+		gap: spacing.sm,
 	},
 	recentList: {
 		gap: spacing.sm,
+	},
+	loadingItem: {
+		alignItems: "stretch",
+	},
+	loadingMeta: {
+		flex: 1,
+		paddingVertical: spacing.sm,
+		paddingHorizontal: spacing.md,
+		justifyContent: "center",
+	},
+	loadingPoster: {
+		borderColor: "transparent",
+	},
+	loadingTitle: {
+		borderColor: "transparent",
+		marginBottom: spacing.xs,
+	},
+	loadingDate: {
+		borderColor: "transparent",
+		marginBottom: spacing.sm,
 	},
 	recentItem: {
 		flexDirection: "row",
@@ -223,6 +291,16 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
+	},
+	loadingRemoveButton: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: 6,
+	},
+	loadingRemoveIcon: {
+		borderColor: "transparent",
+	},
+	loadingRemoveLabel: {
+		borderColor: "transparent",
 	},
 	removeButtonText: {
 		fontSize: 12,

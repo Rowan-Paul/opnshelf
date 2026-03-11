@@ -39,7 +39,22 @@ export function UserListsSection({
 			{isLoading ? (
 				<View style={styles.sectionSkeleton}>
 					{[1, 2].map((i) => (
-						<Skeleton key={i} width="100%" height={96} style={{ marginBottom: spacing.sm }} />
+						<View
+							key={i}
+							style={[
+								styles.listItem,
+								styles.loadingListItem,
+								{
+									backgroundColor: colors.surfaceContainer,
+									borderColor: colors.outline,
+								},
+							]}
+						>
+							<View style={styles.listMeta}>
+								<Skeleton width="56%" height={18} />
+								<Skeleton width="28%" height={12} />
+							</View>
+						</View>
 					))}
 				</View>
 			) : recentLists.length > 0 ? (
@@ -122,9 +137,14 @@ const styles = StyleSheet.create({
 	},
 	sectionSkeleton: {
 		marginTop: spacing.sm,
+		gap: spacing.sm,
 	},
 	recentList: {
 		gap: spacing.sm,
+	},
+	loadingListItem: {
+		minHeight: 96,
+		justifyContent: "center",
 	},
 	listItem: {
 		borderWidth: 1,
