@@ -1,7 +1,8 @@
 import { getYouTubeEmbedUrl, type TmdbTrailerDto } from "@opnshelf/api";
 import { Ionicons } from "@expo/vector-icons";
+import * as Application from "expo-application";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -12,12 +13,21 @@ type TrailerPlayerModalProps = {
 	onClose: () => void;
 };
 
+const FALLBACK_APP_ID = "com.rowanpaul.opnshelf";
+
+function getYouTubeReferer(): string {
+	const appId = (Application.applicationId || FALLBACK_APP_ID).toLowerCase();
+	return `https://${appId}`;
+}
+
 export function TrailerPlayerModal({
 	visible,
 	trailer,
 	onClose,
 }: TrailerPlayerModalProps) {
 	const { colors } = useTheme();
+	const insets = useSafeAreaInsets();
+	const referer = getYouTubeReferer();
 
 	return (
 		<Modal
@@ -26,7 +36,17 @@ export function TrailerPlayerModal({
 			presentationStyle="fullScreen"
 			onRequestClose={onClose}
 		>
-			<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+			<SafeAreaView
+				style={[
+					styles.container,
+					{
+						backgroundColor: colors.background,
+						paddingTop: Math.max(insets.top, spacing.xl),
+						paddingBottom: Math.max(insets.bottom, spacing.lg),
+					},
+				]}
+				edges={["left", "right"]}
+			>
 				<View style={styles.header}>
 					<View style={styles.headerCopy}>
 						<Text style={[styles.eyebrow, { color: colors.onSurfaceVariant }]}>
@@ -57,9 +77,13 @@ export function TrailerPlayerModal({
 						<WebView
 							source={{
 								uri: getYouTubeEmbedUrl(trailer.key, { autoplay: true }),
+								headers: {
+									Referer: referer,
+								},
 							}}
 							style={styles.webview}
 							allowsFullscreenVideo
+							allowsInlineMediaPlayback
 							javaScriptEnabled
 							domStorageEnabled
 							mediaPlaybackRequiresUserAction={false}
@@ -74,7 +98,7 @@ export function TrailerPlayerModal({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		padding: spacing.md,
+		paddingHorizontal: spacing.md,
 	},
 	header: {
 		alignItems: "flex-start",
@@ -86,7 +110,6 @@ const styles = StyleSheet.create({
 	headerCopy: {
 		flex: 1,
 		gap: spacing.xs,
-		paddingTop: spacing.xs,
 	},
 	eyebrow: {
 		fontSize: 11,
