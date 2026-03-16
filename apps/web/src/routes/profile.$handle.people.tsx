@@ -338,7 +338,6 @@ function ProfilePeoplePage() {
 			{hasActiveQuery ? (
 				<SearchResultsSection
 					currentPage={discoverQuery.data?.page ?? discoverPage}
-					isLoading={discoverQuery.isLoading}
 					isFetching={discoverQuery.isFetching}
 					pageNumbers={getVisiblePages(
 						discoverQuery.data?.page ?? discoverPage,

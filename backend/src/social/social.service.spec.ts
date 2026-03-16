@@ -377,7 +377,9 @@ describe("SocialService", () => {
 	it("can reflect public profile counts after follow and unfollow", async () => {
 		const follows = new Set<string>();
 		const statefulPrisma = createStatefulPrisma(follows);
-		const statefulService = new SocialService(statefulPrisma as PrismaService);
+		const statefulService = new SocialService(
+			statefulPrisma as unknown as PrismaService,
+		);
 
 		await statefulService.follow("did:plc:self", "did:plc:target");
 		const followedProfile = await statefulService.getFollowers(

@@ -5,6 +5,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { TrailerSection } from "./TrailerSection";
 
+declare global {
+	var IS_REACT_ACT_ENVIRONMENT: boolean;
+}
+
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 describe("TrailerSection", () => {
