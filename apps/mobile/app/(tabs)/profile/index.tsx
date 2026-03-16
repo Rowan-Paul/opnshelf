@@ -204,11 +204,8 @@ export default function ProfileScreen() {
 									]}
 									onPress={() =>
 										router.push({
-											pathname: "/user/[handle]/friends",
-											params: {
-												handle: profile?.handle ?? "",
-												tab: "following",
-											},
+											pathname: "/(tabs)/profile/friends",
+											params: { tab: "following" },
 										})
 									}
 								>
@@ -236,11 +233,8 @@ export default function ProfileScreen() {
 									]}
 									onPress={() =>
 										router.push({
-											pathname: "/user/[handle]/friends",
-											params: {
-												handle: profile?.handle ?? "",
-												tab: "followers",
-											},
+											pathname: "/(tabs)/profile/friends",
+											params: { tab: "followers" },
 										})
 									}
 								>
@@ -427,11 +421,8 @@ export default function ProfileScreen() {
 						]}
 						onPress={() =>
 							router.push({
-								pathname: "/user/[handle]/friends",
-								params: {
-									handle: profile?.handle ?? "",
-									tab: "following",
-								},
+								pathname: "/(tabs)/profile/friends",
+								params: { tab: "following" },
 							})
 						}
 					>

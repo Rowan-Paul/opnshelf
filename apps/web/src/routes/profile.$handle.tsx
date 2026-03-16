@@ -38,6 +38,7 @@ import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import {
 	getProfilePeopleRoute,
 	getProfileRoute,
+	getVisibleProfileSections,
 	normalizeProfileHandle,
 	type ProfileSection,
 } from "@/lib/profile-routes";
@@ -114,6 +115,12 @@ function ProfileLayout() {
 		isSignedIn,
 		isOwner,
 	});
+	const visibleSections = new Set(
+		getVisibleProfileSections({
+			isOwner,
+			isSignedIn,
+		}),
+	);
 
 	return (
 		<div
@@ -216,58 +223,61 @@ function ProfileLayout() {
 						label="Shelf"
 						section="shelf"
 					/>
-					<ProfileNavLink
-						handle={profile.handle}
-						icon={Tv}
-						label="Up Next"
-						section="up-next"
-					/>
-					<ProfileNavLink
-						handle={profile.handle}
-						icon={List}
-						label="Lists"
-						section="lists"
-					/>
-					{isSignedIn ? (
-						isOwner ? (
-							<ProfileNavLink
-								handle={profile.handle}
-								icon={Users}
-								label="Friends"
-								section="people"
-							/>
-						) : (
-							<>
-								<ProfileNavLink
-									handle={profile.handle}
-									icon={Users}
-									label="Followers"
-									section="followers"
-								/>
-								<ProfileNavLink
-									handle={profile.handle}
-									icon={Star}
-									label="Following"
-									section="following"
-								/>
-							</>
-						)
+					{visibleSections.has("up-next") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Tv}
+							label="Up Next"
+							section="up-next"
+						/>
 					) : null}
-					{isOwner ? (
-						<>
-							<ProfileNavLink
-								handle={profile.handle}
-								icon={Calendar}
-								label="Calendar"
-								section="calendar"
-							/>
-							<ProfileNavLink
-								handle={profile.handle}
-								icon={Settings}
-								label="Settings"
-								section="settings"
-							/>
-						</>
+					{visibleSections.has("lists") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={List}
+							label="Lists"
+							section="lists"
+						/>
+					) : null}
+					{visibleSections.has("people") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Users}
+							label="Friends"
+							section="people"
+						/>
+					) : null}
+					{visibleSections.has("followers") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Users}
+							label="Followers"
+							section="followers"
+						/>
+					) : null}
+					{visibleSections.has("following") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Star}
+							label="Following"
+							section="following"
+						/>
+					) : null}
+					{visibleSections.has("calendar") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Calendar}
+							label="Calendar"
+							section="calendar"
+						/>
+					) : null}
+					{visibleSections.has("settings") ? (
+						<ProfileNavLink
+							handle={profile.handle}
+							icon={Settings}
+							label="Settings"
+							section="settings"
+						/>
 					) : null}
 				</div>
 

@@ -1,6 +1,5 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
-import { router } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SocialFollowButton } from "@/components/social/SocialFollowButton";
 import { SocialUserAvatar } from "@/components/social/SocialUserAvatar";
@@ -36,15 +35,7 @@ export function SocialUserRow({
 			}}
 		>
 			<CardContent style={styles.content}>
-				<TouchableOpacity
-					style={styles.identity}
-					onPress={() =>
-						router.push({
-							pathname: "/user/[handle]/shelf",
-							params: { handle: user.handle },
-						})
-					}
-				>
+				<View style={styles.identity}>
 					<SocialUserAvatar
 						avatar={user.avatar}
 						displayName={user.displayName}
@@ -134,7 +125,7 @@ export function SocialUserRow({
 							</View>
 						</View>
 					</View>
-				</TouchableOpacity>
+				</View>
 				{showFollowButton ? (
 					<View style={styles.buttonRow}>
 						<SocialFollowButton

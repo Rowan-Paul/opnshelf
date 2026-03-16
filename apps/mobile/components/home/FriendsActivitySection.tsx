@@ -75,8 +75,8 @@ export function FriendsActivitySection({
 						<Button
 							onPress={() =>
 								router.push({
-									pathname: "/user/[handle]/friends",
-									params: { handle: userHandle, tab: "following" },
+									pathname: "/(tabs)/profile/friends",
+									params: { tab: "following" },
 								})
 							}
 						>
@@ -305,14 +305,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 					</Text>
 				</TouchableOpacity>
 
-				<TouchableOpacity
-					activeOpacity={0.85}
-					onPress={() =>
-						router.push({
-							pathname: "/user/[handle]/shelf",
-							params: { handle: item.actor.handle },
-						})
-					}
+				<View
 					style={[
 						styles.actorPill,
 						{
@@ -341,7 +334,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 							{activityLabel}
 						</Text>
 					</View>
-				</TouchableOpacity>
+				</View>
 			</View>
 		</View>
 	);

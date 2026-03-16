@@ -3,6 +3,7 @@ import {
 	getProfileListDetailRoute,
 	getProfilePeopleRoute,
 	getProfileRoute,
+	getVisibleProfileSections,
 	isOwnerProfile,
 	normalizeProfileHandle,
 } from "@/lib/profile-routes";
@@ -69,5 +70,28 @@ describe("profile-routes", () => {
 		expect(isOwnerProfile("did:plc:abc", "did:plc:abc")).toBe(true);
 		expect(isOwnerProfile("did:plc:abc", "did:plc:def")).toBe(false);
 		expect(isOwnerProfile(undefined, "did:plc:def")).toBe(false);
+	});
+
+	it("only shows up next in the owner profile nav", () => {
+		expect(
+			getVisibleProfileSections({
+				isOwner: true,
+				isSignedIn: true,
+			}),
+		).toEqual(["shelf", "up-next", "lists", "people", "calendar", "settings"]);
+
+		expect(
+			getVisibleProfileSections({
+				isOwner: false,
+				isSignedIn: true,
+			}),
+		).toEqual(["shelf", "lists", "followers", "following"]);
+
+		expect(
+			getVisibleProfileSections({
+				isOwner: false,
+				isSignedIn: false,
+			}),
+		).toEqual(["shelf", "lists"]);
 	});
 });

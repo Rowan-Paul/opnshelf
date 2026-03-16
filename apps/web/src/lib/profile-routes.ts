@@ -10,6 +10,11 @@ export type ProfileSection =
 
 export type ProfilePeopleTab = "following" | "followers";
 
+interface VisibleProfileSectionsOptions {
+	isOwner: boolean;
+	isSignedIn: boolean;
+}
+
 export interface ProfilePeopleRouteSearch {
 	tab?: ProfilePeopleTab;
 	q?: string;
@@ -162,4 +167,31 @@ export function getProfileListDetailRoute(handle: string, slug: string) {
 			slug,
 		},
 	};
+}
+
+export function getVisibleProfileSections({
+	isOwner,
+	isSignedIn,
+}: VisibleProfileSectionsOptions): ProfileSection[] {
+	const sections: ProfileSection[] = ["shelf"];
+
+	if (isOwner) {
+		sections.push("up-next");
+	}
+
+	sections.push("lists");
+
+	if (isSignedIn) {
+		if (isOwner) {
+			sections.push("people");
+		} else {
+			sections.push("followers", "following");
+		}
+	}
+
+	if (isOwner) {
+		sections.push("calendar", "settings");
+	}
+
+	return sections;
 }

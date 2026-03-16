@@ -6,6 +6,7 @@ import { PaginationControls } from "@/components/PaginationControls";
 import { UpNextShowCollection } from "@/components/up-next/UpNextShowCollection";
 import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
+import { getProfileRoute } from "@/lib/profile-routes";
 
 const PAGE_SIZE = 8;
 
@@ -31,7 +32,7 @@ function ProfileUpNextPage() {
 			path: { userDid },
 			query: { page, pageSize: PAGE_SIZE },
 		}),
-		enabled: !!userDid,
+		enabled: !!userDid && isOwner,
 	});
 	const items = upNextQuery.data?.items ?? [];
 	const currentPage = upNextQuery.data?.page ?? page;
@@ -40,6 +41,17 @@ function ProfileUpNextPage() {
 		() => getVisiblePages(currentPage, totalPages),
 		[currentPage, totalPages],
 	);
+
+	useEffect(() => {
+		if (!profile || isOwner) {
+			return;
+		}
+
+		navigate({
+			...getProfileRoute(profile.handle, "shelf", { page: 1 }),
+			replace: true,
+		});
+	}, [isOwner, navigate, profile]);
 
 	useEffect(() => {
 		if (!upNextQuery.data) {
@@ -55,7 +67,7 @@ function ProfileUpNextPage() {
 		}
 	}, [navigate, page, upNextQuery.data]);
 
-	if (!profile) {
+	if (!profile || !isOwner) {
 		return null;
 	}
 
