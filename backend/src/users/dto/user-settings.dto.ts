@@ -24,7 +24,7 @@ export class UpdateUserSettingsDto {
 export class DeleteUserAccountDto {
 	@ApiProperty({
 		description:
-			"Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.",
+			"Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.",
 		default: false,
 	})
 	@IsBoolean()

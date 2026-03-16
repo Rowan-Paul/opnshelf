@@ -2,6 +2,38 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "./social.service";
 
+const mockPutRecord = jest.fn();
+const mockDeleteRecord = jest.fn();
+
+jest.mock("@atproto/api", () => ({
+	Agent: jest.fn().mockImplementation(() => ({
+		com: {
+			atproto: {
+				repo: {
+					putRecord: mockPutRecord,
+					deleteRecord: mockDeleteRecord,
+				},
+			},
+		},
+	})),
+}));
+
+jest.mock("@atproto/common", () => ({
+	TID: {
+		nextStr: jest.fn(() => "follow-rkey-123"),
+	},
+}));
+
+jest.mock("../lexicons/xyz/opnshelf/follow", () => ({
+	main: {
+		build: jest.fn((data: Record<string, unknown>) => ({
+			$type: "xyz.opnshelf.follow",
+			...data,
+		})),
+	},
+	$nsid: "xyz.opnshelf.follow",
+}));
+
 describe("SocialService", () => {
 	let service: SocialService;
 
@@ -12,9 +44,11 @@ describe("SocialService", () => {
 		},
 		follow: {
 			count: jest.fn(),
-			createMany: jest.fn(),
+			create: jest.fn(),
 			deleteMany: jest.fn(),
 			findMany: jest.fn(),
+			findFirst: jest.fn(),
+			update: jest.fn(),
 		},
 		trackedMovie: {
 			count: jest.fn(),
@@ -30,9 +64,12 @@ describe("SocialService", () => {
 		},
 		$queryRaw: jest.fn(),
 	} as unknown as PrismaService;
+	const session = { did: "did:plc:self" };
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockPutRecord.mockReset();
+		mockDeleteRecord.mockReset();
 		service = new SocialService(prisma);
 	});
 
@@ -40,16 +77,30 @@ describe("SocialService", () => {
 		prisma.user.findUnique = jest
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
-		prisma.follow.createMany = jest.fn().mockResolvedValue({ count: 1 });
+		prisma.follow.findFirst = jest
+			.fn()
+			.mockResolvedValueOnce(null)
+			.mockResolvedValueOnce({ rkey: "follow-rkey-123" });
+		prisma.follow.create = jest.fn().mockResolvedValue({
+			followerDid: "did:plc:self",
+			followingDid: "did:plc:target",
+			rkey: "follow-rkey-123",
+		});
 		prisma.follow.count = jest
 			.fn()
 			.mockResolvedValueOnce(1)
 			.mockResolvedValueOnce(0)
 			.mockResolvedValueOnce(1)
 			.mockResolvedValueOnce(0);
+		mockPutRecord.mockResolvedValue({
+			data: {
+				uri: "at://did:plc:self/xyz.opnshelf.follow/follow-rkey-123",
+				cid: "cid-follow-123",
+			},
+		});
 
 		await expect(
-			service.follow("did:plc:self", "did:plc:target"),
+			service.follow("did:plc:self", session, "did:plc:target"),
 		).resolves.toEqual({
 			targetDid: "did:plc:target",
 			isFollowing: true,
@@ -58,7 +109,7 @@ describe("SocialService", () => {
 		});
 
 		await expect(
-			service.follow("did:plc:self", "did:plc:target"),
+			service.follow("did:plc:self", session, "did:plc:target"),
 		).resolves.toEqual({
 			targetDid: "did:plc:target",
 			isFollowing: true,
@@ -66,15 +117,26 @@ describe("SocialService", () => {
 			canFollow: true,
 		});
 
-		expect(prisma.follow.createMany).toHaveBeenCalledTimes(2);
-		expect(prisma.follow.createMany).toHaveBeenCalledWith({
-			data: [
-				{
-					followerDid: "did:plc:self",
-					followingDid: "did:plc:target",
-				},
-			],
-			skipDuplicates: true,
+		expect(mockPutRecord).toHaveBeenCalledTimes(1);
+		expect(mockPutRecord).toHaveBeenCalledWith({
+			repo: "did:plc:self",
+			collection: "xyz.opnshelf.follow",
+			rkey: "follow-rkey-123",
+			record: expect.objectContaining({
+				$type: "xyz.opnshelf.follow",
+				subjectDid: "did:plc:target",
+			}),
+			validate: false,
+		});
+		expect(prisma.follow.create).toHaveBeenCalledTimes(1);
+		expect(prisma.follow.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				followerDid: "did:plc:self",
+				followingDid: "did:plc:target",
+				rkey: "follow-rkey-123",
+				uri: "at://did:plc:self/xyz.opnshelf.follow/follow-rkey-123",
+				cid: "cid-follow-123",
+			}),
 		});
 	});
 
@@ -82,18 +144,29 @@ describe("SocialService", () => {
 		prisma.user.findUnique = jest
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
+		prisma.follow.findFirst = jest
+			.fn()
+			.mockResolvedValueOnce({ rkey: "follow-rkey-123" })
+			.mockResolvedValueOnce(null);
 		prisma.follow.deleteMany = jest
 			.fn()
 			.mockResolvedValueOnce({ count: 1 })
 			.mockResolvedValueOnce({ count: 0 });
+		mockDeleteRecord.mockResolvedValue({});
 
 		await expect(
-			service.unfollow("did:plc:self", "did:plc:target"),
+			service.unfollow("did:plc:self", session, "did:plc:target"),
 		).resolves.toBeUndefined();
 		await expect(
-			service.unfollow("did:plc:self", "did:plc:target"),
+			service.unfollow("did:plc:self", session, "did:plc:target"),
 		).resolves.toBeUndefined();
 
+		expect(mockDeleteRecord).toHaveBeenCalledTimes(1);
+		expect(mockDeleteRecord).toHaveBeenCalledWith({
+			repo: "did:plc:self",
+			collection: "xyz.opnshelf.follow",
+			rkey: "follow-rkey-123",
+		});
 		expect(prisma.follow.deleteMany).toHaveBeenCalledTimes(2);
 		expect(prisma.follow.deleteMany).toHaveBeenCalledWith({
 			where: {
@@ -105,7 +178,7 @@ describe("SocialService", () => {
 
 	it("rejects self-follow", async () => {
 		await expect(
-			service.follow("did:plc:self", "did:plc:self"),
+			service.follow("did:plc:self", session, "did:plc:self"),
 		).rejects.toThrow(BadRequestException);
 		expect(prisma.user.findUnique).not.toHaveBeenCalled();
 	});
@@ -375,13 +448,20 @@ describe("SocialService", () => {
 	});
 
 	it("can reflect public profile counts after follow and unfollow", async () => {
-		const follows = new Set<string>();
+		const follows = new Map<string, { rkey?: string }>();
 		const statefulPrisma = createStatefulPrisma(follows);
 		const statefulService = new SocialService(
 			statefulPrisma as unknown as PrismaService,
 		);
+		mockPutRecord.mockResolvedValue({
+			data: {
+				uri: "at://did:plc:self/xyz.opnshelf.follow/follow-rkey-123",
+				cid: "cid-follow-123",
+			},
+		});
+		mockDeleteRecord.mockResolvedValue({});
 
-		await statefulService.follow("did:plc:self", "did:plc:target");
+		await statefulService.follow("did:plc:self", session, "did:plc:target");
 		const followedProfile = await statefulService.getFollowers(
 			"did:plc:self",
 			"target",
@@ -394,7 +474,7 @@ describe("SocialService", () => {
 			followingCount: 1,
 		});
 
-		await statefulService.unfollow("did:plc:self", "did:plc:target");
+		await statefulService.unfollow("did:plc:self", session, "did:plc:target");
 		const relationship = await statefulService.getRelationship(
 			"did:plc:self",
 			"did:plc:target",
@@ -433,7 +513,7 @@ function makeUser(
 	};
 }
 
-function createStatefulPrisma(follows: Set<string>) {
+function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 	const users = [
 		{ did: "did:plc:self", handle: "self", displayName: "Self", avatar: null },
 		{
@@ -480,10 +560,10 @@ function createStatefulPrisma(follows: Set<string>) {
 								.map((user) => ({
 									...user,
 									_count: {
-										followers: [...follows].filter((entry) =>
+										followers: [...follows.keys()].filter((entry) =>
 											entry.endsWith(`->${user.did}`),
 										).length,
-										following: [...follows].filter((entry) =>
+										following: [...follows.keys()].filter((entry) =>
 											entry.startsWith(`${user.did}->`),
 										).length,
 									},
@@ -502,7 +582,7 @@ function createStatefulPrisma(follows: Set<string>) {
 						where: { followerDid?: string; followingDid?: string };
 					}) => {
 						return Promise.resolve(
-							[...follows].filter((entry) => {
+							[...follows.keys()].filter((entry) => {
 								const [followerDid, followingDid] = entry.split("->");
 								return (
 									(where.followerDid
@@ -516,20 +596,54 @@ function createStatefulPrisma(follows: Set<string>) {
 						);
 					},
 				),
-			createMany: jest
+			create: jest.fn().mockImplementation(
+				({
+					data,
+				}: {
+					data: {
+						followerDid: string;
+						followingDid: string;
+						rkey?: string | null;
+					};
+				}) => {
+					follows.set(`${data.followerDid}->${data.followingDid}`, {
+						rkey: data.rkey ?? undefined,
+					});
+					return Promise.resolve(data);
+				},
+			),
+			findFirst: jest
 				.fn()
 				.mockImplementation(
 					({
-						data,
+						where,
 					}: {
-						data: Array<{ followerDid: string; followingDid: string }>;
+						where: { followerDid: string; followingDid: string };
 					}) => {
-						for (const follow of data) {
-							follows.add(`${follow.followerDid}->${follow.followingDid}`);
-						}
-						return Promise.resolve({ count: data.length });
+						const entry = follows.get(
+							`${where.followerDid}->${where.followingDid}`,
+						);
+						return Promise.resolve(entry ? { rkey: entry.rkey ?? null } : null);
 					},
 				),
+			update: jest.fn().mockImplementation(
+				({
+					where,
+					data,
+				}: {
+					where: {
+						followerDid_followingDid: {
+							followerDid: string;
+							followingDid: string;
+						};
+					};
+					data: { rkey?: string | null };
+				}) => {
+					const key = `${where.followerDid_followingDid.followerDid}->${where.followerDid_followingDid.followingDid}`;
+					follows.set(key, { rkey: data.rkey ?? undefined });
+					return Promise.resolve({});
+				},
+			),
 			deleteMany: jest
 				.fn()
 				.mockImplementation(
@@ -545,7 +659,7 @@ function createStatefulPrisma(follows: Set<string>) {
 			findMany: jest
 				.fn()
 				.mockImplementation(({ where }: { where: Record<string, unknown> }) => {
-					const entries = [...follows]
+					const entries = [...follows.keys()]
 						.map((entry) => {
 							const [followerDid, followingDid] = entry.split("->");
 							return { followerDid, followingDid };

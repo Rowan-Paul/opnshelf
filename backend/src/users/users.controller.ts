@@ -114,6 +114,11 @@ export class UsersController {
 	@ApiOperation({ summary: "Delete current user's account" })
 	@ApiResponse({ status: 204, description: "Account deleted successfully" })
 	@ApiResponse({ status: 401, description: "Not authenticated" })
+	@ApiResponse({
+		status: 502,
+		description:
+			"Failed to delete OpnShelf data from the user's PDS, so the account was not deleted",
+	})
 	async deleteMyAccount(
 		@Body() dto: DeleteUserAccountDto,
 		@Req() req: AuthenticatedRequest,

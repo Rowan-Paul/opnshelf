@@ -6,6 +6,7 @@ jest.mock("../prisma/prisma.service", () => ({
 
 const mockPutRecord = jest.fn();
 const mockDeleteRecord = jest.fn();
+const mockListRecords = jest.fn();
 jest.mock("@atproto/api", () => ({
 	Agent: jest.fn().mockImplementation(() => ({
 		com: {
@@ -13,6 +14,7 @@ jest.mock("@atproto/api", () => ({
 				repo: {
 					putRecord: mockPutRecord,
 					deleteRecord: mockDeleteRecord,
+					listRecords: mockListRecords,
 				},
 			},
 		},
@@ -31,6 +33,7 @@ jest.mock("../lexicons/xyz/opnshelf/list", () => ({
 			$type: "xyz.opnshelf.list",
 			...data,
 		})),
+		parse: jest.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "xyz.opnshelf.list",
 }));
@@ -90,6 +93,7 @@ describe("ListsService", () => {
 		jest.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
+		mockListRecords.mockReset();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -101,6 +105,177 @@ describe("ListsService", () => {
 		}).compile();
 
 		service = module.get<ListsService>(ListsService);
+	});
+
+	describe("ensureDefaultLists", () => {
+		it("indexes repo-backed default lists before creating missing defaults", async () => {
+			mockPrismaService.movieList.findMany
+				.mockResolvedValueOnce([])
+				.mockResolvedValueOnce([
+					{
+						id: "list-watchlist",
+						rkey: "watchlist-rkey",
+						uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist-rkey",
+						cid: "cid-watchlist",
+						userDid: "did:plc:abc123",
+						name: "Watchlist",
+						description: "Items you want to watch",
+						slug: "watchlist",
+						isDefault: true,
+						createdAt: new Date("2024-01-01"),
+						updatedAt: new Date("2024-01-01"),
+					},
+					{
+						id: "list-favorites",
+						rkey: "favorites-rkey",
+						uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+						cid: "cid-favorites",
+						userDid: "did:plc:abc123",
+						name: "Favorites",
+						description: "Your favorite items",
+						slug: "favorites",
+						isDefault: true,
+						createdAt: new Date("2024-01-02"),
+						updatedAt: new Date("2024-01-02"),
+					},
+				]);
+			mockListRecords.mockResolvedValue({
+				data: {
+					records: [
+						{
+							uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+							cid: "cid-favorites",
+							value: {
+								name: "Favorites",
+								description: "Your favorite items",
+								slug: "favorites",
+								isDefault: true,
+								createdAt: "2024-01-02T00:00:00.000Z",
+							},
+						},
+					],
+				},
+			});
+			mockPrismaService.movieList.upsert.mockResolvedValue({
+				id: "list-favorites",
+				rkey: "favorites-rkey",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+				cid: "cid-favorites",
+				userDid: "did:plc:abc123",
+				name: "Favorites",
+				description: "Your favorite items",
+				slug: "favorites",
+				isDefault: true,
+				createdAt: new Date("2024-01-02"),
+				updatedAt: new Date("2024-01-02"),
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist-rkey",
+					cid: "cid-watchlist",
+				},
+			});
+			mockPrismaService.movieList.create.mockResolvedValue({
+				id: "list-watchlist",
+				rkey: "watchlist-rkey",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist-rkey",
+				cid: "cid-watchlist",
+				userDid: "did:plc:abc123",
+				name: "Watchlist",
+				description: "Items you want to watch",
+				slug: "watchlist",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-01"),
+			});
+
+			const result = await service.ensureDefaultLists("did:plc:abc123", {
+				did: "did:plc:abc123",
+			});
+
+			expect(mockListRecords).toHaveBeenCalledWith({
+				repo: "did:plc:abc123",
+				collection: "xyz.opnshelf.list",
+				limit: 100,
+				cursor: undefined,
+			});
+			expect(mockPrismaService.movieList.upsert).toHaveBeenCalledWith({
+				where: { rkey: "favorites-rkey" },
+				create: {
+					rkey: "favorites-rkey",
+					uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+					cid: "cid-favorites",
+					userDid: "did:plc:abc123",
+					name: "Favorites",
+					description: "Your favorite items",
+					slug: "favorites",
+					isDefault: true,
+				},
+				update: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+					cid: "cid-favorites",
+					name: "Favorites",
+					description: "Your favorite items",
+					slug: "favorites",
+					isDefault: true,
+				},
+			});
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({
+					collection: "xyz.opnshelf.list",
+					record: expect.objectContaining({
+						slug: "watchlist",
+					}),
+				}),
+			);
+			expect(result.map((list) => list.slug)).toEqual([
+				"watchlist",
+				"favorites",
+			]);
+		});
+
+		it("does not create duplicates when both default lists already exist locally", async () => {
+			mockPrismaService.movieList.findMany.mockResolvedValue([
+				{
+					id: "list-watchlist",
+					rkey: "watchlist-rkey",
+					uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist-rkey",
+					cid: "cid-watchlist",
+					userDid: "did:plc:abc123",
+					name: "Watchlist",
+					description: "Items you want to watch",
+					slug: "watchlist",
+					isDefault: true,
+					createdAt: new Date("2024-01-01"),
+					updatedAt: new Date("2024-01-01"),
+				},
+				{
+					id: "list-favorites",
+					rkey: "favorites-rkey",
+					uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
+					cid: "cid-favorites",
+					userDid: "did:plc:abc123",
+					name: "Favorites",
+					description: "Your favorite items",
+					slug: "favorites",
+					isDefault: true,
+					createdAt: new Date("2024-01-02"),
+					updatedAt: new Date("2024-01-02"),
+				},
+			]);
+
+			const result = await service.ensureDefaultLists("did:plc:abc123", {
+				did: "did:plc:abc123",
+			});
+
+			expect(mockListRecords).not.toHaveBeenCalled();
+			expect(mockPutRecord).not.toHaveBeenCalled();
+			expect(result.map((list) => list.slug)).toEqual([
+				"watchlist",
+				"favorites",
+			]);
+		});
 	});
 
 	describe("getUserLists", () => {

@@ -37,6 +37,7 @@ import { SimpleIndexer, Tap } from "@atproto/tap";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
 import { IngesterService } from "./ingester.service";
 
@@ -73,6 +74,10 @@ describe("IngesterService", () => {
 		deleteListRecord: jest.Mock;
 		indexListItemRecord: jest.Mock;
 		deleteListItemRecord: jest.Mock;
+	};
+	let mockSocialService: {
+		indexFollowRecord: jest.Mock;
+		deleteFollowRecordIndex: jest.Mock;
 	};
 
 	const mockConfigService = {
@@ -119,6 +124,11 @@ describe("IngesterService", () => {
 			deleteListItemRecord: jest.fn(),
 		};
 
+		mockSocialService = {
+			indexFollowRecord: jest.fn(),
+			deleteFollowRecordIndex: jest.fn(),
+		};
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				IngesterService,
@@ -127,6 +137,7 @@ describe("IngesterService", () => {
 				{ provide: MoviesService, useValue: mockMoviesService },
 				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },
+				{ provide: SocialService, useValue: mockSocialService },
 			],
 		}).compile();
 
@@ -182,6 +193,61 @@ describe("IngesterService", () => {
 			}
 			return recordHandler;
 		};
+
+		it("should index follows for xyz.opnshelf.follow create", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+
+			await recordHandler({
+				id: 4,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev-follow-1",
+				collection: "xyz.opnshelf.follow",
+				rkey: "follow-rkey-1",
+				record: {
+					$type: "xyz.opnshelf.follow",
+					subjectDid: "did:plc:friend-1",
+					createdAt: "2026-03-16T10:00:00.000Z",
+				},
+				cid: "cid-follow-1",
+				live: true,
+			});
+
+			expect(mockSocialService.indexFollowRecord).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				"follow-rkey-1",
+				"cid-follow-1",
+				expect.objectContaining({
+					subjectDid: "did:plc:friend-1",
+				}),
+				"at://did:plc:abc123/xyz.opnshelf.follow/follow-rkey-1",
+			);
+		});
+
+		it("should delete follows for xyz.opnshelf.follow delete", async () => {
+			const recordHandler = setupRecordHandler();
+
+			await recordHandler({
+				id: 5,
+				type: "record",
+				action: "delete",
+				did: "did:plc:abc123",
+				rev: "rev-follow-2",
+				collection: "xyz.opnshelf.follow",
+				rkey: "follow-rkey-1",
+				cid: "cid-follow-1",
+				live: true,
+			});
+
+			expect(mockSocialService.deleteFollowRecordIndex).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				"follow-rkey-1",
+			);
+		});
 
 		it("should upsert tracked movie for xyz.opnshelf.movie create", async () => {
 			const recordHandler = setupRecordHandler();

@@ -178,6 +178,31 @@ describe("UsersService", () => {
 		});
 	});
 
+	it("delegates account deletion with the PDS deletion flag", async () => {
+		(userDeletionService.deleteUser as jest.Mock).mockResolvedValue(undefined);
+
+		await expect(
+			service.deleteUser("did:plc:123", { did: "did:plc:123" }, true),
+		).resolves.toBeUndefined();
+		expect(userDeletionService.deleteUser).toHaveBeenCalledWith(
+			"did:plc:123",
+			{ did: "did:plc:123" },
+			true,
+		);
+	});
+
+	it("propagates account deletion failures from PDS cleanup", async () => {
+		(userDeletionService.deleteUser as jest.Mock).mockRejectedValue(
+			new BadGatewayException(
+				"Failed to delete OpnShelf data from your PDS. Your account was not deleted.",
+			),
+		);
+
+		await expect(
+			service.deleteUser("did:plc:123", { did: "did:plc:123" }, true),
+		).rejects.toThrow(BadGatewayException);
+	});
+
 	it("imports Bluesky follows with pagination and creates only missing local follows", async () => {
 		prisma.user.findUnique = jest
 			.fn()

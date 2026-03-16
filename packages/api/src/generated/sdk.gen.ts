@@ -303,6 +303,41 @@ export const listsControllerGetListsForItem = <ThrowOnError extends boolean = fa
 export const listsControllerGetListsForMovie = <ThrowOnError extends boolean = false>(options: Options<ListsControllerGetListsForMovieData, ThrowOnError>) => (options.client ?? client).get<ListsControllerGetListsForMovieResponses, unknown, ThrowOnError>({ url: '/lists/for-movie/{movieId}', ...options });
 
 /**
+ * Search OpnShelf people by handle or display name
+ */
+export const socialControllerSearchPeople = <ThrowOnError extends boolean = false>(options: Options<SocialControllerSearchPeopleData, ThrowOnError>) => (options.client ?? client).get<SocialControllerSearchPeopleResponses, unknown, ThrowOnError>({ url: '/social/search', ...options });
+
+/**
+ * Unfollow an OpnShelf user
+ */
+export const socialControllerUnfollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerUnfollowData, ThrowOnError>) => (options.client ?? client).delete<SocialControllerUnfollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
+
+/**
+ * Follow an OpnShelf user
+ */
+export const socialControllerFollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerFollowData, ThrowOnError>) => (options.client ?? client).post<SocialControllerFollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
+
+/**
+ * Get the viewer's relationship to a user
+ */
+export const socialControllerGetRelationship = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetRelationshipData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetRelationshipResponses, unknown, ThrowOnError>({ url: '/social/relationship/{targetDid}', ...options });
+
+/**
+ * Get followers for a public profile
+ */
+export const socialControllerGetFollowers = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetFollowersData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetFollowersResponses, unknown, ThrowOnError>({ url: '/social/profiles/{handle}/followers', ...options });
+
+/**
+ * Get following for a public profile
+ */
+export const socialControllerGetFollowing = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetFollowingData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetFollowingResponses, unknown, ThrowOnError>({ url: '/social/profiles/{handle}/following', ...options });
+
+/**
+ * Get recent watched activity from followed users
+ */
+export const socialControllerGetFeed = <ThrowOnError extends boolean = false>(options?: Options<SocialControllerGetFeedData, ThrowOnError>) => (options?.client ?? client).get<SocialControllerGetFeedResponses, unknown, ThrowOnError>({ url: '/social/feed', ...options });
+
+/**
  * Get a public user profile by handle
  */
 export const usersControllerGetPublicProfile = <ThrowOnError extends boolean = false>(options: Options<UsersControllerGetPublicProfileData, ThrowOnError>) => (options.client ?? client).get<UsersControllerGetPublicProfileResponses, UsersControllerGetPublicProfileErrors, ThrowOnError>({ url: '/users/{handle}/profile', ...options });
@@ -401,38 +436,3 @@ export const searchControllerSearchAll = <ThrowOnError extends boolean = false>(
  * Discover popular movies and shows from TMDB
  */
 export const searchControllerDiscoverAll = <ThrowOnError extends boolean = false>(options?: Options<SearchControllerDiscoverAllData, ThrowOnError>) => (options?.client ?? client).get<SearchControllerDiscoverAllResponses, unknown, ThrowOnError>({ url: '/search/discover', ...options });
-
-/**
- * Search OpnShelf people by handle or display name
- */
-export const socialControllerSearchPeople = <ThrowOnError extends boolean = false>(options: Options<SocialControllerSearchPeopleData, ThrowOnError>) => (options.client ?? client).get<SocialControllerSearchPeopleResponses, unknown, ThrowOnError>({ url: '/social/search', ...options });
-
-/**
- * Unfollow an OpnShelf user
- */
-export const socialControllerUnfollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerUnfollowData, ThrowOnError>) => (options.client ?? client).delete<SocialControllerUnfollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
-
-/**
- * Follow an OpnShelf user
- */
-export const socialControllerFollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerFollowData, ThrowOnError>) => (options.client ?? client).post<SocialControllerFollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
-
-/**
- * Get the viewer's relationship to a user
- */
-export const socialControllerGetRelationship = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetRelationshipData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetRelationshipResponses, unknown, ThrowOnError>({ url: '/social/relationship/{targetDid}', ...options });
-
-/**
- * Get followers for a public profile
- */
-export const socialControllerGetFollowers = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetFollowersData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetFollowersResponses, unknown, ThrowOnError>({ url: '/social/profiles/{handle}/followers', ...options });
-
-/**
- * Get following for a public profile
- */
-export const socialControllerGetFollowing = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetFollowingData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetFollowingResponses, unknown, ThrowOnError>({ url: '/social/profiles/{handle}/following', ...options });
-
-/**
- * Get recent watched activity from followed users
- */
-export const socialControllerGetFeed = <ThrowOnError extends boolean = false>(options?: Options<SocialControllerGetFeedData, ThrowOnError>) => (options?.client ?? client).get<SocialControllerGetFeedResponses, unknown, ThrowOnError>({ url: '/social/feed', ...options });

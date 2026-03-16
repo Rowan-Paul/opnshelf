@@ -20,6 +20,11 @@
 			"id": "xyz.opnshelf.listItem",
 			"path": "lexicons/app/opnshelf/listItem.json",
 			"local": true
+		},
+		{
+			"id": "xyz.opnshelf.follow",
+			"path": "lexicons/app/opnshelf/follow.json",
+			"local": true
 		}
 	]
 }

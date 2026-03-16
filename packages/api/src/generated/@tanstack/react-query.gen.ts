@@ -1032,6 +1032,238 @@ export const listsControllerGetListsForMovieOptions = (options: Options<ListsCon
     queryKey: listsControllerGetListsForMovieQueryKey(options)
 });
 
+export const socialControllerSearchPeopleQueryKey = (options: Options<SocialControllerSearchPeopleData>) => createQueryKey('socialControllerSearchPeople', options);
+
+/**
+ * Search OpnShelf people by handle or display name
+ */
+export const socialControllerSearchPeopleOptions = (options: Options<SocialControllerSearchPeopleData>) => queryOptions<SocialControllerSearchPeopleResponse, DefaultError, SocialControllerSearchPeopleResponse, ReturnType<typeof socialControllerSearchPeopleQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerSearchPeople({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerSearchPeopleQueryKey(options)
+});
+
+export const socialControllerSearchPeopleInfiniteQueryKey = (options: Options<SocialControllerSearchPeopleData>): QueryKey<Options<SocialControllerSearchPeopleData>> => createQueryKey('socialControllerSearchPeople', options, true);
+
+/**
+ * Search OpnShelf people by handle or display name
+ */
+export const socialControllerSearchPeopleInfiniteOptions = (options: Options<SocialControllerSearchPeopleData>) => infiniteQueryOptions<SocialControllerSearchPeopleResponse, DefaultError, InfiniteData<SocialControllerSearchPeopleResponse>, QueryKey<Options<SocialControllerSearchPeopleData>>, number | Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerSearchPeople({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerSearchPeopleInfiniteQueryKey(options)
+});
+
+/**
+ * Unfollow an OpnShelf user
+ */
+export const socialControllerUnfollowMutation = (options?: Partial<Options<SocialControllerUnfollowData>>): UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> => {
+    const mutationOptions: UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await socialControllerUnfollow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Follow an OpnShelf user
+ */
+export const socialControllerFollowMutation = (options?: Partial<Options<SocialControllerFollowData>>): UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> => {
+    const mutationOptions: UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await socialControllerFollow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const socialControllerGetRelationshipQueryKey = (options: Options<SocialControllerGetRelationshipData>) => createQueryKey('socialControllerGetRelationship', options);
+
+/**
+ * Get the viewer's relationship to a user
+ */
+export const socialControllerGetRelationshipOptions = (options: Options<SocialControllerGetRelationshipData>) => queryOptions<SocialControllerGetRelationshipResponse, DefaultError, SocialControllerGetRelationshipResponse, ReturnType<typeof socialControllerGetRelationshipQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetRelationship({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetRelationshipQueryKey(options)
+});
+
+export const socialControllerGetFollowersQueryKey = (options: Options<SocialControllerGetFollowersData>) => createQueryKey('socialControllerGetFollowers', options);
+
+/**
+ * Get followers for a public profile
+ */
+export const socialControllerGetFollowersOptions = (options: Options<SocialControllerGetFollowersData>) => queryOptions<SocialControllerGetFollowersResponse, DefaultError, SocialControllerGetFollowersResponse, ReturnType<typeof socialControllerGetFollowersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFollowers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowersQueryKey(options)
+});
+
+export const socialControllerGetFollowersInfiniteQueryKey = (options: Options<SocialControllerGetFollowersData>): QueryKey<Options<SocialControllerGetFollowersData>> => createQueryKey('socialControllerGetFollowers', options, true);
+
+/**
+ * Get followers for a public profile
+ */
+export const socialControllerGetFollowersInfiniteOptions = (options: Options<SocialControllerGetFollowersData>) => infiniteQueryOptions<SocialControllerGetFollowersResponse, DefaultError, InfiniteData<SocialControllerGetFollowersResponse>, QueryKey<Options<SocialControllerGetFollowersData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFollowers({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowersInfiniteQueryKey(options)
+});
+
+export const socialControllerGetFollowingQueryKey = (options: Options<SocialControllerGetFollowingData>) => createQueryKey('socialControllerGetFollowing', options);
+
+/**
+ * Get following for a public profile
+ */
+export const socialControllerGetFollowingOptions = (options: Options<SocialControllerGetFollowingData>) => queryOptions<SocialControllerGetFollowingResponse, DefaultError, SocialControllerGetFollowingResponse, ReturnType<typeof socialControllerGetFollowingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFollowing({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowingQueryKey(options)
+});
+
+export const socialControllerGetFollowingInfiniteQueryKey = (options: Options<SocialControllerGetFollowingData>): QueryKey<Options<SocialControllerGetFollowingData>> => createQueryKey('socialControllerGetFollowing', options, true);
+
+/**
+ * Get following for a public profile
+ */
+export const socialControllerGetFollowingInfiniteOptions = (options: Options<SocialControllerGetFollowingData>) => infiniteQueryOptions<SocialControllerGetFollowingResponse, DefaultError, InfiniteData<SocialControllerGetFollowingResponse>, QueryKey<Options<SocialControllerGetFollowingData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFollowing({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowingInfiniteQueryKey(options)
+});
+
+export const socialControllerGetFeedQueryKey = (options?: Options<SocialControllerGetFeedData>) => createQueryKey('socialControllerGetFeed', options);
+
+/**
+ * Get recent watched activity from followed users
+ */
+export const socialControllerGetFeedOptions = (options?: Options<SocialControllerGetFeedData>) => queryOptions<SocialControllerGetFeedResponse, DefaultError, SocialControllerGetFeedResponse, ReturnType<typeof socialControllerGetFeedQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFeed({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFeedQueryKey(options)
+});
+
+export const socialControllerGetFeedInfiniteQueryKey = (options?: Options<SocialControllerGetFeedData>): QueryKey<Options<SocialControllerGetFeedData>> => createQueryKey('socialControllerGetFeed', options, true);
+
+/**
+ * Get recent watched activity from followed users
+ */
+export const socialControllerGetFeedInfiniteOptions = (options?: Options<SocialControllerGetFeedData>) => infiniteQueryOptions<SocialControllerGetFeedResponse, DefaultError, InfiniteData<SocialControllerGetFeedResponse>, QueryKey<Options<SocialControllerGetFeedData>>, number | Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFeed({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFeedInfiniteQueryKey(options)
+});
+
 export const usersControllerGetPublicProfileQueryKey = (options: Options<UsersControllerGetPublicProfileData>) => createQueryKey('usersControllerGetPublicProfile', options);
 
 /**
@@ -1338,236 +1570,4 @@ export const searchControllerDiscoverAllInfiniteOptions = (options?: Options<Sea
         return data;
     },
     queryKey: searchControllerDiscoverAllInfiniteQueryKey(options)
-});
-
-export const socialControllerSearchPeopleQueryKey = (options: Options<SocialControllerSearchPeopleData>) => createQueryKey('socialControllerSearchPeople', options);
-
-/**
- * Search OpnShelf people by handle or display name
- */
-export const socialControllerSearchPeopleOptions = (options: Options<SocialControllerSearchPeopleData>) => queryOptions<SocialControllerSearchPeopleResponse, DefaultError, SocialControllerSearchPeopleResponse, ReturnType<typeof socialControllerSearchPeopleQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await socialControllerSearchPeople({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerSearchPeopleQueryKey(options)
-});
-
-export const socialControllerSearchPeopleInfiniteQueryKey = (options: Options<SocialControllerSearchPeopleData>): QueryKey<Options<SocialControllerSearchPeopleData>> => createQueryKey('socialControllerSearchPeople', options, true);
-
-/**
- * Search OpnShelf people by handle or display name
- */
-export const socialControllerSearchPeopleInfiniteOptions = (options: Options<SocialControllerSearchPeopleData>) => infiniteQueryOptions<SocialControllerSearchPeopleResponse, DefaultError, InfiniteData<SocialControllerSearchPeopleResponse>, QueryKey<Options<SocialControllerSearchPeopleData>>, number | Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await socialControllerSearchPeople({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerSearchPeopleInfiniteQueryKey(options)
-});
-
-/**
- * Unfollow an OpnShelf user
- */
-export const socialControllerUnfollowMutation = (options?: Partial<Options<SocialControllerUnfollowData>>): UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> => {
-    const mutationOptions: UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await socialControllerUnfollow({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Follow an OpnShelf user
- */
-export const socialControllerFollowMutation = (options?: Partial<Options<SocialControllerFollowData>>): UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> => {
-    const mutationOptions: UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await socialControllerFollow({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const socialControllerGetRelationshipQueryKey = (options: Options<SocialControllerGetRelationshipData>) => createQueryKey('socialControllerGetRelationship', options);
-
-/**
- * Get the viewer's relationship to a user
- */
-export const socialControllerGetRelationshipOptions = (options: Options<SocialControllerGetRelationshipData>) => queryOptions<SocialControllerGetRelationshipResponse, DefaultError, SocialControllerGetRelationshipResponse, ReturnType<typeof socialControllerGetRelationshipQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await socialControllerGetRelationship({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetRelationshipQueryKey(options)
-});
-
-export const socialControllerGetFollowersQueryKey = (options: Options<SocialControllerGetFollowersData>) => createQueryKey('socialControllerGetFollowers', options);
-
-/**
- * Get followers for a public profile
- */
-export const socialControllerGetFollowersOptions = (options: Options<SocialControllerGetFollowersData>) => queryOptions<SocialControllerGetFollowersResponse, DefaultError, SocialControllerGetFollowersResponse, ReturnType<typeof socialControllerGetFollowersQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await socialControllerGetFollowers({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFollowersQueryKey(options)
-});
-
-export const socialControllerGetFollowersInfiniteQueryKey = (options: Options<SocialControllerGetFollowersData>): QueryKey<Options<SocialControllerGetFollowersData>> => createQueryKey('socialControllerGetFollowers', options, true);
-
-/**
- * Get followers for a public profile
- */
-export const socialControllerGetFollowersInfiniteOptions = (options: Options<SocialControllerGetFollowersData>) => infiniteQueryOptions<SocialControllerGetFollowersResponse, DefaultError, InfiniteData<SocialControllerGetFollowersResponse>, QueryKey<Options<SocialControllerGetFollowersData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await socialControllerGetFollowers({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFollowersInfiniteQueryKey(options)
-});
-
-export const socialControllerGetFollowingQueryKey = (options: Options<SocialControllerGetFollowingData>) => createQueryKey('socialControllerGetFollowing', options);
-
-/**
- * Get following for a public profile
- */
-export const socialControllerGetFollowingOptions = (options: Options<SocialControllerGetFollowingData>) => queryOptions<SocialControllerGetFollowingResponse, DefaultError, SocialControllerGetFollowingResponse, ReturnType<typeof socialControllerGetFollowingQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await socialControllerGetFollowing({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFollowingQueryKey(options)
-});
-
-export const socialControllerGetFollowingInfiniteQueryKey = (options: Options<SocialControllerGetFollowingData>): QueryKey<Options<SocialControllerGetFollowingData>> => createQueryKey('socialControllerGetFollowing', options, true);
-
-/**
- * Get following for a public profile
- */
-export const socialControllerGetFollowingInfiniteOptions = (options: Options<SocialControllerGetFollowingData>) => infiniteQueryOptions<SocialControllerGetFollowingResponse, DefaultError, InfiniteData<SocialControllerGetFollowingResponse>, QueryKey<Options<SocialControllerGetFollowingData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await socialControllerGetFollowing({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFollowingInfiniteQueryKey(options)
-});
-
-export const socialControllerGetFeedQueryKey = (options?: Options<SocialControllerGetFeedData>) => createQueryKey('socialControllerGetFeed', options);
-
-/**
- * Get recent watched activity from followed users
- */
-export const socialControllerGetFeedOptions = (options?: Options<SocialControllerGetFeedData>) => queryOptions<SocialControllerGetFeedResponse, DefaultError, SocialControllerGetFeedResponse, ReturnType<typeof socialControllerGetFeedQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await socialControllerGetFeed({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFeedQueryKey(options)
-});
-
-export const socialControllerGetFeedInfiniteQueryKey = (options?: Options<SocialControllerGetFeedData>): QueryKey<Options<SocialControllerGetFeedData>> => createQueryKey('socialControllerGetFeed', options, true);
-
-/**
- * Get recent watched activity from followed users
- */
-export const socialControllerGetFeedInfiniteOptions = (options?: Options<SocialControllerGetFeedData>) => infiniteQueryOptions<SocialControllerGetFeedResponse, DefaultError, InfiniteData<SocialControllerGetFeedResponse>, QueryKey<Options<SocialControllerGetFeedData>>, number | Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await socialControllerGetFeed({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: socialControllerGetFeedInfiniteQueryKey(options)
 });

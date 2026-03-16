@@ -1,0 +1,26 @@
+{
+	"lexicon": 1,
+	"id": "xyz.opnshelf.follow",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "An OpnShelf follow relationship stored on a user's PDS",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["subjectDid", "createdAt"],
+				"properties": {
+					"subjectDid": {
+						"type": "string",
+						"description": "The DID of the OpnShelf user being followed"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "When the follow record was created"
+					}
+				}
+			}
+		}
+	}
+}

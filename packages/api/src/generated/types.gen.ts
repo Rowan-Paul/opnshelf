@@ -571,6 +571,82 @@ export type MovieListsForItemDto = {
     isInList: boolean;
 };
 
+export type SocialUserCardDto = {
+    did: string;
+    handle: string;
+    displayName?: {
+        [key: string]: unknown;
+    } | null;
+    avatar?: {
+        [key: string]: unknown;
+    } | null;
+    followersCount: number;
+    followingCount: number;
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+};
+
+export type PaginatedSocialUsersDto = {
+    items: Array<SocialUserCardDto>;
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
+export type UserRelationshipDto = {
+    targetDid: string;
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    canFollow: boolean;
+};
+
+export type SocialActorDto = {
+    did: string;
+    handle: string;
+    displayName?: {
+        [key: string]: unknown;
+    } | null;
+    avatar?: {
+        [key: string]: unknown;
+    } | null;
+    followersCount: number;
+    followingCount: number;
+};
+
+export type FollowedActivityItemDto = {
+    actor: SocialActorDto;
+    id: string;
+    type: 'movie' | 'episode';
+    activityAt: string;
+    movieId?: string;
+    title?: string;
+    showId?: string;
+    showTitle?: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    posterPath?: string;
+    backdropPath?: string;
+    releaseYear?: number;
+    firstAirYear?: number;
+    overview?: string;
+    colors?: MovieColorsDto;
+    watchedDate?: string;
+    createdAt: string;
+};
+
+export type FollowedActivityFeedDto = {
+    items: Array<FollowedActivityItemDto>;
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
 export type PublicUserProfileDto = {
     /**
      * Stable DID for the user
@@ -648,7 +724,7 @@ export type UserProfileDto = {
 
 export type DeleteUserAccountDto = {
     /**
-     * Whether to delete the user's watch history from their PDS. If false, the data remains on their PDS.
+     * Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.
      */
     deletePDSData: boolean;
 };
@@ -909,82 +985,6 @@ export type UnifiedDiscoverResponseDto = {
     results: Array<UnifiedSearchResultDto>;
     total_results: number;
     page: number;
-};
-
-export type SocialUserCardDto = {
-    did: string;
-    handle: string;
-    displayName?: {
-        [key: string]: unknown;
-    } | null;
-    avatar?: {
-        [key: string]: unknown;
-    } | null;
-    followersCount: number;
-    followingCount: number;
-    isFollowing: boolean;
-    isFollowedBy: boolean;
-};
-
-export type PaginatedSocialUsersDto = {
-    items: Array<SocialUserCardDto>;
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-};
-
-export type UserRelationshipDto = {
-    targetDid: string;
-    isFollowing: boolean;
-    isFollowedBy: boolean;
-    canFollow: boolean;
-};
-
-export type SocialActorDto = {
-    did: string;
-    handle: string;
-    displayName?: {
-        [key: string]: unknown;
-    } | null;
-    avatar?: {
-        [key: string]: unknown;
-    } | null;
-    followersCount: number;
-    followingCount: number;
-};
-
-export type FollowedActivityItemDto = {
-    actor: SocialActorDto;
-    id: string;
-    type: 'movie' | 'episode';
-    activityAt: string;
-    movieId?: string;
-    title?: string;
-    showId?: string;
-    showTitle?: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    posterPath?: string;
-    backdropPath?: string;
-    releaseYear?: number;
-    firstAirYear?: number;
-    overview?: string;
-    colors?: MovieColorsDto;
-    watchedDate?: string;
-    createdAt: string;
-};
-
-export type FollowedActivityFeedDto = {
-    items: Array<FollowedActivityItemDto>;
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
 };
 
 export type MoviesControllerSearchMoviesData = {
@@ -2018,6 +2018,150 @@ export type ListsControllerGetListsForMovieResponses = {
     200: unknown;
 };
 
+export type SocialControllerSearchPeopleData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        /**
+         * Search term for handle or display name
+         */
+        q: string;
+    };
+    url: '/social/search';
+};
+
+export type SocialControllerSearchPeopleResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerSearchPeopleResponse = SocialControllerSearchPeopleResponses[keyof SocialControllerSearchPeopleResponses];
+
+export type SocialControllerUnfollowData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/follows/{targetDid}';
+};
+
+export type SocialControllerUnfollowResponses = {
+    /**
+     * Relationship removed
+     */
+    204: void;
+};
+
+export type SocialControllerUnfollowResponse = SocialControllerUnfollowResponses[keyof SocialControllerUnfollowResponses];
+
+export type SocialControllerFollowData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/follows/{targetDid}';
+};
+
+export type SocialControllerFollowResponses = {
+    200: UserRelationshipDto;
+};
+
+export type SocialControllerFollowResponse = SocialControllerFollowResponses[keyof SocialControllerFollowResponses];
+
+export type SocialControllerGetRelationshipData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/relationship/{targetDid}';
+};
+
+export type SocialControllerGetRelationshipResponses = {
+    200: UserRelationshipDto;
+};
+
+export type SocialControllerGetRelationshipResponse = SocialControllerGetRelationshipResponses[keyof SocialControllerGetRelationshipResponses];
+
+export type SocialControllerGetFollowersData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/profiles/{handle}/followers';
+};
+
+export type SocialControllerGetFollowersResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetFollowersResponse = SocialControllerGetFollowersResponses[keyof SocialControllerGetFollowersResponses];
+
+export type SocialControllerGetFollowingData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/profiles/{handle}/following';
+};
+
+export type SocialControllerGetFollowingResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetFollowingResponse = SocialControllerGetFollowingResponses[keyof SocialControllerGetFollowingResponses];
+
+export type SocialControllerGetFeedData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/feed';
+};
+
+export type SocialControllerGetFeedResponses = {
+    200: FollowedActivityFeedDto;
+};
+
+export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];
+
 export type UsersControllerGetPublicProfileData = {
     body?: never;
     path: {
@@ -2112,6 +2256,10 @@ export type UsersControllerDeleteMyAccountErrors = {
      * Not authenticated
      */
     401: unknown;
+    /**
+     * Failed to delete OpnShelf data from the user's PDS, so the account was not deleted
+     */
+    502: unknown;
 };
 
 export type UsersControllerDeleteMyAccountResponses = {
@@ -2289,147 +2437,3 @@ export type SearchControllerDiscoverAllResponses = {
 };
 
 export type SearchControllerDiscoverAllResponse = SearchControllerDiscoverAllResponses[keyof SearchControllerDiscoverAllResponses];
-
-export type SocialControllerSearchPeopleData = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Page number to return
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        /**
-         * Search term for handle or display name
-         */
-        q: string;
-    };
-    url: '/social/search';
-};
-
-export type SocialControllerSearchPeopleResponses = {
-    200: PaginatedSocialUsersDto;
-};
-
-export type SocialControllerSearchPeopleResponse = SocialControllerSearchPeopleResponses[keyof SocialControllerSearchPeopleResponses];
-
-export type SocialControllerUnfollowData = {
-    body?: never;
-    path: {
-        targetDid: string;
-    };
-    query?: never;
-    url: '/social/follows/{targetDid}';
-};
-
-export type SocialControllerUnfollowResponses = {
-    /**
-     * Relationship removed
-     */
-    204: void;
-};
-
-export type SocialControllerUnfollowResponse = SocialControllerUnfollowResponses[keyof SocialControllerUnfollowResponses];
-
-export type SocialControllerFollowData = {
-    body?: never;
-    path: {
-        targetDid: string;
-    };
-    query?: never;
-    url: '/social/follows/{targetDid}';
-};
-
-export type SocialControllerFollowResponses = {
-    200: UserRelationshipDto;
-};
-
-export type SocialControllerFollowResponse = SocialControllerFollowResponses[keyof SocialControllerFollowResponses];
-
-export type SocialControllerGetRelationshipData = {
-    body?: never;
-    path: {
-        targetDid: string;
-    };
-    query?: never;
-    url: '/social/relationship/{targetDid}';
-};
-
-export type SocialControllerGetRelationshipResponses = {
-    200: UserRelationshipDto;
-};
-
-export type SocialControllerGetRelationshipResponse = SocialControllerGetRelationshipResponses[keyof SocialControllerGetRelationshipResponses];
-
-export type SocialControllerGetFollowersData = {
-    body?: never;
-    path: {
-        handle: string;
-    };
-    query?: {
-        /**
-         * Page number to return
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-    };
-    url: '/social/profiles/{handle}/followers';
-};
-
-export type SocialControllerGetFollowersResponses = {
-    200: PaginatedSocialUsersDto;
-};
-
-export type SocialControllerGetFollowersResponse = SocialControllerGetFollowersResponses[keyof SocialControllerGetFollowersResponses];
-
-export type SocialControllerGetFollowingData = {
-    body?: never;
-    path: {
-        handle: string;
-    };
-    query?: {
-        /**
-         * Page number to return
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-    };
-    url: '/social/profiles/{handle}/following';
-};
-
-export type SocialControllerGetFollowingResponses = {
-    200: PaginatedSocialUsersDto;
-};
-
-export type SocialControllerGetFollowingResponse = SocialControllerGetFollowingResponses[keyof SocialControllerGetFollowingResponses];
-
-export type SocialControllerGetFeedData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Page number to return
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-    };
-    url: '/social/feed';
-};
-
-export type SocialControllerGetFeedResponses = {
-    200: FollowedActivityFeedDto;
-};
-
-export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];

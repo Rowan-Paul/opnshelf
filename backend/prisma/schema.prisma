@@ -31,6 +31,9 @@ model User {
 model Follow {
   followerDid  String
   followingDid String
+  rkey         String?
+  uri          String?
+  cid          String?
   createdAt    DateTime @default(now())
 
   follower     User @relation("UserFollowing", fields: [followerDid], references: [did], onDelete: Cascade)
@@ -39,6 +42,7 @@ model Follow {
   @@id([followerDid, followingDid])
   @@index([followerDid, createdAt])
   @@index([followingDid, createdAt])
+  @@index([followerDid, rkey])
 }
 
 enum MediaType {

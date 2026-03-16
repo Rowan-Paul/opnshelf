@@ -1,8 +1,16 @@
+import { Agent } from "@atproto/api";
+import { TID } from "@atproto/common";
 import {
 	BadRequestException,
 	Injectable,
+	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import {
+	$nsid as FOLLOW_COLLECTION,
+	main as followSchema,
+} from "../lexicons/xyz/opnshelf/follow";
+import type { Main as FollowRecord } from "../lexicons/xyz/opnshelf/follow.defs";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
@@ -55,6 +63,10 @@ type PaginatedResult<T> = {
 	hasPreviousPage: boolean;
 };
 
+export interface ATSession {
+	did: string;
+}
+
 const DEFAULT_SOCIAL_PAGE_SIZE = 20;
 const MAX_SOCIAL_PAGE_SIZE = 50;
 const DEFAULT_FEED_PAGE_SIZE = 10;
@@ -62,6 +74,8 @@ const MAX_FEED_PAGE_SIZE = 25;
 
 @Injectable()
 export class SocialService {
+	private readonly logger = new Logger(SocialService.name);
+
 	constructor(private readonly prisma: PrismaService) {}
 
 	async searchPeople(
@@ -110,23 +124,74 @@ export class SocialService {
 
 	async follow(
 		viewerDid: string,
+		session: ATSession,
 		targetDid: string,
 	): Promise<UserRelationshipDto> {
 		await this.assertCanFollow(viewerDid, targetDid);
-
-		await this.prisma.follow.createMany({
-			data: [{ followerDid: viewerDid, followingDid: targetDid }],
-			skipDuplicates: true,
+		const existingFollow = await this.prisma.follow.findFirst({
+			where: {
+				followerDid: viewerDid,
+				followingDid: targetDid,
+			},
+			select: { rkey: true },
 		});
+
+		if (existingFollow?.rkey) {
+			return this.getRelationship(viewerDid, targetDid);
+		}
+
+		const { rkey, uri, cid, createdAt } = await this.createFollowRecord(
+			session,
+			targetDid,
+		);
+
+		if (existingFollow) {
+			await this.prisma.follow.update({
+				where: {
+					followerDid_followingDid: {
+						followerDid: viewerDid,
+						followingDid: targetDid,
+					},
+				},
+				data: { rkey, uri, cid, createdAt },
+			});
+		} else {
+			await this.prisma.follow.create({
+				data: {
+					followerDid: viewerDid,
+					followingDid: targetDid,
+					rkey,
+					uri,
+					cid,
+					createdAt,
+				},
+			});
+		}
 
 		return this.getRelationship(viewerDid, targetDid);
 	}
 
-	async unfollow(viewerDid: string, targetDid: string): Promise<void> {
+	async unfollow(
+		viewerDid: string,
+		session: ATSession,
+		targetDid: string,
+	): Promise<void> {
 		await this.assertTargetUserExists(targetDid);
 
 		if (viewerDid === targetDid) {
 			return;
+		}
+
+		const existingFollow = await this.prisma.follow.findFirst({
+			where: {
+				followerDid: viewerDid,
+				followingDid: targetDid,
+			},
+			select: { rkey: true },
+		});
+
+		if (existingFollow?.rkey) {
+			await this.deleteFollowRecord(session, existingFollow.rkey);
 		}
 
 		await this.prisma.follow.deleteMany({
@@ -383,6 +448,63 @@ export class SocialService {
 		};
 	}
 
+	async indexFollowRecord(
+		followerDid: string,
+		rkey: string,
+		cid: string | undefined,
+		record: FollowRecord,
+		uri?: string,
+	) {
+		await this.assertTargetUserExists(record.subjectDid);
+
+		const existingFollow = await this.prisma.follow.findFirst({
+			where: {
+				followerDid,
+				followingDid: record.subjectDid,
+			},
+			select: {
+				followerDid: true,
+				followingDid: true,
+			},
+		});
+
+		const data = {
+			rkey,
+			cid,
+			uri: uri ?? `at://${followerDid}/${FOLLOW_COLLECTION}/${rkey}`,
+			createdAt: new Date(record.createdAt),
+		};
+
+		if (existingFollow) {
+			return this.prisma.follow.update({
+				where: {
+					followerDid_followingDid: {
+						followerDid,
+						followingDid: record.subjectDid,
+					},
+				},
+				data,
+			});
+		}
+
+		return this.prisma.follow.create({
+			data: {
+				followerDid,
+				followingDid: record.subjectDid,
+				...data,
+			},
+		});
+	}
+
+	async deleteFollowRecordIndex(followerDid: string, rkey: string) {
+		return this.prisma.follow.deleteMany({
+			where: {
+				followerDid,
+				rkey,
+			},
+		});
+	}
+
 	private async assertCanFollow(viewerDid: string, targetDid: string) {
 		if (viewerDid === targetDid) {
 			throw new BadRequestException("Users cannot follow themselves");
@@ -414,6 +536,52 @@ export class SocialService {
 		}
 
 		return user;
+	}
+
+	private async createFollowRecord(session: ATSession, targetDid: string) {
+		const rkey = TID.nextStr();
+		const createdAt = new Date();
+		const record: FollowRecord = followSchema.build({
+			subjectDid: targetDid,
+			createdAt: createdAt.toISOString(),
+		});
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		const response = await agent.com.atproto.repo.putRecord({
+			repo: session.did,
+			collection: FOLLOW_COLLECTION,
+			rkey,
+			record,
+			validate: false,
+		});
+
+		return {
+			rkey,
+			uri: response.data.uri,
+			cid: response.data.cid,
+			createdAt,
+		};
+	}
+
+	private async deleteFollowRecord(session: ATSession, rkey: string) {
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		try {
+			await agent.com.atproto.repo.deleteRecord({
+				repo: session.did,
+				collection: FOLLOW_COLLECTION,
+				rkey,
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Failed to delete follow record ${rkey} from PDS`,
+				error,
+			);
+		}
 	}
 
 	private async buildSocialUserCards(

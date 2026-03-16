@@ -64,7 +64,7 @@ export function DeleteAccountModal({
 
 					<View style={styles.pdsSwitchRow}>
 						<Text style={styles.pdsSwitchLabel}>
-							Also delete my watch history from my PDS
+							Also delete my OpnShelf data from my PDS
 						</Text>
 						<Switch
 							value={deletePDSData}
@@ -76,15 +76,16 @@ export function DeleteAccountModal({
 					{deletePDSData ? (
 						<View style={styles.deleteWarningBox}>
 							<Text style={styles.deleteWarningText}>
-								Your watch history will be permanently deleted from your personal
+								Your OpnShelf data, including watch history, follows, lists,
+								and list items, will be permanently deleted from your personal
 								data server. This cannot be recovered.
 							</Text>
 						</View>
 					) : (
 						<View style={styles.deleteInfoBox}>
 							<Text style={styles.deleteInfoText}>
-								Your watch history will remain on your PDS. You can use another app
-								or re-authorize OpnShelf later to access it.
+								Your OpnShelf data will remain on your PDS. You can use another
+								app or re-authorize OpnShelf later to access it.
 							</Text>
 						</View>
 					)}

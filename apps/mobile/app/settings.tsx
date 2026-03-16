@@ -21,6 +21,23 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+	if (error instanceof Error && error.message) {
+		return error.message;
+	}
+
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+
+	return fallback;
+}
+
 export default function SettingsScreen() {
 	const router = useRouter();
 	const { showToast } = useToast();
@@ -73,8 +90,8 @@ export default function SettingsScreen() {
 			await logout();
 			router.replace("/");
 		},
-		onError: () => {
-			showToast("Failed to delete account", "error");
+		onError: (error) => {
+			showToast(getErrorMessage(error, "Failed to delete account"), "error");
 		},
 	});
 

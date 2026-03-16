@@ -87,6 +87,23 @@ export const Route = createFileRoute("/profile/$handle/settings")({
 	component: SettingsPage,
 });
 
+function getErrorMessage(error: unknown, fallback: string): string {
+	if (error instanceof Error && error.message) {
+		return error.message;
+	}
+
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+
+	return fallback;
+}
+
 function SettingsPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -146,8 +163,8 @@ function SettingsPage() {
 			queryClient.removeQueries({ queryKey: authControllerMeQueryKey() });
 			router.navigate({ to: "/" });
 		},
-		onError: () => {
-			toast.error("Failed to delete account");
+		onError: (error) => {
+			toast.error(getErrorMessage(error, "Failed to delete account"));
 		},
 	});
 
@@ -419,7 +436,7 @@ function SettingsPage() {
 								htmlFor={deletePdsId}
 								className="md-body-medium cursor-pointer text-[var(--md-sys-color-on-surface)]"
 							>
-								Also delete my watch history from my PDS
+								Also delete my OpnShelf data from my PDS
 							</Label>
 						</div>
 
@@ -432,8 +449,9 @@ function SettingsPage() {
 								}}
 							>
 								<p className="md-body-medium text-[var(--md-sys-color-error)]">
-									Your watch history will be permanently deleted from your
-									personal data server. This cannot be recovered.
+									Your OpnShelf data, including watch history, follows, lists,
+									and list items, will be permanently deleted from your personal
+									data server. This cannot be recovered.
 								</p>
 							</div>
 						) : (
@@ -444,7 +462,7 @@ function SettingsPage() {
 								}}
 							>
 								<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
-									Your watch history will remain on your PDS. You can use
+									Your OpnShelf data will remain on your PDS. You can use
 									another app or re-authorize OpnShelf later to access it.
 								</p>
 							</div>

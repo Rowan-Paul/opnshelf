@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadGatewayException, BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { AuthenticatedRequest } from "../auth/types";
 import { UsersController } from "./users.controller";
@@ -187,6 +187,39 @@ describe("UsersController", () => {
 				req,
 			),
 		).resolves.toMatchObject({ imported: 1, skipped: 0, failed: 0 });
+	});
+
+	it("deletes the current account and forwards the PDS deletion flag", async () => {
+		usersService.deleteUser.mockResolvedValue(undefined);
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(
+			controller.deleteMyAccount({ deletePDSData: true }, req),
+		).resolves.toBeUndefined();
+		expect(usersService.deleteUser).toHaveBeenCalledWith(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			true,
+		);
+	});
+
+	it("propagates delete-account PDS cleanup failures", async () => {
+		usersService.deleteUser.mockRejectedValue(
+			new BadGatewayException(
+				"Failed to delete OpnShelf data from your PDS. Your account was not deleted.",
+			),
+		);
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(
+			controller.deleteMyAccount({ deletePDSData: true }, req),
+		).rejects.toThrow(BadGatewayException);
 	});
 
 	it("rejects import when session is missing", async () => {

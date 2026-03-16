@@ -21,7 +21,7 @@ import {
 	SocialSearchQueryDto,
 	UserRelationshipDto,
 } from "./dto/social.dto";
-import { SocialService } from "./social.service";
+import { type ATSession, SocialService } from "./social.service";
 
 @ApiTags("social")
 @UseGuards(AuthGuard)
@@ -51,7 +51,11 @@ export class SocialController {
 		@Req() req: AuthenticatedRequest,
 		@Param("targetDid") targetDid: string,
 	): Promise<UserRelationshipDto> {
-		return this.socialService.follow(getViewerDid(req), targetDid);
+		return this.socialService.follow(
+			getViewerDid(req),
+			req.user.session as ATSession,
+			targetDid,
+		);
 	}
 
 	@Delete("follows/:targetDid")
@@ -62,7 +66,11 @@ export class SocialController {
 		@Req() req: AuthenticatedRequest,
 		@Param("targetDid") targetDid: string,
 	): Promise<void> {
-		await this.socialService.unfollow(getViewerDid(req), targetDid);
+		await this.socialService.unfollow(
+			getViewerDid(req),
+			req.user.session as ATSession,
+			targetDid,
+		);
 	}
 
 	@Get("relationship/:targetDid")

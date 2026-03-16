@@ -50,6 +50,8 @@ const DEFAULT_LISTS: Array<{
 		description: "Your favorite items",
 	},
 ];
+const DEFAULT_LIST_SLUGS = new Set(DEFAULT_LISTS.map((list) => list.slug));
+const LIST_RECORDS_PAGE_SIZE = 100;
 
 @Injectable()
 export class ListsService {
@@ -208,20 +210,80 @@ export class ListsService {
 		const existingLists = await this.prisma.movieList.findMany({
 			where: { userDid, isDefault: true },
 		});
+		const hydratedLists = [...existingLists];
 
 		const existingSlugs = new Set(existingLists.map((l) => l.slug));
+
+		if (existingSlugs.size < DEFAULT_LISTS.length) {
+			const repoDefaults = await this.listRepoDefaultLists(userDid, session);
+
+			for (const repoDefault of repoDefaults) {
+				if (existingSlugs.has(repoDefault.slug)) {
+					continue;
+				}
+
+				const indexedDefault = await this.prisma.movieList.upsert({
+					where: { rkey: repoDefault.rkey },
+					create: {
+						rkey: repoDefault.rkey,
+						uri: repoDefault.uri,
+						cid: repoDefault.cid,
+						userDid,
+						name: repoDefault.name,
+						description: repoDefault.description,
+						slug: repoDefault.slug,
+						isDefault: true,
+					},
+					update: {
+						uri: repoDefault.uri,
+						cid: repoDefault.cid,
+						name: repoDefault.name,
+						description: repoDefault.description,
+						slug: repoDefault.slug,
+						isDefault: true,
+					},
+				});
+
+				hydratedLists.push(indexedDefault);
+				existingSlugs.add(repoDefault.slug);
+			}
+		}
+
 		const listsToCreate = DEFAULT_LISTS.filter(
 			(dl) => !existingSlugs.has(dl.slug),
 		);
 
 		for (const defaultList of listsToCreate) {
-			await this.createDefaultList(userDid, session, defaultList);
+			const createdDefault = await this.createDefaultList(
+				userDid,
+				session,
+				defaultList,
+			);
+			hydratedLists.push({
+				id: createdDefault.id,
+				rkey: createdDefault.rkey,
+				uri: createdDefault.uri,
+				cid: null,
+				userDid: createdDefault.userDid,
+				name: createdDefault.name,
+				description: createdDefault.description ?? null,
+				slug: createdDefault.slug,
+				isDefault: createdDefault.isDefault,
+				createdAt: new Date(createdDefault.createdAt),
+				updatedAt: new Date(createdDefault.updatedAt),
+			});
+			existingSlugs.add(defaultList.slug);
 		}
 
-		const allLists = await this.prisma.movieList.findMany({
-			where: { userDid, isDefault: true },
-			orderBy: { createdAt: "asc" },
-		});
+		const allLists =
+			listsToCreate.length > 0 || hydratedLists.length !== existingLists.length
+				? await this.prisma.movieList.findMany({
+						where: { userDid, isDefault: true },
+						orderBy: { createdAt: "asc" },
+					})
+				: hydratedLists.sort(
+						(a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+					);
 
 		return allLists.map((list) => ({
 			id: list.id,
@@ -735,5 +797,85 @@ export class ListsService {
 		const uniqueSuffix = userDid.slice(-6);
 
 		return `${baseSlug}-${uniqueSuffix}`;
+	}
+
+	private async listRepoDefaultLists(
+		userDid: string,
+		session: ATSession,
+	): Promise<
+		Array<{
+			rkey: string;
+			uri: string;
+			cid: string;
+			name: string;
+			description?: string;
+			slug: string;
+		}>
+	> {
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		const repoDefaults: Array<{
+			rkey: string;
+			uri: string;
+			cid: string;
+			name: string;
+			description?: string;
+			slug: string;
+		}> = [];
+		let cursor: string | undefined;
+
+		do {
+			const response = await agent.com.atproto.repo.listRecords({
+				repo: session.did,
+				collection: LIST_COLLECTION,
+				limit: LIST_RECORDS_PAGE_SIZE,
+				cursor,
+			});
+
+			for (const record of response.data.records) {
+				let parsedRecord: ListRecord;
+				try {
+					parsedRecord = listSchema.parse(record.value);
+				} catch {
+					this.logger.debug(`Skipping invalid repo list record: ${record.uri}`);
+					continue;
+				}
+
+				if (
+					!parsedRecord.isDefault ||
+					!DEFAULT_LIST_SLUGS.has(parsedRecord.slug)
+				) {
+					continue;
+				}
+
+				repoDefaults.push({
+					rkey: this.extractRkeyFromUri(record.uri, session.did),
+					uri: record.uri,
+					cid: record.cid,
+					name: parsedRecord.name,
+					description: parsedRecord.description,
+					slug: parsedRecord.slug,
+				});
+			}
+
+			cursor = response.data.cursor;
+		} while (cursor);
+
+		this.logger.debug(
+			`Found ${repoDefaults.length} default list records on repo for user ${userDid}`,
+		);
+
+		return repoDefaults;
+	}
+
+	private extractRkeyFromUri(uri: string, userDid: string): string {
+		const prefix = `at://${userDid}/${LIST_COLLECTION}/`;
+
+		if (!uri.startsWith(prefix)) {
+			throw new Error(`Unexpected list URI returned from repo: ${uri}`);
+		}
+
+		return uri.slice(prefix.length);
 	}
 }
