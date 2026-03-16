@@ -1,0 +1,728 @@
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from "@nestjs/common";
+import { Prisma } from "../generated/client";
+import { PrismaService } from "../prisma/prisma.service";
+import type {
+	FollowedActivityFeedDto,
+	FollowedActivityItemDto,
+	PaginatedSocialUsersDto,
+	SocialActorDto,
+	SocialUserCardDto,
+	UserRelationshipDto,
+} from "./dto/social.dto";
+
+type SocialUserRecord = {
+	did: string;
+	handle: string;
+	displayName: string | null;
+	avatar: string | null;
+	_count: {
+		followers: number;
+		following: number;
+	};
+};
+
+type FollowedActivityRow = {
+	actorDid: string;
+	id: string;
+	type: "movie" | "episode";
+	activityAt: Date;
+	watchedDate: Date | null;
+	createdAt: Date;
+	movieId: string | null;
+	title: string | null;
+	showId: string | null;
+	showTitle: string | null;
+	seasonNumber: number | null;
+	episodeNumber: number | null;
+	posterPath: string | null;
+	backdropPath: string | null;
+	releaseYear: number | null;
+	firstAirYear: number | null;
+	overview: string | null;
+};
+
+type PaginatedResult<T> = {
+	items: T[];
+	page: number;
+	pageSize: number;
+	total: number;
+	totalPages: number;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
+};
+
+const DEFAULT_SOCIAL_PAGE_SIZE = 20;
+const MAX_SOCIAL_PAGE_SIZE = 50;
+const DEFAULT_FEED_PAGE_SIZE = 10;
+const MAX_FEED_PAGE_SIZE = 25;
+
+@Injectable()
+export class SocialService {
+	constructor(private readonly prisma: PrismaService) {}
+
+	async searchPeople(
+		viewerDid: string,
+		query: string,
+		page = 1,
+		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
+	): Promise<PaginatedSocialUsersDto> {
+		const trimmedQuery = normalizeSearchQuery(query);
+		if (trimmedQuery.length < 2) {
+			throw new BadRequestException("Query must be at least 2 characters");
+		}
+
+		const safePageSize = clampPageSize(pageSize, MAX_SOCIAL_PAGE_SIZE);
+		const safePage = clampPage(page);
+
+		const matches = await this.prisma.user.findMany({
+			where: {
+				did: { not: viewerDid },
+				OR: [
+					{ handle: { contains: trimmedQuery, mode: "insensitive" } },
+					{ displayName: { contains: trimmedQuery, mode: "insensitive" } },
+				],
+			},
+			select: socialUserSelect,
+		});
+
+		const sortedMatches = [...matches].sort((left, right) =>
+			compareSocialSearch(left, right, trimmedQuery),
+		);
+
+		const paginated = paginateItems(sortedMatches, safePage, safePageSize);
+		const cards = await this.buildSocialUserCards(
+			paginated.items.map((user) => user.did),
+			viewerDid,
+			new Map(paginated.items.map((user) => [user.did, user])),
+		);
+
+		return {
+			...paginated,
+			items: paginated.items
+				.map((user) => cards.get(user.did))
+				.filter((item): item is SocialUserCardDto => Boolean(item)),
+		};
+	}
+
+	async follow(
+		viewerDid: string,
+		targetDid: string,
+	): Promise<UserRelationshipDto> {
+		await this.assertCanFollow(viewerDid, targetDid);
+
+		await this.prisma.follow.createMany({
+			data: [{ followerDid: viewerDid, followingDid: targetDid }],
+			skipDuplicates: true,
+		});
+
+		return this.getRelationship(viewerDid, targetDid);
+	}
+
+	async unfollow(viewerDid: string, targetDid: string): Promise<void> {
+		await this.assertTargetUserExists(targetDid);
+
+		if (viewerDid === targetDid) {
+			return;
+		}
+
+		await this.prisma.follow.deleteMany({
+			where: {
+				followerDid: viewerDid,
+				followingDid: targetDid,
+			},
+		});
+	}
+
+	async getRelationship(
+		viewerDid: string,
+		targetDid: string,
+	): Promise<UserRelationshipDto> {
+		await this.assertTargetUserExists(targetDid);
+
+		if (viewerDid === targetDid) {
+			return {
+				targetDid,
+				isFollowing: false,
+				isFollowedBy: false,
+				canFollow: false,
+			};
+		}
+
+		const [isFollowing, isFollowedBy] = await Promise.all([
+			this.prisma.follow.count({
+				where: {
+					followerDid: viewerDid,
+					followingDid: targetDid,
+				},
+			}),
+			this.prisma.follow.count({
+				where: {
+					followerDid: targetDid,
+					followingDid: viewerDid,
+				},
+			}),
+		]);
+
+		return {
+			targetDid,
+			isFollowing: isFollowing > 0,
+			isFollowedBy: isFollowedBy > 0,
+			canFollow: true,
+		};
+	}
+
+	async getFollowers(
+		viewerDid: string,
+		handle: string,
+		page = 1,
+		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
+	): Promise<PaginatedSocialUsersDto> {
+		const targetUser = await this.findUserByHandle(handle);
+		const safePageSize = clampPageSize(pageSize, MAX_SOCIAL_PAGE_SIZE);
+		const safePage = clampPage(page);
+
+		const total = await this.prisma.follow.count({
+			where: { followingDid: targetUser.did },
+		});
+		const pagination = getPaginationMeta(total, safePage, safePageSize);
+		const follows =
+			total === 0
+				? []
+				: await this.prisma.follow.findMany({
+						where: { followingDid: targetUser.did },
+						select: { followerDid: true },
+						orderBy: [{ createdAt: "desc" }, { followerDid: "asc" }],
+						skip: (pagination.page - 1) * safePageSize,
+						take: safePageSize,
+					});
+
+		const cards = await this.buildSocialUserCards(
+			follows.map((follow) => follow.followerDid),
+			viewerDid,
+		);
+
+		return {
+			...pagination,
+			items: follows
+				.map((follow) => cards.get(follow.followerDid))
+				.filter((item): item is SocialUserCardDto => Boolean(item)),
+		};
+	}
+
+	async getFollowing(
+		viewerDid: string,
+		handle: string,
+		page = 1,
+		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
+	): Promise<PaginatedSocialUsersDto> {
+		const targetUser = await this.findUserByHandle(handle);
+		const safePageSize = clampPageSize(pageSize, MAX_SOCIAL_PAGE_SIZE);
+		const safePage = clampPage(page);
+
+		const total = await this.prisma.follow.count({
+			where: { followerDid: targetUser.did },
+		});
+		const pagination = getPaginationMeta(total, safePage, safePageSize);
+		const follows =
+			total === 0
+				? []
+				: await this.prisma.follow.findMany({
+						where: { followerDid: targetUser.did },
+						select: { followingDid: true },
+						orderBy: [{ createdAt: "desc" }, { followingDid: "asc" }],
+						skip: (pagination.page - 1) * safePageSize,
+						take: safePageSize,
+					});
+
+		const cards = await this.buildSocialUserCards(
+			follows.map((follow) => follow.followingDid),
+			viewerDid,
+		);
+
+		return {
+			...pagination,
+			items: follows
+				.map((follow) => cards.get(follow.followingDid))
+				.filter((item): item is SocialUserCardDto => Boolean(item)),
+		};
+	}
+
+	async getFollowedActivityFeed(
+		viewerDid: string,
+		page = 1,
+		pageSize = DEFAULT_FEED_PAGE_SIZE,
+	): Promise<FollowedActivityFeedDto> {
+		const safePageSize = clampPageSize(pageSize, MAX_FEED_PAGE_SIZE);
+		const safePage = clampPage(page);
+
+		const followedUsers = await this.prisma.follow.findMany({
+			where: { followerDid: viewerDid },
+			select: { followingDid: true },
+		});
+		const followedDids = followedUsers.map((follow) => follow.followingDid);
+
+		if (followedDids.length === 0) {
+			return emptyPaginatedResult(safePage, safePageSize);
+		}
+
+		const [movieCount, episodeCount] = await Promise.all([
+			this.prisma.trackedMovie.count({
+				where: { userDid: { in: followedDids } },
+			}),
+			this.prisma.trackedEpisode.count({
+				where: { userDid: { in: followedDids } },
+			}),
+		]);
+		const total = movieCount + episodeCount;
+		const pagination = getPaginationMeta(total, safePage, safePageSize);
+
+		if (total === 0) {
+			return {
+				...pagination,
+				items: [],
+			};
+		}
+
+		const followedDidValues = Prisma.join(
+			followedDids.map((did) => Prisma.sql`${did}`),
+		);
+		const rows = await this.prisma.$queryRaw<FollowedActivityRow[]>(Prisma.sql`
+			SELECT
+				activity."actorDid",
+				activity.id,
+				activity.type,
+				activity."activityAt",
+				activity."watchedDate",
+				activity."createdAt",
+				activity."movieId",
+				activity.title,
+				activity."showId",
+				activity."showTitle",
+				activity."seasonNumber",
+				activity."episodeNumber",
+				activity."posterPath",
+				activity."backdropPath",
+				activity."releaseYear",
+				activity."firstAirYear",
+				activity.overview
+			FROM (
+				SELECT
+					tm."userDid" AS "actorDid",
+					tm.id,
+					'movie' AS type,
+					COALESCE(tm."watchedDate", tm."createdAt") AS "activityAt",
+					tm."watchedDate",
+					tm."createdAt",
+					tm."movieId",
+					m.title,
+					NULL::text AS "showId",
+					NULL::text AS "showTitle",
+					NULL::integer AS "seasonNumber",
+					NULL::integer AS "episodeNumber",
+					m."posterPath",
+					m."backdropPath",
+					m."releaseYear",
+					NULL::integer AS "firstAirYear",
+					m.overview
+				FROM "TrackedMovie" tm
+				INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
+				WHERE tm."userDid" IN (${followedDidValues})
+
+				UNION ALL
+
+				SELECT
+					te."userDid" AS "actorDid",
+					te.id,
+					'episode' AS type,
+					COALESCE(te."watchedDate", te."createdAt") AS "activityAt",
+					te."watchedDate",
+					te."createdAt",
+					NULL::text AS "movieId",
+					NULL::text AS title,
+					te."showId",
+					s.title AS "showTitle",
+					te."seasonNumber",
+					te."episodeNumber",
+					s."posterPath",
+					s."backdropPath",
+					NULL::integer AS "releaseYear",
+					s."firstAirYear",
+					s.overview
+				FROM "TrackedEpisode" te
+				INNER JOIN "Show" s ON s."showId" = te."showId"
+				WHERE te."userDid" IN (${followedDidValues})
+			) activity
+			ORDER BY
+				activity."activityAt" DESC,
+				activity."createdAt" DESC,
+				activity.type DESC,
+				activity.id DESC
+			OFFSET ${(pagination.page - 1) * safePageSize}
+			LIMIT ${safePageSize}
+		`);
+
+		const actorMap = await this.buildSocialActorMap(
+			rows.map((row) => row.actorDid),
+		);
+		const colorMap = await this.loadActivityColorMap(rows);
+		const items = rows.map((row) =>
+			this.toFollowedActivityItem(
+				row,
+				actorMap.get(row.actorDid) ?? null,
+				colorMap,
+			),
+		);
+
+		return {
+			...pagination,
+			items,
+		};
+	}
+
+	private async assertCanFollow(viewerDid: string, targetDid: string) {
+		if (viewerDid === targetDid) {
+			throw new BadRequestException("Users cannot follow themselves");
+		}
+
+		await this.assertTargetUserExists(targetDid);
+	}
+
+	private async assertTargetUserExists(targetDid: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { did: targetDid },
+			select: { did: true },
+		});
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+	}
+
+	private async findUserByHandle(handle: string) {
+		const normalizedHandle = normalizeHandle(handle);
+		const user = await this.prisma.user.findUnique({
+			where: { handle: normalizedHandle },
+			select: { did: true, handle: true },
+		});
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		return user;
+	}
+
+	private async buildSocialUserCards(
+		userDids: string[],
+		viewerDid: string,
+		baseUsers?: Map<string, SocialUserRecord>,
+	): Promise<Map<string, SocialUserCardDto>> {
+		const uniqueUserDids = [...new Set(userDids)];
+		if (uniqueUserDids.length === 0) {
+			return new Map();
+		}
+
+		const usersMap =
+			baseUsers ??
+			new Map(
+				(
+					await this.prisma.user.findMany({
+						where: { did: { in: uniqueUserDids } },
+						select: socialUserSelect,
+					})
+				).map((user) => [user.did, user]),
+			);
+
+		const [viewerFollowing, viewerFollowers] = await Promise.all([
+			this.prisma.follow.findMany({
+				where: {
+					followerDid: viewerDid,
+					followingDid: { in: uniqueUserDids },
+				},
+				select: { followingDid: true },
+			}),
+			this.prisma.follow.findMany({
+				where: {
+					followingDid: viewerDid,
+					followerDid: { in: uniqueUserDids },
+				},
+				select: { followerDid: true },
+			}),
+		]);
+
+		const followingSet = new Set(
+			viewerFollowing.map((follow) => follow.followingDid),
+		);
+		const followerSet = new Set(
+			viewerFollowers.map((follow) => follow.followerDid),
+		);
+
+		return new Map(
+			uniqueUserDids
+				.map((did) => {
+					const user = usersMap.get(did);
+					if (!user) {
+						return null;
+					}
+
+					return [
+						did,
+						{
+							did: user.did,
+							handle: user.handle,
+							displayName: user.displayName,
+							avatar: user.avatar,
+							followersCount: user._count.followers,
+							followingCount: user._count.following,
+							isFollowing: followingSet.has(did),
+							isFollowedBy: followerSet.has(did),
+						} satisfies SocialUserCardDto,
+					] as const;
+				})
+				.filter((entry): entry is readonly [string, SocialUserCardDto] =>
+					Boolean(entry),
+				),
+		);
+	}
+
+	private async buildSocialActorMap(
+		userDids: string[],
+	): Promise<Map<string, SocialActorDto>> {
+		const uniqueUserDids = [...new Set(userDids)];
+		if (uniqueUserDids.length === 0) {
+			return new Map();
+		}
+
+		const users = await this.prisma.user.findMany({
+			where: { did: { in: uniqueUserDids } },
+			select: socialUserSelect,
+		});
+
+		return new Map(
+			users.map((user) => [
+				user.did,
+				{
+					did: user.did,
+					handle: user.handle,
+					displayName: user.displayName,
+					avatar: user.avatar,
+					followersCount: user._count.followers,
+					followingCount: user._count.following,
+				} satisfies SocialActorDto,
+			]),
+		);
+	}
+
+	private async loadActivityColorMap(rows: FollowedActivityRow[]) {
+		const movieIds = [
+			...new Set(
+				rows
+					.filter((row) => row.type === "movie" && row.movieId)
+					.map((row) => row.movieId as string),
+			),
+		];
+		const showIds = [
+			...new Set(
+				rows
+					.filter((row) => row.type === "episode" && row.showId)
+					.map((row) => row.showId as string),
+			),
+		];
+
+		const [movies, shows] = await Promise.all([
+			movieIds.length > 0
+				? this.prisma.movie.findMany({
+						where: { movieId: { in: movieIds } },
+						select: { movieId: true, colors: true },
+					})
+				: Promise.resolve([]),
+			showIds.length > 0
+				? this.prisma.show.findMany({
+						where: { showId: { in: showIds } },
+						select: { showId: true, colors: true },
+					})
+				: Promise.resolve([]),
+		]);
+
+		return {
+			movies: new Map<string, unknown>(
+				movies.map((movie): [string, unknown] => [movie.movieId, movie.colors]),
+			),
+			shows: new Map<string, unknown>(
+				shows.map((show): [string, unknown] => [show.showId, show.colors]),
+			),
+		};
+	}
+
+	private toFollowedActivityItem(
+		row: FollowedActivityRow,
+		actor: SocialActorDto | null,
+		colorMap: {
+			movies: Map<string, unknown>;
+			shows: Map<string, unknown>;
+		},
+	): FollowedActivityItemDto {
+		return {
+			actor:
+				actor ??
+				({
+					did: row.actorDid,
+					handle: row.actorDid,
+					displayName: null,
+					avatar: null,
+					followersCount: 0,
+					followingCount: 0,
+				} satisfies SocialActorDto),
+			id: row.id,
+			type: row.type,
+			activityAt: row.activityAt.toISOString(),
+			movieId: row.movieId ?? undefined,
+			title: row.title ?? undefined,
+			showId: row.showId ?? undefined,
+			showTitle: row.showTitle ?? undefined,
+			seasonNumber: row.seasonNumber ?? undefined,
+			episodeNumber: row.episodeNumber ?? undefined,
+			posterPath: row.posterPath ?? undefined,
+			backdropPath: row.backdropPath ?? undefined,
+			releaseYear: row.releaseYear ?? undefined,
+			firstAirYear: row.firstAirYear ?? undefined,
+			overview: row.overview ?? undefined,
+			colors:
+				row.type === "movie"
+					? ((row.movieId ? colorMap.movies.get(row.movieId) : undefined) as
+							| FollowedActivityItemDto["colors"]
+							| undefined)
+					: ((row.showId ? colorMap.shows.get(row.showId) : undefined) as
+							| FollowedActivityItemDto["colors"]
+							| undefined),
+			watchedDate: row.watchedDate?.toISOString(),
+			createdAt: row.createdAt.toISOString(),
+		};
+	}
+}
+
+const socialUserSelect = {
+	did: true,
+	handle: true,
+	displayName: true,
+	avatar: true,
+	_count: {
+		select: {
+			followers: true,
+			following: true,
+		},
+	},
+} as const;
+
+function normalizeHandle(handle: string) {
+	return handle.trim().replace(/^@/, "").toLowerCase();
+}
+
+function normalizeSearchQuery(query: string) {
+	return query.trim().replace(/^@/, "").toLowerCase();
+}
+
+function compareSocialSearch(
+	left: SocialUserRecord,
+	right: SocialUserRecord,
+	query: string,
+) {
+	const rankDifference =
+		getSearchRank(left, query) - getSearchRank(right, query);
+	if (rankDifference !== 0) {
+		return rankDifference;
+	}
+
+	const followersDifference = right._count.followers - left._count.followers;
+	if (followersDifference !== 0) {
+		return followersDifference;
+	}
+
+	return left.handle.localeCompare(right.handle);
+}
+
+function getSearchRank(user: SocialUserRecord, query: string) {
+	const handle = user.handle.toLowerCase();
+	const displayName = user.displayName?.toLowerCase() ?? "";
+
+	if (handle === query) {
+		return 0;
+	}
+
+	if (handle.startsWith(query)) {
+		return 1;
+	}
+
+	if (displayName.startsWith(query)) {
+		return 2;
+	}
+
+	if (handle.includes(query)) {
+		return 3;
+	}
+
+	if (displayName.includes(query)) {
+		return 4;
+	}
+
+	return 5;
+}
+
+function clampPage(page: number) {
+	return Math.max(page, 1);
+}
+
+function clampPageSize(pageSize: number, maxPageSize: number) {
+	return Math.min(Math.max(pageSize, 1), maxPageSize);
+}
+
+function paginateItems<T>(
+	items: T[],
+	page: number,
+	pageSize: number,
+): PaginatedResult<T> {
+	const pagination = getPaginationMeta(items.length, page, pageSize);
+	const start = (pagination.page - 1) * pageSize;
+
+	return {
+		...pagination,
+		items: items.slice(start, start + pageSize),
+	};
+}
+
+function getPaginationMeta(
+	total: number,
+	page: number,
+	pageSize: number,
+): Omit<PaginatedResult<never>, "items"> {
+	const totalPages = total > 0 ? Math.ceil(total / pageSize) : 0;
+	const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1;
+
+	return {
+		page: currentPage,
+		pageSize,
+		total,
+		totalPages,
+		hasNextPage: totalPages > 0 && currentPage < totalPages,
+		hasPreviousPage: totalPages > 0 && currentPage > 1,
+	};
+}
+
+function emptyPaginatedResult(
+	page: number,
+	pageSize: number,
+): FollowedActivityFeedDto {
+	return {
+		items: [],
+		page,
+		pageSize,
+		total: 0,
+		totalPages: 0,
+		hasNextPage: false,
+		hasPreviousPage: false,
+	};
+}

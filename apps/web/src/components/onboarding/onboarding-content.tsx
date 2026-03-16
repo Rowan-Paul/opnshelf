@@ -4,11 +4,14 @@ import {
 	FileSpreadsheet,
 	Sparkles,
 	UserCircle2,
+	Users,
 	WandSparkles,
 } from "lucide-react";
 import { M3Button } from "@/components/ui/m3-button";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
 import type {
+	FollowImportResult,
+	FollowImportStatus,
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
@@ -25,6 +28,10 @@ const ONBOARDING_STEP_DETAILS = [
 		description: "Tune your profile card and local time.",
 	},
 	{
+		title: "Friends",
+		description: "Pull in your Bluesky following on OpnShelf.",
+	},
+	{
 		title: "Import",
 		description: "Bring your watch history from Trakt or CSV.",
 	},
@@ -37,6 +44,7 @@ const ONBOARDING_STEP_DETAILS = [
 const STEP_ICONS = [
 	Sparkles,
 	UserCircle2,
+	Users,
 	CloudDownload,
 	WandSparkles,
 ] as const;
@@ -58,6 +66,8 @@ type OnboardingContentProps = {
 	timezoneId: string;
 	fileInputId: string;
 	userAvatarUrl: string;
+	followImportStatus: FollowImportStatus;
+	followImportResult: FollowImportResult | null;
 	importProgress: ImportProgressState;
 	importPercent: number;
 	importResult: OnboardingImportResult;
@@ -70,11 +80,15 @@ type OnboardingContentProps = {
 	onDisplayNameChange: (value: string) => void;
 	onTimezoneChange: (value: string) => void;
 	onTimeFormatChange: (value: "12h" | "24h") => void;
-	onSkip: () => void;
+	onSkipSetup: () => void;
+	onImportBlueskyFollows: () => void;
+	onSkipFollowImport: () => void;
+	onContinueAfterFollowImport: () => void;
 	onSaveProfileAndContinue: () => void;
 	onTraktImport: () => void;
 	onTraktImportConfirm: () => void;
 	onCsvUpload: (file: File) => void;
+	onSkipHistoryImport: () => void;
 	onComplete: () => void;
 };
 
@@ -91,6 +105,8 @@ export function OnboardingContent({
 	timezoneId,
 	fileInputId,
 	userAvatarUrl,
+	followImportStatus,
+	followImportResult,
 	importProgress,
 	importPercent,
 	importResult,
@@ -103,11 +119,15 @@ export function OnboardingContent({
 	onDisplayNameChange,
 	onTimezoneChange,
 	onTimeFormatChange,
-	onSkip,
+	onSkipSetup,
+	onImportBlueskyFollows,
+	onSkipFollowImport,
+	onContinueAfterFollowImport,
 	onSaveProfileAndContinue,
 	onTraktImport,
 	onTraktImportConfirm,
 	onCsvUpload,
+	onSkipHistoryImport,
 	onComplete,
 }: OnboardingContentProps) {
 	const currentStepDetail =
@@ -116,6 +136,10 @@ export function OnboardingContent({
 		activeTab === "trakt" && importProgress.phase === "importing";
 	const showImportStatusAboveInput =
 		importProgress.phase !== "idle" && !isTraktImporting;
+	const followMessage = getFollowImportMessage(
+		followImportStatus,
+		followImportResult,
+	);
 
 	return (
 		<div className="flex flex-1 justify-center bg-(--md-sys-color-surface) p-4 md:p-6">
@@ -205,6 +229,7 @@ export function OnboardingContent({
 							</p>
 							<ul className="md-body-medium m-0 grid list-disc gap-2 pl-5 text-(--md-sys-color-on-surface-variant)">
 								<li>Profile and timezone come first.</li>
+								<li>Import your Bluesky following already on OpnShelf.</li>
 								<li>Import from Trakt username or CSV export.</li>
 								<li>You can skip import and start tracking instantly.</li>
 							</ul>
@@ -214,7 +239,7 @@ export function OnboardingContent({
 								</M3Button>
 								<M3Button
 									variant="text"
-									onClick={onSkip}
+									onClick={onSkipSetup}
 									disabled={isCompleting}
 								>
 									{isCompleting ? "Finishing..." : "Skip to shelf"}
@@ -337,6 +362,70 @@ export function OnboardingContent({
 					)}
 
 					{step === 3 && (
+						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
+							<p className="md-body-medium m-0">
+								Import the people you already follow on Bluesky who are on
+								OpnShelf. We will only connect accounts that already exist here.
+							</p>
+
+							<div className="grid gap-3 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
+								<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
+									Bluesky friends
+								</p>
+								<p className="md-title-medium m-0">
+									Bring your existing follows into OpnShelf in one step.
+								</p>
+								<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+									No preview list, no invites. If someone you follow is already
+									on OpnShelf, we will follow them here too.
+								</p>
+								{followMessage ? (
+									<div className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface) p-3">
+										<p className="md-body-medium m-0">{followMessage}</p>
+									</div>
+								) : null}
+								{followImportStatus === "success" ? (
+									<M3Button
+										variant="filled"
+										onClick={onContinueAfterFollowImport}
+									>
+										Continue to watch history
+									</M3Button>
+								) : (
+									<M3Button
+										variant="filled"
+										onClick={onImportBlueskyFollows}
+										disabled={followImportStatus === "running"}
+									>
+										{followImportStatus === "running"
+											? "Importing Bluesky following..."
+											: followImportStatus === "error"
+												? "Try again"
+												: "Import my Bluesky following"}
+									</M3Button>
+								)}
+							</div>
+
+							<div className="flex flex-wrap gap-2">
+								<M3Button
+									variant="text"
+									onClick={() => onStepChange(2)}
+									disabled={followImportStatus === "running"}
+								>
+									Back
+								</M3Button>
+								<M3Button
+									variant="text"
+									onClick={onSkipFollowImport}
+									disabled={followImportStatus === "running"}
+								>
+									Skip for now
+								</M3Button>
+							</div>
+						</div>
+					)}
+
+					{step === 4 && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							{showImportStatusAboveInput && (
 								<div className="grid gap-2 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
@@ -563,7 +652,7 @@ export function OnboardingContent({
 								</M3Button>
 								<M3Button
 									variant="text"
-									onClick={onSkip}
+									onClick={onSkipHistoryImport}
 									disabled={isCompleting || isImportBusy}
 								>
 									{isCompleting ? "Finishing..." : "Skip import"}
@@ -572,13 +661,21 @@ export function OnboardingContent({
 						</div>
 					)}
 
-					{step === 4 && (
+					{step === 5 && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							<h3 className="md-title-large m-0">You are all set.</h3>
 							<p className="md-body-medium m-0">
 								Your profile is ready and your shelf can start collecting watch
 								history.
 							</p>
+							{followImportResult?.createdCount ? (
+								<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+									You&apos;re already connected to{" "}
+									{followImportResult.createdCount} friend
+									{followImportResult.createdCount === 1 ? "" : "s"} from
+									Bluesky.
+								</p>
+							) : null}
 							<div className="grid gap-3 sm:grid-cols-3">
 								<div className="rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
 									<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
@@ -644,4 +741,31 @@ function formatPreviewDate(value: string): string {
 		hour: "numeric",
 		minute: "2-digit",
 	}).format(new Date(value));
+}
+
+function getFollowImportMessage(
+	status: FollowImportStatus,
+	result: FollowImportResult | null,
+) {
+	if (status === "error") {
+		return "We could not import your Bluesky following right now.";
+	}
+
+	if (status !== "success" || !result) {
+		return null;
+	}
+
+	if (result.createdCount > 0) {
+		return `Followed ${result.createdCount} Bluesky friend${result.createdCount === 1 ? "" : "s"} on OpnShelf.`;
+	}
+
+	if (result.alreadyFollowingCount > 0) {
+		return "Your Bluesky follows are already synced.";
+	}
+
+	if (result.matchedCount === 0) {
+		return "None of the people you follow on Bluesky are on OpnShelf yet.";
+	}
+
+	return null;
 }

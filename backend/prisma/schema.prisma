@@ -22,8 +22,23 @@ model User {
   trackedMovies TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
   lists        MovieList[]
+  following    Follow[] @relation("UserFollowing")
+  followers    Follow[] @relation("UserFollowers")
   
   @@index([handle])
+}
+
+model Follow {
+  followerDid  String
+  followingDid String
+  createdAt    DateTime @default(now())
+
+  follower     User @relation("UserFollowing", fields: [followerDid], references: [did], onDelete: Cascade)
+  following    User @relation("UserFollowers", fields: [followingDid], references: [did], onDelete: Cascade)
+
+  @@id([followerDid, followingDid])
+  @@index([followerDid, createdAt])
+  @@index([followingDid, createdAt])
 }
 
 enum MediaType {

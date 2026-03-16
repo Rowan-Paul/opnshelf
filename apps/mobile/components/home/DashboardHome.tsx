@@ -13,6 +13,7 @@ import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CreateListModal } from "@/components/CreateListModal";
+import { FriendsActivitySection } from "@/components/home/FriendsActivitySection";
 import { RecentWatchedSection } from "@/components/home/RecentWatchedSection";
 import { UpNextSection } from "@/components/home/UpNextSection";
 import { UserListsSection } from "@/components/home/UserListsSection";
@@ -346,6 +347,8 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 					recentLists={recentLists}
 					onCreateList={() => setShowCreateModal(true)}
 				/>
+
+				<FriendsActivitySection userHandle={user.handle} />
 			</ScrollView>
 
 			<CreateListModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />

@@ -91,4 +91,14 @@ export class PublicUserProfileDto {
 		nullable: true,
 	})
 	avatar!: string | null;
+
+	@ApiProperty({
+		description: "Public follower count",
+	})
+	followersCount!: number;
+
+	@ApiProperty({
+		description: "Public following count",
+	})
+	followingCount!: number;
 }

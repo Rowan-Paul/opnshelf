@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	getProfileListDetailRoute,
+	getProfilePeopleRoute,
 	getProfileRoute,
 	isOwnerProfile,
 	normalizeProfileHandle,
@@ -26,9 +27,41 @@ describe("profile-routes", () => {
 			to: "/profile/$handle/lists",
 			params: { handle: "rowan" },
 		});
+		expect(getProfileRoute("Rowan", "people")).toEqual({
+			to: "/profile/$handle/people",
+			params: { handle: "rowan" },
+			search: {
+				tab: "following",
+				q: "",
+				discoverPage: 1,
+				followingPage: 1,
+				followersPage: 1,
+			},
+		});
+		expect(getProfileRoute("Rowan", "followers", { page: 4 })).toEqual({
+			to: "/profile/$handle/followers",
+			params: { handle: "rowan" },
+			search: { page: 4 },
+		});
+		expect(getProfileRoute("Rowan", "following", { page: 5 })).toEqual({
+			to: "/profile/$handle/following",
+			params: { handle: "rowan" },
+			search: { page: 5 },
+		});
 		expect(getProfileListDetailRoute("@Rowan", "favorites")).toEqual({
 			to: "/profile/$handle/list/$slug",
 			params: { handle: "rowan", slug: "favorites" },
+		});
+		expect(getProfilePeopleRoute("@Rowan", { tab: "followers" })).toEqual({
+			to: "/profile/$handle/people",
+			params: { handle: "rowan" },
+			search: {
+				tab: "followers",
+				q: "",
+				discoverPage: 1,
+				followingPage: 1,
+				followersPage: 1,
+			},
 		});
 	});
 

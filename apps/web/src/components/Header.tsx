@@ -544,11 +544,5 @@ function getNavTarget(
 			return getSearchRoute();
 		case "my-shelf":
 			return currentUserHandle ? getMyShelfRoute(currentUserHandle) : null;
-		case "up-next":
-			return currentUserHandle ? getUpNextRoute(currentUserHandle) : null;
-		case "lists":
-			return currentUserHandle ? getListsRoute(currentUserHandle) : null;
-		case "calendar":
-			return currentUserHandle ? getCalendarRoute(currentUserHandle) : null;
 	}
 }

@@ -1,4 +1,7 @@
-import { authControllerMeOptions } from "@opnshelf/api";
+import {
+	authControllerMeOptions,
+	usersControllerGetPublicProfileOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -11,10 +14,17 @@ import {
 	Settings,
 	Tv,
 	User,
+	Users,
 } from "lucide-react-native";
 import { usePostHog } from "posthog-react-native";
 import { useCallback } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+	ScrollView,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -32,6 +42,12 @@ export default function ProfileScreen() {
 	const { data: profile } = useQuery({
 		...authControllerMeOptions(),
 		enabled: !!user?.did,
+	});
+	const { data: publicProfile } = useQuery({
+		...usersControllerGetPublicProfileOptions({
+			path: { handle: user?.handle ?? "" },
+		}),
+		enabled: !!user?.handle,
 	});
 
 	const handleAuthAction = useCallback(async () => {
@@ -142,182 +158,312 @@ export default function ProfileScreen() {
 				</View>
 			</View>
 
-			{/* User Profile Card */}
-			<Card style={styles.profileCard}>
-				<CardHeader style={styles.profileHeader}>
-					{profile?.avatar ? (
-						<Image
-							source={{ uri: String(profile.avatar) }}
-							style={styles.avatarImage}
-						/>
-					) : (
-						<View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-							<Text style={[styles.avatarText, { color: colors.onPrimary }]}>
-								{String(profile?.displayName)?.[0] ||
-									profile?.handle?.[0] ||
-									"U"}
+			<ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollContent}
+				showsVerticalScrollIndicator={false}
+			>
+				{/* User Profile Card */}
+				<Card style={styles.profileCard}>
+					<CardHeader style={styles.profileHeader}>
+						{profile?.avatar ? (
+							<Image
+								source={{ uri: String(profile.avatar) }}
+								style={styles.avatarImage}
+							/>
+						) : (
+							<View
+								style={[styles.avatar, { backgroundColor: colors.primary }]}
+							>
+								<Text style={[styles.avatarText, { color: colors.onPrimary }]}>
+									{String(profile?.displayName)?.[0] ||
+										profile?.handle?.[0] ||
+										"U"}
+								</Text>
+							</View>
+						)}
+						<View style={styles.profileInfo}>
+							<Text style={[styles.displayName, { color: colors.onSurface }]}>
+								{String(profile?.displayName || profile?.handle || "User")}
+							</Text>
+							{profile?.displayName && (
+								<Text
+									style={[styles.handle, { color: colors.onSurfaceVariant }]}
+								>
+									@{profile.handle}
+								</Text>
+							)}
+							<View style={styles.countsRow}>
+								<TouchableOpacity
+									style={[
+										styles.countPill,
+										{
+											backgroundColor: colors.surfaceContainer,
+											borderColor: colors.outlineVariant,
+										},
+									]}
+									onPress={() =>
+										router.push({
+											pathname: "/user/[handle]/friends",
+											params: {
+												handle: profile?.handle ?? "",
+												tab: "following",
+											},
+										})
+									}
+								>
+									<Text
+										style={[styles.countValue, { color: colors.onSurface }]}
+									>
+										{publicProfile?.followingCount ?? 0}
+									</Text>
+									<Text
+										style={[
+											styles.countLabel,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										Following
+									</Text>
+								</TouchableOpacity>
+								<TouchableOpacity
+									style={[
+										styles.countPill,
+										{
+											backgroundColor: colors.surfaceContainer,
+											borderColor: colors.outlineVariant,
+										},
+									]}
+									onPress={() =>
+										router.push({
+											pathname: "/user/[handle]/friends",
+											params: {
+												handle: profile?.handle ?? "",
+												tab: "followers",
+											},
+										})
+									}
+								>
+									<Text
+										style={[styles.countValue, { color: colors.onSurface }]}
+									>
+										{publicProfile?.followersCount ?? 0}
+									</Text>
+									<Text
+										style={[
+											styles.countLabel,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										Followers
+									</Text>
+								</TouchableOpacity>
+							</View>
+						</View>
+					</CardHeader>
+				</Card>
+
+				{/* Navigation Links */}
+				<View style={styles.linksContainer}>
+					<TouchableOpacity
+						style={[
+							styles.linkCard,
+							{
+								backgroundColor: colors.surfaceContainer,
+								borderColor: colors.outline,
+							},
+						]}
+						onPress={() => router.push("/(tabs)/profile/shelf")}
+					>
+						<View
+							style={[
+								styles.linkIconContainer,
+								{ backgroundColor: `${colors.primary}20` },
+							]}
+						>
+							<BookOpen size={24} color={colors.primary} />
+						</View>
+						<View style={styles.linkContent}>
+							<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+								My Shelf
+							</Text>
+							<Text
+								style={[
+									styles.linkDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Items added to your shelf
 							</Text>
 						</View>
-					)}
-					<View style={styles.profileInfo}>
-						<Text style={[styles.displayName, { color: colors.onSurface }]}>
-							{String(profile?.displayName || profile?.handle || "User")}
+						<Text
+							style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}
+						>
+							→
 						</Text>
-						{profile?.displayName && (
-							<Text style={[styles.handle, { color: colors.onSurfaceVariant }]}>
-								@{profile.handle}
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.linkCard,
+							{
+								backgroundColor: colors.surfaceContainer,
+								borderColor: colors.outline,
+							},
+						]}
+						onPress={() => router.push("/(tabs)/profile/calendar")}
+					>
+						<View
+							style={[
+								styles.linkIconContainer,
+								{ backgroundColor: `${colors.primary}20` },
+							]}
+						>
+							<Calendar size={24} color={colors.primary} />
+						</View>
+						<View style={styles.linkContent}>
+							<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+								Calendar
 							</Text>
-						)}
-					</View>
-				</CardHeader>
-			</Card>
-
-			{/* Navigation Links */}
-			<View style={styles.linksContainer}>
-				<TouchableOpacity
-					style={[
-						styles.linkCard,
-						{
-							backgroundColor: colors.surfaceContainer,
-							borderColor: colors.outline,
-						},
-					]}
-					onPress={() => router.push("/(tabs)/profile/shelf")}
-				>
-					<View
-						style={[
-							styles.linkIconContainer,
-							{ backgroundColor: `${colors.primary}20` },
-						]}
-					>
-						<BookOpen size={24} color={colors.primary} />
-					</View>
-					<View style={styles.linkContent}>
-						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
-							My Shelf
-						</Text>
+							<Text
+								style={[
+									styles.linkDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Upcoming releases from your queue and watchlist
+							</Text>
+						</View>
 						<Text
+							style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}
+						>
+							→
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.linkCard,
+							{
+								backgroundColor: colors.surfaceContainer,
+								borderColor: colors.outline,
+							},
+						]}
+						onPress={() => router.push("/(tabs)/profile/up-next")}
+					>
+						<View
 							style={[
-								styles.linkDescription,
-								{ color: colors.onSurfaceVariant },
+								styles.linkIconContainer,
+								{ backgroundColor: `${colors.primary}20` },
 							]}
 						>
-							Items added to your shelf
-						</Text>
-					</View>
-					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
-						→
-					</Text>
-				</TouchableOpacity>
-
-				<TouchableOpacity
-					style={[
-						styles.linkCard,
-						{
-							backgroundColor: colors.surfaceContainer,
-							borderColor: colors.outline,
-						},
-					]}
-					onPress={() => router.push("/(tabs)/profile/calendar")}
-				>
-					<View
-						style={[
-							styles.linkIconContainer,
-							{ backgroundColor: `${colors.primary}20` },
-						]}
-					>
-						<Calendar size={24} color={colors.primary} />
-					</View>
-					<View style={styles.linkContent}>
-						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
-							Calendar
-						</Text>
+							<Tv size={24} color={colors.primary} />
+						</View>
+						<View style={styles.linkContent}>
+							<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+								Up Next
+							</Text>
+							<Text
+								style={[
+									styles.linkDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								The next episodes in your queue
+							</Text>
+						</View>
 						<Text
+							style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}
+						>
+							→
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.linkCard,
+							{
+								backgroundColor: colors.surfaceContainer,
+								borderColor: colors.outline,
+							},
+						]}
+						onPress={() => router.push("/(tabs)/profile/lists")}
+					>
+						<View
 							style={[
-								styles.linkDescription,
-								{ color: colors.onSurfaceVariant },
+								styles.linkIconContainer,
+								{ backgroundColor: `${colors.primary}20` },
 							]}
 						>
-							Upcoming releases from your queue and watchlist
-						</Text>
-					</View>
-					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
-						→
-					</Text>
-				</TouchableOpacity>
-
-				<TouchableOpacity
-					style={[
-						styles.linkCard,
-						{
-							backgroundColor: colors.surfaceContainer,
-							borderColor: colors.outline,
-						},
-					]}
-					onPress={() => router.push("/(tabs)/profile/up-next")}
-				>
-					<View
-						style={[
-							styles.linkIconContainer,
-							{ backgroundColor: `${colors.primary}20` },
-						]}
-					>
-						<Tv size={24} color={colors.primary} />
-					</View>
-					<View style={styles.linkContent}>
-						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
-							Up Next
-						</Text>
+							<List size={24} color={colors.primary} />
+						</View>
+						<View style={styles.linkContent}>
+							<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+								My Lists
+							</Text>
+							<Text
+								style={[
+									styles.linkDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Custom lists of items
+							</Text>
+						</View>
 						<Text
+							style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}
+						>
+							→
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.linkCard,
+							{
+								backgroundColor: colors.surfaceContainer,
+								borderColor: colors.outline,
+							},
+						]}
+						onPress={() =>
+							router.push({
+								pathname: "/user/[handle]/friends",
+								params: {
+									handle: profile?.handle ?? "",
+									tab: "following",
+								},
+							})
+						}
+					>
+						<View
 							style={[
-								styles.linkDescription,
-								{ color: colors.onSurfaceVariant },
+								styles.linkIconContainer,
+								{ backgroundColor: `${colors.primary}20` },
 							]}
 						>
-							The next episodes in your queue
-						</Text>
-					</View>
-					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
-						→
-					</Text>
-				</TouchableOpacity>
-
-				<TouchableOpacity
-					style={[
-						styles.linkCard,
-						{
-							backgroundColor: colors.surfaceContainer,
-							borderColor: colors.outline,
-						},
-					]}
-					onPress={() => router.push("/(tabs)/profile/lists")}
-				>
-					<View
-						style={[
-							styles.linkIconContainer,
-							{ backgroundColor: `${colors.primary}20` },
-						]}
-					>
-						<List size={24} color={colors.primary} />
-					</View>
-					<View style={styles.linkContent}>
-						<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
-							My Lists
-						</Text>
+							<Users size={24} color={colors.primary} />
+						</View>
+						<View style={styles.linkContent}>
+							<Text style={[styles.linkTitle, { color: colors.onSurface }]}>
+								Friends
+							</Text>
+							<Text
+								style={[
+									styles.linkDescription,
+									{ color: colors.onSurfaceVariant },
+								]}
+							>
+								Search for friends and manage who you follow
+							</Text>
+						</View>
 						<Text
-							style={[
-								styles.linkDescription,
-								{ color: colors.onSurfaceVariant },
-							]}
+							style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}
 						>
-							Custom lists of items
+							→
 						</Text>
-					</View>
-					<Text style={[styles.linkArrow, { color: colors.onSurfaceVariant }]}>
-						→
-					</Text>
-				</TouchableOpacity>
-			</View>
+					</TouchableOpacity>
+				</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -346,6 +492,12 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.sm,
+	},
+	scrollView: {
+		flex: 1,
+	},
+	scrollContent: {
+		paddingBottom: spacing.xxl,
 	},
 	iconButton: {
 		padding: spacing.sm,
@@ -433,6 +585,25 @@ const styles = StyleSheet.create({
 	handle: {
 		fontSize: 14,
 		marginTop: spacing.xs,
+	},
+	countsRow: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: spacing.sm,
+		marginTop: spacing.md,
+	},
+	countPill: {
+		borderWidth: 1,
+		borderRadius: borderRadius.full,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+	},
+	countValue: {
+		fontSize: 16,
+		fontWeight: "700",
+	},
+	countLabel: {
+		fontSize: 12,
 	},
 	linksContainer: {
 		paddingHorizontal: spacing.lg,

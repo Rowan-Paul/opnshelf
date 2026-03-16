@@ -2,6 +2,7 @@ import {
 	CloudDownload,
 	Sparkles,
 	UserCircle2,
+	Users,
 	WandSparkles,
 } from "lucide-react-native";
 
@@ -15,6 +16,11 @@ export const ONBOARDING_STEPS = [
 		title: "Identity",
 		description: "Tune your profile card and local time.",
 		Icon: UserCircle2,
+	},
+	{
+		title: "Friends",
+		description: "Pull in your Bluesky following on OpnShelf.",
+		Icon: Users,
 	},
 	{
 		title: "Import",

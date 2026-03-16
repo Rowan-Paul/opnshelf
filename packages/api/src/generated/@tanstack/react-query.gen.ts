@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, listsControllerAddItemToList, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetListsForMovie, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerFetchMyTraktPublicHistory, usersControllerGetMySettings, usersControllerGetPublicProfile, usersControllerImportMyHistory, usersControllerUpdateMyProfile, usersControllerUpdateMySettings } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetListsForMovieData, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, listsControllerAddItemToList, listsControllerAddToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetListsForMovie, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveFromList, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, socialControllerFollow, socialControllerGetFeed, socialControllerGetFollowers, socialControllerGetFollowing, socialControllerGetRelationship, socialControllerSearchPeople, socialControllerUnfollow, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerFetchMyTraktPublicHistory, usersControllerGetMySettings, usersControllerGetPublicProfile, usersControllerImportMyBlueskyFollows, usersControllerImportMyHistory, usersControllerUpdateMyProfile, usersControllerUpdateMySettings } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerAddToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetListsForMovieData, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveFromListData, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, SocialControllerFollowData, SocialControllerFollowResponse, SocialControllerGetFeedData, SocialControllerGetFeedResponse, SocialControllerGetFollowersData, SocialControllerGetFollowersResponse, SocialControllerGetFollowingData, SocialControllerGetFollowingResponse, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponse, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponse, SocialControllerUnfollowData, SocialControllerUnfollowResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -1154,6 +1154,23 @@ export const usersControllerFetchMyTraktPublicHistoryMutation = (options?: Parti
 };
 
 /**
+ * Import Bluesky follows that already have OpnShelf accounts
+ */
+export const usersControllerImportMyBlueskyFollowsMutation = (options?: Partial<Options<UsersControllerImportMyBlueskyFollowsData>>): UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerImportMyBlueskyFollows({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
  * Import normalized watch history items
  */
 export const usersControllerImportMyHistoryMutation = (options?: Partial<Options<UsersControllerImportMyHistoryData>>): UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> => {
@@ -1321,4 +1338,236 @@ export const searchControllerDiscoverAllInfiniteOptions = (options?: Options<Sea
         return data;
     },
     queryKey: searchControllerDiscoverAllInfiniteQueryKey(options)
+});
+
+export const socialControllerSearchPeopleQueryKey = (options: Options<SocialControllerSearchPeopleData>) => createQueryKey('socialControllerSearchPeople', options);
+
+/**
+ * Search OpnShelf people by handle or display name
+ */
+export const socialControllerSearchPeopleOptions = (options: Options<SocialControllerSearchPeopleData>) => queryOptions<SocialControllerSearchPeopleResponse, DefaultError, SocialControllerSearchPeopleResponse, ReturnType<typeof socialControllerSearchPeopleQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerSearchPeople({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerSearchPeopleQueryKey(options)
+});
+
+export const socialControllerSearchPeopleInfiniteQueryKey = (options: Options<SocialControllerSearchPeopleData>): QueryKey<Options<SocialControllerSearchPeopleData>> => createQueryKey('socialControllerSearchPeople', options, true);
+
+/**
+ * Search OpnShelf people by handle or display name
+ */
+export const socialControllerSearchPeopleInfiniteOptions = (options: Options<SocialControllerSearchPeopleData>) => infiniteQueryOptions<SocialControllerSearchPeopleResponse, DefaultError, InfiniteData<SocialControllerSearchPeopleResponse>, QueryKey<Options<SocialControllerSearchPeopleData>>, number | Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerSearchPeople({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerSearchPeopleInfiniteQueryKey(options)
+});
+
+/**
+ * Unfollow an OpnShelf user
+ */
+export const socialControllerUnfollowMutation = (options?: Partial<Options<SocialControllerUnfollowData>>): UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> => {
+    const mutationOptions: UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await socialControllerUnfollow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Follow an OpnShelf user
+ */
+export const socialControllerFollowMutation = (options?: Partial<Options<SocialControllerFollowData>>): UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> => {
+    const mutationOptions: UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await socialControllerFollow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const socialControllerGetRelationshipQueryKey = (options: Options<SocialControllerGetRelationshipData>) => createQueryKey('socialControllerGetRelationship', options);
+
+/**
+ * Get the viewer's relationship to a user
+ */
+export const socialControllerGetRelationshipOptions = (options: Options<SocialControllerGetRelationshipData>) => queryOptions<SocialControllerGetRelationshipResponse, DefaultError, SocialControllerGetRelationshipResponse, ReturnType<typeof socialControllerGetRelationshipQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetRelationship({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetRelationshipQueryKey(options)
+});
+
+export const socialControllerGetFollowersQueryKey = (options: Options<SocialControllerGetFollowersData>) => createQueryKey('socialControllerGetFollowers', options);
+
+/**
+ * Get followers for a public profile
+ */
+export const socialControllerGetFollowersOptions = (options: Options<SocialControllerGetFollowersData>) => queryOptions<SocialControllerGetFollowersResponse, DefaultError, SocialControllerGetFollowersResponse, ReturnType<typeof socialControllerGetFollowersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFollowers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowersQueryKey(options)
+});
+
+export const socialControllerGetFollowersInfiniteQueryKey = (options: Options<SocialControllerGetFollowersData>): QueryKey<Options<SocialControllerGetFollowersData>> => createQueryKey('socialControllerGetFollowers', options, true);
+
+/**
+ * Get followers for a public profile
+ */
+export const socialControllerGetFollowersInfiniteOptions = (options: Options<SocialControllerGetFollowersData>) => infiniteQueryOptions<SocialControllerGetFollowersResponse, DefaultError, InfiniteData<SocialControllerGetFollowersResponse>, QueryKey<Options<SocialControllerGetFollowersData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFollowersData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFollowers({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowersInfiniteQueryKey(options)
+});
+
+export const socialControllerGetFollowingQueryKey = (options: Options<SocialControllerGetFollowingData>) => createQueryKey('socialControllerGetFollowing', options);
+
+/**
+ * Get following for a public profile
+ */
+export const socialControllerGetFollowingOptions = (options: Options<SocialControllerGetFollowingData>) => queryOptions<SocialControllerGetFollowingResponse, DefaultError, SocialControllerGetFollowingResponse, ReturnType<typeof socialControllerGetFollowingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFollowing({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowingQueryKey(options)
+});
+
+export const socialControllerGetFollowingInfiniteQueryKey = (options: Options<SocialControllerGetFollowingData>): QueryKey<Options<SocialControllerGetFollowingData>> => createQueryKey('socialControllerGetFollowing', options, true);
+
+/**
+ * Get following for a public profile
+ */
+export const socialControllerGetFollowingInfiniteOptions = (options: Options<SocialControllerGetFollowingData>) => infiniteQueryOptions<SocialControllerGetFollowingResponse, DefaultError, InfiniteData<SocialControllerGetFollowingResponse>, QueryKey<Options<SocialControllerGetFollowingData>>, number | Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFollowingData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFollowing({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFollowingInfiniteQueryKey(options)
+});
+
+export const socialControllerGetFeedQueryKey = (options?: Options<SocialControllerGetFeedData>) => createQueryKey('socialControllerGetFeed', options);
+
+/**
+ * Get recent watched activity from followed users
+ */
+export const socialControllerGetFeedOptions = (options?: Options<SocialControllerGetFeedData>) => queryOptions<SocialControllerGetFeedResponse, DefaultError, SocialControllerGetFeedResponse, ReturnType<typeof socialControllerGetFeedQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await socialControllerGetFeed({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFeedQueryKey(options)
+});
+
+export const socialControllerGetFeedInfiniteQueryKey = (options?: Options<SocialControllerGetFeedData>): QueryKey<Options<SocialControllerGetFeedData>> => createQueryKey('socialControllerGetFeed', options, true);
+
+/**
+ * Get recent watched activity from followed users
+ */
+export const socialControllerGetFeedInfiniteOptions = (options?: Options<SocialControllerGetFeedData>) => infiniteQueryOptions<SocialControllerGetFeedResponse, DefaultError, InfiniteData<SocialControllerGetFeedResponse>, QueryKey<Options<SocialControllerGetFeedData>>, number | Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<SocialControllerGetFeedData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await socialControllerGetFeed({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: socialControllerGetFeedInfiniteQueryKey(options)
 });

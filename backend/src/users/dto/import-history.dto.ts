@@ -202,6 +202,28 @@ export class ImportHistoryResponseDto {
 	errors: ImportErrorDto[];
 }
 
+export class ImportBlueskyFollowsResponseDto {
+	@ApiProperty({
+		description: "Total Bluesky follows scanned from AppView",
+	})
+	scannedCount: number;
+
+	@ApiProperty({
+		description: "How many Bluesky follows already have OpnShelf accounts",
+	})
+	matchedCount: number;
+
+	@ApiProperty({
+		description: "How many new OpnShelf follows were created",
+	})
+	createdCount: number;
+
+	@ApiProperty({
+		description: "How many matched users were already followed",
+	})
+	alreadyFollowingCount: number;
+}
+
 export class CompleteOnboardingResponseDto {
 	@ApiProperty({ description: "Timestamp when onboarding was completed" })
 	onboardingCompletedAt: string;

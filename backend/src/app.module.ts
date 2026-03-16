@@ -6,6 +6,7 @@ import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SearchModule } from "./search/search.module";
+import { SocialModule } from "./social/social.module";
 import { ShelfModule } from "./shelf/shelf.module";
 import { ShowsModule } from "./shows/shows.module";
 import { UsersModule } from "./users/users.module";
@@ -22,6 +23,7 @@ import { UsersModule } from "./users/users.module";
 		ShowsModule,
 		ShelfModule,
 		SearchModule,
+		SocialModule,
 	],
 })
 export class AppModule {}

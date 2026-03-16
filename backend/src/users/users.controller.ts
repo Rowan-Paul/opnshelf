@@ -17,6 +17,7 @@ import {
 	CompleteOnboardingResponseDto,
 	FetchTraktPublicHistoryDto,
 	FetchTraktPublicHistoryResponseDto,
+	ImportBlueskyFollowsResponseDto,
 	ImportHistoryDto,
 	ImportHistoryResponseDto,
 } from "./dto/import-history.dto";
@@ -164,6 +165,24 @@ export class UsersController {
 			dto.username,
 			dto.maxItems,
 		);
+	}
+
+	@Post("me/import/bluesky-follows")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Import Bluesky follows that already have OpnShelf accounts",
+	})
+	@ApiResponse({ status: 200, type: ImportBlueskyFollowsResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async importMyBlueskyFollows(
+		@Req() req: AuthenticatedRequest,
+	): Promise<ImportBlueskyFollowsResponseDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		return this.usersService.importBlueskyFollows(did);
 	}
 
 	@Post("me/import/history")

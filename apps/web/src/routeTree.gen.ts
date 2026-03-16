@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PeopleRouteImport } from './routes/people'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListsRouteImport } from './routes/lists'
@@ -23,7 +24,10 @@ import { Route as ShowsShowIdTitleRouteImport } from './routes/shows.$showId.$ti
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle.up-next'
 import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle.shelf'
 import { Route as ProfileHandleSettingsRouteImport } from './routes/profile.$handle.settings'
+import { Route as ProfileHandlePeopleRouteImport } from './routes/profile.$handle.people'
 import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle.lists'
+import { Route as ProfileHandleFollowingRouteImport } from './routes/profile.$handle.following'
+import { Route as ProfileHandleFollowersRouteImport } from './routes/profile.$handle.followers'
 import { Route as ProfileHandleCalendarRouteImport } from './routes/profile.$handle.calendar'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
 import { Route as ProfileHandleListSlugRouteImport } from './routes/profile.$handle.list.$slug'
@@ -43,6 +47,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleRoute = PeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -100,9 +109,24 @@ const ProfileHandleSettingsRoute = ProfileHandleSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
+const ProfileHandlePeopleRoute = ProfileHandlePeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
 const ProfileHandleListsRoute = ProfileHandleListsRouteImport.update({
   id: '/lists',
   path: '/lists',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleFollowingRoute = ProfileHandleFollowingRouteImport.update({
+  id: '/following',
+  path: '/following',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleFollowersRoute = ProfileHandleFollowersRouteImport.update({
+  id: '/followers',
+  path: '/followers',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
 const ProfileHandleCalendarRoute = ProfileHandleCalendarRouteImport.update({
@@ -138,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/people': typeof PeopleRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
@@ -146,7 +171,10 @@ export interface FileRoutesByFullPath {
   '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
+  '/profile/$handle/following': typeof ProfileHandleFollowingRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/people': typeof ProfileHandlePeopleRoute
   '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
@@ -160,6 +188,7 @@ export interface FileRoutesByTo {
   '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/people': typeof PeopleRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -167,7 +196,10 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
+  '/profile/$handle/following': typeof ProfileHandleFollowingRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/people': typeof ProfileHandlePeopleRoute
   '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
@@ -182,6 +214,7 @@ export interface FileRoutesById {
   '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/people': typeof PeopleRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/search': typeof SearchRoute
@@ -190,7 +223,10 @@ export interface FileRoutesById {
   '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
+  '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
+  '/profile/$handle/following': typeof ProfileHandleFollowingRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRoute
+  '/profile/$handle/people': typeof ProfileHandlePeopleRoute
   '/profile/$handle/settings': typeof ProfileHandleSettingsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
@@ -206,6 +242,7 @@ export interface FileRouteTypes {
     | '/lists'
     | '/login'
     | '/onboarding'
+    | '/people'
     | '/privacy'
     | '/profile'
     | '/search'
@@ -214,7 +251,10 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/movies/$movieId/$title'
     | '/profile/$handle/calendar'
+    | '/profile/$handle/followers'
+    | '/profile/$handle/following'
     | '/profile/$handle/lists'
+    | '/profile/$handle/people'
     | '/profile/$handle/settings'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
@@ -228,6 +268,7 @@ export interface FileRouteTypes {
     | '/lists'
     | '/login'
     | '/onboarding'
+    | '/people'
     | '/privacy'
     | '/search'
     | '/auth/complete'
@@ -235,7 +276,10 @@ export interface FileRouteTypes {
     | '/profile'
     | '/movies/$movieId/$title'
     | '/profile/$handle/calendar'
+    | '/profile/$handle/followers'
+    | '/profile/$handle/following'
     | '/profile/$handle/lists'
+    | '/profile/$handle/people'
     | '/profile/$handle/settings'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
@@ -249,6 +293,7 @@ export interface FileRouteTypes {
     | '/lists'
     | '/login'
     | '/onboarding'
+    | '/people'
     | '/privacy'
     | '/profile'
     | '/search'
@@ -257,7 +302,10 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/movies/$movieId/$title'
     | '/profile/$handle/calendar'
+    | '/profile/$handle/followers'
+    | '/profile/$handle/following'
     | '/profile/$handle/lists'
+    | '/profile/$handle/people'
     | '/profile/$handle/settings'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
@@ -272,6 +320,7 @@ export interface RootRouteChildren {
   ListsRoute: typeof ListsRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PeopleRoute: typeof PeopleRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   SearchRoute: typeof SearchRoute
@@ -301,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people': {
+      id: '/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof PeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -380,11 +436,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleSettingsRouteImport
       parentRoute: typeof ProfileHandleRoute
     }
+    '/profile/$handle/people': {
+      id: '/profile/$handle/people'
+      path: '/people'
+      fullPath: '/profile/$handle/people'
+      preLoaderRoute: typeof ProfileHandlePeopleRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
     '/profile/$handle/lists': {
       id: '/profile/$handle/lists'
       path: '/lists'
       fullPath: '/profile/$handle/lists'
       preLoaderRoute: typeof ProfileHandleListsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/following': {
+      id: '/profile/$handle/following'
+      path: '/following'
+      fullPath: '/profile/$handle/following'
+      preLoaderRoute: typeof ProfileHandleFollowingRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/followers': {
+      id: '/profile/$handle/followers'
+      path: '/followers'
+      fullPath: '/profile/$handle/followers'
+      preLoaderRoute: typeof ProfileHandleFollowersRouteImport
       parentRoute: typeof ProfileHandleRoute
     }
     '/profile/$handle/calendar': {
@@ -427,7 +504,10 @@ declare module '@tanstack/react-router' {
 
 interface ProfileHandleRouteChildren {
   ProfileHandleCalendarRoute: typeof ProfileHandleCalendarRoute
+  ProfileHandleFollowersRoute: typeof ProfileHandleFollowersRoute
+  ProfileHandleFollowingRoute: typeof ProfileHandleFollowingRoute
   ProfileHandleListsRoute: typeof ProfileHandleListsRoute
+  ProfileHandlePeopleRoute: typeof ProfileHandlePeopleRoute
   ProfileHandleSettingsRoute: typeof ProfileHandleSettingsRoute
   ProfileHandleShelfRoute: typeof ProfileHandleShelfRoute
   ProfileHandleUpNextRoute: typeof ProfileHandleUpNextRoute
@@ -436,7 +516,10 @@ interface ProfileHandleRouteChildren {
 
 const ProfileHandleRouteChildren: ProfileHandleRouteChildren = {
   ProfileHandleCalendarRoute: ProfileHandleCalendarRoute,
+  ProfileHandleFollowersRoute: ProfileHandleFollowersRoute,
+  ProfileHandleFollowingRoute: ProfileHandleFollowingRoute,
   ProfileHandleListsRoute: ProfileHandleListsRoute,
+  ProfileHandlePeopleRoute: ProfileHandlePeopleRoute,
   ProfileHandleSettingsRoute: ProfileHandleSettingsRoute,
   ProfileHandleShelfRoute: ProfileHandleShelfRoute,
   ProfileHandleUpNextRoute: ProfileHandleUpNextRoute,
@@ -492,6 +575,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListsRoute: ListsRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PeopleRoute: PeopleRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
   SearchRoute: SearchRoute,

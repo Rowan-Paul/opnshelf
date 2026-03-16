@@ -18,6 +18,7 @@ describe("UsersController", () => {
 	const usersService = {
 		completeOnboarding: jest.fn(),
 		fetchTraktPublicHistory: jest.fn(),
+		importBlueskyFollows: jest.fn(),
 		importNormalizedItems: jest.fn(),
 		getPublicProfileByHandle: jest.fn(),
 		getUserSettings: jest.fn(),
@@ -97,6 +98,8 @@ describe("UsersController", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			followersCount: 12,
+			followingCount: 8,
 		});
 
 		await expect(
@@ -106,6 +109,8 @@ describe("UsersController", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			followersCount: 12,
+			followingCount: 8,
 		});
 		expect(usersService.getPublicProfileByHandle).toHaveBeenCalledWith(
 			"@alice.bsky.social",
@@ -131,6 +136,29 @@ describe("UsersController", () => {
 		expect(usersService.updateUserProfile).toHaveBeenCalledWith("did:plc:abc", {
 			displayName: "New Name",
 		});
+	});
+
+	it("imports Bluesky follows for authenticated requests", async () => {
+		usersService.importBlueskyFollows.mockResolvedValue({
+			scannedCount: 5,
+			matchedCount: 2,
+			createdCount: 1,
+			alreadyFollowingCount: 1,
+		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(controller.importMyBlueskyFollows(req)).resolves.toEqual({
+			scannedCount: 5,
+			matchedCount: 2,
+			createdCount: 1,
+			alreadyFollowingCount: 1,
+		});
+		expect(usersService.importBlueskyFollows).toHaveBeenCalledWith(
+			"did:plc:abc",
+		);
 	});
 
 	it("imports normalized items for authenticated requests", async () => {

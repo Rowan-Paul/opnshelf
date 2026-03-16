@@ -1,3 +1,5 @@
+import { socialControllerGetRelationshipOptions } from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -6,9 +8,23 @@ import {
 	useLocation,
 	useMatchRoute,
 } from "@tanstack/react-router";
-import { BookOpen, Calendar, List, Settings, Tv } from "lucide-react";
+import {
+	BookOpen,
+	Calendar,
+	List,
+	Settings,
+	Star,
+	Tv,
+	Users,
+} from "lucide-react";
 import type { ComponentType } from "react";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
+import {
+	canClickRelationshipCounts,
+	shouldShowFollowButton,
+} from "@/components/profile/profile-header-state";
+import { SocialFollowButton } from "@/components/social/SocialFollowButton";
+import { getSocialDisplayName } from "@/components/social/social-display";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
 import {
@@ -20,6 +36,7 @@ import {
 } from "@/components/ui/m3-card";
 import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import {
+	getProfilePeopleRoute,
 	getProfileRoute,
 	normalizeProfileHandle,
 	type ProfileSection,
@@ -44,8 +61,17 @@ export const Route = createFileRoute("/profile/$handle")({
 
 function ProfileLayout() {
 	const { handle } = Route.useParams();
-	const { profile, isOwner, isLoading } = useProfileRouteState(handle);
+	const { currentUser, profile, isOwner, isLoading } =
+		useProfileRouteState(handle);
 	const { seedColor } = useTheme();
+	const relationshipQuery = useQuery({
+		...socialControllerGetRelationshipOptions({
+			path: { targetDid: profile?.did ?? "" },
+		}),
+		enabled: Boolean(currentUser?.did && profile?.did && !isOwner),
+		retry: false,
+	});
+	const isSignedIn = Boolean(currentUser?.did);
 
 	if (isLoading) {
 		return <AuthLoadingState className="max-w-7xl py-4" />;
@@ -81,7 +107,13 @@ function ProfileLayout() {
 		);
 	}
 
-	const displayName = String(profile.displayName || profile.handle);
+	const displayName = getSocialDisplayName(profile.displayName, profile.handle);
+	const relationship = relationshipQuery.data;
+	const countsAreClickable = canClickRelationshipCounts(isSignedIn);
+	const followButtonVisible = shouldShowFollowButton({
+		isSignedIn,
+		isOwner,
+	});
 
 	return (
 		<div
@@ -122,7 +154,54 @@ function ProfileLayout() {
 						>
 							@{profile.handle}
 						</p>
+						<div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+							<ProfileCountLink
+								isInteractive={countsAreClickable}
+								label="Following"
+								value={profile.followingCount}
+								route={
+									isOwner
+										? getProfilePeopleRoute(profile.handle, {
+												tab: "following",
+											})
+										: getProfileRoute(profile.handle, "following", {
+												page: 1,
+											})
+								}
+							/>
+							<span
+								style={{ color: "var(--md-sys-color-outline)" }}
+								aria-hidden="true"
+							>
+								•
+							</span>
+							<ProfileCountLink
+								isInteractive={countsAreClickable}
+								label="Followers"
+								value={profile.followersCount}
+								route={
+									isOwner
+										? getProfilePeopleRoute(profile.handle, {
+												tab: "followers",
+											})
+										: getProfileRoute(profile.handle, "followers", {
+												page: 1,
+											})
+								}
+							/>
+						</div>
 					</div>
+					{followButtonVisible ? (
+						<SocialFollowButton
+							targetDid={profile.did}
+							targetHandle={profile.handle}
+							viewerHandle={currentUser?.handle}
+							isFollowing={relationship?.isFollowing ?? false}
+							isFollowedBy={relationship?.isFollowedBy ?? false}
+							disabled={relationshipQuery.isLoading}
+							className="rounded-full px-6"
+						/>
+					) : null}
 				</div>
 
 				<div
@@ -149,6 +228,31 @@ function ProfileLayout() {
 						label="Lists"
 						section="lists"
 					/>
+					{isSignedIn ? (
+						isOwner ? (
+							<ProfileNavLink
+								handle={profile.handle}
+								icon={Users}
+								label="Friends"
+								section="people"
+							/>
+						) : (
+							<>
+								<ProfileNavLink
+									handle={profile.handle}
+									icon={Users}
+									label="Followers"
+									section="followers"
+								/>
+								<ProfileNavLink
+									handle={profile.handle}
+									icon={Star}
+									label="Following"
+									section="following"
+								/>
+							</>
+						)
+					) : null}
 					{isOwner ? (
 						<>
 							<ProfileNavLink
@@ -170,6 +274,42 @@ function ProfileLayout() {
 				<Outlet />
 			</div>
 		</div>
+	);
+}
+
+function ProfileCountLink({
+	isInteractive,
+	label,
+	value,
+	route,
+}: {
+	isInteractive: boolean;
+	label: string;
+	value: number;
+	route:
+		| ReturnType<typeof getProfileRoute>
+		| ReturnType<typeof getProfilePeopleRoute>;
+}) {
+	const content = (
+		<span className="inline-flex items-center gap-2">
+			<span className="font-semibold">{value}</span>
+			<span style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+				{label}
+			</span>
+		</span>
+	);
+
+	if (!isInteractive) {
+		return content;
+	}
+
+	return (
+		<Link
+			{...route}
+			className="rounded-full px-2 py-1 hover:bg-(--md-sys-color-surface-container)"
+		>
+			{content}
+		</Link>
 	);
 }
 

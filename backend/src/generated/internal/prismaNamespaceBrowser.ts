@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Follow: 'Follow',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   Movie: 'Movie',
@@ -91,6 +92,15 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const FollowScalarFieldEnum = {
+  followerDid: 'followerDid',
+  followingDid: 'followingDid',
+  createdAt: 'createdAt'
+} as const
+
+export type FollowScalarFieldEnum = (typeof FollowScalarFieldEnum)[keyof typeof FollowScalarFieldEnum]
 
 
 export const AuthSessionScalarFieldEnum = {

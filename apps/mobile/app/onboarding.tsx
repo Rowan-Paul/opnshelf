@@ -5,6 +5,7 @@ import {
 	usersControllerCompleteOnboardingMutation,
 	usersControllerFetchMyTraktPublicHistoryMutation,
 	usersControllerGetMySettingsOptions,
+	usersControllerImportMyBlueskyFollowsMutation,
 	usersControllerImportMyHistoryMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
@@ -18,6 +19,8 @@ import { ActivityIndicator, View } from "react-native";
 import { ONBOARDING_STEPS } from "@/components/onboarding/constants";
 import { OnboardingContent } from "@/components/onboarding/OnboardingContent";
 import type {
+	FollowImportResult,
+	FollowImportStatus,
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
@@ -67,6 +70,10 @@ export default function OnboardingScreen() {
 		failed: 0,
 		errors: [],
 	});
+	const [followImportStatus, setFollowImportStatus] =
+		useState<FollowImportStatus>("idle");
+	const [followImportResult, setFollowImportResult] =
+		useState<FollowImportResult | null>(null);
 
 	const [importProgress, setImportProgress] = useState<ImportProgressState>(
 		createIdleImportProgress(),
@@ -89,6 +96,11 @@ export default function OnboardingScreen() {
 	const fetchTraktMutation = useMutation({
 		mutationKey: ["users", "trakt", "history", "fetch"],
 		...usersControllerFetchMyTraktPublicHistoryMutation(),
+	});
+
+	const importBlueskyFollowsMutation = useMutation({
+		mutationKey: ["users", "bluesky", "follows", "import"],
+		...usersControllerImportMyBlueskyFollowsMutation(),
 	});
 
 	const updateProfileMutation = useMutation({
@@ -197,6 +209,26 @@ export default function OnboardingScreen() {
 			setStep(3);
 		} catch {
 			// surfaced by mutation handlers
+		}
+	};
+
+	const handleBlueskyFollowImport = async () => {
+		setFollowImportStatus("running");
+		try {
+			const result = await importBlueskyFollowsMutation.mutateAsync({});
+			setFollowImportResult({
+				matchedCount: result.matchedCount,
+				createdCount: result.createdCount,
+				alreadyFollowingCount: result.alreadyFollowingCount,
+			});
+			setFollowImportStatus("success");
+		} catch (error) {
+			setFollowImportStatus("error");
+			const message =
+				error instanceof Error
+					? error.message
+					: "Could not import Bluesky following";
+			showToast(message, "error");
 		}
 	};
 
@@ -328,7 +360,7 @@ export default function OnboardingScreen() {
 				phase: "done",
 				message: "Import complete.",
 			}));
-			setStep(4);
+			setStep(5);
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -422,7 +454,7 @@ export default function OnboardingScreen() {
 				message: "Import complete.",
 			}));
 
-			setStep(4);
+			setStep(5);
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "Unable to parse CSV file";
@@ -465,6 +497,8 @@ export default function OnboardingScreen() {
 			timezone={timezone}
 			timeFormat={timeFormat}
 			csvFileName={csvFileName}
+			followImportStatus={followImportStatus}
+			followImportResult={followImportResult}
 			importProgress={importProgress}
 			importPercent={importPercent}
 			importResult={importResult}
@@ -497,8 +531,17 @@ export default function OnboardingScreen() {
 			onDisplayNameChange={setDisplayName}
 			onTimezoneChange={setTimezone}
 			onTimeFormatChange={setTimeFormat}
-			onSkip={() => {
+			onSkipSetup={() => {
 				void completeOnboardingAndRedirect();
+			}}
+			onImportBlueskyFollows={() => {
+				void handleBlueskyFollowImport();
+			}}
+			onSkipFollowImport={() => {
+				setStep(4);
+			}}
+			onContinueAfterFollowImport={() => {
+				setStep(4);
 			}}
 			onSaveProfileAndContinue={() => {
 				void handleSaveProfileAndContinue();
@@ -511,6 +554,9 @@ export default function OnboardingScreen() {
 			}}
 			onCsvImport={() => {
 				void handleCsvImport();
+			}}
+			onSkipHistoryImport={() => {
+				void completeOnboardingAndRedirect();
 			}}
 			onComplete={() => {
 				void completeOnboardingAndRedirect();

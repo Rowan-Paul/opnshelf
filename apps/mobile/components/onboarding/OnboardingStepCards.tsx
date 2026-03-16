@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { M3TextField } from "@/components/ui/m3";
 import { useTheme } from "@/contexts/theme";
 import type {
+	FollowImportResult,
+	FollowImportStatus,
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
@@ -32,6 +34,7 @@ export function BriefingStepCard({
 			<CardContent>
 				<View style={styles.bulletList}>
 					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Profile and timezone come first.</Text>
+					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Import Bluesky friends already on OpnShelf.</Text>
 					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Import from Trakt username or CSV export.</Text>
 					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Skip import if you want to start tracking immediately.</Text>
 				</View>
@@ -166,6 +169,115 @@ export function IdentityStepCard({
 						</Button>
 						<Button onPress={onSave} disabled={isSavingProfile}>
 							{isSavingProfile ? "Saving..." : "Save and continue"}
+						</Button>
+					</View>
+				</View>
+			</CardContent>
+		</Card>
+	);
+}
+
+type FriendsStepCardProps = {
+	followImportStatus: FollowImportStatus;
+	followImportResult: FollowImportResult | null;
+	onImport: () => void;
+	onContinue: () => void;
+	onBack: () => void;
+	onSkip: () => void;
+};
+
+export function FriendsStepCard({
+	followImportStatus,
+	followImportResult,
+	onImport,
+	onContinue,
+	onBack,
+	onSkip,
+}: FriendsStepCardProps) {
+	const { colors } = useTheme();
+	const followMessage = getFollowImportMessage(
+		followImportStatus,
+		followImportResult,
+	);
+
+	return (
+		<Card>
+			<CardHeader>
+				<Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Friends</Text>
+				<Text style={[styles.sectionBody, { color: colors.onSurfaceVariant }]}>
+					Import the people you already follow on Bluesky who are on OpnShelf.
+				</Text>
+			</CardHeader>
+			<CardContent>
+				<View style={styles.formStack}>
+					<View
+						style={[
+							styles.previewCard,
+							{
+								backgroundColor: colors.surfaceContainerHigh,
+								borderColor: colors.outlineVariant,
+							},
+						]}
+					>
+						<Text style={[styles.previewKicker, { color: colors.primary }]}>
+							Bluesky friends
+						</Text>
+						<Text style={[styles.previewTitle, { color: colors.onSurface }]}>
+							Bring your existing follows into OpnShelf in one step.
+						</Text>
+						<Text
+							style={[styles.previewSubtitle, { color: colors.onSurfaceVariant }]}
+						>
+							No preview list, no invites. If someone you follow is already on
+							OpnShelf, we will follow them here too.
+						</Text>
+						{followMessage ? (
+							<View
+								style={[
+									styles.importStatusBox,
+									{
+										backgroundColor: colors.surface,
+										borderColor: colors.outlineVariant,
+									},
+								]}
+							>
+								<Text
+									style={[styles.importStatusText, { color: colors.onSurface }]}
+								>
+									{followMessage}
+								</Text>
+							</View>
+						) : null}
+						{followImportStatus === "success" ? (
+							<Button onPress={onContinue}>Continue to watch history</Button>
+						) : (
+							<Button
+								onPress={onImport}
+								disabled={followImportStatus === "running"}
+							>
+								{followImportStatus === "running"
+									? "Importing Bluesky following..."
+									: followImportStatus === "error"
+										? "Try again"
+										: "Import my Bluesky following"}
+							</Button>
+						)}
+					</View>
+
+					<View style={styles.actionsRow}>
+						<Button
+							variant="text"
+							onPress={onBack}
+							disabled={followImportStatus === "running"}
+						>
+							Back
+						</Button>
+						<Button
+							variant="text"
+							onPress={onSkip}
+							disabled={followImportStatus === "running"}
+						>
+							Skip for now
 						</Button>
 					</View>
 				</View>
@@ -575,11 +687,40 @@ function formatPreviewDate(value: string): string {
 	}).format(new Date(value));
 }
 
+function getFollowImportMessage(
+	status: FollowImportStatus,
+	result: FollowImportResult | null,
+) {
+	if (status === "error") {
+		return "We could not import your Bluesky following right now.";
+	}
+
+	if (status !== "success" || !result) {
+		return null;
+	}
+
+	if (result.createdCount > 0) {
+		return `Followed ${result.createdCount} Bluesky friend${result.createdCount === 1 ? "" : "s"} on OpnShelf.`;
+	}
+
+	if (result.alreadyFollowingCount > 0) {
+		return "Your Bluesky follows are already synced.";
+	}
+
+	if (result.matchedCount === 0) {
+		return "None of the people you follow on Bluesky are on OpnShelf yet.";
+	}
+
+	return null;
+}
+
 export function LaunchStepCard({
+	followImportResult,
 	importResult,
 	isCompleting,
 	onComplete,
 }: {
+	followImportResult: FollowImportResult | null;
 	importResult: OnboardingImportResult;
 	isCompleting: boolean;
 	onComplete: () => void;
@@ -593,6 +734,13 @@ export function LaunchStepCard({
 				<Text style={[styles.sectionBody, { color: colors.onSurfaceVariant }]}>You are all set. Your shelf is ready for tracking.</Text>
 			</CardHeader>
 			<CardContent>
+				{followImportResult?.createdCount ? (
+					<Text style={[styles.csvHelp, { color: colors.onSurfaceVariant }]}>
+						You&apos;re already connected to {followImportResult.createdCount}{" "}
+						friend{followImportResult.createdCount === 1 ? "" : "s"} from
+						Bluesky.
+					</Text>
+				) : null}
 				<View style={styles.metricsRow}>
 					<MetricCard label="Imported" value={importResult.imported} />
 					<MetricCard label="Skipped" value={importResult.skipped} />

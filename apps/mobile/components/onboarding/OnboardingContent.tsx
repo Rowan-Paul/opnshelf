@@ -5,12 +5,15 @@ import { useTheme } from "@/contexts/theme";
 import { OnboardingProgressCard } from "./OnboardingProgressCard";
 import {
 	BriefingStepCard,
+	FriendsStepCard,
 	IdentityStepCard,
 	ImportStepCard,
 	LaunchStepCard,
 } from "./OnboardingStepCards";
 import { OnboardingTimezoneModal } from "./OnboardingTimezoneModal";
 import type {
+	FollowImportResult,
+	FollowImportStatus,
 	ImportProgressState,
 	OnboardingImportResult,
 	TabValue,
@@ -28,6 +31,8 @@ type OnboardingContentProps = {
 	timezone: string;
 	timeFormat: "12h" | "24h";
 	csvFileName: string | null;
+	followImportStatus: FollowImportStatus;
+	followImportResult: FollowImportResult | null;
 	importProgress: ImportProgressState;
 	importPercent: number;
 	importResult: OnboardingImportResult;
@@ -40,11 +45,15 @@ type OnboardingContentProps = {
 	onDisplayNameChange: (value: string) => void;
 	onTimezoneChange: (value: string) => void;
 	onTimeFormatChange: (value: "12h" | "24h") => void;
-	onSkip: () => void;
+	onSkipSetup: () => void;
+	onImportBlueskyFollows: () => void;
+	onSkipFollowImport: () => void;
+	onContinueAfterFollowImport: () => void;
 	onSaveProfileAndContinue: () => void;
 	onTraktImport: () => void;
 	onTraktImportConfirm: () => void;
 	onCsvImport: () => void;
+	onSkipHistoryImport: () => void;
 	onComplete: () => void;
 };
 
@@ -58,6 +67,8 @@ export function OnboardingContent({
 	timezone,
 	timeFormat,
 	csvFileName,
+	followImportStatus,
+	followImportResult,
 	importProgress,
 	importPercent,
 	importResult,
@@ -70,11 +81,15 @@ export function OnboardingContent({
 	onDisplayNameChange,
 	onTimezoneChange,
 	onTimeFormatChange,
-	onSkip,
+	onSkipSetup,
+	onImportBlueskyFollows,
+	onSkipFollowImport,
+	onContinueAfterFollowImport,
 	onSaveProfileAndContinue,
 	onTraktImport,
 	onTraktImportConfirm,
 	onCsvImport,
+	onSkipHistoryImport,
 	onComplete,
 }: OnboardingContentProps) {
 	const { colors } = useTheme();
@@ -91,7 +106,7 @@ export function OnboardingContent({
 				{step === 1 && (
 					<BriefingStepCard
 						onStart={() => onStepChange(2)}
-						onSkip={onSkip}
+						onSkip={onSkipSetup}
 						isCompleting={isCompleting}
 					/>
 				)}
@@ -111,6 +126,17 @@ export function OnboardingContent({
 				)}
 
 				{step === 3 && (
+					<FriendsStepCard
+						followImportStatus={followImportStatus}
+						followImportResult={followImportResult}
+						onImport={onImportBlueskyFollows}
+						onContinue={onContinueAfterFollowImport}
+						onBack={() => onStepChange(2)}
+						onSkip={onSkipFollowImport}
+					/>
+				)}
+
+				{step === 4 && (
 					<ImportStepCard
 						activeTab={activeTab}
 						traktUsername={traktUsername}
@@ -125,13 +151,14 @@ export function OnboardingContent({
 						onTraktImport={onTraktImport}
 						onTraktImportConfirm={onTraktImportConfirm}
 						onCsvImport={onCsvImport}
-						onBack={() => onStepChange(2)}
-						onSkip={onSkip}
+						onBack={() => onStepChange(3)}
+						onSkip={onSkipHistoryImport}
 					/>
 				)}
 
-				{step === 4 && (
+				{step === 5 && (
 					<LaunchStepCard
+						followImportResult={followImportResult}
 						importResult={importResult}
 						isCompleting={isCompleting}
 						onComplete={onComplete}

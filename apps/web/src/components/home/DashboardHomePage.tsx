@@ -12,6 +12,7 @@ import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CreateListDialog } from "@/components/CreateListDialog";
+import { FriendsActivitySection } from "@/components/home/FriendsActivitySection";
 import { UpNextSection } from "@/components/home/UpNextSection";
 import { ListCard } from "@/components/ListCard";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
@@ -360,6 +361,10 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 						</M3Card>
 					)}
 				</div>
+			</div>
+
+			<div className="mt-8">
+				<FriendsActivitySection userHandle={user.handle} />
 			</div>
 		</div>
 	);

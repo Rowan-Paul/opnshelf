@@ -31,4 +31,12 @@ export type OnboardingImportResult = {
 	errors: string[];
 };
 
+export type FollowImportStatus = "idle" | "running" | "success" | "error";
+
+export type FollowImportResult = {
+	matchedCount: number;
+	createdCount: number;
+	alreadyFollowingCount: number;
+};
+
 export type TraktImportPreview = FetchTraktPublicHistoryResponseDto;

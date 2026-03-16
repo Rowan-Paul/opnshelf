@@ -1,8 +1,14 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+	BadGatewayException,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	CompleteOnboardingResponseDto,
 	FetchTraktPublicHistoryResponseDto,
+	ImportBlueskyFollowsResponseDto,
 	ImportHistoryResponseDto,
 	NormalizedImportItemDto,
 } from "./dto/import-history.dto";
@@ -19,6 +25,9 @@ import { UserDeletionService } from "./user-deletion.service";
 interface ATSession {
 	did: string;
 }
+
+const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
+const BLUESKY_FOLLOWS_PAGE_SIZE = 100;
 
 @Injectable()
 export class UsersService {
@@ -129,6 +138,12 @@ export class UsersService {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				_count: {
+					select: {
+						followers: true,
+						following: true,
+					},
+				},
 			},
 		});
 
@@ -136,7 +151,14 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		return user;
+		return {
+			did: user.did,
+			handle: user.handle,
+			displayName: user.displayName,
+			avatar: user.avatar,
+			followersCount: user._count.followers,
+			followingCount: user._count.following,
+		};
 	}
 
 	async completeOnboarding(
@@ -175,6 +197,86 @@ export class UsersService {
 		);
 	}
 
+	async importBlueskyFollows(
+		userDid: string,
+	): Promise<ImportBlueskyFollowsResponseDto> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { did: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		const followedDids = await this.fetchBlueskyFollowDids(userDid);
+		if (followedDids.length === 0) {
+			return {
+				scannedCount: 0,
+				matchedCount: 0,
+				createdCount: 0,
+				alreadyFollowingCount: 0,
+			};
+		}
+
+		const candidateDids = followedDids.filter((did) => did !== userDid);
+		if (candidateDids.length === 0) {
+			return {
+				scannedCount: followedDids.length,
+				matchedCount: 0,
+				createdCount: 0,
+				alreadyFollowingCount: 0,
+			};
+		}
+
+		const matchedUsers = await this.prisma.user.findMany({
+			where: { did: { in: candidateDids } },
+			select: { did: true },
+		});
+		const matchedDids = matchedUsers.map((matchedUser) => matchedUser.did);
+
+		if (matchedDids.length === 0) {
+			return {
+				scannedCount: followedDids.length,
+				matchedCount: 0,
+				createdCount: 0,
+				alreadyFollowingCount: 0,
+			};
+		}
+
+		const existingFollows = await this.prisma.follow.findMany({
+			where: {
+				followerDid: userDid,
+				followingDid: { in: matchedDids },
+			},
+			select: {
+				followingDid: true,
+			},
+		});
+		const existingFollowDids = new Set(
+			existingFollows.map((follow) => follow.followingDid),
+		);
+		const followsToCreate = matchedDids.filter(
+			(followingDid) => !existingFollowDids.has(followingDid),
+		);
+
+		if (followsToCreate.length > 0) {
+			await this.prisma.follow.createMany({
+				data: followsToCreate.map((followingDid) => ({
+					followerDid: userDid,
+					followingDid,
+				})),
+				skipDuplicates: true,
+			});
+		}
+
+		return {
+			scannedCount: followedDids.length,
+			matchedCount: matchedDids.length,
+			createdCount: followsToCreate.length,
+			alreadyFollowingCount: existingFollowDids.size,
+		};
+	}
+
 	async importNormalizedItems(
 		userDid: string,
 		session: ATSession,
@@ -199,5 +301,60 @@ export class UsersService {
 		deletePDSData: boolean,
 	): Promise<void> {
 		await this.userDeletionService.deleteUser(did, session, deletePDSData);
+	}
+
+	private async fetchBlueskyFollowDids(actorDid: string): Promise<string[]> {
+		const followedDids = new Set<string>();
+		let cursor: string | undefined;
+
+		try {
+			do {
+				const url = new URL(`${BLUESKY_PUBLIC_API}/app.bsky.graph.getFollows`);
+				url.searchParams.set("actor", actorDid);
+				url.searchParams.set("limit", String(BLUESKY_FOLLOWS_PAGE_SIZE));
+				if (cursor) {
+					url.searchParams.set("cursor", cursor);
+				}
+
+				const response = await fetch(url.toString(), {
+					signal: AbortSignal.timeout(5000),
+				});
+				if (!response.ok) {
+					this.logger.warn(
+						`Bluesky follows import failed for ${actorDid}: ${response.status} ${response.statusText}`,
+					);
+					throw new BadGatewayException(
+						"Could not import Bluesky follows right now",
+					);
+				}
+
+				const data = (await response.json()) as {
+					cursor?: string;
+					follows?: Array<{ did?: string }>;
+				};
+
+				for (const follow of data.follows ?? []) {
+					if (typeof follow.did === "string" && follow.did.length > 0) {
+						followedDids.add(follow.did);
+					}
+				}
+
+				cursor = data.cursor;
+			} while (cursor);
+		} catch (error) {
+			if (error instanceof BadGatewayException) {
+				throw error;
+			}
+
+			this.logger.warn(
+				`Failed to import Bluesky follows for ${actorDid}`,
+				error,
+			);
+			throw new BadGatewayException(
+				"Could not import Bluesky follows right now",
+			);
+		}
+
+		return [...followedDids];
 	}
 }

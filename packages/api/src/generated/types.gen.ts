@@ -592,6 +592,14 @@ export type PublicUserProfileDto = {
     avatar: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Public follower count
+     */
+    followersCount: number;
+    /**
+     * Public following count
+     */
+    followingCount: number;
 };
 
 export type UserSettingsDto = {
@@ -750,6 +758,25 @@ export type FetchTraktPublicHistoryResponseDto = {
     sourceCount: number;
 };
 
+export type ImportBlueskyFollowsResponseDto = {
+    /**
+     * Total Bluesky follows scanned from AppView
+     */
+    scannedCount: number;
+    /**
+     * How many Bluesky follows already have OpnShelf accounts
+     */
+    matchedCount: number;
+    /**
+     * How many new OpnShelf follows were created
+     */
+    createdCount: number;
+    /**
+     * How many matched users were already followed
+     */
+    alreadyFollowingCount: number;
+};
+
 export type ImportHistoryDto = {
     items: Array<NormalizedImportItemDto>;
 };
@@ -882,6 +909,82 @@ export type UnifiedDiscoverResponseDto = {
     results: Array<UnifiedSearchResultDto>;
     total_results: number;
     page: number;
+};
+
+export type SocialUserCardDto = {
+    did: string;
+    handle: string;
+    displayName?: {
+        [key: string]: unknown;
+    } | null;
+    avatar?: {
+        [key: string]: unknown;
+    } | null;
+    followersCount: number;
+    followingCount: number;
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+};
+
+export type PaginatedSocialUsersDto = {
+    items: Array<SocialUserCardDto>;
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
+export type UserRelationshipDto = {
+    targetDid: string;
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    canFollow: boolean;
+};
+
+export type SocialActorDto = {
+    did: string;
+    handle: string;
+    displayName?: {
+        [key: string]: unknown;
+    } | null;
+    avatar?: {
+        [key: string]: unknown;
+    } | null;
+    followersCount: number;
+    followingCount: number;
+};
+
+export type FollowedActivityItemDto = {
+    actor: SocialActorDto;
+    id: string;
+    type: 'movie' | 'episode';
+    activityAt: string;
+    movieId?: string;
+    title?: string;
+    showId?: string;
+    showTitle?: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    posterPath?: string;
+    backdropPath?: string;
+    releaseYear?: number;
+    firstAirYear?: number;
+    overview?: string;
+    colors?: MovieColorsDto;
+    watchedDate?: string;
+    createdAt: string;
+};
+
+export type FollowedActivityFeedDto = {
+    items: Array<FollowedActivityItemDto>;
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
 };
 
 export type MoviesControllerSearchMoviesData = {
@@ -2060,6 +2163,26 @@ export type UsersControllerFetchMyTraktPublicHistoryResponses = {
 
 export type UsersControllerFetchMyTraktPublicHistoryResponse = UsersControllerFetchMyTraktPublicHistoryResponses[keyof UsersControllerFetchMyTraktPublicHistoryResponses];
 
+export type UsersControllerImportMyBlueskyFollowsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/bluesky-follows';
+};
+
+export type UsersControllerImportMyBlueskyFollowsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerImportMyBlueskyFollowsResponses = {
+    200: ImportBlueskyFollowsResponseDto;
+};
+
+export type UsersControllerImportMyBlueskyFollowsResponse = UsersControllerImportMyBlueskyFollowsResponses[keyof UsersControllerImportMyBlueskyFollowsResponses];
+
 export type UsersControllerImportMyHistoryData = {
     body: ImportHistoryDto;
     path?: never;
@@ -2166,3 +2289,147 @@ export type SearchControllerDiscoverAllResponses = {
 };
 
 export type SearchControllerDiscoverAllResponse = SearchControllerDiscoverAllResponses[keyof SearchControllerDiscoverAllResponses];
+
+export type SocialControllerSearchPeopleData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        /**
+         * Search term for handle or display name
+         */
+        q: string;
+    };
+    url: '/social/search';
+};
+
+export type SocialControllerSearchPeopleResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerSearchPeopleResponse = SocialControllerSearchPeopleResponses[keyof SocialControllerSearchPeopleResponses];
+
+export type SocialControllerUnfollowData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/follows/{targetDid}';
+};
+
+export type SocialControllerUnfollowResponses = {
+    /**
+     * Relationship removed
+     */
+    204: void;
+};
+
+export type SocialControllerUnfollowResponse = SocialControllerUnfollowResponses[keyof SocialControllerUnfollowResponses];
+
+export type SocialControllerFollowData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/follows/{targetDid}';
+};
+
+export type SocialControllerFollowResponses = {
+    200: UserRelationshipDto;
+};
+
+export type SocialControllerFollowResponse = SocialControllerFollowResponses[keyof SocialControllerFollowResponses];
+
+export type SocialControllerGetRelationshipData = {
+    body?: never;
+    path: {
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/relationship/{targetDid}';
+};
+
+export type SocialControllerGetRelationshipResponses = {
+    200: UserRelationshipDto;
+};
+
+export type SocialControllerGetRelationshipResponse = SocialControllerGetRelationshipResponses[keyof SocialControllerGetRelationshipResponses];
+
+export type SocialControllerGetFollowersData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/profiles/{handle}/followers';
+};
+
+export type SocialControllerGetFollowersResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetFollowersResponse = SocialControllerGetFollowersResponses[keyof SocialControllerGetFollowersResponses];
+
+export type SocialControllerGetFollowingData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/profiles/{handle}/following';
+};
+
+export type SocialControllerGetFollowingResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetFollowingResponse = SocialControllerGetFollowingResponses[keyof SocialControllerGetFollowingResponses];
+
+export type SocialControllerGetFeedData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/feed';
+};
+
+export type SocialControllerGetFeedResponses = {
+    200: FollowedActivityFeedDto;
+};
+
+export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];

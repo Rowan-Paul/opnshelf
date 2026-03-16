@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+	BadGatewayException,
+	BadRequestException,
+	NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -13,7 +17,12 @@ describe("UsersService", () => {
 	const prisma = {
 		user: {
 			findUnique: jest.fn(),
+			findMany: jest.fn(),
 			update: jest.fn(),
+		},
+		follow: {
+			findMany: jest.fn(),
+			createMany: jest.fn(),
 		},
 		trackedMovie: {
 			findFirst: jest.fn(),
@@ -57,6 +66,10 @@ describe("UsersService", () => {
 			importHistoryService,
 			userDeletionService,
 		);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
 	});
 
 	it("completes onboarding for an existing user", async () => {
@@ -112,6 +125,10 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			_count: {
+				followers: 4,
+				following: 7,
+			},
 		});
 
 		await expect(
@@ -121,6 +138,8 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			followersCount: 4,
+			followingCount: 7,
 		});
 		expect(prisma.user.findUnique).toHaveBeenCalledWith({
 			where: { handle: "alice.bsky.social" },
@@ -129,8 +148,141 @@ describe("UsersService", () => {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				_count: {
+					select: {
+						followers: true,
+						following: true,
+					},
+				},
 			},
 		});
+	});
+
+	it("returns public profile counts from follow aggregates", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue({
+			did: "did:plc:123",
+			handle: "alice.bsky.social",
+			displayName: "Alice",
+			avatar: "https://example.com/alice.jpg",
+			_count: {
+				followers: 11,
+				following: 3,
+			},
+		});
+
+		await expect(
+			service.getPublicProfileByHandle("alice.bsky.social"),
+		).resolves.toMatchObject({
+			followersCount: 11,
+			followingCount: 3,
+		});
+	});
+
+	it("imports Bluesky follows with pagination and creates only missing local follows", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:self" });
+		prisma.user.findMany = jest
+			.fn()
+			.mockResolvedValue([
+				{ did: "did:plc:friend-1" },
+				{ did: "did:plc:friend-2" },
+			]);
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-2" }]);
+		prisma.follow.createMany = jest.fn().mockResolvedValue({ count: 1 });
+
+		global.fetch = jest
+			.fn()
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				statusText: "OK",
+				json: async () => ({
+					cursor: "cursor-2",
+					follows: [{ did: "did:plc:friend-1" }, { did: "did:plc:friend-2" }],
+				}),
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				statusText: "OK",
+				json: async () => ({
+					follows: [{ did: "did:plc:self" }, { did: "did:plc:off-app" }],
+				}),
+			}) as unknown as typeof fetch;
+
+		await expect(service.importBlueskyFollows("did:plc:self")).resolves.toEqual(
+			{
+				scannedCount: 4,
+				matchedCount: 2,
+				createdCount: 1,
+				alreadyFollowingCount: 1,
+			},
+		);
+
+		expect(prisma.user.findMany).toHaveBeenCalledWith({
+			where: {
+				did: {
+					in: ["did:plc:friend-1", "did:plc:friend-2", "did:plc:off-app"],
+				},
+			},
+			select: { did: true },
+		});
+		expect(prisma.follow.createMany).toHaveBeenCalledWith({
+			data: [
+				{
+					followerDid: "did:plc:self",
+					followingDid: "did:plc:friend-1",
+				},
+			],
+			skipDuplicates: true,
+		});
+	});
+
+	it("returns zero counts when no Bluesky follows match OpnShelf users", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:self" });
+		prisma.user.findMany = jest.fn().mockResolvedValue([]);
+		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
+		prisma.follow.createMany = jest.fn();
+
+		global.fetch = jest.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			statusText: "OK",
+			json: async () => ({
+				follows: [{ did: "did:plc:off-app" }],
+			}),
+		}) as unknown as typeof fetch;
+
+		await expect(service.importBlueskyFollows("did:plc:self")).resolves.toEqual(
+			{
+				scannedCount: 1,
+				matchedCount: 0,
+				createdCount: 0,
+				alreadyFollowingCount: 0,
+			},
+		);
+		expect(prisma.follow.createMany).not.toHaveBeenCalled();
+	});
+
+	it("maps Bluesky fetch failures to a gateway error", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:self" });
+
+		global.fetch = jest.fn().mockResolvedValue({
+			ok: false,
+			status: 503,
+			statusText: "Service Unavailable",
+		}) as unknown as typeof fetch;
+
+		await expect(service.importBlueskyFollows("did:plc:self")).rejects.toThrow(
+			BadGatewayException,
+		);
 	});
 
 	it("throws when public profile handle is missing", async () => {

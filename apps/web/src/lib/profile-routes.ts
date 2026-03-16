@@ -3,7 +3,33 @@ export type ProfileSection =
 	| "up-next"
 	| "lists"
 	| "calendar"
-	| "settings";
+	| "settings"
+	| "people"
+	| "followers"
+	| "following";
+
+export type ProfilePeopleTab = "following" | "followers";
+
+export interface ProfilePeopleRouteSearch {
+	tab?: ProfilePeopleTab;
+	q?: string;
+	discoverPage?: number;
+	followingPage?: number;
+	followersPage?: number;
+}
+
+function withDefaultProfilePeopleSearch(
+	search?: ProfilePeopleRouteSearch,
+): Required<ProfilePeopleRouteSearch> {
+	return {
+		tab: "following",
+		q: "",
+		discoverPage: 1,
+		followingPage: 1,
+		followersPage: 1,
+		...search,
+	};
+}
 
 type ProfileRouteTarget =
 	| {
@@ -27,6 +53,21 @@ type ProfileRouteTarget =
 	| {
 			to: "/profile/$handle/settings";
 			params: { handle: string };
+	  }
+	| {
+			to: "/profile/$handle/people";
+			params: { handle: string };
+			search: Required<ProfilePeopleRouteSearch>;
+	  }
+	| {
+			to: "/profile/$handle/followers";
+			params: { handle: string };
+			search?: { page: number };
+	  }
+	| {
+			to: "/profile/$handle/following";
+			params: { handle: string };
+			search?: { page: number };
 	  }
 	| {
 			to: "/profile/$handle/list/$slug";
@@ -79,7 +120,38 @@ export function getProfileRoute(
 				to: "/profile/$handle/settings",
 				params: { handle: normalizedHandle },
 			};
+		case "people":
+			return {
+				to: "/profile/$handle/people",
+				params: { handle: normalizedHandle },
+				search: withDefaultProfilePeopleSearch(),
+			};
+		case "followers":
+			return {
+				to: "/profile/$handle/followers",
+				params: { handle: normalizedHandle },
+				...(search ? { search } : {}),
+			};
+		case "following":
+			return {
+				to: "/profile/$handle/following",
+				params: { handle: normalizedHandle },
+				...(search ? { search } : {}),
+			};
 	}
+}
+
+export function getProfilePeopleRoute(
+	handle: string,
+	search?: ProfilePeopleRouteSearch,
+) {
+	return {
+		to: "/profile/$handle/people" as const,
+		params: {
+			handle: normalizeProfileHandle(handle),
+		},
+		search: withDefaultProfilePeopleSearch(search),
+	};
 }
 
 export function getProfileListDetailRoute(handle: string, slug: string) {
