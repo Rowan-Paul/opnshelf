@@ -1,16 +1,47 @@
-import { showsControllerGetUserUpNextOptions } from "@opnshelf/api";
+import {
+	authControllerMeOptions,
+	showsControllerGetUserUpNextOptions,
+	usersControllerGetPublicProfileOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
+import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { PaginationControls } from "@/components/PaginationControls";
 import { UpNextShowCollection } from "@/components/up-next/UpNextShowCollection";
 import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
-import { getProfileRoute } from "@/lib/profile-routes";
+import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
 
 const PAGE_SIZE = 8;
 
 export const Route = createFileRoute("/profile/$handle/up-next")({
+	beforeLoad: async ({ context, params }) => {
+		const handle = params.handle.trim().replace(/^@/, "").toLowerCase();
+		const [currentUser, profile] = await Promise.all([
+			context.queryClient
+				.ensureQueryData({
+					...authControllerMeOptions(),
+					staleTime: 5 * 60 * 1000,
+					retry: false,
+				})
+				.catch(() => null),
+			context.queryClient
+				.ensureQueryData({
+					...usersControllerGetPublicProfileOptions({
+						path: { handle },
+					}),
+					retry: false,
+				})
+				.catch(() => null),
+		]);
+
+		if (!profile || !isOwnerProfile(currentUser?.did, profile.did)) {
+			throw redirect({
+				...getProfileRoute(handle, "shelf", { page: 1 }),
+			});
+		}
+	},
 	validateSearch: (search: Record<string, unknown>) => ({
 		page: parsePageNumber(search.page),
 	}),
@@ -24,7 +55,8 @@ function ProfileUpNextPage() {
 	const { handle } = Route.useParams();
 	const { page } = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
-	const { profile, isOwner } = useProfileRouteState(handle);
+	const { profile, isAuthLoading, isOwner, isProfileLoading } =
+		useProfileRouteState(handle);
 	const userDid = profile?.did ?? "";
 
 	const upNextQuery = useQuery({
@@ -43,17 +75,6 @@ function ProfileUpNextPage() {
 	);
 
 	useEffect(() => {
-		if (!profile || isOwner) {
-			return;
-		}
-
-		navigate({
-			...getProfileRoute(profile.handle, "shelf", { page: 1 }),
-			replace: true,
-		});
-	}, [isOwner, navigate, profile]);
-
-	useEffect(() => {
 		if (!upNextQuery.data) {
 			return;
 		}
@@ -66,6 +87,10 @@ function ProfileUpNextPage() {
 			});
 		}
 	}, [navigate, page, upNextQuery.data]);
+
+	if (isAuthLoading || isProfileLoading) {
+		return <AuthLoadingState className="max-w-6xl py-8" />;
+	}
 
 	if (!profile || !isOwner) {
 		return null;
