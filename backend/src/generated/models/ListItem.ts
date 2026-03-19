@@ -272,7 +272,7 @@ export type ListItemWhereInput = {
   notes?: Prisma.StringNullableFilter<"ListItem"> | string | null
   position?: Prisma.IntFilter<"ListItem"> | number
   createdAt?: Prisma.DateTimeFilter<"ListItem"> | Date | string
-  list?: Prisma.XOR<Prisma.MovieListScalarRelationFilter, Prisma.MovieListWhereInput>
+  list?: Prisma.XOR<Prisma.ListScalarRelationFilter, Prisma.ListWhereInput>
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
   show?: Prisma.XOR<Prisma.ShowNullableScalarRelationFilter, Prisma.ShowWhereInput> | null
 }
@@ -290,7 +290,7 @@ export type ListItemOrderByWithRelationInput = {
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  list?: Prisma.MovieListOrderByWithRelationInput
+  list?: Prisma.ListOrderByWithRelationInput
   movie?: Prisma.MovieOrderByWithRelationInput
   show?: Prisma.ShowOrderByWithRelationInput
 }
@@ -312,7 +312,7 @@ export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   notes?: Prisma.StringNullableFilter<"ListItem"> | string | null
   position?: Prisma.IntFilter<"ListItem"> | number
   createdAt?: Prisma.DateTimeFilter<"ListItem"> | Date | string
-  list?: Prisma.XOR<Prisma.MovieListScalarRelationFilter, Prisma.MovieListWhereInput>
+  list?: Prisma.XOR<Prisma.ListScalarRelationFilter, Prisma.ListWhereInput>
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
   show?: Prisma.XOR<Prisma.ShowNullableScalarRelationFilter, Prisma.ShowWhereInput> | null
 }, "id" | "rkey" | "listId_mediaType_mediaId">
@@ -365,7 +365,7 @@ export type ListItemCreateInput = {
   notes?: string | null
   position?: number
   createdAt?: Date | string
-  list: Prisma.MovieListCreateNestedOneWithoutItemsInput
+  list: Prisma.ListCreateNestedOneWithoutItemsInput
   movie?: Prisma.MovieCreateNestedOneWithoutListItemsInput
   show?: Prisma.ShowCreateNestedOneWithoutListItemsInput
 }
@@ -395,7 +395,7 @@ export type ListItemUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  list?: Prisma.MovieListUpdateOneRequiredWithoutItemsNestedInput
+  list?: Prisma.ListUpdateOneRequiredWithoutItemsNestedInput
   movie?: Prisma.MovieUpdateOneWithoutListItemsNestedInput
   show?: Prisma.ShowUpdateOneWithoutListItemsNestedInput
 }
@@ -666,7 +666,7 @@ export type ListItemCreateWithoutMovieInput = {
   notes?: string | null
   position?: number
   createdAt?: Date | string
-  list: Prisma.MovieListCreateNestedOneWithoutItemsInput
+  list: Prisma.ListCreateNestedOneWithoutItemsInput
   show?: Prisma.ShowCreateNestedOneWithoutListItemsInput
 }
 
@@ -738,7 +738,7 @@ export type ListItemCreateWithoutShowInput = {
   notes?: string | null
   position?: number
   createdAt?: Date | string
-  list: Prisma.MovieListCreateNestedOneWithoutItemsInput
+  list: Prisma.ListCreateNestedOneWithoutItemsInput
   movie?: Prisma.MovieCreateNestedOneWithoutListItemsInput
 }
 
@@ -860,7 +860,7 @@ export type ListItemUpdateWithoutMovieInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  list?: Prisma.MovieListUpdateOneRequiredWithoutItemsNestedInput
+  list?: Prisma.ListUpdateOneRequiredWithoutItemsNestedInput
   show?: Prisma.ShowUpdateOneWithoutListItemsNestedInput
 }
 
@@ -916,7 +916,7 @@ export type ListItemUpdateWithoutShowInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  list?: Prisma.MovieListUpdateOneRequiredWithoutItemsNestedInput
+  list?: Prisma.ListUpdateOneRequiredWithoutItemsNestedInput
   movie?: Prisma.MovieUpdateOneWithoutListItemsNestedInput
 }
 
@@ -1019,7 +1019,7 @@ export type ListItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   notes?: boolean
   position?: boolean
   createdAt?: boolean
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }, ExtArgs["result"]["listItem"]>
@@ -1037,7 +1037,7 @@ export type ListItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   notes?: boolean
   position?: boolean
   createdAt?: boolean
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }, ExtArgs["result"]["listItem"]>
@@ -1055,7 +1055,7 @@ export type ListItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   notes?: boolean
   position?: boolean
   createdAt?: boolean
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }, ExtArgs["result"]["listItem"]>
@@ -1077,17 +1077,17 @@ export type ListItemSelectScalar = {
 
 export type ListItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "listId" | "mediaType" | "mediaId" | "movieId" | "showId" | "notes" | "position" | "createdAt", ExtArgs["result"]["listItem"]>
 export type ListItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }
 export type ListItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }
 export type ListItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  list?: boolean | Prisma.MovieListDefaultArgs<ExtArgs>
+  list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
   show?: boolean | Prisma.ListItem$showArgs<ExtArgs>
 }
@@ -1095,7 +1095,7 @@ export type ListItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 export type $ListItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ListItem"
   objects: {
-    list: Prisma.$MovieListPayload<ExtArgs>
+    list: Prisma.$ListPayload<ExtArgs>
     movie: Prisma.$MoviePayload<ExtArgs> | null
     show: Prisma.$ShowPayload<ExtArgs> | null
   }
@@ -1506,7 +1506,7 @@ readonly fields: ListItemFieldRefs;
  */
 export interface Prisma__ListItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  list<T extends Prisma.MovieListDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MovieListDefaultArgs<ExtArgs>>): Prisma.Prisma__MovieListClient<runtime.Types.Result.GetResult<Prisma.$MovieListPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  list<T extends Prisma.ListDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ListDefaultArgs<ExtArgs>>): Prisma.Prisma__ListClient<runtime.Types.Result.GetResult<Prisma.$ListPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   movie<T extends Prisma.ListItem$movieArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ListItem$movieArgs<ExtArgs>>): Prisma.Prisma__MovieClient<runtime.Types.Result.GetResult<Prisma.$MoviePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   show<T extends Prisma.ListItem$showArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ListItem$showArgs<ExtArgs>>): Prisma.Prisma__ShowClient<runtime.Types.Result.GetResult<Prisma.$ShowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**

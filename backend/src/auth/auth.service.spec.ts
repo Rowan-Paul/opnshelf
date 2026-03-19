@@ -37,6 +37,14 @@ jest.mock("@atproto/oauth-client-node", () => ({
 // Mock the @atproto/api module
 jest.mock("@atproto/api", () => ({
 	Agent: jest.fn().mockImplementation(() => ({
+		com: {
+			atproto: {
+				repo: {
+					describeRepo: jest.fn(),
+					getRecord: jest.fn(),
+				},
+			},
+		},
 		getProfile: jest.fn(),
 	})),
 }));
@@ -522,17 +530,121 @@ describe("AuthService", () => {
 		});
 	});
 
-	describe("fetchProfile", () => {
-		it("should fetch and return user profile", async () => {
+	describe("hasBlueskyProfile", () => {
+		it("should return true when the repo has an app.bsky.actor.profile/self record", async () => {
 			const { Agent } = require("@atproto/api");
+			const mockRestore = jest
+				.fn()
+				.mockResolvedValue({ did: "did:plc:abc123" });
+			const mockGetRecord = jest.fn().mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/app.bsky.actor.profile/self",
+				},
+			});
+
+			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
+				authorize: jest.fn(),
+				callback: jest.fn(),
+				restore: mockRestore,
+			}));
+			service.onModuleInit();
+
+			Agent.mockImplementation(() => ({
+				com: {
+					atproto: {
+						repo: {
+							describeRepo: jest.fn(),
+							getRecord: mockGetRecord,
+						},
+					},
+				},
+				getProfile: jest.fn(),
+			}));
+
+			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
+				true,
+			);
+			expect(mockGetRecord).toHaveBeenCalledWith({
+				repo: "did:plc:abc123",
+				collection: "app.bsky.actor.profile",
+				rkey: "self",
+			});
+		});
+
+		it("should return false when the profile record does not exist", async () => {
+			const { Agent } = require("@atproto/api");
+			const mockRestore = jest
+				.fn()
+				.mockResolvedValue({ did: "did:plc:abc123" });
+			const mockGetRecord = jest
+				.fn()
+				.mockRejectedValue(new Error("RecordNotFound"));
+
+			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
+				authorize: jest.fn(),
+				callback: jest.fn(),
+				restore: mockRestore,
+			}));
+			service.onModuleInit();
+
+			Agent.mockImplementation(() => ({
+				com: {
+					atproto: {
+						repo: {
+							describeRepo: jest.fn(),
+							getRecord: mockGetRecord,
+						},
+					},
+				},
+				getProfile: jest.fn(),
+			}));
+
+			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
+				false,
+			);
+		});
+
+		it("should return false when the session cannot be restored", async () => {
+			const mockRestore = jest
+				.fn()
+				.mockRejectedValue(new Error("restore failed"));
+
+			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
+				authorize: jest.fn(),
+				callback: jest.fn(),
+				restore: mockRestore,
+			}));
+			service.onModuleInit();
+
+			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
+				false,
+			);
+		});
+	});
+
+	describe("fetchProfile", () => {
+		it("should fetch the canonical handle from the repo and profile extras from appview", async () => {
+			const { Agent } = require("@atproto/api");
+			const mockDescribeRepo = jest.fn().mockResolvedValue({
+				data: {
+					handle: "user.custom-domain.test",
+				},
+			});
 			const mockGetProfile = jest.fn().mockResolvedValue({
 				data: {
-					handle: "user.bsky.social",
+					handle: "handle.invalid",
 					displayName: "Test User",
 					avatar: "https://example.com/avatar.jpg",
 				},
 			});
 			Agent.mockImplementation(() => ({
+				com: {
+					atproto: {
+						repo: {
+							describeRepo: mockDescribeRepo,
+						},
+					},
+				},
 				getProfile: mockGetProfile,
 			}));
 
@@ -541,21 +653,34 @@ describe("AuthService", () => {
 
 			expect(result).toEqual({
 				did: "did:plc:abc123",
-				handle: "user.bsky.social",
+				handle: "user.custom-domain.test",
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			});
+			expect(mockDescribeRepo).toHaveBeenCalledWith({ repo: "did:plc:abc123" });
 			expect(mockGetProfile).toHaveBeenCalledWith({ actor: "did:plc:abc123" });
 		});
 
 		it("should handle missing displayName and avatar", async () => {
 			const { Agent } = require("@atproto/api");
-			const mockGetProfile = jest.fn().mockResolvedValue({
+			const mockDescribeRepo = jest.fn().mockResolvedValue({
 				data: {
 					handle: "user.bsky.social",
 				},
 			});
+			const mockGetProfile = jest.fn().mockResolvedValue({
+				data: {
+					handle: "handle.invalid",
+				},
+			});
 			Agent.mockImplementation(() => ({
+				com: {
+					atproto: {
+						repo: {
+							describeRepo: mockDescribeRepo,
+						},
+					},
+				},
 				getProfile: mockGetProfile,
 			}));
 
@@ -565,6 +690,38 @@ describe("AuthService", () => {
 			expect(result).toEqual({
 				did: "did:plc:abc123",
 				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+			});
+		});
+
+		it("should still return the repo handle if the appview profile fetch fails", async () => {
+			const { Agent } = require("@atproto/api");
+			const mockDescribeRepo = jest.fn().mockResolvedValue({
+				data: {
+					handle: "user.custom-domain.test",
+				},
+			});
+			const mockGetProfile = jest
+				.fn()
+				.mockRejectedValue(new Error("profile fetch failed"));
+			Agent.mockImplementation(() => ({
+				com: {
+					atproto: {
+						repo: {
+							describeRepo: mockDescribeRepo,
+						},
+					},
+				},
+				getProfile: mockGetProfile,
+			}));
+
+			const mockSession = { did: "did:plc:abc123" };
+			const result = await service.fetchProfile(mockSession);
+
+			expect(result).toEqual({
+				did: "did:plc:abc123",
+				handle: "user.custom-domain.test",
 				displayName: null,
 				avatar: null,
 			});

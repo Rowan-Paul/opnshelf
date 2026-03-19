@@ -46,7 +46,7 @@ export function useHomeMetrics(
 
 		return {
 			listCount: items.length,
-			totalMoviesInLists: items.reduce((acc, list) => acc + list.movieCount, 0),
+			totalMoviesInLists: items.reduce((acc, list) => acc + list.itemCount, 0),
 			recentLists: sorted.slice(0, 4),
 		};
 	}, [lists]);

@@ -1,7 +1,7 @@
 import {
+	type ListSummaryDto,
 	listsControllerGetPublicUserListsOptions,
 	listsControllerGetUserListsOptions,
-	type MovieListSummaryDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -134,7 +134,7 @@ function PublicListSummaryCard({
 	seedColor,
 }: {
 	handle: string;
-	list: MovieListSummaryDto;
+	list: ListSummaryDto;
 	seedColor: string;
 }) {
 	const isFavorites = list.slug.includes("favorites");
@@ -183,7 +183,7 @@ function PublicListSummaryCard({
 						className="md-body-medium"
 						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 					>
-						{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
+						{list.itemCount} item{list.itemCount !== 1 ? "s" : ""}
 					</p>
 				</M3CardContent>
 			</M3Card>

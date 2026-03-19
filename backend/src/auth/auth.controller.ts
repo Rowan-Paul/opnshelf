@@ -386,12 +386,14 @@ export class AuthController {
 		if (!user) {
 			throw new BadRequestException("User not found");
 		}
+		const hasBlueskyProfile = await this.authService.hasBlueskyProfile(did);
 
 		return {
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,
 			avatar: user.avatar,
+			hasBlueskyProfile,
 			onboardingCompletedAt: user.onboardingCompletedAt
 				? user.onboardingCompletedAt.toISOString()
 				: null,

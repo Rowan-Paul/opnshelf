@@ -59,7 +59,7 @@ export const ModelName = {
   Show: 'Show',
   TrackedMovie: 'TrackedMovie',
   TrackedEpisode: 'TrackedEpisode',
-  MovieList: 'MovieList',
+  List: 'List',
   ListItem: 'ListItem'
 } as const
 
@@ -193,7 +193,7 @@ export const TrackedEpisodeScalarFieldEnum = {
 export type TrackedEpisodeScalarFieldEnum = (typeof TrackedEpisodeScalarFieldEnum)[keyof typeof TrackedEpisodeScalarFieldEnum]
 
 
-export const MovieListScalarFieldEnum = {
+export const ListScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
   uri: 'uri',
@@ -207,7 +207,7 @@ export const MovieListScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type MovieListScalarFieldEnum = (typeof MovieListScalarFieldEnum)[keyof typeof MovieListScalarFieldEnum]
+export type ListScalarFieldEnum = (typeof ListScalarFieldEnum)[keyof typeof ListScalarFieldEnum]
 
 
 export const ListItemScalarFieldEnum = {

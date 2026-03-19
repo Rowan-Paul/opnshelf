@@ -445,7 +445,7 @@ export class ShowsService {
 			}),
 		);
 
-		const watchlist = await this.prisma.movieList.findFirst({
+		const watchlist = await this.prisma.list.findFirst({
 			where: { userDid, slug: "watchlist" },
 			select: {
 				items: {

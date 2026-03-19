@@ -65,6 +65,7 @@ export interface AuthUser {
 	handle: string;
 	displayName: string | null;
 	avatar: string | null;
+	hasBlueskyProfile: boolean;
 	onboardingCompletedAt: string | null;
 	needsOnboarding: boolean;
 }

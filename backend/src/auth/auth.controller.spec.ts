@@ -33,6 +33,7 @@ describe("AuthController", () => {
 		upsertUser: jest.Mock;
 		getSessionByUserDid: jest.Mock;
 		getUser: jest.Mock;
+		hasBlueskyProfile: jest.Mock;
 		revokeBySessionId: jest.Mock;
 	} = {
 		getClientMetadata: jest.fn(),
@@ -44,6 +45,7 @@ describe("AuthController", () => {
 		upsertUser: jest.fn(),
 		getSessionByUserDid: jest.fn(),
 		getUser: jest.fn(),
+		hasBlueskyProfile: jest.fn().mockResolvedValue(false),
 		revokeBySessionId: jest.fn(),
 	};
 
@@ -551,6 +553,7 @@ describe("AuthController", () => {
 				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
 			};
 			mockAuthService.getUser.mockResolvedValue(mockUser);
+			mockAuthService.hasBlueskyProfile.mockResolvedValue(true);
 
 			const req = createMockRequest({
 				user: { did: "did:plc:abc123", session: {} },
@@ -565,10 +568,14 @@ describe("AuthController", () => {
 				handle: "user.bsky.social",
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
+				hasBlueskyProfile: true,
 				onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
 				needsOnboarding: false,
 			});
 			expect(mockAuthService.getUser).toHaveBeenCalledWith("did:plc:abc123");
+			expect(mockAuthService.hasBlueskyProfile).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
 		});
 
 		it("should throw BadRequestException when no user in request", async () => {

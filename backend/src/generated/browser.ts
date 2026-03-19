@@ -58,10 +58,10 @@ export type TrackedMovie = Prisma.TrackedMovieModel
  */
 export type TrackedEpisode = Prisma.TrackedEpisodeModel
 /**
- * Model MovieList
+ * Model List
  * 
  */
-export type MovieList = Prisma.MovieListModel
+export type List = Prisma.ListModel
 /**
  * Model ListItem
  * 

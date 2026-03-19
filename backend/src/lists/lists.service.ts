@@ -18,10 +18,10 @@ import type {
 	AddToListDto,
 	CreateListDto,
 	MediaInListDto,
-	MovieListDto,
-	MovieListSummaryDto,
-	MovieListWithMoviesDto,
-	MovieListsForItemDto,
+	ListDto,
+	ListSummaryDto,
+	ListWithItemsDto,
+	ListsForItemDto,
 	UpdateListDto,
 } from "./dto/list.dto";
 import { mapItemToDto } from "./list-mappers";
@@ -63,8 +63,8 @@ export class ListsService {
 		private showsService: ShowsService,
 	) {}
 
-	async getUserLists(userDid: string): Promise<MovieListSummaryDto[]> {
-		const lists = await this.prisma.movieList.findMany({
+	async getUserLists(userDid: string): Promise<ListSummaryDto[]> {
+		const lists = await this.prisma.list.findMany({
 			where: { userDid },
 			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 			include: {
@@ -79,13 +79,13 @@ export class ListsService {
 			description: list.description ?? undefined,
 			slug: list.slug,
 			isDefault: list.isDefault,
-			movieCount: list._count.items,
+			itemCount: list._count.items,
 			createdAt: list.createdAt.toISOString(),
 			updatedAt: list.updatedAt.toISOString(),
 		}));
 	}
 
-	async getPublicUserLists(userDid: string): Promise<MovieListSummaryDto[]> {
+	async getPublicUserLists(userDid: string): Promise<ListSummaryDto[]> {
 		return this.getUserLists(userDid);
 	}
 
@@ -94,7 +94,7 @@ export class ListsService {
 		slug: string,
 		page?: number,
 		pageSize?: number,
-	): Promise<MovieListWithMoviesDto | null> {
+	): Promise<ListWithItemsDto | null> {
 		return this.getList(userDid, slug, page, pageSize);
 	}
 
@@ -103,14 +103,14 @@ export class ListsService {
 		slug: string,
 		page?: number,
 		pageSize?: number,
-	): Promise<MovieListWithMoviesDto | null> {
+	): Promise<ListWithItemsDto | null> {
 		const shouldPaginate = page !== undefined || pageSize !== undefined;
 		const safePageSize = shouldPaginate
 			? Math.min(Math.max(pageSize ?? 20, 1), 50)
 			: undefined;
 		const requestedPage = Math.max(page ?? 1, 1);
 
-		const list = await this.prisma.movieList.findFirst({
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 			include: {
 				_count: {
@@ -179,11 +179,11 @@ export class ListsService {
 		userDid: string,
 		mediaType: "movie" | "show",
 		mediaId: string,
-	): Promise<MovieListsForItemDto[]> {
+	): Promise<ListsForItemDto[]> {
 		const scopedMediaId =
 			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
 
-		const lists = await this.prisma.movieList.findMany({
+		const lists = await this.prisma.list.findMany({
 			where: { userDid },
 			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 			include: {
@@ -206,8 +206,8 @@ export class ListsService {
 	async ensureDefaultLists(
 		userDid: string,
 		session: ATSession,
-	): Promise<MovieListDto[]> {
-		const existingLists = await this.prisma.movieList.findMany({
+	): Promise<ListDto[]> {
+		const existingLists = await this.prisma.list.findMany({
 			where: { userDid, isDefault: true },
 		});
 		const hydratedLists = [...existingLists];
@@ -222,7 +222,7 @@ export class ListsService {
 					continue;
 				}
 
-				const indexedDefault = await this.prisma.movieList.upsert({
+				const indexedDefault = await this.prisma.list.upsert({
 					where: { rkey: repoDefault.rkey },
 					create: {
 						rkey: repoDefault.rkey,
@@ -277,7 +277,7 @@ export class ListsService {
 
 		const allLists =
 			listsToCreate.length > 0 || hydratedLists.length !== existingLists.length
-				? await this.prisma.movieList.findMany({
+				? await this.prisma.list.findMany({
 						where: { userDid, isDefault: true },
 						orderBy: { createdAt: "asc" },
 					})
@@ -303,7 +303,7 @@ export class ListsService {
 		userDid: string,
 		session: ATSession,
 		defaultList: { name: string; slug: string; description: string },
-	): Promise<MovieListDto> {
+	): Promise<ListDto> {
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
 
@@ -328,7 +328,7 @@ export class ListsService {
 
 		this.logger.log(`Created default list: ${response.data.uri}`);
 
-		const list = await this.prisma.movieList.create({
+		const list = await this.prisma.list.create({
 			data: {
 				rkey,
 				uri: response.data.uri,
@@ -359,7 +359,7 @@ export class ListsService {
 		userDid: string,
 		session: ATSession,
 		dto: CreateListDto,
-	): Promise<MovieListDto> {
+	): Promise<ListDto> {
 		const slug = this.generateSlug(dto.name, userDid);
 
 		const rkey = TID.nextStr();
@@ -386,7 +386,7 @@ export class ListsService {
 
 		this.logger.log(`Created AT list record: ${response.data.uri}`);
 
-		const list = await this.prisma.movieList.create({
+		const list = await this.prisma.list.create({
 			data: {
 				rkey,
 				uri: response.data.uri,
@@ -418,8 +418,8 @@ export class ListsService {
 		session: ATSession,
 		slug: string,
 		dto: UpdateListDto,
-	): Promise<MovieListDto> {
-		const list = await this.prisma.movieList.findFirst({
+	): Promise<ListDto> {
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 		});
 
@@ -455,7 +455,7 @@ export class ListsService {
 			validate: false,
 		});
 
-		const updated = await this.prisma.movieList.update({
+		const updated = await this.prisma.list.update({
 			where: { id: list.id },
 			data: {
 				name: newName,
@@ -483,7 +483,7 @@ export class ListsService {
 		session: ATSession,
 		slug: string,
 	): Promise<void> {
-		const list = await this.prisma.movieList.findFirst({
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 		});
 
@@ -504,7 +504,7 @@ export class ListsService {
 			rkey: list.rkey,
 		});
 
-		await this.prisma.movieList.delete({
+		await this.prisma.list.delete({
 			where: { id: list.id },
 		});
 
@@ -517,7 +517,7 @@ export class ListsService {
 		slug: string,
 		dto: AddToListDto,
 	): Promise<MediaInListDto> {
-		const list = await this.prisma.movieList.findFirst({
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 		});
 
@@ -617,7 +617,7 @@ export class ListsService {
 		const scopedMediaId =
 			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
 
-		const list = await this.prisma.movieList.findFirst({
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 		});
 
@@ -662,7 +662,7 @@ export class ListsService {
 		userDid: string,
 		record: ListRecord,
 	): Promise<void> {
-		await this.prisma.movieList.upsert({
+		await this.prisma.list.upsert({
 			where: { rkey },
 			create: {
 				rkey,
@@ -687,7 +687,7 @@ export class ListsService {
 	}
 
 	async deleteListRecord(rkey: string): Promise<void> {
-		await this.prisma.movieList.deleteMany({
+		await this.prisma.list.deleteMany({
 			where: { rkey },
 		});
 
@@ -701,7 +701,7 @@ export class ListsService {
 		userDid: string,
 		record: ListItemRecord,
 	): Promise<void> {
-		const list = await this.prisma.movieList.findFirst({
+		const list = await this.prisma.list.findFirst({
 			where: { userDid, rkey: record.listRkey },
 		});
 

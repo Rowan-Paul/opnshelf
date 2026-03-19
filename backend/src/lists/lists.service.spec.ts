@@ -57,7 +57,7 @@ describe("ListsService", () => {
 	let service: ListsService;
 
 	const mockPrismaService = {
-		movieList: {
+		list: {
 			findMany: jest.fn(),
 			findFirst: jest.fn(),
 			create: jest.fn(),
@@ -109,7 +109,7 @@ describe("ListsService", () => {
 
 	describe("ensureDefaultLists", () => {
 		it("indexes repo-backed default lists before creating missing defaults", async () => {
-			mockPrismaService.movieList.findMany
+			mockPrismaService.list.findMany
 				.mockResolvedValueOnce([])
 				.mockResolvedValueOnce([
 					{
@@ -156,7 +156,7 @@ describe("ListsService", () => {
 					],
 				},
 			});
-			mockPrismaService.movieList.upsert.mockResolvedValue({
+			mockPrismaService.list.upsert.mockResolvedValue({
 				id: "list-favorites",
 				rkey: "favorites-rkey",
 				uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
@@ -175,7 +175,7 @@ describe("ListsService", () => {
 					cid: "cid-watchlist",
 				},
 			});
-			mockPrismaService.movieList.create.mockResolvedValue({
+			mockPrismaService.list.create.mockResolvedValue({
 				id: "list-watchlist",
 				rkey: "watchlist-rkey",
 				uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist-rkey",
@@ -199,7 +199,7 @@ describe("ListsService", () => {
 				limit: 100,
 				cursor: undefined,
 			});
-			expect(mockPrismaService.movieList.upsert).toHaveBeenCalledWith({
+			expect(mockPrismaService.list.upsert).toHaveBeenCalledWith({
 				where: { rkey: "favorites-rkey" },
 				create: {
 					rkey: "favorites-rkey",
@@ -236,7 +236,7 @@ describe("ListsService", () => {
 		});
 
 		it("does not create duplicates when both default lists already exist locally", async () => {
-			mockPrismaService.movieList.findMany.mockResolvedValue([
+			mockPrismaService.list.findMany.mockResolvedValue([
 				{
 					id: "list-watchlist",
 					rkey: "watchlist-rkey",
@@ -280,7 +280,7 @@ describe("ListsService", () => {
 
 	describe("getUserLists", () => {
 		it("should return lists with item counts", async () => {
-			mockPrismaService.movieList.findMany.mockResolvedValue([
+			mockPrismaService.list.findMany.mockResolvedValue([
 				{
 					id: "list-1",
 					rkey: "watchlist-abc123",
@@ -296,8 +296,8 @@ describe("ListsService", () => {
 
 			const result = await service.getUserLists("did:plc:abc123");
 
-			expect(result[0].movieCount).toBe(5);
-			expect(mockPrismaService.movieList.findMany).toHaveBeenCalledWith({
+			expect(result[0].itemCount).toBe(5);
+			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
 				orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
 				include: { _count: { select: { items: true } } },
@@ -305,7 +305,7 @@ describe("ListsService", () => {
 		});
 
 		it("should expose public list summaries via the same ordering", async () => {
-			mockPrismaService.movieList.findMany.mockResolvedValue([
+			mockPrismaService.list.findMany.mockResolvedValue([
 				{
 					id: "list-1",
 					rkey: "favorites",
@@ -324,13 +324,13 @@ describe("ListsService", () => {
 			).resolves.toMatchObject([
 				{
 					slug: "favorites",
-					movieCount: 2,
+					itemCount: 2,
 				},
 			]);
 		});
 
 		it("should expose public list details for a user's slug", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "favorites",
 				uri: "at://did:plc:public123/xyz.opnshelf.list/favorites",
@@ -350,7 +350,7 @@ describe("ListsService", () => {
 				slug: "favorites",
 				userDid: "did:plc:public123",
 			});
-			expect(mockPrismaService.movieList.findFirst).toHaveBeenCalledWith({
+			expect(mockPrismaService.list.findFirst).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:public123", slug: "favorites" },
 				include: {
 					_count: {
@@ -363,7 +363,7 @@ describe("ListsService", () => {
 
 	describe("getListsForItem", () => {
 		it("should return list membership for a movie", async () => {
-			mockPrismaService.movieList.findMany.mockResolvedValue([
+			mockPrismaService.list.findMany.mockResolvedValue([
 				{
 					id: "list-1",
 					name: "Watchlist",
@@ -394,7 +394,7 @@ describe("ListsService", () => {
 
 	describe("getList", () => {
 		it("should return all items when pagination is not requested", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "favorites",
 				uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites",
@@ -473,7 +473,7 @@ describe("ListsService", () => {
 		});
 
 		it("should clamp paginated requests to the last available page", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "watchlist",
 				uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist",
@@ -534,7 +534,7 @@ describe("ListsService", () => {
 
 	describe("addToList", () => {
 		it("should add a movie to a list", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "watchlist-abc123",
 			});
@@ -592,7 +592,7 @@ describe("ListsService", () => {
 		});
 
 		it("should add a show to a list", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "favorites-abc123",
 			});
@@ -652,7 +652,7 @@ describe("ListsService", () => {
 
 	describe("removeFromList", () => {
 		it("should remove a media item from a list", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",
 				rkey: "watchlist-abc123",
 			});
@@ -684,7 +684,7 @@ describe("ListsService", () => {
 
 	describe("indexListItemRecord", () => {
 		it("should index a movie list item record", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
 			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
 
 			await service.indexListItemRecord(
@@ -715,7 +715,7 @@ describe("ListsService", () => {
 		});
 
 		it("should index a show list item record", async () => {
-			mockPrismaService.movieList.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
 			mockShowsService.getShowByTMDBId.mockResolvedValue({ showId: "456" });
 
 			await service.indexListItemRecord(

@@ -1,4 +1,4 @@
-import type { MediaInListDto, MovieListDto } from "./dto/list.dto";
+import type { MediaInListDto, ListDto } from "./dto/list.dto";
 import { parseScopedShowMediaId } from "./list-media-id.util";
 
 type ListItemRecord = {
@@ -82,7 +82,6 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 		mediaId: item.mediaId,
 		seasonNumber: parsedShowScope?.seasonNumber,
 		episodeNumber: parsedShowScope?.episodeNumber,
-		movieId: item.mediaType === "movie" ? item.mediaId : undefined,
 		notes: item.notes ?? undefined,
 		position: item.position,
 		createdAt: item.createdAt.toISOString(),
@@ -101,24 +100,10 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 			overview: mediaOverview ?? undefined,
 			colors: (mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
 		},
-		movie:
-			item.mediaType === "movie"
-				? {
-						movieId: item.mediaId,
-						title: mediaTitle ?? "",
-						posterPath: mediaPosterPath ?? undefined,
-						backdropPath: mediaBackdropPath ?? undefined,
-						releaseYear: mediaReleaseYear ?? undefined,
-						releaseDate: mediaReleaseDate?.toISOString() ?? undefined,
-						overview: mediaOverview ?? undefined,
-						colors:
-							(mediaColors as MediaInListDto["media"]["colors"]) ?? undefined,
-					}
-				: undefined,
 	};
 }
 
-export function mapListToDto(list: ListRecord): MovieListDto {
+export function mapListToDto(list: ListRecord): ListDto {
 	return {
 		id: list.id,
 		rkey: list.rkey,

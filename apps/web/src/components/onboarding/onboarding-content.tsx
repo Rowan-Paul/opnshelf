@@ -65,6 +65,7 @@ type OnboardingContentProps = {
 	displayNameId: string;
 	timezoneId: string;
 	fileInputId: string;
+	hasBlueskyProfile: boolean;
 	userAvatarUrl: string;
 	followImportStatus: FollowImportStatus;
 	followImportResult: FollowImportResult | null;
@@ -104,6 +105,7 @@ export function OnboardingContent({
 	displayNameId,
 	timezoneId,
 	fileInputId,
+	hasBlueskyProfile,
 	userAvatarUrl,
 	followImportStatus,
 	followImportResult,
@@ -130,8 +132,16 @@ export function OnboardingContent({
 	onSkipHistoryImport,
 	onComplete,
 }: OnboardingContentProps) {
+	const visibleStepDetails = hasBlueskyProfile
+		? ONBOARDING_STEP_DETAILS
+		: ONBOARDING_STEP_DETAILS.filter((_, index) => index !== 2);
+	const visibleStepIcons = hasBlueskyProfile
+		? STEP_ICONS
+		: STEP_ICONS.filter((_, index) => index !== 2);
+	const visibleStep = hasBlueskyProfile ? step : step >= 4 ? step - 1 : step;
+	const totalSteps = visibleStepDetails.length;
 	const currentStepDetail =
-		ONBOARDING_STEP_DETAILS[step - 1] ?? ONBOARDING_STEP_DETAILS[0];
+		visibleStepDetails[visibleStep - 1] ?? visibleStepDetails[0];
 	const isTraktImporting =
 		activeTab === "trakt" && importProgress.phase === "importing";
 	const showImportStatusAboveInput =
@@ -158,11 +168,11 @@ export function OnboardingContent({
 						className="m-0 grid list-none gap-2 p-0"
 						aria-label="Onboarding steps"
 					>
-						{ONBOARDING_STEP_DETAILS.map((item, index) => {
-							const StepIcon = STEP_ICONS[index];
+						{visibleStepDetails.map((item, index) => {
+							const StepIcon = visibleStepIcons[index];
 							const stepNumber = index + 1;
-							const isComplete = step > stepNumber;
-							const isActive = step === stepNumber;
+							const isComplete = visibleStep > stepNumber;
+							const isActive = visibleStep === stepNumber;
 
 							return (
 								<li
@@ -200,7 +210,7 @@ export function OnboardingContent({
 					<header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 						<div>
 							<p className="md-label-small m-0 uppercase text-(--md-sys-color-primary)">
-								Step {step} of {ONBOARDING_STEPS}
+								Step {visibleStep} of {totalSteps}
 							</p>
 							<h2 className="md-title-large m-0 mt-1">
 								{currentStepDetail.title}
@@ -229,7 +239,9 @@ export function OnboardingContent({
 							</p>
 							<ul className="md-body-medium m-0 grid list-disc gap-2 pl-5 text-(--md-sys-color-on-surface-variant)">
 								<li>Profile and timezone come first.</li>
-								<li>Import your Bluesky following already on OpnShelf.</li>
+								{hasBlueskyProfile ? (
+									<li>Import your Bluesky following already on OpnShelf.</li>
+								) : null}
 								<li>Import from Trakt username or CSV export.</li>
 								<li>You can skip import and start tracking instantly.</li>
 							</ul>
@@ -250,27 +262,29 @@ export function OnboardingContent({
 
 					{step === 2 && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
-							<div className="grid grid-cols-[auto_1fr] items-center gap-4 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
-								<div className="h-13 w-13 overflow-hidden rounded-full border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container-highest)">
-									{userAvatarUrl ? (
-										<img
-											src={userAvatarUrl}
-											alt="BlueSky avatar"
-											className="h-full w-full object-cover"
-										/>
-									) : (
-										<div className="md-body-small grid h-full w-full place-items-center text-(--md-sys-color-on-surface-variant)">
-											No avatar
-										</div>
-									)}
+							{hasBlueskyProfile ? (
+								<div className="grid grid-cols-[auto_1fr] items-center gap-4 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
+									<div className="h-13 w-13 overflow-hidden rounded-full border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container-highest)">
+										{userAvatarUrl ? (
+											<img
+												src={userAvatarUrl}
+												alt="BlueSky avatar"
+												className="h-full w-full object-cover"
+											/>
+										) : (
+											<div className="md-body-small grid h-full w-full place-items-center text-(--md-sys-color-on-surface-variant)">
+												No avatar
+											</div>
+										)}
+									</div>
+									<div>
+										<p className="md-title-small m-0">BlueSky profile linked</p>
+										<p className="md-body-small m-0 mt-1 text-(--md-sys-color-on-surface-variant)">
+											Avatar sync is active. Manual uploads will be added soon.
+										</p>
+									</div>
 								</div>
-								<div>
-									<p className="md-title-small m-0">BlueSky profile linked</p>
-									<p className="md-body-small m-0 mt-1 text-(--md-sys-color-on-surface-variant)">
-										Avatar sync is active. Manual uploads will be added soon.
-									</p>
-								</div>
-							</div>
+							) : null}
 
 							<div className="grid gap-3 md:grid-cols-2">
 								<label className="grid gap-1.5" htmlFor={displayNameId}>
@@ -361,7 +375,7 @@ export function OnboardingContent({
 						</div>
 					)}
 
-					{step === 3 && (
+					{step === 3 && hasBlueskyProfile && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
 							<p className="md-body-medium m-0">
 								Import the people you already follow on Bluesky who are on
@@ -645,7 +659,7 @@ export function OnboardingContent({
 							<div className="flex flex-wrap gap-2">
 								<M3Button
 									variant="text"
-									onClick={() => onStepChange(2)}
+									onClick={() => onStepChange(hasBlueskyProfile ? 3 : 2)}
 									disabled={isImportBusy}
 								>
 									Back

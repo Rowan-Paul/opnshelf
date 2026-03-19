@@ -145,6 +145,10 @@ export type UserDto = {
         [key: string]: unknown;
     } | null;
     /**
+     * Whether this DID resolves to a real Bluesky/AppView profile
+     */
+    hasBlueskyProfile: boolean;
+    /**
      * When onboarding was completed
      */
     onboardingCompletedAt: {
@@ -431,14 +435,14 @@ export type MarkShowWatchedDto = {
     watchedAt?: string;
 };
 
-export type MovieListSummaryDto = {
+export type ListSummaryDto = {
     id: string;
     rkey: string;
     name: string;
     description?: string;
     slug: string;
     isDefault: boolean;
-    movieCount: number;
+    itemCount: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -467,25 +471,15 @@ export type MediaInListDto = {
      * Episode number for episode show items
      */
     episodeNumber?: number;
-    /**
-     * Legacy movieId field for movie items
-     */
-    movieId?: string;
     notes?: string;
     position: number;
     createdAt: string;
     media: {
         [key: string]: unknown;
     };
-    /**
-     * Legacy movie payload for movie items
-     */
-    movie?: {
-        [key: string]: unknown;
-    };
 };
 
-export type MovieListDto = {
+export type ListDto = {
     id: string;
     rkey: string;
     uri: string;
@@ -499,7 +493,7 @@ export type MovieListDto = {
     items?: Array<MediaInListDto>;
 };
 
-export type MovieListWithMoviesDto = {
+export type ListWithItemsDto = {
     id: string;
     rkey: string;
     uri: string;
@@ -563,7 +557,7 @@ export type AddToListDto = {
     notes?: string;
 };
 
-export type MovieListsForItemDto = {
+export type ListsForItemDto = {
     listId: string;
     listName: string;
     listSlug: string;
@@ -1662,7 +1656,7 @@ export type ListsControllerGetUserListsResponses = {
     /**
      * List of user's lists
      */
-    200: Array<MovieListSummaryDto>;
+    200: Array<ListSummaryDto>;
 };
 
 export type ListsControllerGetUserListsResponse = ListsControllerGetUserListsResponses[keyof ListsControllerGetUserListsResponses];
@@ -1685,7 +1679,7 @@ export type ListsControllerCreateListResponses = {
     /**
      * List created
      */
-    201: MovieListDto;
+    201: ListDto;
 };
 
 export type ListsControllerCreateListResponse = ListsControllerCreateListResponses[keyof ListsControllerCreateListResponses];
@@ -1708,7 +1702,7 @@ export type ListsControllerInitDefaultListsResponses = {
     /**
      * Default lists
      */
-    200: Array<MovieListDto>;
+    200: Array<ListDto>;
 };
 
 export type ListsControllerInitDefaultListsResponse = ListsControllerInitDefaultListsResponses[keyof ListsControllerInitDefaultListsResponses];
@@ -1729,7 +1723,7 @@ export type ListsControllerGetPublicUserListsResponses = {
     /**
      * Public list summaries for the user
      */
-    200: Array<MovieListSummaryDto>;
+    200: Array<ListSummaryDto>;
 };
 
 export type ListsControllerGetPublicUserListsResponse = ListsControllerGetPublicUserListsResponses[keyof ListsControllerGetPublicUserListsResponses];
@@ -1768,9 +1762,9 @@ export type ListsControllerGetPublicUserListErrors = {
 
 export type ListsControllerGetPublicUserListResponses = {
     /**
-     * Public list details with movies
+     * Public list details with items
      */
-    200: MovieListWithMoviesDto;
+    200: ListWithItemsDto;
 };
 
 export type ListsControllerGetPublicUserListResponse = ListsControllerGetPublicUserListResponses[keyof ListsControllerGetPublicUserListResponses];
@@ -1839,9 +1833,9 @@ export type ListsControllerGetListErrors = {
 
 export type ListsControllerGetListResponses = {
     /**
-     * List details with movies
+     * List details with items
      */
-    200: MovieListWithMoviesDto;
+    200: ListWithItemsDto;
 };
 
 export type ListsControllerGetListResponse = ListsControllerGetListResponses[keyof ListsControllerGetListResponses];
@@ -1873,7 +1867,7 @@ export type ListsControllerUpdateListResponses = {
     /**
      * List updated
      */
-    200: MovieListDto;
+    200: ListDto;
 };
 
 export type ListsControllerUpdateListResponse = ListsControllerUpdateListResponses[keyof ListsControllerUpdateListResponses];
@@ -1906,19 +1900,6 @@ export type ListsControllerAddItemToListResponses = {
      * Item added to list
      */
     200: unknown;
-};
-
-export type ListsControllerAddToListData = {
-    body?: never;
-    path: {
-        slug: string;
-    };
-    query?: never;
-    url: '/lists/{slug}/movies';
-};
-
-export type ListsControllerAddToListResponses = {
-    201: unknown;
 };
 
 export type ListsControllerRemoveItemFromListData = {
@@ -1959,20 +1940,6 @@ export type ListsControllerRemoveItemFromListResponses = {
     200: unknown;
 };
 
-export type ListsControllerRemoveFromListData = {
-    body?: never;
-    path: {
-        slug: string;
-        movieId: string;
-    };
-    query?: never;
-    url: '/lists/{slug}/movies/{movieId}';
-};
-
-export type ListsControllerRemoveFromListResponses = {
-    200: unknown;
-};
-
 export type ListsControllerGetListsForItemData = {
     body?: never;
     path: {
@@ -2000,23 +1967,10 @@ export type ListsControllerGetListsForItemResponses = {
     /**
      * Lists with membership status
      */
-    200: Array<MovieListsForItemDto>;
+    200: Array<ListsForItemDto>;
 };
 
 export type ListsControllerGetListsForItemResponse = ListsControllerGetListsForItemResponses[keyof ListsControllerGetListsForItemResponses];
-
-export type ListsControllerGetListsForMovieData = {
-    body?: never;
-    path: {
-        movieId: string;
-    };
-    query?: never;
-    url: '/lists/for-movie/{movieId}';
-};
-
-export type ListsControllerGetListsForMovieResponses = {
-    200: unknown;
-};
 
 export type SocialControllerSearchPeopleData = {
     body?: never;

@@ -1,6 +1,6 @@
 import {
+	type ListSummaryDto,
 	listsControllerGetUserListsOptions,
-	type MovieListSummaryDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
@@ -49,13 +49,13 @@ export default function ListsScreen() {
 	}, []);
 
 	const renderItem = useCallback(
-		({ item }: { item: MovieListSummaryDto }) => (
+		({ item }: { item: ListSummaryDto }) => (
 			<ListCard list={item} onPress={() => handleListPress(item.slug)} />
 		),
 		[handleListPress],
 	);
 
-	const keyExtractor = useCallback((item: MovieListSummaryDto) => item.id, []);
+	const keyExtractor = useCallback((item: ListSummaryDto) => item.id, []);
 
 	if (isListsLoading) {
 		return (
@@ -161,7 +161,7 @@ export default function ListsScreen() {
 }
 
 interface ListCardProps {
-	list: MovieListSummaryDto;
+	list: ListSummaryDto;
 	onPress: () => void;
 }
 
@@ -231,7 +231,7 @@ function ListCard({ list, onPress }: ListCardProps) {
 				<Text
 					style={[styles.listCardCount, { color: colors.onSurfaceVariant }]}
 				>
-					{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
+					{list.itemCount} item{list.itemCount !== 1 ? "s" : ""}
 				</Text>
 			</View>
 		</TouchableOpacity>

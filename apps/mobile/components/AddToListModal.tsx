@@ -5,7 +5,7 @@ import {
 	listsControllerGetListQueryKey,
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
-	type MovieListsForItemDto,
+	type ListsForItemDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,7 +48,7 @@ export const AddToListModal = memo(function AddToListModal({
 		}),
 		enabled: visible,
 	});
-	const typedListsForMovie = (listsForMovie || []) as MovieListsForItemDto[];
+	const typedListsForMovie = (listsForMovie || []) as ListsForItemDto[];
 
 	const addMutation = useMutation({
 		mutationKey: ["lists", "addItem", mediaType, mediaId],
@@ -158,7 +158,7 @@ export const AddToListModal = memo(function AddToListModal({
 });
 
 interface ListItemProps {
-	list: MovieListsForItemDto;
+	list: ListsForItemDto;
 	isAddPending: boolean;
 	isRemovePending: boolean;
 	onPress: (slug: string, isInList: boolean) => void;

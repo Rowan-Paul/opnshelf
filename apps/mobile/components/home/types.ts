@@ -24,7 +24,7 @@ export type DashboardListItem = {
 	id: string;
 	name: string;
 	slug: string;
-	movieCount: number;
+	itemCount: number;
 	updatedAt: string;
 };
 

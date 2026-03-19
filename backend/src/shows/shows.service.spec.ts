@@ -55,7 +55,7 @@ describe("ShowsService", () => {
 			upsert: jest.fn(),
 			update: jest.fn(),
 		},
-		movieList: {
+		list: {
 			findFirst: jest.fn(),
 		},
 	};
@@ -498,7 +498,7 @@ describe("ShowsService", () => {
 				colors: { primary: "#111111" },
 			});
 
-			mockPrismaService.movieList.findFirst.mockResolvedValue({
+			mockPrismaService.list.findFirst.mockResolvedValue({
 				items: [
 					{
 						mediaType: "movie",

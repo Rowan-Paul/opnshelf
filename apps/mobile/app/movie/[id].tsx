@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import type { TmdbMovieDetailDto } from "@opnshelf/api";
 import {
 	authControllerMeOptions,
+	type ListsForItemDto,
 	listsControllerGetListsForItemOptions,
-	type MovieListsForItemDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetMovieWatchHistoryOptions,
@@ -199,7 +199,7 @@ export default function MovieDetailScreen() {
 		refetchListsForMovie,
 	]);
 
-	const listsForMovieTyped = (listsForMovie || []) as MovieListsForItemDto[];
+	const listsForMovieTyped = (listsForMovie || []) as ListsForItemDto[];
 	const listsCount = listsForMovieTyped.filter((l) => l.isInList).length;
 
 	const userTimezone = userSettings?.timezone || "UTC";

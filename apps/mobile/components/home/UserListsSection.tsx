@@ -76,7 +76,7 @@ export function UserListsSection({
 									{list.name}
 								</Text>
 								<Text style={[styles.listCount, { color: colors.onSurfaceVariant }]}> 
-									{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
+									{list.itemCount} item{list.itemCount !== 1 ? "s" : ""}
 								</Text>
 							</View>
 						</Pressable>

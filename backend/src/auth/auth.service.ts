@@ -221,6 +221,36 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/**
+	 * Check whether this DID has an actual Bluesky profile record.
+	 * A DID may resolve through Bluesky AppView even when the repo has never
+	 * created app.bsky.actor.profile/self, which should not count as linked.
+	 */
+	async hasBlueskyProfile(did: string): Promise<boolean> {
+		const session = await this.restore(did);
+		if (!session) {
+			return false;
+		}
+
+		try {
+			const agent = new Agent(
+				session as unknown as ConstructorParameters<typeof Agent>[0],
+			);
+			await agent.com.atproto.repo.getRecord({
+				repo: did,
+				collection: "app.bsky.actor.profile",
+				rkey: "self",
+			});
+			return true;
+		} catch (error) {
+			this.logger.warn(
+				`Failed to determine Bluesky profile status for ${did}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+			return false;
+		}
+	}
+
+	/**
 	 * Get session record by opaque id (cookie value). Used to resolve DID from cookie.
 	 */
 	async getSessionById(sessionId: string) {
@@ -272,12 +302,30 @@ export class AuthService implements OnModuleInit {
 		const agent = new Agent(
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
-		const profile = await agent.getProfile({ actor: session.did });
+		const repo = await agent.com.atproto.repo.describeRepo({
+			repo: session.did,
+		});
+		const handle = repo.data.handle;
+
+		let displayName: string | null = null;
+		let avatar: string | null = null;
+
+		try {
+			const profile = await agent.getProfile({ actor: session.did });
+			displayName = profile.data.displayName || null;
+			avatar = profile.data.avatar || null;
+		} catch (error) {
+			this.logger.warn(
+				`Failed to fetch app profile for ${session.did}; continuing with repo handle only`,
+				error instanceof Error ? error.stack : undefined,
+			);
+		}
+
 		return {
 			did: session.did,
-			handle: profile.data.handle,
-			displayName: profile.data.displayName || null,
-			avatar: profile.data.avatar || null,
+			handle,
+			displayName,
+			avatar,
 		};
 	}
 

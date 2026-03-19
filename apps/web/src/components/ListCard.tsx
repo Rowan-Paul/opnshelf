@@ -1,4 +1,4 @@
-import type { MovieListSummaryDto } from "@opnshelf/api";
+import type { ListSummaryDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { List, Star } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
@@ -13,7 +13,7 @@ import { getProfileListDetailRoute } from "@/lib/profile-routes";
 
 interface ListCardProps {
 	handle: string;
-	list: MovieListSummaryDto;
+	list: ListSummaryDto;
 }
 
 export function ListCard({ handle, list }: ListCardProps) {
@@ -71,7 +71,7 @@ export function ListCard({ handle, list }: ListCardProps) {
 						className="md-body-medium"
 						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 					>
-						{list.movieCount} item{list.movieCount !== 1 ? "s" : ""}
+						{list.itemCount} item{list.itemCount !== 1 ? "s" : ""}
 					</p>
 				</M3CardContent>
 			</M3Card>

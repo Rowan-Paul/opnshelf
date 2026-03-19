@@ -39,7 +39,7 @@ describe("UserDeletionService", () => {
 		listItem: {
 			findMany: jest.fn(),
 		},
-		movieList: {
+		list: {
 			findMany: jest.fn(),
 		},
 	} as unknown as PrismaService;
@@ -55,7 +55,7 @@ describe("UserDeletionService", () => {
 		prisma.trackedEpisode.findMany = jest.fn().mockResolvedValue([]);
 		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
 		prisma.listItem.findMany = jest.fn().mockResolvedValue([]);
-		prisma.movieList.findMany = jest.fn().mockResolvedValue([]);
+		prisma.list.findMany = jest.fn().mockResolvedValue([]);
 
 		service = new UserDeletionService(prisma);
 	});
@@ -165,7 +165,7 @@ describe("UserDeletionService", () => {
 			],
 		]);
 		expect(prisma.listItem.findMany).not.toHaveBeenCalled();
-		expect(prisma.movieList.findMany).not.toHaveBeenCalled();
+		expect(prisma.list.findMany).not.toHaveBeenCalled();
 		expect(prisma.user.delete).toHaveBeenCalledWith({
 			where: { did: "did:plc:test" },
 		});

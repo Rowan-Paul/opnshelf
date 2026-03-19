@@ -21,7 +21,7 @@ model User {
   
   trackedMovies TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
-  lists        MovieList[]
+  lists        List[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
   
@@ -168,7 +168,7 @@ model TrackedEpisode {
   @@index([cid])
 }
 
-model MovieList {
+model List {
   id          String   @id @default(cuid())
   rkey        String   @unique
   uri         String
@@ -199,7 +199,7 @@ model ListItem {
   cid       String?
   
   listId    String
-  list      MovieList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  list      List      @relation(fields: [listId], references: [id], onDelete: Cascade)
   
   mediaType MediaType
   mediaId   String

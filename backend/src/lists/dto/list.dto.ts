@@ -123,9 +123,6 @@ export class MediaInListDto {
 	@ApiPropertyOptional({ description: "Episode number for episode show items" })
 	episodeNumber?: number;
 
-	@ApiPropertyOptional({ description: "Legacy movieId field for movie items" })
-	movieId?: string;
-
 	@ApiPropertyOptional()
 	notes?: string;
 
@@ -156,26 +153,9 @@ export class MediaInListDto {
 			muted?: string;
 		};
 	};
-
-	@ApiPropertyOptional({ description: "Legacy movie payload for movie items" })
-	movie?: {
-		movieId: string;
-		title: string;
-		posterPath?: string;
-		backdropPath?: string;
-		releaseYear?: number;
-		releaseDate?: string;
-		overview?: string;
-		colors?: {
-			primary?: string;
-			secondary?: string;
-			accent?: string;
-			muted?: string;
-		};
-	};
 }
 
-export class MovieListDto {
+export class ListDto {
 	@ApiProperty()
 	id: string;
 
@@ -210,7 +190,7 @@ export class MovieListDto {
 	items?: MediaInListDto[];
 }
 
-export class MovieListSummaryDto {
+export class ListSummaryDto {
 	@ApiProperty()
 	id: string;
 
@@ -230,7 +210,7 @@ export class MovieListSummaryDto {
 	isDefault: boolean;
 
 	@ApiProperty()
-	movieCount: number;
+	itemCount: number;
 
 	@ApiProperty()
 	createdAt: string;
@@ -239,7 +219,7 @@ export class MovieListSummaryDto {
 	updatedAt: string;
 }
 
-export class MovieListWithMoviesDto {
+export class ListWithItemsDto {
 	@ApiProperty()
 	id: string;
 
@@ -294,7 +274,7 @@ export class MovieListWithMoviesDto {
 	hasNextPage: boolean;
 }
 
-export class MovieListsForItemDto {
+export class ListsForItemDto {
 	@ApiProperty()
 	listId: string;
 

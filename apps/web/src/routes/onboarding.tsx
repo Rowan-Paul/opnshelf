@@ -127,7 +127,19 @@ function OnboardingPage() {
 		...usersControllerImportMyHistoryMutation(),
 	});
 
-	const progress = useMemo(() => (step / ONBOARDING_STEPS) * 100, [step]);
+	const userAvatarUrl = typeof user?.avatar === "string" ? user.avatar : "";
+	const userDisplayName =
+		typeof user?.displayName === "string" ? user.displayName : "";
+	const userHandle = typeof user?.handle === "string" ? user.handle : "";
+	const hasBlueskyProfile = user?.hasBlueskyProfile === true;
+	const visibleStep = hasBlueskyProfile ? step : step >= 4 ? step - 1 : step;
+	const totalSteps = hasBlueskyProfile
+		? ONBOARDING_STEPS
+		: ONBOARDING_STEPS - 1;
+	const progress = useMemo(
+		() => (visibleStep / totalSteps) * 100,
+		[totalSteps, visibleStep],
+	);
 	const isImporting =
 		fetchTraktMutation.isPending || importHistoryMutation.isPending;
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
@@ -137,10 +149,6 @@ function OnboardingPage() {
 					(importProgress.processedItems / importProgress.totalItems) * 100,
 				)
 			: 0;
-	const userAvatarUrl = typeof user?.avatar === "string" ? user.avatar : "";
-	const userDisplayName =
-		typeof user?.displayName === "string" ? user.displayName : "";
-	const userHandle = typeof user?.handle === "string" ? user.handle : "";
 	const isCompleting = completeOnboardingMutation.isPending;
 	const isSavingProfile =
 		updateProfileMutation.isPending || updateSettingsMutation.isPending;
@@ -173,6 +181,12 @@ function OnboardingPage() {
 		setTimeFormat(settings.timeFormat === "12h" ? "12h" : "24h");
 	}, [settings]);
 
+	useEffect(() => {
+		if (!hasBlueskyProfile && step === 3) {
+			setStep(4);
+		}
+	}, [hasBlueskyProfile, step]);
+
 	if (isAuthLoading) {
 		return (
 			<div className="flex-1 flex items-center justify-center">
@@ -200,7 +214,7 @@ function OnboardingPage() {
 		});
 
 		toast.success("Profile and time preferences saved");
-		setStep(3);
+		setStep(hasBlueskyProfile ? 3 : 4);
 	};
 
 	const handleBlueskyFollowImport = async () => {
@@ -452,6 +466,7 @@ function OnboardingPage() {
 			displayNameId={displayNameId}
 			timezoneId={timezoneId}
 			fileInputId={fileInputId}
+			hasBlueskyProfile={hasBlueskyProfile}
 			userAvatarUrl={userAvatarUrl}
 			followImportStatus={followImportStatus}
 			followImportResult={followImportResult}

@@ -14,6 +14,11 @@ export class UserDto {
 	avatar: string | null;
 
 	@ApiProperty({
+		description: "Whether this DID resolves to a real Bluesky/AppView profile",
+	})
+	hasBlueskyProfile: boolean;
+
+	@ApiProperty({
 		description: "When onboarding was completed",
 		nullable: true,
 	})
