@@ -139,7 +139,7 @@ export default function ListsScreen() {
 									{ color: colors.onSurfaceVariant },
 								]}
 							>
-								Your default lists will appear after you add items
+								Your starter lists are ready whenever you want to add items.
 							</Text>
 						</CardHeader>
 						<CardContent>

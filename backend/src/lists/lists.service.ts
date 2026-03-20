@@ -203,7 +203,17 @@ export class ListsService {
 		}));
 	}
 
-	async ensureDefaultLists(
+	async hasAllDefaultLists(userDid: string): Promise<boolean> {
+		const defaultLists = await this.prisma.list.findMany({
+			where: { userDid, isDefault: true },
+			select: { slug: true },
+		});
+		const existingSlugs = new Set(defaultLists.map((list) => list.slug));
+
+		return DEFAULT_LISTS.every((list) => existingSlugs.has(list.slug));
+	}
+
+	async provisionDefaultLists(
 		userDid: string,
 		session: ATSession,
 	): Promise<ListDto[]> {

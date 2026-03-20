@@ -17,7 +17,7 @@ jest.mock("@atproto/tap", () => ({
 }));
 
 import { IngesterService } from "../ingester/ingester.service";
-import { ProfileService } from "../users/profile.service";
+import { UsersService } from "../users/users.service";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 
@@ -54,8 +54,8 @@ describe("AuthController", () => {
 		addRepo: jest.fn().mockResolvedValue(undefined),
 	};
 
-	const mockProfileService = {
-		seedProfileForNewUser: jest.fn().mockResolvedValue(undefined),
+	const mockUsersService = {
+		initializeProfileForNewUser: jest.fn().mockResolvedValue(undefined),
 	};
 
 	const mockConfigService = {
@@ -99,7 +99,7 @@ describe("AuthController", () => {
 				{ provide: AuthService, useValue: mockAuthService },
 				{ provide: ConfigService, useValue: mockConfigService },
 				{ provide: IngesterService, useValue: mockIngesterService },
-				{ provide: ProfileService, useValue: mockProfileService },
+				{ provide: UsersService, useValue: mockUsersService },
 			],
 		}).compile();
 
@@ -297,6 +297,45 @@ describe("AuthController", () => {
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/auth/complete",
+			);
+		});
+
+		it("initializes the seeded profile and default lists for new users", async () => {
+			const mockSession = { did: "did:plc:new123" };
+			const mockProfile = {
+				did: "did:plc:new123",
+				handle: "new-user.bsky.social",
+				displayName: "New User",
+				avatar: "https://example.com/avatar.jpg",
+			};
+			const mockSessionRecord = {
+				id: "session-123",
+				userDid: "did:plc:new123",
+			};
+
+			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+			mockAuthService.upsertUser.mockResolvedValue({
+				user: mockProfile,
+				isNewUser: true,
+			});
+			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
+
+			const req = createMockRequest({
+				url: "/auth/callback?code=abc&state=xyz",
+			});
+			const res = createMockResponse();
+
+			await controller.callback(req, res);
+
+			expect(mockUsersService.initializeProfileForNewUser).toHaveBeenCalledWith(
+				"did:plc:new123",
+				mockSession,
+				{
+					handle: "new-user.bsky.social",
+					displayName: "New User",
+					avatarUrl: "https://example.com/avatar.jpg",
+				},
 			);
 		});
 

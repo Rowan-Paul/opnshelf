@@ -4,6 +4,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import { ListsService } from "../lists/lists.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	CompleteOnboardingResponseDto,
@@ -39,6 +40,7 @@ export class UsersService {
 		private readonly importHistoryService: ImportHistoryService,
 		private readonly userDeletionService: UserDeletionService,
 		private readonly profileService: ProfileService,
+		private readonly listsService: ListsService,
 	) {}
 
 	/**
@@ -109,12 +111,13 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const updatedProfile = await this.profileService.updateProfile(
+		const updatedProfile = await this.runProfileWriteWithDefaultLists(
 			did,
 			session,
-			{
-				displayName: dto.displayName,
-			},
+			() =>
+				this.profileService.updateProfile(did, session, {
+					displayName: dto.displayName,
+				}),
 		);
 
 		this.logger.log(`Updated OpnShelf profile for user ${did}`);
@@ -137,12 +140,13 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const updatedProfile = await this.profileService.updateProfile(
+		const updatedProfile = await this.runProfileWriteWithDefaultLists(
 			did,
 			session,
-			{
-				avatar: file,
-			},
+			() =>
+				this.profileService.updateProfile(did, session, {
+					avatar: file,
+				}),
 		);
 		this.logger.log(`Uploaded avatar for user ${did}`);
 		return updatedProfile;
@@ -158,9 +162,27 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const updatedProfile = await this.profileService.deleteAvatar(did, session);
+		const updatedProfile = await this.runProfileWriteWithDefaultLists(
+			did,
+			session,
+			() => this.profileService.deleteAvatar(did, session),
+		);
 		this.logger.log(`Deleted avatar for user ${did}`);
 		return updatedProfile;
+	}
+
+	async initializeProfileForNewUser(
+		did: string,
+		session: ATSession,
+		seed: {
+			handle: string;
+			displayName: string | null;
+			avatarUrl: string | null;
+		},
+	): Promise<void> {
+		await this.runProfileWriteWithDefaultLists(did, session, () =>
+			this.profileService.seedProfileForNewUser(did, session, seed),
+		);
 	}
 
 	async streamUserAvatar(
@@ -400,5 +422,42 @@ export class UsersService {
 		}
 
 		return [...followedDids];
+	}
+
+	private async runProfileWriteWithDefaultLists<T>(
+		did: string,
+		session: ATSession,
+		writeProfile: () => Promise<T>,
+	): Promise<T> {
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: { profileRkey: true },
+		});
+		const hadProfileRecord = Boolean(user?.profileRkey);
+		const needsDefaultLists =
+			!(await this.listsService.hasAllDefaultLists(did));
+		const result = await writeProfile();
+
+		if (!needsDefaultLists) {
+			return result;
+		}
+
+		try {
+			await this.listsService.provisionDefaultLists(did, session);
+		} catch (error) {
+			if (!hadProfileRecord) {
+				try {
+					await this.profileService.deleteProfileRecordIndex(did);
+				} catch (rollbackError) {
+					this.logger.warn(
+						`Failed to roll back profile index after default list provisioning failed for ${did}`,
+						rollbackError instanceof Error ? rollbackError.stack : undefined,
+					);
+				}
+			}
+			throw error;
+		}
+
+		return result;
 	}
 }

@@ -14,7 +14,7 @@ import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { IngesterService } from "../ingester/ingester.service";
-import { ProfileService } from "../users/profile.service";
+import { UsersService } from "../users/users.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
@@ -37,7 +37,7 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly configService: ConfigService,
 		private readonly ingesterService: IngesterService,
-		private readonly profileService: ProfileService,
+		private readonly usersService: UsersService,
 	) {}
 
 	/**
@@ -300,22 +300,15 @@ export class AuthController {
 			}
 
 			if (isNewUser) {
-				try {
-					await this.profileService.seedProfileForNewUser(
-						session.did,
-						session,
-						{
-							handle: profile.handle,
-							displayName: profile.displayName,
-							avatarUrl: profile.avatar,
-						},
-					);
-				} catch (profileError) {
-					this.logger.warn(
-						`Failed to seed OpnShelf profile for ${session.did}`,
-						profileError instanceof Error ? profileError.stack : undefined,
-					);
-				}
+				await this.usersService.initializeProfileForNewUser(
+					session.did,
+					session,
+					{
+						handle: profile.handle,
+						displayName: profile.displayName,
+						avatarUrl: profile.avatar,
+					},
+				);
 			}
 
 			// Resolve opaque session id (cookie stores this, not DID)

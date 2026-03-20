@@ -90,7 +90,7 @@ function ProfileListsPage() {
 						</M3CardTitle>
 						<M3CardDescription>
 							{isOwner
-								? "Your default lists will appear after you add movies"
+								? "Your starter lists are ready whenever you want to add movies."
 								: `${displayName} hasn&apos;t published any list summaries yet.`}
 						</M3CardDescription>
 					</M3CardHeader>

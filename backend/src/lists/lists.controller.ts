@@ -51,10 +51,6 @@ export class ListsController {
 	async getUserLists(
 		@Req() req: AuthenticatedRequest,
 	): Promise<ListSummaryDto[]> {
-		await this.listsService.ensureDefaultLists(
-			req.user.did,
-			req.user.session as ATSession,
-		);
 		return this.listsService.getUserLists(req.user.did);
 	}
 
@@ -72,19 +68,6 @@ export class ListsController {
 			req.user.did,
 			req.user.session as ATSession,
 			dto,
-		);
-	}
-
-	@Post("init-defaults")
-	@UseGuards(AuthGuard)
-	@ApiBearerAuth()
-	@ApiOperation({ summary: "Initialize default lists (watchlist, favorites)" })
-	@ApiOkResponse({ description: "Default lists", type: [ListDto] })
-	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async initDefaultLists(@Req() req: AuthenticatedRequest): Promise<ListDto[]> {
-		return this.listsService.ensureDefaultLists(
-			req.user.did,
-			req.user.session as ATSession,
 		);
 	}
 
@@ -251,10 +234,6 @@ export class ListsController {
 		@Param("mediaType") mediaType: "movie" | "show",
 		@Param("mediaId") mediaId: string,
 	): Promise<ListsForItemDto[]> {
-		await this.listsService.ensureDefaultLists(
-			req.user.did,
-			req.user.session as ATSession,
-		);
 		return this.listsService.getListsForItem(req.user.did, mediaType, mediaId);
 	}
 }

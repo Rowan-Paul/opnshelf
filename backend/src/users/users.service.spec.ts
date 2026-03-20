@@ -9,6 +9,7 @@ import type {
 	ImportHistoryResponseDto,
 	NormalizedImportItemDto,
 } from "./dto/import-history.dto";
+import type { ListsService } from "../lists/lists.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
@@ -83,9 +84,16 @@ describe("UsersService", () => {
 
 	const profileService = {
 		updateProfile: jest.fn(),
+		seedProfileForNewUser: jest.fn(),
 		deleteAvatar: jest.fn(),
+		deleteProfileRecordIndex: jest.fn(),
 		streamAvatar: jest.fn(),
 	} as unknown as ProfileService;
+
+	const listsService = {
+		hasAllDefaultLists: jest.fn(),
+		provisionDefaultLists: jest.fn(),
+	} as unknown as ListsService;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -93,11 +101,13 @@ describe("UsersService", () => {
 			fetchTraktPublicHistory: jest.fn(),
 			importNormalizedItems: jest.fn(),
 		};
+		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(true);
 		service = new UsersService(
 			prisma,
 			importHistoryService as unknown as ImportHistoryService,
 			userDeletionService,
 			profileService,
+			listsService,
 		);
 	});
 
@@ -152,6 +162,8 @@ describe("UsersService", () => {
 				displayName: "Updated User",
 			},
 		);
+		expect(listsService.hasAllDefaultLists).toHaveBeenCalledWith("did:plc:123");
+		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
 	});
 
 	it("throws when updating profile for missing user", async () => {
@@ -194,6 +206,7 @@ describe("UsersService", () => {
 				avatar: file,
 			},
 		);
+		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
 	});
 
 	it("deletes a user avatar through the profile service", async () => {
@@ -215,6 +228,91 @@ describe("UsersService", () => {
 		expect(profileService.deleteAvatar).toHaveBeenCalledWith(
 			"did:plc:123",
 			session,
+		);
+		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
+	});
+
+	it("provisions default lists after the first profile save", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:first" })
+			.mockResolvedValueOnce({ profileRkey: null });
+		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
+		(profileService.updateProfile as jest.Mock).mockResolvedValue({
+			displayName: "First User",
+			avatar: null,
+		});
+		(listsService.provisionDefaultLists as jest.Mock).mockResolvedValue([]);
+
+		await expect(
+			service.updateUserProfile("did:plc:first", { did: "did:plc:first" }, {}),
+		).resolves.toEqual({
+			displayName: "First User",
+			avatar: null,
+		});
+
+		expect(listsService.provisionDefaultLists).toHaveBeenCalledWith(
+			"did:plc:first",
+			{ did: "did:plc:first" },
+		);
+		expect(profileService.deleteProfileRecordIndex).not.toHaveBeenCalled();
+	});
+
+	it("rolls back the local profile index if default list provisioning fails on first save", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:first" })
+			.mockResolvedValueOnce({ profileRkey: null });
+		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
+		(profileService.updateProfile as jest.Mock).mockResolvedValue({
+			displayName: "First User",
+			avatar: null,
+		});
+		(listsService.provisionDefaultLists as jest.Mock).mockRejectedValue(
+			new Error("pds list failure"),
+		);
+
+		await expect(
+			service.updateUserProfile("did:plc:first", { did: "did:plc:first" }, {}),
+		).rejects.toThrow("pds list failure");
+
+		expect(profileService.deleteProfileRecordIndex).toHaveBeenCalledWith(
+			"did:plc:first",
+		);
+	});
+
+	it("initializes the seeded profile and default lists for a new user", async () => {
+		prisma.user.findUnique = jest.fn().mockResolvedValue({ profileRkey: null });
+		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
+		(profileService.seedProfileForNewUser as jest.Mock).mockResolvedValue(
+			undefined,
+		);
+		(listsService.provisionDefaultLists as jest.Mock).mockResolvedValue([]);
+
+		await expect(
+			service.initializeProfileForNewUser(
+				"did:plc:new123",
+				{ did: "did:plc:new123" },
+				{
+					handle: "new-user.bsky.social",
+					displayName: "New User",
+					avatarUrl: "https://example.com/avatar.jpg",
+				},
+			),
+		).resolves.toBeUndefined();
+
+		expect(profileService.seedProfileForNewUser).toHaveBeenCalledWith(
+			"did:plc:new123",
+			{ did: "did:plc:new123" },
+			{
+				handle: "new-user.bsky.social",
+				displayName: "New User",
+				avatarUrl: "https://example.com/avatar.jpg",
+			},
+		);
+		expect(listsService.provisionDefaultLists).toHaveBeenCalledWith(
+			"did:plc:new123",
+			{ did: "did:plc:new123" },
 		);
 	});
 

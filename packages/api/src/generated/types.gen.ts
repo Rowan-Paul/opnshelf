@@ -150,6 +150,13 @@ export type UserDto = {
     needsOnboarding: boolean;
 };
 
+export type BlueskyProfileStatusDto = {
+    /**
+     * Whether this DID resolves to a real Bluesky/AppView profile
+     */
+    hasBlueskyProfile: boolean;
+};
+
 export type TmdbShowResultDto = {
     id: number;
     name: string;
@@ -1279,6 +1286,26 @@ export type AuthControllerMeResponses = {
 
 export type AuthControllerMeResponse = AuthControllerMeResponses[keyof AuthControllerMeResponses];
 
+export type AuthControllerBlueskyProfileStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/me/bluesky-profile-status';
+};
+
+export type AuthControllerBlueskyProfileStatusErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type AuthControllerBlueskyProfileStatusResponses = {
+    200: BlueskyProfileStatusDto;
+};
+
+export type AuthControllerBlueskyProfileStatusResponse = AuthControllerBlueskyProfileStatusResponses[keyof AuthControllerBlueskyProfileStatusResponses];
+
 export type AuthControllerLogoutData = {
     body?: never;
     path?: never;
@@ -1905,29 +1932,6 @@ export type ListsControllerCreateListResponses = {
 };
 
 export type ListsControllerCreateListResponse = ListsControllerCreateListResponses[keyof ListsControllerCreateListResponses];
-
-export type ListsControllerInitDefaultListsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/lists/init-defaults';
-};
-
-export type ListsControllerInitDefaultListsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ListsControllerInitDefaultListsResponses = {
-    /**
-     * Default lists
-     */
-    200: Array<ListDto>;
-};
-
-export type ListsControllerInitDefaultListsResponse = ListsControllerInitDefaultListsResponses[keyof ListsControllerInitDefaultListsResponses];
 
 export type ListsControllerGetPublicUserListsData = {
     body?: never;

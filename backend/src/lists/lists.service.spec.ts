@@ -107,7 +107,7 @@ describe("ListsService", () => {
 		service = module.get<ListsService>(ListsService);
 	});
 
-	describe("ensureDefaultLists", () => {
+	describe("provisionDefaultLists", () => {
 		it("indexes repo-backed default lists before creating missing defaults", async () => {
 			mockPrismaService.list.findMany
 				.mockResolvedValueOnce([])
@@ -189,7 +189,7 @@ describe("ListsService", () => {
 				updatedAt: new Date("2024-01-01"),
 			});
 
-			const result = await service.ensureDefaultLists("did:plc:abc123", {
+			const result = await service.provisionDefaultLists("did:plc:abc123", {
 				did: "did:plc:abc123",
 			});
 
@@ -265,7 +265,7 @@ describe("ListsService", () => {
 				},
 			]);
 
-			const result = await service.ensureDefaultLists("did:plc:abc123", {
+			const result = await service.provisionDefaultLists("did:plc:abc123", {
 				did: "did:plc:abc123",
 			});
 
