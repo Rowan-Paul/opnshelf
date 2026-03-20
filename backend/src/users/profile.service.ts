@@ -40,6 +40,8 @@ type StoredProfileRecord = {
 	cid: string | null;
 };
 
+type PlainProfileBlob = NonNullable<ProfileRecord["avatar"]>;
+
 const PROFILE_RKEY = "self";
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -295,8 +297,9 @@ export class ProfileService {
 				collection: PROFILE_COLLECTION,
 				rkey: PROFILE_RKEY,
 			});
+			const recordValue = normalizeProfileRecordValue(response.data.value);
 			return {
-				record: profileSchema.parse(response.data.value),
+				record: profileSchema.parse(recordValue),
 				uri: response.data.uri,
 				cid: response.data.cid ?? null,
 			};
@@ -320,8 +323,9 @@ export class ProfileService {
 			input.displayName !== undefined
 				? input.displayName
 				: normalizeDisplayName(input.existingRecord?.displayName);
-		const nextAvatar =
-			input.avatar !== undefined ? input.avatar : input.existingRecord?.avatar;
+		const nextAvatar = normalizeProfileBlob(
+			input.avatar !== undefined ? input.avatar : input.existingRecord?.avatar,
+		);
 
 		return profileSchema.build({
 			createdAt,
@@ -358,7 +362,11 @@ export class ProfileService {
 		const upload = await agent.uploadBlob(image.buffer, {
 			encoding: mimeType,
 		});
-		return upload.data.blob.original as unknown as ProfileRecord["avatar"];
+		const blob = normalizeProfileBlob(upload.data.blob);
+		if (!blob) {
+			throw new BadGatewayException("Failed to normalize uploaded avatar blob");
+		}
+		return blob;
 	}
 
 	private async fetchExternalAvatar(url: string): Promise<UploadableImage> {
@@ -435,28 +443,81 @@ function getBlobMimeType(blob: unknown): string | null {
 }
 
 function serializeProfileRecord(record: ProfileRecord): ProfileRecord {
-	if (!record.avatar) {
+	const normalizedRecord = normalizeProfileRecordValue(record);
+	if (!normalizedRecord) {
 		return record;
 	}
 
+	return normalizedRecord;
+}
+
+function normalizeProfileRecordValue(value: unknown): ProfileRecord | null {
+	if (!value || typeof value !== "object") {
+		return null;
+	}
+
+	if (!("avatar" in value)) {
+		return value as ProfileRecord;
+	}
+
+	const normalizedAvatar = normalizeProfileBlob(
+		(value as { avatar?: unknown }).avatar,
+	);
+	if (normalizedAvatar === undefined) {
+		return value as ProfileRecord;
+	}
+
+	const nextRecord = { ...(value as ProfileRecord) };
+	if (normalizedAvatar === null) {
+		delete (nextRecord as { avatar?: unknown }).avatar;
+		return nextRecord;
+	}
+
 	return {
-		...record,
-		avatar: serializeBlobRef(record.avatar),
+		...nextRecord,
+		avatar: normalizedAvatar,
 	};
 }
 
-function serializeBlobRef(
-	blob: ProfileRecord["avatar"],
-): ProfileRecord["avatar"] {
-	if (!blob || typeof blob !== "object") {
-		return blob;
+function normalizeProfileBlob(
+	blob: unknown,
+): ProfileRecord["avatar"] | null | undefined {
+	if (blob === undefined || blob === null || typeof blob !== "object") {
+		return blob as ProfileRecord["avatar"] | null | undefined;
 	}
 
-	if ("original" in blob && blob.original) {
-		return blob.original as unknown as ProfileRecord["avatar"];
+	const source =
+		"original" in blob && blob.original && typeof blob.original === "object"
+			? blob.original
+			: blob;
+	const normalized = toPlainProfileBlob(source);
+
+	return normalized ?? (blob as ProfileRecord["avatar"]);
+}
+
+function toPlainProfileBlob(blob: object): PlainProfileBlob | null {
+	const candidate = blob as {
+		$type?: unknown;
+		ref?: unknown;
+		mimeType?: unknown;
+		size?: unknown;
+	};
+
+	if (
+		candidate.$type !== "blob" ||
+		!("ref" in candidate) ||
+		typeof candidate.mimeType !== "string" ||
+		typeof candidate.size !== "number"
+	) {
+		return null;
 	}
 
-	return blob;
+	return {
+		$type: "blob",
+		ref: candidate.ref as PlainProfileBlob["ref"],
+		mimeType: candidate.mimeType,
+		size: candidate.size,
+	};
 }
 
 function isRecordMissingError(error: unknown): boolean {
