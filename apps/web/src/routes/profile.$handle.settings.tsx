@@ -522,113 +522,144 @@ function SettingsPage() {
 					</div>
 				</M3CardHeader>
 				<M3CardContent className="space-y-6">
-					<div className="grid gap-6 md:grid-cols-[auto_1fr]">
-						<div className="space-y-3">
-							<div
-								className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border"
-								style={{
-									backgroundColor: "var(--md-sys-color-surface-container)",
-									borderColor: "var(--md-sys-color-outline-variant)",
-								}}
-							>
-								{avatarPreviewUrl ? (
-									<img
-										src={avatarPreviewUrl}
-										alt={displayName || user.handle}
-										className="h-full w-full object-cover"
-									/>
-								) : (
-									<span
-										className="text-4xl font-semibold"
-										style={{ color: seedColor }}
+					<div className="px-1 py-2">
+						<div className="grid gap-6 lg:grid-cols-[152px_minmax(0,1fr)] lg:items-start">
+							<div className="flex flex-col items-center gap-4 lg:pt-2">
+								<div
+									className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 shadow-sm"
+									style={{
+										backgroundColor: "var(--md-sys-color-surface-container)",
+										borderColor: "var(--md-sys-color-outline-variant)",
+									}}
+								>
+									{avatarPreviewUrl ? (
+										<img
+											src={avatarPreviewUrl}
+											alt={displayName || user.handle}
+											className="h-full w-full object-cover"
+										/>
+									) : (
+										<span
+											className="text-4xl font-semibold"
+											style={{ color: seedColor }}
+										>
+											{(displayName || user.handle).charAt(0).toUpperCase()}
+										</span>
+									)}
+								</div>
+								<div className="space-y-1 text-center">
+									<p className="md-title-medium text-[var(--md-sys-color-on-surface)]">
+										{displayName || "Your profile"}
+									</p>
+									<p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
+										@{user.handle}
+									</p>
+								</div>
+							</div>
+
+							<div className="space-y-6">
+								<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
+									<div className="space-y-2">
+										<Label htmlFor={displayNameId} className="md-label-large">
+											Display Name
+										</Label>
+										<input
+											id={displayNameId}
+											type="text"
+											value={displayName}
+											onChange={(event) => setDisplayName(event.target.value)}
+											placeholder="How your name appears"
+											className="w-full rounded-2xl border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-4 py-3 text-[var(--md-sys-color-on-surface)]"
+										/>
+									</div>
+
+									<div
+										className="rounded-2xl border px-4 py-3"
+										style={{
+											backgroundColor: "var(--md-sys-color-surface-container)",
+											borderColor: "var(--md-sys-color-outline-variant)",
+										}}
 									>
-										{(displayName || user.handle).charAt(0).toUpperCase()}
-									</span>
-								)}
+										<p className="md-label-medium text-[var(--md-sys-color-on-surface-variant)]">
+											Handle
+										</p>
+										<p className="md-body-large break-all text-[var(--md-sys-color-on-surface)]">
+											@{user.handle}
+										</p>
+									</div>
+								</div>
+
+								<div className="flex justify-start">
+									<M3Button
+										variant="filled"
+										onClick={handleProfileSave}
+										disabled={updateProfileMutation.isPending}
+									>
+										{updateProfileMutation.isPending
+											? "Saving..."
+											: "Save profile"}
+									</M3Button>
+								</div>
+
+								<div className="space-y-3">
+									<div className="space-y-2">
+										<Label className="md-label-large">Profile Photo</Label>
+										<div
+											className="rounded-2xl border px-4 py-4"
+											style={{
+												backgroundColor:
+													"var(--md-sys-color-surface-container)",
+												borderColor: "var(--md-sys-color-outline-variant)",
+											}}
+										>
+											<input
+												ref={avatarInputRef}
+												type="file"
+												accept="image/jpeg,image/png,image/webp"
+												onChange={handleAvatarSelection}
+												className="block w-full text-sm text-[var(--md-sys-color-on-surface-variant)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--md-sys-color-primary-container)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--md-sys-color-on-primary-container)]"
+											/>
+											<p className="mt-3 md-body-small text-[var(--md-sys-color-on-surface-variant)]">
+												{AVATAR_UPLOAD_HELP_TEXT} Choose a square image for the
+												cleanest crop.
+											</p>
+											{avatarErrorMessage ? (
+												<p className="mt-2 md-body-small text-[var(--md-sys-color-error)]">
+													{avatarErrorMessage}
+												</p>
+											) : null}
+										</div>
+									</div>
+
+									<div className="flex flex-wrap gap-2">
+										<M3Button
+											variant="filled-tonal"
+											onClick={handleAvatarUpload}
+											disabled={
+												!selectedAvatarFile || uploadAvatarMutation.isPending
+											}
+										>
+											<Camera className="mr-2 h-4 w-4" />
+											{uploadAvatarMutation.isPending
+												? "Uploading..."
+												: "Upload photo"}
+										</M3Button>
+										<M3Button
+											variant="text"
+											onClick={() => deleteAvatarMutation.mutate({})}
+											disabled={
+												(!user.avatar && !selectedAvatarFile) ||
+												deleteAvatarMutation.isPending
+											}
+										>
+											{deleteAvatarMutation.isPending
+												? "Removing..."
+												: "Remove"}
+										</M3Button>
+									</div>
+								</div>
 							</div>
-							<input
-								ref={avatarInputRef}
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								onChange={handleAvatarSelection}
-								className="block w-full text-sm text-[var(--md-sys-color-on-surface-variant)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--md-sys-color-primary-container)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--md-sys-color-on-primary-container)]"
-							/>
-							<div className="flex flex-wrap gap-2">
-								<M3Button
-									variant="filled"
-									onClick={handleAvatarUpload}
-									disabled={
-										!selectedAvatarFile || uploadAvatarMutation.isPending
-									}
-								>
-									<Camera className="mr-2 h-4 w-4" />
-									{uploadAvatarMutation.isPending
-										? "Uploading..."
-										: "Upload photo"}
-								</M3Button>
-								<M3Button
-									variant="outlined"
-									onClick={() => deleteAvatarMutation.mutate({})}
-									disabled={
-										(!user.avatar && !selectedAvatarFile) ||
-										deleteAvatarMutation.isPending
-									}
-								>
-									{deleteAvatarMutation.isPending ? "Removing..." : "Remove"}
-								</M3Button>
-							</div>
-							<p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
-								{AVATAR_UPLOAD_HELP_TEXT}
-							</p>
-							{avatarErrorMessage ? (
-								<p className="md-body-small text-[var(--md-sys-color-error)]">
-									{avatarErrorMessage}
-								</p>
-							) : null}
 						</div>
-
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Label htmlFor={displayNameId} className="md-label-large">
-									Display Name
-								</Label>
-								<input
-									id={displayNameId}
-									type="text"
-									value={displayName}
-									onChange={(event) => setDisplayName(event.target.value)}
-									placeholder="How your name appears"
-									className="w-full rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-3 py-2 text-[var(--md-sys-color-on-surface)]"
-								/>
-							</div>
-
-							<M3Button
-								variant="filled"
-								onClick={handleProfileSave}
-								disabled={updateProfileMutation.isPending}
-							>
-								{updateProfileMutation.isPending ? "Saving..." : "Save profile"}
-							</M3Button>
-						</div>
-					</div>
-
-					<div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
-
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="md-label-large">Handle</p>
-							<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
-								@{user.handle}
-							</p>
-						</div>
-						{displayName && (
-							<div className="text-right">
-								<p className="md-label-large">Display Name</p>
-								<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
-									{displayName}
-								</p>
-							</div>
-						)}
 					</div>
 
 					<div className="h-px bg-[var(--md-sys-color-outline-variant)]" />

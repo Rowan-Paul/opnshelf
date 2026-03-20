@@ -337,7 +337,7 @@ export class ProfileService {
 			repo: session.did,
 			collection: PROFILE_COLLECTION,
 			rkey: PROFILE_RKEY,
-			record,
+			record: serializeProfileRecord(record),
 			validate: false,
 		});
 	}
@@ -432,6 +432,31 @@ function getBlobMimeType(blob: unknown): string | null {
 
 	const mimeType = (blob as { mimeType?: unknown }).mimeType;
 	return typeof mimeType === "string" ? mimeType : null;
+}
+
+function serializeProfileRecord(record: ProfileRecord): ProfileRecord {
+	if (!record.avatar) {
+		return record;
+	}
+
+	return {
+		...record,
+		avatar: serializeBlobRef(record.avatar),
+	};
+}
+
+function serializeBlobRef(
+	blob: ProfileRecord["avatar"],
+): ProfileRecord["avatar"] {
+	if (!blob || typeof blob !== "object") {
+		return blob;
+	}
+
+	if ("original" in blob && blob.original) {
+		return blob.original as unknown as ProfileRecord["avatar"];
+	}
+
+	return blob;
 }
 
 function isRecordMissingError(error: unknown): boolean {
