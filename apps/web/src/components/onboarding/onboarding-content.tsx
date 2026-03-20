@@ -69,7 +69,6 @@ type OnboardingContentProps = {
 	timezoneId: string;
 	fileInputId: string;
 	hasBlueskyProfile: boolean;
-	userAvatarUrl: string;
 	followImportStatus: FollowImportStatus;
 	followImportResult: FollowImportResult | null;
 	importProgress: ImportProgressState;
@@ -112,7 +111,6 @@ export function OnboardingContent({
 	timezoneId,
 	fileInputId,
 	hasBlueskyProfile,
-	userAvatarUrl,
 	followImportStatus,
 	followImportResult,
 	importProgress,

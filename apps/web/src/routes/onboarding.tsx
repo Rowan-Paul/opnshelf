@@ -1,5 +1,6 @@
 import {
 	authControllerMeOptions,
+	getBlueskyProfileStatus,
 	listsControllerGetUserListsOptions,
 	shelfControllerGetUserShelfOptions,
 	usersControllerCompleteOnboardingMutation,
@@ -93,6 +94,18 @@ function OnboardingPage() {
 		retry: false,
 		staleTime: 0,
 	});
+	const shouldLoadBlueskyProfileStatus =
+		Boolean(user) && user?.needsOnboarding === true;
+	const {
+		data: blueskyProfileStatus,
+		isLoading: isBlueskyProfileStatusLoading,
+	} = useQuery({
+		queryKey: ["auth", "me", "bluesky-profile-status"],
+		queryFn: getBlueskyProfileStatus,
+		enabled: shouldLoadBlueskyProfileStatus,
+		retry: false,
+		staleTime: 0,
+	});
 
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -152,7 +165,7 @@ function OnboardingPage() {
 	const userDisplayName =
 		typeof user?.displayName === "string" ? user.displayName : "";
 	const userHandle = typeof user?.handle === "string" ? user.handle : "";
-	const hasBlueskyProfile = user?.hasBlueskyProfile === true;
+	const hasBlueskyProfile = blueskyProfileStatus?.hasBlueskyProfile === true;
 	const visibleStep = hasBlueskyProfile ? step : step >= 4 ? step - 1 : step;
 	const totalSteps = hasBlueskyProfile
 		? ONBOARDING_STEPS
@@ -223,7 +236,7 @@ function OnboardingPage() {
 		}
 	}, [hasBlueskyProfile, step]);
 
-	if (isAuthLoading) {
+	if (isAuthLoading || isBlueskyProfileStatusLoading) {
 		return (
 			<div className="flex-1 flex items-center justify-center">
 				<div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin border-(--md-sys-color-primary)" />
@@ -519,7 +532,6 @@ function OnboardingPage() {
 			timezoneId={timezoneId}
 			fileInputId={fileInputId}
 			hasBlueskyProfile={hasBlueskyProfile}
-			userAvatarUrl={userAvatarUrl}
 			followImportStatus={followImportStatus}
 			followImportResult={followImportResult}
 			importProgress={importProgress}

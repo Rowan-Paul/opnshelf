@@ -1,5 +1,6 @@
 import {
 	authControllerMeOptions,
+	getBlueskyProfileStatus,
 	listsControllerGetUserListsOptions,
 	shelfControllerGetUserShelfOptions,
 	usersControllerCompleteOnboardingMutation,
@@ -91,6 +92,18 @@ export default function OnboardingScreen() {
 	const [importProgress, setImportProgress] = useState<ImportProgressState>(
 		createIdleImportProgress(),
 	);
+	const shouldLoadBlueskyProfileStatus =
+		Boolean(user) && user?.needsOnboarding === true;
+	const {
+		data: blueskyProfileStatus,
+		isLoading: isBlueskyProfileStatusLoading,
+	} = useQuery({
+		queryKey: ["auth", "me", "bluesky-profile-status"],
+		queryFn: getBlueskyProfileStatus,
+		enabled: shouldLoadBlueskyProfileStatus,
+		retry: false,
+		staleTime: 0,
+	});
 
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -193,10 +206,21 @@ export default function OnboardingScreen() {
 		setTimeFormat(settings.timeFormat === "12h" ? "12h" : "24h");
 	}, [settings]);
 
+	const hasBlueskyProfile = blueskyProfileStatus?.hasBlueskyProfile === true;
+	const visibleStep = hasBlueskyProfile ? step : step >= 4 ? step - 1 : step;
+	const totalVisibleSteps = hasBlueskyProfile
+		? ONBOARDING_STEPS.length
+		: ONBOARDING_STEPS.length - 1;
 	const progressPercent = useMemo(
-		() => Math.round((step / ONBOARDING_STEPS.length) * 100),
-		[step],
+		() => Math.round((visibleStep / totalVisibleSteps) * 100),
+		[totalVisibleSteps, visibleStep],
 	);
+
+	useEffect(() => {
+		if (!hasBlueskyProfile && step === 3) {
+			setStep(4);
+		}
+	}, [hasBlueskyProfile, step]);
 
 	const importPercent =
 		importProgress.totalItems > 0
@@ -249,7 +273,7 @@ export default function OnboardingScreen() {
 			});
 
 			showToast("Profile and time preferences saved", "success");
-			setStep(3);
+			setStep(hasBlueskyProfile ? 3 : 4);
 		} catch {
 			// surfaced by mutation handlers
 		}
@@ -540,7 +564,7 @@ export default function OnboardingScreen() {
 		}
 	};
 
-	if (isAuthLoading) {
+	if (isAuthLoading || isBlueskyProfileStatusLoading) {
 		return (
 			<View
 				style={{
@@ -563,6 +587,7 @@ export default function OnboardingScreen() {
 		<OnboardingContent
 			step={step}
 			progressPercent={progressPercent}
+			hasBlueskyProfile={hasBlueskyProfile}
 			activeTab={activeTab}
 			traktUsername={traktUsername}
 			traktPreview={traktPreview}

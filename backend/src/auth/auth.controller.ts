@@ -17,6 +17,7 @@ import { IngesterService } from "../ingester/ingester.service";
 import { ProfileService } from "../users/profile.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
+import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
 import { UserDto } from "./dto/user.dto";
 import type { AuthenticatedRequest } from "./types";
 
@@ -398,18 +399,39 @@ export class AuthController {
 		if (!user) {
 			throw new BadRequestException("User not found");
 		}
-		const hasBlueskyProfile = await this.authService.hasBlueskyProfile(did);
 
 		return {
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,
 			avatar: user.avatar,
-			hasBlueskyProfile,
 			onboardingCompletedAt: user.onboardingCompletedAt
 				? user.onboardingCompletedAt.toISOString()
 				: null,
 			needsOnboarding: user.onboardingCompletedAt === null,
+		};
+	}
+
+	/**
+	 * Get whether the current authenticated user has a Bluesky profile record.
+	 */
+	@Get("auth/me/bluesky-profile-status")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Get current authenticated user's Bluesky profile status",
+	})
+	@ApiResponse({ status: 200, type: BlueskyProfileStatusDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async blueskyProfileStatus(
+		@Req() req: AuthenticatedRequest,
+	): Promise<BlueskyProfileStatusDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		return {
+			hasBlueskyProfile: await this.authService.hasBlueskyProfile(did),
 		};
 	}
 

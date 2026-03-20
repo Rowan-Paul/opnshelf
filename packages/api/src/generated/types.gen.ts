@@ -141,10 +141,6 @@ export type UserDto = {
      */
     avatar: string | null;
     /**
-     * Whether this DID resolves to a real Bluesky/AppView profile
-     */
-    hasBlueskyProfile: boolean;
-    /**
      * When onboarding was completed
      */
     onboardingCompletedAt: string | null;

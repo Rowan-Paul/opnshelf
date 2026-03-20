@@ -24,6 +24,7 @@ import { styles } from "./styles";
 type OnboardingContentProps = {
 	step: number;
 	progressPercent: number;
+	hasBlueskyProfile: boolean;
 	activeTab: TabValue;
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
@@ -63,6 +64,7 @@ type OnboardingContentProps = {
 export function OnboardingContent({
 	step,
 	progressPercent,
+	hasBlueskyProfile,
 	activeTab,
 	traktUsername,
 	traktPreview,
@@ -107,7 +109,11 @@ export function OnboardingContent({
 			edges={["top", "left", "right", "bottom"]}
 		>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
-				<OnboardingProgressCard step={step} progressPercent={progressPercent} />
+				<OnboardingProgressCard
+					step={step}
+					progressPercent={progressPercent}
+					hasBlueskyProfile={hasBlueskyProfile}
+				/>
 
 				{step === 1 && (
 					<BriefingStepCard
@@ -134,7 +140,7 @@ export function OnboardingContent({
 					/>
 				)}
 
-				{step === 3 && (
+				{step === 3 && hasBlueskyProfile && (
 					<FriendsStepCard
 						followImportStatus={followImportStatus}
 						followImportResult={followImportResult}
@@ -160,7 +166,7 @@ export function OnboardingContent({
 						onTraktImport={onTraktImport}
 						onTraktImportConfirm={onTraktImportConfirm}
 						onCsvImport={onCsvImport}
-						onBack={() => onStepChange(3)}
+						onBack={() => onStepChange(hasBlueskyProfile ? 3 : 2)}
 						onSkip={onSkipHistoryImport}
 					/>
 				)}

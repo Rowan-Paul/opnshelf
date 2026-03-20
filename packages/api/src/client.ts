@@ -65,9 +65,22 @@ export interface AuthUser {
 	handle: string;
 	displayName: string | null;
 	avatar: string | null;
-	hasBlueskyProfile: boolean;
 	onboardingCompletedAt: string | null;
 	needsOnboarding: boolean;
+}
+
+export interface BlueskyProfileStatus {
+	hasBlueskyProfile: boolean;
+}
+
+export async function getBlueskyProfileStatus(): Promise<BlueskyProfileStatus> {
+	const { data } = await client.get<BlueskyProfileStatus>({
+		url: "/auth/me/bluesky-profile-status",
+	});
+	if (!data) {
+		throw new Error("Missing Bluesky profile status response");
+	}
+	return data;
 }
 
 // Simple URL helper for login (not an API call)

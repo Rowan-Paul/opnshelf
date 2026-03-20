@@ -17,6 +17,7 @@ jest.mock("@atproto/tap", () => ({
 }));
 
 import { IngesterService } from "../ingester/ingester.service";
+import { ProfileService } from "../users/profile.service";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 
@@ -51,6 +52,10 @@ describe("AuthController", () => {
 
 	const mockIngesterService = {
 		addRepo: jest.fn().mockResolvedValue(undefined),
+	};
+
+	const mockProfileService = {
+		seedProfileForNewUser: jest.fn().mockResolvedValue(undefined),
 	};
 
 	const mockConfigService = {
@@ -94,6 +99,7 @@ describe("AuthController", () => {
 				{ provide: AuthService, useValue: mockAuthService },
 				{ provide: ConfigService, useValue: mockConfigService },
 				{ provide: IngesterService, useValue: mockIngesterService },
+				{ provide: ProfileService, useValue: mockProfileService },
 			],
 		}).compile();
 
@@ -553,7 +559,6 @@ describe("AuthController", () => {
 				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
 			};
 			mockAuthService.getUser.mockResolvedValue(mockUser);
-			mockAuthService.hasBlueskyProfile.mockResolvedValue(true);
 
 			const req = createMockRequest({
 				user: { did: "did:plc:abc123", session: {} },
@@ -568,14 +573,11 @@ describe("AuthController", () => {
 				handle: "user.bsky.social",
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
-				hasBlueskyProfile: true,
 				onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
 				needsOnboarding: false,
 			});
 			expect(mockAuthService.getUser).toHaveBeenCalledWith("did:plc:abc123");
-			expect(mockAuthService.hasBlueskyProfile).toHaveBeenCalledWith(
-				"did:plc:abc123",
-			);
+			expect(mockAuthService.hasBlueskyProfile).not.toHaveBeenCalled();
 		});
 
 		it("should throw BadRequestException when no user in request", async () => {
@@ -597,6 +599,35 @@ describe("AuthController", () => {
 
 			await expect(
 				controller.me(
+					req as unknown as import("../auth/types").AuthenticatedRequest,
+				),
+			).rejects.toThrow(BadRequestException);
+		});
+	});
+
+	describe("blueskyProfileStatus", () => {
+		it("should return Bluesky profile status when authenticated", async () => {
+			mockAuthService.hasBlueskyProfile.mockResolvedValue(true);
+
+			const req = createMockRequest({
+				user: { did: "did:plc:abc123", session: {} },
+			} as unknown as import("express").Request);
+
+			const result = await controller.blueskyProfileStatus(
+				req as unknown as import("../auth/types").AuthenticatedRequest,
+			);
+
+			expect(result).toEqual({ hasBlueskyProfile: true });
+			expect(mockAuthService.hasBlueskyProfile).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
+		});
+
+		it("should throw BadRequestException when no user in request", async () => {
+			const req = createMockRequest();
+
+			await expect(
+				controller.blueskyProfileStatus(
 					req as unknown as import("../auth/types").AuthenticatedRequest,
 				),
 			).rejects.toThrow(BadRequestException);

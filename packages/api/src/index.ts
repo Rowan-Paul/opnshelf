@@ -22,5 +22,7 @@ export {
 	configureApiClient,
 	getLoginUrl,
 	getSignupUrl,
+	getBlueskyProfileStatus,
 	type AuthUser,
+	type BlueskyProfileStatus,
 } from './client';
