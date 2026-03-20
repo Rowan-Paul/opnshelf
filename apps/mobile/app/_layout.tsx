@@ -84,14 +84,6 @@ function AppContent() {
 				/>
 				<Stack.Screen name="settings" />
 				<Stack.Screen name="list/[slug]" />
-				<Stack.Screen name="user/[handle]/_layout" />
-				<Stack.Screen name="user/[handle]/index" />
-				<Stack.Screen name="user/[handle]/shelf" />
-				<Stack.Screen name="user/[handle]/lists" />
-				<Stack.Screen name="user/[handle]/up-next" />
-				<Stack.Screen name="user/[handle]/friends" />
-				<Stack.Screen name="user/[handle]/followers" />
-				<Stack.Screen name="user/[handle]/following" />
 				<Stack.Screen name="login" />
 				<Stack.Screen name="onboarding" />
 			</Stack>

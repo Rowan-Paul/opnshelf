@@ -9,7 +9,6 @@ import {
 	usersControllerUploadMyAvatarMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
@@ -28,7 +27,10 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import {
+	createAvatarUploadFile,
 	getAvatarUploadErrorMessage,
+	type ReactNativeUploadFile,
+	toMultipartUploadValue,
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
 
@@ -63,9 +65,8 @@ export default function SettingsScreen() {
 	const [timezone, setTimezone] = useState<string>("UTC");
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
 	const [displayName, setDisplayName] = useState("");
-	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
-		null,
-	);
+	const [selectedAvatarFile, setSelectedAvatarFile] =
+		useState<ReactNativeUploadFile | null>(null);
 	const [avatarPreviewUri, setAvatarPreviewUri] = useState<string | null>(null);
 	const [avatarErrorMessage, setAvatarErrorMessage] = useState<string | null>(
 		null,
@@ -278,14 +279,14 @@ export default function SettingsScreen() {
 			return;
 		}
 
-		const file = new File(asset.uri);
+		const file = createAvatarUploadFile(asset);
 		setAvatarErrorMessage(null);
 		setSelectedAvatarFile(file);
 		setAvatarPreviewUri(asset.uri);
 
 		uploadAvatarMutation.mutate({
 			body: {
-				avatar: file,
+				avatar: toMultipartUploadValue(file),
 			},
 		});
 	}, [showToast, uploadAvatarMutation]);

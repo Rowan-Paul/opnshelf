@@ -126,6 +126,7 @@ export function OnboardingContent({
 				{step === 2 && (
 					<IdentityStepCard
 						displayName={displayName}
+						hasBlueskyProfile={hasBlueskyProfile}
 						avatarPreviewUri={avatarPreviewUri}
 						avatarErrorMessage={avatarErrorMessage}
 						timezone={timezone}

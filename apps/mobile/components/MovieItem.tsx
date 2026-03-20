@@ -25,10 +25,10 @@ import { getTmdbPosterUrl } from "@/lib/utils";
 
 interface MovieItemProps {
 	movie: TmdbMovieResultDto;
-	isWatched: boolean;
-	isMarking: boolean;
-	isUnmarking: boolean;
-	onToggle: (movieId: string, isWatched: boolean) => void;
+	isWatched?: boolean;
+	isMarking?: boolean;
+	isUnmarking?: boolean;
+	onToggle?: (movieId: string, isWatched: boolean) => void;
 	onPress: () => void;
 	width?: number;
 }
@@ -57,9 +57,9 @@ const SpinningLoader = ({ size, color }: { size: number; color: string }) => {
 
 export function MovieItem({
 	movie,
-	isWatched,
-	isMarking,
-	isUnmarking,
+	isWatched = false,
+	isMarking = false,
+	isUnmarking = false,
 	onToggle,
 	onPress,
 	width,
@@ -71,6 +71,7 @@ export function MovieItem({
 	const handleToggle = useCallback(
 		(e: GestureResponderEvent) => {
 			e.stopPropagation();
+			if (!onToggle) return;
 
 			if (Platform.OS !== "web") {
 				Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -98,6 +99,7 @@ export function MovieItem({
 
 	const isPending = isMarking || isUnmarking;
 	const posterUrl = getTmdbPosterUrl(movie.poster_path);
+	const hasToggle = !!onToggle;
 
 	const styles = useMemo(
 		() =>
@@ -207,28 +209,30 @@ export function MovieItem({
 					</View>
 				)}
 
-				<AnimatedPressable
-					onPress={handleToggle}
-					onPressIn={handlePressIn}
-					onPressOut={handlePressOut}
-					disabled={isPending}
-					hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-					style={[
-						styles.actionButton,
-						isWatched && styles.actionButtonWatched,
-						animatedButtonStyle,
-					]}
-				>
-					<View style={styles.iconContainer}>
-						{isPending ? (
-							<SpinningLoader size={16} color={colors.onSurface} />
-						) : isWatched ? (
-							<Check size={16} color={colors.onSurface} strokeWidth={2.5} />
-						) : (
-							<Plus size={16} color={colors.onSurface} strokeWidth={2.5} />
-						)}
-					</View>
-				</AnimatedPressable>
+				{hasToggle && (
+					<AnimatedPressable
+						onPress={handleToggle}
+						onPressIn={handlePressIn}
+						onPressOut={handlePressOut}
+						disabled={isPending}
+						hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+						style={[
+							styles.actionButton,
+							isWatched && styles.actionButtonWatched,
+							animatedButtonStyle,
+						]}
+					>
+						<View style={styles.iconContainer}>
+							{isPending ? (
+								<SpinningLoader size={16} color={colors.onSurface} />
+							) : isWatched ? (
+								<Check size={16} color={colors.onSurface} strokeWidth={2.5} />
+							) : (
+								<Plus size={16} color={colors.onSurface} strokeWidth={2.5} />
+							)}
+						</View>
+					</AnimatedPressable>
+				)}
 			</Pressable>
 			<Pressable onPress={onPress} style={styles.titleContainer}>
 				<Text style={styles.movieTitle} numberOfLines={2}>

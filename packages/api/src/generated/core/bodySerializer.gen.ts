@@ -20,9 +20,25 @@ export type QuerySerializerOptions = QuerySerializerOptionsObject & {
   parameters?: Record<string, QuerySerializerOptionsObject>;
 };
 
+type ReactNativeFileLike = {
+  name?: string;
+  type?: string;
+  uri: string;
+};
+
+const isReactNativeFileLike = (value: unknown): value is ReactNativeFileLike => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return typeof (value as { uri?: unknown }).uri === 'string';
+};
+
 const serializeFormDataPair = (data: FormData, key: string, value: unknown): void => {
   if (typeof value === 'string' || value instanceof Blob) {
     data.append(key, value);
+  } else if (isReactNativeFileLike(value)) {
+    data.append(key, value as unknown as Blob);
   } else if (value instanceof Date) {
     data.append(key, value.toISOString());
   } else {

@@ -51,7 +51,7 @@ export default function SearchScreen() {
 	const [query, setQuery] = useState("");
 	const [mediaType, setMediaType] = useState<"all" | "movies" | "shows">("all");
 	const debouncedQuery = useDebouncedSearch(query, DEBOUNCE_MS);
-	const { user } = useAuth();
+	const { user, isAuthenticated } = useAuth();
 	const { showToast } = useToast();
 	const { colors } = useTheme();
 	const queryClient = useQueryClient();
@@ -333,10 +333,10 @@ export default function SearchScreen() {
 				return (
 					<MovieItem
 						movie={movie}
-						isWatched={isWatched}
-						isMarking={isMarking}
-						isUnmarking={isUnmarking}
-						onToggle={handleToggleWatched}
+						isWatched={isAuthenticated ? isWatched : undefined}
+						isMarking={isAuthenticated ? isMarking : undefined}
+						isUnmarking={isAuthenticated ? isUnmarking : undefined}
+						onToggle={isAuthenticated ? handleToggleWatched : undefined}
 						onPress={() => handleMoviePress(movie)}
 						width={ITEM_WIDTH}
 					/>
@@ -362,10 +362,10 @@ export default function SearchScreen() {
 				return (
 					<ShowItem
 						show={show}
-						isWatched={isWatched}
-						isMarking={isMarking}
-						isUnmarking={isUnmarking}
-						onToggle={handleToggleShowWatched}
+						isWatched={isAuthenticated ? isWatched : undefined}
+						isMarking={isAuthenticated ? isMarking : undefined}
+						isUnmarking={isAuthenticated ? isUnmarking : undefined}
+						onToggle={isAuthenticated ? handleToggleShowWatched : undefined}
 						onPress={() =>
 							handleShowPress(show as { id: number; name: string })
 						}
@@ -385,6 +385,7 @@ export default function SearchScreen() {
 			handleToggleShowWatched,
 			handleMoviePress,
 			handleShowPress,
+			isAuthenticated,
 		],
 	);
 

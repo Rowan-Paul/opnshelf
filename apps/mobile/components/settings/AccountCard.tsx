@@ -1,7 +1,7 @@
 import type { UserDto } from "@opnshelf/api";
 import { Image } from "expo-image";
 import { Camera, Loader2, Trash2, User } from "lucide-react-native";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +44,12 @@ export function AccountCard({
 }: AccountCardProps) {
 	const { colors } = useTheme();
 	const styles = useMemo(() => createStyles(colors), [colors]);
+	const [hasAvatarLoadError, setHasAvatarLoadError] = useState(false);
+	const showAvatarImage = Boolean(avatarUri) && !hasAvatarLoadError;
+
+	useEffect(() => {
+		setHasAvatarLoadError(false);
+	}, [avatarUri]);
 
 	return (
 		<Card style={styles.card}>
@@ -68,8 +74,13 @@ export function AccountCard({
 							{ backgroundColor: colors.surfaceContainerHigh },
 						]}
 					>
-						{avatarUri ? (
-							<Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+						{showAvatarImage ? (
+							<Image
+								source={{ uri: avatarUri ?? undefined }}
+								style={styles.avatarImage}
+								contentFit="cover"
+								onError={() => setHasAvatarLoadError(true)}
+							/>
 						) : (
 							<Text style={[styles.avatarFallback, { color: colors.primary }]}>
 								{(displayName || user.handle).charAt(0).toUpperCase()}

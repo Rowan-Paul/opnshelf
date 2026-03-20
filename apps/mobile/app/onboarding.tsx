@@ -33,7 +33,10 @@ import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
 import {
+	createAvatarUploadFile,
 	getAvatarUploadErrorMessage,
+	type ReactNativeUploadFile,
+	toMultipartUploadValue,
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
 import {
@@ -67,9 +70,8 @@ export default function OnboardingScreen() {
 		null,
 	);
 	const [displayName, setDisplayName] = useState("");
-	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
-		null,
-	);
+	const [selectedAvatarFile, setSelectedAvatarFile] =
+		useState<ReactNativeUploadFile | null>(null);
 	const [avatarPreviewUri, setAvatarPreviewUri] = useState<string | null>(null);
 	const [avatarErrorMessage, setAvatarErrorMessage] = useState<string | null>(
 		null,
@@ -258,7 +260,7 @@ export default function OnboardingScreen() {
 			if (selectedAvatarFile) {
 				await uploadAvatarMutation.mutateAsync({
 					body: {
-						avatar: selectedAvatarFile,
+						avatar: toMultipartUploadValue(selectedAvatarFile),
 					},
 				});
 				setSelectedAvatarFile(null);
@@ -305,7 +307,7 @@ export default function OnboardingScreen() {
 		}
 
 		setAvatarErrorMessage(null);
-		setSelectedAvatarFile(new File(asset.uri));
+		setSelectedAvatarFile(createAvatarUploadFile(asset));
 		setAvatarPreviewUri(asset.uri);
 	};
 

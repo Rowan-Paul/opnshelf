@@ -40,7 +40,7 @@ export function BriefingStepCard({
 					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Import from Trakt username or CSV export.</Text>
 					<Text style={[styles.bulletItem, { color: colors.onSurfaceVariant }]}>• Skip import if you want to start tracking immediately.</Text>
 				</View>
-				<View style={styles.actionsRow}>
+				<View style={[styles.actionsRow, styles.briefingActionsRow]}>
 					<Button onPress={onStart}>Begin setup</Button>
 					<Button variant="text" onPress={onSkip} disabled={isCompleting}>
 						{isCompleting ? "Finishing..." : "Skip to dashboard"}
@@ -53,6 +53,7 @@ export function BriefingStepCard({
 
 type IdentityStepCardProps = {
 	displayName: string;
+	hasBlueskyProfile: boolean;
 	avatarPreviewUri: string | null;
 	avatarErrorMessage: string | null;
 	timezone: string;
@@ -68,6 +69,7 @@ type IdentityStepCardProps = {
 
 export function IdentityStepCard({
 	displayName,
+	hasBlueskyProfile,
 	avatarPreviewUri,
 	avatarErrorMessage,
 	timezone,
@@ -132,13 +134,14 @@ export function IdentityStepCard({
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									Pick a different image if you want an OpnShelf photo that
-									doesn&apos;t match your current avatar.
+									{hasBlueskyProfile
+										? "Your Bluesky avatar is prefilled. Upload a new one if you want a different OpnShelf photo."
+										: "Upload a profile photo now or skip and add one later in settings."}
 								</Text>
 							</View>
 						</View>
 						<Button variant="filled-tonal" onPress={onPickAvatar}>
-							Upload or replace photo
+							{hasBlueskyProfile ? "Upload new photo" : "Upload profile photo"}
 						</Button>
 						<Text
 							style={[

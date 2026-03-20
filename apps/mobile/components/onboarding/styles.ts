@@ -88,6 +88,9 @@ export const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 		flexWrap: "wrap",
 	},
+	briefingActionsRow: {
+		marginTop: spacing.md,
+	},
 	formStack: {
 		gap: spacing.sm,
 	},

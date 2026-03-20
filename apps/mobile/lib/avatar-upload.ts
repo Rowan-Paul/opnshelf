@@ -9,7 +9,15 @@ export const AVATAR_UPLOAD_HELP_TEXT = "Use a JPEG, PNG, or WebP image up to 5 M
 
 type UploadLike = {
 	fileSize?: number | null;
+	fileName?: string | null;
 	mimeType?: string | null;
+	uri?: string | null;
+};
+
+export type ReactNativeUploadFile = {
+	uri: string;
+	name: string;
+	type: string;
 };
 
 export function validateAvatarAsset(asset: UploadLike): string | null {
@@ -17,15 +25,44 @@ export function validateAvatarAsset(asset: UploadLike): string | null {
 		return `Profile photo is too large. ${AVATAR_UPLOAD_HELP_TEXT}`;
 	}
 
+	const mimeType = normalizeAvatarMimeType(asset.mimeType);
 	if (
-		typeof asset.mimeType === "string" &&
-		asset.mimeType !== "" &&
-		!ALLOWED_AVATAR_MIME_TYPES.has(asset.mimeType)
+		mimeType !== null &&
+		mimeType !== "" &&
+		!ALLOWED_AVATAR_MIME_TYPES.has(mimeType)
 	) {
 		return "Profile photo must be a JPEG, PNG, or WebP image.";
 	}
 
 	return null;
+}
+
+export function createAvatarUploadFile(asset: UploadLike): ReactNativeUploadFile {
+	if (typeof asset.uri !== "string" || asset.uri.trim() === "") {
+		throw new Error("Profile photo URI is required");
+	}
+
+	const mimeType =
+		normalizeAvatarMimeType(asset.mimeType) ??
+		inferMimeTypeFromUri(asset.uri) ??
+		"image/jpeg";
+	const extension = getExtensionForMimeType(mimeType);
+	const baseName =
+		normalizeFileName(asset.fileName) ??
+		getFileNameFromUri(asset.uri) ??
+		`avatar${extension}`;
+	const name =
+		baseName.includes(".") || extension === "" ? baseName : `${baseName}${extension}`;
+
+	return {
+		uri: asset.uri,
+		name,
+		type: mimeType,
+	};
+}
+
+export function toMultipartUploadValue(file: ReactNativeUploadFile): Blob {
+	return file as unknown as Blob;
 }
 
 export function getAvatarUploadErrorMessage(
@@ -109,4 +146,77 @@ function getNumericValue(error: unknown, path: string[]): number | null {
 	}
 
 	return typeof current === "number" ? current : null;
+}
+
+function normalizeAvatarMimeType(mimeType: string | null | undefined): string | null {
+	if (typeof mimeType !== "string") {
+		return null;
+	}
+
+	const normalized = mimeType.split(";")[0]?.trim().toLowerCase() ?? "";
+	if (normalized === "") {
+		return null;
+	}
+	if (normalized === "image/jpg") {
+		return "image/jpeg";
+	}
+	return normalized;
+}
+
+function inferMimeTypeFromUri(uri: string): string | null {
+	const extension = getFileExtension(uri);
+	switch (extension) {
+		case "jpg":
+		case "jpeg":
+			return "image/jpeg";
+		case "png":
+			return "image/png";
+		case "webp":
+			return "image/webp";
+		default:
+			return null;
+	}
+}
+
+function getExtensionForMimeType(mimeType: string): string {
+	switch (mimeType) {
+		case "image/jpeg":
+			return ".jpg";
+		case "image/png":
+			return ".png";
+		case "image/webp":
+			return ".webp";
+		default:
+			return "";
+	}
+}
+
+function normalizeFileName(fileName: string | null | undefined): string | null {
+	if (typeof fileName !== "string") {
+		return null;
+	}
+
+	const trimmed = fileName.trim();
+	return trimmed === "" ? null : trimmed;
+}
+
+function getFileNameFromUri(uri: string): string | null {
+	const trimmed = uri.trim();
+	if (trimmed === "") {
+		return null;
+	}
+
+	const withoutQuery = trimmed.split("?")[0] ?? trimmed;
+	const segments = withoutQuery.split("/");
+	const lastSegment = segments.at(-1)?.trim() ?? "";
+	return lastSegment === "" ? null : lastSegment;
+}
+
+function getFileExtension(uri: string): string {
+	const fileName = getFileNameFromUri(uri);
+	if (!fileName || !fileName.includes(".")) {
+		return "";
+	}
+
+	return fileName.split(".").at(-1)?.toLowerCase() ?? "";
 }
