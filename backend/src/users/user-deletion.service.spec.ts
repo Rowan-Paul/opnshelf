@@ -163,6 +163,13 @@ describe("UserDeletionService", () => {
 					rkey: "custom-list",
 				},
 			],
+			[
+				{
+					repo: "did:plc:test",
+					collection: "xyz.opnshelf.profile",
+					rkey: "self",
+				},
+			],
 		]);
 		expect(prisma.listItem.findMany).not.toHaveBeenCalled();
 		expect(prisma.list.findMany).not.toHaveBeenCalled();
