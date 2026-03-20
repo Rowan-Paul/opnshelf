@@ -4,32 +4,43 @@ import {
 	NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type {
+	FetchTraktPublicHistoryResponseDto,
+	ImportHistoryResponseDto,
+	NormalizedImportItemDto,
+} from "./dto/import-history.dto";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
-
-jest.mock("./import-history.service", () => ({
-	ImportHistoryService: jest.fn().mockImplementation(() => ({
-		fetchTraktPublicHistory: jest.fn(),
-		importNormalizedItems: jest.fn(),
-	})),
-}));
 
 jest.mock("./profile.service", () => ({
 	ProfileService: class MockProfileService {},
 }));
 
-import { ImportHistoryService } from "./import-history.service";
+import type { ImportHistoryService } from "./import-history.service";
 import type { ProfileService } from "./profile.service";
 import type { UserDeletionService } from "./user-deletion.service";
 import { UsersService } from "./users.service";
 
+type MockImportHistoryService = {
+	fetchTraktPublicHistory: jest.MockedFunction<
+		(
+			username: string,
+			maxItems?: number,
+		) => Promise<FetchTraktPublicHistoryResponseDto>
+	>;
+	importNormalizedItems: jest.MockedFunction<
+		(
+			userDid: string,
+			session: { did: string },
+			items: NormalizedImportItemDto[],
+		) => Promise<ImportHistoryResponseDto>
+	>;
+};
+
 describe("UsersService", () => {
 	let service: UsersService;
-	let importHistoryService: {
-		fetchTraktPublicHistory: jest.Mock;
-		importNormalizedItems: jest.Mock;
-	};
+	let importHistoryService: MockImportHistoryService;
 
 	const prisma = {
 		user: {
@@ -78,18 +89,13 @@ describe("UsersService", () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		importHistoryService = new ImportHistoryService(
-			prisma,
-			moviesService,
-			showsService,
-			configService,
-		) as unknown as {
-			fetchTraktPublicHistory: jest.Mock;
-			importNormalizedItems: jest.Mock;
+		importHistoryService = {
+			fetchTraktPublicHistory: jest.fn(),
+			importNormalizedItems: jest.fn(),
 		};
 		service = new UsersService(
 			prisma,
-			importHistoryService,
+			importHistoryService as unknown as ImportHistoryService,
 			userDeletionService,
 			profileService,
 		);
@@ -456,10 +462,10 @@ describe("UsersService", () => {
 			profile: {
 				username: "rpf_2001",
 				slug: "rpf_2001",
-				name: null,
+				name: undefined,
 				isPrivate: false,
 				isVip: false,
-				avatarUrl: null,
+				avatarUrl: undefined,
 			},
 			importableCount: 100,
 			previewItems: [],
