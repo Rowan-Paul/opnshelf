@@ -575,19 +575,20 @@ function SettingsPage() {
 										/>
 									</div>
 
-									<div
-										className="rounded-2xl border px-4 py-3"
-										style={{
-											backgroundColor: "var(--md-sys-color-surface-container)",
-											borderColor: "var(--md-sys-color-outline-variant)",
-										}}
-									>
-										<p className="md-label-medium text-[var(--md-sys-color-on-surface-variant)]">
-											Handle
-										</p>
-										<p className="md-body-large break-all text-[var(--md-sys-color-on-surface)]">
-											@{user.handle}
-										</p>
+									<div className="space-y-2">
+										<Label className="md-label-large">Handle</Label>
+										<div
+											className="flex min-h-[54px] cursor-not-allowed items-center rounded-2xl border px-4 py-3"
+											style={{
+												backgroundColor:
+													"var(--md-sys-color-surface-container)",
+												borderColor: "var(--md-sys-color-outline-variant)",
+											}}
+										>
+											<p className="md-body-large break-all text-[var(--md-sys-color-on-surface)]">
+												@{user.handle}
+											</p>
+										</div>
 									</div>
 								</div>
 
