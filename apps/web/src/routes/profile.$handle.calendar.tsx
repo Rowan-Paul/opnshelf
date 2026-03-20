@@ -25,6 +25,7 @@ import {
 import { useProfileRouteState } from "@/hooks/useProfileRouteState";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
+import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 import {
 	createTitleSlug,
 	formatDateOnly,
@@ -75,10 +76,11 @@ type CalendarMonthView = {
 export const Route = createFileRoute("/profile/$handle/calendar")({
 	beforeLoad: async ({ context, params }) => {
 		const handle = params.handle.trim().replace(/^@/, "").toLowerCase();
+		const authHeaders = await getSsrAuthHeaders();
 		const [currentUser, profile] = await Promise.all([
 			context.queryClient
 				.ensureQueryData({
-					...authControllerMeOptions(),
+					...authControllerMeOptions(authHeaders),
 					staleTime: 5 * 60 * 1000,
 					retry: false,
 				})

@@ -39,6 +39,7 @@ import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
+import { ProfileService } from "../users/profile.service";
 import { IngesterService } from "./ingester.service";
 
 type MockPrismaService = {
@@ -78,6 +79,10 @@ describe("IngesterService", () => {
 	let mockSocialService: {
 		indexFollowRecord: jest.Mock;
 		deleteFollowRecordIndex: jest.Mock;
+	};
+	let mockProfileService: {
+		indexProfileRecord: jest.Mock;
+		deleteProfileRecordIndex: jest.Mock;
 	};
 
 	const mockConfigService = {
@@ -129,6 +134,11 @@ describe("IngesterService", () => {
 			deleteFollowRecordIndex: jest.fn(),
 		};
 
+		mockProfileService = {
+			indexProfileRecord: jest.fn(),
+			deleteProfileRecordIndex: jest.fn(),
+		};
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				IngesterService,
@@ -138,6 +148,7 @@ describe("IngesterService", () => {
 				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },
 				{ provide: SocialService, useValue: mockSocialService },
+				{ provide: ProfileService, useValue: mockProfileService },
 			],
 		}).compile();
 

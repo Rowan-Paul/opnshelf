@@ -682,16 +682,12 @@ export class ListsService {
 				isDefault: record.isDefault,
 			},
 		});
-
-		this.logger.debug(`Indexed list record: ${uri}`);
 	}
 
 	async deleteListRecord(rkey: string): Promise<void> {
 		await this.prisma.list.deleteMany({
 			where: { rkey },
 		});
-
-		this.logger.debug(`Deleted list record: ${rkey}`);
 	}
 
 	async indexListItemRecord(
@@ -776,16 +772,12 @@ export class ListsService {
 				notes: record.notes,
 			},
 		});
-
-		this.logger.debug(`Indexed list item record: ${uri}`);
 	}
 
 	async deleteListItemRecord(rkey: string): Promise<void> {
 		await this.prisma.listItem.deleteMany({
 			where: { rkey },
 		});
-
-		this.logger.debug(`Deleted list item record: ${rkey}`);
 	}
 
 	private generateSlug(name: string, userDid: string): string {
@@ -800,7 +792,7 @@ export class ListsService {
 	}
 
 	private async listRepoDefaultLists(
-		userDid: string,
+		_userDid: string,
 		session: ATSession,
 	): Promise<
 		Array<{
@@ -838,7 +830,6 @@ export class ListsService {
 				try {
 					parsedRecord = listSchema.parse(record.value);
 				} catch {
-					this.logger.debug(`Skipping invalid repo list record: ${record.uri}`);
 					continue;
 				}
 
@@ -861,10 +852,6 @@ export class ListsService {
 
 			cursor = response.data.cursor;
 		} while (cursor);
-
-		this.logger.debug(
-			`Found ${repoDefaults.length} default list records on repo for user ${userDid}`,
-		);
 
 		return repoDefaults;
 	}

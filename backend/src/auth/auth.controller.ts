@@ -155,12 +155,10 @@ export class AuthController {
 		}
 
 		try {
-			this.logger.log(`Starting OAuth flow for handle: ${userHandle}`);
 			const authUrl = await this.authService.authorize(
 				userHandle,
 				oauthAppState,
 			);
-			this.logger.log(`Redirecting to: ${authUrl}`);
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth authorization failed", error);
@@ -219,9 +217,7 @@ export class AuthController {
 		}
 
 		try {
-			this.logger.log("Starting OAuth signup flow via PDS");
 			const authUrl = await this.authService.authorizeWithPds(oauthAppState);
-			this.logger.log(`Redirecting to PDS: ${authUrl}`);
 			return res.redirect(authUrl);
 		} catch (error) {
 			this.logger.error("OAuth PDS signup authorization failed", error);
@@ -273,11 +269,8 @@ export class AuthController {
 			// Parse callback query params
 			const params = new URLSearchParams(req.url.split("?")[1] || "");
 
-			this.logger.log("Processing OAuth callback");
 			const { session, state } = await this.authService.callback(params);
 			const statePayload = this.authService.parseOAuthAppState(state);
-
-			this.logger.log(`OAuth callback successful for DID: ${session.did}`);
 
 			// Prefer OAuth state (survives iOS auth sessions), then cookie fallback.
 			const timezone = statePayload.timezone || cookies?.[TIMEZONE_COOKIE_NAME];
@@ -294,12 +287,9 @@ export class AuthController {
 				res.clearCookie(TIMEZONE_COOKIE_NAME);
 			}
 
-			this.logger.log(`User upserted: ${profile.handle}`);
-
 			// Register user's DID with TAP for repo tracking and backfill
 			try {
 				await this.ingesterService.addRepo(session.did);
-				this.logger.log(`Registered ${session.did} with TAP for backfill`);
 			} catch (tapError) {
 				// Log but don't fail login if TAP registration fails
 				this.logger.error(
@@ -363,7 +353,6 @@ export class AuthController {
 					? `opnshelf://auth/complete?session=${encodeURIComponent(sessionRecord.id)}`
 					: new URL("/auth/complete", frontendUrl).toString();
 
-			this.logger.log(`Redirecting to: ${completeUrl}`);
 			return res.redirect(completeUrl);
 		} catch (error) {
 			this.logger.error("OAuth callback failed", error);

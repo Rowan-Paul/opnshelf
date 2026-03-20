@@ -4,12 +4,14 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
 import { getProfileRoute } from "@/lib/profile-routes";
+import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 
 export const Route = createFileRoute("/profile/")({
 	beforeLoad: async ({ context }) => {
+		const authHeaders = await getSsrAuthHeaders();
 		const user = await context.queryClient
 			.ensureQueryData({
-				...authControllerMeOptions(),
+				...authControllerMeOptions(authHeaders),
 				staleTime: 5 * 60 * 1000,
 				retry: false,
 			})

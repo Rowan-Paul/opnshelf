@@ -59,15 +59,17 @@ import {
 	validateAvatarFile,
 } from "@/lib/avatar-upload";
 import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
+import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
 
 export const Route = createFileRoute("/profile/$handle/settings")({
 	beforeLoad: async ({ context, params }) => {
 		const handle = params.handle.trim().replace(/^@/, "").toLowerCase();
+		const authHeaders = await getSsrAuthHeaders();
 		const [currentUser, profile] = await Promise.all([
 			context.queryClient
 				.ensureQueryData({
-					...authControllerMeOptions(),
+					...authControllerMeOptions(authHeaders),
 					staleTime: 5 * 60 * 1000,
 					retry: false,
 				})

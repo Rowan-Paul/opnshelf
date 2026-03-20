@@ -49,10 +49,6 @@ export class AuthService implements OnModuleInit {
 			oauthClientConfig.runtimeClientId,
 		);
 
-		this.logger.log(
-			`Initializing OAuth client with client_id: ${clientMetadata.client_id}`,
-		);
-
 		// Create Prisma-backed state store
 		const stateStore = {
 			set: async (key: string, state: NodeSavedState) => {
@@ -123,7 +119,6 @@ export class AuthService implements OnModuleInit {
 				// Allow HTTP for localhost development
 				allowHttp: oauthClientConfig.allowHttp,
 			});
-			this.logger.log("OAuth client initialized successfully");
 		} catch (error) {
 			this.logger.error("Failed to initialize OAuth client", error);
 			throw error;
@@ -275,7 +270,6 @@ export class AuthService implements OnModuleInit {
 	async revoke(did: string) {
 		try {
 			await this.prisma.authSession.deleteMany({ where: { userDid: did } });
-			this.logger.log(`Session revoked for ${did}`);
 		} catch (error) {
 			this.logger.error(`Failed to revoke session for ${did}`, error);
 		}
@@ -287,7 +281,6 @@ export class AuthService implements OnModuleInit {
 	async revokeBySessionId(sessionId: string) {
 		try {
 			await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
-			this.logger.log("Session revoked by id");
 		} catch (error) {
 			this.logger.error("Failed to revoke session by id", error);
 		}
@@ -492,9 +485,7 @@ export class AuthService implements OnModuleInit {
 				expiresAt: { lt: new Date() },
 			},
 		});
-		if (result.count > 0) {
-			this.logger.log(`Cleaned up ${result.count} expired auth states`);
-		}
+		void result;
 	}
 
 	/**

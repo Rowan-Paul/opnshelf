@@ -153,16 +153,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		try {
 			await this.tap.addRepos([did]);
-
-			// Check repo info to verify it's being tracked
-			try {
-				const repoInfo = await this.tap.getRepoInfo(did);
-				this.logger.debug(
-					`Repo ${did} info: state=${repoInfo.state}, rev=${repoInfo.rev}, records=${repoInfo.records}`,
-				);
-			} catch (infoErr) {
-				this.logger.warn(`Could not get repo info for ${did}`, infoErr);
-			}
 		} catch (err) {
 			this.logger.error(`Failed to register repo ${did} with TAP`, err);
 			throw err;
@@ -225,8 +215,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleListEvent(evt, uri);
 		} else if (evt.collection === LIST_ITEM_COLLECTION) {
 			await this.handleListItemEvent(evt, uri);
-		} else {
-			this.logger.debug(`Skipping event for collection ${evt.collection}`);
 		}
 	}
 
@@ -241,7 +229,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				followRecord = followSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid follow record, skipping");
 				return;
 			}
 
@@ -250,7 +237,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 
@@ -277,7 +263,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				movieRecord = movieSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid movie record, skipping");
 				return;
 			}
 
@@ -286,7 +271,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 
@@ -345,7 +329,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				profileRecord = profileSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid profile record, skipping");
 				return;
 			}
 
@@ -354,7 +337,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 
@@ -383,7 +365,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				listRecord = listSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid list record, skipping");
 				return;
 			}
 
@@ -392,7 +373,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 
@@ -421,7 +401,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				episodeRecord = episodeSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid episode record, skipping");
 				return;
 			}
 
@@ -430,7 +409,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 
@@ -493,7 +471,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			try {
 				listItemRecord = listItemSchema.parse(evt.record);
 			} catch {
-				this.logger.debug("Received invalid list item record, skipping");
 				return;
 			}
 
@@ -502,7 +479,6 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			});
 
 			if (!user) {
-				this.logger.debug(`User ${evt.did} not in database, skipping record`);
 				return;
 			}
 

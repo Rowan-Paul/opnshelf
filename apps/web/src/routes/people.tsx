@@ -2,6 +2,7 @@ import { authControllerMeOptions } from "@opnshelf/api";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { parsePageNumber } from "@/lib/pagination";
 import { getProfilePeopleRoute } from "@/lib/profile-routes";
+import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 
 export const Route = createFileRoute("/people")({
 	validateSearch: (search: Record<string, unknown>) => ({
@@ -9,9 +10,10 @@ export const Route = createFileRoute("/people")({
 		page: parsePageNumber(search.page),
 	}),
 	beforeLoad: async ({ context, search }) => {
+		const authHeaders = await getSsrAuthHeaders();
 		const user = await context.queryClient
 			.ensureQueryData({
-				...authControllerMeOptions(),
+				...authControllerMeOptions(authHeaders),
 				staleTime: 5 * 60 * 1000,
 				retry: false,
 			})
