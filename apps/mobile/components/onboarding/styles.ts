@@ -158,6 +158,27 @@ export const styles = StyleSheet.create({
 		justifyContent: "space-between",
 		alignItems: "flex-start",
 	},
+	identityAvatarRow: {
+		flexDirection: "row",
+		gap: spacing.md,
+		alignItems: "center",
+	},
+	identityAvatar: {
+		width: 72,
+		height: 72,
+		borderRadius: 36,
+		overflow: "hidden",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	identityAvatarImage: {
+		width: "100%",
+		height: "100%",
+	},
+	identityAvatarFallback: {
+		fontSize: 28,
+		fontWeight: "700",
+	},
 	previewHeaderText: {
 		flex: 1,
 		gap: 2,

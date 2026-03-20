@@ -28,6 +28,8 @@ type OnboardingContentProps = {
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
 	displayName: string;
+	avatarPreviewUri: string | null;
+	avatarErrorMessage: string | null;
 	timezone: string;
 	timeFormat: "12h" | "24h";
 	csvFileName: string | null;
@@ -43,6 +45,7 @@ type OnboardingContentProps = {
 	onActiveTabChange: (tab: TabValue) => void;
 	onTraktUsernameChange: (value: string) => void;
 	onDisplayNameChange: (value: string) => void;
+	onPickAvatar: () => void;
 	onTimezoneChange: (value: string) => void;
 	onTimeFormatChange: (value: "12h" | "24h") => void;
 	onSkipSetup: () => void;
@@ -64,6 +67,8 @@ export function OnboardingContent({
 	traktUsername,
 	traktPreview,
 	displayName,
+	avatarPreviewUri,
+	avatarErrorMessage,
 	timezone,
 	timeFormat,
 	csvFileName,
@@ -79,6 +84,7 @@ export function OnboardingContent({
 	onActiveTabChange,
 	onTraktUsernameChange,
 	onDisplayNameChange,
+	onPickAvatar,
 	onTimezoneChange,
 	onTimeFormatChange,
 	onSkipSetup,
@@ -114,10 +120,13 @@ export function OnboardingContent({
 				{step === 2 && (
 					<IdentityStepCard
 						displayName={displayName}
+						avatarPreviewUri={avatarPreviewUri}
+						avatarErrorMessage={avatarErrorMessage}
 						timezone={timezone}
 						timeFormat={timeFormat}
 						isSavingProfile={isSavingProfile}
 						onDisplayNameChange={onDisplayNameChange}
+						onPickAvatar={onPickAvatar}
 						onOpenTimezonePicker={() => setIsTimezoneModalOpen(true)}
 						onTimeFormatChange={onTimeFormatChange}
 						onBack={() => onStepChange(1)}

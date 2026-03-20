@@ -29,6 +29,13 @@ export type UserMinAggregateOutputType = {
   handle: string | null
   displayName: string | null
   avatar: string | null
+  profileRkey: string | null
+  profileUri: string | null
+  profileCid: string | null
+  profileDisplayName: string | null
+  profileAvatarCid: string | null
+  profileAvatarMimeType: string | null
+  profileUpdatedAt: Date | null
   timezone: string | null
   timeFormat: string | null
   onboardingCompletedAt: Date | null
@@ -41,6 +48,13 @@ export type UserMaxAggregateOutputType = {
   handle: string | null
   displayName: string | null
   avatar: string | null
+  profileRkey: string | null
+  profileUri: string | null
+  profileCid: string | null
+  profileDisplayName: string | null
+  profileAvatarCid: string | null
+  profileAvatarMimeType: string | null
+  profileUpdatedAt: Date | null
   timezone: string | null
   timeFormat: string | null
   onboardingCompletedAt: Date | null
@@ -53,6 +67,13 @@ export type UserCountAggregateOutputType = {
   handle: number
   displayName: number
   avatar: number
+  profileRkey: number
+  profileUri: number
+  profileCid: number
+  profileDisplayName: number
+  profileAvatarCid: number
+  profileAvatarMimeType: number
+  profileUpdatedAt: number
   timezone: number
   timeFormat: number
   onboardingCompletedAt: number
@@ -67,6 +88,13 @@ export type UserMinAggregateInputType = {
   handle?: true
   displayName?: true
   avatar?: true
+  profileRkey?: true
+  profileUri?: true
+  profileCid?: true
+  profileDisplayName?: true
+  profileAvatarCid?: true
+  profileAvatarMimeType?: true
+  profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
   onboardingCompletedAt?: true
@@ -79,6 +107,13 @@ export type UserMaxAggregateInputType = {
   handle?: true
   displayName?: true
   avatar?: true
+  profileRkey?: true
+  profileUri?: true
+  profileCid?: true
+  profileDisplayName?: true
+  profileAvatarCid?: true
+  profileAvatarMimeType?: true
+  profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
   onboardingCompletedAt?: true
@@ -91,6 +126,13 @@ export type UserCountAggregateInputType = {
   handle?: true
   displayName?: true
   avatar?: true
+  profileRkey?: true
+  profileUri?: true
+  profileCid?: true
+  profileDisplayName?: true
+  profileAvatarCid?: true
+  profileAvatarMimeType?: true
+  profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
   onboardingCompletedAt?: true
@@ -176,6 +218,13 @@ export type UserGroupByOutputType = {
   handle: string
   displayName: string | null
   avatar: string | null
+  profileRkey: string | null
+  profileUri: string | null
+  profileCid: string | null
+  profileDisplayName: string | null
+  profileAvatarCid: string | null
+  profileAvatarMimeType: string | null
+  profileUpdatedAt: Date | null
   timezone: string
   timeFormat: string
   onboardingCompletedAt: Date | null
@@ -209,6 +258,13 @@ export type UserWhereInput = {
   handle?: Prisma.StringFilter<"User"> | string
   displayName?: Prisma.StringNullableFilter<"User"> | string | null
   avatar?: Prisma.StringNullableFilter<"User"> | string | null
+  profileRkey?: Prisma.StringNullableFilter<"User"> | string | null
+  profileUri?: Prisma.StringNullableFilter<"User"> | string | null
+  profileCid?: Prisma.StringNullableFilter<"User"> | string | null
+  profileDisplayName?: Prisma.StringNullableFilter<"User"> | string | null
+  profileAvatarCid?: Prisma.StringNullableFilter<"User"> | string | null
+  profileAvatarMimeType?: Prisma.StringNullableFilter<"User"> | string | null
+  profileUpdatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -226,6 +282,13 @@ export type UserOrderByWithRelationInput = {
   handle?: Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileRkey?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileDisplayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileAvatarCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileAvatarMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -246,6 +309,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   displayName?: Prisma.StringNullableFilter<"User"> | string | null
   avatar?: Prisma.StringNullableFilter<"User"> | string | null
+  profileRkey?: Prisma.StringNullableFilter<"User"> | string | null
+  profileUri?: Prisma.StringNullableFilter<"User"> | string | null
+  profileCid?: Prisma.StringNullableFilter<"User"> | string | null
+  profileDisplayName?: Prisma.StringNullableFilter<"User"> | string | null
+  profileAvatarCid?: Prisma.StringNullableFilter<"User"> | string | null
+  profileAvatarMimeType?: Prisma.StringNullableFilter<"User"> | string | null
+  profileUpdatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -263,6 +333,13 @@ export type UserOrderByWithAggregationInput = {
   handle?: Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileRkey?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileDisplayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileAvatarCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileAvatarMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -281,6 +358,13 @@ export type UserScalarWhereWithAggregatesInput = {
   handle?: Prisma.StringWithAggregatesFilter<"User"> | string
   displayName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatar?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileRkey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileUri?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileCid?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileDisplayName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileAvatarCid?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileAvatarMimeType?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileUpdatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -293,6 +377,13 @@ export type UserCreateInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -310,6 +401,13 @@ export type UserUncheckedCreateInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -327,6 +425,13 @@ export type UserUpdateInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -344,6 +449,13 @@ export type UserUncheckedUpdateInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -361,6 +473,13 @@ export type UserCreateManyInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -373,6 +492,13 @@ export type UserUpdateManyMutationInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -385,6 +511,13 @@ export type UserUncheckedUpdateManyInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -397,6 +530,13 @@ export type UserCountOrderByAggregateInput = {
   handle?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   avatar?: Prisma.SortOrder
+  profileRkey?: Prisma.SortOrder
+  profileUri?: Prisma.SortOrder
+  profileCid?: Prisma.SortOrder
+  profileDisplayName?: Prisma.SortOrder
+  profileAvatarCid?: Prisma.SortOrder
+  profileAvatarMimeType?: Prisma.SortOrder
+  profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
@@ -409,6 +549,13 @@ export type UserMaxOrderByAggregateInput = {
   handle?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   avatar?: Prisma.SortOrder
+  profileRkey?: Prisma.SortOrder
+  profileUri?: Prisma.SortOrder
+  profileCid?: Prisma.SortOrder
+  profileDisplayName?: Prisma.SortOrder
+  profileAvatarCid?: Prisma.SortOrder
+  profileAvatarMimeType?: Prisma.SortOrder
+  profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
@@ -421,6 +568,13 @@ export type UserMinOrderByAggregateInput = {
   handle?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   avatar?: Prisma.SortOrder
+  profileRkey?: Prisma.SortOrder
+  profileUri?: Prisma.SortOrder
+  profileCid?: Prisma.SortOrder
+  profileDisplayName?: Prisma.SortOrder
+  profileAvatarCid?: Prisma.SortOrder
+  profileAvatarMimeType?: Prisma.SortOrder
+  profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
@@ -524,6 +678,13 @@ export type UserCreateWithoutFollowingInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -540,6 +701,13 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -561,6 +729,13 @@ export type UserCreateWithoutFollowersInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -577,6 +752,13 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -609,6 +791,13 @@ export type UserUpdateWithoutFollowingInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -625,6 +814,13 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -652,6 +848,13 @@ export type UserUpdateWithoutFollowersInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -668,6 +871,13 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -684,6 +894,13 @@ export type UserCreateWithoutTrackedMoviesInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -700,6 +917,13 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -732,6 +956,13 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -748,6 +979,13 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -764,6 +1002,13 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -780,6 +1025,13 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -812,6 +1064,13 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -828,6 +1087,13 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -844,6 +1110,13 @@ export type UserCreateWithoutListsInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -860,6 +1133,13 @@ export type UserUncheckedCreateWithoutListsInput = {
   handle: string
   displayName?: string | null
   avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
   onboardingCompletedAt?: Date | string | null
@@ -892,6 +1172,13 @@ export type UserUpdateWithoutListsInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -908,6 +1195,13 @@ export type UserUncheckedUpdateWithoutListsInput = {
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -991,6 +1285,13 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   handle?: boolean
   displayName?: boolean
   avatar?: boolean
+  profileRkey?: boolean
+  profileUri?: boolean
+  profileCid?: boolean
+  profileDisplayName?: boolean
+  profileAvatarCid?: boolean
+  profileAvatarMimeType?: boolean
+  profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
   onboardingCompletedAt?: boolean
@@ -1009,6 +1310,13 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   handle?: boolean
   displayName?: boolean
   avatar?: boolean
+  profileRkey?: boolean
+  profileUri?: boolean
+  profileCid?: boolean
+  profileDisplayName?: boolean
+  profileAvatarCid?: boolean
+  profileAvatarMimeType?: boolean
+  profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
   onboardingCompletedAt?: boolean
@@ -1021,6 +1329,13 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   handle?: boolean
   displayName?: boolean
   avatar?: boolean
+  profileRkey?: boolean
+  profileUri?: boolean
+  profileCid?: boolean
+  profileDisplayName?: boolean
+  profileAvatarCid?: boolean
+  profileAvatarMimeType?: boolean
+  profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
   onboardingCompletedAt?: boolean
@@ -1033,6 +1348,13 @@ export type UserSelectScalar = {
   handle?: boolean
   displayName?: boolean
   avatar?: boolean
+  profileRkey?: boolean
+  profileUri?: boolean
+  profileCid?: boolean
+  profileDisplayName?: boolean
+  profileAvatarCid?: boolean
+  profileAvatarMimeType?: boolean
+  profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
   onboardingCompletedAt?: boolean
@@ -1040,7 +1362,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "timezone" | "timeFormat" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -1066,6 +1388,13 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     handle: string
     displayName: string | null
     avatar: string | null
+    profileRkey: string | null
+    profileUri: string | null
+    profileCid: string | null
+    profileDisplayName: string | null
+    profileAvatarCid: string | null
+    profileAvatarMimeType: string | null
+    profileUpdatedAt: Date | null
     timezone: string
     timeFormat: string
     onboardingCompletedAt: Date | null
@@ -1503,6 +1832,13 @@ export interface UserFieldRefs {
   readonly handle: Prisma.FieldRef<"User", 'String'>
   readonly displayName: Prisma.FieldRef<"User", 'String'>
   readonly avatar: Prisma.FieldRef<"User", 'String'>
+  readonly profileRkey: Prisma.FieldRef<"User", 'String'>
+  readonly profileUri: Prisma.FieldRef<"User", 'String'>
+  readonly profileCid: Prisma.FieldRef<"User", 'String'>
+  readonly profileDisplayName: Prisma.FieldRef<"User", 'String'>
+  readonly profileAvatarCid: Prisma.FieldRef<"User", 'String'>
+  readonly profileAvatarMimeType: Prisma.FieldRef<"User", 'String'>
+  readonly profileUpdatedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>

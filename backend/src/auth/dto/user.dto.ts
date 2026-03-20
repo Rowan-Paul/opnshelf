@@ -7,10 +7,14 @@ export class UserDto {
 	@ApiProperty({ description: "User handle (e.g., user.bsky.social)" })
 	handle: string;
 
-	@ApiProperty({ description: "Display name", nullable: true })
+	@ApiProperty({ description: "Display name", nullable: true, type: String })
 	displayName: string | null;
 
-	@ApiProperty({ description: "Avatar URL", nullable: true })
+	@ApiProperty({
+		description: "OpnShelf profile avatar URL",
+		nullable: true,
+		type: String,
+	})
 	avatar: string | null;
 
 	@ApiProperty({
@@ -21,6 +25,7 @@ export class UserDto {
 	@ApiProperty({
 		description: "When onboarding was completed",
 		nullable: true,
+		type: String,
 	})
 	onboardingCompletedAt: string | null;
 

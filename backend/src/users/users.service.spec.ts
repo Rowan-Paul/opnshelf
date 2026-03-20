@@ -7,12 +7,29 @@ import { ConfigService } from "@nestjs/config";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
+
+jest.mock("./import-history.service", () => ({
+	ImportHistoryService: jest.fn().mockImplementation(() => ({
+		fetchTraktPublicHistory: jest.fn(),
+		importNormalizedItems: jest.fn(),
+	})),
+}));
+
+jest.mock("./profile.service", () => ({
+	ProfileService: class MockProfileService {},
+}));
+
 import { ImportHistoryService } from "./import-history.service";
+import type { ProfileService } from "./profile.service";
 import type { UserDeletionService } from "./user-deletion.service";
 import { UsersService } from "./users.service";
 
 describe("UsersService", () => {
 	let service: UsersService;
+	let importHistoryService: {
+		fetchTraktPublicHistory: jest.Mock;
+		importNormalizedItems: jest.Mock;
+	};
 
 	const prisma = {
 		user: {
@@ -53,18 +70,28 @@ describe("UsersService", () => {
 		deleteUser: jest.fn(),
 	} as unknown as UserDeletionService;
 
+	const profileService = {
+		updateProfile: jest.fn(),
+		deleteAvatar: jest.fn(),
+		streamAvatar: jest.fn(),
+	} as unknown as ProfileService;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
-		const importHistoryService = new ImportHistoryService(
+		importHistoryService = new ImportHistoryService(
 			prisma,
 			moviesService,
 			showsService,
 			configService,
-		);
+		) as unknown as {
+			fetchTraktPublicHistory: jest.Mock;
+			importNormalizedItems: jest.Mock;
+		};
 		service = new UsersService(
 			prisma,
 			importHistoryService,
 			userDeletionService,
+			profileService,
 		);
 	});
 
@@ -98,25 +125,91 @@ describe("UsersService", () => {
 		prisma.user.findUnique = jest
 			.fn()
 			.mockResolvedValue({ did: "did:plc:123" });
-		prisma.user.update = jest.fn().mockResolvedValue({
+		(profileService.updateProfile as jest.Mock).mockResolvedValue({
 			displayName: "Updated User",
 			avatar: "https://example.com/avatar.jpg",
 		});
+		const session = { did: "did:plc:123" };
 
 		await expect(
-			service.updateUserProfile("did:plc:123", { displayName: "Updated User" }),
+			service.updateUserProfile("did:plc:123", session, {
+				displayName: "Updated User",
+			}),
 		).resolves.toEqual({
 			displayName: "Updated User",
 			avatar: "https://example.com/avatar.jpg",
 		});
+		expect(profileService.updateProfile).toHaveBeenCalledWith(
+			"did:plc:123",
+			session,
+			{
+				displayName: "Updated User",
+			},
+		);
 	});
 
 	it("throws when updating profile for missing user", async () => {
 		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
 
 		await expect(
-			service.updateUserProfile("did:plc:missing", { displayName: "Nope" }),
+			service.updateUserProfile(
+				"did:plc:missing",
+				{ did: "did:plc:missing" },
+				{ displayName: "Nope" },
+			),
 		).rejects.toThrow(NotFoundException);
+	});
+
+	it("uploads a user avatar through the profile service", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:123" });
+		(profileService.updateProfile as jest.Mock).mockResolvedValue({
+			displayName: "Updated User",
+			avatar: "https://example.com/avatar.jpg",
+		});
+		const session = { did: "did:plc:123" };
+		const file = {
+			buffer: Buffer.from("avatar"),
+			mimetype: "image/png",
+			size: 6,
+		};
+
+		await expect(
+			service.uploadUserAvatar("did:plc:123", session, file),
+		).resolves.toEqual({
+			displayName: "Updated User",
+			avatar: "https://example.com/avatar.jpg",
+		});
+		expect(profileService.updateProfile).toHaveBeenCalledWith(
+			"did:plc:123",
+			session,
+			{
+				avatar: file,
+			},
+		);
+	});
+
+	it("deletes a user avatar through the profile service", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:123" });
+		(profileService.deleteAvatar as jest.Mock).mockResolvedValue({
+			displayName: "Updated User",
+			avatar: null,
+		});
+		const session = { did: "did:plc:123" };
+
+		await expect(
+			service.deleteUserAvatar("did:plc:123", session),
+		).resolves.toEqual({
+			displayName: "Updated User",
+			avatar: null,
+		});
+		expect(profileService.deleteAvatar).toHaveBeenCalledWith(
+			"did:plc:123",
+			session,
+		);
 	});
 
 	it("returns a public profile by normalized handle", async () => {
@@ -318,222 +411,120 @@ describe("UsersService", () => {
 		).rejects.toThrow(NotFoundException);
 	});
 
-	it("normalizes Trakt movie/episode items and skips unsupported action", async () => {
-		const profilePayload = {
-			username: "alice",
-			name: "Alice Example",
-			private: false,
-			vip: true,
-			ids: { slug: "alice" },
-			images: {
-				avatar: {
-					medium: "//example.com/avatar-medium.jpg",
-				},
+	it("delegates Trakt history fetching to the import history service", async () => {
+		importHistoryService.fetchTraktPublicHistory.mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: true,
+				avatarUrl: "https://example.com/avatar-medium.jpg",
 			},
-		};
-		const payload = [
+			importableCount: 2,
+			previewItems: [],
+			items: [],
+			skipped: [],
+			sourceCount: 2,
+		});
+
+		await expect(
+			service.fetchTraktPublicHistory("alice", 100),
+		).resolves.toEqual({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: true,
+				avatarUrl: "https://example.com/avatar-medium.jpg",
+			},
+			importableCount: 2,
+			previewItems: [],
+			items: [],
+			skipped: [],
+			sourceCount: 2,
+		});
+		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
+			"alice",
+			100,
+		);
+	});
+
+	it("delegates Trakt history fetching without a max item limit", async () => {
+		importHistoryService.fetchTraktPublicHistory.mockResolvedValue({
+			profile: {
+				username: "rpf_2001",
+				slug: "rpf_2001",
+				name: null,
+				isPrivate: false,
+				isVip: false,
+				avatarUrl: null,
+			},
+			importableCount: 100,
+			previewItems: [],
+			items: [],
+			skipped: [],
+			sourceCount: 100,
+		});
+
+		await expect(
+			service.fetchTraktPublicHistory("rpf_2001"),
+		).resolves.toMatchObject({
+			importableCount: 100,
+			sourceCount: 100,
+		});
+		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
+			"rpf_2001",
+			undefined,
+		);
+	});
+
+	it("delegates normalized history imports", async () => {
+		const items = [
 			{
-				type: "movie",
-				action: "watch",
-				watched_at: "2026-01-01T01:00:00.000Z",
-				movie: { title: "Past Lives", year: 2023, ids: { tmdb: 100 } },
+				type: "movie" as const,
+				movieTmdbId: 10,
+				watchedAt: "2026-01-01T00:00:00.000Z",
 			},
 			{
-				type: "episode",
-				action: "scrobble",
-				watched_at: "2026-01-02T02:00:00.000Z",
-				show: { title: "Severance", ids: { tmdb: 200 } },
-				episode: { season: 1, number: 2, title: "Half Loop" },
-			},
-			{
-				type: "movie",
-				action: "rate",
-				watched_at: "2026-01-03T03:00:00.000Z",
-				movie: { ids: { tmdb: 300 } },
+				type: "movie" as const,
+				movieTmdbId: 10,
+				watchedAt: "2026-01-02T00:00:00.000Z",
 			},
 		];
-
-		global.fetch = jest
-			.fn()
-			.mockResolvedValueOnce({
-				ok: true,
-				status: 200,
-				json: async () => profilePayload,
-			})
-			.mockResolvedValueOnce({
-				ok: true,
-				status: 200,
-				json: async () => payload,
-			}) as unknown as typeof fetch;
-
-		const result = await service.fetchTraktPublicHistory("alice", 100);
-
-		expect(result.profile).toEqual({
-			username: "alice",
-			slug: "alice",
-			name: "Alice Example",
-			isPrivate: false,
-			isVip: true,
-			avatarUrl: "https://example.com/avatar-medium.jpg",
+		importHistoryService.importNormalizedItems.mockResolvedValue({
+			imported: 2,
+			skipped: 0,
+			failed: 0,
+			errors: [],
 		});
-		expect(result.importableCount).toBe(2);
-		expect(result.previewItems).toEqual([
-			{
-				type: "movie",
-				title: "Past Lives",
-				subtitle: "Movie • 2023",
-				watchedAt: "2026-01-01T01:00:00.000Z",
-			},
-			{
-				type: "episode",
-				title: "Severance",
-				subtitle: "S01E02 • Half Loop",
-				watchedAt: "2026-01-02T02:00:00.000Z",
-			},
-		]);
-		expect(result.items).toHaveLength(2);
-		expect(result.items[0]).toMatchObject({ type: "movie", movieTmdbId: 100 });
-		expect(result.items[1]).toMatchObject({
-			type: "episode",
-			showTmdbId: 200,
-			seasonNumber: 1,
-			episodeNumber: 2,
-		});
-		expect(result.skipped).toHaveLength(1);
-		expect(result.skipped[0]?.reason).toBe("unsupported_action");
-	});
 
-	it("continues paging when Trakt returns short pages before the last page", async () => {
-		const profilePayload = {
-			username: "rpf_2001",
-			private: false,
-			vip: false,
-			ids: { slug: "rpf_2001" },
-		};
-		const firstPage = Array.from({ length: 99 }, (_, index) => ({
-			type: "movie",
-			action: "watch",
-			watched_at: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
-			movie: {
-				title: `Movie ${index + 1}`,
-				ids: { tmdb: index + 1 },
-			},
-		}));
-		const secondPage = [
-			{
-				type: "movie",
-				action: "watch",
-				watched_at: "2026-04-15T00:00:00.000Z",
-				movie: { title: "Movie 100", ids: { tmdb: 100 } },
-			},
-		];
-
-		global.fetch = jest
-			.fn()
-			.mockResolvedValueOnce({
-				ok: true,
-				status: 200,
-				headers: new Headers(),
-				json: async () => profilePayload,
-			})
-			.mockResolvedValueOnce({
-				ok: true,
-				status: 200,
-				headers: new Headers({
-					"x-pagination-page-count": "2",
-				}),
-				json: async () => firstPage,
-			})
-			.mockResolvedValueOnce({
-				ok: true,
-				status: 200,
-				headers: new Headers({
-					"x-pagination-page-count": "2",
-				}),
-				json: async () => secondPage,
-			}) as unknown as typeof fetch;
-
-		const result = await service.fetchTraktPublicHistory("rpf_2001");
-
-		expect(result.importableCount).toBe(100);
-		expect(result.items).toHaveLength(100);
-		expect(result.items[result.items.length - 1]).toMatchObject({
-			type: "movie",
-			movieTmdbId: 100,
-		});
-	});
-
-	it("returns dedupe skips without dropping rewatches", async () => {
-		prisma.trackedMovie.findFirst = jest
-			.fn()
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce(null);
-		moviesService.markWatched = jest.fn().mockResolvedValue({
-			uri: "at://movie/1",
-			cid: "cid-1",
-			rkey: "rkey-1",
-		});
-		moviesService.indexTrackedMovie = jest.fn().mockResolvedValue({});
-
-		const result = await service.importNormalizedItems(
-			"did:plc:abc",
-			{ did: "did:plc:abc" },
-			[
-				{
-					type: "movie",
-					movieTmdbId: 10,
-					watchedAt: "2026-01-01T00:00:00.000Z",
-				},
-				{
-					type: "movie",
-					movieTmdbId: 10,
-					watchedAt: "2026-01-01T00:00:00.000Z",
-				},
-				{
-					type: "movie",
-					movieTmdbId: 10,
-					watchedAt: "2026-01-02T00:00:00.000Z",
-				},
-			],
-		);
-
-		expect(moviesService.markWatched).toHaveBeenCalledTimes(2);
-		expect(result).toMatchObject({ imported: 2, skipped: 1, failed: 0 });
-	});
-
-	it("continues when a write fails", async () => {
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		moviesService.markWatched = jest
-			.fn()
-			.mockRejectedValue(new Error("write failed"));
-
-		const result = await service.importNormalizedItems(
-			"did:plc:abc",
-			{ did: "did:plc:abc" },
-			[
-				{
-					type: "movie",
-					movieTmdbId: 10,
-					watchedAt: "2026-01-01T00:00:00.000Z",
-				},
-			],
-		);
-
-		expect(result.failed).toBe(1);
-		expect(result.errors[0]?.code).toBe("write_failed");
-	});
-
-	it("rejects history import payloads larger than 100", async () => {
 		await expect(
 			service.importNormalizedItems(
 				"did:plc:abc",
 				{ did: "did:plc:abc" },
-				Array.from({ length: 101 }, () => ({
-					type: "movie" as const,
-					movieTmdbId: 1,
-					watchedAt: "2026-01-01T00:00:00.000Z",
-				})),
+				items,
 			),
-		).rejects.toThrow(BadRequestException);
+		).resolves.toEqual({
+			imported: 2,
+			skipped: 0,
+			failed: 0,
+			errors: [],
+		});
+		expect(importHistoryService.importNormalizedItems).toHaveBeenCalledWith(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			items,
+		);
+	});
+
+	it("propagates normalized history import failures", async () => {
+		const error = new BadRequestException("Too many items");
+		importHistoryService.importNormalizedItems.mockRejectedValue(error);
+
+		await expect(
+			service.importNormalizedItems("did:plc:abc", { did: "did:plc:abc" }, []),
+		).rejects.toThrow(error);
 	});
 });

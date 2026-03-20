@@ -12,7 +12,7 @@ import { PrismaService } from "../prisma/prisma.service";
 const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
 
 export const OAUTH_SCOPE =
-	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
+	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
 export interface OAuthAppState {
 	platform?: "mobile";
@@ -342,22 +342,28 @@ export class AuthService implements OnModuleInit {
 		},
 		timezone?: string,
 	) {
+		const existingUser = await this.prisma.user.findUnique({
+			where: { did: profile.did },
+			select: { did: true },
+		});
+
 		try {
-			return await this.prisma.user.upsert({
+			const user = await this.prisma.user.upsert({
 				where: { did: profile.did },
 				update: {
 					handle: profile.handle,
-					displayName: profile.displayName,
-					avatar: profile.avatar,
 				},
 				create: {
 					did: profile.did,
 					handle: profile.handle,
 					displayName: profile.displayName,
-					avatar: profile.avatar,
 					timezone: timezone || "UTC",
 				},
 			});
+			return {
+				user,
+				isNewUser: !existingUser,
+			};
 		} catch (error) {
 			// Handle stale handle collisions (e.g. handle transfer between DIDs).
 			if (!this.isHandleUniqueConstraintError(error)) {
@@ -368,7 +374,7 @@ export class AuthService implements OnModuleInit {
 				`Handle collision detected for ${profile.handle}. Reassigning stale owner and retrying.`,
 			);
 
-			return this.prisma.$transaction(async (tx) => {
+			const user = await this.prisma.$transaction(async (tx) => {
 				const existingHandleOwner = await tx.user.findUnique({
 					where: { handle: profile.handle },
 				});
@@ -392,18 +398,19 @@ export class AuthService implements OnModuleInit {
 					where: { did: profile.did },
 					update: {
 						handle: profile.handle,
-						displayName: profile.displayName,
-						avatar: profile.avatar,
 					},
 					create: {
 						did: profile.did,
 						handle: profile.handle,
 						displayName: profile.displayName,
-						avatar: profile.avatar,
 						timezone: timezone || "UTC",
 					},
 				});
 			});
+			return {
+				user,
+				isNewUser: !existingUser,
+			};
 		}
 	}
 

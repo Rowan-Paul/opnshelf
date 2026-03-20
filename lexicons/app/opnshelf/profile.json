@@ -1,0 +1,38 @@
+{
+	"lexicon": 1,
+	"id": "xyz.opnshelf.profile",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "An OpnShelf profile record",
+			"key": "literal:self",
+			"record": {
+				"type": "object",
+				"required": ["createdAt", "updatedAt"],
+				"properties": {
+					"displayName": {
+						"type": "string",
+						"maxLength": 64,
+						"description": "Display name shown in OpnShelf"
+					},
+					"avatar": {
+						"type": "blob",
+						"accept": ["image/jpeg", "image/png", "image/webp"],
+						"maxSize": 5242880,
+						"description": "Profile photo stored in the user's PDS"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record update timestamp"
+					}
+				}
+			}
+		}
+	}
+}

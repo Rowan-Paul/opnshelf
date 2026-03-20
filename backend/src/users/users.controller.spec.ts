@@ -1,8 +1,14 @@
 import { BadGatewayException, BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { AuthenticatedRequest } from "../auth/types";
-import { UsersController } from "./users.controller";
-import { UsersService } from "./users.service";
+
+jest.mock("@nestjs/platform-express", () => ({
+	FileInterceptor: () => class MockFileInterceptor {},
+}));
+
+jest.mock("./users.service", () => ({
+	UsersService: class MockUsersService {},
+}));
 
 jest.mock("../auth/auth.guard", () => ({
 	AuthGuard: class MockAuthGuard {
@@ -11,6 +17,9 @@ jest.mock("../auth/auth.guard", () => ({
 		}
 	},
 }));
+
+import { UsersController } from "./users.controller";
+import { UsersService } from "./users.service";
 
 describe("UsersController", () => {
 	let controller: UsersController;
@@ -24,6 +33,9 @@ describe("UsersController", () => {
 		getUserSettings: jest.fn(),
 		updateUserSettings: jest.fn(),
 		updateUserProfile: jest.fn(),
+		uploadUserAvatar: jest.fn(),
+		deleteUserAvatar: jest.fn(),
+		streamUserAvatar: jest.fn(),
 		deleteUser: jest.fn(),
 	};
 
@@ -133,9 +145,81 @@ describe("UsersController", () => {
 			displayName: "New Name",
 			avatar: "https://example.com/avatar.jpg",
 		});
-		expect(usersService.updateUserProfile).toHaveBeenCalledWith("did:plc:abc", {
+		expect(usersService.updateUserProfile).toHaveBeenCalledWith(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			{
+				displayName: "New Name",
+			},
+		);
+	});
+
+	it("uploads an avatar for authenticated requests", async () => {
+		usersService.uploadUserAvatar.mockResolvedValue({
 			displayName: "New Name",
+			avatar: "https://example.com/avatar.jpg",
 		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+		const file = {
+			buffer: Buffer.from("avatar"),
+			mimetype: "image/png",
+			size: 6,
+		};
+
+		await expect(controller.uploadMyAvatar(file, req)).resolves.toEqual({
+			displayName: "New Name",
+			avatar: "https://example.com/avatar.jpg",
+		});
+		expect(usersService.uploadUserAvatar).toHaveBeenCalledWith(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			file,
+		);
+	});
+
+	it("rejects avatar upload when the file is missing", async () => {
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(controller.uploadMyAvatar(undefined, req)).rejects.toThrow(
+			BadRequestException,
+		);
+	});
+
+	it("deletes an avatar for authenticated requests", async () => {
+		usersService.deleteUserAvatar.mockResolvedValue({
+			displayName: "New Name",
+			avatar: null,
+		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
+		} as AuthenticatedRequest;
+
+		await expect(controller.deleteMyAvatar(req)).resolves.toEqual({
+			displayName: "New Name",
+			avatar: null,
+		});
+		expect(usersService.deleteUserAvatar).toHaveBeenCalledWith("did:plc:abc", {
+			did: "did:plc:abc",
+		});
+	});
+
+	it("streams a public avatar by DID and CID", async () => {
+		const res = {} as never;
+
+		await expect(
+			controller.getAvatar("did:plc:abc", "bafy-avatar", res),
+		).resolves.toBeUndefined();
+		expect(usersService.streamUserAvatar).toHaveBeenCalledWith(
+			"did:plc:abc",
+			"bafy-avatar",
+			res,
+		);
 	});
 
 	it("imports Bluesky follows for authenticated requests", async () => {

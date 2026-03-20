@@ -1,9 +1,11 @@
+import { Image } from "expo-image";
 import { FileSpreadsheet } from "lucide-react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { M3TextField } from "@/components/ui/m3";
 import { useTheme } from "@/contexts/theme";
+import { AVATAR_UPLOAD_HELP_TEXT } from "@/lib/avatar-upload";
 import type {
 	FollowImportResult,
 	FollowImportStatus,
@@ -51,10 +53,13 @@ export function BriefingStepCard({
 
 type IdentityStepCardProps = {
 	displayName: string;
+	avatarPreviewUri: string | null;
+	avatarErrorMessage: string | null;
 	timezone: string;
 	timeFormat: "12h" | "24h";
 	isSavingProfile: boolean;
 	onDisplayNameChange: (value: string) => void;
+	onPickAvatar: () => void;
 	onOpenTimezonePicker: () => void;
 	onTimeFormatChange: (value: "12h" | "24h") => void;
 	onBack: () => void;
@@ -63,10 +68,13 @@ type IdentityStepCardProps = {
 
 export function IdentityStepCard({
 	displayName,
+	avatarPreviewUri,
+	avatarErrorMessage,
 	timezone,
 	timeFormat,
 	isSavingProfile,
 	onDisplayNameChange,
+	onPickAvatar,
 	onOpenTimezonePicker,
 	onTimeFormatChange,
 	onBack,
@@ -82,6 +90,73 @@ export function IdentityStepCard({
 			</CardHeader>
 			<CardContent>
 				<View style={styles.profileFormStack}>
+					<View
+						style={[
+							styles.previewCard,
+							{
+								backgroundColor: colors.surfaceContainerHigh,
+								borderColor: colors.outlineVariant,
+							},
+						]}
+					>
+						<View style={styles.identityAvatarRow}>
+							<View
+								style={[
+									styles.identityAvatar,
+									{ backgroundColor: colors.surfaceContainerHighest },
+								]}
+							>
+								{avatarPreviewUri ? (
+									<Image
+										source={{ uri: avatarPreviewUri }}
+										style={styles.identityAvatarImage}
+									/>
+								) : (
+									<Text
+										style={[
+											styles.identityAvatarFallback,
+											{ color: colors.primary },
+										]}
+									>
+										{(displayName || "U").charAt(0).toUpperCase()}
+									</Text>
+								)}
+							</View>
+							<View style={styles.previewHeaderText}>
+								<Text style={[styles.previewTitle, { color: colors.onSurface }]}>
+									Profile photo
+								</Text>
+								<Text
+									style={[
+										styles.previewSubtitle,
+										{ color: colors.onSurfaceVariant },
+									]}
+								>
+									Pick a different image if you want an OpnShelf photo that
+									doesn&apos;t match your current avatar.
+								</Text>
+							</View>
+						</View>
+						<Button variant="filled-tonal" onPress={onPickAvatar}>
+							Upload or replace photo
+						</Button>
+						<Text
+							style={[
+								styles.previewSubtitle,
+								{ color: colors.onSurfaceVariant },
+							]}
+						>
+							{AVATAR_UPLOAD_HELP_TEXT}
+						</Text>
+						{avatarErrorMessage ? (
+							<Text
+								style={[styles.previewSubtitle, { color: colors.error }]}
+							>
+								{avatarErrorMessage}
+							</Text>
+						) : null}
+					</View>
+
 					<M3TextField
 						label="Display name"
 						value={displayName}

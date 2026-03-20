@@ -4,13 +4,26 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Query,
 	Param,
 	Patch,
 	Post,
 	Req,
+	Res,
+	UploadedFile,
 	UseGuards,
+	UseInterceptors,
 } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiConsumes,
+	ApiOperation,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
+import type { Response } from "express";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
@@ -45,6 +58,19 @@ export class UsersController {
 		@Param("handle") handle: string,
 	): Promise<PublicUserProfileDto> {
 		return this.usersService.getPublicProfileByHandle(handle);
+	}
+
+	@Get("avatar")
+	@ApiOperation({ summary: "Get a public user avatar from the user's PDS" })
+	@ApiQuery({ name: "did", required: true, description: "User DID" })
+	@ApiQuery({ name: "cid", required: true, description: "Blob CID" })
+	@ApiResponse({ status: 200, description: "Avatar image bytes" })
+	async getAvatar(
+		@Query("did") did: string,
+		@Query("cid") cid: string,
+		@Res() res: Response,
+	): Promise<void> {
+		await this.usersService.streamUserAvatar(did, cid, res);
 	}
 
 	/**
@@ -103,7 +129,78 @@ export class UsersController {
 			throw new Error("User not found in request");
 		}
 
-		return this.usersService.updateUserProfile(did, dto);
+		const session = req.user?.session as ATSession | undefined;
+		if (!session || !session.did) {
+			throw new BadRequestException("Session not found in request");
+		}
+
+		return this.usersService.updateUserProfile(did, session, dto);
+	}
+
+	@Post("me/profile/avatar")
+	@UseGuards(AuthGuard)
+	@UseInterceptors(FileInterceptor("avatar"))
+	@ApiConsumes("multipart/form-data")
+	@ApiBody({
+		schema: {
+			type: "object",
+			required: ["avatar"],
+			properties: {
+				avatar: {
+					type: "string",
+					format: "binary",
+				},
+			},
+		},
+	})
+	@ApiOperation({ summary: "Upload current user's profile avatar" })
+	@ApiResponse({ status: 200, type: UserProfileDto })
+	async uploadMyAvatar(
+		@UploadedFile()
+		file:
+			| {
+					buffer: Buffer;
+					mimetype: string;
+					size: number;
+			  }
+			| undefined,
+		@Req() req: AuthenticatedRequest,
+	): Promise<UserProfileDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const session = req.user?.session as ATSession | undefined;
+		if (!session || !session.did) {
+			throw new BadRequestException("Session not found in request");
+		}
+
+		if (!file) {
+			throw new BadRequestException("Avatar file is required");
+		}
+
+		return this.usersService.uploadUserAvatar(did, session, file);
+	}
+
+	@Delete("me/profile/avatar")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Delete current user's profile avatar" })
+	@ApiResponse({ status: 200, type: UserProfileDto })
+	async deleteMyAvatar(
+		@Req() req: AuthenticatedRequest,
+	): Promise<UserProfileDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const session = req.user?.session as ATSession | undefined;
+		if (!session || !session.did) {
+			throw new BadRequestException("Session not found in request");
+		}
+
+		return this.usersService.deleteUserAvatar(did, session);
 	}
 
 	/**

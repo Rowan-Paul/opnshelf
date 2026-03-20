@@ -17,6 +17,11 @@ import {
 } from "../lexicons/xyz/opnshelf/follow";
 import type { Main as FollowRecord } from "../lexicons/xyz/opnshelf/follow.defs";
 import {
+	$nsid as PROFILE_COLLECTION,
+	main as profileSchema,
+} from "../lexicons/xyz/opnshelf/profile.defs";
+import type { Main as ProfileRecord } from "../lexicons/xyz/opnshelf/profile.defs";
+import {
 	$nsid as LIST_COLLECTION,
 	main as listSchema,
 } from "../lexicons/xyz/opnshelf/list";
@@ -41,6 +46,7 @@ import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
+import { ProfileService } from "../users/profile.service";
 
 @Injectable()
 export class IngesterService implements OnModuleInit, OnModuleDestroy {
@@ -57,6 +63,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly showsService: ShowsService,
 		private readonly listsService: ListsService,
 		private readonly socialService: SocialService,
+		private readonly profileService: ProfileService,
 	) {
 		this.tapUrl = this.config.get<string>("TAP_URL") ?? "http://localhost:2480";
 		this.tapAdminPassword = this.config.get<string>("TAP_ADMIN_PASSWORD");
@@ -210,6 +217,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleMovieEvent(evt, uri);
 		} else if (evt.collection === EPISODE_COLLECTION) {
 			await this.handleEpisodeEvent(evt, uri);
+		} else if (evt.collection === PROFILE_COLLECTION) {
+			await this.handleProfileEvent(evt, uri);
 		} else if (evt.collection === FOLLOW_COLLECTION) {
 			await this.handleFollowEvent(evt, uri);
 		} else if (evt.collection === LIST_COLLECTION) {
@@ -322,6 +331,44 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.prisma.trackedMovie.deleteMany({
 				where: { rkey: evt.rkey },
 			});
+		}
+	}
+
+	private async handleProfileEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.warn(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let profileRecord: ProfileRecord;
+			try {
+				profileRecord = profileSchema.parse(evt.record);
+			} catch {
+				this.logger.debug("Received invalid profile record, skipping");
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				this.logger.debug(`User ${evt.did} not in database, skipping record`);
+				return;
+			}
+
+			await this.profileService.indexProfileRecord(
+				evt.did,
+				evt.rkey,
+				evt.cid ?? null,
+				uri,
+				profileRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			await this.profileService.deleteProfileRecordIndex(evt.did);
 		}
 	}
 

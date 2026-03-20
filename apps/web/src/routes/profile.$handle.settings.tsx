@@ -2,15 +2,19 @@ import {
 	authControllerMeOptions,
 	authControllerMeQueryKey,
 	usersControllerDeleteMyAccountMutation,
+	usersControllerDeleteMyAvatarMutation,
 	usersControllerGetMySettingsOptions,
 	usersControllerGetPublicProfileOptions,
+	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
+	usersControllerUploadMyAvatarMutation,
 } from "@opnshelf/api";
 import { usePostHog } from "@posthog/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
 	AlertTriangle,
+	Camera,
 	Clock,
 	Globe,
 	Loader2,
@@ -18,7 +22,7 @@ import {
 	Trash2,
 	User,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { type ChangeEvent, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
@@ -49,6 +53,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import {
+	AVATAR_UPLOAD_HELP_TEXT,
+	getAvatarUploadErrorMessage,
+	validateAvatarFile,
+} from "@/lib/avatar-upload";
 import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
 
@@ -110,7 +119,9 @@ function SettingsPage() {
 	const { seedColor } = useTheme();
 	const timezoneId = useId();
 	const deletePdsId = useId();
+	const displayNameId = useId();
 	const posthog = usePostHog();
+	const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -127,6 +138,14 @@ function SettingsPage() {
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deletePDSData, setDeletePDSData] = useState(false);
+	const [displayName, setDisplayName] = useState("");
+	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
+		null,
+	);
+	const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+	const [avatarErrorMessage, setAvatarErrorMessage] = useState<string | null>(
+		null,
+	);
 
 	useEffect(() => {
 		if (settings) {
@@ -134,6 +153,23 @@ function SettingsPage() {
 			setIs24Hour(settings.timeFormat === "24h");
 		}
 	}, [settings]);
+
+	useEffect(() => {
+		setDisplayName(user?.displayName ? String(user.displayName) : "");
+	}, [user?.displayName]);
+
+	useEffect(() => {
+		if (!selectedAvatarFile) {
+			setAvatarPreviewUrl(user?.avatar ? String(user.avatar) : null);
+			return;
+		}
+
+		const objectUrl = URL.createObjectURL(selectedAvatarFile);
+		setAvatarPreviewUrl(objectUrl);
+		return () => {
+			URL.revokeObjectURL(objectUrl);
+		};
+	}, [selectedAvatarFile, user?.avatar]);
 
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "settings", "update"],
@@ -168,6 +204,103 @@ function SettingsPage() {
 		},
 	});
 
+	const updateProfileMutation = useMutation({
+		mutationKey: ["users", "profile", "update"],
+		...usersControllerUpdateMyProfileMutation(),
+		onSuccess: async (updatedProfile) => {
+			await refreshProfileState(updatedProfile);
+			toast.success("Profile saved");
+		},
+		onError: () => {
+			toast.error("Failed to save profile");
+		},
+	});
+
+	const uploadAvatarMutation = useMutation({
+		mutationKey: ["users", "profile", "avatar", "upload"],
+		...usersControllerUploadMyAvatarMutation(),
+		onSuccess: async (updatedProfile) => {
+			setSelectedAvatarFile(null);
+			setAvatarErrorMessage(null);
+			if (avatarInputRef.current) {
+				avatarInputRef.current.value = "";
+			}
+			await refreshProfileState(updatedProfile);
+			toast.success("Profile photo updated");
+		},
+		onError: (error) => {
+			setAvatarErrorMessage(
+				getAvatarUploadErrorMessage(error, "Failed to upload profile photo"),
+			);
+		},
+	});
+
+	const deleteAvatarMutation = useMutation({
+		mutationKey: ["users", "profile", "avatar", "delete"],
+		...usersControllerDeleteMyAvatarMutation(),
+		onSuccess: async (updatedProfile) => {
+			setSelectedAvatarFile(null);
+			setAvatarErrorMessage(null);
+			if (avatarInputRef.current) {
+				avatarInputRef.current.value = "";
+			}
+			await refreshProfileState(updatedProfile);
+			toast.success("Profile photo removed");
+		},
+		onError: () => {
+			toast.error("Failed to remove profile photo");
+		},
+	});
+
+	const refreshProfileState = async (updatedProfile: {
+		displayName: string | null;
+		avatar: string | null;
+	}) => {
+		queryClient.setQueryData(authControllerMeQueryKey(), (previousUser) => {
+			if (!previousUser) {
+				return previousUser;
+			}
+
+			return {
+				...previousUser,
+				displayName: updatedProfile.displayName,
+				avatar: updatedProfile.avatar,
+			};
+		});
+
+		if (user?.handle) {
+			queryClient.setQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: user.handle },
+				}).queryKey,
+				(previousProfile) => {
+					if (!previousProfile) {
+						return previousProfile;
+					}
+
+					return {
+						...previousProfile,
+						displayName: updatedProfile.displayName,
+						avatar: updatedProfile.avatar,
+					};
+				},
+			);
+		}
+
+		await Promise.all([
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeQueryKey(),
+			}),
+			user?.handle
+				? queryClient.invalidateQueries({
+						queryKey: usersControllerGetPublicProfileOptions({
+							path: { handle: user.handle },
+						}).queryKey,
+					})
+				: Promise.resolve(),
+		]);
+	};
+
 	const handleTimezoneChange = (value: string) => {
 		setTimezone(value);
 		updateSettingsMutation.mutate({
@@ -179,6 +312,46 @@ function SettingsPage() {
 		setIs24Hour(checked);
 		updateSettingsMutation.mutate({
 			body: { timeFormat: checked ? "24h" : "12h" },
+		});
+	};
+
+	const handleAvatarSelection = (event: ChangeEvent<HTMLInputElement>) => {
+		const nextFile = event.target.files?.[0] ?? null;
+		if (!nextFile) {
+			setSelectedAvatarFile(null);
+			setAvatarErrorMessage(null);
+			return;
+		}
+
+		const validationMessage = validateAvatarFile(nextFile);
+		if (validationMessage) {
+			event.target.value = "";
+			setSelectedAvatarFile(null);
+			setAvatarErrorMessage(validationMessage);
+			return;
+		}
+
+		setAvatarErrorMessage(null);
+		setSelectedAvatarFile(nextFile);
+	};
+
+	const handleProfileSave = () => {
+		updateProfileMutation.mutate({
+			body: {
+				displayName,
+			},
+		});
+	};
+
+	const handleAvatarUpload = () => {
+		if (!selectedAvatarFile) {
+			return;
+		}
+
+		uploadAvatarMutation.mutate({
+			body: {
+				avatar: selectedAvatarFile,
+			},
 		});
 	};
 
@@ -348,7 +521,99 @@ function SettingsPage() {
 						</div>
 					</div>
 				</M3CardHeader>
-				<M3CardContent className="space-y-4">
+				<M3CardContent className="space-y-6">
+					<div className="grid gap-6 md:grid-cols-[auto_1fr]">
+						<div className="space-y-3">
+							<div
+								className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border"
+								style={{
+									backgroundColor: "var(--md-sys-color-surface-container)",
+									borderColor: "var(--md-sys-color-outline-variant)",
+								}}
+							>
+								{avatarPreviewUrl ? (
+									<img
+										src={avatarPreviewUrl}
+										alt={displayName || user.handle}
+										className="h-full w-full object-cover"
+									/>
+								) : (
+									<span
+										className="text-4xl font-semibold"
+										style={{ color: seedColor }}
+									>
+										{(displayName || user.handle).charAt(0).toUpperCase()}
+									</span>
+								)}
+							</div>
+							<input
+								ref={avatarInputRef}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								onChange={handleAvatarSelection}
+								className="block w-full text-sm text-[var(--md-sys-color-on-surface-variant)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--md-sys-color-primary-container)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--md-sys-color-on-primary-container)]"
+							/>
+							<div className="flex flex-wrap gap-2">
+								<M3Button
+									variant="filled"
+									onClick={handleAvatarUpload}
+									disabled={
+										!selectedAvatarFile || uploadAvatarMutation.isPending
+									}
+								>
+									<Camera className="mr-2 h-4 w-4" />
+									{uploadAvatarMutation.isPending
+										? "Uploading..."
+										: "Upload photo"}
+								</M3Button>
+								<M3Button
+									variant="outlined"
+									onClick={() => deleteAvatarMutation.mutate({})}
+									disabled={
+										(!user.avatar && !selectedAvatarFile) ||
+										deleteAvatarMutation.isPending
+									}
+								>
+									{deleteAvatarMutation.isPending ? "Removing..." : "Remove"}
+								</M3Button>
+							</div>
+							<p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
+								{AVATAR_UPLOAD_HELP_TEXT}
+							</p>
+							{avatarErrorMessage ? (
+								<p className="md-body-small text-[var(--md-sys-color-error)]">
+									{avatarErrorMessage}
+								</p>
+							) : null}
+						</div>
+
+						<div className="space-y-4">
+							<div className="space-y-2">
+								<Label htmlFor={displayNameId} className="md-label-large">
+									Display Name
+								</Label>
+								<input
+									id={displayNameId}
+									type="text"
+									value={displayName}
+									onChange={(event) => setDisplayName(event.target.value)}
+									placeholder="How your name appears"
+									className="w-full rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-3 py-2 text-[var(--md-sys-color-on-surface)]"
+								/>
+							</div>
+
+							<M3Button
+								variant="filled"
+								onClick={handleProfileSave}
+								disabled={updateProfileMutation.isPending}
+							>
+								{updateProfileMutation.isPending ? "Saving..." : "Save profile"}
+							</M3Button>
+						</div>
+					</div>
+
+					<div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
+
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="md-label-large">Handle</p>
@@ -356,11 +621,11 @@ function SettingsPage() {
 								@{user.handle}
 							</p>
 						</div>
-						{user.displayName && (
+						{displayName && (
 							<div className="text-right">
 								<p className="md-label-large">Display Name</p>
 								<p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
-									{String(user.displayName)}
+									{displayName}
 								</p>
 							</div>
 						)}

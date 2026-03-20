@@ -59,12 +59,14 @@ export class UserProfileDto {
 	@ApiProperty({
 		description: "Display name shown in OpnShelf",
 		nullable: true,
+		type: String,
 	})
 	displayName!: string | null;
 
 	@ApiProperty({
-		description: "Avatar URL imported from BlueSky",
+		description: "OpnShelf profile avatar URL",
 		nullable: true,
+		type: String,
 	})
 	avatar!: string | null;
 }
@@ -83,12 +85,14 @@ export class PublicUserProfileDto {
 	@ApiProperty({
 		description: "Display name shown in OpnShelf",
 		nullable: true,
+		type: String,
 	})
 	displayName!: string | null;
 
 	@ApiProperty({
-		description: "Avatar URL imported from BlueSky",
+		description: "OpnShelf profile avatar URL",
 		nullable: true,
+		type: String,
 	})
 	avatar!: string | null;
 

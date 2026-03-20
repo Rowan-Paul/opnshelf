@@ -10,6 +10,7 @@ import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
 import { $nsid as LIST_COLLECTION } from "../lexicons/xyz/opnshelf/list";
 import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/listItem";
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
+import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";
 import { PrismaService } from "../prisma/prisma.service";
 
 interface ATSession {
@@ -111,6 +112,13 @@ export class UserDeletionService {
 			session.did,
 			LIST_COLLECTION,
 			did,
+		);
+		await this.tryDeleteRecord(
+			agent,
+			session.did,
+			PROFILE_COLLECTION,
+			"self",
+			"Failed to delete profile record from PDS",
 		);
 	}
 

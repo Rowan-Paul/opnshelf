@@ -14,6 +14,7 @@ import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { IngesterService } from "../ingester/ingester.service";
+import { ProfileService } from "../users/profile.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { UserDto } from "./dto/user.dto";
@@ -35,6 +36,7 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly configService: ConfigService,
 		private readonly ingesterService: IngesterService,
+		private readonly profileService: ProfileService,
 	) {}
 
 	/**
@@ -282,7 +284,10 @@ export class AuthController {
 
 			// Fetch user profile and upsert in database (timezone only set for new users)
 			const profile = await this.authService.fetchProfile(session);
-			await this.authService.upsertUser(profile, timezone);
+			const { isNewUser } = await this.authService.upsertUser(
+				profile,
+				timezone,
+			);
 
 			// Clear timezone cookie after use
 			if (timezone) {
@@ -301,6 +306,24 @@ export class AuthController {
 					`Failed to register ${session.did} with TAP`,
 					tapError,
 				);
+			}
+
+			if (isNewUser) {
+				try {
+					await this.profileService.seedProfileForNewUser(
+						session.did,
+						session,
+						{
+							displayName: profile.displayName,
+							avatarUrl: profile.avatar,
+						},
+					);
+				} catch (profileError) {
+					this.logger.warn(
+						`Failed to seed OpnShelf profile for ${session.did}`,
+						profileError instanceof Error ? profileError.stack : undefined,
+					);
+				}
 			}
 
 			// Resolve opaque session id (cookie stores this, not DID)

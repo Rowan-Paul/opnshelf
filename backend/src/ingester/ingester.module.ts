@@ -4,6 +4,7 @@ import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SocialModule } from "../social/social.module";
 import { ShowsModule } from "../shows/shows.module";
+import { UsersModule } from "../users/users.module";
 import { IngesterService } from "./ingester.service";
 
 @Module({
@@ -13,6 +14,7 @@ import { IngesterService } from "./ingester.service";
 		forwardRef(() => ShowsModule),
 		forwardRef(() => ListsModule),
 		forwardRef(() => SocialModule),
+		forwardRef(() => UsersModule),
 	],
 	providers: [IngesterService],
 	exports: [IngesterService],

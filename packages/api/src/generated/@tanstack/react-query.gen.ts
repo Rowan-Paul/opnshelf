@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, listsControllerAddItemToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, socialControllerFollow, socialControllerGetFeed, socialControllerGetFollowers, socialControllerGetFollowing, socialControllerGetRelationship, socialControllerSearchPeople, socialControllerUnfollow, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerFetchMyTraktPublicHistory, usersControllerGetMySettings, usersControllerGetPublicProfile, usersControllerImportMyBlueskyFollows, usersControllerImportMyHistory, usersControllerUpdateMyProfile, usersControllerUpdateMySettings } from '../sdk.gen';
-import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, SocialControllerFollowData, SocialControllerFollowResponse, SocialControllerGetFeedData, SocialControllerGetFeedResponse, SocialControllerGetFollowersData, SocialControllerGetFollowersResponse, SocialControllerGetFollowingData, SocialControllerGetFollowingResponse, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponse, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponse, SocialControllerUnfollowData, SocialControllerUnfollowResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse } from '../types.gen';
+import { authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, listsControllerAddItemToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerInitDefaultLists, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, type Options, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, socialControllerFollow, socialControllerGetFeed, socialControllerGetFollowers, socialControllerGetFollowing, socialControllerGetRelationship, socialControllerSearchPeople, socialControllerUnfollow, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerDeleteMyAvatar, usersControllerFetchMyTraktPublicHistory, usersControllerGetAvatar, usersControllerGetMySettings, usersControllerGetPublicProfile, usersControllerImportMyBlueskyFollows, usersControllerImportMyHistory, usersControllerUpdateMyProfile, usersControllerUpdateMySettings, usersControllerUploadMyAvatar } from '../sdk.gen';
+import type { AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, ListsControllerAddItemToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerInitDefaultListsData, ListsControllerInitDefaultListsResponse, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, SocialControllerFollowData, SocialControllerFollowResponse, SocialControllerGetFeedData, SocialControllerGetFeedResponse, SocialControllerGetFollowersData, SocialControllerGetFollowersResponse, SocialControllerGetFollowingData, SocialControllerGetFollowingResponse, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponse, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponse, SocialControllerUnfollowData, SocialControllerUnfollowResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerDeleteMyAvatarData, UsersControllerDeleteMyAvatarResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetAvatarData, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse, UsersControllerUploadMyAvatarData, UsersControllerUploadMyAvatarResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -734,6 +734,213 @@ export const showsControllerMarkShowWatchedMutation = (options?: Partial<Options
     return mutationOptions;
 };
 
+export const usersControllerGetPublicProfileQueryKey = (options: Options<UsersControllerGetPublicProfileData>) => createQueryKey('usersControllerGetPublicProfile', options);
+
+/**
+ * Get a public user profile by handle
+ */
+export const usersControllerGetPublicProfileOptions = (options: Options<UsersControllerGetPublicProfileData>) => queryOptions<UsersControllerGetPublicProfileResponse, DefaultError, UsersControllerGetPublicProfileResponse, ReturnType<typeof usersControllerGetPublicProfileQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await usersControllerGetPublicProfile({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: usersControllerGetPublicProfileQueryKey(options)
+});
+
+export const usersControllerGetAvatarQueryKey = (options: Options<UsersControllerGetAvatarData>) => createQueryKey('usersControllerGetAvatar', options);
+
+/**
+ * Get a public user avatar from the user's PDS
+ */
+export const usersControllerGetAvatarOptions = (options: Options<UsersControllerGetAvatarData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof usersControllerGetAvatarQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await usersControllerGetAvatar({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: usersControllerGetAvatarQueryKey(options)
+});
+
+export const usersControllerGetMySettingsQueryKey = (options?: Options<UsersControllerGetMySettingsData>) => createQueryKey('usersControllerGetMySettings', options);
+
+/**
+ * Get current user's settings
+ */
+export const usersControllerGetMySettingsOptions = (options?: Options<UsersControllerGetMySettingsData>) => queryOptions<UsersControllerGetMySettingsResponse, DefaultError, UsersControllerGetMySettingsResponse, ReturnType<typeof usersControllerGetMySettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await usersControllerGetMySettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: usersControllerGetMySettingsQueryKey(options)
+});
+
+/**
+ * Update current user's settings
+ */
+export const usersControllerUpdateMySettingsMutation = (options?: Partial<Options<UsersControllerUpdateMySettingsData>>): UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerUpdateMySettings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Update current user's profile
+ */
+export const usersControllerUpdateMyProfileMutation = (options?: Partial<Options<UsersControllerUpdateMyProfileData>>): UseMutationOptions<UsersControllerUpdateMyProfileResponse, DefaultError, Options<UsersControllerUpdateMyProfileData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerUpdateMyProfileResponse, DefaultError, Options<UsersControllerUpdateMyProfileData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerUpdateMyProfile({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete current user's profile avatar
+ */
+export const usersControllerDeleteMyAvatarMutation = (options?: Partial<Options<UsersControllerDeleteMyAvatarData>>): UseMutationOptions<UsersControllerDeleteMyAvatarResponse, DefaultError, Options<UsersControllerDeleteMyAvatarData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerDeleteMyAvatarResponse, DefaultError, Options<UsersControllerDeleteMyAvatarData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerDeleteMyAvatar({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Upload current user's profile avatar
+ */
+export const usersControllerUploadMyAvatarMutation = (options?: Partial<Options<UsersControllerUploadMyAvatarData>>): UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerUploadMyAvatar({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete current user's account
+ */
+export const usersControllerDeleteMyAccountMutation = (options?: Partial<Options<UsersControllerDeleteMyAccountData>>): UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerDeleteMyAccount({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Complete onboarding for the current user
+ */
+export const usersControllerCompleteOnboardingMutation = (options?: Partial<Options<UsersControllerCompleteOnboardingData>>): UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerCompleteOnboarding({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Fetch normalized history from a public Trakt profile
+ */
+export const usersControllerFetchMyTraktPublicHistoryMutation = (options?: Partial<Options<UsersControllerFetchMyTraktPublicHistoryData>>): UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerFetchMyTraktPublicHistory({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Import Bluesky follows that already have OpnShelf accounts
+ */
+export const usersControllerImportMyBlueskyFollowsMutation = (options?: Partial<Options<UsersControllerImportMyBlueskyFollowsData>>): UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerImportMyBlueskyFollows({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Import normalized watch history items
+ */
+export const usersControllerImportMyHistoryMutation = (options?: Partial<Options<UsersControllerImportMyHistoryData>>): UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersControllerImportMyHistory({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const listsControllerGetUserListsQueryKey = (options?: Options<ListsControllerGetUserListsData>) => createQueryKey('listsControllerGetUserLists', options);
 
 /**
@@ -1211,161 +1418,6 @@ export const socialControllerGetFeedInfiniteOptions = (options?: Options<SocialC
     },
     queryKey: socialControllerGetFeedInfiniteQueryKey(options)
 });
-
-export const usersControllerGetPublicProfileQueryKey = (options: Options<UsersControllerGetPublicProfileData>) => createQueryKey('usersControllerGetPublicProfile', options);
-
-/**
- * Get a public user profile by handle
- */
-export const usersControllerGetPublicProfileOptions = (options: Options<UsersControllerGetPublicProfileData>) => queryOptions<UsersControllerGetPublicProfileResponse, DefaultError, UsersControllerGetPublicProfileResponse, ReturnType<typeof usersControllerGetPublicProfileQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await usersControllerGetPublicProfile({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: usersControllerGetPublicProfileQueryKey(options)
-});
-
-export const usersControllerGetMySettingsQueryKey = (options?: Options<UsersControllerGetMySettingsData>) => createQueryKey('usersControllerGetMySettings', options);
-
-/**
- * Get current user's settings
- */
-export const usersControllerGetMySettingsOptions = (options?: Options<UsersControllerGetMySettingsData>) => queryOptions<UsersControllerGetMySettingsResponse, DefaultError, UsersControllerGetMySettingsResponse, ReturnType<typeof usersControllerGetMySettingsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await usersControllerGetMySettings({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: usersControllerGetMySettingsQueryKey(options)
-});
-
-/**
- * Update current user's settings
- */
-export const usersControllerUpdateMySettingsMutation = (options?: Partial<Options<UsersControllerUpdateMySettingsData>>): UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerUpdateMySettingsResponse, DefaultError, Options<UsersControllerUpdateMySettingsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerUpdateMySettings({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Update current user's profile
- */
-export const usersControllerUpdateMyProfileMutation = (options?: Partial<Options<UsersControllerUpdateMyProfileData>>): UseMutationOptions<UsersControllerUpdateMyProfileResponse, DefaultError, Options<UsersControllerUpdateMyProfileData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerUpdateMyProfileResponse, DefaultError, Options<UsersControllerUpdateMyProfileData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerUpdateMyProfile({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Delete current user's account
- */
-export const usersControllerDeleteMyAccountMutation = (options?: Partial<Options<UsersControllerDeleteMyAccountData>>): UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerDeleteMyAccountResponse, DefaultError, Options<UsersControllerDeleteMyAccountData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerDeleteMyAccount({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Complete onboarding for the current user
- */
-export const usersControllerCompleteOnboardingMutation = (options?: Partial<Options<UsersControllerCompleteOnboardingData>>): UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerCompleteOnboardingResponse, DefaultError, Options<UsersControllerCompleteOnboardingData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerCompleteOnboarding({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Fetch normalized history from a public Trakt profile
- */
-export const usersControllerFetchMyTraktPublicHistoryMutation = (options?: Partial<Options<UsersControllerFetchMyTraktPublicHistoryData>>): UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerFetchMyTraktPublicHistoryResponse, DefaultError, Options<UsersControllerFetchMyTraktPublicHistoryData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerFetchMyTraktPublicHistory({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Import Bluesky follows that already have OpnShelf accounts
- */
-export const usersControllerImportMyBlueskyFollowsMutation = (options?: Partial<Options<UsersControllerImportMyBlueskyFollowsData>>): UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerImportMyBlueskyFollows({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Import normalized watch history items
- */
-export const usersControllerImportMyHistoryMutation = (options?: Partial<Options<UsersControllerImportMyHistoryData>>): UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerImportMyHistoryResponse, DefaultError, Options<UsersControllerImportMyHistoryData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerImportMyHistory({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
 
 export const shelfControllerGetUserShelfQueryKey = (options: Options<ShelfControllerGetUserShelfData>) => createQueryKey('shelfControllerGetUserShelf', options);
 

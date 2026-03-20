@@ -20,6 +20,7 @@ import type {
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
 import { ImportHistoryService } from "./import-history.service";
+import { ProfileService } from "./profile.service";
 import { UserDeletionService } from "./user-deletion.service";
 
 interface ATSession {
@@ -37,6 +38,7 @@ export class UsersService {
 		private readonly prisma: PrismaService,
 		private readonly importHistoryService: ImportHistoryService,
 		private readonly userDeletionService: UserDeletionService,
+		private readonly profileService: ProfileService,
 	) {}
 
 	/**
@@ -98,6 +100,7 @@ export class UsersService {
 
 	async updateUserProfile(
 		did: string,
+		session: ATSession,
 		dto: UpdateUserProfileDto,
 	): Promise<UserProfileDto> {
 		const user = await this.prisma.user.findUnique({ where: { did } });
@@ -106,25 +109,66 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const updatedUser = await this.prisma.user.update({
-			where: { did },
-			data: {
-				...(dto.displayName !== undefined && {
-					displayName: dto.displayName.trim() || null,
-				}),
+		const updatedProfile = await this.profileService.updateProfile(
+			did,
+			session,
+			{
+				displayName: dto.displayName,
 			},
-			select: {
-				displayName: true,
-				avatar: true,
+		);
+
+		this.logger.log(`Updated OpnShelf profile for user ${did}`);
+
+		return updatedProfile;
+	}
+
+	async uploadUserAvatar(
+		did: string,
+		session: ATSession,
+		file: {
+			buffer: Buffer;
+			mimetype: string;
+			size: number;
+		},
+	): Promise<UserProfileDto> {
+		const user = await this.prisma.user.findUnique({ where: { did } });
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		const updatedProfile = await this.profileService.updateProfile(
+			did,
+			session,
+			{
+				avatar: file,
 			},
-		});
+		);
+		this.logger.log(`Uploaded avatar for user ${did}`);
+		return updatedProfile;
+	}
 
-		this.logger.log(`Updated profile for user ${did}`);
+	async deleteUserAvatar(
+		did: string,
+		session: ATSession,
+	): Promise<UserProfileDto> {
+		const user = await this.prisma.user.findUnique({ where: { did } });
 
-		return {
-			displayName: updatedUser.displayName,
-			avatar: updatedUser.avatar,
-		};
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		const updatedProfile = await this.profileService.deleteAvatar(did, session);
+		this.logger.log(`Deleted avatar for user ${did}`);
+		return updatedProfile;
+	}
+
+	async streamUserAvatar(
+		did: string,
+		cid: string,
+		response: import("express").Response,
+	) {
+		return this.profileService.streamAvatar(did, cid, response);
 	}
 
 	async getPublicProfileByHandle(

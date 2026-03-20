@@ -8,6 +8,7 @@ import {
 	WandSparkles,
 } from "lucide-react";
 import { M3Button } from "@/components/ui/m3-button";
+import { AVATAR_UPLOAD_HELP_TEXT } from "@/lib/avatar-upload";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
 import type {
 	FollowImportResult,
@@ -60,6 +61,8 @@ type OnboardingContentProps = {
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
 	displayName: string;
+	avatarPreviewUrl: string | null;
+	avatarErrorMessage: string | null;
 	timezone: string;
 	timeFormat: "12h" | "24h";
 	displayNameId: string;
@@ -79,6 +82,7 @@ type OnboardingContentProps = {
 	onActiveTabChange: (tab: TabValue) => void;
 	onTraktUsernameChange: (value: string) => void;
 	onDisplayNameChange: (value: string) => void;
+	onAvatarChange: (file: File | null) => void;
 	onTimezoneChange: (value: string) => void;
 	onTimeFormatChange: (value: "12h" | "24h") => void;
 	onSkipSetup: () => void;
@@ -100,6 +104,8 @@ export function OnboardingContent({
 	traktUsername,
 	traktPreview,
 	displayName,
+	avatarPreviewUrl,
+	avatarErrorMessage,
 	timezone,
 	timeFormat,
 	displayNameId,
@@ -119,6 +125,7 @@ export function OnboardingContent({
 	onActiveTabChange,
 	onTraktUsernameChange,
 	onDisplayNameChange,
+	onAvatarChange,
 	onTimezoneChange,
 	onTimeFormatChange,
 	onSkipSetup,
@@ -262,29 +269,48 @@ export function OnboardingContent({
 
 					{step === 2 && (
 						<div className="animate-in fade-in slide-in-from-bottom-2 grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 duration-300">
-							{hasBlueskyProfile ? (
-								<div className="grid grid-cols-[auto_1fr] items-center gap-4 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
-									<div className="h-13 w-13 overflow-hidden rounded-full border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container-highest)">
-										{userAvatarUrl ? (
+							<div className="grid gap-3 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
+								<div className="grid grid-cols-[auto_1fr] items-center gap-4">
+									<div className="grid h-16 w-16 place-items-center overflow-hidden rounded-full border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container-highest)">
+										{avatarPreviewUrl ? (
 											<img
-												src={userAvatarUrl}
-												alt="BlueSky avatar"
+												src={avatarPreviewUrl}
+												alt="Profile avatar"
 												className="h-full w-full object-cover"
 											/>
 										) : (
-											<div className="md-body-small grid h-full w-full place-items-center text-(--md-sys-color-on-surface-variant)">
-												No avatar
-											</div>
+											<span className="md-title-large text-(--md-sys-color-primary)">
+												{(displayName || "U").charAt(0).toUpperCase()}
+											</span>
 										)}
 									</div>
 									<div>
-										<p className="md-title-small m-0">BlueSky profile linked</p>
+										<p className="md-title-small m-0">Profile photo</p>
 										<p className="md-body-small m-0 mt-1 text-(--md-sys-color-on-surface-variant)">
-											Avatar sync is active. Manual uploads will be added soon.
+											{hasBlueskyProfile
+												? "Your Bluesky avatar is prefilled. Upload a new one if you want a different OpnShelf photo."
+												: "Upload a profile photo now or skip and add one later in settings."}
 										</p>
 									</div>
 								</div>
-							) : null}
+								<input
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									onChange={(event) => {
+										onAvatarChange(event.target.files?.[0] ?? null);
+										event.target.value = "";
+									}}
+									className="block w-full text-sm text-(--md-sys-color-on-surface-variant) file:mr-4 file:rounded-full file:border-0 file:bg-(--md-sys-color-primary-container) file:px-4 file:py-2 file:text-sm file:font-medium file:text-(--md-sys-color-on-primary-container)"
+								/>
+								<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+									{AVATAR_UPLOAD_HELP_TEXT}
+								</p>
+								{avatarErrorMessage ? (
+									<p className="md-body-small m-0 text-(--md-sys-color-error)">
+										{avatarErrorMessage}
+									</p>
+								) : null}
+							</div>
 
 							<div className="grid gap-3 md:grid-cols-2">
 								<label className="grid gap-1.5" htmlFor={displayNameId}>

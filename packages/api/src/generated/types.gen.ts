@@ -135,15 +135,11 @@ export type UserDto = {
     /**
      * Display name
      */
-    displayName: {
-        [key: string]: unknown;
-    } | null;
+    displayName: string | null;
     /**
-     * Avatar URL
+     * OpnShelf profile avatar URL
      */
-    avatar: {
-        [key: string]: unknown;
-    } | null;
+    avatar: string | null;
     /**
      * Whether this DID resolves to a real Bluesky/AppView profile
      */
@@ -151,9 +147,7 @@ export type UserDto = {
     /**
      * When onboarding was completed
      */
-    onboardingCompletedAt: {
-        [key: string]: unknown;
-    } | null;
+    onboardingCompletedAt: string | null;
     /**
      * Whether this user should complete onboarding
      */
@@ -435,6 +429,224 @@ export type MarkShowWatchedDto = {
     watchedAt?: string;
 };
 
+export type PublicUserProfileDto = {
+    /**
+     * Stable DID for the user
+     */
+    did: string;
+    /**
+     * AT Protocol handle
+     */
+    handle: string;
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName: string | null;
+    /**
+     * OpnShelf profile avatar URL
+     */
+    avatar: string | null;
+    /**
+     * Public follower count
+     */
+    followersCount: number;
+    /**
+     * Public following count
+     */
+    followingCount: number;
+};
+
+export type UserSettingsDto = {
+    /**
+     * Time format preference
+     */
+    timeFormat: '12h' | '24h';
+    /**
+     * IANA timezone identifier (e.g., America/New_York)
+     */
+    timezone: string;
+};
+
+export type UpdateUserSettingsDto = {
+    /**
+     * Time format preference
+     */
+    timeFormat?: '12h' | '24h';
+    /**
+     * IANA timezone identifier (e.g., America/New_York)
+     */
+    timezone?: string;
+};
+
+export type UpdateUserProfileDto = {
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName?: string;
+};
+
+export type UserProfileDto = {
+    /**
+     * Display name shown in OpnShelf
+     */
+    displayName: string | null;
+    /**
+     * OpnShelf profile avatar URL
+     */
+    avatar: string | null;
+};
+
+export type DeleteUserAccountDto = {
+    /**
+     * Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.
+     */
+    deletePDSData: boolean;
+};
+
+export type CompleteOnboardingResponseDto = {
+    /**
+     * Timestamp when onboarding was completed
+     */
+    onboardingCompletedAt: string;
+    needsOnboarding: boolean;
+};
+
+export type FetchTraktPublicHistoryDto = {
+    /**
+     * Trakt username or slug
+     */
+    username: string;
+    /**
+     * Maximum items to fetch. If omitted, fetches full available history via pagination.
+     */
+    maxItems?: number;
+};
+
+export type TraktPublicProfileDto = {
+    /**
+     * Trakt username
+     */
+    username: string;
+    /**
+     * Trakt profile slug
+     */
+    slug: string;
+    /**
+     * Trakt display name
+     */
+    name?: string;
+    /**
+     * Whether the profile is private
+     */
+    isPrivate: boolean;
+    /**
+     * Whether the profile has Trakt VIP
+     */
+    isVip: boolean;
+    /**
+     * Profile avatar URL
+     */
+    avatarUrl?: string;
+};
+
+export type TraktHistoryPreviewItemDto = {
+    type: 'movie' | 'episode';
+    /**
+     * Primary display title for this watch item
+     */
+    title: string;
+    /**
+     * Secondary context for this watch item
+     */
+    subtitle?: string;
+    /**
+     * UTC datetime in ISO-8601 format
+     */
+    watchedAt: string;
+};
+
+export type NormalizedImportItemDto = {
+    type: 'movie' | 'episode';
+    /**
+     * UTC datetime in ISO-8601 format
+     */
+    watchedAt: string;
+    /**
+     * TMDB movie id
+     */
+    movieTmdbId?: number;
+    /**
+     * TMDB show id
+     */
+    showTmdbId?: number;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    action?: 'watch' | 'scrobble' | 'checkin';
+};
+
+export type ImportSkipDto = {
+    /**
+     * 1-based item index from source payload
+     */
+    index: number;
+    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
+    message?: string;
+};
+
+export type FetchTraktPublicHistoryResponseDto = {
+    profile: TraktPublicProfileDto;
+    /**
+     * Count of importable rows after normalization
+     */
+    importableCount: number;
+    previewItems: Array<TraktHistoryPreviewItemDto>;
+    items: Array<NormalizedImportItemDto>;
+    skipped: Array<ImportSkipDto>;
+    /**
+     * Count of rows returned by Trakt before filtering
+     */
+    sourceCount: number;
+};
+
+export type ImportBlueskyFollowsResponseDto = {
+    /**
+     * Total Bluesky follows scanned from AppView
+     */
+    scannedCount: number;
+    /**
+     * How many Bluesky follows already have OpnShelf accounts
+     */
+    matchedCount: number;
+    /**
+     * How many new OpnShelf follows were created
+     */
+    createdCount: number;
+    /**
+     * How many matched users were already followed
+     */
+    alreadyFollowingCount: number;
+};
+
+export type ImportHistoryDto = {
+    items: Array<NormalizedImportItemDto>;
+};
+
+export type ImportErrorDto = {
+    /**
+     * 1-based item index from request payload
+     */
+    index: number;
+    code: 'invalid_item' | 'already_exists' | 'write_failed' | 'duplicate_in_request';
+    message: string;
+};
+
+export type ImportHistoryResponseDto = {
+    imported: number;
+    skipped: number;
+    failed: number;
+    errors: Array<ImportErrorDto>;
+};
+
 export type ListSummaryDto = {
     id: string;
     rkey: string;
@@ -639,232 +851,6 @@ export type FollowedActivityFeedDto = {
     totalPages: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
-};
-
-export type PublicUserProfileDto = {
-    /**
-     * Stable DID for the user
-     */
-    did: string;
-    /**
-     * AT Protocol handle
-     */
-    handle: string;
-    /**
-     * Display name shown in OpnShelf
-     */
-    displayName: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Avatar URL imported from BlueSky
-     */
-    avatar: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Public follower count
-     */
-    followersCount: number;
-    /**
-     * Public following count
-     */
-    followingCount: number;
-};
-
-export type UserSettingsDto = {
-    /**
-     * Time format preference
-     */
-    timeFormat: '12h' | '24h';
-    /**
-     * IANA timezone identifier (e.g., America/New_York)
-     */
-    timezone: string;
-};
-
-export type UpdateUserSettingsDto = {
-    /**
-     * Time format preference
-     */
-    timeFormat?: '12h' | '24h';
-    /**
-     * IANA timezone identifier (e.g., America/New_York)
-     */
-    timezone?: string;
-};
-
-export type UpdateUserProfileDto = {
-    /**
-     * Display name shown in OpnShelf
-     */
-    displayName?: string;
-};
-
-export type UserProfileDto = {
-    /**
-     * Display name shown in OpnShelf
-     */
-    displayName: {
-        [key: string]: unknown;
-    } | null;
-    /**
-     * Avatar URL imported from BlueSky
-     */
-    avatar: {
-        [key: string]: unknown;
-    } | null;
-};
-
-export type DeleteUserAccountDto = {
-    /**
-     * Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.
-     */
-    deletePDSData: boolean;
-};
-
-export type CompleteOnboardingResponseDto = {
-    /**
-     * Timestamp when onboarding was completed
-     */
-    onboardingCompletedAt: string;
-    needsOnboarding: boolean;
-};
-
-export type FetchTraktPublicHistoryDto = {
-    /**
-     * Trakt username or slug
-     */
-    username: string;
-    /**
-     * Maximum items to fetch. If omitted, fetches full available history via pagination.
-     */
-    maxItems?: number;
-};
-
-export type TraktPublicProfileDto = {
-    /**
-     * Trakt username
-     */
-    username: string;
-    /**
-     * Trakt profile slug
-     */
-    slug: string;
-    /**
-     * Trakt display name
-     */
-    name?: string;
-    /**
-     * Whether the profile is private
-     */
-    isPrivate: boolean;
-    /**
-     * Whether the profile has Trakt VIP
-     */
-    isVip: boolean;
-    /**
-     * Profile avatar URL
-     */
-    avatarUrl?: string;
-};
-
-export type TraktHistoryPreviewItemDto = {
-    type: 'movie' | 'episode';
-    /**
-     * Primary display title for this watch item
-     */
-    title: string;
-    /**
-     * Secondary context for this watch item
-     */
-    subtitle?: string;
-    /**
-     * UTC datetime in ISO-8601 format
-     */
-    watchedAt: string;
-};
-
-export type NormalizedImportItemDto = {
-    type: 'movie' | 'episode';
-    /**
-     * UTC datetime in ISO-8601 format
-     */
-    watchedAt: string;
-    /**
-     * TMDB movie id
-     */
-    movieTmdbId?: number;
-    /**
-     * TMDB show id
-     */
-    showTmdbId?: number;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    action?: 'watch' | 'scrobble' | 'checkin';
-};
-
-export type ImportSkipDto = {
-    /**
-     * 1-based item index from source payload
-     */
-    index: number;
-    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
-    message?: string;
-};
-
-export type FetchTraktPublicHistoryResponseDto = {
-    profile: TraktPublicProfileDto;
-    /**
-     * Count of importable rows after normalization
-     */
-    importableCount: number;
-    previewItems: Array<TraktHistoryPreviewItemDto>;
-    items: Array<NormalizedImportItemDto>;
-    skipped: Array<ImportSkipDto>;
-    /**
-     * Count of rows returned by Trakt before filtering
-     */
-    sourceCount: number;
-};
-
-export type ImportBlueskyFollowsResponseDto = {
-    /**
-     * Total Bluesky follows scanned from AppView
-     */
-    scannedCount: number;
-    /**
-     * How many Bluesky follows already have OpnShelf accounts
-     */
-    matchedCount: number;
-    /**
-     * How many new OpnShelf follows were created
-     */
-    createdCount: number;
-    /**
-     * How many matched users were already followed
-     */
-    alreadyFollowingCount: number;
-};
-
-export type ImportHistoryDto = {
-    items: Array<NormalizedImportItemDto>;
-};
-
-export type ImportErrorDto = {
-    /**
-     * 1-based item index from request payload
-     */
-    index: number;
-    code: 'invalid_item' | 'already_exists' | 'write_failed' | 'duplicate_in_request';
-    message: string;
-};
-
-export type ImportHistoryResponseDto = {
-    imported: number;
-    skipped: number;
-    failed: number;
-    errors: Array<ImportErrorDto>;
 };
 
 export type ShelfResponseDto = {
@@ -1638,6 +1624,246 @@ export type ShowsControllerMarkShowWatchedResponses = {
 
 export type ShowsControllerMarkShowWatchedResponse = ShowsControllerMarkShowWatchedResponses[keyof ShowsControllerMarkShowWatchedResponses];
 
+export type UsersControllerGetPublicProfileData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: never;
+    url: '/users/{handle}/profile';
+};
+
+export type UsersControllerGetPublicProfileErrors = {
+    /**
+     * User not found
+     */
+    404: unknown;
+};
+
+export type UsersControllerGetPublicProfileResponses = {
+    200: PublicUserProfileDto;
+};
+
+export type UsersControllerGetPublicProfileResponse = UsersControllerGetPublicProfileResponses[keyof UsersControllerGetPublicProfileResponses];
+
+export type UsersControllerGetAvatarData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * User DID
+         */
+        did: string;
+        /**
+         * Blob CID
+         */
+        cid: string;
+    };
+    url: '/users/avatar';
+};
+
+export type UsersControllerGetAvatarResponses = {
+    /**
+     * Avatar image bytes
+     */
+    200: unknown;
+};
+
+export type UsersControllerGetMySettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings';
+};
+
+export type UsersControllerGetMySettingsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerGetMySettingsResponses = {
+    200: UserSettingsDto;
+};
+
+export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
+
+export type UsersControllerUpdateMySettingsData = {
+    body: UpdateUserSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings';
+};
+
+export type UsersControllerUpdateMySettingsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerUpdateMySettingsResponses = {
+    200: UserSettingsDto;
+};
+
+export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
+
+export type UsersControllerUpdateMyProfileData = {
+    body: UpdateUserProfileDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile';
+};
+
+export type UsersControllerUpdateMyProfileErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerUpdateMyProfileResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerUpdateMyProfileResponse = UsersControllerUpdateMyProfileResponses[keyof UsersControllerUpdateMyProfileResponses];
+
+export type UsersControllerDeleteMyAvatarData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile/avatar';
+};
+
+export type UsersControllerDeleteMyAvatarResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerDeleteMyAvatarResponse = UsersControllerDeleteMyAvatarResponses[keyof UsersControllerDeleteMyAvatarResponses];
+
+export type UsersControllerUploadMyAvatarData = {
+    body: {
+        avatar: Blob | File;
+    };
+    path?: never;
+    query?: never;
+    url: '/users/me/profile/avatar';
+};
+
+export type UsersControllerUploadMyAvatarResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerUploadMyAvatarResponse = UsersControllerUploadMyAvatarResponses[keyof UsersControllerUploadMyAvatarResponses];
+
+export type UsersControllerDeleteMyAccountData = {
+    body: DeleteUserAccountDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/account';
+};
+
+export type UsersControllerDeleteMyAccountErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Failed to delete OpnShelf data from the user's PDS, so the account was not deleted
+     */
+    502: unknown;
+};
+
+export type UsersControllerDeleteMyAccountResponses = {
+    /**
+     * Account deleted successfully
+     */
+    204: void;
+};
+
+export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];
+
+export type UsersControllerCompleteOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/onboarding/complete';
+};
+
+export type UsersControllerCompleteOnboardingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerCompleteOnboardingResponses = {
+    200: CompleteOnboardingResponseDto;
+};
+
+export type UsersControllerCompleteOnboardingResponse = UsersControllerCompleteOnboardingResponses[keyof UsersControllerCompleteOnboardingResponses];
+
+export type UsersControllerFetchMyTraktPublicHistoryData = {
+    body: FetchTraktPublicHistoryDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/fetch';
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryResponses = {
+    200: FetchTraktPublicHistoryResponseDto;
+};
+
+export type UsersControllerFetchMyTraktPublicHistoryResponse = UsersControllerFetchMyTraktPublicHistoryResponses[keyof UsersControllerFetchMyTraktPublicHistoryResponses];
+
+export type UsersControllerImportMyBlueskyFollowsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/bluesky-follows';
+};
+
+export type UsersControllerImportMyBlueskyFollowsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerImportMyBlueskyFollowsResponses = {
+    200: ImportBlueskyFollowsResponseDto;
+};
+
+export type UsersControllerImportMyBlueskyFollowsResponse = UsersControllerImportMyBlueskyFollowsResponses[keyof UsersControllerImportMyBlueskyFollowsResponses];
+
+export type UsersControllerImportMyHistoryData = {
+    body: ImportHistoryDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/history';
+};
+
+export type UsersControllerImportMyHistoryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerImportMyHistoryResponses = {
+    200: ImportHistoryResponseDto;
+};
+
+export type UsersControllerImportMyHistoryResponse = UsersControllerImportMyHistoryResponses[keyof UsersControllerImportMyHistoryResponses];
+
 export type ListsControllerGetUserListsData = {
     body?: never;
     path?: never;
@@ -2115,195 +2341,6 @@ export type SocialControllerGetFeedResponses = {
 };
 
 export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];
-
-export type UsersControllerGetPublicProfileData = {
-    body?: never;
-    path: {
-        handle: string;
-    };
-    query?: never;
-    url: '/users/{handle}/profile';
-};
-
-export type UsersControllerGetPublicProfileErrors = {
-    /**
-     * User not found
-     */
-    404: unknown;
-};
-
-export type UsersControllerGetPublicProfileResponses = {
-    200: PublicUserProfileDto;
-};
-
-export type UsersControllerGetPublicProfileResponse = UsersControllerGetPublicProfileResponses[keyof UsersControllerGetPublicProfileResponses];
-
-export type UsersControllerGetMySettingsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/settings';
-};
-
-export type UsersControllerGetMySettingsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerGetMySettingsResponses = {
-    200: UserSettingsDto;
-};
-
-export type UsersControllerGetMySettingsResponse = UsersControllerGetMySettingsResponses[keyof UsersControllerGetMySettingsResponses];
-
-export type UsersControllerUpdateMySettingsData = {
-    body: UpdateUserSettingsDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/settings';
-};
-
-export type UsersControllerUpdateMySettingsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerUpdateMySettingsResponses = {
-    200: UserSettingsDto;
-};
-
-export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
-
-export type UsersControllerUpdateMyProfileData = {
-    body: UpdateUserProfileDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/profile';
-};
-
-export type UsersControllerUpdateMyProfileErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerUpdateMyProfileResponses = {
-    200: UserProfileDto;
-};
-
-export type UsersControllerUpdateMyProfileResponse = UsersControllerUpdateMyProfileResponses[keyof UsersControllerUpdateMyProfileResponses];
-
-export type UsersControllerDeleteMyAccountData = {
-    body: DeleteUserAccountDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/account';
-};
-
-export type UsersControllerDeleteMyAccountErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-    /**
-     * Failed to delete OpnShelf data from the user's PDS, so the account was not deleted
-     */
-    502: unknown;
-};
-
-export type UsersControllerDeleteMyAccountResponses = {
-    /**
-     * Account deleted successfully
-     */
-    204: void;
-};
-
-export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];
-
-export type UsersControllerCompleteOnboardingData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/onboarding/complete';
-};
-
-export type UsersControllerCompleteOnboardingErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerCompleteOnboardingResponses = {
-    200: CompleteOnboardingResponseDto;
-};
-
-export type UsersControllerCompleteOnboardingResponse = UsersControllerCompleteOnboardingResponses[keyof UsersControllerCompleteOnboardingResponses];
-
-export type UsersControllerFetchMyTraktPublicHistoryData = {
-    body: FetchTraktPublicHistoryDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/fetch';
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryResponses = {
-    200: FetchTraktPublicHistoryResponseDto;
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryResponse = UsersControllerFetchMyTraktPublicHistoryResponses[keyof UsersControllerFetchMyTraktPublicHistoryResponses];
-
-export type UsersControllerImportMyBlueskyFollowsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/bluesky-follows';
-};
-
-export type UsersControllerImportMyBlueskyFollowsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerImportMyBlueskyFollowsResponses = {
-    200: ImportBlueskyFollowsResponseDto;
-};
-
-export type UsersControllerImportMyBlueskyFollowsResponse = UsersControllerImportMyBlueskyFollowsResponses[keyof UsersControllerImportMyBlueskyFollowsResponses];
-
-export type UsersControllerImportMyHistoryData = {
-    body: ImportHistoryDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/history';
-};
-
-export type UsersControllerImportMyHistoryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerImportMyHistoryResponses = {
-    200: ImportHistoryResponseDto;
-};
-
-export type UsersControllerImportMyHistoryResponse = UsersControllerImportMyHistoryResponses[keyof UsersControllerImportMyHistoryResponses];
 
 export type ShelfControllerGetUserShelfData = {
     body?: never;

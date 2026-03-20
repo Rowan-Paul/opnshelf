@@ -242,23 +242,24 @@ describe("AuthService", () => {
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
 			mockPrismaService.user.upsert.mockResolvedValue(mockUser);
 
 			const result = await service.upsertUser(profile);
 
-			expect(result).toEqual(mockUser);
+			expect(result).toEqual({
+				user: mockUser,
+				isNewUser: true,
+			});
 			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith({
 				where: { did: profile.did },
 				update: {
 					handle: profile.handle,
-					displayName: profile.displayName,
-					avatar: profile.avatar,
 				},
 				create: {
 					did: profile.did,
 					handle: profile.handle,
 					displayName: profile.displayName,
-					avatar: profile.avatar,
 					timezone: "UTC",
 				},
 			});
@@ -276,6 +277,7 @@ describe("AuthService", () => {
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
 
 			await service.upsertUser(profile);
 
@@ -283,14 +285,11 @@ describe("AuthService", () => {
 				where: { did: profile.did },
 				update: {
 					handle: profile.handle,
-					displayName: null,
-					avatar: null,
 				},
 				create: {
 					did: profile.did,
 					handle: profile.handle,
 					displayName: null,
-					avatar: null,
 					timezone: "UTC",
 				},
 			});
@@ -321,19 +320,21 @@ describe("AuthService", () => {
 				async (fn: (tx: typeof mockPrismaService) => unknown) =>
 					fn(mockPrismaService),
 			);
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({
+					did: "did:plc:old123",
+					handle: "user.bsky.social",
+					displayName: null,
+					avatar: null,
+					timezone: "UTC",
+					timeFormat: "24h",
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
 			mockPrismaService.user.upsert
 				.mockRejectedValueOnce(handleConflictError)
 				.mockResolvedValueOnce(mockUser);
-			mockPrismaService.user.findUnique.mockResolvedValue({
-				did: "did:plc:old123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-				timezone: "UTC",
-				timeFormat: "24h",
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
 			mockPrismaService.user.update.mockResolvedValue({
 				did: "did:plc:old123",
 				handle: "legacy-did-plc-old123-1234",
@@ -347,7 +348,10 @@ describe("AuthService", () => {
 
 			const result = await service.upsertUser(profile);
 
-			expect(result).toEqual(mockUser);
+			expect(result).toEqual({
+				user: mockUser,
+				isNewUser: true,
+			});
 			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
 			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
 				where: { handle: profile.handle },
@@ -418,7 +422,7 @@ describe("AuthService", () => {
 				client_uri: "http://127.0.0.1:3001",
 				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
 				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 				grant_types: ["authorization_code", "refresh_token"],
 				response_types: ["code"],
 				application_type: "native",
@@ -486,7 +490,8 @@ describe("AuthService", () => {
 
 			expect(client.authorize).toHaveBeenCalledWith("user.bsky.social", {
 				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+				state: undefined,
 			});
 			expect(result).toBe(mockUrl.toString());
 		});
@@ -739,9 +744,11 @@ describe("AuthService", () => {
 			// - repo:xyz.opnshelf.list: write list records
 			// - repo:xyz.opnshelf.listItem: write list item records
 			// - repo:xyz.opnshelf.follow: write follow records
+			// - repo:xyz.opnshelf.profile: write profile records
+			// - blob:*/*: upload profile images
 			// - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
 			expect(authServiceModule.OAUTH_SCOPE).toBe(
-				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.listItem repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 			);
 		});
 

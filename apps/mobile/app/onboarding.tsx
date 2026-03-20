@@ -9,10 +9,12 @@ import {
 	usersControllerImportMyHistoryMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
+	usersControllerUploadMyAvatarMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -29,6 +31,10 @@ import type {
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
+import {
+	getAvatarUploadErrorMessage,
+	validateAvatarAsset,
+} from "@/lib/avatar-upload";
 import {
 	type ImportProgressUpdate,
 	parseCsvText,
@@ -60,6 +66,13 @@ export default function OnboardingScreen() {
 		null,
 	);
 	const [displayName, setDisplayName] = useState("");
+	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
+		null,
+	);
+	const [avatarPreviewUri, setAvatarPreviewUri] = useState<string | null>(null);
+	const [avatarErrorMessage, setAvatarErrorMessage] = useState<string | null>(
+		null,
+	);
 	const [timezone, setTimezone] = useState("UTC");
 	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
 	const [csvFileName, setCsvFileName] = useState<string | null>(null);
@@ -123,6 +136,15 @@ export default function OnboardingScreen() {
 		mutationKey: ["users", "history", "import"],
 		...usersControllerImportMyHistoryMutation(),
 	});
+	const uploadAvatarMutation = useMutation({
+		mutationKey: ["users", "profile", "avatar", "upload"],
+		...usersControllerUploadMyAvatarMutation(),
+		onError: (error) => {
+			setAvatarErrorMessage(
+				getAvatarUploadErrorMessage(error, "Could not upload profile photo"),
+			);
+		},
+	});
 
 	const needsAuthRedirect = !isAuthLoading && (!isAuthenticated || !user);
 	const needsDashboardRedirect =
@@ -154,6 +176,15 @@ export default function OnboardingScreen() {
 	}, [user]);
 
 	useEffect(() => {
+		if (selectedAvatarFile) {
+			setAvatarPreviewUri(selectedAvatarFile.uri);
+			return;
+		}
+
+		setAvatarPreviewUri(user?.avatar ? String(user.avatar) : null);
+	}, [selectedAvatarFile, user?.avatar]);
+
+	useEffect(() => {
 		if (!settings) {
 			return;
 		}
@@ -178,7 +209,9 @@ export default function OnboardingScreen() {
 		fetchTraktMutation.isPending || importHistoryMutation.isPending;
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
 	const isSavingProfile =
-		updateProfileMutation.isPending || updateSettingsMutation.isPending;
+		updateProfileMutation.isPending ||
+		updateSettingsMutation.isPending ||
+		uploadAvatarMutation.isPending;
 	const isCompleting = completeOnboardingMutation.isPending;
 
 	const updateImportProgress = (update: ImportProgressUpdate) => {
@@ -198,6 +231,16 @@ export default function OnboardingScreen() {
 				},
 			});
 
+			if (selectedAvatarFile) {
+				await uploadAvatarMutation.mutateAsync({
+					body: {
+						avatar: selectedAvatarFile,
+					},
+				});
+				setSelectedAvatarFile(null);
+				setAvatarErrorMessage(null);
+			}
+
 			await updateSettingsMutation.mutateAsync({
 				body: {
 					timezone,
@@ -210,6 +253,36 @@ export default function OnboardingScreen() {
 		} catch {
 			// surfaced by mutation handlers
 		}
+	};
+
+	const handlePickAvatar = async () => {
+		const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+		if (!permission.granted) {
+			showToast("Photo library permission is required", "error");
+			return;
+		}
+
+		const result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: "images",
+			allowsEditing: true,
+			aspect: [1, 1],
+			quality: 1,
+		});
+
+		const asset = result.assets?.[0];
+		if (result.canceled || !asset?.uri) {
+			return;
+		}
+
+		const validationMessage = validateAvatarAsset(asset);
+		if (validationMessage) {
+			setAvatarErrorMessage(validationMessage);
+			return;
+		}
+
+		setAvatarErrorMessage(null);
+		setSelectedAvatarFile(new File(asset.uri));
+		setAvatarPreviewUri(asset.uri);
 	};
 
 	const handleBlueskyFollowImport = async () => {
@@ -494,6 +567,8 @@ export default function OnboardingScreen() {
 			traktUsername={traktUsername}
 			traktPreview={traktPreview}
 			displayName={displayName}
+			avatarPreviewUri={avatarPreviewUri}
+			avatarErrorMessage={avatarErrorMessage}
 			timezone={timezone}
 			timeFormat={timeFormat}
 			csvFileName={csvFileName}
@@ -529,6 +604,9 @@ export default function OnboardingScreen() {
 				}
 			}}
 			onDisplayNameChange={setDisplayName}
+			onPickAvatar={() => {
+				void handlePickAvatar();
+			}}
 			onTimezoneChange={setTimezone}
 			onTimeFormatChange={setTimeFormat}
 			onSkipSetup={() => {

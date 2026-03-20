@@ -13,6 +13,13 @@ model User {
   handle      String   @unique
   displayName String?
   avatar      String?
+  profileRkey String?
+  profileUri  String?
+  profileCid  String?
+  profileDisplayName String?
+  profileAvatarCid String?
+  profileAvatarMimeType String?
+  profileUpdatedAt DateTime?
   timezone    String   @default("UTC")
   timeFormat  String   @default("24h")
   onboardingCompletedAt DateTime?
@@ -26,6 +33,7 @@ model User {
   followers    Follow[] @relation("UserFollowers")
   
   @@index([handle])
+  @@index([profileAvatarCid])
 }
 
 model Follow {

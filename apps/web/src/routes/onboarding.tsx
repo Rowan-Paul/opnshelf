@@ -9,6 +9,7 @@ import {
 	usersControllerImportMyHistoryMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
+	usersControllerUploadMyAvatarMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -26,6 +27,10 @@ import type {
 	TabValue,
 	TraktImportPreview,
 } from "@/components/onboarding/types";
+import {
+	getAvatarUploadErrorMessage,
+	validateAvatarFile,
+} from "@/lib/avatar-upload";
 import { parseCsvFile, runImportInChunks } from "@/lib/onboarding-import";
 
 export const Route = createFileRoute("/onboarding")({
@@ -57,6 +62,13 @@ function OnboardingPage() {
 		null,
 	);
 	const [displayName, setDisplayName] = useState("");
+	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
+		null,
+	);
+	const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+	const [avatarErrorMessage, setAvatarErrorMessage] = useState<string | null>(
+		null,
+	);
 	const [timezone, setTimezone] = useState("UTC");
 	const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
 	const displayNameId = useId();
@@ -126,6 +138,15 @@ function OnboardingPage() {
 		mutationKey: ["users", "history", "import"],
 		...usersControllerImportMyHistoryMutation(),
 	});
+	const uploadAvatarMutation = useMutation({
+		mutationKey: ["users", "profile", "avatar", "upload"],
+		...usersControllerUploadMyAvatarMutation(),
+		onError: (error) => {
+			setAvatarErrorMessage(
+				getAvatarUploadErrorMessage(error, "Could not upload profile photo"),
+			);
+		},
+	});
 
 	const userAvatarUrl = typeof user?.avatar === "string" ? user.avatar : "";
 	const userDisplayName =
@@ -151,7 +172,9 @@ function OnboardingPage() {
 			: 0;
 	const isCompleting = completeOnboardingMutation.isPending;
 	const isSavingProfile =
-		updateProfileMutation.isPending || updateSettingsMutation.isPending;
+		updateProfileMutation.isPending ||
+		updateSettingsMutation.isPending ||
+		uploadAvatarMutation.isPending;
 	const needsAuthRedirect = !isAuthLoading && !user;
 	const needsShelfRedirect = !isAuthLoading && !!user && !user.needsOnboarding;
 
@@ -172,6 +195,19 @@ function OnboardingPage() {
 		}
 		setDisplayName(userDisplayName || userHandle);
 	}, [user, userDisplayName, userHandle]);
+
+	useEffect(() => {
+		if (!selectedAvatarFile) {
+			setAvatarPreviewUrl(userAvatarUrl || null);
+			return;
+		}
+
+		const objectUrl = URL.createObjectURL(selectedAvatarFile);
+		setAvatarPreviewUrl(objectUrl);
+		return () => {
+			URL.revokeObjectURL(objectUrl);
+		};
+	}, [selectedAvatarFile, userAvatarUrl]);
 
 	useEffect(() => {
 		if (!settings) {
@@ -206,6 +242,15 @@ function OnboardingPage() {
 			},
 		});
 
+		if (selectedAvatarFile) {
+			await uploadAvatarMutation.mutateAsync({
+				body: {
+					avatar: selectedAvatarFile,
+				},
+			});
+			setAvatarErrorMessage(null);
+		}
+
 		await updateSettingsMutation.mutateAsync({
 			body: {
 				timezone,
@@ -213,7 +258,12 @@ function OnboardingPage() {
 			},
 		});
 
+		await queryClient.invalidateQueries({
+			queryKey: authControllerMeOptions().queryKey,
+		});
+
 		toast.success("Profile and time preferences saved");
+		setSelectedAvatarFile(null);
 		setStep(hasBlueskyProfile ? 3 : 4);
 	};
 
@@ -463,6 +513,8 @@ function OnboardingPage() {
 			displayName={displayName}
 			timezone={timezone}
 			timeFormat={timeFormat}
+			avatarPreviewUrl={avatarPreviewUrl}
+			avatarErrorMessage={avatarErrorMessage}
 			displayNameId={displayNameId}
 			timezoneId={timezoneId}
 			fileInputId={fileInputId}
@@ -496,6 +548,23 @@ function OnboardingPage() {
 				}
 			}}
 			onDisplayNameChange={setDisplayName}
+			onAvatarChange={(file) => {
+				if (!file) {
+					setSelectedAvatarFile(null);
+					setAvatarErrorMessage(null);
+					return;
+				}
+
+				const validationMessage = validateAvatarFile(file);
+				if (validationMessage) {
+					setSelectedAvatarFile(null);
+					setAvatarErrorMessage(validationMessage);
+					return;
+				}
+
+				setAvatarErrorMessage(null);
+				setSelectedAvatarFile(file);
+			}}
 			onTimezoneChange={setTimezone}
 			onTimeFormatChange={setTimeFormat}
 			onSkipSetup={() => {
