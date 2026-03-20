@@ -155,6 +155,76 @@ describe("ProfileService", () => {
 		expect(record.avatar).not.toBeInstanceOf(BlobRef);
 	});
 
+	it("seeds a fallback display name from the handle when none exists", async () => {
+		prisma.user.findUnique.mockResolvedValue({
+			did: session.did,
+			profileRkey: null,
+		});
+		prisma.user.update.mockResolvedValue({
+			displayName: "rowanpaul",
+			avatar: null,
+		});
+
+		await expect(
+			service.seedProfileForNewUser(session.did, session, {
+				handle: "rowanpaul.opnshelf.social",
+				displayName: null,
+				avatarUrl: null,
+			}),
+		).resolves.toBeUndefined();
+
+		expect(mockPutRecord).toHaveBeenCalledWith(
+			expect.objectContaining({
+				record: expect.objectContaining({
+					displayName: "rowanpaul",
+				}),
+			}),
+		);
+		expect(prisma.user.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					displayName: "rowanpaul",
+					profileDisplayName: "rowanpaul",
+				}),
+			}),
+		);
+	});
+
+	it("preserves an explicit seeded display name", async () => {
+		prisma.user.findUnique.mockResolvedValue({
+			did: session.did,
+			profileRkey: null,
+		});
+		prisma.user.update.mockResolvedValue({
+			displayName: "Rowan Paul",
+			avatar: null,
+		});
+
+		await expect(
+			service.seedProfileForNewUser(session.did, session, {
+				handle: "rowanpaul.opnshelf.social",
+				displayName: "Rowan Paul",
+				avatarUrl: null,
+			}),
+		).resolves.toBeUndefined();
+
+		expect(mockPutRecord).toHaveBeenCalledWith(
+			expect.objectContaining({
+				record: expect.objectContaining({
+					displayName: "Rowan Paul",
+				}),
+			}),
+		);
+		expect(prisma.user.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					displayName: "Rowan Paul",
+					profileDisplayName: "Rowan Paul",
+				}),
+			}),
+		);
+	});
+
 	it("normalizes BlobRef avatars returned by getRecord before parsing", async () => {
 		const avatar = await createAvatarBlob();
 		const blobRef = new BlobRef(

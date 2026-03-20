@@ -305,6 +305,7 @@ export class AuthController {
 						session.did,
 						session,
 						{
+							handle: profile.handle,
 							displayName: profile.displayName,
 							avatarUrl: profile.avatar,
 						},

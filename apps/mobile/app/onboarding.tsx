@@ -29,6 +29,7 @@ import type {
 	TabValue,
 	TraktImportPreview,
 } from "@/components/onboarding/types";
+import { getDisplayName } from "@/components/social/social-display";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { useToast } from "@/contexts/toast";
@@ -181,12 +182,11 @@ export default function OnboardingScreen() {
 			return;
 		}
 
-		const rawDisplayName = (user as unknown as { displayName?: unknown })
-			.displayName;
 		setDisplayName(
-			typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0
-				? rawDisplayName
-				: user.handle,
+			getDisplayName(
+				(user as unknown as { displayName?: unknown }).displayName,
+				user.handle,
+			),
 		);
 	}, [user]);
 

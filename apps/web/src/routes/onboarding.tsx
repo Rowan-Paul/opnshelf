@@ -28,6 +28,7 @@ import type {
 	TabValue,
 	TraktImportPreview,
 } from "@/components/onboarding/types";
+import { getSocialDisplayName } from "@/components/social/social-display";
 import {
 	getAvatarUploadErrorMessage,
 	validateAvatarFile,
@@ -206,7 +207,7 @@ function OnboardingPage() {
 		if (!user) {
 			return;
 		}
-		setDisplayName(userDisplayName || userHandle);
+		setDisplayName(getSocialDisplayName(userDisplayName, userHandle));
 	}, [user, userDisplayName, userHandle]);
 
 	useEffect(() => {

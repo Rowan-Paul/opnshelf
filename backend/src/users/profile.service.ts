@@ -64,6 +64,7 @@ export class ProfileService {
 		userDid: string,
 		session: ATSession,
 		seed: {
+			handle: string;
 			displayName: string | null;
 			avatarUrl: string | null;
 		},
@@ -95,7 +96,9 @@ export class ProfileService {
 		}
 
 		const record = this.buildProfileRecord({
-			displayName: normalizeDisplayName(seed.displayName),
+			displayName:
+				normalizeDisplayName(seed.displayName) ??
+				getHandleDisplayName(seed.handle),
 			avatar: avatarBlob ?? null,
 		});
 		const response = await this.putProfileRecord(session, record);
@@ -414,6 +417,22 @@ function normalizeDisplayName(
 
 	const trimmed = displayName.trim();
 	return trimmed.length > 0 ? trimmed : null;
+}
+
+function getHandleDisplayName(
+	handle: string | null | undefined,
+): string | null {
+	if (typeof handle !== "string") {
+		return null;
+	}
+
+	const trimmed = handle.trim();
+	if (trimmed.length === 0) {
+		return null;
+	}
+
+	const [localPart] = trimmed.split(".");
+	return localPart && localPart.length > 0 ? localPart : trimmed;
 }
 
 function normalizeMimeType(mimeType: string): string {

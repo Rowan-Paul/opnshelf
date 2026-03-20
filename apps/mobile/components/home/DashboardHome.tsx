@@ -17,6 +17,7 @@ import { FriendsActivitySection } from "@/components/home/FriendsActivitySection
 import { RecentWatchedSection } from "@/components/home/RecentWatchedSection";
 import { UpNextSection } from "@/components/home/UpNextSection";
 import { UserListsSection } from "@/components/home/UserListsSection";
+import { getDisplayName } from "@/components/social/social-display";
 import type { DashboardUser } from "@/components/home/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -357,12 +358,10 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 }
 
 function resolveDisplayName(user: DashboardUser): string {
-	const rawDisplayName = (user as unknown as { displayName?: unknown }).displayName;
-	if (typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0) {
-		return rawDisplayName;
-	}
-
-	return user.handle;
+	return getDisplayName(
+		(user as unknown as { displayName?: unknown }).displayName,
+		user.handle,
+	);
 }
 
 function DashboardMetricsSkeleton() {

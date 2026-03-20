@@ -17,6 +17,7 @@ import { UpNextSection } from "@/components/home/UpNextSection";
 import { ListCard } from "@/components/ListCard";
 import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
 import { ShelfMovieCard } from "@/components/ShelfMovieCard";
+import { getSocialDisplayName } from "@/components/social/social-display";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -31,9 +32,10 @@ type DashboardRange = "week" | "month";
 
 export function DashboardHomePage({ user }: { user: UserDto }) {
 	const [range, setRange] = useState<DashboardRange>("week");
-	const displayName =
-		(user as unknown as { displayName?: string | null }).displayName ??
-		user.handle;
+	const displayName = getSocialDisplayName(
+		(user as unknown as { displayName?: string | null }).displayName,
+		user.handle,
+	);
 
 	const { data: shelfData, isLoading } = useQuery({
 		...shelfControllerGetUserShelfOptions({
