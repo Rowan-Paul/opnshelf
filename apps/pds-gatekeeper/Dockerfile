@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/pds-gatekeeper/package.json apps/pds-gatekeeper/package.json
 
-RUN pnpm install --frozen-lockfile --filter @opnshelf/pds-gatekeeper...
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @opnshelf/pds-gatekeeper...
 
 COPY apps/pds-gatekeeper apps/pds-gatekeeper
 
@@ -34,7 +34,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/pds-gatekeeper/package.json apps/pds-gatekeeper/package.json
 
-RUN pnpm install --frozen-lockfile --filter @opnshelf/pds-gatekeeper... --prod
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @opnshelf/pds-gatekeeper... --prod
 
 # Copy the compiled output from the builder stage.
 COPY --from=builder /app/apps/pds-gatekeeper/dist /app/apps/pds-gatekeeper/dist
