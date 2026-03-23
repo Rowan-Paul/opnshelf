@@ -58,6 +58,11 @@ function AppContent() {
 	const segments = useSegments();
 
 	const isTabsRoute = segments[0] === "(tabs)";
+	const isOnboardingRoute = segments[0] === "onboarding";
+	const isLoginRoute = segments[0] === "login";
+	const isAuthRoute = segments[0] === "auth";
+	const shouldShowRootTraktBanner =
+		!isTabsRoute && !isOnboardingRoute && !isLoginRoute && !isAuthRoute;
 
 	if (isLoading) {
 		return <LoadingScreen message="Loading..." />;
@@ -92,7 +97,7 @@ function AppContent() {
 				<Stack.Screen name="login" />
 				<Stack.Screen name="onboarding" />
 			</Stack>
-			{!isTabsRoute ? <TraktImportStatusBanner /> : null}
+			{shouldShowRootTraktBanner ? <TraktImportStatusBanner /> : null}
 			<StatusBar style="light" />
 		</M3SnackbarProvider>
 	);

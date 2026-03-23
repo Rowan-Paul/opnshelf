@@ -2,12 +2,14 @@ import {
 	BadRequestException,
 	HttpException,
 	HttpStatus,
+	Inject,
 	Injectable,
 	Logger,
 	NotFoundException,
 	ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { AUTH_SERVICE } from "../auth/auth.tokens";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
@@ -22,6 +24,7 @@ import type {
 	TraktImportJobDto,
 	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
+import type { AuthService } from "../auth/auth.service";
 
 interface ATSession {
 	did: string;
@@ -115,6 +118,8 @@ export class ImportHistoryService {
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
 		private readonly configService: ConfigService,
+		@Inject(AUTH_SERVICE)
+		private readonly authService: Pick<AuthService, "restore">,
 	) {
 		this.traktApiKey = this.configService.get<string>("TRAKT_API_KEY") ?? "";
 	}
@@ -1042,19 +1047,12 @@ export class ImportHistoryService {
 	private async restoreImportSession(
 		userDid: string,
 	): Promise<ATSession | null> {
-		const record = await this.prisma.authSession.findUnique({
-			where: { userDid },
-			select: { sessionData: true },
-		});
-		if (!record) {
-			return null;
-		}
-
 		try {
-			return JSON.parse(record.sessionData) as ATSession;
+			const session = await this.authService.restore(userDid);
+			return session ? (session as unknown as ATSession) : null;
 		} catch (error) {
 			this.logger.warn(
-				`Failed to parse stored auth session for ${userDid}: ${this.getErrorMessage(error)}`,
+				`Failed to restore auth session for ${userDid}: ${this.getErrorMessage(error)}`,
 			);
 			return null;
 		}

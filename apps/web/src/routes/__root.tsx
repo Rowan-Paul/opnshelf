@@ -101,6 +101,13 @@ function RootComponent() {
 
 function AppShell() {
 	const { data: user, isLoading: isUserLoading } = useCurrentUser();
+	const location = useLocation();
+	const pathname = location.pathname;
+	const shouldShowTraktStatus =
+		Boolean(user) &&
+		pathname !== "/onboarding" &&
+		pathname !== "/login" &&
+		!pathname.startsWith("/auth/");
 
 	return (
 		<ThemeProvider>
@@ -125,7 +132,7 @@ function AppShell() {
 					TanStackQueryDevtools,
 				]}
 			/>
-			<TraktImportStatusToast enabled={Boolean(user)} />
+			<TraktImportStatusToast enabled={shouldShowTraktStatus} />
 			<Toaster />
 		</ThemeProvider>
 	);

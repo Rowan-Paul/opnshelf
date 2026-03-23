@@ -1,4 +1,5 @@
 import { ConfigService } from "@nestjs/config";
+import type { AuthService } from "../auth/auth.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
@@ -42,6 +43,10 @@ describe("ImportHistoryService", () => {
 		}),
 	} as unknown as ConfigService;
 
+	const authService = {
+		restore: jest.fn(),
+	} as unknown as AuthService;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 		service = new ImportHistoryService(
@@ -49,6 +54,7 @@ describe("ImportHistoryService", () => {
 			moviesService,
 			showsService,
 			configService,
+			authService,
 		);
 		global.fetch = jest.fn() as unknown as typeof fetch;
 	});
@@ -220,8 +226,8 @@ describe("ImportHistoryService", () => {
 		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(job);
 		prisma.traktImportJob.findUnique = jest.fn().mockResolvedValue(job);
 		prisma.traktImportJob.update = jest.fn().mockResolvedValue(job);
-		prisma.authSession.findUnique = jest.fn().mockResolvedValue({
-			sessionData: JSON.stringify({ did: "did:plc:abc" }),
+		(authService.restore as jest.Mock).mockResolvedValue({
+			did: "did:plc:abc",
 		});
 
 		(global.fetch as jest.Mock).mockResolvedValue(
@@ -273,8 +279,8 @@ describe("ImportHistoryService", () => {
 		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(job);
 		prisma.traktImportJob.findUnique = jest.fn().mockResolvedValue(job);
 		prisma.traktImportJob.update = jest.fn().mockResolvedValue(job);
-		prisma.authSession.findUnique = jest.fn().mockResolvedValue({
-			sessionData: JSON.stringify({ did: "did:plc:abc" }),
+		(authService.restore as jest.Mock).mockResolvedValue({
+			did: "did:plc:abc",
 		});
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
 		(moviesService.markWatched as jest.Mock).mockResolvedValue({
