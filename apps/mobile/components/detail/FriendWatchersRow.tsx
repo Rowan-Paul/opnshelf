@@ -23,27 +23,35 @@ export function FriendWatchersRow({
 
 	if (isLoading) {
 		return (
-			<View style={styles.container}>
-				<View style={styles.avatarGroup}>
-					{Array.from({ length: 4 }, (_, index) => (
-						<View
-							key={`watcher-skeleton-${index + 1}`}
-							style={[
-								styles.skeletonAvatar,
-								{
-									backgroundColor: themeColors.surfaceContainerHighest,
-									marginLeft: index === 0 ? 0 : -10,
-								},
-							]}
-						/>
-					))}
-				</View>
+			<View style={styles.wrapper}>
 				<View
 					style={[
-						styles.skeletonBadge,
+						styles.titleSkeleton,
 						{ backgroundColor: themeColors.surfaceContainerHighest },
 					]}
 				/>
+				<View style={styles.container}>
+					<View style={styles.avatarGroup}>
+						{Array.from({ length: 4 }, (_, index) => (
+							<View
+								key={`watcher-skeleton-${index + 1}`}
+								style={[
+									styles.skeletonAvatar,
+									{
+										backgroundColor: themeColors.surfaceContainerHighest,
+										marginLeft: index === 0 ? 0 : -10,
+									},
+								]}
+							/>
+						))}
+					</View>
+					<View
+						style={[
+							styles.skeletonBadge,
+							{ backgroundColor: themeColors.surfaceContainerHighest },
+						]}
+					/>
+				</View>
 			</View>
 		);
 	}
@@ -55,71 +63,87 @@ export function FriendWatchersRow({
 	const overflowCount = Math.max(watchers.total - watchers.items.length, 0);
 
 	return (
-		<View style={styles.container}>
-			<View style={styles.avatarGroup}>
-				{watchers.items.map((watcher, index) => {
-					const content = (
-						<View
-							style={[
-								styles.avatarFrame,
-								{
-									marginLeft: index === 0 ? 0 : -10,
-									borderColor: themeColors.surface,
-								},
-							]}
-						>
-							<SocialUserAvatar
-								avatar={watcher.actor.avatar}
-								displayName={watcher.actor.displayName}
-								handle={watcher.actor.handle}
-								size={32}
-							/>
-						</View>
-					);
+		<View style={styles.wrapper}>
+			<Text style={[styles.title, { color: themeColors.onSurfaceVariant }]}>
+				Friend Activity
+			</Text>
+			<View style={styles.container}>
+				<View style={styles.avatarGroup}>
+					{watchers.items.map((watcher, index) => {
+						const content = (
+							<View
+								style={[
+									styles.avatarFrame,
+									{
+										marginLeft: index === 0 ? 0 : -10,
+										borderColor: themeColors.surface,
+									},
+								]}
+							>
+								<SocialUserAvatar
+									avatar={watcher.actor.avatar}
+									displayName={watcher.actor.displayName}
+									handle={watcher.actor.handle}
+									size={32}
+								/>
+							</View>
+						);
 
-					if (!onPressWatcher) {
-						return <View key={watcher.actor.did}>{content}</View>;
-					}
+						if (!onPressWatcher) {
+							return <View key={watcher.actor.did}>{content}</View>;
+						}
 
-					return (
-						<TouchableOpacity
-							key={watcher.actor.did}
-							onPress={() => onPressWatcher(watcher.actor.handle)}
-							activeOpacity={0.8}
-						>
-							{content}
-						</TouchableOpacity>
-					);
-				})}
-			</View>
-			{overflowCount > 0 ? (
-				<View
-					style={[
-						styles.overflowBadge,
-						{ backgroundColor: themeColors.surfaceContainer },
-					]}
-				>
-					<Users size={12} color={colors.primary} />
-					<Text
+						return (
+							<TouchableOpacity
+								key={watcher.actor.did}
+								onPress={() => onPressWatcher(watcher.actor.handle)}
+								activeOpacity={0.8}
+							>
+								{content}
+							</TouchableOpacity>
+						);
+					})}
+				</View>
+				{overflowCount > 0 ? (
+					<View
 						style={[
-							styles.overflowLabel,
-							{ color: themeColors.onSurfaceVariant },
+							styles.overflowBadge,
+							{ backgroundColor: themeColors.surfaceContainer },
 						]}
 					>
-						+{overflowCount}
-					</Text>
-				</View>
-			) : null}
+						<Users size={12} color={colors.primary} />
+						<Text
+							style={[
+								styles.overflowLabel,
+								{ color: themeColors.onSurfaceVariant },
+							]}
+						>
+							+{overflowCount}
+						</Text>
+					</View>
+				) : null}
+			</View>
 		</View>
 	);
 }
 
 const styles = StyleSheet.create({
+	wrapper: {
+		gap: spacing.xs,
+		alignSelf: "flex-start",
+		maxWidth: "100%",
+	},
+	title: {
+		fontSize: 11,
+		fontWeight: "600",
+		textTransform: "uppercase",
+		letterSpacing: 1.6,
+		paddingLeft: spacing.xs,
+	},
 	container: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
-		alignSelf: "flex-start",
 		paddingLeft: spacing.xs,
 		maxWidth: "100%",
 		minHeight: 32,
@@ -155,5 +179,11 @@ const styles = StyleSheet.create({
 		height: 32,
 		borderRadius: borderRadius.full,
 		width: 56,
+	},
+	titleSkeleton: {
+		height: 12,
+		width: 88,
+		borderRadius: borderRadius.full,
+		marginLeft: spacing.xs,
 	},
 });

@@ -54,6 +54,7 @@ describe("FriendWatchersRow", () => {
 			</ThemeProvider>,
 		);
 
+		expect(markup).toContain("Friend Activity");
 		expect(markup).toContain("+2");
 		expect(markup).toContain("friend-1.jpg");
 		expect(markup).toContain("friend-2.jpg");

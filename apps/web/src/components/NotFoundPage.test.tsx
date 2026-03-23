@@ -28,7 +28,7 @@ describe("NotFoundPage", () => {
 
 		if (root && container) {
 			act(() => {
-				root.unmount();
+				root?.unmount();
 			});
 		}
 
