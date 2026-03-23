@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { MovieColorsDto } from "../../movies/dto/movie.dto";
 
 export class SocialUserCardDto {
@@ -106,6 +106,31 @@ export class SocialFeedPaginationQueryDto {
 	@IsInt()
 	@Min(1)
 	@Max(25)
+	pageSize?: number;
+}
+
+export class SocialWatchersQueryDto {
+	@ApiProperty({ enum: ["movie", "show"] })
+	@IsString()
+	@IsIn(["movie", "show"])
+	mediaType: "movie" | "show";
+
+	@ApiProperty({
+		description:
+			'Movie TMDB id or scoped show media id such as "showId", "showId:season:1", or "showId:season:1:episode:2"',
+	})
+	@IsString()
+	mediaId: string;
+
+	@ApiPropertyOptional({
+		description: "Maximum number of watcher avatars to return",
+		default: 3,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(10)
 	pageSize?: number;
 }
 
@@ -217,4 +242,37 @@ export class FollowedActivityFeedDto {
 
 	@ApiProperty()
 	hasPreviousPage: boolean;
+}
+
+export class FollowedWatcherActorDto {
+	@ApiProperty()
+	did: string;
+
+	@ApiProperty()
+	handle: string;
+
+	@ApiPropertyOptional({ type: String, nullable: true })
+	displayName: string | null;
+
+	@ApiPropertyOptional({ type: String, nullable: true })
+	avatar: string | null;
+}
+
+export class FollowedWatcherDto {
+	@ApiProperty({ type: FollowedWatcherActorDto })
+	actor: FollowedWatcherActorDto;
+
+	@ApiProperty()
+	activityAt: string;
+}
+
+export class FollowedWatchersDto {
+	@ApiProperty({ type: [FollowedWatcherDto] })
+	items: FollowedWatcherDto[];
+
+	@ApiProperty()
+	pageSize: number;
+
+	@ApiProperty()
+	total: number;
 }

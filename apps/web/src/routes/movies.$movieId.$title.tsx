@@ -9,6 +9,7 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbMovieDetailDto,
 	type TrackedMovieDto,
 	usersControllerGetMySettingsOptions,
@@ -131,6 +132,18 @@ function MovieDetailPage() {
 		}),
 		enabled: !!user?.did,
 	});
+	const { data: friendWatchers, isLoading: isFriendWatchersLoading } = useQuery(
+		{
+			...socialControllerGetWatchersOptions({
+				query: {
+					mediaType: "movie",
+					mediaId: movieId,
+					pageSize: 8,
+				},
+			}),
+			enabled: !!user?.did,
+		},
+	);
 
 	const listsCount = listsForMovie?.filter((l) => l.isInList).length ?? 0;
 
@@ -317,7 +330,12 @@ function MovieDetailPage() {
 						/>
 					</div>
 
-					<MovieDetailContent movie={movie} colors={colors} />
+					<MovieDetailContent
+						movie={movie}
+						colors={colors}
+						friendWatchers={friendWatchers}
+						isFriendWatchersLoading={isFriendWatchersLoading}
+					/>
 				</div>
 			</div>
 

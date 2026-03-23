@@ -3,6 +3,7 @@ export { DetailActions } from "./DetailActions";
 export { DetailHero } from "./DetailHero";
 export { EpisodeCard } from "./EpisodeCard";
 export { EpisodeNav } from "./EpisodeNav";
+export { FriendWatchersRow } from "./FriendWatchersRow";
 export { MetadataPills } from "./MetadataPills";
 export { SeasonCard } from "./SeasonCard";
 export { SeasonNav } from "./SeasonNav";

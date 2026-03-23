@@ -16,9 +16,11 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	FollowedActivityFeedDto,
 	PaginatedSocialUsersDto,
+	FollowedWatchersDto,
 	SocialFeedPaginationQueryDto,
 	SocialPaginationQueryDto,
 	SocialSearchQueryDto,
+	SocialWatchersQueryDto,
 	UserRelationshipDto,
 } from "./dto/social.dto";
 import { type ATSession, SocialService } from "./social.service";
@@ -126,6 +128,24 @@ export class SocialController {
 			getViewerDid(req),
 			query.page ?? 1,
 			query.pageSize ?? 10,
+		);
+	}
+
+	@Get("watchers")
+	@ApiOperation({
+		summary:
+			"Get followed users who watched a scoped movie, show, season, or episode",
+	})
+	@ApiResponse({ status: 200, type: FollowedWatchersDto })
+	async getWatchers(
+		@Req() req: AuthenticatedRequest,
+		@Query() query: SocialWatchersQueryDto,
+	): Promise<FollowedWatchersDto> {
+		return this.socialService.getFollowedWatchers(
+			getViewerDid(req),
+			query.mediaType,
+			query.mediaId,
+			query.pageSize ?? 3,
 		);
 	}
 }

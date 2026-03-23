@@ -10,6 +10,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbEpisodeDto,
 	type TmdbShowDetailDto,
 	usersControllerGetMySettingsOptions,
@@ -169,6 +170,18 @@ function ShowEpisodePage() {
 		}),
 		enabled: !!user?.did,
 	});
+	const { data: friendWatchers, isLoading: isFriendWatchersLoading } = useQuery(
+		{
+			...socialControllerGetWatchersOptions({
+				query: {
+					mediaType: "show",
+					mediaId: scopedEpisodeMediaId,
+					pageSize: 8,
+				},
+			}),
+			enabled: !!user?.did,
+		},
+	);
 
 	const show = showData as TmdbShowDetailDto | undefined;
 
@@ -388,7 +401,7 @@ function ShowEpisodePage() {
 					<div className="space-y-4 min-w-0 max-w-[300px]">
 						<DetailActions
 							mediaType="episode"
-							mediaId={showId}
+							mediaId={scopedEpisodeMediaId}
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
 							colors={colors}
@@ -431,6 +444,8 @@ function ShowEpisodePage() {
 						seasonNumber={seasonNumber}
 						episodeNumber={episodeNumber}
 						colors={colors}
+						friendWatchers={friendWatchers}
+						isFriendWatchersLoading={isFriendWatchersLoading}
 					/>
 				</div>
 			</div>

@@ -8,6 +8,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbSeasonDetailDto,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
@@ -30,6 +31,7 @@ import {
 	DetailActions,
 	DetailHero,
 	EpisodeCard,
+	FriendWatchersRow,
 	MetadataPills,
 	SeasonNav,
 	TrailerSection,
@@ -167,6 +169,18 @@ function ShowSeasonPage() {
 		}),
 		enabled: !!user?.did,
 	});
+	const { data: friendWatchers, isLoading: isFriendWatchersLoading } = useQuery(
+		{
+			...socialControllerGetWatchersOptions({
+				query: {
+					mediaType: "show",
+					mediaId: scopedSeasonMediaId,
+					pageSize: 8,
+				},
+			}),
+			enabled: !!user?.did,
+		},
+	);
 
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
 
@@ -313,7 +327,7 @@ function ShowSeasonPage() {
 							<div className="space-y-4 min-w-0">
 								<DetailActions
 									mediaType="season"
-									mediaId={showId}
+									mediaId={scopedSeasonMediaId}
 									seasonNumber={seasonNumber}
 									colors={colors}
 									isWatched={watchedEpisodeCount > 0}
@@ -342,6 +356,11 @@ function ShowSeasonPage() {
 
 							<div className="space-y-6 min-w-0">
 								<MetadataPills items={metadataItems} />
+								<FriendWatchersRow
+									watchers={friendWatchers}
+									isLoading={isFriendWatchersLoading}
+									colors={colors}
+								/>
 
 								<section>
 									<h2

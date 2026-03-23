@@ -25,6 +25,7 @@ import { getProfileRoute } from "@/lib/profile-routes";
 import { createTitleSlug, formatDateOnly, getTmdbPosterUrl } from "@/lib/utils";
 
 export interface UpNextShowCollectionProps {
+	isFetching: boolean;
 	isLoading: boolean;
 	upNext: UpNextShowDto[];
 	userDid: string;
@@ -36,6 +37,7 @@ export interface UpNextShowCollectionProps {
 }
 
 export function UpNextShowCollection({
+	isFetching,
 	isLoading,
 	upNext,
 	userDid,
@@ -66,6 +68,7 @@ export function UpNextShowCollection({
 
 	const items = typeof limit === "number" ? upNext.slice(0, limit) : upNext;
 	const isProfile = variant === "profile";
+	const isRefreshing = isFetching && !isLoading && items.length > 0;
 	const skeletonCount = isProfile ? 6 : 4;
 	const skeletonIds = Array.from(
 		{ length: skeletonCount },
@@ -132,7 +135,13 @@ export function UpNextShowCollection({
 					))}
 				</div>
 			) : items.length > 0 ? (
-				<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+				<div
+					aria-busy={isRefreshing || undefined}
+					className={`grid grid-cols-1 gap-4 transition-opacity duration-200 xl:grid-cols-2 ${
+						isRefreshing ? "pointer-events-none" : ""
+					}`}
+					style={{ opacity: isRefreshing ? 0.58 : 1 }}
+				>
 					{items.map((item) => {
 						const posterUrl = getTmdbPosterUrl(item.show.posterPath, "w500");
 						const isPending =

@@ -7,6 +7,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbShowDetailDto,
 } from "@opnshelf/api";
 import { usePostHog } from "@posthog/react";
@@ -28,6 +29,7 @@ import {
 	type ColorTheme,
 	DetailActions,
 	DetailHero,
+	FriendWatchersRow,
 	MetadataPills,
 	SeasonCard,
 	TrailerSection,
@@ -133,6 +135,18 @@ function ShowDetailPage() {
 		}),
 		enabled: !!user?.did,
 	});
+	const { data: friendWatchers, isLoading: isFriendWatchersLoading } = useQuery(
+		{
+			...socialControllerGetWatchersOptions({
+				query: {
+					mediaType: "show",
+					mediaId: showId,
+					pageSize: 8,
+				},
+			}),
+			enabled: !!user?.did,
+		},
+	);
 
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
 	const watchedEpisodeCount = history?.length ?? 0;
@@ -286,6 +300,11 @@ function ShowDetailPage() {
 
 							<div className="space-y-6 min-w-0">
 								<MetadataPills items={metadataItems} />
+								<FriendWatchersRow
+									watchers={friendWatchers}
+									isLoading={isFriendWatchersLoading}
+									colors={colors}
+								/>
 
 								<section>
 									<h2

@@ -2,6 +2,7 @@ import type { UpNextShowDto } from "@opnshelf/api";
 import { UpNextShowCollection } from "@/components/up-next/UpNextShowCollection";
 
 type UpNextSectionProps = {
+	isFetching: boolean;
 	isLoading: boolean;
 	upNext: UpNextShowDto[];
 	userDid: string;
@@ -9,6 +10,7 @@ type UpNextSectionProps = {
 };
 
 export function UpNextSection({
+	isFetching,
 	isLoading,
 	upNext,
 	userDid,
@@ -16,6 +18,7 @@ export function UpNextSection({
 }: UpNextSectionProps) {
 	return (
 		<UpNextShowCollection
+			isFetching={isFetching}
 			isLoading={isLoading}
 			upNext={upNext}
 			userDid={userDid}

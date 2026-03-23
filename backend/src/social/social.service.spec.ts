@@ -447,6 +447,176 @@ describe("SocialService", () => {
 		});
 	});
 
+	it("returns an empty watcher summary when the viewer follows nobody", async () => {
+		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
+
+		await expect(
+			service.getFollowedWatchers("did:plc:self", "movie", "movie-1", 3),
+		).resolves.toEqual({
+			items: [],
+			pageSize: 3,
+			total: 0,
+		});
+
+		expect(prisma.$queryRaw).not.toHaveBeenCalled();
+		expect(prisma.user.findMany).not.toHaveBeenCalled();
+	});
+
+	it("returns an empty watcher summary when followed users have no matching watches", async () => {
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
+		prisma.$queryRaw = jest.fn().mockResolvedValue([]);
+
+		await expect(
+			service.getFollowedWatchers("did:plc:self", "movie", "movie-1", 3),
+		).resolves.toEqual({
+			items: [],
+			pageSize: 3,
+			total: 0,
+		});
+
+		expect(prisma.user.findMany).not.toHaveBeenCalled();
+	});
+
+	it("returns compact movie watchers and preserves total count beyond the avatar limit", async () => {
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
+		prisma.$queryRaw = jest.fn().mockResolvedValue([
+			{
+				actorDid: "did:plc:friend-3",
+				activityAt: new Date("2026-03-03T12:00:00.000Z"),
+				createdAt: new Date("2026-03-03T12:00:00.000Z"),
+			},
+			{
+				actorDid: "did:plc:friend-2",
+				activityAt: new Date("2026-03-02T12:00:00.000Z"),
+				createdAt: new Date("2026-03-02T12:00:00.000Z"),
+			},
+			{
+				actorDid: "did:plc:friend-1",
+				activityAt: new Date("2026-03-01T12:00:00.000Z"),
+				createdAt: new Date("2026-03-01T12:00:00.000Z"),
+			},
+			{
+				actorDid: "did:plc:friend-4",
+				activityAt: new Date("2026-02-28T12:00:00.000Z"),
+				createdAt: new Date("2026-02-28T12:00:00.000Z"),
+			},
+		]);
+		prisma.user.findMany = jest
+			.fn()
+			.mockResolvedValue([
+				makeUser("did:plc:friend-1", "friend-1", "Friend 1", 10, 5),
+				makeUser("did:plc:friend-2", "friend-2", "Friend 2", 10, 5),
+				makeUser("did:plc:friend-3", "friend-3", "Friend 3", 10, 5),
+			]);
+
+		const result = await service.getFollowedWatchers(
+			"did:plc:self",
+			"movie",
+			"movie-1",
+			3,
+		);
+
+		expect(result.total).toBe(4);
+		expect(result.pageSize).toBe(3);
+		expect(result.items.map((item) => item.actor.did)).toEqual([
+			"did:plc:friend-3",
+			"did:plc:friend-2",
+			"did:plc:friend-1",
+		]);
+		expect(getSqlText(getQueryRawMock(prisma).mock.calls[0][0])).toContain(
+			'tm."movieId" = ',
+		);
+	});
+
+	it("queries show watchers without season or episode filters for show detail pages", async () => {
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
+		prisma.$queryRaw = jest.fn().mockResolvedValue([
+			{
+				actorDid: "did:plc:friend-1",
+				activityAt: new Date("2026-03-03T12:00:00.000Z"),
+				createdAt: new Date("2026-03-03T12:00:00.000Z"),
+			},
+		]);
+		prisma.user.findMany = jest
+			.fn()
+			.mockResolvedValue([
+				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
+			]);
+
+		await service.getFollowedWatchers("did:plc:self", "show", "show-1", 3);
+
+		const sql = getSqlText(getQueryRawMock(prisma).mock.calls[0][0]);
+		expect(sql).toContain('te."showId" = ');
+		expect(sql).not.toContain('te."seasonNumber" = ');
+		expect(sql).not.toContain('te."episodeNumber" = ');
+	});
+
+	it("filters season watcher queries by season only", async () => {
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
+		prisma.$queryRaw = jest.fn().mockResolvedValue([
+			{
+				actorDid: "did:plc:friend-1",
+				activityAt: new Date("2026-03-03T12:00:00.000Z"),
+				createdAt: new Date("2026-03-03T12:00:00.000Z"),
+			},
+		]);
+		prisma.user.findMany = jest
+			.fn()
+			.mockResolvedValue([
+				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
+			]);
+
+		await service.getFollowedWatchers(
+			"did:plc:self",
+			"show",
+			"show-1:season:2",
+			3,
+		);
+
+		const sql = getSqlText(getQueryRawMock(prisma).mock.calls[0][0]);
+		expect(sql).toContain('te."showId" = ');
+		expect(sql).toContain('te."seasonNumber" = ');
+		expect(sql).not.toContain('te."episodeNumber" = ');
+	});
+
+	it("filters episode watcher queries by exact season and episode", async () => {
+		prisma.follow.findMany = jest
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
+		prisma.$queryRaw = jest.fn().mockResolvedValue([
+			{
+				actorDid: "did:plc:friend-1",
+				activityAt: new Date("2026-03-03T12:00:00.000Z"),
+				createdAt: new Date("2026-03-03T12:00:00.000Z"),
+			},
+		]);
+		prisma.user.findMany = jest
+			.fn()
+			.mockResolvedValue([
+				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
+			]);
+
+		await service.getFollowedWatchers(
+			"did:plc:self",
+			"show",
+			"show-1:season:2:episode:4",
+			3,
+		);
+
+		const sql = getSqlText(getQueryRawMock(prisma).mock.calls[0][0]);
+		expect(sql).toContain('te."showId" = ');
+		expect(sql).toContain('te."seasonNumber" = ');
+		expect(sql).toContain('te."episodeNumber" = ');
+	});
+
 	it("can reflect public profile counts after follow and unfollow", async () => {
 		const follows = new Map<string, { rkey?: string }>();
 		const statefulPrisma = createStatefulPrisma(follows);
@@ -702,4 +872,21 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 		},
 		$queryRaw: jest.fn().mockResolvedValue([]),
 	};
+}
+
+function getSqlText(query: unknown) {
+	if (
+		query &&
+		typeof query === "object" &&
+		"strings" in query &&
+		Array.isArray(query.strings)
+	) {
+		return query.strings.join(" ");
+	}
+
+	return String(query);
+}
+
+function getQueryRawMock(prisma: PrismaService) {
+	return prisma.$queryRaw as unknown as jest.Mock;
 }

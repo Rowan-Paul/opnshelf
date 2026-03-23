@@ -856,6 +856,24 @@ export type FollowedActivityFeedDto = {
     hasPreviousPage: boolean;
 };
 
+export type FollowedWatcherActorDto = {
+    did: string;
+    handle: string;
+    displayName?: string | null;
+    avatar?: string | null;
+};
+
+export type FollowedWatcherDto = {
+    actor: FollowedWatcherActorDto;
+    activityAt: string;
+};
+
+export type FollowedWatchersDto = {
+    items: Array<FollowedWatcherDto>;
+    pageSize: number;
+    total: number;
+};
+
 export type ShelfResponseDto = {
     items: Array<{
         id: string;
@@ -2341,6 +2359,29 @@ export type SocialControllerGetFeedResponses = {
 };
 
 export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];
+
+export type SocialControllerGetWatchersData = {
+    body?: never;
+    path?: never;
+    query: {
+        mediaType: 'movie' | 'show';
+        /**
+         * Movie TMDB id or scoped show media id such as "showId", "showId:season:1", or "showId:season:1:episode:2"
+         */
+        mediaId: string;
+        /**
+         * Maximum number of watcher avatars to return
+         */
+        pageSize?: number;
+    };
+    url: '/social/watchers';
+};
+
+export type SocialControllerGetWatchersResponses = {
+    200: FollowedWatchersDto;
+};
+
+export type SocialControllerGetWatchersResponse = SocialControllerGetWatchersResponses[keyof SocialControllerGetWatchersResponses];
 
 export type ShelfControllerGetUserShelfData = {
     body?: never;

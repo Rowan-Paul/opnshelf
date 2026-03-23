@@ -1,10 +1,11 @@
-import type { TmdbMovieDetailDto } from "@opnshelf/api";
+import type { FollowedWatchersDto, TmdbMovieDetailDto } from "@opnshelf/api";
 import { Calendar, Clock, Star } from "lucide-react";
 import { useMemo } from "react";
 import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
 import {
 	type ColorTheme,
+	FriendWatchersRow,
 	MetadataPills,
 	TrailerSection,
 } from "@/components/detail";
@@ -14,9 +15,16 @@ import { formatDateOnly, formatRuntime } from "@/lib/utils";
 type MovieDetailContentProps = {
 	movie?: TmdbMovieDetailDto;
 	colors: ColorTheme;
+	friendWatchers?: FollowedWatchersDto;
+	isFriendWatchersLoading?: boolean;
 };
 
-export function MovieDetailContent({ movie, colors }: MovieDetailContentProps) {
+export function MovieDetailContent({
+	movie,
+	colors,
+	friendWatchers,
+	isFriendWatchersLoading = false,
+}: MovieDetailContentProps) {
 	const metadataItems = useMemo(() => {
 		const items = [];
 		if (movie?.release_date) {
@@ -43,6 +51,11 @@ export function MovieDetailContent({ movie, colors }: MovieDetailContentProps) {
 	return (
 		<div className="space-y-6 min-w-0 w-full">
 			<MetadataPills items={metadataItems} />
+			<FriendWatchersRow
+				watchers={friendWatchers}
+				isLoading={isFriendWatchersLoading}
+				colors={colors}
+			/>
 
 			<section>
 				<h2 className="m3-title-large mb-3" style={{ color: colors.primary }}>

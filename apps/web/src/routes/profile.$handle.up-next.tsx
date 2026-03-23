@@ -111,6 +111,7 @@ function ProfileUpNextPage() {
 			/>
 
 			<UpNextShowCollection
+				isFetching={upNextQuery.isFetching}
 				isLoading={upNextQuery.isLoading}
 				upNext={items}
 				userDid={userDid}

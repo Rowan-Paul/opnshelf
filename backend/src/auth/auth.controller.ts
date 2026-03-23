@@ -24,7 +24,6 @@ import type { AuthenticatedRequest } from "./types";
 const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
 const TIMEZONE_COOKIE_NAME = "auth_timezone";
-const MOBILE_FAILURE_DEEP_LINK = "opnshelf://auth/callback";
 type OAuthErrorCode = "handle_required" | "auth_failed" | "callback_failed";
 type AuthPlatform = "mobile" | undefined;
 
@@ -70,9 +69,7 @@ export class AuthController {
 	}
 
 	private buildMobileErrorUrl(errorCode: OAuthErrorCode): string {
-		// Use auth callback deep link so WebBrowser auth session can close reliably.
-		void errorCode;
-		return MOBILE_FAILURE_DEEP_LINK;
+		return `opnshelf://auth/complete?error=${encodeURIComponent(errorCode)}`;
 	}
 
 	private resolveErrorRedirect(

@@ -1,4 +1,8 @@
-import type { TmdbEpisodeDto, TmdbShowDetailDto } from "@opnshelf/api";
+import type {
+	FollowedWatchersDto,
+	TmdbEpisodeDto,
+	TmdbShowDetailDto,
+} from "@opnshelf/api";
 import { Calendar, Clock, Film, Layers, Star } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
@@ -6,6 +10,7 @@ import { CastSection } from "@/components/CastSection";
 import { CrewSection } from "@/components/CrewSection";
 import {
 	type ColorTheme,
+	FriendWatchersRow,
 	MetadataPills,
 	TrailerSection,
 } from "@/components/detail";
@@ -19,6 +24,8 @@ type ShowEpisodeContentProps = {
 	seasonNumber: string;
 	episodeNumber: string;
 	colors: ColorTheme;
+	friendWatchers?: FollowedWatchersDto;
+	isFriendWatchersLoading?: boolean;
 };
 
 export function ShowEpisodeContent({
@@ -29,6 +36,8 @@ export function ShowEpisodeContent({
 	seasonNumber,
 	episodeNumber,
 	colors,
+	friendWatchers,
+	isFriendWatchersLoading = false,
 }: ShowEpisodeContentProps) {
 	const metadataItems = useMemo(() => {
 		const items: Array<{
@@ -73,6 +82,11 @@ export function ShowEpisodeContent({
 	return (
 		<div className="space-y-6 min-w-0">
 			<MetadataPills items={metadataItems} />
+			<FriendWatchersRow
+				watchers={friendWatchers}
+				isLoading={isFriendWatchersLoading}
+				colors={colors}
+			/>
 
 			<section>
 				<h2

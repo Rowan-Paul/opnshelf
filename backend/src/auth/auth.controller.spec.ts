@@ -155,7 +155,9 @@ describe("AuthController", () => {
 			await controller.login(undefined, "mobile", undefined, res);
 
 			expect(mockAuthService.authorize).not.toHaveBeenCalled();
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=handle_required",
+			);
 		});
 
 		it("should set platform cookie when platform=mobile", async () => {
@@ -226,7 +228,9 @@ describe("AuthController", () => {
 
 			await controller.login("user.bsky.social", "mobile", undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=auth_failed",
+			);
 		});
 	});
 
@@ -250,7 +254,9 @@ describe("AuthController", () => {
 
 			await controller.signup("mobile", undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=auth_failed",
+			);
 		});
 	});
 
@@ -539,7 +545,9 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=callback_failed",
+			);
 		});
 
 		it("should redirect with error on callback failure", async () => {
@@ -570,7 +578,9 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=callback_failed",
+			);
 		});
 
 		it("should redirect to mobile login on callback failure when mobile cookie is set", async () => {
@@ -584,7 +594,9 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("opnshelf://auth/callback");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=callback_failed",
+			);
 		});
 	});
 

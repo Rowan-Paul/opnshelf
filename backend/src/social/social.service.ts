@@ -16,6 +16,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import type {
 	FollowedActivityFeedDto,
 	FollowedActivityItemDto,
+	FollowedWatcherActorDto,
+	FollowedWatcherDto,
+	FollowedWatchersDto,
 	PaginatedSocialUsersDto,
 	SocialActorDto,
 	SocialUserCardDto,
@@ -53,6 +56,12 @@ type FollowedActivityRow = {
 	overview: string | null;
 };
 
+type FollowedWatcherRow = {
+	actorDid: string;
+	activityAt: Date;
+	createdAt: Date;
+};
+
 type PaginatedResult<T> = {
 	items: T[];
 	page: number;
@@ -71,6 +80,8 @@ const DEFAULT_SOCIAL_PAGE_SIZE = 20;
 const MAX_SOCIAL_PAGE_SIZE = 50;
 const DEFAULT_FEED_PAGE_SIZE = 10;
 const MAX_FEED_PAGE_SIZE = 25;
+const DEFAULT_WATCHERS_PAGE_SIZE = 3;
+const MAX_WATCHERS_PAGE_SIZE = 10;
 
 @Injectable()
 export class SocialService {
@@ -448,6 +459,53 @@ export class SocialService {
 		};
 	}
 
+	async getFollowedWatchers(
+		viewerDid: string,
+		mediaType: "movie" | "show",
+		mediaId: string,
+		pageSize = DEFAULT_WATCHERS_PAGE_SIZE,
+	): Promise<FollowedWatchersDto> {
+		const safePageSize = clampPageSize(pageSize, MAX_WATCHERS_PAGE_SIZE);
+		const followedDids = await this.getFollowedDids(viewerDid);
+
+		if (followedDids.length === 0) {
+			return {
+				items: [],
+				pageSize: safePageSize,
+				total: 0,
+			};
+		}
+
+		const rows =
+			mediaType === "movie"
+				? await this.loadMovieWatcherRows(followedDids, mediaId)
+				: await this.loadShowWatcherRows(
+						followedDids,
+						parseScopedShowMediaId(mediaId),
+					);
+
+		if (rows.length === 0) {
+			return {
+				items: [],
+				pageSize: safePageSize,
+				total: 0,
+			};
+		}
+
+		const limitedRows = rows.slice(0, safePageSize);
+		const actorMap = await this.buildFollowedWatcherActorMap(
+			limitedRows.map((row) => row.actorDid),
+		);
+
+		return {
+			items: limitedRows.map((row) =>
+				this.toFollowedWatcherItem(row, actorMap.get(row.actorDid) ?? null),
+			),
+			pageSize: safePageSize,
+			total: rows.length,
+		};
+	}
+
 	async indexFollowRecord(
 		followerDid: string,
 		rkey: string,
@@ -685,6 +743,123 @@ export class SocialService {
 		);
 	}
 
+	private async buildFollowedWatcherActorMap(
+		userDids: string[],
+	): Promise<Map<string, FollowedWatcherActorDto>> {
+		const uniqueUserDids = [...new Set(userDids)];
+		if (uniqueUserDids.length === 0) {
+			return new Map();
+		}
+
+		const users = await this.prisma.user.findMany({
+			where: { did: { in: uniqueUserDids } },
+			select: watcherUserSelect,
+		});
+
+		return new Map(
+			users.map((user) => [
+				user.did,
+				{
+					did: user.did,
+					handle: user.handle,
+					displayName: user.displayName,
+					avatar: user.avatar,
+				} satisfies FollowedWatcherActorDto,
+			]),
+		);
+	}
+
+	private async getFollowedDids(viewerDid: string) {
+		const followedUsers = await this.prisma.follow.findMany({
+			where: { followerDid: viewerDid },
+			select: { followingDid: true },
+		});
+
+		return followedUsers.map((follow) => follow.followingDid);
+	}
+
+	private async loadMovieWatcherRows(
+		followedDids: string[],
+		movieId: string,
+	): Promise<FollowedWatcherRow[]> {
+		const followedDidValues = Prisma.join(
+			followedDids.map((did) => Prisma.sql`${did}`),
+		);
+
+		return this.prisma.$queryRaw<FollowedWatcherRow[]>(Prisma.sql`
+			SELECT
+				watchers."actorDid",
+				watchers."activityAt",
+				watchers."createdAt"
+			FROM (
+				SELECT DISTINCT ON (tm."userDid")
+					tm."userDid" AS "actorDid",
+					COALESCE(tm."watchedDate", tm."createdAt") AS "activityAt",
+					tm."createdAt"
+				FROM "TrackedMovie" tm
+				WHERE tm."userDid" IN (${followedDidValues})
+					AND tm."movieId" = ${movieId}
+				ORDER BY
+					tm."userDid",
+					COALESCE(tm."watchedDate", tm."createdAt") DESC,
+					tm."createdAt" DESC,
+					tm.id DESC
+			) watchers
+			ORDER BY
+				watchers."activityAt" DESC,
+				watchers."createdAt" DESC,
+				watchers."actorDid" ASC
+		`);
+	}
+
+	private async loadShowWatcherRows(
+		followedDids: string[],
+		scope: {
+			showId: string;
+			seasonNumber?: number;
+			episodeNumber?: number;
+		},
+	): Promise<FollowedWatcherRow[]> {
+		const followedDidValues = Prisma.join(
+			followedDids.map((did) => Prisma.sql`${did}`),
+		);
+		const seasonCondition =
+			typeof scope.seasonNumber === "number"
+				? Prisma.sql` AND te."seasonNumber" = ${scope.seasonNumber}`
+				: Prisma.empty;
+		const episodeCondition =
+			typeof scope.episodeNumber === "number"
+				? Prisma.sql` AND te."episodeNumber" = ${scope.episodeNumber}`
+				: Prisma.empty;
+
+		return this.prisma.$queryRaw<FollowedWatcherRow[]>(Prisma.sql`
+			SELECT
+				watchers."actorDid",
+				watchers."activityAt",
+				watchers."createdAt"
+			FROM (
+				SELECT DISTINCT ON (te."userDid")
+					te."userDid" AS "actorDid",
+					COALESCE(te."watchedDate", te."createdAt") AS "activityAt",
+					te."createdAt"
+				FROM "TrackedEpisode" te
+				WHERE te."userDid" IN (${followedDidValues})
+					AND te."showId" = ${scope.showId}
+					${seasonCondition}
+					${episodeCondition}
+				ORDER BY
+					te."userDid",
+					COALESCE(te."watchedDate", te."createdAt") DESC,
+					te."createdAt" DESC,
+					te.id DESC
+			) watchers
+			ORDER BY
+				watchers."activityAt" DESC,
+				watchers."createdAt" DESC,
+				watchers."actorDid" ASC
+		`);
+	}
+
 	private async loadActivityColorMap(rows: FollowedActivityRow[]) {
 		const movieIds = [
 			...new Set(
@@ -771,6 +946,23 @@ export class SocialService {
 			createdAt: row.createdAt.toISOString(),
 		};
 	}
+
+	private toFollowedWatcherItem(
+		row: FollowedWatcherRow,
+		actor: FollowedWatcherActorDto | null,
+	): FollowedWatcherDto {
+		return {
+			actor:
+				actor ??
+				({
+					did: row.actorDid,
+					handle: row.actorDid,
+					displayName: null,
+					avatar: null,
+				} satisfies FollowedWatcherActorDto),
+			activityAt: row.activityAt.toISOString(),
+		};
+	}
 }
 
 const socialUserSelect = {
@@ -786,12 +978,44 @@ const socialUserSelect = {
 	},
 } as const;
 
+const watcherUserSelect = {
+	did: true,
+	handle: true,
+	displayName: true,
+	avatar: true,
+} as const;
+
 function normalizeHandle(handle: string) {
 	return handle.trim().replace(/^@/, "").toLowerCase();
 }
 
 function normalizeSearchQuery(query: string) {
 	return query.trim().replace(/^@/, "").toLowerCase();
+}
+
+function parseScopedShowMediaId(mediaId: string): {
+	showId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
+} {
+	const episodeMatch = mediaId.match(/^([^:]+):season:(\d+):episode:(\d+)$/);
+	if (episodeMatch) {
+		return {
+			showId: episodeMatch[1],
+			seasonNumber: Number(episodeMatch[2]),
+			episodeNumber: Number(episodeMatch[3]),
+		};
+	}
+
+	const seasonMatch = mediaId.match(/^([^:]+):season:(\d+)$/);
+	if (seasonMatch) {
+		return {
+			showId: seasonMatch[1],
+			seasonNumber: Number(seasonMatch[2]),
+		};
+	}
+
+	return { showId: mediaId };
 }
 
 function compareSocialSearch(
