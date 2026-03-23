@@ -89,9 +89,9 @@ export function DetailActions({
 
 	return (
 		<View style={styles.container}>
-			{isWatched ? (
-				<>
-					<TrackedStatusCard
+				{isWatched ? (
+					<>
+						<TrackedStatusCard
 						isWatched={isWatched}
 						watchedDate={watchedDate}
 						totalWatches={totalWatches}
@@ -100,9 +100,9 @@ export function DetailActions({
 						isRemoving={isUnmarkingPending}
 						colors={colors}
 					/>
-					<View style={[styles.buttonRow, styles.buttonRowAfterStatus]}>
-						<TouchableOpacity
-							onPress={onMarkWatched}
+						<View style={[styles.buttonRow, styles.buttonRowAfterStatus]}>
+							<TouchableOpacity
+								onPress={onMarkWatched}
 							disabled={isPending}
 							style={[styles.primaryButtonCompact, { flex: 1, opacity: isPending ? 0.7 : 1 }]}
 							activeOpacity={0.8}
@@ -137,50 +137,52 @@ export function DetailActions({
 								size={20}
 								color={themeColors.onSurfaceVariant}
 							/>
-						</TouchableOpacity>
-					</View>
-				</>
-			) : (
-				<View style={styles.buttonRow}>
-					<TouchableOpacity
-						onPress={onMarkWatched}
-						disabled={isPending}
-						style={[styles.primaryButton, { flex: 1, opacity: isPending ? 0.7 : 1 }]}
-						activeOpacity={0.8}
-					>
-						<LinearGradient
-							colors={[primaryColor, secondaryColor]}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 1 }}
-							style={styles.gradientButton}
+							</TouchableOpacity>
+						</View>
+					</>
+				) : (
+					<>
+						<View style={styles.buttonRow}>
+							<TouchableOpacity
+								onPress={onMarkWatched}
+							disabled={isPending}
+							style={[styles.primaryButton, { flex: 1, opacity: isPending ? 0.7 : 1 }]}
+							activeOpacity={0.8}
 						>
-							{isPending ? (
-								<View style={styles.buttonContent}>
-									<ActivityIndicator color="#3f2e00" size="small" />
-									<Text style={styles.primaryButtonText}>Loading</Text>
-								</View>
-							) : (
-								<View style={styles.buttonContent}>
-									<Ionicons name="add" size={20} color="#3f2e00" />
-									<Text style={styles.primaryButtonText}>Add to Shelf</Text>
-								</View>
-							)}
-						</LinearGradient>
-					</TouchableOpacity>
+							<LinearGradient
+								colors={[primaryColor, secondaryColor]}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 1 }}
+								style={styles.gradientButton}
+							>
+								{isPending ? (
+									<View style={styles.buttonContent}>
+										<ActivityIndicator color="#3f2e00" size="small" />
+										<Text style={styles.primaryButtonText}>Loading</Text>
+									</View>
+								) : (
+									<View style={styles.buttonContent}>
+										<Ionicons name="add" size={20} color="#3f2e00" />
+										<Text style={styles.primaryButtonText}>Add to Shelf</Text>
+									</View>
+								)}
+							</LinearGradient>
+						</TouchableOpacity>
 
-					<TouchableOpacity
-						onPress={onShowDatePicker}
-						style={[styles.calendarButton, { borderColor: themeColors.outline }]}
-						activeOpacity={0.8}
-					>
-						<Ionicons
-							name="calendar-outline"
-							size={20}
-							color={themeColors.onSurfaceVariant}
-						/>
-					</TouchableOpacity>
-				</View>
-			)}
+						<TouchableOpacity
+							onPress={onShowDatePicker}
+							style={[styles.calendarButton, { borderColor: themeColors.outline }]}
+							activeOpacity={0.8}
+						>
+							<Ionicons
+								name="calendar-outline"
+								size={20}
+								color={themeColors.onSurfaceVariant}
+							/>
+							</TouchableOpacity>
+						</View>
+					</>
+				)}
 
 			{onShowListModal && (
 				<TouchableOpacity
@@ -213,21 +215,21 @@ export function DetailActions({
 				</TouchableOpacity>
 			)}
 
-			{onShare && (
-				<TouchableOpacity
-					onPress={onShare}
+				{onShare && (
+					<TouchableOpacity
+						onPress={onShare}
 					style={[styles.secondaryButton, { borderColor: themeColors.outline }]}
 					activeOpacity={0.8}
 				>
 					<Ionicons name="share-outline" size={18} color={themeColors.onSurfaceVariant} />
 					<Text style={[styles.secondaryButtonText, { color: themeColors.onSurfaceVariant }]}>
 						Share
-					</Text>
-				</TouchableOpacity>
-			)}
-		</View>
-	);
-}
+						</Text>
+					</TouchableOpacity>
+				)}
+			</View>
+		);
+	}
 
 const styles = StyleSheet.create({
 	container: {

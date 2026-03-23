@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "node --import tsx --test test/app.test.ts",
-    "check": "tsc --noEmit -p tsconfig.json"
+    "check": "node ./scripts/check.mjs"
   },
   "dependencies": {
     "@fastify/formbody": "^8.0.2",

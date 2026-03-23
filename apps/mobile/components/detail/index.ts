@@ -1,5 +1,6 @@
 export { DetailHero } from "./DetailHero";
 export { DetailActions } from "./DetailActions";
+export { FriendWatchersRow } from "./FriendWatchersRow";
 export { TrackedStatusCard } from "./TrackedStatusCard";
 export { MetadataPills } from "./MetadataPills";
 export { SeasonCard } from "./SeasonCard";

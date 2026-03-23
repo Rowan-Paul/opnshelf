@@ -29,11 +29,6 @@ type UploadableImage = {
 	size: number;
 };
 
-type ResolvedProfile = {
-	displayName: string | null;
-	avatar: string | null;
-};
-
 type StoredProfileRecord = {
 	record: ProfileRecord;
 	uri: string;

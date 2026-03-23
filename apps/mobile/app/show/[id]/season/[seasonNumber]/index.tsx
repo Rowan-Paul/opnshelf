@@ -9,6 +9,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbSeasonDetailDto,
 	type TmdbShowDetailDto,
 	type TmdbTrailerDto,
@@ -34,6 +35,7 @@ import {
 	DetailHero,
 	EpisodeCard,
 	type EpisodeSummary,
+	FriendWatchersRow,
 	GenresSection,
 	MetadataPills,
 	OverviewSection,
@@ -132,6 +134,20 @@ export default function ShowSeasonScreen() {
 		}),
 		enabled: !!resolvedUserDid,
 	});
+	const {
+		data: friendWatchers,
+		isRefetching: isFriendWatchersRefetching,
+		refetch: refetchFriendWatchers,
+	} = useQuery({
+		...socialControllerGetWatchersOptions({
+			query: {
+				mediaType: "show",
+				mediaId: scopedSeasonMediaId,
+				pageSize: 8,
+			},
+		}),
+		enabled: !!resolvedUserDid,
+	});
 
 	const {
 		data: userSettings,
@@ -147,7 +163,8 @@ export default function ShowSeasonScreen() {
 		isSeasonRefetching ||
 		isHistoryRefetching ||
 		isListsRefetching ||
-		isUserSettingsRefetching;
+		isUserSettingsRefetching ||
+		isFriendWatchersRefetching;
 
 	const handleRefresh = useCallback(async () => {
 		const refetchPromises: Promise<unknown>[] = [
@@ -160,6 +177,7 @@ export default function ShowSeasonScreen() {
 				refetchHistory(),
 				refetchLists(),
 				refetchUserSettings(),
+				refetchFriendWatchers(),
 			);
 		}
 		await Promise.all(refetchPromises);
@@ -171,6 +189,7 @@ export default function ShowSeasonScreen() {
 		refetchHistory,
 		refetchLists,
 		refetchUserSettings,
+		refetchFriendWatchers,
 	]);
 
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
@@ -350,7 +369,7 @@ export default function ShowSeasonScreen() {
 				<View style={styles.content}>
 					<DetailActions
 						mediaType="season"
-						mediaId={id}
+						mediaId={scopedSeasonMediaId}
 						seasonNumber={seasonNumber}
 						colors={showColors}
 						isWatched={watchedEpisodeCount > 0}
@@ -396,10 +415,14 @@ export default function ShowSeasonScreen() {
 					)}
 
 					<MetadataPills items={metadataItems} />
-
 					<OverviewSection
 						titleColor={showColors.primary}
 						content={season?.overview || ""}
+					/>
+					<FriendWatchersRow
+						watchers={friendWatchers}
+						isLoading={!!resolvedUserDid && !friendWatchers}
+						colors={showColors}
 					/>
 					<TrailerSection
 						mediaType="season"

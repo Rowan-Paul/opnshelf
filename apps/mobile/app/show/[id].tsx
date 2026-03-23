@@ -9,6 +9,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ import {
 	CrewSection,
 	DetailActions,
 	DetailHero,
+	FriendWatchersRow,
 	GenresSection,
 	MetadataPills,
 	OverviewSection,
@@ -110,6 +112,20 @@ export default function ShowDetailScreen() {
 		}),
 		enabled: !!user?.did,
 	});
+	const {
+		data: friendWatchers,
+		isRefetching: isFriendWatchersRefetching,
+		refetch: refetchFriendWatchers,
+	} = useQuery({
+		...socialControllerGetWatchersOptions({
+			query: {
+				mediaType: "show",
+				mediaId: id,
+				pageSize: 8,
+			},
+		}),
+		enabled: !!user?.did,
+	});
 
 	const {
 		data: userSettings,
@@ -124,7 +140,8 @@ export default function ShowDetailScreen() {
 		(isShowRefetching ||
 			isHistoryRefetching ||
 			isListsRefetching ||
-			isUserSettingsRefetching) &&
+			isUserSettingsRefetching ||
+			isFriendWatchersRefetching) &&
 		!isLoading;
 
 	const handleRefresh = useCallback(async () => {
@@ -134,6 +151,7 @@ export default function ShowDetailScreen() {
 				refetchHistory(),
 				refetchLists(),
 				refetchUserSettings(),
+				refetchFriendWatchers(),
 			);
 		}
 		await Promise.all(refetchPromises);
@@ -144,6 +162,7 @@ export default function ShowDetailScreen() {
 		refetchHistory,
 		refetchLists,
 		refetchUserSettings,
+		refetchFriendWatchers,
 	]);
 
 	const listsCount = listsForShow?.filter((l) => l.isInList).length ?? 0;
@@ -354,10 +373,14 @@ export default function ShowDetailScreen() {
 					/>
 
 					<MetadataPills items={metadataItems} />
-
 					<OverviewSection
 						titleColor={showColors.primary}
 						content={show?.overview || ""}
+					/>
+					<FriendWatchersRow
+						watchers={friendWatchers}
+						isLoading={!!user?.did && !friendWatchers}
+						colors={showColors}
 					/>
 					<TrailerSection
 						mediaType="show"

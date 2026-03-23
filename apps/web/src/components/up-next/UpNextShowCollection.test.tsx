@@ -26,16 +26,11 @@ vi.mock("@tanstack/react-router", () => ({
 	Link: ({
 		children,
 		className,
-		onClick,
 	}: {
 		children: ReactNode;
 		className?: string;
-		onClick?: MouseEventHandler<HTMLAnchorElement>;
-	}) => (
-		<a href="#" className={className} onClick={onClick}>
-			{children}
-		</a>
-	),
+		onClick?: MouseEventHandler<HTMLSpanElement>;
+	}) => <span className={className}>{children}</span>,
 }));
 
 declare global {

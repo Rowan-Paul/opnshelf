@@ -34,7 +34,7 @@ export function FriendsSearchResultsSection({
 		Animated.timing(opacity, {
 			toValue: nextOpacity,
 			duration: 180,
-			useNativeDriver: true,
+			useNativeDriver: false,
 		}).start();
 	}, [isFetching, opacity, results.length]);
 

@@ -13,6 +13,7 @@ import {
 	showsControllerGetUserShowsQueryKey,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	type TmdbEpisodeDto,
 	type TmdbSeasonDetailDto,
 	usersControllerGetMySettingsOptions,
@@ -36,6 +37,7 @@ import {
 	DetailHero,
 	EpisodeNav,
 	type EpisodeSummary,
+	FriendWatchersRow,
 	MetadataPills,
 	OverviewSection,
 	TrailerPlayerModal,
@@ -173,6 +175,20 @@ export default function ShowEpisodeScreen() {
 		}),
 		enabled: !!resolvedUserDid,
 	});
+	const {
+		data: friendWatchers,
+		isRefetching: isFriendWatchersRefetching,
+		refetch: refetchFriendWatchers,
+	} = useQuery({
+		...socialControllerGetWatchersOptions({
+			query: {
+				mediaType: "show",
+				mediaId: scopedEpisodeMediaId,
+				pageSize: 8,
+			},
+		}),
+		enabled: !!resolvedUserDid,
+	});
 
 	const isRefreshing =
 		isShowRefetching ||
@@ -180,7 +196,8 @@ export default function ShowEpisodeScreen() {
 		isSeasonRefetching ||
 		isHistoryRefetching ||
 		isUserSettingsRefetching ||
-		isListsRefetching;
+		isListsRefetching ||
+		isFriendWatchersRefetching;
 
 	const handleRefresh = useCallback(async () => {
 		const refetchPromises: Promise<unknown>[] = [
@@ -194,6 +211,7 @@ export default function ShowEpisodeScreen() {
 				refetchHistory(),
 				refetchUserSettings(),
 				refetchLists(),
+				refetchFriendWatchers(),
 			);
 		}
 		await Promise.all(refetchPromises);
@@ -206,6 +224,7 @@ export default function ShowEpisodeScreen() {
 		refetchHistory,
 		refetchUserSettings,
 		refetchLists,
+		refetchFriendWatchers,
 	]);
 
 	const show = showData as TmdbShowDetailDto | undefined;
@@ -499,7 +518,7 @@ export default function ShowEpisodeScreen() {
 
 						<DetailActions
 							mediaType="episode"
-							mediaId={id}
+							mediaId={scopedEpisodeMediaId}
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
 							colors={showColors}
@@ -540,6 +559,11 @@ export default function ShowEpisodeScreen() {
 						<OverviewSection
 							titleColor={showColors.primary}
 							content={(episode as TmdbEpisodeDto)?.overview || ""}
+						/>
+						<FriendWatchersRow
+							watchers={friendWatchers}
+							isLoading={!!resolvedUserDid && !friendWatchers}
+							colors={showColors}
 						/>
 						<TrailerSection
 							mediaType="episode"

@@ -12,6 +12,7 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	socialControllerGetWatchersOptions,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ import {
 	CrewSection,
 	DetailActions,
 	DetailHero,
+	FriendWatchersRow,
 	GenresSection,
 	MetadataPills,
 	OverviewSection,
@@ -169,13 +171,28 @@ export default function MovieDetailScreen() {
 		}),
 		enabled: !!user?.did,
 	});
+	const {
+		data: friendWatchers,
+		isRefetching: isFriendWatchersRefetching,
+		refetch: refetchFriendWatchers,
+	} = useQuery({
+		...socialControllerGetWatchersOptions({
+			query: {
+				mediaType: "movie",
+				mediaId: movieId,
+				pageSize: 8,
+			},
+		}),
+		enabled: !!user?.did,
+	});
 
 	const isRefreshing =
 		(isMovieRefetching ||
 			isTrackedMoviesRefetching ||
 			isWatchHistoryRefetching ||
 			isUserSettingsRefetching ||
-			isListsRefetching) &&
+			isListsRefetching ||
+			isFriendWatchersRefetching) &&
 		!isMovieLoading;
 
 	const handleRefresh = useCallback(async () => {
@@ -186,6 +203,7 @@ export default function MovieDetailScreen() {
 				refetchWatchHistory(),
 				refetchUserSettings(),
 				refetchListsForMovie(),
+				refetchFriendWatchers(),
 			);
 		}
 		await Promise.all(refetchPromises);
@@ -197,6 +215,7 @@ export default function MovieDetailScreen() {
 		refetchWatchHistory,
 		refetchUserSettings,
 		refetchListsForMovie,
+		refetchFriendWatchers,
 	]);
 
 	const listsForMovieTyped = (listsForMovie || []) as ListsForItemDto[];
@@ -463,10 +482,14 @@ export default function MovieDetailScreen() {
 					/>
 
 					<MetadataPills items={metadataItems} />
-
 					<OverviewSection
 						titleColor={movieColors.primary}
 						content={movie?.overview || ""}
+					/>
+					<FriendWatchersRow
+						watchers={friendWatchers}
+						isLoading={!!user?.did && !friendWatchers}
+						colors={movieColors}
 					/>
 					<TrailerSection
 						mediaType="movie"

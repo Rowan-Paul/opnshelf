@@ -63,12 +63,12 @@ function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDism
 					Animated.timing(panAnim, {
 						toValue: 200,
 						duration: 150,
-						useNativeDriver: true,
+						useNativeDriver: false,
 					}).start(onDismiss);
 				} else {
 					Animated.spring(panAnim, {
 						toValue: 0,
-						useNativeDriver: true,
+						useNativeDriver: false,
 						friction: 8,
 					}).start();
 				}
@@ -81,12 +81,12 @@ function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDism
 			Animated.timing(slideAnim, {
 				toValue: 0,
 				duration: 300,
-				useNativeDriver: true,
+				useNativeDriver: false,
 			}),
 			Animated.timing(opacityAnim, {
 				toValue: 1,
 				duration: 300,
-				useNativeDriver: true,
+				useNativeDriver: false,
 			}),
 		]).start();
 	}, []);
@@ -97,12 +97,12 @@ function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDism
 				Animated.timing(slideAnim, {
 					toValue: 100,
 					duration: 200,
-					useNativeDriver: true,
+					useNativeDriver: false,
 				}),
 				Animated.timing(opacityAnim, {
 					toValue: 0,
 					duration: 200,
-					useNativeDriver: true,
+					useNativeDriver: false,
 				}),
 			]).start(onDismiss);
 		}, 4000);
