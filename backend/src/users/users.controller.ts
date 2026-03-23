@@ -33,6 +33,9 @@ import {
 	ImportBlueskyFollowsResponseDto,
 	ImportHistoryDto,
 	ImportHistoryResponseDto,
+	StartTraktImportDto,
+	StartTraktImportResponseDto,
+	TraktImportJobDto,
 } from "./dto/import-history.dto";
 import {
 	DeleteUserAccountDto,
@@ -267,6 +270,48 @@ export class UsersController {
 			dto.username,
 			dto.maxItems,
 		);
+	}
+
+	@Post("me/import/trakt/public/start")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Start a background import for a public Trakt profile",
+	})
+	@ApiResponse({ status: 200, type: StartTraktImportResponseDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async startMyTraktImport(
+		@Body() dto: StartTraktImportDto,
+		@Req() req: AuthenticatedRequest,
+	): Promise<StartTraktImportResponseDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		return this.usersService.startTraktImport(did, dto.username);
+	}
+
+	@Get("me/import/trakt/public/current")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary:
+			"Get the current or most recent background Trakt import for the current user",
+	})
+	@ApiResponse({
+		status: 200,
+		type: TraktImportJobDto,
+		description: "Current or recent Trakt import job, or null when none exists",
+	})
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async getMyCurrentTraktImport(
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto | null> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		return this.usersService.getCurrentTraktImport(did);
 	}
 
 	@Post("me/import/bluesky-follows")

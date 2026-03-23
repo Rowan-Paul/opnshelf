@@ -12,6 +12,8 @@ import type {
 	ImportBlueskyFollowsResponseDto,
 	ImportHistoryResponseDto,
 	NormalizedImportItemDto,
+	StartTraktImportResponseDto,
+	TraktImportJobDto,
 } from "./dto/import-history.dto";
 import type {
 	PublicUserProfileDto,
@@ -261,6 +263,35 @@ export class UsersService {
 			username,
 			maxItems,
 		);
+	}
+
+	async startTraktImport(
+		userDid: string,
+		username: string,
+	): Promise<StartTraktImportResponseDto> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { did: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		return this.importHistoryService.startTraktImport(userDid, username);
+	}
+
+	async getCurrentTraktImport(
+		userDid: string,
+	): Promise<TraktImportJobDto | null> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { did: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		return this.importHistoryService.getCurrentTraktImport(userDid);
 	}
 
 	async importBlueskyFollows(

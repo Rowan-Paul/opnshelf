@@ -394,14 +394,14 @@ export function ImportStepCard({
 	onActiveTabChange,
 	onTraktUsernameChange,
 	onTraktImport,
-	onTraktImportConfirm,
+	onTraktImportConfirm: _onTraktImportConfirm,
 	onCsvImport,
 	onBack,
 	onSkip,
 }: ImportStepCardProps) {
 	const { colors } = useTheme();
 	const isTraktImporting =
-		activeTab === "trakt" && importProgress.phase === "importing";
+		activeTab === "trakt" && importProgress.phase === "fetching_trakt";
 	const showImportStatusAboveInput =
 		importProgress.phase !== "idle" && !isTraktImporting;
 
@@ -446,8 +446,9 @@ export function ImportStepCard({
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									{traktPreview.importableCount} importable items found from{" "}
-									{traktPreview.sourceCount} Trakt history rows.
+									Preview loaded from {traktPreview.sourcePreviewCount} recent
+									Trakt history rows. The full import will keep running in the
+									background.
 								</Text>
 							) : null}
 						</View>
@@ -516,15 +517,15 @@ export function ImportStepCard({
 								editable={!isTraktImporting}
 							/>
 							<Text style={[styles.csvHelp, { color: colors.onSurfaceVariant }]}>
-								We fetch the Trakt profile and recent plays first so you can
-								confirm the account before importing.
+								We fetch the Trakt profile and recent plays first, then keep
+								importing your full watch history in the background.
 							</Text>
 							<Button onPress={onTraktImport} disabled={isImportBusy}>
 								{isImportBusy
 									? "Working..."
 									: traktPreview
 										? "Refresh preview"
-										: "Fetch preview"}
+										: "Start background import"}
 							</Button>
 							{isTraktImporting ? (
 								<View
@@ -630,7 +631,7 @@ export function ImportStepCard({
 													{ color: colors.onSurfaceVariant },
 												]}
 											>
-												Ready to import
+												Background import
 											</Text>
 											<Text
 												style={[
@@ -638,10 +639,20 @@ export function ImportStepCard({
 													{ color: colors.primary },
 												]}
 											>
-												{traktPreview.importableCount}
+												Queued
 											</Text>
 										</View>
 									</View>
+
+									<Text
+										style={[
+											styles.csvHelp,
+											{ color: colors.onSurfaceVariant },
+										]}
+									>
+										We&apos;ll keep importing the full Trakt history for this
+										account on the server while you finish onboarding.
+									</Text>
 
 									<View style={styles.previewListWrap}>
 										<Text
@@ -705,13 +716,6 @@ export function ImportStepCard({
 											</Text>
 										)}
 									</View>
-
-										<Button
-											onPress={onTraktImportConfirm}
-											disabled={isImportBusy || traktPreview.importableCount < 1}
-										>
-											{`Import ${traktPreview.importableCount} item${traktPreview.importableCount === 1 ? "" : "s"}`}
-										</Button>
 								</View>
 							) : null}
 						</View>
@@ -746,7 +750,11 @@ export function ImportStepCard({
 							Back
 						</Button>
 						<Button variant="text" onPress={onSkip} disabled={isImportBusy || isCompleting}>
-							{isCompleting ? "Finishing..." : "Skip import"}
+							{isCompleting
+								? "Finishing..."
+								: activeTab === "trakt" && traktPreview
+									? "Continue"
+									: "Skip import"}
 						</Button>
 					</View>
 				</View>

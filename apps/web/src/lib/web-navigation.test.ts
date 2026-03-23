@@ -7,7 +7,6 @@ import {
 	getSignedOutPrimaryNav,
 	getUpNextRoute,
 	isGlobalNavItemActive,
-	shouldHideMobileBottomNav,
 } from "@/lib/web-navigation";
 
 describe("web-navigation", () => {
@@ -76,13 +75,5 @@ describe("web-navigation", () => {
 		expect(
 			isGlobalNavItemActive("my-shelf", "/profile/other/shelf", "rowan"),
 		).toBe(false);
-	});
-
-	it("hides mobile bottom nav on auth and onboarding routes", () => {
-		expect(shouldHideMobileBottomNav("/login")).toBe(true);
-		expect(shouldHideMobileBottomNav("/onboarding")).toBe(true);
-		expect(shouldHideMobileBottomNav("/auth/complete")).toBe(true);
-		expect(shouldHideMobileBottomNav("/")).toBe(false);
-		expect(shouldHideMobileBottomNav("/search")).toBe(false);
 	});
 });

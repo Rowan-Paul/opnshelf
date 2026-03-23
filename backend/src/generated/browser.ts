@@ -38,6 +38,11 @@ export type AuthSession = Prisma.AuthSessionModel
  */
 export type AuthState = Prisma.AuthStateModel
 /**
+ * Model TraktImportJob
+ * 
+ */
+export type TraktImportJob = Prisma.TraktImportJobModel
+/**
  * Model Movie
  * 
  */

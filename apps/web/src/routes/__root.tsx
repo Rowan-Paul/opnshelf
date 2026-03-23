@@ -14,11 +14,10 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import React from "react";
 import { Toaster } from "sonner";
 import { NotFoundPage } from "@/components/NotFoundPage";
+import { TraktImportStatusToast } from "@/components/TraktImportStatusToast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { cn } from "@/lib/utils";
-import { shouldHideMobileBottomNav } from "@/lib/web-navigation";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -101,28 +100,15 @@ function RootComponent() {
 }
 
 function AppShell() {
-	const location = useLocation();
 	const { data: user, isLoading: isUserLoading } = useCurrentUser();
-	const showMobileBottomNav =
-		Boolean(user) && !shouldHideMobileBottomNav(location.pathname);
 
 	return (
 		<ThemeProvider>
 			<OnboardingGate user={user} />
 			<ScreenTracker />
 			<div className="min-h-screen flex flex-col">
-				<Header
-					user={user ?? null}
-					isAuthLoading={isUserLoading}
-					showMobileBottomNav={showMobileBottomNav}
-				/>
-				<main
-					className={cn(
-						"flex-1 flex flex-col min-h-0",
-						showMobileBottomNav &&
-							"pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0",
-					)}
-				>
+				<Header user={user ?? null} isAuthLoading={isUserLoading} />
+				<main className="flex-1 flex flex-col min-h-0">
 					<Outlet />
 				</main>
 				<Footer />
@@ -139,6 +125,7 @@ function AppShell() {
 					TanStackQueryDevtools,
 				]}
 			/>
+			<TraktImportStatusToast enabled={Boolean(user)} />
 			<Toaster />
 		</ThemeProvider>
 	);

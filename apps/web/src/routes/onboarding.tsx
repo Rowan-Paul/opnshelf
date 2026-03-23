@@ -4,10 +4,11 @@ import {
 	listsControllerGetUserListsOptions,
 	shelfControllerGetUserShelfOptions,
 	usersControllerCompleteOnboardingMutation,
-	usersControllerFetchMyTraktPublicHistoryMutation,
+	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerImportMyBlueskyFollowsMutation,
 	usersControllerImportMyHistoryMutation,
+	usersControllerStartMyTraktImportMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 	usersControllerUploadMyAvatarMutation,
@@ -122,9 +123,9 @@ function OnboardingPage() {
 		},
 	});
 
-	const fetchTraktMutation = useMutation({
-		mutationKey: ["users", "trakt", "history", "fetch"],
-		...usersControllerFetchMyTraktPublicHistoryMutation(),
+	const startTraktMutation = useMutation({
+		mutationKey: ["users", "trakt", "history", "start"],
+		...usersControllerStartMyTraktImportMutation(),
 	});
 
 	const importBlueskyFollowsMutation = useMutation({
@@ -176,7 +177,7 @@ function OnboardingPage() {
 		[totalSteps, visibleStep],
 	);
 	const isImporting =
-		fetchTraktMutation.isPending || importHistoryMutation.isPending;
+		startTraktMutation.isPending || importHistoryMutation.isPending;
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
 	const importPercent =
 		importProgress.totalItems > 0
@@ -367,76 +368,30 @@ function OnboardingPage() {
 				message: "Fetching public history from Trakt...",
 			});
 
-			const fetched = await fetchTraktMutation.mutateAsync({
+			const fetched = await startTraktMutation.mutateAsync({
 				body: {
 					username,
 				},
 			});
 			setTraktPreview(fetched);
+			void queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
+			});
 
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "preview_ready",
-				totalItems: fetched.importableCount,
-				message:
-					fetched.importableCount > 0
-						? `Preview ready for @${fetched.profile.username}`
-						: `No importable items found for @${fetched.profile.username}`,
+				totalItems: fetched.job.normalizedCount,
+				message: `Background import queued for @${fetched.profile.username}. We'll keep importing your full history while you continue setup.`,
 			}));
-
-			if (!fetched.importableCount) {
-				toast.message("No supported watch history items found");
-			}
+			toast.success(
+				`Background import started for @${fetched.profile.username}`,
+			);
 		} catch (error) {
 			const message =
 				error instanceof Error
 					? error.message
 					: "Unable to fetch Trakt history right now";
-			setImportProgress((prev) => ({
-				...prev,
-				phase: "error",
-				message,
-			}));
-			toast.error(message);
-		}
-	};
-
-	const handleConfirmTraktImport = async () => {
-		if (!traktPreview || traktPreview.importableCount < 1) {
-			return;
-		}
-
-		try {
-			const result = await runImportInChunks(
-				traktPreview.items,
-				importHistoryMutation.mutateAsync,
-				(update) => {
-					setImportProgress((prev) => ({
-						...prev,
-						phase: "importing",
-						message: "Importing history...",
-						...update,
-					}));
-				},
-			);
-
-			setImportResult({
-				imported: result.imported,
-				skipped: result.skipped + traktPreview.skipped.length,
-				failed: result.failed,
-				errors: result.errors,
-			});
-			setImportProgress((prev) => ({
-				...prev,
-				phase: "done",
-				message: "Import complete.",
-			}));
-			setStep(5);
-		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "Unable to import Trakt history right now";
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "error",
@@ -598,9 +553,7 @@ function OnboardingPage() {
 			onTraktImport={() => {
 				void handleTraktImport();
 			}}
-			onTraktImportConfirm={() => {
-				void handleConfirmTraktImport();
-			}}
+			onTraktImportConfirm={() => {}}
 			onCsvUpload={(file) => {
 				void handleCsvUpload(file);
 			}}

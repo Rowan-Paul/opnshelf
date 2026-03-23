@@ -28,6 +28,7 @@ model User {
   
   trackedMovies TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
+  traktImportJobs TraktImportJob[]
   lists        List[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
@@ -58,6 +59,14 @@ enum MediaType {
   show
 }
 
+enum TraktImportJobStatus {
+  queued
+  running
+  waiting_retry
+  completed
+  failed
+}
+
 // OAuth session storage for @atproto/oauth-client-node sessionStore
 // No FK to User because the OAuth library stores session before we create the User
 // Cookie stores opaque id (not DID) for session lookup
@@ -78,6 +87,35 @@ model AuthState {
   createdAt DateTime @default(now())
   
   @@index([expiresAt])
+}
+
+model TraktImportJob {
+  id               String               @id @default(cuid())
+  userDid          String
+  user             User                 @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  traktUsername    String
+  status           TraktImportJobStatus @default(queued)
+  currentPage      Int                  @default(1)
+  totalPages       Int?
+  sourceCount      Int                  @default(0)
+  normalizedCount  Int                  @default(0)
+  importedCount    Int                  @default(0)
+  skippedCount     Int                  @default(0)
+  failedCount      Int                  @default(0)
+  nextRunAt        DateTime             @default(now())
+  lastError        String?
+  profileUsername  String?
+  profileSlug      String?
+  profileName      String?
+  profileAvatarUrl String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([userDid, status])
+  @@index([status, nextRunAt])
+  @@index([userDid, createdAt])
 }
 
 model Movie {

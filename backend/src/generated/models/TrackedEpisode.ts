@@ -607,14 +607,6 @@ export type TrackedEpisodeUncheckedUpdateManyWithoutShowNestedInput = {
   deleteMany?: Prisma.TrackedEpisodeScalarWhereInput | Prisma.TrackedEpisodeScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type TrackedEpisodeCreateWithoutUserInput = {
   id?: string
   rkey: string

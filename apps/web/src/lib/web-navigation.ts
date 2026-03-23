@@ -78,11 +78,3 @@ export function isGlobalNavItemActive(
 		}
 	}
 }
-
-export function shouldHideMobileBottomNav(pathname: string) {
-	return (
-		pathname === "/login" ||
-		pathname === "/onboarding" ||
-		pathname.startsWith("/auth/")
-	);
-}

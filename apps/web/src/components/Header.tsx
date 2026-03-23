@@ -40,7 +40,6 @@ import {
 interface HeaderProps {
 	user: UserDto | null | undefined;
 	isAuthLoading: boolean;
-	showMobileBottomNav: boolean;
 }
 
 type NavLinkTarget =
@@ -58,11 +57,7 @@ const navIcons = {
 	"my-shelf": BookOpen,
 } satisfies Record<GlobalNavItem["id"], typeof Home>;
 
-export default function Header({
-	user,
-	isAuthLoading,
-	showMobileBottomNav,
-}: HeaderProps) {
+export default function Header({ user, isAuthLoading }: HeaderProps) {
 	const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
@@ -85,66 +80,56 @@ export default function Header({
 	};
 
 	return (
-		<>
-			<header
-				className="sticky top-0 z-40 border-b"
+		<header
+			className="sticky top-0 z-40 border-b"
+			style={{
+				backgroundColor: "var(--md-sys-color-surface)",
+				borderColor: "var(--md-sys-color-outline-variant)",
+				boxShadow:
+					"0 18px 40px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.02)",
+			}}
+		>
+			<div
+				className="absolute inset-x-0 top-0 h-px"
 				style={{
-					backgroundColor: "var(--md-sys-color-surface)",
-					borderColor: "var(--md-sys-color-outline-variant)",
-					boxShadow:
-						"0 18px 40px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.02)",
+					background: `linear-gradient(90deg, transparent, ${seedColor}, transparent)`,
+					opacity: 0.45,
 				}}
-			>
-				<div
-					className="absolute inset-x-0 top-0 h-px"
-					style={{
-						background: `linear-gradient(90deg, transparent, ${seedColor}, transparent)`,
-						opacity: 0.45,
-					}}
-				/>
+			/>
 
-				<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[4.5rem]">
-					<Brand seedColor={seedColor} />
+			<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[4.5rem]">
+				<Brand seedColor={seedColor} />
 
-					<nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
-						{primaryNav.map((item) => (
-							<PrimaryNavLink
-								key={item.id}
-								item={item}
-								currentPath={location.pathname}
-								currentUserHandle={user?.handle}
-								seedColor={seedColor}
-							/>
-						))}
-					</nav>
+				<nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
+					{primaryNav.map((item) => (
+						<PrimaryNavLink
+							key={item.id}
+							item={item}
+							currentPath={location.pathname}
+							currentUserHandle={user?.handle}
+							seedColor={seedColor}
+						/>
+					))}
+				</nav>
 
-					<div className="flex items-center gap-2">
-						{isAuthLoading ? (
-							<AuthActionsSkeleton />
-						) : user ? (
-							<AccountMenu
-								user={user}
-								seedColor={seedColor}
-								isOpen={isAccountMenuOpen}
-								onOpenChange={setIsAccountMenuOpen}
-								onLogout={handleLogout}
-								isLoggingOut={logoutMutation.isPending}
-							/>
-						) : (
-							<SignedOutActions />
-						)}
-					</div>
+				<div className="flex items-center gap-2">
+					{isAuthLoading ? (
+						<AuthActionsSkeleton />
+					) : user ? (
+						<AccountMenu
+							user={user}
+							seedColor={seedColor}
+							isOpen={isAccountMenuOpen}
+							onOpenChange={setIsAccountMenuOpen}
+							onLogout={handleLogout}
+							isLoggingOut={logoutMutation.isPending}
+						/>
+					) : (
+						<SignedOutActions />
+					)}
 				</div>
-			</header>
-
-			{showMobileBottomNav && user ? (
-				<MobileBottomNav
-					currentPath={location.pathname}
-					currentUserHandle={user.handle}
-					seedColor={seedColor}
-				/>
-			) : null}
-		</>
+			</div>
+		</header>
 	);
 }
 
@@ -266,86 +251,6 @@ function PrimaryNavLink({
 		>
 			<Icon className="size-4" />
 			<span className="md-label-large">{item.label}</span>
-		</Link>
-	);
-}
-
-function MobileBottomNav({
-	currentPath,
-	currentUserHandle,
-	seedColor,
-}: {
-	currentPath: string;
-	currentUserHandle: string;
-	seedColor: string;
-}) {
-	return (
-		<div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-2 md:hidden">
-			<nav
-				className="pointer-events-auto mx-auto flex max-w-md items-stretch gap-2 rounded-[28px] border px-2 pt-2 shadow-[0_-16px_32px_rgba(0,0,0,0.36)] backdrop-blur-xl"
-				style={{
-					backgroundColor: "rgba(20, 18, 24, 0.94)",
-					borderColor: "rgba(255, 255, 255, 0.08)",
-					paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))",
-				}}
-			>
-				{getSignedInPrimaryNav().map((item) => (
-					<MobileBottomNavLink
-						key={item.id}
-						item={item}
-						currentPath={currentPath}
-						currentUserHandle={currentUserHandle}
-						seedColor={seedColor}
-					/>
-				))}
-			</nav>
-		</div>
-	);
-}
-
-function MobileBottomNavLink({
-	item,
-	currentPath,
-	currentUserHandle,
-	seedColor,
-}: {
-	item: GlobalNavItem;
-	currentPath: string;
-	currentUserHandle: string;
-	seedColor: string;
-}) {
-	const Icon = navIcons[item.id];
-	const isActive = isGlobalNavItemActive(
-		item.id,
-		currentPath,
-		currentUserHandle,
-	);
-	const target = getNavTarget(item.id, currentUserHandle);
-
-	if (!target) {
-		return null;
-	}
-
-	return (
-		<Link
-			{...target}
-			className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[22px] px-3 py-2 text-center transition-all duration-200"
-			style={
-				isActive
-					? {
-							backgroundColor: `${seedColor}24`,
-							color: seedColor,
-							boxShadow: `inset 0 0 0 1px ${seedColor}40`,
-						}
-					: {
-							color: "var(--md-sys-color-on-surface-variant)",
-						}
-			}
-		>
-			<Icon className="size-[1.15rem]" />
-			<span className="text-[11px] font-semibold tracking-[0.02em]">
-				{item.label}
-			</span>
 		</Link>
 	);
 }

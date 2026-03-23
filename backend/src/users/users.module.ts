@@ -7,6 +7,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { ShowsModule } from "../shows/shows.module";
 import { ImportHistoryService } from "./import-history.service";
 import { ProfileService } from "./profile.service";
+import { TraktImportWorkerService } from "./trakt-import-worker.service";
 import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
@@ -24,6 +25,7 @@ import { UsersService } from "./users.service";
 	providers: [
 		UsersService,
 		ImportHistoryService,
+		TraktImportWorkerService,
 		UserDeletionService,
 		ProfileService,
 	],

@@ -55,6 +55,7 @@ export const ModelName = {
   Follow: 'Follow',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
+  TraktImportJob: 'TraktImportJob',
   Movie: 'Movie',
   Show: 'Show',
   TrackedMovie: 'TrackedMovie',
@@ -132,6 +133,33 @@ export const AuthStateScalarFieldEnum = {
 } as const
 
 export type AuthStateScalarFieldEnum = (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum]
+
+
+export const TraktImportJobScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  traktUsername: 'traktUsername',
+  status: 'status',
+  currentPage: 'currentPage',
+  totalPages: 'totalPages',
+  sourceCount: 'sourceCount',
+  normalizedCount: 'normalizedCount',
+  importedCount: 'importedCount',
+  skippedCount: 'skippedCount',
+  failedCount: 'failedCount',
+  nextRunAt: 'nextRunAt',
+  lastError: 'lastError',
+  profileUsername: 'profileUsername',
+  profileSlug: 'profileSlug',
+  profileName: 'profileName',
+  profileAvatarUrl: 'profileAvatarUrl',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktImportJobScalarFieldEnum = (typeof TraktImportJobScalarFieldEnum)[keyof typeof TraktImportJobScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {

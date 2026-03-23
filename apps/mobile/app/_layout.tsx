@@ -4,6 +4,7 @@ import {
 	useGlobalSearchParams,
 	usePathname,
 	useRouter,
+	useSegments,
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PostHogProvider } from "posthog-react-native";
@@ -13,6 +14,7 @@ import { MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { TraktImportStatusBanner } from "@/components/TraktImportStatusBanner";
 import { M3SnackbarProvider } from "@/components/ui/m3/M3Snackbar";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { ThemeProvider } from "@/contexts/theme";
@@ -53,6 +55,9 @@ function LocaleInitializer({ children }: { children: React.ReactNode }) {
 
 function AppContent() {
 	const { isLoading } = useAuth();
+	const segments = useSegments();
+
+	const isTabsRoute = segments[0] === "(tabs)";
 
 	if (isLoading) {
 		return <LoadingScreen message="Loading..." />;
@@ -87,6 +92,7 @@ function AppContent() {
 				<Stack.Screen name="login" />
 				<Stack.Screen name="onboarding" />
 			</Stack>
+			{!isTabsRoute ? <TraktImportStatusBanner /> : null}
 			<StatusBar style="light" />
 		</M3SnackbarProvider>
 	);

@@ -132,7 +132,7 @@ export function OnboardingContent({
 	onContinueAfterFollowImport,
 	onSaveProfileAndContinue,
 	onTraktImport,
-	onTraktImportConfirm,
+	onTraktImportConfirm: _onTraktImportConfirm,
 	onCsvUpload,
 	onSkipHistoryImport,
 	onComplete,
@@ -148,7 +148,7 @@ export function OnboardingContent({
 	const currentStepDetail =
 		visibleStepDetails[visibleStep - 1] ?? visibleStepDetails[0];
 	const isTraktImporting =
-		activeTab === "trakt" && importProgress.phase === "importing";
+		activeTab === "trakt" && importProgress.phase === "fetching_trakt";
 	const showImportStatusAboveInput =
 		importProgress.phase !== "idle" && !isTraktImporting;
 	const followMessage = getFollowImportMessage(
@@ -470,8 +470,9 @@ export function OnboardingContent({
 									<p className="md-label-large m-0">{importProgress.message}</p>
 									{importProgress.phase === "preview_ready" && traktPreview ? (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-											{traktPreview.importableCount} importable items found from{" "}
-											{traktPreview.sourceCount} Trakt history rows.
+											Preview loaded from {traktPreview.sourcePreviewCount}{" "}
+											recent Trakt history rows. The full import will keep
+											running in the background.
 										</p>
 									) : (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
@@ -532,15 +533,19 @@ export function OnboardingContent({
 										/>
 									</label>
 									<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-										We fetch the Trakt profile and recent plays first so you can
-										confirm the account before importing.
+										We fetch the Trakt profile and recent plays first, then keep
+										importing your full watch history in the background.
 									</p>
 									<M3Button
 										variant="filled"
 										onClick={onTraktImport}
 										disabled={isImportBusy}
 									>
-										{traktPreview ? "Refresh preview" : "Fetch preview"}
+										{isImportBusy
+											? "Working..."
+											: traktPreview
+												? "Refresh preview"
+												: "Start background import"}
 									</M3Button>
 									{isTraktImporting ? (
 										<div className="grid gap-3 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
@@ -584,13 +589,18 @@ export function OnboardingContent({
 												</div>
 												<div className="grid gap-2 text-right">
 													<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
-														Ready to import
+														Background import
 													</p>
 													<p className="md-headline-small m-0 text-(--md-sys-color-primary)">
-														{traktPreview.importableCount}
+														Queued
 													</p>
 												</div>
 											</div>
+
+											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+												We&apos;ll keep importing the full Trakt history for
+												this account on the server while you finish onboarding.
+											</p>
 
 											<div className="grid gap-2">
 												<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
@@ -628,17 +638,6 @@ export function OnboardingContent({
 													</p>
 												)}
 											</div>
-
-											<M3Button
-												variant="filled"
-												onClick={onTraktImportConfirm}
-												disabled={
-													isImportBusy || traktPreview.importableCount < 1
-												}
-											>
-												Import {traktPreview.importableCount} item
-												{traktPreview.importableCount === 1 ? "" : "s"}
-											</M3Button>
 										</div>
 									) : null}
 								</div>
@@ -693,7 +692,11 @@ export function OnboardingContent({
 									onClick={onSkipHistoryImport}
 									disabled={isCompleting || isImportBusy}
 								>
-									{isCompleting ? "Finishing..." : "Skip import"}
+									{isCompleting
+										? "Finishing..."
+										: activeTab === "trakt" && traktPreview
+											? "Continue"
+											: "Skip import"}
 								</M3Button>
 							</div>
 						</div>

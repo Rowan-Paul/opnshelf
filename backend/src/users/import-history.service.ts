@@ -17,7 +17,9 @@ import type {
 	ImportHistoryResponseDto,
 	ImportSkipDto,
 	NormalizedImportItemDto,
+	StartTraktImportResponseDto,
 	TraktHistoryPreviewItemDto,
+	TraktImportJobDto,
 	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
 
@@ -67,6 +69,39 @@ type TraktHistoryPayloadItem = {
 	};
 };
 
+type TraktJobStatus =
+	| "queued"
+	| "running"
+	| "waiting_retry"
+	| "completed"
+	| "failed";
+
+type TraktImportJobRecord = Awaited<
+	ReturnType<PrismaService["traktImportJob"]["findFirst"]>
+>;
+
+const TRAKT_HISTORY_PAGE_SIZE = 100;
+const TRAKT_PREVIEW_ITEM_LIMIT = 5;
+const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
+	"queued",
+	"running",
+	"waiting_retry",
+];
+const RECENT_TERMINAL_JOB_WINDOW_MS = 15 * 60 * 1000;
+const TRAKT_RETRY_FALLBACK_SECONDS = 60;
+const TRAKT_RETRY_MAX_SECONDS = 10 * 60;
+const TRAKT_PAGE_DELAY_MS = 800;
+
+class TraktApiError extends Error {
+	constructor(
+		message: string,
+		public readonly status: number,
+		public readonly retryAfterSeconds?: number,
+	) {
+		super(message);
+	}
+}
+
 @Injectable()
 export class ImportHistoryService {
 	private readonly logger = new Logger(ImportHistoryService.name);
@@ -88,80 +123,165 @@ export class ImportHistoryService {
 		username: string,
 		maxItems?: number,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
-		if (!this.traktApiKey) {
-			throw new BadRequestException(
-				"Trakt import is not configured on this server. You can still import via CSV.",
-			);
-		}
+		try {
+			this.ensureTraktConfigured();
 
-		const normalizedUsername = username.trim();
-		if (!normalizedUsername) {
-			throw new BadRequestException("Trakt username is required");
-		}
+			const normalizedUsername = this.normalizeUsername(username);
+			const safeMaxItems =
+				typeof maxItems === "number"
+					? Math.max(Math.floor(maxItems), 1)
+					: Number.POSITIVE_INFINITY;
+			const profile = await this.fetchTraktPublicProfile(normalizedUsername);
+			let page = 1;
+			let pageCount = Number.POSITIVE_INFINITY;
+			let sourceCount = 0;
+			const items: NormalizedImportItemDto[] = [];
+			const skipped: ImportSkipDto[] = [];
+			const previewItems: TraktHistoryPreviewItemDto[] = [];
 
-		const safeMaxItems =
-			typeof maxItems === "number"
-				? Math.max(Math.floor(maxItems), 1)
-				: Number.POSITIVE_INFINITY;
-		const profile = await this.fetchTraktPublicProfile(normalizedUsername);
-		const pageSize = 100;
-		let page = 1;
-		let pageCount = Number.POSITIVE_INFINITY;
-		let sourceCount = 0;
-		const items: NormalizedImportItemDto[] = [];
-		const skipped: ImportSkipDto[] = [];
-		const previewItems: TraktHistoryPreviewItemDto[] = [];
-
-		while (items.length < safeMaxItems && page <= pageCount) {
-			const url = this.createTraktUrl(
-				`/users/${encodeURIComponent(normalizedUsername)}/history`,
-			);
-			url.searchParams.set("page", String(page));
-			url.searchParams.set("limit", String(pageSize));
-
-			const { data: payload, headers } =
-				await this.fetchTraktJsonWithHeaders<unknown>(url);
-			if (!Array.isArray(payload)) {
-				throw new BadRequestException("Unexpected Trakt response format");
-			}
-			pageCount = this.parsePaginationPageCount(headers) ?? pageCount;
-
-			sourceCount += payload.length;
-			for (let i = 0; i < payload.length; i++) {
-				if (items.length >= safeMaxItems) {
-					break;
-				}
-				const result = this.normalizeTraktApiItem(
-					payload[i],
-					sourceCount - payload.length + i + 1,
+			while (items.length < safeMaxItems && page <= pageCount) {
+				const pageResult = await this.fetchTraktHistoryPage(
+					normalizedUsername,
+					page,
 				);
-				if (result.item) {
-					items.push(result.item);
-					if (result.previewItem && previewItems.length < 5) {
-						previewItems.push(result.previewItem);
-					}
-				} else if (result.skip) {
-					skipped.push(result.skip);
-				}
-			}
+				pageCount = pageResult.pageCount ?? pageCount;
+				sourceCount += pageResult.payload.length;
 
-			if (payload.length < pageSize) {
-				if (!Number.isFinite(pageCount)) {
+				for (let i = 0; i < pageResult.payload.length; i++) {
+					if (items.length >= safeMaxItems) {
+						break;
+					}
+					const result = this.normalizeTraktApiItem(
+						pageResult.payload[i],
+						sourceCount - pageResult.payload.length + i + 1,
+					);
+					if (result.item) {
+						items.push(result.item);
+						if (
+							result.previewItem &&
+							previewItems.length < TRAKT_PREVIEW_ITEM_LIMIT
+						) {
+							previewItems.push(result.previewItem);
+						}
+					} else if (result.skip) {
+						skipped.push(result.skip);
+					}
+				}
+
+				if (
+					pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE &&
+					!Number.isFinite(pageCount)
+				) {
 					break;
 				}
+
+				page += 1;
 			}
 
-			page += 1;
+			return {
+				profile,
+				importableCount: items.length,
+				previewItems,
+				items,
+				skipped,
+				sourceCount,
+			};
+		} catch (error) {
+			throw this.toPublicTraktException(error);
+		}
+	}
+
+	async startTraktImport(
+		userDid: string,
+		username: string,
+	): Promise<StartTraktImportResponseDto> {
+		try {
+			this.ensureTraktConfigured();
+			const normalizedUsername = this.normalizeUsername(username);
+			const existingJob = await this.findLatestTraktImportJob(userDid, {
+				statuses: ACTIVE_TRAKT_JOB_STATUSES,
+			});
+
+			if (existingJob) {
+				const existingProfile = this.buildProfileFromJob(existingJob);
+				const preview = await this.fetchTraktPreview(
+					existingJob.traktUsername,
+				).catch((error: unknown) => {
+					this.logger.warn(
+						`Unable to refresh Trakt preview for existing job ${existingJob.id}: ${this.getErrorMessage(error)}`,
+					);
+					return {
+						profile: existingProfile,
+						previewItems: [] as TraktHistoryPreviewItemDto[],
+						sourcePreviewCount: 0,
+					};
+				});
+
+				return {
+					profile: preview.profile,
+					previewItems: preview.previewItems,
+					sourcePreviewCount: preview.sourcePreviewCount,
+					job: this.mapTraktImportJob(existingJob),
+				};
+			}
+
+			const preview = await this.fetchTraktPreview(normalizedUsername);
+			const job = await this.prisma.traktImportJob.create({
+				data: {
+					userDid,
+					traktUsername: normalizedUsername,
+					status: "queued",
+					nextRunAt: new Date(),
+					profileUsername: preview.profile.username,
+					profileSlug: preview.profile.slug,
+					profileName: preview.profile.name,
+					profileAvatarUrl: preview.profile.avatarUrl,
+				},
+			});
+
+			return {
+				profile: preview.profile,
+				previewItems: preview.previewItems,
+				sourcePreviewCount: preview.sourcePreviewCount,
+				job: this.mapTraktImportJob(job),
+			};
+		} catch (error) {
+			throw this.toPublicTraktException(error);
+		}
+	}
+
+	async getCurrentTraktImport(
+		userDid: string,
+	): Promise<TraktImportJobDto | null> {
+		const activeJob = await this.findLatestTraktImportJob(userDid, {
+			statuses: ACTIVE_TRAKT_JOB_STATUSES,
+		});
+		if (activeJob) {
+			return this.mapTraktImportJob(activeJob);
 		}
 
-		return {
-			profile,
-			importableCount: items.length,
-			previewItems,
-			items,
-			skipped,
-			sourceCount,
-		};
+		const recentTerminalJob = await this.findLatestTraktImportJob(userDid, {
+			statuses: ["completed", "failed"],
+			recentSince: new Date(Date.now() - RECENT_TERMINAL_JOB_WINDOW_MS),
+		});
+
+		return recentTerminalJob ? this.mapTraktImportJob(recentTerminalJob) : null;
+	}
+
+	async processNextTraktImportJob(): Promise<void> {
+		const job = await this.prisma.traktImportJob.findFirst({
+			where: {
+				status: { in: ACTIVE_TRAKT_JOB_STATUSES },
+				nextRunAt: { lte: new Date() },
+			},
+			orderBy: [{ nextRunAt: "asc" }, { createdAt: "asc" }],
+		});
+
+		if (!job) {
+			return;
+		}
+
+		await this.processTraktImportJob(job.id);
 	}
 
 	async importNormalizedItems(
@@ -255,11 +375,9 @@ export class ImportHistoryService {
 				failed += 1;
 				const itemContext = this.describeImportItem(item);
 				const rawMessage =
-					error instanceof Error
-						? error.message
-						: "Failed to import watch item";
+					this.getErrorMessage(error) || "Failed to import watch item";
 				this.logger.warn(
-					`Failed to import item at index ${index + 1}: ${error instanceof Error ? error.message : String(error)}`,
+					`Failed to import item at index ${index + 1}: ${rawMessage}`,
 				);
 				errors.push({
 					index: index + 1,
@@ -275,6 +393,174 @@ export class ImportHistoryService {
 			failed,
 			errors,
 		};
+	}
+
+	private async processTraktImportJob(jobId: string): Promise<void> {
+		const job = await this.prisma.traktImportJob.findUnique({
+			where: { id: jobId },
+		});
+		if (!job) {
+			return;
+		}
+		if (
+			job.status === "completed" ||
+			job.status === "failed" ||
+			job.nextRunAt > new Date()
+		) {
+			return;
+		}
+
+		const session = await this.restoreImportSession(job.userDid);
+		if (!session) {
+			await this.failTraktImportJob(
+				job.id,
+				"Your sign-in session expired. Please sign in again and retry the import.",
+			);
+			return;
+		}
+
+		await this.prisma.traktImportJob.update({
+			where: { id: job.id },
+			data: {
+				status: "running",
+				startedAt: job.startedAt ?? new Date(),
+				lastError: null,
+			},
+		});
+
+		try {
+			const pageResult = await this.fetchTraktHistoryPage(
+				job.traktUsername,
+				job.currentPage,
+			);
+			const totalPages =
+				pageResult.pageCount ?? job.totalPages ?? job.currentPage;
+			const normalized = this.normalizeTraktPage(
+				pageResult.payload,
+				job.sourceCount + 1,
+			);
+			const importResult = await this.importNormalizedItems(
+				job.userDid,
+				session,
+				normalized.items,
+			);
+			const nextPage = job.currentPage + 1;
+			const isComplete =
+				pageResult.payload.length === 0 ||
+				nextPage > totalPages ||
+				pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE;
+
+			await this.prisma.traktImportJob.update({
+				where: { id: job.id },
+				data: {
+					status: isComplete ? "completed" : "running",
+					currentPage: isComplete ? job.currentPage : nextPage,
+					totalPages,
+					sourceCount: job.sourceCount + pageResult.payload.length,
+					normalizedCount: job.normalizedCount + normalized.items.length,
+					importedCount: job.importedCount + importResult.imported,
+					skippedCount:
+						job.skippedCount + normalized.skipped.length + importResult.skipped,
+					failedCount: job.failedCount + importResult.failed,
+					lastError: importResult.errors[0]?.message ?? null,
+					nextRunAt: isComplete
+						? new Date()
+						: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),
+					completedAt: isComplete ? new Date() : null,
+				},
+			});
+		} catch (error) {
+			if (error instanceof TraktApiError && error.status === 429) {
+				const retryAfterSeconds = this.getRetryAfterSeconds(
+					error.retryAfterSeconds,
+				);
+				this.logger.warn(
+					`Trakt rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s.`,
+				);
+				await this.prisma.traktImportJob.update({
+					where: { id: job.id },
+					data: {
+						status: "waiting_retry",
+						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
+						lastError: `Trakt rate limit reached. Retrying in ${retryAfterSeconds} seconds.`,
+					},
+				});
+				return;
+			}
+
+			if (error instanceof TraktApiError) {
+				await this.failTraktImportJob(job.id, error.message);
+				return;
+			}
+
+			await this.failTraktImportJob(job.id, this.getErrorMessage(error));
+		}
+	}
+
+	private async failTraktImportJob(
+		jobId: string,
+		message?: string,
+	): Promise<void> {
+		await this.prisma.traktImportJob.update({
+			where: { id: jobId },
+			data: {
+				status: "failed",
+				lastError:
+					message ||
+					"Trakt import failed. Please retry later or use CSV import.",
+				completedAt: new Date(),
+				nextRunAt: new Date(),
+			},
+		});
+	}
+
+	private async fetchTraktPreview(username: string): Promise<{
+		profile: TraktPublicProfileDto;
+		previewItems: TraktHistoryPreviewItemDto[];
+		sourcePreviewCount: number;
+	}> {
+		const profile = await this.fetchTraktPublicProfile(username);
+		const pageResult = await this.fetchTraktHistoryPage(username, 1);
+		const normalized = this.normalizeTraktPage(pageResult.payload, 1);
+
+		return {
+			profile,
+			previewItems: normalized.previewItems,
+			sourcePreviewCount: pageResult.payload.length,
+		};
+	}
+
+	private normalizeTraktPage(
+		payload: unknown[],
+		startIndex: number,
+	): {
+		items: NormalizedImportItemDto[];
+		skipped: ImportSkipDto[];
+		previewItems: TraktHistoryPreviewItemDto[];
+	} {
+		const items: NormalizedImportItemDto[] = [];
+		const skipped: ImportSkipDto[] = [];
+		const previewItems: TraktHistoryPreviewItemDto[] = [];
+
+		for (let index = 0; index < payload.length; index++) {
+			const result = this.normalizeTraktApiItem(
+				payload[index],
+				startIndex + index,
+			);
+			if (result.item) {
+				items.push(result.item);
+				if (
+					result.previewItem &&
+					previewItems.length < TRAKT_PREVIEW_ITEM_LIMIT
+				) {
+					previewItems.push(result.previewItem);
+				}
+			} else if (result.skip) {
+				skipped.push(result.skip);
+			}
+		}
+
+		return { items, skipped, previewItems };
 	}
 
 	private normalizeTraktApiItem(
@@ -296,7 +582,6 @@ export class ImportHistoryService {
 		}
 
 		const item = rawItem as TraktHistoryPayloadItem;
-
 		const action =
 			typeof item.action === "string" ? (item.action as string) : "watch";
 		if (!this.allowedActions.has(action)) {
@@ -310,7 +595,6 @@ export class ImportHistoryService {
 		}
 
 		const normalizedAction = action as "watch" | "scrobble" | "checkin";
-
 		if (
 			typeof item.watched_at !== "string" ||
 			Number.isNaN(Date.parse(item.watched_at))
@@ -425,6 +709,28 @@ export class ImportHistoryService {
 		};
 	}
 
+	private async fetchTraktHistoryPage(
+		username: string,
+		page: number,
+	): Promise<{ payload: unknown[]; pageCount?: number }> {
+		const url = this.createTraktUrl(
+			`/users/${encodeURIComponent(username)}/history`,
+		);
+		url.searchParams.set("page", String(page));
+		url.searchParams.set("limit", String(TRAKT_HISTORY_PAGE_SIZE));
+
+		const { data, headers } =
+			await this.fetchTraktJsonWithHeaders<unknown>(url);
+		if (!Array.isArray(data)) {
+			throw new BadRequestException("Unexpected Trakt response format");
+		}
+
+		return {
+			payload: data,
+			pageCount: this.parsePaginationPageCount(headers),
+		};
+	}
+
 	private buildImportKey(item: NormalizedImportItemDto): string {
 		if (item.type === "movie") {
 			return `movie:${item.movieTmdbId}:${item.watchedAt}`;
@@ -499,10 +805,19 @@ export class ImportHistoryService {
 			throw new BadRequestException("Unexpected Trakt profile format");
 		}
 
-		const profile = payload as TraktProfilePayload;
+		return this.mapTraktProfilePayload(
+			payload as TraktProfilePayload,
+			username,
+		);
+	}
+
+	private mapTraktProfilePayload(
+		profile: TraktProfilePayload,
+		fallbackUsername: string,
+	): TraktPublicProfileDto {
 		return {
-			username: this.getStringValue(profile.username, username),
-			slug: this.getStringValue(profile.ids?.slug, username),
+			username: this.getStringValue(profile.username, fallbackUsername),
+			slug: this.getStringValue(profile.ids?.slug, fallbackUsername),
 			name: this.getOptionalStringValue(profile.name),
 			isPrivate: profile.private === true,
 			isVip: profile.vip === true,
@@ -528,26 +843,32 @@ export class ImportHistoryService {
 		});
 
 		if (response.status === 404) {
-			throw new NotFoundException("Trakt user not found");
+			throw new TraktApiError("Trakt user not found", 404);
 		}
 		if (response.status === 401 || response.status === 403) {
-			throw new BadRequestException(
+			throw new TraktApiError(
 				"Trakt profile is private or unavailable. Try CSV import instead.",
+				response.status,
 			);
 		}
 		if (response.status === 429) {
-			throw new HttpException(
-				"Trakt rate limit reached. Please retry in a few minutes or use CSV import.",
-				HttpStatus.TOO_MANY_REQUESTS,
+			throw new TraktApiError(
+				"Trakt rate limit reached. We will retry in the background shortly.",
+				429,
+				this.parseRetryAfterSeconds(response.headers),
 			);
 		}
 		if (response.status >= 500) {
-			throw new ServiceUnavailableException(
+			throw new TraktApiError(
 				"Trakt is temporarily unavailable. Please retry later or use CSV import.",
+				response.status,
 			);
 		}
 		if (!response.ok) {
-			throw new BadRequestException("Failed to fetch Trakt public history");
+			throw new TraktApiError(
+				"Failed to fetch Trakt public history",
+				response.status,
+			);
 		}
 
 		return {
@@ -558,6 +879,20 @@ export class ImportHistoryService {
 
 	private parsePaginationPageCount(headers: Headers): number | undefined {
 		const rawValue = headers.get("x-pagination-page-count");
+		if (!rawValue) {
+			return undefined;
+		}
+
+		const parsed = Number.parseInt(rawValue, 10);
+		if (!Number.isInteger(parsed) || parsed < 1) {
+			return undefined;
+		}
+
+		return parsed;
+	}
+
+	private parseRetryAfterSeconds(headers: Headers): number | undefined {
+		const rawValue = headers.get("retry-after");
 		if (!rawValue) {
 			return undefined;
 		}
@@ -626,5 +961,142 @@ export class ImportHistoryService {
 		const episodeCode = `S${String(seasonNumber).padStart(2, "0")}E${String(episodeNumber).padStart(2, "0")}`;
 		const title = this.getOptionalStringValue(episodeTitle);
 		return title ? `${episodeCode} • ${title}` : episodeCode;
+	}
+
+	private ensureTraktConfigured(): void {
+		if (!this.traktApiKey) {
+			throw new BadRequestException(
+				"Trakt import is not configured on this server. You can still import via CSV.",
+			);
+		}
+	}
+
+	private normalizeUsername(username: string): string {
+		const normalizedUsername = username.trim();
+		if (!normalizedUsername) {
+			throw new BadRequestException("Trakt username is required");
+		}
+		return normalizedUsername;
+	}
+
+	private async findLatestTraktImportJob(
+		userDid: string,
+		options: { statuses: TraktJobStatus[]; recentSince?: Date },
+	) {
+		return this.prisma.traktImportJob.findFirst({
+			where: {
+				userDid,
+				status: { in: options.statuses },
+				...(options.recentSince
+					? {
+							updatedAt: {
+								gte: options.recentSince,
+							},
+						}
+					: {}),
+			},
+			orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+		});
+	}
+
+	private mapTraktImportJob(
+		job: NonNullable<TraktImportJobRecord>,
+	): TraktImportJobDto {
+		return {
+			id: job.id,
+			traktUsername: job.traktUsername,
+			status: job.status,
+			currentPage: job.currentPage,
+			totalPages: job.totalPages ?? undefined,
+			sourceCount: job.sourceCount,
+			normalizedCount: job.normalizedCount,
+			importedCount: job.importedCount,
+			skippedCount: job.skippedCount,
+			failedCount: job.failedCount,
+			nextRunAt: job.nextRunAt.toISOString(),
+			lastError: job.lastError ?? undefined,
+			profileUsername: job.profileUsername ?? undefined,
+			profileSlug: job.profileSlug ?? undefined,
+			profileName: job.profileName ?? undefined,
+			profileAvatarUrl: job.profileAvatarUrl ?? undefined,
+			startedAt: job.startedAt?.toISOString(),
+			completedAt: job.completedAt?.toISOString(),
+			createdAt: job.createdAt.toISOString(),
+			updatedAt: job.updatedAt.toISOString(),
+		};
+	}
+
+	private buildProfileFromJob(
+		job: NonNullable<TraktImportJobRecord>,
+	): TraktPublicProfileDto {
+		return {
+			username: job.profileUsername ?? job.traktUsername,
+			slug: job.profileSlug ?? job.traktUsername,
+			name: job.profileName ?? undefined,
+			isPrivate: false,
+			isVip: false,
+			avatarUrl: job.profileAvatarUrl ?? undefined,
+		};
+	}
+
+	private async restoreImportSession(
+		userDid: string,
+	): Promise<ATSession | null> {
+		const record = await this.prisma.authSession.findUnique({
+			where: { userDid },
+			select: { sessionData: true },
+		});
+		if (!record) {
+			return null;
+		}
+
+		try {
+			return JSON.parse(record.sessionData) as ATSession;
+		} catch (error) {
+			this.logger.warn(
+				`Failed to parse stored auth session for ${userDid}: ${this.getErrorMessage(error)}`,
+			);
+			return null;
+		}
+	}
+
+	private getRetryAfterSeconds(retryAfterSeconds?: number): number {
+		const boundedRetry = retryAfterSeconds ?? TRAKT_RETRY_FALLBACK_SECONDS;
+		return Math.max(1, Math.min(boundedRetry, TRAKT_RETRY_MAX_SECONDS));
+	}
+
+	private getErrorMessage(error: unknown): string {
+		if (error instanceof TraktApiError) {
+			return error.message;
+		}
+		if (error instanceof HttpException) {
+			return error.message;
+		}
+		if (error instanceof Error) {
+			return error.message;
+		}
+		return String(error);
+	}
+
+	private toPublicTraktException(error: unknown): Error {
+		if (error instanceof HttpException) {
+			return error;
+		}
+		if (error instanceof TraktApiError) {
+			if (error.status === 404) {
+				return new NotFoundException(error.message);
+			}
+			if (error.status === 401 || error.status === 403 || error.status < 500) {
+				return new BadRequestException(error.message);
+			}
+			if (error.status === 429) {
+				return new HttpException(error.message, HttpStatus.TOO_MANY_REQUESTS);
+			}
+			return new ServiceUnavailableException(error.message);
+		}
+		if (error instanceof Error) {
+			return error;
+		}
+		return new Error(String(error));
 	}
 }

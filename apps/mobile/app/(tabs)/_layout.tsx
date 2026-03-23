@@ -1,6 +1,15 @@
+import {
+	BottomTabBar,
+	type BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
 import { router, Tabs, usePathname } from "expo-router";
 import { Home, Search, User } from "lucide-react-native";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { TraktImportStatusBanner } from "@/components/TraktImportStatusBanner";
 import { useTheme } from "@/contexts/theme";
+
+const BANNER_GAP = 12;
 
 export default function TabLayout() {
 	const { colors } = useTheme();
@@ -23,6 +32,7 @@ export default function TabLayout() {
 				},
 				headerTintColor: colors.onBackground,
 			}}
+			tabBar={(props) => <TabBarWithBanner {...props} />}
 		>
 			<Tabs.Screen
 				name="index"
@@ -59,3 +69,32 @@ export default function TabLayout() {
 		</Tabs>
 	);
 }
+
+function TabBarWithBanner(props: BottomTabBarProps) {
+	const [tabBarHeight, setTabBarHeight] = useState(0);
+
+	return (
+		<View pointerEvents="box-none" style={styles.tabBarContainer}>
+			<TraktImportStatusBanner
+				bottomOffset={tabBarHeight > 0 ? tabBarHeight + BANNER_GAP : undefined}
+			/>
+			<View
+				style={styles.tabBarMeasure}
+				onLayout={(event) => setTabBarHeight(event.nativeEvent.layout.height)}
+			>
+				<BottomTabBar {...props} />
+			</View>
+		</View>
+	);
+}
+
+const styles = StyleSheet.create({
+	tabBarContainer: {
+		alignSelf: "stretch",
+		position: "relative",
+		width: "100%",
+	},
+	tabBarMeasure: {
+		width: "100%",
+	},
+});

@@ -1,4 +1,4 @@
-import type { FetchTraktPublicHistoryResponseDto } from "@opnshelf/api";
+import type { StartTraktImportResponseDto } from "@opnshelf/api";
 
 export type TabValue = "trakt" | "csv";
 
@@ -39,4 +39,4 @@ export type FollowImportResult = {
 	alreadyFollowingCount: number;
 };
 
-export type TraktImportPreview = FetchTraktPublicHistoryResponseDto;
+export type TraktImportPreview = StartTraktImportResponseDto;

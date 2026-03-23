@@ -388,6 +388,7 @@ export const ModelName = {
   Follow: 'Follow',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
+  TraktImportJob: 'TraktImportJob',
   Movie: 'Movie',
   Show: 'Show',
   TrackedMovie: 'TrackedMovie',
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "authSession" | "authState" | "movie" | "show" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
+    modelProps: "user" | "follow" | "authSession" | "authState" | "traktImportJob" | "movie" | "show" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -706,6 +707,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AuthStateCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AuthStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    TraktImportJob: {
+      payload: Prisma.$TraktImportJobPayload<ExtArgs>
+      fields: Prisma.TraktImportJobFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TraktImportJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TraktImportJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        findFirst: {
+          args: Prisma.TraktImportJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TraktImportJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        findMany: {
+          args: Prisma.TraktImportJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+        }
+        create: {
+          args: Prisma.TraktImportJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        createMany: {
+          args: Prisma.TraktImportJobCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TraktImportJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+        }
+        delete: {
+          args: Prisma.TraktImportJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        update: {
+          args: Prisma.TraktImportJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        deleteMany: {
+          args: Prisma.TraktImportJobDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TraktImportJobUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TraktImportJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+        }
+        upsert: {
+          args: Prisma.TraktImportJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+        }
+        aggregate: {
+          args: Prisma.TraktImportJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktImportJob>
+        }
+        groupBy: {
+          args: Prisma.TraktImportJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraktImportJobGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TraktImportJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraktImportJobCountAggregateOutputType> | number
         }
       }
     }
@@ -1247,6 +1322,33 @@ export const AuthStateScalarFieldEnum = {
 export type AuthStateScalarFieldEnum = (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum]
 
 
+export const TraktImportJobScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  traktUsername: 'traktUsername',
+  status: 'status',
+  currentPage: 'currentPage',
+  totalPages: 'totalPages',
+  sourceCount: 'sourceCount',
+  normalizedCount: 'normalizedCount',
+  importedCount: 'importedCount',
+  skippedCount: 'skippedCount',
+  failedCount: 'failedCount',
+  nextRunAt: 'nextRunAt',
+  lastError: 'lastError',
+  profileUsername: 'profileUsername',
+  profileSlug: 'profileSlug',
+  profileName: 'profileName',
+  profileAvatarUrl: 'profileAvatarUrl',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktImportJobScalarFieldEnum = (typeof TraktImportJobScalarFieldEnum)[keyof typeof TraktImportJobScalarFieldEnum]
+
+
 export const MovieScalarFieldEnum = {
   movieId: 'movieId',
   title: 'title',
@@ -1424,6 +1526,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'TraktImportJobStatus'
+ */
+export type EnumTraktImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraktImportJobStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'TraktImportJobStatus[]'
+ */
+export type ListEnumTraktImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraktImportJobStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -1584,6 +1700,7 @@ export type GlobalOmitConfig = {
   follow?: Prisma.FollowOmit
   authSession?: Prisma.AuthSessionOmit
   authState?: Prisma.AuthStateOmit
+  traktImportJob?: Prisma.TraktImportJobOmit
   movie?: Prisma.MovieOmit
   show?: Prisma.ShowOmit
   trackedMovie?: Prisma.TrackedMovieOmit

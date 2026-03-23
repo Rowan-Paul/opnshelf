@@ -179,6 +179,92 @@ export class FetchTraktPublicHistoryResponseDto {
 	sourceCount: number;
 }
 
+export class StartTraktImportDto {
+	@ApiProperty({ description: "Trakt username or slug" })
+	@IsString()
+	username: string;
+}
+
+export class TraktImportJobDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	traktUsername: string;
+
+	@ApiProperty({
+		enum: ["queued", "running", "waiting_retry", "completed", "failed"],
+	})
+	status: "queued" | "running" | "waiting_retry" | "completed" | "failed";
+
+	@ApiProperty()
+	currentPage: number;
+
+	@ApiPropertyOptional()
+	totalPages?: number;
+
+	@ApiProperty()
+	sourceCount: number;
+
+	@ApiProperty()
+	normalizedCount: number;
+
+	@ApiProperty()
+	importedCount: number;
+
+	@ApiProperty()
+	skippedCount: number;
+
+	@ApiProperty()
+	failedCount: number;
+
+	@ApiProperty()
+	nextRunAt: string;
+
+	@ApiPropertyOptional()
+	lastError?: string;
+
+	@ApiPropertyOptional()
+	profileUsername?: string;
+
+	@ApiPropertyOptional()
+	profileSlug?: string;
+
+	@ApiPropertyOptional()
+	profileName?: string;
+
+	@ApiPropertyOptional()
+	profileAvatarUrl?: string;
+
+	@ApiPropertyOptional()
+	startedAt?: string;
+
+	@ApiPropertyOptional()
+	completedAt?: string;
+
+	@ApiProperty()
+	createdAt: string;
+
+	@ApiProperty()
+	updatedAt: string;
+}
+
+export class StartTraktImportResponseDto {
+	@ApiProperty({ type: TraktPublicProfileDto })
+	profile: TraktPublicProfileDto;
+
+	@ApiProperty({ type: [TraktHistoryPreviewItemDto] })
+	previewItems: TraktHistoryPreviewItemDto[];
+
+	@ApiProperty({
+		description: "Count of rows returned by Trakt for the preview page",
+	})
+	sourcePreviewCount: number;
+
+	@ApiProperty({ type: TraktImportJobDto })
+	job: TraktImportJobDto;
+}
+
 export class ImportHistoryDto {
 	@ApiProperty({ type: [NormalizedImportItemDto], maxItems: 100 })
 	@IsArray()

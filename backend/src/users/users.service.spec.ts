@@ -8,6 +8,8 @@ import type {
 	FetchTraktPublicHistoryResponseDto,
 	ImportHistoryResponseDto,
 	NormalizedImportItemDto,
+	StartTraktImportResponseDto,
+	TraktImportJobDto,
 } from "./dto/import-history.dto";
 import type { ListsService } from "../lists/lists.service";
 import type { MoviesService } from "../movies/movies.service";
@@ -29,6 +31,12 @@ type MockImportHistoryService = {
 			username: string,
 			maxItems?: number,
 		) => Promise<FetchTraktPublicHistoryResponseDto>
+	>;
+	startTraktImport: jest.MockedFunction<
+		(userDid: string, username: string) => Promise<StartTraktImportResponseDto>
+	>;
+	getCurrentTraktImport: jest.MockedFunction<
+		(userDid: string) => Promise<TraktImportJobDto | null>
 	>;
 	importNormalizedItems: jest.MockedFunction<
 		(
@@ -99,6 +107,8 @@ describe("UsersService", () => {
 		jest.clearAllMocks();
 		importHistoryService = {
 			fetchTraktPublicHistory: jest.fn(),
+			startTraktImport: jest.fn(),
+			getCurrentTraktImport: jest.fn(),
 			importNormalizedItems: jest.fn(),
 		};
 		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(true);
@@ -581,6 +591,82 @@ describe("UsersService", () => {
 		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
 			"rpf_2001",
 			undefined,
+		);
+	});
+
+	it("starts a background Trakt import for an existing user", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:abc" });
+		importHistoryService.startTraktImport.mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: false,
+				avatarUrl: "https://example.com/avatar.jpg",
+			},
+			previewItems: [],
+			sourcePreviewCount: 25,
+			job: {
+				id: "job-1",
+				traktUsername: "alice",
+				status: "queued",
+				currentPage: 1,
+				sourceCount: 0,
+				normalizedCount: 0,
+				importedCount: 0,
+				skippedCount: 0,
+				failedCount: 0,
+				nextRunAt: "2026-03-23T18:00:00.000Z",
+				createdAt: "2026-03-23T18:00:00.000Z",
+				updatedAt: "2026-03-23T18:00:00.000Z",
+			},
+		});
+
+		await expect(
+			service.startTraktImport("did:plc:abc", "alice"),
+		).resolves.toMatchObject({
+			job: {
+				id: "job-1",
+				status: "queued",
+			},
+		});
+		expect(importHistoryService.startTraktImport).toHaveBeenCalledWith(
+			"did:plc:abc",
+			"alice",
+		);
+	});
+
+	it("gets the current Trakt import for an existing user", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:abc" });
+		importHistoryService.getCurrentTraktImport.mockResolvedValue({
+			id: "job-1",
+			traktUsername: "alice",
+			status: "running",
+			currentPage: 2,
+			totalPages: 5,
+			sourceCount: 100,
+			normalizedCount: 90,
+			importedCount: 88,
+			skippedCount: 2,
+			failedCount: 0,
+			nextRunAt: "2026-03-23T18:00:00.000Z",
+			createdAt: "2026-03-23T18:00:00.000Z",
+			updatedAt: "2026-03-23T18:01:00.000Z",
+		});
+
+		await expect(
+			service.getCurrentTraktImport("did:plc:abc"),
+		).resolves.toMatchObject({
+			id: "job-1",
+			status: "running",
+		});
+		expect(importHistoryService.getCurrentTraktImport).toHaveBeenCalledWith(
+			"did:plc:abc",
 		);
 	});
 

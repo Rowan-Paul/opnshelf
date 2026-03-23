@@ -27,6 +27,8 @@ describe("UsersController", () => {
 	const usersService = {
 		completeOnboarding: jest.fn(),
 		fetchTraktPublicHistory: jest.fn(),
+		startTraktImport: jest.fn(),
+		getCurrentTraktImport: jest.fn(),
 		importBlueskyFollows: jest.fn(),
 		importNormalizedItems: jest.fn(),
 		getPublicProfileByHandle: jest.fn(),
@@ -101,6 +103,84 @@ describe("UsersController", () => {
 		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith(
 			"alice",
 			10,
+		);
+	});
+
+	it("starts a background Trakt import", async () => {
+		usersService.startTraktImport.mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice Example",
+				isPrivate: false,
+				isVip: true,
+				avatarUrl: "https://example.com/avatar.jpg",
+			},
+			previewItems: [],
+			sourcePreviewCount: 25,
+			job: {
+				id: "job-1",
+				traktUsername: "alice",
+				status: "queued",
+				currentPage: 1,
+				sourceCount: 0,
+				normalizedCount: 0,
+				importedCount: 0,
+				skippedCount: 0,
+				failedCount: 0,
+				nextRunAt: "2026-03-23T18:00:00.000Z",
+				createdAt: "2026-03-23T18:00:00.000Z",
+				updatedAt: "2026-03-23T18:00:00.000Z",
+			},
+		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: {} },
+		} as AuthenticatedRequest;
+
+		await expect(
+			controller.startMyTraktImport({ username: "alice" }, req),
+		).resolves.toMatchObject({
+			job: {
+				id: "job-1",
+				status: "queued",
+			},
+		});
+		expect(usersService.startTraktImport).toHaveBeenCalledWith(
+			"did:plc:abc",
+			"alice",
+		);
+	});
+
+	it("gets the current background Trakt import", async () => {
+		usersService.getCurrentTraktImport.mockResolvedValue({
+			id: "job-1",
+			traktUsername: "alice",
+			status: "running",
+			currentPage: 2,
+			totalPages: 5,
+			sourceCount: 100,
+			normalizedCount: 90,
+			importedCount: 88,
+			skippedCount: 2,
+			failedCount: 0,
+			nextRunAt: "2026-03-23T18:00:00.000Z",
+			createdAt: "2026-03-23T18:00:00.000Z",
+			updatedAt: "2026-03-23T18:01:00.000Z",
+		});
+
+		const req = {
+			user: { did: "did:plc:abc", session: {} },
+		} as AuthenticatedRequest;
+
+		await expect(
+			controller.getMyCurrentTraktImport(req),
+		).resolves.toMatchObject({
+			id: "job-1",
+			status: "running",
+		});
+		expect(usersService.getCurrentTraktImport).toHaveBeenCalledWith(
+			"did:plc:abc",
 		);
 	});
 
