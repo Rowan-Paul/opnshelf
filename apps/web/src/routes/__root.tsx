@@ -132,7 +132,10 @@ function AppShell() {
 					TanStackQueryDevtools,
 				]}
 			/>
-			<TraktImportStatusToast enabled={shouldShowTraktStatus} />
+			<TraktImportStatusToast
+				enabled={shouldShowTraktStatus}
+				userDid={user?.did}
+			/>
 			<Toaster />
 		</ThemeProvider>
 	);

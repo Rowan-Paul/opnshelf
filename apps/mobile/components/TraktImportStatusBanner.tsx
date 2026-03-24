@@ -5,8 +5,13 @@ import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
+import {
+	dismissTraktImportJob,
+	loadDismissedTraktImportJobIds,
+} from "@/lib/trakt-import-dismissal";
 
 const ACTIVE_STATUSES = ["queued", "running", "waiting_retry"] as const;
+const TERMINAL_STATUSES = ["completed", "failed"] as const;
 const MIN_BOTTOM_OFFSET = 12;
 
 type TraktImportStatusBannerProps = {
@@ -20,6 +25,10 @@ export function TraktImportStatusBanner({
 	const { colors } = useTheme();
 	const insets = useSafeAreaInsets();
 	const [dismissedJobId, setDismissedJobId] = useState<string | null>(null);
+	const [dismissedTerminalJobIds, setDismissedTerminalJobIds] = useState<
+		string[]
+	>([]);
+	const [isDismissalReady, setIsDismissalReady] = useState(false);
 	const { data: job } = useQuery({
 		...usersControllerGetMyCurrentTraktImportOptions(),
 		enabled: !!user,
@@ -32,6 +41,33 @@ export function TraktImportStatusBanner({
 	});
 
 	useEffect(() => {
+		let isMounted = true;
+
+		const loadDismissedJobIds = async () => {
+			if (!user?.did) {
+				if (isMounted) {
+					setDismissedTerminalJobIds([]);
+					setIsDismissalReady(true);
+				}
+				return;
+			}
+
+			setIsDismissalReady(false);
+			const dismissedJobIds = await loadDismissedTraktImportJobIds(user.did);
+			if (isMounted) {
+				setDismissedTerminalJobIds(dismissedJobIds);
+				setIsDismissalReady(true);
+			}
+		};
+
+		void loadDismissedJobIds();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [user?.did]);
+
+	useEffect(() => {
 		if (!job) {
 			setDismissedJobId(null);
 			return;
@@ -41,9 +77,33 @@ export function TraktImportStatusBanner({
 		}
 	}, [job]);
 
-	if (!job || dismissedJobId === job.id) {
+	const isTerminalJob = job ? isTerminalStatus(job.status) : false;
+	const isPersistentlyDismissed =
+		job && isTerminalJob && dismissedTerminalJobIds.includes(job.id);
+
+	if (
+		!job ||
+		dismissedJobId === job.id ||
+		isPersistentlyDismissed ||
+		(isTerminalJob && !isDismissalReady)
+	) {
 		return null;
 	}
+
+	const handleDismiss = async () => {
+		if (isActiveStatus(job.status)) {
+			setDismissedJobId(job.id);
+			return;
+		}
+
+		if (!user?.did || !isTerminalStatus(job.status)) {
+			setDismissedJobId(job.id);
+			return;
+		}
+
+		const nextDismissedJobIds = await dismissTraktImportJob(user.did, job.id);
+		setDismissedTerminalJobIds(nextDismissedJobIds);
+	};
 
 	return (
 		<View
@@ -82,7 +142,7 @@ export function TraktImportStatusBanner({
 						</Text>
 					</View>
 					<Pressable
-						onPress={() => setDismissedJobId(job.id)}
+						onPress={() => void handleDismiss()}
 						style={[
 							styles.dismissButton,
 							{ borderColor: colors.outlineVariant },
@@ -103,6 +163,12 @@ export function TraktImportStatusBanner({
 function isActiveStatus(status: string): boolean {
 	return ACTIVE_STATUSES.includes(
 		status as (typeof ACTIVE_STATUSES)[number],
+	);
+}
+
+function isTerminalStatus(status: string): boolean {
+	return TERMINAL_STATUSES.includes(
+		status as (typeof TERMINAL_STATUSES)[number],
 	);
 }
 

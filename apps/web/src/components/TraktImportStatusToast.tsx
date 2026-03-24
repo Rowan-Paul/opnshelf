@@ -2,17 +2,28 @@ import { usersControllerGetMyCurrentTraktImportOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import {
+	dismissTraktImportJob,
+	loadDismissedTraktImportJobIds,
+} from "@/lib/trakt-import-dismissal";
 
 const ACTIVE_STATUSES = ["queued", "running", "waiting_retry"] as const;
+const TERMINAL_STATUSES = ["completed", "failed"] as const;
 
 type TraktImportStatusToastProps = {
 	enabled: boolean;
+	userDid?: string;
 };
 
 export function TraktImportStatusToast({
 	enabled,
+	userDid,
 }: TraktImportStatusToastProps) {
 	const [dismissedJobId, setDismissedJobId] = useState<string | null>(null);
+	const [dismissedTerminalJobIds, setDismissedTerminalJobIds] = useState<
+		string[]
+	>([]);
+	const [isDismissalReady, setIsDismissalReady] = useState(false);
 	const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 	const { data: job } = useQuery({
 		...usersControllerGetMyCurrentTraktImportOptions(),
@@ -30,6 +41,17 @@ export function TraktImportStatusToast({
 	}, []);
 
 	useEffect(() => {
+		if (!userDid) {
+			setDismissedTerminalJobIds([]);
+			setIsDismissalReady(true);
+			return;
+		}
+
+		setDismissedTerminalJobIds(loadDismissedTraktImportJobIds(userDid));
+		setIsDismissalReady(true);
+	}, [userDid]);
+
+	useEffect(() => {
 		if (!job) {
 			setDismissedJobId(null);
 			return;
@@ -39,9 +61,33 @@ export function TraktImportStatusToast({
 		}
 	}, [job]);
 
-	if (!job || dismissedJobId === job.id || !portalTarget) {
+	const isTerminalJob = job ? isTerminalStatus(job.status) : false;
+	const isPersistentlyDismissed =
+		job && isTerminalJob && dismissedTerminalJobIds.includes(job.id);
+
+	if (
+		!job ||
+		dismissedJobId === job.id ||
+		isPersistentlyDismissed ||
+		(isTerminalJob && !isDismissalReady) ||
+		!portalTarget
+	) {
 		return null;
 	}
+
+	const handleDismiss = () => {
+		if (isActiveStatus(job.status)) {
+			setDismissedJobId(job.id);
+			return;
+		}
+
+		if (!userDid || !isTerminalStatus(job.status)) {
+			setDismissedJobId(job.id);
+			return;
+		}
+
+		setDismissedTerminalJobIds(dismissTraktImportJob(userDid, job.id));
+	};
 
 	return createPortal(
 		<div className="pointer-events-none fixed right-4 bottom-4 left-4 z-50 md:right-6 md:bottom-6 md:left-auto md:w-[360px]">
@@ -63,7 +109,7 @@ export function TraktImportStatusToast({
 					<button
 						type="button"
 						className="rounded-full border border-(--md-sys-color-outline-variant) px-2 py-1 text-xs text-(--md-sys-color-on-surface-variant)"
-						onClick={() => setDismissedJobId(job.id)}
+						onClick={handleDismiss}
 					>
 						Dismiss
 					</button>
@@ -76,6 +122,12 @@ export function TraktImportStatusToast({
 
 function isActiveStatus(status: string): boolean {
 	return ACTIVE_STATUSES.includes(status as (typeof ACTIVE_STATUSES)[number]);
+}
+
+function isTerminalStatus(status: string): boolean {
+	return TERMINAL_STATUSES.includes(
+		status as (typeof TERMINAL_STATUSES)[number],
+	);
 }
 
 function getStatusMessage(job: {
