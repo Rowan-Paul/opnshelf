@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use Canonical Tailwind Classes"
+  short_description: "Prefer first-party Tailwind utility syntax."
+  default_prompt: "Use $use-canonical-tailwind-classes to normalize Tailwind class strings to canonical utilities and keep arbitrary values only when they are truly custom."
