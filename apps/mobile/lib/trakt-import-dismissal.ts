@@ -59,3 +59,11 @@ export async function dismissTraktImportJob(
 		return [jobId];
 	}
 }
+
+export async function clearDismissedTraktImportJobIds(userDid: string) {
+	try {
+		await SecureStore.deleteItemAsync(getStorageKey(userDid));
+	} catch (error) {
+		console.error("Failed to clear dismissed Trakt import jobs:", error);
+	}
+}

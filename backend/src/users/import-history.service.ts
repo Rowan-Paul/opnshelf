@@ -265,9 +265,19 @@ export class ImportHistoryService {
 			return this.mapTraktImportJob(activeJob);
 		}
 
-		const recentTerminalJob = await this.findLatestTraktImportJob(userDid, {
-			statuses: ["completed", "failed"],
-			recentSince: new Date(Date.now() - RECENT_TERMINAL_JOB_WINDOW_MS),
+		const recentTerminalJob = await this.prisma.traktImportJob.findFirst({
+			where: {
+				userDid,
+				status: { in: ["completed", "failed"] },
+				updatedAt: {
+					gte: new Date(Date.now() - RECENT_TERMINAL_JOB_WINDOW_MS),
+				},
+			},
+			orderBy: [
+				{ completedAt: "desc" },
+				{ updatedAt: "desc" },
+				{ createdAt: "desc" },
+			],
 		});
 
 		return recentTerminalJob ? this.mapTraktImportJob(recentTerminalJob) : null;
@@ -450,10 +460,13 @@ export class ImportHistoryService {
 				normalized.items,
 			);
 			const nextPage = job.currentPage + 1;
+			const hasKnownTotalPages =
+				Number.isInteger(totalPages) && totalPages >= 1;
 			const isComplete =
 				pageResult.payload.length === 0 ||
-				nextPage > totalPages ||
-				pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE;
+				(hasKnownTotalPages
+					? nextPage > totalPages
+					: pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE);
 
 			await this.prisma.traktImportJob.update({
 				where: { id: job.id },
@@ -467,7 +480,7 @@ export class ImportHistoryService {
 					skippedCount:
 						job.skippedCount + normalized.skipped.length + importResult.skipped,
 					failedCount: job.failedCount + importResult.failed,
-					lastError: importResult.errors[0]?.message ?? null,
+					lastError: null,
 					nextRunAt: isComplete
 						? new Date()
 						: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),

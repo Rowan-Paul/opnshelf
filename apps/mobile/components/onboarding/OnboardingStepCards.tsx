@@ -13,6 +13,7 @@ import type {
 	OnboardingImportResult,
 	TabValue,
 	TraktImportPreview,
+	TraktQueuedImport,
 } from "./types";
 import { styles } from "./styles";
 
@@ -368,6 +369,7 @@ type ImportStepCardProps = {
 	activeTab: TabValue;
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
+	traktQueuedImport: TraktQueuedImport | null;
 	csvFileName: string | null;
 	importProgress: ImportProgressState;
 	importPercent: number;
@@ -386,6 +388,7 @@ export function ImportStepCard({
 	activeTab,
 	traktUsername,
 	traktPreview,
+	traktQueuedImport,
 	csvFileName,
 	importProgress,
 	importPercent,
@@ -394,7 +397,7 @@ export function ImportStepCard({
 	onActiveTabChange,
 	onTraktUsernameChange,
 	onTraktImport,
-	onTraktImportConfirm: _onTraktImportConfirm,
+	onTraktImportConfirm,
 	onCsvImport,
 	onBack,
 	onSkip,
@@ -402,6 +405,8 @@ export function ImportStepCard({
 	const { colors } = useTheme();
 	const isTraktImporting =
 		activeTab === "trakt" && importProgress.phase === "fetching_trakt";
+	const isTraktImportQueued =
+		activeTab === "trakt" && traktPreview !== null && traktQueuedImport !== null;
 	const showImportStatusAboveInput =
 		importProgress.phase !== "idle" && !isTraktImporting;
 
@@ -446,9 +451,9 @@ export function ImportStepCard({
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									Preview loaded from {traktPreview.sourcePreviewCount} recent
-									Trakt history rows. The full import will keep running in the
-									background.
+									{isTraktImportQueued
+										? `Preview loaded from ${traktQueuedImport.sourcePreviewCount} recent Trakt history rows. The full import will keep running in the background.`
+										: `${traktPreview.importableCount} importable items found from ${traktPreview.sourceCount} Trakt history rows.`}
 								</Text>
 							) : null}
 						</View>
@@ -517,15 +522,15 @@ export function ImportStepCard({
 								editable={!isTraktImporting}
 							/>
 							<Text style={[styles.csvHelp, { color: colors.onSurfaceVariant }]}>
-								We fetch the Trakt profile and recent plays first, then keep
-								importing your full watch history in the background.
+								We fetch the Trakt profile and recent plays first so you can
+								confirm the account before importing.
 							</Text>
 							<Button onPress={onTraktImport} disabled={isImportBusy}>
 								{isImportBusy
 									? "Working..."
 									: traktPreview
 										? "Refresh preview"
-										: "Start background import"}
+										: "Fetch preview"}
 							</Button>
 							{isTraktImporting ? (
 								<View
@@ -631,7 +636,9 @@ export function ImportStepCard({
 													{ color: colors.onSurfaceVariant },
 												]}
 											>
-												Background import
+												{isTraktImportQueued
+													? "Background import"
+													: "Ready to import"}
 											</Text>
 											<Text
 												style={[
@@ -639,20 +646,24 @@ export function ImportStepCard({
 													{ color: colors.primary },
 												]}
 											>
-												Queued
+												{isTraktImportQueued
+													? "Queued"
+													: traktPreview.importableCount}
 											</Text>
 										</View>
 									</View>
 
-									<Text
-										style={[
-											styles.csvHelp,
-											{ color: colors.onSurfaceVariant },
-										]}
-									>
-										We&apos;ll keep importing the full Trakt history for this
-										account on the server while you finish onboarding.
-									</Text>
+									{isTraktImportQueued ? (
+										<Text
+											style={[
+												styles.csvHelp,
+												{ color: colors.onSurfaceVariant },
+											]}
+										>
+											We&apos;ll keep importing the full Trakt history for this
+											account on the server while you finish onboarding.
+										</Text>
+									) : null}
 
 									<View style={styles.previewListWrap}>
 										<Text
@@ -716,6 +727,18 @@ export function ImportStepCard({
 											</Text>
 										)}
 									</View>
+
+									{!isTraktImportQueued ? (
+										<Button
+											onPress={onTraktImportConfirm}
+											disabled={
+												isImportBusy || traktPreview.importableCount < 1
+											}
+										>
+											Import {traktPreview.importableCount} item
+											{traktPreview.importableCount === 1 ? "" : "s"}
+										</Button>
+									) : null}
 								</View>
 							) : null}
 						</View>
@@ -752,7 +775,7 @@ export function ImportStepCard({
 						<Button variant="text" onPress={onSkip} disabled={isImportBusy || isCompleting}>
 							{isCompleting
 								? "Finishing..."
-								: activeTab === "trakt" && traktPreview
+								: isTraktImportQueued
 									? "Continue"
 									: "Skip import"}
 						</Button>

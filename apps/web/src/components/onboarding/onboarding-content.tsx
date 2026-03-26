@@ -17,6 +17,7 @@ import type {
 	OnboardingImportResult,
 	TabValue,
 	TraktImportPreview,
+	TraktQueuedImport,
 } from "./types";
 
 const ONBOARDING_STEP_DETAILS = [
@@ -60,6 +61,7 @@ type OnboardingContentProps = {
 	activeTab: TabValue;
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
+	traktQueuedImport: TraktQueuedImport | null;
 	displayName: string;
 	avatarPreviewUrl: string | null;
 	avatarErrorMessage: string | null;
@@ -102,6 +104,7 @@ export function OnboardingContent({
 	activeTab,
 	traktUsername,
 	traktPreview,
+	traktQueuedImport,
 	displayName,
 	avatarPreviewUrl,
 	avatarErrorMessage,
@@ -132,7 +135,7 @@ export function OnboardingContent({
 	onContinueAfterFollowImport,
 	onSaveProfileAndContinue,
 	onTraktImport,
-	onTraktImportConfirm: _onTraktImportConfirm,
+	onTraktImportConfirm,
 	onCsvUpload,
 	onSkipHistoryImport,
 	onComplete,
@@ -149,6 +152,10 @@ export function OnboardingContent({
 		visibleStepDetails[visibleStep - 1] ?? visibleStepDetails[0];
 	const isTraktImporting =
 		activeTab === "trakt" && importProgress.phase === "fetching_trakt";
+	const isTraktImportQueued =
+		activeTab === "trakt" &&
+		traktPreview !== null &&
+		traktQueuedImport !== null;
 	const showImportStatusAboveInput =
 		importProgress.phase !== "idle" && !isTraktImporting;
 	const followMessage = getFollowImportMessage(
@@ -470,9 +477,9 @@ export function OnboardingContent({
 									<p className="md-label-large m-0">{importProgress.message}</p>
 									{importProgress.phase === "preview_ready" && traktPreview ? (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-											Preview loaded from {traktPreview.sourcePreviewCount}{" "}
-											recent Trakt history rows. The full import will keep
-											running in the background.
+											{isTraktImportQueued
+												? `Preview loaded from ${traktQueuedImport.sourcePreviewCount} recent Trakt history rows. The full import will keep running in the background.`
+												: `${traktPreview.importableCount} importable items found from ${traktPreview.sourceCount} Trakt history rows.`}
 										</p>
 									) : (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
@@ -533,8 +540,8 @@ export function OnboardingContent({
 										/>
 									</label>
 									<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-										We fetch the Trakt profile and recent plays first, then keep
-										importing your full watch history in the background.
+										We fetch the Trakt profile and recent plays first so you can
+										confirm the account before importing.
 									</p>
 									<M3Button
 										variant="filled"
@@ -545,7 +552,7 @@ export function OnboardingContent({
 											? "Working..."
 											: traktPreview
 												? "Refresh preview"
-												: "Start background import"}
+												: "Fetch preview"}
 									</M3Button>
 									{isTraktImporting ? (
 										<div className="grid gap-3 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
@@ -589,18 +596,25 @@ export function OnboardingContent({
 												</div>
 												<div className="grid gap-2 text-right">
 													<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
-														Background import
+														{isTraktImportQueued
+															? "Background import"
+															: "Ready to import"}
 													</p>
 													<p className="md-headline-small m-0 text-(--md-sys-color-primary)">
-														Queued
+														{isTraktImportQueued
+															? "Queued"
+															: traktPreview.importableCount}
 													</p>
 												</div>
 											</div>
 
-											<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-												We&apos;ll keep importing the full Trakt history for
-												this account on the server while you finish onboarding.
-											</p>
+											{isTraktImportQueued ? (
+												<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+													We&apos;ll keep importing the full Trakt history for
+													this account on the server while you finish
+													onboarding.
+												</p>
+											) : null}
 
 											<div className="grid gap-2">
 												<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
@@ -638,6 +652,19 @@ export function OnboardingContent({
 													</p>
 												)}
 											</div>
+
+											{!isTraktImportQueued ? (
+												<M3Button
+													variant="filled"
+													onClick={onTraktImportConfirm}
+													disabled={
+														isImportBusy || traktPreview.importableCount < 1
+													}
+												>
+													Import {traktPreview.importableCount} item
+													{traktPreview.importableCount === 1 ? "" : "s"}
+												</M3Button>
+											) : null}
 										</div>
 									) : null}
 								</div>
@@ -694,7 +721,7 @@ export function OnboardingContent({
 								>
 									{isCompleting
 										? "Finishing..."
-										: activeTab === "trakt" && traktPreview
+										: isTraktImportQueued
 											? "Continue"
 											: "Skip import"}
 								</M3Button>

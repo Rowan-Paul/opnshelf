@@ -18,6 +18,7 @@ import type {
 	OnboardingImportResult,
 	TabValue,
 	TraktImportPreview,
+	TraktQueuedImport,
 } from "./types";
 import { styles } from "./styles";
 
@@ -28,6 +29,7 @@ type OnboardingContentProps = {
 	activeTab: TabValue;
 	traktUsername: string;
 	traktPreview: TraktImportPreview | null;
+	traktQueuedImport: TraktQueuedImport | null;
 	displayName: string;
 	avatarPreviewUri: string | null;
 	avatarErrorMessage: string | null;
@@ -68,6 +70,7 @@ export function OnboardingContent({
 	activeTab,
 	traktUsername,
 	traktPreview,
+	traktQueuedImport,
 	displayName,
 	avatarPreviewUri,
 	avatarErrorMessage,
@@ -157,6 +160,7 @@ export function OnboardingContent({
 						activeTab={activeTab}
 						traktUsername={traktUsername}
 						traktPreview={traktPreview}
+						traktQueuedImport={traktQueuedImport}
 						csvFileName={csvFileName}
 						importProgress={importProgress}
 						importPercent={importPercent}

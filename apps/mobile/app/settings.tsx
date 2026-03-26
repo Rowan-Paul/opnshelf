@@ -33,6 +33,7 @@ import {
 	toMultipartUploadValue,
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
+import { clearDismissedTraktImportJobIds } from "@/lib/trakt-import-dismissal";
 
 function getErrorMessage(error: unknown, fallback: string): string {
 	if (error instanceof Error && error.message) {
@@ -114,6 +115,9 @@ export default function SettingsScreen() {
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: async (_, variables) => {
+			if (user?.did) {
+				await clearDismissedTraktImportJobIds(user.did);
+			}
 			showToast("Account deleted", "success");
 			posthog.capture("account_deleted", {
 				deleted_pds_data: Boolean(variables?.body?.deletePDSData),

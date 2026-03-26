@@ -1,28 +1,40 @@
 // Export generated SDK
-export * from './generated/index';
+
+// Re-export auth utilities from custom client wrapper
+export {
+	type AuthUser,
+	type BlueskyProfileStatus,
+	configureApiClient,
+	getBlueskyProfileStatus,
+	getLoginUrl,
+	getSessionToken,
+	getSignupUrl,
+	setOnUnauthorized,
+	setSessionToken,
+} from "./client";
 
 // Export TanStack Query hooks
-export * from './generated/@tanstack/react-query.gen';
-
+export * from "./generated/@tanstack/react-query.gen";
+export type {
+	Client,
+	ClientOptions,
+	Config,
+	Options,
+} from "./generated/client/index";
+export { createClient, createConfig } from "./generated/client/index";
 // Export client configuration utilities
-export { client } from './generated/client.gen';
-export { createClient, createConfig } from './generated/client/index';
-export type { Client, ClientOptions, Config, Options } from './generated/client/index';
+export { client } from "./generated/client.gen";
+export * from "./generated/index";
 export {
 	getYouTubeEmbedUrl,
 	getYouTubeThumbnailUrl,
 	resolveDetailTrailer,
-} from './trailer';
-
-// Re-export auth utilities from custom client wrapper
+} from "./trailer";
+export type { TraktImportStatusJob } from "./trakt-import-status";
 export {
-	setOnUnauthorized,
-	setSessionToken,
-	getSessionToken,
-	configureApiClient,
-	getLoginUrl,
-	getSignupUrl,
-	getBlueskyProfileStatus,
-	type AuthUser,
-	type BlueskyProfileStatus,
-} from './client';
+	getTraktImportStatusMessage,
+	getTraktImportStatusProgress,
+	isActiveTraktImportStatus,
+	isKnownTraktImportStatus,
+	isTerminalTraktImportStatus,
+} from "./trakt-import-status";

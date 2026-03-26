@@ -4,6 +4,7 @@ import {
 	listsControllerGetUserListsOptions,
 	shelfControllerGetUserShelfOptions,
 	usersControllerCompleteOnboardingMutation,
+	usersControllerFetchMyTraktPublicHistoryMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerImportMyBlueskyFollowsMutation,
@@ -28,6 +29,7 @@ import type {
 	OnboardingImportResult,
 	TabValue,
 	TraktImportPreview,
+	TraktQueuedImport,
 } from "@/components/onboarding/types";
 import { getSocialDisplayName } from "@/components/social/social-display";
 import {
@@ -43,7 +45,7 @@ export const Route = createFileRoute("/onboarding")({
 	component: OnboardingPage,
 });
 
-function OnboardingPage() {
+export function OnboardingPage() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const createIdleImportProgress = (): ImportProgressState => ({
@@ -64,6 +66,8 @@ function OnboardingPage() {
 	const [traktPreview, setTraktPreview] = useState<TraktImportPreview | null>(
 		null,
 	);
+	const [traktQueuedImport, setTraktQueuedImport] =
+		useState<TraktQueuedImport | null>(null);
 	const [displayName, setDisplayName] = useState("");
 	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
 		null,
@@ -123,6 +127,11 @@ function OnboardingPage() {
 		},
 	});
 
+	const fetchTraktMutation = useMutation({
+		mutationKey: ["users", "trakt", "history", "fetch"],
+		...usersControllerFetchMyTraktPublicHistoryMutation(),
+	});
+
 	const startTraktMutation = useMutation({
 		mutationKey: ["users", "trakt", "history", "start"],
 		...usersControllerStartMyTraktImportMutation(),
@@ -177,7 +186,9 @@ function OnboardingPage() {
 		[totalSteps, visibleStep],
 	);
 	const isImporting =
-		startTraktMutation.isPending || importHistoryMutation.isPending;
+		fetchTraktMutation.isPending ||
+		startTraktMutation.isPending ||
+		importHistoryMutation.isPending;
 	const isImportBusy = isImporting || importProgress.phase === "parsing_csv";
 	const importPercent =
 		importProgress.totalItems > 0
@@ -355,6 +366,7 @@ function OnboardingPage() {
 
 		try {
 			setTraktPreview(null);
+			setTraktQueuedImport(null);
 			setImportProgress({
 				phase: "fetching_trakt",
 				totalItems: 0,
@@ -368,30 +380,70 @@ function OnboardingPage() {
 				message: "Fetching public history from Trakt...",
 			});
 
-			const fetched = await startTraktMutation.mutateAsync({
+			const fetched = await fetchTraktMutation.mutateAsync({
 				body: {
 					username,
 				},
 			});
 			setTraktPreview(fetched);
-			void queryClient.invalidateQueries({
-				queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
-			});
 
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "preview_ready",
-				totalItems: fetched.job.normalizedCount,
-				message: `Background import queued for @${fetched.profile.username}. We'll keep importing your full history while you continue setup.`,
+				totalItems: fetched.importableCount,
+				message:
+					fetched.importableCount > 0
+						? `Preview ready for @${fetched.profile.username}`
+						: `No importable items found for @${fetched.profile.username}`,
 			}));
-			toast.success(
-				`Background import started for @${fetched.profile.username}`,
-			);
+			if (!fetched.importableCount) {
+				toast.message("No supported watch history items found");
+			}
 		} catch (error) {
 			const message =
 				error instanceof Error
 					? error.message
 					: "Unable to fetch Trakt history right now";
+			setImportProgress((prev) => ({
+				...prev,
+				phase: "error",
+				message,
+			}));
+			toast.error(message);
+		}
+	};
+
+	const handleConfirmTraktImport = async () => {
+		if (!traktPreview || traktPreview.importableCount < 1) {
+			return;
+		}
+
+		try {
+			const started = await startTraktMutation.mutateAsync({
+				body: {
+					username: traktUsername.trim(),
+				},
+			});
+			setTraktQueuedImport({
+				sourcePreviewCount: started.sourcePreviewCount,
+				job: started.job,
+			});
+			void queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
+			});
+			setImportProgress((prev) => ({
+				...prev,
+				phase: "preview_ready",
+				message: `Background import queued for @${started.profile.username}. We'll keep importing your full history while you continue setup.`,
+			}));
+			toast.success(
+				`Background import started for @${started.profile.username}`,
+			);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Unable to import Trakt history right now";
 			setImportProgress((prev) => ({
 				...prev,
 				phase: "error",
@@ -479,6 +531,7 @@ function OnboardingPage() {
 			activeTab={activeTab}
 			traktUsername={traktUsername}
 			traktPreview={traktPreview}
+			traktQueuedImport={traktQueuedImport}
 			displayName={displayName}
 			timezone={timezone}
 			timeFormat={timeFormat}
@@ -501,17 +554,27 @@ function OnboardingPage() {
 				setActiveTab(tab);
 				if (tab !== "trakt") {
 					setTraktPreview(null);
+					setTraktQueuedImport(null);
 					setImportProgress((prev) =>
-						prev.phase === "preview_ready" ? createIdleImportProgress() : prev,
+						prev.phase === "preview_ready" || prev.phase === "error"
+							? createIdleImportProgress()
+							: prev,
 					);
 				}
 			}}
 			onTraktUsernameChange={(value) => {
 				setTraktUsername(value);
-				if (traktPreview) {
+				if (
+					traktPreview ||
+					traktQueuedImport ||
+					importProgress.phase === "error"
+				) {
 					setTraktPreview(null);
+					setTraktQueuedImport(null);
 					setImportProgress((prev) =>
-						prev.phase === "preview_ready" ? createIdleImportProgress() : prev,
+						prev.phase === "preview_ready" || prev.phase === "error"
+							? createIdleImportProgress()
+							: prev,
 					);
 				}
 			}}
@@ -553,7 +616,9 @@ function OnboardingPage() {
 			onTraktImport={() => {
 				void handleTraktImport();
 			}}
-			onTraktImportConfirm={() => {}}
+			onTraktImportConfirm={() => {
+				void handleConfirmTraktImport();
+			}}
 			onCsvUpload={(file) => {
 				void handleCsvUpload(file);
 			}}

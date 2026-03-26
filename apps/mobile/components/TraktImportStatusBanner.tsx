@@ -1,4 +1,11 @@
-import { usersControllerGetMyCurrentTraktImportOptions } from "@opnshelf/api";
+import {
+	getTraktImportStatusMessage,
+	getTraktImportStatusProgress,
+	isActiveTraktImportStatus,
+	isKnownTraktImportStatus,
+	isTerminalTraktImportStatus,
+	usersControllerGetMyCurrentTraktImportOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
@@ -9,9 +16,6 @@ import {
 	dismissTraktImportJob,
 	loadDismissedTraktImportJobIds,
 } from "@/lib/trakt-import-dismissal";
-
-const ACTIVE_STATUSES = ["queued", "running", "waiting_retry"] as const;
-const TERMINAL_STATUSES = ["completed", "failed"] as const;
 const MIN_BOTTOM_OFFSET = 12;
 
 type TraktImportStatusBannerProps = {
@@ -36,7 +40,7 @@ export function TraktImportStatusBanner({
 		staleTime: 0,
 		refetchInterval: (query) => {
 			const value = query.state.data;
-			return value && isActiveStatus(value.status) ? 5_000 : false;
+			return value && isActiveTraktImportStatus(value.status) ? 5_000 : false;
 		},
 	});
 
@@ -72,17 +76,23 @@ export function TraktImportStatusBanner({
 			setDismissedJobId(null);
 			return;
 		}
-		if (isActiveStatus(job.status)) {
+		if (isActiveTraktImportStatus(job.status)) {
 			setDismissedJobId(null);
 		}
 	}, [job]);
 
-	const isTerminalJob = job ? isTerminalStatus(job.status) : false;
+	const statusMessage = job ? getTraktImportStatusMessage(job) : null;
+	const progress = job ? getTraktImportStatusProgress(job) : null;
+	const isKnownStatus = job ? isKnownTraktImportStatus(job.status) : false;
+	const isTerminalJob = job ? isTerminalTraktImportStatus(job.status) : false;
 	const isPersistentlyDismissed =
 		job && isTerminalJob && dismissedTerminalJobIds.includes(job.id);
 
 	if (
+		!user?.did ||
 		!job ||
+		!isKnownStatus ||
+		!statusMessage ||
 		dismissedJobId === job.id ||
 		isPersistentlyDismissed ||
 		(isTerminalJob && !isDismissalReady)
@@ -91,12 +101,12 @@ export function TraktImportStatusBanner({
 	}
 
 	const handleDismiss = async () => {
-		if (isActiveStatus(job.status)) {
+		if (isActiveTraktImportStatus(job.status)) {
 			setDismissedJobId(job.id);
 			return;
 		}
 
-		if (!user?.did || !isTerminalStatus(job.status)) {
+		if (!user?.did || !isTerminalTraktImportStatus(job.status)) {
 			setDismissedJobId(job.id);
 			return;
 		}
@@ -125,78 +135,64 @@ export function TraktImportStatusBanner({
 					},
 				]}
 			>
-				<View style={styles.headerRow}>
-					<View style={styles.headerText}>
-						<Text style={[styles.kicker, { color: colors.primary }]}>
-							Trakt import
-						</Text>
-						<Text style={[styles.title, { color: colors.onSurface }]}>
-							{job.profileUsername
-								? `@${job.profileUsername}`
-								: job.traktUsername}
-						</Text>
-						<Text
-							style={[styles.message, { color: colors.onSurfaceVariant }]}
+				<View style={styles.content}>
+					<View style={styles.headerRow}>
+						<View style={styles.headerText}>
+							<Text style={[styles.kicker, { color: colors.primary }]}>Trakt import</Text>
+							<Text style={[styles.title, { color: colors.onSurface }]}>
+								{job.profileUsername
+									? `@${job.profileUsername}`
+									: job.traktUsername}
+							</Text>
+							<Text
+								style={[styles.message, { color: colors.onSurfaceVariant }]}
+							>
+								{statusMessage}
+							</Text>
+						</View>
+						<Pressable
+							onPress={() => void handleDismiss()}
+							style={[
+								styles.dismissButton,
+								{ borderColor: colors.outlineVariant },
+							]}
 						>
-							{getStatusMessage(job)}
-						</Text>
+							<Text
+								style={[styles.dismissLabel, { color: colors.onSurfaceVariant }]}
+							>
+								Dismiss
+							</Text>
+						</Pressable>
 					</View>
-					<Pressable
-						onPress={() => void handleDismiss()}
-						style={[
-							styles.dismissButton,
-							{ borderColor: colors.outlineVariant },
-						]}
-					>
-						<Text
-							style={[styles.dismissLabel, { color: colors.onSurfaceVariant }]}
-						>
-							Dismiss
-						</Text>
-					</Pressable>
+					{progress !== null ? (
+						<View style={styles.progressGroup}>
+							<View
+								style={[
+									styles.progressTrack,
+									{ backgroundColor: colors.surfaceContainerHighest },
+								]}
+							>
+								<View
+									style={[
+										styles.progressFill,
+										{
+											backgroundColor: colors.primary,
+											width: `${progress}%`,
+										},
+									]}
+								/>
+							</View>
+							<Text
+								style={[styles.progressLabel, { color: colors.onSurfaceVariant }]}
+							>
+								{progress}% complete
+							</Text>
+						</View>
+					) : null}
 				</View>
 			</View>
 		</View>
 	);
-}
-
-function isActiveStatus(status: string): boolean {
-	return ACTIVE_STATUSES.includes(
-		status as (typeof ACTIVE_STATUSES)[number],
-	);
-}
-
-function isTerminalStatus(status: string): boolean {
-	return TERMINAL_STATUSES.includes(
-		status as (typeof TERMINAL_STATUSES)[number],
-	);
-}
-
-function getStatusMessage(job: {
-	status: string;
-	currentPage: number;
-	totalPages?: number;
-	importedCount: number;
-	skippedCount: number;
-	failedCount: number;
-	lastError?: string;
-}): string {
-	if (job.status === "queued") {
-		return "Queued on the server. We’ll keep importing your full watch history in the background.";
-	}
-	if (job.status === "waiting_retry") {
-		return job.lastError ?? "Waiting for Trakt rate limits to reset before retrying.";
-	}
-	if (job.status === "running") {
-		const pageLabel = job.totalPages
-			? `Page ${job.currentPage} of ${job.totalPages}`
-			: `Page ${job.currentPage}`;
-		return `${pageLabel}. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
-	}
-	if (job.status === "completed") {
-		return `Finished. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
-	}
-	return job.lastError ?? "Import failed. You can retry from onboarding later.";
 }
 
 const styles = StyleSheet.create({
@@ -215,6 +211,9 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.18,
 		shadowRadius: 18,
 		elevation: 8,
+	},
+	content: {
+		gap: 12,
 	},
 	headerRow: {
 		alignItems: "flex-start",
@@ -239,6 +238,22 @@ const styles = StyleSheet.create({
 	message: {
 		fontSize: 13,
 		lineHeight: 18,
+	},
+	progressGroup: {
+		gap: 6,
+	},
+	progressTrack: {
+		borderRadius: 999,
+		height: 8,
+		overflow: "hidden",
+	},
+	progressFill: {
+		borderRadius: 999,
+		height: "100%",
+	},
+	progressLabel: {
+		fontSize: 12,
+		fontWeight: "500",
 	},
 	dismissButton: {
 		borderRadius: 999,

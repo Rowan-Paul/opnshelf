@@ -61,6 +61,7 @@ import {
 import { getProfileRoute, isOwnerProfile } from "@/lib/profile-routes";
 import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 import { TIMEZONE_GROUPS } from "@/lib/timezones";
+import { clearDismissedTraktImportJobIds } from "@/lib/trakt-import-dismissal";
 
 export const Route = createFileRoute("/profile/$handle/settings")({
 	beforeLoad: async ({ context, params }) => {
@@ -191,14 +192,16 @@ function SettingsPage() {
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
 		onSuccess: () => {
+			if (user?.did) {
+				clearDismissedTraktImportJobIds(user.did);
+			}
 			posthog.capture("account_deleted", {
 				deleted_pds_data: deletePDSData,
 			});
 			posthog.reset();
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
-			queryClient.setQueryData(authControllerMeQueryKey(), null);
-			queryClient.removeQueries({ queryKey: authControllerMeQueryKey() });
+			queryClient.clear();
 			router.navigate({ to: "/" });
 		},
 		onError: (error) => {

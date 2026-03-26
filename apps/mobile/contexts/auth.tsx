@@ -107,12 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const logout = useCallback(async () => {
 		await saveSessionToken(null);
 		setHasSessionToken(false);
-		// Set user to null immediately to update UI, then remove queries
-		// Use the exact query key structure created by authControllerMeQueryKey()
 		const meQueryKey = authControllerMeQueryKey();
 		queryClient.setQueryData(meQueryKey, null);
-		queryClient.removeQueries({ queryKey: meQueryKey });
-		queryClient.removeQueries({ queryKey: ["moviesControllerGetUserMovies"] });
+		queryClient.clear();
 	}, [queryClient]);
 
 	const handleAuthCallback = useCallback(

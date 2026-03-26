@@ -1,4 +1,11 @@
-import { usersControllerGetMyCurrentTraktImportOptions } from "@opnshelf/api";
+import {
+	getTraktImportStatusMessage,
+	getTraktImportStatusProgress,
+	isActiveTraktImportStatus,
+	isKnownTraktImportStatus,
+	isTerminalTraktImportStatus,
+	usersControllerGetMyCurrentTraktImportOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -6,9 +13,6 @@ import {
 	dismissTraktImportJob,
 	loadDismissedTraktImportJobIds,
 } from "@/lib/trakt-import-dismissal";
-
-const ACTIVE_STATUSES = ["queued", "running", "waiting_retry"] as const;
-const TERMINAL_STATUSES = ["completed", "failed"] as const;
 
 type TraktImportStatusToastProps = {
 	enabled: boolean;
@@ -32,7 +36,7 @@ export function TraktImportStatusToast({
 		staleTime: 0,
 		refetchInterval: (query) => {
 			const value = query.state.data;
-			return value && isActiveStatus(value.status) ? 5_000 : false;
+			return value && isActiveTraktImportStatus(value.status) ? 5_000 : false;
 		},
 	});
 
@@ -56,17 +60,24 @@ export function TraktImportStatusToast({
 			setDismissedJobId(null);
 			return;
 		}
-		if (isActiveStatus(job.status)) {
+		if (isActiveTraktImportStatus(job.status)) {
 			setDismissedJobId(null);
 		}
 	}, [job]);
 
-	const isTerminalJob = job ? isTerminalStatus(job.status) : false;
+	const statusMessage = job ? getTraktImportStatusMessage(job) : null;
+	const progress = job ? getTraktImportStatusProgress(job) : null;
+	const isKnownStatus = job ? isKnownTraktImportStatus(job.status) : false;
+	const isTerminalJob = job ? isTerminalTraktImportStatus(job.status) : false;
 	const isPersistentlyDismissed =
 		job && isTerminalJob && dismissedTerminalJobIds.includes(job.id);
 
 	if (
+		!enabled ||
+		!userDid ||
 		!job ||
+		!isKnownStatus ||
+		!statusMessage ||
 		dismissedJobId === job.id ||
 		isPersistentlyDismissed ||
 		(isTerminalJob && !isDismissalReady) ||
@@ -76,12 +87,12 @@ export function TraktImportStatusToast({
 	}
 
 	const handleDismiss = () => {
-		if (isActiveStatus(job.status)) {
+		if (isActiveTraktImportStatus(job.status)) {
 			setDismissedJobId(job.id);
 			return;
 		}
 
-		if (!userDid || !isTerminalStatus(job.status)) {
+		if (!userDid || !isTerminalTraktImportStatus(job.status)) {
 			setDismissedJobId(job.id);
 			return;
 		}
@@ -92,69 +103,45 @@ export function TraktImportStatusToast({
 	return createPortal(
 		<div className="pointer-events-none fixed right-4 bottom-4 left-4 z-50 md:right-6 md:bottom-6 md:left-auto md:w-[360px]">
 			<div className="pointer-events-auto w-full rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) p-4 shadow-lg">
-				<div className="flex items-start justify-between gap-3">
-					<div className="grid gap-1">
-						<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
-							Trakt import
-						</p>
-						<p className="md-title-medium m-0">
-							{job.profileUsername
-								? `@${job.profileUsername}`
-								: job.traktUsername}
-						</p>
-						<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-							{getStatusMessage(job)}
-						</p>
+				<div className="grid gap-3">
+					<div className="flex items-start justify-between gap-3">
+						<div className="grid gap-1">
+							<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
+								Trakt import
+							</p>
+							<p className="md-title-medium m-0">
+								{job.profileUsername
+									? `@${job.profileUsername}`
+									: job.traktUsername}
+							</p>
+							<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+								{statusMessage}
+							</p>
+						</div>
+						<button
+							type="button"
+							className="rounded-full border border-(--md-sys-color-outline-variant) px-2 py-1 text-xs text-(--md-sys-color-on-surface-variant)"
+							onClick={handleDismiss}
+						>
+							Dismiss
+						</button>
 					</div>
-					<button
-						type="button"
-						className="rounded-full border border-(--md-sys-color-outline-variant) px-2 py-1 text-xs text-(--md-sys-color-on-surface-variant)"
-						onClick={handleDismiss}
-					>
-						Dismiss
-					</button>
+					{progress !== null ? (
+						<div className="grid gap-1">
+							<div className="h-2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-highest)">
+								<div
+									className="h-full rounded-full bg-(--md-sys-color-primary) transition-[width] duration-300"
+									style={{ width: `${progress}%` }}
+								/>
+							</div>
+							<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
+								{progress}% complete
+							</p>
+						</div>
+					) : null}
 				</div>
 			</div>
 		</div>,
 		portalTarget,
 	);
-}
-
-function isActiveStatus(status: string): boolean {
-	return ACTIVE_STATUSES.includes(status as (typeof ACTIVE_STATUSES)[number]);
-}
-
-function isTerminalStatus(status: string): boolean {
-	return TERMINAL_STATUSES.includes(
-		status as (typeof TERMINAL_STATUSES)[number],
-	);
-}
-
-function getStatusMessage(job: {
-	status: string;
-	currentPage: number;
-	totalPages?: number;
-	importedCount: number;
-	skippedCount: number;
-	failedCount: number;
-	lastError?: string;
-}): string {
-	if (job.status === "queued") {
-		return "Queued on the server. We’ll keep importing your full watch history in the background.";
-	}
-	if (job.status === "waiting_retry") {
-		return (
-			job.lastError ?? "Waiting for Trakt rate limits to reset before retrying."
-		);
-	}
-	if (job.status === "running") {
-		const pageLabel = job.totalPages
-			? `Page ${job.currentPage} of ${job.totalPages}`
-			: `Page ${job.currentPage}`;
-		return `${pageLabel}. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
-	}
-	if (job.status === "completed") {
-		return `Finished. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
-	}
-	return job.lastError ?? "Import failed. You can retry from onboarding later.";
 }

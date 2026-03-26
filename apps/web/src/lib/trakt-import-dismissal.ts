@@ -52,3 +52,11 @@ export function dismissTraktImportJob(
 
 	return nextJobIds;
 }
+
+export function clearDismissedTraktImportJobIds(userDid: string) {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	window.localStorage.removeItem(getStorageKey(userDid));
+}
