@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { publishSignedOutAuthState } from "@/lib/auth-cache";
 import {
 	AVATAR_UPLOAD_HELP_TEXT,
 	getAvatarUploadErrorMessage,
@@ -191,7 +192,7 @@ function SettingsPage() {
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
-		onSuccess: () => {
+		onSuccess: async () => {
 			if (user?.did) {
 				clearDismissedTraktImportJobIds(user.did);
 			}
@@ -201,7 +202,7 @@ function SettingsPage() {
 			posthog.reset();
 			setShowDeleteDialog(false);
 			toast.success("Account deleted");
-			queryClient.clear();
+			await publishSignedOutAuthState(queryClient);
 			router.navigate({ to: "/" });
 		},
 		onError: (error) => {

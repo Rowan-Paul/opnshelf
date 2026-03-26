@@ -22,6 +22,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { publishSignedOutAuthState } from "@/lib/auth-cache";
 import { cn } from "@/lib/utils";
 import {
 	type GlobalNavItem,
@@ -68,8 +69,8 @@ export default function Header({ user, isAuthLoading }: HeaderProps) {
 	const logoutMutation = useMutation({
 		mutationKey: ["auth", "logout"],
 		...authControllerLogoutMutation(),
-		onSuccess: () => {
-			queryClient.clear();
+		onSuccess: async () => {
+			await publishSignedOutAuthState(queryClient);
 			navigate({ to: "/" });
 		},
 	});

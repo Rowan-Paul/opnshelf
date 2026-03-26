@@ -1,9 +1,8 @@
-import { authControllerMeOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { DashboardHomePage } from "@/components/home/DashboardHomePage";
 import { LandingHomePage } from "@/components/home/LandingHomePage";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
@@ -19,12 +18,8 @@ export const Route = createFileRoute("/")({
 	component: HomePage,
 });
 
-function HomePage() {
-	const { data: user, isLoading: isUserLoading } = useQuery({
-		...authControllerMeOptions(),
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
+export function HomePage() {
+	const { data: user, isLoading: isUserLoading } = useCurrentUser();
 
 	if (isUserLoading) {
 		return <AuthLoadingState className="max-w-6xl py-16" />;
