@@ -8,11 +8,11 @@ import { LandingHomePage } from "@/components/home/LandingHomePage";
 export const Route = createFileRoute("/")({
 	head: () => ({
 		meta: [
-			{ title: "Track Movies and Shows | OpnShelf" },
+			{ title: "OpnShelf | Discover, Curate, and Own Your Watch History" },
 			{
 				name: "description",
 				content:
-					"Track movies and shows at movie, season, and episode level with watch history, lists, and AT Protocol account portability.",
+					"Browse movies and shows, build custom lists, import your history, and keep your data portable with AT Protocol identity.",
 			},
 		],
 	}),
