@@ -43,8 +43,9 @@ describe("HomePage", () => {
 		vi.clearAllMocks();
 
 		if (root) {
+			const mountedRoot = root;
 			act(() => {
-				root.unmount();
+				mountedRoot.unmount();
 			});
 		}
 
@@ -94,6 +95,10 @@ describe("HomePage", () => {
 			data: {
 				did: "did:plc:alice",
 				handle: "alice",
+				displayName: "Alice",
+				avatar: null,
+				onboardingCompletedAt: null,
+				needsOnboarding: false,
 			},
 			isLoading: false,
 		});

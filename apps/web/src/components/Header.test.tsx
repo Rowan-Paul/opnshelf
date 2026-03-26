@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { UserDto } from "@opnshelf/api";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -80,8 +81,9 @@ describe("Header logout", () => {
 		vi.clearAllMocks();
 
 		if (root) {
+			const mountedRoot = root;
 			act(() => {
-				root.unmount();
+				mountedRoot.unmount();
 			});
 		}
 
@@ -91,11 +93,7 @@ describe("Header logout", () => {
 		document.body.innerHTML = "";
 	});
 
-	function renderHeader(user: {
-		did: string;
-		handle: string;
-		displayName: string;
-	}) {
+	function renderHeader(user: UserDto) {
 		mockUseQueryClient.mockReturnValue({ name: "query-client" });
 		mockPublishSignedOutAuthState.mockResolvedValue(undefined);
 		mockUseMutation.mockImplementation(
@@ -125,6 +123,9 @@ describe("Header logout", () => {
 			did: "did:plc:alice",
 			handle: "alice",
 			displayName: "Alice",
+			avatar: null,
+			onboardingCompletedAt: null,
+			needsOnboarding: false,
 		});
 
 		const signOutButton = Array.from(document.querySelectorAll("button")).find(
