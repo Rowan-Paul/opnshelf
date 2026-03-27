@@ -261,6 +261,95 @@ describe("ShowsService", () => {
 		});
 	});
 
+	describe("syncShowMetadata", () => {
+		it("should upsert the show before upserting seasons", async () => {
+			mockPrismaService.season.findFirst.mockResolvedValue(null);
+			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+				null,
+			);
+			mockPrismaService.show.upsert.mockResolvedValue({
+				showId: "123",
+				title: "Test Show",
+			});
+			mockPrismaService.season.upsert.mockResolvedValue({
+				id: "season-1",
+			});
+			mockPrismaService.episode.upsert.mockResolvedValue({
+				id: "episode-1",
+			});
+
+			mockFetch
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 123,
+							name: "Test Show",
+							overview: "A test show",
+							first_air_date: "2024-01-01",
+							seasons: [
+								{
+									id: 10,
+									season_number: 1,
+									name: "Season 1",
+									poster_path: "/season.jpg",
+									air_date: "2024-01-01",
+									episode_count: 1,
+								},
+							],
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve({ results: [] }),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
+							id: 10,
+							name: "Season 1",
+							season_number: 1,
+							episodes: [
+								{
+									id: 100,
+									name: "Episode 1",
+									episode_number: 1,
+									still_path: "/episode.jpg",
+									air_date: "2024-01-02",
+									overview: "Episode overview",
+								},
+							],
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () => Promise.resolve({ results: [] }),
+				});
+
+			await service.syncShowMetadata("123");
+
+			expect(mockPrismaService.show.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { showId: "123" },
+				}),
+			);
+			expect(mockPrismaService.season.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						showId: "123",
+						seasonNumber: 1,
+					}),
+				}),
+			);
+			expect(
+				mockPrismaService.show.upsert.mock.invocationCallOrder[0],
+			).toBeLessThan(
+				mockPrismaService.season.upsert.mock.invocationCallOrder[0],
+			);
+		});
+	});
+
 	describe("getEpisodeContext", () => {
 		it("should move to the next aired episode across seasons", async () => {
 			mockPrismaService.episode.count.mockResolvedValue(0);

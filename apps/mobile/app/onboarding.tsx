@@ -45,6 +45,10 @@ import {
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
 import {
+	buildImportErrorList,
+	getSafeOnboardingErrorMessage,
+} from "@/lib/onboarding-errors";
+import {
 	type ImportProgressUpdate,
 	parseCsvText,
 	runImportInChunks,
@@ -338,10 +342,10 @@ export default function OnboardingScreen() {
 			setFollowImportStatus("success");
 		} catch (error) {
 			setFollowImportStatus("error");
-			const message =
-				error instanceof Error
-					? error.message
-					: "Could not import Bluesky following";
+			const message = getSafeOnboardingErrorMessage(
+				error,
+				"Could not import Bluesky following",
+			);
 			showToast(message, "error");
 		}
 	};
@@ -431,10 +435,10 @@ export default function OnboardingScreen() {
 				message: `Preview ready for @${fetched.profile.username}`,
 			}));
 		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "Unable to fetch Trakt history right now";
+			const message = getSafeOnboardingErrorMessage(
+				error,
+				"Could not fetch Trakt history right now.",
+			);
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "error",
@@ -467,10 +471,10 @@ export default function OnboardingScreen() {
 			}));
 			showToast(`Background import started for @${started.profile.username}`);
 		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "Unable to import Trakt history right now";
+			const message = getSafeOnboardingErrorMessage(
+				error,
+				"Could not start the Trakt import right now.",
+			);
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "error",
@@ -546,10 +550,10 @@ export default function OnboardingScreen() {
 				imported: imported.imported,
 				skipped: imported.skipped,
 				failed: imported.failed + parsed.errors.length,
-				errors: [
-					...parsed.errors.map((entry) => entry.message),
-					...imported.errors,
-				],
+				errors: buildImportErrorList(
+					parsed.errors.map((entry) => entry.message),
+					imported.errors,
+				),
 			});
 
 			setImportProgress((previous) => ({
@@ -561,8 +565,10 @@ export default function OnboardingScreen() {
 
 			setStep(5);
 		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "Unable to parse CSV file";
+			const message = getSafeOnboardingErrorMessage(
+				error,
+				"Could not import your history right now.",
+			);
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "error",

@@ -85,6 +85,18 @@ type TraktJobStatus =
 	| "completed"
 	| "failed";
 
+type ImportWriteFailureReason =
+	| "duplicate_record"
+	| "metadata_unavailable"
+	| "upstream_write_failed"
+	| "unknown";
+
+type ClassifiedImportWriteError = {
+	reason: ImportWriteFailureReason;
+	message: string;
+	rawMessage: string;
+};
+
 type BackgroundJobRecord = Awaited<
 	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
 >;
@@ -385,24 +397,27 @@ export class ImportHistoryService {
 				}
 
 				failed += 1;
-				const itemContext = this.describeImportItem(item);
 				errors.push({
 					index: index + 1,
 					code: "invalid_item",
-					message: `${itemContext}: missing required fields`,
+					message: "This item is missing required fields.",
 				});
 			} catch (error) {
-				failed += 1;
 				const itemContext = this.describeImportItem(item);
-				const rawMessage =
-					this.getErrorMessage(error) || "Failed to import watch item";
+				const classified = this.classifyImportWriteError(error);
 				this.logger.warn(
-					`Failed to import item at index ${index + 1}: ${rawMessage}`,
+					`Failed to import item at index ${index + 1} (${itemContext}): ${classified.rawMessage}`,
 				);
+				if (classified.reason === "duplicate_record") {
+					skipped += 1;
+					continue;
+				}
+				failed += 1;
 				errors.push({
 					index: index + 1,
 					code: "write_failed",
-					message: `${itemContext}: ${rawMessage}`,
+					reason: classified.reason,
+					message: classified.message,
 				});
 			}
 		}
@@ -1094,6 +1109,63 @@ export class ImportHistoryService {
 	private getRetryAfterSeconds(retryAfterSeconds?: number): number {
 		const boundedRetry = retryAfterSeconds ?? TRAKT_RETRY_FALLBACK_SECONDS;
 		return Math.max(1, Math.min(boundedRetry, TRAKT_RETRY_MAX_SECONDS));
+	}
+
+	private classifyImportWriteError(error: unknown): ClassifiedImportWriteError {
+		const rawMessage =
+			this.getErrorMessage(error) || "Failed to import watch item";
+		const normalizedMessage = rawMessage.toLowerCase();
+
+		if (
+			normalizedMessage.includes("unique constraint failed") ||
+			normalizedMessage.includes("duplicate key") ||
+			normalizedMessage.includes("duplicate") ||
+			normalizedMessage.includes("trackedmovie_rkey_key") ||
+			normalizedMessage.includes("trackedepisode_rkey_key") ||
+			normalizedMessage.includes("`rkey`")
+		) {
+			return {
+				reason: "duplicate_record",
+				message: "This watch was already imported.",
+				rawMessage,
+			};
+		}
+
+		if (
+			normalizedMessage.includes("tmdb") ||
+			normalizedMessage.includes("show details") ||
+			normalizedMessage.includes("movie details") ||
+			normalizedMessage.includes("metadata") ||
+			normalizedMessage.includes("season details") ||
+			normalizedMessage.includes("episode details")
+		) {
+			return {
+				reason: "metadata_unavailable",
+				message: "We couldn't fetch details for this title right now.",
+				rawMessage,
+			};
+		}
+
+		if (
+			normalizedMessage.includes("atproto") ||
+			normalizedMessage.includes("pds") ||
+			normalizedMessage.includes("putrecord") ||
+			normalizedMessage.includes("repo.putrecord") ||
+			normalizedMessage.includes("repo#putrecord") ||
+			normalizedMessage.includes("upstream")
+		) {
+			return {
+				reason: "upstream_write_failed",
+				message: "We couldn't save this watch right now. Please try again.",
+				rawMessage,
+			};
+		}
+
+		return {
+			reason: "unknown",
+			message: "We couldn't import this item.",
+			rawMessage,
+		};
 	}
 
 	private getErrorMessage(error: unknown): string {

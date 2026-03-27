@@ -720,6 +720,7 @@ export type ImportErrorDto = {
      */
     index: number;
     code: 'invalid_item' | 'already_exists' | 'write_failed' | 'duplicate_in_request';
+    reason?: 'duplicate_record' | 'metadata_unavailable' | 'upstream_write_failed' | 'unknown';
     message: string;
 };
 
@@ -1966,7 +1967,7 @@ export type UsersControllerGetMyAccountDeletionResponses = {
     /**
      * Current or most recent account deletion job, or null when none exists
      */
-    200: AccountDeletionJobDto | null;
+    200: AccountDeletionJobDto;
 };
 
 export type UsersControllerGetMyAccountDeletionResponse = UsersControllerGetMyAccountDeletionResponses[keyof UsersControllerGetMyAccountDeletionResponses];

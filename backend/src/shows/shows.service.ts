@@ -210,6 +210,7 @@ export class ShowsService {
 		}
 
 		const show = await this.showsTmdb.getShowDetails(showId);
+		await this.upsertShow(show);
 		const tmdbSeasons = (show.seasons ?? []).filter(
 			(s) => s.season_number !== 0,
 		);

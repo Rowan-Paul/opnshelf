@@ -124,6 +124,7 @@ describe("AuthService", () => {
 				},
 				stateStore: expect.any(Object),
 				sessionStore: expect.any(Object),
+				requestLock: expect.any(Function),
 				allowHttp: true,
 			});
 		});

@@ -1,4 +1,5 @@
 import { Agent } from "@atproto/api";
+import { requestLocalLock } from "@atproto/oauth-client-node";
 import {
 	NodeOAuthClient,
 	type OAuthClientMetadataInput,
@@ -116,6 +117,7 @@ export class AuthService implements OnModuleInit {
 				clientMetadata,
 				stateStore,
 				sessionStore,
+				requestLock: requestLocalLock,
 				// Allow HTTP for localhost development
 				allowHttp: oauthClientConfig.allowHttp,
 			});

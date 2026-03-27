@@ -128,7 +128,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 	return fallback;
 }
 
-function SettingsPage() {
+export function SettingsPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { seedColor } = useTheme();
@@ -137,6 +137,7 @@ function SettingsPage() {
 	const displayNameId = useId();
 	const posthog = usePostHog();
 	const avatarInputRef = useRef<HTMLInputElement | null>(null);
+	const deletionCompletionHandledRef = useRef(false);
 
 	const { data: user, isLoading: isAuthLoading } = useQuery({
 		...authControllerMeOptions(),
@@ -214,6 +215,11 @@ function SettingsPage() {
 	});
 
 	const handleDeletionComplete = useCallback(async () => {
+		if (deletionCompletionHandledRef.current) {
+			return;
+		}
+		deletionCompletionHandledRef.current = true;
+
 		if (user?.did) {
 			clearDismissedTraktImportJobIds(user.did);
 		}
@@ -768,6 +774,7 @@ function SettingsPage() {
 									: undefined
 							}
 							onRetry={() => {
+								deletionCompletionHandledRef.current = false;
 								setDeletionJobId(null);
 								setDeletePDSData(true);
 							}}
@@ -875,11 +882,12 @@ function SettingsPage() {
 								<M3Button
 									variant="filled"
 									className="bg-(--md-sys-color-error) text-(--md-sys-color-on-error) hover:brightness-110 active:brightness-95"
-									onClick={() =>
+									onClick={() => {
+										deletionCompletionHandledRef.current = false;
 										deleteAccountMutation.mutate({
 											body: { deletePDSData },
-										})
-									}
+										});
+									}}
 									disabled={deleteAccountMutation.isPending}
 								>
 									{deleteAccountMutation.isPending && (

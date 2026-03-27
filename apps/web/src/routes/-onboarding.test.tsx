@@ -285,15 +285,14 @@ describe("OnboardingPage Trakt flow", () => {
 		expect(mockFetchTrakt).toHaveBeenCalledWith({
 			body: { username: "alice" },
 		});
-		expect(container?.textContent).toContain(
-			"2 importable items found from 4 Trakt history rows.",
-		);
-		expect(container?.textContent).toContain("Import 2 items");
+		expect(container?.textContent).toContain("Trakt profile");
+		expect(container?.textContent).toContain("Last played items");
+		expect(container?.textContent).toContain("Start import");
 		expect(container?.textContent).not.toContain("Continue");
 
 		const confirmImportButton = Array.from(
 			container?.querySelectorAll("button") ?? [],
-		).find((button) => button.textContent?.includes("Import 2 items"));
+		).find((button) => button.textContent?.includes("Start import"));
 
 		await act(async () => {
 			confirmImportButton?.dispatchEvent(
@@ -308,7 +307,9 @@ describe("OnboardingPage Trakt flow", () => {
 			queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
 		});
 		expect(container?.textContent).toContain("Background import");
-		expect(container?.textContent).toContain("Queued");
+		expect(container?.textContent).toContain(
+			"We'll keep importing the full Trakt history",
+		);
 		expect(container?.textContent).toContain("Continue");
 
 		act(() => {
@@ -317,8 +318,10 @@ describe("OnboardingPage Trakt flow", () => {
 			}
 		});
 
-		expect(container?.textContent).not.toContain("Import 2 items");
-		expect(container?.textContent).not.toContain("Queued");
+		expect(container?.textContent).not.toContain("Start import");
+		expect(container?.textContent).not.toContain(
+			"We'll keep importing the full Trakt history",
+		);
 		expect(container?.textContent).toContain("Fetch preview");
 		expect(container?.textContent).toContain("Skip import");
 	});

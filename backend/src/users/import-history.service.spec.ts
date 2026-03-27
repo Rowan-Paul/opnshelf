@@ -465,4 +465,153 @@ describe("ImportHistoryService", () => {
 			}),
 		);
 	});
+
+	it("treats duplicate tracked movie races as skipped without exposing prisma errors", async () => {
+		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
+		(moviesService.markWatched as jest.Mock).mockResolvedValue({
+			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
+			cid: "cid-1",
+			rkey: "1",
+		});
+		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+			new Error("Unique constraint failed on the fields: (`rkey`)"),
+		);
+
+		const warnSpy = jest.spyOn(
+			(service as unknown as { logger: { warn: (message: string) => void } })
+				.logger,
+			"warn",
+		);
+
+		const result = await service.importNormalizedItems(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			[
+				{
+					type: "movie",
+					movieTmdbId: 329865,
+					watchedAt: "2026-03-22T12:00:00.000Z",
+					action: "watch",
+				},
+			],
+		);
+
+		expect(result).toEqual({
+			imported: 0,
+			skipped: 1,
+			failed: 0,
+			errors: [],
+		});
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Unique constraint failed on the fields"),
+		);
+	});
+
+	it("treats duplicate tracked episode races as skipped without exposing prisma errors", async () => {
+		prisma.trackedEpisode.findFirst = jest.fn().mockResolvedValue(null);
+		(showsService.markEpisodeWatched as jest.Mock).mockResolvedValue({
+			uri: "at://did:plc:abc/xyz.opnshelf.episode/1",
+			cid: "cid-1",
+			rkey: "1",
+		});
+		(showsService.indexTrackedEpisode as jest.Mock).mockRejectedValue(
+			new Error("Unique constraint failed on the fields: (`rkey`)"),
+		);
+
+		const result = await service.importNormalizedItems(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			[
+				{
+					type: "episode",
+					showTmdbId: 1399,
+					seasonNumber: 1,
+					episodeNumber: 1,
+					watchedAt: "2026-03-22T12:00:00.000Z",
+					action: "watch",
+				},
+			],
+		);
+
+		expect(result).toEqual({
+			imported: 0,
+			skipped: 1,
+			failed: 0,
+			errors: [],
+		});
+	});
+
+	it("returns sanitized unknown write failures", async () => {
+		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
+		(moviesService.markWatched as jest.Mock).mockResolvedValue({
+			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
+			cid: "cid-1",
+			rkey: "1",
+		});
+		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+			new Error("database exploded in production"),
+		);
+
+		const result = await service.importNormalizedItems(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			[
+				{
+					type: "movie",
+					movieTmdbId: 329865,
+					watchedAt: "2026-03-22T12:00:00.000Z",
+					action: "watch",
+				},
+			],
+		);
+
+		expect(result).toEqual({
+			imported: 0,
+			skipped: 0,
+			failed: 1,
+			errors: [
+				{
+					index: 1,
+					code: "write_failed",
+					reason: "unknown",
+					message: "We couldn't import this item.",
+				},
+			],
+		});
+		expect(JSON.stringify(result.errors)).not.toContain("database exploded");
+	});
+
+	it("returns sanitized metadata failures", async () => {
+		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
+		(moviesService.markWatched as jest.Mock).mockResolvedValue({
+			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
+			cid: "cid-1",
+			rkey: "1",
+		});
+		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+			new Error("TMDB movie details request failed"),
+		);
+
+		const result = await service.importNormalizedItems(
+			"did:plc:abc",
+			{ did: "did:plc:abc" },
+			[
+				{
+					type: "movie",
+					movieTmdbId: 329865,
+					watchedAt: "2026-03-22T12:00:00.000Z",
+					action: "watch",
+				},
+			],
+		);
+
+		expect(result.errors).toEqual([
+			{
+				index: 1,
+				code: "write_failed",
+				reason: "metadata_unavailable",
+				message: "We couldn't fetch details for this title right now.",
+			},
+		]);
+	});
 });

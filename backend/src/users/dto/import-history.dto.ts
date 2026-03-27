@@ -100,6 +100,20 @@ export class ImportErrorDto {
 		| "write_failed"
 		| "duplicate_in_request";
 
+	@ApiPropertyOptional({
+		enum: [
+			"duplicate_record",
+			"metadata_unavailable",
+			"upstream_write_failed",
+			"unknown",
+		],
+	})
+	reason?:
+		| "duplicate_record"
+		| "metadata_unavailable"
+		| "upstream_write_failed"
+		| "unknown";
+
 	@ApiProperty()
 	message: string;
 }
