@@ -165,7 +165,7 @@ export function OnboardingContent({
 
 	return (
 		<div className="flex flex-1 justify-center bg-(--md-sys-color-surface) p-4 md:p-6">
-			<div className="grid w-full max-w-6xl gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+			<div className="grid w-full max-w-7xl gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
 				<aside className="flex flex-col gap-5 rounded-(--md-sys-shape-corner-extra-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-low) p-5">
 					<p className="md-label-small m-0 uppercase tracking-[0.14em] text-(--md-sys-color-primary)">
 						Onboarding

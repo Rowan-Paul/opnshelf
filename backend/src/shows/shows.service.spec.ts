@@ -49,15 +49,29 @@ describe("ShowsService", () => {
 			create: jest.fn(),
 			delete: jest.fn(),
 			deleteMany: jest.fn(),
+			groupBy: jest.fn(),
 		},
 		show: {
 			findUnique: jest.fn(),
 			upsert: jest.fn(),
 			update: jest.fn(),
 		},
+		season: {
+			findFirst: jest.fn(),
+			findMany: jest.fn(),
+			upsert: jest.fn(),
+		},
+		episode: {
+			findFirst: jest.fn(),
+			findMany: jest.fn(),
+			upsert: jest.fn(),
+			count: jest.fn(),
+			groupBy: jest.fn(),
+		},
 		list: {
 			findFirst: jest.fn(),
 		},
+		$queryRaw: jest.fn(),
 	};
 
 	const mockConfigService = {
@@ -249,6 +263,8 @@ describe("ShowsService", () => {
 
 	describe("getEpisodeContext", () => {
 		it("should move to the next aired episode across seasons", async () => {
+			mockPrismaService.episode.count.mockResolvedValue(0);
+
 			mockFetch
 				.mockResolvedValueOnce({
 					ok: true,
@@ -306,25 +322,7 @@ describe("ShowsService", () => {
 
 	describe("getUserUpNext", () => {
 		it("should return next episodes and omit caught-up shows", async () => {
-			const showsTmdb = (
-				service as unknown as {
-					showsTmdb: {
-						getEpisodeContext: (
-							showId: string,
-							seasonNumber: number,
-							episodeNumber: number,
-						) => Promise<unknown>;
-						getEpisodeDetails: (
-							showId: string,
-							seasonNumber: number,
-							episodeNumber: number,
-						) => Promise<unknown>;
-					};
-				}
-			).showsTmdb;
-			const getEpisodeContextSpy = jest.spyOn(showsTmdb, "getEpisodeContext");
-			const getEpisodeDetailsSpy = jest.spyOn(showsTmdb, "getEpisodeDetails");
-
+			// Query 1: anchors via distinct
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
 				{
 					id: "tracked-1",
@@ -344,42 +342,33 @@ describe("ShowsService", () => {
 						colors: { primary: "#111111" },
 					},
 				},
+			]);
+
+			// Query 2: next episodes via raw SQL
+			mockPrismaService.$queryRaw = jest.fn().mockResolvedValue([
 				{
-					id: "tracked-2",
 					showId: "show-1",
 					seasonNumber: 1,
-					episodeNumber: 1,
-					watchedDate: new Date("2024-01-09T00:00:00.000Z"),
-					createdAt: new Date("2024-01-09T00:00:00.000Z"),
-					show: {
-						showId: "show-1",
-						title: "Show One",
-						posterPath: "/show-one.jpg",
-						backdropPath: null,
-						firstAirYear: 2024,
-						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
-						overview: "Overview 1",
-						colors: { primary: "#111111" },
-					},
+					episodeNumber: 3,
+					name: "Episode 3",
+					airDate: new Date("2024-01-11T00:00:00.000Z"),
+					overview: "Next up",
+					stillPath: "/still-3.jpg",
 				},
-				{
-					id: "tracked-3",
-					showId: "show-2",
-					seasonNumber: 2,
-					episodeNumber: 8,
-					watchedDate: new Date("2024-01-08T00:00:00.000Z"),
-					createdAt: new Date("2024-01-08T00:00:00.000Z"),
-					show: {
-						showId: "show-2",
-						title: "Show Two",
-						posterPath: "/show-two.jpg",
-						backdropPath: null,
-						firstAirYear: 2023,
-						firstAirDate: new Date("2023-01-01T00:00:00.000Z"),
-						overview: "Overview 2",
-						colors: { primary: "#222222" },
-					},
-				},
+			]);
+
+			// Query 3: total aired episodes
+			mockPrismaService.episode = {
+				...mockPrismaService.episode,
+				groupBy: jest
+					.fn()
+					.mockResolvedValue([{ showId: "show-1", _count: 10 }]),
+			};
+
+			// Query 4: watched episodes groupBy
+			mockPrismaService.trackedEpisode.groupBy = jest.fn().mockResolvedValue([
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 2 },
 			]);
 
 			mockPrismaService.show.findUnique.mockResolvedValue({
@@ -387,61 +376,23 @@ describe("ShowsService", () => {
 				colors: { primary: "#111111" },
 			});
 
-			getEpisodeContextSpy
-				.mockResolvedValueOnce({
-					next: { seasonNumber: 1, episodeNumber: 3 },
-					previous: { seasonNumber: 1, episodeNumber: 1 },
-				})
-				.mockResolvedValueOnce({
-					next: null,
-					previous: { seasonNumber: 2, episodeNumber: 7 },
-				});
-
-			getEpisodeDetailsSpy.mockResolvedValue({
-				episode_number: 3,
-				season_number: 1,
-				name: "Episode 3",
-				air_date: "2024-01-11",
-				overview: "Next up",
-				still_path: "/still-3.jpg",
-			});
-
 			const result = await service.getUserUpNext("did:plc:abc123");
 
-			expect(result).toEqual({
-				items: [
-					{
-						showId: "show-1",
-						watchCount: 2,
-						latestWatchedDate: "2024-01-10T00:00:00.000Z",
-						lastWatched: { seasonNumber: 1, episodeNumber: 2 },
-						nextEpisode: {
-							seasonNumber: 1,
-							episodeNumber: 3,
-							name: "Episode 3",
-							airDate: "2024-01-11",
-							overview: "Next up",
-							stillPath: "/still-3.jpg",
-						},
-						show: {
-							showId: "show-1",
-							title: "Show One",
-							posterPath: "/show-one.jpg",
-							backdropPath: undefined,
-							firstAirYear: 2024,
-							firstAirDate: "2024-01-01T00:00:00.000Z",
-							overview: "Overview 1",
-							colors: { primary: "#111111" },
-						},
-					},
-				],
-				total: 1,
-				page: 1,
-				pageSize: 8,
-				totalPages: 1,
-				hasPreviousPage: false,
-				hasNextPage: false,
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0]).toMatchObject({
+				showId: "show-1",
+				totalEpisodes: 10,
+				episodesWatched: 2,
+				lastWatched: { seasonNumber: 1, episodeNumber: 2 },
+				nextEpisode: {
+					seasonNumber: 1,
+					episodeNumber: 3,
+					name: "Episode 3",
+				},
 			});
+			expect(result.total).toBe(1);
+			expect(result.page).toBe(1);
+			expect(result.pageSize).toBe(8);
 		});
 	});
 

@@ -208,6 +208,14 @@ export class UpNextShowDto {
 	@ApiProperty()
 	watchCount: number;
 
+	@ApiProperty({ description: "Total aired non-special episodes for the show" })
+	totalEpisodes: number;
+
+	@ApiProperty({
+		description: "Distinct episodes the user has watched (non-special)",
+	})
+	episodesWatched: number;
+
 	@ApiProperty()
 	latestWatchedDate: string;
 
@@ -469,6 +477,24 @@ export class PaginatedUpNextQueryDto {
 	@Min(1)
 	@Max(50)
 	pageSize?: number;
+
+	@ApiPropertyOptional({
+		description: "Sort field",
+		enum: ["lastWatched", "title", "progress"],
+		default: "lastWatched",
+	})
+	@IsOptional()
+	@IsString()
+	sortBy?: "lastWatched" | "title" | "progress";
+
+	@ApiPropertyOptional({
+		description: "Sort direction",
+		enum: ["asc", "desc"],
+		default: "desc",
+	})
+	@IsOptional()
+	@IsString()
+	sortOrder?: "asc" | "desc";
 }
 
 export class PaginatedUpNextResponseDto {
@@ -494,6 +520,43 @@ export class PaginatedUpNextResponseDto {
 
 	@ApiProperty({ description: "Whether a next page exists" })
 	hasNextPage: boolean;
+}
+
+export class LocalSeasonDto {
+	@ApiProperty()
+	seasonNumber: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiPropertyOptional()
+	posterPath?: string | null;
+
+	@ApiPropertyOptional()
+	airDate?: string | null;
+
+	@ApiProperty({ description: "Number of episodes stored locally" })
+	episodeCount: number;
+}
+
+export class LocalEpisodeDto {
+	@ApiProperty()
+	episodeNumber: number;
+
+	@ApiProperty()
+	seasonNumber: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiPropertyOptional()
+	airDate?: string | null;
+
+	@ApiPropertyOptional()
+	overview?: string | null;
+
+	@ApiPropertyOptional()
+	stillPath?: string | null;
 }
 
 export class ReleaseCalendarItemDto {

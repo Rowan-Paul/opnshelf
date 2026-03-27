@@ -9,6 +9,7 @@ import {
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { Prisma } from "../generated/client";
 import {
 	ShowsTmdbService,
 	type TMDBCredits,
@@ -148,11 +149,7 @@ export class ShowsService {
 		previous: { seasonNumber: number; episodeNumber: number } | null;
 		next: { seasonNumber: number; episodeNumber: number } | null;
 	}> {
-		return this.showsTmdb.getEpisodeContext(
-			showId,
-			seasonNumber,
-			episodeNumber,
-		);
+		return this.getEpisodeContextLocal(showId, seasonNumber, episodeNumber);
 	}
 
 	async getShowByTMDBId(showId: string) {
@@ -195,6 +192,168 @@ export class ShowsService {
 				overview: showData.overview ?? null,
 				colors: colors ?? undefined,
 			},
+		});
+	}
+
+	async syncShowMetadata(showId: string): Promise<void> {
+		const STALE_MS = 24 * 60 * 60 * 1000;
+		const existingSeason = await this.prisma.season.findFirst({
+			where: { showId },
+			select: { updatedAt: true },
+			orderBy: { updatedAt: "desc" },
+		});
+		if (
+			existingSeason &&
+			Date.now() - existingSeason.updatedAt.getTime() < STALE_MS
+		) {
+			return;
+		}
+
+		const show = await this.showsTmdb.getShowDetails(showId);
+		const tmdbSeasons = (show.seasons ?? []).filter(
+			(s) => s.season_number !== 0,
+		);
+
+		for (const tmdbSeason of tmdbSeasons) {
+			let seasonDetail: TMDBSeason;
+			try {
+				seasonDetail = await this.showsTmdb.getSeasonDetails(
+					showId,
+					tmdbSeason.season_number,
+				);
+			} catch {
+				this.logger.warn(
+					`Failed to fetch season ${tmdbSeason.season_number} for show ${showId}`,
+				);
+				continue;
+			}
+
+			const season = await this.prisma.season.upsert({
+				where: {
+					showId_seasonNumber: {
+						showId,
+						seasonNumber: tmdbSeason.season_number,
+					},
+				},
+				create: {
+					tmdbId: tmdbSeason.id,
+					showId,
+					seasonNumber: tmdbSeason.season_number,
+					name: tmdbSeason.name,
+					posterPath: tmdbSeason.poster_path ?? null,
+					airDate: tmdbSeason.air_date ? new Date(tmdbSeason.air_date) : null,
+					episodeCount: tmdbSeason.episode_count ?? null,
+				},
+				update: {
+					tmdbId: tmdbSeason.id,
+					name: tmdbSeason.name,
+					posterPath: tmdbSeason.poster_path ?? null,
+					airDate: tmdbSeason.air_date ? new Date(tmdbSeason.air_date) : null,
+					episodeCount: tmdbSeason.episode_count ?? null,
+				},
+			});
+
+			const episodes = seasonDetail.episodes ?? [];
+			for (const ep of episodes) {
+				await this.prisma.episode.upsert({
+					where: {
+						showId_seasonNumber_episodeNumber: {
+							showId,
+							seasonNumber: tmdbSeason.season_number,
+							episodeNumber: ep.episode_number,
+						},
+					},
+					create: {
+						tmdbId: ep.id,
+						seasonId: season.id,
+						showId,
+						seasonNumber: tmdbSeason.season_number,
+						episodeNumber: ep.episode_number,
+						name: ep.name,
+						airDate: ep.air_date ? new Date(ep.air_date) : null,
+						overview: ep.overview ?? null,
+						stillPath: ep.still_path ?? null,
+					},
+					update: {
+						tmdbId: ep.id,
+						name: ep.name,
+						airDate: ep.air_date ? new Date(ep.air_date) : null,
+						overview: ep.overview ?? null,
+						stillPath: ep.still_path ?? null,
+					},
+				});
+			}
+		}
+	}
+
+	async getEpisodeContextLocal(
+		showId: string,
+		seasonNumber: number,
+		episodeNumber: number,
+	): Promise<{
+		previous: { seasonNumber: number; episodeNumber: number } | null;
+		next: { seasonNumber: number; episodeNumber: number } | null;
+	}> {
+		const hasLocalData = await this.prisma.episode.count({
+			where: { showId },
+		});
+		if (hasLocalData === 0) {
+			return this.showsTmdb.getEpisodeContext(
+				showId,
+				seasonNumber,
+				episodeNumber,
+			);
+		}
+
+		const [previous, next] = await Promise.all([
+			this.prisma.episode.findFirst({
+				where: {
+					showId,
+					seasonNumber: { not: 0 },
+					OR: [
+						{
+							seasonNumber,
+							episodeNumber: { lt: episodeNumber },
+						},
+						{ seasonNumber: { lt: seasonNumber, gt: 0 } },
+					],
+				},
+				orderBy: [{ seasonNumber: "desc" }, { episodeNumber: "desc" }],
+				select: { seasonNumber: true, episodeNumber: true },
+			}),
+			this.prisma.episode.findFirst({
+				where: {
+					showId,
+					seasonNumber: { not: 0 },
+					airDate: { not: null, lte: new Date() },
+					OR: [
+						{
+							seasonNumber,
+							episodeNumber: { gt: episodeNumber },
+						},
+						{ seasonNumber: { gt: seasonNumber } },
+					],
+				},
+				orderBy: [{ seasonNumber: "asc" }, { episodeNumber: "asc" }],
+				select: { seasonNumber: true, episodeNumber: true },
+			}),
+		]);
+
+		return { previous, next };
+	}
+
+	async getLocalSeasons(showId: string) {
+		return this.prisma.season.findMany({
+			where: { showId, seasonNumber: { not: 0 } },
+			orderBy: { seasonNumber: "asc" },
+			include: { _count: { select: { episodes: true } } },
+		});
+	}
+
+	async getLocalEpisodes(showId: string, seasonNumber: number) {
+		return this.prisma.episode.findMany({
+			where: { showId, seasonNumber },
+			orderBy: { episodeNumber: "asc" },
 		});
 	}
 
@@ -265,99 +424,210 @@ export class ShowsService {
 		return Array.from(showMap.values());
 	}
 
-	async getUserUpNext(userDid: string, page: number = 1, pageSize: number = 8) {
-		const trackedEpisodes = (await this.prisma.trackedEpisode.findMany({
-			where: { userDid },
+	async getUserUpNext(
+		userDid: string,
+		page: number = 1,
+		pageSize: number = 8,
+		sortBy: "lastWatched" | "title" | "progress" = "lastWatched",
+		sortOrder: "asc" | "desc" = "desc",
+	) {
+		// Query 1: one anchor per show via Prisma distinct (S0 excluded, tie-broken)
+		const anchors = (await this.prisma.trackedEpisode.findMany({
+			where: { userDid, seasonNumber: { not: 0 } },
+			orderBy: [
+				{ watchedDate: "desc" },
+				{ createdAt: "desc" },
+				{ seasonNumber: "desc" },
+				{ episodeNumber: "desc" },
+			],
+			distinct: ["showId"],
 			include: { show: true },
-			orderBy: [{ watchedDate: "desc" }, { createdAt: "desc" }],
 		})) as TrackedEpisodeWithShow[];
 
-		const showMap = new Map<
-			string,
-			{
-				latest: TrackedEpisodeWithShow;
-				watchCount: number;
-				latestWatchedDate: Date;
-			}
-		>();
-
-		for (const tracked of trackedEpisodes) {
-			const latestWatchedDate = tracked.watchedDate ?? tracked.createdAt;
-			const existing = showMap.get(tracked.showId);
-
-			if (!existing) {
-				showMap.set(tracked.showId, {
-					latest: tracked,
-					watchCount: 1,
-					latestWatchedDate,
-				});
-				continue;
-			}
-
-			existing.watchCount += 1;
+		if (anchors.length === 0) {
+			return {
+				items: [],
+				total: 0,
+				page: 1,
+				pageSize: Math.min(Math.max(pageSize, 1), 50),
+				totalPages: 0,
+				hasPreviousPage: false,
+				hasNextPage: false,
+			};
 		}
 
-		const allItems = await Promise.all(
-			Array.from(showMap.values()).map(
-				async ({ latest, watchCount, latestWatchedDate }) => {
-					try {
-						const context = await this.showsTmdb.getEpisodeContext(
-							latest.showId,
-							latest.seasonNumber,
-							latest.episodeNumber,
-						);
+		const showIds = anchors.map((a) => a.showId);
+		const _anchorMap = new Map(anchors.map((a) => [a.showId, a]));
+		const now = new Date();
 
-						if (!context.next) {
-							return null;
-						}
+		// Build VALUES clause for the raw SQL query
+		const anchorValues = anchors
+			.map(
+				(a) =>
+					`('${a.showId.replace(/'/g, "''")}', ${a.seasonNumber}, ${a.episodeNumber})`,
+			)
+			.join(", ");
 
-						const nextEpisode = await this.showsTmdb.getEpisodeDetails(
-							latest.showId,
-							context.next.seasonNumber,
-							context.next.episodeNumber,
-						);
-						const colors = await this.ensureShowHasColors(latest.showId);
+		// Queries 2-4 run in parallel
+		const [nextEpisodeRows, totalsByShow, watchedRaw] = await Promise.all([
+			// Query 2: next episode for all anchors (raw SQL DISTINCT ON)
+			this.prisma.$queryRaw<
+				Array<{
+					showId: string;
+					seasonNumber: number;
+					episodeNumber: number;
+					name: string;
+					airDate: Date | null;
+					overview: string | null;
+					stillPath: string | null;
+				}>
+			>(Prisma.sql`
+				SELECT DISTINCT ON (e."showId")
+					e."showId",
+					e."seasonNumber",
+					e."episodeNumber",
+					e."name",
+					e."airDate",
+					e."overview",
+					e."stillPath"
+				FROM "Episode" e
+				JOIN (VALUES ${Prisma.raw(anchorValues)}) AS anchors("showId", "seasonNumber", "episodeNumber")
+					ON e."showId" = anchors."showId"
+				WHERE e."seasonNumber" != 0
+					AND e."airDate" IS NOT NULL
+					AND e."airDate" <= ${now}
+					AND (
+						(e."seasonNumber" = anchors."seasonNumber" AND e."episodeNumber" > anchors."episodeNumber")
+						OR e."seasonNumber" > anchors."seasonNumber"
+					)
+				ORDER BY e."showId", e."seasonNumber" ASC, e."episodeNumber" ASC
+			`),
 
-						return {
-							showId: latest.showId,
-							watchCount,
-							latestWatchedDate: latestWatchedDate.toISOString(),
-							lastWatched: {
-								seasonNumber: latest.seasonNumber,
-								episodeNumber: latest.episodeNumber,
-							},
-							nextEpisode: {
-								seasonNumber: nextEpisode.season_number,
-								episodeNumber: nextEpisode.episode_number,
-								name: nextEpisode.name,
-								airDate: nextEpisode.air_date,
-								overview: nextEpisode.overview,
-								stillPath: nextEpisode.still_path,
-							},
-							show: {
-								showId: latest.show.showId,
-								title: latest.show.title,
-								posterPath: latest.show.posterPath ?? undefined,
-								backdropPath: latest.show.backdropPath ?? undefined,
-								firstAirYear: latest.show.firstAirYear ?? undefined,
-								firstAirDate: latest.show.firstAirDate?.toISOString(),
-								overview: latest.show.overview ?? undefined,
-								colors: colors ?? undefined,
-							},
-						};
-					} catch (error) {
-						this.logger.warn(
-							`Failed to compute up next for show ${latest.showId}: ${error instanceof Error ? error.message : String(error)}`,
-						);
-						return null;
-					}
+			// Query 3: total aired episodes per show
+			this.prisma.episode.groupBy({
+				by: ["showId"],
+				where: {
+					showId: { in: showIds },
+					seasonNumber: { not: 0 },
+					airDate: { not: null, lte: now },
 				},
-			),
-		);
+				_count: true,
+			}),
 
-		const items = allItems.filter(
-			(item): item is NonNullable<typeof item> => item !== null,
-		);
+			// Query 4: distinct watched episodes per show
+			this.prisma.trackedEpisode.groupBy({
+				by: ["showId", "seasonNumber", "episodeNumber"],
+				where: {
+					userDid,
+					showId: { in: showIds },
+					seasonNumber: { not: 0 },
+				},
+			}),
+		]);
+
+		// Build lookup maps
+		const nextEpMap = new Map(nextEpisodeRows.map((r) => [r.showId, r]));
+		const totalsMap = new Map(totalsByShow.map((r) => [r.showId, r._count]));
+		const watchedCountMap = new Map<string, number>();
+		for (const row of watchedRaw) {
+			watchedCountMap.set(
+				row.showId,
+				(watchedCountMap.get(row.showId) ?? 0) + 1,
+			);
+		}
+
+		// Assembly: join, filter, sort
+		const items: Array<{
+			showId: string;
+			watchCount: number;
+			totalEpisodes: number;
+			episodesWatched: number;
+			latestWatchedDate: string;
+			lastWatched: { seasonNumber: number; episodeNumber: number };
+			nextEpisode: {
+				seasonNumber: number;
+				episodeNumber: number;
+				name: string;
+				airDate?: string;
+				overview?: string;
+				stillPath?: string;
+			};
+			show: {
+				showId: string;
+				title: string;
+				posterPath?: string;
+				backdropPath?: string;
+				firstAirYear?: number;
+				firstAirDate?: string;
+				overview?: string;
+				colors?: unknown;
+			};
+		}> = [];
+
+		for (const anchor of anchors) {
+			const nextEp = nextEpMap.get(anchor.showId);
+			if (!nextEp) continue;
+
+			const totalEpisodes = totalsMap.get(anchor.showId) ?? 0;
+			const episodesWatched = watchedCountMap.get(anchor.showId) ?? 0;
+
+			if (totalEpisodes > 0 && episodesWatched >= totalEpisodes) continue;
+
+			const colors = await this.ensureShowHasColors(anchor.showId);
+			const latestWatchedDate = anchor.watchedDate ?? anchor.createdAt;
+
+			items.push({
+				showId: anchor.showId,
+				watchCount: episodesWatched,
+				totalEpisodes,
+				episodesWatched,
+				latestWatchedDate: latestWatchedDate.toISOString(),
+				lastWatched: {
+					seasonNumber: anchor.seasonNumber,
+					episodeNumber: anchor.episodeNumber,
+				},
+				nextEpisode: {
+					seasonNumber: nextEp.seasonNumber,
+					episodeNumber: nextEp.episodeNumber,
+					name: nextEp.name,
+					airDate: nextEp.airDate?.toISOString(),
+					overview: nextEp.overview ?? undefined,
+					stillPath: nextEp.stillPath ?? undefined,
+				},
+				show: {
+					showId: anchor.show.showId,
+					title: anchor.show.title,
+					posterPath: anchor.show.posterPath ?? undefined,
+					backdropPath: anchor.show.backdropPath ?? undefined,
+					firstAirYear: anchor.show.firstAirYear ?? undefined,
+					firstAirDate: anchor.show.firstAirDate?.toISOString(),
+					overview: anchor.show.overview ?? undefined,
+					colors: colors ?? undefined,
+				},
+			});
+		}
+
+		const dir = sortOrder === "asc" ? 1 : -1;
+		items.sort((a, b) => {
+			switch (sortBy) {
+				case "title":
+					return dir * a.show.title.localeCompare(b.show.title);
+				case "progress": {
+					const pA =
+						a.totalEpisodes > 0 ? a.episodesWatched / a.totalEpisodes : 0;
+					const pB =
+						b.totalEpisodes > 0 ? b.episodesWatched / b.totalEpisodes : 0;
+					return dir * (pA - pB);
+				}
+				default:
+					return (
+						dir *
+						(new Date(a.latestWatchedDate).getTime() -
+							new Date(b.latestWatchedDate).getTime())
+					);
+			}
+		});
+
 		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
 		const total = items.length;
 		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
@@ -652,6 +922,11 @@ export class ShowsService {
 	) {
 		const showData = await this.getShowDetails(showId);
 		await this.upsertShow(showData);
+		await this.syncShowMetadata(showId).catch((err) =>
+			this.logger.warn(
+				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+			),
+		);
 
 		return this.prisma.trackedEpisode.create({
 			data: {
@@ -866,6 +1141,11 @@ export class ShowsService {
 
 		const showData = await this.getShowDetails(showId);
 		await this.upsertShow(showData);
+		await this.syncShowMetadata(showId).catch((err) =>
+			this.logger.warn(
+				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+			),
+		);
 
 		const trackedEpisodes: Array<{
 			id: string;
@@ -985,6 +1265,11 @@ export class ShowsService {
 
 		const showData = await this.getShowDetails(showId);
 		await this.upsertShow(showData);
+		await this.syncShowMetadata(showId).catch((err) =>
+			this.logger.warn(
+				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+			),
+		);
 
 		const trackedEpisodes: Array<{
 			id: string;

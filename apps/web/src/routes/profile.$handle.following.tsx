@@ -99,11 +99,11 @@ function FollowingPage() {
 	}
 
 	if (!profile || followingQuery.isLoading) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	if (isOwner) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	const currentPage = followingQuery.data?.page ?? page;

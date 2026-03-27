@@ -429,6 +429,13 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					return;
 				}
 			}
+			await this.showsService
+				.syncShowMetadata(episodeRecord.showId)
+				.catch((err) =>
+					this.logger.warn(
+						`Failed to sync metadata for show ${episodeRecord.showId}: ${err instanceof Error ? err.message : String(err)}`,
+					),
+				);
 
 			await this.prisma.trackedEpisode.upsert({
 				where: { rkey: evt.rkey },

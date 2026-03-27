@@ -85,7 +85,7 @@ export function LandingHomePage() {
 							"radial-gradient(circle at top left, rgba(243, 188, 0, 0.18), transparent 35%), radial-gradient(circle at 85% 20%, rgba(176, 207, 186, 0.12), transparent 30%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0))",
 					}}
 				/>
-				<div className="container relative mx-auto max-w-6xl px-4 py-16 md:py-24">
+				<div className="container relative mx-auto max-w-7xl px-4 py-16 md:py-24">
 					<div className="max-w-5xl">
 						<div className="mb-6 flex items-center gap-3">
 							<img
@@ -151,7 +151,7 @@ export function LandingHomePage() {
 			</section>
 
 			<section className="border-b border-[var(--md-sys-color-outline-variant)] bg-[color:rgba(255,255,255,0.02)]">
-				<div className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
+				<div className="container mx-auto max-w-7xl px-4 py-10 md:py-14">
 					<div className="mb-8 max-w-2xl">
 						<p
 							className="md-label-large uppercase tracking-[0.12em]"
@@ -189,7 +189,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="container mx-auto max-w-6xl px-4 py-16 md:py-20">
+			<section className="container mx-auto max-w-7xl px-4 py-16 md:py-20">
 				<div className="mb-10 max-w-2xl">
 					<p
 						className="md-label-large uppercase tracking-[0.12em]"
@@ -252,7 +252,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="container mx-auto max-w-6xl px-4 pb-16">
+			<section className="container mx-auto max-w-7xl px-4 pb-16">
 				<div
 					className="grid gap-6 overflow-hidden rounded-[32px] border px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1fr_auto] lg:items-center"
 					style={{
@@ -291,7 +291,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="container mx-auto max-w-6xl px-4 pb-16">
+			<section className="container mx-auto max-w-7xl px-4 pb-16">
 				<div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
 					<div className="max-w-xl">
 						<p
@@ -335,7 +335,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="container mx-auto max-w-6xl px-4 pb-20">
+			<section className="container mx-auto max-w-7xl px-4 pb-20">
 				<div
 					className="rounded-[32px] border px-6 py-10 text-center md:px-10"
 					style={{

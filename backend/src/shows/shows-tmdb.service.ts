@@ -6,6 +6,17 @@ import {
 	type TMDBVideo,
 } from "../tmdb/tmdb-trailer.util";
 
+export interface TMDBSeasonSummary {
+	id: number;
+	name: string;
+	season_number: number;
+	episode_count?: number;
+	poster_path?: string;
+	air_date?: string;
+	overview?: string;
+	vote_average?: number;
+}
+
 export interface TMDBShow {
 	id: number;
 	name: string;
@@ -16,6 +27,7 @@ export interface TMDBShow {
 	genres?: Array<{ id: number; name: string }>;
 	number_of_seasons?: number;
 	number_of_episodes?: number;
+	seasons?: TMDBSeasonSummary[];
 	popularity: number;
 	vote_average: number;
 	vote_count: number;
@@ -321,7 +333,7 @@ export class ShowsTmdbService {
 		}
 
 		if (!episode.air_date) {
-			return true;
+			return false;
 		}
 
 		return new Date(episode.air_date).getTime() <= Date.now();

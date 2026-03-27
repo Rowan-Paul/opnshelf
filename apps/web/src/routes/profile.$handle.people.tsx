@@ -211,7 +211,7 @@ function ProfilePeoplePage() {
 	]);
 
 	if (isAuthLoading || isLoading) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	if (!currentUser) {
@@ -567,7 +567,7 @@ function ConnectionsSection({
 	onPageChange: (page: number) => void;
 }) {
 	if (isLoading) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	if (items.length === 0) {

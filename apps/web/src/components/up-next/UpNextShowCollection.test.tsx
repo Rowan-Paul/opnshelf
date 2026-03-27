@@ -43,6 +43,8 @@ const sampleItems: UpNextShowDto[] = [
 	{
 		showId: "show-1",
 		watchCount: 3,
+		totalEpisodes: 10,
+		episodesWatched: 3,
 		latestWatchedDate: "2026-03-20T12:00:00.000Z",
 		lastWatched: {
 			seasonNumber: 1,
@@ -64,6 +66,8 @@ const sampleItems: UpNextShowDto[] = [
 	{
 		showId: "show-2",
 		watchCount: 7,
+		totalEpisodes: 20,
+		episodesWatched: 7,
 		latestWatchedDate: "2026-03-19T12:00:00.000Z",
 		lastWatched: {
 			seasonNumber: 2,

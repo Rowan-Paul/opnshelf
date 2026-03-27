@@ -99,11 +99,11 @@ function FollowersPage() {
 	}
 
 	if (!profile || followersQuery.isLoading) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	if (isOwner) {
-		return <AuthLoadingState className="max-w-6xl py-8" />;
+		return <AuthLoadingState className="max-w-7xl py-8" />;
 	}
 
 	const currentPage = followersQuery.data?.page ?? page;

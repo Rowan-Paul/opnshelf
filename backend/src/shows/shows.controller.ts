@@ -25,6 +25,8 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	type DiscoverShowsDto,
 	EpisodeHistoryItemDto,
+	LocalEpisodeDto,
+	LocalSeasonDto,
 	MarkedEpisodesResponseDto,
 	MarkEpisodeWatchedDto,
 	MarkSeasonWatchedDto,
@@ -75,7 +77,16 @@ export class ShowsController {
 	@ApiResponse({ status: 200, type: TMDBShowDetailDto })
 	async getShowDetails(@Param("showId") showId: string) {
 		const showData = await this.showsService.getShowDetails(showId);
-		const show = await this.showsService.upsertShow(showData);
+		const [show] = await Promise.all([
+			this.showsService.upsertShow(showData),
+			this.showsService
+				.syncShowMetadata(showId)
+				.catch((err) =>
+					this.logger.warn(
+						`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+					),
+				),
+		]);
 		const credits = await this.showsService.getShowCredits(showId);
 
 		return {
@@ -93,6 +104,36 @@ export class ShowsController {
 		@Param("seasonNumber") seasonNumber: string,
 	) {
 		return this.showsService.getSeasonDetails(showId, Number(seasonNumber));
+	}
+
+	@Get("tmdb/:showId/local-seasons")
+	@ApiOperation({
+		summary:
+			"Get seasons from local database (populated via sync on first interaction)",
+	})
+	@ApiResponse({ status: 200, type: [LocalSeasonDto] })
+	async getLocalSeasons(@Param("showId") showId: string) {
+		const seasons = await this.showsService.getLocalSeasons(showId);
+		return seasons.map((s) => ({
+			seasonNumber: s.seasonNumber,
+			name: s.name,
+			posterPath: s.posterPath,
+			airDate: s.airDate?.toISOString() ?? null,
+			episodeCount: s._count.episodes,
+		}));
+	}
+
+	@Get("tmdb/:showId/season/:seasonNumber/local-episodes")
+	@ApiOperation({
+		summary:
+			"Get episodes from local database (populated via sync on first interaction)",
+	})
+	@ApiResponse({ status: 200, type: [LocalEpisodeDto] })
+	async getLocalEpisodes(
+		@Param("showId") showId: string,
+		@Param("seasonNumber") seasonNumber: string,
+	) {
+		return this.showsService.getLocalEpisodes(showId, Number(seasonNumber));
 	}
 
 	@Get("tmdb/:showId/season/:seasonNumber/episode/:episodeNumber")
@@ -151,7 +192,13 @@ export class ShowsController {
 		@Param("userDid") userDid: string,
 		@Query() query: PaginatedUpNextQueryDto,
 	) {
-		return this.showsService.getUserUpNext(userDid, query.page, query.pageSize);
+		return this.showsService.getUserUpNext(
+			userDid,
+			query.page,
+			query.pageSize,
+			query.sortBy,
+			query.sortOrder,
+		);
 	}
 
 	@Get("user/:userDid/release-calendar")

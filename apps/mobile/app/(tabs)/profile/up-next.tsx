@@ -4,18 +4,33 @@ import {
 } from "@opnshelf/api";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { ArrowLeft, LogIn, Tv } from "lucide-react-native";
-import { useCallback, useMemo } from "react";
+import { ArrowLeft, ArrowUpDown, LogIn, Tv } from "lucide-react-native";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import {
+	type SortBy,
+	type SortOrder,
+	SortPickerModal,
+	type SortValue,
+} from "@/components/up-next/SortPickerModal";
 import { UpNextShowList } from "@/components/up-next/UpNextShowList";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 
 const PAGE_SIZE = 12;
+
+const SORT_LABELS: Record<SortValue, string> = {
+	"lastWatched-desc": "Recently watched",
+	"lastWatched-asc": "Oldest watched",
+	"title-asc": "Title A-Z",
+	"title-desc": "Title Z-A",
+	"progress-desc": "Most progress",
+	"progress-asc": "Least progress",
+};
 
 type UpNextInfiniteQueryKey = [
 	{
@@ -26,6 +41,8 @@ type UpNextInfiniteQueryKey = [
 		};
 		query: {
 			pageSize: number;
+			sortBy: SortBy;
+			sortOrder: SortOrder;
 		};
 	},
 ];
@@ -36,6 +53,11 @@ export default function UpNextScreen() {
 	const queryClient = useQueryClient();
 	const userDid = user?.did ?? "";
 
+	const [sortBy, setSortBy] = useState<SortBy>("lastWatched");
+	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+	const [sortModalVisible, setSortModalVisible] = useState(false);
+	const sortValue = `${sortBy}-${sortOrder}` as SortValue;
+
 	const queryKey = useMemo(
 		() =>
 			[
@@ -43,10 +65,10 @@ export default function UpNextScreen() {
 					_id: "showsControllerGetUserUpNext" as const,
 					_infinite: true as const,
 					path: { userDid },
-					query: { pageSize: PAGE_SIZE },
+					query: { pageSize: PAGE_SIZE, sortBy, sortOrder },
 				},
 			] satisfies UpNextInfiniteQueryKey,
-		[userDid],
+		[userDid, sortBy, sortOrder],
 	);
 
 	const upNextQuery = useInfiniteQuery({
@@ -57,6 +79,8 @@ export default function UpNextScreen() {
 				query: {
 					page: pageParam as number,
 					pageSize: PAGE_SIZE,
+					sortBy,
+					sortOrder,
 				},
 				signal,
 				throwOnError: true,
@@ -69,6 +93,16 @@ export default function UpNextScreen() {
 		getNextPageParam: (lastPage) =>
 			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 	});
+
+	const handleSortChange = useCallback(
+		(value: SortValue) => {
+			const [newSortBy, newSortOrder] = value.split("-") as [SortBy, SortOrder];
+			setSortBy(newSortBy);
+			setSortOrder(newSortOrder);
+			queryClient.removeQueries({ queryKey });
+		},
+		[queryClient, queryKey],
+	);
 
 	const pages = upNextQuery.data?.pages ?? [];
 	const items = useMemo(
@@ -166,7 +200,10 @@ export default function UpNextScreen() {
 			style={[styles.container, { backgroundColor: colors.background }]}
 			edges={["top", "left", "right", "bottom"]}
 		>
-			<Header />
+			<Header
+				sortLabel={SORT_LABELS[sortValue]}
+				onSortPress={() => setSortModalVisible(true)}
+			/>
 			<UpNextShowList
 				items={items}
 				isLoading={upNextQuery.isLoading}
@@ -178,11 +215,23 @@ export default function UpNextScreen() {
 				refreshing={isRefreshing}
 				onRefresh={() => void handleRefresh()}
 			/>
+			<SortPickerModal
+				visible={sortModalVisible}
+				onClose={() => setSortModalVisible(false)}
+				value={sortValue}
+				onSelect={handleSortChange}
+			/>
 		</SafeAreaView>
 	);
 }
 
-function Header() {
+function Header({
+	sortLabel,
+	onSortPress,
+}: {
+	sortLabel?: string;
+	onSortPress?: () => void;
+}) {
 	const { colors } = useTheme();
 
 	return (
@@ -200,6 +249,25 @@ function Header() {
 					Pick up exactly where you left off.
 				</Text>
 			</View>
+			{onSortPress && (
+				<TouchableOpacity
+					onPress={onSortPress}
+					style={[
+						styles.sortButton,
+						{ backgroundColor: colors.surfaceContainerHigh },
+					]}
+				>
+					<ArrowUpDown size={16} color={colors.onSurfaceVariant} />
+					{sortLabel && (
+						<Text
+							style={[styles.sortLabel, { color: colors.onSurfaceVariant }]}
+							numberOfLines={1}
+						>
+							{sortLabel}
+						</Text>
+					)}
+				</TouchableOpacity>
+			)}
 		</View>
 	);
 }
@@ -231,6 +299,21 @@ const styles = StyleSheet.create({
 	headerSubtitle: {
 		fontSize: 14,
 		lineHeight: 20,
+	},
+	sortButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs + 2,
+		borderRadius: borderRadius.full,
+		alignSelf: "flex-start",
+		marginTop: spacing.xs,
+	},
+	sortLabel: {
+		fontSize: 12,
+		fontWeight: "600",
+		maxWidth: 100,
 	},
 	centerContent: {
 		flex: 1,

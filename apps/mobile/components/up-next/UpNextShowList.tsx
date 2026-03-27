@@ -142,6 +142,24 @@ export function UpNextShowList({
 							</View>
 						)}
 					</View>
+					{item.totalEpisodes > 0 && (
+						<View
+							style={[
+								styles.progressTrack,
+								{ backgroundColor: colors.surfaceContainerHighest },
+							]}
+						>
+							<View
+								style={[
+									styles.progressFill,
+									{
+										width: `${Math.min(Math.round((item.episodesWatched / item.totalEpisodes) * 100), 100)}%`,
+										backgroundColor: colors.primary,
+									},
+								]}
+							/>
+						</View>
+					)}
 				</View>
 
 				<View style={styles.upNextMeta}>
@@ -424,6 +442,16 @@ function UpNextSkeletonCard({ isFull }: { isFull: boolean }) {
 						borderColor: "transparent",
 					}}
 				/>
+				<Skeleton
+					width={84}
+					height={3}
+					borderRadius={borderRadius.full}
+					style={{
+						marginTop: 6,
+						backgroundColor: colors.surfaceContainerHighest,
+						borderColor: "transparent",
+					}}
+				/>
 			</View>
 			<View style={styles.upNextMeta}>
 				<View style={styles.metaTop}>
@@ -635,6 +663,16 @@ const styles = StyleSheet.create({
 	posterFallbackText: {
 		fontSize: 10,
 		fontWeight: "600",
+	},
+	progressTrack: {
+		height: 3,
+		borderRadius: borderRadius.full,
+		overflow: "hidden",
+		marginTop: 6,
+	},
+	progressFill: {
+		height: "100%",
+		borderRadius: borderRadius.full,
 	},
 	upNextMeta: {
 		flex: 1,

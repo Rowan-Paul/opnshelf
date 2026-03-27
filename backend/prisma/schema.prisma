@@ -152,8 +152,51 @@ model Show {
 
   trackedBy     TrackedEpisode[]
   listItems     ListItem[]
+  seasons       Season[]
 
   @@index([title])
+}
+
+model Season {
+  id            String    @id @default(cuid())
+  tmdbId        Int       @unique
+  showId        String
+  show          Show      @relation(fields: [showId], references: [showId], onDelete: Cascade)
+  seasonNumber  Int
+  name          String
+  posterPath    String?
+  airDate       DateTime?
+  episodeCount  Int?
+
+  episodes      Episode[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([showId, seasonNumber])
+  @@index([showId])
+}
+
+model Episode {
+  id             String    @id @default(cuid())
+  tmdbId         Int       @unique
+  seasonId       String
+  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  showId         String
+  episodeNumber  Int
+  seasonNumber   Int
+  name           String
+  airDate        DateTime?
+  overview       String?
+  stillPath      String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([showId, seasonNumber, episodeNumber])
+  @@index([seasonId])
+  @@index([showId])
+  @@index([airDate])
 }
 
 model TrackedMovie {

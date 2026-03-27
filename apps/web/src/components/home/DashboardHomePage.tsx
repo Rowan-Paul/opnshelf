@@ -106,7 +106,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 	}, [lists]);
 
 	return (
-		<div className="container mx-auto max-w-6xl px-4 py-8 md:py-10">
+		<div className="container mx-auto max-w-7xl px-4 py-8 md:py-10">
 			<div
 				className="mb-8 rounded-[28px] border p-5 md:p-6"
 				style={{

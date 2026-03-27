@@ -69,6 +69,7 @@ describe("IngesterService", () => {
 		getShowByTMDBId: jest.Mock;
 		getShowDetails: jest.Mock;
 		upsertShow: jest.Mock;
+		syncShowMetadata: jest.Mock;
 	};
 	let mockListsService: {
 		indexListRecord: jest.Mock;
@@ -120,6 +121,7 @@ describe("IngesterService", () => {
 			getShowByTMDBId: jest.fn(),
 			getShowDetails: jest.fn(),
 			upsertShow: jest.fn(),
+			syncShowMetadata: jest.fn().mockResolvedValue(undefined),
 		};
 
 		mockListsService = {

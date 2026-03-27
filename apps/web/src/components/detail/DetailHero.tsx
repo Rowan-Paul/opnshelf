@@ -36,7 +36,7 @@ export function DetailHero({
 					}}
 				/>
 				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
-					<div className="container mx-auto max-w-6xl">
+					<div className="container mx-auto max-w-7xl">
 						<div className="flex items-end gap-4 md:gap-8">
 							<div className="shrink-0">
 								<div className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden bg-(--md-sys-color-surface-container)" />
@@ -103,7 +103,7 @@ export function DetailHero({
 			</button>
 
 			<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
-				<div className="container mx-auto max-w-6xl">
+				<div className="container mx-auto max-w-7xl">
 					<div className="flex items-end gap-4 md:gap-8">
 						<div className="shrink-0">
 							<div

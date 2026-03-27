@@ -58,6 +58,8 @@ export const ModelName = {
   TraktImportJob: 'TraktImportJob',
   Movie: 'Movie',
   Show: 'Show',
+  Season: 'Season',
+  Episode: 'Episode',
   TrackedMovie: 'TrackedMovie',
   TrackedEpisode: 'TrackedEpisode',
   List: 'List',
@@ -192,6 +194,40 @@ export const ShowScalarFieldEnum = {
 } as const
 
 export type ShowScalarFieldEnum = (typeof ShowScalarFieldEnum)[keyof typeof ShowScalarFieldEnum]
+
+
+export const SeasonScalarFieldEnum = {
+  id: 'id',
+  tmdbId: 'tmdbId',
+  showId: 'showId',
+  seasonNumber: 'seasonNumber',
+  name: 'name',
+  posterPath: 'posterPath',
+  airDate: 'airDate',
+  episodeCount: 'episodeCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SeasonScalarFieldEnum = (typeof SeasonScalarFieldEnum)[keyof typeof SeasonScalarFieldEnum]
+
+
+export const EpisodeScalarFieldEnum = {
+  id: 'id',
+  tmdbId: 'tmdbId',
+  seasonId: 'seasonId',
+  showId: 'showId',
+  episodeNumber: 'episodeNumber',
+  seasonNumber: 'seasonNumber',
+  name: 'name',
+  airDate: 'airDate',
+  overview: 'overview',
+  stillPath: 'stillPath',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EpisodeScalarFieldEnum = (typeof EpisodeScalarFieldEnum)[keyof typeof EpisodeScalarFieldEnum]
 
 
 export const TrackedMovieScalarFieldEnum = {

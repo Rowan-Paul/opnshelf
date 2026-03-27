@@ -185,6 +185,23 @@ export function UpNextShowCollection({
 													</div>
 												)}
 											</div>
+											{item.totalEpisodes > 0 ? (
+												<div
+													className="mt-1.5 h-1 w-full overflow-hidden rounded-full"
+													style={{
+														backgroundColor:
+															"var(--md-sys-color-surface-container-highest)",
+													}}
+												>
+													<div
+														className="h-full rounded-full transition-all duration-300"
+														style={{
+															width: `${Math.min(Math.round((item.episodesWatched / item.totalEpisodes) * 100), 100)}%`,
+															backgroundColor: "var(--md-sys-color-primary)",
+														}}
+													/>
+												</div>
+											) : null}
 										</div>
 										<div className="flex min-w-0 flex-1 flex-col justify-between">
 											<div>

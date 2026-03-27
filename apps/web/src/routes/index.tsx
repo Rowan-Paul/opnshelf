@@ -22,7 +22,7 @@ export function HomePage() {
 	const { data: user, isLoading: isUserLoading } = useCurrentUser();
 
 	if (isUserLoading) {
-		return <AuthLoadingState className="max-w-6xl py-16" />;
+		return <AuthLoadingState className="max-w-7xl py-16" />;
 	}
 
 	if (!user) {

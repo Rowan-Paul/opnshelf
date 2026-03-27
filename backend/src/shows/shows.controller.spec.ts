@@ -35,6 +35,10 @@ describe("ShowsController", () => {
 		getShowByTMDBId: jest.fn(),
 		getEpisodeWatchHistory: jest.fn(),
 		removeTrackedEpisodeById: jest.fn(),
+		syncShowMetadata: jest.fn().mockResolvedValue(undefined),
+		getLocalSeasons: jest.fn().mockResolvedValue([]),
+		getLocalEpisodes: jest.fn().mockResolvedValue([]),
+		getEpisodeContext: jest.fn(),
 	};
 
 	const mockAuthService = {
@@ -251,6 +255,8 @@ describe("ShowsController", () => {
 			"did:plc:abc123",
 			2,
 			8,
+			undefined,
+			undefined,
 		);
 	});
 

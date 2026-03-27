@@ -73,6 +73,16 @@ export type Movie = Prisma.MovieModel
  */
 export type Show = Prisma.ShowModel
 /**
+ * Model Season
+ * 
+ */
+export type Season = Prisma.SeasonModel
+/**
+ * Model Episode
+ * 
+ */
+export type Episode = Prisma.EpisodeModel
+/**
  * Model TrackedMovie
  * 
  */

@@ -391,6 +391,8 @@ export const ModelName = {
   TraktImportJob: 'TraktImportJob',
   Movie: 'Movie',
   Show: 'Show',
+  Season: 'Season',
+  Episode: 'Episode',
   TrackedMovie: 'TrackedMovie',
   TrackedEpisode: 'TrackedEpisode',
   List: 'List',
@@ -410,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "authSession" | "authState" | "traktImportJob" | "movie" | "show" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
+    modelProps: "user" | "follow" | "authSession" | "authState" | "traktImportJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -932,6 +934,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Season: {
+      payload: Prisma.$SeasonPayload<ExtArgs>
+      fields: Prisma.SeasonFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SeasonFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SeasonFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        findFirst: {
+          args: Prisma.SeasonFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SeasonFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        findMany: {
+          args: Prisma.SeasonFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>[]
+        }
+        create: {
+          args: Prisma.SeasonCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        createMany: {
+          args: Prisma.SeasonCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SeasonCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>[]
+        }
+        delete: {
+          args: Prisma.SeasonDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        update: {
+          args: Prisma.SeasonUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        deleteMany: {
+          args: Prisma.SeasonDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SeasonUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SeasonUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>[]
+        }
+        upsert: {
+          args: Prisma.SeasonUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SeasonPayload>
+        }
+        aggregate: {
+          args: Prisma.SeasonAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSeason>
+        }
+        groupBy: {
+          args: Prisma.SeasonGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SeasonGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SeasonCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SeasonCountAggregateOutputType> | number
+        }
+      }
+    }
+    Episode: {
+      payload: Prisma.$EpisodePayload<ExtArgs>
+      fields: Prisma.EpisodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EpisodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EpisodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        findFirst: {
+          args: Prisma.EpisodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EpisodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        findMany: {
+          args: Prisma.EpisodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        create: {
+          args: Prisma.EpisodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        createMany: {
+          args: Prisma.EpisodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EpisodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        delete: {
+          args: Prisma.EpisodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        update: {
+          args: Prisma.EpisodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        deleteMany: {
+          args: Prisma.EpisodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EpisodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EpisodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        upsert: {
+          args: Prisma.EpisodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        aggregate: {
+          args: Prisma.EpisodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEpisode>
+        }
+        groupBy: {
+          args: Prisma.EpisodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EpisodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EpisodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EpisodeCountAggregateOutputType> | number
+        }
+      }
+    }
     TrackedMovie: {
       payload: Prisma.$TrackedMoviePayload<ExtArgs>
       fields: Prisma.TrackedMovieFieldRefs
@@ -1381,6 +1531,40 @@ export const ShowScalarFieldEnum = {
 export type ShowScalarFieldEnum = (typeof ShowScalarFieldEnum)[keyof typeof ShowScalarFieldEnum]
 
 
+export const SeasonScalarFieldEnum = {
+  id: 'id',
+  tmdbId: 'tmdbId',
+  showId: 'showId',
+  seasonNumber: 'seasonNumber',
+  name: 'name',
+  posterPath: 'posterPath',
+  airDate: 'airDate',
+  episodeCount: 'episodeCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SeasonScalarFieldEnum = (typeof SeasonScalarFieldEnum)[keyof typeof SeasonScalarFieldEnum]
+
+
+export const EpisodeScalarFieldEnum = {
+  id: 'id',
+  tmdbId: 'tmdbId',
+  seasonId: 'seasonId',
+  showId: 'showId',
+  episodeNumber: 'episodeNumber',
+  seasonNumber: 'seasonNumber',
+  name: 'name',
+  airDate: 'airDate',
+  overview: 'overview',
+  stillPath: 'stillPath',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EpisodeScalarFieldEnum = (typeof EpisodeScalarFieldEnum)[keyof typeof EpisodeScalarFieldEnum]
+
+
 export const TrackedMovieScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
@@ -1703,6 +1887,8 @@ export type GlobalOmitConfig = {
   traktImportJob?: Prisma.TraktImportJobOmit
   movie?: Prisma.MovieOmit
   show?: Prisma.ShowOmit
+  season?: Prisma.SeasonOmit
+  episode?: Prisma.EpisodeOmit
   trackedMovie?: Prisma.TrackedMovieOmit
   trackedEpisode?: Prisma.TrackedEpisodeOmit
   list?: Prisma.ListOmit

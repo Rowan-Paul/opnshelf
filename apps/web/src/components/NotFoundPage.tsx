@@ -28,7 +28,7 @@ export function NotFoundPage() {
 				}}
 			/>
 
-			<div className="container relative mx-auto flex w-full max-w-6xl flex-1 px-4 py-12 md:py-20">
+			<div className="container relative mx-auto flex w-full max-w-7xl flex-1 px-4 py-12 md:py-20">
 				<div className="grid w-full gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
 					<div className="max-w-2xl">
 						<div
