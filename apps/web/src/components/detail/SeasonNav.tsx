@@ -31,7 +31,7 @@ export function SeasonNav({
 						title,
 						seasonNumber: String(currentSeason - 1),
 					}}
-					className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
+					className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container)/40 transition-colors text-sm"
 				>
 					<ArrowLeft className="w-4 h-4" />
 					<span>Season {currentSeason - 1}</span>
@@ -48,7 +48,7 @@ export function SeasonNav({
 						title,
 						seasonNumber: String(currentSeason + 1),
 					}}
-					className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
+					className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container)/40 transition-colors text-sm"
 				>
 					<span>Season {currentSeason + 1}</span>
 					<ArrowRight className="w-4 h-4" />

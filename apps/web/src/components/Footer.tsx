@@ -3,28 +3,47 @@ import { Film, Github } from "lucide-react";
 
 export default function Footer() {
 	return (
-		<footer className="bg-gray-900 text-gray-400 py-8 border-t border-gray-800">
-			<div className="container mx-auto px-4">
-				<div className="flex flex-col md:flex-row items-center justify-between gap-4">
+		<footer
+			className="border-t py-8"
+			style={{
+				backgroundColor: "var(--md-sys-color-surface-container-low)",
+				borderColor: "var(--md-sys-color-outline-variant)",
+			}}
+		>
+			<div className="container mx-auto max-w-7xl px-4">
+				<div className="flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
 					<div className="flex items-center gap-2">
-						<Film className="w-6 h-6 text-amber-500" />
-						<span className="font-semibold text-white">OpnShelf</span>
+						<Film
+							className="size-6"
+							style={{ color: "var(--md-sys-color-primary)" }}
+						/>
+						<span
+							className="font-semibold"
+							style={{ color: "var(--md-sys-color-on-surface)" }}
+						>
+							OpnShelf
+						</span>
 					</div>
 
-					<nav className="flex items-center gap-6 text-sm">
-						<Link to="/privacy" className="hover:text-white transition-colors">
+					<nav className="flex flex-wrap items-center justify-center gap-5 text-sm sm:gap-6">
+						<Link
+							to="/privacy"
+							className="whitespace-nowrap transition-colors hover:text-(--md-sys-color-on-surface)"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+						>
 							Privacy Policy
 						</Link>
 						<a
 							href="https://tangled.org/rowanpaulflynn.dev/opnshelf"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-2 hover:text-white transition-colors"
+							className="flex items-center gap-2 transition-colors hover:text-(--md-sys-color-on-surface)"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
 							<img
 								src="https://assets.tangled.network/tangled_dolly_face_only_white_on_trans.svg"
 								alt="Tangled"
-								className="w-4 h-4"
+								className="size-4"
 							/>
 							Tangled
 						</a>
@@ -32,12 +51,13 @@ export default function Footer() {
 							href="https://bsky.app/profile/opnshelf.xyz"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-2 hover:text-white transition-colors"
+							className="flex items-center gap-2 transition-colors hover:text-(--md-sys-color-on-surface)"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
 							<svg
 								preserveAspectRatio="xMidYMid"
 								viewBox="0 0 256 226"
-								className="w-4 h-4"
+								className="size-4"
 								aria-hidden="true"
 							>
 								<path
@@ -51,14 +71,18 @@ export default function Footer() {
 							href="https://github.com/Rowan-Paul/opnshelf"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-2 hover:text-white transition-colors"
+							className="flex items-center gap-2 transition-colors hover:text-(--md-sys-color-on-surface)"
+							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
-							<Github className="w-4 h-4" />
+							<Github className="size-4" />
 							GitHub
 						</a>
 					</nav>
 
-					<p className="text-sm">
+					<p
+						className="text-sm"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
 						© {new Date().getFullYear()} OpnShelf. Built on AT Protocol.
 					</p>
 				</div>

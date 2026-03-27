@@ -23,9 +23,9 @@ export function CrewSection({ crew, colors }: CrewSectionProps) {
 				{crew.map((person) => (
 					<div
 						key={`${person.id}-${person.job}`}
-						className="group p-3 rounded-lg bg-gray-900/30 hover:bg-gray-900/60 transition-all duration-200 cursor-pointer"
+						className="group p-3 rounded-lg bg-(--md-sys-color-surface-container)/30 hover:bg-(--md-sys-color-surface-container)/60 transition-all duration-200 cursor-pointer"
 					>
-						<p className="text-sm font-medium text-gray-200 line-clamp-1 transition-colors duration-200 group-hover:text-white">
+						<p className="text-sm font-medium text-(--md-sys-color-on-surface) line-clamp-1 transition-colors duration-200 group-hover:brightness-110">
 							{person.name}
 						</p>
 						<p className="text-xs mt-0.5" style={{ color: colors.muted }}>

@@ -171,7 +171,7 @@ export function UpNextShowCollection({
 										className={`flex gap-4 p-4 items-stretch ${cardMinHeight}`}
 									>
 										<div className="w-24 shrink-0 self-center">
-											<div className="aspect-2/3 w-full overflow-hidden rounded-xl bg-gray-900">
+											<div className="aspect-2/3 w-full overflow-hidden rounded-xl bg-(--md-sys-color-surface-container)">
 												{posterUrl ? (
 													<img
 														src={posterUrl}
@@ -180,7 +180,7 @@ export function UpNextShowCollection({
 														loading="lazy"
 													/>
 												) : (
-													<div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+													<div className="flex h-full w-full items-center justify-center text-sm text-(--md-sys-color-on-surface-variant)">
 														No poster
 													</div>
 												)}

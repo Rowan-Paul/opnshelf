@@ -98,7 +98,7 @@ export default function Header({ user, isAuthLoading }: HeaderProps) {
 				}}
 			/>
 
-			<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[4.5rem]">
+			<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-18">
 				<Brand seedColor={seedColor} />
 
 				<nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
@@ -233,7 +233,7 @@ function PrimaryNavLink({
 			{...target}
 			className={cn(
 				"inline-flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-200",
-				"hover:-translate-y-0.5 hover:bg-[var(--md-sys-color-surface-container-high)] hover:text-[var(--md-sys-color-on-surface)]",
+				"hover:-translate-y-0.5 hover:bg-(--md-sys-color-surface-container-high) hover:text-(--md-sys-color-on-surface)",
 			)}
 			style={
 				isActive
@@ -365,7 +365,7 @@ function AccountMenu({
 						type="button"
 						onClick={onLogout}
 						disabled={isLoggingOut}
-						className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left transition-colors hover:bg-[var(--md-sys-color-surface-container-low)] disabled:opacity-60"
+						className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-low) disabled:opacity-60"
 						style={{ color: "var(--md-sys-color-on-surface)" }}
 					>
 						<LogOut className="size-4" />
@@ -392,7 +392,7 @@ function MenuLink({
 		<Link
 			{...target}
 			onClick={onSelect}
-			className="flex items-center gap-3 rounded-[18px] px-3 py-3 transition-colors hover:bg-[var(--md-sys-color-surface-container-low)]"
+			className="flex items-center gap-3 rounded-[18px] px-3 py-3 transition-colors hover:bg-(--md-sys-color-surface-container-low)"
 			style={{ color: "var(--md-sys-color-on-surface)" }}
 		>
 			<Icon className="size-4" />

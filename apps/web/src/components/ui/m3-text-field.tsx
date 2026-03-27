@@ -22,10 +22,10 @@ const m3TextFieldVariants = cva(
 				 * - 2px primary color outline on focus
 				 */
 				outlined: [
-					"rounded-[var(--md-sys-shape-corner-extra-small)]",
-					"border border-[var(--md-sys-color-outline)]",
+					"rounded-(--md-sys-shape-corner-extra-small)",
+					"border border-(--md-sys-color-outline)",
 					"bg-transparent",
-					"focus-within:border-[var(--md-sys-color-primary)]",
+					"focus-within:border-(--md-sys-color-primary)",
 					"focus-within:border-2",
 				].join(" "),
 
@@ -35,11 +35,11 @@ const m3TextFieldVariants = cva(
 				 * - Underline that animates on focus
 				 */
 				filled: [
-					"rounded-t-[var(--md-sys-shape-corner-extra-small)]",
-					"bg-[var(--md-sys-color-surface-container-highest)]",
-					"border-b border-[var(--md-sys-color-on-surface-variant)]",
+					"rounded-t-(--md-sys-shape-corner-extra-small)",
+					"bg-(--md-sys-color-surface-container-highest)",
+					"border-b border-(--md-sys-color-on-surface-variant)",
 					"focus-within:border-b-2",
-					"focus-within:border-[var(--md-sys-color-primary)]",
+					"focus-within:border-(--md-sys-color-primary)",
 				].join(" "),
 			},
 			/**
@@ -47,8 +47,8 @@ const m3TextFieldVariants = cva(
 			 */
 			error: {
 				true: [
-					"border-[var(--md-sys-color-error)]",
-					"focus-within:border-[var(--md-sys-color-error)]",
+					"border-(--md-sys-color-error)",
+					"focus-within:border-(--md-sys-color-error)",
 				].join(" "),
 				false: "",
 			},
@@ -63,8 +63,8 @@ const m3TextFieldVariants = cva(
 const m3TextFieldInputVariants = cva(
 	[
 		"w-full bg-transparent",
-		"text-[var(--md-sys-color-on-surface)]",
-		"placeholder:text-[var(--md-sys-color-on-surface-variant)]",
+		"text-(--md-sys-color-on-surface)",
+		"placeholder:text-(--md-sys-color-on-surface-variant)",
 		"outline-none",
 		"md-body-large",
 	].join(" "),

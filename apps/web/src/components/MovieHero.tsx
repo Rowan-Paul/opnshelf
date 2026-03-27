@@ -111,8 +111,15 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 										className="w-full aspect-2/3 object-cover"
 									/>
 								) : (
-									<div className="w-full aspect-2/3 bg-gray-900 flex items-center justify-center">
-										<span className="text-gray-600">No poster</span>
+									<div
+										className="w-full aspect-2/3 flex items-center justify-center"
+										style={{
+											backgroundColor:
+												"var(--md-sys-color-surface-container-high)",
+											color: "var(--md-sys-color-on-surface-variant)",
+										}}
+									>
+										No poster
 									</div>
 								)}
 							</div>
@@ -128,7 +135,10 @@ export function MovieHero({ movie, isLoading }: MovieHeroProps) {
 								{movie?.title}
 							</h1>
 							{releaseYear && (
-								<div className="flex items-center gap-4 text-lg text-gray-300">
+								<div
+									className="flex items-center gap-4 text-lg"
+									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+								>
 									<span className="flex items-center gap-2">
 										<Calendar
 											className="w-4 h-4"

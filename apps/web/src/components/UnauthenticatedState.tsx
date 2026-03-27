@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen, LogIn, Settings2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { M3Button } from "@/components/ui/m3-button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+	M3Card,
+	M3CardContent,
+	M3CardDescription,
+	M3CardHeader,
+	M3CardTitle,
+} from "@/components/ui/m3-card";
 
 interface UnauthenticatedStateProps {
 	title: string;
@@ -21,26 +21,41 @@ export function UnauthenticatedState({
 	icon = "shelf",
 }: UnauthenticatedStateProps) {
 	const Icon = icon === "settings" ? Settings2 : BookOpen;
-	const iconColor = icon === "settings" ? "text-amber-500" : "text-amber-500";
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-gray-50">
+		<div
+			className="min-h-screen"
+			style={{
+				backgroundColor: "var(--md-sys-color-background)",
+				color: "var(--md-sys-color-on-background)",
+			}}
+		>
 			<div className="container mx-auto px-4 py-16 max-w-4xl">
-				<Card className="bg-gray-900 border-gray-800 text-center">
-					<CardHeader>
-						<Icon className={`w-16 h-16 ${iconColor} mx-auto mb-4`} />
-						<CardTitle className="text-3xl">{title}</CardTitle>
-						<CardDescription className="text-xl">{description}</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<Button asChild size="lg">
+				<M3Card variant="filled" className="rounded-[28px] text-center">
+					<M3CardHeader className="items-center px-6 pt-8">
+						<Icon
+							className="size-16 mb-4"
+							style={{ color: "var(--md-sys-color-primary)" }}
+						/>
+						<M3CardTitle className="md-headline-medium">{title}</M3CardTitle>
+						<M3CardDescription className="md-title-large">
+							{description}
+						</M3CardDescription>
+					</M3CardHeader>
+					<M3CardContent className="pb-8">
+						<M3Button
+							variant="filled"
+							size="lg"
+							asChild
+							className="rounded-full"
+						>
 							<Link to="/login">
-								<LogIn className="w-5 h-5 mr-2" />
+								<LogIn className="size-5" />
 								Sign in
 							</Link>
-						</Button>
-					</CardContent>
-				</Card>
+						</M3Button>
+					</M3CardContent>
+				</M3Card>
 			</div>
 		</div>
 	);

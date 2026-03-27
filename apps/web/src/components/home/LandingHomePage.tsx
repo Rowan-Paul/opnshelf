@@ -77,7 +77,7 @@ export function LandingHomePage() {
 				color: "var(--md-sys-color-on-background)",
 			}}
 		>
-			<section className="relative border-b border-[var(--md-sys-color-outline-variant)]">
+			<section className="relative border-b border-(--md-sys-color-outline-variant)">
 				<div
 					className="absolute inset-0 opacity-90"
 					style={{
@@ -150,7 +150,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="border-b border-[var(--md-sys-color-outline-variant)] bg-[color:rgba(255,255,255,0.02)]">
+			<section className="border-b border-(--md-sys-color-outline-variant) bg-[rgba(255,255,255,0.02)]">
 				<div className="container mx-auto max-w-7xl px-4 py-10 md:py-14">
 					<div className="mb-8 max-w-2xl">
 						<p
@@ -209,7 +209,7 @@ export function LandingHomePage() {
 							<M3Card
 								key={section.title}
 								variant="elevated"
-								className="rounded-[28px] border border-[var(--md-sys-color-outline-variant)]"
+								className="rounded-[28px] border border-(--md-sys-color-outline-variant)"
 							>
 								<M3CardHeader className="px-6 pt-6">
 									<div

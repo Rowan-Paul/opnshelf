@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const m3CardVariants = cva(
 	[
 		"relative overflow-hidden",
-		"rounded-[var(--md-sys-shape-corner-medium)]",
+		"rounded-(--md-sys-shape-corner-medium)",
 		"transition-all duration-200",
 	].join(" "),
 	{
@@ -26,7 +26,7 @@ const m3CardVariants = cva(
 				 * - Hover elevation: level 2
 				 */
 				elevated: [
-					"bg-[var(--md-sys-color-surface-container-low)]",
+					"bg-(--md-sys-color-surface-container-low)",
 					"md-elevation-1",
 					"hover:md-elevation-2",
 				].join(" "),
@@ -36,9 +36,7 @@ const m3CardVariants = cva(
 				 * - Surface container highest color
 				 * - No shadow
 				 */
-				filled: ["bg-[var(--md-sys-color-surface-container-highest)]"].join(
-					" ",
-				),
+				filled: ["bg-(--md-sys-color-surface-container-highest)"].join(" "),
 
 				/**
 				 * Outlined Card
@@ -46,8 +44,8 @@ const m3CardVariants = cva(
 				 * - 1px outline
 				 */
 				outlined: [
-					"bg-[var(--md-sys-color-surface)]",
-					"border border-[var(--md-sys-color-outline-variant)]",
+					"bg-(--md-sys-color-surface)",
+					"border border-(--md-sys-color-outline-variant)",
 				].join(" "),
 			},
 		},

@@ -51,7 +51,7 @@ const STEP_ICONS = [
 	WandSparkles,
 ] as const;
 const INPUT_CLASS =
-	"w-full rounded-(--md-sys-shape-corner-medium) border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface)] px-3 py-2 text-[var(--md-sys-color-on-surface)] outline-none transition placeholder:text-[var(--md-sys-color-on-surface-variant)] focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/30";
+	"w-full rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline) bg-(--md-sys-color-surface) px-3 py-2 text-(--md-sys-color-on-surface) outline-none transition placeholder:text-(--md-sys-color-on-surface-variant) focus:border-(--md-sys-color-primary) focus:ring-2 focus:ring-(--md-sys-color-primary)/30";
 
 export const ONBOARDING_STEPS = ONBOARDING_STEP_DETAILS.length;
 

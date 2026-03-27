@@ -143,7 +143,7 @@ function LoginPage() {
 					}}
 				>
 					<div className="mb-8">
-						<h1 className="md-headline-large mb-3">Login</h1>
+						<h1 className="md-headline-large mb-3">Sign in</h1>
 						<p className="md-body-large text-(--md-sys-color-on-surface-variant)">
 							Connect with your Atmosphere account
 						</p>

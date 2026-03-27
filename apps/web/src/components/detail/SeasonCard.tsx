@@ -135,11 +135,10 @@ export function SeasonCard({
 				title,
 				seasonNumber: String(seasonNumber),
 			}}
-			className="group block rounded-xl border bg-gray-900/30 hover:bg-gray-900/50 transition-all overflow-hidden"
-			style={{ borderColor: "var(--md-sys-color-outline)" }}
+			className="group block rounded-xl border border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container)/30 hover:bg-(--md-sys-color-surface-container)/50 transition-all overflow-hidden"
 		>
 			<div className="grid grid-cols-[100px_1fr] gap-4">
-				<div className="aspect-2/3 bg-gray-900 relative">
+				<div className="aspect-2/3 bg-(--md-sys-color-surface-container) relative">
 					{posterUrl ? (
 						<img
 							src={posterUrl}
@@ -147,7 +146,7 @@ export function SeasonCard({
 							className="w-full h-full object-cover"
 						/>
 					) : (
-						<div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">
+						<div className="w-full h-full flex items-center justify-center text-(--md-sys-color-on-surface-variant) text-xs">
 							No poster
 						</div>
 					)}
@@ -155,37 +154,39 @@ export function SeasonCard({
 				<div className="py-3 pr-4 min-w-0">
 					<div className="flex items-center justify-between gap-2 mb-1">
 						<h3
-							className="font-semibold text-lg group-hover:text-white transition-colors"
+							className="font-semibold text-lg group-hover:text-(--md-sys-color-on-surface) transition-colors"
 							style={{ color: colors.primary }}
 						>
 							Season {seasonNumber}
 						</h3>
 						{airDate && (
-							<span className="text-xs text-gray-400 flex items-center gap-1">
+							<span className="text-xs text-(--md-sys-color-on-surface-variant) flex items-center gap-1">
 								<Calendar className="w-3 h-3" />
 								{new Date(airDate).getFullYear()}
 							</span>
 						)}
 					</div>
 
-					<div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
+					<div className="flex items-center gap-3 text-xs text-(--md-sys-color-on-surface-variant) mb-2">
 						<span className="flex items-center gap-1">
 							<Film className="w-3 h-3" />
 							{episodeCount} episodes
 						</span>
 						{watchedCount > 0 && (
-							<span className="text-gray-300">{watchedCount} watched</span>
+							<span className="text-(--md-sys-color-on-surface)">
+								{watchedCount} watched
+							</span>
 						)}
 					</div>
 
 					{overview && (
-						<p className="text-xs text-gray-400 line-clamp-2 mb-3">
+						<p className="text-xs text-(--md-sys-color-on-surface-variant) line-clamp-2 mb-3">
 							{overview}
 						</p>
 					)}
 
 					{episodeCount > 0 && (
-						<div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mb-3">
+						<div className="w-full h-1.5 bg-(--md-sys-color-surface-container-high) rounded-full overflow-hidden mb-3">
 							<div
 								className="h-full rounded-full transition-all"
 								style={{

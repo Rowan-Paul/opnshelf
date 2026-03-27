@@ -5,18 +5,21 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)]/50",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-(--md-sys-color-primary)/50",
 	{
 		variants: {
 			variant: {
 				default:
-					"bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110",
-				destructive: "bg-red-600 text-white hover:bg-red-700",
+					"bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110",
+				destructive:
+					"bg-(--md-sys-color-error) text-(--md-sys-color-on-error) hover:brightness-110",
 				outline:
-					"border border-gray-700 bg-gray-900 text-gray-50 hover:bg-gray-800 hover:text-white",
-				secondary: "bg-gray-800 text-gray-50 hover:bg-gray-700",
-				ghost: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-				link: "text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline hover:brightness-110",
+					"border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container) text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-high)",
+				secondary:
+					"bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-highest)",
+				ghost:
+					"text-(--md-sys-color-on-surface-variant) hover:text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-high)/50",
+				link: "text-(--md-sys-color-primary) underline-offset-4 hover:underline hover:brightness-110",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -16,8 +16,18 @@ export function MovieDetails({ movie, colors }: MovieDetailsProps) {
 	return (
 		<section className="grid grid-cols-2 gap-4 min-w-0">
 			{movie?.release_date && (
-				<div className="p-4 rounded-lg bg-gray-900/50">
-					<span className="text-gray-500 text-sm block mb-1">Release Date</span>
+				<div
+					className="p-4 rounded-lg"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container)",
+					}}
+				>
+					<span
+						className="text-sm block mb-1"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Release Date
+					</span>
 					<span className="font-medium" style={{ color: colors.accent }}>
 						{formatDateOnly(movie.release_date)}
 					</span>
@@ -27,25 +37,53 @@ export function MovieDetails({ movie, colors }: MovieDetailsProps) {
 				<button
 					type="button"
 					onClick={() => setShowHours(!showHours)}
-					className="p-4 rounded-lg bg-gray-900/50 text-left cursor-pointer hover:bg-gray-800/50 transition-colors w-full"
+					className="p-4 rounded-lg text-left cursor-pointer transition-colors w-full"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container)",
+					}}
 				>
-					<span className="text-gray-500 text-sm block mb-1">Runtime</span>
+					<span
+						className="text-sm block mb-1"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Runtime
+					</span>
 					<span className="font-medium" style={{ color: colors.accent }}>
 						{formatRuntime(movie.runtime, showHours)}
 					</span>
 				</button>
 			)}
 			{movie?.vote_average && (
-				<div className="p-4 rounded-lg bg-gray-900/50">
-					<span className="text-gray-500 text-sm block mb-1">Rating</span>
+				<div
+					className="p-4 rounded-lg"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container)",
+					}}
+				>
+					<span
+						className="text-sm block mb-1"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Rating
+					</span>
 					<span className="font-medium" style={{ color: colors.accent }}>
 						{movie.vote_average.toFixed(1)}/10
 					</span>
 				</div>
 			)}
 			{movie?.vote_count && (
-				<div className="p-4 rounded-lg bg-gray-900/50">
-					<span className="text-gray-500 text-sm block mb-1">Votes</span>
+				<div
+					className="p-4 rounded-lg"
+					style={{
+						backgroundColor: "var(--md-sys-color-surface-container)",
+					}}
+				>
+					<span
+						className="text-sm block mb-1"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						Votes
+					</span>
 					<span className="font-medium" style={{ color: colors.accent }}>
 						{movie.vote_count.toLocaleString()}
 					</span>

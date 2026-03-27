@@ -342,7 +342,7 @@ function ProfileListDetailPage() {
 							size="sm"
 							onClick={() => setShowDeleteConfirm(true)}
 							disabled={deleteMutation.isPending}
-							className="border-[var(--md-sys-color-error)] text-[var(--md-sys-color-error)]"
+							className="border-(--md-sys-color-error) text-(--md-sys-color-error)"
 						>
 							<Trash2 className="mr-2 h-4 w-4" />
 							{deleteMutation.isPending ? "Deleting..." : "Delete"}

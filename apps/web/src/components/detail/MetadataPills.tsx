@@ -22,7 +22,7 @@ export function MetadataPills({ items }: MetadataPillsProps) {
 							key={item.label}
 							to={item.linkTo.to}
 							params={item.linkTo.params}
-							className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2 hover:bg-gray-900/40 transition-colors"
+							className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-(--md-sys-color-on-surface-variant) flex items-center gap-2 hover:bg-(--md-sys-color-surface-container)/40 transition-colors"
 						>
 							{content}
 						</Link>
@@ -32,7 +32,7 @@ export function MetadataPills({ items }: MetadataPillsProps) {
 				return (
 					<div
 						key={item.label}
-						className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-gray-300 flex items-center gap-2"
+						className="rounded-full border border-(--md-sys-color-outline) px-3 py-1.5 text-sm text-(--md-sys-color-on-surface-variant) flex items-center gap-2"
 					>
 						{content}
 					</div>

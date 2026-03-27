@@ -110,7 +110,7 @@ export function CreateListDialog({ triggerClassName }: CreateListDialogProps) {
 					</div>
 					<div className="space-y-2">
 						<div
-							className="relative rounded-[var(--md-sys-shape-corner-extra-small)] border bg-transparent transition-all duration-200"
+							className="relative rounded-(--md-sys-shape-corner-extra-small) border bg-transparent transition-all duration-200"
 							style={{
 								borderColor: isDescriptionFocused
 									? "var(--md-sys-color-primary)"
@@ -139,7 +139,7 @@ export function CreateListDialog({ triggerClassName }: CreateListDialogProps) {
 								onBlur={() => setIsDescriptionFocused(false)}
 								maxLength={500}
 								rows={3}
-								className="w-full resize-none bg-transparent py-4 px-4 text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)] outline-none md-body-large"
+								className="w-full resize-none bg-transparent py-4 px-4 text-(--md-sys-color-on-surface) placeholder:text-(--md-sys-color-on-surface-variant) outline-none md-body-large"
 							/>
 						</div>
 					</div>

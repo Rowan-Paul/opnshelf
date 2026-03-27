@@ -20,7 +20,7 @@ const m3ButtonVariants = cva(
 		"transition-all duration-200",
 		"disabled:pointer-events-none disabled:opacity-38",
 		"[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-[18px] shrink-0 [&_svg]:shrink-0",
-		"outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--md-sys-color-surface)]",
+		"outline-none focus-visible:ring-2 focus-visible:ring-(--md-sys-color-primary) focus-visible:ring-offset-2 focus-visible:ring-offset-(--md-sys-color-surface)",
 		"md-label-large",
 		"md-ripple",
 	].join(" "),
@@ -34,8 +34,8 @@ const m3ButtonVariants = cva(
 				 * - Primary color text on surface container low
 				 */
 				elevated: [
-					"bg-[var(--md-sys-color-surface-container-low)]",
-					"text-[var(--md-sys-color-primary)]",
+					"bg-(--md-sys-color-surface-container-low)",
+					"text-(--md-sys-color-primary)",
 					"md-elevation-1",
 					"hover:md-elevation-2",
 					"active:md-elevation-1",
@@ -47,8 +47,8 @@ const m3ButtonVariants = cva(
 				 * - Primary color background
 				 */
 				filled: [
-					"bg-[var(--md-sys-color-primary)]",
-					"text-[var(--md-sys-color-on-primary)]",
+					"bg-(--md-sys-color-primary)",
+					"text-(--md-sys-color-on-primary)",
 					"hover:brightness-110",
 					"active:brightness-95",
 				].join(" "),
@@ -59,8 +59,8 @@ const m3ButtonVariants = cva(
 				 * - Secondary container background
 				 */
 				"filled-tonal": [
-					"bg-[var(--md-sys-color-secondary-container)]",
-					"text-[var(--md-sys-color-on-secondary-container)]",
+					"bg-(--md-sys-color-secondary-container)",
+					"text-(--md-sys-color-on-secondary-container)",
 					"hover:brightness-110",
 					"active:brightness-95",
 				].join(" "),
@@ -72,10 +72,10 @@ const m3ButtonVariants = cva(
 				 */
 				outlined: [
 					"bg-transparent",
-					"text-[var(--md-sys-color-primary)]",
-					"border border-[var(--md-sys-color-outline)]",
-					"hover:bg-[var(--md-sys-color-primary-container)]/10",
-					"active:bg-[var(--md-sys-color-primary-container)]/20",
+					"text-(--md-sys-color-primary)",
+					"border border-(--md-sys-color-outline)",
+					"hover:bg-(--md-sys-color-primary-container)/10",
+					"active:bg-(--md-sys-color-primary-container)/20",
 				].join(" "),
 
 				/**
@@ -85,9 +85,9 @@ const m3ButtonVariants = cva(
 				 */
 				text: [
 					"bg-transparent",
-					"text-[var(--md-sys-color-primary)]",
-					"hover:bg-[var(--md-sys-color-primary-container)]/10",
-					"active:bg-[var(--md-sys-color-primary-container)]/20",
+					"text-(--md-sys-color-primary)",
+					"hover:bg-(--md-sys-color-primary-container)/10",
+					"active:bg-(--md-sys-color-primary-container)/20",
 					"px-3",
 				].join(" "),
 			},

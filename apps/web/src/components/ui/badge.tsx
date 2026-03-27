@@ -9,12 +9,15 @@ const badgeVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "bg-amber-600 text-white",
-				secondary: "bg-gray-700 text-gray-200",
-				destructive: "bg-red-600 text-white",
-				outline: "border border-gray-600 text-gray-200 bg-gray-800",
-				ghost: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-				link: "text-amber-400 underline-offset-4 hover:underline hover:text-amber-300",
+				default: "bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)",
+				secondary:
+					"bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface)",
+				destructive: "bg-(--md-sys-color-error) text-(--md-sys-color-on-error)",
+				outline:
+					"border border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) bg-(--md-sys-color-surface-container-high)",
+				ghost:
+					"text-(--md-sys-color-on-surface-variant) hover:text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-high)/50",
+				link: "text-(--md-sys-color-primary) underline-offset-4 hover:underline hover:brightness-110",
 			},
 		},
 		defaultVariants: {

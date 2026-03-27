@@ -17,7 +17,10 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
 	return (
 		<div className="flex items-center gap-2">
 			<div className="grid gap-1 text-center">
-				<Label htmlFor="hours" className="text-xs text-gray-400">
+				<Label
+					htmlFor="hours"
+					className="text-xs text-(--md-sys-color-on-surface-variant)"
+				>
 					Hours
 				</Label>
 				<TimePickerInput
@@ -26,12 +29,15 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
 					setDate={setDate}
 					ref={hourRef}
 					onRightFocus={() => minuteRef.current?.focus()}
-					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-amber-500"
+					className="w-[60px] bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline-variant) text-(--md-sys-color-on-surface) focus:border-(--md-sys-color-primary)"
 				/>
 			</div>
-			<span className="text-gray-400 mt-5">:</span>
+			<span className="text-(--md-sys-color-on-surface-variant) mt-5">:</span>
 			<div className="grid gap-1 text-center">
-				<Label htmlFor="minutes" className="text-xs text-gray-400">
+				<Label
+					htmlFor="minutes"
+					className="text-xs text-(--md-sys-color-on-surface-variant)"
+				>
 					Minutes
 				</Label>
 				<TimePickerInput
@@ -40,11 +46,11 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
 					setDate={setDate}
 					ref={minuteRef}
 					onLeftFocus={() => hourRef.current?.focus()}
-					className="w-[60px] bg-gray-800 border-gray-700 text-white focus:border-amber-500"
+					className="w-[60px] bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline-variant) text-(--md-sys-color-on-surface) focus:border-(--md-sys-color-primary)"
 				/>
 			</div>
 			<div className="flex h-10 items-center mt-4">
-				<Clock className="ml-2 h-4 w-4 text-gray-400" />
+				<Clock className="ml-2 h-4 w-4 text-(--md-sys-color-on-surface-variant)" />
 			</div>
 		</div>
 	);

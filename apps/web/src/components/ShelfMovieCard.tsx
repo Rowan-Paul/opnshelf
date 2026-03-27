@@ -134,7 +134,7 @@ export function ShelfMovieCard({
 				}}
 				className="block rounded-[20px] px-1 pb-1"
 			>
-				<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-[var(--md-sys-color-primary)]">
+				<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-(--md-sys-color-primary)">
 					{tracked.title}
 				</h3>
 				{tracked.releaseYear && (

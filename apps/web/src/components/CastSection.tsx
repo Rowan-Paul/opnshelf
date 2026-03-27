@@ -35,7 +35,13 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 										key={`cast-${person.id}`}
 										className="shrink-0 w-32 group cursor-pointer"
 									>
-										<div className="relative overflow-hidden rounded-lg bg-gray-900/50 aspect-2/3 mb-2 transition-transform duration-300 group-hover:scale-[1.02]">
+										<div
+											className="relative overflow-hidden rounded-lg aspect-2/3 mb-2 transition-transform duration-300 group-hover:scale-[1.02]"
+											style={{
+												backgroundColor:
+													"var(--md-sys-color-surface-container)",
+											}}
+										>
 											{profileUrl ? (
 												<img
 													src={profileUrl}
@@ -44,15 +50,27 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 													loading="lazy"
 												/>
 											) : (
-												<div className="w-full h-full bg-gray-800 flex items-center justify-center">
-													<span className="text-gray-600 text-xs text-center px-2">
+												<div
+													className="w-full h-full flex items-center justify-center"
+													style={{
+														backgroundColor:
+															"var(--md-sys-color-surface-container-high)",
+														color: "var(--md-sys-color-on-surface-variant)",
+													}}
+												>
+													<span className="text-xs text-center px-2">
 														No photo
 													</span>
 												</div>
 											)}
 										</div>
 										<div className="space-y-0.5">
-											<p className="text-sm font-medium text-gray-200 line-clamp-2 transition-colors duration-200 group-hover:text-white">
+											<p
+												className="text-sm font-medium line-clamp-2 transition-colors duration-200"
+												style={{
+													color: "var(--md-sys-color-on-surface)",
+												}}
+											>
 												{person.name}
 											</p>
 											{person.character && (
@@ -71,7 +89,8 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 						<div
 							className="absolute right-0 top-0 bottom-4 w-16 pointer-events-none"
 							style={{
-								background: `linear-gradient(to left, rgb(3, 7, 18), transparent)`,
+								background:
+									"linear-gradient(to left, var(--md-sys-color-background), transparent)",
 							}}
 						/>
 					</div>
@@ -95,7 +114,13 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 										key={`guest-${person.id}`}
 										className="shrink-0 w-32 group cursor-pointer"
 									>
-										<div className="relative overflow-hidden rounded-lg bg-gray-900/50 aspect-2/3 mb-2 transition-transform duration-300 group-hover:scale-[1.02]">
+										<div
+											className="relative overflow-hidden rounded-lg aspect-2/3 mb-2 transition-transform duration-300 group-hover:scale-[1.02]"
+											style={{
+												backgroundColor:
+													"var(--md-sys-color-surface-container)",
+											}}
+										>
 											{profileUrl ? (
 												<img
 													src={profileUrl}
@@ -104,15 +129,27 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 													loading="lazy"
 												/>
 											) : (
-												<div className="w-full h-full bg-gray-800 flex items-center justify-center">
-													<span className="text-gray-600 text-xs text-center px-2">
+												<div
+													className="w-full h-full flex items-center justify-center"
+													style={{
+														backgroundColor:
+															"var(--md-sys-color-surface-container-high)",
+														color: "var(--md-sys-color-on-surface-variant)",
+													}}
+												>
+													<span className="text-xs text-center px-2">
 														No photo
 													</span>
 												</div>
 											)}
 										</div>
 										<div className="space-y-0.5">
-											<p className="text-sm font-medium text-gray-200 line-clamp-2 transition-colors duration-200 group-hover:text-white">
+											<p
+												className="text-sm font-medium line-clamp-2 transition-colors duration-200"
+												style={{
+													color: "var(--md-sys-color-on-surface)",
+												}}
+											>
 												{person.name}
 											</p>
 											{person.character && (
@@ -131,7 +168,8 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 						<div
 							className="absolute right-0 top-0 bottom-4 w-16 pointer-events-none"
 							style={{
-								background: `linear-gradient(to left, rgb(3, 7, 18), transparent)`,
+								background:
+									"linear-gradient(to left, var(--md-sys-color-background), transparent)",
 							}}
 						/>
 					</div>

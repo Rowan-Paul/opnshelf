@@ -96,7 +96,10 @@ export function MovieCard({
 					movieId: movieId,
 					title: createTitleSlug(movie.title),
 				}}
-				className="block relative aspect-2/3 bg-gray-900 rounded-lg overflow-hidden mb-2"
+				className="block relative aspect-2/3 rounded-lg overflow-hidden mb-2"
+				style={{
+					backgroundColor: "var(--md-sys-color-surface-container-high)",
+				}}
 			>
 				{posterUrl ? (
 					<img
@@ -105,7 +108,10 @@ export function MovieCard({
 						className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
 					/>
 				) : (
-					<div className="w-full h-full flex items-center justify-center text-gray-600">
+					<div
+						className="w-full h-full flex items-center justify-center md-body-medium"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
 						No poster
 					</div>
 				)}
@@ -163,10 +169,17 @@ export function MovieCard({
 				}}
 				className="block"
 			>
-				<h3 className="font-semibold text-sm line-clamp-2 mb-1 hover:text-amber-400 transition-colors">
+				<h3 className="font-semibold text-sm line-clamp-2 mb-1 transition-colors hover:text-(--md-sys-color-primary)">
 					{movie.title}
 				</h3>
-				{releaseYear && <p className="text-gray-500 text-sm">{releaseYear}</p>}
+				{releaseYear && (
+					<p
+						className="text-sm"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						{releaseYear}
+					</p>
+				)}
 			</Link>
 		</div>
 	);

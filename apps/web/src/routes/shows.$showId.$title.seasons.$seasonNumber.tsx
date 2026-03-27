@@ -369,7 +369,7 @@ function ShowSeasonPage() {
 									>
 										Overview
 									</h2>
-									<p className="text-gray-300 leading-relaxed">
+									<p className="text-(--md-sys-color-on-surface-variant) leading-relaxed">
 										{season?.overview || "No season overview available."}
 									</p>
 								</section>

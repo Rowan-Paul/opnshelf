@@ -15,12 +15,14 @@ export function BreadcrumbNav({ items, colors }: BreadcrumbNavProps) {
 
 				return (
 					<div key={item.label} className="flex items-center gap-1">
-						{index > 0 && <ChevronRight className="w-4 h-4 text-gray-500" />}
+						{index > 0 && (
+							<ChevronRight className="w-4 h-4 text-(--md-sys-color-on-surface-variant)" />
+						)}
 						{item.linkTo && !isLast ? (
 							<Link
 								to={item.linkTo.to}
 								params={item.linkTo.params}
-								className="text-gray-400 hover:text-gray-200 transition-colors"
+								className="text-(--md-sys-color-on-surface-variant) hover:text-(--md-sys-color-on-surface) transition-colors"
 							>
 								{item.label}
 							</Link>

@@ -95,7 +95,7 @@ export function ShowEpisodeContent({
 				>
 					Overview
 				</h2>
-				<p className="text-gray-300 leading-relaxed mb-4">
+				<p className="text-(--md-sys-color-on-surface-variant) leading-relaxed mb-4">
 					{episode?.overview || "No overview available."}
 				</p>
 			</section>

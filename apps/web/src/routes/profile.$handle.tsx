@@ -152,11 +152,9 @@ function ProfileLayout() {
 						</div>
 					)}
 					<div className="min-w-0 flex-1">
-						<h1 className="md-headline-medium [overflow-wrap:anywhere]">
-							{displayName}
-						</h1>
+						<h1 className="md-headline-medium wrap-anywhere">{displayName}</h1>
 						<p
-							className="[overflow-wrap:anywhere]"
+							className="wrap-anywhere"
 							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 						>
 							@{profile.handle}
@@ -359,10 +357,10 @@ function ProfileNavLink({
 	return (
 		<Link
 			{...route}
-			className={`flex items-center gap-2 rounded-[var(--md-sys-shape-corner-large)] px-4 py-2 transition-colors md-label-large ${
+			className={`flex items-center gap-2 rounded-(--md-sys-shape-corner-large) px-4 py-2 transition-colors md-label-large ${
 				isActive
 					? ""
-					: "hover:bg-[var(--md-sys-color-surface-container)] hover:text-[var(--md-sys-color-on-surface)]"
+					: "hover:bg-(--md-sys-color-surface-container) hover:text-(--md-sys-color-on-surface)"
 			}`}
 			style={
 				isActive

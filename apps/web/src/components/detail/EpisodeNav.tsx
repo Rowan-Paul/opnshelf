@@ -54,7 +54,7 @@ export function EpisodeNav({
 							),
 							episodeNumber: String(previousEpisode.episode_number),
 						}}
-						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
+						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container)/40 transition-colors text-sm"
 					>
 						<ArrowLeft className="w-4 h-4" />
 						<span>Episode {previousEpisode.episode_number}</span>
@@ -72,7 +72,7 @@ export function EpisodeNav({
 							seasonNumber: String(nextContext?.seasonNumber ?? seasonNumber),
 							episodeNumber: String(nextEpisode.episode_number),
 						}}
-						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-gray-900/40 transition-colors text-sm"
+						className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container)/40 transition-colors text-sm"
 					>
 						<span>Episode {nextEpisode.episode_number}</span>
 						<ArrowRight className="w-4 h-4" />
@@ -132,11 +132,13 @@ export function EpisodeNav({
 									borderColor: "var(--md-sys-color-outline)",
 								}}
 							>
-								<div className="text-xs uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-2">
+								<div className="text-xs uppercase tracking-wide text-(--md-sys-color-on-surface-variant) mb-2 flex items-center gap-2">
 									{slot.icon}
 									{slot.label}
 								</div>
-								<div className="text-gray-500 text-sm">No episode</div>
+								<div className="text-(--md-sys-color-on-surface-variant) text-sm">
+									No episode
+								</div>
 							</div>
 						);
 					}
@@ -155,8 +157,8 @@ export function EpisodeNav({
 							}}
 							className={`rounded-lg border p-3 transition-colors ${
 								slot.highlighted
-									? "bg-gray-900/60 hover:bg-gray-900/70"
-									: "bg-gray-900/30 hover:bg-gray-900/50"
+									? "bg-(--md-sys-color-surface-container)/60 hover:bg-(--md-sys-color-surface-container)/70"
+									: "bg-(--md-sys-color-surface-container)/30 hover:bg-(--md-sys-color-surface-container)/50"
 							}`}
 							style={{
 								borderColor: slot.highlighted
@@ -164,7 +166,7 @@ export function EpisodeNav({
 									: "var(--md-sys-color-outline)",
 							}}
 						>
-							<div className="text-xs uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-2">
+							<div className="text-xs uppercase tracking-wide text-(--md-sys-color-on-surface-variant) mb-2 flex items-center gap-2">
 								{slot.icon}
 								{slot.label}
 							</div>
@@ -181,7 +183,7 @@ export function EpisodeNav({
 								<div className="font-medium text-sm">
 									E{slot.episode.episode_number}: {slot.episode.name}
 								</div>
-								<div className="text-xs text-gray-400 mt-1">
+								<div className="text-xs text-(--md-sys-color-on-surface-variant) mt-1">
 									{slot.episode.air_date
 										? formatDateOnly(slot.episode.air_date)
 										: "TBA"}

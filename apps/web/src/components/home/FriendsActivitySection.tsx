@@ -140,7 +140,7 @@ function FriendsActivitySectionSkeleton() {
 				{Array.from({ length: 5 }, (_, index) => (
 					<div
 						key={`friends-activity-skeleton-${index + 1}`}
-						className="w-[min(11rem,70vw)] shrink-0 rounded-[24px] border p-3 sm:w-[11.5rem] lg:w-[12rem]"
+						className="w-[min(11rem,70vw)] shrink-0 rounded-[24px] border p-3 sm:w-46 lg:w-48"
 						style={{
 							backgroundColor: "var(--md-sys-color-surface-container-low)",
 							borderColor: "var(--md-sys-color-outline-variant)",
@@ -229,7 +229,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 
 	return (
 		<div
-			className="group flex h-full w-[min(11rem,70vw)] shrink-0 flex-col rounded-[24px] border p-3 transition-transform duration-200 hover:-translate-y-1 sm:w-[11.5rem] lg:w-[12rem]"
+			className="group flex h-full w-[min(11rem,70vw)] shrink-0 flex-col rounded-[24px] border p-3 transition-transform duration-200 hover:-translate-y-1 sm:w-46 lg:w-48"
 			style={{
 				backgroundColor: "var(--md-sys-color-surface-container-low)",
 				borderColor: "var(--md-sys-color-outline-variant)",
@@ -274,11 +274,11 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 				</div>
 			)}
 
-			<div className="flex min-h-[8.75rem] flex-1 flex-col px-1 pb-1">
+			<div className="flex min-h-35 flex-1 flex-col px-1 pb-1">
 				<div>
 					{mediaTarget ? (
 						<Link {...mediaTarget} className="block rounded-[20px]">
-							<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-[var(--md-sys-color-primary)]">
+							<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-(--md-sys-color-primary)">
 								{mediaTitle}
 							</h3>
 						</Link>

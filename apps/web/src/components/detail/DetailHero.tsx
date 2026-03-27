@@ -58,8 +58,14 @@ export function DetailHero({
 			className="w-full aspect-2/3 object-cover"
 		/>
 	) : (
-		<div className="w-full aspect-2/3 bg-gray-900 flex items-center justify-center">
-			<span className="text-gray-600">No poster</span>
+		<div
+			className="w-full aspect-2/3 flex items-center justify-center"
+			style={{
+				backgroundColor: "var(--md-sys-color-surface-container-high)",
+				color: "var(--md-sys-color-on-surface-variant)",
+			}}
+		>
+			No poster
 		</div>
 	);
 
@@ -136,7 +142,10 @@ export function DetailHero({
 								{title}
 							</h1>
 							{subtitle && (
-								<h2 className="text-lg md:text-2xl text-gray-200">
+								<h2
+									className="text-lg md:text-2xl"
+									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+								>
 									{subtitle}
 								</h2>
 							)}
