@@ -544,12 +544,9 @@ describe("UsersService", () => {
 			previewItems: [],
 			items: [],
 			skipped: [],
-			sourceCount: 2,
 		});
 
-		await expect(
-			service.fetchTraktPublicHistory("alice", 100),
-		).resolves.toEqual({
+		await expect(service.fetchTraktPublicHistory("alice")).resolves.toEqual({
 			profile: {
 				username: "alice",
 				slug: "alice",
@@ -562,40 +559,9 @@ describe("UsersService", () => {
 			previewItems: [],
 			items: [],
 			skipped: [],
-			sourceCount: 2,
 		});
 		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
 			"alice",
-			100,
-		);
-	});
-
-	it("delegates Trakt history fetching without a max item limit", async () => {
-		importHistoryService.fetchTraktPublicHistory.mockResolvedValue({
-			profile: {
-				username: "rpf_2001",
-				slug: "rpf_2001",
-				name: undefined,
-				isPrivate: false,
-				isVip: false,
-				avatarUrl: undefined,
-			},
-			importableCount: 100,
-			previewItems: [],
-			items: [],
-			skipped: [],
-			sourceCount: 100,
-		});
-
-		await expect(
-			service.fetchTraktPublicHistory("rpf_2001"),
-		).resolves.toMatchObject({
-			importableCount: 100,
-			sourceCount: 100,
-		});
-		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
-			"rpf_2001",
-			undefined,
 		);
 	});
 

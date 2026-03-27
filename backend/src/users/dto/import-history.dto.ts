@@ -108,17 +108,6 @@ export class FetchTraktPublicHistoryDto {
 	@ApiProperty({ description: "Trakt username or slug" })
 	@IsString()
 	username: string;
-
-	@ApiPropertyOptional({
-		description:
-			"Maximum items to fetch. If omitted, fetches full available history via pagination.",
-		minimum: 1,
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	@Min(1)
-	maxItems?: number;
 }
 
 export class TraktPublicProfileDto {
@@ -160,7 +149,8 @@ export class FetchTraktPublicHistoryResponseDto {
 	profile: TraktPublicProfileDto;
 
 	@ApiProperty({
-		description: "Count of importable rows after normalization",
+		description:
+			"Count of importable rows after normalization (from the recent preview window)",
 	})
 	importableCount: number;
 
@@ -172,11 +162,6 @@ export class FetchTraktPublicHistoryResponseDto {
 
 	@ApiProperty({ type: [ImportSkipDto] })
 	skipped: ImportSkipDto[];
-
-	@ApiProperty({
-		description: "Count of rows returned by Trakt before filtering",
-	})
-	sourceCount: number;
 }
 
 export class StartTraktImportDto {

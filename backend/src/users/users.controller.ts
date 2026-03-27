@@ -322,10 +322,7 @@ export class UsersController {
 	async fetchMyTraktPublicHistory(
 		@Body() dto: FetchTraktPublicHistoryDto,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
-		return this.usersService.fetchTraktPublicHistory(
-			dto.username,
-			dto.maxItems,
-		);
+		return this.usersService.fetchTraktPublicHistory(dto.username);
 	}
 
 	@Post("me/import/trakt/public/start")

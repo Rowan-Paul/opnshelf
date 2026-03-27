@@ -83,11 +83,10 @@ describe("UsersController", () => {
 			previewItems: [],
 			items: [],
 			skipped: [],
-			sourceCount: 0,
 		});
 
 		await expect(
-			controller.fetchMyTraktPublicHistory({ username: "alice", maxItems: 10 }),
+			controller.fetchMyTraktPublicHistory({ username: "alice" }),
 		).resolves.toEqual({
 			profile: {
 				username: "alice",
@@ -100,12 +99,8 @@ describe("UsersController", () => {
 			previewItems: [],
 			items: [],
 			skipped: [],
-			sourceCount: 0,
 		});
-		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith(
-			"alice",
-			10,
-		);
+		expect(usersService.fetchTraktPublicHistory).toHaveBeenCalledWith("alice");
 	});
 
 	it("starts a background Trakt import", async () => {

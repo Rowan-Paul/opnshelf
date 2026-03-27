@@ -91,6 +91,7 @@ type BackgroundJobRecord = Awaited<
 
 const TRAKT_HISTORY_PAGE_SIZE = 100;
 const TRAKT_PREVIEW_ITEM_LIMIT = 5;
+const TRAKT_PREVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"queued",
 	"running",
@@ -132,39 +133,32 @@ export class ImportHistoryService {
 
 	async fetchTraktPublicHistory(
 		username: string,
-		maxItems?: number,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
 		try {
 			this.ensureTraktConfigured();
 
 			const normalizedUsername = this.normalizeUsername(username);
-			const safeMaxItems =
-				typeof maxItems === "number"
-					? Math.max(Math.floor(maxItems), 1)
-					: Number.POSITIVE_INFINITY;
 			const profile = await this.fetchTraktPublicProfile(normalizedUsername);
+			const startAt = new Date(Date.now() - TRAKT_PREVIEW_WINDOW_MS);
 			let page = 1;
 			let pageCount = Number.POSITIVE_INFINITY;
-			let sourceCount = 0;
 			const items: NormalizedImportItemDto[] = [];
 			const skipped: ImportSkipDto[] = [];
 			const previewItems: TraktHistoryPreviewItemDto[] = [];
 
-			while (items.length < safeMaxItems && page <= pageCount) {
+			while (page <= pageCount) {
 				const pageResult = await this.fetchTraktHistoryPage(
 					normalizedUsername,
 					page,
+					{ startAt },
 				);
 				pageCount = pageResult.pageCount ?? pageCount;
-				sourceCount += pageResult.payload.length;
+				const baseIndex = items.length + skipped.length + 1;
 
 				for (let i = 0; i < pageResult.payload.length; i++) {
-					if (items.length >= safeMaxItems) {
-						break;
-					}
 					const result = this.normalizeTraktApiItem(
 						pageResult.payload[i],
-						sourceCount - pageResult.payload.length + i + 1,
+						baseIndex + i,
 					);
 					if (result.item) {
 						items.push(result.item);
@@ -195,7 +189,6 @@ export class ImportHistoryService {
 				previewItems,
 				items,
 				skipped,
-				sourceCount,
 			};
 		} catch (error) {
 			throw this.toPublicTraktException(error);
@@ -751,12 +744,16 @@ export class ImportHistoryService {
 	private async fetchTraktHistoryPage(
 		username: string,
 		page: number,
+		options?: { startAt?: Date },
 	): Promise<{ payload: unknown[]; pageCount?: number }> {
 		const url = this.createTraktUrl(
 			`/users/${encodeURIComponent(username)}/history`,
 		);
 		url.searchParams.set("page", String(page));
 		url.searchParams.set("limit", String(TRAKT_HISTORY_PAGE_SIZE));
+		if (options?.startAt) {
+			url.searchParams.set("start_at", options.startAt.toISOString());
+		}
 
 		const { data, headers } =
 			await this.fetchTraktJsonWithHeaders<unknown>(url);

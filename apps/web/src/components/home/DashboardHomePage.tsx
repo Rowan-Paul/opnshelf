@@ -1,8 +1,6 @@
 import {
 	listsControllerGetUserListsOptions,
 	moviesControllerUnmarkWatchedMutation,
-	type ShelfActivityBucketDto,
-	type ShelfActivitySummaryDto,
 	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
@@ -12,8 +10,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CreateListDialog } from "@/components/CreateListDialog";
+import { AtAGlanceCard } from "@/components/home/AtAGlanceCard";
 import { FriendsActivitySection } from "@/components/home/FriendsActivitySection";
 import { UpNextSection } from "@/components/home/UpNextSection";
 import { ListCard } from "@/components/ListCard";
@@ -34,10 +33,7 @@ import {
 import { getProfileRoute } from "@/lib/profile-routes";
 import { createTitleSlug } from "@/lib/utils";
 
-type DashboardRange = "week" | "month";
-
 export function DashboardHomePage({ user }: { user: UserDto }) {
-	const [range, setRange] = useState<DashboardRange>("week");
 	const displayName = getSocialDisplayName(
 		(user as unknown as { displayName?: string | null }).displayName,
 		user.handle,
@@ -108,17 +104,6 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		};
 	}, [shelfData]);
 
-	const activityBars = useMemo(
-		() => buildActivityBars(activitySummary?.dailyActivity, range),
-		[activitySummary?.dailyActivity, range],
-	);
-	const watchedInRangeCount =
-		range === "week"
-			? (activitySummary?.watchedLast7Days ?? 0)
-			: (activitySummary?.watchedLast30Days ?? 0);
-
-	const maxActivityValue = Math.max(...activityBars.map((bar) => bar.value), 1);
-
 	const { recentLists } = useMemo(() => {
 		const listItems = lists ?? [];
 		const sortedLists = [...listItems].sort((a, b) => {
@@ -184,100 +169,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 				</div>
 
 				<div className="lg:col-span-2">
-					<M3Card
-						variant="elevated"
-						className="h-full rounded-xl border"
-						style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
-					>
-						<M3CardHeader>
-							<M3CardTitle className="md-title-large">At a glance</M3CardTitle>
-							<M3CardDescription>
-								A lighter read on your recent momentum.
-							</M3CardDescription>
-						</M3CardHeader>
-						<M3CardContent className="space-y-5">
-							<div
-								className="inline-flex w-full flex-wrap gap-2 rounded-full border p-1"
-								style={{
-									backgroundColor: "var(--md-sys-color-surface-container)",
-									borderColor: "var(--md-sys-color-outline-variant)",
-								}}
-							>
-								<M3Button
-									size="sm"
-									variant={range === "week" ? "filled-tonal" : "text"}
-									className="min-w-24 flex-1 rounded-full"
-									onClick={() => setRange("week")}
-								>
-									Week
-								</M3Button>
-								<M3Button
-									size="sm"
-									variant={range === "month" ? "filled-tonal" : "text"}
-									className="min-w-24 flex-1 rounded-full"
-									onClick={() => setRange("month")}
-								>
-									Month
-								</M3Button>
-							</div>
-							<div
-								className="rounded-xl border p-4"
-								style={{
-									backgroundColor: "var(--md-sys-color-surface-container)",
-									borderColor: "var(--md-sys-color-outline-variant)",
-								}}
-							>
-								<div className="mb-4 flex items-center justify-between gap-3">
-									<div>
-										<p className="text-sm font-semibold text-(--md-sys-color-on-surface)">
-											Viewing rhythm
-										</p>
-										<p className="text-xs text-(--md-sys-color-on-surface-variant)">
-											{range === "week" ? "Last 7 days" : "Past 30 days"}
-										</p>
-									</div>
-									<p className="text-xs text-(--md-sys-color-on-surface-variant)">
-										{watchedInRangeCount} watched
-									</p>
-								</div>
-								<div
-									className={range === "month" ? "overflow-x-auto pb-2" : ""}
-								>
-									<div
-										className={
-											range === "month"
-												? "flex min-w-[720px] gap-2"
-												: "grid grid-cols-7 gap-2"
-										}
-									>
-										{activityBars.map((bar) => (
-											<div
-												key={bar.key}
-												className={`flex min-w-0 flex-col items-center gap-2 ${
-													range === "month" ? "w-5 shrink-0" : ""
-												}`}
-											>
-												<div className="flex h-24 w-full items-end overflow-hidden rounded-2xl bg-[rgba(127,127,127,0.14)] px-1 py-1">
-													<div
-														className="w-full rounded-xl bg-(--md-sys-color-primary)"
-														style={{
-															height: `${Math.max((bar.value / maxActivityValue) * 100, bar.value > 0 ? 18 : 8)}%`,
-														}}
-													/>
-												</div>
-												<span className="text-xs font-semibold text-(--md-sys-color-on-surface)">
-													{bar.value}
-												</span>
-												<span className="min-h-4 text-center text-[11px] text-(--md-sys-color-on-surface-variant)">
-													{bar.showLabel ? bar.label : ""}
-												</span>
-											</div>
-										))}
-									</div>
-								</div>
-							</div>
-						</M3CardContent>
-					</M3Card>
+					<AtAGlanceCard activitySummary={activitySummary} />
 				</div>
 			</div>
 
@@ -477,45 +369,4 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 			</div>
 		</div>
 	);
-}
-
-function buildActivityBars(
-	dailyActivity: ShelfActivitySummaryDto["dailyActivity"] | undefined,
-	range: DashboardRange,
-) {
-	const visibleBuckets =
-		range === "week" ? (dailyActivity?.slice(-7) ?? []) : (dailyActivity ?? []);
-
-	if (visibleBuckets.length === 0) {
-		return Array.from({ length: range === "week" ? 7 : 30 }, (_, index) => ({
-			key: `placeholder-${range}-${index}`,
-			value: 0,
-			label: "",
-			showLabel: false,
-		}));
-	}
-
-	return visibleBuckets.map((bucket, index) => ({
-		key: bucket.date,
-		value: bucket.count,
-		label:
-			range === "week"
-				? formatDayKey(bucket, { weekday: "short" }).slice(0, 3)
-				: formatDayKey(bucket, { month: "short", day: "numeric" }),
-		showLabel:
-			range === "week" ||
-			index % 5 === 0 ||
-			index === visibleBuckets.length - 1,
-	}));
-}
-
-function formatDayKey(
-	bucket: ShelfActivityBucketDto,
-	options: Intl.DateTimeFormatOptions,
-) {
-	const [year, month, day] = bucket.date.split("-").map(Number);
-	return new Intl.DateTimeFormat(undefined, {
-		...options,
-		timeZone: "UTC",
-	}).format(new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)));
 }

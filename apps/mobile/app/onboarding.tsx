@@ -428,15 +428,8 @@ export default function OnboardingScreen() {
 			setImportProgress((previous) => ({
 				...previous,
 				phase: "preview_ready",
-				totalItems: fetched.importableCount,
-				message:
-					fetched.importableCount > 0
-						? `Preview ready for @${fetched.profile.username}`
-						: `No importable items found for @${fetched.profile.username}`,
+				message: `Preview ready for @${fetched.profile.username}`,
 			}));
-			if (!fetched.importableCount) {
-				showToast("No supported watch history items found", "info");
-			}
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -452,7 +445,7 @@ export default function OnboardingScreen() {
 	};
 
 	const handleConfirmTraktImport = async () => {
-		if (!traktPreview || traktPreview.importableCount < 1) {
+		if (!traktPreview) {
 			return;
 		}
 

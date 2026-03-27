@@ -123,7 +123,6 @@ const traktPreview = {
 		},
 	],
 	skipped: [],
-	sourceCount: 4,
 };
 
 const startedImport = {

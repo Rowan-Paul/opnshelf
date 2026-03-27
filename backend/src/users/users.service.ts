@@ -257,12 +257,8 @@ export class UsersService {
 
 	async fetchTraktPublicHistory(
 		username: string,
-		maxItems?: number,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
-		return this.importHistoryService.fetchTraktPublicHistory(
-			username,
-			maxItems,
-		);
+		return this.importHistoryService.fetchTraktPublicHistory(username);
 	}
 
 	async startTraktImport(

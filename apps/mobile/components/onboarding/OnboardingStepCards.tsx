@@ -444,16 +444,14 @@ export function ImportStepCard({
 							>
 								{importProgress.message}
 							</Text>
-							{importProgress.phase === "preview_ready" && traktPreview ? (
+							{importProgress.phase !== "preview_ready" ? (
 								<Text
 									style={[
 										styles.importStatusMeta,
 										{ color: colors.onSurfaceVariant },
 									]}
 								>
-									{isTraktImportQueued
-										? `Preview loaded from ${traktQueuedImport.sourcePreviewCount} recent Trakt history rows. The full import will keep running in the background.`
-										: `${traktPreview.importableCount} importable items found from ${traktPreview.sourceCount} Trakt history rows.`}
+									Preparing data for import...
 								</Text>
 							) : null}
 						</View>
@@ -629,28 +627,6 @@ export function ImportStepCard({
 													: ""}
 											</Text>
 										</View>
-										<View style={styles.previewCountWrap}>
-											<Text
-												style={[
-													styles.previewCountLabel,
-													{ color: colors.onSurfaceVariant },
-												]}
-											>
-												{isTraktImportQueued
-													? "Background import"
-													: "Ready to import"}
-											</Text>
-											<Text
-												style={[
-													styles.previewCountValue,
-													{ color: colors.primary },
-												]}
-											>
-												{isTraktImportQueued
-													? "Queued"
-													: traktPreview.importableCount}
-											</Text>
-										</View>
 									</View>
 
 									{isTraktImportQueued ? (
@@ -731,12 +707,9 @@ export function ImportStepCard({
 									{!isTraktImportQueued ? (
 										<Button
 											onPress={onTraktImportConfirm}
-											disabled={
-												isImportBusy || traktPreview.importableCount < 1
-											}
+											disabled={isImportBusy}
 										>
-											Import {traktPreview.importableCount} item
-											{traktPreview.importableCount === 1 ? "" : "s"}
+											Start import
 										</Button>
 									) : null}
 								</View>

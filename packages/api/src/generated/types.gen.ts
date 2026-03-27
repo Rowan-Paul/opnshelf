@@ -567,10 +567,6 @@ export type FetchTraktPublicHistoryDto = {
      * Trakt username or slug
      */
     username: string;
-    /**
-     * Maximum items to fetch. If omitted, fetches full available history via pagination.
-     */
-    maxItems?: number;
 };
 
 export type TraktPublicProfileDto = {
@@ -647,16 +643,12 @@ export type ImportSkipDto = {
 export type FetchTraktPublicHistoryResponseDto = {
     profile: TraktPublicProfileDto;
     /**
-     * Count of importable rows after normalization
+     * Count of importable rows after normalization (from the recent preview window)
      */
     importableCount: number;
     previewItems: Array<TraktHistoryPreviewItemDto>;
     items: Array<NormalizedImportItemDto>;
     skipped: Array<ImportSkipDto>;
-    /**
-     * Count of rows returned by Trakt before filtering
-     */
-    sourceCount: number;
 };
 
 export type StartTraktImportDto = {

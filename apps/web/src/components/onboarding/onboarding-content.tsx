@@ -475,13 +475,7 @@ export function OnboardingContent({
 							{showImportStatusAboveInput && (
 								<div className="grid gap-2 rounded-(--md-sys-shape-corner-medium) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-3">
 									<p className="md-label-large m-0">{importProgress.message}</p>
-									{importProgress.phase === "preview_ready" && traktPreview ? (
-										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
-											{isTraktImportQueued
-												? `Preview loaded from ${traktQueuedImport.sourcePreviewCount} recent Trakt history rows. The full import will keep running in the background.`
-												: `${traktPreview.importableCount} importable items found from ${traktPreview.sourceCount} Trakt history rows.`}
-										</p>
-									) : (
+									{importProgress.phase !== "preview_ready" && (
 										<p className="md-body-small m-0 text-(--md-sys-color-on-surface-variant)">
 											Preparing data for import...
 										</p>
@@ -579,33 +573,19 @@ export function OnboardingContent({
 										</div>
 									) : traktPreview ? (
 										<div className="grid gap-4 rounded-(--md-sys-shape-corner-large) border border-(--md-sys-color-outline-variant) bg-(--md-sys-color-surface-container-high) p-4">
-											<div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-												<div className="grid gap-1">
-													<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
-														Trakt profile
-													</p>
-													<h3 className="md-title-large m-0">
-														{traktPreview.profile.name ??
-															`@${traktPreview.profile.username}`}
-													</h3>
-													<p className="md-body-medium m-0 text-(--md-sys-color-on-surface-variant)">
-														@{traktPreview.profile.username}
-														{traktPreview.profile.isVip ? " • VIP" : ""}
-														{traktPreview.profile.isPrivate ? " • Private" : ""}
-													</p>
-												</div>
-												<div className="grid gap-2 text-right">
-													<p className="md-label-small m-0 uppercase text-(--md-sys-color-on-surface-variant)">
-														{isTraktImportQueued
-															? "Background import"
-															: "Ready to import"}
-													</p>
-													<p className="md-headline-small m-0 text-(--md-sys-color-primary)">
-														{isTraktImportQueued
-															? "Queued"
-															: traktPreview.importableCount}
-													</p>
-												</div>
+											<div className="grid gap-1">
+												<p className="md-label-small m-0 uppercase tracking-[0.12em] text-(--md-sys-color-primary)">
+													Trakt profile
+												</p>
+												<h3 className="md-title-large m-0">
+													{traktPreview.profile.name ??
+														`@${traktPreview.profile.username}`}
+												</h3>
+												<p className="md-body-medium m-0 text-(--md-sys-color-on-surface-variant)">
+													@{traktPreview.profile.username}
+													{traktPreview.profile.isVip ? " • VIP" : ""}
+													{traktPreview.profile.isPrivate ? " • Private" : ""}
+												</p>
 											</div>
 
 											{isTraktImportQueued ? (
@@ -657,12 +637,9 @@ export function OnboardingContent({
 												<M3Button
 													variant="filled"
 													onClick={onTraktImportConfirm}
-													disabled={
-														isImportBusy || traktPreview.importableCount < 1
-													}
+													disabled={isImportBusy}
 												>
-													Import {traktPreview.importableCount} item
-													{traktPreview.importableCount === 1 ? "" : "s"}
+													Start import
 												</M3Button>
 											) : null}
 										</div>
