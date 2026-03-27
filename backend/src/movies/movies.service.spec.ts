@@ -722,6 +722,38 @@ describe("MoviesService", () => {
 			});
 		});
 
+		it("should ignore missing PDS records in all mode without warning", async () => {
+			const mockSession = { did: "did:plc:abc123" };
+			const allWatches = [
+				{ id: "tracked-1", rkey: "movie-123-1234567890", movieId: "123" },
+			];
+			const warnSpy = jest.spyOn(
+				(
+					service as unknown as {
+						logger: { warn: (...args: unknown[]) => void };
+					}
+				).logger,
+				"warn",
+			);
+
+			mockPrismaService.trackedMovie.findMany.mockResolvedValue(allWatches);
+			mockDeleteRecord.mockRejectedValue(new Error("RecordNotFound"));
+
+			const result = await service.unmarkWatched(
+				"did:plc:abc123",
+				mockSession,
+				"123",
+				"all",
+			);
+
+			expect(result).toEqual({
+				movieId: "123",
+				mode: "all",
+				deletedCount: 1,
+			});
+			expect(warnSpy).not.toHaveBeenCalled();
+		});
+
 		it("should return empty result when no watch record found in latest mode", async () => {
 			const mockSession = { did: "did:plc:abc123" };
 

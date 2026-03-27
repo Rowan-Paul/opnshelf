@@ -221,7 +221,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleFollowEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
@@ -255,7 +255,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleMovieEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
@@ -321,7 +321,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleProfileEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
@@ -357,7 +357,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleListEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
@@ -393,7 +393,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleEpisodeEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
@@ -470,7 +470,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleListItemEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
-				this.logger.warn(`Record event missing record data: ${uri}`);
+				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 

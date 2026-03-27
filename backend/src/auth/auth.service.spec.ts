@@ -122,9 +122,17 @@ describe("AuthService", () => {
 					token_endpoint_auth_method: "none",
 					dpop_bound_access_tokens: true,
 				},
-				stateStore: expect.any(Object),
-				sessionStore: expect.any(Object),
-				requestLock: expect.any(Function),
+				stateStore: {
+					set: expect.any(Function),
+					get: expect.any(Function),
+					del: expect.any(Function),
+				},
+				sessionStore: {
+					set: expect.any(Function),
+					get: expect.any(Function),
+					del: expect.any(Function),
+				},
+				requestLock: undefined,
 				allowHttp: true,
 			});
 		});
@@ -604,10 +612,19 @@ describe("AuthService", () => {
 				},
 				getProfile: jest.fn(),
 			}));
+			const warnSpy = jest.spyOn(
+				(
+					service as unknown as {
+						logger: { warn: (...args: unknown[]) => void };
+					}
+				).logger,
+				"warn",
+			);
 
 			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
 				false,
 			);
+			expect(warnSpy).not.toHaveBeenCalled();
 		});
 
 		it("should return false when the session cannot be restored", async () => {
@@ -621,10 +638,19 @@ describe("AuthService", () => {
 				restore: mockRestore,
 			}));
 			service.onModuleInit();
+			const warnSpy = jest.spyOn(
+				(
+					service as unknown as {
+						logger: { warn: (...args: unknown[]) => void };
+					}
+				).logger,
+				"warn",
+			);
 
 			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
 				false,
 			);
+			expect(warnSpy).not.toHaveBeenCalled();
 		});
 	});
 

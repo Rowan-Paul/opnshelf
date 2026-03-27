@@ -176,6 +176,46 @@ describe("SocialService", () => {
 		});
 	});
 
+	it("logs best-effort PDS delete failures at debug while still unfollowing locally", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:target" });
+		prisma.follow.findFirst = jest
+			.fn()
+			.mockResolvedValue({ rkey: "follow-rkey-123" });
+		prisma.follow.deleteMany = jest.fn().mockResolvedValue({ count: 1 });
+		mockDeleteRecord.mockRejectedValue(new Error("pds unavailable"));
+		const debugSpy = jest.spyOn(
+			(
+				service as unknown as {
+					logger: { debug: (...args: unknown[]) => void };
+				}
+			).logger,
+			"debug",
+		);
+		const warnSpy = jest.spyOn(
+			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
+				.logger,
+			"warn",
+		);
+
+		await expect(
+			service.unfollow("did:plc:self", session, "did:plc:target"),
+		).resolves.toBeUndefined();
+
+		expect(debugSpy).toHaveBeenCalledWith(
+			"Failed to delete follow record follow-rkey-123 from PDS",
+			expect.any(Error),
+		);
+		expect(warnSpy).not.toHaveBeenCalled();
+		expect(prisma.follow.deleteMany).toHaveBeenCalledWith({
+			where: {
+				followerDid: "did:plc:self",
+				followingDid: "did:plc:target",
+			},
+		});
+	});
+
 	it("rejects self-follow", async () => {
 		await expect(
 			service.follow("did:plc:self", session, "did:plc:self"),

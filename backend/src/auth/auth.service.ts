@@ -223,12 +223,12 @@ export class AuthService implements OnModuleInit {
 	 * created app.bsky.actor.profile/self, which should not count as linked.
 	 */
 	async hasBlueskyProfile(did: string): Promise<boolean> {
-		const session = await this.restore(did);
-		if (!session) {
-			return false;
-		}
-
 		try {
+			const session = await this.getRestoredSessionQuietly(did);
+			if (!session) {
+				return false;
+			}
+
 			const agent = new Agent(
 				session as unknown as ConstructorParameters<typeof Agent>[0],
 			);
@@ -238,12 +238,17 @@ export class AuthService implements OnModuleInit {
 				rkey: "self",
 			});
 			return true;
-		} catch (error) {
-			this.logger.warn(
-				`Failed to determine Bluesky profile status for ${did}`,
-				error instanceof Error ? error.stack : undefined,
-			);
+		} catch {
 			return false;
+		}
+	}
+
+	private async getRestoredSessionQuietly(did: string) {
+		const client = this.getOAuthClient();
+		try {
+			return await client.restore(did);
+		} catch {
+			return undefined;
 		}
 	}
 

@@ -262,6 +262,45 @@ describe("IngesterService", () => {
 			);
 		});
 
+		it("logs missing record payloads at debug instead of warn", async () => {
+			const recordHandler = setupRecordHandler();
+			const debugSpy = jest.spyOn(
+				(
+					service as unknown as {
+						logger: { debug: (...args: unknown[]) => void };
+					}
+				).logger,
+				"debug",
+			);
+			const warnSpy = jest.spyOn(
+				(
+					service as unknown as {
+						logger: { warn: (...args: unknown[]) => void };
+					}
+				).logger,
+				"warn",
+			);
+
+			await recordHandler({
+				id: 6,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev-follow-missing",
+				collection: "xyz.opnshelf.follow",
+				rkey: "follow-rkey-missing",
+				cid: "cid-follow-missing",
+				live: true,
+			});
+
+			expect(debugSpy).toHaveBeenCalledWith(
+				"Record event missing record data: at://did:plc:abc123/xyz.opnshelf.follow/follow-rkey-missing",
+			);
+			expect(warnSpy).not.toHaveBeenCalledWith(
+				"Record event missing record data: at://did:plc:abc123/xyz.opnshelf.follow/follow-rkey-missing",
+			);
+		});
+
 		it("should upsert tracked movie for xyz.opnshelf.movie create", async () => {
 			const recordHandler = setupRecordHandler();
 			mockPrismaService.user.findUnique.mockResolvedValue({

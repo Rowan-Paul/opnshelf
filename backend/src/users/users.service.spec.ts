@@ -167,6 +167,11 @@ describe("UsersService", () => {
 			displayName: "Updated User",
 			avatar: "https://example.com/avatar.jpg",
 		});
+		const logSpy = jest.spyOn(
+			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
+				.logger,
+			"log",
+		);
 		expect(profileService.updateProfile).toHaveBeenCalledWith(
 			"did:plc:123",
 			session,
@@ -176,6 +181,34 @@ describe("UsersService", () => {
 		);
 		expect(listsService.hasAllDefaultLists).toHaveBeenCalledWith("did:plc:123");
 		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
+		expect(logSpy).not.toHaveBeenCalled();
+	});
+
+	it("updates user settings without logging routine success", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.update = jest.fn().mockResolvedValue({
+			timezone: "Europe/Amsterdam",
+			timeFormat: "24h",
+		});
+		const logSpy = jest.spyOn(
+			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
+				.logger,
+			"log",
+		);
+
+		await expect(
+			service.updateUserSettings("did:plc:123", {
+				timezone: "Europe/Amsterdam",
+				timeFormat: "24h",
+			}),
+		).resolves.toEqual({
+			timezone: "Europe/Amsterdam",
+			timeFormat: "24h",
+		});
+
+		expect(logSpy).not.toHaveBeenCalled();
 	});
 
 	it("throws when updating profile for missing user", async () => {
@@ -204,6 +237,11 @@ describe("UsersService", () => {
 			mimetype: "image/png",
 			size: 6,
 		};
+		const logSpy = jest.spyOn(
+			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
+				.logger,
+			"log",
+		);
 
 		await expect(
 			service.uploadUserAvatar("did:plc:123", session, file),
@@ -219,6 +257,7 @@ describe("UsersService", () => {
 			},
 		);
 		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
+		expect(logSpy).not.toHaveBeenCalled();
 	});
 
 	it("deletes a user avatar through the profile service", async () => {
@@ -230,6 +269,11 @@ describe("UsersService", () => {
 			avatar: null,
 		});
 		const session = { did: "did:plc:123" };
+		const logSpy = jest.spyOn(
+			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
+				.logger,
+			"log",
+		);
 
 		await expect(
 			service.deleteUserAvatar("did:plc:123", session),
@@ -242,6 +286,7 @@ describe("UsersService", () => {
 			session,
 		);
 		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
+		expect(logSpy).not.toHaveBeenCalled();
 	});
 
 	it("provisions default lists after the first profile save", async () => {
@@ -510,6 +555,11 @@ describe("UsersService", () => {
 		prisma.user.findUnique = jest
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });
+		const warnSpy = jest.spyOn(
+			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
+				.logger,
+			"warn",
+		);
 
 		global.fetch = jest.fn().mockResolvedValue({
 			ok: false,
@@ -520,6 +570,29 @@ describe("UsersService", () => {
 		await expect(service.importBlueskyFollows("did:plc:self")).rejects.toThrow(
 			BadGatewayException,
 		);
+		expect(warnSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps Bluesky network failures to a gateway error without warning noise", async () => {
+		prisma.user.findUnique = jest
+			.fn()
+			.mockResolvedValueOnce({ did: "did:plc:self" });
+		const warnSpy = jest.spyOn(
+			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
+				.logger,
+			"warn",
+		);
+
+		global.fetch = jest
+			.fn()
+			.mockRejectedValue(
+				new Error("socket timeout"),
+			) as unknown as typeof fetch;
+
+		await expect(service.importBlueskyFollows("did:plc:self")).rejects.toThrow(
+			BadGatewayException,
+		);
+		expect(warnSpy).not.toHaveBeenCalled();
 	});
 
 	it("throws when public profile handle is missing", async () => {

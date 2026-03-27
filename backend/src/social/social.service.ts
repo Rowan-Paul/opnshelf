@@ -635,7 +635,7 @@ export class SocialService {
 				rkey,
 			});
 		} catch (error) {
-			this.logger.warn(
+			this.logger.debug(
 				`Failed to delete follow record ${rkey} from PDS`,
 				error,
 			);

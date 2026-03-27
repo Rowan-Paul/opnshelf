@@ -94,8 +94,6 @@ export class UsersService {
 			},
 		});
 
-		this.logger.log(`Updated settings for user ${did}`);
-
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
@@ -121,8 +119,6 @@ export class UsersService {
 					displayName: dto.displayName,
 				}),
 		);
-
-		this.logger.log(`Updated OpnShelf profile for user ${did}`);
 
 		return updatedProfile;
 	}
@@ -150,7 +146,6 @@ export class UsersService {
 					avatar: file,
 				}),
 		);
-		this.logger.log(`Uploaded avatar for user ${did}`);
 		return updatedProfile;
 	}
 
@@ -169,7 +164,6 @@ export class UsersService {
 			session,
 			() => this.profileService.deleteAvatar(did, session),
 		);
-		this.logger.log(`Deleted avatar for user ${did}`);
 		return updatedProfile;
 	}
 
@@ -411,9 +405,6 @@ export class UsersService {
 					signal: AbortSignal.timeout(5000),
 				});
 				if (!response.ok) {
-					this.logger.warn(
-						`Bluesky follows import failed for ${actorDid}: ${response.status} ${response.statusText}`,
-					);
 					throw new BadGatewayException(
 						"Could not import Bluesky follows right now",
 					);
@@ -436,11 +427,6 @@ export class UsersService {
 			if (error instanceof BadGatewayException) {
 				throw error;
 			}
-
-			this.logger.warn(
-				`Failed to import Bluesky follows for ${actorDid}`,
-				error,
-			);
 			throw new BadGatewayException(
 				"Could not import Bluesky follows right now",
 			);

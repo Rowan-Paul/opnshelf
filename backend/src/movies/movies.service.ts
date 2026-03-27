@@ -294,11 +294,7 @@ export class MoviesService {
 					this.logger.log(
 						`Deleted AT record for movie ${movieId} with rkey ${tracked.rkey}`,
 					);
-				} catch {
-					this.logger.warn(
-						`Failed to delete record ${tracked.rkey}, may not exist in PDS`,
-					);
-				}
+				} catch {}
 			}
 
 			return { movieId, mode, deletedCount: trackedMovies.length };
