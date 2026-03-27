@@ -87,7 +87,7 @@ export default function Header({ user, isAuthLoading }: HeaderProps) {
 				backgroundColor: "var(--md-sys-color-surface)",
 				borderColor: "var(--md-sys-color-outline-variant)",
 				boxShadow:
-					"0 18px 40px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.02)",
+					"0 18px 40px color-mix(in srgb, var(--md-sys-color-scrim) 28%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--md-sys-color-on-surface) 2%, transparent)",
 			}}
 		>
 			<div
@@ -138,7 +138,7 @@ function Brand({ seedColor }: { seedColor: string }) {
 	return (
 		<Link to="/" className="group flex items-center gap-3">
 			<div
-				className="flex size-10 items-center justify-center rounded-[18px] border transition-transform duration-300 group-hover:scale-[1.04]"
+				className="flex size-10 items-center justify-center rounded-lg border transition-transform duration-300 group-hover:scale-[1.04]"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-high)",
 					borderColor: "var(--md-sys-color-outline-variant)",
@@ -297,14 +297,14 @@ function AccountMenu({
 			<PopoverContent
 				align="end"
 				sideOffset={10}
-				className="w-[20rem] rounded-[24px] border p-2"
+				className="w-[20rem] rounded-xl border p-2"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-high)",
 					borderColor: "var(--md-sys-color-outline-variant)",
 				}}
 			>
 				<div
-					className="mb-2 flex items-center gap-3 rounded-[18px] border px-3 py-3"
+					className="mb-2 flex items-center gap-3 rounded-lg border px-3 py-3"
 					style={{
 						backgroundColor: "var(--md-sys-color-surface-container-low)",
 						borderColor: "var(--md-sys-color-outline-variant)",
@@ -365,7 +365,7 @@ function AccountMenu({
 						type="button"
 						onClick={onLogout}
 						disabled={isLoggingOut}
-						className="flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-low) disabled:opacity-60"
+						className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-low) disabled:opacity-60"
 						style={{ color: "var(--md-sys-color-on-surface)" }}
 					>
 						<LogOut className="size-4" />
@@ -392,7 +392,7 @@ function MenuLink({
 		<Link
 			{...target}
 			onClick={onSelect}
-			className="flex items-center gap-3 rounded-[18px] px-3 py-3 transition-colors hover:bg-(--md-sys-color-surface-container-low)"
+			className="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-(--md-sys-color-surface-container-low)"
 			style={{ color: "var(--md-sys-color-on-surface)" }}
 		>
 			<Icon className="size-4" />

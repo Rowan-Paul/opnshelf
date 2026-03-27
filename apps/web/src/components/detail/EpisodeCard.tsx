@@ -132,7 +132,7 @@ export function EpisodeCard({
 			style={{
 				borderColor:
 					watchedCount > 0
-						? `${colors.primary}40`
+						? `color-mix(in srgb, ${colors.primary} 25%, transparent)`
 						: "var(--md-sys-color-outline)",
 			}}
 		>
@@ -179,7 +179,7 @@ export function EpisodeCard({
 							type="button"
 							onClick={handleToggleWatched}
 							disabled={isPending}
-							className={`flex items-center gap-1 px-4 py-2 rounded-md text-xs font-medium transition-all mt-2 ${watchedCount > 0 ? "bg-red-500/20 text-red-500" : "bg-green-500/20 text-green-500"}`}
+							className={`flex items-center gap-1 px-4 py-2 rounded-sm text-xs font-medium transition-all mt-2 ${watchedCount > 0 ? "bg-(--md-sys-color-error)/20 text-(--md-sys-color-error)" : "bg-(--md-sys-color-tertiary)/20 text-(--md-sys-color-tertiary)"}`}
 							title="Add to Shelf"
 						>
 							{isPending ? (

@@ -17,8 +17,8 @@ import { ArrowLeft, List, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ListMediaCard } from "@/components/lists/ListMediaCard";
-import { MovieGridSkeleton } from "@/components/MovieGrid";
+import { MediaPosterCard } from "@/components/MediaPosterCard";
+import { PosterGridSkeleton } from "@/components/MovieGrid";
 import { PaginationControls } from "@/components/PaginationControls";
 import { useTheme } from "@/components/theme-provider";
 import { M3Button } from "@/components/ui/m3-button";
@@ -36,7 +36,7 @@ import {
 } from "@/lib/invalidate-shelf";
 import { getVisiblePages, parsePageNumber } from "@/lib/pagination";
 import { getProfileRoute } from "@/lib/profile-routes";
-import { parseScopedShowMediaId } from "@/lib/utils";
+import { createTitleSlug, parseScopedShowMediaId } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
 
@@ -184,7 +184,7 @@ function ProfileListDetailPage() {
 	});
 
 	if (isLoading) {
-		return <MovieGridSkeleton />;
+		return <PosterGridSkeleton />;
 	}
 
 	if (!profile) {
@@ -192,7 +192,7 @@ function ProfileListDetailPage() {
 	}
 
 	if (isListLoading) {
-		return <MovieGridSkeleton />;
+		return <PosterGridSkeleton />;
 	}
 
 	if (!list) {
@@ -369,31 +369,106 @@ function ProfileListDetailPage() {
 						{totalItems} item{totalItems !== 1 ? "s" : ""}
 					</p>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-						{items.map((item) => (
-							<ListMediaCard
-								key={item.id}
-								item={item}
-								readOnly={!isOwner}
-								onWatch={isOwner ? () => handleQuickWatch(item) : undefined}
-								onRemove={
-									isOwner
-										? ({ mediaType, mediaId }) => {
-												removeMutation.mutate({
-													path: { slug, mediaType, mediaId },
-												});
-											}
-										: undefined
-								}
-								isWatching={isOwner ? isQuickWatchPending(item) : false}
-								isRemoving={
-									isOwner &&
-									removeMutation.isPending &&
-									removeMutation.variables?.path?.mediaType ===
-										item.mediaType &&
-									removeMutation.variables?.path?.mediaId === item.mediaId
-								}
-							/>
-						))}
+						{items.map((item) => {
+							const media = item.media as {
+								title?: string;
+								posterPath?: string | null;
+								releaseYear?: number | null;
+								showId?: string;
+							};
+							const mediaType: "movie" | "show" =
+								item.mediaType === "show" ? "show" : "movie";
+							const scopedShow =
+								mediaType === "show"
+									? parseScopedShowMediaId(item.mediaId)
+									: null;
+							const showIdForNav =
+								media.showId ?? scopedShow?.showId ?? item.mediaId;
+							const seasonNumber = scopedShow?.seasonNumber;
+							const episodeNumber = scopedShow?.episodeNumber;
+							const mediaTitle = media.title ?? "Untitled";
+							const titleSlug = createTitleSlug(mediaTitle);
+							const isMovie = mediaType === "movie";
+							const listContext =
+								typeof seasonNumber === "number" &&
+								typeof episodeNumber === "number"
+									? `S${seasonNumber} E${episodeNumber}`
+									: typeof seasonNumber === "number"
+										? `Season ${seasonNumber}`
+										: null;
+
+							let linkTo: string;
+							let linkParams: Record<string, string>;
+							if (isMovie) {
+								linkTo = "/movies/$movieId/$title";
+								linkParams = { movieId: item.mediaId, title: titleSlug };
+							} else if (
+								typeof seasonNumber === "number" &&
+								typeof episodeNumber === "number"
+							) {
+								linkTo =
+									"/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber";
+								linkParams = {
+									showId: showIdForNav,
+									title: titleSlug,
+									seasonNumber: String(seasonNumber),
+									episodeNumber: String(episodeNumber),
+								};
+							} else if (typeof seasonNumber === "number") {
+								linkTo = "/shows/$showId/$title/seasons/$seasonNumber";
+								linkParams = {
+									showId: showIdForNav,
+									title: titleSlug,
+									seasonNumber: String(seasonNumber),
+								};
+							} else {
+								linkTo = "/shows/$showId/$title";
+								linkParams = { showId: showIdForNav, title: titleSlug };
+							}
+
+							return (
+								<MediaPosterCard
+									key={item.id}
+									posterPath={media.posterPath}
+									title={mediaTitle}
+									subtitle={
+										[media.releaseYear?.toString(), listContext]
+											.filter(Boolean)
+											.join(" · ") || undefined
+									}
+									to={linkTo}
+									params={linkParams}
+									user={isOwner ? currentUser : undefined}
+									readOnly={!isOwner}
+									isOnShelf={false}
+									onToggleShelf={
+										isOwner ? () => handleQuickWatch(item) : undefined
+									}
+									isShelfPending={isOwner ? isQuickWatchPending(item) : false}
+									onRemove={
+										isOwner
+											? () => {
+													removeMutation.mutate({
+														path: {
+															slug,
+															mediaType,
+															mediaId: item.mediaId,
+														},
+													});
+												}
+											: undefined
+									}
+									isRemoving={
+										isOwner &&
+										removeMutation.isPending &&
+										removeMutation.variables?.path?.mediaType ===
+											item.mediaType &&
+										removeMutation.variables?.path?.mediaId === item.mediaId
+									}
+									removeIcon="x"
+								/>
+							);
+						})}
 					</div>
 					<div className="mt-6">
 						<PaginationControls

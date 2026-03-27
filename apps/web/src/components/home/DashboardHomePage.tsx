@@ -1,13 +1,15 @@
 import {
 	listsControllerGetUserListsOptions,
+	moviesControllerUnmarkWatchedMutation,
 	type ShelfActivityBucketDto,
 	type ShelfActivitySummaryDto,
 	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
+	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetUserUpNextOptions,
 	type UserDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -15,8 +17,7 @@ import { CreateListDialog } from "@/components/CreateListDialog";
 import { FriendsActivitySection } from "@/components/home/FriendsActivitySection";
 import { UpNextSection } from "@/components/home/UpNextSection";
 import { ListCard } from "@/components/ListCard";
-import { ShelfEpisodeCard } from "@/components/ShelfEpisodeCard";
-import { ShelfMovieCard } from "@/components/ShelfMovieCard";
+import { MediaPosterCard } from "@/components/MediaPosterCard";
 import { getSocialDisplayName } from "@/components/social/social-display";
 import { M3Button } from "@/components/ui/m3-button";
 import {
@@ -26,7 +27,12 @@ import {
 	M3CardHeader,
 	M3CardTitle,
 } from "@/components/ui/m3-card";
+import {
+	invalidateUserShelfQueries,
+	invalidateUserUpNextQueries,
+} from "@/lib/invalidate-shelf";
 import { getProfileRoute } from "@/lib/profile-routes";
+import { createTitleSlug } from "@/lib/utils";
 
 type DashboardRange = "week" | "month";
 
@@ -69,6 +75,25 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 		enabled: !!user.did,
 	});
 
+	const queryClient = useQueryClient();
+
+	const unmarkMovieMutation = useMutation({
+		mutationKey: ["dashboard", "movies", "unmarkWatched"],
+		...moviesControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			invalidateUserShelfQueries(queryClient, user.did);
+		},
+	});
+
+	const deleteEpisodeMutation = useMutation({
+		mutationKey: ["dashboard", "episodes", "deleteWatchEntry"],
+		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
+		onSuccess: () => {
+			invalidateUserShelfQueries(queryClient, user.did);
+			invalidateUserUpNextQueries(queryClient, user.did);
+		},
+	});
+
 	const { recentWatched } = useMemo(() => {
 		const items = shelfData?.items ?? [];
 
@@ -108,7 +133,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 	return (
 		<div className="container mx-auto max-w-7xl px-4 py-8 md:py-10">
 			<div
-				className="mb-8 rounded-[28px] border p-5 md:p-6"
+				className="mb-8 rounded-xl border p-5 md:p-6"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-high)",
 					borderColor: "var(--md-sys-color-outline-variant)",
@@ -161,7 +186,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 				<div className="lg:col-span-2">
 					<M3Card
 						variant="elevated"
-						className="h-full rounded-[28px] border"
+						className="h-full rounded-xl border"
 						style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 					>
 						<M3CardHeader>
@@ -196,7 +221,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 								</M3Button>
 							</div>
 							<div
-								className="rounded-[24px] border p-4"
+								className="rounded-xl border p-4"
 								style={{
 									backgroundColor: "var(--md-sys-color-surface-container)",
 									borderColor: "var(--md-sys-color-outline-variant)",
@@ -281,26 +306,103 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 						</div>
 					) : recentWatched.length > 0 ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-							{recentWatched.map((item) =>
-								item.type === "movie" ? (
-									<ShelfMovieCard
-										key={item.id}
-										tracked={item as never}
+							{recentWatched.map((item) => {
+								const shelfItem = item as {
+									id: string;
+									type: string;
+									movieId?: string;
+									title?: string;
+									showId?: string;
+									showTitle?: string;
+									seasonNumber?: number;
+									episodeNumber?: number;
+									posterPath?: string;
+									releaseYear?: number;
+								};
+								const isMovie = shelfItem.type === "movie";
+								const title = isMovie
+									? (shelfItem.title ?? "Untitled")
+									: (shelfItem.showTitle ?? "Untitled");
+
+								return (
+									<MediaPosterCard
+										key={shelfItem.id}
+										posterPath={shelfItem.posterPath}
+										title={title}
+										subtitle={
+											isMovie ? shelfItem.releaseYear?.toString() : undefined
+										}
+										badge={
+											!isMovie && shelfItem.seasonNumber != null
+												? `S${shelfItem.seasonNumber} E${shelfItem.episodeNumber}`
+												: undefined
+										}
+										to={
+											isMovie
+												? "/movies/$movieId/$title"
+												: "/shows/$showId/$title/seasons/$seasonNumber/episodes/$episodeNumber"
+										}
+										params={
+											isMovie
+												? {
+														movieId: shelfItem.movieId ?? "",
+														title: createTitleSlug(title),
+													}
+												: {
+														showId: shelfItem.showId ?? "",
+														title: createTitleSlug(title),
+														seasonNumber: String(shelfItem.seasonNumber ?? 1),
+														episodeNumber: String(shelfItem.episodeNumber ?? 1),
+													}
+										}
 										user={user}
+										listMedia={
+											isMovie && shelfItem.movieId
+												? {
+														type: "movie",
+														id: shelfItem.movieId,
+														title,
+													}
+												: shelfItem.showId
+													? {
+															type: "show",
+															id: shelfItem.showId,
+															title,
+														}
+													: undefined
+										}
+										onRemove={() => {
+											if (isMovie) {
+												unmarkMovieMutation.mutate({
+													path: {
+														movieId: shelfItem.movieId ?? "",
+													},
+												});
+											} else {
+												deleteEpisodeMutation.mutate({
+													path: {
+														trackedEpisodeId: shelfItem.id,
+													},
+												});
+											}
+										}}
+										isRemoving={
+											isMovie
+												? unmarkMovieMutation.isPending &&
+													unmarkMovieMutation.variables?.path?.movieId ===
+														shelfItem.movieId
+												: deleteEpisodeMutation.isPending &&
+													deleteEpisodeMutation.variables?.path
+														?.trackedEpisodeId === shelfItem.id
+										}
 									/>
-								) : (
-									<ShelfEpisodeCard
-										key={item.id}
-										tracked={item as never}
-										user={user}
-									/>
-								),
-							)}
+								);
+							})}
 						</div>
 					) : (
 						<M3Card
 							variant="elevated"
-							className="rounded-[28px] border"
+							className="rounded-xl border"
 							style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 						>
 							<M3CardHeader>
@@ -356,7 +458,7 @@ export function DashboardHomePage({ user }: { user: UserDto }) {
 					) : (
 						<M3Card
 							variant="elevated"
-							className="rounded-[28px] border"
+							className="rounded-xl border"
 							style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 						>
 							<M3CardHeader>

@@ -28,7 +28,7 @@ export function SocialUserCard({
 	return (
 		<M3Card
 			variant="elevated"
-			className="rounded-[28px] border"
+			className="rounded-xl border"
 			style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 		>
 			<M3CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">

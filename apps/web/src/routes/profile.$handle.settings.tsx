@@ -837,8 +837,10 @@ function SettingsPage() {
 									<div
 										className="p-3 rounded-lg border"
 										style={{
-											backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
-											borderColor: "rgba(var(--md-sys-color-error), 0.2)",
+											backgroundColor:
+												"color-mix(in srgb, var(--md-sys-color-error) 10%, transparent)",
+											borderColor:
+												"color-mix(in srgb, var(--md-sys-color-error) 20%, transparent)",
 										}}
 									>
 										<p className="md-body-medium text-(--md-sys-color-error)">
@@ -979,8 +981,10 @@ function DeletionProgressView({
 					<div
 						className="rounded-lg border p-3"
 						style={{
-							backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
-							borderColor: "rgba(var(--md-sys-color-error), 0.2)",
+							backgroundColor:
+								"color-mix(in srgb, var(--md-sys-color-error) 10%, transparent)",
+							borderColor:
+								"color-mix(in srgb, var(--md-sys-color-error) 20%, transparent)",
 						}}
 					>
 						<p className="md-body-medium text-(--md-sys-color-error)">

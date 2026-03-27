@@ -43,7 +43,7 @@ export function TrailerSection({
 				{isFallback ? <Badge variant="outline">From show</Badge> : null}
 			</div>
 
-			<div className="max-w-3xl overflow-hidden rounded-[1.25rem] border border-white/8 bg-black/20">
+			<div className="max-w-3xl overflow-hidden rounded-xl border border-white/8 bg-black/20">
 				<div className="aspect-video w-full bg-black">
 					{isPlaying ? (
 						<iframe

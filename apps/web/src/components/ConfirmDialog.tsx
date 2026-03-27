@@ -38,7 +38,7 @@ export function ConfirmDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) rounded-[1.75rem]">
+			<DialogContent className="bg-(--md-sys-color-surface-container-high) border-(--md-sys-color-outline) text-(--md-sys-color-on-surface) rounded-xl">
 				<DialogHeader>
 					<DialogTitle className="text-(--md-sys-color-on-surface)">
 						{title}

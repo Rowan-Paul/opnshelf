@@ -111,7 +111,7 @@ export function MaterialDatePicker({
 	return (
 		<div
 			className={cn(
-				"w-[328px] bg-(--md-sys-color-surface-container-high) rounded-[28px] p-0 overflow-hidden",
+				"w-[328px] bg-(--md-sys-color-surface-container-high) rounded-xl p-0 overflow-hidden",
 				className,
 			)}
 		>
@@ -171,7 +171,7 @@ export function MaterialDatePicker({
 			{/* Year/Month Picker Overlay */}
 			{selectingYear && (
 				<div className="px-4 pb-4">
-					<div className="bg-(--md-sys-color-surface-container) rounded-[16px] p-4 max-h-[280px] overflow-y-auto">
+					<div className="bg-(--md-sys-color-surface-container) rounded-lg p-4 max-h-[280px] overflow-y-auto">
 						<div className="grid grid-cols-3 gap-2">
 							{months.map((month, index) => (
 								<button

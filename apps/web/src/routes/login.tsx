@@ -11,7 +11,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useTheme } from "@/components/theme-provider";
-import { LoadingButton } from "@/components/ui/loading-button";
+import { M3Button } from "@/components/ui/m3-button";
 import { M3TextField } from "@/components/ui/m3-text-field";
 
 const OAUTH_PENDING_KEY = "oauth_pending";
@@ -154,7 +154,7 @@ function LoginPage() {
 							className="mb-6 p-4 rounded-lg border"
 							style={{
 								backgroundColor:
-									"rgba(var(--md-sys-color-tertiary-container), 0.5)",
+									"color-mix(in srgb, var(--md-sys-color-tertiary-container) 50%, transparent)",
 								borderColor: "var(--md-sys-color-tertiary)",
 							}}
 						>
@@ -248,18 +248,14 @@ function LoginPage() {
 							)}
 						</div>
 
-						<LoadingButton
+						<M3Button
 							type="submit"
-							disabled={isSubmitting}
+							variant="filled"
 							isLoading={isSubmitting}
 							className="w-full flex items-center justify-center px-4 py-3 font-semibold rounded-(--md-sys-shape-corner-large) transition-colors"
-							style={{
-								backgroundColor: "var(--md-sys-color-primary)",
-								color: "var(--md-sys-color-on-primary)",
-							}}
 						>
 							Connect
-						</LoadingButton>
+						</M3Button>
 
 						<button
 							type="button"

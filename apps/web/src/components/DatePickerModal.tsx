@@ -12,7 +12,6 @@ import { format } from "date-fns";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { M3Button } from "@/components/ui/m3-button";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
@@ -244,7 +243,7 @@ export function DatePickerModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-			<div className="bg-(--md-sys-color-surface-container-high) rounded-[1.75rem] p-6 max-w-sm w-full">
+			<div className="bg-(--md-sys-color-surface-container-high) rounded-xl p-6 max-w-sm w-full">
 				<div className="flex justify-between items-center mb-6">
 					<h3 className="text-xl font-semibold text-(--md-sys-color-on-surface)">
 						{modalTitle || "Select date"}
@@ -274,21 +273,18 @@ export function DatePickerModal({
 						>
 							Cancel
 						</M3Button>
-						<LoadingButton
+						<M3Button
 							type="button"
+							variant="filled"
 							onClick={handleSubmit}
-							disabled={
-								!customDate ||
-								markMutation.isPending ||
-								markEpisodeMutation.isPending
-							}
-							className="flex-1 bg-(--md-sys-color-primary) hover:bg-(--md-sys-color-primary)/90"
+							disabled={!customDate}
 							isLoading={
 								markMutation.isPending || markEpisodeMutation.isPending
 							}
+							className="flex-1"
 						>
 							Add Watch
-						</LoadingButton>
+						</M3Button>
 					</div>
 				</div>
 			</div>

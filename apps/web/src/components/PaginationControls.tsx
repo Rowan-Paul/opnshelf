@@ -22,7 +22,7 @@ export function PaginationControls({
 
 	return (
 		<div
-			className="grid gap-3 rounded-[28px] border px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
+			className="grid gap-3 rounded-xl border px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center"
 			style={{
 				backgroundColor: "var(--md-sys-color-surface-container)",
 				borderColor: "var(--md-sys-color-outline-variant)",

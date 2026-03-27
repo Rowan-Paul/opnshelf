@@ -32,7 +32,7 @@ export function DetailHero({
 				<div
 					className="w-full h-full animate-pulse"
 					style={{
-						background: `linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%)`,
+						background: `linear-gradient(135deg, var(--md-sys-color-surface-container) 0%, var(--md-sys-color-surface) 100%)`,
 					}}
 				/>
 				<div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
@@ -81,13 +81,13 @@ export function DetailHero({
 					<div
 						className="absolute inset-0"
 						style={{
-							background: `linear-gradient(to bottom, transparent 0%, rgba(3, 7, 18, 0.6) 60%, rgb(3, 7, 18) 100%)`,
+							background: `linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--md-sys-color-surface) 60%, transparent) 60%, var(--md-sys-color-surface) 100%)`,
 						}}
 					/>
 					<div
 						className="absolute inset-0"
 						style={{
-							background: `linear-gradient(to right, rgba(3, 7, 18, 0.8) 0%, transparent 50%)`,
+							background: `linear-gradient(to right, color-mix(in srgb, var(--md-sys-color-surface) 80%, transparent) 0%, transparent 50%)`,
 						}}
 					/>
 				</>
@@ -95,7 +95,7 @@ export function DetailHero({
 				<div
 					className="w-full h-full"
 					style={{
-						background: `linear-gradient(135deg, ${colors.muted} 0%, rgb(3, 7, 18) 100%)`,
+						background: `linear-gradient(135deg, ${colors.muted} 0%, var(--md-sys-color-surface) 100%)`,
 					}}
 				/>
 			)}
@@ -115,7 +115,7 @@ export function DetailHero({
 							<div
 								className="w-28 md:w-48 lg:w-64 rounded-lg overflow-hidden shadow-2xl"
 								style={{
-									boxShadow: `0 25px 50px -12px ${colors.primary}40`,
+									boxShadow: `0 25px 50px -12px color-mix(in srgb, ${colors.primary} 25%, transparent)`,
 								}}
 							>
 								{posterLinkTo ? (
@@ -136,7 +136,7 @@ export function DetailHero({
 							<h1
 								className="text-2xl md:text-5xl lg:text-6xl font-bold mb-2"
 								style={{
-									textShadow: `0 4px 30px ${colors.primary}60`,
+									textShadow: `0 4px 30px color-mix(in srgb, ${colors.primary} 38%, transparent)`,
 								}}
 							>
 								{title}

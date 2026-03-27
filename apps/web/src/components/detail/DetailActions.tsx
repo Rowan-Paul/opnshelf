@@ -3,7 +3,7 @@ import { Calendar, Check, ListPlus, RotateCcw, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AddToShelfButton } from "@/components/AddToShelfButton";
-import { ActionButton } from "@/components/ui/action-button";
+import { M3Button } from "@/components/ui/m3-button";
 import { TrackedStatusCard } from "./TrackedStatusCard";
 import type { ColorTheme } from "./types";
 
@@ -95,18 +95,17 @@ export function DetailActions({
 					className="w-full py-4 px-6 rounded-xl m3-label-large text-center transition-all duration-200 hover:scale-[1.02]"
 					style={{
 						background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-						boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+						boxShadow: `0 15px 35px -10px color-mix(in srgb, ${colors.primary} 38%, transparent)`,
 						color: "var(--md-sys-color-on-primary)",
 					}}
 					onClick={onLogin}
 				>
 					Sign in to Track
 				</button>
-				<ActionButton
-					icon={<Share2 className="w-4 h-4" />}
-					label="Share"
-					onClick={handleShare}
-				/>
+				<M3Button variant="outlined" onClick={handleShare} className="w-full">
+					<Share2 className="w-4 h-4" />
+					Share
+				</M3Button>
 			</div>
 		);
 	}
@@ -134,29 +133,14 @@ export function DetailActions({
 							size="compact"
 							className="flex-1"
 						/>
-						<button
-							type="button"
+						<M3Button
+							variant="outlined"
+							size="icon"
 							onClick={onShowDatePicker}
 							title={`Watch ${mediaType}`}
-							className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
-							style={{
-								backgroundColor: "transparent",
-								borderColor: "var(--md-sys-color-outline)",
-							}}
-							onMouseEnter={(e) => {
-								e.currentTarget.style.backgroundColor =
-									"var(--md-sys-color-surface-container)";
-								e.currentTarget.style.borderColor =
-									"var(--md-sys-color-primary)";
-							}}
-							onMouseLeave={(e) => {
-								e.currentTarget.style.backgroundColor = "transparent";
-								e.currentTarget.style.borderColor =
-									"var(--md-sys-color-outline)";
-							}}
 						>
-							<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
-						</button>
+							<Calendar className="w-5 h-5" />
+						</M3Button>
 					</div>
 				</>
 			) : (
@@ -169,55 +153,38 @@ export function DetailActions({
 						colors={colors}
 						className="flex-1"
 					/>
-					<button
-						type="button"
+					<M3Button
+						variant="outlined"
+						size="icon"
 						onClick={onShowDatePicker}
 						title={`Watch ${mediaType}`}
-						className="p-3 rounded-xl border transition-all duration-200 flex items-center justify-center group"
-						style={{
-							backgroundColor: "transparent",
-							borderColor: "var(--md-sys-color-outline)",
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor =
-								"var(--md-sys-color-surface-container)";
-							e.currentTarget.style.borderColor = "var(--md-sys-color-primary)";
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = "transparent";
-							e.currentTarget.style.borderColor = "var(--md-sys-color-outline)";
-						}}
 					>
-						<Calendar className="w-5 h-5 text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-primary) transition-colors" />
-					</button>
+						<Calendar className="w-5 h-5" />
+					</M3Button>
 				</div>
 			)}
 
 			{onShowListModal && (
-				<ActionButton
-					icon={
-						isInAnyList ? (
-							<Check className="w-4 h-4" />
-						) : (
-							<ListPlus className="w-4 h-4" />
-						)
-					}
-					label={
-						isInAnyList
-							? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
-							: "Add to List"
-					}
+				<M3Button
+					variant={isInAnyList ? "filled-tonal" : "outlined"}
 					onClick={handleShowListModal}
-					isActive={isInAnyList}
-					activeColor={colors.primary}
-				/>
+					className="w-full"
+				>
+					{isInAnyList ? (
+						<Check className="w-4 h-4" />
+					) : (
+						<ListPlus className="w-4 h-4" />
+					)}
+					{isInAnyList
+						? `In ${listsCount} list${listsCount > 1 ? "s" : ""}`
+						: "Add to List"}
+				</M3Button>
 			)}
 
-			<ActionButton
-				icon={<Share2 className="w-4 h-4" />}
-				label={copied ? "Copied!" : "Share"}
-				onClick={handleShare}
-			/>
+			<M3Button variant="outlined" onClick={handleShare} className="w-full">
+				<Share2 className="w-4 h-4" />
+				{copied ? "Copied!" : "Share"}
+			</M3Button>
 		</div>
 	);
 }

@@ -1,20 +1,26 @@
 import {
 	authControllerMeOptions,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesQueryKey,
+	moviesControllerMarkWatchedMutation,
+	moviesControllerUnmarkWatchedMutation,
 	searchControllerDiscoverAllOptions,
 	searchControllerSearchAllOptions,
 	showsControllerGetUserShowsOptions,
-	type TmdbMovieResultDto,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { usePostHog } from "@posthog/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MovieCard } from "@/components/MovieCard";
-import { ShowCard } from "@/components/ShowCard";
+import { MediaPosterCard } from "@/components/MediaPosterCard";
 import { M3TextField } from "@/components/ui/m3-text-field";
+import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
+import { createTitleSlug } from "@/lib/utils";
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
@@ -66,6 +72,60 @@ function SearchPage() {
 		if (!trackedShows) return new Set<string>();
 		return new Set(trackedShows.map((s: { showId: string }) => s.showId));
 	}, [trackedShows]);
+
+	const queryClient = useQueryClient();
+
+	const markMovieMutation = useMutation({
+		mutationKey: ["search", "movies", "markWatched"],
+		...moviesControllerMarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did ?? "" },
+				}),
+			});
+			invalidateUserShelfQueries(queryClient, user?.did);
+		},
+	});
+
+	const unmarkMovieMutation = useMutation({
+		mutationKey: ["search", "movies", "unmarkWatched"],
+		...moviesControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid: user?.did ?? "" },
+				}),
+			});
+			invalidateUserShelfQueries(queryClient, user?.did);
+		},
+	});
+
+	const markShowMutation = useMutation({
+		mutationKey: ["search", "shows", "markShowWatched"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did ?? "" },
+				}),
+			});
+			invalidateUserShelfQueries(queryClient, user?.did);
+		},
+	});
+
+	const unmarkShowMutation = useMutation({
+		mutationKey: ["search", "shows", "unmarkWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({
+					path: { userDid: user?.did ?? "" },
+				}),
+			});
+			invalidateUserShelfQueries(queryClient, user?.did);
+		},
+	});
 
 	useEffect(() => {
 		if (searchQuery !== lastNavigatedQueryRef.current) {
@@ -267,41 +327,81 @@ function SearchPage() {
 						</div>
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 							{combinedResults.map((item) => {
-								if (item.media_type === "movie") {
-									const movie: TmdbMovieResultDto = {
-										id: item.id,
-										title: item.title ?? "",
-										poster_path: item.poster_path,
-										backdrop_path: item.backdrop_path,
-										release_date: item.release_date,
-										overview: item.overview,
-									};
-									return (
-										<MovieCard
-											key={`movie-${item.id}`}
-											movie={movie}
-											user={user}
-											isWatched={watchedMovieIds.has(item.id.toString())}
-										/>
-									);
-								} else {
-									const show = {
-										id: item.id,
-										name: item.name ?? "",
-										poster_path: item.poster_path,
-										backdrop_path: item.backdrop_path,
-										first_air_date: item.first_air_date,
-										overview: item.overview,
-									};
-									return (
-										<ShowCard
-											key={`show-${item.id}`}
-											show={show}
-											user={user}
-											isWatched={watchedShowIds.has(item.id.toString())}
-										/>
-									);
-								}
+								const isMovie = item.media_type === "movie";
+								const id = item.id.toString();
+								const title = isMovie ? (item.title ?? "") : (item.name ?? "");
+								const year = isMovie
+									? item.release_date?.split("-")[0]
+									: item.first_air_date?.split("-")[0];
+								const isWatched = isMovie
+									? watchedMovieIds.has(id)
+									: watchedShowIds.has(id);
+								const isShelfPending = isMovie
+									? (markMovieMutation.isPending &&
+											markMovieMutation.variables?.body?.movieId === id) ||
+										(unmarkMovieMutation.isPending &&
+											unmarkMovieMutation.variables?.path?.movieId === id)
+									: (markShowMutation.isPending &&
+											markShowMutation.variables?.body?.showId === id) ||
+										(unmarkShowMutation.isPending &&
+											unmarkShowMutation.variables?.path?.showId === id);
+
+								return (
+									<MediaPosterCard
+										key={`${item.media_type}-${item.id}`}
+										posterPath={item.poster_path}
+										title={title}
+										subtitle={year}
+										to={
+											isMovie
+												? "/movies/$movieId/$title"
+												: "/shows/$showId/$title"
+										}
+										params={
+											isMovie
+												? {
+														movieId: id,
+														title: createTitleSlug(title),
+													}
+												: {
+														showId: id,
+														title: createTitleSlug(title),
+													}
+										}
+										user={user}
+										isOnShelf={isWatched}
+										isShelfPending={isShelfPending}
+										onToggleShelf={() => {
+											if (isMovie) {
+												if (isWatched) {
+													unmarkMovieMutation.mutate({
+														path: { movieId: id },
+													});
+												} else {
+													markMovieMutation.mutate({
+														body: { movieId: id },
+													});
+												}
+											} else {
+												if (isWatched) {
+													unmarkShowMutation.mutate({
+														path: { showId: id },
+														query: { mode: "all" },
+													});
+												} else {
+													markShowMutation.mutate({
+														body: { showId: id },
+													});
+												}
+											}
+										}}
+										listMedia={{
+											type: isMovie ? "movie" : "show",
+											id,
+											title,
+										}}
+									/>
+								);
 							})}
 						</div>
 					</>

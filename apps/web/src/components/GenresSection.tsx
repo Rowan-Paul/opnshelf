@@ -25,9 +25,9 @@ export function GenresSection({ genres, colors }: GenresSectionProps) {
 						key={genre.id}
 						className="px-4 py-2 rounded-full text-sm font-medium"
 						style={{
-							backgroundColor: `${colors.primary}20`,
+							backgroundColor: `color-mix(in srgb, ${colors.primary} 12%, transparent)`,
 							color: colors.accent,
-							border: `1px solid ${colors.primary}40`,
+							border: `1px solid color-mix(in srgb, ${colors.primary} 25%, transparent)`,
 						}}
 					>
 						{genre.name}

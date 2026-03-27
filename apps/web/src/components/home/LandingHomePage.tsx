@@ -82,7 +82,7 @@ export function LandingHomePage() {
 					className="absolute inset-0 opacity-90"
 					style={{
 						background:
-							"radial-gradient(circle at top left, rgba(243, 188, 0, 0.18), transparent 35%), radial-gradient(circle at 85% 20%, rgba(176, 207, 186, 0.12), transparent 30%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0))",
+							"radial-gradient(circle at top left, color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent), transparent 35%), radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--md-sys-color-tertiary-container) 12%, transparent), transparent 30%), linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-on-surface) 2%, transparent), transparent)",
 					}}
 				/>
 				<div className="container relative mx-auto max-w-7xl px-4 py-16 md:py-24">
@@ -91,7 +91,7 @@ export function LandingHomePage() {
 							<img
 								src="/icon.png"
 								alt="OpnShelf"
-								className="size-14 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.28)]"
+								className="size-14 rounded-2xl shadow-[0_12px_30px_color-mix(in_srgb,var(--md-sys-color-scrim)_28%,transparent)]"
 							/>
 							<span
 								className="md-label-large rounded-full px-4 py-1.5"
@@ -150,7 +150,7 @@ export function LandingHomePage() {
 				</div>
 			</section>
 
-			<section className="border-b border-(--md-sys-color-outline-variant) bg-[rgba(255,255,255,0.02)]">
+			<section className="border-b border-(--md-sys-color-outline-variant) bg-(--md-sys-color-on-surface)/2">
 				<div className="container mx-auto max-w-7xl px-4 py-10 md:py-14">
 					<div className="mb-8 max-w-2xl">
 						<p
@@ -168,10 +168,11 @@ export function LandingHomePage() {
 						{comparisonItems.map((item) => (
 							<div
 								key={item.current}
-								className="rounded-[24px] border p-6"
+								className="rounded-xl border p-6"
 								style={{
 									borderColor: "var(--md-sys-color-outline-variant)",
-									backgroundColor: "rgba(255, 255, 255, 0.025)",
+									backgroundColor:
+										"color-mix(in srgb, var(--md-sys-color-on-surface) 2.5%, transparent)",
 								}}
 							>
 								<p
@@ -209,7 +210,7 @@ export function LandingHomePage() {
 							<M3Card
 								key={section.title}
 								variant="elevated"
-								className="rounded-[28px] border border-(--md-sys-color-outline-variant)"
+								className="rounded-xl border border-(--md-sys-color-outline-variant)"
 							>
 								<M3CardHeader className="px-6 pt-6">
 									<div
@@ -254,12 +255,14 @@ export function LandingHomePage() {
 
 			<section className="container mx-auto max-w-7xl px-4 pb-16">
 				<div
-					className="grid gap-6 overflow-hidden rounded-[32px] border px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1fr_auto] lg:items-center"
+					className="grid gap-6 overflow-hidden rounded-xl border px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1fr_auto] lg:items-center"
 					style={{
-						borderColor: "rgba(243, 188, 0, 0.34)",
+						borderColor:
+							"color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent)",
 						background:
-							"linear-gradient(135deg, rgba(92, 69, 0, 0.7), rgba(33, 31, 38, 0.95) 48%, rgba(50, 75, 59, 0.7))",
-						boxShadow: "0 24px 60px rgba(0, 0, 0, 0.28)",
+							"linear-gradient(135deg, color-mix(in srgb, var(--md-sys-color-primary-container) 70%, transparent), color-mix(in srgb, var(--md-sys-color-surface-container) 95%, transparent) 48%, color-mix(in srgb, var(--md-sys-color-tertiary-container) 70%, transparent))",
+						boxShadow:
+							"0 24px 60px color-mix(in srgb, var(--md-sys-color-scrim) 28%, transparent)",
 					}}
 				>
 					<div className="max-w-3xl">
@@ -306,7 +309,7 @@ export function LandingHomePage() {
 					</div>
 
 					<div
-						className="rounded-[28px] border p-6 md:p-8"
+						className="rounded-xl border p-6 md:p-8"
 						style={{
 							borderColor: "var(--md-sys-color-outline-variant)",
 							backgroundColor: "var(--md-sys-color-surface-container-low)",
@@ -337,7 +340,7 @@ export function LandingHomePage() {
 
 			<section className="container mx-auto max-w-7xl px-4 pb-20">
 				<div
-					className="rounded-[32px] border px-6 py-10 text-center md:px-10"
+					className="rounded-xl border px-6 py-10 text-center md:px-10"
 					style={{
 						borderColor: "var(--md-sys-color-outline-variant)",
 						backgroundColor: "var(--md-sys-color-surface-container)",

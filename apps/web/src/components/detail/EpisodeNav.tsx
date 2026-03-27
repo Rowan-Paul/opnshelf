@@ -175,7 +175,7 @@ export function EpisodeNav({
 								style={
 									slot.highlighted
 										? {
-												backgroundColor: `${colors.primary}15`,
+												backgroundColor: `color-mix(in srgb, ${colors.primary} 8%, transparent)`,
 											}
 										: {}
 								}

@@ -52,7 +52,7 @@ export function FriendsActivitySection({ userHandle }: { userHandle: string }) {
 				<FriendsActivitySectionHeader userHandle={userHandle} />
 				<M3Card
 					variant="elevated"
-					className="rounded-[28px] border"
+					className="rounded-xl border"
 					style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 				>
 					<M3CardHeader>
@@ -77,7 +77,7 @@ export function FriendsActivitySection({ userHandle }: { userHandle: string }) {
 				<FriendsActivitySectionHeader userHandle={userHandle} />
 				<M3Card
 					variant="elevated"
-					className="rounded-[28px] border"
+					className="rounded-xl border"
 					style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 				>
 					<M3CardHeader>
@@ -140,13 +140,13 @@ function FriendsActivitySectionSkeleton() {
 				{Array.from({ length: 5 }, (_, index) => (
 					<div
 						key={`friends-activity-skeleton-${index + 1}`}
-						className="w-[min(11rem,70vw)] shrink-0 rounded-[24px] border p-3 sm:w-46 lg:w-48"
+						className="w-[min(11rem,70vw)] shrink-0 rounded-xl border p-3 sm:w-46 lg:w-48"
 						style={{
 							backgroundColor: "var(--md-sys-color-surface-container-low)",
 							borderColor: "var(--md-sys-color-outline-variant)",
 						}}
 					>
-						<Skeleton className="mb-3 aspect-2/3 w-full rounded-[20px] bg-(--md-sys-color-surface-container-highest)" />
+						<Skeleton className="mb-3 aspect-2/3 w-full rounded-xl bg-(--md-sys-color-surface-container-highest)" />
 						<div className="space-y-2 px-1 pb-1">
 							<Skeleton className="h-5 w-4/5 rounded-full bg-(--md-sys-color-surface-container-highest)" />
 							<Skeleton className="h-4 w-2/3 rounded-full bg-(--md-sys-color-surface-container-highest)" />
@@ -229,7 +229,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 
 	return (
 		<div
-			className="group flex h-full w-[min(11rem,70vw)] shrink-0 flex-col rounded-[24px] border p-3 transition-transform duration-200 hover:-translate-y-1 sm:w-46 lg:w-48"
+			className="group flex h-full w-[min(11rem,70vw)] shrink-0 flex-col rounded-xl border p-3 transition-transform duration-200 hover:-translate-y-1 sm:w-46 lg:w-48"
 			style={{
 				backgroundColor: "var(--md-sys-color-surface-container-low)",
 				borderColor: "var(--md-sys-color-outline-variant)",
@@ -238,7 +238,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 			{mediaTarget ? (
 				<Link
 					{...mediaTarget}
-					className="relative mb-3 block overflow-hidden rounded-[20px]"
+					className="relative mb-3 block overflow-hidden rounded-xl"
 				>
 					<div
 						className="aspect-2/3"
@@ -264,7 +264,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 				</Link>
 			) : (
 				<div
-					className="mb-3 flex aspect-2/3 items-center justify-center rounded-[20px] px-4 text-center text-sm"
+					className="mb-3 flex aspect-2/3 items-center justify-center rounded-xl px-4 text-center text-sm"
 					style={{
 						backgroundColor: "var(--md-sys-color-surface-container-highest)",
 						color: "var(--md-sys-color-on-surface-variant)",
@@ -277,7 +277,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 			<div className="flex min-h-35 flex-1 flex-col px-1 pb-1">
 				<div>
 					{mediaTarget ? (
-						<Link {...mediaTarget} className="block rounded-[20px]">
+						<Link {...mediaTarget} className="block rounded-xl">
 							<h3 className="mb-1 line-clamp-2 text-sm font-semibold transition-colors hover:text-(--md-sys-color-primary)">
 								{mediaTitle}
 							</h3>
@@ -290,7 +290,7 @@ function FriendsActivityCard({ item }: { item: FollowedActivityItemDto }) {
 				</div>
 
 				<div
-					className="mt-auto flex min-h-16 items-center gap-2 rounded-[18px] border px-2.5 py-2"
+					className="mt-auto flex min-h-16 items-center gap-2 rounded-lg border px-2.5 py-2"
 					style={{
 						backgroundColor: "var(--md-sys-color-surface-container)",
 						borderColor: "var(--md-sys-color-outline-variant)",

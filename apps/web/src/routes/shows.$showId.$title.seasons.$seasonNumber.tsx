@@ -188,7 +188,7 @@ function ShowSeasonPage() {
 		primary: show?.colors?.primary || seedColor,
 		secondary: show?.colors?.secondary || seedColor,
 		accent: show?.colors?.accent || seedColor,
-		muted: show?.colors?.muted || "#6b7280",
+		muted: show?.colors?.muted || "var(--md-sys-color-surface-container)",
 	};
 
 	const backdropUrl = getTmdbBackdropUrl(show?.backdrop_path);

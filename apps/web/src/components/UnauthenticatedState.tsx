@@ -31,7 +31,7 @@ export function UnauthenticatedState({
 			}}
 		>
 			<div className="container mx-auto px-4 py-16 max-w-4xl">
-				<M3Card variant="filled" className="rounded-[28px] text-center">
+				<M3Card variant="filled" className="rounded-xl text-center">
 					<M3CardHeader className="items-center px-6 pt-8">
 						<Icon
 							className="size-16 mb-4"

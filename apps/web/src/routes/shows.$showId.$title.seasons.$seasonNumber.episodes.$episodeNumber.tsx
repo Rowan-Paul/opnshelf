@@ -296,10 +296,11 @@ function ShowEpisodePage() {
 	});
 
 	const colors: ColorTheme = {
-		primary: show?.colors?.primary || "#F59E0B",
-		secondary: show?.colors?.secondary || "#D97706",
-		accent: show?.colors?.accent || "#FBBF24",
-		muted: show?.colors?.muted || "#6b7280",
+		primary: show?.colors?.primary || "var(--md-sys-color-primary)",
+		secondary:
+			show?.colors?.secondary || "var(--md-sys-color-primary-container)",
+		accent: show?.colors?.accent || "var(--md-sys-color-on-primary-container)",
+		muted: show?.colors?.muted || "var(--md-sys-color-surface-container)",
 	};
 
 	const backdropUrl = getTmdbBackdropUrl(show?.backdrop_path);

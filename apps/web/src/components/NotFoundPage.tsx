@@ -24,7 +24,7 @@ export function NotFoundPage() {
 				className="pointer-events-none absolute inset-0"
 				style={{
 					background:
-						"radial-gradient(circle at top left, rgba(243, 188, 0, 0.16), transparent 34%), radial-gradient(circle at bottom right, rgba(243, 188, 0, 0.1), transparent 28%)",
+						"radial-gradient(circle at top left, color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent), transparent 34%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent), transparent 28%)",
 				}}
 			/>
 
@@ -34,8 +34,10 @@ export function NotFoundPage() {
 						<div
 							className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-2"
 							style={{
-								backgroundColor: "rgba(243, 188, 0, 0.1)",
-								borderColor: "rgba(243, 188, 0, 0.24)",
+								backgroundColor:
+									"color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)",
+								borderColor:
+									"color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent)",
 								color: "var(--md-sys-color-primary)",
 							}}
 						>
@@ -107,7 +109,7 @@ export function NotFoundPage() {
 
 					<M3Card
 						variant="elevated"
-						className="rounded-[28px] border"
+						className="rounded-xl border"
 						style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 					>
 						<M3CardHeader className="gap-3 p-6 pb-4">
@@ -131,7 +133,7 @@ export function NotFoundPage() {
 
 						<M3CardContent className="space-y-4 p-6 pt-0">
 							<div
-								className="rounded-[24px] border p-4"
+								className="rounded-xl border p-4"
 								style={{
 									backgroundColor: "var(--md-sys-color-surface-container)",
 									borderColor: "var(--md-sys-color-outline-variant)",
@@ -146,7 +148,7 @@ export function NotFoundPage() {
 							</div>
 
 							<div
-								className="rounded-[24px] border p-4"
+								className="rounded-xl border p-4"
 								style={{
 									backgroundColor: "var(--md-sys-color-surface-container)",
 									borderColor: "var(--md-sys-color-outline-variant)",
@@ -162,10 +164,12 @@ export function NotFoundPage() {
 							</div>
 
 							<div
-								className="rounded-[24px] border p-4"
+								className="rounded-xl border p-4"
 								style={{
-									backgroundColor: "rgba(243, 188, 0, 0.1)",
-									borderColor: "rgba(243, 188, 0, 0.24)",
+									backgroundColor:
+										"color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)",
+									borderColor:
+										"color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent)",
 								}}
 							>
 								<p className="mb-1 text-sm font-semibold text-(--md-sys-color-on-surface)">

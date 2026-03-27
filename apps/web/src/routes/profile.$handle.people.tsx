@@ -218,7 +218,7 @@ function ProfilePeoplePage() {
 		return (
 			<M3Card
 				variant="elevated"
-				className="mx-auto max-w-xl rounded-[28px] border"
+				className="mx-auto max-w-xl rounded-xl border"
 				style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 			>
 				<M3CardHeader>
@@ -246,7 +246,7 @@ function ProfilePeoplePage() {
 		return (
 			<M3Card
 				variant="elevated"
-				className="rounded-[28px] border"
+				className="rounded-xl border"
 				style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 			>
 				<M3CardHeader>
@@ -503,7 +503,7 @@ function SearchResultsSection({
 		return (
 			<M3Card
 				variant="elevated"
-				className="rounded-[28px] border"
+				className="rounded-xl border"
 				style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 			>
 				<M3CardHeader>
@@ -574,7 +574,7 @@ function ConnectionsSection({
 		return (
 			<M3Card
 				variant="elevated"
-				className="rounded-[28px] border"
+				className="rounded-xl border"
 				style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
 			>
 				<M3CardHeader>

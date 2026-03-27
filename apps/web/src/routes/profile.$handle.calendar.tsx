@@ -274,7 +274,7 @@ function ProfileCalendarPage() {
 					<div className="space-y-5">
 						{selectedMonthView ? (
 							<section
-								className="overflow-hidden rounded-[30px] border"
+								className="overflow-hidden rounded-xl border"
 								style={{
 									backgroundColor: "var(--md-sys-color-surface-container-low)",
 									borderColor: "var(--md-sys-color-outline-variant)",
@@ -426,7 +426,7 @@ function ProfileCalendarPage() {
 						<div className="space-y-5 lg:hidden">
 							{selectedMonthEvents.length === 0 && selectedMonthView ? (
 								<div
-									className="rounded-[24px] border px-4 py-5"
+									className="rounded-xl border px-4 py-5"
 									style={{
 										backgroundColor:
 											"var(--md-sys-color-surface-container-low)",
@@ -440,14 +440,14 @@ function ProfileCalendarPage() {
 							{daySections.map((section) => (
 								<section
 									key={section.dayKey}
-									className="rounded-[28px] border p-4 md:p-5"
+									className="rounded-xl border p-4 md:p-5"
 									style={{
 										backgroundColor:
 											"var(--md-sys-color-surface-container-low)",
 										borderColor: "var(--md-sys-color-outline-variant)",
 									}}
 								>
-									<div className="mb-4 flex flex-col gap-2 rounded-[22px] border px-4 py-3 md:flex-row md:items-end md:justify-between">
+									<div className="mb-4 flex flex-col gap-2 rounded-xl border px-4 py-3 md:flex-row md:items-end md:justify-between">
 										<div>
 											<p className="md-title-large">{section.label}</p>
 											<p
@@ -497,7 +497,7 @@ function ReleaseEventCard({ event }: { event: ReleaseCalendarEvent }) {
 			className="block"
 		>
 			<div
-				className="group flex h-full gap-3 rounded-[24px] border p-3 transition-transform hover:-translate-y-0.5"
+				className="group flex h-full gap-3 rounded-xl border p-3 transition-transform hover:-translate-y-0.5"
 				style={{
 					backgroundColor: "var(--md-sys-color-surface-container-highest)",
 					borderColor: "var(--md-sys-color-outline-variant)",
@@ -505,7 +505,7 @@ function ReleaseEventCard({ event }: { event: ReleaseCalendarEvent }) {
 				}}
 			>
 				<div
-					className="relative h-24 w-16 shrink-0 overflow-hidden rounded-[18px]"
+					className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg"
 					style={{
 						backgroundColor: "var(--md-sys-color-surface-container-high)",
 					}}
@@ -574,7 +574,7 @@ function CalendarEventPill({ event }: { event: ReleaseCalendarEvent }) {
 		<Link
 			to={event.to as never}
 			params={event.params as never}
-			className="block rounded-[18px] border px-3 py-3 transition-transform hover:-translate-y-0.5"
+			className="block rounded-lg border px-3 py-3 transition-transform hover:-translate-y-0.5"
 			style={{
 				backgroundColor: "var(--md-sys-color-surface-container-highest)",
 				borderColor: "var(--md-sys-color-outline-variant)",

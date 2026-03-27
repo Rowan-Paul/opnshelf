@@ -33,10 +33,10 @@ export function AddToShelfButton({
 			type="button"
 			onClick={onClick}
 			disabled={disabled || isPending}
-			className={`w-full rounded-xl m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 ${sizeClasses} ${className}`}
+			className={`w-full rounded-full m3-label-large transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 ${sizeClasses} ${className}`}
 			style={{
 				background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-				boxShadow: `0 15px 35px -10px ${colors.primary}60`,
+				boxShadow: `0 15px 35px -10px color-mix(in srgb, ${colors.primary} 38%, transparent)`,
 				color: "var(--md-sys-color-on-primary)",
 			}}
 		>
