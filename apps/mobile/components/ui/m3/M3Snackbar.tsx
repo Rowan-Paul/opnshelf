@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDismiss: () => void }) {
 	const { colors } = useTheme();
-	const slideAnim = useRef(new Animated.Value(100)).current;
+	const slideAnim = useRef(new Animated.Value(-100)).current;
 	const opacityAnim = useRef(new Animated.Value(0)).current;
 	const panAnim = useRef(new Animated.Value(0)).current;
 
@@ -53,15 +53,15 @@ function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDism
 	const panResponder = useRef(
 		PanResponder.create({
 			onStartShouldSetPanResponder: () => true,
-			onPanResponderMove: (_, gestureState) => {
-				if (gestureState.dy > 0) {
-					panAnim.setValue(gestureState.dy);
-				}
-			},
-			onPanResponderRelease: (_, gestureState) => {
-				if (gestureState.dy > 50) {
-					Animated.timing(panAnim, {
-						toValue: 200,
+		onPanResponderMove: (_, gestureState) => {
+			if (gestureState.dy < 0) {
+				panAnim.setValue(gestureState.dy);
+			}
+		},
+		onPanResponderRelease: (_, gestureState) => {
+			if (gestureState.dy < -50) {
+				Animated.timing(panAnim, {
+					toValue: -200,
 						duration: 150,
 						useNativeDriver: false,
 					}).start(onDismiss);
@@ -94,17 +94,17 @@ function SnackbarItemComponent({ item, onDismiss }: { item: SnackbarItem; onDism
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			Animated.parallel([
-				Animated.timing(slideAnim, {
-					toValue: 100,
-					duration: 200,
-					useNativeDriver: false,
-				}),
-				Animated.timing(opacityAnim, {
-					toValue: 0,
-					duration: 200,
-					useNativeDriver: false,
-				}),
-			]).start(onDismiss);
+			Animated.timing(slideAnim, {
+				toValue: -100,
+				duration: 200,
+				useNativeDriver: false,
+			}),
+			Animated.timing(opacityAnim, {
+				toValue: 0,
+				duration: 200,
+				useNativeDriver: false,
+			}),
+		]).start(onDismiss);
 		}, 4000);
 		return () => clearTimeout(timer);
 	}, [onDismiss, slideAnim, opacityAnim]);
@@ -152,7 +152,7 @@ export function M3SnackbarProvider({ children }: M3SnackbarProviderProps) {
 		<SnackbarContext.Provider value={{ showSnackbar }}>
 			{children}
 			<View
-				style={[styles.container, { bottom: insets.bottom + 16 }]}
+				style={[styles.container, { top: insets.top + 16 }]}
 				pointerEvents="box-none"
 			>
 				{snackbars.map((snackbar) => (
@@ -189,9 +189,9 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingHorizontal: 16,
 		paddingVertical: 14,
-		marginBottom: 8,
+		marginTop: 8,
 		borderRadius: m3BorderRadius.extraSmall,
-		minWidth: SCREEN_WIDTH * 0.8,
+		minWidth: SCREEN_WIDTH * 0.92,
 		maxWidth: SCREEN_WIDTH - 32,
 		shadowColor: "#000",
 		shadowOffset: { width: 0, height: 3 },

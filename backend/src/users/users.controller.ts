@@ -4,6 +4,8 @@ import {
 	Controller,
 	Delete,
 	Get,
+	HttpCode,
+	HttpStatus,
 	Query,
 	Param,
 	Patch,
@@ -38,6 +40,7 @@ import {
 	TraktImportJobDto,
 } from "./dto/import-history.dto";
 import {
+	AccountDeletionJobDto,
 	DeleteUserAccountDto,
 	PublicUserProfileDto,
 	UpdateUserProfileDto,
@@ -45,6 +48,7 @@ import {
 	UserProfileDto,
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
+import { parseAccountDeletionData } from "./background-job-data";
 import { UsersService } from "./users.service";
 import type { ATSession } from "../movies/movies.service";
 
@@ -206,38 +210,90 @@ export class UsersController {
 		return this.usersService.deleteUserAvatar(did, session);
 	}
 
-	/**
-	 * Delete current user's account
-	 */
 	@Delete("me/account")
 	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: "Delete current user's account" })
-	@ApiResponse({ status: 204, description: "Account deleted successfully" })
+	@ApiResponse({
+		status: 200,
+		type: AccountDeletionJobDto,
+		description: "PDS deletion requested; returns a job to poll for progress",
+	})
+	@ApiResponse({
+		status: 204,
+		description: "Account deleted immediately (no PDS deletion)",
+	})
 	@ApiResponse({ status: 401, description: "Not authenticated" })
 	@ApiResponse({
-		status: 502,
-		description:
-			"Failed to delete OpnShelf data from the user's PDS, so the account was not deleted",
+		status: 409,
+		description: "Account deletion already in progress",
 	})
 	async deleteMyAccount(
 		@Body() dto: DeleteUserAccountDto,
 		@Req() req: AuthenticatedRequest,
-	): Promise<void> {
+		@Res({ passthrough: true }) res: Response,
+	): Promise<AccountDeletionJobDto | undefined> {
 		const did = req.user?.did;
 		if (!did) {
-			throw new Error("User not found in request");
+			throw new BadRequestException("User not found in request");
 		}
 
-		const session = req.user?.session as ATSession | undefined;
-		if (!session || !session.did) {
-			throw new Error("Session not found in request");
+		const deletePDSData = dto.deletePDSData ?? false;
+
+		if (!deletePDSData) {
+			await this.usersService.deleteUserSync(did);
+			res.status(HttpStatus.NO_CONTENT);
+			return;
 		}
 
-		await this.usersService.deleteUser(
-			did,
-			session,
-			dto.deletePDSData ?? false,
-		);
+		const job = await this.usersService.createDeletionJob(did, true);
+		const jobData = parseAccountDeletionData(job.data);
+
+		res.status(HttpStatus.OK);
+		return {
+			id: job.id,
+			status: job.status,
+			totalRecords: jobData.totalRecords,
+			deletedRecords: jobData.deletedRecords,
+			currentStep: jobData.currentStep,
+			lastError: job.lastError ?? undefined,
+			createdAt: job.createdAt.toISOString(),
+		};
+	}
+
+	@Get("me/account-deletion")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Get current account deletion job status" })
+	@ApiResponse({
+		status: 200,
+		type: AccountDeletionJobDto,
+		description:
+			"Current or most recent account deletion job, or null when none exists",
+	})
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async getMyAccountDeletion(
+		@Req() req: AuthenticatedRequest,
+	): Promise<AccountDeletionJobDto | null> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const job = await this.usersService.getCurrentDeletionJob(did);
+		if (!job) {
+			return null;
+		}
+
+		const jobData = parseAccountDeletionData(job.data);
+		return {
+			id: job.id,
+			status: job.status,
+			totalRecords: jobData.totalRecords,
+			deletedRecords: jobData.deletedRecords,
+			currentStep: jobData.currentStep,
+			lastError: job.lastError ?? undefined,
+			createdAt: job.createdAt.toISOString(),
+		};
 	}
 
 	@Post("me/onboarding/complete")

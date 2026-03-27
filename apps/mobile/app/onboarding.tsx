@@ -40,6 +40,7 @@ import {
 	createAvatarUploadFile,
 	getAvatarUploadErrorMessage,
 	type ReactNativeUploadFile,
+	reactNativeFileFormData,
 	toMultipartUploadValue,
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
@@ -164,7 +165,9 @@ export default function OnboardingScreen() {
 	});
 	const uploadAvatarMutation = useMutation({
 		mutationKey: ["users", "profile", "avatar", "upload"],
-		...usersControllerUploadMyAvatarMutation(),
+		...usersControllerUploadMyAvatarMutation({
+			bodySerializer: reactNativeFileFormData,
+		}),
 		onError: (error) => {
 			setAvatarErrorMessage(
 				getAvatarUploadErrorMessage(error, "Could not upload profile photo"),

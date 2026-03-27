@@ -87,7 +87,9 @@ describe("UsersService", () => {
 	} as unknown as ConfigService;
 
 	const userDeletionService = {
-		deleteUser: jest.fn(),
+		deleteUserSync: jest.fn(),
+		createDeletionJob: jest.fn(),
+		getCurrentDeletionJob: jest.fn(),
 	} as unknown as UserDeletionService;
 
 	const profileService = {
@@ -385,29 +387,32 @@ describe("UsersService", () => {
 		});
 	});
 
-	it("delegates account deletion with the PDS deletion flag", async () => {
-		(userDeletionService.deleteUser as jest.Mock).mockResolvedValue(undefined);
+	it("delegates synchronous account deletion", async () => {
+		(userDeletionService.deleteUserSync as jest.Mock).mockResolvedValue(
+			undefined,
+		);
 
 		await expect(
-			service.deleteUser("did:plc:123", { did: "did:plc:123" }, true),
+			service.deleteUserSync("did:plc:123"),
 		).resolves.toBeUndefined();
-		expect(userDeletionService.deleteUser).toHaveBeenCalledWith(
+		expect(userDeletionService.deleteUserSync).toHaveBeenCalledWith(
 			"did:plc:123",
-			{ did: "did:plc:123" },
-			true,
 		);
 	});
 
-	it("propagates account deletion failures from PDS cleanup", async () => {
-		(userDeletionService.deleteUser as jest.Mock).mockRejectedValue(
-			new BadGatewayException(
-				"Failed to delete OpnShelf data from your PDS. Your account was not deleted.",
-			),
+	it("delegates async deletion job creation", async () => {
+		const mockJob = { id: "job-1", status: "queued" };
+		(userDeletionService.createDeletionJob as jest.Mock).mockResolvedValue(
+			mockJob,
 		);
 
 		await expect(
-			service.deleteUser("did:plc:123", { did: "did:plc:123" }, true),
-		).rejects.toThrow(BadGatewayException);
+			service.createDeletionJob("did:plc:123", true),
+		).resolves.toEqual(mockJob);
+		expect(userDeletionService.createDeletionJob).toHaveBeenCalledWith(
+			"did:plc:123",
+			true,
+		);
 	});
 
 	it("imports Bluesky follows with pagination and creates only missing local follows", async () => {

@@ -55,7 +55,7 @@ export const ModelName = {
   Follow: 'Follow',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
-  TraktImportJob: 'TraktImportJob',
+  BackgroundJob: 'BackgroundJob',
   Movie: 'Movie',
   Show: 'Show',
   Season: 'Season',
@@ -137,31 +137,21 @@ export const AuthStateScalarFieldEnum = {
 export type AuthStateScalarFieldEnum = (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum]
 
 
-export const TraktImportJobScalarFieldEnum = {
+export const BackgroundJobScalarFieldEnum = {
   id: 'id',
+  type: 'type',
   userDid: 'userDid',
-  traktUsername: 'traktUsername',
   status: 'status',
-  currentPage: 'currentPage',
-  totalPages: 'totalPages',
-  sourceCount: 'sourceCount',
-  normalizedCount: 'normalizedCount',
-  importedCount: 'importedCount',
-  skippedCount: 'skippedCount',
-  failedCount: 'failedCount',
+  data: 'data',
   nextRunAt: 'nextRunAt',
   lastError: 'lastError',
-  profileUsername: 'profileUsername',
-  profileSlug: 'profileSlug',
-  profileName: 'profileName',
-  profileAvatarUrl: 'profileAvatarUrl',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktImportJobScalarFieldEnum = (typeof TraktImportJobScalarFieldEnum)[keyof typeof TraktImportJobScalarFieldEnum]
+export type BackgroundJobScalarFieldEnum = (typeof BackgroundJobScalarFieldEnum)[keyof typeof BackgroundJobScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {
@@ -305,6 +295,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {

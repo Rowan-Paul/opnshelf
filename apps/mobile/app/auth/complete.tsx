@@ -2,7 +2,7 @@ import { authControllerMeOptions } from "@opnshelf/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, Image, Text, View } from "react-native";
 import { useToast } from "@/contexts/toast";
 import { saveSessionToken } from "@/lib/api";
@@ -15,7 +15,12 @@ export default function AuthCompleteScreen() {
 	const { showToast } = useToast();
 	const posthog = usePostHog();
 
+	const hasStarted = useRef(false);
+
 	useEffect(() => {
+		if (hasStarted.current) return;
+		hasStarted.current = true;
+
 		async function completeAuth() {
 			try {
 				if (session) {
@@ -27,7 +32,6 @@ export default function AuthCompleteScreen() {
 					staleTime: 0,
 				});
 
-				// Identify the user in PostHog after successful login
 				if (user) {
 					posthog.identify(user.did, {
 						$set: {

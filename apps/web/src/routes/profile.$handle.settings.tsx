@@ -1,8 +1,13 @@
 import {
+	type AccountDeletionJobDto,
 	authControllerMeOptions,
 	authControllerMeQueryKey,
+	getAccountDeletionProgress,
+	getAccountDeletionStepLabel,
+	isActiveAccountDeletionStatus,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
+	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerGetPublicProfileOptions,
 	usersControllerUpdateMyProfileMutation,
@@ -22,7 +27,14 @@ import {
 	Trash2,
 	User,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useId, useRef, useState } from "react";
+import {
+	type ChangeEvent,
+	useCallback,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+} from "react";
 import { toast } from "sonner";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { useTheme } from "@/components/theme-provider";
@@ -35,7 +47,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { M3Button } from "@/components/ui/m3-button";
 import {
 	M3Card,
@@ -142,6 +153,7 @@ function SettingsPage() {
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [deletePDSData, setDeletePDSData] = useState(false);
+	const [deletionJobId, setDeletionJobId] = useState<string | null>(null);
 	const [displayName, setDisplayName] = useState("");
 	const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
 		null,
@@ -189,15 +201,67 @@ function SettingsPage() {
 		},
 	});
 
+	const deletionJobQuery = useQuery({
+		...usersControllerGetMyAccountDeletionOptions(),
+		enabled: !!deletionJobId,
+		refetchInterval: (query) => {
+			const job = query.state.data;
+			if (!job || !isActiveAccountDeletionStatus(job.status)) {
+				return false;
+			}
+			return 2_000;
+		},
+	});
+
+	const handleDeletionComplete = useCallback(async () => {
+		if (user?.did) {
+			clearDismissedTraktImportJobIds(user.did);
+		}
+		posthog.capture("account_deleted", { deleted_pds_data: true });
+		posthog.reset();
+		setShowDeleteDialog(false);
+		setDeletionJobId(null);
+		toast.success("Account deleted");
+		await publishSignedOutAuthState(queryClient);
+		router.navigate({ to: "/" });
+	}, [user?.did, posthog, queryClient, router]);
+
+	useEffect(() => {
+		const job = deletionJobQuery.data;
+		if (!job) {
+			return;
+		}
+
+		if (job.status === "completed") {
+			handleDeletionComplete();
+		}
+	}, [
+		deletionJobQuery.data?.status,
+		deletionJobQuery.data,
+		handleDeletionComplete,
+	]);
+
+	useEffect(() => {
+		if (deletionJobQuery.error && deletionJobId) {
+			handleDeletionComplete();
+		}
+	}, [deletionJobQuery.error, deletionJobId, handleDeletionComplete]);
+
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
-		onSuccess: async () => {
+		onSuccess: async (data) => {
+			const job = data as AccountDeletionJobDto | undefined;
+			if (job?.id) {
+				setDeletionJobId(job.id);
+				return;
+			}
+
 			if (user?.did) {
 				clearDismissedTraktImportJobIds(user.did);
 			}
 			posthog.capture("account_deleted", {
-				deleted_pds_data: deletePDSData,
+				deleted_pds_data: false,
 			});
 			posthog.reset();
 			setShowDeleteDialog(false);
@@ -685,116 +749,250 @@ function SettingsPage() {
 			</M3Card>
 
 			{/* Delete Account Dialog */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent className="bg-(--md-sys-color-surface-container) border-(--md-sys-color-outline)">
-					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2 text-(--md-sys-color-on-surface)">
-							<AlertTriangle className="w-5 h-5 text-(--md-sys-color-error)" />
-							Delete Account
-						</DialogTitle>
-						<DialogDescription className="text-(--md-sys-color-on-surface-variant)">
-							Are you sure you want to delete your account? This action cannot
-							be undone.
-						</DialogDescription>
-					</DialogHeader>
-
-					<div className="space-y-4 py-4">
-						<div
-							className="p-4 rounded-lg border"
-							style={{
-								backgroundColor: "var(--md-sys-color-surface-container-lowest)",
-								borderColor: "var(--md-sys-color-outline-variant)",
-							}}
-						>
-							<p className="md-body-medium text-(--md-sys-color-on-surface-variant) mb-3">
-								What happens to your data:
-							</p>
-							<div className="space-y-2 text-sm">
-								<p className="flex items-start gap-2 text-(--md-sys-color-on-surface)">
-									<span style={{ color: seedColor }}>✓</span>
-									Your OpnShelf account and settings will be deleted
-								</p>
-								<p className="flex items-start gap-2 text-(--md-sys-color-on-surface)">
-									<span style={{ color: seedColor }}>✓</span>
-									Your local session will be cleared
-								</p>
-							</div>
-						</div>
-
-						<div
-							className="flex items-center gap-3 p-4 rounded-lg border"
-							style={{
-								backgroundColor: "var(--md-sys-color-surface-container-lowest)",
-								borderColor: "var(--md-sys-color-outline-variant)",
-							}}
-						>
-							<input
-								type="checkbox"
-								id={deletePdsId}
-								checked={deletePDSData}
-								onChange={(e) => setDeletePDSData(e.target.checked)}
-								className="w-4 h-4 rounded border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container) accent-(--md-sys-color-primary)"
-							/>
-							<Label
-								htmlFor={deletePdsId}
-								className="md-body-medium cursor-pointer text-(--md-sys-color-on-surface)"
-							>
-								Also delete my OpnShelf data from my PDS
-							</Label>
-						</div>
-
-						{deletePDSData ? (
-							<div
-								className="p-3 rounded-lg border"
-								style={{
-									backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
-									borderColor: "rgba(var(--md-sys-color-error), 0.2)",
-								}}
-							>
-								<p className="md-body-medium text-(--md-sys-color-error)">
-									Your OpnShelf data, including watch history, follows, lists,
-									and list items, will be permanently deleted from your personal
-									data server. This cannot be recovered.
-								</p>
-							</div>
-						) : (
-							<div
-								className="p-3 rounded-lg"
-								style={{
-									backgroundColor: "var(--md-sys-color-surface-container)",
-								}}
-							>
-								<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
-									Your OpnShelf data will remain on your PDS. You can use
-									another app or re-authorize OpnShelf later to access it.
-								</p>
-							</div>
-						)}
-					</div>
-
-					<DialogFooter className="gap-2">
-						<M3Button
-							variant="outlined"
-							onClick={() => setShowDeleteDialog(false)}
-							disabled={deleteAccountMutation.isPending}
-						>
-							Cancel
-						</M3Button>
-						<LoadingButton
-							variant="destructive"
-							onClick={() =>
-								deleteAccountMutation.mutate({
-									body: { deletePDSData },
-								})
+			<Dialog
+				open={showDeleteDialog}
+				onOpenChange={deletionJobId ? undefined : setShowDeleteDialog}
+			>
+				<DialogContent
+					className="bg-(--md-sys-color-surface-container) border-(--md-sys-color-outline)"
+					onInteractOutside={
+						deletionJobId ? (e) => e.preventDefault() : undefined
+					}
+				>
+					{deletionJobId ? (
+						<DeletionProgressView
+							job={deletionJobQuery.data}
+							error={
+								deletionJobQuery.data?.status === "failed"
+									? deletionJobQuery.data.lastError
+									: undefined
 							}
-							disabled={deleteAccountMutation.isPending}
-							isLoading={deleteAccountMutation.isPending}
-						>
-							Delete Account
-						</LoadingButton>
-					</DialogFooter>
+							onRetry={() => {
+								setDeletionJobId(null);
+								setDeletePDSData(true);
+							}}
+							seedColor={seedColor}
+						/>
+					) : (
+						<>
+							<DialogHeader>
+								<DialogTitle className="flex items-center gap-2 text-(--md-sys-color-on-surface)">
+									<AlertTriangle className="w-5 h-5 text-(--md-sys-color-error)" />
+									Delete Account
+								</DialogTitle>
+								<DialogDescription className="text-(--md-sys-color-on-surface-variant)">
+									Are you sure you want to delete your account? This action
+									cannot be undone.
+								</DialogDescription>
+							</DialogHeader>
+
+							<div className="space-y-4 py-4">
+								<div
+									className="p-4 rounded-lg border"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-lowest)",
+										borderColor: "var(--md-sys-color-outline-variant)",
+									}}
+								>
+									<p className="md-body-medium text-(--md-sys-color-on-surface-variant) mb-3">
+										What happens to your data:
+									</p>
+									<div className="space-y-2 text-sm">
+										<p className="flex items-start gap-2 text-(--md-sys-color-on-surface)">
+											<span style={{ color: seedColor }}>✓</span>
+											Your OpnShelf account and settings will be deleted
+										</p>
+										<p className="flex items-start gap-2 text-(--md-sys-color-on-surface)">
+											<span style={{ color: seedColor }}>✓</span>
+											Your local session will be cleared
+										</p>
+									</div>
+								</div>
+
+								<div
+									className="flex items-center gap-3 p-4 rounded-lg border"
+									style={{
+										backgroundColor:
+											"var(--md-sys-color-surface-container-lowest)",
+										borderColor: "var(--md-sys-color-outline-variant)",
+									}}
+								>
+									<input
+										type="checkbox"
+										id={deletePdsId}
+										checked={deletePDSData}
+										onChange={(e) => setDeletePDSData(e.target.checked)}
+										className="w-4 h-4 rounded border-(--md-sys-color-outline) bg-(--md-sys-color-surface-container) accent-(--md-sys-color-primary)"
+									/>
+									<Label
+										htmlFor={deletePdsId}
+										className="md-body-medium cursor-pointer text-(--md-sys-color-on-surface)"
+									>
+										Also delete my OpnShelf data from my PDS
+									</Label>
+								</div>
+
+								{deletePDSData ? (
+									<div
+										className="p-3 rounded-lg border"
+										style={{
+											backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
+											borderColor: "rgba(var(--md-sys-color-error), 0.2)",
+										}}
+									>
+										<p className="md-body-medium text-(--md-sys-color-error)">
+											Your OpnShelf data, including watch history, follows,
+											lists, and list items, will be permanently deleted from
+											your personal data server. This cannot be recovered.
+										</p>
+									</div>
+								) : (
+									<div
+										className="p-3 rounded-lg"
+										style={{
+											backgroundColor: "var(--md-sys-color-surface-container)",
+										}}
+									>
+										<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
+											Your OpnShelf data will remain on your PDS. You can use
+											another app or re-authorize OpnShelf later to access it.
+										</p>
+									</div>
+								)}
+							</div>
+
+							<DialogFooter className="gap-2">
+								<M3Button
+									variant="outlined"
+									onClick={() => setShowDeleteDialog(false)}
+									disabled={deleteAccountMutation.isPending}
+								>
+									Cancel
+								</M3Button>
+								<M3Button
+									variant="filled"
+									className="bg-(--md-sys-color-error) text-(--md-sys-color-on-error) hover:brightness-110 active:brightness-95"
+									onClick={() =>
+										deleteAccountMutation.mutate({
+											body: { deletePDSData },
+										})
+									}
+									disabled={deleteAccountMutation.isPending}
+								>
+									{deleteAccountMutation.isPending && (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									)}
+									{deleteAccountMutation.isPending
+										? "Deleting…"
+										: "Delete Account"}
+								</M3Button>
+							</DialogFooter>
+						</>
+					)}
 				</DialogContent>
 			</Dialog>
+		</div>
+	);
+}
+
+function DeletionProgressView({
+	job,
+	error,
+	onRetry,
+	seedColor,
+}: {
+	job: AccountDeletionJobDto | null | undefined;
+	error: string | undefined;
+	onRetry: () => void;
+	seedColor: string;
+}) {
+	const progress = job ? getAccountDeletionProgress(job) : null;
+	const stepLabel = job
+		? getAccountDeletionStepLabel(job.currentStep)
+		: "Preparing…";
+	const isFailed = job?.status === "failed";
+
+	return (
+		<div className="space-y-6 py-2">
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2 text-(--md-sys-color-on-surface)">
+					{isFailed ? (
+						<AlertTriangle className="h-5 w-5 text-(--md-sys-color-error)" />
+					) : (
+						<Loader2
+							className="h-5 w-5 animate-spin"
+							style={{ color: seedColor }}
+						/>
+					)}
+					{isFailed ? "Deletion Failed" : "Deleting Account…"}
+				</DialogTitle>
+				<DialogDescription className="text-(--md-sys-color-on-surface-variant)">
+					{isFailed
+						? "Something went wrong while deleting your account."
+						: "Please keep this page open. Your data is being removed."}
+				</DialogDescription>
+			</DialogHeader>
+
+			{!isFailed && (
+				<div className="space-y-3">
+					<div className="space-y-1.5">
+						<div className="flex items-center justify-between">
+							<p className="md-body-medium text-(--md-sys-color-on-surface-variant)">
+								{stepLabel}
+							</p>
+							{progress !== null && (
+								<p
+									className="md-label-medium font-mono"
+									style={{ color: seedColor }}
+								>
+									{progress}%
+								</p>
+							)}
+						</div>
+						<div
+							className="h-2 w-full overflow-hidden rounded-full"
+							style={{
+								backgroundColor:
+									"var(--md-sys-color-surface-container-highest)",
+							}}
+						>
+							<div
+								className="h-full rounded-full transition-all duration-300 ease-out"
+								style={{
+									width: `${progress ?? 0}%`,
+									backgroundColor: seedColor,
+								}}
+							/>
+						</div>
+					</div>
+					{job && job.totalRecords > 0 && (
+						<p className="md-body-small text-(--md-sys-color-on-surface-variant)">
+							{job.deletedRecords} of {job.totalRecords} records deleted
+						</p>
+					)}
+				</div>
+			)}
+
+			{isFailed && (
+				<div className="space-y-4">
+					<div
+						className="rounded-lg border p-3"
+						style={{
+							backgroundColor: "rgba(var(--md-sys-color-error), 0.1)",
+							borderColor: "rgba(var(--md-sys-color-error), 0.2)",
+						}}
+					>
+						<p className="md-body-medium text-(--md-sys-color-error)">
+							{error ??
+								"Account deletion failed. Please try again or contact support."}
+						</p>
+					</div>
+					<M3Button variant="filled" onClick={onRetry} className="w-full">
+						Retry
+					</M3Button>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -1,10 +1,11 @@
 import * as SecureStore from "expo-secure-store";
 
-const STORAGE_KEY_PREFIX = "opnshelf_trakt_import_dismissed_jobs:";
+const STORAGE_KEY_PREFIX = "opnshelf_trakt_import_dismissed_jobs.";
 const MAX_STORED_JOB_IDS = 25;
 
 function getStorageKey(userDid: string): string {
-	return `${STORAGE_KEY_PREFIX}${userDid}`;
+	const sanitized = userDid.replace(/[^a-zA-Z0-9._-]/g, "_");
+	return `${STORAGE_KEY_PREFIX}${sanitized}`;
 }
 
 function parseStoredJobIds(rawValue: string | null): string[] {

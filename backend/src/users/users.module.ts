@@ -5,9 +5,9 @@ import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ShowsModule } from "../shows/shows.module";
+import { BackgroundJobWorkerService } from "./background-job-worker.service";
 import { ImportHistoryService } from "./import-history.service";
 import { ProfileService } from "./profile.service";
-import { TraktImportWorkerService } from "./trakt-import-worker.service";
 import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
@@ -25,7 +25,7 @@ import { UsersService } from "./users.service";
 	providers: [
 		UsersService,
 		ImportHistoryService,
-		TraktImportWorkerService,
+		BackgroundJobWorkerService,
 		UserDeletionService,
 		ProfileService,
 	],

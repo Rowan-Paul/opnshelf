@@ -1,7 +1,10 @@
 import {
+	type AccountDeletionJobDto,
 	authControllerMeOptions,
+	isActiveAccountDeletionStatus,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
+	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerGetPublicProfileOptions,
 	usersControllerUpdateMyProfileMutation,
@@ -30,6 +33,7 @@ import {
 	createAvatarUploadFile,
 	getAvatarUploadErrorMessage,
 	type ReactNativeUploadFile,
+	reactNativeFileFormData,
 	toMultipartUploadValue,
 	validateAvatarAsset,
 } from "@/lib/avatar-upload";
@@ -63,6 +67,7 @@ export default function SettingsScreen() {
 
 	const [showTimezoneModal, setShowTimezoneModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deletionJobId, setDeletionJobId] = useState<string | null>(null);
 	const [timezone, setTimezone] = useState<string>("UTC");
 	const [is24Hour, setIs24Hour] = useState<boolean>(true);
 	const [displayName, setDisplayName] = useState("");
@@ -111,10 +116,58 @@ export default function SettingsScreen() {
 		},
 	});
 
+	const deletionJobQuery = useQuery({
+		...usersControllerGetMyAccountDeletionOptions(),
+		enabled: !!deletionJobId,
+		refetchInterval: (query) => {
+			const job = query.state.data;
+			if (!job || !isActiveAccountDeletionStatus(job.status)) {
+				return false;
+			}
+			return 2_000;
+		},
+	});
+
+	const handleDeletionComplete = useCallback(async () => {
+		if (user?.did) {
+			await clearDismissedTraktImportJobIds(user.did);
+		}
+		showToast("Account deleted", "success");
+		posthog.capture("account_deleted", { deleted_pds_data: true });
+		posthog.reset();
+		setShowDeleteModal(false);
+		setDeletionJobId(null);
+		await logout();
+		router.replace("/");
+	}, [user?.did, showToast, posthog, logout, router]);
+
+	useEffect(() => {
+		const job = deletionJobQuery.data;
+		if (job?.status === "completed") {
+			void handleDeletionComplete();
+		}
+	}, [
+		deletionJobQuery.data?.status,
+		handleDeletionComplete,
+		deletionJobQuery.data,
+	]);
+
+	useEffect(() => {
+		if (deletionJobQuery.error && deletionJobId) {
+			void handleDeletionComplete();
+		}
+	}, [deletionJobQuery.error, deletionJobId, handleDeletionComplete]);
+
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
-		onSuccess: async (_, variables) => {
+		onSuccess: async (data, variables) => {
+			const job = data as AccountDeletionJobDto | undefined;
+			if (job?.id) {
+				setDeletionJobId(job.id);
+				return;
+			}
+
 			if (user?.did) {
 				await clearDismissedTraktImportJobIds(user.did);
 			}
@@ -146,7 +199,9 @@ export default function SettingsScreen() {
 
 	const uploadAvatarMutation = useMutation({
 		mutationKey: ["users", "profile", "avatar", "upload"],
-		...usersControllerUploadMyAvatarMutation(),
+		...usersControllerUploadMyAvatarMutation({
+			bodySerializer: reactNativeFileFormData,
+		}),
 		onSuccess: async (updatedProfile) => {
 			setSelectedAvatarFile(null);
 			setAvatarErrorMessage(null);
@@ -370,8 +425,12 @@ export default function SettingsScreen() {
 			<DeleteAccountModal
 				visible={showDeleteModal}
 				isDeleting={deleteAccountMutation.isPending}
+				deletionJob={deletionJobQuery.data}
 				onClose={() => setShowDeleteModal(false)}
 				onConfirm={handleConfirmDelete}
+				onRetry={() => {
+					setDeletionJobId(null);
+				}}
 			/>
 		</SafeAreaView>
 	);

@@ -1,7 +1,7 @@
-import { BadGatewayException, NotFoundException } from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 
-const mockListRecords = jest.fn();
 const mockDeleteRecord = jest.fn();
+const mockListRecords = jest.fn();
 
 jest.mock("@atproto/api", () => ({
 	Agent: jest.fn().mockImplementation(() => ({
@@ -17,6 +17,7 @@ jest.mock("@atproto/api", () => ({
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
+import type { AuthService } from "../auth/auth.service";
 import { UserDeletionService } from "./user-deletion.service";
 
 describe("UserDeletionService", () => {
@@ -29,20 +30,27 @@ describe("UserDeletionService", () => {
 		},
 		trackedMovie: {
 			findMany: jest.fn(),
+			count: jest.fn(),
 		},
 		trackedEpisode: {
 			findMany: jest.fn(),
+			count: jest.fn(),
 		},
 		follow: {
 			findMany: jest.fn(),
+			count: jest.fn(),
 		},
-		listItem: {
-			findMany: jest.fn(),
-		},
-		list: {
-			findMany: jest.fn(),
+		backgroundJob: {
+			findFirst: jest.fn(),
+			findUnique: jest.fn(),
+			create: jest.fn(),
+			update: jest.fn(),
 		},
 	} as unknown as PrismaService;
+
+	const authService = {
+		restore: jest.fn(),
+	} as unknown as AuthService;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -52,203 +60,84 @@ describe("UserDeletionService", () => {
 			.mockResolvedValue({ did: "did:plc:test" });
 		prisma.user.delete = jest.fn().mockResolvedValue(undefined);
 		prisma.trackedMovie.findMany = jest.fn().mockResolvedValue([]);
+		prisma.trackedMovie.count = jest.fn().mockResolvedValue(0);
 		prisma.trackedEpisode.findMany = jest.fn().mockResolvedValue([]);
+		prisma.trackedEpisode.count = jest.fn().mockResolvedValue(0);
 		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
-		prisma.listItem.findMany = jest.fn().mockResolvedValue([]);
-		prisma.list.findMany = jest.fn().mockResolvedValue([]);
+		prisma.follow.count = jest.fn().mockResolvedValue(0);
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(null);
+		prisma.backgroundJob.create = jest.fn().mockResolvedValue({
+			id: "job-1",
+			type: "account_deletion",
+			userDid: "did:plc:test",
+			status: "queued",
+			data: { deletePdsData: true, totalRecords: 1, deletedRecords: 0 },
+			createdAt: new Date(),
+		});
 
-		service = new UserDeletionService(prisma);
+		mockListRecords.mockResolvedValue({ data: { records: [] } });
+		mockDeleteRecord.mockResolvedValue(undefined);
+
+		service = new UserDeletionService(prisma, authService);
 	});
 
-	it("deletes all repo list items and lists, including favorites missing from Prisma", async () => {
-		mockListRecords
-			.mockResolvedValueOnce({
-				data: {
-					records: [
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.listItem/list-item-1",
-							cid: "cid-1",
-							value: {},
-						},
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.listItem/list-item-2",
-							cid: "cid-2",
-							value: {},
-						},
-					],
-					cursor: "cursor-2",
-				},
-			})
-			.mockResolvedValueOnce({
-				data: {
-					records: [
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.listItem/list-item-3",
-							cid: "cid-3",
-							value: {},
-						},
-					],
-				},
-			})
-			.mockResolvedValueOnce({
-				data: {
-					records: [
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.list/favorites",
-							cid: "cid-4",
-							value: {},
-						},
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.list/custom-list",
-							cid: "cid-5",
-							value: {},
-						},
-					],
-				},
+	describe("deleteUserSync", () => {
+		it("deletes a user without PDS cleanup", async () => {
+			await service.deleteUserSync("did:plc:test");
+
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
+		});
+
+		it("throws when user not found", async () => {
+			prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+
+			await expect(service.deleteUserSync("did:plc:missing")).rejects.toThrow(
+				NotFoundException,
+			);
+		});
+	});
+
+	describe("createDeletionJob", () => {
+		it("creates a deletion job with record counts", async () => {
+			prisma.trackedMovie.count = jest.fn().mockResolvedValue(5);
+			prisma.trackedEpisode.count = jest.fn().mockResolvedValue(10);
+			prisma.follow.count = jest.fn().mockResolvedValue(3);
+
+			await service.createDeletionJob("did:plc:test", true);
+
+			expect(prisma.backgroundJob.create).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					type: "account_deletion",
+					userDid: "did:plc:test",
+					status: "queued",
+					data: expect.objectContaining({
+						deletePdsData: true,
+						totalRecords: 19,
+						deletedRecords: 0,
+					}),
+				}),
+			});
+		});
+
+		it("throws when user not found", async () => {
+			prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+
+			await expect(
+				service.createDeletionJob("did:plc:missing", true),
+			).rejects.toThrow(NotFoundException);
+		});
+
+		it("rejects when a deletion is already in progress", async () => {
+			prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue({
+				id: "existing-job",
+				status: "running",
 			});
 
-		await service.deleteUser("did:plc:test", { did: "did:plc:test" }, true);
-
-		expect(mockListRecords).toHaveBeenNthCalledWith(1, {
-			repo: "did:plc:test",
-			collection: "xyz.opnshelf.listItem",
-			limit: 100,
-			cursor: undefined,
+			await expect(
+				service.createDeletionJob("did:plc:test", true),
+			).rejects.toThrow(ConflictException);
 		});
-		expect(mockListRecords).toHaveBeenNthCalledWith(2, {
-			repo: "did:plc:test",
-			collection: "xyz.opnshelf.listItem",
-			limit: 100,
-			cursor: "cursor-2",
-		});
-		expect(mockListRecords).toHaveBeenNthCalledWith(3, {
-			repo: "did:plc:test",
-			collection: "xyz.opnshelf.list",
-			limit: 100,
-			cursor: undefined,
-		});
-		expect(mockDeleteRecord.mock.calls).toEqual([
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.listItem",
-					rkey: "list-item-1",
-				},
-			],
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.listItem",
-					rkey: "list-item-2",
-				},
-			],
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.listItem",
-					rkey: "list-item-3",
-				},
-			],
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.list",
-					rkey: "favorites",
-				},
-			],
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.list",
-					rkey: "custom-list",
-				},
-			],
-			[
-				{
-					repo: "did:plc:test",
-					collection: "xyz.opnshelf.profile",
-					rkey: "self",
-				},
-			],
-		]);
-		expect(prisma.listItem.findMany).not.toHaveBeenCalled();
-		expect(prisma.list.findMany).not.toHaveBeenCalled();
-		expect(prisma.user.delete).toHaveBeenCalledWith({
-			where: { did: "did:plc:test" },
-		});
-	});
-
-	it("aborts account deletion when listing repo records fails", async () => {
-		mockListRecords.mockRejectedValueOnce(new Error("PDS unavailable"));
-
-		await expect(
-			service.deleteUser("did:plc:test", { did: "did:plc:test" }, true),
-		).rejects.toThrow(BadGatewayException);
-		expect(prisma.user.delete).not.toHaveBeenCalled();
-	});
-
-	it("aborts account deletion when deleting a repo list record fails", async () => {
-		mockListRecords
-			.mockResolvedValueOnce({
-				data: { records: [] },
-			})
-			.mockResolvedValueOnce({
-				data: {
-					records: [
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.list/favorites",
-							cid: "cid-1",
-							value: {},
-						},
-					],
-				},
-			});
-		mockDeleteRecord.mockRejectedValueOnce({
-			status: 500,
-			error: "InternalError",
-		});
-
-		await expect(
-			service.deleteUser("did:plc:test", { did: "did:plc:test" }, true),
-		).rejects.toThrow(BadGatewayException);
-		expect(prisma.user.delete).not.toHaveBeenCalled();
-	});
-
-	it("treats already-missing repo records as deleted", async () => {
-		mockListRecords
-			.mockResolvedValueOnce({
-				data: { records: [] },
-			})
-			.mockResolvedValueOnce({
-				data: {
-					records: [
-						{
-							uri: "at://did:plc:test/xyz.opnshelf.list/favorites",
-							cid: "cid-1",
-							value: {},
-						},
-					],
-				},
-			});
-		mockDeleteRecord.mockRejectedValueOnce({
-			status: 404,
-			error: "RecordNotFound",
-			message: "RecordNotFound",
-		});
-
-		await expect(
-			service.deleteUser("did:plc:test", { did: "did:plc:test" }, true),
-		).resolves.toBeUndefined();
-		expect(prisma.user.delete).toHaveBeenCalledWith({
-			where: { did: "did:plc:test" },
-		});
-	});
-
-	it("throws when deleting a missing user", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
-
-		await expect(
-			service.deleteUser("did:plc:missing", { did: "did:plc:missing" }, false),
-		).rejects.toThrow(NotFoundException);
 	});
 });

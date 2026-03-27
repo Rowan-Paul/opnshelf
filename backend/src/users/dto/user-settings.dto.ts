@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserSettingsDto {
@@ -30,6 +30,31 @@ export class DeleteUserAccountDto {
 	@IsBoolean()
 	@IsOptional()
 	deletePDSData?: boolean;
+}
+
+export class AccountDeletionJobDto {
+	@ApiProperty()
+	id!: string;
+
+	@ApiProperty({
+		enum: ["queued", "running", "completed", "failed"],
+	})
+	status!: string;
+
+	@ApiProperty()
+	totalRecords!: number;
+
+	@ApiProperty()
+	deletedRecords!: number;
+
+	@ApiPropertyOptional()
+	currentStep?: string;
+
+	@ApiPropertyOptional()
+	lastError?: string;
+
+	@ApiProperty()
+	createdAt!: string;
 }
 
 export class UserSettingsDto {

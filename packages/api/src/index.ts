@@ -30,6 +30,14 @@ export {
 	getYouTubeThumbnailUrl,
 	resolveDetailTrailer,
 } from "./trailer";
+export type { AccountDeletionStatusJob } from "./account-deletion-status";
+export {
+	getAccountDeletionProgress,
+	getAccountDeletionStatusMessage,
+	getAccountDeletionStepLabel,
+	isActiveAccountDeletionStatus,
+	isTerminalAccountDeletionStatus,
+} from "./account-deletion-status";
 export type { TraktImportStatusJob } from "./trakt-import-status";
 export {
 	getTraktImportStatusMessage,

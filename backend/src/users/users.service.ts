@@ -386,18 +386,16 @@ export class UsersService {
 		);
 	}
 
-	/**
-	 * Delete user account
-	 * @param did - User's DID
-	 * @param session - AT Protocol session for PDS operations
-	 * @param deletePDSData - Whether to delete data from user's PDS
-	 */
-	async deleteUser(
-		did: string,
-		session: ATSession,
-		deletePDSData: boolean,
-	): Promise<void> {
-		await this.userDeletionService.deleteUser(did, session, deletePDSData);
+	async deleteUserSync(did: string): Promise<void> {
+		await this.userDeletionService.deleteUserSync(did);
+	}
+
+	async createDeletionJob(did: string, deletePDSData: boolean) {
+		return this.userDeletionService.createDeletionJob(did, deletePDSData);
+	}
+
+	async getCurrentDeletionJob(userDid: string) {
+		return this.userDeletionService.getCurrentDeletionJob(userDid);
 	}
 
 	private async fetchBlueskyFollowDids(actorDid: string): Promise<string[]> {

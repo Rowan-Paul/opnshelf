@@ -65,6 +65,39 @@ export function toMultipartUploadValue(file: ReactNativeUploadFile): Blob {
 	return file as unknown as Blob;
 }
 
+function isReactNativeFile(value: unknown): value is ReactNativeUploadFile {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"uri" in value &&
+		"name" in value &&
+		"type" in value &&
+		typeof (value as Record<string, unknown>).uri === "string"
+	);
+}
+
+/**
+ * Body serializer that handles React Native file objects ({ uri, name, type })
+ * which RN's FormData accepts natively but the generated serializer misses
+ * because they aren't Blob instances.
+ */
+export const reactNativeFileFormData = (
+	body: Record<string, unknown>,
+): FormData => {
+	const data = new FormData();
+	for (const [key, value] of Object.entries(body)) {
+		if (value === undefined || value === null) continue;
+		if (isReactNativeFile(value) || value instanceof Blob) {
+			data.append(key, value as unknown as Blob);
+		} else if (typeof value === "string") {
+			data.append(key, value);
+		} else {
+			data.append(key, JSON.stringify(value));
+		}
+	}
+	return data;
+};
+
 export function getAvatarUploadErrorMessage(
 	error: unknown,
 	fallback: string,

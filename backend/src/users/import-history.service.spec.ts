@@ -9,29 +9,47 @@ describe("ImportHistoryService", () => {
 	let service: ImportHistoryService;
 
 	function buildTraktImportJob(overrides: Record<string, unknown> = {}) {
+		const {
+			traktUsername = "alice",
+			currentPage = 1,
+			totalPages = null,
+			sourceCount = 0,
+			normalizedCount = 0,
+			importedCount = 0,
+			skippedCount = 0,
+			failedCount = 0,
+			profileUsername = "alice",
+			profileSlug = "alice",
+			profileName = "Alice Example",
+			profileAvatarUrl = "https://example.com/avatar.jpg",
+			...rest
+		} = overrides;
 		return {
 			id: "job-1",
+			type: "trakt_import",
 			userDid: "did:plc:abc",
-			traktUsername: "alice",
 			status: "queued",
-			currentPage: 1,
-			totalPages: null,
-			sourceCount: 0,
-			normalizedCount: 0,
-			importedCount: 0,
-			skippedCount: 0,
-			failedCount: 0,
+			data: {
+				traktUsername,
+				currentPage,
+				totalPages,
+				sourceCount,
+				normalizedCount,
+				importedCount,
+				skippedCount,
+				failedCount,
+				profileUsername,
+				profileSlug,
+				profileName,
+				profileAvatarUrl,
+			},
 			nextRunAt: new Date("2026-03-23T18:00:00.000Z"),
 			lastError: null,
-			profileUsername: "alice",
-			profileSlug: "alice",
-			profileName: "Alice Example",
-			profileAvatarUrl: "https://example.com/avatar.jpg",
 			startedAt: null,
 			completedAt: null,
 			createdAt: new Date("2026-03-23T18:00:00.000Z"),
 			updatedAt: new Date("2026-03-23T18:00:00.000Z"),
-			...overrides,
+			...rest,
 		};
 	}
 
@@ -45,7 +63,7 @@ describe("ImportHistoryService", () => {
 		authSession: {
 			findUnique: jest.fn(),
 		},
-		traktImportJob: {
+		backgroundJob: {
 			findFirst: jest.fn(),
 			findUnique: jest.fn(),
 			create: jest.fn(),
@@ -91,8 +109,8 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("starts a new background Trakt import with preview data", async () => {
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(null);
-		prisma.traktImportJob.create = jest
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(null);
+		prisma.backgroundJob.create = jest
 			.fn()
 			.mockResolvedValue(buildTraktImportJob());
 
@@ -146,19 +164,22 @@ describe("ImportHistoryService", () => {
 				status: "queued",
 			},
 		});
-		expect(prisma.traktImportJob.create).toHaveBeenCalledWith(
+		expect(prisma.backgroundJob.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
+					type: "trakt_import",
 					userDid: "did:plc:abc",
-					traktUsername: "alice",
-					profileUsername: "alice",
+					data: expect.objectContaining({
+						traktUsername: "alice",
+						profileUsername: "alice",
+					}),
 				}),
 			}),
 		);
 	});
 
 	it("reuses an existing active Trakt import job", async () => {
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
 				currentPage: 2,
@@ -195,14 +216,14 @@ describe("ImportHistoryService", () => {
 				status: "running",
 			},
 		});
-		expect(prisma.traktImportJob.create).not.toHaveBeenCalled();
+		expect(prisma.backgroundJob.create).not.toHaveBeenCalled();
 	});
 
 	it("moves a job to waiting_retry when Trakt returns 429", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.update = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
 		(authService.restore as jest.Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
@@ -218,7 +239,7 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		expect(prisma.traktImportJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				where: { id: "job-1" },
 				data: expect.objectContaining({
@@ -231,9 +252,9 @@ describe("ImportHistoryService", () => {
 
 	it("processes a Trakt job page and marks the job completed", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.update = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
 		(authService.restore as jest.Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
@@ -276,14 +297,16 @@ describe("ImportHistoryService", () => {
 			"329865",
 			"2026-03-22T12:00:00.000Z",
 		);
-		expect(prisma.traktImportJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				where: { id: "job-1" },
 				data: expect.objectContaining({
 					status: "completed",
-					importedCount: 1,
-					normalizedCount: 1,
-					sourceCount: 1,
+					data: expect.objectContaining({
+						importedCount: 1,
+						normalizedCount: 1,
+						sourceCount: 1,
+					}),
 					lastError: null,
 				}),
 			}),
@@ -292,9 +315,9 @@ describe("ImportHistoryService", () => {
 
 	it("keeps a Trakt job running when Trakt reports more pages after a short page", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.traktImportJob.update = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
 		(authService.restore as jest.Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
@@ -328,16 +351,18 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		expect(prisma.traktImportJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				where: { id: "job-1" },
 				data: expect.objectContaining({
 					status: "running",
-					currentPage: 2,
-					totalPages: 61,
-					importedCount: 99,
-					normalizedCount: 99,
-					sourceCount: 99,
+					data: expect.objectContaining({
+						currentPage: 2,
+						totalPages: 61,
+						importedCount: 99,
+						normalizedCount: 99,
+						sourceCount: 99,
+					}),
 					completedAt: null,
 				}),
 			}),
@@ -345,7 +370,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("prefers the newest active job over recent terminal jobs", async () => {
-		prisma.traktImportJob.findFirst = jest.fn().mockResolvedValue(
+		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
 				currentPage: 3,
@@ -363,8 +388,8 @@ describe("ImportHistoryService", () => {
 			importedCount: 42,
 		});
 
-		expect(prisma.traktImportJob.findFirst).toHaveBeenCalledTimes(1);
-		expect(prisma.traktImportJob.findFirst).toHaveBeenCalledWith(
+		expect(prisma.backgroundJob.findFirst).toHaveBeenCalledTimes(1);
+		expect(prisma.backgroundJob.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({
 					userDid: "did:plc:abc",
@@ -376,7 +401,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("returns the newest recent terminal job using terminal-aware ordering", async () => {
-		prisma.traktImportJob.findFirst = jest
+		prisma.backgroundJob.findFirst = jest
 			.fn()
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce(
@@ -396,7 +421,7 @@ describe("ImportHistoryService", () => {
 			importedCount: 199,
 		});
 
-		expect(prisma.traktImportJob.findFirst).toHaveBeenNthCalledWith(
+		expect(prisma.backgroundJob.findFirst).toHaveBeenNthCalledWith(
 			2,
 			expect.objectContaining({
 				where: expect.objectContaining({
@@ -416,7 +441,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("keeps completed jobs completed when they include item-level failures", async () => {
-		prisma.traktImportJob.findFirst = jest
+		prisma.backgroundJob.findFirst = jest
 			.fn()
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce(

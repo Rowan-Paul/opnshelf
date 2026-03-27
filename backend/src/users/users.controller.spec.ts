@@ -1,4 +1,4 @@
-import { BadGatewayException, BadRequestException } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { AuthenticatedRequest } from "../auth/types";
 
@@ -38,7 +38,9 @@ describe("UsersController", () => {
 		uploadUserAvatar: jest.fn(),
 		deleteUserAvatar: jest.fn(),
 		streamUserAvatar: jest.fn(),
-		deleteUser: jest.fn(),
+		deleteUserSync: jest.fn(),
+		createDeletionJob: jest.fn(),
+		getCurrentDeletionJob: jest.fn(),
 	};
 
 	beforeEach(async () => {
@@ -353,37 +355,59 @@ describe("UsersController", () => {
 		).resolves.toMatchObject({ imported: 1, skipped: 0, failed: 0 });
 	});
 
-	it("deletes the current account and forwards the PDS deletion flag", async () => {
-		usersService.deleteUser.mockResolvedValue(undefined);
+	it("deletes the current account synchronously when PDS deletion is not requested", async () => {
+		usersService.deleteUserSync.mockResolvedValue(undefined);
 
 		const req = {
 			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
 		} as AuthenticatedRequest;
+		const res = { status: jest.fn() } as unknown as import("express").Response;
 
-		await expect(
-			controller.deleteMyAccount({ deletePDSData: true }, req),
-		).resolves.toBeUndefined();
-		expect(usersService.deleteUser).toHaveBeenCalledWith(
-			"did:plc:abc",
-			{ did: "did:plc:abc" },
-			true,
+		const result = await controller.deleteMyAccount(
+			{ deletePDSData: false },
+			req,
+			res,
 		);
+		expect(result).toBeUndefined();
+		expect(usersService.deleteUserSync).toHaveBeenCalledWith("did:plc:abc");
+		expect(res.status).toHaveBeenCalledWith(204);
 	});
 
-	it("propagates delete-account PDS cleanup failures", async () => {
-		usersService.deleteUser.mockRejectedValue(
-			new BadGatewayException(
-				"Failed to delete OpnShelf data from your PDS. Your account was not deleted.",
-			),
-		);
+	it("creates an async deletion job when PDS deletion is requested", async () => {
+		const mockJob = {
+			id: "job-1",
+			status: "queued",
+			data: {
+				deletePdsData: true,
+				totalRecords: 10,
+				deletedRecords: 0,
+			},
+			lastError: null,
+			createdAt: new Date("2026-03-27T12:00:00.000Z"),
+		};
+		usersService.createDeletionJob.mockResolvedValue(mockJob);
 
 		const req = {
 			user: { did: "did:plc:abc", session: { did: "did:plc:abc" } },
 		} as AuthenticatedRequest;
+		const res = { status: jest.fn() } as unknown as import("express").Response;
 
-		await expect(
-			controller.deleteMyAccount({ deletePDSData: true }, req),
-		).rejects.toThrow(BadGatewayException);
+		const result = await controller.deleteMyAccount(
+			{ deletePDSData: true },
+			req,
+			res,
+		);
+		expect(result).toMatchObject({
+			id: "job-1",
+			status: "queued",
+			totalRecords: 10,
+			deletedRecords: 0,
+		});
+		expect(usersService.createDeletionJob).toHaveBeenCalledWith(
+			"did:plc:abc",
+			true,
+		);
+		expect(res.status).toHaveBeenCalledWith(200);
 	});
 
 	it("rejects import when session is missing", async () => {

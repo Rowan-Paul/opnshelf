@@ -15,14 +15,3 @@ export const MediaType = {
 } as const
 
 export type MediaType = (typeof MediaType)[keyof typeof MediaType]
-
-
-export const TraktImportJobStatus = {
-  queued: 'queued',
-  running: 'running',
-  waiting_retry: 'waiting_retry',
-  completed: 'completed',
-  failed: 'failed'
-} as const
-
-export type TraktImportJobStatus = (typeof TraktImportJobStatus)[keyof typeof TraktImportJobStatus]

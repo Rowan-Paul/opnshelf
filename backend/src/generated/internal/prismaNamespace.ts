@@ -388,7 +388,7 @@ export const ModelName = {
   Follow: 'Follow',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
-  TraktImportJob: 'TraktImportJob',
+  BackgroundJob: 'BackgroundJob',
   Movie: 'Movie',
   Show: 'Show',
   Season: 'Season',
@@ -412,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "authSession" | "authState" | "traktImportJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
+    modelProps: "user" | "follow" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -712,77 +712,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    TraktImportJob: {
-      payload: Prisma.$TraktImportJobPayload<ExtArgs>
-      fields: Prisma.TraktImportJobFieldRefs
+    BackgroundJob: {
+      payload: Prisma.$BackgroundJobPayload<ExtArgs>
+      fields: Prisma.BackgroundJobFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.TraktImportJobFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload> | null
+          args: Prisma.BackgroundJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.TraktImportJobFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         findFirst: {
-          args: Prisma.TraktImportJobFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload> | null
+          args: Prisma.BackgroundJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.TraktImportJobFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         findMany: {
-          args: Prisma.TraktImportJobFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+          args: Prisma.BackgroundJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>[]
         }
         create: {
-          args: Prisma.TraktImportJobCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         createMany: {
-          args: Prisma.TraktImportJobCreateManyArgs<ExtArgs>
+          args: Prisma.BackgroundJobCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.TraktImportJobCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+          args: Prisma.BackgroundJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>[]
         }
         delete: {
-          args: Prisma.TraktImportJobDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         update: {
-          args: Prisma.TraktImportJobUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         deleteMany: {
-          args: Prisma.TraktImportJobDeleteManyArgs<ExtArgs>
+          args: Prisma.BackgroundJobDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.TraktImportJobUpdateManyArgs<ExtArgs>
+          args: Prisma.BackgroundJobUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.TraktImportJobUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>[]
+          args: Prisma.BackgroundJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>[]
         }
         upsert: {
-          args: Prisma.TraktImportJobUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportJobPayload>
+          args: Prisma.BackgroundJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackgroundJobPayload>
         }
         aggregate: {
-          args: Prisma.TraktImportJobAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktImportJob>
+          args: Prisma.BackgroundJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBackgroundJob>
         }
         groupBy: {
-          args: Prisma.TraktImportJobGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportJobGroupByOutputType>[]
+          args: Prisma.BackgroundJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BackgroundJobGroupByOutputType>[]
         }
         count: {
-          args: Prisma.TraktImportJobCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportJobCountAggregateOutputType> | number
+          args: Prisma.BackgroundJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BackgroundJobCountAggregateOutputType> | number
         }
       }
     }
@@ -1472,31 +1472,21 @@ export const AuthStateScalarFieldEnum = {
 export type AuthStateScalarFieldEnum = (typeof AuthStateScalarFieldEnum)[keyof typeof AuthStateScalarFieldEnum]
 
 
-export const TraktImportJobScalarFieldEnum = {
+export const BackgroundJobScalarFieldEnum = {
   id: 'id',
+  type: 'type',
   userDid: 'userDid',
-  traktUsername: 'traktUsername',
   status: 'status',
-  currentPage: 'currentPage',
-  totalPages: 'totalPages',
-  sourceCount: 'sourceCount',
-  normalizedCount: 'normalizedCount',
-  importedCount: 'importedCount',
-  skippedCount: 'skippedCount',
-  failedCount: 'failedCount',
+  data: 'data',
   nextRunAt: 'nextRunAt',
   lastError: 'lastError',
-  profileUsername: 'profileUsername',
-  profileSlug: 'profileSlug',
-  profileName: 'profileName',
-  profileAvatarUrl: 'profileAvatarUrl',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktImportJobScalarFieldEnum = (typeof TraktImportJobScalarFieldEnum)[keyof typeof TraktImportJobScalarFieldEnum]
+export type BackgroundJobScalarFieldEnum = (typeof BackgroundJobScalarFieldEnum)[keyof typeof BackgroundJobScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {
@@ -1642,6 +1632,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
@@ -1710,16 +1707,16 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'TraktImportJobStatus'
+ * Reference to a field of type 'Json'
  */
-export type EnumTraktImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraktImportJobStatus'>
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
 /**
- * Reference to a field of type 'TraktImportJobStatus[]'
+ * Reference to a field of type 'QueryMode'
  */
-export type ListEnumTraktImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraktImportJobStatus[]'>
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1734,20 +1731,6 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1884,7 +1867,7 @@ export type GlobalOmitConfig = {
   follow?: Prisma.FollowOmit
   authSession?: Prisma.AuthSessionOmit
   authState?: Prisma.AuthStateOmit
-  traktImportJob?: Prisma.TraktImportJobOmit
+  backgroundJob?: Prisma.BackgroundJobOmit
   movie?: Prisma.MovieOmit
   show?: Prisma.ShowOmit
   season?: Prisma.SeasonOmit

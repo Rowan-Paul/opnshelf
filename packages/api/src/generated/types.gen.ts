@@ -544,6 +544,16 @@ export type DeleteUserAccountDto = {
     deletePDSData: boolean;
 };
 
+export type AccountDeletionJobDto = {
+    id: string;
+    status: 'queued' | 'running' | 'completed' | 'failed';
+    totalRecords: number;
+    deletedRecords: number;
+    currentStep?: string;
+    lastError?: string;
+    createdAt: string;
+};
+
 export type CompleteOnboardingResponseDto = {
     /**
      * Timestamp when onboarding was completed
@@ -1928,19 +1938,46 @@ export type UsersControllerDeleteMyAccountErrors = {
      */
     401: unknown;
     /**
-     * Failed to delete OpnShelf data from the user's PDS, so the account was not deleted
+     * Account deletion already in progress
      */
-    502: unknown;
+    409: unknown;
 };
 
 export type UsersControllerDeleteMyAccountResponses = {
     /**
-     * Account deleted successfully
+     * PDS deletion requested; returns a job to poll for progress
+     */
+    200: AccountDeletionJobDto;
+    /**
+     * Account deleted immediately (no PDS deletion)
      */
     204: void;
 };
 
 export type UsersControllerDeleteMyAccountResponse = UsersControllerDeleteMyAccountResponses[keyof UsersControllerDeleteMyAccountResponses];
+
+export type UsersControllerGetMyAccountDeletionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/account-deletion';
+};
+
+export type UsersControllerGetMyAccountDeletionErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerGetMyAccountDeletionResponses = {
+    /**
+     * Current or most recent account deletion job, or null when none exists
+     */
+    200: AccountDeletionJobDto | null;
+};
+
+export type UsersControllerGetMyAccountDeletionResponse = UsersControllerGetMyAccountDeletionResponses[keyof UsersControllerGetMyAccountDeletionResponses];
 
 export type UsersControllerCompleteOnboardingData = {
     body?: never;

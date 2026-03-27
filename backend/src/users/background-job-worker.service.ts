@@ -5,16 +5,22 @@ import {
 	type OnModuleInit,
 } from "@nestjs/common";
 import { ImportHistoryService } from "./import-history.service";
+import { UserDeletionService } from "./user-deletion.service";
 
 const WORKER_POLL_INTERVAL_MS = 2_000;
 
 @Injectable()
-export class TraktImportWorkerService implements OnModuleInit, OnModuleDestroy {
-	private readonly logger = new Logger(TraktImportWorkerService.name);
+export class BackgroundJobWorkerService
+	implements OnModuleInit, OnModuleDestroy
+{
+	private readonly logger = new Logger(BackgroundJobWorkerService.name);
 	private timer: NodeJS.Timeout | null = null;
 	private isProcessing = false;
 
-	constructor(private readonly importHistoryService: ImportHistoryService) {}
+	constructor(
+		private readonly importHistoryService: ImportHistoryService,
+		private readonly userDeletionService: UserDeletionService,
+	) {}
 
 	onModuleInit() {
 		this.timer = setInterval(() => {
@@ -37,9 +43,10 @@ export class TraktImportWorkerService implements OnModuleInit, OnModuleDestroy {
 		this.isProcessing = true;
 		try {
 			await this.importHistoryService.processNextTraktImportJob();
+			await this.userDeletionService.processNextDeletionJob();
 		} catch (error) {
 			this.logger.error(
-				`Trakt import worker tick failed: ${error instanceof Error ? error.message : String(error)}`,
+				`Background job worker tick failed: ${error instanceof Error ? error.message : String(error)}`,
 			);
 		} finally {
 			this.isProcessing = false;

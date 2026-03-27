@@ -64,7 +64,7 @@ export default function LoginScreen() {
 	const completeAuthSession = async (authUrl: string) => {
 		const result = await WebBrowser.openAuthSessionAsync(
 			authUrl,
-			"opnshelf://auth/callback",
+			"opnshelf://auth/complete",
 		);
 
 		if (result.type !== "success") {

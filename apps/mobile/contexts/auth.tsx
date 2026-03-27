@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const loginUrl = getLoginUrl(handle, undefined, "mobile");
 		const result = await WebBrowser.openAuthSessionAsync(
 			loginUrl,
-			"opnshelf://auth/callback"
+			"opnshelf://auth/complete"
 		);
 
 		if (result.type === "success") {

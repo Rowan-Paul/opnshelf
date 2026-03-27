@@ -25,6 +25,12 @@ import type {
 	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
 import type { AuthService } from "../auth/auth.service";
+import {
+	TRAKT_IMPORT_JOB_TYPE,
+	buildTraktImportData,
+	parseTraktImportData,
+	type TraktImportJobData,
+} from "./background-job-data";
 
 interface ATSession {
 	did: string;
@@ -79,8 +85,8 @@ type TraktJobStatus =
 	| "completed"
 	| "failed";
 
-type TraktImportJobRecord = Awaited<
-	ReturnType<PrismaService["traktImportJob"]["findFirst"]>
+type BackgroundJobRecord = Awaited<
+	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
 >;
 
 const TRAKT_HISTORY_PAGE_SIZE = 100;
@@ -208,9 +214,10 @@ export class ImportHistoryService {
 			});
 
 			if (existingJob) {
-				const existingProfile = this.buildProfileFromJob(existingJob);
+				const existingData = parseTraktImportData(existingJob.data);
+				const existingProfile = this.buildProfileFromJobData(existingData);
 				const preview = await this.fetchTraktPreview(
-					existingJob.traktUsername,
+					existingData.traktUsername,
 				).catch((error: unknown) => {
 					this.logger.warn(
 						`Unable to refresh Trakt preview for existing job ${existingJob.id}: ${this.getErrorMessage(error)}`,
@@ -231,16 +238,19 @@ export class ImportHistoryService {
 			}
 
 			const preview = await this.fetchTraktPreview(normalizedUsername);
-			const job = await this.prisma.traktImportJob.create({
+			const job = await this.prisma.backgroundJob.create({
 				data: {
+					type: TRAKT_IMPORT_JOB_TYPE,
 					userDid,
-					traktUsername: normalizedUsername,
 					status: "queued",
 					nextRunAt: new Date(),
-					profileUsername: preview.profile.username,
-					profileSlug: preview.profile.slug,
-					profileName: preview.profile.name,
-					profileAvatarUrl: preview.profile.avatarUrl,
+					data: buildTraktImportData({
+						traktUsername: normalizedUsername,
+						profileUsername: preview.profile.username,
+						profileSlug: preview.profile.slug,
+						profileName: preview.profile.name,
+						profileAvatarUrl: preview.profile.avatarUrl,
+					}),
 				},
 			});
 
@@ -265,8 +275,9 @@ export class ImportHistoryService {
 			return this.mapTraktImportJob(activeJob);
 		}
 
-		const recentTerminalJob = await this.prisma.traktImportJob.findFirst({
+		const recentTerminalJob = await this.prisma.backgroundJob.findFirst({
 			where: {
+				type: TRAKT_IMPORT_JOB_TYPE,
 				userDid,
 				status: { in: ["completed", "failed"] },
 				updatedAt: {
@@ -284,8 +295,9 @@ export class ImportHistoryService {
 	}
 
 	async processNextTraktImportJob(): Promise<void> {
-		const job = await this.prisma.traktImportJob.findFirst({
+		const job = await this.prisma.backgroundJob.findFirst({
 			where: {
+				type: TRAKT_IMPORT_JOB_TYPE,
 				status: { in: ACTIVE_TRAKT_JOB_STATUSES },
 				nextRunAt: { lte: new Date() },
 			},
@@ -411,7 +423,7 @@ export class ImportHistoryService {
 	}
 
 	private async processTraktImportJob(jobId: string): Promise<void> {
-		const job = await this.prisma.traktImportJob.findUnique({
+		const job = await this.prisma.backgroundJob.findUnique({
 			where: { id: jobId },
 		});
 		if (!job) {
@@ -425,6 +437,8 @@ export class ImportHistoryService {
 			return;
 		}
 
+		const jobData = parseTraktImportData(job.data);
+
 		const session = await this.restoreImportSession(job.userDid);
 		if (!session) {
 			await this.failTraktImportJob(
@@ -434,7 +448,7 @@ export class ImportHistoryService {
 			return;
 		}
 
-		await this.prisma.traktImportJob.update({
+		await this.prisma.backgroundJob.update({
 			where: { id: job.id },
 			data: {
 				status: "running",
@@ -445,21 +459,21 @@ export class ImportHistoryService {
 
 		try {
 			const pageResult = await this.fetchTraktHistoryPage(
-				job.traktUsername,
-				job.currentPage,
+				jobData.traktUsername,
+				jobData.currentPage,
 			);
 			const totalPages =
-				pageResult.pageCount ?? job.totalPages ?? job.currentPage;
+				pageResult.pageCount ?? jobData.totalPages ?? jobData.currentPage;
 			const normalized = this.normalizeTraktPage(
 				pageResult.payload,
-				job.sourceCount + 1,
+				jobData.sourceCount + 1,
 			);
 			const importResult = await this.importNormalizedItems(
 				job.userDid,
 				session,
 				normalized.items,
 			);
-			const nextPage = job.currentPage + 1;
+			const nextPage = jobData.currentPage + 1;
 			const hasKnownTotalPages =
 				Number.isInteger(totalPages) && totalPages >= 1;
 			const isComplete =
@@ -468,18 +482,25 @@ export class ImportHistoryService {
 					? nextPage > totalPages
 					: pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE);
 
-			await this.prisma.traktImportJob.update({
+			const updatedData: TraktImportJobData = {
+				...jobData,
+				currentPage: isComplete ? jobData.currentPage : nextPage,
+				totalPages,
+				sourceCount: jobData.sourceCount + pageResult.payload.length,
+				normalizedCount: jobData.normalizedCount + normalized.items.length,
+				importedCount: jobData.importedCount + importResult.imported,
+				skippedCount:
+					jobData.skippedCount +
+					normalized.skipped.length +
+					importResult.skipped,
+				failedCount: jobData.failedCount + importResult.failed,
+			};
+
+			await this.prisma.backgroundJob.update({
 				where: { id: job.id },
 				data: {
 					status: isComplete ? "completed" : "running",
-					currentPage: isComplete ? job.currentPage : nextPage,
-					totalPages,
-					sourceCount: job.sourceCount + pageResult.payload.length,
-					normalizedCount: job.normalizedCount + normalized.items.length,
-					importedCount: job.importedCount + importResult.imported,
-					skippedCount:
-						job.skippedCount + normalized.skipped.length + importResult.skipped,
-					failedCount: job.failedCount + importResult.failed,
+					data: updatedData,
 					lastError: null,
 					nextRunAt: isComplete
 						? new Date()
@@ -495,7 +516,7 @@ export class ImportHistoryService {
 				this.logger.warn(
 					`Trakt rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s.`,
 				);
-				await this.prisma.traktImportJob.update({
+				await this.prisma.backgroundJob.update({
 					where: { id: job.id },
 					data: {
 						status: "waiting_retry",
@@ -519,7 +540,7 @@ export class ImportHistoryService {
 		jobId: string,
 		message?: string,
 	): Promise<void> {
-		await this.prisma.traktImportJob.update({
+		await this.prisma.backgroundJob.update({
 			where: { id: jobId },
 			data: {
 				status: "failed",
@@ -1001,8 +1022,9 @@ export class ImportHistoryService {
 		userDid: string,
 		options: { statuses: TraktJobStatus[]; recentSince?: Date },
 	) {
-		return this.prisma.traktImportJob.findFirst({
+		return this.prisma.backgroundJob.findFirst({
 			where: {
+				type: TRAKT_IMPORT_JOB_TYPE,
 				userDid,
 				status: { in: options.statuses },
 				...(options.recentSince
@@ -1018,25 +1040,26 @@ export class ImportHistoryService {
 	}
 
 	private mapTraktImportJob(
-		job: NonNullable<TraktImportJobRecord>,
+		job: NonNullable<BackgroundJobRecord>,
 	): TraktImportJobDto {
+		const jobData = parseTraktImportData(job.data);
 		return {
 			id: job.id,
-			traktUsername: job.traktUsername,
-			status: job.status,
-			currentPage: job.currentPage,
-			totalPages: job.totalPages ?? undefined,
-			sourceCount: job.sourceCount,
-			normalizedCount: job.normalizedCount,
-			importedCount: job.importedCount,
-			skippedCount: job.skippedCount,
-			failedCount: job.failedCount,
+			traktUsername: jobData.traktUsername,
+			status: job.status as TraktImportJobDto["status"],
+			currentPage: jobData.currentPage,
+			totalPages: jobData.totalPages ?? undefined,
+			sourceCount: jobData.sourceCount,
+			normalizedCount: jobData.normalizedCount,
+			importedCount: jobData.importedCount,
+			skippedCount: jobData.skippedCount,
+			failedCount: jobData.failedCount,
 			nextRunAt: job.nextRunAt.toISOString(),
 			lastError: job.lastError ?? undefined,
-			profileUsername: job.profileUsername ?? undefined,
-			profileSlug: job.profileSlug ?? undefined,
-			profileName: job.profileName ?? undefined,
-			profileAvatarUrl: job.profileAvatarUrl ?? undefined,
+			profileUsername: jobData.profileUsername,
+			profileSlug: jobData.profileSlug,
+			profileName: jobData.profileName,
+			profileAvatarUrl: jobData.profileAvatarUrl,
 			startedAt: job.startedAt?.toISOString(),
 			completedAt: job.completedAt?.toISOString(),
 			createdAt: job.createdAt.toISOString(),
@@ -1044,16 +1067,16 @@ export class ImportHistoryService {
 		};
 	}
 
-	private buildProfileFromJob(
-		job: NonNullable<TraktImportJobRecord>,
+	private buildProfileFromJobData(
+		jobData: TraktImportJobData,
 	): TraktPublicProfileDto {
 		return {
-			username: job.profileUsername ?? job.traktUsername,
-			slug: job.profileSlug ?? job.traktUsername,
-			name: job.profileName ?? undefined,
+			username: jobData.profileUsername ?? jobData.traktUsername,
+			slug: jobData.profileSlug ?? jobData.traktUsername,
+			name: jobData.profileName,
 			isPrivate: false,
 			isVip: false,
-			avatarUrl: job.profileAvatarUrl ?? undefined,
+			avatarUrl: jobData.profileAvatarUrl,
 		};
 	}
 
