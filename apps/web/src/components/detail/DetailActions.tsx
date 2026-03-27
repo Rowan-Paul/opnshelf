@@ -138,6 +138,7 @@ export function DetailActions({
 							size="icon"
 							onClick={onShowDatePicker}
 							title={`Watch ${mediaType}`}
+							className="h-auto self-stretch"
 						>
 							<Calendar className="w-5 h-5" />
 						</M3Button>
@@ -158,6 +159,7 @@ export function DetailActions({
 						size="icon"
 						onClick={onShowDatePicker}
 						title={`Watch ${mediaType}`}
+						className="h-auto self-stretch"
 					>
 						<Calendar className="w-5 h-5" />
 					</M3Button>
