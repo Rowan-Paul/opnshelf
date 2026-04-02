@@ -1069,6 +1069,41 @@ export type UnifiedDiscoverResponseDto = {
     page: number;
 };
 
+export type PersonFilmographyItemDto = {
+    id: number;
+    media_type: string;
+    title: string;
+    poster_path?: string;
+    release_date?: string;
+    first_air_date?: string;
+    character?: string;
+    job?: string;
+    department?: string;
+    order?: number;
+    vote_average?: number;
+};
+
+export type TmdbPersonDetailDto = {
+    id: number;
+    name: string;
+    profile_path?: string;
+    biography?: string;
+    birthday?: string;
+    deathday?: string;
+    place_of_birth?: string;
+    known_for_department?: string;
+    popularity?: number;
+    filmography: Array<PersonFilmographyItemDto>;
+};
+
+export type PersonFilmographyResponseDto = {
+    items: Array<PersonFilmographyItemDto>;
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -2659,3 +2694,68 @@ export type SearchControllerDiscoverAllResponses = {
 };
 
 export type SearchControllerDiscoverAllResponse = SearchControllerDiscoverAllResponses[keyof SearchControllerDiscoverAllResponses];
+
+export type PeopleControllerGetPersonDetailsData = {
+    body?: never;
+    path: {
+        /**
+         * TMDB person ID
+         */
+        personId: string;
+    };
+    query?: never;
+    url: '/people/tmdb/{personId}';
+};
+
+export type PeopleControllerGetPersonDetailsErrors = {
+    /**
+     * Person not found
+     */
+    404: unknown;
+};
+
+export type PeopleControllerGetPersonDetailsResponses = {
+    /**
+     * Person details retrieved successfully
+     */
+    200: TmdbPersonDetailDto;
+};
+
+export type PeopleControllerGetPersonDetailsResponse = PeopleControllerGetPersonDetailsResponses[keyof PeopleControllerGetPersonDetailsResponses];
+
+export type PeopleControllerGetPersonFilmographyData = {
+    body?: never;
+    path: {
+        /**
+         * TMDB person ID
+         */
+        personId: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Items per page
+         */
+        pageSize?: number;
+    };
+    url: '/people/tmdb/{personId}/filmography';
+};
+
+export type PeopleControllerGetPersonFilmographyErrors = {
+    /**
+     * Person not found
+     */
+    404: unknown;
+};
+
+export type PeopleControllerGetPersonFilmographyResponses = {
+    /**
+     * Filmography retrieved successfully
+     */
+    200: PersonFilmographyResponseDto;
+};
+
+export type PeopleControllerGetPersonFilmographyResponse = PeopleControllerGetPersonFilmographyResponses[keyof PeopleControllerGetPersonFilmographyResponses];

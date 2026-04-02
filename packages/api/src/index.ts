@@ -46,17 +46,3 @@ export {
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 } from "./trakt-import-status";
-
-// TODO: Remove these manual exports after running `pnpm generate:api`
-// People API - temporary manual implementation until backend codegen is run
-export type {
-	PersonFilmographyItemDto,
-	TmdbPersonDetailDto,
-	PeopleControllerGetPersonDetailsData,
-	PeopleControllerGetPersonDetailsResponse,
-} from "./people-temp";
-export { peopleControllerGetPersonDetails } from "./people-temp";
-export {
-	peopleControllerGetPersonDetailsOptions,
-	peopleControllerGetPersonDetailsQueryKey,
-} from "./people-temp";

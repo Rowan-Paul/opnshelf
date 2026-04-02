@@ -1,15 +1,32 @@
 import {
+	authControllerMeOptions,
+	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesQueryKey,
+	moviesControllerMarkWatchedMutation,
+	moviesControllerUnmarkWatchedMutation,
 	type PersonFilmographyItemDto,
 	peopleControllerGetPersonDetailsOptions,
+	peopleControllerGetPersonFilmographyInfiniteOptions,
+	showsControllerGetUserShowsOptions,
+	showsControllerGetUserShowsQueryKey,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 	type TmdbPersonDetailDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Calendar, Film, MapPin, Star, Tv } from "lucide-react";
-import { useMemo } from "react";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Calendar, MapPin, Star } from "lucide-react";
+import { useMemo, useState } from "react";
+import { DatePickerModal } from "@/components/DatePickerModal";
 import { DetailHero } from "@/components/detail";
+import { MediaPosterCard } from "@/components/MediaPosterCard";
 import { useTheme } from "@/components/theme-provider";
-import { getTmdbPosterUrl, getTmdbProfileUrl } from "@/lib/utils";
+import { createTitleSlug, getTmdbProfileUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/person/$personId/$name")({
 	loader: async ({ params, context }) => {
@@ -87,11 +104,52 @@ function PersonDetailPage() {
 	const { personId, name } = Route.useParams();
 	const router = useRouter();
 	const { seedColor } = useTheme();
+	const queryClient = useQueryClient();
+
+	const { data: user } = useQuery({
+		...authControllerMeOptions(),
+		staleTime: 5 * 60 * 1000,
+		retry: false,
+	});
+	const userDid = user?.did || "";
 
 	const { data: personData, isLoading: isPersonLoading } = useQuery({
 		...peopleControllerGetPersonDetailsOptions({
 			path: { personId },
 		}),
+	});
+
+	const {
+		data: filmographyData,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		status,
+	} = useInfiniteQuery({
+		...peopleControllerGetPersonFilmographyInfiniteOptions({
+			path: { personId },
+		}),
+		getNextPageParam: (lastPage) => {
+			if (lastPage.page < lastPage.totalPages) {
+				return lastPage.page + 1;
+			}
+			return undefined;
+		},
+	});
+
+	// Fetch user's tracked movies and shows for watch status
+	const { data: trackedMovies } = useQuery({
+		...moviesControllerGetUserMoviesOptions({
+			path: { userDid },
+		}),
+		enabled: !!userDid,
+	});
+
+	const { data: trackedShows } = useQuery({
+		...showsControllerGetUserShowsOptions({
+			path: { userDid },
+		}),
+		enabled: !!userDid,
 	});
 
 	const person = personData as TmdbPersonDetailDto | undefined;
@@ -156,6 +214,140 @@ function PersonDetailPage() {
 		return items;
 	}, [person]);
 
+	// Flatten all filmography items from infinite query pages
+	const filmographyItems = useMemo(() => {
+		return filmographyData?.pages.flatMap((page) => page.items) ?? [];
+	}, [filmographyData]);
+
+	const totalFilmographyCount = filmographyData?.pages[0]?.total ?? 0;
+
+	// Create lookup sets for watched items
+	const watchedMovieIds = useMemo(() => {
+		if (!trackedMovies) return new Set<string>();
+		return new Set(trackedMovies.map((m) => m.movieId));
+	}, [trackedMovies]);
+
+	const watchedShowIds = useMemo(() => {
+		if (!trackedShows) return new Set<string>();
+		return new Set(trackedShows.map((s) => s.showId));
+	}, [trackedShows]);
+
+	// Calculate watched count
+	const watchedCount = useMemo(() => {
+		return filmographyItems.filter((item) => {
+			if (item.media_type === "movie") {
+				return watchedMovieIds.has(String(item.id));
+			}
+			return watchedShowIds.has(String(item.id));
+		}).length;
+	}, [filmographyItems, watchedMovieIds, watchedShowIds]);
+
+	// Mark watched mutations
+	const markMovieMutation = useMutation({
+		mutationKey: ["movies", "markWatched"],
+		...moviesControllerMarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
+			});
+		},
+	});
+
+	const unmarkMovieMutation = useMutation({
+		mutationKey: ["movies", "unmarkWatched"],
+		...moviesControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
+			});
+		},
+	});
+
+	const markShowMutation = useMutation({
+		mutationKey: ["shows", "markShowWatched"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({ path: { userDid } }),
+			});
+		},
+	});
+
+	const unmarkShowMutation = useMutation({
+		mutationKey: ["shows", "unmarkWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserShowsQueryKey({ path: { userDid } }),
+			});
+		},
+	});
+
+	// Modal states
+	const [datePickerModal, setDatePickerModal] = useState<{
+		mediaType: "movie" | "show";
+		mediaId: string;
+		title: string;
+		isWatched: boolean;
+	} | null>(null);
+
+	const handleToggleWatched = (item: PersonFilmographyItemDto) => {
+		if (!user) return;
+
+		const isMovie = item.media_type === "movie";
+		const mediaId = String(item.id);
+		const isWatched = isMovie
+			? watchedMovieIds.has(mediaId)
+			: watchedShowIds.has(mediaId);
+
+		if (isWatched) {
+			// Unmark
+			if (isMovie) {
+				unmarkMovieMutation.mutate({
+					path: { movieId: mediaId },
+					query: { mode: "all" },
+				});
+			} else {
+				unmarkShowMutation.mutate({
+					path: { showId: mediaId },
+					query: { mode: "all" },
+				});
+			}
+		} else {
+			// Open date picker for marking
+			setDatePickerModal({
+				mediaType: item.media_type,
+				mediaId,
+				title: item.title,
+				isWatched: false,
+			});
+		}
+	};
+
+	const handleMarkWithDate = (date: Date) => {
+		if (!datePickerModal || !user) return;
+
+		const { mediaType, mediaId } = datePickerModal;
+
+		if (mediaType === "movie") {
+			markMovieMutation.mutate({
+				body: {
+					movieId: mediaId,
+					watchedAt: date.toISOString(),
+				},
+			});
+		} else {
+			markShowMutation.mutate({
+				body: {
+					showId: mediaId,
+					watchedAt: date.toISOString(),
+				},
+			});
+		}
+
+		setDatePickerModal(null);
+	};
+
 	return (
 		<div
 			className="min-h-screen m3-background m3-on-background"
@@ -177,7 +369,7 @@ function PersonDetailPage() {
 			<div className="container mx-auto px-4 py-6 max-w-7xl">
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
 					<div className="space-y-4 min-w-0">
-						{/* Sidebar content - could add actions later */}
+						{/* Sidebar content */}
 						<div className="m3-surface-container rounded-xl p-4">
 							<h3
 								className="m3-title-medium mb-3"
@@ -198,6 +390,43 @@ function PersonDetailPage() {
 								))}
 							</div>
 						</div>
+
+						{/* Watched Stats Card */}
+						{user && filmographyItems.length > 0 && (
+							<div className="m3-surface-container rounded-xl p-4">
+								<h3
+									className="m3-title-medium mb-2"
+									style={{ color: colors.primary }}
+								>
+									Your Progress
+								</h3>
+								<div
+									className="text-sm"
+									style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+								>
+									<span
+										className="font-semibold"
+										style={{ color: colors.primary }}
+									>
+										{watchedCount}
+									</span>{" "}
+									of{" "}
+									<span className="font-medium">{totalFilmographyCount}</span>{" "}
+									titles watched
+								</div>
+								{totalFilmographyCount > 0 && (
+									<div className="mt-3 h-2 rounded-full bg-(--md-sys-color-surface-container-high)">
+										<div
+											className="h-full rounded-full transition-all"
+											style={{
+												width: `${Math.min(100, (watchedCount / totalFilmographyCount) * 100)}%`,
+												backgroundColor: colors.primary,
+											}}
+										/>
+									</div>
+								)}
+							</div>
+						)}
 					</div>
 
 					<div className="space-y-6 min-w-0">
@@ -218,28 +447,135 @@ function PersonDetailPage() {
 
 						{/* Filmography Section */}
 						<section>
-							<h2
-								className="text-xl font-semibold mb-4"
-								style={{ color: colors.primary }}
-							>
-								Filmography
-								<span className="ml-2 text-sm font-normal text-(--md-sys-color-on-surface-variant)">
-									({person?.filmography?.length || 0} titles)
-								</span>
-							</h2>
-							<div className="space-y-3">
-								{person?.filmography?.map((item: PersonFilmographyItemDto) => (
-									<FilmographyItem
-										key={`${item.media_type}-${item.id}-${item.character || item.job || ""}`}
-										item={item}
-										colors={colors}
-									/>
-								))}
+							<div className="flex items-center justify-between mb-4">
+								<h2
+									className="text-xl font-semibold"
+									style={{ color: colors.primary }}
+								>
+									Filmography
+									<span className="ml-2 text-sm font-normal text-(--md-sys-color-on-surface-variant)">
+										({totalFilmographyCount > 0 ? totalFilmographyCount : "..."}{" "}
+										titles)
+									</span>
+								</h2>
+							</div>
+
+							{/* Filmography grid - first page loads automatically */}
+							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+								{filmographyItems.map((item: PersonFilmographyItemDto) => {
+									const isMovie = item.media_type === "movie";
+									const id = String(item.id);
+									const year = isMovie
+										? item.release_date?.split("-")[0]
+										: item.first_air_date?.split("-")[0];
+									const isWatched = isMovie
+										? watchedMovieIds.has(id)
+										: watchedShowIds.has(id);
+									const isShelfPending = isMovie
+										? (markMovieMutation.isPending &&
+												markMovieMutation.variables?.body?.movieId === id) ||
+											(unmarkMovieMutation.isPending &&
+												unmarkMovieMutation.variables?.path?.movieId === id)
+										: (markShowMutation.isPending &&
+												markShowMutation.variables?.body?.showId === id) ||
+											(unmarkShowMutation.isPending &&
+												unmarkShowMutation.variables?.path?.showId === id);
+
+									return (
+										<MediaPosterCard
+											key={`${item.media_type}-${item.id}`}
+											posterPath={item.poster_path}
+											title={item.title}
+											subtitle={year}
+											to={
+												isMovie
+													? "/movies/$movieId/$title"
+													: "/shows/$showId/$title"
+											}
+											params={
+												isMovie
+													? {
+															movieId: id,
+															title: createTitleSlug(item.title),
+														}
+													: {
+															showId: id,
+															title: createTitleSlug(item.title),
+														}
+											}
+											user={user}
+											isOnShelf={isWatched}
+											isShelfPending={isShelfPending}
+											onToggleShelf={() => handleToggleWatched(item)}
+											listMedia={
+												user
+													? {
+															type: isMovie ? "movie" : "show",
+															id,
+															title: item.title,
+														}
+													: undefined
+											}
+										/>
+									);
+								})}
+							</div>
+
+							{/* Show more button / loading state */}
+							<div className="py-6">
+								{isFetchingNextPage ? (
+									<div className="flex items-center justify-center gap-2 text-(--md-sys-color-on-surface-variant)">
+										<div
+											className="animate-spin rounded-full h-5 w-5 border-b-2"
+											style={{ borderColor: colors.primary }}
+										/>
+										<span className="text-sm">Loading...</span>
+									</div>
+								) : hasNextPage ? (
+									<button
+										type="button"
+										onClick={() => fetchNextPage()}
+										className="w-full py-3 px-4 rounded-lg bg-(--md-sys-color-surface-container) hover:bg-(--md-sys-color-surface-container-high) transition-colors text-sm font-medium"
+										style={{ color: colors.primary }}
+									>
+										Show more
+									</button>
+								) : filmographyItems.length > 0 ? (
+									<p className="text-center text-sm text-(--md-sys-color-on-surface-variant)">
+										Showing all {filmographyItems.length} titles
+									</p>
+								) : status === "success" ? (
+									<p className="text-center text-sm text-(--md-sys-color-on-surface-variant)">
+										No filmography available
+									</p>
+								) : null}
 							</div>
 						</section>
 					</div>
 				</div>
 			</div>
+
+			{/* Date Picker Modal */}
+			{datePickerModal && user && (
+				<DatePickerModal
+					open={!!datePickerModal}
+					onClose={() => setDatePickerModal(null)}
+					mode={datePickerModal.mediaType === "movie" ? "movie" : "show"}
+					movieId={
+						datePickerModal.mediaType === "movie"
+							? datePickerModal.mediaId
+							: undefined
+					}
+					showId={
+						datePickerModal.mediaType === "show"
+							? datePickerModal.mediaId
+							: undefined
+					}
+					userDid={user.did}
+					modalTitle={`Mark "${datePickerModal.title}" as watched`}
+					onSelect={handleMarkWithDate}
+				/>
+			)}
 
 			{isPersonLoading && (
 				<div
@@ -255,108 +591,5 @@ function PersonDetailPage() {
 				</div>
 			)}
 		</div>
-	);
-}
-
-interface FilmographyItemProps {
-	item: PersonFilmographyItemDto;
-	colors: { primary: string };
-}
-
-function FilmographyItem({ item, colors }: FilmographyItemProps) {
-	const year = item.release_date
-		? new Date(item.release_date).getFullYear()
-		: item.first_air_date
-			? new Date(item.first_air_date).getFullYear()
-			: null;
-
-	const posterUrl = getTmdbPosterUrl(item.poster_path, "w92");
-
-	const role = item.character || item.job || "";
-	const department = item.department || "";
-
-	// Determine the route based on media type
-	const routeTo =
-		item.media_type === "movie"
-			? {
-					to: "/movies/$movieId/$title",
-					params: {
-						movieId: String(item.id),
-						title: item.title.toLowerCase().replace(/\s+/g, "-"),
-					},
-				}
-			: {
-					to: "/shows/$showId/$title",
-					params: {
-						showId: String(item.id),
-						title: item.title.toLowerCase().replace(/\s+/g, "-"),
-					},
-				};
-
-	return (
-		<Link
-			to={routeTo.to}
-			params={routeTo.params}
-			className="flex gap-4 p-3 rounded-lg transition-colors hover:bg-(--md-sys-color-surface-container) group"
-		>
-			{/* Poster */}
-			<div className="shrink-0 w-16 aspect-2/3 rounded-md overflow-hidden bg-(--md-sys-color-surface-container-high)">
-				{posterUrl ? (
-					<img
-						src={posterUrl}
-						alt={item.title}
-						className="w-full h-full object-cover"
-						loading="lazy"
-					/>
-				) : (
-					<div className="w-full h-full flex items-center justify-center">
-						{item.media_type === "movie" ? (
-							<Film className="w-6 h-6 text-(--md-sys-color-on-surface-variant)" />
-						) : (
-							<Tv className="w-6 h-6 text-(--md-sys-color-on-surface-variant)" />
-						)}
-					</div>
-				)}
-			</div>
-
-			{/* Info */}
-			<div className="flex-1 min-w-0">
-				<div className="flex items-start justify-between gap-2">
-					<div className="flex-1 min-w-0">
-						<h3 className="font-medium line-clamp-1 group-hover:text-(--md-sys-color-primary) transition-colors">
-							{item.title}
-						</h3>
-						<p className="text-sm text-(--md-sys-color-on-surface-variant) line-clamp-1">
-							{role && <span>{role}</span>}
-							{role && department && (
-								<span className="text-(--md-sys-color-outline)"> • </span>
-							)}
-							{department && <span>{department}</span>}
-						</p>
-					</div>
-					<div className="flex items-center gap-2 shrink-0">
-						{/* Media Type Badge */}
-						<span
-							className="text-xs px-2 py-1 rounded-full"
-							style={{
-								backgroundColor: "var(--md-sys-color-surface-container-high)",
-								color: "var(--md-sys-color-on-surface-variant)",
-							}}
-						>
-							{item.media_type === "movie" ? "Movie" : "TV"}
-						</span>
-						{/* Year */}
-						{year && (
-							<span
-								className="text-sm font-medium"
-								style={{ color: colors.primary }}
-							>
-								{year}
-							</span>
-						)}
-					</div>
-				</div>
-			</div>
-		</Link>
 	);
 }

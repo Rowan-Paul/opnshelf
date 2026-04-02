@@ -13,6 +13,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import React from "react";
 import { Toaster } from "sonner";
+import { ErrorPage } from "@/components/ErrorPage";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { TraktImportStatusToast } from "@/components/TraktImportStatusToast";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -64,6 +65,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 	component: RootComponent,
 	notFoundComponent: NotFoundPage,
+	errorComponent: ErrorPage,
 	shellComponent: RootDocument,
 });
 

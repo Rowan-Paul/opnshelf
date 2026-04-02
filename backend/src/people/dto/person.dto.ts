@@ -77,3 +77,32 @@ export class TmdbPersonDetailDto {
 	@ApiProperty({ type: [PersonFilmographyItemDto] })
 	filmography: PersonFilmographyItemDto[];
 }
+
+export class PersonFilmographyResponseDto {
+	@ApiProperty({ type: [PersonFilmographyItemDto] })
+	items: PersonFilmographyItemDto[];
+
+	@ApiProperty()
+	total: number;
+
+	@ApiProperty()
+	page: number;
+
+	@ApiProperty()
+	pageSize: number;
+
+	@ApiProperty()
+	totalPages: number;
+}
+
+export class PersonFilmographyQueryDto {
+	@ApiPropertyOptional({ description: "Page number (1-based)", default: 1 })
+	@IsOptional()
+	@IsNumber()
+	page?: number = 1;
+
+	@ApiPropertyOptional({ description: "Items per page", default: 20 })
+	@IsOptional()
+	@IsNumber()
+	pageSize?: number = 20;
+}
