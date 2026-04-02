@@ -626,12 +626,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	listContent: {
-		paddingHorizontal: H_PADDING - ITEM_MARGIN,
 		paddingBottom: spacing.xxl,
-	},
-	columnWrapper: {
-		gap: GAP,
-		justifyContent: "space-between",
 	},
 	content: {
 		paddingHorizontal: spacing.md,
