@@ -399,7 +399,7 @@ function ShowEpisodePage() {
 
 			<div className="container mx-auto px-4 py-6 max-w-7xl">
 				<div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 min-w-0">
-					<div className="space-y-4 min-w-0 max-w-[300px]">
+					<div className="w-full space-y-4 min-w-0 md:max-w-[300px]">
 						<DetailActions
 							mediaType="episode"
 							mediaId={scopedEpisodeMediaId}
