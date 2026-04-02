@@ -29,6 +29,7 @@ import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle
 import { Route as ProfileHandleFollowingRouteImport } from './routes/profile.$handle.following'
 import { Route as ProfileHandleFollowersRouteImport } from './routes/profile.$handle.followers'
 import { Route as ProfileHandleCalendarRouteImport } from './routes/profile.$handle.calendar'
+import { Route as PersonPersonIdNameRouteImport } from './routes/person.$personId.$name'
 import { Route as MoviesMovieIdTitleRouteImport } from './routes/movies.$movieId.$title'
 import { Route as ProfileHandleListSlugRouteImport } from './routes/profile.$handle.list.$slug'
 import { Route as ShowsShowIdTitleSeasonsSeasonNumberRouteImport } from './routes/shows.$showId.$title.seasons.$seasonNumber'
@@ -134,6 +135,11 @@ const ProfileHandleCalendarRoute = ProfileHandleCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
+const PersonPersonIdNameRoute = PersonPersonIdNameRouteImport.update({
+  id: '/person/$personId/$name',
+  path: '/person/$personId/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoviesMovieIdTitleRoute = MoviesMovieIdTitleRouteImport.update({
   id: '/movies/$movieId/$title',
   path: '/movies/$movieId/$title',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/person/$personId/$name': typeof PersonPersonIdNameRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
   '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
   '/profile/$handle/following': typeof ProfileHandleFollowingRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/profile': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/person/$personId/$name': typeof PersonPersonIdNameRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
   '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
   '/profile/$handle/following': typeof ProfileHandleFollowingRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/profile/': typeof ProfileIndexRoute
   '/movies/$movieId/$title': typeof MoviesMovieIdTitleRoute
+  '/person/$personId/$name': typeof PersonPersonIdNameRoute
   '/profile/$handle/calendar': typeof ProfileHandleCalendarRoute
   '/profile/$handle/followers': typeof ProfileHandleFollowersRoute
   '/profile/$handle/following': typeof ProfileHandleFollowingRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/profile/$handle'
     | '/profile/'
     | '/movies/$movieId/$title'
+    | '/person/$personId/$name'
     | '/profile/$handle/calendar'
     | '/profile/$handle/followers'
     | '/profile/$handle/following'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/profile/$handle'
     | '/profile'
     | '/movies/$movieId/$title'
+    | '/person/$personId/$name'
     | '/profile/$handle/calendar'
     | '/profile/$handle/followers'
     | '/profile/$handle/following'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/profile/$handle'
     | '/profile/'
     | '/movies/$movieId/$title'
+    | '/person/$personId/$name'
     | '/profile/$handle/calendar'
     | '/profile/$handle/followers'
     | '/profile/$handle/following'
@@ -326,6 +338,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   MoviesMovieIdTitleRoute: typeof MoviesMovieIdTitleRoute
+  PersonPersonIdNameRoute: typeof PersonPersonIdNameRoute
   ShowsShowIdTitleRoute: typeof ShowsShowIdTitleRouteWithChildren
 }
 
@@ -471,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleCalendarRouteImport
       parentRoute: typeof ProfileHandleRoute
     }
+    '/person/$personId/$name': {
+      id: '/person/$personId/$name'
+      path: '/person/$personId/$name'
+      fullPath: '/person/$personId/$name'
+      preLoaderRoute: typeof PersonPersonIdNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/movies/$movieId/$title': {
       id: '/movies/$movieId/$title'
       path: '/movies/$movieId/$title'
@@ -581,6 +601,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   MoviesMovieIdTitleRoute: MoviesMovieIdTitleRoute,
+  PersonPersonIdNameRoute: PersonPersonIdNameRoute,
   ShowsShowIdTitleRoute: ShowsShowIdTitleRouteWithChildren,
 }
 export const routeTree = rootRouteImport

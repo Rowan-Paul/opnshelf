@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -17,12 +18,32 @@ type CastSectionProps = {
 	cast?: CastMember[];
 };
 
+function getPersonSlug(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-|-$/g, "");
+}
+
 export function CastSection({ titleColor, cast }: CastSectionProps) {
 	const { colors } = useTheme();
+	const router = useRouter();
 
 	if (!cast?.length) {
 		return null;
 	}
+
+	const handlePress = (person: CastMember) => {
+		const personSlug = getPersonSlug(person.name);
+		router.push({
+			pathname: "/person/[id]",
+			params: {
+				id: String(person.id),
+				name: person.name,
+			},
+		});
+	};
 
 	return (
 		<View style={styles.section}>
@@ -36,7 +57,12 @@ export function CastSection({ titleColor, cast }: CastSectionProps) {
 					{cast.map((person) => {
 						const profileUrl = getTmdbProfileUrl(person.profile_path);
 						return (
-							<TouchableOpacity key={person.id} style={styles.castCard} activeOpacity={0.8}>
+							<TouchableOpacity
+								key={person.id}
+								style={styles.castCard}
+								activeOpacity={0.8}
+								onPress={() => handlePress(person)}
+							>
 								<View style={styles.castImageContainer}>
 									{profileUrl ? (
 										<Image source={{ uri: profileUrl }} style={styles.castImage} contentFit="cover" />

@@ -4,6 +4,7 @@ import { AuthModule } from "./auth/auth.module";
 import { IngesterModule } from "./ingester/ingester.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
+import { PeopleModule } from "./people/people.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SearchModule } from "./search/search.module";
 import { SocialModule } from "./social/social.module";
@@ -24,6 +25,7 @@ import { UsersModule } from "./users/users.module";
 		ShelfModule,
 		SearchModule,
 		SocialModule,
+		PeopleModule,
 	],
 })
 export class AppModule {}

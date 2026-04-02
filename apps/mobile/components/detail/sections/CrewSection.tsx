@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { borderRadius, spacing } from "@/constants/spacing";
 import { useTheme } from "@/contexts/theme";
@@ -14,12 +15,31 @@ type CrewSectionProps = {
 	crew?: CrewMember[];
 };
 
+function getPersonSlug(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-|-$/g, "");
+}
+
 export function CrewSection({ titleColor, crew }: CrewSectionProps) {
 	const { colors } = useTheme();
+	const router = useRouter();
 
 	if (!crew?.length) {
 		return null;
 	}
+
+	const handlePress = (person: CrewMember) => {
+		router.push({
+			pathname: "/person/[id]",
+			params: {
+				id: String(person.id),
+				name: person.name,
+			},
+		});
+	};
 
 	return (
 		<View style={styles.section}>
@@ -33,6 +53,7 @@ export function CrewSection({ titleColor, crew }: CrewSectionProps) {
 							{ backgroundColor: colors.surfaceContainer },
 						]}
 						activeOpacity={0.8}
+						onPress={() => handlePress(person)}
 					>
 						<Text style={[styles.crewName, { color: colors.onSurface }]} numberOfLines={1}>
 							{person.name}

@@ -1,4 +1,5 @@
 import type { TmdbCastDto } from "@opnshelf/api";
+import { Link } from "@tanstack/react-router";
 import { getTmdbProfileUrl } from "@/lib/utils";
 
 interface CastSectionProps {
@@ -8,6 +9,14 @@ interface CastSectionProps {
 		primary?: string;
 		muted?: string;
 	};
+}
+
+function getPersonSlug(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-|-$/g, "");
 }
 
 export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
@@ -30,9 +39,15 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 						<div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent w-full pr-8">
 							{cast.map((person) => {
 								const profileUrl = getTmdbProfileUrl(person.profile_path);
+								const personSlug = getPersonSlug(person.name);
 								return (
-									<div
+									<Link
 										key={`cast-${person.id}`}
+										to="/person/$personId/$name"
+										params={{
+											personId: String(person.id),
+											name: personSlug,
+										}}
 										className="shrink-0 w-32 group cursor-pointer"
 									>
 										<div
@@ -66,7 +81,7 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 										</div>
 										<div className="space-y-0.5">
 											<p
-												className="text-sm font-medium line-clamp-2 transition-colors duration-200"
+												className="text-sm font-medium line-clamp-2 transition-colors duration-200 group-hover:text-(--md-sys-color-primary)"
 												style={{
 													color: "var(--md-sys-color-on-surface)",
 												}}
@@ -82,7 +97,7 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 												</p>
 											)}
 										</div>
-									</div>
+									</Link>
 								);
 							})}
 						</div>
@@ -109,9 +124,15 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 						<div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent w-full pr-8">
 							{guestStars.map((person) => {
 								const profileUrl = getTmdbProfileUrl(person.profile_path);
+								const personSlug = getPersonSlug(person.name);
 								return (
-									<div
+									<Link
 										key={`guest-${person.id}`}
+										to="/person/$personId/$name"
+										params={{
+											personId: String(person.id),
+											name: personSlug,
+										}}
 										className="shrink-0 w-32 group cursor-pointer"
 									>
 										<div
@@ -145,7 +166,7 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 										</div>
 										<div className="space-y-0.5">
 											<p
-												className="text-sm font-medium line-clamp-2 transition-colors duration-200"
+												className="text-sm font-medium line-clamp-2 transition-colors duration-200 group-hover:text-(--md-sys-color-primary)"
 												style={{
 													color: "var(--md-sys-color-on-surface)",
 												}}
@@ -161,7 +182,7 @@ export function CastSection({ cast, guestStars, colors }: CastSectionProps) {
 												</p>
 											)}
 										</div>
-									</div>
+									</Link>
 								);
 							})}
 						</div>
