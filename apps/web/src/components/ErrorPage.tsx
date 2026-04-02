@@ -26,7 +26,7 @@ export function ErrorPage({ error, reset }: ErrorComponentProps) {
 			return error;
 		}
 		if (error && typeof error === "object" && "message" in error) {
-			return String(error.message);
+			return String((error as { message: unknown }).message);
 		}
 		return "An unexpected error occurred";
 	}, [error]);
@@ -93,7 +93,7 @@ export function ErrorPage({ error, reset }: ErrorComponentProps) {
 								</a>
 							</M3Button>
 
-							<M3Button variant="tonal" size="lg" onClick={reset}>
+							<M3Button variant="filled-tonal" size="lg" onClick={reset}>
 								<RefreshCw className="size-5" />
 								Try again
 							</M3Button>

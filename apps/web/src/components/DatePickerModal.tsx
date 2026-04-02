@@ -22,6 +22,7 @@ type DatePickerModalProps = {
 	onClose: () => void;
 	userDid: string | undefined;
 	modalTitle?: string;
+	onSelect?: (date: Date) => void;
 } & (
 	| {
 			mode?: "movie";
@@ -49,6 +50,7 @@ export function DatePickerModal({
 	onClose,
 	userDid,
 	modalTitle,
+	onSelect,
 	...target
 }: DatePickerModalProps) {
 	const queryClient = useQueryClient();
@@ -193,6 +195,9 @@ export function DatePickerModal({
 		} else {
 			return;
 		}
+
+		// Call onSelect callback if provided
+		onSelect?.(dateTime);
 
 		if (isEpisodeMode) {
 			markEpisodeMutation.mutate({

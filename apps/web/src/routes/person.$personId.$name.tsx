@@ -316,7 +316,7 @@ function PersonDetailPage() {
 		} else {
 			// Open date picker for marking
 			setDatePickerModal({
-				mediaType: item.media_type,
+				mediaType: item.media_type as "movie" | "show",
 				mediaId,
 				title: item.title,
 				isWatched: false,
@@ -560,17 +560,9 @@ function PersonDetailPage() {
 				<DatePickerModal
 					open={!!datePickerModal}
 					onClose={() => setDatePickerModal(null)}
-					mode={datePickerModal.mediaType === "movie" ? "movie" : "show"}
-					movieId={
-						datePickerModal.mediaType === "movie"
-							? datePickerModal.mediaId
-							: undefined
-					}
-					showId={
-						datePickerModal.mediaType === "show"
-							? datePickerModal.mediaId
-							: undefined
-					}
+					{...(datePickerModal.mediaType === "movie"
+						? { mode: "movie" as const, movieId: datePickerModal.mediaId }
+						: { mode: "show" as const, showId: datePickerModal.mediaId })}
 					userDid={user.did}
 					modalTitle={`Mark "${datePickerModal.title}" as watched`}
 					onSelect={handleMarkWithDate}

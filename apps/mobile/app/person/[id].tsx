@@ -76,13 +76,13 @@ function formatLifespan(birthday?: string, deathday?: string): string | null {
 function toMovieItem(item: PersonFilmographyItemDto): {
 	id: number;
 	title: string;
-	poster_path?: string | null;
+	poster_path?: string;
 	release_date?: string;
 } {
 	return {
 		id: item.id,
 		title: item.title,
-		poster_path: item.poster_path,
+		poster_path: item.poster_path ?? undefined,
 		release_date: item.release_date,
 	};
 }
@@ -380,7 +380,6 @@ export default function PersonDetailScreen() {
 				keyExtractor={keyExtractor}
 				numColumns={COLUMNS}
 				contentContainerStyle={styles.listContent}
-				columnWrapperStyle={styles.columnWrapper}
 				onScroll={onScroll}
 				scrollEventThrottle={16}
 				refreshControl={
@@ -600,7 +599,6 @@ export default function PersonDetailScreen() {
 						</View>
 					) : null
 				}
-				estimatedItemSize={200}
 			/>
 
 			<ScrollRevealHeader
@@ -612,12 +610,11 @@ export default function PersonDetailScreen() {
 			{/* Add to List Modal */}
 			{activeListModal && user && (
 				<AddToListModal
-					open={!!activeListModal}
-					onOpenChange={(open) => !open && setActiveListModal(null)}
+					visible={!!activeListModal}
+					onClose={() => setActiveListModal(null)}
 					mediaType={activeListModal.mediaType}
 					mediaId={activeListModal.mediaId}
 					mediaTitle={activeListModal.title}
-					user={user}
 				/>
 			)}
 		</SafeAreaView>
