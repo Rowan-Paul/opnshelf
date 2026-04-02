@@ -49,7 +49,12 @@ function LoginPage() {
 
 	useEffect(() => {
 		if (user && !isAuthLoading) {
-			navigate({ to: redirect || "/shelf" });
+			if (redirect) {
+				navigate({ to: redirect });
+				return;
+			}
+
+			navigate({ to: "/" });
 		}
 	}, [user, isAuthLoading, navigate, redirect]);
 

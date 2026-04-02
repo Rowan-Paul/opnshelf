@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AuthLoadingState } from "@/components/AuthLoadingState";
 import { UnauthenticatedState } from "@/components/UnauthenticatedState";
-import { getProfileRoute } from "@/lib/profile-routes";
 import { getSsrAuthHeaders } from "@/lib/ssr-auth-headers";
 
 export const Route = createFileRoute("/profile/")({
@@ -19,7 +18,7 @@ export const Route = createFileRoute("/profile/")({
 
 		if (user) {
 			throw redirect({
-				...getProfileRoute(user.handle, "shelf", { page: 1 }),
+				to: "/",
 			});
 		}
 	},
