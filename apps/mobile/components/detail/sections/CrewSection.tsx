@@ -41,29 +41,51 @@ export function CrewSection({ titleColor, crew }: CrewSectionProps) {
 		});
 	};
 
+	// Separate directors from other crew
+	const directors = crew.filter((person) => person.job === "Director");
+	const otherCrew = crew.filter((person) => person.job !== "Director");
+
+	const renderCrewCard = (person: CrewMember) => (
+		<TouchableOpacity
+			key={`${person.id}-${person.job || "crew"}`}
+			style={[styles.crewCard, { backgroundColor: colors.surfaceContainer }]}
+			activeOpacity={0.8}
+			onPress={() => handlePress(person)}
+		>
+			<Text style={[styles.crewName, { color: colors.onSurface }]} numberOfLines={1}>
+				{person.name}
+			</Text>
+			<Text style={[styles.crewJob, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+				{person.job || person.department || "Crew"}
+			</Text>
+		</TouchableOpacity>
+	);
+
 	return (
 		<View style={styles.section}>
 			<Text style={[styles.sectionTitle, { color: titleColor ?? colors.primary }]}>Crew</Text>
-			<View style={styles.crewGrid}>
-				{crew.map((person) => (
-					<TouchableOpacity
-						key={`${person.id}-${person.job || "crew"}`}
-						style={[
-							styles.crewCard,
-							{ backgroundColor: colors.surfaceContainer },
-						]}
-						activeOpacity={0.8}
-						onPress={() => handlePress(person)}
-					>
-						<Text style={[styles.crewName, { color: colors.onSurface }]} numberOfLines={1}>
-							{person.name}
+			{directors.length > 0 && (
+				<>
+					<Text style={[styles.subSectionTitle, { color: colors.onSurfaceVariant }]}>
+						Director{directors.length > 1 ? "s" : ""}
+					</Text>
+					<View style={styles.crewGrid}>
+						{directors.map(renderCrewCard)}
+					</View>
+				</>
+			)}
+			{otherCrew.length > 0 && (
+				<>
+					{directors.length > 0 && (
+						<Text style={[styles.subSectionTitle, { color: colors.onSurfaceVariant, marginTop: spacing.md }]}>
+							Other Crew
 						</Text>
-						<Text style={[styles.crewJob, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
-							{person.job || person.department || "Crew"}
-						</Text>
-					</TouchableOpacity>
-				))}
-			</View>
+					)}
+					<View style={styles.crewGrid}>
+						{otherCrew.map(renderCrewCard)}
+					</View>
+				</>
+			)}
 		</View>
 	);
 }
@@ -75,6 +97,11 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: "600",
+	},
+	subSectionTitle: {
+		fontSize: 14,
+		fontWeight: "500",
+		marginBottom: spacing.xs,
 	},
 	crewGrid: {
 		flexDirection: "row",

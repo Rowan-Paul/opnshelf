@@ -110,6 +110,9 @@ export function UpNextShowCollection({
 							<div className={`flex items-stretch gap-4 p-4 ${cardMinHeight}`}>
 								<div className="w-24 shrink-0 self-center">
 									<Skeleton className="aspect-2/3 w-full rounded-xl bg-(--md-sys-color-surface-container-highest)" />
+									<div className="mt-1.5 h-1 w-1/2 overflow-hidden rounded-full bg-(--md-sys-color-surface-container-highest)">
+										<div className="h-full w-full bg-(--md-sys-color-primary)/40" />
+									</div>
 								</div>
 								<div className="flex min-w-0 flex-1 flex-col justify-between">
 									<div>

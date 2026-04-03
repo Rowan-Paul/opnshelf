@@ -10,6 +10,7 @@ interface MediaPosterCardProps {
 	posterPath?: string | null;
 	title: string;
 	subtitle?: string;
+	metaText?: string; // Role information (e.g., "as Character • Director")
 	badge?: string;
 
 	to: string;
@@ -37,6 +38,7 @@ export function MediaPosterCard({
 	posterPath,
 	title,
 	subtitle,
+	metaText,
 	badge,
 	to,
 	params,
@@ -161,6 +163,14 @@ export function MediaPosterCard({
 						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
 					>
 						{subtitle}
+					</p>
+				)}
+				{metaText && (
+					<p
+						className="text-sm line-clamp-2"
+						style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+					>
+						{metaText}
 					</p>
 				)}
 			</Link>

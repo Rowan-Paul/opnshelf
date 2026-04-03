@@ -30,6 +30,7 @@ interface MovieItemProps {
 	isUnmarking?: boolean;
 	onToggle?: (movieId: string, isWatched: boolean) => void;
 	onPress: () => void;
+	metaText?: string;
 	width?: number;
 }
 
@@ -62,6 +63,7 @@ export function MovieItem({
 	isUnmarking = false,
 	onToggle,
 	onPress,
+	metaText,
 	width,
 }: MovieItemProps) {
 	const { colors } = useTheme();
@@ -175,13 +177,20 @@ export function MovieItem({
 				yearBadge: {
 					marginTop: spacing.xs,
 				},
-				movieYear: {
-					fontSize: 12,
-					color: colors.onSurfaceVariant,
-					fontWeight: "500",
-					letterSpacing: 0.5,
-				},
-			}),
+			movieYear: {
+				fontSize: 12,
+				color: colors.onSurfaceVariant,
+				fontWeight: "500",
+				letterSpacing: 0.5,
+			},
+			metaText: {
+				fontSize: 12,
+				color: colors.onSurfaceVariant,
+				fontWeight: "500",
+				letterSpacing: 0.5,
+				marginTop: spacing.xs,
+			},
+		}),
 		[
 			width,
 			colors.surfaceContainer,
@@ -238,7 +247,12 @@ export function MovieItem({
 				<Text style={styles.movieTitle} numberOfLines={2}>
 					{movie.title}
 				</Text>
-				{movie.release_date && (
+				{metaText ? (
+					<Text style={styles.metaText} numberOfLines={2}>
+						{metaText}
+					</Text>
+				) : null}
+				{!metaText && movie.release_date && (
 					<View style={styles.yearBadge}>
 						<Text style={styles.movieYear}>
 							{movie.release_date.split("-")[0]}

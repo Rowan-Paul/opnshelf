@@ -26,7 +26,27 @@ import { DatePickerModal } from "@/components/DatePickerModal";
 import { DetailHero } from "@/components/detail";
 import { MediaPosterCard } from "@/components/MediaPosterCard";
 import { useTheme } from "@/components/theme-provider";
-import { createTitleSlug, getTmdbProfileUrl } from "@/lib/utils";
+import {
+	createTitleSlug,
+	getTmdbBackdropUrl,
+	getTmdbProfileUrl,
+} from "@/lib/utils";
+
+const BIO_TRUNCATE_LENGTH = 300;
+
+// Truncate biography text at word boundary
+function truncateBiography(text: string, maxLength: number): string {
+	if (text.length <= maxLength) return text;
+
+	// Find the last space before maxLength
+	const truncated = text.slice(0, maxLength);
+	const lastSpace = truncated.lastIndexOf(" ");
+
+	// If no space found, just truncate at maxLength
+	if (lastSpace === -1) return `${truncated}...`;
+
+	return `${truncated.slice(0, lastSpace)}...`;
+}
 
 export const Route = createFileRoute("/person/$personId/$name")({
 	loader: async ({ params, context }) => {
@@ -87,6 +107,32 @@ function formatDate(dateString?: string): string | null {
 	});
 }
 
+// Format roles array for display
+// Cast role first (with "as Character"), then crew jobs alphabetically
+function formatRoles(item: PersonFilmographyItemDto): string | undefined {
+	if (!item.roles || item.roles.length === 0) {
+		// Fallback to legacy fields
+		if (item.character) return `as ${item.character}`;
+		if (item.job) return item.job;
+		return undefined;
+	}
+
+	const roleStrings = item.roles
+		.map((role) => {
+			if (role.type === "cast" && role.character) {
+				return `as ${role.character}`;
+			}
+			if (role.type === "crew" && role.job) {
+				return role.job;
+			}
+			return undefined;
+		})
+		.filter((r): r is string => !!r);
+
+	if (roleStrings.length === 0) return undefined;
+	return roleStrings.join(" • ");
+}
+
 function formatLifespan(birthday?: string, deathday?: string): string | null {
 	if (!birthday) return null;
 
@@ -105,6 +151,7 @@ function PersonDetailPage() {
 	const router = useRouter();
 	const { seedColor } = useTheme();
 	const queryClient = useQueryClient();
+	const [isBioExpanded, setIsBioExpanded] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -153,6 +200,14 @@ function PersonDetailPage() {
 	});
 
 	const person = personData as TmdbPersonDetailDto | undefined;
+
+	// Biography truncation logic
+	const biography = person?.biography || "";
+	const shouldTruncate = biography.length > BIO_TRUNCATE_LENGTH;
+	const displayedBiography = useMemo(() => {
+		if (!shouldTruncate || isBioExpanded) return biography;
+		return truncateBiography(biography, BIO_TRUNCATE_LENGTH);
+	}, [biography, shouldTruncate, isBioExpanded]);
 
 	const colors = {
 		primary: seedColor,
@@ -218,6 +273,14 @@ function PersonDetailPage() {
 	const filmographyItems = useMemo(() => {
 		return filmographyData?.pages.flatMap((page) => page.items) ?? [];
 	}, [filmographyData]);
+
+	// Get backdrop from first filmography item with a backdrop
+	const backdropUrl = useMemo(() => {
+		const itemWithBackdrop = filmographyItems.find(
+			(item) => item.backdrop_path,
+		);
+		return getTmdbBackdropUrl(itemWithBackdrop?.backdrop_path);
+	}, [filmographyItems]);
 
 	const totalFilmographyCount = filmographyData?.pages[0]?.total ?? 0;
 
@@ -359,7 +422,7 @@ function PersonDetailPage() {
 			<DetailHero
 				title={person?.name || name.replace(/-/g, " ")}
 				subtitle={subtitle ?? undefined}
-				backdropUrl={null}
+				backdropUrl={backdropUrl}
 				posterUrl={profileUrl}
 				colors={colors}
 				isLoading={isPersonLoading}
@@ -439,8 +502,18 @@ function PersonDetailPage() {
 								>
 									Biography
 								</h2>
-								<p className="text-(--md-sys-color-on-surface-variant) leading-relaxed whitespace-pre-line">
-									{person.biography}
+								<p className="text-(--md-sys-color-on-surface-variant) leading-relaxed whitespace-pre-line inline">
+									{displayedBiography}
+									{shouldTruncate && (
+										<button
+											type="button"
+											onClick={() => setIsBioExpanded(!isBioExpanded)}
+											className="text-sm font-medium hover:underline ml-1"
+											style={{ color: colors.primary }}
+										>
+											{isBioExpanded ? "Show less" : "Show more"}
+										</button>
+									)}
 								</p>
 							</section>
 						)}
@@ -481,12 +554,15 @@ function PersonDetailPage() {
 											(unmarkShowMutation.isPending &&
 												unmarkShowMutation.variables?.path?.showId === id);
 
+									const metaText = formatRoles(item);
+
 									return (
 										<MediaPosterCard
 											key={`${item.media_type}-${item.id}`}
 											posterPath={item.poster_path}
 											title={item.title}
 											subtitle={year}
+											metaText={metaText}
 											to={
 												isMovie
 													? "/movies/$movieId/$title"

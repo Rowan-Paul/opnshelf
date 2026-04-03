@@ -1069,18 +1069,66 @@ export type UnifiedDiscoverResponseDto = {
     page: number;
 };
 
+export type PersonFilmographyRoleDto = {
+    /**
+     * Type of role (cast or crew)
+     */
+    type: string;
+    /**
+     * Character name for cast roles
+     */
+    character?: string;
+    /**
+     * Job title for crew roles
+     */
+    job?: string;
+    /**
+     * Department for crew roles
+     */
+    department?: string;
+    /**
+     * Billing order for cast roles (lower is higher billing)
+     */
+    order?: number;
+};
+
 export type PersonFilmographyItemDto = {
     id: number;
     media_type: string;
     title: string;
     poster_path?: string;
+    backdrop_path?: string;
     release_date?: string;
     first_air_date?: string;
+    /**
+     * Legacy field: character name (use roles array for merged items)
+     *
+     * @deprecated
+     */
     character?: string;
+    /**
+     * Legacy field: job title (use roles array for merged items)
+     *
+     * @deprecated
+     */
     job?: string;
+    /**
+     * Legacy field: department (use roles array for merged items)
+     *
+     * @deprecated
+     */
     department?: string;
+    /**
+     * Legacy field: billing order (use roles array for merged items)
+     *
+     * @deprecated
+     */
     order?: number;
     vote_average?: number;
+    /**
+     * Array of roles when person has multiple credits for the same title (e.g., actor + director)
+     */
+    roles?: Array<PersonFilmographyRoleDto>;
 };
 
 export type TmdbPersonDetailDto = {

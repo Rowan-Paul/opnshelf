@@ -46,12 +46,14 @@ import { useScrollRevealHeader } from "@/hooks/useScrollRevealHeader";
 import { invalidateUserShelfQueries } from "@/lib/invalidate-shelf";
 
 const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w92";
+const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w780";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const GAP = spacing.md;
 const H_PADDING = spacing.lg;
 const COLUMNS = 2;
 const ITEM_MARGIN = GAP / 2;
 const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING * 2) / COLUMNS - ITEM_MARGIN * 2;
+const BIO_TRUNCATE_LENGTH = 300;
 
 function formatDate(dateString?: string): string | null {
 	if (!dateString) return null;
@@ -70,6 +72,46 @@ function formatLifespan(birthday?: string, deathday?: string): string | null {
 		return `${birthYear} - ${deathYear}`;
 	}
 	return `${birthYear} - Present`;
+}
+
+// Truncate biography text at word boundary
+function truncateBiography(text: string, maxLength: number): string {
+	if (text.length <= maxLength) return text;
+
+	// Find the last space before maxLength
+	const truncated = text.slice(0, maxLength);
+	const lastSpace = truncated.lastIndexOf(" ");
+
+	// If no space found, just truncate at maxLength
+	if (lastSpace === -1) return `${truncated}...`;
+
+	return `${truncated.slice(0, lastSpace)}...`;
+}
+
+// Format roles array for display
+// Cast role first (with "as Character"), then crew jobs alphabetically
+function formatRoles(item: PersonFilmographyItemDto): string | undefined {
+	if (!item.roles || item.roles.length === 0) {
+		// Fallback to legacy fields
+		if (item.character) return `as ${item.character}`;
+		if (item.job) return item.job;
+		return undefined;
+	}
+
+	const roleStrings = item.roles
+		.map((role) => {
+			if (role.type === "cast" && role.character) {
+				return `as ${role.character}`;
+			}
+			if (role.type === "crew" && role.job) {
+				return role.job;
+			}
+			return undefined;
+		})
+		.filter((r): r is string => !!r);
+
+	if (roleStrings.length === 0) return undefined;
+	return roleStrings.join(" • ");
 }
 
 // Convert filmography item to MovieItem format
@@ -103,6 +145,7 @@ export default function PersonDetailScreen() {
 	const { colors } = useTheme();
 	const { showCompactHeader, onScroll } = useScrollRevealHeader();
 	const queryClient = useQueryClient();
+	const [isBioExpanded, setIsBioExpanded] = useState(false);
 
 	const { data: user } = useQuery({
 		...authControllerMeOptions(),
@@ -156,6 +199,14 @@ export default function PersonDetailScreen() {
 		? `${POSTER_BASE_URL}${person.profile_path}`
 		: null;
 
+	// Biography truncation logic
+	const biography = person?.biography || "";
+	const shouldTruncate = biography.length > BIO_TRUNCATE_LENGTH;
+	const displayedBiography = useMemo(() => {
+		if (!shouldTruncate || isBioExpanded) return biography;
+		return truncateBiography(biography, BIO_TRUNCATE_LENGTH);
+	}, [biography, shouldTruncate, isBioExpanded]);
+
 	const subtitle = useMemo(() => {
 		const lifespan = formatLifespan(person?.birthday, person?.deathday);
 		if (person?.known_for_department && lifespan) {
@@ -178,6 +229,16 @@ export default function PersonDetailScreen() {
 	const filmographyItems = useMemo(() => {
 		return filmographyData?.pages.flatMap((page) => page.items) ?? [];
 	}, [filmographyData]);
+
+	// Get backdrop from first filmography item with a backdrop
+	const backdropUrl = useMemo(() => {
+		const itemWithBackdrop = filmographyItems.find(
+			(item) => item.backdrop_path,
+		);
+		return itemWithBackdrop?.backdrop_path
+			? `${BACKDROP_BASE_URL}${itemWithBackdrop.backdrop_path}`
+			: null;
+	}, [filmographyItems]);
 
 	const totalFilmographyCount = filmographyData?.pages[0]?.total ?? 0;
 
@@ -337,7 +398,7 @@ export default function PersonDetailScreen() {
 			: unmarkShowMutation.isPending &&
 				unmarkShowMutation.variables?.path?.showId === mediaId;
 
-		const metaText = item.character || item.job || undefined;
+		const metaText = formatRoles(item);
 
 		if (isMovie) {
 			return (
@@ -348,6 +409,7 @@ export default function PersonDetailScreen() {
 					isUnmarking={user ? isUnmarking : undefined}
 					onToggle={user ? () => handleToggleWatched(item) : undefined}
 					onPress={() => handleNavigateToMedia(item)}
+					metaText={metaText}
 					width={ITEM_WIDTH}
 				/>
 			);
@@ -396,7 +458,7 @@ export default function PersonDetailScreen() {
 						<DetailHero
 							title={person?.name || "Person"}
 							subtitle={subtitle}
-							backdropUrl={null}
+							backdropUrl={backdropUrl}
 							posterUrl={profileUrl}
 							colors={{
 								primary: colors.primary,
@@ -538,14 +600,28 @@ export default function PersonDetailScreen() {
 									>
 										Biography
 									</Text>
-									<Text
-										style={[
-											styles.biography,
-											{ color: colors.onSurfaceVariant },
-										]}
-									>
-										{person.biography}
-									</Text>
+									<View style={styles.biographyRow}>
+										<Text
+											style={[
+												styles.biography,
+												{ color: colors.onSurfaceVariant },
+											]}
+										>
+											{displayedBiography}
+											{shouldTruncate && (
+												<Text
+													onPress={() => setIsBioExpanded(!isBioExpanded)}
+													style={[
+														styles.bioToggleTextInline,
+														{ color: colors.primary },
+													]}
+												>
+													{" "}
+													{isBioExpanded ? "Show less" : "Show more"}
+												</Text>
+											)}
+										</Text>
+									</View>
 								</View>
 							)}
 
@@ -674,6 +750,17 @@ const styles = StyleSheet.create({
 	biography: {
 		fontSize: 15,
 		lineHeight: 22,
+		flex: 1,
+	},
+	biographyRow: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		alignItems: "flex-start",
+	},
+	bioToggleTextInline: {
+		fontSize: 15,
+		lineHeight: 22,
+		fontWeight: "500",
 	},
 	loadMoreContainer: {
 		padding: spacing.md,

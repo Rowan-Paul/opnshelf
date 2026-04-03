@@ -18,6 +18,7 @@ export interface TMDBMovieCredit {
 	id: number;
 	title: string;
 	poster_path?: string;
+	backdrop_path?: string;
 	release_date?: string;
 	vote_average?: number;
 	character?: string;
@@ -30,6 +31,7 @@ export interface TMDBTvCredit {
 	id: number;
 	name: string;
 	poster_path?: string;
+	backdrop_path?: string;
 	first_air_date?: string;
 	vote_average?: number;
 	character?: string;
@@ -106,68 +108,133 @@ export class PeopleTmdbService {
 			this.getPersonTvCredits(personId),
 		]);
 
-		// Transform movie credits
-		const movieItems: PersonFilmographyItemDto[] = [
-			...movieCredits.cast.map(
-				(credit): PersonFilmographyItemDto => ({
-					id: credit.id,
-					media_type: "movie",
-					title: credit.title,
-					poster_path: credit.poster_path,
-					release_date: credit.release_date,
-					character: credit.character,
-					department: "Acting",
-					order: credit.order,
-					vote_average: credit.vote_average,
-				}),
-			),
-			...movieCredits.crew.map(
-				(credit): PersonFilmographyItemDto => ({
-					id: credit.id,
-					media_type: "movie",
-					title: credit.title,
-					poster_path: credit.poster_path,
-					release_date: credit.release_date,
-					job: credit.job,
-					department: credit.department,
-					vote_average: credit.vote_average,
-				}),
-			),
-		];
+		// Use a Map to deduplicate and merge cast/crew credits
+		const itemsMap = new Map<string, PersonFilmographyItemDto>();
 
-		// Transform TV credits
-		const tvItems: PersonFilmographyItemDto[] = [
-			...tvCredits.cast.map(
-				(credit): PersonFilmographyItemDto => ({
-					id: credit.id,
-					media_type: "tv",
-					title: credit.name,
-					poster_path: credit.poster_path,
-					first_air_date: credit.first_air_date,
-					character: credit.character,
-					department: "Acting",
-					order: credit.order,
-					vote_average: credit.vote_average,
-				}),
-			),
-			...tvCredits.crew.map(
-				(credit): PersonFilmographyItemDto => ({
-					id: credit.id,
-					media_type: "tv",
-					title: credit.name,
-					poster_path: credit.poster_path,
-					first_air_date: credit.first_air_date,
-					job: credit.job,
-					department: credit.department,
-					vote_average: credit.vote_average,
-				}),
-			),
-		];
+		// Helper to get or create item
+		const getOrCreateItem = (
+			key: string,
+			baseItem: Omit<PersonFilmographyItemDto, "roles">,
+		): PersonFilmographyItemDto => {
+			if (!itemsMap.has(key)) {
+				itemsMap.set(key, { ...baseItem, roles: [] });
+			}
+			return itemsMap.get(key)!;
+		};
 
-		// Combine all items
-		const allItems = [...movieItems, ...tvItems];
+		// Process movie cast credits
+		for (const credit of movieCredits.cast) {
+			const key = `movie-${credit.id}`;
+			const item = getOrCreateItem(key, {
+				id: credit.id,
+				media_type: "movie",
+				title: credit.title,
+				poster_path: credit.poster_path,
+				backdrop_path: credit.backdrop_path,
+				release_date: credit.release_date,
+				vote_average: credit.vote_average,
+			});
+			item.roles?.push({
+				type: "cast",
+				character: credit.character,
+				order: credit.order,
+			});
+		}
 
-		// Sort by release date (newest first), with unknown dates at the end
+		// Process movie crew credits
+		for (const credit of movieCredits.crew) {
+			const key = `movie-${credit.id}`;
+			const item = getOrCreateItem(key, {
+				id: credit.id,
+				media_type: "movie",
+				title: credit.title,
+				poster_path: credit.poster_path,
+				backdrop_path: credit.backdrop_path,
+				release_date: credit.release_date,
+				vote_average: credit.vote_average,
+			});
+			item.roles?.push({
+				type: "crew",
+				job: credit.job,
+				department: credit.department,
+			});
+		}
+
+		// Process TV cast credits
+		for (const credit of tvCredits.cast) {
+			const key = `tv-${credit.id}`;
+			const item = getOrCreateItem(key, {
+				id: credit.id,
+				media_type: "tv",
+				title: credit.name,
+				poster_path: credit.poster_path,
+				backdrop_path: credit.backdrop_path,
+				first_air_date: credit.first_air_date,
+				vote_average: credit.vote_average,
+			});
+			item.roles?.push({
+				type: "cast",
+				character: credit.character,
+				order: credit.order,
+			});
+		}
+
+		// Process TV crew credits
+		for (const credit of tvCredits.crew) {
+			const key = `tv-${credit.id}`;
+			const item = getOrCreateItem(key, {
+				id: credit.id,
+				media_type: "tv",
+				title: credit.name,
+				poster_path: credit.poster_path,
+				backdrop_path: credit.backdrop_path,
+				first_air_date: credit.first_air_date,
+				vote_average: credit.vote_average,
+			});
+			item.roles?.push({
+				type: "crew",
+				job: credit.job,
+				department: credit.department,
+			});
+		}
+
+		// Convert map to array and sort roles for each item
+		const allItems = Array.from(itemsMap.values());
+
+		for (const item of allItems) {
+			if (item.roles && item.roles.length > 0) {
+				// Sort roles: cast first (by order), then crew (alphabetically by job)
+				item.roles.sort((a, b) => {
+					// Cast roles come first
+					if (a.type === "cast" && b.type !== "cast") return -1;
+					if (a.type !== "cast" && b.type === "cast") return 1;
+
+					// For cast roles, sort by order (lower order = higher billing)
+					if (a.type === "cast" && b.type === "cast") {
+						const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+						const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+						return orderA - orderB;
+					}
+
+					// For crew roles, sort alphabetically by job
+					const jobA = a.job ?? "";
+					const jobB = b.job ?? "";
+					return jobA.localeCompare(jobB);
+				});
+
+				// Set legacy fields from first role for backward compatibility
+				const firstRole = item.roles[0];
+				if (firstRole.type === "cast") {
+					item.character = firstRole.character;
+					item.order = firstRole.order;
+				} else {
+					item.job = firstRole.job;
+					item.department = firstRole.department;
+				}
+			}
+		}
+
+		// Sort items by release date (newest first), with unknown dates at the end
 		allItems.sort((a, b) => {
 			const dateA = a.release_date || a.first_air_date || "";
 			const dateB = b.release_date || b.first_air_date || "";

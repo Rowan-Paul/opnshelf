@@ -1,6 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 
+export class PersonFilmographyRoleDto {
+	@ApiProperty({ description: "Type of role (cast or crew)" })
+	type: "cast" | "crew";
+
+	@ApiPropertyOptional({ description: "Character name for cast roles" })
+	character?: string;
+
+	@ApiPropertyOptional({ description: "Job title for crew roles" })
+	job?: string;
+
+	@ApiPropertyOptional({ description: "Department for crew roles" })
+	department?: string;
+
+	@ApiPropertyOptional({
+		description: "Billing order for cast roles (lower is higher billing)",
+	})
+	order?: number;
+}
+
 export class PersonFilmographyItemDto {
 	@ApiProperty()
 	id: number;
@@ -15,25 +34,49 @@ export class PersonFilmographyItemDto {
 	poster_path?: string;
 
 	@ApiPropertyOptional()
+	backdrop_path?: string;
+
+	@ApiPropertyOptional()
 	release_date?: string;
 
 	@ApiPropertyOptional()
 	first_air_date?: string;
 
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({
+		description:
+			"Legacy field: character name (use roles array for merged items)",
+		deprecated: true,
+	})
 	character?: string;
 
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({
+		description: "Legacy field: job title (use roles array for merged items)",
+		deprecated: true,
+	})
 	job?: string;
 
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({
+		description: "Legacy field: department (use roles array for merged items)",
+		deprecated: true,
+	})
 	department?: string;
 
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({
+		description:
+			"Legacy field: billing order (use roles array for merged items)",
+		deprecated: true,
+	})
 	order?: number;
 
 	@ApiPropertyOptional()
 	vote_average?: number;
+
+	@ApiPropertyOptional({
+		type: [PersonFilmographyRoleDto],
+		description:
+			"Array of roles when person has multiple credits for the same title (e.g., actor + director)",
+	})
+	roles?: PersonFilmographyRoleDto[];
 }
 
 export class TmdbPersonDetailDto {
