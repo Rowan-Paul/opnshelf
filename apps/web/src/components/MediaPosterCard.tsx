@@ -103,10 +103,12 @@ export function MediaPosterCard({
 								}}
 								isLoading={isShelfPending}
 								className={cn(
-									"shadow-lg ring-1 ring-black/10",
+									"shadow-lg ring-1 ring-black/10 transition-transform duration-200 ease-out",
 									isOnShelf
 										? "bg-(--md-sys-color-tertiary) hover:bg-(--md-sys-color-error)"
 										: HOVER_REVEAL,
+									// When watched, start at list button position, slide left on hover
+									isOnShelf && "translate-x-10 group-hover:translate-x-0",
 								)}
 							>
 								{isOnShelf ? (

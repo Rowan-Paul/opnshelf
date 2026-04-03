@@ -22,7 +22,6 @@ import {
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Calendar, MapPin, Star } from "lucide-react";
 import { useMemo, useState } from "react";
-import { DatePickerModal } from "@/components/DatePickerModal";
 import { DetailHero } from "@/components/detail";
 import { MediaPosterCard } from "@/components/MediaPosterCard";
 import { useTheme } from "@/components/theme-provider";
@@ -346,14 +345,6 @@ function PersonDetailPage() {
 		},
 	});
 
-	// Modal states
-	const [datePickerModal, setDatePickerModal] = useState<{
-		mediaType: "movie" | "show";
-		mediaId: string;
-		title: string;
-		isWatched: boolean;
-	} | null>(null);
-
 	const handleToggleWatched = (item: PersonFilmographyItemDto) => {
 		if (!user) return;
 
@@ -377,38 +368,18 @@ function PersonDetailPage() {
 				});
 			}
 		} else {
-			// Open date picker for marking
-			setDatePickerModal({
-				mediaType: item.media_type as "movie" | "show",
-				mediaId,
-				title: item.title,
-				isWatched: false,
-			});
+			// Mark with current date
+			const now = new Date().toISOString();
+			if (isMovie) {
+				markMovieMutation.mutate({
+					body: { movieId: mediaId, watchedAt: now },
+				});
+			} else {
+				markShowMutation.mutate({
+					body: { showId: mediaId, watchedAt: now },
+				});
+			}
 		}
-	};
-
-	const handleMarkWithDate = (date: Date) => {
-		if (!datePickerModal || !user) return;
-
-		const { mediaType, mediaId } = datePickerModal;
-
-		if (mediaType === "movie") {
-			markMovieMutation.mutate({
-				body: {
-					movieId: mediaId,
-					watchedAt: date.toISOString(),
-				},
-			});
-		} else {
-			markShowMutation.mutate({
-				body: {
-					showId: mediaId,
-					watchedAt: date.toISOString(),
-				},
-			});
-		}
-
-		setDatePickerModal(null);
 	};
 
 	return (
@@ -630,20 +601,6 @@ function PersonDetailPage() {
 					</div>
 				</div>
 			</div>
-
-			{/* Date Picker Modal */}
-			{datePickerModal && user && (
-				<DatePickerModal
-					open={!!datePickerModal}
-					onClose={() => setDatePickerModal(null)}
-					{...(datePickerModal.mediaType === "movie"
-						? { mode: "movie" as const, movieId: datePickerModal.mediaId }
-						: { mode: "show" as const, showId: datePickerModal.mediaId })}
-					userDid={user.did}
-					modalTitle={`Mark "${datePickerModal.title}" as watched`}
-					onSelect={handleMarkWithDate}
-				/>
-			)}
 
 			{isPersonLoading && (
 				<div
