@@ -146,7 +146,7 @@ export function UpNextShowList({
 						<View
 							style={[
 								styles.progressTrack,
-								{ backgroundColor: colors.surfaceContainerHighest },
+								{ backgroundColor: `${colors.primary}33` },
 							]}
 						>
 							<View

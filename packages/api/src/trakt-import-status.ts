@@ -51,10 +51,7 @@ export function getTraktImportStatusMessage(
 		);
 	}
 	if (job.status === "running") {
-		const pageLabel = job.totalPages
-			? `Page ${job.currentPage} of ${job.totalPages}`
-			: `Page ${job.currentPage}`;
-		return `${pageLabel}. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
+		return `Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;
 	}
 	if (job.status === "completed") {
 		return `Finished. Imported ${job.importedCount}, skipped ${job.skippedCount}, failed ${job.failedCount}.`;

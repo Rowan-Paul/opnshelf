@@ -189,13 +189,7 @@ export function UpNextShowCollection({
 												)}
 											</div>
 											{item.totalEpisodes > 0 ? (
-												<div
-													className="mt-1.5 h-1 w-full overflow-hidden rounded-full"
-													style={{
-														backgroundColor:
-															"var(--md-sys-color-surface-container-highest)",
-													}}
-												>
+												<div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-(--md-sys-color-primary)/20">
 													<div
 														className="h-full rounded-full transition-all duration-300"
 														style={{
