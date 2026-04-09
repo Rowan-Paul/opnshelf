@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-	Bell,
 	Calendar,
 	Film,
 	List,
@@ -112,109 +111,99 @@ export default function Header() {
 						})}
 					</div>
 
-					{/* Right side actions */}
-					<div className="flex items-center gap-2">
-						{/* Search */}
-						<SearchCommand />
+				{/* Right side actions */}
+				<div className="flex items-center gap-2">
+					{/* Search */}
+					<SearchCommand />
 
-						{/* Notifications - only show when authenticated */}
-						{isAuthenticated && (
-							<button
-								type="button"
-								className="btn btn-ghost hidden h-9 w-9 p-0 sm:flex"
-								aria-label="Notifications"
-							>
-								<Bell className="h-4 w-4" />
-							</button>
-						)}
+					{/* Theme Toggle */}
+					<ThemeToggle />
 
-						{/* Theme toggle */}
-						<div className="hidden sm:block">
-							<ThemeToggle />
-						</div>
-
-						{/* User Menu or Login Button */}
-						{isLoading ? (
-							<div className="h-9 w-9 animate-pulse rounded-full bg-[var(--background-subtle)]" />
-						) : isAuthenticated && user ? (
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<button
-										type="button"
-										className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)]"
-										aria-label="User menu"
-									>
+					{/* User Menu or Login Button */}
+					{isLoading ? (
+						<div className="h-9 w-9 animate-pulse rounded-full bg-[var(--background-subtle)]" />
+					) : isAuthenticated && user ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button
+									type="button"
+									className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)] transition-colors sm:flex"
+									aria-label="User menu"
+								>
+									{user.avatar ? (
+										<img
+											src={user.avatar}
+											alt={user.displayName || user.handle}
+											className="h-full w-full object-cover"
+										/>
+									) : (
+										<User className="h-4 w-4 text-[var(--foreground-muted)]" />
+									)}
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56">
+								<div className="flex items-center gap-2 p-2">
+									<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
 										{user.avatar ? (
 											<img
 												src={user.avatar}
 												alt={user.displayName || user.handle}
-												className="h-full w-full object-cover"
+												className="h-full w-full rounded-full object-cover"
 											/>
 										) : (
-											<User className="h-4 w-4 text-[var(--foreground-muted)]" />
+											<User className="h-4 w-4 text-[var(--accent)]" />
 										)}
-									</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="w-56">
-									<div className="flex items-center gap-2 p-2">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
-											{user.avatar ? (
-												<img
-													src={user.avatar}
-													alt={user.displayName || user.handle}
-													className="h-full w-full rounded-full object-cover"
-												/>
-											) : (
-												<User className="h-4 w-4 text-[var(--accent)]" />
-											)}
-										</div>
-										<div className="flex flex-col">
-											<span className="text-sm font-medium">
-												{user.displayName || user.handle}
-											</span>
-											<span className="text-xs text-[var(--foreground-muted)]">
-												@{user.handle}
-											</span>
-										</div>
 									</div>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem asChild>
-										<Link to="/settings" className="cursor-pointer">
-											<User className="mr-2 h-4 w-4" />
-											Profile & Settings
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										onClick={logout}
-										className="cursor-pointer text-red-600 focus:text-red-600"
-									>
-										<LogOut className="mr-2 h-4 w-4" />
-										Sign Out
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						) : (
-							<Link to="/login" className="btn btn-primary hidden sm:flex">
-								Sign In
-							</Link>
-						)}
-
-						{/* Mobile menu button */}
-						<button
-							type="button"
-							className="btn btn-ghost h-9 w-9 p-0 md:hidden"
-							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-							aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-							aria-expanded={mobileMenuOpen}
+									<div className="flex flex-col">
+										<span className="text-sm font-medium">
+											{user.displayName || user.handle}
+										</span>
+										<span className="text-xs text-[var(--foreground-muted)]">
+											@{user.handle}
+										</span>
+									</div>
+								</div>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem asChild>
+									<Link to="/settings" className="cursor-pointer">
+										<User className="mr-2 h-4 w-4" />
+										Profile & Settings
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={logout}
+									className="cursor-pointer text-red-600 focus:text-red-600"
+								>
+									<LogOut className="mr-2 h-4 w-4" />
+									Sign Out
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<Link 
+							to="/login" 
+							className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)] sm:flex"
 						>
-							{mobileMenuOpen ? (
-								<X className="h-5 w-5" />
-							) : (
-								<Menu className="h-5 w-5" />
-							)}
-						</button>
-					</div>
+							Sign In
+						</Link>
+					)}
+
+					{/* Mobile menu button - only visible on small screens */}
+					<button
+						type="button"
+						className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)] md:hidden"
+						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+						aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+						aria-expanded={mobileMenuOpen}
+					>
+						{mobileMenuOpen ? (
+							<X className="h-5 w-5" />
+						) : (
+							<Menu className="h-5 w-5" />
+						)}
+					</button>
+				</div>
 				</nav>
 
 				{/* Mobile Navigation */}
@@ -289,14 +278,6 @@ export default function Header() {
 									</Link>
 								</>
 							)}
-
-							<div className="my-2 border-t border-[var(--border)]" />
-							<div className="flex items-center justify-between px-3 py-2">
-								<span className="text-sm text-[var(--foreground-muted)]">
-									Theme
-								</span>
-								<ThemeToggle />
-							</div>
 						</div>
 					</div>
 				)}

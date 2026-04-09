@@ -144,12 +144,13 @@ export function SearchCommand({
 			<button
 				type="button"
 				onClick={() => handleOpenChange(true)}
-				className="relative h-9 w-9 rounded-md border border-[var(--border)] bg-[var(--background-elevated)] p-2 text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+				className="group flex h-9 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-[var(--foreground-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
 				aria-label="Search"
 			>
 				<Search className="h-4 w-4" />
-				<kbd className="pointer-events-none absolute right-1 top-1 hidden h-4 select-none items-center gap-1 rounded border bg-muted px-1 font-mono text-[10px] font-medium sm:flex">
-					<span className="text-xs">⌘</span>K
+				<span className="hidden text-sm sm:inline">Search</span>
+				<kbd className="ml-1 hidden h-5 select-none items-center gap-0.5 rounded border border-[var(--border-strong)] bg-[var(--background-subtle)] px-1.5 font-mono text-[10px] font-medium text-[var(--foreground-muted)] sm:flex">
+					<span>⌘</span>K
 				</kbd>
 			</button>
 

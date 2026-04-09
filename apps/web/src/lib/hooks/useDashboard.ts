@@ -75,6 +75,17 @@ export function useDashboardStats(userDid: string) {
 	});
 }
 
+// User's shelf (library) - combines movies and episodes
+export function useUserShelf(userDid: string, pageSize = 10) {
+	return useQuery({
+		...shelfControllerGetUserShelfOptions({
+			path: { userDid },
+			query: { page: 1, pageSize },
+		}),
+		enabled: !!userDid,
+	});
+}
+
 // User's recent activity from shelf
 export function useUserShelfActivity(
 	userDid: string,

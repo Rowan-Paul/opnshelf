@@ -21,10 +21,8 @@ import {
 	useDashboardStats,
 	useDiscoverMovies,
 	useDiscoverShows,
-	useUserMovies,
+	useUserShelf,
 	useUserShelfActivity,
-	useUserShows,
-	useUserUpNext,
 } from "#/lib/hooks";
 import MediaCard from "../components/MediaCard";
 
@@ -125,14 +123,9 @@ function Dashboard() {
 		isLoading: showsLoading,
 		error: showsError,
 	} = useDiscoverShows(1);
-	const { data: userMovies, isLoading: userMoviesLoading } = useUserMovies(
+	const { data: shelfData, isLoading: shelfLoading } = useUserShelf(
 		userDid || "",
-	);
-	const { data: userShows, isLoading: userShowsLoading } = useUserShows(
-		userDid || "",
-	);
-	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
-		userDid || "",
+		12,
 	);
 	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
 		userDid || "",
@@ -177,20 +170,23 @@ function Dashboard() {
 	const isLoading =
 		moviesLoading ||
 		showsLoading ||
-		userMoviesLoading ||
-		userShowsLoading ||
-		upNextLoading ||
+		shelfLoading ||
 		statsLoading ||
 		activityLoading ||
 		authLoading ||
 		calendarLoading;
 	const hasError = moviesError || showsError;
 
-	// Calculate real stats
+	// Calculate real stats from shelf data
+	const movieCount =
+		shelfData?.items?.filter((item) => item.type === "movie").length || 0;
+	const showCount =
+		shelfData?.items?.filter((item) => item.type === "episode").length || 0;
+
 	const userStats = [
 		{
 			label: "Movies",
-			value: String(userMovies?.length || 0),
+			value: String(movieCount),
 			icon: Film,
 			change: statsData
 				? `+${statsData.recentMovies || 0} this month`
@@ -198,7 +194,7 @@ function Dashboard() {
 		},
 		{
 			label: "Shows",
-			value: String(userShows?.length || 0),
+			value: String(showCount),
 			icon: Tv,
 			change: statsData
 				? `+${statsData.recentShows || 0} this month`
@@ -255,38 +251,42 @@ function Dashboard() {
 		})) || []),
 	].slice(0, 6);
 
-	// Transform user's tracked content for display
-	const userContent = [
-		...(userMovies?.slice(0, 3).map((item) => ({
-			id: item.movieId,
-			title: item.movie.title,
-			type: "movie" as const,
-			posterUrl: item.movie.posterPath
-				? `https://image.tmdb.org/t/p/w500${item.movie.posterPath}`
-				: "",
-			backdropUrl: item.movie.backdropPath
-				? `https://image.tmdb.org/t/p/original${item.movie.backdropPath}`
-				: undefined,
-			year: item.movie.releaseYear,
-			isWatched: !!item.watchedDate,
-			watchedDate: item.watchedDate,
-		})) || []),
-		...(upNextData?.items?.slice(0, 3).map((item) => ({
-			id: item.showId,
-			title: `${item.show.title} S${item.lastWatched.seasonNumber}E${item.lastWatched.episodeNumber}`,
-			type: "show" as const,
-			posterUrl: item.show.posterPath
-				? `https://image.tmdb.org/t/p/w500${item.show.posterPath}`
-				: "",
-			backdropUrl: item.show.backdropPath
-				? `https://image.tmdb.org/t/p/original${item.show.backdropPath}`
-				: undefined,
-			year: item.show.firstAirYear,
-			episodeInfo: item.lastWatched.name, // Episode title
-			isWatched: true,
-			watchedDate: item.latestWatchedDate,
-		})) || []),
-	].slice(0, 6);
+	// Transform user's tracked content for display from shelf data
+	const userContent =
+		shelfData?.items?.slice(0, 6).map((item) => {
+			if (item.type === "movie") {
+				return {
+					id: item.movieId,
+					title: item.title,
+					type: "movie" as const,
+					posterUrl: item.posterPath
+						? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+						: "",
+					backdropUrl: item.backdropPath
+						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						: undefined,
+					year: item.releaseYear,
+					isWatched: !!item.watchedDate,
+					watchedDate: item.watchedDate,
+				};
+			}
+			// Episode type
+			return {
+				id: item.showId,
+				title: item.showTitle,
+				type: "show" as const,
+				posterUrl: item.posterPath
+					? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+					: "",
+				backdropUrl: item.backdropPath
+					? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+					: undefined,
+				year: item.firstAirYear,
+				episodeInfo: `S${item.seasonNumber}E${item.episodeNumber}`,
+				isWatched: !!item.watchedDate,
+				watchedDate: item.watchedDate,
+			};
+		}) || [];
 
 	// Use user content if available, otherwise fall back to featured content
 	const displayContent = userContent.length > 0 ? userContent : featuredContent;

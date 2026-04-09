@@ -51,7 +51,7 @@ export default function ThemeToggle() {
 		return (
 			<button
 				type="button"
-				className="btn btn-secondary h-9 w-9 p-0"
+				className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground)] transition-colors hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
 				aria-label="Loading theme"
 			>
 				<Monitor className="h-4 w-4" />
@@ -85,7 +85,7 @@ export default function ThemeToggle() {
 		<button
 			type="button"
 			onClick={cycleMode}
-			className="btn btn-secondary h-9 w-9 p-0"
+			className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground)] transition-colors hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
 			aria-label={`Current theme: ${labels[mode]}. Click to change.`}
 			title={`Theme: ${labels[mode]}`}
 		>
