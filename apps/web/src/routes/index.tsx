@@ -90,13 +90,23 @@ function formatWatchedDate(dateStr: string): string {
 	const date = new Date(dateStr);
 	const now = new Date();
 	const isThisYear = date.getFullYear() === now.getFullYear();
-	const timeString = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-	
+	const timeString = date.toLocaleTimeString("en-US", {
+		hour: "numeric",
+		minute: "2-digit",
+	});
+
 	if (isThisYear) {
-		const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+		const formattedDate = date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+		});
 		return `${formattedDate} at ${timeString}`;
 	}
-	const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+	const formattedDate = date.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
 	return `${formattedDate} at ${timeString}`;
 }
 
@@ -373,18 +383,22 @@ function Dashboard() {
 						) : displayContent.length > 0 ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{displayContent.map((item) => (
-							<MediaCard
-								key={item.id}
-								id={item.id}
-								title={item.title}
-								posterUrl={item.posterUrl}
-								backdropUrl={item.backdropUrl}
-								type={item.type}
-								year={item.year}
-								watchedDate={item.watchedDate ? formatWatchedDate(item.watchedDate) : undefined}
-								layout="backdrop"
-								size="md"
-							/>
+									<MediaCard
+										key={item.id}
+										id={item.id}
+										title={item.title}
+										posterUrl={item.posterUrl}
+										backdropUrl={item.backdropUrl}
+										type={item.type}
+										year={item.year}
+										watchedDate={
+											item.watchedDate
+												? formatWatchedDate(item.watchedDate)
+												: undefined
+										}
+										layout="backdrop"
+										size="md"
+									/>
 								))}
 							</div>
 						) : (
