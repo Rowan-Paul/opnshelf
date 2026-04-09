@@ -206,10 +206,11 @@ export default function Header() {
 				</div>
 				</nav>
 
-				{/* Mobile Navigation */}
+				{/* Mobile Navigation - Overlay */}
 				{mobileMenuOpen && (
-					<div className="animate-slide-up border-t border-[var(--border)] py-4 md:hidden">
-						<div className="flex flex-col gap-1">
+					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-t border-[var(--border)] bg-[var(--background)] md:hidden">
+						<div className="container-app h-full overflow-y-auto py-4">
+							<div className="flex flex-col gap-1">
 							{navigation.map((item) => {
 								const isActive =
 									currentPath === item.href ||
@@ -280,8 +281,9 @@ export default function Header() {
 							)}
 						</div>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
+		</div>
 		</header>
 	);
 }

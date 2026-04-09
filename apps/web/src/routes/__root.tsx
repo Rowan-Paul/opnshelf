@@ -6,6 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { DefaultErrorComponent, NotFoundComponent } from "../components/ErrorBoundary";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import PostHogProvider from "../integrations/posthog/provider";
@@ -33,6 +34,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [{ rel: "stylesheet", href: appCss }],
 	}),
+	errorComponent: DefaultErrorComponent,
+	notFoundComponent: NotFoundComponent,
 	shellComponent: RootDocument,
 });
 
