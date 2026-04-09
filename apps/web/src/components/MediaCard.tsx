@@ -15,6 +15,7 @@ interface MediaCardProps {
 	progress?: number;
 	isWatched?: boolean;
 	isInWatchlist?: boolean;
+	watchedDate?: string;
 	size?: "sm" | "md" | "lg";
 	layout?: "poster" | "backdrop";
 	href?: string;
@@ -36,6 +37,7 @@ export default function MediaCard({
 	progress,
 	isWatched = false,
 	isInWatchlist = false,
+	watchedDate,
 	size = "md",
 	layout = "poster",
 	href,
@@ -49,15 +51,15 @@ export default function MediaCard({
 	const sizeClasses = {
 		sm: {
 			poster: "w-[120px]",
-			backdrop: "w-[200px]",
+			backdrop: "w-full max-w-[200px]",
 		},
 		md: {
 			poster: "w-[160px] sm:w-[180px]",
-			backdrop: "w-[280px] sm:w-[320px]",
+			backdrop: "w-full",
 		},
 		lg: {
 			poster: "w-[200px] sm:w-[220px]",
-			backdrop: "w-[340px] sm:w-[400px]",
+			backdrop: "w-full",
 		},
 	};
 
@@ -187,6 +189,12 @@ export default function MediaCard({
 							<h3 className="font-semibold text-white line-clamp-1">{title}</h3>
 							{episodeInfo && (
 								<p className="mt-1 text-sm text-white/70">{episodeInfo}</p>
+							)}
+							{watchedDate && (
+								<p className="mt-1 text-xs text-white/50 flex items-center gap-1">
+									<Clock className="h-3 w-3" />
+									{watchedDate}
+								</p>
 							)}
 						</div>
 					)}

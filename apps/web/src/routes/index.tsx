@@ -24,6 +24,7 @@ import {
 	useUserMovies,
 	useUserShelfActivity,
 	useUserShows,
+	useUserUpNext,
 } from "#/lib/hooks";
 import MediaCard from "../components/MediaCard";
 
@@ -84,6 +85,21 @@ function getEpisodeInfo(item: ReleaseCalendarItemDto): string | undefined {
 	return undefined;
 }
 
+// Helper function to format watched time (e.g., "Apr 9 at 2:30 PM", "Jan 15, 2024 at 2:30 PM")
+function formatWatchedDate(dateStr: string): string {
+	const date = new Date(dateStr);
+	const now = new Date();
+	const isThisYear = date.getFullYear() === now.getFullYear();
+	const timeString = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+	
+	if (isThisYear) {
+		const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+		return `${formattedDate} at ${timeString}`;
+	}
+	const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+	return `${formattedDate} at ${timeString}`;
+}
+
 function Dashboard() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const userDid = user?.did;
@@ -103,6 +119,9 @@ function Dashboard() {
 		userDid || "",
 	);
 	const { data: userShows, isLoading: userShowsLoading } = useUserShows(
+		userDid || "",
+	);
+	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
 		userDid || "",
 	);
 	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
@@ -150,6 +169,7 @@ function Dashboard() {
 		showsLoading ||
 		userMoviesLoading ||
 		userShowsLoading ||
+		upNextLoading ||
 		statsLoading ||
 		activityLoading ||
 		authLoading ||
@@ -239,10 +259,11 @@ function Dashboard() {
 				: undefined,
 			year: item.movie.releaseYear,
 			isWatched: !!item.watchedDate,
+			watchedDate: item.watchedDate,
 		})) || []),
-		...(userShows?.slice(0, 3).map((item) => ({
+		...(upNextData?.items?.slice(0, 3).map((item) => ({
 			id: item.showId,
-			title: item.show.title,
+			title: `${item.show.title} S${item.lastWatched.seasonNumber}E${item.lastWatched.episodeNumber}`,
 			type: "show" as const,
 			posterUrl: item.show.posterPath
 				? `https://image.tmdb.org/t/p/w500${item.show.posterPath}`
@@ -251,6 +272,9 @@ function Dashboard() {
 				? `https://image.tmdb.org/t/p/original${item.show.backdropPath}`
 				: undefined,
 			year: item.show.firstAirYear,
+			episodeInfo: item.lastWatched.name, // Episode title
+			isWatched: true,
+			watchedDate: item.latestWatchedDate,
 		})) || []),
 	].slice(0, 6);
 
@@ -347,19 +371,20 @@ function Dashboard() {
 								<Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
 							</div>
 						) : displayContent.length > 0 ? (
-							<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{displayContent.map((item) => (
-									<MediaCard
-										key={item.id}
-										id={item.id}
-										title={item.title}
-										posterUrl={item.posterUrl}
-										backdropUrl={item.backdropUrl}
-										type={item.type}
-										year={item.year}
-										layout="backdrop"
-										size="md"
-									/>
+							<MediaCard
+								key={item.id}
+								id={item.id}
+								title={item.title}
+								posterUrl={item.posterUrl}
+								backdropUrl={item.backdropUrl}
+								type={item.type}
+								year={item.year}
+								watchedDate={item.watchedDate ? formatWatchedDate(item.watchedDate) : undefined}
+								layout="backdrop"
+								size="md"
+							/>
 								))}
 							</div>
 						) : (
