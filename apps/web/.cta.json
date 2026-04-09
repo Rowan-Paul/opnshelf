@@ -3,17 +3,19 @@
   "mode": "file-router",
   "typescript": true,
   "packageManager": "pnpm",
+  "includeExamples": false,
   "tailwind": true,
   "addOnOptions": {},
-  "git": true,
+  "envVarValues": {},
+  "git": false,
+  "routerOnly": false,
   "version": 1,
-  "framework": "react-cra",
+  "framework": "react",
   "chosenAddOns": [
     "biome",
-    "railway",
-    "start",
     "shadcn",
     "t3env",
+    "posthog",
     "tanstack-query"
   ]
 }
