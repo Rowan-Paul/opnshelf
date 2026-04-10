@@ -1,7 +1,7 @@
-import type { ReleaseCalendarItemDto } from "@opnshelf/api";
+import type { FollowedActivityItemDto, ReleaseCalendarItemDto } from "@opnshelf/api";
 import {
 	showsControllerGetUserReleaseCalendarOptions,
-	socialControllerGetFollowingOptions,
+	socialControllerGetFeedOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -10,7 +10,9 @@ import {
 	ChevronRight,
 	Clock,
 	Film,
+	Heart,
 	Loader2,
+	MessageCircle,
 	TrendingUp,
 	Tv,
 	Users,
@@ -22,7 +24,6 @@ import {
 	useDiscoverMovies,
 	useDiscoverShows,
 	useUserShelf,
-	useUserShelfActivity,
 } from "#/lib/hooks";
 import MediaCard from "../components/MediaCard";
 
@@ -67,6 +68,22 @@ function formatRelativeDate(dateStr: string): string {
 function formatDate(dateStr: string): string {
 	const date = new Date(dateStr);
 	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// Helper function to format relative time for social feed
+function formatRelativeTime(dateString: string): string {
+	const date = new Date(dateString);
+	const now = new Date();
+	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+	if (diffInSeconds < 60) return "Just now";
+	if (diffInSeconds < 3600)
+		return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+	if (diffInSeconds < 86400)
+		return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+	if (diffInSeconds < 604800)
+		return `${Math.floor(diffInSeconds / 86400)} days ago`;
+	return date.toLocaleDateString();
 }
 
 // Helper function to get episode info
@@ -130,22 +147,14 @@ function Dashboard() {
 	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
 		userDid || "",
 	);
-	const { data: recentActivity, isLoading: activityLoading } =
-		useUserShelfActivity(userDid || "", user?.displayName || "You");
 
-	// Fetch following data
-	const { data: followingData, isLoading: followingLoading } = useQuery({
-		...socialControllerGetFollowingOptions({
-			path: { handle: user?.handle || "" },
+	// Fetch social activity feed
+	const { data: feedData, isLoading: feedLoading } = useQuery({
+		...socialControllerGetFeedOptions({
 			query: { pageSize: 10 },
 		}),
-		enabled: !!user?.handle,
+		enabled: !!userDid,
 	});
-
-	const following = followingData?.items || [];
-	const followingCount = following.length;
-	const displayFollowing = following.slice(0, 4);
-	const remainingCount = Math.max(0, followingCount - 4);
 
 	// Fetch release calendar data
 	const { data: calendarData, isLoading: calendarLoading } = useQuery({
@@ -155,10 +164,17 @@ function Dashboard() {
 		enabled: !!user?.did,
 	});
 
-	// Get upcoming releases - filter to next 10 upcoming
+	// Get upcoming releases - filter to next two weeks, limit to 10
 	const upcomingReleases = calendarData?.items
 		? calendarData.items
-				.filter((item) => new Date(item.releaseDate) >= new Date())
+				.filter((item) => {
+					const releaseDate = new Date(item.releaseDate);
+					const today = new Date();
+					today.setHours(0, 0, 0, 0);
+					const twoWeeksLater = new Date(today);
+					twoWeeksLater.setDate(today.getDate() + 14);
+					return releaseDate >= today && releaseDate <= twoWeeksLater;
+				})
 				.sort(
 					(a, b) =>
 						new Date(a.releaseDate).getTime() -
@@ -172,7 +188,7 @@ function Dashboard() {
 		showsLoading ||
 		shelfLoading ||
 		statsLoading ||
-		activityLoading ||
+		feedLoading ||
 		authLoading ||
 		calendarLoading;
 	const hasError = moviesError || showsError;
@@ -272,8 +288,9 @@ function Dashboard() {
 			}
 			// Episode type
 			return {
-				id: item.showId,
-				title: item.showTitle,
+				id: item.id, // Use the unique tracked episode ID
+				showId: item.showId,
+				title: item.episodeTitle || `${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
 				type: "show" as const,
 				posterUrl: item.posterPath
 					? `https://image.tmdb.org/t/p/w500${item.posterPath}`
@@ -282,7 +299,7 @@ function Dashboard() {
 					? `https://image.tmdb.org/t/p/original${item.backdropPath}`
 					: undefined,
 				year: item.firstAirYear,
-				episodeInfo: `S${item.seasonNumber}E${item.episodeNumber}`,
+				episodeInfo: `${item.showTitle} • S${item.seasonNumber}E${item.episodeNumber}`,
 				isWatched: !!item.watchedDate,
 				watchedDate: item.watchedDate,
 			};
@@ -365,7 +382,7 @@ function Dashboard() {
 					<section>
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">
-								{userContent.length > 0 ? "Your Library" : "Featured For You"}
+								{userContent.length > 0 ? "Your Shelf" : "Featured For You"}
 							</h2>
 							<Link
 								to="/shelf"
@@ -382,24 +399,25 @@ function Dashboard() {
 							</div>
 						) : displayContent.length > 0 ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-								{displayContent.map((item) => (
-									<MediaCard
-										key={item.id}
-										id={item.id}
-										title={item.title}
-										posterUrl={item.posterUrl}
-										backdropUrl={item.backdropUrl}
-										type={item.type}
-										year={item.year}
-										watchedDate={
-											item.watchedDate
-												? formatWatchedDate(item.watchedDate)
-												: undefined
-										}
-										layout="backdrop"
-										size="md"
-									/>
-								))}
+							{displayContent.map((item) => (
+								<MediaCard
+									key={item.id}
+									id={item.id}
+									title={item.title}
+									posterUrl={item.posterUrl}
+									backdropUrl={item.backdropUrl}
+									type={item.type}
+									year={item.year}
+									episodeInfo={item.episodeInfo}
+									watchedDate={
+										item.watchedDate
+											? formatWatchedDate(item.watchedDate)
+											: undefined
+									}
+									layout="backdrop"
+									size="md"
+								/>
+							))}
 							</div>
 						) : (
 							<div className="card p-8 text-center">
@@ -413,10 +431,19 @@ function Dashboard() {
 						)}
 					</section>
 
-					{/* Recent Activity - Real data from API */}
+					{/* Social Feed - Activity from people you follow */}
 					<section>
-						<h2 className="text-display-3 mb-4">Recent Activity</h2>
-						{activityLoading ? (
+						<div className="mb-4 flex items-center justify-between">
+							<h2 className="text-display-3">Friend Activity</h2>
+							<Link
+								to="/following"
+								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+							>
+								<Users className="h-4 w-4" />
+								View all
+							</Link>
+						</div>
+						{feedLoading ? (
 							<div className="card p-8">
 								<div className="space-y-3">
 									{[1, 2, 3].map((i) => (
@@ -424,7 +451,7 @@ function Dashboard() {
 											key={i}
 											className="flex items-center gap-3 animate-pulse"
 										>
-											<div className="h-10 w-10 rounded-lg bg-[var(--background-subtle)]" />
+											<div className="h-10 w-10 rounded-full bg-[var(--background-subtle)]" />
 											<div className="flex-1 space-y-1">
 												<div className="h-4 w-1/2 rounded bg-[var(--background-subtle)]" />
 												<div className="h-3 w-1/3 rounded bg-[var(--background-subtle)]" />
@@ -433,49 +460,89 @@ function Dashboard() {
 									))}
 								</div>
 							</div>
-						) : recentActivity && recentActivity.length > 0 ? (
+						) : feedData?.items && feedData.items.length > 0 ? (
 							<div className="card divide-y divide-[var(--border)]">
-								{recentActivity.map((activity) => (
+								{feedData.items.map((item: FollowedActivityItemDto) => (
 									<div
-										key={activity.id}
-										className="flex items-center gap-3 p-3 first:pt-4 last:pb-4"
+										key={item.id}
+										className="flex items-start gap-3 p-4 first:pt-5 last:pb-5"
 									>
-										<div
-											className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${activity.type === "movie" ? "bg-[var(--background-subtle)]" : "bg-[var(--accent-subtle)]"} ${activity.type === "movie" ? "text-[var(--foreground-muted)]" : "text-[var(--accent)]"}`}
-										>
-											{activity.type === "movie" ? (
-												<Film className="h-5 w-5" />
-											) : (
-												<Tv className="h-5 w-5" />
-											)}
-										</div>
+										{/* User Avatar */}
+										<img
+											src={item.actor.avatar || `https://i.pravatar.cc/150?u=${item.actor.did}`}
+											alt={item.actor.displayName || item.actor.handle}
+											className="h-10 w-10 rounded-full object-cover"
+										/>
 										<div className="flex-1 min-w-0">
-											<p className="font-medium text-sm truncate">
-												{activity.title}
+											{/* Activity Header */}
+											<p className="text-sm">
+												<Link
+													to={`/profile/${item.actor.handle}`}
+													className="font-medium hover:text-[var(--accent)]"
+												>
+													{item.actor.displayName || item.actor.handle}
+												</Link>{" "}
+												{item.verb === "watch" && (
+													<span className="text-[var(--foreground-muted)]">watched</span>
+												)}
+												{item.verb === "follow" && (
+													<span className="text-[var(--foreground-muted)]">followed</span>
+												)}
+												{item.verb === "list_add" && (
+													<span className="text-[var(--foreground-muted)]">added to list</span>
+												)}
 											</p>
-											<p className="text-xs text-[var(--foreground-muted)]">
-												<span className="text-[var(--accent)]">
-													{activity.user}
-												</span>{" "}
-												{activity.action} {activity.date}
+											{/* Content Title */}
+											<p className="font-medium text-sm mt-0.5">
+												<Link
+													to={`/${item.content.type}/${item.content.id}`}
+													className="hover:text-[var(--accent)]"
+												>
+													{item.content.title}
+													{item.content.type === "episode" && item.content.episodeTitle && (
+														<span className="text-[var(--foreground-muted)]">
+															{" "}
+															(S{item.content.seasonNumber}E
+															{item.content.episodeNumber})
+														</span>
+													)}
+												</Link>
 											</p>
+											{/* Timestamp & Actions */}
+											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
+												<span>{formatRelativeTime(item.createdAt)}</span>
+												{item.verb === "watch" && (
+													<button
+														type="button"
+														className="flex items-center gap-1 hover:text-[var(--accent)]"
+													>
+														<Heart className="h-3 w-3" />
+														Like
+													</button>
+												)}
+											</div>
 										</div>
+										{/* Content Type Badge */}
 										<span
-											className={`badge ${activity.type === "movie" ? "badge-subtle" : "badge-accent"}`}
+											className={`badge ${item.content.type === "movie" ? "badge-subtle" : "badge-accent"}`}
 										>
-											{activity.type === "movie" ? "Movie" : "TV"}
+											{item.content.type === "movie" ? "Movie" : "TV"}
 										</span>
 									</div>
 								))}
 							</div>
 						) : (
 							<div className="card p-8 text-center">
+								<MessageCircle className="h-12 w-12 mx-auto mb-3 text-[var(--foreground-muted)]" />
 								<p className="text-[var(--foreground-muted)]">
-									Your recent activity will appear here once you start tracking
-									movies and shows.
+									Activity from people you follow will appear here.
 								</p>
-								<Link to="/search" className="btn btn-primary mt-4 inline-flex">
-									Start Tracking
+								<Link
+									to="/following"
+									className="btn btn-primary mt-4 inline-flex"
+								>
+									<Users className="h-4 w-4 mr-2" />
+									Find people to follow
 								</Link>
 							</div>
 						)}
@@ -581,100 +648,6 @@ function Dashboard() {
 								))}
 							</div>
 						)}
-					</section>
-
-					{/* Quick Actions */}
-					<section>
-						<h2 className="text-display-3 mb-4">Quick Actions</h2>
-						<div className="space-y-2">
-							<Link
-								to="/search"
-								className="btn btn-primary w-full justify-start gap-2"
-							>
-								<Film className="h-4 w-4" />
-								Find a Movie
-							</Link>
-							<Link
-								to="/search"
-								className="btn btn-secondary w-full justify-start gap-2"
-							>
-								<Tv className="h-4 w-4" />
-								Find a Show
-							</Link>
-							<Link
-								to="/lists"
-								className="btn btn-ghost w-full justify-start gap-2"
-							>
-								<ChevronRight className="h-4 w-4" />
-								View Your Lists
-							</Link>
-						</div>
-					</section>
-
-					{/* Following Preview */}
-					<section>
-						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Following</h2>
-							<Link
-								to="/following"
-								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
-							>
-								View all
-								<ChevronRight className="h-4 w-4" />
-							</Link>
-						</div>
-						<div className="card p-4">
-							{followingLoading ? (
-								<div className="flex items-center gap-3">
-									<Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />
-									<span className="text-sm text-[var(--foreground-muted)]">
-										Loading...
-									</span>
-								</div>
-							) : followingCount === 0 ? (
-								<>
-									<p className="text-sm text-[var(--foreground-muted)]">
-										Start following people to see what they&apos;re watching.
-									</p>
-									<Link
-										to="/following"
-										className="mt-3 btn btn-secondary w-full text-sm"
-									>
-										<Users className="h-4 w-4" />
-										Find people to follow
-									</Link>
-								</>
-							) : (
-								<>
-									<p className="text-sm text-[var(--foreground-muted)]">
-										You&apos;re following {followingCount}{" "}
-										{followingCount === 1 ? "friend" : "friends"}
-									</p>
-									<Link
-										to="/following"
-										className="mt-3 flex -space-x-2 cursor-pointer"
-									>
-										{displayFollowing.map((friend) => (
-											<img
-												key={friend.did}
-												src={
-													friend.avatar
-														? String(friend.avatar)
-														: `https://i.pravatar.cc/150?u=${friend.did}`
-												}
-												alt={String(friend.displayName) || friend.handle}
-												className="h-8 w-8 rounded-full border-2 border-[var(--background)] object-cover"
-											/>
-										))}
-										{remainingCount > 0 && (
-											<div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--background)] bg-[var(--accent)] text-xs font-medium text-white">
-												+{remainingCount}
-											</div>
-										)}
-									</Link>
-								</>
-							)}
-						</div>
 					</section>
 				</div>
 			</div>

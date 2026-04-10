@@ -31,6 +31,7 @@ interface EpisodeData {
 	showTitle: string;
 	seasonNumber: number;
 	episodeNumber: number;
+	episodeTitle?: string;
 	posterPath?: string;
 	backdropPath?: string;
 	firstAirYear?: number;
@@ -55,6 +56,7 @@ interface RawShelfRow {
 	releaseDate: Date | null;
 	seasonNumber: number | null;
 	episodeNumber: number | null;
+	episodeName: string | null;
 	firstAirYear: number | null;
 	firstAirDate: Date | null;
 	overview: string | null;
@@ -124,58 +126,64 @@ export class ShelfService {
 						shelf."backdropPath",
 						shelf."releaseYear",
 						shelf."releaseDate",
-						shelf."seasonNumber",
-						shelf."episodeNumber",
-						shelf."firstAirYear",
-						shelf."firstAirDate",
-						shelf."overview"
-					FROM (
-						SELECT
-							tm.id AS "trackedId",
-							'movie' AS "type",
-							tm."watchedDate" AS "watchedDate",
-							tm."createdAt" AS "createdAt",
-							COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
-							tm."movieId" AS "movieId",
-							NULL::text AS "showId",
-							m.title AS "title",
-							m."posterPath" AS "posterPath",
-							m."backdropPath" AS "backdropPath",
-							m."releaseYear" AS "releaseYear",
-							m."releaseDate" AS "releaseDate",
-							NULL::integer AS "seasonNumber",
-							NULL::integer AS "episodeNumber",
-							NULL::integer AS "firstAirYear",
-							NULL::timestamp AS "firstAirDate",
-							m.overview AS "overview"
-						FROM "TrackedMovie" tm
-						INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
-						WHERE tm."userDid" = ${userDid}
+					shelf."seasonNumber",
+					shelf."episodeNumber",
+					shelf."episodeName",
+					shelf."firstAirYear",
+					shelf."firstAirDate",
+					shelf."overview"
+				FROM (
+					SELECT
+						tm.id AS "trackedId",
+						'movie' AS "type",
+						tm."watchedDate" AS "watchedDate",
+						tm."createdAt" AS "createdAt",
+						COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
+						tm."movieId" AS "movieId",
+						NULL::text AS "showId",
+						m.title AS "title",
+						m."posterPath" AS "posterPath",
+						m."backdropPath" AS "backdropPath",
+						m."releaseYear" AS "releaseYear",
+						m."releaseDate" AS "releaseDate",
+						NULL::integer AS "seasonNumber",
+						NULL::integer AS "episodeNumber",
+						NULL::text AS "episodeName",
+						NULL::integer AS "firstAirYear",
+						NULL::timestamp AS "firstAirDate",
+						m.overview AS "overview"
+					FROM "TrackedMovie" tm
+					INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
+					WHERE tm."userDid" = ${userDid}
 
-						UNION ALL
+					UNION ALL
 
-						SELECT
-							te.id AS "trackedId",
-							'episode' AS "type",
-							te."watchedDate" AS "watchedDate",
-							te."createdAt" AS "createdAt",
-							COALESCE(te."watchedDate", te."createdAt") AS "sortDate",
-							NULL::text AS "movieId",
-							te."showId" AS "showId",
-							s.title AS "title",
-							s."posterPath" AS "posterPath",
-							s."backdropPath" AS "backdropPath",
-							NULL::integer AS "releaseYear",
-							NULL::timestamp AS "releaseDate",
-							te."seasonNumber" AS "seasonNumber",
-							te."episodeNumber" AS "episodeNumber",
-							s."firstAirYear" AS "firstAirYear",
-							s."firstAirDate" AS "firstAirDate",
-							s.overview AS "overview"
-						FROM "TrackedEpisode" te
-						INNER JOIN "Show" s ON s."showId" = te."showId"
-						WHERE te."userDid" = ${userDid}
-					) shelf
+					SELECT
+						te.id AS "trackedId",
+						'episode' AS "type",
+						te."watchedDate" AS "watchedDate",
+						te."createdAt" AS "createdAt",
+						COALESCE(te."watchedDate", te."createdAt") AS "sortDate",
+						NULL::text AS "movieId",
+						te."showId" AS "showId",
+						s.title AS "title",
+						s."posterPath" AS "posterPath",
+						s."backdropPath" AS "backdropPath",
+						NULL::integer AS "releaseYear",
+						NULL::timestamp AS "releaseDate",
+						te."seasonNumber" AS "seasonNumber",
+						te."episodeNumber" AS "episodeNumber",
+						ep.name AS "episodeName",
+						s."firstAirYear" AS "firstAirYear",
+						s."firstAirDate" AS "firstAirDate",
+						ep.overview AS "overview"
+					FROM "TrackedEpisode" te
+					INNER JOIN "Show" s ON s."showId" = te."showId"
+					LEFT JOIN "Episode" ep ON ep."showId" = te."showId" 
+						AND ep."seasonNumber" = te."seasonNumber" 
+						AND ep."episodeNumber" = te."episodeNumber"
+					WHERE te."userDid" = ${userDid}
+				) shelf
 					ORDER BY
 						shelf."sortDate" DESC,
 						shelf."createdAt" DESC,
@@ -228,6 +236,7 @@ export class ShelfService {
 							showTitle: row.title,
 							seasonNumber: row.seasonNumber,
 							episodeNumber: row.episodeNumber,
+							episodeTitle: row.episodeName ?? undefined,
 							posterPath: row.posterPath ?? undefined,
 							backdropPath: row.backdropPath ?? undefined,
 							firstAirYear: row.firstAirYear ?? undefined,

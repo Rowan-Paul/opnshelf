@@ -70,11 +70,12 @@ export function useShowDetails(showId: string) {
 	});
 }
 
-// User's tracked shows
-export function useUserShows(userDid: string) {
+// User's tracked shows with pagination
+export function useUserShows(userDid: string, pageSize = 20) {
 	return useQuery({
 		...showsControllerGetUserShowsOptions({
 			path: { userDid },
+			query: { page: 1, pageSize },
 		}),
 		enabled: !!userDid,
 	});

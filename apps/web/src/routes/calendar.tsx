@@ -107,9 +107,14 @@ function CalendarPage() {
 
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
+		const twoWeeksLater = new Date(today);
+		twoWeeksLater.setDate(today.getDate() + 14);
 
 		return calendarData.items
-			.filter((item) => new Date(item.releaseDate) >= today)
+			.filter((item) => {
+				const releaseDate = new Date(item.releaseDate);
+				return releaseDate >= today && releaseDate <= twoWeeksLater;
+			})
 			.sort(
 				(a, b) =>
 					new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime(),

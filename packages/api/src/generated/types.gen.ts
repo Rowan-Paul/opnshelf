@@ -977,6 +977,7 @@ export type ShelfResponseDto = {
         showTitle: string;
         seasonNumber: number;
         episodeNumber: number;
+        episodeTitle?: string;
         posterPath?: string;
         backdropPath?: string;
         firstAirYear?: number;

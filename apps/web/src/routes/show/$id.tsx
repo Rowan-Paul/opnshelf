@@ -1,4 +1,8 @@
-import { showsControllerGetSeasonDetailsOptions } from "@opnshelf/api";
+import {
+	showsControllerGetSeasonDetailsOptions,
+	showsControllerGetShowWatchHistoryOptions,
+	listsControllerGetListsForItemOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -20,7 +24,6 @@ import {
 	useDiscoverShows,
 	useMarkEpisodeWatched,
 	useShowDetails,
-	useUserShows,
 	useUserUpNext,
 } from "#/lib/hooks";
 import MediaCard from "../../components/MediaCard";
@@ -79,8 +82,25 @@ function ShowDetailPage() {
 		error: showError,
 	} = useShowDetails(id);
 
-	// Fetch user's tracked shows
-	const { data: userShowsData } = useUserShows(userDid || "");
+	// Fetch user's watch history for this specific show
+	const { data: watchHistory } = useQuery({
+		...showsControllerGetShowWatchHistoryOptions({
+			path: { userDid: userDid || "", showId: id },
+		}),
+		enabled: !!userDid && !!id,
+	});
+
+	// Fetch lists containing this show
+	const { data: listsForItem } = useQuery({
+		...listsControllerGetListsForItemOptions({
+			path: { mediaType: "show", mediaId: id },
+		}),
+		enabled: !!id,
+	});
+
+	// Count how many lists this show is actually in
+	const listsContainingShow =
+		listsForItem?.filter((list) => list.isInList) || [];
 
 	// Fetch user's up next episodes
 	const { data: upNextData } = useUserUpNext(userDid || "");
@@ -97,18 +117,16 @@ function ShowDetailPage() {
 	// Mark episode watched mutation
 	const markWatchedMutation = useMarkEpisodeWatched();
 
-	// Check if user tracks this show
-	const trackedShow = userShowsData?.find((s) => s.showId === id);
-	const isTracking = !!trackedShow;
+	// Check if user tracks this show (based on watch history)
+	const isTracking = !!watchHistory && watchHistory.length > 0;
 
 	// Find up next episode for this show
 	const upNextForShow = upNextData?.items?.find((item) => item.showId === id);
 	const nextEpisode = upNextForShow?.nextEpisode;
 
-	// Calculate watched episodes
-	const episodesWatched = upNextForShow?.episodesWatched || 0;
-	const totalEpisodes =
-		upNextForShow?.totalEpisodes || show?.number_of_episodes || 0;
+	// Calculate watched episodes from watch history
+	const episodesWatched = watchHistory?.length || 0;
+	const totalEpisodes = show?.number_of_episodes || 0;
 	const progressPercentage =
 		totalEpisodes > 0 ? (episodesWatched / totalEpisodes) * 100 : 0;
 	const episodesRemaining = totalEpisodes - episodesWatched;
@@ -214,25 +232,20 @@ function ShowDetailPage() {
 		);
 	};
 
-	// Check if an episode has been watched (estimate based on up next data)
+	// Check if an episode has been watched using watch history
 	const isEpisodeWatched = (seasonNum: number, episodeNum: number) => {
-		// This is a simplified check - in a real app you'd fetch the actual watch history
-		// For now, we estimate based on the next episode position
-		if (!upNextForShow) return false;
+		if (!watchHistory || watchHistory.length === 0) return false;
 
-		const lastWatchedSeason = upNextForShow.lastWatched?.seasonNumber || 1;
-		const lastWatchedEpisode = upNextForShow.lastWatched?.episodeNumber || 0;
-
-		if (seasonNum < lastWatchedSeason) return true;
-		if (seasonNum === lastWatchedSeason && episodeNum <= lastWatchedEpisode)
-			return true;
-		return false;
+		return watchHistory.some(
+			(ep) =>
+				ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
+		);
 	};
 
 	return (
 		<div className="min-h-screen pb-8">
 			{/* Hero Section with Backdrop */}
-			<div className="relative">
+			<div className="relative z-10 min-h-[50vh] overflow-hidden">
 				{/* Backdrop Image */}
 				<div className="absolute inset-0 h-[60vh] overflow-hidden">
 					{backdropUrl ? (
@@ -390,7 +403,7 @@ function ShowDetailPage() {
 			</div>
 
 			{/* Main Content */}
-			<div className="container-app">
+			<div className="container-app relative z-20 mt-8">
 				<div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
 					{/* Left Column */}
 					<div className="space-y-8">
@@ -672,28 +685,31 @@ function ShowDetailPage() {
 						<section className="card p-5">
 							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
 							<div className="space-y-2">
-								{isTracking ? (
-									<Link
-										to="/lists"
-										className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
-									>
-										<span className="text-sm font-medium">
-											Currently Watching
-										</span>
-										<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
-									</Link>
-								) : (
-									<p className="text-sm text-[var(--foreground-muted)]">
-										Not in any lists yet
-									</p>
-								)}
+										{listsContainingShow.length > 0 ? (
+											listsContainingShow.map((list) => (
+												<Link
+													key={list.listId}
+													to={`/lists/${list.listSlug}`}
+													className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
+												>
+													<span className="text-sm font-medium">
+														{list.listName}
+													</span>
+													<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
+												</Link>
+											))
+										) : (
+											<p className="text-sm text-[var(--foreground-muted)]">
+												Not in any lists yet
+											</p>
+										)}
 							</div>
 							<button
 								type="button"
 								className="mt-3 w-full btn btn-secondary text-sm"
 							>
 								<Plus className="h-4 w-4" />
-								Add to another list
+								{listsContainingShow.length > 0 ? "Add to another list" : "Add to list"}
 							</button>
 						</section>
 					</div>

@@ -16,6 +16,20 @@ function AuthCompletePage() {
 	);
 	const [errorMessage, setErrorMessage] = useState("");
 
+	// Helper function to get error message - defined before useEffect
+	const getErrorMessage = (error: string): string => {
+		switch (error) {
+			case "handle_required":
+				return "Please provide your handle to sign in.";
+			case "auth_failed":
+				return "Authentication failed. Please check your handle and try again.";
+			case "callback_failed":
+				return "Something went wrong during authentication. Please try again.";
+			default:
+				return "An unexpected error occurred. Please try again.";
+		}
+	};
+
 	useEffect(() => {
 		// Check for error in query params
 		const error = (search as { error?: string }).error;
@@ -40,20 +54,7 @@ function AuthCompletePage() {
 				setStatus("error");
 				setErrorMessage("Failed to complete authentication. Please try again.");
 			});
-	}, [queryClient, search, getErrorMessage]);
-
-	const getErrorMessage = (error: string): string => {
-		switch (error) {
-			case "handle_required":
-				return "Please provide your handle to sign in.";
-			case "auth_failed":
-				return "Authentication failed. Please check your handle and try again.";
-			case "callback_failed":
-				return "Something went wrong during authentication. Please try again.";
-			default:
-				return "An unexpected error occurred. Please try again.";
-		}
-	};
+	}, [queryClient, search]);
 
 	return (
 		<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">

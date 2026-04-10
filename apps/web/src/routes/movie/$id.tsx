@@ -329,7 +329,7 @@ function MovieDetailPage() {
 	return (
 		<div className="min-h-screen pb-8">
 			{/* Hero Section with Backdrop */}
-			<div className="relative">
+			<div className="relative z-10 min-h-[50vh] overflow-hidden">
 				{/* Backdrop Image */}
 				<div className="absolute inset-0 h-[60vh] overflow-hidden">
 					<img
@@ -560,7 +560,7 @@ function MovieDetailPage() {
 			</div>
 
 			{/* Main Content */}
-			<div className="container-app">
+			<div className="container-app relative z-20 mt-8">
 				<div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
 					{/* Left Column */}
 					<div className="space-y-8">
