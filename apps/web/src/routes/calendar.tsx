@@ -330,7 +330,7 @@ function CalendarPage() {
 									}}
 									className={`relative h-24 flex flex-col items-start rounded-lg border p-1.5 text-left transition-all ${
 										inSelectedWeek
-											? "border-[var(--border)] bg-[var(--accent)]/5"
+											? "border-[var(--border)] bg-[var(--background-elevated)]"
 											: isToday
 												? "border-[var(--accent)] bg-[var(--accent-subtle)]"
 												: "border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)]"
@@ -371,6 +371,10 @@ function CalendarPage() {
 												</span>
 											)}
 										</div>
+									)}
+									{/* Selected week indicator */}
+									{inSelectedWeek && (
+										<div className="absolute bottom-1.5 left-1.5 right-1.5 h-0.5 rounded-full bg-[var(--accent)]" />
 									)}
 								</button>
 							);
