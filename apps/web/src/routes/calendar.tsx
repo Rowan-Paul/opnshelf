@@ -38,15 +38,34 @@ function transformReleasesToDateMap(
 function CalendarPage() {
 	const user = useUser();
 	const [currentDate, setCurrentDate] = useState(new Date());
-	const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
 	const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
 
-	// Fetch release calendar data
+	// Calculate date range for 3 months (prev, current, next)
+	const dateRange = useMemo(() => {
+		const year = currentDate.getFullYear();
+		const month = currentDate.getMonth();
+
+		// Previous month
+		const prevMonth = new Date(year, month - 1, 1);
+		// Next month
+		const nextMonth = new Date(year, month + 2, 0); // Last day of next month
+
+		const startDate = prevMonth.toISOString().split("T")[0];
+		const endDate = nextMonth.toISOString().split("T")[0];
+
+		return { startDate, endDate };
+	}, [currentDate]);
+
+	// Fetch release calendar data with date range
 	const { data: calendarData, isLoading } = useQuery({
 		...showsControllerGetUserReleaseCalendarOptions({
 			path: { userDid: user?.did || "" },
+			query: dateRange,
 		}),
 		enabled: !!user?.did,
+		// Keep previous data while fetching new data for smooth transitions
+		placeholderData: (previousData) => previousData,
+		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
 
 	// Transform API data into date-keyed format
@@ -93,6 +112,12 @@ function CalendarPage() {
 			new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
 		);
 		setSelectedWeekStart(null);
+	};
+
+	const goToToday = () => {
+		const today = new Date();
+		setCurrentDate(today);
+		setSelectedWeekStart(getWeekStart(today));
 	};
 
 	const formatDateKey = (day: number) => {
@@ -175,7 +200,11 @@ function CalendarPage() {
 		for (let i = 0; i < 7; i++) {
 			const date = new Date(selectedWeekStart);
 			date.setDate(selectedWeekStart.getDate() + i);
-			const dateKey = date.toISOString().split("T")[0];
+			// Use local date components to match the formatDateKey function
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, "0");
+			const day = String(date.getDate()).padStart(2, "0");
+			const dateKey = `${year}-${month}-${day}`;
 			const dayReleases = releases[dateKey] || [];
 			for (const release of dayReleases) {
 				weekReleases.push({ ...release, date: dateKey });
@@ -229,33 +258,11 @@ function CalendarPage() {
 	return (
 		<div className="container-app py-8">
 			{/* Header */}
-			<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 className="text-display-2 mb-2">Release Calendar</h1>
-					<p className="text-[var(--foreground-muted)]">
-						Track upcoming movies and TV shows you're following.
-					</p>
-				</div>
-
-				{/* View Toggle */}
-				<div className="flex items-center gap-2">
-					<div className="flex rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] p-1">
-						{(["month", "week", "list"] as const).map((mode) => (
-							<button
-								key={mode}
-								type="button"
-								onClick={() => setViewMode(mode)}
-								className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-									viewMode === mode
-										? "bg-[var(--accent)] text-white"
-										: "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
-								}`}
-							>
-								{mode.charAt(0).toUpperCase() + mode.slice(1)}
-							</button>
-						))}
-					</div>
-				</div>
+			<div className="mb-8">
+				<h1 className="text-display-2 mb-2">Release Calendar</h1>
+				<p className="text-[var(--foreground-muted)]">
+					Track upcoming movies and TV shows you're following.
+				</p>
 			</div>
 
 			{/* Calendar Navigation */}
@@ -265,9 +272,18 @@ function CalendarPage() {
 					Previous
 				</button>
 
-				<h2 className="text-display-3">
-					{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-				</h2>
+				<div className="flex flex-col items-center">
+					<h2 className="text-display-3">
+						{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+					</h2>
+					<button
+						type="button"
+						onClick={goToToday}
+						className="text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors mt-1"
+					>
+						Go to today
+					</button>
+				</div>
 
 				<button type="button" onClick={nextMonth} className="btn btn-secondary">
 					Next
@@ -315,6 +331,7 @@ function CalendarPage() {
 									day,
 								).toDateString();
 							const inSelectedWeek = isInSelectedWeek(day);
+							const isDimmed = selectedWeekStart && !inSelectedWeek;
 
 							return (
 								<button
@@ -334,7 +351,7 @@ function CalendarPage() {
 											: isToday
 												? "border-[var(--accent)] bg-[var(--accent-subtle)]"
 												: "border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)]"
-									}`}
+									} ${isDimmed ? "opacity-40" : ""}`}
 								>
 									<span
 										className={`text-sm font-medium ${
@@ -350,7 +367,7 @@ function CalendarPage() {
 										<div className="mt-1 flex flex-col gap-0.5 w-full">
 											{dayReleases.slice(0, 2).map((release) => (
 												<div
-													key={`${release.showId || release.movieId || release.title}-${release.releaseDate}`}
+													key={`${release.showId || release.movieId || release.title}-${release.releaseDate}-${release.seasonNumber}-${release.episodeNumber}`}
 													className="flex items-center gap-1.5 overflow-hidden"
 												>
 													<div
@@ -372,13 +389,21 @@ function CalendarPage() {
 											)}
 										</div>
 									)}
-									{/* Selected week indicator */}
-									{inSelectedWeek && (
-										<div className="absolute bottom-1.5 left-1.5 right-1.5 h-0.5 rounded-full bg-[var(--accent)]" />
-									)}
 								</button>
 							);
 						})}
+
+						{/* Empty cells for days after the last day of month to complete the grid */}
+						{Array.from({
+							length: (7 - ((firstDayOfMonth + daysInMonth) % 7)) % 7,
+						}).map((_, index) => (
+							<div
+								// biome-ignore lint/suspicious/noArrayIndexKey: Empty calendar placeholder cells
+								key={`calendar-end-empty-${index}`}
+								className="h-24 rounded-lg bg-[var(--background-subtle)]"
+								aria-hidden="true"
+							/>
+						))}
 					</div>
 				</div>
 
@@ -412,7 +437,7 @@ function CalendarPage() {
 							<div className="space-y-3">
 								{selectedWeekReleases.map((release) => (
 									<Link
-										key={`${release.showId || release.movieId}-${release.releaseDate}-${release.date}`}
+										key={`${release.showId || release.movieId}-${release.releaseDate}-${release.date}-${release.seasonNumber}-${release.episodeNumber}`}
 										to={getItemUrl(release)}
 										className="card card-interactive flex items-center gap-3 p-3"
 									>

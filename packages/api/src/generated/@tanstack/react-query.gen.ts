@@ -607,7 +607,7 @@ export const showsControllerGetUserUpNextInfiniteOptions = (options: Options<Sho
 export const showsControllerGetUserReleaseCalendarQueryKey = (options: Options<ShowsControllerGetUserReleaseCalendarData>) => createQueryKey('showsControllerGetUserReleaseCalendar', options);
 
 /**
- * Get upcoming releases for watched shows and future-dated watchlist items
+ * Get releases for watched shows and watchlist items within a date range
  */
 export const showsControllerGetUserReleaseCalendarOptions = (options: Options<ShowsControllerGetUserReleaseCalendarData>) => queryOptions<ShowsControllerGetUserReleaseCalendarResponse, DefaultError, ShowsControllerGetUserReleaseCalendarResponse, ReturnType<typeof showsControllerGetUserReleaseCalendarQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

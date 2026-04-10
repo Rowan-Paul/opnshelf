@@ -487,15 +487,7 @@ describe("ShowsService", () => {
 
 	describe("getUserReleaseCalendar", () => {
 		it("should return upcoming tracked-show airings and future watchlist releases", async () => {
-			const showsTmdb = (
-				service as unknown as {
-					showsTmdb: {
-						getShowDetails: (showId: string) => Promise<unknown>;
-					};
-				}
-			).showsTmdb;
-			const getShowDetailsSpy = jest.spyOn(showsTmdb, "getShowDetails");
-
+			// Mock tracked episodes to get the shows the user is watching
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
 				{
 					id: "tracked-1",
@@ -504,34 +496,35 @@ describe("ShowsService", () => {
 					episodeNumber: 2,
 					watchedDate: new Date("2024-01-10T00:00:00.000Z"),
 					createdAt: new Date("2024-01-10T00:00:00.000Z"),
-					show: {
-						showId: "show-1",
-						title: "Tracked Show",
-						posterPath: "/tracked-show.jpg",
-						backdropPath: "/tracked-show-backdrop.jpg",
-						firstAirYear: 2024,
-						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
-						overview: "Tracked show overview",
-						colors: { primary: "#111111" },
-					},
 				},
 			]);
 
-			getShowDetailsSpy.mockResolvedValue({
-				id: 1,
-				name: "Tracked Show",
-				popularity: 1,
-				vote_average: 1,
-				vote_count: 1,
-				next_episode_to_air: {
-					id: 101,
+			// Mock episodes from watched shows with air dates in range
+			mockPrismaService.episode.findMany.mockResolvedValue([
+				{
+					id: "episode-1",
+					tmdbId: 101,
+					showId: "show-1",
+					seasonNumber: 2,
+					episodeNumber: 5,
 					name: "Broadcast Episode",
-					season_number: 2,
-					episode_number: 5,
-					air_date: "2099-01-12",
+					airDate: new Date("2099-01-12T00:00:00.000Z"),
 					overview: "Broadcast overview",
+					season: {
+						id: "season-1",
+						show: {
+							showId: "show-1",
+							title: "Tracked Show",
+							posterPath: "/tracked-show.jpg",
+							backdropPath: "/tracked-show-backdrop.jpg",
+							firstAirYear: 2024,
+							firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
+							overview: "Tracked show overview",
+							colors: { primary: "#111111" },
+						},
+					},
 				},
-			});
+			]);
 
 			mockPrismaService.show.findUnique.mockResolvedValue({
 				posterPath: "/tracked-show.jpg",
@@ -593,7 +586,7 @@ describe("ShowsService", () => {
 						source: "watchlist",
 						mediaType: "movie",
 						releaseKind: "movie",
-						releaseDate: "2099-01-10T00:00:00.000Z",
+						releaseDate: "2099-01-10",
 						title: "Future Movie",
 						subtitle: "Watchlist movie release",
 						overview: "Movie overview",
@@ -606,7 +599,7 @@ describe("ShowsService", () => {
 						source: "watchlist",
 						mediaType: "show",
 						releaseKind: "show",
-						releaseDate: "2099-01-11T00:00:00.000Z",
+						releaseDate: "2099-01-11",
 						title: "Future Show",
 						subtitle: "Watchlist series release",
 						overview: "Show overview",

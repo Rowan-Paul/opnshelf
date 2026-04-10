@@ -277,11 +277,16 @@ describe("ShowsController", () => {
 			mockReleaseCalendar,
 		);
 
-		const result = await controller.getUserReleaseCalendar("did:plc:abc123");
+		const query = { startDate: "2026-01-01", endDate: "2026-03-31" };
+		const result = await controller.getUserReleaseCalendar(
+			"did:plc:abc123",
+			query,
+		);
 
 		expect(result).toEqual(mockReleaseCalendar);
 		expect(mockShowsService.getUserReleaseCalendar).toHaveBeenCalledWith(
 			"did:plc:abc123",
+			query,
 		);
 	});
 });

@@ -1,12 +1,12 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
-import { parseScopedShowMediaId } from "../lists/list-media-id.util";
 import {
 	$nsid as COLLECTION,
 	main as episodeSchema,
 } from "../lexicons/xyz/opnshelf/episode";
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
+import { parseScopedShowMediaId } from "../lists/list-media-id.util";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "../generated/client";
@@ -650,77 +650,98 @@ export class ShowsService {
 		};
 	}
 
-	async getUserReleaseCalendar(userDid: string) {
-		const trackedEpisodes = (await this.prisma.trackedEpisode.findMany({
+	async getUserReleaseCalendar(
+		userDid: string,
+		query?: { startDate?: string; endDate?: string },
+	) {
+		// Parse date range or default to all upcoming dates
+		const startDate = query?.startDate
+			? new Date(query.startDate)
+			: new Date("1970-01-01");
+		const endDate = query?.endDate
+			? new Date(query.endDate)
+			: new Date("2099-12-31");
+
+		// Get shows the user is watching (has tracked episodes for)
+		const trackedEpisodes = await this.prisma.trackedEpisode.findMany({
 			where: { userDid },
-			include: { show: true },
-			orderBy: [{ watchedDate: "desc" }, { createdAt: "desc" }],
-		})) as TrackedEpisodeWithShow[];
+			select: { showId: true },
+			distinct: ["showId"],
+		});
 
-		const trackedShows = new Map<
-			string,
-			{
-				showId: string;
-				show: TrackedEpisodeWithShow["show"];
-			}
-		>();
+		const showIds = trackedEpisodes.map((t) => t.showId);
 
-		for (const tracked of trackedEpisodes) {
-			const existing = trackedShows.get(tracked.showId);
-			if (!existing) {
-				trackedShows.set(tracked.showId, {
-					showId: tracked.showId,
-					show: tracked.show,
-				});
-			}
-		}
+		// Query episodes from watched shows with air dates in range
+		const episodes = await this.prisma.episode.findMany({
+			where: {
+				showId: { in: showIds },
+				airDate: {
+					gte: startDate,
+					lte: endDate,
+				},
+			},
+			include: {
+				season: {
+					include: {
+						show: true,
+					},
+				},
+			},
+			orderBy: { airDate: "asc" },
+		});
 
-		const watchingItems: Array<ReleaseCalendarItem | null> = await Promise.all(
-			Array.from(trackedShows.values()).map(async ({ showId, show }) => {
-				try {
-					const showDetails = await this.showsTmdb.getShowDetails(showId);
-					const nextEpisode = showDetails.next_episode_to_air;
+		const watchingItems: ReleaseCalendarItem[] = await Promise.all(
+			episodes.map(async (episode) => {
+				const show = episode.season.show;
+				const colors = await this.ensureShowHasColors(show.showId);
 
-					if (
-						!nextEpisode?.air_date ||
-						!this.isUpcomingDate(nextEpisode.air_date)
-					) {
-						return null;
-					}
-
-					const colors = await this.ensureShowHasColors(showId);
-
-					return {
-						source: "watching" as const,
-						mediaType: "show" as const,
-						releaseKind: "episode" as const,
-						releaseDate: nextEpisode.air_date,
-						title: show.title,
-						subtitle: `S${nextEpisode.season_number} E${nextEpisode.episode_number} · ${nextEpisode.name || "Next airing episode"}`,
-						overview: nextEpisode.overview ?? show.overview ?? undefined,
-						posterPath: show.posterPath ?? undefined,
-						backdropPath: show.backdropPath ?? undefined,
-						showId,
-						seasonNumber: nextEpisode.season_number,
-						episodeNumber: nextEpisode.episode_number,
-						colors: (colors ?? show.colors ?? undefined) as
-							| ReleaseCalendarColors
-							| undefined,
-					};
-				} catch (error) {
-					this.logger.warn(
-						`Failed to compute release calendar entry for show ${showId}: ${error instanceof Error ? error.message : String(error)}`,
-					);
-					return null;
-				}
+				return {
+					source: "watching" as const,
+					mediaType: "show" as const,
+					releaseKind: "episode" as const,
+					releaseDate: episode.airDate?.toISOString().split("T")[0] ?? "",
+					title: show.title,
+					subtitle: `S${episode.seasonNumber} E${episode.episodeNumber} · ${episode.name}`,
+					overview: episode.overview ?? show.overview ?? undefined,
+					posterPath: show.posterPath ?? undefined,
+					backdropPath: show.backdropPath ?? undefined,
+					showId: show.showId,
+					seasonNumber: episode.seasonNumber,
+					episodeNumber: episode.episodeNumber,
+					colors: (colors ?? show.colors ?? undefined) as
+						| ReleaseCalendarColors
+						| undefined,
+				};
 			}),
 		);
 
+		// Get watchlist
 		const watchlist = await this.prisma.list.findFirst({
 			where: { userDid, slug: "watchlist" },
 			select: {
 				items: {
-					orderBy: { createdAt: "desc" },
+					where: {
+						OR: [
+							{
+								mediaType: "movie",
+								movie: {
+									releaseDate: {
+										gte: startDate,
+										lte: endDate,
+									},
+								},
+							},
+							{
+								mediaType: "show",
+								show: {
+									firstAirDate: {
+										gte: startDate,
+										lte: endDate,
+									},
+								},
+							},
+						],
+					},
 					select: {
 						mediaType: true,
 						mediaId: true,
@@ -756,61 +777,60 @@ export class ShowsService {
 		).flatMap((item): ReleaseCalendarItem[] => {
 			const watchlistItem = item as WatchlistReleaseItem;
 
-			if (watchlistItem.mediaType === "movie") {
-				const releaseDate = watchlistItem.movie?.releaseDate;
-				if (!releaseDate || !this.isUpcomingDate(releaseDate)) {
-					return [];
-				}
-
+			if (watchlistItem.mediaType === "movie" && watchlistItem.movie) {
 				return [
 					{
 						source: "watchlist" as const,
 						mediaType: "movie" as const,
 						releaseKind: "movie" as const,
-						releaseDate: releaseDate.toISOString(),
-						title: watchlistItem.movie?.title ?? "Untitled",
+						releaseDate:
+							watchlistItem.movie.releaseDate?.toISOString().split("T")[0] ??
+							"",
+						title: watchlistItem.movie.title,
 						subtitle: "Watchlist movie release",
-						overview: watchlistItem.movie?.overview ?? undefined,
-						posterPath: watchlistItem.movie?.posterPath ?? undefined,
-						backdropPath: watchlistItem.movie?.backdropPath ?? undefined,
-						movieId: watchlistItem.movie?.movieId ?? watchlistItem.mediaId,
-						colors: watchlistItem.movie?.colors as
+						overview: watchlistItem.movie.overview ?? undefined,
+						posterPath: watchlistItem.movie.posterPath ?? undefined,
+						backdropPath: watchlistItem.movie.backdropPath ?? undefined,
+						movieId: watchlistItem.movie.movieId,
+						colors: watchlistItem.movie.colors as
 							| ReleaseCalendarColors
 							| undefined,
 					},
 				];
 			}
 
-			if (parseScopedShowMediaId(watchlistItem.mediaId)) {
-				return [];
+			if (watchlistItem.mediaType === "show" && watchlistItem.show) {
+				// Skip scoped shows (season/episode specific)
+				if (parseScopedShowMediaId(watchlistItem.mediaId)) {
+					return [];
+				}
+
+				return [
+					{
+						source: "watchlist" as const,
+						mediaType: "show" as const,
+						releaseKind: "show" as const,
+						releaseDate:
+							watchlistItem.show.firstAirDate?.toISOString().split("T")[0] ??
+							"",
+						title: watchlistItem.show.title,
+						subtitle: "Watchlist series release",
+						overview: watchlistItem.show.overview ?? undefined,
+						posterPath: watchlistItem.show.posterPath ?? undefined,
+						backdropPath: watchlistItem.show.backdropPath ?? undefined,
+						showId: watchlistItem.show.showId,
+						colors: watchlistItem.show.colors as
+							| ReleaseCalendarColors
+							| undefined,
+					},
+				];
 			}
 
-			const releaseDate = watchlistItem.show?.firstAirDate;
-			if (!releaseDate || !this.isUpcomingDate(releaseDate)) {
-				return [];
-			}
-
-			return [
-				{
-					source: "watchlist" as const,
-					mediaType: "show" as const,
-					releaseKind: "show" as const,
-					releaseDate: releaseDate.toISOString(),
-					title: watchlistItem.show?.title ?? "Untitled",
-					subtitle: "Watchlist series release",
-					overview: watchlistItem.show?.overview ?? undefined,
-					posterPath: watchlistItem.show?.posterPath ?? undefined,
-					backdropPath: watchlistItem.show?.backdropPath ?? undefined,
-					showId: watchlistItem.show?.showId ?? watchlistItem.mediaId,
-					colors: watchlistItem.show?.colors as
-						| ReleaseCalendarColors
-						| undefined,
-				},
-			];
+			return [];
 		});
 
 		const items: ReleaseCalendarItem[] = [...watchingItems, ...watchlistItems]
-			.filter((item): item is ReleaseCalendarItem => item !== null)
+			.filter((item) => item.releaseDate)
 			.sort((left, right) => {
 				const releaseDateCompare =
 					this.parseReleaseDate(left.releaseDate).getTime() -
@@ -1336,12 +1356,5 @@ export class ShowsService {
 		}
 
 		return new Date(value);
-	}
-
-	private isUpcomingDate(value: string | Date) {
-		const releaseDate = this.parseReleaseDate(value);
-		const today = new Date();
-		today.setUTCHours(0, 0, 0, 0);
-		return releaseDate.getTime() >= today.getTime();
 	}
 }

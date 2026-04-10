@@ -1665,7 +1665,16 @@ export type ShowsControllerGetUserReleaseCalendarData = {
     path: {
         userDid: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Start date for release calendar range (YYYY-MM-DD)
+         */
+        startDate?: string;
+        /**
+         * End date for release calendar range (YYYY-MM-DD)
+         */
+        endDate?: string;
+    };
     url: '/shows/user/{userDid}/release-calendar';
 };
 
