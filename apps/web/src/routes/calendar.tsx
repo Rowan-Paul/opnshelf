@@ -11,7 +11,7 @@ import {
 	Loader2,
 	Tv,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "../lib/auth-context";
 
 export const Route = createFileRoute("/calendar")({
@@ -35,10 +35,31 @@ function transformReleasesToDateMap(
 	return releasesByDate;
 }
 
+// Get the start of the week (Monday) for a given date
+function getWeekStart(date: Date): Date {
+	const d = new Date(date);
+	const day = d.getDay();
+	// Adjust for Monday start (0 = Sunday, so Monday is 1)
+	const diff = day === 0 ? 6 : day - 1;
+	d.setDate(d.getDate() - diff);
+	d.setHours(0, 0, 0, 0);
+	return d;
+}
+
 function CalendarPage() {
 	const user = useUser();
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
+
+	// Initialize selected week to current week on mount
+	useEffect(() => {
+		setSelectedWeekStart((current) => {
+			if (!current) {
+				return getWeekStart(new Date());
+			}
+			return current;
+		});
+	}, []);
 
 	// Calculate date range for 3 months (prev, current, next)
 	const dateRange = useMemo(() => {
@@ -125,16 +146,6 @@ function CalendarPage() {
 		const month = String(currentDate.getMonth() + 1).padStart(2, "0");
 		const dayStr = String(day).padStart(2, "0");
 		return `${year}-${month}-${dayStr}`;
-	};
-
-	const getWeekStart = (date: Date): Date => {
-		const d = new Date(date);
-		const day = d.getDay();
-		// Adjust for Monday start (0 = Sunday, so Monday is 1)
-		const diff = day === 0 ? 6 : day - 1;
-		d.setDate(d.getDate() - diff);
-		d.setHours(0, 0, 0, 0);
-		return d;
 	};
 
 	const isSameDay = (d1: Date, d2: Date): boolean => {
@@ -236,6 +247,77 @@ function CalendarPage() {
 		return `${selectedWeekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 	};
 
+	// Mobile week navigation functions
+	const goToPrevWeek = () => {
+		if (!selectedWeekStart) return;
+		const newWeekStart = new Date(selectedWeekStart);
+		newWeekStart.setDate(selectedWeekStart.getDate() - 7);
+		setSelectedWeekStart(newWeekStart);
+		setCurrentDate(newWeekStart);
+	};
+
+	const goToNextWeek = () => {
+		if (!selectedWeekStart) return;
+		const newWeekStart = new Date(selectedWeekStart);
+		newWeekStart.setDate(selectedWeekStart.getDate() + 7);
+		setSelectedWeekStart(newWeekStart);
+		setCurrentDate(newWeekStart);
+	};
+
+	// Group releases by day for mobile list view
+	const getMobileWeekReleases = useMemo(() => {
+		if (!selectedWeekStart) return [];
+
+		const days: Array<{
+			date: Date;
+			dateKey: string;
+			releases: Array<ReleaseCalendarItemDto>;
+			isToday: boolean;
+		}> = [];
+
+		for (let i = 0; i < 7; i++) {
+			const date = new Date(selectedWeekStart);
+			date.setDate(selectedWeekStart.getDate() + i);
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, "0");
+			const day = String(date.getDate()).padStart(2, "0");
+			const dateKey = `${year}-${month}-${day}`;
+			const dayReleases = releases[dateKey] || [];
+
+			const today = new Date();
+			const isToday =
+				date.getFullYear() === today.getFullYear() &&
+				date.getMonth() === today.getMonth() &&
+				date.getDate() === today.getDate();
+
+			days.push({
+				date,
+				dateKey,
+				releases: dayReleases,
+				isToday,
+			});
+		}
+
+		return days;
+	}, [selectedWeekStart, releases]);
+
+	// Format date for mobile view (e.g., "Mon, Jan 15")
+	const formatMobileDate = (date: Date): string => {
+		const today = new Date();
+		const isToday =
+			date.getFullYear() === today.getFullYear() &&
+			date.getMonth() === today.getMonth() &&
+			date.getDate() === today.getDate();
+
+		if (isToday) return "Today";
+
+		return date.toLocaleDateString("en-US", {
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+		});
+	};
+
 	if (isLoading) {
 		return (
 			<div className="container-app py-8">
@@ -265,8 +347,8 @@ function CalendarPage() {
 				</p>
 			</div>
 
-			{/* Calendar Navigation */}
-			<div className="mb-6 flex items-center justify-between">
+			{/* Desktop: Calendar Navigation */}
+			<div className="mb-6 hidden items-center justify-between lg:flex">
 				<button type="button" onClick={prevMonth} className="btn btn-secondary">
 					<ChevronLeft className="h-4 w-4" />
 					Previous
@@ -279,7 +361,7 @@ function CalendarPage() {
 					<button
 						type="button"
 						onClick={goToToday}
-						className="text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors mt-1"
+						className="mt-1 text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
 					>
 						Go to today
 					</button>
@@ -291,7 +373,116 @@ function CalendarPage() {
 				</button>
 			</div>
 
-			<div className="grid gap-8 lg:grid-cols-3">
+			{/* Mobile: Week Navigation */}
+			<div className="mb-6 flex items-center justify-between lg:hidden">
+				<button
+					type="button"
+					onClick={goToPrevWeek}
+					className="btn btn-secondary h-12 w-12 p-0"
+					aria-label="Previous week"
+				>
+					<ChevronLeft className="h-6 w-6" />
+				</button>
+
+				<div className="flex flex-col items-center px-4">
+					<h2 className="text-display-3 text-center">
+						{selectedWeekStart ? formatWeekRange() : "Select a week"}
+					</h2>
+					<button
+						type="button"
+						onClick={goToToday}
+						className="mt-1 text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+					>
+						Go to today
+					</button>
+				</div>
+
+				<button
+					type="button"
+					onClick={goToNextWeek}
+					className="btn btn-secondary h-12 w-12 p-0"
+					aria-label="Next week"
+				>
+					<ChevronRight className="h-6 w-6" />
+				</button>
+			</div>
+
+			{/* Mobile: Week List View */}
+			<div className="space-y-6 lg:hidden">
+				{getMobileWeekReleases.map((day, _index) => (
+					<section key={day.dateKey} className={day.isToday ? "relative" : ""}>
+						{day.isToday && (
+							<div className="absolute -left-3 top-0 bottom-0 w-1 rounded-full bg-[var(--accent)]" />
+						)}
+						<h3
+							className={`mb-3 text-display-3 ${
+								day.isToday ? "text-[var(--accent)]" : ""
+							}`}
+						>
+							{formatMobileDate(day.date)}
+						</h3>
+
+						{day.releases.length === 0 ? (
+							<div className="card p-4">
+								<p className="text-sm text-[var(--foreground-muted)]">
+									No releases
+								</p>
+							</div>
+						) : (
+							<div className="space-y-3">
+								{day.releases.map((release) => (
+									<Link
+										key={`${release.showId || release.movieId}-${day.dateKey}-${release.seasonNumber}-${release.episodeNumber}`}
+										to={getItemUrl(release)}
+										className="card card-interactive flex items-center gap-3 p-3"
+									>
+										{release.posterPath ? (
+											<img
+												src={`https://image.tmdb.org/t/p/w200${release.posterPath}`}
+												alt={release.title}
+												className="h-24 w-16 rounded object-cover"
+												loading="lazy"
+											/>
+										) : (
+											<div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-[var(--background-subtle)]">
+												{getReleaseType(release) === "movie" ? (
+													<Film className="h-10 w-10 text-[var(--foreground-muted)]" />
+												) : (
+													<Tv className="h-10 w-10 text-[var(--foreground-muted)]" />
+												)}
+											</div>
+										)}
+										<div className="min-w-0 flex-1">
+											<p className="truncate font-medium">
+												{getDisplayTitle(release)}
+											</p>
+											<div className="mt-1 flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+												<span className="flex items-center gap-1">
+													{getReleaseType(release) === "movie" ? (
+														<>
+															<Film className="h-4 w-4" />
+															Movie
+														</>
+													) : (
+														<>
+															<Tv className="h-4 w-4" />
+															TV
+														</>
+													)}
+												</span>
+											</div>
+										</div>
+										<ChevronRight className="h-6 w-6 shrink-0 text-[var(--foreground-muted)]" />
+									</Link>
+								))}
+							</div>
+						)}
+					</section>
+				))}
+			</div>
+
+			{/* Desktop View */}
+			<div className="hidden gap-8 lg:grid lg:grid-cols-3">
 				{/* Calendar Grid */}
 				<div className="lg:col-span-2">
 					{/* Weekday Headers */}
