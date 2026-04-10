@@ -330,7 +330,7 @@ function CalendarPage() {
 									}}
 									className={`relative h-24 flex flex-col items-start rounded-lg border p-1.5 text-left transition-all ${
 										inSelectedWeek
-											? "border-[var(--accent)] bg-[var(--accent-subtle)] ring-1 ring-[var(--accent)]"
+											? "border-[var(--border)] bg-[var(--accent)]/5"
 											: isToday
 												? "border-[var(--accent)] bg-[var(--accent-subtle)]"
 												: "border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)]"
@@ -338,7 +338,7 @@ function CalendarPage() {
 								>
 									<span
 										className={`text-sm font-medium ${
-											isToday || inSelectedWeek
+											isToday
 												? "text-[var(--accent)]"
 												: "text-[var(--foreground)]"
 										}`}
