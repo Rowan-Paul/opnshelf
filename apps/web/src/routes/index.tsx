@@ -1,4 +1,7 @@
-import type { FollowedActivityItemDto, ReleaseCalendarItemDto } from "@opnshelf/api";
+import type {
+	FollowedActivityItemDto,
+	ReleaseCalendarItemDto,
+} from "@opnshelf/api";
 import {
 	showsControllerGetUserReleaseCalendarOptions,
 	socialControllerGetFeedOptions,
@@ -290,7 +293,9 @@ function Dashboard() {
 			return {
 				id: item.id, // Use the unique tracked episode ID
 				showId: item.showId,
-				title: item.episodeTitle || `${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
+				title:
+					item.episodeTitle ||
+					`${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
 				type: "show" as const,
 				posterUrl: item.posterPath
 					? `https://image.tmdb.org/t/p/w500${item.posterPath}`
@@ -399,25 +404,25 @@ function Dashboard() {
 							</div>
 						) : displayContent.length > 0 ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-							{displayContent.map((item) => (
-								<MediaCard
-									key={item.id}
-									id={item.id}
-									title={item.title}
-									posterUrl={item.posterUrl}
-									backdropUrl={item.backdropUrl}
-									type={item.type}
-									year={item.year}
-									episodeInfo={item.episodeInfo}
-									watchedDate={
-										item.watchedDate
-											? formatWatchedDate(item.watchedDate)
-											: undefined
-									}
-									layout="backdrop"
-									size="md"
-								/>
-							))}
+								{displayContent.map((item) => (
+									<MediaCard
+										key={item.id}
+										id={item.id}
+										title={item.title}
+										posterUrl={item.posterUrl}
+										backdropUrl={item.backdropUrl}
+										type={item.type}
+										year={item.year}
+										episodeInfo={item.episodeInfo}
+										watchedDate={
+											item.watchedDate
+												? formatWatchedDate(item.watchedDate)
+												: undefined
+										}
+										layout="backdrop"
+										size="md"
+									/>
+								))}
 							</div>
 						) : (
 							<div className="card p-8 text-center">
@@ -469,7 +474,10 @@ function Dashboard() {
 									>
 										{/* User Avatar */}
 										<img
-											src={item.actor.avatar || `https://i.pravatar.cc/150?u=${item.actor.did}`}
+											src={
+												item.actor.avatar ||
+												`https://i.pravatar.cc/150?u=${item.actor.did}`
+											}
 											alt={item.actor.displayName || item.actor.handle}
 											className="h-10 w-10 rounded-full object-cover"
 										/>
@@ -483,13 +491,19 @@ function Dashboard() {
 													{item.actor.displayName || item.actor.handle}
 												</Link>{" "}
 												{item.verb === "watch" && (
-													<span className="text-[var(--foreground-muted)]">watched</span>
+													<span className="text-[var(--foreground-muted)]">
+														watched
+													</span>
 												)}
 												{item.verb === "follow" && (
-													<span className="text-[var(--foreground-muted)]">followed</span>
+													<span className="text-[var(--foreground-muted)]">
+														followed
+													</span>
 												)}
 												{item.verb === "list_add" && (
-													<span className="text-[var(--foreground-muted)]">added to list</span>
+													<span className="text-[var(--foreground-muted)]">
+														added to list
+													</span>
 												)}
 											</p>
 											{/* Content Title */}
@@ -499,13 +513,14 @@ function Dashboard() {
 													className="hover:text-[var(--accent)]"
 												>
 													{item.content.title}
-													{item.content.type === "episode" && item.content.episodeTitle && (
-														<span className="text-[var(--foreground-muted)]">
-															{" "}
-															(S{item.content.seasonNumber}E
-															{item.content.episodeNumber})
-														</span>
-													)}
+													{item.content.type === "episode" &&
+														item.content.episodeTitle && (
+															<span className="text-[var(--foreground-muted)]">
+																{" "}
+																(S{item.content.seasonNumber}E
+																{item.content.episodeNumber})
+															</span>
+														)}
 												</Link>
 											</p>
 											{/* Timestamp & Actions */}

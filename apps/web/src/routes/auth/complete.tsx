@@ -2,7 +2,7 @@ import { authControllerMeOptions } from "@opnshelf/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/auth/complete")({
 	component: AuthCompletePage,
@@ -16,8 +16,8 @@ function AuthCompletePage() {
 	);
 	const [errorMessage, setErrorMessage] = useState("");
 
-	// Helper function to get error message - defined before useEffect
-	const getErrorMessage = (error: string): string => {
+	// Helper function to get error message - memoized with useCallback
+	const getErrorMessage = useCallback((error: string): string => {
 		switch (error) {
 			case "handle_required":
 				return "Please provide your handle to sign in.";
@@ -28,7 +28,7 @@ function AuthCompletePage() {
 			default:
 				return "An unexpected error occurred. Please try again.";
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		// Check for error in query params
@@ -54,7 +54,7 @@ function AuthCompletePage() {
 				setStatus("error");
 				setErrorMessage("Failed to complete authentication. Please try again.");
 			});
-	}, [queryClient, search]);
+	}, [queryClient, search, getErrorMessage]);
 
 	return (
 		<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">

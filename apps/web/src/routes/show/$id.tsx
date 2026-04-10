@@ -1,7 +1,7 @@
 import {
+	listsControllerGetListsForItemOptions,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
-	listsControllerGetListsForItemOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -237,8 +237,7 @@ function ShowDetailPage() {
 		if (!watchHistory || watchHistory.length === 0) return false;
 
 		return watchHistory.some(
-			(ep) =>
-				ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
+			(ep) => ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
 		);
 	};
 
@@ -685,31 +684,33 @@ function ShowDetailPage() {
 						<section className="card p-5">
 							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
 							<div className="space-y-2">
-										{listsContainingShow.length > 0 ? (
-											listsContainingShow.map((list) => (
-												<Link
-													key={list.listId}
-													to={`/lists/${list.listSlug}`}
-													className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
-												>
-													<span className="text-sm font-medium">
-														{list.listName}
-													</span>
-													<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
-												</Link>
-											))
-										) : (
-											<p className="text-sm text-[var(--foreground-muted)]">
-												Not in any lists yet
-											</p>
-										)}
+								{listsContainingShow.length > 0 ? (
+									listsContainingShow.map((list) => (
+										<Link
+											key={list.listId}
+											to={`/lists/${list.listSlug}`}
+											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
+										>
+											<span className="text-sm font-medium">
+												{list.listName}
+											</span>
+											<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
+										</Link>
+									))
+								) : (
+									<p className="text-sm text-[var(--foreground-muted)]">
+										Not in any lists yet
+									</p>
+								)}
 							</div>
 							<button
 								type="button"
 								className="mt-3 w-full btn btn-secondary text-sm"
 							>
 								<Plus className="h-4 w-4" />
-								{listsContainingShow.length > 0 ? "Add to another list" : "Add to list"}
+								{listsContainingShow.length > 0
+									? "Add to another list"
+									: "Add to list"}
 							</button>
 						</section>
 					</div>

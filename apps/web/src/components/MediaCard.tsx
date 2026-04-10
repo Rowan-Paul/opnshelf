@@ -36,7 +36,6 @@ export default function MediaCard({
 	episodeInfo,
 	progress,
 	isWatched = false,
-	isInWatchlist = false,
 	watchedDate,
 	size = "md",
 	layout = "poster",

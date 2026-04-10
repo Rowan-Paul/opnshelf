@@ -48,16 +48,16 @@ export default function Footer() {
 							{footerLinks.social.map((item) => {
 								const Icon = item.icon;
 								return (
-								<a
-									key={item.name}
-									href={item.href}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
-									aria-label={item.name}
-								>
-									<Icon className="h-4 w-4" />
-								</a>
+									<a
+										key={item.name}
+										href={item.href}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+										aria-label={item.name}
+									>
+										<Icon className="h-4 w-4" />
+									</a>
 								);
 							})}
 						</div>

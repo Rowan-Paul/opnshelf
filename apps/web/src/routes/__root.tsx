@@ -6,7 +6,10 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { DefaultErrorComponent, NotFoundComponent } from "../components/ErrorBoundary";
+import {
+	DefaultErrorComponent,
+	NotFoundComponent,
+} from "../components/ErrorBoundary";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import PostHogProvider from "../integrations/posthog/provider";
@@ -43,6 +46,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Theme script must be inline to prevent FOUC */}
 				<script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
 				<HeadContent />
 			</head>

@@ -687,7 +687,6 @@ function MovieDetailPage() {
 									)}
 									{watchHistory[0]?.rating && (
 										<div className="flex items-center gap-1 pt-2 border-t border-[var(--border-subtle)]">
-											{/* biome-ignore lint/suspicious/noArrayIndexKey: Rating stars use position as key */}
 											{Array.from({ length: 5 }).map((_, i) => (
 												<Star
 													// biome-ignore lint/suspicious/noArrayIndexKey: Rating stars use position as key

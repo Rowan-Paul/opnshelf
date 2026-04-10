@@ -111,132 +111,38 @@ export default function Header() {
 						})}
 					</div>
 
-				{/* Right side actions */}
-				<div className="flex items-center gap-2">
-					{/* Search */}
-					<SearchCommand />
+					{/* Right side actions */}
+					<div className="flex items-center gap-2">
+						{/* Search */}
+						<SearchCommand />
 
-					{/* Theme Toggle */}
-					<ThemeToggle />
+						{/* Theme Toggle */}
+						<ThemeToggle />
 
-					{/* User Menu or Login Button */}
-					{isLoading ? (
-						<div className="h-9 w-9 animate-pulse rounded-full bg-[var(--background-subtle)]" />
-					) : isAuthenticated && user ? (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<button
-									type="button"
-									className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)] transition-colors sm:flex"
-									aria-label="User menu"
-								>
-									{user.avatar ? (
-										<img
-											src={user.avatar}
-											alt={user.displayName || user.handle}
-											className="h-full w-full object-cover"
-										/>
-									) : (
-										<User className="h-4 w-4 text-[var(--foreground-muted)]" />
-									)}
-								</button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56">
-								<div className="flex items-center gap-2 p-2">
-									<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+						{/* User Menu or Login Button */}
+						{isLoading ? (
+							<div className="h-9 w-9 animate-pulse rounded-full bg-[var(--background-subtle)]" />
+						) : isAuthenticated && user ? (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										type="button"
+										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)] transition-colors sm:flex"
+										aria-label="User menu"
+									>
 										{user.avatar ? (
 											<img
 												src={user.avatar}
 												alt={user.displayName || user.handle}
-												className="h-full w-full rounded-full object-cover"
+												className="h-full w-full object-cover"
 											/>
 										) : (
-											<User className="h-4 w-4 text-[var(--accent)]" />
+											<User className="h-4 w-4 text-[var(--foreground-muted)]" />
 										)}
-									</div>
-									<div className="flex flex-col">
-										<span className="text-sm font-medium">
-											{user.displayName || user.handle}
-										</span>
-										<span className="text-xs text-[var(--foreground-muted)]">
-											@{user.handle}
-										</span>
-									</div>
-								</div>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem asChild>
-									<Link to="/settings" className="cursor-pointer">
-										<User className="mr-2 h-4 w-4" />
-										Profile & Settings
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={logout}
-									className="cursor-pointer text-red-600 focus:text-red-600"
-								>
-									<LogOut className="mr-2 h-4 w-4" />
-									Sign Out
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					) : (
-						<Link 
-							to="/login" 
-							className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)] sm:flex"
-						>
-							Sign In
-						</Link>
-					)}
-
-					{/* Mobile menu button - only visible on small screens */}
-					<button
-						type="button"
-						className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)] md:hidden"
-						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-						aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-						aria-expanded={mobileMenuOpen}
-					>
-						{mobileMenuOpen ? (
-							<X className="h-5 w-5" />
-						) : (
-							<Menu className="h-5 w-5" />
-						)}
-					</button>
-				</div>
-				</nav>
-
-				{/* Mobile Navigation - Overlay */}
-				{mobileMenuOpen && (
-					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-t border-[var(--border)] bg-[var(--background)] md:hidden">
-						<div className="container-app h-full overflow-y-auto py-4">
-							<div className="flex flex-col gap-1">
-							{navigation.map((item) => {
-								const isActive =
-									currentPath === item.href ||
-									(item.href !== "/" && currentPath.startsWith(item.href));
-								const Icon = item.icon;
-								return (
-									<Link
-										key={item.name}
-										to={item.href}
-										className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors ${
-											isActive
-												? "bg-[var(--accent-subtle)] text-[var(--accent)]"
-												: "text-[var(--foreground-muted)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
-										}`}
-									>
-										<Icon className="h-5 w-5" />
-										{item.name}
-									</Link>
-								);
-							})}
-
-							{/* Mobile user section */}
-							{isAuthenticated && user && (
-								<>
-									<div className="my-2 border-t border-[var(--border)]" />
-									<div className="flex items-center gap-3 px-3 py-3">
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-56">
+									<div className="flex items-center gap-2 p-2">
 										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
 											{user.avatar ? (
 												<img
@@ -257,33 +163,127 @@ export default function Header() {
 											</span>
 										</div>
 									</div>
-									<button
-										type="button"
+									<DropdownMenuSeparator />
+									<DropdownMenuItem asChild>
+										<Link to="/settings" className="cursor-pointer">
+											<User className="mr-2 h-4 w-4" />
+											Profile & Settings
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
 										onClick={logout}
-										className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+										className="cursor-pointer text-red-600 focus:text-red-600"
 									>
-										<LogOut className="h-5 w-5" />
+										<LogOut className="mr-2 h-4 w-4" />
 										Sign Out
-									</button>
-								</>
-							)}
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						) : (
+							<Link
+								to="/login"
+								className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)] sm:flex"
+							>
+								Sign In
+							</Link>
+						)}
 
-							{!isAuthenticated && (
-								<>
-									<div className="my-2 border-t border-[var(--border)]" />
-									<Link
-										to="/login"
-										className="flex items-center gap-3 rounded-md bg-[var(--accent)] px-3 py-3 text-sm font-medium text-white"
-									>
-										Sign In
-									</Link>
-								</>
+						{/* Mobile menu button - only visible on small screens */}
+						<button
+							type="button"
+							className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)] md:hidden"
+							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+							aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+							aria-expanded={mobileMenuOpen}
+						>
+							{mobileMenuOpen ? (
+								<X className="h-5 w-5" />
+							) : (
+								<Menu className="h-5 w-5" />
 							)}
+						</button>
+					</div>
+				</nav>
+
+				{/* Mobile Navigation - Overlay */}
+				{mobileMenuOpen && (
+					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-t border-[var(--border)] bg-[var(--background)] md:hidden">
+						<div className="container-app h-full overflow-y-auto py-4">
+							<div className="flex flex-col gap-1">
+								{navigation.map((item) => {
+									const isActive =
+										currentPath === item.href ||
+										(item.href !== "/" && currentPath.startsWith(item.href));
+									const Icon = item.icon;
+									return (
+										<Link
+											key={item.name}
+											to={item.href}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors ${
+												isActive
+													? "bg-[var(--accent-subtle)] text-[var(--accent)]"
+													: "text-[var(--foreground-muted)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+											}`}
+										>
+											<Icon className="h-5 w-5" />
+											{item.name}
+										</Link>
+									);
+								})}
+
+								{/* Mobile user section */}
+								{isAuthenticated && user && (
+									<>
+										<div className="my-2 border-t border-[var(--border)]" />
+										<div className="flex items-center gap-3 px-3 py-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+												{user.avatar ? (
+													<img
+														src={user.avatar}
+														alt={user.displayName || user.handle}
+														className="h-full w-full rounded-full object-cover"
+													/>
+												) : (
+													<User className="h-4 w-4 text-[var(--accent)]" />
+												)}
+											</div>
+											<div className="flex flex-col">
+												<span className="text-sm font-medium">
+													{user.displayName || user.handle}
+												</span>
+												<span className="text-xs text-[var(--foreground-muted)]">
+													@{user.handle}
+												</span>
+											</div>
+										</div>
+										<button
+											type="button"
+											onClick={logout}
+											className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+										>
+											<LogOut className="h-5 w-5" />
+											Sign Out
+										</button>
+									</>
+								)}
+
+								{!isAuthenticated && (
+									<>
+										<div className="my-2 border-t border-[var(--border)]" />
+										<Link
+											to="/login"
+											className="flex items-center gap-3 rounded-md bg-[var(--accent)] px-3 py-3 text-sm font-medium text-white"
+										>
+											Sign In
+										</Link>
+									</>
+								)}
+							</div>
 						</div>
 					</div>
-				</div>
-			)}
-		</div>
+				)}
+			</div>
 		</header>
 	);
 }

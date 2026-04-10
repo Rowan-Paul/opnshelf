@@ -5,7 +5,7 @@ import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
-	beforeLoad: ({ context }) => {
+	beforeLoad: () => {
 		// If user is already authenticated, redirect to home
 		// Note: This is a simple check, the actual check happens in the component
 	},
@@ -119,14 +119,8 @@ function LoginPage() {
 				<div className="mt-6 text-center text-sm text-[var(--foreground-muted)]">
 					<p>
 						By signing in, you agree to our{" "}
-						<a href="#" className="text-[var(--accent)] hover:underline">
-							Terms of Service
-						</a>{" "}
-						and{" "}
-						<a href="#" className="text-[var(--accent)] hover:underline">
-							Privacy Policy
-						</a>
-						.
+						<span className="text-[var(--accent)]">Terms of Service</span> and{" "}
+						<span className="text-[var(--accent)]">Privacy Policy</span>.
 					</p>
 					<p className="mt-4">
 						Powered by{" "}
