@@ -183,7 +183,7 @@ export default function Header() {
 						) : (
 							<Link
 								to="/login"
-								className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)] sm:flex"
+								className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[var(--accent-foreground)] transition-colors hover:bg-[var(--accent-hover)] sm:flex"
 							>
 								Sign In
 							</Link>
@@ -273,7 +273,7 @@ export default function Header() {
 										<div className="my-2 border-t border-[var(--border)]" />
 										<Link
 											to="/login"
-											className="flex items-center gap-3 rounded-md bg-[var(--accent)] px-3 py-3 text-sm font-medium text-white"
+											className="flex items-center gap-3 rounded-md bg-[var(--accent)] px-3 py-3 text-sm font-medium text-[var(--accent-foreground)]"
 										>
 											Sign In
 										</Link>

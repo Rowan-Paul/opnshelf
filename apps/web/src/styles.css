@@ -48,6 +48,7 @@
 
   --accent: var(--accent-600);
   --accent-hover: var(--accent-700);
+  --accent-foreground: #3f2e00;
   --accent-subtle: var(--accent-50);
   --accent-muted: var(--accent-100);
 
@@ -96,6 +97,7 @@
 
   --accent: var(--accent-400);
   --accent-hover: var(--accent-300);
+  --accent-foreground: #3f2e00;
   --accent-subtle: rgba(251, 191, 36, 0.15);
   --accent-muted: rgba(251, 191, 36, 0.25);
 
