@@ -553,9 +553,20 @@ function Dashboard() {
 										to={
 											release.mediaType === "movie" && release.movieId
 												? buildMovieUrl(release.movieId, release.title)
-												: release.showId
-													? buildShowUrl(release.showId, release.title)
-													: "#"
+												: release.mediaType === "show" &&
+														release.releaseKind === "episode" &&
+														release.showId &&
+														release.seasonNumber !== undefined &&
+														release.episodeNumber !== undefined
+													? buildEpisodeUrl(
+															release.showId,
+															release.title,
+															release.seasonNumber,
+															release.episodeNumber,
+														)
+													: release.showId
+														? buildShowUrl(release.showId, release.title)
+														: "#"
 										}
 										className="card card-interactive flex items-center gap-3 p-3"
 									>
