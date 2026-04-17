@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Clock, MoreHorizontal, Play, Star } from "lucide-react";
 import { useState } from "react";
+import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 interface MediaCardProps {
 	id: string | number;
 	title: string;
+	displayTitle?: string; // Optional different title for display (e.g., episode name)
+	// Episode-specific props for linking to episode detail page
+	seasonNumber?: number;
+	episodeNumber?: number;
 	posterUrl: string;
 	backdropUrl?: string;
 	type: "movie" | "show";
@@ -27,6 +32,9 @@ interface MediaCardProps {
 export default function MediaCard({
 	id,
 	title,
+	displayTitle,
+	seasonNumber,
+	episodeNumber,
 	posterUrl,
 	backdropUrl,
 	type,
@@ -69,7 +77,24 @@ export default function MediaCard({
 
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
-	const linkHref = href || (type === "movie" ? `/movie/${id}` : `/show/${id}`);
+
+	// Build URL - episodes go to episode detail page if season/episode numbers provided
+	const linkHref = (() => {
+		if (href) return href;
+		if (type === "movie") {
+			return buildMovieUrl(id, title);
+		}
+		if (
+			type === "show" &&
+			seasonNumber !== undefined &&
+			episodeNumber !== undefined
+		) {
+			return buildEpisodeUrl(id, title, seasonNumber, episodeNumber);
+		}
+		return buildShowUrl(id, title);
+	})();
+
+	const displayName = displayTitle || title;
 
 	return (
 		<article
@@ -109,7 +134,7 @@ export default function MediaCard({
 									)}
 								</div>
 								<p className="px-2 text-xs text-[var(--foreground-muted)]">
-									{title}
+									{displayName}
 								</p>
 							</div>
 						</div>
@@ -185,7 +210,9 @@ export default function MediaCard({
 					{/* Backdrop layout content */}
 					{layout === "backdrop" && (
 						<div className="absolute bottom-0 left-0 right-0 p-4">
-							<h3 className="font-semibold text-white line-clamp-1">{title}</h3>
+							<h3 className="font-semibold text-white line-clamp-1">
+								{displayName}
+							</h3>
 							{episodeInfo && (
 								<p className="mt-1 text-sm text-white/70">{episodeInfo}</p>
 							)}
@@ -203,7 +230,7 @@ export default function MediaCard({
 				{layout === "poster" && (
 					<div className="mt-2 space-y-1">
 						<h3 className="font-medium text-sm text-[var(--foreground)] line-clamp-1">
-							{title}
+							{displayName}
 						</h3>
 						<div className="flex items-center gap-2 text-xs text-[var(--foreground-muted)]">
 							{year && <span>{year}</span>}

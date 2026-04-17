@@ -12,6 +12,7 @@ import {
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import { useAuth } from "../lib/auth-context";
 
 export const Route = createFileRoute("/calendar")({
@@ -241,10 +242,10 @@ function CalendarPage() {
 
 	const getItemUrl = (item: ReleaseCalendarItemDto) => {
 		if (item.mediaType === "movie" && item.movieId) {
-			return `/movies/${item.movieId}`;
+			return buildMovieUrl(item.movieId, item.title);
 		}
 		if (item.mediaType === "show" && item.showId) {
-			return `/shows/${item.showId}`;
+			return buildShowUrl(item.showId, item.title);
 		}
 		return "#";
 	};

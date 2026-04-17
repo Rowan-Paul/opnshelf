@@ -23,6 +23,7 @@ import { useEffect } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useDashboardStats, useUserShelf } from "#/lib/hooks";
+import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import MediaCard from "../components/MediaCard";
 
 // Initialize API client
@@ -234,11 +235,13 @@ function Dashboard() {
 			}
 			// Episode type
 			return {
-				id: item.id, // Use the unique tracked episode ID
-				showId: item.showId,
-				title:
+				id: item.showId, // Use the TMDB show ID for URLs
+				title: item.showTitle, // Use show title for URL building
+				displayTitle:
 					item.episodeTitle ||
 					`${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
+				seasonNumber: item.seasonNumber,
+				episodeNumber: item.episodeNumber,
 				type: "show" as const,
 				posterUrl: item.posterPath
 					? `https://image.tmdb.org/t/p/w500${item.posterPath}`
@@ -338,6 +341,9 @@ function Dashboard() {
 										key={item.id}
 										id={item.id}
 										title={item.title}
+										displayTitle={item.displayTitle}
+										seasonNumber={item.seasonNumber}
+										episodeNumber={item.episodeNumber}
 										posterUrl={item.posterUrl}
 										backdropUrl={item.backdropUrl}
 										type={item.type}
@@ -437,8 +443,16 @@ function Dashboard() {
 												<Link
 													to={
 														item.type === "movie"
-															? `/movies/${item.movieId}`
-															: `/shows/${item.showId}/seasons/${item.seasonNumber}/episodes/${item.episodeNumber}`
+															? buildMovieUrl(
+																	item.movieId || "",
+																	item.title || "",
+																)
+															: buildEpisodeUrl(
+																	item.showId || "",
+																	item.showTitle || "",
+																	item.seasonNumber || 0,
+																	item.episodeNumber || 0,
+																)
 													}
 													className="hover:text-[var(--accent)]"
 												>
@@ -538,9 +552,9 @@ function Dashboard() {
 										key={`${release.showId || release.movieId || release.title}-${release.releaseDate}`}
 										to={
 											release.mediaType === "movie" && release.movieId
-												? `/movies/${release.movieId}`
+												? buildMovieUrl(release.movieId, release.title)
 												: release.showId
-													? `/shows/${release.showId}`
+													? buildShowUrl(release.showId, release.title)
 													: "#"
 										}
 										className="card card-interactive flex items-center gap-3 p-3"

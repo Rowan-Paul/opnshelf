@@ -4,6 +4,8 @@ import {
 	listsControllerGetUserListsOptions,
 	moviesControllerGetMovieWatchHistoryOptions,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerMarkWatchedMutation,
+	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -24,12 +26,12 @@ import { useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useDiscoverMovies, useMovieDetails } from "#/lib/hooks";
-import MediaCard from "../../components/MediaCard";
+import MediaCard from "../../../components/MediaCard";
 
 // Initialize API client
 setupApiClient();
 
-export const Route = createFileRoute("/movie/$id")({
+export const Route = createFileRoute("/movies/$movieId/$movieName")({
 	component: MovieDetailPage,
 });
 
@@ -49,14 +51,14 @@ function formatDate(dateString: string): string {
 }
 
 function MovieDetailPage() {
-	const { id } = Route.useParams();
+	const { movieId } = Route.useParams();
 	const { user, isAuthenticated } = useAuth();
 	const userDid = user?.did;
 	const queryClient = useQueryClient();
 	const [showListDropdown, setShowListDropdown] = useState(false);
 
 	// Fetch movie details from API
-	const { data: movie, isLoading, error } = useMovieDetails(id);
+	const { data: movie, isLoading, error } = useMovieDetails(movieId);
 	const { data: similarMoviesData } = useDiscoverMovies(1);
 
 	// Fetch user movies to check if this movie is tracked
@@ -70,7 +72,7 @@ function MovieDetailPage() {
 	// Check if movie is in user's lists
 	const { data: listsForItem } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "movie", mediaId: id },
+			path: { mediaType: "movie", mediaId: movieId },
 		}),
 		enabled: isAuthenticated,
 	});
@@ -78,7 +80,7 @@ function MovieDetailPage() {
 	// Fetch watch history for activity section
 	const { data: watchHistory } = useQuery({
 		...moviesControllerGetMovieWatchHistoryOptions({
-			path: { userDid: userDid || "", movieId: id },
+			path: { userDid: userDid || "", movieId },
 		}),
 		enabled: !!userDid,
 	});
@@ -93,9 +95,9 @@ function MovieDetailPage() {
 	const isWatched = useMemo(() => {
 		if (!userMovies || !Array.isArray(userMovies)) return false;
 		return userMovies.some(
-			(um: { movieId: number }) => um.movieId === Number(id),
+			(um: { movieId: number }) => um.movieId === Number(movieId),
 		);
-	}, [userMovies, id]);
+	}, [userMovies, movieId]);
 
 	const isInWatchlist = useMemo(() => {
 		if (!listsForItem || !Array.isArray(listsForItem)) return false;
@@ -111,7 +113,7 @@ function MovieDetailPage() {
 
 	// Mark watched mutation with optimistic update
 	const markWatchedMutation = useMutation({
-		mutationKey: ["movies", id, "markWatched"],
+		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async () => {
 			// Cancel outgoing refetches
@@ -135,7 +137,7 @@ function MovieDetailPage() {
 				["moviesControllerGetUserMovies"],
 				(old: unknown) => {
 					if (!old || !Array.isArray(old)) return old;
-					return [...old, { movieId: Number(id), title: movie?.title }];
+					return [...old, { movieId: Number(movieId), title: movie?.title }];
 				},
 			);
 
@@ -172,7 +174,7 @@ function MovieDetailPage() {
 
 	// Unmark watched mutation with optimistic update
 	const unmarkWatchedMutation = useMutation({
-		mutationKey: ["movies", id, "unmarkWatched"],
+		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async () => {
 			await queryClient.cancelQueries({
@@ -187,7 +189,7 @@ function MovieDetailPage() {
 				(old: unknown) => {
 					if (!old || !Array.isArray(old)) return old;
 					return old.filter(
-						(m: { movieId: number }) => m.movieId !== Number(id),
+						(m: { movieId: number }) => m.movieId !== Number(movieId),
 					);
 				},
 			);
@@ -229,14 +231,14 @@ function MovieDetailPage() {
 	const handleMarkWatched = () => {
 		if (!isAuthenticated) return;
 		markWatchedMutation.mutate({
-			body: { movieId: Number(id) },
+			body: { movieId: Number(movieId) },
 		});
 	};
 
 	const handleUnmarkWatched = () => {
 		if (!isAuthenticated) return;
 		unmarkWatchedMutation.mutate({
-			path: { movieId: id },
+			path: { movieId: movieId },
 		});
 	};
 
@@ -246,7 +248,7 @@ function MovieDetailPage() {
 			path: { slug },
 			body: {
 				mediaType: "movie",
-				mediaId: Number(id),
+				mediaId: Number(movieId),
 				title: movie?.title || "",
 			},
 		});
@@ -311,7 +313,7 @@ function MovieDetailPage() {
 	// Get similar movies from discover API, excluding current movie
 	const similarMovies =
 		similarMoviesData?.results
-			?.filter((m) => m.id !== Number(id))
+			?.filter((m) => m.id !== Number(movieId))
 			?.slice(0, 4)
 			?.map((m) => ({
 				id: m.id,
@@ -561,7 +563,7 @@ function MovieDetailPage() {
 
 			{/* Main Content */}
 			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
 					<div className="space-y-8">
 						{/* Overview */}
@@ -603,15 +605,15 @@ function MovieDetailPage() {
 						<section>
 							<h2 className="text-display-3 mb-4">Similar Movies</h2>
 							<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-								{similarMovies.map((movie) => (
+								{similarMovies.map((similarMovie) => (
 									<MediaCard
-										key={movie.id}
-										id={movie.id}
-										title={movie.title}
-										posterUrl={movie.posterUrl}
-										type={movie.type}
-										year={movie.year}
-										rating={movie.rating}
+										key={similarMovie.id}
+										id={similarMovie.id}
+										title={similarMovie.title}
+										posterUrl={similarMovie.posterUrl}
+										type={similarMovie.type}
+										year={similarMovie.year}
+										rating={similarMovie.rating}
 										size="sm"
 										layout="poster"
 									/>

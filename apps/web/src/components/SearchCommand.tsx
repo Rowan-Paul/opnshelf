@@ -33,6 +33,7 @@ import {
 	CommandSeparator,
 	CommandShortcut,
 } from "#/components/ui/command";
+import { buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 interface SearchCommandProps {
 	open?: boolean;
@@ -218,7 +219,7 @@ export function SearchCommand({
 								{movies.slice(0, 5).map((movie: UnifiedSearchResultDto) => (
 									<CommandItem key={`movie-${movie.id}`} asChild>
 										<Link
-											to={`/movie/${movie.id}`}
+											to={buildMovieUrl(movie.id, getTitle(movie))}
 											className="flex items-center gap-2"
 										>
 											<Film className="h-4 w-4" />
@@ -249,7 +250,7 @@ export function SearchCommand({
 								{shows.slice(0, 5).map((show: UnifiedSearchResultDto) => (
 									<CommandItem key={`show-${show.id}`} asChild>
 										<Link
-											to={`/show/${show.id}`}
+											to={buildShowUrl(show.id, getTitle(show))}
 											className="flex items-center gap-2"
 										>
 											<Tv className="h-4 w-4" />

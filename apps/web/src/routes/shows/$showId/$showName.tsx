@@ -4,7 +4,12 @@ import {
 	showsControllerGetShowWatchHistoryOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	useMatches,
+} from "@tanstack/react-router";
 import {
 	Check,
 	ChevronDown,
@@ -26,12 +31,13 @@ import {
 	useShowDetails,
 	useUserUpNext,
 } from "#/lib/hooks";
-import MediaCard from "../../components/MediaCard";
+import { slugifyName } from "#/lib/url-utils";
+import MediaCard from "../../../components/MediaCard";
 
 // Initialize API client
 setupApiClient();
 
-export const Route = createFileRoute("/show/$id")({
+export const Route = createFileRoute("/shows/$showId/$showName")({
 	component: ShowDetailPage,
 });
 
@@ -69,9 +75,21 @@ function useSeasonDetails(showId: string, seasonNumber: number | null) {
 }
 
 function ShowDetailPage() {
-	const { id } = Route.useParams();
+	const { showId } = Route.useParams();
+	const matches = useMatches();
 	const { user, isAuthenticated } = useAuth();
 	const userDid = user?.did;
+
+	// Check if we're on a child route (season or episode page)
+	const isChildRoute = matches.some(
+		(match) =>
+			match.routeId === "/shows/$showId/$showName/seasons/$seasonNumber" ||
+			match.routeId ===
+				"/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber",
+	);
+
+	// NOTE: All hooks must be called unconditionally before any early return
+	// This is a React requirement for hooks
 
 	const [expandedSeason, setExpandedSeason] = useState<number | null>(1);
 
@@ -80,22 +98,22 @@ function ShowDetailPage() {
 		data: show,
 		isLoading: showLoading,
 		error: showError,
-	} = useShowDetails(id);
+	} = useShowDetails(showId);
 
 	// Fetch user's watch history for this specific show
 	const { data: watchHistory } = useQuery({
 		...showsControllerGetShowWatchHistoryOptions({
-			path: { userDid: userDid || "", showId: id },
+			path: { userDid: userDid || "", showId },
 		}),
-		enabled: !!userDid && !!id,
+		enabled: !!userDid && !!showId,
 	});
 
 	// Fetch lists containing this show
 	const { data: listsForItem } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "show", mediaId: id },
+			path: { mediaType: "show", mediaId: showId },
 		}),
-		enabled: !!id,
+		enabled: !!showId,
 	});
 
 	// Count how many lists this show is actually in
@@ -110,18 +128,25 @@ function ShowDetailPage() {
 
 	// Fetch season details when expanded
 	const { data: seasonDetails, isLoading: seasonLoading } = useSeasonDetails(
-		id,
+		showId,
 		expandedSeason,
 	);
 
 	// Mark episode watched mutation
 	const markWatchedMutation = useMarkEpisodeWatched();
 
+	// If on season or episode page, render only the outlet (child component)
+	if (isChildRoute) {
+		return <Outlet />;
+	}
+
 	// Check if user tracks this show (based on watch history)
 	const isTracking = !!watchHistory && watchHistory.length > 0;
 
 	// Find up next episode for this show
-	const upNextForShow = upNextData?.items?.find((item) => item.showId === id);
+	const upNextForShow = upNextData?.items?.find(
+		(item) => item.showId === showId,
+	);
 	const nextEpisode = upNextForShow?.nextEpisode;
 
 	// Calculate watched episodes from watch history
@@ -185,7 +210,7 @@ function ShowDetailPage() {
 	// Get similar shows from discover API, excluding current show
 	const similarShows =
 		discoverShowsData?.results
-			?.filter((s) => s.id !== Number(id))
+			?.filter((s) => s.id !== Number(showId))
 			?.slice(0, 4)
 			?.map((s) => ({
 				id: s.id,
@@ -206,7 +231,7 @@ function ShowDetailPage() {
 
 		markWatchedMutation.mutate({
 			body: {
-				showId: id,
+				showId,
 				seasonNumber,
 				episodeNumber,
 			},
@@ -403,7 +428,7 @@ function ShowDetailPage() {
 
 			{/* Main Content */}
 			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
 					<div className="space-y-8">
 						{/* Overview */}
@@ -424,6 +449,24 @@ function ShowDetailPage() {
 										.map((season) => (
 											<div key={season.id} className="card overflow-hidden">
 												{/* Season Header */}
+												<Link
+													to="/shows/$showId/$showName/seasons/$seasonNumber"
+													params={{
+														showId,
+														showName: slugifyName(show.name),
+														seasonNumber: season.season_number,
+													}}
+													className="flex flex-1 items-center justify-between p-4 text-left transition-colors hover:bg-[var(--background-subtle)]"
+												>
+													<div>
+														<h3 className="font-semibold hover:text-[var(--accent)]">
+															{season.name || `Season ${season.season_number}`}
+														</h3>
+														<p className="text-sm text-[var(--foreground-muted)]">
+															{season.episode_count || 0} episodes
+														</p>
+													</div>
+												</Link>
 												<button
 													type="button"
 													onClick={() =>
@@ -433,18 +476,10 @@ function ShowDetailPage() {
 																: season.season_number,
 														)
 													}
-													className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-[var(--background-subtle)]"
+													className="flex items-center justify-center p-4 text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)]"
 												>
-													<div>
-														<h3 className="font-semibold">
-															{season.name || `Season ${season.season_number}`}
-														</h3>
-														<p className="text-sm text-[var(--foreground-muted)]">
-															{season.episode_count || 0} episodes
-														</p>
-													</div>
 													<ChevronDown
-														className={`h-5 w-5 text-[var(--foreground-muted)] transition-transform ${
+														className={`h-5 w-5 transition-transform ${
 															expandedSeason === season.season_number
 																? "rotate-180"
 																: ""
@@ -471,8 +506,15 @@ function ShowDetailPage() {
 																);
 
 																return (
-																	<div
+																	<Link
 																		key={episode.id}
+																		to="/shows/$showId/$showName/_seasons/$seasonNumber/episodes/$episodeNumber"
+																		params={{
+																			showId,
+																			showName: slugifyName(show.name),
+																			seasonNumber: season.season_number,
+																			episodeNumber: episode.episode_number,
+																		}}
 																		className={`flex items-center gap-4 p-4 transition-colors ${
 																			isCurrent
 																				? "bg-[var(--accent-subtle)]"
@@ -512,12 +554,13 @@ function ShowDetailPage() {
 																		{!isWatched && isAuthenticated && (
 																			<button
 																				type="button"
-																				onClick={() =>
+																				onClick={(e) => {
+																					e.preventDefault();
 																					handleMarkWatched(
 																						season.season_number,
 																						episode.episode_number,
-																					)
-																				}
+																					);
+																				}}
 																				disabled={markWatchedMutation.isPending}
 																				className="btn btn-secondary h-8 px-3 text-xs"
 																			>
@@ -528,7 +571,7 @@ function ShowDetailPage() {
 																				)}
 																			</button>
 																		)}
-																	</div>
+																	</Link>
 																);
 															})
 														) : (
