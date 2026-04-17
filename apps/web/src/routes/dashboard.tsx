@@ -403,88 +403,74 @@ function Dashboard() {
 							</div>
 						) : feedData?.items && feedData.items.length > 0 ? (
 							<div className="card divide-y divide-[var(--border)]">
-								{feedData.items
-									.filter(
-										(item: FollowedActivityItemDto) => item.content != null,
-									)
-									.map((item: FollowedActivityItemDto) => (
-										<div
-											key={item.id}
-											className="flex items-start gap-3 p-4 first:pt-5 last:pb-5"
-										>
-											{/* User Avatar */}
-											<img
-												src={
-													item.actor.avatar ||
-													`https://i.pravatar.cc/150?u=${item.actor.did}`
-												}
-												alt={item.actor.displayName || item.actor.handle}
-												className="h-10 w-10 rounded-full object-cover"
-											/>
-											<div className="flex-1 min-w-0">
-												{/* Activity Header */}
-												<p className="text-sm">
-													<Link
-														to={`/profile/${item.actor.handle}`}
-														className="font-medium hover:text-[var(--accent)]"
-													>
-														{item.actor.displayName || item.actor.handle}
-													</Link>{" "}
-													{item.verb === "watch" && (
+								{feedData.items.map((item: FollowedActivityItemDto) => (
+									<div
+										key={item.id}
+										className="flex items-start gap-3 p-4 first:pt-5 last:pb-5"
+									>
+										{/* User Avatar */}
+										<img
+											src={
+												item.actor.avatar ||
+												`https://i.pravatar.cc/150?u=${item.actor.did}`
+											}
+											alt={item.actor.displayName || item.actor.handle}
+											className="h-10 w-10 rounded-full object-cover"
+										/>
+										<div className="flex-1 min-w-0">
+											{/* Activity Header */}
+											<p className="text-sm">
+												<Link
+													to={`/profile/${item.actor.handle}`}
+													className="font-medium hover:text-[var(--accent)]"
+												>
+													{item.actor.displayName || item.actor.handle}
+												</Link>{" "}
+												<span className="text-[var(--foreground-muted)]">
+													{item.type === "movie"
+														? "watched"
+														: "watched episode"}
+												</span>
+											</p>
+											{/* Content Title */}
+											<p className="font-medium text-sm mt-0.5">
+												<Link
+													to={
+														item.type === "movie"
+															? `/movies/${item.movieId}`
+															: `/shows/${item.showId}/seasons/${item.seasonNumber}/episodes/${item.episodeNumber}`
+													}
+													className="hover:text-[var(--accent)]"
+												>
+													{item.title || item.showTitle}
+													{item.type === "episode" && (
 														<span className="text-[var(--foreground-muted)]">
-															watched
+															{" "}
+															(S{item.seasonNumber}E{item.episodeNumber})
 														</span>
 													)}
-													{item.verb === "follow" && (
-														<span className="text-[var(--foreground-muted)]">
-															followed
-														</span>
-													)}
-													{item.verb === "list_add" && (
-														<span className="text-[var(--foreground-muted)]">
-															added to list
-														</span>
-													)}
-												</p>
-												{/* Content Title */}
-												<p className="font-medium text-sm mt-0.5">
-													<Link
-														to={`/${item.content.type}/${item.content.id}`}
-														className="hover:text-[var(--accent)]"
-													>
-														{item.content.title}
-														{item.content.type === "episode" &&
-															item.content.episodeTitle && (
-																<span className="text-[var(--foreground-muted)]">
-																	{" "}
-																	(S{item.content.seasonNumber}E
-																	{item.content.episodeNumber})
-																</span>
-															)}
-													</Link>
-												</p>
-												{/* Timestamp & Actions */}
-												<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
-													<span>{formatRelativeTime(item.createdAt)}</span>
-													{item.verb === "watch" && (
-														<button
-															type="button"
-															className="flex items-center gap-1 hover:text-[var(--accent)]"
-														>
-															<Heart className="h-3 w-3" />
-															Like
-														</button>
-													)}
-												</div>
+												</Link>
+											</p>
+											{/* Timestamp & Actions */}
+											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
+												<span>{formatRelativeTime(item.createdAt)}</span>
+												<button
+													type="button"
+													className="flex items-center gap-1 hover:text-[var(--accent)]"
+												>
+													<Heart className="h-3 w-3" />
+													Like
+												</button>
 											</div>
-											{/* Content Type Badge */}
-											<span
-												className={`badge ${item.content.type === "movie" ? "badge-subtle" : "badge-accent"}`}
-											>
-												{item.content.type === "movie" ? "Movie" : "TV"}
-											</span>
 										</div>
-									))}
+										{/* Content Type Badge */}
+										<span
+											className={`badge ${item.type === "movie" ? "badge-subtle" : "badge-accent"}`}
+										>
+											{item.type === "movie" ? "Movie" : "TV"}
+										</span>
+									</div>
+								))}
 							</div>
 						) : (
 							<div className="card p-8 text-center">
