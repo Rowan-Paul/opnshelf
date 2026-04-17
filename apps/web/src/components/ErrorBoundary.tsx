@@ -52,7 +52,7 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 				<button
 					type="button"
 					onClick={handleRetry}
-					className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+					className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-medium text-[#3f2e00] transition-colors hover:bg-[var(--accent-hover)]"
 				>
 					<RefreshCw className="h-4 w-4" />
 					Try Again
@@ -103,7 +103,7 @@ export function NotFoundComponent() {
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<Link
 					to="/"
-					className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[var(--accent-hover)]"
+					className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-medium text-[#3f2e00] transition-colors hover:bg-[var(--accent-hover)]"
 				>
 					<Home className="h-4 w-4" />
 					Go Home

@@ -24,17 +24,17 @@
   --slate-900: #0f172a;
   --slate-950: #020617;
 
-  /* Accent - Sapphire blue */
-  --accent-50: #eff6ff;
-  --accent-100: #dbeafe;
-  --accent-200: #bfdbfe;
-  --accent-300: #93c5fd;
-  --accent-400: #60a5fa;
-  --accent-500: #3b82f6;
-  --accent-600: #2563eb;
-  --accent-700: #1d4ed8;
-  --accent-800: #1e40af;
-  --accent-900: #1e3a8a;
+  /* Accent - Warm Amber/Gold */
+  --accent-50: #fffbeb;
+  --accent-100: #fef3c7;
+  --accent-200: #fde68a;
+  --accent-300: #fcd34d;
+  --accent-400: #fbbf24;
+  --accent-500: #f59e0b;
+  --accent-600: #f3bc00;
+  --accent-700: #d97706;
+  --accent-800: #92400e;
+  --accent-900: #78350f;
 
   /* Semantic tokens */
   --background: var(--slate-50);
@@ -73,7 +73,7 @@
   --popover: var(--background-elevated);
   --popover-foreground: var(--foreground);
   --primary: var(--accent);
-  --primary-foreground: #ffffff;
+  --primary-foreground: #3f2e00;
   --secondary: var(--background-subtle);
   --secondary-foreground: var(--foreground);
   --muted: var(--background-subtle);
@@ -94,10 +94,10 @@
   --foreground-muted: var(--slate-400);
   --foreground-subtle: var(--slate-500);
 
-  --accent: var(--accent-500);
-  --accent-hover: var(--accent-400);
-  --accent-subtle: rgba(59, 130, 246, 0.1);
-  --accent-muted: rgba(59, 130, 246, 0.2);
+  --accent: var(--accent-400);
+  --accent-hover: var(--accent-300);
+  --accent-subtle: rgba(251, 191, 36, 0.15);
+  --accent-muted: rgba(251, 191, 36, 0.25);
 
   --border: var(--slate-800);
   --border-strong: var(--slate-700);
@@ -114,7 +114,7 @@
   --popover: var(--background-elevated);
   --popover-foreground: var(--foreground);
   --primary: var(--accent);
-  --primary-foreground: var(--slate-950);
+  --primary-foreground: #3f2e00;
   --secondary: var(--background-subtle);
   --secondary-foreground: var(--foreground);
   --muted: var(--background-subtle);
@@ -292,7 +292,7 @@ body {
 
 .btn-primary {
   background-color: var(--accent);
-  color: white;
+  color: #3f2e00;
   border-color: var(--accent);
 }
 
@@ -579,7 +579,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-700));
+  background: linear-gradient(135deg, var(--accent-400), #f97316);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

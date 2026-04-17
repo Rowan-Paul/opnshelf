@@ -38,7 +38,7 @@ function LoginPage() {
 				{/* Logo */}
 				<div className="mb-8 text-center">
 					<div className="mb-4 flex justify-center">
-						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent)] text-white">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent)] text-[#3f2e00]">
 							<Film className="h-8 w-8" />
 						</div>
 					</div>

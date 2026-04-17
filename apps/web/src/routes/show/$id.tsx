@@ -346,7 +346,7 @@ function ShowDetailPage() {
 							{/* Current Progress */}
 							{isTracking && nextEpisode && (
 								<div className="mt-4 flex items-center gap-2 text-sm">
-									<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-white text-xs font-medium">
+									<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[#3f2e00] text-xs font-medium">
 										{nextEpisode.episode_number}
 									</div>
 									<span className="text-[var(--foreground-muted)]">

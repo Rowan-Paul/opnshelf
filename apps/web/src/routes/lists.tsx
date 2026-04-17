@@ -470,7 +470,7 @@ function ListsPage() {
 											onClick={() => setViewMode("grid")}
 											className={`rounded-md p-1.5 transition-colors ${
 												viewMode === "grid"
-													? "bg-[var(--accent)] text-white"
+													? "bg-[var(--accent)] text-[#3f2e00]"
 													: "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
 											}`}
 											aria-label="Grid view"
@@ -482,7 +482,7 @@ function ListsPage() {
 											onClick={() => setViewMode("list")}
 											className={`rounded-md p-1.5 transition-colors ${
 												viewMode === "list"
-													? "bg-[var(--accent)] text-white"
+													? "bg-[var(--accent)] text-[#3f2e00]"
 													: "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
 											}`}
 											aria-label="List view"
