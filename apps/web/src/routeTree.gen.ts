@@ -19,7 +19,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as MoviesMovieIdMovieNameRouteImport } from './routes/movies/$movieId/$movieName'
+import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber'
+import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
 
 const LoginRoute = LoginRouteImport.update({
@@ -72,11 +74,23 @@ const MoviesMovieIdMovieNameRoute = MoviesMovieIdMovieNameRouteImport.update({
   path: '/movies/$movieId/$movieName',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowsShowIdShowNameIndexRoute =
+  ShowsShowIdShowNameIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ShowsShowIdShowNameRoute,
+  } as any)
 const ShowsShowIdShowNameSeasonsSeasonNumberRoute =
   ShowsShowIdShowNameSeasonsSeasonNumberRouteImport.update({
     id: '/seasons/$seasonNumber',
     path: '/seasons/$seasonNumber',
     getParentRoute: () => ShowsShowIdShowNameRoute,
+  } as any)
+const ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute =
+  ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ShowsShowIdShowNameSeasonsSeasonNumberRoute,
   } as any)
 const ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
   ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport.update(
@@ -98,7 +112,9 @@ export interface FileRoutesByFullPath {
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
+  '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$showName/seasons/$seasonNumber/': typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
@@ -111,8 +127,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
-  '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
-  '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$showName': typeof ShowsShowIdShowNameIndexRoute
+  '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRoutesById {
@@ -127,7 +143,9 @@ export interface FileRoutesById {
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
+  '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
+  '/shows/$showId/$showName/seasons/$seasonNumber/': typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 export interface FileRouteTypes {
@@ -143,7 +161,9 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
     | '/shows/$showId/$showName'
+    | '/shows/$showId/$showName/'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
+    | '/shows/$showId/$showName/seasons/$seasonNumber/'
     | '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,7 +191,9 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
     | '/shows/$showId/$showName'
+    | '/shows/$showId/$showName/'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
+    | '/shows/$showId/$showName/seasons/$seasonNumber/'
     | '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber'
   fileRoutesById: FileRoutesById
 }
@@ -260,12 +282,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoviesMovieIdMovieNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shows/$showId/$showName/': {
+      id: '/shows/$showId/$showName/'
+      path: '/'
+      fullPath: '/shows/$showId/$showName/'
+      preLoaderRoute: typeof ShowsShowIdShowNameIndexRouteImport
+      parentRoute: typeof ShowsShowIdShowNameRoute
+    }
     '/shows/$showId/$showName/seasons/$seasonNumber': {
       id: '/shows/$showId/$showName/seasons/$seasonNumber'
       path: '/seasons/$seasonNumber'
       fullPath: '/shows/$showId/$showName/seasons/$seasonNumber'
       preLoaderRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteImport
       parentRoute: typeof ShowsShowIdShowNameRoute
+    }
+    '/shows/$showId/$showName/seasons/$seasonNumber/': {
+      id: '/shows/$showId/$showName/seasons/$seasonNumber/'
+      path: '/'
+      fullPath: '/shows/$showId/$showName/seasons/$seasonNumber/'
+      preLoaderRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport
+      parentRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberRoute
     }
     '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber': {
       id: '/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber'
@@ -278,11 +314,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface ShowsShowIdShowNameSeasonsSeasonNumberRouteChildren {
+  ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
   ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute
 }
 
 const ShowsShowIdShowNameSeasonsSeasonNumberRouteChildren: ShowsShowIdShowNameSeasonsSeasonNumberRouteChildren =
   {
+    ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute:
+      ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute,
     ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute:
       ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute,
   }
@@ -293,10 +332,12 @@ const ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren =
   )
 
 interface ShowsShowIdShowNameRouteChildren {
+  ShowsShowIdShowNameIndexRoute: typeof ShowsShowIdShowNameIndexRoute
   ShowsShowIdShowNameSeasonsSeasonNumberRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
 }
 
 const ShowsShowIdShowNameRouteChildren: ShowsShowIdShowNameRouteChildren = {
+  ShowsShowIdShowNameIndexRoute: ShowsShowIdShowNameIndexRoute,
   ShowsShowIdShowNameSeasonsSeasonNumberRoute:
     ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren,
 }
