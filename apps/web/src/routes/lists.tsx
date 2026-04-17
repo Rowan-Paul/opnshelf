@@ -1,5 +1,5 @@
 import type { MediaInListDto } from "@opnshelf/api";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	Clock,
@@ -16,7 +16,7 @@ import {
 	Star,
 	Tv,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -25,7 +25,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { useUser } from "#/lib/auth-context";
+import { useAuth } from "#/lib/auth-context";
 import { useCreateList, useList, useUserLists } from "#/lib/hooks";
 import MediaCard from "../components/MediaCard";
 
@@ -129,7 +129,16 @@ function getRating(media: Record<string, unknown>): number | undefined {
 }
 
 function ListsPage() {
-	const _user = useUser();
+	const { isAuthenticated, isLoading: authLoading } = useAuth();
+	const navigate = useNavigate();
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [authLoading, isAuthenticated, navigate]);
+
 	const [selectedListSlug, setSelectedListSlug] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [showCreateModal, setShowCreateModal] = useState(false);

@@ -8,7 +8,7 @@ import {
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	Activity,
 	Clock,
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { setupApiClient } from "#/lib/api";
-import { useUser } from "#/lib/auth-context";
+import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/following")({
 	component: FollowingPage,
@@ -64,9 +64,17 @@ function formatRelativeTime(dateString: string): string {
 }
 
 function FollowingPage() {
-	const user = useUser();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const userHandle = user?.handle;
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [authLoading, isAuthenticated, navigate]);
 
 	// Search state
 	const [searchQuery, setSearchQuery] = useState("");

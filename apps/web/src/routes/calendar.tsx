@@ -1,7 +1,7 @@
 import type { ReleaseCalendarItemDto } from "@opnshelf/api";
 import { showsControllerGetUserReleaseCalendarOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	Calendar as CalendarIcon,
 	ChevronLeft,
@@ -12,7 +12,7 @@ import {
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useUser } from "../lib/auth-context";
+import { useAuth } from "../lib/auth-context";
 
 export const Route = createFileRoute("/calendar")({
 	component: CalendarPage,
@@ -47,7 +47,16 @@ function getWeekStart(date: Date): Date {
 }
 
 function CalendarPage() {
-	const user = useUser();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+	const navigate = useNavigate();
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [authLoading, isAuthenticated, navigate]);
+
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
 

@@ -1,25 +1,24 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Film, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
-	beforeLoad: () => {
-		// If user is already authenticated, redirect to home
-		// Note: This is a simple check, the actual check happens in the component
-	},
 });
 
 function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const { login, signup, isAuthenticated } = useAuth();
+	const navigate = useNavigate();
 
 	// Redirect if already authenticated
-	if (isAuthenticated) {
-		throw redirect({ to: "/" });
-	}
+	useEffect(() => {
+		if (isAuthenticated) {
+			navigate({ to: "/dashboard" });
+		}
+	}, [isAuthenticated, navigate]);
 
 	const handleLogin = (e: React.FormEvent) => {
 		e.preventDefault();

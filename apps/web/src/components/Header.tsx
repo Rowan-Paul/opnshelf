@@ -22,7 +22,7 @@ import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
-	{ name: "Dashboard", href: "/", icon: Film },
+	{ name: "Dashboard", href: "/dashboard", icon: Film },
 	{ name: "Calendar", href: "/calendar", icon: Calendar },
 	{ name: "Following", href: "/following", icon: Users },
 	{ name: "Lists", href: "/lists", icon: List },
