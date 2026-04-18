@@ -4,6 +4,7 @@ staged_files=$(mktemp)
 
 git diff --cached --name-only --diff-filter=ACMR -z >"$staged_files"
 
+# Run linting/formatting only (typecheck has existing errors to fix)
 pnpm check:write || {
   rm -f "$staged_files"
   exit 1

@@ -94,9 +94,7 @@ function MovieDetailPage() {
 	// Check tracking status
 	const isWatched = useMemo(() => {
 		if (!userMovies || !Array.isArray(userMovies)) return false;
-		return userMovies.some(
-			(um: { movieId: number }) => um.movieId === Number(movieId),
-		);
+		return userMovies.some((um) => um.movieId === movieId);
 	}, [userMovies, movieId]);
 
 	const isInWatchlist = useMemo(() => {
@@ -105,11 +103,10 @@ function MovieDetailPage() {
 	}, [listsForItem]);
 
 	const _watchedList = listsForItem?.find(
-		(list: { slug: string }) => list.slug === "watched",
+		(list) => list.listSlug === "watched",
 	);
 	const otherLists =
-		listsForItem?.filter((list: { slug: string }) => list.slug !== "watched") ||
-		[];
+		listsForItem?.filter((list) => list.listSlug !== "watched") || [];
 
 	// Mark watched mutation with optimistic update
 	const markWatchedMutation = useMutation({
@@ -231,7 +228,7 @@ function MovieDetailPage() {
 	const handleMarkWatched = () => {
 		if (!isAuthenticated) return;
 		markWatchedMutation.mutate({
-			body: { movieId: Number(movieId) },
+			body: { movieId: movieId },
 		});
 	};
 
@@ -248,7 +245,7 @@ function MovieDetailPage() {
 			path: { slug },
 			body: {
 				mediaType: "movie",
-				mediaId: Number(movieId),
+				mediaId: movieId,
 				title: movie?.title || "",
 			},
 		});
@@ -258,12 +255,8 @@ function MovieDetailPage() {
 	// Get available lists (not already containing this movie)
 	const availableLists = useMemo(() => {
 		if (!userLists || !listsForItem) return [];
-		const listIdsInItem = new Set(
-			listsForItem.map((l: { id: number }) => l.id),
-		);
-		return userLists.filter(
-			(list: { id: number }) => !listIdsInItem.has(list.id),
-		);
+		const listIdsInItem = new Set(listsForItem.map((l) => l.listId));
+		return userLists.filter((list) => !listIdsInItem.has(list.id));
 	}, [userLists, listsForItem]);
 
 	if (isLoading) {
@@ -316,7 +309,7 @@ function MovieDetailPage() {
 			?.filter((m) => m.id !== Number(movieId))
 			?.slice(0, 4)
 			?.map((m) => ({
-				id: m.id,
+				id: String(m.id),
 				title: m.title,
 				type: "movie" as const,
 				year: m.release_date
@@ -325,7 +318,6 @@ function MovieDetailPage() {
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
-				rating: m.vote_average,
 			})) || [];
 
 	return (
@@ -379,7 +371,7 @@ function MovieDetailPage() {
 								<div className="flex flex-col justify-center">
 									<h1 className="text-display-2">{movie.title}</h1>
 									<p className="mt-2 text-lg text-[var(--foreground-muted)]">
-										{movie.tagline}
+										{/* Tagline not available in current API */}
 									</p>
 								</div>
 							</div>
@@ -388,7 +380,7 @@ function MovieDetailPage() {
 							<div className="hidden lg:block">
 								<h1 className="text-display-2">{movie.title}</h1>
 								<p className="mt-2 text-xl text-[var(--foreground-muted)]">
-									{movie.tagline}
+									{/* Tagline not available in current API */}
 								</p>
 							</div>
 
@@ -496,18 +488,16 @@ function MovieDetailPage() {
 												<p className="px-2 py-1 text-xs font-medium text-[var(--foreground-muted)]">
 													Add to list
 												</p>
-												{availableLists.map(
-													(list: { slug: string; name: string }) => (
-														<button
-															key={list.slug}
-															type="button"
-															onClick={() => handleAddToList(list.slug)}
-															className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
-														>
-															{list.name}
-														</button>
-													),
-												)}
+												{availableLists.map((list) => (
+													<button
+														key={list.slug}
+														type="button"
+														onClick={() => handleAddToList(list.slug)}
+														className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+													>
+														{list.name}
+													</button>
+												))}
 											</div>
 										</div>
 									)}
@@ -549,9 +539,9 @@ function MovieDetailPage() {
 											Watched
 										</span>
 									)}
-									{otherLists.map((list: { slug: string; name: string }) => (
-										<span key={list.slug} className="badge badge-subtle">
-											In {list.name}
+									{otherLists.map((list) => (
+										<span key={list.listSlug} className="badge badge-subtle">
+											In {list.listName}
 										</span>
 									))}
 								</div>
@@ -671,40 +661,17 @@ function MovieDetailPage() {
 							Array.isArray(watchHistory) &&
 							watchHistory.length > 0 ? (
 								<div className="space-y-3">
-									{watchHistory.map(
-										(
-											entry: { id: string; watchedAt: string; rating?: number },
-											index: number,
-										) => (
-											<div
-												key={entry.id || index}
-												className="flex items-center gap-2 text-green-600"
-											>
-												<Check className="h-5 w-5" />
-												<span className="font-medium">
-													Watched on {formatDate(entry.watchedAt)}
-												</span>
-											</div>
-										),
-									)}
-									{watchHistory[0]?.rating && (
-										<div className="flex items-center gap-1 pt-2 border-t border-[var(--border-subtle)]">
-											{Array.from({ length: 5 }).map((_, i) => (
-												<Star
-													// biome-ignore lint/suspicious/noArrayIndexKey: Rating stars use position as key
-													key={i}
-													className={`h-4 w-4 ${
-														i < (watchHistory[0].rating || 0)
-															? "fill-yellow-500 text-yellow-500"
-															: "text-[var(--border-strong)]"
-													}`}
-												/>
-											))}
-											<span className="ml-2 text-sm font-medium">
-												Your rating: {watchHistory[0].rating}/5
+									{watchHistory.map((entry, index) => (
+										<div
+											key={entry.id || index}
+											className="flex items-center gap-2 text-green-600"
+										>
+											<Check className="h-5 w-5" />
+											<span className="font-medium">
+												Watched on {formatDate(entry.watchedDate)}
 											</span>
 										</div>
-									)}
+									))}
 								</div>
 							) : (
 								<div className="empty-state p-0">
@@ -721,13 +688,15 @@ function MovieDetailPage() {
 							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
 							<div className="space-y-2">
 								{otherLists.length > 0 ? (
-									otherLists.map((list: { slug: string; name: string }) => (
+									otherLists.map((list) => (
 										<Link
-											key={list.slug}
-											to={`/lists/${list.slug}`}
+											key={list.listSlug}
+											to={`/lists/${list.listSlug}` as "/lists/$slug"}
 											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
 										>
-											<span className="text-sm font-medium">{list.name}</span>
+											<span className="text-sm font-medium">
+												{list.listName}
+											</span>
 											<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
 										</Link>
 									))

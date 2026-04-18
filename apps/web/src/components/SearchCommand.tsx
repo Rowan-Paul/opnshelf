@@ -1,6 +1,7 @@
 import {
 	type ListSummaryDto,
 	listsControllerGetUserListsOptions,
+	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
@@ -281,7 +282,8 @@ export function SearchCommand({
 								{userLists.slice(0, 5).map((list: ListSummaryDto) => (
 									<CommandItem key={`list-${list.id}`} asChild>
 										<Link
-											to={`/lists/${list.slug}`}
+											to="/lists/$slug"
+											params={{ slug: list.slug }}
 											className="flex items-center gap-2"
 										>
 											<List className="h-4 w-4" />
@@ -295,28 +297,32 @@ export function SearchCommand({
 					)}
 
 					{/* People Section */}
-					{peopleData && peopleData.length > 0 && (
+					{peopleData?.items && peopleData.items.length > 0 && (
 						<>
 							<CommandSeparator />
-							<CommandGroup heading={`People (${peopleData.length})`}>
-								{peopleData.slice(0, 5).map((person) => (
-									<CommandItem key={`person-${person.did}`} asChild>
-										<Link
-											to={`/profile/${person.handle || person.did}`}
-											className="flex items-center gap-2"
-										>
-											<User className="h-4 w-4" />
-											<span>
-												{person.displayName || person.handle || "Unknown"}
-											</span>
-											{person.handle && (
-												<span className="text-[var(--foreground-muted)]">
-													@{person.handle}
+							<CommandGroup heading={`People (${peopleData.items.length})`}>
+								{peopleData.items
+									.slice(0, 5)
+									.map((person: SocialUserCardDto) => (
+										<CommandItem key={`person-${person.did}`} asChild>
+											<Link
+												to={
+													`/profile/${person.handle || person.did}` as "/profile/$handle"
+												}
+												className="flex items-center gap-2"
+											>
+												<User className="h-4 w-4" />
+												<span>
+													{person.displayName || person.handle || "Unknown"}
 												</span>
-											)}
-										</Link>
-									</CommandItem>
-								))}
+												{person.handle && (
+													<span className="text-[var(--foreground-muted)]">
+														@{person.handle}
+													</span>
+												)}
+											</Link>
+										</CommandItem>
+									))}
 							</CommandGroup>
 						</>
 					)}

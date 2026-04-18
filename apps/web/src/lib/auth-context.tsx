@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// Handle unauthorized responses
 	setOnUnauthorized(() => {
 		// Clear user data on 401
-		queryClient.setQueryData(authControllerMeOptions().queryKey, null);
+		queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
 	});
 
 	const login = useCallback((handle: string) => {

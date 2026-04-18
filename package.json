@@ -12,6 +12,7 @@
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
     "check": "turbo run check",
     "check:write": "turbo run check -- --write --unsafe",
+    "typecheck": "turbo run typecheck",
     "prepare": "husky"
   },
   "workspaces": [

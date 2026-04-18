@@ -184,7 +184,7 @@ function Dashboard() {
 			value: String(movieCount),
 			icon: Film,
 			change: statsData
-				? `+${statsData.recentMovies || 0} this month`
+				? `${statsData.watchedLast30Days || 0} watched this month`
 				: "Track your first movie",
 		},
 		{
@@ -192,25 +192,25 @@ function Dashboard() {
 			value: String(showCount),
 			icon: Tv,
 			change: statsData
-				? `+${statsData.recentShows || 0} this month`
+				? `${statsData.watchedLast7Days || 0} watched this week`
 				: "Track your first show",
 		},
 		{
-			label: "Hours",
-			value: String(Math.round(statsData?.totalWatchTimeHours || 0)),
+			label: "Activity",
+			value: String(statsData?.watchedLast7Days || 0),
 			icon: Clock,
-			change: statsData?.weeklyWatchTimeHours
-				? `${statsData.weeklyWatchTimeHours}h this week`
+			change: statsData?.dailyActivity?.length
+				? `${statsData.dailyActivity.length} active days`
 				: "Start watching",
 		},
 		{
-			label: "Streak",
-			value: String(statsData?.streakDays || 0),
+			label: "This Month",
+			value: String(statsData?.watchedLast30Days || 0),
 			icon: TrendingUp,
 			change:
-				statsData?.streakDays && statsData.streakDays > 0
-					? "days"
-					: "Start a streak",
+				statsData?.watchedLast30Days && statsData.watchedLast30Days > 0
+					? "total watched"
+					: "Start tracking",
 		},
 	];
 
@@ -317,7 +317,7 @@ function Dashboard() {
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">Your Shelf</h2>
 							<Link
-								to="/shelf"
+								to={"/dashboard" as const}
 								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
 							>
 								View all
@@ -367,13 +367,16 @@ function Dashboard() {
 								<p className="text-sm text-[var(--foreground-muted)] mb-4">
 									Start tracking movies and shows to see them here!
 								</p>
-								<Link
-									to="/search"
+								<button
+									type="button"
+									onClick={() => {
+										/* TODO: open search dialog */
+									}}
 									className="btn btn-primary inline-flex gap-2"
 								>
 									<Film className="h-4 w-4" />
 									Discover Content
-								</Link>
+								</button>
 							</div>
 						)}
 					</section>
@@ -417,52 +420,20 @@ function Dashboard() {
 										{/* User Avatar */}
 										<img
 											src={
-												item.actor.avatar ||
+												String(item.actor.avatar) ||
 												`https://i.pravatar.cc/150?u=${item.actor.did}`
 											}
-											alt={item.actor.displayName || item.actor.handle}
+											alt={String(item.actor.displayName || item.actor.handle)}
 											className="h-10 w-10 rounded-full object-cover"
 										/>
 										<div className="flex-1 min-w-0">
 											{/* Activity Header */}
 											<p className="text-sm">
 												<Link
-													to={`/profile/${item.actor.handle}`}
+													to={`/following` as const}
 													className="font-medium hover:text-[var(--accent)]"
 												>
-													{item.actor.displayName || item.actor.handle}
-												</Link>{" "}
-												<span className="text-[var(--foreground-muted)]">
-													{item.type === "movie"
-														? "watched"
-														: "watched episode"}
-												</span>
-											</p>
-											{/* Content Title */}
-											<p className="font-medium text-sm mt-0.5">
-												<Link
-													to={
-														item.type === "movie"
-															? buildMovieUrl(
-																	item.movieId || "",
-																	item.title || "",
-																)
-															: buildEpisodeUrl(
-																	item.showId || "",
-																	item.showTitle || "",
-																	item.seasonNumber || 0,
-																	item.episodeNumber || 0,
-																)
-													}
-													className="hover:text-[var(--accent)]"
-												>
-													{item.title || item.showTitle}
-													{item.type === "episode" && (
-														<span className="text-[var(--foreground-muted)]">
-															{" "}
-															(S{item.seasonNumber}E{item.episodeNumber})
-														</span>
-													)}
+													{String(item.actor.displayName || item.actor.handle)}
 												</Link>
 											</p>
 											{/* Timestamp & Actions */}

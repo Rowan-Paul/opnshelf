@@ -141,5 +141,7 @@ export type {
 	MoviesControllerDiscoverMoviesResponse,
 	ShowsControllerDiscoverShowsResponse,
 	ShelfActivitySummaryDto,
-	ActivityItem,
 };
+
+// Re-export ActivityItem type with explicit naming to avoid conflicts
+export type { ActivityItem as DashboardActivityItem };

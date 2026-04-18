@@ -27,6 +27,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { buildMovieUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/following")({
 	component: FollowingPage,
@@ -99,15 +100,17 @@ function FollowingPage() {
 		data: feedData,
 		isLoading: feedLoading,
 		error: feedError,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
 	} = useQuery({
 		...socialControllerGetFeedOptions({
 			query: { pageSize: 20 },
 		}),
 		enabled: !!userHandle,
 	});
+
+	// Pagination state (feed is not an infinite query)
+	const hasNextPage = false;
+	const isFetchingNextPage = false;
+	const fetchNextPage = () => {};
 
 	// Search people
 	const { data: searchData, isLoading: searchLoading } = useQuery({
@@ -324,7 +327,10 @@ function FollowingPage() {
 									Follow people to see what they&apos;re watching
 								</p>
 								{following.length === 0 && (
-									<Link to="/discover" className="btn btn-primary mt-4">
+									<Link
+										to={"/following" as const}
+										className="btn btn-primary mt-4"
+									>
 										<UserPlus className="h-4 w-4 mr-2" />
 										Find people to follow
 									</Link>
@@ -353,7 +359,7 @@ function FollowingPage() {
 										<div className="flex-1 min-w-0">
 											<div className="flex items-center gap-2 flex-wrap">
 												<Link
-													to={`/user/${activity.actor.handle}`}
+													to={"/following" as const}
 													className="font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
 												>
 													{String(activity.actor.displayName) ||
@@ -367,8 +373,11 @@ function FollowingPage() {
 												<Link
 													to={
 														activity.type === "movie"
-															? `/movies/${activity.movieId}`
-															: `/shows/${activity.showId}/seasons/${activity.seasonNumber}/episodes/${activity.episodeNumber}`
+															? (buildMovieUrl(
+																	activity.movieId || "",
+																	activity.title || "",
+																) as "/movies/$movieId/$movieName")
+															: (`/shows/${activity.showId}/${encodeURIComponent(activity.showTitle || "")}/seasons/${activity.seasonNumber}/episodes/${activity.episodeNumber}` as "/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber")
 													}
 													className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
 												>
@@ -407,8 +416,11 @@ function FollowingPage() {
 											<Link
 												to={
 													activity.type === "movie"
-														? `/movies/${activity.movieId}`
-														: `/shows/${activity.showId}`
+														? (buildMovieUrl(
+																activity.movieId || "",
+																activity.title || "",
+															) as "/movies/$movieId/$movieName")
+														: (`/shows/${activity.showId}/${encodeURIComponent(activity.showTitle || "")}` as "/shows/$showId/$showName")
 												}
 											>
 												<img

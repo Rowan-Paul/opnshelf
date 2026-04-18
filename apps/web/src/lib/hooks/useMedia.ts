@@ -40,7 +40,10 @@ export function useMarkMovieWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: moviesControllerMarkWatched,
+		mutationFn: async (variables: { body: { movieId: string } }) => {
+			const result = await moviesControllerMarkWatched(variables);
+			return result.data;
+		},
 		onSuccess: () => {
 			// Invalidate relevant queries
 			queryClient.invalidateQueries({ queryKey: ["movies"] });
@@ -53,7 +56,10 @@ export function useUnmarkMovieWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: moviesControllerUnmarkWatched,
+		mutationFn: async (variables: { path: { movieId: string } }) => {
+			const result = await moviesControllerUnmarkWatched(variables);
+			return result.data;
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["movies"] });
 		},
@@ -96,7 +102,12 @@ export function useMarkEpisodeWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: showsControllerMarkWatched,
+		mutationFn: async (variables: {
+			body: { showId: string; seasonNumber: number; episodeNumber: number };
+		}) => {
+			const result = await showsControllerMarkWatched(variables);
+			return result.data;
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
 		},
@@ -108,7 +119,12 @@ export function useUnmarkEpisodeWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: showsControllerUnmarkWatched,
+		mutationFn: async (variables: {
+			path: { showId: string; seasonNumber: number; episodeNumber: number };
+		}) => {
+			const result = await showsControllerUnmarkWatched(variables);
+			return result.data;
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
 		},

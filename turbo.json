@@ -16,6 +16,9 @@
     },
     "check": {
       "cache": false
+    },
+    "typecheck": {
+      "cache": false
     }
   }
 }

@@ -33,8 +33,12 @@ export function useCreateList() {
 	return useMutation({
 		mutationFn: async (data: CreateListDto) => {
 			const mutation = listsControllerCreateListMutation();
+			if (!mutation.mutationFn) {
+				throw new Error("Mutation function not available");
+			}
 			return mutation.mutationFn({ body: data });
 		},
+		mutationKey: ["lists", "create"],
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetUserLists"],
@@ -56,12 +60,17 @@ export function useAddItemToList() {
 			data: AddToListDto;
 		}) => {
 			const mutation = listsControllerAddItemToListMutation();
-			return mutation.mutationFn({
+			if (!mutation.mutationFn) {
+				throw new Error("Mutation function not available");
+			}
+			const result = await mutation.mutationFn({
 				path: { slug },
 				body: data,
 			});
+			return result.data;
 		},
-		onSuccess: (_, _variables) => {
+		mutationKey: ["lists", "addItem"],
+		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetUserLists"],
@@ -85,10 +94,15 @@ export function useRemoveItemFromList() {
 			mediaId: string;
 		}) => {
 			const mutation = listsControllerRemoveItemFromListMutation();
-			return mutation.mutationFn({
+			if (!mutation.mutationFn) {
+				throw new Error("Mutation function not available");
+			}
+			const result = await mutation.mutationFn({
 				path: { slug, mediaType, mediaId },
 			});
+			return result.data;
 		},
+		mutationKey: ["lists", "removeItem"],
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });
 			queryClient.invalidateQueries({
