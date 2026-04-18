@@ -193,7 +193,7 @@ export type TrackedMovieGroupByOutputType = {
   _max: TrackedMovieMaxAggregateOutputType | null
 }
 
-type GetTrackedMovieGroupByPayload<T extends TrackedMovieGroupByArgs> = Prisma.PrismaPromise<
+export type GetTrackedMovieGroupByPayload<T extends TrackedMovieGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TrackedMovieGroupByOutputType, T['by']> &
       {
@@ -1447,6 +1447,11 @@ export type TrackedMovieFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Skip the first `n` TrackedMovies.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of TrackedMovies.
+   */
   distinct?: Prisma.TrackedMovieScalarFieldEnum | Prisma.TrackedMovieScalarFieldEnum[]
 }
 

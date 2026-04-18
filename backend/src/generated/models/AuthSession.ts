@@ -158,7 +158,7 @@ export type AuthSessionGroupByOutputType = {
   _max: AuthSessionMaxAggregateOutputType | null
 }
 
-type GetAuthSessionGroupByPayload<T extends AuthSessionGroupByArgs> = Prisma.PrismaPromise<
+export type GetAuthSessionGroupByPayload<T extends AuthSessionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AuthSessionGroupByOutputType, T['by']> &
       {
@@ -954,6 +954,11 @@ export type AuthSessionFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Skip the first `n` AuthSessions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AuthSessions.
+   */
   distinct?: Prisma.AuthSessionScalarFieldEnum | Prisma.AuthSessionScalarFieldEnum[]
 }
 

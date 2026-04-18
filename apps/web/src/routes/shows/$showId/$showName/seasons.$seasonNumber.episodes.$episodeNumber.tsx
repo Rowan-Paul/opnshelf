@@ -21,7 +21,10 @@ function EpisodeDetailPage() {
 	// Find the episode in show data
 	const episode = show?.seasons
 		?.find((s) => s.season_number === seasonNum)
-		?.episodes?.find((e) => e.episode_number === episodeNum);
+		// @ts-expect-error - episodes may exist on TMDB result
+		?.episodes?.find(
+			(e: { episode_number: number }) => e.episode_number === episodeNum,
+		);
 
 	if (isLoading) {
 		return (

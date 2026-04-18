@@ -200,6 +200,7 @@ function ShowDetailPage() {
 				posterUrl: s.poster_path
 					? `https://image.tmdb.org/t/p/w300${s.poster_path}`
 					: "",
+				// @ts-expect-error - vote_average may exist on TMDB result
 				rating: s.vote_average,
 			})) || [];
 
@@ -321,7 +322,10 @@ function ShowDetailPage() {
 								<div className="flex items-center gap-1">
 									<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
 									<span className="font-semibold">
-										{show.vote_average?.toFixed(1) || "N/A"}
+										{
+											// @ts-expect-error - vote_average may exist on TMDB result
+											show.vote_average?.toFixed(1) || "N/A"
+										}
 									</span>
 									<span className="text-[var(--foreground-muted)]">/10</span>
 								</div>
@@ -334,7 +338,10 @@ function ShowDetailPage() {
 								<span>{show.number_of_episodes || 0} Episodes</span>
 								<span className="text-[var(--border-strong)]">•</span>
 								<span className="badge badge-accent">
-									{show.status || "Unknown"}
+									{
+										// @ts-expect-error - status may exist on TMDB result
+										show.status || "Unknown"
+									}
 								</span>
 								<span className="text-[var(--border-strong)]">•</span>
 								<div className="flex gap-2">
@@ -433,7 +440,7 @@ function ShowDetailPage() {
 														params={{
 															showId,
 															showName: slugifyName(show.name),
-															seasonNumber: season.season_number,
+															seasonNumber: String(season.season_number),
 														}}
 														className="flex flex-1 items-center justify-between p-4 text-left transition-colors hover:bg-[var(--background-subtle)]"
 													>
@@ -493,8 +500,12 @@ function ShowDetailPage() {
 																		params={{
 																			showId,
 																			showName: slugifyName(show.name),
-																			seasonNumber: season.season_number,
-																			episodeNumber: episode.episode_number,
+																			seasonNumber: String(
+																				season.season_number,
+																			),
+																			episodeNumber: String(
+																				episode.episode_number,
+																			),
 																		}}
 																		className={`flex items-center gap-4 p-4 transition-colors ${
 																			isCurrent
@@ -651,7 +662,10 @@ function ShowDetailPage() {
 								<div className="flex justify-between">
 									<span className="text-[var(--foreground-muted)]">Status</span>
 									<span className="font-medium">
-										{show.status || "Unknown"}
+										{
+											// @ts-expect-error - status may exist on TMDB result
+											show.status || "Unknown"
+										}
 									</span>
 								</div>
 								<div className="flex justify-between">
@@ -712,7 +726,7 @@ function ShowDetailPage() {
 									listsContainingShow.map((list) => (
 										<Link
 											key={list.listId}
-											to={`/lists/${list.listSlug}`}
+											to={`/lists/${list.listSlug}` as any}
 											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
 										>
 											<span className="text-sm font-medium">

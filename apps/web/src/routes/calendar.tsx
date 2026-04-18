@@ -196,21 +196,6 @@ function CalendarPage() {
 		return item.mediaType;
 	};
 
-	const _getEpisodeInfo = (
-		item: ReleaseCalendarItemDto,
-	): string | undefined => {
-		if (item.releaseKind === "episode" && item.seasonNumber !== undefined) {
-			if (item.episodeNumber !== undefined) {
-				return `S${item.seasonNumber}E${item.episodeNumber}`;
-			}
-			return `Season ${item.seasonNumber}`;
-		}
-		if (item.releaseKind === "show") {
-			return "Season Premiere";
-		}
-		return undefined;
-	};
-
 	const getSelectedWeekReleases = (): Array<
 		ReleaseCalendarItemDto & { date: string }
 	> => {

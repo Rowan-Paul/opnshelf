@@ -282,8 +282,7 @@ export function SearchCommand({
 								{userLists.slice(0, 5).map((list: ListSummaryDto) => (
 									<CommandItem key={`list-${list.id}`} asChild>
 										<Link
-											to="/lists/$slug"
-											params={{ slug: list.slug }}
+											to={`/lists/${list.slug}` as any}
 											className="flex items-center gap-2"
 										>
 											<List className="h-4 w-4" />
@@ -306,18 +305,18 @@ export function SearchCommand({
 									.map((person: SocialUserCardDto) => (
 										<CommandItem key={`person-${person.did}`} asChild>
 											<Link
-												to={
-													`/profile/${person.handle || person.did}` as "/profile/$handle"
-												}
+												to={`/profile/${person.handle || person.did}` as any}
 												className="flex items-center gap-2"
 											>
 												<User className="h-4 w-4" />
 												<span>
-													{person.displayName || person.handle || "Unknown"}
+													{String(
+														person.displayName || person.handle || "Unknown",
+													)}
 												</span>
 												{person.handle && (
 													<span className="text-[var(--foreground-muted)]">
-														@{person.handle}
+														@{String(person.handle)}
 													</span>
 												)}
 											</Link>

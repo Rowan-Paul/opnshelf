@@ -1,6 +1,4 @@
 import {
-	type AddToListDto,
-	type CreateListDto,
 	listsControllerAddItemToListMutation,
 	listsControllerCreateListMutation,
 	listsControllerGetListOptions,
@@ -31,13 +29,7 @@ export function useCreateList() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async (data: CreateListDto) => {
-			const mutation = listsControllerCreateListMutation();
-			if (!mutation.mutationFn) {
-				throw new Error("Mutation function not available");
-			}
-			return mutation.mutationFn({ body: data });
-		},
+		...listsControllerCreateListMutation(),
 		mutationKey: ["lists", "create"],
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -52,23 +44,7 @@ export function useAddItemToList() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({
-			slug,
-			data,
-		}: {
-			slug: string;
-			data: AddToListDto;
-		}) => {
-			const mutation = listsControllerAddItemToListMutation();
-			if (!mutation.mutationFn) {
-				throw new Error("Mutation function not available");
-			}
-			const result = await mutation.mutationFn({
-				path: { slug },
-				body: data,
-			});
-			return result.data;
-		},
+		...listsControllerAddItemToListMutation(),
 		mutationKey: ["lists", "addItem"],
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });
@@ -84,24 +60,7 @@ export function useRemoveItemFromList() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: async ({
-			slug,
-			mediaType,
-			mediaId,
-		}: {
-			slug: string;
-			mediaType: string;
-			mediaId: string;
-		}) => {
-			const mutation = listsControllerRemoveItemFromListMutation();
-			if (!mutation.mutationFn) {
-				throw new Error("Mutation function not available");
-			}
-			const result = await mutation.mutationFn({
-				path: { slug, mediaType, mediaId },
-			});
-			return result.data;
-		},
+		...listsControllerRemoveItemFromListMutation(),
 		mutationKey: ["lists", "removeItem"],
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });

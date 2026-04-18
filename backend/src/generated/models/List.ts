@@ -200,7 +200,7 @@ export type ListGroupByOutputType = {
   _max: ListMaxAggregateOutputType | null
 }
 
-type GetListGroupByPayload<T extends ListGroupByArgs> = Prisma.PrismaPromise<
+export type GetListGroupByPayload<T extends ListGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ListGroupByOutputType, T['by']> &
       {
@@ -1479,6 +1479,11 @@ export type ListFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Skip the first `n` Lists.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Lists.
+   */
   distinct?: Prisma.ListScalarFieldEnum | Prisma.ListScalarFieldEnum[]
 }
 

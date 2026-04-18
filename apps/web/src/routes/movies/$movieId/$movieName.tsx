@@ -102,9 +102,6 @@ function MovieDetailPage() {
 		return listsForItem.length > 0;
 	}, [listsForItem]);
 
-	const _watchedList = listsForItem?.find(
-		(list) => list.listSlug === "watched",
-	);
 	const otherLists =
 		listsForItem?.filter((list) => list.listSlug !== "watched") || [];
 
@@ -246,7 +243,6 @@ function MovieDetailPage() {
 			body: {
 				mediaType: "movie",
 				mediaId: movieId,
-				title: movie?.title || "",
 			},
 		});
 		setShowListDropdown(false);
@@ -318,6 +314,10 @@ function MovieDetailPage() {
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
+				// @ts-expect-error - vote_average may exist on TMDB result
+				rating: m.vote_average
+					? Math.round(m.vote_average * 10) / 10
+					: undefined,
 			})) || [];
 
 	return (
@@ -691,7 +691,7 @@ function MovieDetailPage() {
 									otherLists.map((list) => (
 										<Link
 											key={list.listSlug}
-											to={`/lists/${list.listSlug}` as "/lists/$slug"}
+											to={`/lists/${list.listSlug}` as any}
 											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
 										>
 											<span className="text-sm font-medium">

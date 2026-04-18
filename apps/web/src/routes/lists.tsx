@@ -192,8 +192,10 @@ function ListsPage() {
 
 		try {
 			await createListMutation.mutateAsync({
-				name: newListName.trim(),
-				description: newListDescription.trim() || undefined,
+				body: {
+					name: newListName.trim(),
+					description: newListDescription.trim() || undefined,
+				},
 			});
 			setShowCreateModal(false);
 			setNewListName("");

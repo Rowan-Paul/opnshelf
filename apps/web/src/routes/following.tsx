@@ -27,7 +27,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { buildMovieUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/following")({
 	component: FollowingPage,
@@ -370,19 +369,37 @@ function FollowingPage() {
 														? "watched"
 														: "watched episode"}
 												</span>
-												<Link
-													to={
-														activity.type === "movie"
-															? (buildMovieUrl(
-																	activity.movieId || "",
-																	activity.title || "",
-																) as "/movies/$movieId/$movieName")
-															: (`/shows/${activity.showId}/${encodeURIComponent(activity.showTitle || "")}/seasons/${activity.seasonNumber}/episodes/${activity.episodeNumber}` as "/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber")
-													}
-													className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
-												>
-													{activity.title || activity.showTitle}
-												</Link>
+												{activity.type === "movie" ? (
+													<Link
+														to="/movies/$movieId/$movieName"
+														params={{
+															movieId: String(activity.movieId),
+															movieName: encodeURIComponent(
+																activity.title || "",
+															),
+														}}
+														className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+													>
+														{activity.title}
+													</Link>
+												) : (
+													<Link
+														to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+														params={{
+															showId: String(activity.showId),
+															showName: encodeURIComponent(
+																activity.showTitle || "",
+															),
+															seasonNumber: String(activity.seasonNumber || 0),
+															episodeNumber: String(
+																activity.episodeNumber || 0,
+															),
+														}}
+														className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+													>
+														{activity.showTitle}
+													</Link>
+												)}
 												<span className="badge badge-subtle">
 													{activity.type === "movie" ? (
 														<Film className="h-3 w-3" />
@@ -413,26 +430,45 @@ function FollowingPage() {
 									{/* Media Preview */}
 									{(activity.posterPath || activity.backdropPath) && (
 										<div className="mt-4 flex gap-4">
-											<Link
-												to={
-													activity.type === "movie"
-														? (buildMovieUrl(
-																activity.movieId || "",
-																activity.title || "",
-															) as "/movies/$movieId/$movieName")
-														: (`/shows/${activity.showId}/${encodeURIComponent(activity.showTitle || "")}` as "/shows/$showId/$showName")
-												}
-											>
-												<img
-													src={
-														activity.posterPath
-															? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
-															: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
-													}
-													alt={activity.title || activity.showTitle || ""}
-													className="h-24 w-16 rounded-lg object-cover"
-												/>
-											</Link>
+											{activity.type === "movie" ? (
+												<Link
+													to="/movies/$movieId/$movieName"
+													params={{
+														movieId: String(activity.movieId),
+														movieName: encodeURIComponent(activity.title || ""),
+													}}
+												>
+													<img
+														src={
+															activity.posterPath
+																? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
+																: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
+														}
+														alt={activity.title || activity.showTitle || ""}
+														className="h-24 w-16 rounded-lg object-cover"
+													/>
+												</Link>
+											) : (
+												<Link
+													to="/shows/$showId/$showName"
+													params={{
+														showId: String(activity.showId),
+														showName: encodeURIComponent(
+															activity.showTitle || "",
+														),
+													}}
+												>
+													<img
+														src={
+															activity.posterPath
+																? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
+																: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
+														}
+														alt={activity.title || activity.showTitle || ""}
+														className="h-24 w-16 rounded-lg object-cover"
+													/>
+												</Link>
+											)}
 											<div className="flex-1">
 												<p className="text-[var(--foreground-muted)] text-sm line-clamp-3">
 													{activity.overview}

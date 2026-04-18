@@ -102,20 +102,16 @@ export function useUserShelfActivity(
 }
 
 // Discover movies for "Continue Watching" or recommendations
-export function useDiscoverMovies(page = 1) {
+export function useDiscoverMovies(_page = 1) {
 	return useQuery({
-		...moviesControllerDiscoverMoviesOptions({
-			query: { page },
-		}),
+		...moviesControllerDiscoverMoviesOptions(),
 	});
 }
 
 // Discover shows
-export function useDiscoverShows(page = 1) {
+export function useDiscoverShows(_page = 1) {
 	return useQuery({
-		...showsControllerDiscoverShowsOptions({
-			query: { page },
-		}),
+		...showsControllerDiscoverShowsOptions(),
 	});
 }
 

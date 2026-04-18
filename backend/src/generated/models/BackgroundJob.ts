@@ -196,7 +196,7 @@ export type BackgroundJobGroupByOutputType = {
   _max: BackgroundJobMaxAggregateOutputType | null
 }
 
-type GetBackgroundJobGroupByPayload<T extends BackgroundJobGroupByArgs> = Prisma.PrismaPromise<
+export type GetBackgroundJobGroupByPayload<T extends BackgroundJobGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<BackgroundJobGroupByOutputType, T['by']> &
       {
@@ -1116,6 +1116,11 @@ export type BackgroundJobFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Skip the first `n` BackgroundJobs.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of BackgroundJobs.
+   */
   distinct?: Prisma.BackgroundJobScalarFieldEnum | Prisma.BackgroundJobScalarFieldEnum[]
 }
 
