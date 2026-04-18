@@ -1,5 +1,31 @@
 import { Link } from "@tanstack/react-router";
-import { Film, Github, Twitter } from "lucide-react";
+import { Film } from "lucide-react";
+
+// Bluesky icon component using local SVG
+const BlueskyIcon = ({ className }: { className?: string }) => (
+	<img src="/bluesky.svg" alt="Bluesky" className={className} />
+);
+
+// Tangled icon component with dark/light mode variants
+const TangledIcon = ({ className }: { className?: string }) => (
+	<div
+		className={`relative ${className}`}
+		style={{ width: "1rem", height: "1rem" }}
+	>
+		{/* Dark mode (white icon) */}
+		<img
+			src="/tangled-white.svg"
+			alt="Tangled"
+			className="absolute inset-0 h-full w-full object-contain dark:block hidden"
+		/>
+		{/* Light mode (black icon) */}
+		<img
+			src="/tangled-black.svg"
+			alt="Tangled"
+			className="absolute inset-0 h-full w-full object-contain block dark:hidden"
+		/>
+	</div>
+);
 
 const footerLinks = {
 	product: [
@@ -20,8 +46,16 @@ const footerLinks = {
 		{ name: "Cookie Policy", href: "#" },
 	],
 	social: [
-		{ name: "Twitter", href: "https://twitter.com", icon: Twitter },
-		{ name: "GitHub", href: "https://github.com", icon: Github },
+		{
+			name: "Bluesky",
+			href: "https://bsky.app/profile/opnshelf.xyz",
+			icon: BlueskyIcon,
+		},
+		{
+			name: "Tangled",
+			href: "https://tangled.org/rowanpaulflynn.dev/opnshelf",
+			icon: TangledIcon,
+		},
 	],
 };
 
@@ -56,7 +90,11 @@ export default function Footer() {
 										className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
 										aria-label={item.name}
 									>
-										<Icon className="h-4 w-4" />
+										{item.name === "Tangled" ? (
+											<TangledIcon className="h-4 w-4" />
+										) : (
+											<Icon className="h-4 w-4" />
+										)}
 									</a>
 								);
 							})}

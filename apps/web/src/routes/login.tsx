@@ -103,14 +103,7 @@ function LoginPage() {
 						disabled={isLoading}
 						className="btn btn-secondary w-full"
 					>
-						{isLoading ? (
-							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
-								Redirecting...
-							</>
-						) : (
-							"Create New Account"
-						)}
+						Create New Account
 					</button>
 				</div>
 
