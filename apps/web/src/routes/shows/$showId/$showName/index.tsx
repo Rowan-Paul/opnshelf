@@ -218,7 +218,10 @@ function ShowDetailPage() {
 
 	// Get current episode display text
 	const getCurrentEpisodeText = () => {
-		if (nextEpisode) {
+		if (
+			nextEpisode?.season_number !== undefined &&
+			nextEpisode?.episode_number !== undefined
+		) {
 			return `Continue S${nextEpisode.season_number}E${nextEpisode.episode_number}`;
 		}
 		if (isTracking && episodesWatched > 0) {
@@ -347,19 +350,22 @@ function ShowDetailPage() {
 							</div>
 
 							{/* Current Progress */}
-							{isTracking && nextEpisode && (
-								<div className="mt-4 flex items-center gap-2 text-sm">
-									<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[#3f2e00] text-xs font-medium">
-										{nextEpisode.episode_number}
-									</div>
-									<span className="text-[var(--foreground-muted)]">
-										Currently at{" "}
-										<span className="font-medium text-[var(--foreground)]">
-											S{nextEpisode.season_number}E{nextEpisode.episode_number}
+							{isTracking &&
+								nextEpisode?.season_number !== undefined &&
+								nextEpisode?.episode_number !== undefined && (
+									<div className="mt-4 flex items-center gap-2 text-sm">
+										<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[#3f2e00] text-xs font-medium">
+											{nextEpisode.episode_number}
+										</div>
+										<span className="text-[var(--foreground-muted)]">
+											Currently at{" "}
+											<span className="font-medium text-[var(--foreground)]">
+												S{nextEpisode.season_number}E
+												{nextEpisode.episode_number}
+											</span>
 										</span>
-									</span>
-								</div>
-							)}
+									</div>
+								)}
 
 							{/* Action Buttons */}
 							<div className="mt-6 flex flex-wrap gap-3">
