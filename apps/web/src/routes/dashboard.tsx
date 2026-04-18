@@ -1,6 +1,7 @@
 import type {
 	FollowedActivityItemDto,
 	ReleaseCalendarItemDto,
+	UpNextShowDto,
 } from "@opnshelf/api";
 import {
 	showsControllerGetUserReleaseCalendarOptions,
@@ -13,7 +14,6 @@ import {
 	ChevronRight,
 	Clock,
 	Film,
-	Heart,
 	MessageCircle,
 	TrendingUp,
 	Tv,
@@ -23,6 +23,7 @@ import { useEffect } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useDashboardStats, useUserShelf } from "#/lib/hooks";
+import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import MediaCard from "../components/MediaCard";
 
@@ -131,11 +132,14 @@ function Dashboard() {
 	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
 		userDid || "",
 	);
+	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
+		userDid || "",
+	);
 
 	// Fetch social activity feed
 	const { data: feedData, isLoading: feedLoading } = useQuery({
 		...socialControllerGetFeedOptions({
-			query: { pageSize: 10 },
+			query: { pageSize: 6 },
 		}),
 	});
 
@@ -256,6 +260,27 @@ function Dashboard() {
 			};
 		}) || [];
 
+	// Transform "Up Next" data for display
+	const upNextContent =
+		upNextData?.items?.slice(0, 6).map((item: UpNextShowDto) => {
+			return {
+				id: item.show.showId,
+				title: item.show.title,
+				displayTitle: item.nextEpisode.name,
+				seasonNumber: item.nextEpisode.seasonNumber,
+				episodeNumber: item.nextEpisode.episodeNumber,
+				type: "show" as const,
+				posterUrl: item.show.posterPath
+					? `https://image.tmdb.org/t/p/w500${item.show.posterPath}`
+					: "",
+				backdropUrl: item.show.backdropPath
+					? `https://image.tmdb.org/t/p/original${item.show.backdropPath}`
+					: undefined,
+				year: item.show.firstAirYear,
+				episodeInfo: `${item.show.title} • S${item.nextEpisode.seasonNumber}E${item.nextEpisode.episodeNumber}`,
+			};
+		}) || [];
+
 	return (
 		<div className="container-app py-8">
 			{/* Welcome Section */}
@@ -312,6 +337,71 @@ function Dashboard() {
 			<div className="grid gap-8 lg:grid-cols-3">
 				{/* Main Content - Continue Watching */}
 				<div className="lg:col-span-2 space-y-8">
+					{/* Up Next - Shows the next episodes to watch */}
+					<section>
+						<div className="mb-4 flex items-center justify-between">
+							<h2 className="text-display-3">Up Next</h2>
+							<Link
+								to={"/dashboard" as const}
+								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+							>
+								View all
+								<ChevronRight className="h-4 w-4" />
+							</Link>
+						</div>
+
+						{upNextLoading ? (
+							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+								{[1, 2, 3, 4, 5, 6].map((i) => (
+									<div
+										key={i}
+										className="aspect-[16/9] animate-pulse rounded-lg bg-[var(--background-subtle)]"
+									/>
+								))}
+							</div>
+						) : upNextContent.length > 0 ? (
+							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+								{upNextContent.map((item) => (
+									<MediaCard
+										key={`${item.id}-${item.seasonNumber}-${item.episodeNumber}`}
+										id={item.id}
+										title={item.title}
+										displayTitle={item.displayTitle}
+										seasonNumber={item.seasonNumber}
+										episodeNumber={item.episodeNumber}
+										posterUrl={item.posterUrl}
+										backdropUrl={item.backdropUrl}
+										type={item.type}
+										year={item.year}
+										episodeInfo={item.episodeInfo}
+										layout="backdrop"
+										size="md"
+									/>
+								))}
+							</div>
+						) : (
+							<div className="card p-8 text-center">
+								<Tv className="h-12 w-12 mx-auto mb-3 text-[var(--foreground-muted)]" />
+								<p className="text-[var(--foreground-muted)] mb-2">
+									You're all caught up!
+								</p>
+								<p className="text-sm text-[var(--foreground-muted)] mb-4">
+									Start tracking shows to see your next episodes here.
+								</p>
+								<button
+									type="button"
+									onClick={() => {
+										/* TODO: open search dialog */
+									}}
+									className="btn btn-primary inline-flex gap-2"
+								>
+									<Tv className="h-4 w-4" />
+									Discover Shows
+								</button>
+							</div>
+						)}
+					</section>
+
 					{/* Continue Watching */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
@@ -445,16 +535,9 @@ function Dashboard() {
 														: `${item.showTitle}${item.seasonNumber && item.episodeNumber ? ` S${item.seasonNumber}E${item.episodeNumber}` : ""}`}
 												</span>
 											</p>
-											{/* Timestamp & Actions */}
+											{/* Timestamp */}
 											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
 												<span>{formatRelativeTime(item.createdAt)}</span>
-												<button
-													type="button"
-													className="flex items-center gap-1 hover:text-[var(--accent)]"
-												>
-													<Heart className="h-3 w-3" />
-													Like
-												</button>
 											</div>
 										</div>
 										{/* Content Type Badge */}
