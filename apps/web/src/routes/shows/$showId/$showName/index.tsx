@@ -7,6 +7,8 @@ import {
 	listsControllerRemoveItemFromListMutation,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
+	showsControllerGetShowWatchHistoryQueryKey,
+	showsControllerGetUserUpNextOptions,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
@@ -35,6 +37,7 @@ import {
 	useDiscoverShows,
 	useMarkEpisodeWatched,
 	useShowDetails,
+	useUnmarkEpisodeWatched,
 	useUserUpNext,
 } from "#/lib/hooks";
 import { slugifyName } from "#/lib/url-utils";
@@ -89,6 +92,14 @@ function ShowDetailPage() {
 	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
 	const [processingSeason, setProcessingSeason] = useState<number | null>(null);
+	const [processingEpisode, setProcessingEpisode] = useState<{
+		seasonNumber: number;
+		episodeNumber: number;
+	} | null>(null);
+	const [unmarkingEpisode, setUnmarkingEpisode] = useState<{
+		seasonNumber: number;
+		episodeNumber: number;
+	} | null>(null);
 
 	// Fetch show details from API
 	const {
@@ -98,10 +109,11 @@ function ShowDetailPage() {
 	} = useShowDetails(showId);
 
 	// Fetch user's watch history for this specific show
+	const watchHistoryQuery = showsControllerGetShowWatchHistoryOptions({
+		path: { userDid: userDid || "", showId },
+	});
 	const { data: watchHistory } = useQuery({
-		...showsControllerGetShowWatchHistoryOptions({
-			path: { userDid: userDid || "", showId },
-		}),
+		...watchHistoryQuery,
 		enabled: !!userDid && !!showId,
 	});
 
@@ -167,6 +179,9 @@ function ShowDetailPage() {
 
 	// Mark episode watched mutation
 	const markWatchedMutation = useMarkEpisodeWatched();
+
+	// Unmark episode watched mutation
+	const unmarkEpisodeMutation = useUnmarkEpisodeWatched();
 
 	// Add to list mutation with optimistic update
 	const addToListMutation = useMutation({
@@ -261,8 +276,14 @@ function ShowDetailPage() {
 		onSuccess: () => {
 			// Invalidate watch history and related queries
 			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryOptions({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: userDid || "", showId },
+				}),
+			});
+			// Invalidate up next to update "Current" badge
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserUpNextOptions({
+					path: { userDid: userDid || "" },
 				}).queryKey,
 			});
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
@@ -276,8 +297,14 @@ function ShowDetailPage() {
 		onSuccess: () => {
 			// Invalidate watch history and related queries
 			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryOptions({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: userDid || "", showId },
+				}),
+			});
+			// Invalidate up next to update "Current" badge
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserUpNextOptions({
+					path: { userDid: userDid || "" },
 				}).queryKey,
 			});
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
@@ -291,8 +318,14 @@ function ShowDetailPage() {
 		onSuccess: () => {
 			// Invalidate watch history and related queries
 			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryOptions({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid: userDid || "", showId },
+				}),
+			});
+			// Invalidate up next to update "Current" badge
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserUpNextOptions({
+					path: { userDid: userDid || "" },
 				}).queryKey,
 			});
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
@@ -401,13 +434,34 @@ function ShowDetailPage() {
 	const handleMarkWatched = (seasonNumber: number, episodeNumber: number) => {
 		if (!userDid || !isAuthenticated) return;
 
-		markWatchedMutation.mutate({
-			body: {
-				showId,
-				seasonNumber,
-				episodeNumber,
+		setProcessingEpisode({ seasonNumber, episodeNumber });
+		markWatchedMutation.mutate(
+			{
+				body: {
+					showId,
+					seasonNumber,
+					episodeNumber,
+				},
 			},
-		});
+			{
+				onSettled: () => setProcessingEpisode(null),
+			},
+		);
+	};
+
+	// Handle unmark episode as watched (remove from shelf)
+	const handleUnmarkEpisode = (seasonNumber: number, episodeNumber: number) => {
+		if (!userDid || !isAuthenticated) return;
+
+		setUnmarkingEpisode({ seasonNumber, episodeNumber });
+		unmarkEpisodeMutation.mutate(
+			{
+				path: { showId, seasonNumber, episodeNumber },
+			},
+			{
+				onSettled: () => setUnmarkingEpisode(null),
+			},
+		);
 	};
 
 	const handleToggleWatchlist = () => {
@@ -794,33 +848,36 @@ function ShowDetailPage() {
 										.filter((season) => season.season_number > 0) // Filter out specials (season 0)
 										.map((season) => (
 											<div key={season.id} className="card overflow-hidden">
-												{/* Clickable header area (toggles accordion) */}
-												<button
-													type="button"
-													className="flex items-center w-full text-left"
-													onClick={() => {
-														setHasUserToggledSeason(true);
-														setExpandedSeason(
-															expandedSeason === season.season_number
-																? null
-																: season.season_number,
-														);
-													}}
-												>
-													{/* Season Header */}
-													<div className="flex flex-1 items-center justify-between p-4">
-														<div>
-															<h3 className="font-semibold">
-																{season.name ||
-																	`Season ${season.season_number}`}
-															</h3>
-															<p className="text-sm text-[var(--foreground-muted)]">
-																{season.episode_count || 0} episodes
-															</p>
+												{/* Header area with accordion toggle and actions as siblings */}
+												<div className="flex items-center">
+													{/* Clickable header area (toggles accordion) */}
+													<button
+														type="button"
+														className="flex flex-1 items-center text-left"
+														onClick={() => {
+															setHasUserToggledSeason(true);
+															setExpandedSeason(
+																expandedSeason === season.season_number
+																	? null
+																	: season.season_number,
+															);
+														}}
+													>
+														{/* Season Header */}
+														<div className="flex flex-1 items-center justify-between p-4">
+															<div>
+																<h3 className="font-semibold">
+																	{season.name ||
+																		`Season ${season.season_number}`}
+																</h3>
+																<p className="text-sm text-[var(--foreground-muted)]">
+																	{season.episode_count || 0} episodes
+																</p>
+															</div>
 														</div>
-													</div>
+													</button>
 
-													{/* Season Actions */}
+													{/* Season Actions - now a sibling, not nested */}
 													{isAuthenticated &&
 														(season.episode_count || 0) > 0 && (
 															<span className="flex items-center gap-1 pr-2">
@@ -830,11 +887,12 @@ function ShowDetailPage() {
 																) ? (
 																	<button
 																		type="button"
-																		onClick={() =>
+																		onClick={(e) => {
+																			e.stopPropagation();
 																			handleUnmarkSeasonWatched(
 																				season.season_number,
-																			)
-																		}
+																			);
+																		}}
 																		disabled={
 																			processingSeason === season.season_number
 																		}
@@ -850,18 +908,19 @@ function ShowDetailPage() {
 																		) : (
 																			<>
 																				<Check className="h-3.5 w-3.5" />
-																				Watched
+																				On shelf
 																			</>
 																		)}
 																	</button>
 																) : (
 																	<button
 																		type="button"
-																		onClick={() =>
+																		onClick={(e) => {
+																			e.stopPropagation();
 																			handleMarkSeasonWatched(
 																				season.season_number,
-																			)
-																		}
+																			);
+																		}}
 																		disabled={
 																			processingSeason === season.season_number
 																		}
@@ -886,7 +945,18 @@ function ShowDetailPage() {
 														)}
 
 													{/* Expand/Chevron - also toggles */}
-													<div className="flex items-center justify-center self-stretch px-4 text-[var(--foreground-muted)]">
+													<button
+														type="button"
+														onClick={() => {
+															setHasUserToggledSeason(true);
+															setExpandedSeason(
+																expandedSeason === season.season_number
+																	? null
+																	: season.season_number,
+															);
+														}}
+														className="flex items-center justify-center self-stretch px-4 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+													>
 														<ChevronDown
 															className={`h-5 w-5 transition-transform ${
 																expandedSeason === season.season_number
@@ -894,8 +964,8 @@ function ShowDetailPage() {
 																	: ""
 															}`}
 														/>
-													</div>
-												</button>
+													</button>
+												</div>
 
 												{/* Episode List */}
 												<div
@@ -975,26 +1045,77 @@ function ShowDetailPage() {
 																					` • ${formatDate(episode.air_date)}`}
 																			</p>
 																		</div>
-																		{!isWatched && isAuthenticated && (
-																			<button
-																				type="button"
-																				onClick={(e) => {
-																					e.preventDefault();
-																					handleMarkWatched(
-																						season.season_number,
-																						episode.episode_number,
-																					);
-																				}}
-																				disabled={markWatchedMutation.isPending}
-																				className="btn btn-secondary h-8 px-3 text-xs"
-																			>
-																				{markWatchedMutation.isPending ? (
-																					<Loader2 className="h-3 w-3 animate-spin" />
-																				) : (
-																					"Watch"
-																				)}
-																			</button>
-																		)}
+																		{isAuthenticated &&
+																			(isWatched ? (
+																				// Remove from shelf button for watched episodes
+																				<button
+																					type="button"
+																					onClick={(e) => {
+																						e.preventDefault();
+																						e.stopPropagation();
+																						handleUnmarkEpisode(
+																							season.season_number,
+																							episode.episode_number,
+																						);
+																					}}
+																					disabled={
+																						unmarkingEpisode?.seasonNumber ===
+																							season.season_number &&
+																						unmarkingEpisode?.episodeNumber ===
+																							episode.episode_number
+																					}
+																					className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+																					title="Remove from shelf"
+																				>
+																					{unmarkingEpisode?.seasonNumber ===
+																						season.season_number &&
+																					unmarkingEpisode?.episodeNumber ===
+																						episode.episode_number ? (
+																						<>
+																							<Loader2 className="h-3 w-3 animate-spin" />
+																							Loading
+																						</>
+																					) : (
+																						<>
+																							<Check className="h-3.5 w-3.5" />
+																							On shelf
+																						</>
+																					)}
+																				</button>
+																			) : (
+																				// Add to shelf button for unwatched episodes
+																				<button
+																					type="button"
+																					onClick={(e) => {
+																						e.preventDefault();
+																						e.stopPropagation();
+																						handleMarkWatched(
+																							season.season_number,
+																							episode.episode_number,
+																						);
+																					}}
+																					disabled={
+																						processingEpisode?.seasonNumber ===
+																							season.season_number &&
+																						processingEpisode?.episodeNumber ===
+																							episode.episode_number
+																					}
+																					className="btn btn-secondary h-8 px-3 text-xs"
+																					title="Add to shelf"
+																				>
+																					{processingEpisode?.seasonNumber ===
+																						season.season_number &&
+																					processingEpisode?.episodeNumber ===
+																						episode.episode_number ? (
+																						<>
+																							<Loader2 className="h-3 w-3 animate-spin" />
+																							Loading
+																						</>
+																					) : (
+																						"Add to shelf"
+																					)}
+																				</button>
+																			))}
 																	</Link>
 																);
 															})
@@ -1128,7 +1249,7 @@ function ShowDetailPage() {
 											) : (
 												<>
 													<Check className="h-4 w-4" />
-													Mark All as Watched
+													Add show to shelf
 												</>
 											)}
 										</button>

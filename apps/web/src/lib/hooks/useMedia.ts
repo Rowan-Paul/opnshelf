@@ -8,6 +8,7 @@ import {
 	type ShowsControllerGetShowDetailsResponse,
 	type ShowsControllerGetUserShowsResponse,
 	showsControllerGetShowDetailsOptions,
+	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsOptions,
 	showsControllerGetUserUpNextOptions,
 	showsControllerMarkWatched,
@@ -101,13 +102,26 @@ export function useMarkEpisodeWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
+		mutationKey: ["shows", "markEpisodeWatched"],
 		mutationFn: async (variables: {
 			body: { showId: string; seasonNumber: number; episodeNumber: number };
 		}) => {
 			const result = await showsControllerMarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			// Invalidate the specific show's watch history
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid: "", showId: variables.body.showId },
+				}),
+			});
+			// Also invalidate up next queries - affects which episode is "current"
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid: "" } })
+					.queryKey,
+			});
+			// Invalidate general shows list
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
 		},
 	});
