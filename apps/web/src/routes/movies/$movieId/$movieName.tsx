@@ -539,7 +539,10 @@ function MovieDetailPage() {
 										className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
 									>
 										{unmarkWatchedMutation.isPending ? (
-											<Loader2 className="h-4 w-4 animate-spin" />
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Removing...
+											</>
 										) : (
 											<>
 												<X className="h-4 w-4" />
@@ -555,7 +558,10 @@ function MovieDetailPage() {
 										className="btn btn-primary gap-2"
 									>
 										{markWatchedMutation.isPending ? (
-											<Loader2 className="h-4 w-4 animate-spin" />
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Adding...
+											</>
 										) : (
 											<>
 												<Plus className="h-4 w-4" />
@@ -576,9 +582,16 @@ function MovieDetailPage() {
 									}
 									className="btn btn-secondary gap-2"
 								>
-									{addToListMutation.isPending ||
-									removeFromListMutation.isPending ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
+									{addToListMutation.isPending ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Adding...
+										</>
+									) : removeFromListMutation.isPending ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Removing...
+										</>
 									) : isInWatchlist ? (
 										<>
 											<Bookmark className="h-4 w-4 fill-current" />
