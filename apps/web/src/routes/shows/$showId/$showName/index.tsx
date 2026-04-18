@@ -1,23 +1,34 @@
 import {
+	listsControllerAddItemToListMutation,
 	listsControllerGetListsForItemOptions,
+	listsControllerGetListsForItemQueryKey,
+	listsControllerGetUserListsOptions,
+	listsControllerGetUserListsQueryKey,
+	listsControllerRemoveItemFromListMutation,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
+	showsControllerMarkSeasonWatchedMutation,
+	showsControllerMarkShowWatchedMutation,
+	showsControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+	Bookmark,
 	Check,
 	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
+	Eye,
 	Heart,
 	Loader2,
 	Play,
 	Plus,
 	Share2,
 	Star,
+	X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import {
@@ -73,8 +84,11 @@ function ShowDetailPage() {
 	const { showId } = Route.useParams();
 	const { user, isAuthenticated } = useAuth();
 	const userDid = user?.did;
-
-	const [expandedSeason, setExpandedSeason] = useState<number | null>(1);
+	const queryClient = useQueryClient();
+	const [showListDropdown, setShowListDropdown] = useState(false);
+	const [activeListAction, setActiveListAction] = useState<string | null>(null);
+	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
+	const [processingSeason, setProcessingSeason] = useState<number | null>(null);
 
 	// Fetch show details from API
 	const {
@@ -96,15 +110,51 @@ function ShowDetailPage() {
 		...listsControllerGetListsForItemOptions({
 			path: { mediaType: "show", mediaId: showId },
 		}),
-		enabled: !!showId,
+		enabled: isAuthenticated,
 	});
 
-	// Count how many lists this show is actually in
-	const listsContainingShow =
-		listsForItem?.filter((list) => list.isInList) || [];
+	// Fetch user's lists for the dropdown
+	const { data: userLists } = useQuery({
+		...listsControllerGetUserListsOptions(),
+		enabled: isAuthenticated && showListDropdown,
+	});
+
+	// Check list status
+	const isInWatchlist = useMemo(() => {
+		if (!listsForItem || !Array.isArray(listsForItem)) return false;
+		return listsForItem.some(
+			(list) => list.listSlug === "watchlist" && list.isInList,
+		);
+	}, [listsForItem]);
+
+	const isInFavorites = useMemo(() => {
+		if (!listsForItem || !Array.isArray(listsForItem)) return false;
+		return listsForItem.some(
+			(list) => list.listSlug === "favorites" && list.isInList,
+		);
+	}, [listsForItem]);
+
+	const otherLists =
+		listsForItem?.filter((list) => !list.isDefault && list.isInList) || [];
 
 	// Fetch user's up next episodes
 	const { data: upNextData } = useUserUpNext(userDid || "");
+
+	// Find up next episode for this show to determine current season
+	const upNextForShow = upNextData?.items?.find(
+		(item) => item.showId === showId,
+	);
+	const nextEpisode = upNextForShow?.nextEpisode;
+
+	const [expandedSeason, setExpandedSeason] = useState<number | null>(null);
+
+	// Update expanded season when nextEpisode data becomes available
+	// Only update if user hasn't manually toggled a season
+	useEffect(() => {
+		if (!hasUserToggledSeason && nextEpisode?.seasonNumber) {
+			setExpandedSeason(nextEpisode.seasonNumber);
+		}
+	}, [nextEpisode?.seasonNumber, hasUserToggledSeason]);
 
 	// Fetch discover shows for similar recommendations
 	const { data: discoverShowsData } = useDiscoverShows(1);
@@ -118,21 +168,164 @@ function ShowDetailPage() {
 	// Mark episode watched mutation
 	const markWatchedMutation = useMarkEpisodeWatched();
 
+	// Add to list mutation with optimistic update
+	const addToListMutation = useMutation({
+		mutationKey: ["lists", "addItem", showId],
+		...listsControllerAddItemToListMutation(),
+		onMutate: async (variables) => {
+			const listsForItemKey = listsControllerGetListsForItemQueryKey({
+				path: { mediaType: "show", mediaId: showId },
+			});
+
+			await queryClient.cancelQueries({ queryKey: listsForItemKey });
+
+			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
+
+			// Optimistically add to the list
+			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.map((list: { listSlug: string; isInList: boolean }) =>
+					list.listSlug === variables.path.slug
+						? { ...list, isInList: true }
+						: list,
+				);
+			});
+
+			return { previousListsForItem, listsForItemKey };
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousListsForItem) {
+				queryClient.setQueryData(
+					context.listsForItemKey,
+					context.previousListsForItem,
+				);
+			}
+		},
+		onSettled: (_data, _error, _variables, context) => {
+			if (context?.listsForItemKey) {
+				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
+			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+		},
+	});
+
+	// Remove from list mutation with optimistic update
+	const removeFromListMutation = useMutation({
+		mutationKey: ["lists", "removeItem", showId],
+		...listsControllerRemoveItemFromListMutation(),
+		onMutate: async (variables) => {
+			const listsForItemKey = listsControllerGetListsForItemQueryKey({
+				path: { mediaType: "show", mediaId: showId },
+			});
+
+			await queryClient.cancelQueries({ queryKey: listsForItemKey });
+
+			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
+
+			// Optimistically remove from the list
+			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.map((list: { listSlug: string; isInList: boolean }) =>
+					list.listSlug === variables.path.slug
+						? { ...list, isInList: false }
+						: list,
+				);
+			});
+
+			return { previousListsForItem, listsForItemKey };
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousListsForItem) {
+				queryClient.setQueryData(
+					context.listsForItemKey,
+					context.previousListsForItem,
+				);
+			}
+		},
+		onSettled: (_data, _error, _variables, context) => {
+			if (context?.listsForItemKey) {
+				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
+			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+		},
+	});
+
+	// Mark entire show as watched mutation
+	const markShowWatchedMutation = useMutation({
+		mutationKey: ["shows", showId, "markShowWatched"],
+		...showsControllerMarkShowWatchedMutation(),
+		onSuccess: () => {
+			// Invalidate watch history and related queries
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryOptions({
+					path: { userDid: userDid || "", showId },
+				}).queryKey,
+			});
+			queryClient.invalidateQueries({ queryKey: ["shows"] });
+		},
+	});
+
+	// Unmark entire show as watched mutation
+	const unmarkShowWatchedMutation = useMutation({
+		mutationKey: ["shows", showId, "unmarkShowWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onSuccess: () => {
+			// Invalidate watch history and related queries
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryOptions({
+					path: { userDid: userDid || "", showId },
+				}).queryKey,
+			});
+			queryClient.invalidateQueries({ queryKey: ["shows"] });
+		},
+	});
+
+	// Mark entire season as watched mutation
+	const markSeasonWatchedMutation = useMutation({
+		mutationKey: ["shows", showId, "markSeasonWatched"],
+		...showsControllerMarkSeasonWatchedMutation(),
+		onSuccess: () => {
+			// Invalidate watch history and related queries
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryOptions({
+					path: { userDid: userDid || "", showId },
+				}).queryKey,
+			});
+			queryClient.invalidateQueries({ queryKey: ["shows"] });
+		},
+	});
+
+	// Get available lists (not already containing this show)
+	const availableLists = useMemo(() => {
+		if (!userLists || !listsForItem) return [];
+		const listIdsInItem = new Set(listsForItem.map((l) => l.listId));
+		return userLists.filter((list) => !listIdsInItem.has(list.id));
+	}, [userLists, listsForItem]);
+
 	// Check if user tracks this show (based on watch history)
 	const isTracking = !!watchHistory && watchHistory.length > 0;
 
-	// Find up next episode for this show
-	const upNextForShow = upNextData?.items?.find(
-		(item) => item.showId === showId,
-	);
-	const nextEpisode = upNextForShow?.nextEpisode;
-
-	// Calculate watched episodes from watch history
-	const episodesWatched = watchHistory?.length || 0;
+	// Calculate watched episodes from watch history (count unique episodes only)
+	const uniqueEpisodesWatched = useMemo(() => {
+		if (!watchHistory || !Array.isArray(watchHistory)) return 0;
+		const uniqueEpisodes = new Set(
+			watchHistory.map(
+				(ep: { seasonNumber: number; episodeNumber: number }) =>
+					`${ep.seasonNumber}-${ep.episodeNumber}`,
+			),
+		);
+		return uniqueEpisodes.size;
+	}, [watchHistory]);
 	const totalEpisodes = show?.number_of_episodes || 0;
-	const progressPercentage =
-		totalEpisodes > 0 ? (episodesWatched / totalEpisodes) * 100 : 0;
-	const episodesRemaining = totalEpisodes - episodesWatched;
+	const rawProgressPercentage =
+		totalEpisodes > 0 ? (uniqueEpisodesWatched / totalEpisodes) * 100 : 0;
+	const progressPercentage = Math.max(0, Math.min(100, rawProgressPercentage));
+	const episodesWatched = uniqueEpisodesWatched;
+	const episodesRemaining = Math.max(0, totalEpisodes - uniqueEpisodesWatched);
 
 	// Loading state
 	if (showLoading) {
@@ -217,6 +410,83 @@ function ShowDetailPage() {
 		});
 	};
 
+	const handleToggleWatchlist = () => {
+		if (!isAuthenticated) return;
+		setActiveListAction("watchlist");
+		if (isInWatchlist) {
+			removeFromListMutation.mutate(
+				{
+					path: { slug: "watchlist", mediaType: "show", mediaId: showId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
+		} else {
+			addToListMutation.mutate(
+				{
+					path: { slug: "watchlist" },
+					body: { mediaType: "show", mediaId: showId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
+		}
+	};
+
+	const handleToggleFavorites = () => {
+		if (!isAuthenticated) return;
+		setActiveListAction("favorites");
+		if (isInFavorites) {
+			removeFromListMutation.mutate(
+				{
+					path: { slug: "favorites", mediaType: "show", mediaId: showId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
+		} else {
+			addToListMutation.mutate(
+				{
+					path: { slug: "favorites" },
+					body: { mediaType: "show", mediaId: showId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
+		}
+	};
+
+	const handleAddToList = (slug: string) => {
+		if (!isAuthenticated) return;
+		addToListMutation.mutate({
+			path: { slug },
+			body: {
+				mediaType: "show",
+				mediaId: showId,
+			},
+		});
+		setShowListDropdown(false);
+	};
+
+	const handleMarkShowWatched = () => {
+		if (!isAuthenticated) return;
+		markShowWatchedMutation.mutate({
+			body: { showId },
+		});
+	};
+
+	const handleUnmarkShowWatched = () => {
+		if (!isAuthenticated) return;
+		unmarkShowWatchedMutation.mutate({
+			path: { showId },
+			query: { mode: "all" },
+		});
+	};
+
 	// Get current episode display text
 	const getCurrentEpisodeText = () => {
 		if (nextEpisode) {
@@ -242,6 +512,47 @@ function ShowDetailPage() {
 
 		return watchHistory.some(
 			(ep) => ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
+		);
+	};
+
+	// Check if all episodes in a season have been watched
+	const isSeasonFullyWatched = (seasonNum: number, episodeCount: number) => {
+		if (!watchHistory || watchHistory.length === 0) return false;
+		if (episodeCount === 0) return false;
+
+		const watchedInSeason = watchHistory.filter(
+			(ep) => ep.seasonNumber === seasonNum,
+		).length;
+		return watchedInSeason >= episodeCount;
+	};
+
+	// Handle mark entire season as watched
+	const handleMarkSeasonWatched = (seasonNumber: number) => {
+		if (!isAuthenticated) return;
+		setProcessingSeason(seasonNumber);
+		markSeasonWatchedMutation.mutate(
+			{
+				body: { showId, seasonNumber },
+			},
+			{
+				onSettled: () => setProcessingSeason(null),
+			},
+		);
+	};
+
+	// Handle unmark entire season (remove all episodes from shelf)
+	const handleUnmarkSeasonWatched = (seasonNumber: number) => {
+		if (!isAuthenticated) return;
+		setProcessingSeason(seasonNumber);
+		// Use unmarkWatched with mode "all" and seasonNumber to remove all episodes of this season
+		unmarkShowWatchedMutation.mutate(
+			{
+				path: { showId },
+				query: { mode: "all", seasonNumber: String(seasonNumber) },
+			},
+			{
+				onSettled: () => setProcessingSeason(null),
+			},
 		);
 	};
 
@@ -370,40 +681,90 @@ function ShowDetailPage() {
 
 							{/* Action Buttons */}
 							<div className="mt-6 flex flex-wrap gap-3">
-								<button type="button" className="btn btn-primary gap-2">
-									<Play className="h-4 w-4" />
-									{getCurrentEpisodeText()}
-								</button>
-
-								{isTracking ? (
-									<button
-										type="button"
-										className="btn btn-secondary gap-2 bg-[var(--accent-subtle)] text-[var(--accent)]"
+								{nextEpisode ? (
+									<Link
+										to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+										params={{
+											showId,
+											showName: slugifyName(show.name),
+											seasonNumber: String(nextEpisode.seasonNumber),
+											episodeNumber: String(nextEpisode.episodeNumber),
+										}}
+										className="btn btn-primary gap-2"
 									>
-										<Check className="h-4 w-4" />
-										Tracking
-									</button>
+										<Play className="h-4 w-4" />
+										{getCurrentEpisodeText()}
+									</Link>
 								) : (
-									<button type="button" className="btn btn-secondary gap-2">
-										<Plus className="h-4 w-4" />
-										Track Show
+									<button type="button" className="btn btn-primary gap-2">
+										<Play className="h-4 w-4" />
+										{getCurrentEpisodeText()}
 									</button>
 								)}
 
+								{/* Watchlist Button */}
 								<button
 									type="button"
-									className="btn btn-secondary h-10 w-10 p-0"
-									aria-label="Share"
+									onClick={handleToggleWatchlist}
+									disabled={
+										!isAuthenticated ||
+										addToListMutation.isPending ||
+										removeFromListMutation.isPending
+									}
+									className="btn btn-secondary gap-2"
 								>
-									<Share2 className="h-4 w-4" />
+									{activeListAction === "watchlist" ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Loading
+										</>
+									) : isInWatchlist ? (
+										<>
+											<Bookmark className="h-4 w-4 fill-current" />
+											In Watchlist
+										</>
+									) : (
+										<>
+											<Bookmark className="h-4 w-4" />
+											Add to Watchlist
+										</>
+									)}
 								</button>
 
+								{/* Favorites Button (replaces Like) */}
 								<button
 									type="button"
-									className="btn btn-secondary h-10 w-10 p-0"
-									aria-label="Like"
+									onClick={handleToggleFavorites}
+									disabled={
+										!isAuthenticated ||
+										addToListMutation.isPending ||
+										removeFromListMutation.isPending
+									}
+									className={`inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border transition-all duration-150 ${
+										isInFavorites
+											? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
+											: "bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
+									}`}
+									aria-label={
+										isInFavorites ? "Remove from Favorites" : "Add to Favorites"
+									}
 								>
-									<Heart className="h-4 w-4" />
+									{activeListAction === "favorites" ? (
+										<Loader2 className="h-5 w-5 animate-spin" />
+									) : (
+										<Heart
+											className={`h-5 w-5 ${isInFavorites ? "fill-current" : ""}`}
+										/>
+									)}
+								</button>
+
+								{/* Share Button */}
+								<button
+									type="button"
+									className="inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)] transition-all duration-150"
+									aria-label="Share"
+								>
+									<Share2 className="h-5 w-5" />
 								</button>
 							</div>
 						</div>
@@ -433,19 +794,23 @@ function ShowDetailPage() {
 										.filter((season) => season.season_number > 0) // Filter out specials (season 0)
 										.map((season) => (
 											<div key={season.id} className="card overflow-hidden">
-												<div className="flex items-center">
+												{/* Clickable header area (toggles accordion) */}
+												<button
+													type="button"
+													className="flex items-center w-full text-left"
+													onClick={() => {
+														setHasUserToggledSeason(true);
+														setExpandedSeason(
+															expandedSeason === season.season_number
+																? null
+																: season.season_number,
+														);
+													}}
+												>
 													{/* Season Header */}
-													<Link
-														to="/shows/$showId/$showName/seasons/$seasonNumber"
-														params={{
-															showId,
-															showName: slugifyName(show.name),
-															seasonNumber: String(season.season_number),
-														}}
-														className="flex flex-1 items-center justify-between p-4 text-left transition-colors hover:bg-[var(--background-subtle)]"
-													>
+													<div className="flex flex-1 items-center justify-between p-4">
 														<div>
-															<h3 className="font-semibold hover:text-[var(--accent)]">
+															<h3 className="font-semibold">
 																{season.name ||
 																	`Season ${season.season_number}`}
 															</h3>
@@ -453,18 +818,75 @@ function ShowDetailPage() {
 																{season.episode_count || 0} episodes
 															</p>
 														</div>
-													</Link>
-													<button
-														type="button"
-														onClick={() =>
-															setExpandedSeason(
-																expandedSeason === season.season_number
-																	? null
-																	: season.season_number,
-															)
-														}
-														className="flex items-center justify-center p-4 text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)]"
-													>
+													</div>
+
+													{/* Season Actions */}
+													{isAuthenticated &&
+														(season.episode_count || 0) > 0 && (
+															<span className="flex items-center gap-1 pr-2">
+																{isSeasonFullyWatched(
+																	season.season_number,
+																	season.episode_count || 0,
+																) ? (
+																	<button
+																		type="button"
+																		onClick={() =>
+																			handleUnmarkSeasonWatched(
+																				season.season_number,
+																			)
+																		}
+																		disabled={
+																			processingSeason === season.season_number
+																		}
+																		className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+																		title="Remove all episodes of this season from shelf"
+																	>
+																		{processingSeason ===
+																		season.season_number ? (
+																			<>
+																				<Loader2 className="h-3.5 w-3.5 animate-spin" />
+																				Loading
+																			</>
+																		) : (
+																			<>
+																				<Check className="h-3.5 w-3.5" />
+																				Watched
+																			</>
+																		)}
+																	</button>
+																) : (
+																	<button
+																		type="button"
+																		onClick={() =>
+																			handleMarkSeasonWatched(
+																				season.season_number,
+																			)
+																		}
+																		disabled={
+																			processingSeason === season.season_number
+																		}
+																		className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-[var(--background-subtle)] text-[var(--foreground-muted)] hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] transition-colors"
+																		title="Add all episodes in this season to your shelf"
+																	>
+																		{processingSeason ===
+																		season.season_number ? (
+																			<>
+																				<Loader2 className="h-3.5 w-3.5 animate-spin" />
+																				Loading
+																			</>
+																		) : (
+																			<>
+																				<Eye className="h-3.5 w-3.5" />
+																				Add to shelf
+																			</>
+																		)}
+																	</button>
+																)}
+															</span>
+														)}
+
+													{/* Expand/Chevron - also toggles */}
+													<div className="flex items-center justify-center self-stretch px-4 text-[var(--foreground-muted)]">
 														<ChevronDown
 															className={`h-5 w-5 transition-transform ${
 																expandedSeason === season.season_number
@@ -472,12 +894,22 @@ function ShowDetailPage() {
 																	: ""
 															}`}
 														/>
-													</button>
-												</div>
+													</div>
+												</button>
 
 												{/* Episode List */}
-												{expandedSeason === season.season_number && (
-													<div className="border-t border-[var(--border)]">
+												<div
+													className="grid transition-all duration-300 ease-in-out border-t border-[var(--border)]"
+													style={{
+														gridTemplateRows:
+															expandedSeason === season.season_number
+																? "1fr"
+																: "0fr",
+														opacity:
+															expandedSeason === season.season_number ? 1 : 0,
+													}}
+												>
+													<div className="overflow-hidden">
 														{seasonLoading ? (
 															<div className="p-4 text-center">
 																<Loader2 className="h-6 w-6 animate-spin mx-auto text-[var(--accent)]" />
@@ -571,8 +1003,25 @@ function ShowDetailPage() {
 																No episodes available
 															</div>
 														)}
+
+														{/* Season Detail Link at bottom */}
+														<Link
+															to="/shows/$showId/$showName/seasons/$seasonNumber"
+															params={{
+																showId,
+																showName: slugifyName(show.name),
+																seasonNumber: String(season.season_number),
+															}}
+															className="flex items-center justify-center py-3 text-sm text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--accent)] border-t border-[var(--border)]"
+															title="Go to season details"
+														>
+															<span className="flex items-center gap-2">
+																View Season Details
+																<ChevronRight className="h-4 w-4" />
+															</span>
+														</Link>
 													</div>
-												)}
+												</div>
 											</div>
 										))}
 								</div>
@@ -633,6 +1082,82 @@ function ShowDetailPage() {
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
+						{/* Your Progress */}
+						{isAuthenticated && (
+							<section className="card p-5">
+								<h3 className="font-display font-semibold mb-4">
+									Your Progress
+								</h3>
+								<div className="space-y-4">
+									<div className="flex items-center justify-between">
+										<span className="text-sm text-[var(--foreground-muted)]">
+											Episodes Watched
+										</span>
+										<span className="font-semibold">
+											{episodesWatched}/{totalEpisodes}
+										</span>
+									</div>
+									<div className="h-2 w-full rounded-full bg-[var(--background-subtle)]">
+										<div
+											className="h-full rounded-full bg-[var(--accent)]"
+											style={{ width: `${progressPercentage}%` }}
+										/>
+									</div>
+									<div className="flex items-center justify-between text-sm">
+										<span className="text-[var(--foreground-muted)]">
+											{Math.round(progressPercentage)}% complete
+										</span>
+										<span className="text-[var(--foreground-muted)]">
+											{episodesRemaining} remaining
+										</span>
+									</div>
+									{progressPercentage < 100 ? (
+										<button
+											type="button"
+											onClick={handleMarkShowWatched}
+											disabled={
+												!isAuthenticated || markShowWatchedMutation.isPending
+											}
+											className="mt-4 w-full btn btn-secondary gap-2"
+										>
+											{markShowWatchedMutation.isPending ? (
+												<>
+													<Loader2 className="h-4 w-4 animate-spin" />
+													Loading
+												</>
+											) : (
+												<>
+													<Check className="h-4 w-4" />
+													Mark All as Watched
+												</>
+											)}
+										</button>
+									) : (
+										<button
+											type="button"
+											onClick={handleUnmarkShowWatched}
+											disabled={
+												!isAuthenticated || unmarkShowWatchedMutation.isPending
+											}
+											className="mt-4 w-full btn btn-secondary gap-2"
+										>
+											{unmarkShowWatchedMutation.isPending ? (
+												<>
+													<Loader2 className="h-4 w-4 animate-spin" />
+													Loading
+												</>
+											) : (
+												<>
+													<X className="h-4 w-4" />
+													Remove all plays
+												</>
+											)}
+										</button>
+									)}
+								</div>
+							</section>
+						)}
+
 						{/* Details Card */}
 						<section className="card p-5">
 							<h3 className="font-display font-semibold mb-4">Details</h3>
@@ -685,47 +1210,14 @@ function ShowDetailPage() {
 							</div>
 						</section>
 
-						{/* Your Progress */}
-						{isTracking && (
-							<section className="card p-5">
-								<h3 className="font-display font-semibold mb-4">
-									Your Progress
-								</h3>
-								<div className="space-y-4">
-									<div className="flex items-center justify-between">
-										<span className="text-sm text-[var(--foreground-muted)]">
-											Episodes Watched
-										</span>
-										<span className="font-semibold">
-											{episodesWatched}/{totalEpisodes}
-										</span>
-									</div>
-									<div className="h-2 w-full rounded-full bg-[var(--background-subtle)]">
-										<div
-											className="h-full rounded-full bg-[var(--accent)]"
-											style={{ width: `${progressPercentage}%` }}
-										/>
-									</div>
-									<div className="flex items-center justify-between text-sm">
-										<span className="text-[var(--foreground-muted)]">
-											{Math.round(progressPercentage)}% complete
-										</span>
-										<span className="text-[var(--foreground-muted)]">
-											{episodesRemaining} remaining
-										</span>
-									</div>
-								</div>
-							</section>
-						)}
-
 						{/* Lists Containing This */}
-						<section className="card p-5">
+						<section className="card p-5 relative">
 							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
 							<div className="space-y-2">
-								{listsContainingShow.length > 0 ? (
-									listsContainingShow.map((list) => (
+								{otherLists.length > 0 ? (
+									otherLists.map((list) => (
 										<Link
-											key={list.listId}
+											key={list.listSlug}
 											to={`/lists/${list.listSlug}` as any}
 											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
 										>
@@ -737,19 +1229,41 @@ function ShowDetailPage() {
 									))
 								) : (
 									<p className="text-sm text-[var(--foreground-muted)]">
-										Not in any lists yet
+										Not in any custom lists yet
 									</p>
 								)}
 							</div>
-							<button
-								type="button"
-								className="mt-3 w-full btn btn-secondary text-sm"
-							>
-								<Plus className="h-4 w-4" />
-								{listsContainingShow.length > 0
-									? "Add to another list"
-									: "Add to list"}
-							</button>
+							{availableLists.length > 0 && (
+								<div className="relative">
+									<button
+										type="button"
+										onClick={() => setShowListDropdown(!showListDropdown)}
+										className="mt-3 w-full btn btn-secondary text-sm"
+									>
+										<Plus className="h-4 w-4" />
+										Add to another list
+									</button>
+									{showListDropdown && (
+										<div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] shadow-lg z-50">
+											<div className="p-2">
+												<p className="px-2 py-1 text-xs font-medium text-[var(--foreground-muted)]">
+													Add to list
+												</p>
+												{availableLists.map((list) => (
+													<button
+														key={list.slug}
+														type="button"
+														onClick={() => handleAddToList(list.slug)}
+														className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+													>
+														{list.name}
+													</button>
+												))}
+											</div>
+										</div>
+									)}
+								</div>
+							)}
 						</section>
 					</div>
 				</div>
