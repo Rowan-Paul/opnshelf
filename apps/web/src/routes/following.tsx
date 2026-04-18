@@ -121,12 +121,18 @@ function FollowingPage() {
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["socialControllerGetFollowing"],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["socialControllerSearchPeople"],
+		onSuccess: async () => {
+			// Refetch all related queries to update the UI immediately
+			await queryClient.refetchQueries({
+				predicate: (query) => {
+					const queryKey = query.queryKey[0] as { _id?: string } | undefined;
+					const id = queryKey?._id;
+					return (
+						id === "socialControllerGetFollowing" ||
+						id === "socialControllerSearchPeople" ||
+						id === "socialControllerGetFeed"
+					);
+				},
 			});
 		},
 	});
@@ -135,12 +141,18 @@ function FollowingPage() {
 	const unfollowMutation = useMutation({
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["socialControllerGetFollowing"],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["socialControllerSearchPeople"],
+		onSuccess: async () => {
+			// Refetch all related queries to update the UI immediately
+			await queryClient.refetchQueries({
+				predicate: (query) => {
+					const queryKey = query.queryKey[0] as { _id?: string } | undefined;
+					const id = queryKey?._id;
+					return (
+						id === "socialControllerGetFollowing" ||
+						id === "socialControllerSearchPeople" ||
+						id === "socialControllerGetFeed"
+					);
+				},
 			});
 		},
 	});
@@ -198,7 +210,7 @@ function FollowingPage() {
 								<input
 									type="text"
 									placeholder="Find people to follow..."
-									className="input pl-10"
+									className="input !pl-10"
 									value={searchQuery}
 									onChange={(e) => setSearchQuery(e.target.value)}
 									onFocus={handleSearchFocus}
@@ -561,16 +573,6 @@ function FollowingPage() {
 					</section>
 
 					{/* Discover People CTA */}
-					<section className="card p-5 bg-gradient-to-br from-[var(--accent-subtle)] to-transparent">
-						<h3 className="font-display font-semibold mb-2">Discover People</h3>
-						<p className="text-sm text-[var(--foreground-muted)] mb-4">
-							Find more people to follow and see what they&apos;re watching.
-						</p>
-						<Link to="/discover" className="btn btn-primary w-full">
-							<UserPlus className="h-4 w-4 mr-2" />
-							Find People
-						</Link>
-					</section>
 				</div>
 			</div>
 		</div>

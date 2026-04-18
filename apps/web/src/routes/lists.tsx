@@ -448,7 +448,7 @@ function ListsPage() {
 										<input
 											type="text"
 											placeholder="Search list..."
-											className="input h-9 w-48 pl-9 text-sm"
+											className="input h-9 w-48 !pl-9 text-sm"
 											value={searchQuery}
 											onChange={(e) => setSearchQuery(e.target.value)}
 										/>
