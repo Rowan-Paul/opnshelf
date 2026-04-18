@@ -218,11 +218,8 @@ function ShowDetailPage() {
 
 	// Get current episode display text
 	const getCurrentEpisodeText = () => {
-		if (
-			nextEpisode?.season_number !== undefined &&
-			nextEpisode?.episode_number !== undefined
-		) {
-			return `Continue S${nextEpisode.season_number}E${nextEpisode.episode_number}`;
+		if (nextEpisode) {
+			return `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`;
 		}
 		if (isTracking && episodesWatched > 0) {
 			return "Continue Watching";
@@ -233,8 +230,8 @@ function ShowDetailPage() {
 	// Check if an episode is the next/current one
 	const isCurrentEpisode = (seasonNum: number, episodeNum: number) => {
 		return (
-			nextEpisode?.season_number === seasonNum &&
-			nextEpisode?.episode_number === episodeNum
+			nextEpisode?.seasonNumber === seasonNum &&
+			nextEpisode?.episodeNumber === episodeNum
 		);
 	};
 
@@ -350,22 +347,19 @@ function ShowDetailPage() {
 							</div>
 
 							{/* Current Progress */}
-							{isTracking &&
-								nextEpisode?.season_number !== undefined &&
-								nextEpisode?.episode_number !== undefined && (
-									<div className="mt-4 flex items-center gap-2 text-sm">
-										<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[#3f2e00] text-xs font-medium">
-											{nextEpisode.episode_number}
-										</div>
-										<span className="text-[var(--foreground-muted)]">
-											Currently at{" "}
-											<span className="font-medium text-[var(--foreground)]">
-												S{nextEpisode.season_number}E
-												{nextEpisode.episode_number}
-											</span>
-										</span>
+							{isTracking && nextEpisode && (
+								<div className="mt-4 flex items-center gap-2 text-sm">
+									<div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[#3f2e00] text-xs font-medium">
+										{nextEpisode.episodeNumber}
 									</div>
-								)}
+									<span className="text-[var(--foreground-muted)]">
+										Currently at{" "}
+										<span className="font-medium text-[var(--foreground)]">
+											S{nextEpisode.seasonNumber}E{nextEpisode.episodeNumber}
+										</span>
+									</span>
+								</div>
+							)}
 
 							{/* Action Buttons */}
 							<div className="mt-6 flex flex-wrap gap-3">
