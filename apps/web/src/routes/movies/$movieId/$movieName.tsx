@@ -2,6 +2,7 @@ import {
 	listsControllerAddItemToListMutation,
 	listsControllerGetListsForItemOptions,
 	listsControllerGetUserListsOptions,
+	listsControllerRemoveItemFromListMutation,
 	moviesControllerGetMovieWatchHistoryOptions,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerMarkWatchedMutation,
@@ -11,7 +12,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Check,
-	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
 	Clock,
@@ -99,11 +99,20 @@ function MovieDetailPage() {
 
 	const isInWatchlist = useMemo(() => {
 		if (!listsForItem || !Array.isArray(listsForItem)) return false;
-		return listsForItem.length > 0;
+		return listsForItem.some(
+			(list) => list.listSlug === "watchlist" && list.isInList,
+		);
+	}, [listsForItem]);
+
+	const isInFavorites = useMemo(() => {
+		if (!listsForItem || !Array.isArray(listsForItem)) return false;
+		return listsForItem.some(
+			(list) => list.listSlug === "favorites" && list.isInList,
+		);
 	}, [listsForItem]);
 
 	const otherLists =
-		listsForItem?.filter((list) => list.listSlug !== "watched") || [];
+		listsForItem?.filter((list) => !list.isDefault && list.isInList) || [];
 
 	// Mark watched mutation with optimistic update
 	const markWatchedMutation = useMutation({
@@ -222,6 +231,20 @@ function MovieDetailPage() {
 		},
 	});
 
+	// Remove from list mutation
+	const removeFromListMutation = useMutation({
+		mutationKey: ["lists", "removeItem"],
+		...listsControllerRemoveItemFromListMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["listsControllerGetListsForItem"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["listsControllerGetUserLists"],
+			});
+		},
+	});
+
 	const handleMarkWatched = () => {
 		if (!isAuthenticated) return;
 		markWatchedMutation.mutate({
@@ -234,6 +257,34 @@ function MovieDetailPage() {
 		unmarkWatchedMutation.mutate({
 			path: { movieId: movieId },
 		});
+	};
+
+	const handleToggleWatchlist = () => {
+		if (!isAuthenticated) return;
+		if (isInWatchlist) {
+			removeFromListMutation.mutate({
+				path: { slug: "watchlist", mediaType: "movie", mediaId: movieId },
+			});
+		} else {
+			addToListMutation.mutate({
+				path: { slug: "watchlist" },
+				body: { mediaType: "movie", mediaId: movieId },
+			});
+		}
+	};
+
+	const handleToggleFavorites = () => {
+		if (!isAuthenticated) return;
+		if (isInFavorites) {
+			removeFromListMutation.mutate({
+				path: { slug: "favorites", mediaType: "movie", mediaId: movieId },
+			});
+		} else {
+			addToListMutation.mutate({
+				path: { slug: "favorites" },
+				body: { mediaType: "movie", mediaId: movieId },
+			});
+		}
 	};
 
 	const handleAddToList = (slug: string) => {
@@ -404,12 +455,11 @@ function MovieDetailPage() {
 								</span>
 								<span className="text-[var(--border-strong)]">•</span>
 								<div className="flex gap-2">
-									{movie.genres?.map((g) => g.name) ||
-										[].map((genre) => (
-											<span key={genre} className="badge badge-subtle">
-												{genre}
-											</span>
-										))}
+									{movie.genres?.map((g) => (
+										<span key={g.name} className="badge badge-subtle">
+											{g.name}
+										</span>
+									))}
 								</div>
 							</div>
 
@@ -450,101 +500,74 @@ function MovieDetailPage() {
 									</button>
 								)}
 
-								<div className="relative">
-									<button
-										type="button"
-										onClick={() =>
-											isAuthenticated && setShowListDropdown(!showListDropdown)
-										}
-										disabled={!isAuthenticated || addToListMutation.isPending}
-										className={`btn gap-2 ${
-											isInWatchlist
-												? "btn-secondary bg-[var(--accent-subtle)] text-[var(--accent)]"
-												: "btn-secondary"
-										}`}
-									>
-										{addToListMutation.isPending ? (
-											<Loader2 className="h-4 w-4 animate-spin" />
-										) : isInWatchlist ? (
-											<>
-												<Check className="h-4 w-4" />
-												In List
-												<ChevronDown className="h-3 w-3" />
-											</>
-										) : (
-											<>
-												<Plus className="h-4 w-4" />
-												Add to List
-												<ChevronDown className="h-3 w-3" />
-											</>
-										)}
-									</button>
-
-									{/* List Dropdown */}
-									{showListDropdown && availableLists.length > 0 && (
-										<div className="absolute top-full left-0 mt-2 w-56 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] shadow-lg z-50">
-											<div className="p-2">
-												<p className="px-2 py-1 text-xs font-medium text-[var(--foreground-muted)]">
-													Add to list
-												</p>
-												{availableLists.map((list) => (
-													<button
-														key={list.slug}
-														type="button"
-														onClick={() => handleAddToList(list.slug)}
-														className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
-													>
-														{list.name}
-													</button>
-												))}
-											</div>
-										</div>
-									)}
-
-									{showListDropdown && availableLists.length === 0 && (
-										<div className="absolute top-full left-0 mt-2 w-56 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] shadow-lg z-50">
-											<div className="p-3 text-center">
-												<p className="text-sm text-[var(--foreground-muted)]">
-													Already in all your lists
-												</p>
-											</div>
-										</div>
-									)}
-								</div>
-
+								{/* Watchlist Button */}
 								<button
 									type="button"
-									className="btn btn-secondary h-10 w-10 p-0"
+									onClick={handleToggleWatchlist}
+									disabled={
+										!isAuthenticated ||
+										addToListMutation.isPending ||
+										removeFromListMutation.isPending
+									}
+									className={`btn gap-2 ${
+										isInWatchlist
+											? "btn-secondary bg-[var(--accent-subtle)] text-[var(--accent)]"
+											: "btn-secondary"
+									}`}
+								>
+									{addToListMutation.isPending ||
+									removeFromListMutation.isPending ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : isInWatchlist ? (
+										<>
+											<Check className="h-4 w-4" />
+											Watchlist
+										</>
+									) : (
+										<>
+											<Plus className="h-4 w-4" />
+											Watchlist
+										</>
+									)}
+								</button>
+
+								{/* Favorites Button (replaces Like) */}
+								<button
+									type="button"
+									onClick={handleToggleFavorites}
+									disabled={
+										!isAuthenticated ||
+										addToListMutation.isPending ||
+										removeFromListMutation.isPending
+									}
+									className={`inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border transition-all duration-150 ${
+										isInFavorites
+											? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
+											: "bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
+									}`}
+									aria-label={
+										isInFavorites ? "Remove from Favorites" : "Add to Favorites"
+									}
+								>
+									{addToListMutation.isPending ||
+									removeFromListMutation.isPending ? (
+										<Loader2 className="h-5 w-5 animate-spin" />
+									) : (
+										<Heart
+											className={`h-5 w-5 ${isInFavorites ? "fill-current" : ""}`}
+										/>
+									)}
+								</button>
+
+								{/* Share Button */}
+								<button
+									type="button"
+									className="inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)] transition-all duration-150"
 									aria-label="Share"
 								>
-									<Share2 className="h-4 w-4" />
-								</button>
-
-								<button
-									type="button"
-									className="btn btn-secondary h-10 w-10 p-0"
-									aria-label="Like"
-								>
-									<Heart className="h-4 w-4" />
+									<Share2 className="h-5 w-5" />
 								</button>
 							</div>
-
-							{/* Tracking Badges */}
-							{isAuthenticated && (isWatched || isInWatchlist) && (
-								<div className="mt-3 flex flex-wrap gap-2">
-									{isWatched && (
-										<span className="badge badge-subtle bg-green-500/10 text-green-600 border-green-500/20">
-											<Check className="h-3 w-3 mr-1" />
-											Watched
-										</span>
-									)}
-									{otherLists.map((list) => (
-										<span key={list.listSlug} className="badge badge-subtle">
-											In {list.listName}
-										</span>
-									))}
-								</div>
-							)}
 						</div>
 					</div>
 				</div>
@@ -647,7 +670,7 @@ function MovieDetailPage() {
 								<div className="flex justify-between">
 									<span className="text-[var(--foreground-muted)]">Genres</span>
 									<span className="font-medium text-right">
-										{movie.genres?.map((g) => g.name) || [].join(", ")}
+										{movie.genres?.map((g) => g.name).join(", ") || "N/A"}
 									</span>
 								</div>
 							</div>
@@ -683,7 +706,7 @@ function MovieDetailPage() {
 						</section>
 
 						{/* Lists Containing This */}
-						<section className="card p-5">
+						<section className="card p-5 relative">
 							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
 							<div className="space-y-2">
 								{otherLists.length > 0 ? (
@@ -706,14 +729,35 @@ function MovieDetailPage() {
 								)}
 							</div>
 							{availableLists.length > 0 && (
-								<button
-									type="button"
-									onClick={() => setShowListDropdown(!showListDropdown)}
-									className="mt-3 w-full btn btn-secondary text-sm"
-								>
-									<Plus className="h-4 w-4" />
-									Add to another list
-								</button>
+								<div className="relative">
+									<button
+										type="button"
+										onClick={() => setShowListDropdown(!showListDropdown)}
+										className="mt-3 w-full btn btn-secondary text-sm"
+									>
+										<Plus className="h-4 w-4" />
+										Add to another list
+									</button>
+									{showListDropdown && (
+										<div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] shadow-lg z-50">
+											<div className="p-2">
+												<p className="px-2 py-1 text-xs font-medium text-[var(--foreground-muted)]">
+													Add to list
+												</p>
+												{availableLists.map((list) => (
+													<button
+														key={list.slug}
+														type="button"
+														onClick={() => handleAddToList(list.slug)}
+														className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+													>
+														{list.name}
+													</button>
+												))}
+											</div>
+										</div>
+									)}
+								</div>
 							)}
 						</section>
 					</div>
