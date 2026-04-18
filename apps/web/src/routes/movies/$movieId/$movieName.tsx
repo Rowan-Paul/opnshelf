@@ -314,9 +314,8 @@ function MovieDetailPage() {
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
-				// @ts-expect-error - vote_average may exist on TMDB result
-				rating: m.vote_average
-					? Math.round(m.vote_average * 10) / 10
+				rating: (m as { vote_average?: number }).vote_average
+					? Math.round((m as { vote_average?: number }).vote_average! * 10) / 10
 					: undefined,
 			})) || [];
 

@@ -4,15 +4,11 @@ staged_files=$(mktemp)
 
 git diff --cached --name-only --diff-filter=ACMR -z >"$staged_files"
 
-# NOTE: TypeScript typecheck temporarily disabled due to 29 existing errors
-# that need router configuration and API updates. Run `pnpm typecheck` manually.
-# TODO: Fix remaining type errors and re-enable typecheck before commits.
-
-# Run type checking (informational only for now)
-# pnpm typecheck || {
-#   rm -f "$staged_files"
-#   exit 1
-# }
+# Run type checking first
+pnpm typecheck || {
+  rm -f "$staged_files"
+  exit 1
+}
 
 # Run linting/formatting
 pnpm check:write || {
