@@ -126,7 +126,7 @@ function Dashboard() {
 	// Fetch user data from API
 	const { data: shelfData, isLoading: shelfLoading } = useUserShelf(
 		userDid || "",
-		12,
+		6,
 	);
 	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
 		userDid || "",
@@ -435,6 +435,15 @@ function Dashboard() {
 												>
 													{String(item.actor.displayName || item.actor.handle)}
 												</Link>
+												<span className="text-[var(--foreground-muted)]">
+													{" "}
+													watched{" "}
+												</span>
+												<span className="font-medium">
+													{item.type === "movie"
+														? item.title
+														: `${item.showTitle}${item.seasonNumber && item.episodeNumber ? ` S${item.seasonNumber}E${item.episodeNumber}` : ""}`}
+												</span>
 											</p>
 											{/* Timestamp & Actions */}
 											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
