@@ -336,39 +336,108 @@ function FollowingPage() {
 								)}
 							</div>
 						) : (
-							activities.map((activity: FollowedActivityItemDto) => (
-								<article
-									key={activity.id}
-									className="card p-5 transition-shadow hover:shadow-md"
-								>
-									{/* Activity Header */}
-									<div className="flex items-start gap-3">
-										<img
-											src={
-												activity.actor.avatar
-													? String(activity.actor.avatar)
-													: `https://i.pravatar.cc/150?u=${activity.actor.did}`
-											}
-											alt={
-												String(activity.actor.displayName) ||
-												activity.actor.handle
-											}
-											className="h-10 w-10 rounded-full object-cover"
-										/>
-										<div className="flex-1 min-w-0">
-											<div className="flex items-center gap-2 flex-wrap">
-												<Link
-													to={"/following" as const}
-													className="font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
-												>
-													{String(activity.actor.displayName) ||
-														activity.actor.handle}
-												</Link>
-												<span className="text-[var(--foreground-muted)]">
-													{activity.type === "movie"
-														? "watched"
-														: "watched episode"}
-												</span>
+							activities
+								// Deduplicate by ID to prevent React key warnings
+								.filter(
+									(activity, index, self) =>
+										index === self.findIndex((a) => a.id === activity.id),
+								)
+								.map((activity: FollowedActivityItemDto) => (
+									<article
+										key={activity.id}
+										className="card p-5 transition-shadow hover:shadow-md"
+									>
+										{/* Activity Header */}
+										<div className="flex items-start gap-3">
+											<img
+												src={
+													activity.actor.avatar
+														? String(activity.actor.avatar)
+														: `https://i.pravatar.cc/150?u=${activity.actor.did}`
+												}
+												alt={
+													String(activity.actor.displayName) ||
+													activity.actor.handle
+												}
+												className="h-10 w-10 rounded-full object-cover"
+											/>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-2 flex-wrap">
+													<Link
+														to={"/following" as const}
+														className="font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
+													>
+														{String(activity.actor.displayName) ||
+															activity.actor.handle}
+													</Link>
+													<span className="text-[var(--foreground-muted)]">
+														{activity.type === "movie"
+															? "watched"
+															: "watched episode"}
+													</span>
+													{activity.type === "movie" ? (
+														<Link
+															to="/movies/$movieId/$movieName"
+															params={{
+																movieId: String(activity.movieId),
+																movieName: encodeURIComponent(
+																	activity.title || "",
+																),
+															}}
+															className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+														>
+															{activity.title}
+														</Link>
+													) : (
+														<Link
+															to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+															params={{
+																showId: String(activity.showId),
+																showName: encodeURIComponent(
+																	activity.showTitle || "",
+																),
+																seasonNumber: String(
+																	activity.seasonNumber || 0,
+																),
+																episodeNumber: String(
+																	activity.episodeNumber || 0,
+																),
+															}}
+															className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+														>
+															{activity.showTitle}
+														</Link>
+													)}
+													<span className="badge badge-subtle">
+														{activity.type === "movie" ? (
+															<Film className="h-3 w-3" />
+														) : (
+															<Tv className="h-3 w-3" />
+														)}
+													</span>
+													{activity.seasonNumber && activity.episodeNumber && (
+														<span className="text-sm text-[var(--foreground-muted)]">
+															S{activity.seasonNumber}E{activity.episodeNumber}
+														</span>
+													)}
+												</div>
+												<div className="flex items-center gap-2 mt-1 text-sm text-[var(--foreground-muted)]">
+													<Clock className="h-3 w-3" />
+													{formatRelativeTime(activity.activityAt)}
+												</div>
+											</div>
+											<button
+												type="button"
+												className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)]"
+												aria-label="More options"
+											>
+												<MoreHorizontal className="h-4 w-4" />
+											</button>
+										</div>
+
+										{/* Media Preview */}
+										{(activity.posterPath || activity.backdropPath) && (
+											<div className="mt-4 flex gap-4">
 												{activity.type === "movie" ? (
 													<Link
 														to="/movies/$movieId/$movieName"
@@ -378,124 +447,65 @@ function FollowingPage() {
 																activity.title || "",
 															),
 														}}
-														className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
 													>
-														{activity.title}
+														<img
+															src={
+																activity.posterPath
+																	? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
+																	: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
+															}
+															alt={activity.title || activity.showTitle || ""}
+															className="h-24 w-16 rounded-lg object-cover"
+														/>
 													</Link>
 												) : (
 													<Link
-														to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+														to="/shows/$showId/$showName"
 														params={{
 															showId: String(activity.showId),
 															showName: encodeURIComponent(
 																activity.showTitle || "",
 															),
-															seasonNumber: String(activity.seasonNumber || 0),
-															episodeNumber: String(
-																activity.episodeNumber || 0,
-															),
 														}}
-														className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
 													>
-														{activity.showTitle}
+														<img
+															src={
+																activity.posterPath
+																	? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
+																	: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
+															}
+															alt={activity.title || activity.showTitle || ""}
+															className="h-24 w-16 rounded-lg object-cover"
+														/>
 													</Link>
 												)}
-												<span className="badge badge-subtle">
-													{activity.type === "movie" ? (
-														<Film className="h-3 w-3" />
-													) : (
-														<Tv className="h-3 w-3" />
-													)}
-												</span>
-												{activity.seasonNumber && activity.episodeNumber && (
-													<span className="text-sm text-[var(--foreground-muted)]">
-														S{activity.seasonNumber}E{activity.episodeNumber}
-													</span>
-												)}
+												<div className="flex-1">
+													<p className="text-[var(--foreground-muted)] text-sm line-clamp-3">
+														{activity.overview}
+													</p>
+												</div>
 											</div>
-											<div className="flex items-center gap-2 mt-1 text-sm text-[var(--foreground-muted)]">
-												<Clock className="h-3 w-3" />
-												{formatRelativeTime(activity.activityAt)}
-											</div>
-										</div>
-										<button
-											type="button"
-											className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)]"
-											aria-label="More options"
-										>
-											<MoreHorizontal className="h-4 w-4" />
-										</button>
-									</div>
+										)}
 
-									{/* Media Preview */}
-									{(activity.posterPath || activity.backdropPath) && (
-										<div className="mt-4 flex gap-4">
-											{activity.type === "movie" ? (
-												<Link
-													to="/movies/$movieId/$movieName"
-													params={{
-														movieId: String(activity.movieId),
-														movieName: encodeURIComponent(activity.title || ""),
-													}}
-												>
-													<img
-														src={
-															activity.posterPath
-																? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
-																: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
-														}
-														alt={activity.title || activity.showTitle || ""}
-														className="h-24 w-16 rounded-lg object-cover"
-													/>
-												</Link>
-											) : (
-												<Link
-													to="/shows/$showId/$showName"
-													params={{
-														showId: String(activity.showId),
-														showName: encodeURIComponent(
-															activity.showTitle || "",
-														),
-													}}
-												>
-													<img
-														src={
-															activity.posterPath
-																? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
-																: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
-														}
-														alt={activity.title || activity.showTitle || ""}
-														className="h-24 w-16 rounded-lg object-cover"
-													/>
-												</Link>
-											)}
-											<div className="flex-1">
-												<p className="text-[var(--foreground-muted)] text-sm line-clamp-3">
-													{activity.overview}
-												</p>
-											</div>
+										{/* Actions */}
+										<div className="mt-4 flex items-center gap-4 pt-4 border-t border-[var(--border)]">
+											<button
+												type="button"
+												className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+											>
+												<Heart className="h-4 w-4" />
+												Like
+											</button>
+											<button
+												type="button"
+												className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+											>
+												<MessageCircle className="h-4 w-4" />
+												Comment
+											</button>
 										</div>
-									)}
-
-									{/* Actions */}
-									<div className="mt-4 flex items-center gap-4 pt-4 border-t border-[var(--border)]">
-										<button
-											type="button"
-											className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-										>
-											<Heart className="h-4 w-4" />
-											Like
-										</button>
-										<button
-											type="button"
-											className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-										>
-											<MessageCircle className="h-4 w-4" />
-											Comment
-										</button>
-									</div>
-								</article>
-							))
+									</article>
+								))
 						)}
 					</div>
 

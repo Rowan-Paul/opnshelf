@@ -235,7 +235,7 @@ function Dashboard() {
 			}
 			// Episode type
 			return {
-				id: item.showId, // Use the TMDB show ID for URLs
+				id: `${item.showId}-${item.seasonNumber}-${item.episodeNumber}`, // Unique ID for each episode
 				title: item.showTitle, // Use show title for URL building
 				displayTitle:
 					item.episodeTitle ||

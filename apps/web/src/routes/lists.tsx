@@ -560,87 +560,99 @@ function ListsPage() {
 								filteredItems.length > 0 &&
 								(viewMode === "grid" ? (
 									<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-										{filteredItems.map((item: MediaInListDto) => (
-											<MediaCard
-												key={item.id}
-												id={item.mediaId}
-												title={getTitle(item.media)}
-												posterUrl={getPosterUrl(item.media)}
-												backdropUrl={getBackdropUrl(item.media)}
-												type={item.mediaType as "movie" | "show"}
-												year={getYear(item.media)}
-												rating={getRating(item.media)}
-												duration={formatDuration(
-													item.media.runtime as number | undefined,
-												)}
-												size="md"
-												layout="poster"
-											/>
-										))}
+										{filteredItems
+											// Deduplicate by ID to prevent React key warnings
+											.filter(
+												(item, index, self) =>
+													index === self.findIndex((i) => i.id === item.id),
+											)
+											.map((item: MediaInListDto) => (
+												<MediaCard
+													key={item.id}
+													id={item.mediaId}
+													title={getTitle(item.media)}
+													posterUrl={getPosterUrl(item.media)}
+													backdropUrl={getBackdropUrl(item.media)}
+													type={item.mediaType as "movie" | "show"}
+													year={getYear(item.media)}
+													rating={getRating(item.media)}
+													duration={formatDuration(
+														item.media.runtime as number | undefined,
+													)}
+													size="md"
+													layout="poster"
+												/>
+											))}
 									</div>
 								) : (
 									<div className="space-y-2">
-										{filteredItems.map((item: MediaInListDto) => (
-											<div
-												key={item.id}
-												className="card card-interactive flex items-center gap-4 p-3"
-											>
-												<img
-													src={getPosterUrl(item.media)}
-													alt={getTitle(item.media)}
-													className="h-20 w-14 rounded-lg object-cover"
-													loading="lazy"
-												/>
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-2">
-														<h3 className="font-semibold">
-															{getTitle(item.media)}
-														</h3>
-														<span
-															className={`badge ${
-																item.mediaType === "movie"
-																	? "badge-subtle"
-																	: "badge-accent"
-															}`}
-														>
-															{item.mediaType === "movie" ? "Movie" : "TV"}
-														</span>
-													</div>
-													<div className="mt-1 flex items-center gap-3 text-sm text-[var(--foreground-muted)]">
-														{getYear(item.media) && (
-															<span>{getYear(item.media)}</span>
-														)}
-														{getRating(item.media) && (
-															<>
-																<span>•</span>
-																<span className="flex items-center gap-1">
-																	<Star className="h-3 w-3 fill-current text-yellow-500" />
-																	{getRating(item.media)?.toFixed(1)}
-																</span>
-															</>
-														)}
-														{formatDuration(
-															item.media.runtime as number | undefined,
-														) && (
-															<>
-																<span>•</span>
-																<span>
-																	{formatDuration(
-																		item.media.runtime as number | undefined,
-																	)}
-																</span>
-															</>
-														)}
-													</div>
-												</div>
-												<button
-													type="button"
-													className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)]"
+										{filteredItems
+											// Deduplicate by ID to prevent React key warnings
+											.filter(
+												(item, index, self) =>
+													index === self.findIndex((i) => i.id === item.id),
+											)
+											.map((item: MediaInListDto) => (
+												<div
+													key={item.id}
+													className="card card-interactive flex items-center gap-4 p-3"
 												>
-													<MoreHorizontal className="h-4 w-4" />
-												</button>
-											</div>
-										))}
+													<img
+														src={getPosterUrl(item.media)}
+														alt={getTitle(item.media)}
+														className="h-20 w-14 rounded-lg object-cover"
+														loading="lazy"
+													/>
+													<div className="flex-1 min-w-0">
+														<div className="flex items-center gap-2">
+															<h3 className="font-semibold">
+																{getTitle(item.media)}
+															</h3>
+															<span
+																className={`badge ${
+																	item.mediaType === "movie"
+																		? "badge-subtle"
+																		: "badge-accent"
+																}`}
+															>
+																{item.mediaType === "movie" ? "Movie" : "TV"}
+															</span>
+														</div>
+														<div className="mt-1 flex items-center gap-3 text-sm text-[var(--foreground-muted)]">
+															{getYear(item.media) && (
+																<span>{getYear(item.media)}</span>
+															)}
+															{getRating(item.media) && (
+																<>
+																	<span>•</span>
+																	<span className="flex items-center gap-1">
+																		<Star className="h-3 w-3 fill-current text-yellow-500" />
+																		{getRating(item.media)?.toFixed(1)}
+																	</span>
+																</>
+															)}
+															{formatDuration(
+																item.media.runtime as number | undefined,
+															) && (
+																<>
+																	<span>•</span>
+																	<span>
+																		{formatDuration(
+																			item.media.runtime as number | undefined,
+																		)}
+																	</span>
+																</>
+															)}
+														</div>
+													</div>
+													<button
+														type="button"
+														className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)]"
+													>
+														<MoreHorizontal className="h-4 w-4" />
+													</button>
+												</div>
+											))}
 									</div>
 								))}
 						</div>
