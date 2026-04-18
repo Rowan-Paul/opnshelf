@@ -574,11 +574,7 @@ function MovieDetailPage() {
 										addToListMutation.isPending ||
 										removeFromListMutation.isPending
 									}
-									className={`btn gap-2 ${
-										isInWatchlist
-											? "btn-secondary bg-[var(--accent)] text-[var(--accent-foreground)] border-[var(--accent)]"
-											: "btn-secondary"
-									}`}
+									className="btn btn-secondary gap-2"
 								>
 									{addToListMutation.isPending ||
 									removeFromListMutation.isPending ? (
@@ -591,7 +587,7 @@ function MovieDetailPage() {
 									) : (
 										<>
 											<Bookmark className="h-4 w-4" />
-											Watchlist
+											Add to Watchlist
 										</>
 									)}
 								</button>
