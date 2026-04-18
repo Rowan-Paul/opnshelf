@@ -17,10 +17,10 @@ import {
 	Clock,
 	Heart,
 	Loader2,
-	Play,
 	Plus,
 	Share2,
 	Star,
+	X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
@@ -122,9 +122,11 @@ function MovieDetailPage() {
 			// Cancel outgoing refetches
 			await queryClient.cancelQueries({
 				queryKey: ["moviesControllerGetUserMovies"],
+				exact: false,
 			});
 			await queryClient.cancelQueries({
 				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
 			});
 
 			// Snapshot previous values
@@ -165,12 +167,15 @@ function MovieDetailPage() {
 			// Always refetch after error or success
 			queryClient.invalidateQueries({
 				queryKey: ["moviesControllerGetUserMovies"],
+				exact: false,
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["moviesControllerGetMovieWatchHistory"],
+				exact: false,
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
 			});
 		},
 	});
@@ -182,6 +187,7 @@ function MovieDetailPage() {
 		onMutate: async () => {
 			await queryClient.cancelQueries({
 				queryKey: ["moviesControllerGetUserMovies"],
+				exact: false,
 			});
 			const previousUserMovies = queryClient.getQueryData([
 				"moviesControllerGetUserMovies",
@@ -210,37 +216,109 @@ function MovieDetailPage() {
 		onSettled: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["moviesControllerGetUserMovies"],
+				exact: false,
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["moviesControllerGetMovieWatchHistory"],
+				exact: false,
 			});
 		},
 	});
 
-	// Add to list mutation
+	// Add to list mutation with optimistic update
 	const addToListMutation = useMutation({
 		mutationKey: ["lists", "addItem"],
 		...listsControllerAddItemToListMutation(),
-		onSuccess: () => {
+		onMutate: async (variables) => {
+			await queryClient.cancelQueries({
+				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
+			});
+
+			const previousListsForItem = queryClient.getQueryData([
+				"listsControllerGetListsForItem",
+			]);
+
+			// Optimistically add to the list
+			queryClient.setQueryData(
+				["listsControllerGetListsForItem"],
+				(old: unknown) => {
+					if (!old || !Array.isArray(old)) return old;
+					return old.map((list: { listSlug: string; isInList: boolean }) =>
+						list.listSlug === variables.path.slug
+							? { ...list, isInList: true }
+							: list,
+					);
+				},
+			);
+
+			return { previousListsForItem };
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousListsForItem) {
+				queryClient.setQueryData(
+					["listsControllerGetListsForItem"],
+					context.previousListsForItem,
+				);
+			}
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetUserLists"],
+				exact: false,
 			});
 		},
 	});
 
-	// Remove from list mutation
+	// Remove from list mutation with optimistic update
 	const removeFromListMutation = useMutation({
 		mutationKey: ["lists", "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
-		onSuccess: () => {
+		onMutate: async (variables) => {
+			await queryClient.cancelQueries({
+				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
+			});
+
+			const previousListsForItem = queryClient.getQueryData([
+				"listsControllerGetListsForItem",
+			]);
+
+			// Optimistically remove from the list
+			queryClient.setQueryData(
+				["listsControllerGetListsForItem"],
+				(old: unknown) => {
+					if (!old || !Array.isArray(old)) return old;
+					return old.map((list: { listSlug: string; isInList: boolean }) =>
+						list.listSlug === variables.path.slug
+							? { ...list, isInList: false }
+							: list,
+					);
+				},
+			);
+
+			return { previousListsForItem };
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousListsForItem) {
+				queryClient.setQueryData(
+					["listsControllerGetListsForItem"],
+					context.previousListsForItem,
+				);
+			}
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetListsForItem"],
+				exact: false,
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["listsControllerGetUserLists"],
+				exact: false,
 			});
 		},
 	});
@@ -465,38 +543,37 @@ function MovieDetailPage() {
 
 							{/* Action Buttons */}
 							<div className="mt-6 flex flex-wrap gap-3">
-								<button type="button" className="btn btn-primary gap-2">
-									<Play className="h-4 w-4" />
-									Watch Trailer
-								</button>
-
 								{isWatched ? (
 									<button
 										type="button"
 										onClick={handleUnmarkWatched}
 										disabled={unmarkWatchedMutation.isPending}
-										className="btn btn-secondary gap-2 bg-green-500/10 text-green-600 border-green-500/20"
+										className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
 									>
 										{unmarkWatchedMutation.isPending ? (
 											<Loader2 className="h-4 w-4 animate-spin" />
 										) : (
-											<Check className="h-4 w-4" />
+											<>
+												<X className="h-4 w-4" />
+												Remove from shelf
+											</>
 										)}
-										Watched
 									</button>
 								) : (
 									<button
 										type="button"
 										onClick={handleMarkWatched}
-										disabled={markWatchedMutation.isPending}
-										className="btn btn-secondary gap-2"
+										disabled={markWatchedMutation.isPending || !isAuthenticated}
+										className="btn btn-primary gap-2"
 									>
 										{markWatchedMutation.isPending ? (
 											<Loader2 className="h-4 w-4 animate-spin" />
 										) : (
-											<Check className="h-4 w-4" />
+											<>
+												<Plus className="h-4 w-4" />
+												Add to shelf
+											</>
 										)}
-										Mark Watched
 									</button>
 								)}
 
