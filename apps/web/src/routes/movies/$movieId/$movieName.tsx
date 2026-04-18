@@ -61,6 +61,7 @@ function MovieDetailPage() {
 	const userDid = user?.did;
 	const queryClient = useQueryClient();
 	const [showListDropdown, setShowListDropdown] = useState(false);
+	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 
 	// Fetch movie details from API
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
@@ -327,29 +328,51 @@ function MovieDetailPage() {
 
 	const handleToggleWatchlist = () => {
 		if (!isAuthenticated) return;
+		setActiveListAction("watchlist");
 		if (isInWatchlist) {
-			removeFromListMutation.mutate({
-				path: { slug: "watchlist", mediaType: "movie", mediaId: movieId },
-			});
+			removeFromListMutation.mutate(
+				{
+					path: { slug: "watchlist", mediaType: "movie", mediaId: movieId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
 		} else {
-			addToListMutation.mutate({
-				path: { slug: "watchlist" },
-				body: { mediaType: "movie", mediaId: movieId },
-			});
+			addToListMutation.mutate(
+				{
+					path: { slug: "watchlist" },
+					body: { mediaType: "movie", mediaId: movieId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
 		}
 	};
 
 	const handleToggleFavorites = () => {
 		if (!isAuthenticated) return;
+		setActiveListAction("favorites");
 		if (isInFavorites) {
-			removeFromListMutation.mutate({
-				path: { slug: "favorites", mediaType: "movie", mediaId: movieId },
-			});
+			removeFromListMutation.mutate(
+				{
+					path: { slug: "favorites", mediaType: "movie", mediaId: movieId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
 		} else {
-			addToListMutation.mutate({
-				path: { slug: "favorites" },
-				body: { mediaType: "movie", mediaId: movieId },
-			});
+			addToListMutation.mutate(
+				{
+					path: { slug: "favorites" },
+					body: { mediaType: "movie", mediaId: movieId },
+				},
+				{
+					onSettled: () => setActiveListAction(null),
+				},
+			);
 		}
 	};
 
@@ -582,8 +605,7 @@ function MovieDetailPage() {
 									}
 									className="btn btn-secondary gap-2"
 								>
-									{addToListMutation.isPending ||
-									removeFromListMutation.isPending ? (
+									{activeListAction === "watchlist" ? (
 										<>
 											<Loader2 className="h-4 w-4 animate-spin" />
 											Loading
@@ -619,8 +641,7 @@ function MovieDetailPage() {
 										isInFavorites ? "Remove from Favorites" : "Add to Favorites"
 									}
 								>
-									{addToListMutation.isPending ||
-									removeFromListMutation.isPending ? (
+									{activeListAction === "favorites" ? (
 										<Loader2 className="h-5 w-5 animate-spin" />
 									) : (
 										<Heart
