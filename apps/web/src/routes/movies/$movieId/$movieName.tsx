@@ -15,6 +15,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+	Bookmark,
 	Check,
 	ChevronLeft,
 	ChevronRight,
@@ -575,7 +576,7 @@ function MovieDetailPage() {
 									}
 									className={`btn gap-2 ${
 										isInWatchlist
-											? "btn-secondary bg-[var(--accent-subtle)] text-[var(--accent)]"
+											? "btn-secondary bg-[var(--accent)] text-[var(--accent-foreground)] border-[var(--accent)]"
 											: "btn-secondary"
 									}`}
 								>
@@ -584,12 +585,12 @@ function MovieDetailPage() {
 										<Loader2 className="h-4 w-4 animate-spin" />
 									) : isInWatchlist ? (
 										<>
-											<Check className="h-4 w-4" />
-											Watchlist
+											<Bookmark className="h-4 w-4 fill-current" />
+											In Watchlist
 										</>
 									) : (
 										<>
-											<Plus className="h-4 w-4" />
+											<Bookmark className="h-4 w-4" />
 											Watchlist
 										</>
 									)}
