@@ -1,10 +1,14 @@
 import {
 	listsControllerAddItemToListMutation,
 	listsControllerGetListsForItemOptions,
+	listsControllerGetListsForItemQueryKey,
 	listsControllerGetUserListsOptions,
+	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	moviesControllerGetMovieWatchHistoryOptions,
+	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
@@ -119,64 +123,63 @@ function MovieDetailPage() {
 		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async () => {
+			// Get proper query keys
+			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+				path: { userDid: userDid || "" },
+			});
+			const listsForItemKey = listsControllerGetListsForItemQueryKey({
+				path: { mediaType: "movie", mediaId: movieId },
+			});
+
 			// Cancel outgoing refetches
-			await queryClient.cancelQueries({
-				queryKey: ["moviesControllerGetUserMovies"],
-				exact: false,
-			});
-			await queryClient.cancelQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
-			});
+			await queryClient.cancelQueries({ queryKey: userMoviesKey });
+			await queryClient.cancelQueries({ queryKey: listsForItemKey });
 
 			// Snapshot previous values
-			const previousUserMovies = queryClient.getQueryData([
-				"moviesControllerGetUserMovies",
-			]);
-			const previousListsForItem = queryClient.getQueryData([
-				"listsControllerGetListsForItem",
-			]);
+			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
+			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
 
-			// Optimistically update
-			queryClient.setQueryData(
-				["moviesControllerGetUserMovies"],
-				(old: unknown) => {
-					if (!old || !Array.isArray(old)) return old;
-					return [...old, { movieId: Number(movieId), title: movie?.title }];
-				},
-			);
+			// Optimistically update user movies
+			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return [...old, { movieId: Number(movieId), title: movie?.title }];
+			});
 
-			return { previousUserMovies, previousListsForItem };
+			return {
+				previousUserMovies,
+				previousListsForItem,
+				userMoviesKey,
+				listsForItemKey,
+			};
 		},
 		onError: (_err, _variables, context) => {
 			// Rollback on error
 			if (context?.previousUserMovies) {
 				queryClient.setQueryData(
-					["moviesControllerGetUserMovies"],
+					context.userMoviesKey,
 					context.previousUserMovies,
 				);
 			}
 			if (context?.previousListsForItem) {
 				queryClient.setQueryData(
-					["listsControllerGetListsForItem"],
+					context.listsForItemKey,
 					context.previousListsForItem,
 				);
 			}
 		},
-		onSettled: () => {
+		onSettled: (_data, _error, _variables, context) => {
 			// Always refetch after error or success
+			if (context?.userMoviesKey) {
+				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
+			}
 			queryClient.invalidateQueries({
-				queryKey: ["moviesControllerGetUserMovies"],
-				exact: false,
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: userDid || "", movieId },
+				}),
 			});
-			queryClient.invalidateQueries({
-				queryKey: ["moviesControllerGetMovieWatchHistory"],
-				exact: false,
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
-			});
+			if (context?.listsForItemKey) {
+				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
+			}
 		},
 	});
 
@@ -185,42 +188,38 @@ function MovieDetailPage() {
 		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async () => {
-			await queryClient.cancelQueries({
-				queryKey: ["moviesControllerGetUserMovies"],
-				exact: false,
+			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+				path: { userDid: userDid || "" },
 			});
-			const previousUserMovies = queryClient.getQueryData([
-				"moviesControllerGetUserMovies",
-			]);
 
-			queryClient.setQueryData(
-				["moviesControllerGetUserMovies"],
-				(old: unknown) => {
-					if (!old || !Array.isArray(old)) return old;
-					return old.filter(
-						(m: { movieId: number }) => m.movieId !== Number(movieId),
-					);
-				},
-			);
+			await queryClient.cancelQueries({ queryKey: userMoviesKey });
+			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
 
-			return { previousUserMovies };
+			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.filter(
+					(m: { movieId: number }) => m.movieId !== Number(movieId),
+				);
+			});
+
+			return { previousUserMovies, userMoviesKey };
 		},
 		onError: (_err, _variables, context) => {
 			if (context?.previousUserMovies) {
 				queryClient.setQueryData(
-					["moviesControllerGetUserMovies"],
+					context.userMoviesKey,
 					context.previousUserMovies,
 				);
 			}
 		},
-		onSettled: () => {
+		onSettled: (_data, _error, _variables, context) => {
+			if (context?.userMoviesKey) {
+				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
+			}
 			queryClient.invalidateQueries({
-				queryKey: ["moviesControllerGetUserMovies"],
-				exact: false,
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["moviesControllerGetMovieWatchHistory"],
-				exact: false,
+				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+					path: { userDid: userDid || "", movieId },
+				}),
 			});
 		},
 	});
@@ -230,46 +229,40 @@ function MovieDetailPage() {
 		mutationKey: ["lists", "addItem"],
 		...listsControllerAddItemToListMutation(),
 		onMutate: async (variables) => {
-			await queryClient.cancelQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
+			const listsForItemKey = listsControllerGetListsForItemQueryKey({
+				path: { mediaType: "movie", mediaId: movieId },
 			});
 
-			const previousListsForItem = queryClient.getQueryData([
-				"listsControllerGetListsForItem",
-			]);
+			await queryClient.cancelQueries({ queryKey: listsForItemKey });
+
+			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
 
 			// Optimistically add to the list
-			queryClient.setQueryData(
-				["listsControllerGetListsForItem"],
-				(old: unknown) => {
-					if (!old || !Array.isArray(old)) return old;
-					return old.map((list: { listSlug: string; isInList: boolean }) =>
-						list.listSlug === variables.path.slug
-							? { ...list, isInList: true }
-							: list,
-					);
-				},
-			);
+			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.map((list: { listSlug: string; isInList: boolean }) =>
+					list.listSlug === variables.path.slug
+						? { ...list, isInList: true }
+						: list,
+				);
+			});
 
-			return { previousListsForItem };
+			return { previousListsForItem, listsForItemKey };
 		},
 		onError: (_err, _variables, context) => {
 			if (context?.previousListsForItem) {
 				queryClient.setQueryData(
-					["listsControllerGetListsForItem"],
+					context.listsForItemKey,
 					context.previousListsForItem,
 				);
 			}
 		},
-		onSettled: () => {
+		onSettled: (_data, _error, _variables, context) => {
+			if (context?.listsForItemKey) {
+				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
+			}
 			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetUserLists"],
-				exact: false,
+				queryKey: listsControllerGetUserListsQueryKey(),
 			});
 		},
 	});
@@ -279,46 +272,40 @@ function MovieDetailPage() {
 		mutationKey: ["lists", "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
 		onMutate: async (variables) => {
-			await queryClient.cancelQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
+			const listsForItemKey = listsControllerGetListsForItemQueryKey({
+				path: { mediaType: "movie", mediaId: movieId },
 			});
 
-			const previousListsForItem = queryClient.getQueryData([
-				"listsControllerGetListsForItem",
-			]);
+			await queryClient.cancelQueries({ queryKey: listsForItemKey });
+
+			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
 
 			// Optimistically remove from the list
-			queryClient.setQueryData(
-				["listsControllerGetListsForItem"],
-				(old: unknown) => {
-					if (!old || !Array.isArray(old)) return old;
-					return old.map((list: { listSlug: string; isInList: boolean }) =>
-						list.listSlug === variables.path.slug
-							? { ...list, isInList: false }
-							: list,
-					);
-				},
-			);
+			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.map((list: { listSlug: string; isInList: boolean }) =>
+					list.listSlug === variables.path.slug
+						? { ...list, isInList: false }
+						: list,
+				);
+			});
 
-			return { previousListsForItem };
+			return { previousListsForItem, listsForItemKey };
 		},
 		onError: (_err, _variables, context) => {
 			if (context?.previousListsForItem) {
 				queryClient.setQueryData(
-					["listsControllerGetListsForItem"],
+					context.listsForItemKey,
 					context.previousListsForItem,
 				);
 			}
 		},
-		onSettled: () => {
+		onSettled: (_data, _error, _variables, context) => {
+			if (context?.listsForItemKey) {
+				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
+			}
 			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetListsForItem"],
-				exact: false,
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetUserLists"],
-				exact: false,
+				queryKey: listsControllerGetUserListsQueryKey(),
 			});
 		},
 	});
