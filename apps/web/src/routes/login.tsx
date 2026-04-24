@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
 import { ArrowRight, Film, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
@@ -12,6 +16,8 @@ function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const { login, signup, isAuthenticated } = useAuth();
 	const navigate = useNavigate();
+	const search = useSearch({ from: "/login" });
+	const message = (search as { message?: string }).message;
 
 	// Redirect if already authenticated
 	useEffect(() => {
@@ -47,6 +53,13 @@ function LoginPage() {
 						Track what you watch with your AT Protocol account
 					</p>
 				</div>
+
+				{/* Redirect Notice */}
+				{message && (
+					<div className="mb-6 rounded-lg border border-(--accent) bg-(--accent-subtle) px-4 py-3 text-(--foreground) text-sm">
+						{message}
+					</div>
+				)}
 
 				{/* Login Form */}
 				<div className="card p-6">

@@ -22,7 +22,7 @@ export default function SimilarMediaGrid({
 
 	return (
 		<section>
-			<h2 className="text-display-3 mb-4">{title}</h2>
+			<h2 className="mb-4 text-display-3">{title}</h2>
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				{items.map((item) => (
 					<MediaCard

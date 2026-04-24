@@ -161,7 +161,7 @@ function FollowingPage() {
 
 			<div className="grid gap-8 lg:grid-cols-3">
 				{/* Main Feed */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					<PeopleSearch
 						query={searchQuery}
 						onQueryChange={setSearchQuery}
@@ -193,7 +193,7 @@ function FollowingPage() {
 								className="btn btn-secondary"
 								disabled={false}
 							>
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 								Loading...
 							</button>
 						</div>

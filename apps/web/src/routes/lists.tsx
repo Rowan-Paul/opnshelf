@@ -1,5 +1,10 @@
-import type { MediaInListDto } from "@opnshelf/api";
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { authControllerMeOptions, type MediaInListDto } from "@opnshelf/api";
+import {
+	createFileRoute,
+	Outlet,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
 import {
 	AlertCircle,
 	Clock,
@@ -34,6 +39,19 @@ export const LISTS_PAGE_DESCRIPTION =
 	"Organize movies and shows into watchlists, favorites, and custom collections.";
 
 export const Route = createFileRoute("/lists")({
+	beforeLoad: async ({ context }) => {
+		try {
+			await context.queryClient.fetchQuery(authControllerMeOptions());
+		} catch (error: any) {
+			if (error.status === 401 || error.statusCode === 401) {
+				throw redirect({
+					to: "/login",
+					search: { message: "Please log in to view your lists" },
+				});
+			}
+			throw error;
+		}
+	},
 	component: ListsLayout,
 });
 
