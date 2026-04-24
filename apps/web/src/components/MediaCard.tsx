@@ -1,7 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Clock, MoreHorizontal, Play, Star } from "lucide-react";
+import {
+	Check,
+	Clock,
+	Loader2,
+	MoreHorizontal,
+	Play,
+	Star,
+	X,
+} from "lucide-react";
 import { useState } from "react";
-import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
+import {
+	buildEpisodeUrl,
+	buildMovieUrl,
+	buildSeasonUrl,
+	buildShowUrl,
+} from "#/lib/url-utils";
 
 interface MediaCardProps {
 	id: string | number;
@@ -27,6 +40,8 @@ interface MediaCardProps {
 	onWatch?: () => void;
 	onAddToList?: () => void;
 	onMarkWatched?: () => void;
+	onRemove?: () => void;
+	isRemoving?: boolean;
 }
 
 export default function MediaCard({
@@ -51,6 +66,8 @@ export default function MediaCard({
 	onWatch,
 	onAddToList,
 	onMarkWatched,
+	onRemove,
+	isRemoving = false,
 }: MediaCardProps) {
 	const [imageLoaded, setImageLoaded] = useState(false);
 	const [imageError, setImageError] = useState(false);
@@ -78,18 +95,17 @@ export default function MediaCard({
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
 
-	// Build URL - episodes go to episode detail page if season/episode numbers provided
+	// Build URL - scoped show items go to season/episode detail pages
 	const linkHref = (() => {
 		if (href) return href;
 		if (type === "movie") {
 			return buildMovieUrl(id, title);
 		}
-		if (
-			type === "show" &&
-			seasonNumber !== undefined &&
-			episodeNumber !== undefined
-		) {
-			return buildEpisodeUrl(id, title, seasonNumber, episodeNumber);
+		if (type === "show" && seasonNumber !== undefined) {
+			if (episodeNumber !== undefined) {
+				return buildEpisodeUrl(id, title, seasonNumber, episodeNumber);
+			}
+			return buildSeasonUrl(id, title, seasonNumber);
 		}
 		return buildShowUrl(id, title);
 	})();
@@ -234,6 +250,16 @@ export default function MediaCard({
 						</h3>
 						<div className="flex items-center gap-2 text-(--foreground-muted) text-xs">
 							{year && <span>{year}</span>}
+							{typeof seasonNumber === "number" && type === "show" && (
+								<>
+									<span>•</span>
+									<span>
+										{typeof episodeNumber === "number"
+											? `S${seasonNumber}E${episodeNumber}`
+											: `Season ${seasonNumber}`}
+									</span>
+								</>
+							)}
 							{rating && (
 								<>
 									<span>•</span>
@@ -255,9 +281,27 @@ export default function MediaCard({
 			</Link>
 
 			{/* Actions menu */}
-			{(onAddToList || onMarkWatched) && (
-				<div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
-					<div className="relative">
+			{(onAddToList || onMarkWatched || onRemove) && (
+				<div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+					{onRemove && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								onRemove();
+							}}
+							disabled={isRemoving}
+							className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50"
+							aria-label="Remove from list"
+						>
+							{isRemoving ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								<X className="h-4 w-4" />
+							)}
+						</button>
+					)}
+					{(onAddToList || onMarkWatched) && (
 						<button
 							type="button"
 							className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
@@ -265,7 +309,7 @@ export default function MediaCard({
 						>
 							<MoreHorizontal className="h-4 w-4" />
 						</button>
-					</div>
+					)}
 				</div>
 			)}
 		</article>

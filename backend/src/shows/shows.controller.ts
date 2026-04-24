@@ -78,16 +78,14 @@ export class ShowsController {
 	@ApiResponse({ status: 200, type: TMDBShowDetailDto })
 	async getShowDetails(@Param("showId") showId: string) {
 		const showData = await this.showsService.getShowDetails(showId);
-		const [show] = await Promise.all([
-			this.showsService.upsertShow(showData),
-			this.showsService
-				.syncShowMetadata(showId)
-				.catch((err) =>
-					this.logger.warn(
-						`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
-					),
+		const show = await this.showsService.upsertShow(showData);
+		this.showsService
+			.syncShowMetadata(showId)
+			.catch((err) =>
+				this.logger.warn(
+					`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
 				),
-		]);
+			);
 		const credits = await this.showsService.getShowCredits(showId);
 
 		return {

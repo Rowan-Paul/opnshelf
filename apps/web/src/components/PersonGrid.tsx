@@ -11,19 +11,39 @@ interface PersonGridProps {
 	emptyMessage?: string;
 }
 
+function deduplicatePeople(people: Person[]): Person[] {
+	const map = new Map<number, Person>();
+	for (const person of people) {
+		const existing = map.get(person.id);
+		if (existing) {
+			const roles = new Set(
+				[existing.role, person.role]
+					.filter(Boolean)
+					.flatMap((r) => r.split(", ")),
+			);
+			existing.role = Array.from(roles).join(", ");
+		} else {
+			map.set(person.id, { ...person });
+		}
+	}
+	return Array.from(map.values());
+}
+
 export default function PersonGrid({
 	people,
 	title = "Cast",
 	emptyMessage = "No information available.",
 }: PersonGridProps) {
+	const uniquePeople = deduplicatePeople(people);
+
 	return (
 		<section>
 			<h2 className="mb-4 text-display-3">{title}</h2>
-			{people.length === 0 ? (
+			{uniquePeople.length === 0 ? (
 				<p className="text-(--foreground-muted) text-sm">{emptyMessage}</p>
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{people.map((person) => (
+					{uniquePeople.map((person) => (
 						<div
 							key={person.id}
 							className="card card-interactive flex items-center gap-3 p-3"

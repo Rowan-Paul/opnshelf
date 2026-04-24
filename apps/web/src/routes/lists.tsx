@@ -1,4 +1,11 @@
-import { authControllerMeOptions, type MediaInListDto } from "@opnshelf/api";
+import {
+	authControllerMeOptions,
+	listsControllerGetListQueryKey,
+	listsControllerGetUserListsQueryKey,
+	listsControllerRemoveItemFromListMutation,
+	type MediaInListDto,
+} from "@opnshelf/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Outlet,
@@ -14,12 +21,11 @@ import {
 	List,
 	List as ListIcon,
 	Loader2,
-	MoreHorizontal,
 	Plus,
 	Search,
-	SortAsc,
 	Star,
 	Tv,
+	X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -225,6 +231,24 @@ export function ListsPage({
 
 	// Create list mutation
 	const createListMutation = useCreateList();
+	const queryClient = useQueryClient();
+
+	// Remove item from list mutation
+	const removeItemMutation = useMutation({
+		...listsControllerRemoveItemFromListMutation(),
+		onSuccess: () => {
+			if (selectedListSlug) {
+				queryClient.invalidateQueries({
+					queryKey: listsControllerGetListQueryKey({
+						path: { slug: selectedListSlug },
+					}),
+				});
+			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+		},
+	});
 
 	const activeList = useMemo(() => {
 		if (!userLists) return null;
@@ -527,15 +551,6 @@ export function ListsPage({
 										/>
 									</div>
 
-									{/* Sort */}
-									<button
-										type="button"
-										className="btn btn-secondary h-9 w-9 p-0"
-										aria-label="Sort"
-									>
-										<SortAsc className="h-4 w-4" />
-									</button>
-
 									{/* View Toggle */}
 									<div className="flex rounded-lg border border-(--border) bg-(--background-elevated) p-0.5">
 										<button
@@ -563,15 +578,6 @@ export function ListsPage({
 											<ListIcon className="h-4 w-4" />
 										</button>
 									</div>
-
-									{/* More options */}
-									<button
-										type="button"
-										className="btn btn-secondary h-9 w-9 p-0"
-										aria-label="More options"
-									>
-										<MoreHorizontal className="h-4 w-4" />
-									</button>
 								</div>
 							</div>
 
@@ -657,6 +663,20 @@ export function ListsPage({
 													)}
 													size="md"
 													layout="poster"
+													onRemove={() =>
+														removeItemMutation.mutate({
+															path: {
+																slug: selectedListSlug || "",
+																mediaType: item.mediaType,
+																mediaId: item.mediaId,
+															},
+														})
+													}
+													isRemoving={
+														removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId
+													}
 												/>
 											))}
 									</div>
@@ -693,12 +713,13 @@ export function ListsPage({
 															>
 																{item.mediaType === "movie" ? "Movie" : "TV"}
 															</span>
-															{item.seasonNumber !== undefined &&
-																item.episodeNumber !== undefined && (
-																	<span className="badge badge-subtle text-[10px]">
-																		S{item.seasonNumber}E{item.episodeNumber}
-																	</span>
-																)}
+															{item.seasonNumber !== undefined && (
+																<span className="badge badge-subtle text-[10px]">
+																	{item.episodeNumber !== undefined
+																		? `S${item.seasonNumber}E${item.episodeNumber}`
+																		: `Season ${item.seasonNumber}`}
+																</span>
+															)}
 														</div>
 														<div className="mt-1 flex items-center gap-3 text-(--foreground-muted) text-sm">
 															{getYear(item.media) && (
@@ -729,9 +750,30 @@ export function ListsPage({
 													</div>
 													<button
 														type="button"
-														className="btn btn-ghost h-8 w-8 p-0 text-(--foreground-muted)"
+														onClick={() =>
+															removeItemMutation.mutate({
+																path: {
+																	slug: selectedListSlug || "",
+																	mediaType: item.mediaType,
+																	mediaId: item.mediaId,
+																},
+															})
+														}
+														disabled={
+															removeItemMutation.isPending &&
+															removeItemMutation.variables?.path?.mediaId ===
+																item.mediaId
+														}
+														className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:border-red-300 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+														aria-label="Remove from list"
 													>
-														<MoreHorizontal className="h-4 w-4" />
+														{removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId ? (
+															<Loader2 className="h-4 w-4 animate-spin" />
+														) : (
+															<X className="h-4 w-4" />
+														)}
 													</button>
 												</div>
 											))}

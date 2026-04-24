@@ -210,6 +210,7 @@ export class ShowsService {
 		}
 
 		const show = await this.showsTmdb.getShowDetails(showId);
+		const dbShowId = show.id.toString();
 		await this.upsertShow(show);
 		const tmdbSeasons = (show.seasons ?? []).filter(
 			(s) => s.season_number !== 0,
@@ -235,7 +236,7 @@ export class ShowsService {
 				},
 				create: {
 					tmdbId: tmdbSeason.id,
-					showId,
+					showId: dbShowId,
 					seasonNumber: tmdbSeason.season_number,
 					name: tmdbSeason.name,
 					posterPath: tmdbSeason.poster_path ?? null,
@@ -243,7 +244,7 @@ export class ShowsService {
 					episodeCount: tmdbSeason.episode_count ?? null,
 				},
 				update: {
-					showId,
+					showId: dbShowId,
 					seasonNumber: tmdbSeason.season_number,
 					name: tmdbSeason.name,
 					posterPath: tmdbSeason.poster_path ?? null,
@@ -257,7 +258,7 @@ export class ShowsService {
 				await this.prisma.episode.upsert({
 					where: {
 						showId_seasonNumber_episodeNumber: {
-							showId,
+							showId: dbShowId,
 							seasonNumber: tmdbSeason.season_number,
 							episodeNumber: ep.episode_number,
 						},
@@ -265,7 +266,7 @@ export class ShowsService {
 					create: {
 						tmdbId: ep.id,
 						seasonId: season.id,
-						showId,
+						showId: dbShowId,
 						seasonNumber: tmdbSeason.season_number,
 						episodeNumber: ep.episode_number,
 						name: ep.name,
