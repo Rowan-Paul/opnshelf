@@ -15,6 +15,7 @@ import {
 	showsControllerUnmarkWatched,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "#/lib/auth-context";
 
 // Movie detail hook
 export function useMovieDetails(movieId: string) {
@@ -100,6 +101,8 @@ export function useUserUpNext(userDid: string) {
 // Mark episode as watched mutation
 export function useMarkEpisodeWatched() {
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
+	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationKey: ["shows", "markEpisodeWatched"],
@@ -113,12 +116,12 @@ export function useMarkEpisodeWatched() {
 			// Invalidate the specific show's watch history
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
-					path: { userDid: "", showId: variables.body.showId },
+					path: { userDid, showId: variables.body.showId },
 				}),
 			});
 			// Also invalidate up next queries - affects which episode is "current"
 			queryClient.invalidateQueries({
-				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid: "" } })
+				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
 					.queryKey,
 			});
 			// Invalidate general shows list
@@ -130,6 +133,8 @@ export function useMarkEpisodeWatched() {
 // Unmark episode as watched mutation
 export function useUnmarkEpisodeWatched() {
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
+	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationFn: async (variables: {
@@ -138,7 +143,19 @@ export function useUnmarkEpisodeWatched() {
 			const result = await showsControllerUnmarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			// Invalidate the specific show's watch history
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetShowWatchHistoryQueryKey({
+					path: { userDid, showId: variables.path.showId },
+				}),
+			});
+			// Also invalidate up next queries - affects which episode is "current"
+			queryClient.invalidateQueries({
+				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
+					.queryKey,
+			});
+			// Invalidate general shows list
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
 		},
 	});

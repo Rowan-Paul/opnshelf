@@ -231,10 +231,7 @@ export class ShowsService {
 
 			const season = await this.prisma.season.upsert({
 				where: {
-					showId_seasonNumber: {
-						showId,
-						seasonNumber: tmdbSeason.season_number,
-					},
+					tmdbId: tmdbSeason.id,
 				},
 				create: {
 					tmdbId: tmdbSeason.id,
@@ -246,7 +243,8 @@ export class ShowsService {
 					episodeCount: tmdbSeason.episode_count ?? null,
 				},
 				update: {
-					tmdbId: tmdbSeason.id,
+					showId,
+					seasonNumber: tmdbSeason.season_number,
 					name: tmdbSeason.name,
 					posterPath: tmdbSeason.poster_path ?? null,
 					airDate: tmdbSeason.air_date ? new Date(tmdbSeason.air_date) : null,

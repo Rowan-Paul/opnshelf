@@ -282,7 +282,8 @@ export function SearchCommand({
 								{userLists.slice(0, 5).map((list: ListSummaryDto) => (
 									<CommandItem key={`list-${list.id}`} asChild>
 										<Link
-											to={`/lists/${list.slug}` as any}
+											to="/lists/$listSlug"
+											params={{ listSlug: list.slug }}
 											className="flex items-center gap-2"
 										>
 											<List className="h-4 w-4" />

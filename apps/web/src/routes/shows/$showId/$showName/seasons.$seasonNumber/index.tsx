@@ -1,11 +1,55 @@
+import {
+	showsControllerGetSeasonDetailsOptions,
+	showsControllerGetShowDetailsOptions,
+} from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Loader2 } from "lucide-react";
+import { setupApiClient } from "#/lib/api";
 import { useShowDetails } from "#/lib/hooks";
+import { buildSeasonPageMeta } from "#/lib/media-meta";
 import { buildShowUrl } from "#/lib/url-utils";
+
+setupApiClient();
 
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/",
 )({
+	loader: async ({ context, params }) => {
+		const [show, season] = await Promise.all([
+			context.queryClient.ensureQueryData(
+				showsControllerGetShowDetailsOptions({
+					path: { showId: params.showId },
+				}),
+			),
+			context.queryClient.ensureQueryData(
+				showsControllerGetSeasonDetailsOptions({
+					path: {
+						showId: params.showId,
+						seasonNumber: params.seasonNumber,
+					},
+				}),
+			),
+		]);
+
+		return { show, season };
+	},
+	head: ({ loaderData, params }) => {
+		const meta = buildSeasonPageMeta(
+			loaderData?.show,
+			loaderData?.season,
+			params.seasonNumber,
+		);
+
+		return {
+			meta: [
+				{ title: meta.title },
+				{
+					name: "description",
+					content: meta.description,
+				},
+			],
+		};
+	},
 	component: SeasonDetailPage,
 });
 

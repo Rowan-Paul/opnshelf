@@ -1,42 +1,46 @@
-import {
-	listsControllerAddItemToListMutation,
-	listsControllerGetListsForItemOptions,
-	listsControllerGetListsForItemQueryKey,
-	listsControllerGetUserListsOptions,
-	listsControllerGetUserListsQueryKey,
-	listsControllerRemoveItemFromListMutation,
-	moviesControllerGetMovieWatchHistoryOptions,
-	moviesControllerGetMovieWatchHistoryQueryKey,
-	moviesControllerGetUserMoviesOptions,
-	moviesControllerGetUserMoviesQueryKey,
-	moviesControllerMarkWatchedMutation,
-	moviesControllerUnmarkWatchedMutation,
-} from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Bookmark,
-	Check,
-	ChevronLeft,
-	ChevronRight,
-	Clock,
-	Heart,
-	Loader2,
-	Plus,
-	Share2,
-	Star,
-	X,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
+import { createFileRoute } from "@tanstack/react-router";
+import { Check, Clock, Loader2, Plus, Star, X } from "lucide-react";
 import { setupApiClient } from "#/lib/api";
-import { useAuth } from "#/lib/auth-context";
-import { useDiscoverMovies, useMovieDetails } from "#/lib/hooks";
-import MediaCard from "../../../components/MediaCard";
+import {
+	useDiscoverMovies,
+	useMediaWatchStatus,
+	useMovieDetails,
+	useWatchActions,
+} from "#/lib/hooks";
+import { buildMoviePageMeta } from "#/lib/media-meta";
+import CastGrid from "../../../components/CastGrid";
+import DetailsCard from "../../../components/DetailsCard";
+import ErrorState from "../../../components/ErrorState";
+import InYourLists from "../../../components/InYourLists";
+import LoadingState from "../../../components/LoadingState";
+import MediaActionsBar from "../../../components/MediaActionsBar";
+import MediaHero from "../../../components/MediaHero";
+import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 
-// Initialize API client
 setupApiClient();
 
 export const Route = createFileRoute("/movies/$movieId/$movieName")({
+	loader: async ({ context, params }) => {
+		return context.queryClient.ensureQueryData(
+			moviesControllerGetMovieDetailsOptions({
+				path: { movieId: params.movieId },
+			}),
+		);
+	},
+	head: ({ loaderData, params }) => {
+		const meta = buildMoviePageMeta(loaderData, params.movieName);
+
+		return {
+			meta: [
+				{ title: meta.title },
+				{
+					name: "description",
+					content: meta.description,
+				},
+			],
+		};
+	},
 	component: MovieDetailPage,
 });
 
@@ -47,377 +51,45 @@ function formatRuntime(minutes: number): string {
 }
 
 function formatDate(dateString: string): string {
-	const date = new Date(dateString);
-	return date.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
+	if (!dateString) return "Unknown";
+	try {
+		return new Date(dateString).toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	} catch {
+		return dateString;
+	}
 }
 
 function MovieDetailPage() {
 	const { movieId } = Route.useParams();
-	const { user, isAuthenticated } = useAuth();
-	const userDid = user?.did;
-	const queryClient = useQueryClient();
-	const [showListDropdown, setShowListDropdown] = useState(false);
-	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 
-	// Fetch movie details from API
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
 	const { data: similarMoviesData } = useDiscoverMovies(1);
-
-	// Fetch user movies to check if this movie is tracked
-	const { data: userMovies } = useQuery({
-		...moviesControllerGetUserMoviesOptions({
-			path: { userDid: userDid || "" },
-		}),
-		enabled: !!userDid,
+	const { isWatched, movieWatchHistory } = useMediaWatchStatus({
+		mediaType: "movie",
+		movieId,
 	});
+	const {
+		markMovieWatched,
+		unmarkMovieWatched,
+		isMarkMoviePending,
+		isUnmarkMoviePending,
+	} = useWatchActions({ mediaType: "movie", movieId });
 
-	// Check if movie is in user's lists
-	const { data: listsForItem } = useQuery({
-		...listsControllerGetListsForItemOptions({
-			path: { mediaType: "movie", mediaId: movieId },
-		}),
-		enabled: isAuthenticated,
-	});
-
-	// Fetch watch history for activity section
-	const { data: watchHistory } = useQuery({
-		...moviesControllerGetMovieWatchHistoryOptions({
-			path: { userDid: userDid || "", movieId },
-		}),
-		enabled: !!userDid,
-	});
-
-	// Fetch user's lists for the dropdown
-	const { data: userLists } = useQuery({
-		...listsControllerGetUserListsOptions(),
-		enabled: isAuthenticated && showListDropdown,
-	});
-
-	// Check tracking status
-	const isWatched = useMemo(() => {
-		if (!userMovies || !Array.isArray(userMovies)) return false;
-		return userMovies.some((um) => um.movieId === movieId);
-	}, [userMovies, movieId]);
-
-	const isInWatchlist = useMemo(() => {
-		if (!listsForItem || !Array.isArray(listsForItem)) return false;
-		return listsForItem.some(
-			(list) => list.listSlug === "watchlist" && list.isInList,
-		);
-	}, [listsForItem]);
-
-	const isInFavorites = useMemo(() => {
-		if (!listsForItem || !Array.isArray(listsForItem)) return false;
-		return listsForItem.some(
-			(list) => list.listSlug === "favorites" && list.isInList,
-		);
-	}, [listsForItem]);
-
-	const otherLists =
-		listsForItem?.filter((list) => !list.isDefault && list.isInList) || [];
-
-	// Mark watched mutation with optimistic update
-	const markWatchedMutation = useMutation({
-		mutationKey: ["movies", movieId, "markWatched"],
-		...moviesControllerMarkWatchedMutation(),
-		onMutate: async () => {
-			// Get proper query keys
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
-				path: { userDid: userDid || "" },
-			});
-			const listsForItemKey = listsControllerGetListsForItemQueryKey({
-				path: { mediaType: "movie", mediaId: movieId },
-			});
-
-			// Cancel outgoing refetches
-			await queryClient.cancelQueries({ queryKey: userMoviesKey });
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-
-			// Snapshot previous values
-			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
-			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
-
-			// Optimistically update user movies
-			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return [...old, { movieId: Number(movieId), title: movie?.title }];
-			});
-
-			return {
-				previousUserMovies,
-				previousListsForItem,
-				userMoviesKey,
-				listsForItemKey,
-			};
-		},
-		onError: (_err, _variables, context) => {
-			// Rollback on error
-			if (context?.previousUserMovies) {
-				queryClient.setQueryData(
-					context.userMoviesKey,
-					context.previousUserMovies,
-				);
-			}
-			if (context?.previousListsForItem) {
-				queryClient.setQueryData(
-					context.listsForItemKey,
-					context.previousListsForItem,
-				);
-			}
-		},
-		onSettled: (_data, _error, _variables, context) => {
-			// Always refetch after error or success
-			if (context?.userMoviesKey) {
-				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
-			}
-			queryClient.invalidateQueries({
-				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-					path: { userDid: userDid || "", movieId },
-				}),
-			});
-			if (context?.listsForItemKey) {
-				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
-			}
-		},
-	});
-
-	// Unmark watched mutation with optimistic update
-	const unmarkWatchedMutation = useMutation({
-		mutationKey: ["movies", movieId, "unmarkWatched"],
-		...moviesControllerUnmarkWatchedMutation(),
-		onMutate: async () => {
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
-				path: { userDid: userDid || "" },
-			});
-
-			await queryClient.cancelQueries({ queryKey: userMoviesKey });
-			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
-
-			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.filter(
-					(m: { movieId: number }) => m.movieId !== Number(movieId),
-				);
-			});
-
-			return { previousUserMovies, userMoviesKey };
-		},
-		onError: (_err, _variables, context) => {
-			if (context?.previousUserMovies) {
-				queryClient.setQueryData(
-					context.userMoviesKey,
-					context.previousUserMovies,
-				);
-			}
-		},
-		onSettled: (_data, _error, _variables, context) => {
-			if (context?.userMoviesKey) {
-				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
-			}
-			queryClient.invalidateQueries({
-				queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-					path: { userDid: userDid || "", movieId },
-				}),
-			});
-		},
-	});
-
-	// Add to list mutation with optimistic update
-	const addToListMutation = useMutation({
-		mutationKey: ["lists", "addItem"],
-		...listsControllerAddItemToListMutation(),
-		onMutate: async (variables) => {
-			const listsForItemKey = listsControllerGetListsForItemQueryKey({
-				path: { mediaType: "movie", mediaId: movieId },
-			});
-
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-
-			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
-
-			// Optimistically add to the list
-			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.map((list: { listSlug: string; isInList: boolean }) =>
-					list.listSlug === variables.path.slug
-						? { ...list, isInList: true }
-						: list,
-				);
-			});
-
-			return { previousListsForItem, listsForItemKey };
-		},
-		onError: (_err, _variables, context) => {
-			if (context?.previousListsForItem) {
-				queryClient.setQueryData(
-					context.listsForItemKey,
-					context.previousListsForItem,
-				);
-			}
-		},
-		onSettled: (_data, _error, _variables, context) => {
-			if (context?.listsForItemKey) {
-				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
-			}
-			queryClient.invalidateQueries({
-				queryKey: listsControllerGetUserListsQueryKey(),
-			});
-		},
-	});
-
-	// Remove from list mutation with optimistic update
-	const removeFromListMutation = useMutation({
-		mutationKey: ["lists", "removeItem"],
-		...listsControllerRemoveItemFromListMutation(),
-		onMutate: async (variables) => {
-			const listsForItemKey = listsControllerGetListsForItemQueryKey({
-				path: { mediaType: "movie", mediaId: movieId },
-			});
-
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-
-			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
-
-			// Optimistically remove from the list
-			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.map((list: { listSlug: string; isInList: boolean }) =>
-					list.listSlug === variables.path.slug
-						? { ...list, isInList: false }
-						: list,
-				);
-			});
-
-			return { previousListsForItem, listsForItemKey };
-		},
-		onError: (_err, _variables, context) => {
-			if (context?.previousListsForItem) {
-				queryClient.setQueryData(
-					context.listsForItemKey,
-					context.previousListsForItem,
-				);
-			}
-		},
-		onSettled: (_data, _error, _variables, context) => {
-			if (context?.listsForItemKey) {
-				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
-			}
-			queryClient.invalidateQueries({
-				queryKey: listsControllerGetUserListsQueryKey(),
-			});
-		},
-	});
-
-	const handleMarkWatched = () => {
-		if (!isAuthenticated) return;
-		markWatchedMutation.mutate({
-			body: { movieId: movieId },
-		});
-	};
-
-	const handleUnmarkWatched = () => {
-		if (!isAuthenticated) return;
-		unmarkWatchedMutation.mutate({
-			path: { movieId: movieId },
-		});
-	};
-
-	const handleToggleWatchlist = () => {
-		if (!isAuthenticated) return;
-		setActiveListAction("watchlist");
-		if (isInWatchlist) {
-			removeFromListMutation.mutate(
-				{
-					path: { slug: "watchlist", mediaType: "movie", mediaId: movieId },
-				},
-				{
-					onSettled: () => setActiveListAction(null),
-				},
-			);
-		} else {
-			addToListMutation.mutate(
-				{
-					path: { slug: "watchlist" },
-					body: { mediaType: "movie", mediaId: movieId },
-				},
-				{
-					onSettled: () => setActiveListAction(null),
-				},
-			);
-		}
-	};
-
-	const handleToggleFavorites = () => {
-		if (!isAuthenticated) return;
-		setActiveListAction("favorites");
-		if (isInFavorites) {
-			removeFromListMutation.mutate(
-				{
-					path: { slug: "favorites", mediaType: "movie", mediaId: movieId },
-				},
-				{
-					onSettled: () => setActiveListAction(null),
-				},
-			);
-		} else {
-			addToListMutation.mutate(
-				{
-					path: { slug: "favorites" },
-					body: { mediaType: "movie", mediaId: movieId },
-				},
-				{
-					onSettled: () => setActiveListAction(null),
-				},
-			);
-		}
-	};
-
-	const handleAddToList = (slug: string) => {
-		if (!isAuthenticated) return;
-		addToListMutation.mutate({
-			path: { slug },
-			body: {
-				mediaType: "movie",
-				mediaId: movieId,
-			},
-		});
-		setShowListDropdown(false);
-	};
-
-	// Get available lists (not already containing this movie)
-	const availableLists = useMemo(() => {
-		if (!userLists || !listsForItem) return [];
-		const listIdsInItem = new Set(listsForItem.map((l) => l.listId));
-		return userLists.filter((list) => !listIdsInItem.has(list.id));
-	}, [userLists, listsForItem]);
-
-	if (isLoading) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<Loader2 className="h-12 w-12 animate-spin text-[var(--accent)]" />
-			</div>
-		);
-	}
-
+	if (isLoading) return <LoadingState />;
 	if (error || !movie) {
 		return (
-			<div className="container-app py-8">
-				<div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-800">
-					<p className="text-lg font-medium">Failed to load movie</p>
-					<p className="mt-2">Please check your connection and try again.</p>
-					<Link to="/" className="btn btn-primary mt-4 inline-flex">
-						Back to Dashboard
-					</Link>
-				</div>
-			</div>
+			<ErrorState
+				message="Failed to load movie"
+				backTo="/"
+				backLabel="Back to Dashboard"
+			/>
 		);
 	}
 
-	// Transform API data
 	const backdropUrl = movie.backdrop_path
 		? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
 		: movie.poster_path
@@ -430,6 +102,7 @@ function MovieDetailPage() {
 	const director =
 		movie.credits?.crew?.find((person) => person.job === "Director")?.name ||
 		"Unknown";
+
 	const cast =
 		movie.credits?.cast?.slice(0, 6).map((actor) => ({
 			name: actor.name,
@@ -439,7 +112,6 @@ function MovieDetailPage() {
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
 		})) || [];
 
-	// Get similar movies from discover API, excluding current movie
 	const similarMovies =
 		similarMoviesData?.results
 			?.filter((m) => m.id !== Number(movieId))
@@ -461,215 +133,90 @@ function MovieDetailPage() {
 
 	return (
 		<div className="min-h-screen pb-8">
-			{/* Hero Section with Backdrop */}
-			<div className="relative z-10 min-h-[50vh] overflow-hidden">
-				{/* Backdrop Image */}
-				<div className="absolute inset-0 h-[60vh] overflow-hidden">
-					<img
-						src={backdropUrl}
-						alt={movie.title}
-						className="h-full w-full object-cover"
-					/>
-					{/* Gradient Overlays */}
-					<div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/60 to-transparent" />
-					<div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent" />
-				</div>
-
-				{/* Content */}
-				<div className="container-app relative pt-8">
-					{/* Back Button */}
-					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
-						<ChevronLeft className="h-4 w-4" />
-						Back to Dashboard
-					</Link>
-
-					{/* Movie Info Header */}
-					<div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
-						{/* Poster */}
-						<div className="hidden lg:block">
-							<div className="aspect-[2/3] overflow-hidden rounded-xl shadow-2xl">
-								<img
-									src={posterUrl}
-									alt={movie.title}
-									className="h-full w-full object-cover"
-								/>
-							</div>
+			<MediaHero
+				title={movie.title}
+				backdropUrl={backdropUrl}
+				posterUrl={posterUrl}
+				metaItems={
+					<>
+						<div className="flex items-center gap-1">
+							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+							<span className="font-semibold">{movie.vote_average}</span>
+							<span className="text-[var(--foreground-muted)]">/10</span>
 						</div>
-
-						{/* Info */}
-						<div className="flex flex-col justify-end pb-8 lg:pb-16">
-							{/* Mobile Poster */}
-							<div className="mb-6 flex gap-4 lg:hidden">
-								<div className="h-40 w-28 flex-shrink-0 overflow-hidden rounded-lg">
-									<img
-										src={posterUrl}
-										alt={movie.title}
-										className="h-full w-full object-cover"
-									/>
-								</div>
-								<div className="flex flex-col justify-center">
-									<h1 className="text-display-2">{movie.title}</h1>
-									<p className="mt-2 text-lg text-[var(--foreground-muted)]">
-										{/* Tagline not available in current API */}
-									</p>
-								</div>
-							</div>
-
-							{/* Desktop Title */}
-							<div className="hidden lg:block">
-								<h1 className="text-display-2">{movie.title}</h1>
-								<p className="mt-2 text-xl text-[var(--foreground-muted)]">
-									{/* Tagline not available in current API */}
-								</p>
-							</div>
-
-							{/* Meta Info */}
-							<div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-								<div className="flex items-center gap-1">
-									<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-									<span className="font-semibold">{movie.vote_average}</span>
-									<span className="text-[var(--foreground-muted)]">/10</span>
-								</div>
-								<span className="text-[var(--border-strong)]">•</span>
-								<span>{formatRuntime(movie.runtime || 0)}</span>
-								<span className="text-[var(--border-strong)]">•</span>
-								<span>
-									{movie.release_date
-										? new Date(movie.release_date).toLocaleDateString("en-US", {
-												month: "long",
-												day: "numeric",
-												year: "numeric",
-											})
-										: "Unknown"}
+						<span className="text-[var(--border-strong)]">•</span>
+						<span>{formatRuntime(movie.runtime || 0)}</span>
+						<span className="text-[var(--border-strong)]">•</span>
+						<span>
+							{movie.release_date
+								? new Date(movie.release_date).toLocaleDateString("en-US", {
+										month: "long",
+										day: "numeric",
+										year: "numeric",
+									})
+								: "Unknown"}
+						</span>
+						<span className="text-[var(--border-strong)]">•</span>
+						<div className="flex gap-2">
+							{movie.genres?.map((g) => (
+								<span key={g.name} className="badge badge-subtle">
+									{g.name}
 								</span>
-								<span className="text-[var(--border-strong)]">•</span>
-								<div className="flex gap-2">
-									{movie.genres?.map((g) => (
-										<span key={g.name} className="badge badge-subtle">
-											{g.name}
-										</span>
-									))}
-								</div>
-							</div>
-
-							{/* Action Buttons */}
-							<div className="mt-6 flex flex-wrap gap-3">
-								{isWatched ? (
-									<button
-										type="button"
-										onClick={handleUnmarkWatched}
-										disabled={unmarkWatchedMutation.isPending}
-										className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
-									>
-										{unmarkWatchedMutation.isPending ? (
-											<>
-												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<X className="h-4 w-4" />
-												Remove from shelf
-											</>
-										)}
-									</button>
-								) : (
-									<button
-										type="button"
-										onClick={handleMarkWatched}
-										disabled={markWatchedMutation.isPending || !isAuthenticated}
-										className="btn btn-primary gap-2"
-									>
-										{markWatchedMutation.isPending ? (
-											<>
-												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<Plus className="h-4 w-4" />
-												Add to shelf
-											</>
-										)}
-									</button>
-								)}
-
-								{/* Watchlist Button */}
-								<button
-									type="button"
-									onClick={handleToggleWatchlist}
-									disabled={
-										!isAuthenticated ||
-										addToListMutation.isPending ||
-										removeFromListMutation.isPending
-									}
-									className="btn btn-secondary gap-2"
-								>
-									{activeListAction === "watchlist" ? (
-										<>
-											<Loader2 className="h-4 w-4 animate-spin" />
-											Loading
-										</>
-									) : isInWatchlist ? (
-										<>
-											<Bookmark className="h-4 w-4 fill-current" />
-											In Watchlist
-										</>
-									) : (
-										<>
-											<Bookmark className="h-4 w-4" />
-											Add to Watchlist
-										</>
-									)}
-								</button>
-
-								{/* Favorites Button (replaces Like) */}
-								<button
-									type="button"
-									onClick={handleToggleFavorites}
-									disabled={
-										!isAuthenticated ||
-										addToListMutation.isPending ||
-										removeFromListMutation.isPending
-									}
-									className={`inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border transition-all duration-150 ${
-										isInFavorites
-											? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-											: "bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
-									}`}
-									aria-label={
-										isInFavorites ? "Remove from Favorites" : "Add to Favorites"
-									}
-								>
-									{activeListAction === "favorites" ? (
-										<Loader2 className="h-5 w-5 animate-spin" />
-									) : (
-										<Heart
-											className={`h-5 w-5 ${isInFavorites ? "fill-current" : ""}`}
-										/>
-									)}
-								</button>
-
-								{/* Share Button */}
-								<button
-									type="button"
-									className="inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)] transition-all duration-150"
-									aria-label="Share"
-								>
-									<Share2 className="h-5 w-5" />
-								</button>
-							</div>
+							))}
 						</div>
-					</div>
-				</div>
-			</div>
+					</>
+				}
+				actions={
+					<>
+						{isWatched ? (
+							<button
+								type="button"
+								onClick={unmarkMovieWatched}
+								disabled={isUnmarkMoviePending}
+								className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
+							>
+								{isUnmarkMoviePending ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin" />
+										Loading
+									</>
+								) : (
+									<>
+										<X className="h-4 w-4" />
+										Remove from shelf
+									</>
+								)}
+							</button>
+						) : (
+							<button
+								type="button"
+								onClick={markMovieWatched}
+								disabled={isMarkMoviePending}
+								className="btn btn-primary gap-2"
+							>
+								{isMarkMoviePending ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin" />
+										Loading
+									</>
+								) : (
+									<>
+										<Plus className="h-4 w-4" />
+										Add to shelf
+									</>
+								)}
+							</button>
+						)}
+						<MediaActionsBar mediaType="movie" mediaId={movieId} />
+					</>
+				}
+			/>
 
 			{/* Main Content */}
 			<div className="container-app relative z-20 mt-8">
 				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
 					<div className="space-y-8">
-						{/* Overview */}
 						<section>
 							<h2 className="text-display-3 mb-4">Overview</h2>
 							<p className="text-[var(--foreground-muted)] leading-relaxed">
@@ -677,104 +224,44 @@ function MovieDetailPage() {
 							</p>
 						</section>
 
-						{/* Cast */}
-						<section>
-							<h2 className="text-display-3 mb-4">Cast</h2>
-							<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-								{cast.map((actor) => (
-									<div
-										key={actor.name}
-										className="card card-interactive flex items-center gap-3 p-3"
-									>
-										<img
-											src={actor.photo}
-											alt={actor.name}
-											className="h-12 w-12 rounded-full object-cover"
-										/>
-										<div className="min-w-0">
-											<p className="font-medium text-sm truncate">
-												{actor.name}
-											</p>
-											<p className="text-xs text-[var(--foreground-muted)] truncate">
-												{actor.character}
-											</p>
-										</div>
-									</div>
-								))}
-							</div>
-						</section>
-
-						{/* Similar Movies */}
-						<section>
-							<h2 className="text-display-3 mb-4">Similar Movies</h2>
-							<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-								{similarMovies.map((similarMovie) => (
-									<MediaCard
-										key={similarMovie.id}
-										id={similarMovie.id}
-										title={similarMovie.title}
-										posterUrl={similarMovie.posterUrl}
-										type={similarMovie.type}
-										year={similarMovie.year}
-										rating={similarMovie.rating}
-										size="sm"
-										layout="poster"
-									/>
-								))}
-							</div>
-						</section>
+						<CastGrid cast={cast} />
+						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
-						{/* Details Card */}
-						<section className="card p-5">
-							<h3 className="font-display font-semibold mb-4">Details</h3>
-							<div className="space-y-3 text-sm">
-								<div className="flex justify-between">
-									<span className="text-[var(--foreground-muted)]">
-										Director
-									</span>
-									<span className="font-medium">{director}</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-[var(--foreground-muted)]">
-										Runtime
-									</span>
-									<span className="font-medium">
-										{formatRuntime(movie.runtime || 0)}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-[var(--foreground-muted)]">
-										Release
-									</span>
-									<span className="font-medium">
-										{movie.release_date
-											? new Date(movie.release_date).toLocaleDateString(
-													"en-US",
-													{ month: "long", day: "numeric", year: "numeric" },
-												)
-											: "Unknown"}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-[var(--foreground-muted)]">Genres</span>
-									<span className="font-medium text-right">
-										{movie.genres?.map((g) => g.name).join(", ") || "N/A"}
-									</span>
-								</div>
-							</div>
-						</section>
+						<DetailsCard
+							items={[
+								{ label: "Director", value: director },
+								{
+									label: "Runtime",
+									value: formatRuntime(movie.runtime || 0),
+								},
+								{
+									label: "Release",
+									value: movie.release_date
+										? new Date(movie.release_date).toLocaleDateString("en-US", {
+												month: "long",
+												day: "numeric",
+												year: "numeric",
+											})
+										: "Unknown",
+								},
+								{
+									label: "Genres",
+									value: movie.genres?.map((g) => g.name).join(", ") || "N/A",
+								},
+							]}
+						/>
 
 						{/* Your Activity */}
 						<section className="card p-5">
 							<h3 className="font-display font-semibold mb-4">Your Activity</h3>
-							{watchHistory &&
-							Array.isArray(watchHistory) &&
-							watchHistory.length > 0 ? (
+							{movieWatchHistory &&
+							Array.isArray(movieWatchHistory) &&
+							movieWatchHistory.length > 0 ? (
 								<div className="space-y-3">
-									{watchHistory.map((entry, index) => (
+									{movieWatchHistory.map((entry, index) => (
 										<div
 											key={entry.id || index}
 											className="flex items-center gap-2 text-green-600"
@@ -790,67 +277,13 @@ function MovieDetailPage() {
 								<div className="empty-state p-0">
 									<Clock className="h-10 w-10 text-[var(--foreground-subtle)]" />
 									<p className="mt-2 text-sm text-[var(--foreground-muted)]">
-										You haven't watched this yet
+										You haven&apos;t watched this yet
 									</p>
 								</div>
 							)}
 						</section>
 
-						{/* Lists Containing This */}
-						<section className="card p-5 relative">
-							<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
-							<div className="space-y-2">
-								{otherLists.length > 0 ? (
-									otherLists.map((list) => (
-										<Link
-											key={list.listSlug}
-											to={`/lists/${list.listSlug}` as any}
-											className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-[var(--background-subtle)]"
-										>
-											<span className="text-sm font-medium">
-												{list.listName}
-											</span>
-											<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
-										</Link>
-									))
-								) : (
-									<p className="text-sm text-[var(--foreground-muted)]">
-										Not in any custom lists yet
-									</p>
-								)}
-							</div>
-							{availableLists.length > 0 && (
-								<div className="relative">
-									<button
-										type="button"
-										onClick={() => setShowListDropdown(!showListDropdown)}
-										className="mt-3 w-full btn btn-secondary text-sm"
-									>
-										<Plus className="h-4 w-4" />
-										Add to another list
-									</button>
-									{showListDropdown && (
-										<div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] shadow-lg z-50">
-											<div className="p-2">
-												<p className="px-2 py-1 text-xs font-medium text-[var(--foreground-muted)]">
-													Add to list
-												</p>
-												{availableLists.map((list) => (
-													<button
-														key={list.slug}
-														type="button"
-														onClick={() => handleAddToList(list.slug)}
-														className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
-													>
-														{list.name}
-													</button>
-												))}
-											</div>
-										</div>
-									)}
-								</div>
-							)}
-						</section>
+						<InYourLists mediaType="movie" mediaId={movieId} />
 					</div>
 				</div>
 			</div>

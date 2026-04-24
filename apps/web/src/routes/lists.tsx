@@ -1,5 +1,5 @@
 import type { MediaInListDto } from "@opnshelf/api";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	Clock,
@@ -29,8 +29,12 @@ import { useAuth } from "#/lib/auth-context";
 import { useCreateList, useList, useUserLists } from "#/lib/hooks";
 import MediaCard from "../components/MediaCard";
 
+export const LISTS_PAGE_TITLE = "Lists | OpnShelf";
+export const LISTS_PAGE_DESCRIPTION =
+	"Organize movies and shows into watchlists, favorites, and custom collections.";
+
 export const Route = createFileRoute("/lists")({
-	component: ListsPage,
+	component: ListsLayout,
 });
 
 const colorClasses: Record<string, string> = {
@@ -128,7 +132,38 @@ function getRating(media: Record<string, unknown>): number | undefined {
 	return undefined;
 }
 
-function ListsPage() {
+export function buildListPageMeta(
+	list?: {
+		name: string;
+		description?: string;
+		total?: number;
+	} | null,
+) {
+	if (!list) {
+		return {
+			title: LISTS_PAGE_TITLE,
+			description: LISTS_PAGE_DESCRIPTION,
+		};
+	}
+
+	const itemLabel =
+		typeof list.total === "number"
+			? `${list.total} item${list.total === 1 ? "" : "s"}`
+			: "saved items";
+
+	return {
+		title: `${list.name} | Lists | OpnShelf`,
+		description:
+			list.description?.trim() ||
+			`Browse ${itemLabel} in the ${list.name} list on OpnShelf.`,
+	};
+}
+
+export function ListsPage({
+	selectedListSlug,
+}: {
+	selectedListSlug?: string | null;
+}) {
 	const { isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
@@ -139,7 +174,6 @@ function ListsPage() {
 		}
 	}, [authLoading, isAuthenticated, navigate]);
 
-	const [selectedListSlug, setSelectedListSlug] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [newListName, setNewListName] = useState("");
@@ -153,12 +187,16 @@ function ListsPage() {
 		error: listsError,
 	} = useUserLists();
 
-	// Get the first list's slug when lists load
-	useMemo(() => {
+	// Default to the first list when lists load and none is selected
+	useEffect(() => {
 		if (userLists && userLists.length > 0 && !selectedListSlug) {
-			setSelectedListSlug(userLists[0].slug);
+			navigate({
+				to: "/lists/$listSlug",
+				params: { listSlug: userLists[0].slug },
+				replace: true,
+			});
 		}
-	}, [userLists, selectedListSlug]);
+	}, [navigate, selectedListSlug, userLists]);
 
 	// Fetch selected list details with items
 	const {
@@ -187,11 +225,19 @@ function ListsPage() {
 		});
 	}, [listDetails?.items, searchQuery]);
 
+	const handleSelectList = (slug: string) => {
+		navigate({
+			to: "/lists/$listSlug",
+			params: { listSlug: slug },
+			replace: true,
+		});
+	};
+
 	const handleCreateList = async () => {
 		if (!newListName.trim()) return;
 
 		try {
-			await createListMutation.mutateAsync({
+			const newList = await createListMutation.mutateAsync({
 				body: {
 					name: newListName.trim(),
 					description: newListDescription.trim() || undefined,
@@ -200,6 +246,13 @@ function ListsPage() {
 			setShowCreateModal(false);
 			setNewListName("");
 			setNewListDescription("");
+			if (newList?.slug) {
+				navigate({
+					to: "/lists/$listSlug",
+					params: { listSlug: newList.slug },
+					replace: true,
+				});
+			}
 		} catch (error) {
 			console.error("Failed to create list:", error);
 		}
@@ -393,7 +446,7 @@ function ListsPage() {
 							<button
 								key={list.id}
 								type="button"
-								onClick={() => setSelectedListSlug(list.slug)}
+								onClick={() => handleSelectList(list.slug)}
 								className={`w-full text-left card card-interactive p-4 transition-all ${
 									selectedListSlug === list.slug
 										? "border-[var(--accent)] bg-[var(--accent-subtle)]"
@@ -730,4 +783,8 @@ function ListsPage() {
 			</Dialog>
 		</div>
 	);
+}
+
+function ListsLayout() {
+	return <Outlet />;
 }

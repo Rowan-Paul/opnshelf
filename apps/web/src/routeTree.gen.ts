@@ -16,6 +16,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ListsIndexRouteImport } from './routes/lists/index'
+import { Route as ListsListSlugRouteImport } from './routes/lists.$listSlug'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as MoviesMovieIdMovieNameRouteImport } from './routes/movies/$movieId/$movieName'
@@ -58,6 +60,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ListsIndexRoute = ListsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ListsRoute,
+} as any)
+const ListsListSlugRoute = ListsListSlugRouteImport.update({
+  id: '/$listSlug',
+  path: '/$listSlug',
+  getParentRoute: () => ListsRoute,
 } as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
@@ -107,9 +119,11 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
-  '/lists': typeof ListsRoute
+  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$listSlug': typeof ListsListSlugRoute
+  '/lists/': typeof ListsIndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
@@ -123,9 +137,10 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
-  '/lists': typeof ListsRoute
   '/login': typeof LoginRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$listSlug': typeof ListsListSlugRoute
+  '/lists': typeof ListsIndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
@@ -138,9 +153,11 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
-  '/lists': typeof ListsRoute
+  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/lists/$listSlug': typeof ListsListSlugRoute
+  '/lists/': typeof ListsIndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
@@ -159,6 +176,8 @@ export interface FileRouteTypes {
     | '/lists'
     | '/login'
     | '/auth/complete'
+    | '/lists/$listSlug'
+    | '/lists/'
     | '/movies/$movieId/$movieName'
     | '/shows/$showId/$showName'
     | '/shows/$showId/$showName/'
@@ -172,9 +191,10 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/dashboard'
     | '/following'
-    | '/lists'
     | '/login'
     | '/auth/complete'
+    | '/lists/$listSlug'
+    | '/lists'
     | '/movies/$movieId/$movieName'
     | '/shows/$showId/$showName'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
@@ -189,6 +209,8 @@ export interface FileRouteTypes {
     | '/lists'
     | '/login'
     | '/auth/complete'
+    | '/lists/$listSlug'
+    | '/lists/'
     | '/movies/$movieId/$movieName'
     | '/shows/$showId/$showName'
     | '/shows/$showId/$showName/'
@@ -203,7 +225,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   DashboardRoute: typeof DashboardRoute
   FollowingRoute: typeof FollowingRoute
-  ListsRoute: typeof ListsRoute
+  ListsRoute: typeof ListsRouteWithChildren
   LoginRoute: typeof LoginRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
@@ -261,6 +283,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lists/': {
+      id: '/lists/'
+      path: '/'
+      fullPath: '/lists/'
+      preLoaderRoute: typeof ListsIndexRouteImport
+      parentRoute: typeof ListsRoute
+    }
+    '/lists/$listSlug': {
+      id: '/lists/$listSlug'
+      path: '/$listSlug'
+      fullPath: '/lists/$listSlug'
+      preLoaderRoute: typeof ListsListSlugRouteImport
+      parentRoute: typeof ListsRoute
+    }
     '/auth/complete': {
       id: '/auth/complete'
       path: '/auth/complete'
@@ -313,6 +349,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ListsRouteChildren {
+  ListsListSlugRoute: typeof ListsListSlugRoute
+  ListsIndexRoute: typeof ListsIndexRoute
+}
+
+const ListsRouteChildren: ListsRouteChildren = {
+  ListsListSlugRoute: ListsListSlugRoute,
+  ListsIndexRoute: ListsIndexRoute,
+}
+
+const ListsRouteWithChildren = ListsRoute._addFileChildren(ListsRouteChildren)
+
 interface ShowsShowIdShowNameSeasonsSeasonNumberRouteChildren {
   ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
   ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute
@@ -351,7 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   DashboardRoute: DashboardRoute,
   FollowingRoute: FollowingRoute,
-  ListsRoute: ListsRoute,
+  ListsRoute: ListsRouteWithChildren,
   LoginRoute: LoginRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,

@@ -1,9 +1,11 @@
 import {
-	listsControllerAddItemToListMutation,
+	type ListSummaryDto,
+	type ListsControllerGetUserListsResponse,
 	listsControllerCreateListMutation,
 	listsControllerGetListOptions,
+	listsControllerGetListQueryKey,
 	listsControllerGetUserListsOptions,
-	listsControllerRemoveItemFromListMutation,
+	listsControllerGetUserListsQueryKey,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -27,46 +29,55 @@ export function useList(slug: string) {
 // Create a new list mutation
 export function useCreateList() {
 	const queryClient = useQueryClient();
+	const userListsKey = listsControllerGetUserListsQueryKey();
 
 	return useMutation({
-		...listsControllerCreateListMutation(),
 		mutationKey: ["lists", "create"],
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetUserLists"],
+		...listsControllerCreateListMutation(),
+		onSuccess: async (newList) => {
+			queryClient.setQueryData(
+				userListsKey,
+				(currentLists: ListsControllerGetUserListsResponse | undefined) => {
+					if (!currentLists) return currentLists;
+					if (currentLists.some((list) => list.slug === newList.slug)) {
+						return currentLists;
+					}
+
+					const newListSummary: ListSummaryDto = {
+						id: newList.id,
+						rkey: newList.rkey,
+						name: newList.name,
+						description: newList.description,
+						slug: newList.slug,
+						isDefault: newList.isDefault,
+						itemCount: 0,
+						createdAt: newList.createdAt,
+						updatedAt: newList.updatedAt,
+					};
+
+					return [newListSummary, ...currentLists];
+				},
+			);
+
+			await queryClient.refetchQueries({
+				queryKey: userListsKey,
+				type: "all",
 			});
 		},
 	});
 }
 
-// Add item to list mutation
-export function useAddItemToList() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		...listsControllerAddItemToListMutation(),
-		mutationKey: ["lists", "addItem"],
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetUserLists"],
-			});
-		},
+// Invalidate both the user's list of lists and a specific list's contents
+export function invalidateListQueries(
+	queryClient: ReturnType<typeof useQueryClient>,
+	slug?: string,
+) {
+	queryClient.invalidateQueries({
+		queryKey: listsControllerGetUserListsQueryKey(),
 	});
-}
-
-// Remove item from list mutation
-export function useRemoveItemFromList() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		...listsControllerRemoveItemFromListMutation(),
-		mutationKey: ["lists", "removeItem"],
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["listsControllerGetList"] });
-			queryClient.invalidateQueries({
-				queryKey: ["listsControllerGetUserLists"],
-			});
-		},
-	});
+	if (slug) {
+		queryClient.invalidateQueries({
+			queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+		});
+	}
 }

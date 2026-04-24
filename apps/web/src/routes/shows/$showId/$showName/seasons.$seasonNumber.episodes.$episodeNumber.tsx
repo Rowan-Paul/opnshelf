@@ -1,11 +1,55 @@
+import {
+	showsControllerGetEpisodeDetailsOptions,
+	showsControllerGetShowDetailsOptions,
+} from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Loader2 } from "lucide-react";
+import { setupApiClient } from "#/lib/api";
 import { useShowDetails } from "#/lib/hooks";
+import { buildEpisodePageMeta } from "#/lib/media-meta";
 import { buildShowUrl } from "#/lib/url-utils";
+
+setupApiClient();
 
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber",
 )({
+	loader: async ({ context, params }) => {
+		const [show, episode] = await Promise.all([
+			context.queryClient.ensureQueryData(
+				showsControllerGetShowDetailsOptions({
+					path: { showId: params.showId },
+				}),
+			),
+			context.queryClient.ensureQueryData(
+				showsControllerGetEpisodeDetailsOptions({
+					path: {
+						showId: params.showId,
+						seasonNumber: params.seasonNumber,
+						episodeNumber: params.episodeNumber,
+					},
+				}),
+			),
+		]);
+
+		return { show, episode };
+	},
+	head: ({ loaderData, params }) => {
+		const meta = buildEpisodePageMeta(loaderData?.show, loaderData?.episode, {
+			seasonNumber: params.seasonNumber,
+			episodeNumber: params.episodeNumber,
+		});
+
+		return {
+			meta: [
+				{ title: meta.title },
+				{
+					name: "description",
+					content: meta.description,
+				},
+			],
+		};
+	},
 	component: EpisodeDetailPage,
 });
 
