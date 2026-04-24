@@ -20,3 +20,22 @@ export function withUserLocale(
 
 	return merged;
 }
+
+/**
+ * Format a date string into a human-readable date.
+ * Falls back to the raw string if parsing fails.
+ */
+export function formatDate(dateString: string, timezone?: string): string {
+	if (!dateString) return "Unknown";
+	try {
+		return new Date(dateString).toLocaleDateString(
+			"en-US",
+			withUserLocale(
+				{ month: "long", day: "numeric", year: "numeric" },
+				timezone,
+			),
+		);
+	} catch {
+		return dateString;
+	}
+}

@@ -17,7 +17,7 @@ interface EpisodeRowProps {
 	showName: string;
 	seasonNumber: number;
 	isWatched: boolean;
-	isCurrent: boolean;
+	isUpNext: boolean;
 	isProcessing: boolean;
 	isUnmarking: boolean;
 	onMarkWatched: () => void;
@@ -54,7 +54,7 @@ export default function EpisodeRow({
 	showName,
 	seasonNumber,
 	isWatched,
-	isCurrent,
+	isUpNext,
 	isProcessing,
 	isUnmarking,
 	onMarkWatched,
@@ -74,7 +74,7 @@ export default function EpisodeRow({
 				episodeNumber: String(episode.episode_number),
 			}}
 			className={`flex items-center gap-4 p-4 transition-colors ${
-				isCurrent
+				isUpNext
 					? "bg-[var(--accent-subtle)]"
 					: "hover:bg-[var(--background-subtle)]"
 			} ${!isLast ? "border-b border-[var(--border)]" : ""}`}
@@ -88,10 +88,8 @@ export default function EpisodeRow({
 			</div>
 			<div className="flex-1 min-w-0">
 				<div className="flex items-center gap-2">
-					<h4 className="font-medium truncate">
-						{episode.episode_number}. {episode.name}
-					</h4>
-					{isCurrent && <span className="badge badge-accent">Current</span>}
+					<h4 className="font-medium truncate">{episode.name}</h4>
+					{isUpNext && <span className="badge badge-accent">Up Next</span>}
 				</div>
 				<p className="text-sm text-[var(--foreground-muted)]">
 					{formatRuntime(episode.runtime || 0)}

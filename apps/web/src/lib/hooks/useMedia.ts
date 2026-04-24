@@ -7,7 +7,9 @@ import {
 	moviesControllerUnmarkWatched,
 	type ShowsControllerGetShowDetailsResponse,
 	type ShowsControllerGetUserShowsResponse,
+	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
+	showsControllerGetShowWatchHistoryOptions,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsOptions,
 	showsControllerGetUserUpNextOptions,
@@ -15,6 +17,7 @@ import {
 	showsControllerUnmarkWatched,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 
 // Movie detail hook
@@ -159,6 +162,70 @@ export function useUnmarkEpisodeWatched() {
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
 		},
 	});
+}
+
+// Show watch history hook
+export function useShowWatchHistory(showId: string) {
+	const { user } = useAuth();
+	const userDid = user?.did || "";
+
+	return useQuery({
+		...showsControllerGetShowWatchHistoryOptions({
+			path: { userDid: userDid || "", showId },
+		}),
+		enabled: !!userDid && !!showId,
+	});
+}
+
+// Season detail hook
+export function useSeasonDetails(showId: string, seasonNumber: string) {
+	return useQuery({
+		...showsControllerGetSeasonDetailsOptions({
+			path: { showId, seasonNumber },
+		}),
+		enabled: !!showId && !!seasonNumber,
+	});
+}
+
+// Episode watch actions with loading-state tracking
+export function useEpisodeWatchActions(showId: string) {
+	const { isAuthenticated } = useAuth();
+	const [processingEpisode, setProcessingEpisode] = useState<{
+		seasonNumber: number;
+		episodeNumber: number;
+	} | null>(null);
+	const [unmarkingEpisode, setUnmarkingEpisode] = useState<{
+		seasonNumber: number;
+		episodeNumber: number;
+	} | null>(null);
+
+	const markEpisodeMutation = useMarkEpisodeWatched();
+	const unmarkEpisodeMutation = useUnmarkEpisodeWatched();
+
+	const handleMarkEpisode = (seasonNumber: number, episodeNumber: number) => {
+		if (!isAuthenticated) return;
+		setProcessingEpisode({ seasonNumber, episodeNumber });
+		markEpisodeMutation.mutate(
+			{ body: { showId, seasonNumber, episodeNumber } },
+			{ onSettled: () => setProcessingEpisode(null) },
+		);
+	};
+
+	const handleUnmarkEpisode = (seasonNumber: number, episodeNumber: number) => {
+		if (!isAuthenticated) return;
+		setUnmarkingEpisode({ seasonNumber, episodeNumber });
+		unmarkEpisodeMutation.mutate(
+			{ path: { showId, seasonNumber, episodeNumber } },
+			{ onSettled: () => setUnmarkingEpisode(null) },
+		);
+	};
+
+	return {
+		processingEpisode,
+		unmarkingEpisode,
+		handleMarkEpisode,
+		handleUnmarkEpisode,
+	};
 }
 
 // Type exports

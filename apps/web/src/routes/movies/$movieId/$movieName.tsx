@@ -135,6 +135,7 @@ function MovieDetailPage() {
 
 	const cast =
 		movie.credits?.cast?.slice(0, 6).map((actor) => ({
+			id: actor.id,
 			name: actor.name,
 			character: actor.character || "",
 			photo: actor.profile_path
@@ -157,7 +158,9 @@ function MovieDetailPage() {
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
 				rating: (m as { vote_average?: number }).vote_average
-					? Math.round((m as { vote_average?: number }).vote_average! * 10) / 10
+					? Math.round(
+							((m as { vote_average?: number }).vote_average ?? 0) * 10,
+						) / 10
 					: undefined,
 			})) || [];
 

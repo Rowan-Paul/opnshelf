@@ -117,9 +117,11 @@ export class PeopleTmdbService {
 			baseItem: Omit<PersonFilmographyItemDto, "roles">,
 		): PersonFilmographyItemDto => {
 			if (!itemsMap.has(key)) {
-				itemsMap.set(key, { ...baseItem, roles: [] });
+				const item = { ...baseItem, roles: [] };
+				itemsMap.set(key, item);
+				return item;
 			}
-			return itemsMap.get(key)!;
+			return itemsMap.get(key) as PersonFilmographyItemDto;
 		};
 
 		// Process movie cast credits

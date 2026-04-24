@@ -52,7 +52,7 @@ export default function EpisodeList({
 						ep.seasonNumber === seasonNumber &&
 						ep.episodeNumber === episode.episode_number,
 				);
-				const isCurrent =
+				const isUpNext =
 					nextEpisode?.seasonNumber === seasonNumber &&
 					nextEpisode?.episodeNumber === episode.episode_number;
 
@@ -64,7 +64,7 @@ export default function EpisodeList({
 						showName={showName}
 						seasonNumber={seasonNumber}
 						isWatched={isWatched}
-						isCurrent={isCurrent}
+						isUpNext={isUpNext}
 						isProcessing={
 							processingEpisode?.seasonNumber === seasonNumber &&
 							processingEpisode?.episodeNumber === episode.episode_number

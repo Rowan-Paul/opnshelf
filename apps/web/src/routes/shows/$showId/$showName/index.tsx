@@ -1,32 +1,33 @@
 import {
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
-	showsControllerGetShowWatchHistoryOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChevronRight, Loader2, Play, Star, X } from "lucide-react";
+import { ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { withUserLocale } from "#/lib/date-utils";
+import { formatDate } from "#/lib/date-utils";
 import {
 	useDiscoverShows,
-	useMarkEpisodeWatched,
+	useEpisodeWatchActions,
 	useShowDetails,
-	useUnmarkEpisodeWatched,
+	useShowWatchHistory,
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
 import { buildShowPageMeta } from "#/lib/media-meta";
 import { slugifyName } from "#/lib/url-utils";
 import CastGrid from "../../../../components/CastGrid";
+import CrewGrid from "../../../../components/CrewGrid";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import InYourLists from "../../../../components/InYourLists";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import ProgressCard from "../../../../components/ProgressCard";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
@@ -57,21 +58,6 @@ export const Route = createFileRoute("/shows/$showId/$showName/")({
 	component: ShowDetailPage,
 });
 
-function formatDate(dateString: string, timezone?: string): string {
-	if (!dateString) return "Unknown";
-	try {
-		return new Date(dateString).toLocaleDateString(
-			"en-US",
-			withUserLocale(
-				{ month: "long", day: "numeric", year: "numeric" },
-				timezone,
-			),
-		);
-	} catch {
-		return dateString;
-	}
-}
-
 function useSeasonDetails(showId: string, seasonNumber: number | null) {
 	return useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -90,14 +76,6 @@ function ShowDetailPage() {
 	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
 	const [expandedSeason, setExpandedSeason] = useState<number | null>(null);
 	const [processingSeason, setProcessingSeason] = useState<number | null>(null);
-	const [processingEpisode, setProcessingEpisode] = useState<{
-		seasonNumber: number;
-		episodeNumber: number;
-	} | null>(null);
-	const [unmarkingEpisode, setUnmarkingEpisode] = useState<{
-		seasonNumber: number;
-		episodeNumber: number;
-	} | null>(null);
 
 	const {
 		data: show,
@@ -112,6 +90,14 @@ function ShowDetailPage() {
 		expandedSeason,
 	);
 
+	const { data: watchHistory } = useShowWatchHistory(showId);
+	const {
+		processingEpisode,
+		unmarkingEpisode,
+		handleMarkEpisode,
+		handleUnmarkEpisode,
+	} = useEpisodeWatchActions(showId);
+
 	const upNextForShow = upNextData?.items?.find(
 		(item) => item.showId === showId,
 	);
@@ -123,14 +109,6 @@ function ShowDetailPage() {
 		}
 	}, [nextEpisode?.seasonNumber, hasUserToggledSeason]);
 
-	// Watch history query
-	const { data: watchHistory } = useQuery({
-		...showsControllerGetShowWatchHistoryOptions({
-			path: { userDid: userDid || "", showId },
-		}),
-		enabled: !!userDid && !!showId,
-	});
-
 	// Watch actions
 	const {
 		markShowWatched,
@@ -140,9 +118,6 @@ function ShowDetailPage() {
 		isMarkShowPending,
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
-
-	const markEpisodeMutation = useMarkEpisodeWatched();
-	const unmarkEpisodeMutation = useUnmarkEpisodeWatched();
 
 	const isTracking = !!watchHistory && watchHistory.length > 0;
 
@@ -158,10 +133,6 @@ function ShowDetailPage() {
 	}, [watchHistory]);
 
 	const totalEpisodes = show?.number_of_episodes || 0;
-	const rawProgressPercentage =
-		totalEpisodes > 0 ? (uniqueEpisodesWatched / totalEpisodes) * 100 : 0;
-	const progressPercentage = Math.max(0, Math.min(100, rawProgressPercentage));
-	const episodesRemaining = Math.max(0, totalEpisodes - uniqueEpisodesWatched);
 
 	const isSeasonFullyWatched = (seasonNum: number, episodeCount: number) => {
 		if (!watchHistory || watchHistory.length === 0) return false;
@@ -180,32 +151,6 @@ function ShowDetailPage() {
 			return "Continue Watching";
 		}
 		return "Start Watching";
-	};
-
-	const handleMarkEpisode = (seasonNumber: number, episodeNumber: number) => {
-		if (!isAuthenticated) return;
-		setProcessingEpisode({ seasonNumber, episodeNumber });
-		markEpisodeMutation.mutate(
-			{
-				body: { showId, seasonNumber, episodeNumber },
-			},
-			{
-				onSettled: () => setProcessingEpisode(null),
-			},
-		);
-	};
-
-	const handleUnmarkEpisode = (seasonNumber: number, episodeNumber: number) => {
-		if (!isAuthenticated) return;
-		setUnmarkingEpisode({ seasonNumber, episodeNumber });
-		unmarkEpisodeMutation.mutate(
-			{
-				path: { showId, seasonNumber, episodeNumber },
-			},
-			{
-				onSettled: () => setUnmarkingEpisode(null),
-			},
-		);
 	};
 
 	const handleMarkSeasonWatched = (seasonNumber: number) => {
@@ -261,11 +206,22 @@ function ShowDetailPage() {
 
 	const cast =
 		show.credits?.cast?.slice(0, 6).map((actor) => ({
+			id: actor.id,
 			name: actor.name,
 			character: actor.character || "",
 			photo: actor.profile_path
 				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
+		})) || [];
+
+	const crew =
+		show.credits?.crew?.slice(0, 6).map((person) => ({
+			id: person.id,
+			name: person.name,
+			job: person.job || "",
+			photo: person.profile_path
+				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+				: `https://i.pravatar.cc/150?u=${person.id}`,
 		})) || [];
 
 	const similarShows =
@@ -443,6 +399,7 @@ function ShowDetailPage() {
 						)}
 
 						<CastGrid cast={cast} />
+						<CrewGrid crew={crew} />
 						<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 					</div>
 
@@ -450,74 +407,16 @@ function ShowDetailPage() {
 					<div className="space-y-6">
 						{/* Your Progress */}
 						{isAuthenticated && (
-							<section className="card p-5">
-								<h3 className="font-display font-semibold mb-4">
-									Your Progress
-								</h3>
-								<div className="space-y-4">
-									<div className="flex items-center justify-between">
-										<span className="text-sm text-[var(--foreground-muted)]">
-											Episodes Watched
-										</span>
-										<span className="font-semibold">
-											{uniqueEpisodesWatched}/{totalEpisodes}
-										</span>
-									</div>
-									<div className="h-2 w-full rounded-full bg-[var(--background-subtle)]">
-										<div
-											className="h-full rounded-full bg-[var(--accent)]"
-											style={{ width: `${progressPercentage}%` }}
-										/>
-									</div>
-									<div className="flex items-center justify-between text-sm">
-										<span className="text-[var(--foreground-muted)]">
-											{Math.round(progressPercentage)}% complete
-										</span>
-										<span className="text-[var(--foreground-muted)]">
-											{episodesRemaining} remaining
-										</span>
-									</div>
-									{progressPercentage < 100 ? (
-										<button
-											type="button"
-											onClick={handleMarkShowWatched}
-											disabled={!isAuthenticated || isMarkShowPending}
-											className="mt-4 w-full btn btn-secondary gap-2"
-										>
-											{isMarkShowPending ? (
-												<>
-													<Loader2 className="h-4 w-4 animate-spin" />
-													Loading
-												</>
-											) : (
-												<>
-													<Check className="h-4 w-4" />
-													Add show to shelf
-												</>
-											)}
-										</button>
-									) : (
-										<button
-											type="button"
-											onClick={handleUnmarkShowWatched}
-											disabled={!isAuthenticated || isUnmarkShowPending}
-											className="mt-4 w-full btn btn-secondary gap-2"
-										>
-											{isUnmarkShowPending ? (
-												<>
-													<Loader2 className="h-4 w-4 animate-spin" />
-													Loading
-												</>
-											) : (
-												<>
-													<X className="h-4 w-4" />
-													Remove all plays
-												</>
-											)}
-										</button>
-									)}
-								</div>
-							</section>
+							<ProgressCard
+								episodesWatched={uniqueEpisodesWatched}
+								totalEpisodes={totalEpisodes}
+								markLabel="Add show to shelf"
+								unmarkLabel="Remove all plays"
+								isMarkPending={isMarkShowPending}
+								isUnmarkPending={isUnmarkShowPending}
+								onMarkWatched={handleMarkShowWatched}
+								onUnmarkWatched={handleUnmarkShowWatched}
+							/>
 						)}
 
 						<DetailsCard

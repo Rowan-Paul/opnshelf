@@ -1,38 +1,32 @@
 import {
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
-	showsControllerGetShowWatchHistoryOptions,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Check,
-	ChevronLeft,
-	ChevronRight,
-	Loader2,
-	Play,
-	Star,
-	X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { withUserLocale } from "#/lib/date-utils";
+import { formatDate } from "#/lib/date-utils";
 import {
-	useMarkEpisodeWatched,
+	useEpisodeWatchActions,
+	useSeasonDetails,
 	useShowDetails,
-	useUnmarkEpisodeWatched,
+	useShowWatchHistory,
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
 import { buildSeasonPageMeta } from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
+import CastGrid from "../../../../../components/CastGrid";
+import CrewGrid from "../../../../../components/CrewGrid";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import InYourLists from "../../../../../components/InYourLists";
 import LoadingState from "../../../../../components/LoadingState";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
+import ProgressCard from "../../../../../components/ProgressCard";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 
 setupApiClient();
@@ -79,46 +73,12 @@ export const Route = createFileRoute(
 	component: SeasonDetailPage,
 });
 
-function formatDate(dateString: string, timezone?: string): string {
-	if (!dateString) return "Unknown";
-	try {
-		return new Date(dateString).toLocaleDateString(
-			"en-US",
-			withUserLocale(
-				{ month: "long", day: "numeric", year: "numeric" },
-				timezone,
-			),
-		);
-	} catch {
-		return dateString;
-	}
-}
-
-function useSeasonDetails(showId: string, seasonNumber: string) {
-	return useQuery({
-		...showsControllerGetSeasonDetailsOptions({
-			path: { showId, seasonNumber },
-		}),
-		enabled: !!showId && !!seasonNumber,
-	});
-}
-
 function SeasonDetailPage() {
 	const { showId, showName, seasonNumber } = Route.useParams();
 	const { user, userSettings, isAuthenticated } = useAuth();
-	const userDid = user?.did || "";
 	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
-
-	const [processingEpisode, setProcessingEpisode] = useState<{
-		seasonNumber: number;
-		episodeNumber: number;
-	} | null>(null);
-	const [unmarkingEpisode, setUnmarkingEpisode] = useState<{
-		seasonNumber: number;
-		episodeNumber: number;
-	} | null>(null);
 	const [processingSeason, setProcessingSeason] = useState(false);
 
 	const {
@@ -133,15 +93,14 @@ function SeasonDetailPage() {
 		error: seasonError,
 	} = useSeasonDetails(showId, seasonNumber);
 
-	const { data: upNextData } = useUserUpNext(userDid);
-
-	// Watch history query
-	const { data: watchHistory } = useQuery({
-		...showsControllerGetShowWatchHistoryOptions({
-			path: { userDid: userDid || "", showId },
-		}),
-		enabled: !!userDid && !!showId,
-	});
+	const { data: upNextData } = useUserUpNext(user?.did || "");
+	const { data: watchHistory } = useShowWatchHistory(showId);
+	const {
+		processingEpisode,
+		unmarkingEpisode,
+		handleMarkEpisode,
+		handleUnmarkEpisode,
+	} = useEpisodeWatchActions(showId);
 
 	// Watch actions
 	const {
@@ -150,9 +109,6 @@ function SeasonDetailPage() {
 		isMarkSeasonPending,
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
-
-	const markEpisodeMutation = useMarkEpisodeWatched();
-	const unmarkEpisodeMutation = useUnmarkEpisodeWatched();
 
 	// Season-specific watch history
 	const seasonWatchHistory = useMemo(() => {
@@ -164,25 +120,6 @@ function SeasonDetailPage() {
 
 	const episodesWatched = seasonWatchHistory.length;
 	const totalEpisodes = season?.episodes?.length || 0;
-	const rawProgressPercentage =
-		totalEpisodes > 0 ? (episodesWatched / totalEpisodes) * 100 : 0;
-	const progressPercentage = Math.max(0, Math.min(100, rawProgressPercentage));
-	const episodesRemaining = Math.max(0, totalEpisodes - episodesWatched);
-
-	// Next unwatched episode in this season
-	const nextUnwatchedEpisode = useMemo(() => {
-		if (!season?.episodes) return null;
-		const watchedEpisodeNumbers = new Set(
-			seasonWatchHistory.map(
-				(ep: { episodeNumber: number }) => ep.episodeNumber,
-			),
-		);
-		return (
-			season.episodes.find(
-				(ep) => !watchedEpisodeNumbers.has(ep.episode_number),
-			) || null
-		);
-	}, [season?.episodes, seasonWatchHistory]);
 
 	// Up next for this show
 	const upNextForShow = upNextData?.items?.find(
@@ -190,19 +127,13 @@ function SeasonDetailPage() {
 	);
 	const nextEpisode = upNextForShow?.nextEpisode;
 
-	// Determine the "current" episode for this season
-	const currentSeasonEpisode = useMemo(() => {
+	// Only highlight the up-next episode if it's in this season
+	const upNextEpisode = useMemo(() => {
 		if (nextEpisode?.seasonNumber === seasonNum) {
 			return nextEpisode;
 		}
-		if (nextUnwatchedEpisode) {
-			return {
-				seasonNumber: seasonNum,
-				episodeNumber: nextUnwatchedEpisode.episode_number,
-			};
-		}
 		return null;
-	}, [nextEpisode, nextUnwatchedEpisode, seasonNum]);
+	}, [nextEpisode, seasonNum]);
 
 	// Season navigation
 	const sortedSeasons = useMemo(() => {
@@ -222,32 +153,6 @@ function SeasonDetailPage() {
 			? sortedSeasons[currentSeasonIndex + 1]
 			: null;
 
-	const handleMarkEpisode = (seasonNumber: number, episodeNumber: number) => {
-		if (!isAuthenticated) return;
-		setProcessingEpisode({ seasonNumber, episodeNumber });
-		markEpisodeMutation.mutate(
-			{
-				body: { showId, seasonNumber, episodeNumber },
-			},
-			{
-				onSettled: () => setProcessingEpisode(null),
-			},
-		);
-	};
-
-	const handleUnmarkEpisode = (seasonNumber: number, episodeNumber: number) => {
-		if (!isAuthenticated) return;
-		setUnmarkingEpisode({ seasonNumber, episodeNumber });
-		unmarkEpisodeMutation.mutate(
-			{
-				path: { showId, seasonNumber, episodeNumber },
-			},
-			{
-				onSettled: () => setUnmarkingEpisode(null),
-			},
-		);
-	};
-
 	const handleMarkSeasonWatched = () => {
 		if (!isAuthenticated) return;
 		setProcessingSeason(true);
@@ -263,8 +168,8 @@ function SeasonDetailPage() {
 	};
 
 	const getContinueButtonText = () => {
-		if (currentSeasonEpisode) {
-			return `Continue S${currentSeasonEpisode.seasonNumber}E${currentSeasonEpisode.episodeNumber}`;
+		if (upNextEpisode) {
+			return `Continue S${upNextEpisode.seasonNumber}E${upNextEpisode.episodeNumber}`;
 		}
 		if (episodesWatched > 0) {
 			return "Continue Watching";
@@ -273,14 +178,14 @@ function SeasonDetailPage() {
 	};
 
 	const getContinueButtonLink = () => {
-		if (currentSeasonEpisode) {
+		if (upNextEpisode) {
 			return {
 				to: "/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber" as const,
 				params: {
 					showId,
 					showName: slugifyName(show?.name || showName),
-					seasonNumber: String(currentSeasonEpisode.seasonNumber),
-					episodeNumber: String(currentSeasonEpisode.episodeNumber),
+					seasonNumber: String(upNextEpisode.seasonNumber),
+					episodeNumber: String(upNextEpisode.episodeNumber),
 				},
 			};
 		}
@@ -317,6 +222,26 @@ function SeasonDetailPage() {
 		: show.poster_path
 			? `https://image.tmdb.org/t/p/w500${show.poster_path}`
 			: "";
+
+	const cast =
+		show.credits?.cast?.slice(0, 6).map((actor) => ({
+			id: actor.id,
+			name: actor.name,
+			character: actor.character || "",
+			photo: actor.profile_path
+				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+				: `https://i.pravatar.cc/150?u=${actor.id}`,
+		})) || [];
+
+	const crew =
+		show.credits?.crew?.slice(0, 6).map((person) => ({
+			id: person.id,
+			name: person.name,
+			job: person.job || "",
+			photo: person.profile_path
+				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+				: `https://i.pravatar.cc/150?u=${person.id}`,
+		})) || [];
 
 	// Air date range
 	const firstEpisode = season.episodes?.[0];
@@ -451,7 +376,7 @@ function SeasonDetailPage() {
 										showName={slugifyName(show.name)}
 										seasonNumber={seasonNum}
 										watchHistory={watchHistory}
-										nextEpisode={currentSeasonEpisode || null}
+										nextEpisode={upNextEpisode || null}
 										onMarkEpisode={handleMarkEpisode}
 										onUnmarkEpisode={handleUnmarkEpisode}
 										processingEpisode={processingEpisode}
@@ -461,88 +386,26 @@ function SeasonDetailPage() {
 								</div>
 							</section>
 						)}
+
+						<CastGrid cast={cast} />
+						<CrewGrid crew={crew} />
 					</div>
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
 						{/* Your Progress */}
 						{isAuthenticated && (
-							<section className="card p-5">
-								<h3 className="font-display font-semibold mb-4">
-									Your Progress
-								</h3>
-								<div className="space-y-4">
-									<div className="flex items-center justify-between">
-										<span className="text-sm text-[var(--foreground-muted)]">
-											Episodes Watched
-										</span>
-										<span className="font-semibold">
-											{episodesWatched}/{totalEpisodes}
-										</span>
-									</div>
-									<div className="h-2 w-full rounded-full bg-[var(--background-subtle)]">
-										<div
-											className="h-full rounded-full bg-[var(--accent)]"
-											style={{ width: `${progressPercentage}%` }}
-										/>
-									</div>
-									<div className="flex items-center justify-between text-sm">
-										<span className="text-[var(--foreground-muted)]">
-											{Math.round(progressPercentage)}% complete
-										</span>
-										<span className="text-[var(--foreground-muted)]">
-											{episodesRemaining} remaining
-										</span>
-									</div>
-									{progressPercentage < 100 ? (
-										<button
-											type="button"
-											onClick={handleMarkSeasonWatched}
-											disabled={
-												!isAuthenticated ||
-												isMarkSeasonPending ||
-												processingSeason
-											}
-											className="mt-4 w-full btn btn-secondary gap-2"
-										>
-											{processingSeason || isMarkSeasonPending ? (
-												<>
-													<Loader2 className="h-4 w-4 animate-spin" />
-													Loading
-												</>
-											) : (
-												<>
-													<Check className="h-4 w-4" />
-													Add Season to Shelf
-												</>
-											)}
-										</button>
-									) : (
-										<button
-											type="button"
-											onClick={handleUnmarkSeasonWatched}
-											disabled={
-												!isAuthenticated ||
-												isUnmarkShowPending ||
-												processingSeason
-											}
-											className="mt-4 w-full btn btn-secondary gap-2"
-										>
-											{processingSeason || isUnmarkShowPending ? (
-												<>
-													<Loader2 className="h-4 w-4 animate-spin" />
-													Loading
-												</>
-											) : (
-												<>
-													<X className="h-4 w-4" />
-													Remove Season from Shelf
-												</>
-											)}
-										</button>
-									)}
-								</div>
-							</section>
+							<ProgressCard
+								episodesWatched={episodesWatched}
+								totalEpisodes={totalEpisodes}
+								markLabel="Add Season to Shelf"
+								unmarkLabel="Remove Season from Shelf"
+								isMarkPending={isMarkSeasonPending}
+								isUnmarkPending={isUnmarkShowPending}
+								processing={processingSeason}
+								onMarkWatched={handleMarkSeasonWatched}
+								onUnmarkWatched={handleUnmarkSeasonWatched}
+							/>
 						)}
 
 						{/* Details */}
