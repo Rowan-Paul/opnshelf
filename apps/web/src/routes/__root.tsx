@@ -6,6 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { AuthProvider } from "#/lib/auth-context";
 import {
 	DefaultErrorComponent,
 	NotFoundComponent,
@@ -14,7 +15,6 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import PostHogProvider from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import { AuthProvider } from "../lib/auth-context";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {

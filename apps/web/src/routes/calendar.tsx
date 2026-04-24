@@ -12,8 +12,8 @@ import {
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "#/lib/auth-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
-import { useAuth } from "../lib/auth-context";
 
 export const Route = createFileRoute("/calendar")({
 	component: CalendarPage,
