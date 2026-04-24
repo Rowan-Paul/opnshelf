@@ -15,6 +15,7 @@ import {
 	Loader2,
 	MoreHorizontal,
 	Search,
+	User,
 	UserCheck,
 	UserPlus,
 	Users,
@@ -41,6 +42,13 @@ export const Route = createFileRoute("/following")({
 
 // Initialize API client
 setupApiClient();
+
+function toSlug(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-|-$/g, "");
+}
 
 // Debounce hook for search
 function useDebounce<T>(value: T, delay: number): T {
@@ -236,15 +244,17 @@ function FollowingPage() {
 												key={person.did}
 												className="flex items-center gap-3 p-2 hover:bg-[var(--background-subtle)] rounded-lg"
 											>
-												<img
-													src={
-														person.avatar
-															? String(person.avatar)
-															: `https://i.pravatar.cc/150?u=${person.did}`
-													}
-													alt={String(person.displayName) || person.handle}
-													className="h-10 w-10 rounded-full object-cover"
-												/>
+												{person.avatar ? (
+													<img
+														src={String(person.avatar)}
+														alt={String(person.displayName) || person.handle}
+														className="h-10 w-10 rounded-full object-cover"
+													/>
+												) : (
+													<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+														<User className="h-4 w-4 text-[var(--accent)]" />
+													</div>
+												)}
 												<div className="flex-1 min-w-0">
 													<p className="font-medium text-sm truncate">
 														{String(person.displayName) || person.handle}
@@ -354,9 +364,7 @@ function FollowingPage() {
 															to="/movies/$movieId/$movieName"
 															params={{
 																movieId: String(activity.movieId),
-																movieName: encodeURIComponent(
-																	activity.title || "",
-																),
+																movieName: toSlug(activity.title || ""),
 															}}
 														>
 															<img
@@ -374,9 +382,7 @@ function FollowingPage() {
 															to="/shows/$showId/$showName"
 															params={{
 																showId: String(activity.showId),
-																showName: encodeURIComponent(
-																	activity.showTitle || "",
-																),
+																showName: toSlug(activity.showTitle || ""),
 															}}
 														>
 															<img
@@ -397,18 +403,20 @@ function FollowingPage() {
 											<div className="flex-1 min-w-0 flex flex-col gap-2">
 												{/* Profile + action header */}
 												<div className="flex items-start gap-2">
-													<img
-														src={
-															activity.actor.avatar
-																? String(activity.actor.avatar)
-																: `https://i.pravatar.cc/150?u=${activity.actor.did}`
-														}
-														alt={
-															String(activity.actor.displayName) ||
-															activity.actor.handle
-														}
-														className="h-8 w-8 rounded-full object-cover"
-													/>
+													{activity.actor.avatar ? (
+														<img
+															src={String(activity.actor.avatar)}
+															alt={
+																String(activity.actor.displayName) ||
+																activity.actor.handle
+															}
+															className="h-8 w-8 rounded-full object-cover"
+														/>
+													) : (
+														<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+															<User className="h-3.5 w-3.5 text-[var(--accent)]" />
+														</div>
+													)}
 													<div className="flex-1 min-w-0">
 														<div className="flex items-center gap-1.5 flex-wrap text-sm">
 															<Link
@@ -428,9 +436,7 @@ function FollowingPage() {
 																	to="/movies/$movieId/$movieName"
 																	params={{
 																		movieId: String(activity.movieId),
-																		movieName: encodeURIComponent(
-																			activity.title || "",
-																		),
+																		movieName: toSlug(activity.title || ""),
 																	}}
 																	className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
 																>
@@ -438,18 +444,10 @@ function FollowingPage() {
 																</Link>
 															) : (
 																<Link
-																	to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+																	to="/shows/$showId/$showName"
 																	params={{
 																		showId: String(activity.showId),
-																		showName: encodeURIComponent(
-																			activity.showTitle || "",
-																		),
-																		seasonNumber: String(
-																			activity.seasonNumber || 0,
-																		),
-																		episodeNumber: String(
-																			activity.episodeNumber || 0,
-																		),
+																		showName: toSlug(activity.showTitle || ""),
 																	}}
 																	className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
 																>
@@ -486,14 +484,27 @@ function FollowingPage() {
 													(activity.seasonNumber ||
 														activity.episodeNumber ||
 														activity.episodeName) && (
-														<p className="text-base font-semibold text-[var(--foreground)]">
+														<Link
+															to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+															params={{
+																showId: String(activity.showId),
+																showName: toSlug(activity.showTitle || ""),
+																seasonNumber: String(
+																	activity.seasonNumber || 0,
+																),
+																episodeNumber: String(
+																	activity.episodeNumber || 0,
+																),
+															}}
+															className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
+														>
 															{activity.seasonNumber && activity.episodeNumber
 																? `S${activity.seasonNumber}E${activity.episodeNumber}`
 																: ""}
 															{activity.episodeName
 																? `${activity.seasonNumber && activity.episodeNumber ? " - " : ""}${activity.episodeName}`
 																: ""}
-														</p>
+														</Link>
 													)}
 
 												{/* Description */}
@@ -578,15 +589,17 @@ function FollowingPage() {
 							<div className="space-y-3">
 								{following.slice(0, 5).map((friend: SocialUserCardDto) => (
 									<div key={friend.did} className="flex items-center gap-3">
-										<img
-											src={
-												friend.avatar
-													? String(friend.avatar)
-													: `https://i.pravatar.cc/150?u=${friend.did}`
-											}
-											alt={String(friend.displayName) || friend.handle}
-											className="h-10 w-10 rounded-full object-cover"
-										/>
+										{friend.avatar ? (
+											<img
+												src={String(friend.avatar)}
+												alt={String(friend.displayName) || friend.handle}
+												className="h-10 w-10 rounded-full object-cover"
+											/>
+										) : (
+											<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+												<User className="h-4 w-4 text-[var(--accent)]" />
+											</div>
+										)}
 										<div className="flex-1 min-w-0">
 											<p className="font-medium text-sm truncate">
 												{String(friend.displayName) || friend.handle}
