@@ -917,6 +917,9 @@ export type FollowedActivityItemDto = {
     showTitle?: string;
     seasonNumber?: number;
     episodeNumber?: number;
+    episodeName?: string;
+    episodeOverview?: string;
+    stillPath?: string;
     posterPath?: string;
     backdropPath?: string;
     releaseYear?: number;

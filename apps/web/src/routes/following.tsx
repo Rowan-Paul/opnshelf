@@ -12,11 +12,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	Activity,
 	Clock,
-	Film,
 	Loader2,
 	MoreHorizontal,
 	Search,
-	Tv,
 	UserCheck,
 	UserPlus,
 	Users,
@@ -26,7 +24,6 @@ import { useCallback, useEffect, useState } from "react";
 import FeedItemActions from "#/components/FeedItemActions";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { withUserLocale } from "#/lib/date-utils";
 
 export const Route = createFileRoute("/following")({
 	head: () => ({
@@ -55,29 +52,6 @@ function useDebounce<T>(value: T, delay: number): T {
 	}, [value, delay]);
 
 	return debouncedValue;
-}
-
-// Format relative time
-function formatRelativeTime(
-	dateString: string,
-	timezone?: string,
-	timeFormat?: "12h" | "24h",
-): string {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-	if (diffInSeconds < 60) return "Just now";
-	if (diffInSeconds < 3600)
-		return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-	if (diffInSeconds < 86400)
-		return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-	if (diffInSeconds < 604800)
-		return `${Math.floor(diffInSeconds / 86400)} days ago`;
-	return date.toLocaleDateString(
-		"en-US",
-		withUserLocale({}, timezone, timeFormat),
-	);
 }
 
 function FollowingPage() {
@@ -482,27 +456,19 @@ function FollowingPage() {
 																	{activity.showTitle}
 																</Link>
 															)}
-															<span className="badge badge-subtle">
-																{activity.type === "movie" ? (
-																	<Film className="h-3 w-3" />
-																) : (
-																	<Tv className="h-3 w-3" />
-																)}
-															</span>
-															{activity.seasonNumber &&
-																activity.episodeNumber && (
-																	<span className="text-sm text-[var(--foreground-muted)]">
-																		S{activity.seasonNumber}E
-																		{activity.episodeNumber}
-																	</span>
-																)}
 														</div>
 														<div className="flex items-center gap-1.5 mt-0.5 text-xs text-[var(--foreground-muted)]">
 															<Clock className="h-3 w-3" />
-															{formatRelativeTime(
-																activity.activityAt,
-																userTimezone,
-																userTimeFormat,
+															{new Date(activity.activityAt).toLocaleString(
+																"en-US",
+																{
+																	month: "short",
+																	day: "numeric",
+																	hour: "numeric",
+																	minute: "2-digit",
+																	timeZone: userTimezone,
+																	hour12: userTimeFormat === "12h",
+																},
 															)}
 														</div>
 													</div>
@@ -515,10 +481,29 @@ function FollowingPage() {
 													</button>
 												</div>
 
+												{/* Episode identifier */}
+												{activity.type === "episode" &&
+													(activity.seasonNumber ||
+														activity.episodeNumber ||
+														activity.episodeName) && (
+														<p className="text-base font-semibold text-[var(--foreground)]">
+															{activity.seasonNumber && activity.episodeNumber
+																? `S${activity.seasonNumber}E${activity.episodeNumber}`
+																: ""}
+															{activity.episodeName
+																? `${activity.seasonNumber && activity.episodeNumber ? " - " : ""}${activity.episodeName}`
+																: ""}
+														</p>
+													)}
+
 												{/* Description */}
-												{activity.overview && (
+												{(activity.type === "episode"
+													? activity.episodeOverview
+													: activity.overview) && (
 													<p className="text-[var(--foreground-muted)] text-sm line-clamp-3">
-														{activity.overview}
+														{activity.type === "episode"
+															? activity.episodeOverview
+															: activity.overview}
 													</p>
 												)}
 
