@@ -11,15 +11,41 @@ import { useAuth } from "#/lib/auth-context";
 interface UseListActionsOptions {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 }
 
-export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
+function buildScopedShowMediaId(
+	mediaId: string,
+	seasonNumber?: number,
+	episodeNumber?: number,
+): string {
+	if (typeof seasonNumber === "number" && Number.isFinite(seasonNumber)) {
+		if (typeof episodeNumber === "number" && Number.isFinite(episodeNumber)) {
+			return `${mediaId}:season:${seasonNumber}:episode:${episodeNumber}`;
+		}
+		return `${mediaId}:season:${seasonNumber}`;
+	}
+	return mediaId;
+}
+
+export function useListActions({
+	mediaType,
+	mediaId,
+	seasonNumber,
+	episodeNumber,
+}: UseListActionsOptions) {
+	const scopedMediaId = buildScopedShowMediaId(
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	);
 	const { isAuthenticated } = useAuth();
 	const queryClient = useQueryClient();
 	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 
 	const listsForItemKey = listsControllerGetListsForItemQueryKey({
-		path: { mediaType, mediaId },
+		path: { mediaType, mediaId: scopedMediaId },
 	});
 	const userListsKey = listsControllerGetUserListsQueryKey();
 
@@ -96,7 +122,7 @@ export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
 		if (isInWatchlist) {
 			removeFromListMutation.mutate(
 				{
-					path: { slug: "watchlist", mediaType, mediaId },
+					path: { slug: "watchlist", mediaType, mediaId: scopedMediaId },
 				},
 				{ onSettled: onDone },
 			);
@@ -104,7 +130,7 @@ export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
 			addToListMutation.mutate(
 				{
 					path: { slug: "watchlist" },
-					body: { mediaType, mediaId },
+					body: { mediaType, mediaId: scopedMediaId },
 				},
 				{ onSettled: onDone },
 			);
@@ -118,7 +144,7 @@ export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
 		if (isInFavorites) {
 			removeFromListMutation.mutate(
 				{
-					path: { slug: "favorites", mediaType, mediaId },
+					path: { slug: "favorites", mediaType, mediaId: scopedMediaId },
 				},
 				{ onSettled: onDone },
 			);
@@ -126,7 +152,7 @@ export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
 			addToListMutation.mutate(
 				{
 					path: { slug: "favorites" },
-					body: { mediaType, mediaId },
+					body: { mediaType, mediaId: scopedMediaId },
 				},
 				{ onSettled: onDone },
 			);
@@ -137,14 +163,14 @@ export function useListActions({ mediaType, mediaId }: UseListActionsOptions) {
 		if (!isAuthenticated) return;
 		addToListMutation.mutate({
 			path: { slug },
-			body: { mediaType, mediaId },
+			body: { mediaType, mediaId: scopedMediaId },
 		});
 	};
 
 	const removeFromList = (slug: string) => {
 		if (!isAuthenticated) return;
 		removeFromListMutation.mutate({
-			path: { slug, mediaType, mediaId },
+			path: { slug, mediaType, mediaId: scopedMediaId },
 		});
 	};
 

@@ -29,6 +29,7 @@ import { buildSeasonPageMeta } from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
+import InYourLists from "../../../../../components/InYourLists";
 import LoadingState from "../../../../../components/LoadingState";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
@@ -372,12 +373,16 @@ function SeasonDetailPage() {
 							<Play className="h-4 w-4" />
 							{getContinueButtonText()}
 						</Link>
-						<MediaActionsBar mediaType="show" mediaId={showId} />
+						<MediaActionsBar
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+						/>
 					</>
 				}
 				currentProgress={
 					<div className="flex items-center gap-4 text-sm">
-						{previousSeason ? (
+						{previousSeason && (
 							<Link
 								to="/shows/$showId/$showName/seasons/$seasonNumber"
 								params={{
@@ -387,19 +392,14 @@ function SeasonDetailPage() {
 								}}
 								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
 							>
-								<ChevronLeft className="h-4 w-4" />S
-								{previousSeason.season_number}
-							</Link>
-						) : (
-							<span className="inline-flex items-center gap-1 text-[var(--foreground-muted)] opacity-40">
 								<ChevronLeft className="h-4 w-4" />
-								Prev
-							</span>
+								Previous (S{previousSeason.season_number})
+							</Link>
 						)}
 						<span className="text-[var(--foreground-muted)]">
 							Season {seasonNum} of {sortedSeasons.length}
 						</span>
-						{nextSeason ? (
+						{nextSeason && (
 							<Link
 								to="/shows/$showId/$showName/seasons/$seasonNumber"
 								params={{
@@ -409,14 +409,9 @@ function SeasonDetailPage() {
 								}}
 								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
 							>
-								S{nextSeason.season_number}
+								Next (S{nextSeason.season_number})
 								<ChevronRight className="h-4 w-4" />
 							</Link>
-						) : (
-							<span className="inline-flex items-center gap-1 text-[var(--foreground-muted)] opacity-40">
-								Next
-								<ChevronRight className="h-4 w-4" />
-							</span>
 						)}
 					</div>
 				}
@@ -575,6 +570,12 @@ function SeasonDetailPage() {
 										: "N/A",
 								},
 							]}
+						/>
+
+						<InYourLists
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
 						/>
 					</div>
 				</div>

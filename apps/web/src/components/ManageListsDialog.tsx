@@ -11,6 +11,8 @@ import { useListActions, useListItemStatus } from "#/lib/hooks";
 interface ManageListsDialogProps {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	title?: string;
@@ -20,6 +22,8 @@ interface ManageListsDialogProps {
 export default function ManageListsDialog({
 	mediaType,
 	mediaId,
+	seasonNumber,
+	episodeNumber,
 	open,
 	onOpenChange,
 	title = "Manage lists",
@@ -28,6 +32,8 @@ export default function ManageListsDialog({
 	const { customListsWithStatus, userLists, listsForItem } = useListItemStatus({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 
 	const {
@@ -36,7 +42,7 @@ export default function ManageListsDialog({
 		toggleWatchlist,
 		toggleFavorites,
 		isPending,
-	} = useListActions({ mediaType, mediaId });
+	} = useListActions({ mediaType, mediaId, seasonNumber, episodeNumber });
 
 	const isLoading =
 		!userLists || !listsForItem || customListsWithStatus === undefined;

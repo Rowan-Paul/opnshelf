@@ -11,19 +11,43 @@ import { useAuth } from "#/lib/auth-context";
 interface UseListItemStatusOptions {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 	enabled?: boolean;
+}
+
+function buildScopedShowMediaId(
+	mediaId: string,
+	seasonNumber?: number,
+	episodeNumber?: number,
+): string {
+	if (typeof seasonNumber === "number" && Number.isFinite(seasonNumber)) {
+		if (typeof episodeNumber === "number" && Number.isFinite(episodeNumber)) {
+			return `${mediaId}:season:${seasonNumber}:episode:${episodeNumber}`;
+		}
+		return `${mediaId}:season:${seasonNumber}`;
+	}
+	return mediaId;
 }
 
 export function useListItemStatus({
 	mediaType,
 	mediaId,
+	seasonNumber,
+	episodeNumber,
 	enabled = true,
 }: UseListItemStatusOptions) {
 	const { isAuthenticated } = useAuth();
 
+	const scopedMediaId = buildScopedShowMediaId(
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	);
+
 	const { data: listsForItem } = useQuery({
 		...listsControllerGetListsForItemOptions({
-			path: { mediaType, mediaId },
+			path: { mediaType, mediaId: scopedMediaId },
 		}),
 		enabled: isAuthenticated && enabled,
 	});
@@ -83,7 +107,7 @@ export function useListItemStatus({
 		availableLists,
 		customListsWithStatus,
 		listsForItemKey: listsControllerGetListsForItemQueryKey({
-			path: { mediaType, mediaId },
+			path: { mediaType, mediaId: scopedMediaId },
 		}),
 		userListsKey: listsControllerGetUserListsQueryKey(),
 	};

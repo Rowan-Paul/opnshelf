@@ -7,17 +7,28 @@ import { useListActions, useListItemStatus } from "#/lib/hooks";
 interface InYourListsProps {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 }
 
-export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
+export default function InYourLists({
+	mediaType,
+	mediaId,
+	seasonNumber,
+	episodeNumber,
+}: InYourListsProps) {
 	const [open, setOpen] = useState(false);
 	const { otherLists, availableLists } = useListItemStatus({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 	const { removeFromList, isPending } = useListActions({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 
 	return (
@@ -88,6 +99,8 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 					<ManageListsDialog
 						mediaType={mediaType}
 						mediaId={mediaId}
+						seasonNumber={seasonNumber}
+						episodeNumber={episodeNumber}
 						open={open}
 						onOpenChange={setOpen}
 						title="Add to list"

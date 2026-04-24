@@ -5,19 +5,25 @@ import { useListActions, useListItemStatus } from "#/lib/hooks";
 interface MediaActionsBarProps {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 }
 
 export default function MediaActionsBar({
 	mediaType,
 	mediaId,
+	seasonNumber,
+	episodeNumber,
 }: MediaActionsBarProps) {
 	const [shareSuccess, setShareSuccess] = useState(false);
 	const { isInWatchlist, isInFavorites } = useListItemStatus({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 	const { toggleWatchlist, toggleFavorites, activeListAction, isPending } =
-		useListActions({ mediaType, mediaId });
+		useListActions({ mediaType, mediaId, seasonNumber, episodeNumber });
 
 	const handleShare = async () => {
 		const url = window.location.href;
