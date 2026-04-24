@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/calendar")({
@@ -48,8 +49,14 @@ function getWeekStart(date: Date): Date {
 }
 
 function CalendarPage() {
-	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const navigate = useNavigate();
+	const userTimezone = userSettings?.timezone;
 
 	// Redirect to login if not authenticated
 	useEffect(() => {
@@ -253,7 +260,7 @@ function CalendarPage() {
 		if (!selectedWeekStart) return "";
 		const weekEnd = new Date(selectedWeekStart);
 		weekEnd.setDate(selectedWeekStart.getDate() + 6);
-		return `${selectedWeekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+		return `${selectedWeekStart.toLocaleDateString("en-US", withUserLocale({ month: "short", day: "numeric" }, userTimezone))} - ${weekEnd.toLocaleDateString("en-US", withUserLocale({ month: "short", day: "numeric" }, userTimezone))}`;
 	};
 
 	// Mobile week navigation functions
@@ -320,11 +327,13 @@ function CalendarPage() {
 
 		if (isToday) return "Today";
 
-		return date.toLocaleDateString("en-US", {
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-		});
+		return date.toLocaleDateString(
+			"en-US",
+			withUserLocale(
+				{ weekday: "short", month: "short", day: "numeric" },
+				userTimezone,
+			),
+		);
 	};
 
 	if (isLoading) {
@@ -462,7 +471,10 @@ function CalendarPage() {
 											</div>
 										)}
 										<div className="min-w-0 flex-1">
-											<p className="truncate font-medium">
+											<p
+												title={getDisplayTitle(release)}
+												className="truncate font-medium"
+											>
 												{getDisplayTitle(release)}
 											</p>
 											<div className="mt-1 flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
@@ -577,7 +589,10 @@ function CalendarPage() {
 																: "bg-purple-500"
 														}`}
 													/>
-													<span className="text-[10px] text-[var(--foreground)] truncate leading-tight">
+													<span
+														title={getDisplayTitle(release)}
+														className="text-[10px] text-[var(--foreground)] truncate leading-tight"
+													>
 														{getDisplayTitle(release)}
 													</span>
 												</div>
@@ -657,7 +672,10 @@ function CalendarPage() {
 											</div>
 										)}
 										<div className="flex-1 min-w-0">
-											<p className="font-medium text-sm truncate">
+											<p
+												title={getDisplayTitle(release)}
+												className="font-medium text-sm truncate"
+											>
 												{getDisplayTitle(release)}
 											</p>
 											<div className="mt-1 flex items-center gap-2 text-xs text-[var(--foreground-muted)]">
@@ -667,10 +685,13 @@ function CalendarPage() {
 													) : (
 														<Tv className="h-3 w-3" />
 													)}
-													{new Date(release.date).toLocaleDateString("en-US", {
-														month: "short",
-														day: "numeric",
-													})}
+													{new Date(release.date).toLocaleDateString(
+														"en-US",
+														withUserLocale(
+															{ month: "short", day: "numeric" },
+															userTimezone,
+														),
+													)}
 												</span>
 											</div>
 										</div>

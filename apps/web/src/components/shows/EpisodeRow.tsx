@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Loader2 } from "lucide-react";
+import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 
 interface Episode {
 	id: number;
@@ -31,14 +33,16 @@ function formatRuntime(minutes: number): string {
 	return `${hours}h ${mins}m`;
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, timezone?: string): string {
 	if (!dateString) return "";
 	try {
-		return new Date(dateString).toLocaleDateString("en-US", {
-			month: "long",
-			day: "numeric",
-			year: "numeric",
-		});
+		return new Date(dateString).toLocaleDateString(
+			"en-US",
+			withUserLocale(
+				{ month: "long", day: "numeric", year: "numeric" },
+				timezone,
+			),
+		);
 	} catch {
 		return dateString;
 	}
@@ -57,6 +61,9 @@ export default function EpisodeRow({
 	onUnmarkWatched,
 	isLast = false,
 }: EpisodeRowProps) {
+	const { userSettings } = useAuth();
+	const userTimezone = userSettings?.timezone;
+
 	return (
 		<Link
 			to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
@@ -88,7 +95,8 @@ export default function EpisodeRow({
 				</div>
 				<p className="text-sm text-[var(--foreground-muted)]">
 					{formatRuntime(episode.runtime || 0)}
-					{episode.air_date && ` • ${formatDate(episode.air_date)}`}
+					{episode.air_date &&
+						` • ${formatDate(episode.air_date, userTimezone)}`}
 				</p>
 			</div>
 			{isWatched ? (

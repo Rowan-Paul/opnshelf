@@ -4,6 +4,8 @@ import {
 	getSignupUrl,
 	setOnUnauthorized,
 	type UserDto,
+	type UserSettingsDto,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +19,7 @@ import { env } from "#/env";
 
 interface AuthContextType {
 	user: UserDto | null;
+	userSettings: UserSettingsDto | null;
 	isLoading: boolean;
 	isAuthenticated: boolean;
 	login: (handle: string) => void;
@@ -35,6 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		...authControllerMeOptions(),
 		retry: false,
 		staleTime: 5 * 60 * 1000, // 5 minutes
+	});
+
+	// Fetch user settings
+	const { data: userSettings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!user,
+		retry: false,
+		staleTime: 5 * 60 * 1000,
 	});
 
 	// Handle unauthorized responses
@@ -75,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const value: AuthContextType = {
 		user: user ?? null,
+		userSettings: userSettings ?? null,
 		isLoading: isLoading || isLoggingOut,
 		isAuthenticated: !!user,
 		login,

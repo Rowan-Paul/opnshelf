@@ -27,6 +27,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 
 export const Route = createFileRoute("/following")({
 	component: FollowingPage,
@@ -48,7 +49,11 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Format relative time
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(
+	dateString: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	const date = new Date(dateString);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -60,12 +65,22 @@ function formatRelativeTime(dateString: string): string {
 		return `${Math.floor(diffInSeconds / 3600)} hours ago`;
 	if (diffInSeconds < 604800)
 		return `${Math.floor(diffInSeconds / 86400)} days ago`;
-	return date.toLocaleDateString();
+	return date.toLocaleDateString(
+		"en-US",
+		withUserLocale({}, timezone, timeFormat),
+	);
 }
 
 function FollowingPage() {
-	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const navigate = useNavigate();
+	const userTimezone = userSettings?.timezone;
+	const userTimeFormat = userSettings?.timeFormat;
 	const queryClient = useQueryClient();
 	const userHandle = user?.handle;
 
@@ -423,7 +438,11 @@ function FollowingPage() {
 												</div>
 												<div className="flex items-center gap-2 mt-1 text-sm text-[var(--foreground-muted)]">
 													<Clock className="h-3 w-3" />
-													{formatRelativeTime(activity.activityAt)}
+													{formatRelativeTime(
+														activity.activityAt,
+														userTimezone,
+														userTimeFormat,
+													)}
 												</div>
 											</div>
 											<button

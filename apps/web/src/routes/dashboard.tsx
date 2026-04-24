@@ -22,6 +22,7 @@ import {
 import { useEffect } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 import { useDashboardStats, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
@@ -52,13 +53,24 @@ function formatRelativeDate(dateStr: string): string {
 }
 
 // Helper function to format date
-function formatDate(dateStr: string): string {
+function formatDate(
+	dateStr: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	const date = new Date(dateStr);
-	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+	return date.toLocaleDateString(
+		"en-US",
+		withUserLocale({ month: "short", day: "numeric" }, timezone, timeFormat),
+	);
 }
 
 // Helper function to format relative time for social feed
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(
+	dateString: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	const date = new Date(dateString);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -70,7 +82,10 @@ function formatRelativeTime(dateString: string): string {
 		return `${Math.floor(diffInSeconds / 3600)} hours ago`;
 	if (diffInSeconds < 604800)
 		return `${Math.floor(diffInSeconds / 86400)} days ago`;
-	return date.toLocaleDateString();
+	return date.toLocaleDateString(
+		"en-US",
+		withUserLocale({}, timezone, timeFormat),
+	);
 }
 
 // Helper function to get episode info
@@ -88,34 +103,52 @@ function getEpisodeInfo(item: ReleaseCalendarItemDto): string | undefined {
 }
 
 // Helper function to format watched time (e.g. "Apr 9 at 2:30 PM", "Jan 15, 2024 at 2:30 PM")
-function formatWatchedDate(dateStr: string): string {
+function formatWatchedDate(
+	dateStr: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	const date = new Date(dateStr);
 	const now = new Date();
 	const isThisYear = date.getFullYear() === now.getFullYear();
-	const timeString = date.toLocaleTimeString("en-US", {
-		hour: "numeric",
-		minute: "2-digit",
-	});
+	const timeString = date.toLocaleTimeString(
+		"en-US",
+		withUserLocale(
+			{ hour: "numeric", minute: "2-digit" },
+			timezone,
+			timeFormat,
+		),
+	);
 
 	if (isThisYear) {
-		const formattedDate = date.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-		});
+		const formattedDate = date.toLocaleDateString(
+			"en-US",
+			withUserLocale({ month: "short", day: "numeric" }, timezone, timeFormat),
+		);
 		return `${formattedDate} at ${timeString}`;
 	}
-	const formattedDate = date.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
+	const formattedDate = date.toLocaleDateString(
+		"en-US",
+		withUserLocale(
+			{ month: "short", day: "numeric", year: "numeric" },
+			timezone,
+			timeFormat,
+		),
+	);
 	return `${formattedDate} at ${timeString}`;
 }
 
 function Dashboard() {
-	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const navigate = useNavigate();
 	const userDid = user?.did;
+	const userTimezone = userSettings?.timezone;
+	const userTimeFormat = userSettings?.timeFormat;
 
 	// Redirect to login if not authenticated
 	useEffect(() => {
@@ -441,7 +474,11 @@ function Dashboard() {
 										episodeInfo={item.episodeInfo}
 										watchedDate={
 											item.watchedDate
-												? formatWatchedDate(item.watchedDate)
+												? formatWatchedDate(
+														item.watchedDate,
+														userTimezone,
+														userTimeFormat,
+													)
 												: undefined
 										}
 										layout="backdrop"
@@ -537,7 +574,13 @@ function Dashboard() {
 											</p>
 											{/* Timestamp */}
 											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
-												<span>{formatRelativeTime(item.createdAt)}</span>
+												<span>
+													{formatRelativeTime(
+														item.createdAt,
+														userTimezone,
+														userTimeFormat,
+													)}
+												</span>
 											</div>
 										</div>
 										{/* Content Type Badge */}
@@ -653,7 +696,13 @@ function Dashboard() {
 												{release.title}
 											</p>
 											<div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--foreground-muted)]">
-												<span>{formatDate(release.releaseDate)}</span>
+												<span>
+													{formatDate(
+														release.releaseDate,
+														userTimezone,
+														userTimeFormat,
+													)}
+												</span>
 												<span className="text-[var(--accent)]">
 													• {formatRelativeDate(release.releaseDate)}
 												</span>

@@ -10,6 +10,8 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { setupApiClient } from "#/lib/api";
+import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 import {
 	useDiscoverMovies,
 	useMediaWatchStatus,
@@ -58,17 +60,27 @@ function formatRuntime(minutes: number): string {
 	return `${hours}h ${mins}m`;
 }
 
-function formatDateTime(dateString: string): string {
+function formatDateTime(
+	dateString: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	if (!dateString) return "Unknown";
 	try {
-		return new Date(dateString).toLocaleString("en-US", {
-			month: "short",
-			day: "numeric",
-			year: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-			hour12: true,
-		});
+		return new Date(dateString).toLocaleString(
+			"en-US",
+			withUserLocale(
+				{
+					month: "short",
+					day: "numeric",
+					year: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+				},
+				timezone,
+				timeFormat,
+			),
+		);
 	} catch {
 		return dateString;
 	}
@@ -76,6 +88,9 @@ function formatDateTime(dateString: string): string {
 
 function MovieDetailPage() {
 	const { movieId } = Route.useParams();
+	const { userSettings } = useAuth();
+	const userTimezone = userSettings?.timezone;
+	const userTimeFormat = userSettings?.timeFormat;
 
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
 	const { data: similarMoviesData } = useDiscoverMovies(1);
@@ -164,11 +179,13 @@ function MovieDetailPage() {
 						<span className="text-[var(--border-strong)]">•</span>
 						<span>
 							{movie.release_date
-								? new Date(movie.release_date).toLocaleDateString("en-US", {
-										month: "long",
-										day: "numeric",
-										year: "numeric",
-									})
+								? new Date(movie.release_date).toLocaleDateString(
+										"en-US",
+										withUserLocale(
+											{ month: "long", day: "numeric", year: "numeric" },
+											userTimezone,
+										),
+									)
 								: "Unknown"}
 						</span>
 						<span className="text-[var(--border-strong)]">•</span>
@@ -261,11 +278,13 @@ function MovieDetailPage() {
 								{
 									label: "Release",
 									value: movie.release_date
-										? new Date(movie.release_date).toLocaleDateString("en-US", {
-												month: "long",
-												day: "numeric",
-												year: "numeric",
-											})
+										? new Date(movie.release_date).toLocaleDateString(
+												"en-US",
+												withUserLocale(
+													{ month: "long", day: "numeric", year: "numeric" },
+													userTimezone,
+												),
+											)
 										: "Unknown",
 								},
 								{
@@ -289,7 +308,11 @@ function MovieDetailPage() {
 										>
 											<div className="flex flex-1 items-center p-2">
 												<span className="text-sm font-medium">
-													{formatDateTime(entry.watchedDate)}
+													{formatDateTime(
+														entry.watchedDate,
+														userTimezone,
+														userTimeFormat,
+													)}
 												</span>
 											</div>
 											<button

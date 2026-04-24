@@ -9,6 +9,7 @@ import { Check, ChevronRight, Loader2, Play, Star, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { withUserLocale } from "#/lib/date-utils";
 import {
 	useDiscoverShows,
 	useMarkEpisodeWatched,
@@ -56,14 +57,16 @@ export const Route = createFileRoute("/shows/$showId/$showName/")({
 	component: ShowDetailPage,
 });
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, timezone?: string): string {
 	if (!dateString) return "Unknown";
 	try {
-		return new Date(dateString).toLocaleDateString("en-US", {
-			month: "long",
-			day: "numeric",
-			year: "numeric",
-		});
+		return new Date(dateString).toLocaleDateString(
+			"en-US",
+			withUserLocale(
+				{ month: "long", day: "numeric", year: "numeric" },
+				timezone,
+			),
+		);
 	} catch {
 		return dateString;
 	}
@@ -80,8 +83,9 @@ function useSeasonDetails(showId: string, seasonNumber: number | null) {
 
 function ShowDetailPage() {
 	const { showId } = Route.useParams();
-	const { user, isAuthenticated } = useAuth();
+	const { user, userSettings, isAuthenticated } = useAuth();
 	const userDid = user?.did || "";
+	const userTimezone = userSettings?.timezone;
 
 	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
 	const [expandedSeason, setExpandedSeason] = useState<number | null>(null);
@@ -535,7 +539,7 @@ function ShowDetailPage() {
 								},
 								{
 									label: "First Aired",
-									value: formatDate(show.first_air_date || ""),
+									value: formatDate(show.first_air_date || "", userTimezone),
 								},
 								{
 									label: "Genres",
