@@ -1,4 +1,5 @@
 import {
+	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
@@ -120,6 +121,24 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 	});
 
+	const deleteMovieWatchHistoryEntry = useMutation({
+		...moviesControllerDeleteWatchHistoryEntryMutation(),
+		onSettled: () => {
+			if (options.mediaType === "movie") {
+				queryClient.invalidateQueries({
+					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+						path: { userDid, movieId: options.movieId },
+					}),
+				});
+			}
+			queryClient.invalidateQueries({
+				queryKey: moviesControllerGetUserMoviesQueryKey({
+					path: { userDid },
+				}),
+			});
+		},
+	});
+
 	// Show mutations
 	const showWatchHistoryKey =
 		options.mediaType === "show"
@@ -217,6 +236,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
+	const handleDeleteMovieWatchHistoryEntry = (trackedMovieId: string) => {
+		if (!isAuthenticated || options.mediaType !== "movie") return;
+		deleteMovieWatchHistoryEntry.mutate({
+			path: { trackedMovieId },
+		});
+	};
+
 	const handleMarkEpisodeWatched = (
 		seasonNumber: number,
 		episodeNumber: number,
@@ -270,8 +296,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		// Movie actions
 		markMovieWatched: handleMarkMovieWatched,
 		unmarkMovieWatched: handleUnmarkMovieWatched,
+		deleteMovieWatchHistoryEntry: handleDeleteMovieWatchHistoryEntry,
 		isMarkMoviePending: markMovieWatched.isPending,
 		isUnmarkMoviePending: unmarkMovieWatched.isPending,
+		isDeleteMovieHistoryPending: deleteMovieWatchHistoryEntry.isPending,
 		// Show actions
 		markEpisodeWatched: handleMarkEpisodeWatched,
 		unmarkEpisodeWatched: handleUnmarkEpisodeWatched,

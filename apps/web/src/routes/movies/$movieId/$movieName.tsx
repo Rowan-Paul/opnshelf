@@ -1,6 +1,14 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Clock, Loader2, Plus, Star, X } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
+import { useState } from "react";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { setupApiClient } from "#/lib/api";
 import {
 	useDiscoverMovies,
@@ -50,13 +58,16 @@ function formatRuntime(minutes: number): string {
 	return `${hours}h ${mins}m`;
 }
 
-function formatDate(dateString: string): string {
+function formatDateTime(dateString: string): string {
 	if (!dateString) return "Unknown";
 	try {
-		return new Date(dateString).toLocaleDateString("en-US", {
+		return new Date(dateString).toLocaleString("en-US", {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: true,
 		});
 	} catch {
 		return dateString;
@@ -75,9 +86,13 @@ function MovieDetailPage() {
 	const {
 		markMovieWatched,
 		unmarkMovieWatched,
+		deleteMovieWatchHistoryEntry,
 		isMarkMoviePending,
 		isUnmarkMoviePending,
+		isDeleteMovieHistoryPending,
 	} = useWatchActions({ mediaType: "movie", movieId });
+
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
 	if (isLoading) return <LoadingState />;
 	if (error || !movie) {
@@ -171,7 +186,13 @@ function MovieDetailPage() {
 						{isWatched ? (
 							<button
 								type="button"
-								onClick={unmarkMovieWatched}
+								onClick={() => {
+									if (movieWatchHistory && movieWatchHistory.length > 1) {
+										setConfirmRemoveOpen(true);
+									} else {
+										unmarkMovieWatched();
+									}
+								}}
 								disabled={isUnmarkMoviePending}
 								className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
 							>
@@ -260,25 +281,70 @@ function MovieDetailPage() {
 							{movieWatchHistory &&
 							Array.isArray(movieWatchHistory) &&
 							movieWatchHistory.length > 0 ? (
-								<div className="space-y-3">
+								<div className="space-y-1">
 									{movieWatchHistory.map((entry, index) => (
 										<div
 											key={entry.id || index}
-											className="flex items-center gap-2 text-green-600"
+											className="group flex items-center rounded-lg transition-colors hover:bg-[var(--background-subtle)]"
 										>
-											<Check className="h-5 w-5" />
-											<span className="font-medium">
-												Watched on {formatDate(entry.watchedDate)}
-											</span>
+											<div className="flex flex-1 items-center p-2">
+												<span className="text-sm font-medium">
+													{formatDateTime(entry.watchedDate)}
+												</span>
+											</div>
+											<button
+												type="button"
+												onClick={() => deleteMovieWatchHistoryEntry(entry.id)}
+												disabled={isDeleteMovieHistoryPending}
+												className="flex items-center justify-center h-8 w-8 rounded-md text-[var(--foreground-muted)] hover:bg-red-500/10 hover:text-red-500 transition-colors"
+												aria-label="Remove this play"
+											>
+												<X className="h-4 w-4" />
+											</button>
 										</div>
 									))}
+									<button
+										type="button"
+										onClick={markMovieWatched}
+										disabled={isMarkMoviePending}
+										className="btn btn-secondary w-full gap-2 mt-3"
+									>
+										{isMarkMoviePending ? (
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="h-4 w-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
 								</div>
 							) : (
-								<div className="empty-state p-0">
-									<Clock className="h-10 w-10 text-[var(--foreground-subtle)]" />
-									<p className="mt-2 text-sm text-[var(--foreground-muted)]">
+								<div className="space-y-3">
+									<p className="text-sm text-[var(--foreground-muted)]">
 										You haven&apos;t watched this yet
 									</p>
+									<button
+										type="button"
+										onClick={markMovieWatched}
+										disabled={isMarkMoviePending}
+										className="btn btn-secondary w-full text-sm gap-2"
+									>
+										{isMarkMoviePending ? (
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="h-4 w-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
 								</div>
 							)}
 						</section>
@@ -287,6 +353,50 @@ function MovieDetailPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Confirm remove all plays dialog */}
+			<Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<AlertTriangle className="h-5 w-5 text-amber-500" />
+							Remove all plays?
+						</DialogTitle>
+						<DialogDescription>
+							This will remove all{" "}
+							<strong>{movieWatchHistory?.length || 0}</strong> watch entries
+							for <strong>{movie.title}</strong>. This action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+						<button
+							type="button"
+							onClick={() => setConfirmRemoveOpen(false)}
+							className="btn btn-secondary"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={() => {
+								unmarkMovieWatched();
+								setConfirmRemoveOpen(false);
+							}}
+							disabled={isUnmarkMoviePending}
+							className="btn bg-red-600 text-white hover:bg-red-700"
+						>
+							{isUnmarkMoviePending ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin" />
+									Removing...
+								</>
+							) : (
+								"Remove all"
+							)}
+						</button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
