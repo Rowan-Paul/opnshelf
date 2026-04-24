@@ -64,7 +64,7 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 				) : availableLists.length === 0 ? (
 					<div className="space-y-3">
 						<p className="text-sm text-[var(--foreground-muted)]">
-							Not in any custom lists yet
+							Not in any lists yet
 						</p>
 						<Link
 							to="/lists"
@@ -76,7 +76,7 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 					</div>
 				) : (
 					<p className="text-sm text-[var(--foreground-muted)]">
-						Not in any custom lists yet
+						Not in any lists yet
 					</p>
 				)}
 			</div>
