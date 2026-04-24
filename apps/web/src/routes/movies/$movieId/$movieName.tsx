@@ -19,13 +19,13 @@ import {
 	useWatchActions,
 } from "#/lib/hooks";
 import { buildMoviePageMeta } from "#/lib/media-meta";
-import CastGrid from "../../../components/CastGrid";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
 import InYourLists from "../../../components/InYourLists";
 import LoadingState from "../../../components/LoadingState";
 import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
+import PersonGrid from "../../../components/PersonGrid";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 
 setupApiClient();
@@ -137,7 +137,7 @@ function MovieDetailPage() {
 		movie.credits?.cast?.slice(0, 6).map((actor) => ({
 			id: actor.id,
 			name: actor.name,
-			character: actor.character || "",
+			role: actor.character || "",
 			photo: actor.profile_path
 				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
@@ -175,11 +175,11 @@ function MovieDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">{movie.vote_average}</span>
-							<span className="text-[var(--foreground-muted)]">/10</span>
+							<span className="text-(--foreground-muted)">/10</span>
 						</div>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>{formatRuntime(movie.runtime || 0)}</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>
 							{movie.release_date
 								? new Date(movie.release_date).toLocaleDateString(
@@ -191,7 +191,7 @@ function MovieDetailPage() {
 									)
 								: "Unknown"}
 						</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<div className="flex gap-2">
 							{movie.genres?.map((g) => (
 								<span key={g.name} className="badge badge-subtle">
@@ -214,7 +214,7 @@ function MovieDetailPage() {
 									}
 								}}
 								disabled={isUnmarkMoviePending}
-								className="btn gap-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/20"
+								className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
 							>
 								{isUnmarkMoviePending ? (
 									<>
@@ -259,13 +259,13 @@ function MovieDetailPage() {
 					{/* Left Column */}
 					<div className="space-y-8">
 						<section>
-							<h2 className="text-display-3 mb-4">Overview</h2>
-							<p className="text-[var(--foreground-muted)] leading-relaxed">
+							<h2 className="mb-4 text-display-3">Overview</h2>
+							<p className="text-(--foreground-muted) leading-relaxed">
 								{movie.overview}
 							</p>
 						</section>
 
-						<CastGrid cast={cast} />
+						<PersonGrid people={cast} />
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 
@@ -299,7 +299,7 @@ function MovieDetailPage() {
 
 						{/* Your Activity */}
 						<section className="card p-5">
-							<h3 className="font-display font-semibold mb-4">Your Activity</h3>
+							<h3 className="mb-4 font-display font-semibold">Your Activity</h3>
 							{movieWatchHistory &&
 							Array.isArray(movieWatchHistory) &&
 							movieWatchHistory.length > 0 ? (
@@ -307,10 +307,10 @@ function MovieDetailPage() {
 									{movieWatchHistory.map((entry, index) => (
 										<div
 											key={entry.id || index}
-											className="group flex items-center rounded-lg transition-colors hover:bg-[var(--background-subtle)]"
+											className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
 										>
 											<div className="flex flex-1 items-center p-2">
-												<span className="text-sm font-medium">
+												<span className="font-medium text-sm">
 													{formatDateTime(
 														entry.watchedDate,
 														userTimezone,
@@ -322,7 +322,7 @@ function MovieDetailPage() {
 												type="button"
 												onClick={() => deleteMovieWatchHistoryEntry(entry.id)}
 												disabled={isDeleteMovieHistoryPending}
-												className="flex items-center justify-center h-8 w-8 rounded-md text-[var(--foreground-muted)] hover:bg-red-500/10 hover:text-red-500 transition-colors"
+												className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 												aria-label="Remove this play"
 											>
 												<X className="h-4 w-4" />
@@ -333,7 +333,7 @@ function MovieDetailPage() {
 										type="button"
 										onClick={markMovieWatched}
 										disabled={isMarkMoviePending}
-										className="btn btn-secondary w-full gap-2 mt-3"
+										className="btn btn-secondary mt-3 w-full gap-2"
 									>
 										{isMarkMoviePending ? (
 											<>
@@ -350,14 +350,14 @@ function MovieDetailPage() {
 								</div>
 							) : (
 								<div className="space-y-3">
-									<p className="text-sm text-[var(--foreground-muted)]">
+									<p className="text-(--foreground-muted) text-sm">
 										You haven&apos;t watched this yet
 									</p>
 									<button
 										type="button"
 										onClick={markMovieWatched}
 										disabled={isMarkMoviePending}
-										className="btn btn-secondary w-full text-sm gap-2"
+										className="btn btn-secondary w-full gap-2 text-sm"
 									>
 										{isMarkMoviePending ? (
 											<>

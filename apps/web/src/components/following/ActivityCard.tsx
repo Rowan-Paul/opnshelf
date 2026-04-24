@@ -63,7 +63,7 @@ export function ActivityCard({
 				)}
 
 				{/* Content next to poster */}
-				<div className="flex-1 min-w-0 flex flex-col gap-2">
+				<div className="flex min-w-0 flex-1 flex-col gap-2">
 					{/* Profile + action header */}
 					<div className="flex items-start gap-2">
 						<UserAvatar
@@ -71,15 +71,15 @@ export function ActivityCard({
 							alt={String(activity.actor.displayName) || activity.actor.handle}
 							size="sm"
 						/>
-						<div className="flex-1 min-w-0">
-							<div className="flex items-center gap-1.5 flex-wrap text-sm">
+						<div className="min-w-0 flex-1">
+							<div className="flex flex-wrap items-center gap-1.5 text-sm">
 								<Link
 									to={"/following" as const}
-									className="font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
+									className="font-semibold text-(--foreground) hover:text-(--accent)"
 								>
 									{String(activity.actor.displayName) || activity.actor.handle}
 								</Link>
-								<span className="text-[var(--foreground-muted)]">
+								<span className="text-(--foreground-muted)">
 									{activity.type === "movie" ? "watched" : "watched episode"}
 								</span>
 								{activity.type === "movie" ? (
@@ -89,7 +89,7 @@ export function ActivityCard({
 											movieId: String(activity.movieId),
 											movieName: toSlug(activity.title || ""),
 										}}
-										className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+										className="font-medium text-(--foreground) hover:text-(--accent)"
 									>
 										{activity.title}
 									</Link>
@@ -100,13 +100,13 @@ export function ActivityCard({
 											showId: String(activity.showId),
 											showName: toSlug(activity.showTitle || ""),
 										}}
-										className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]"
+										className="font-medium text-(--foreground) hover:text-(--accent)"
 									>
 										{activity.showTitle}
 									</Link>
 								)}
 							</div>
-							<div className="flex items-center gap-1.5 mt-0.5 text-xs text-[var(--foreground-muted)]">
+							<div className="mt-0.5 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
 								<Clock className="h-3 w-3" />
 								{new Date(activity.activityAt).toLocaleString("en-US", {
 									month: "short",
@@ -120,7 +120,7 @@ export function ActivityCard({
 						</div>
 						<button
 							type="button"
-							className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)] shrink-0"
+							className="btn btn-ghost h-8 w-8 shrink-0 p-0 text-(--foreground-muted)"
 							aria-label="More options"
 						>
 							<MoreHorizontal className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function ActivityCard({
 									seasonNumber: String(activity.seasonNumber || 0),
 									episodeNumber: String(activity.episodeNumber || 0),
 								}}
-								className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--accent)]"
+								className="font-semibold text-(--foreground) text-base hover:text-(--accent)"
 							>
 								{activity.seasonNumber && activity.episodeNumber
 									? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -155,7 +155,7 @@ export function ActivityCard({
 					{(activity.type === "episode"
 						? activity.episodeOverview
 						: activity.overview) && (
-						<p className="text-[var(--foreground-muted)] text-sm line-clamp-3">
+						<p className="line-clamp-3 text-(--foreground-muted) text-sm">
 							{activity.type === "episode"
 								? activity.episodeOverview
 								: activity.overview}

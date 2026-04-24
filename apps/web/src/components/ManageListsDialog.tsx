@@ -64,7 +64,7 @@ export default function ManageListsDialog({
 
 				{isLoading ? (
 					<div className="flex items-center justify-center py-8">
-						<Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+						<Loader2 className="h-6 w-6 animate-spin text-(--accent)" />
 					</div>
 				) : (
 					<div className="space-y-1 py-2">
@@ -73,13 +73,13 @@ export default function ManageListsDialog({
 							type="button"
 							onClick={() => toggleWatchlist(isWatchlist)}
 							disabled={isPending}
-							className="w-full flex items-center justify-between text-left px-3 py-2.5 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+							className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-(--background-subtle)"
 						>
 							<span>Watchlist</span>
 							{isWatchlist ? (
 								<Check className="h-4 w-4 text-green-500" />
 							) : (
-								<Plus className="h-4 w-4 text-[var(--foreground-muted)]" />
+								<Plus className="h-4 w-4 text-(--foreground-muted)" />
 							)}
 						</button>
 
@@ -88,13 +88,13 @@ export default function ManageListsDialog({
 							type="button"
 							onClick={() => toggleFavorites(isFavorites)}
 							disabled={isPending}
-							className="w-full flex items-center justify-between text-left px-3 py-2.5 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+							className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-(--background-subtle)"
 						>
 							<span>Favorites</span>
 							{isFavorites ? (
 								<Check className="h-4 w-4 text-green-500" />
 							) : (
-								<Plus className="h-4 w-4 text-[var(--foreground-muted)]" />
+								<Plus className="h-4 w-4 text-(--foreground-muted)" />
 							)}
 						</button>
 
@@ -109,20 +109,20 @@ export default function ManageListsDialog({
 										: addToList(list.slug)
 								}
 								disabled={isPending}
-								className="w-full flex items-center justify-between text-left px-3 py-2.5 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
+								className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-(--background-subtle)"
 							>
 								<span>{list.name}</span>
 								{list.isInList ? (
 									<Check className="h-4 w-4 text-green-500" />
 								) : (
-									<Plus className="h-4 w-4 text-[var(--foreground-muted)]" />
+									<Plus className="h-4 w-4 text-(--foreground-muted)" />
 								)}
 							</button>
 						))}
 					</div>
 				)}
 
-				<div className="flex justify-end pt-2 border-t border-[var(--border)] mt-2">
+				<div className="mt-2 flex justify-end border-(--border) border-t pt-2">
 					<button
 						type="button"
 						onClick={() => onOpenChange(false)}

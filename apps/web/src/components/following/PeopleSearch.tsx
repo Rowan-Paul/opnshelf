@@ -33,44 +33,44 @@ export function PeopleSearch({
 		<div className="relative">
 			<div className="flex gap-3">
 				<div className="relative flex-1">
-					<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--foreground-muted)]" />
+					<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--foreground-muted)" />
 					<input
 						type="text"
 						placeholder="Find people to follow..."
-						className="input !pl-10"
+						className="input pl-10!"
 						value={query}
 						onChange={(e) => onQueryChange(e.target.value)}
 						onFocus={onFocus}
 						onBlur={onBlur}
 					/>
 					{isLoading && (
-						<Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--foreground-muted)]" />
+						<Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
 					)}
 				</div>
 			</div>
 
 			{isSearching && query.length > 0 && (
-				<div className="absolute top-full left-0 right-0 mt-2 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+				<div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-(--border) bg-(--background) shadow-lg">
 					{results.length === 0 ? (
-						<div className="p-4 text-center text-[var(--foreground-muted)]">
+						<div className="p-4 text-center text-(--foreground-muted)">
 							{isLoading ? "Searching..." : "No users found"}
 						</div>
 					) : (
-						<div className="p-2 space-y-1">
+						<div className="space-y-1 p-2">
 							{results.map((person: SocialUserCardDto) => (
 								<div
 									key={person.did}
-									className="flex items-center gap-3 p-2 hover:bg-[var(--background-subtle)] rounded-lg"
+									className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
 								>
 									<UserAvatar
 										src={person.avatar}
 										alt={String(person.displayName) || person.handle}
 									/>
-									<div className="flex-1 min-w-0">
-										<p className="font-medium text-sm truncate">
+									<div className="min-w-0 flex-1">
+										<p className="truncate font-medium text-sm">
 											{String(person.displayName) || person.handle}
 										</p>
-										<p className="text-xs text-[var(--foreground-muted)]">
+										<p className="text-(--foreground-muted) text-xs">
 											@{person.handle}
 										</p>
 									</div>
@@ -98,7 +98,7 @@ export function PeopleSearch({
 												<Loader2 className="h-3 w-3 animate-spin" />
 											) : (
 												<>
-													<UserPlus className="h-3 w-3 mr-1" />
+													<UserPlus className="mr-1 h-3 w-3" />
 													Follow
 												</>
 											)}

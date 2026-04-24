@@ -21,16 +21,16 @@ export function MiniActivityCard({
 				src={activity.actor.avatar}
 				alt={String(activity.actor.displayName) || activity.actor.handle}
 			/>
-			<div className="flex-1 min-w-0">
+			<div className="min-w-0 flex-1">
 				{/* Header */}
 				<p className="text-sm">
 					<Link
 						to={"/following" as const}
-						className="font-semibold hover:text-[var(--accent)]"
+						className="font-semibold hover:text-(--accent)"
 					>
 						{String(activity.actor.displayName) || activity.actor.handle}
 					</Link>
-					<span className="text-[var(--foreground-muted)]">
+					<span className="text-(--foreground-muted)">
 						{" "}
 						{activity.type === "movie" ? "watched" : "watched episode"}{" "}
 					</span>
@@ -41,7 +41,7 @@ export function MiniActivityCard({
 								movieId: String(activity.movieId),
 								movieName: toSlug(activity.title || ""),
 							}}
-							className="font-medium hover:text-[var(--accent)]"
+							className="font-medium hover:text-(--accent)"
 						>
 							{activity.title}
 						</Link>
@@ -52,7 +52,7 @@ export function MiniActivityCard({
 								showId: String(activity.showId),
 								showName: toSlug(activity.showTitle || ""),
 							}}
-							className="font-medium hover:text-[var(--accent)]"
+							className="font-medium hover:text-(--accent)"
 						>
 							{activity.showTitle}
 						</Link>
@@ -72,7 +72,7 @@ export function MiniActivityCard({
 								seasonNumber: String(activity.seasonNumber || 0),
 								episodeNumber: String(activity.episodeNumber || 0),
 							}}
-							className="text-sm font-semibold text-[var(--foreground)] hover:text-[var(--accent)] block mt-0.5"
+							className="mt-0.5 block font-semibold text-(--foreground) text-sm hover:text-(--accent)"
 						>
 							{activity.seasonNumber && activity.episodeNumber
 								? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -84,7 +84,7 @@ export function MiniActivityCard({
 					)}
 
 				{/* Timestamp */}
-				<div className="flex items-center gap-1.5 mt-1 text-xs text-[var(--foreground-muted)]">
+				<div className="mt-1 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
 					<Clock className="h-3 w-3" />
 					{new Date(activity.activityAt).toLocaleString("en-US", {
 						month: "short",

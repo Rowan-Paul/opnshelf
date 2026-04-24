@@ -31,14 +31,14 @@ export default function EpisodeList({
 	if (isLoading) {
 		return (
 			<div className="p-4 text-center">
-				<Loader2 className="h-6 w-6 animate-spin mx-auto text-[var(--accent)]" />
+				<Loader2 className="mx-auto h-6 w-6 animate-spin text-(--accent)" />
 			</div>
 		);
 	}
 
 	if (!episodes || episodes.length === 0) {
 		return (
-			<div className="p-4 text-center text-[var(--foreground-muted)]">
+			<div className="p-4 text-center text-(--foreground-muted)">
 				No episodes available
 			</div>
 		);

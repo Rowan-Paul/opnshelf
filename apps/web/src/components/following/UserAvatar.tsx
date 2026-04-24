@@ -32,9 +32,9 @@ export function UserAvatar({ src, alt, size = "md" }: UserAvatarProps) {
 
 	return (
 		<div
-			className={`${sizeClasses[size]} flex items-center justify-center rounded-full bg-[var(--accent-subtle)]`}
+			className={`${sizeClasses[size]} flex items-center justify-center rounded-full bg-(--accent-subtle)`}
 		>
-			<User className={`${iconSizes[size]} text-[var(--accent)]`} />
+			<User className={`${iconSizes[size]} text-(--accent)`} />
 		</div>
 	);
 }

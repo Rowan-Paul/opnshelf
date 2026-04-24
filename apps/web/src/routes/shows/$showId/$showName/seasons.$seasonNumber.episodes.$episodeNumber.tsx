@@ -3,11 +3,41 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import {
+	AlertTriangle,
+	ChevronLeft,
+	ChevronRight,
+	Loader2,
+	Plus,
+	Star,
+	X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { setupApiClient } from "#/lib/api";
-import { useShowDetails } from "#/lib/hooks";
+import { useAuth } from "#/lib/auth-context";
+import { formatDate } from "#/lib/date-utils";
+import {
+	useEpisodeDetails,
+	useShowDetails,
+	useShowWatchHistory,
+	useWatchActions,
+} from "#/lib/hooks";
 import { buildEpisodePageMeta } from "#/lib/media-meta";
-import { buildShowUrl } from "#/lib/url-utils";
+import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
+import DetailsCard from "../../../../components/DetailsCard";
+import ErrorState from "../../../../components/ErrorState";
+import InYourLists from "../../../../components/InYourLists";
+import LoadingState from "../../../../components/LoadingState";
+import MediaActionsBar from "../../../../components/MediaActionsBar";
+import MediaHero from "../../../../components/MediaHero";
+import PersonGrid from "../../../../components/PersonGrid";
 
 setupApiClient();
 
@@ -55,73 +85,435 @@ export const Route = createFileRoute(
 
 function EpisodeDetailPage() {
 	const { showId, showName, seasonNumber, episodeNumber } = Route.useParams();
-
-	// Fetch show details for context
-	const { data: show, isLoading } = useShowDetails(showId);
+	const { userSettings } = useAuth();
+	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
 	const episodeNum = Number.parseInt(episodeNumber, 10);
 
-	// Find the episode in show data
-	const episode = show?.seasons
-		?.find((s) => s.season_number === seasonNum)
-		// @ts-expect-error - episodes may exist on TMDB result
-		?.episodes?.find(
-			(e: { episode_number: number }) => e.episode_number === episodeNum,
-		);
+	const {
+		data: show,
+		isLoading: showLoading,
+		error: showError,
+	} = useShowDetails(showId);
 
-	if (isLoading) {
+	const {
+		data: episode,
+		isLoading: episodeLoading,
+		error: episodeError,
+	} = useEpisodeDetails(showId, seasonNumber, episodeNumber);
+
+	const { data: watchHistory } = useShowWatchHistory(showId);
+
+	const {
+		markEpisodeWatched,
+		unmarkEpisodeWatched,
+		deleteEpisodeWatchHistoryEntry,
+		isMarkEpisodePending,
+		isUnmarkEpisodePending,
+		isDeleteEpisodeHistoryPending,
+	} = useWatchActions({ mediaType: "show", showId });
+
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+
+	// Episode-specific watch history
+	const episodeWatchHistory = useMemo(() => {
+		if (!watchHistory || !Array.isArray(watchHistory)) return [];
+		return watchHistory.filter(
+			(ep: { seasonNumber: number; episodeNumber: number }) =>
+				ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
+		);
+	}, [watchHistory, seasonNum, episodeNum]);
+
+	const isWatched = episodeWatchHistory.length > 0;
+
+	if (showLoading || episodeLoading) return <LoadingState />;
+	if (showError || episodeError || !show || !episode) {
 		return (
-			<div className="flex h-screen items-center justify-center">
-				<Loader2 className="h-12 w-12 animate-spin text-[var(--accent)]" />
-			</div>
+			<ErrorState
+				message="Failed to load episode"
+				backTo={buildSeasonUrl(showId, show?.name || showName, seasonNum)}
+				backLabel="Back to Season"
+			/>
 		);
 	}
 
+	const backdropUrl = episode.still_path
+		? `https://image.tmdb.org/t/p/original${episode.still_path}`
+		: show.backdrop_path
+			? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
+			: show.poster_path
+				? `https://image.tmdb.org/t/p/original${show.poster_path}`
+				: "";
+	const posterUrl = show.poster_path
+		? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+		: "";
+
+	const director =
+		episode.crew?.find((person) => person.job === "Director")?.name ||
+		"Unknown";
+
+	const guestStars =
+		episode.guest_stars?.slice(0, 6).map((actor) => ({
+			id: actor.id,
+			name: actor.name,
+			role: actor.character || "",
+			photo: actor.profile_path
+				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+				: `https://i.pravatar.cc/150?u=${actor.id}`,
+		})) || [];
+
+	const episodeCrew =
+		episode.crew?.slice(0, 6).map((person) => ({
+			id: person.id,
+			name: person.name,
+			role: person.job || "",
+			photo: person.profile_path
+				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+				: `https://i.pravatar.cc/150?u=${person.id}`,
+		})) || [];
+
+	// Previous / Next episode navigation
+	const prevEpisode = episode._context?.previous;
+	const nextEpisodeCtx = episode._context?.next;
+
+	const breadcrumbs = [
+		{
+			label: show.name,
+			to: buildShowUrl(showId, show.name),
+		},
+		{
+			label: `Season ${seasonNum}`,
+			to: buildSeasonUrl(showId, show.name, seasonNum),
+		},
+		{
+			label: `Episode ${episodeNum}`,
+			to: "",
+		},
+	];
+
 	return (
 		<div className="min-h-screen pb-8">
-			<div className="container-app py-8">
-				{/* Back Button */}
-				<Link
-					to={buildShowUrl(showId, show?.name || showName)}
-					className="btn btn-secondary mb-6 inline-flex gap-2"
-				>
-					<ChevronLeft className="h-4 w-4" />
-					Back to {show?.name || showName}
-				</Link>
-
-				{/* Placeholder Content */}
-				<div className="card p-8 text-center">
-					<h1 className="text-display-2 mb-4">Episode Detail - Placeholder</h1>
-					<p className="text-[var(--foreground-muted)] mb-4">
-						This is a placeholder for the episode detail page.
-					</p>
-					<div className="space-y-2 text-sm text-[var(--foreground-muted)]">
-						<p>
-							<strong>Show ID:</strong> {showId}
-						</p>
-						<p>
-							<strong>Show Name:</strong> {show?.name || showName}
-						</p>
-						<p>
-							<strong>Season:</strong> {seasonNum}
-						</p>
-						<p>
-							<strong>Episode:</strong> {episodeNum}
-						</p>
-						{episode && (
-							<>
-								<p>
-									<strong>Episode Name:</strong> {episode.name}
-								</p>
-								<p>
-									<strong>Air Date:</strong> {episode.air_date || "Unknown"}
-								</p>
-							</>
+			<MediaHero
+				title={`${show.name} — ${episode.name}`}
+				backdropUrl={backdropUrl}
+				posterUrl={posterUrl}
+				metaItems={
+					<>
+						<div className="flex items-center gap-1">
+							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+							<span className="font-semibold">
+								{episode.vote_average?.toFixed(1) || "N/A"}
+							</span>
+							<span className="text-(--foreground-muted)">/10</span>
+						</div>
+						<span className="text-(--border-strong)">•</span>
+						<span className="badge badge-accent">
+							S{seasonNum}E{episodeNum}
+						</span>
+						<span className="text-(--border-strong)">•</span>
+						<span>
+							{episode.runtime ? `${episode.runtime} min` : ""}
+							{episode.runtime && episode.air_date ? " • " : ""}
+							{episode.air_date
+								? formatDate(episode.air_date, userTimezone)
+								: "Unknown air date"}
+						</span>
+					</>
+				}
+				actions={
+					<>
+						{isWatched ? (
+							<button
+								type="button"
+								onClick={() => {
+									if (episodeWatchHistory && episodeWatchHistory.length > 1) {
+										setConfirmRemoveOpen(true);
+									} else {
+										unmarkEpisodeWatched(seasonNum, episodeNum);
+									}
+								}}
+								disabled={isUnmarkEpisodePending}
+								className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+							>
+								{isUnmarkEpisodePending ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin" />
+										Loading
+									</>
+								) : (
+									<>
+										<X className="h-4 w-4" />
+										Remove from shelf
+									</>
+								)}
+							</button>
+						) : (
+							<button
+								type="button"
+								onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
+								disabled={isMarkEpisodePending}
+								className="btn btn-primary gap-2"
+							>
+								{isMarkEpisodePending ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin" />
+										Loading
+									</>
+								) : (
+									<>
+										<Plus className="h-4 w-4" />
+										Add to shelf
+									</>
+								)}
+							</button>
 						)}
+						<MediaActionsBar
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+							episodeNumber={episodeNum}
+						/>
+					</>
+				}
+				breadcrumbs={breadcrumbs}
+				currentProgress={
+					<div className="flex items-center gap-4 text-sm">
+						{prevEpisode && (
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(prevEpisode.seasonNumber),
+									episodeNumber: String(prevEpisode.episodeNumber),
+								}}
+								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
+							>
+								<ChevronLeft className="h-4 w-4" />
+								Prev (S{prevEpisode.seasonNumber}E{prevEpisode.episodeNumber})
+							</Link>
+						)}
+						<span className="text-(--foreground-muted)">
+							Episode {episodeNum} of {show.number_of_episodes || "?"}
+						</span>
+						{nextEpisodeCtx && (
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(nextEpisodeCtx.seasonNumber),
+									episodeNumber: String(nextEpisodeCtx.episodeNumber),
+								}}
+								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
+							>
+								Next (S{nextEpisodeCtx.seasonNumber}E
+								{nextEpisodeCtx.episodeNumber})
+								<ChevronRight className="h-4 w-4" />
+							</Link>
+						)}
+					</div>
+				}
+			/>
+
+			{/* Main Content */}
+			<div className="container-app relative z-20 mt-8">
+				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+					{/* Left Column */}
+					<div className="space-y-8">
+						{/* Overview */}
+						<section>
+							<h2 className="mb-4 text-display-3">Overview</h2>
+							<p className="text-(--foreground-muted) leading-relaxed">
+								{episode.overview || "No overview available."}
+							</p>
+						</section>
+
+						{/* Guest Stars */}
+						<PersonGrid
+							people={guestStars}
+							title="Guest Stars"
+							emptyMessage="No guest stars information available."
+						/>
+
+						{/* Crew */}
+						<PersonGrid
+							people={episodeCrew}
+							title="Crew"
+							emptyMessage="No crew information available."
+						/>
+					</div>
+
+					{/* Right Column - Sidebar */}
+					<div className="space-y-6">
+						{/* Your Activity */}
+						<section className="card p-5">
+							<h3 className="mb-4 font-display font-semibold">Your Activity</h3>
+							{episodeWatchHistory.length > 0 ? (
+								<div className="space-y-1">
+									{episodeWatchHistory.map((entry, index) => (
+										<div
+											key={entry.id || index}
+											className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
+										>
+											<div className="flex flex-1 items-center p-2">
+												<span className="font-medium text-sm">
+													{entry.watchedDate
+														? new Date(entry.watchedDate).toLocaleString(
+																"en-US",
+																{
+																	month: "short",
+																	day: "numeric",
+																	year: "numeric",
+																	hour: "numeric",
+																	minute: "2-digit",
+																},
+															)
+														: "Unknown"}
+												</span>
+											</div>
+											<button
+												type="button"
+												onClick={() => deleteEpisodeWatchHistoryEntry(entry.id)}
+												disabled={isDeleteEpisodeHistoryPending}
+												className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
+												aria-label="Remove this play"
+											>
+												<X className="h-4 w-4" />
+											</button>
+										</div>
+									))}
+									<button
+										type="button"
+										onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
+										disabled={isMarkEpisodePending}
+										className="btn btn-secondary mt-3 w-full gap-2"
+									>
+										{isMarkEpisodePending ? (
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="h-4 w-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
+								</div>
+							) : (
+								<div className="space-y-3">
+									<p className="text-(--foreground-muted) text-sm">
+										You haven&apos;t watched this yet
+									</p>
+									<button
+										type="button"
+										onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
+										disabled={isMarkEpisodePending}
+										className="btn btn-secondary w-full gap-2 text-sm"
+									>
+										{isMarkEpisodePending ? (
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="h-4 w-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
+								</div>
+							)}
+						</section>
+
+						{/* Details */}
+						<DetailsCard
+							title="Episode Details"
+							items={[
+								{
+									label: "Director",
+									value: director,
+								},
+								{
+									label: "Air Date",
+									value: episode.air_date
+										? formatDate(episode.air_date, userTimezone)
+										: "Unknown",
+								},
+								{
+									label: "Runtime",
+									value: episode.runtime ? `${episode.runtime} min` : "N/A",
+								},
+								{
+									label: "Rating",
+									value: episode.vote_average
+										? `${episode.vote_average.toFixed(1)}/10`
+										: "N/A",
+								},
+							]}
+						/>
+
+						<InYourLists
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+							episodeNumber={episodeNum}
+						/>
 					</div>
 				</div>
 			</div>
+
+			{/* Confirm remove all plays dialog */}
+			<Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<AlertTriangle className="h-5 w-5 text-amber-500" />
+							Remove all plays?
+						</DialogTitle>
+						<DialogDescription>
+							This will remove all{" "}
+							<strong>{episodeWatchHistory.length || 0}</strong> watch entries
+							for{" "}
+							<strong>
+								{show.name} S{seasonNum}E{episodeNum}
+							</strong>
+							. This action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+						<button
+							type="button"
+							onClick={() => setConfirmRemoveOpen(false)}
+							className="btn btn-secondary"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={() => {
+								unmarkEpisodeWatched(seasonNum, episodeNum, "all");
+								setConfirmRemoveOpen(false);
+							}}
+							disabled={isUnmarkEpisodePending}
+							className="btn bg-red-600 text-white hover:bg-red-700"
+						>
+							{isUnmarkEpisodePending ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin" />
+									Removing...
+								</>
+							) : (
+								"Remove all"
+							)}
+						</button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

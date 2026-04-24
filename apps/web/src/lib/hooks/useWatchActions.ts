@@ -4,6 +4,7 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserUpNextOptions,
@@ -223,6 +224,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 	});
 
+	const deleteEpisodeWatchHistoryEntry = useMutation({
+		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
+		onSettled: () => {
+			invalidateShowQueries();
+		},
+	});
+
 	const handleMarkMovieWatched = () => {
 		if (!isAuthenticated || options.mediaType !== "movie") return;
 		markMovieWatched.mutate({ body: { movieId: options.movieId } });
@@ -256,11 +264,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const handleUnmarkEpisodeWatched = (
 		seasonNumber: number,
 		episodeNumber: number,
+		mode: "latest" | "all" = "latest",
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		unmarkEpisodeWatched.mutate({
 			path: { showId: options.showId },
-			query: { seasonNumber, episodeNumber },
+			query: { seasonNumber, episodeNumber, mode },
 		});
 	};
 
@@ -292,6 +301,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
+	const handleDeleteEpisodeWatchHistoryEntry = (trackedEpisodeId: string) => {
+		if (!isAuthenticated || options.mediaType !== "show") return;
+		deleteEpisodeWatchHistoryEntry.mutate({
+			path: { trackedEpisodeId },
+		});
+	};
+
 	return {
 		// Movie actions
 		markMovieWatched: handleMarkMovieWatched,
@@ -307,10 +323,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		unmarkShowWatched: handleUnmarkShowWatched,
 		markSeasonWatched: handleMarkSeasonWatched,
 		unmarkSeasonWatched: handleUnmarkSeasonWatched,
+		deleteEpisodeWatchHistoryEntry: handleDeleteEpisodeWatchHistoryEntry,
 		isMarkEpisodePending: markEpisodeWatched.isPending,
 		isUnmarkEpisodePending: unmarkEpisodeWatched.isPending,
 		isMarkShowPending: markShowWatched.isPending,
 		isUnmarkShowPending: unmarkShowWatched.isPending,
 		isMarkSeasonPending: markSeasonWatched.isPending,
+		isDeleteEpisodeHistoryPending: deleteEpisodeWatchHistoryEntry.isPending,
 	};
 }

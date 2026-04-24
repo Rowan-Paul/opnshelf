@@ -61,9 +61,9 @@ function AuthCompletePage() {
 			<div className="w-full max-w-md text-center">
 				{status === "loading" && (
 					<>
-						<Loader2 className="mx-auto h-16 w-16 animate-spin text-[var(--accent)]" />
+						<Loader2 className="mx-auto h-16 w-16 animate-spin text-(--accent)" />
 						<h1 className="mt-6 text-display-3">Completing Sign In...</h1>
-						<p className="mt-2 text-[var(--foreground-muted)]">
+						<p className="mt-2 text-(--foreground-muted)">
 							Please wait while we verify your account.
 						</p>
 					</>
@@ -73,7 +73,7 @@ function AuthCompletePage() {
 					<>
 						<CheckCircle className="mx-auto h-16 w-16 text-green-500" />
 						<h1 className="mt-6 text-display-3">Welcome!</h1>
-						<p className="mt-2 text-[var(--foreground-muted)]">
+						<p className="mt-2 text-(--foreground-muted)">
 							You&apos;re signed in. Redirecting to your dashboard...
 						</p>
 					</>
@@ -83,9 +83,7 @@ function AuthCompletePage() {
 					<>
 						<XCircle className="mx-auto h-16 w-16 text-red-500" />
 						<h1 className="mt-6 text-display-3">Sign In Failed</h1>
-						<p className="mt-2 text-[var(--foreground-muted)]">
-							{errorMessage}
-						</p>
+						<p className="mt-2 text-(--foreground-muted)">{errorMessage}</p>
 						<a href="/login" className="btn btn-primary mt-6 inline-flex">
 							Try Again
 						</a>

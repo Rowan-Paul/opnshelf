@@ -47,7 +47,7 @@ export default function SeasonAccordion({
 							<h3 className="font-semibold">
 								{season.name || `Season ${season.season_number}`}
 							</h3>
-							<p className="text-sm text-[var(--foreground-muted)]">
+							<p className="text-(--foreground-muted) text-sm">
 								{episodeCount} episodes
 							</p>
 						</div>
@@ -65,7 +65,7 @@ export default function SeasonAccordion({
 									onUnmarkSeasonWatched();
 								}}
 								disabled={isProcessingSeason}
-								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+								className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
 								title="Remove all episodes of this season from shelf"
 							>
 								{isProcessingSeason ? (
@@ -88,7 +88,7 @@ export default function SeasonAccordion({
 									onMarkSeasonWatched();
 								}}
 								disabled={isProcessingSeason}
-								className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-[var(--background-subtle)] text-[var(--foreground-muted)] hover:bg-[var(--accent-subtle)] hover:text-[var(--accent)] transition-colors"
+								className="flex items-center gap-1.5 rounded-md bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-xs transition-colors hover:bg-(--accent-subtle) hover:text-(--accent)"
 								title="Add all episodes in this season to your shelf"
 							>
 								{isProcessingSeason ? (
@@ -111,7 +111,7 @@ export default function SeasonAccordion({
 				<button
 					type="button"
 					onClick={onToggle}
-					className="flex items-center justify-center self-stretch px-4 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+					className="flex items-center justify-center self-stretch px-4 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
 				>
 					<ChevronDown
 						className={`h-5 w-5 transition-transform ${
@@ -123,7 +123,7 @@ export default function SeasonAccordion({
 
 			{/* Episode List */}
 			<div
-				className="grid transition-all duration-300 ease-in-out border-t border-[var(--border)]"
+				className="grid border-(--border) border-t transition-all duration-300 ease-in-out"
 				style={{
 					gridTemplateRows: isExpanded ? "1fr" : "0fr",
 					opacity: isExpanded ? 1 : 0,

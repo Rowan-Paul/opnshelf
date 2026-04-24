@@ -290,10 +290,10 @@ function Dashboard() {
 		<div className="container-app py-8">
 			{/* Welcome Section */}
 			<div className="mb-8">
-				<h1 className="text-display-2 mb-2">
+				<h1 className="mb-2 text-display-2">
 					{`Welcome back, ${user?.displayName || user?.handle || ""}`}
 				</h1>
-				<p className="text-[var(--foreground-muted)]">@{user?.handle}</p>
+				<p className="text-(--foreground-muted)">@{user?.handle}</p>
 			</div>
 
 			{/* Stats Grid */}
@@ -301,14 +301,14 @@ function Dashboard() {
 				{isLoading
 					? // Skeleton stats
 						[1, 2, 3, 4].map((i) => (
-							<div key={i} className="card p-5 animate-pulse">
+							<div key={i} className="card animate-pulse p-5">
 								<div className="flex items-center justify-between">
 									<div className="space-y-2">
-										<div className="h-4 w-16 rounded bg-[var(--background-subtle)]" />
-										<div className="h-8 w-12 rounded bg-[var(--background-subtle)]" />
-										<div className="h-3 w-20 rounded bg-[var(--background-subtle)]" />
+										<div className="h-4 w-16 rounded bg-(--background-subtle)" />
+										<div className="h-8 w-12 rounded bg-(--background-subtle)" />
+										<div className="h-3 w-20 rounded bg-(--background-subtle)" />
 									</div>
-									<div className="h-12 w-12 rounded-xl bg-[var(--background-subtle)]" />
+									<div className="h-12 w-12 rounded-xl bg-(--background-subtle)" />
 								</div>
 							</div>
 						))
@@ -322,15 +322,15 @@ function Dashboard() {
 								>
 									<div className="flex items-center justify-between">
 										<div>
-											<p className="text-sm text-[var(--foreground-muted)]">
+											<p className="text-(--foreground-muted) text-sm">
 												{stat.label}
 											</p>
-											<p className="text-display-3 mt-1">{stat.value}</p>
-											<p className="mt-1 text-xs text-[var(--accent)]">
+											<p className="mt-1 text-display-3">{stat.value}</p>
+											<p className="mt-1 text-(--accent) text-xs">
 												{stat.change}
 											</p>
 										</div>
-										<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-subtle)] text-[var(--accent)]">
+										<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
 											<Icon className="h-6 w-6" />
 										</div>
 									</div>
@@ -341,14 +341,14 @@ function Dashboard() {
 
 			<div className="grid gap-8 lg:grid-cols-3">
 				{/* Main Content - Continue Watching */}
-				<div className="lg:col-span-2 space-y-8">
+				<div className="space-y-8 lg:col-span-2">
 					{/* Up Next - Shows the next episodes to watch */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">Up Next</h2>
 							<Link
 								to={"/dashboard" as const}
-								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 							>
 								View all
 								<ChevronRight className="h-4 w-4" />
@@ -360,7 +360,7 @@ function Dashboard() {
 								{[1, 2, 3, 4, 5, 6].map((i) => (
 									<div
 										key={i}
-										className="aspect-[16/9] animate-pulse rounded-lg bg-[var(--background-subtle)]"
+										className="aspect-video animate-pulse rounded-lg bg-(--background-subtle)"
 									/>
 								))}
 							</div>
@@ -386,11 +386,11 @@ function Dashboard() {
 							</div>
 						) : (
 							<div className="card p-8 text-center">
-								<Tv className="h-12 w-12 mx-auto mb-3 text-[var(--foreground-muted)]" />
-								<p className="text-[var(--foreground-muted)] mb-2">
+								<Tv className="mx-auto mb-3 h-12 w-12 text-(--foreground-muted)" />
+								<p className="mb-2 text-(--foreground-muted)">
 									You're all caught up!
 								</p>
-								<p className="text-sm text-[var(--foreground-muted)] mb-4">
+								<p className="mb-4 text-(--foreground-muted) text-sm">
 									Start tracking shows to see your next episodes here.
 								</p>
 								<button
@@ -413,7 +413,7 @@ function Dashboard() {
 							<h2 className="text-display-3">Your Shelf</h2>
 							<Link
 								to={"/dashboard" as const}
-								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 							>
 								View all
 								<ChevronRight className="h-4 w-4" />
@@ -425,7 +425,7 @@ function Dashboard() {
 								{[1, 2, 3, 4, 5, 6].map((i) => (
 									<div
 										key={i}
-										className="aspect-[16/9] animate-pulse rounded-lg bg-[var(--background-subtle)]"
+										className="aspect-video animate-pulse rounded-lg bg-(--background-subtle)"
 									/>
 								))}
 							</div>
@@ -460,10 +460,10 @@ function Dashboard() {
 							</div>
 						) : (
 							<div className="card p-8 text-center">
-								<p className="text-[var(--foreground-muted)] mb-2">
+								<p className="mb-2 text-(--foreground-muted)">
 									Your shelf is empty
 								</p>
-								<p className="text-sm text-[var(--foreground-muted)] mb-4">
+								<p className="mb-4 text-(--foreground-muted) text-sm">
 									Start tracking movies and shows to see them here!
 								</p>
 								<button
@@ -497,7 +497,7 @@ function Dashboard() {
 							<h2 className="text-display-3">Upcoming</h2>
 							<Link
 								to="/calendar"
-								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 							>
 								<Calendar className="h-4 w-4" />
 								Calendar
@@ -509,12 +509,12 @@ function Dashboard() {
 									{[1, 2, 3].map((i) => (
 										<div
 											key={i}
-											className="flex items-center gap-3 animate-pulse"
+											className="flex animate-pulse items-center gap-3"
 										>
-											<div className="h-12 w-9 rounded bg-[var(--background-subtle)]" />
+											<div className="h-12 w-9 rounded bg-(--background-subtle)" />
 											<div className="flex-1 space-y-1">
-												<div className="h-4 w-3/4 rounded bg-[var(--background-subtle)]" />
-												<div className="h-3 w-1/2 rounded bg-[var(--background-subtle)]" />
+												<div className="h-4 w-3/4 rounded bg-(--background-subtle)" />
+												<div className="h-3 w-1/2 rounded bg-(--background-subtle)" />
 											</div>
 										</div>
 									))}
@@ -522,11 +522,11 @@ function Dashboard() {
 							</div>
 						) : upcomingReleases.length === 0 ? (
 							<div className="card p-6 text-center">
-								<Clock className="mx-auto mb-3 h-8 w-8 text-[var(--foreground-muted)]" />
-								<p className="text-sm text-[var(--foreground-muted)]">
+								<Clock className="mx-auto mb-3 h-8 w-8 text-(--foreground-muted)" />
+								<p className="text-(--foreground-muted) text-sm">
 									No upcoming releases
 								</p>
-								<p className="mt-1 text-xs text-[var(--foreground-muted)]">
+								<p className="mt-1 text-(--foreground-muted) text-xs">
 									Track shows and movies to see their release dates here.
 								</p>
 							</div>
@@ -562,19 +562,19 @@ function Dashboard() {
 												className="h-12 w-9 rounded object-cover"
 											/>
 										) : (
-											<div className="flex h-12 w-9 items-center justify-center rounded bg-[var(--background-subtle)]">
+											<div className="flex h-12 w-9 items-center justify-center rounded bg-(--background-subtle)">
 												{release.mediaType === "movie" ? (
-													<Film className="h-5 w-5 text-[var(--foreground-muted)]" />
+													<Film className="h-5 w-5 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-5 w-5 text-[var(--foreground-muted)]" />
+													<Tv className="h-5 w-5 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}
-										<div className="flex-1 min-w-0">
-											<p className="font-medium text-sm truncate">
+										<div className="min-w-0 flex-1">
+											<p className="truncate font-medium text-sm">
 												{release.title}
 											</p>
-											<div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--foreground-muted)]">
+											<div className="mt-0.5 flex items-center gap-2 text-(--foreground-muted) text-xs">
 												<span>
 													{formatDate(
 														release.releaseDate,
@@ -582,12 +582,12 @@ function Dashboard() {
 														userTimeFormat,
 													)}
 												</span>
-												<span className="text-[var(--accent)]">
+												<span className="text-(--accent)">
 													• {formatRelativeDate(release.releaseDate)}
 												</span>
 											</div>
 											{getEpisodeInfo(release) && (
-												<p className="mt-0.5 text-xs text-[var(--foreground-muted)] truncate">
+												<p className="mt-0.5 truncate text-(--foreground-muted) text-xs">
 													{getEpisodeInfo(release)}
 												</p>
 											)}

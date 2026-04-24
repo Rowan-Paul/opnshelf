@@ -340,14 +340,14 @@ function CalendarPage() {
 		return (
 			<div className="container-app py-8">
 				<div className="mb-8">
-					<h1 className="text-display-2 mb-2">Release Calendar</h1>
-					<p className="text-[var(--foreground-muted)]">
+					<h1 className="mb-2 text-display-2">Release Calendar</h1>
+					<p className="text-(--foreground-muted)">
 						Track upcoming movies and TV shows you're following.
 					</p>
 				</div>
 				<div className="flex items-center justify-center py-20">
-					<Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
-					<span className="ml-3 text-[var(--foreground-muted)]">
+					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+					<span className="ml-3 text-(--foreground-muted)">
 						Loading calendar...
 					</span>
 				</div>
@@ -359,8 +359,8 @@ function CalendarPage() {
 		<div className="container-app py-8">
 			{/* Header */}
 			<div className="mb-8">
-				<h1 className="text-display-2 mb-2">Release Calendar</h1>
-				<p className="text-[var(--foreground-muted)]">
+				<h1 className="mb-2 text-display-2">Release Calendar</h1>
+				<p className="text-(--foreground-muted)">
 					Track upcoming movies and TV shows you're following.
 				</p>
 			</div>
@@ -379,7 +379,7 @@ function CalendarPage() {
 					<button
 						type="button"
 						onClick={goToToday}
-						className="mt-1 text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+						className="mt-1 text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 					>
 						Go to today
 					</button>
@@ -403,13 +403,13 @@ function CalendarPage() {
 				</button>
 
 				<div className="flex flex-col items-center px-4">
-					<h2 className="text-display-3 text-center">
+					<h2 className="text-center text-display-3">
 						{selectedWeekStart ? formatWeekRange() : "Select a week"}
 					</h2>
 					<button
 						type="button"
 						onClick={goToToday}
-						className="mt-1 text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+						className="mt-1 text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 					>
 						Go to today
 					</button>
@@ -430,11 +430,11 @@ function CalendarPage() {
 				{getMobileWeekReleases.map((day, _index) => (
 					<section key={day.dateKey} className={day.isToday ? "relative" : ""}>
 						{day.isToday && (
-							<div className="absolute -left-3 top-0 bottom-0 w-1 rounded-full bg-[var(--accent)]" />
+							<div className="absolute top-0 bottom-0 -left-3 w-1 rounded-full bg-(--accent)" />
 						)}
 						<h3
 							className={`mb-3 text-display-3 ${
-								day.isToday ? "text-[var(--accent)]" : ""
+								day.isToday ? "text-(--accent)" : ""
 							}`}
 						>
 							{formatMobileDate(day.date)}
@@ -442,9 +442,7 @@ function CalendarPage() {
 
 						{day.releases.length === 0 ? (
 							<div className="card p-4">
-								<p className="text-sm text-[var(--foreground-muted)]">
-									No releases
-								</p>
+								<p className="text-(--foreground-muted) text-sm">No releases</p>
 							</div>
 						) : (
 							<div className="space-y-3">
@@ -462,11 +460,11 @@ function CalendarPage() {
 												loading="lazy"
 											/>
 										) : (
-											<div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-[var(--background-subtle)]">
+											<div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-(--background-subtle)">
 												{getReleaseType(release) === "movie" ? (
-													<Film className="h-10 w-10 text-[var(--foreground-muted)]" />
+													<Film className="h-10 w-10 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-10 w-10 text-[var(--foreground-muted)]" />
+													<Tv className="h-10 w-10 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}
@@ -477,7 +475,7 @@ function CalendarPage() {
 											>
 												{getDisplayTitle(release)}
 											</p>
-											<div className="mt-1 flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-sm">
 												<span className="flex items-center gap-1">
 													{getReleaseType(release) === "movie" ? (
 														<>
@@ -493,7 +491,7 @@ function CalendarPage() {
 												</span>
 											</div>
 										</div>
-										<ChevronRight className="h-6 w-6 shrink-0 text-[var(--foreground-muted)]" />
+										<ChevronRight className="h-6 w-6 shrink-0 text-(--foreground-muted)" />
 									</Link>
 								))}
 							</div>
@@ -511,7 +509,7 @@ function CalendarPage() {
 						{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
 							<div
 								key={day}
-								className="py-2 text-center text-sm font-medium text-[var(--foreground-muted)]"
+								className="py-2 text-center font-medium text-(--foreground-muted) text-sm"
 							>
 								{day}
 							</div>
@@ -525,7 +523,7 @@ function CalendarPage() {
 							<div
 								// biome-ignore lint/suspicious/noArrayIndexKey: Empty calendar placeholder cells
 								key={`calendar-empty-${index}`}
-								className="h-24 rounded-lg bg-[var(--background-subtle)]"
+								className="h-24 rounded-lg bg-(--background-subtle)"
 								aria-hidden="true"
 							/>
 						))}
@@ -557,33 +555,31 @@ function CalendarPage() {
 										);
 										setSelectedWeekStart(getWeekStart(clickedDate));
 									}}
-									className={`relative h-24 flex flex-col items-start rounded-lg border p-1.5 text-left transition-all ${
+									className={`relative flex h-24 flex-col items-start rounded-lg border p-1.5 text-left transition-all ${
 										inSelectedWeek
-											? "border-[var(--border)] bg-[var(--background-elevated)]"
+											? "border-(--border) bg-(--background-elevated)"
 											: isToday
-												? "border-[var(--accent)] bg-[var(--accent-subtle)]"
-												: "border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)]"
+												? "border-(--accent) bg-(--accent-subtle)"
+												: "border-(--border) bg-(--background-elevated) hover:border-(--border-strong)"
 									} ${isDimmed ? "opacity-40" : ""}`}
 								>
 									<span
-										className={`text-sm font-medium ${
-											isToday
-												? "text-[var(--accent)]"
-												: "text-[var(--foreground)]"
+										className={`font-medium text-sm ${
+											isToday ? "text-(--accent)" : "text-(--foreground)"
 										}`}
 									>
 										{day}
 									</span>
 
 									{dayReleases.length > 0 && (
-										<div className="mt-1 flex flex-col gap-0.5 w-full">
+										<div className="mt-1 flex w-full flex-col gap-0.5">
 											{dayReleases.slice(0, 2).map((release) => (
 												<div
 													key={`${release.showId || release.movieId || release.title}-${release.releaseDate}-${release.seasonNumber}-${release.episodeNumber}`}
 													className="flex items-center gap-1.5 overflow-hidden"
 												>
 													<div
-														className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+														className={`h-1.5 w-1.5 shrink-0 rounded-full ${
 															getReleaseType(release) === "movie"
 																? "bg-blue-500"
 																: "bg-purple-500"
@@ -591,14 +587,14 @@ function CalendarPage() {
 													/>
 													<span
 														title={getDisplayTitle(release)}
-														className="text-[10px] text-[var(--foreground)] truncate leading-tight"
+														className="truncate text-(--foreground) text-[10px] leading-tight"
 													>
 														{getDisplayTitle(release)}
 													</span>
 												</div>
 											))}
 											{dayReleases.length > 2 && (
-												<span className="text-[10px] text-[var(--foreground-muted)] leading-tight">
+												<span className="text-(--foreground-muted) text-[10px] leading-tight">
 													+{dayReleases.length - 2} more
 												</span>
 											)}
@@ -615,7 +611,7 @@ function CalendarPage() {
 							<div
 								// biome-ignore lint/suspicious/noArrayIndexKey: Empty calendar placeholder cells
 								key={`calendar-end-empty-${index}`}
-								className="h-24 rounded-lg bg-[var(--background-subtle)]"
+								className="h-24 rounded-lg bg-(--background-subtle)"
 								aria-hidden="true"
 							/>
 						))}
@@ -626,7 +622,7 @@ function CalendarPage() {
 				<div className="space-y-6">
 					{/* Selected Week Releases */}
 					<section>
-						<h3 className="text-display-3 mb-4 flex items-center gap-2">
+						<h3 className="mb-4 flex items-center gap-2 text-display-3">
 							<CalendarIcon className="h-5 w-5" />
 							{selectedWeekStart ? formatWeekRange() : "Select a week"}
 						</h3>
@@ -634,15 +630,15 @@ function CalendarPage() {
 							<div className="card p-6 text-center">
 								{selectedWeekStart ? (
 									<>
-										<Clock className="mx-auto mb-3 h-8 w-8 text-[var(--foreground-muted)]" />
-										<p className="text-[var(--foreground-muted)]">
+										<Clock className="mx-auto mb-3 h-8 w-8 text-(--foreground-muted)" />
+										<p className="text-(--foreground-muted)">
 											No releases this week
 										</p>
 									</>
 								) : (
 									<>
-										<CalendarIcon className="mx-auto mb-3 h-8 w-8 text-[var(--foreground-muted)]" />
-										<p className="text-[var(--foreground-muted)]">
+										<CalendarIcon className="mx-auto mb-3 h-8 w-8 text-(--foreground-muted)" />
+										<p className="text-(--foreground-muted)">
 											Click any day to see the week&apos;s releases
 										</p>
 									</>
@@ -663,22 +659,22 @@ function CalendarPage() {
 												className="h-16 w-12 rounded object-cover"
 											/>
 										) : (
-											<div className="flex h-16 w-12 items-center justify-center rounded bg-[var(--background-subtle)]">
+											<div className="flex h-16 w-12 items-center justify-center rounded bg-(--background-subtle)">
 												{getReleaseType(release) === "movie" ? (
-													<Film className="h-6 w-6 text-[var(--foreground-muted)]" />
+													<Film className="h-6 w-6 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-6 w-6 text-[var(--foreground-muted)]" />
+													<Tv className="h-6 w-6 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}
-										<div className="flex-1 min-w-0">
+										<div className="min-w-0 flex-1">
 											<p
 												title={getDisplayTitle(release)}
-												className="font-medium text-sm truncate"
+												className="truncate font-medium text-sm"
 											>
 												{getDisplayTitle(release)}
 											</p>
-											<div className="mt-1 flex items-center gap-2 text-xs text-[var(--foreground-muted)]">
+											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-xs">
 												<span className="flex items-center gap-1">
 													{getReleaseType(release) === "movie" ? (
 														<Film className="h-3 w-3" />

@@ -31,27 +31,27 @@ export default function ProgressCard({
 
 	return (
 		<section className="card p-5">
-			<h3 className="font-display font-semibold mb-4">Your Progress</h3>
+			<h3 className="mb-4 font-display font-semibold">Your Progress</h3>
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<span className="text-sm text-[var(--foreground-muted)]">
+					<span className="text-(--foreground-muted) text-sm">
 						Episodes Watched
 					</span>
 					<span className="font-semibold">
 						{episodesWatched}/{totalEpisodes}
 					</span>
 				</div>
-				<div className="h-2 w-full rounded-full bg-[var(--background-subtle)]">
+				<div className="h-2 w-full rounded-full bg-(--background-subtle)">
 					<div
-						className="h-full rounded-full bg-[var(--accent)]"
+						className="h-full rounded-full bg-(--accent)"
 						style={{ width: `${progressPercentage}%` }}
 					/>
 				</div>
 				<div className="flex items-center justify-between text-sm">
-					<span className="text-[var(--foreground-muted)]">
+					<span className="text-(--foreground-muted)">
 						{Math.round(progressPercentage)}% complete
 					</span>
-					<span className="text-[var(--foreground-muted)]">
+					<span className="text-(--foreground-muted)">
 						{episodesRemaining} remaining
 					</span>
 				</div>
@@ -61,7 +61,7 @@ export default function ProgressCard({
 						type="button"
 						onClick={onUnmarkWatched}
 						disabled={isUnmarkPending || processing}
-						className="mt-4 w-full btn btn-secondary gap-2"
+						className="btn btn-secondary mt-4 w-full gap-2"
 					>
 						{isUnmarkPending || processing ? (
 							<>
@@ -80,7 +80,7 @@ export default function ProgressCard({
 						type="button"
 						onClick={onMarkWatched}
 						disabled={isMarkPending || processing}
-						className="mt-4 w-full btn btn-secondary gap-2"
+						className="btn btn-secondary mt-4 w-full gap-2"
 					>
 						{isMarkPending || processing ? (
 							<>

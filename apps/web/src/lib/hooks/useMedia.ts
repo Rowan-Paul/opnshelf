@@ -7,6 +7,7 @@ import {
 	moviesControllerUnmarkWatched,
 	type ShowsControllerGetShowDetailsResponse,
 	type ShowsControllerGetUserShowsResponse,
+	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
@@ -78,6 +79,20 @@ export function useShowDetails(showId: string) {
 			path: { showId },
 		}),
 		enabled: !!showId,
+	});
+}
+
+// Episode detail hook
+export function useEpisodeDetails(
+	showId: string,
+	seasonNumber: string,
+	episodeNumber: string,
+) {
+	return useQuery({
+		...showsControllerGetEpisodeDetailsOptions({
+			path: { showId, seasonNumber, episodeNumber },
+		}),
+		enabled: !!showId && !!seasonNumber && !!episodeNumber,
 	});
 }
 

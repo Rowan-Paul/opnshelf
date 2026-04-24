@@ -18,14 +18,13 @@ import {
 } from "#/lib/hooks";
 import { buildSeasonPageMeta } from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
-import CastGrid from "../../../../../components/CastGrid";
-import CrewGrid from "../../../../../components/CrewGrid";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import InYourLists from "../../../../../components/InYourLists";
 import LoadingState from "../../../../../components/LoadingState";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
+import PersonGrid from "../../../../../components/PersonGrid";
 import ProgressCard from "../../../../../components/ProgressCard";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 
@@ -227,7 +226,7 @@ function SeasonDetailPage() {
 		show.credits?.cast?.slice(0, 6).map((actor) => ({
 			id: actor.id,
 			name: actor.name,
-			character: actor.character || "",
+			role: actor.character || "",
 			photo: actor.profile_path
 				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
@@ -237,7 +236,7 @@ function SeasonDetailPage() {
 		show.credits?.crew?.slice(0, 6).map((person) => ({
 			id: person.id,
 			name: person.name,
-			job: person.job || "",
+			role: person.job || "",
 			photo: person.profile_path
 				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
 				: `https://i.pravatar.cc/150?u=${person.id}`,
@@ -270,16 +269,16 @@ function SeasonDetailPage() {
 							<span className="font-semibold">
 								{season.vote_average?.toFixed(1) || "N/A"}
 							</span>
-							<span className="text-[var(--foreground-muted)]">/10</span>
+							<span className="text-(--foreground-muted)">/10</span>
 						</div>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>
 							{season.episodes?.length || 0} Episode
 							{season.episodes?.length !== 1 ? "s" : ""}
 						</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>{airDateRange}</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span className="badge badge-accent">
 							{
 								// @ts-expect-error - status may exist on TMDB result
@@ -315,13 +314,13 @@ function SeasonDetailPage() {
 									showName: slugifyName(show.name),
 									seasonNumber: String(previousSeason.season_number),
 								}}
-								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
 							>
 								<ChevronLeft className="h-4 w-4" />
 								Previous (S{previousSeason.season_number})
 							</Link>
 						)}
-						<span className="text-[var(--foreground-muted)]">
+						<span className="text-(--foreground-muted)">
 							Season {seasonNum} of {sortedSeasons.length}
 						</span>
 						{nextSeason && (
@@ -332,7 +331,7 @@ function SeasonDetailPage() {
 									showName: slugifyName(show.name),
 									seasonNumber: String(nextSeason.season_number),
 								}}
-								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
 							>
 								Next (S{nextSeason.season_number})
 								<ChevronRight className="h-4 w-4" />
@@ -359,8 +358,8 @@ function SeasonDetailPage() {
 					<div className="space-y-8">
 						{/* Overview */}
 						<section>
-							<h2 className="text-display-3 mb-4">Overview</h2>
-							<p className="text-[var(--foreground-muted)] leading-relaxed">
+							<h2 className="mb-4 text-display-3">Overview</h2>
+							<p className="text-(--foreground-muted) leading-relaxed">
 								{season.overview || "No overview available."}
 							</p>
 						</section>
@@ -368,7 +367,7 @@ function SeasonDetailPage() {
 						{/* Episodes */}
 						{season.episodes && season.episodes.length > 0 && (
 							<section>
-								<h2 className="text-display-3 mb-4">Episodes</h2>
+								<h2 className="mb-4 text-display-3">Episodes</h2>
 								<div className="card overflow-hidden">
 									<EpisodeList
 										episodes={season.episodes}
@@ -387,8 +386,12 @@ function SeasonDetailPage() {
 							</section>
 						)}
 
-						<CastGrid cast={cast} />
-						<CrewGrid crew={crew} />
+						<PersonGrid people={cast} />
+						<PersonGrid
+							people={crew}
+							title="Crew"
+							emptyMessage="No crew information available."
+						/>
 					</div>
 
 					{/* Right Column - Sidebar */}

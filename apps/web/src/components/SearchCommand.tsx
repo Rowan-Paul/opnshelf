@@ -146,12 +146,12 @@ export function SearchCommand({
 			<button
 				type="button"
 				onClick={() => handleOpenChange(true)}
-				className="group flex h-9 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-[var(--foreground-muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+				className="group flex h-9 items-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-3 text-(--foreground-muted) transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle) hover:text-(--foreground)"
 				aria-label="Search"
 			>
 				<Search className="h-4 w-4" />
 				<span className="hidden text-sm sm:inline">Search</span>
-				<kbd className="ml-1 hidden h-5 select-none items-center gap-0.5 rounded border border-[var(--border-strong)] bg-[var(--background-subtle)] px-1.5 font-mono text-[10px] font-medium text-[var(--foreground-muted)] sm:flex">
+				<kbd className="ml-1 hidden h-5 select-none items-center gap-0.5 rounded border border-(--border-strong) bg-(--background-subtle) px-1.5 font-medium font-mono text-(--foreground-muted) text-[10px] sm:flex">
 					<span>⌘</span>K
 				</kbd>
 			</button>
@@ -166,7 +166,7 @@ export function SearchCommand({
 					{/* Empty state */}
 					{hasSearchQuery && !isLoading && !hasResults && (
 						<CommandEmpty>
-							<div className="flex flex-col items-center gap-2 py-6 text-[var(--foreground-muted)]">
+							<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
 								<Search className="h-8 w-8 opacity-50" />
 								<p>No results found for &quot;{debouncedQuery}&quot;</p>
 								<p className="text-sm">
@@ -178,8 +178,8 @@ export function SearchCommand({
 
 					{/* Loading state */}
 					{isLoading && (
-						<div className="flex items-center justify-center py-8 text-[var(--foreground-muted)]">
-							<Loader2 className="h-5 w-5 animate-spin mr-2" />
+						<div className="flex items-center justify-center py-8 text-(--foreground-muted)">
+							<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 							<span>Searching...</span>
 						</div>
 					)}
@@ -226,7 +226,7 @@ export function SearchCommand({
 											<Film className="h-4 w-4" />
 											<span>{getTitle(movie)}</span>
 											{getYear(movie) && (
-												<span className="text-[var(--foreground-muted)]">
+												<span className="text-(--foreground-muted)">
 													({getYear(movie)})
 												</span>
 											)}
@@ -257,7 +257,7 @@ export function SearchCommand({
 											<Tv className="h-4 w-4" />
 											<span>{getTitle(show)}</span>
 											{getYear(show) && (
-												<span className="text-[var(--foreground-muted)]">
+												<span className="text-(--foreground-muted)">
 													({getYear(show)})
 												</span>
 											)}
@@ -316,7 +316,7 @@ export function SearchCommand({
 													)}
 												</span>
 												{person.handle && (
-													<span className="text-[var(--foreground-muted)]">
+													<span className="text-(--foreground-muted)">
 														@{String(person.handle)}
 													</span>
 												)}

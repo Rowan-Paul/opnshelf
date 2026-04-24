@@ -73,20 +73,20 @@ function LandingPage() {
 				<div className="container-app">
 					<div className="mx-auto max-w-3xl text-center">
 						{/* Badge */}
-						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--background-elevated)] px-4 py-1.5 text-sm">
-							<Sparkles className="h-4 w-4 text-[var(--accent)]" />
+						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--background-elevated) px-4 py-1.5 text-sm">
+							<Sparkles className="h-4 w-4 text-(--accent)" />
 							<span>Powered by AT Protocol</span>
 						</div>
 
 						{/* Headline */}
-						<h1 className="text-display-1 mb-6">
+						<h1 className="mb-6 text-display-1">
 							Track what you watch.
 							<br />
 							Share with friends.
 						</h1>
 
 						{/* Subheadline */}
-						<p className="mx-auto mb-10 max-w-xl text-lg text-[var(--foreground-muted)]">
+						<p className="mx-auto mb-10 max-w-xl text-(--foreground-muted) text-lg">
 							OpnShelf is your personal media tracker. Log movies and shows, see
 							what friends are watching, and discover your next favorite.
 						</p>
@@ -102,7 +102,7 @@ function LandingPage() {
 							</Link>
 							<Link
 								to="/about"
-								className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+								className="text-(--foreground-muted) transition-colors hover:text-(--foreground)"
 							>
 								Learn more
 							</Link>
@@ -112,16 +112,16 @@ function LandingPage() {
 
 				{/* Background decoration */}
 				<div className="absolute inset-0 -z-10 overflow-hidden">
-					<div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[var(--accent)] opacity-[0.03] blur-3xl" />
+					<div className="absolute top-0 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-(--accent) opacity-[0.03] blur-3xl" />
 				</div>
 			</section>
 
 			{/* Features Grid */}
-			<section className="border-t border-[var(--border)] py-24">
+			<section className="border-(--border) border-t py-24">
 				<div className="container-app">
 					<div className="mb-16 text-center">
-						<h2 className="text-display-2 mb-4">Everything you need</h2>
-						<p className="mx-auto max-w-xl text-[var(--foreground-muted)]">
+						<h2 className="mb-4 text-display-2">Everything you need</h2>
+						<p className="mx-auto max-w-xl text-(--foreground-muted)">
 							A complete toolkit for media tracking and social discovery.
 						</p>
 					</div>
@@ -132,15 +132,15 @@ function LandingPage() {
 							return (
 								<div
 									key={feature.title}
-									className="card p-6 transition-colors hover:border-[var(--border-strong)]"
+									className="card p-6 transition-colors hover:border-(--border-strong)"
 								>
-									<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-subtle)] text-[var(--accent)]">
+									<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
 										<Icon className="h-6 w-6" />
 									</div>
-									<h3 className="mb-2 text-lg font-semibold">
+									<h3 className="mb-2 font-semibold text-lg">
 										{feature.title}
 									</h3>
-									<p className="text-sm text-[var(--foreground-muted)]">
+									<p className="text-(--foreground-muted) text-sm">
 										{feature.description}
 									</p>
 								</div>
@@ -151,11 +151,11 @@ function LandingPage() {
 			</section>
 
 			{/* CTA Section */}
-			<section className="border-t border-[var(--border)] py-24">
+			<section className="border-(--border) border-t py-24">
 				<div className="container-app">
 					<div className="mx-auto max-w-2xl text-center">
-						<h2 className="text-display-2 mb-4">Ready to start tracking?</h2>
-						<p className="mb-8 text-[var(--foreground-muted)]">
+						<h2 className="mb-4 text-display-2">Ready to start tracking?</h2>
+						<p className="mb-8 text-(--foreground-muted)">
 							Join thousands of users tracking their media journey with
 							OpnShelf. Sign in with your AT Protocol account to get started.
 						</p>

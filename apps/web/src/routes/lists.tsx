@@ -262,9 +262,9 @@ export function ListsPage({
 	if (listsLoading) {
 		return (
 			<div className="container-app py-8">
-				<div className="flex items-center justify-center h-64">
-					<Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
-					<span className="ml-2 text-[var(--foreground-muted)]">
+				<div className="flex h-64 items-center justify-center">
+					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+					<span className="ml-2 text-(--foreground-muted)">
 						Loading lists...
 					</span>
 				</div>
@@ -276,13 +276,13 @@ export function ListsPage({
 	if (listsError) {
 		return (
 			<div className="container-app py-8">
-				<div className="flex flex-col items-center justify-center h-64 gap-4">
+				<div className="flex h-64 flex-col items-center justify-center gap-4">
 					<AlertCircle className="h-12 w-12 text-red-500" />
 					<div className="text-center">
-						<h3 className="font-semibold text-[var(--foreground)]">
+						<h3 className="font-semibold text-(--foreground)">
 							Failed to load lists
 						</h3>
-						<p className="text-sm text-[var(--foreground-muted)]">
+						<p className="text-(--foreground-muted) text-sm">
 							{listsError instanceof Error
 								? listsError.message
 								: "An error occurred"}
@@ -302,12 +302,12 @@ export function ListsPage({
 			<div className="container-app py-8">
 				<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)]">
+						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
 							<List className="h-5 w-5" />
 						</div>
 						<div>
 							<h1 className="text-display-2">Lists</h1>
-							<p className="text-[var(--foreground-muted)]">
+							<p className="text-(--foreground-muted)">
 								Organize and manage your collections
 							</p>
 						</div>
@@ -323,21 +323,21 @@ export function ListsPage({
 					</button>
 				</div>
 
-				<div className="flex h-96 flex-col items-center justify-center rounded-xl border-2 border-dashed border-[var(--border)]">
-					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--background-subtle)]">
-						<List className="h-8 w-8 text-[var(--foreground-subtle)]" />
+				<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
+						<List className="h-8 w-8 text-(--foreground-subtle)" />
 					</div>
-					<h3 className="mt-4 font-display text-lg font-semibold">
+					<h3 className="mt-4 font-display font-semibold text-lg">
 						No lists yet
 					</h3>
-					<p className="mt-1 text-[var(--foreground-muted)] max-w-md text-center">
+					<p className="mt-1 max-w-md text-center text-(--foreground-muted)">
 						Create your first list to start organizing movies and shows you want
 						to watch
 					</p>
 					<button
 						type="button"
 						onClick={() => setShowCreateModal(true)}
-						className="mt-4 btn btn-primary gap-2"
+						className="btn btn-primary mt-4 gap-2"
 					>
 						<Plus className="h-4 w-4" />
 						Create Your First List
@@ -355,7 +355,7 @@ export function ListsPage({
 						</DialogHeader>
 						<div className="space-y-4 py-4">
 							<div className="space-y-2">
-								<label htmlFor="list-name" className="text-sm font-medium">
+								<label htmlFor="list-name" className="font-medium text-sm">
 									List Name
 								</label>
 								<input
@@ -370,7 +370,7 @@ export function ListsPage({
 							<div className="space-y-2">
 								<label
 									htmlFor="list-description"
-									className="text-sm font-medium"
+									className="font-medium text-sm"
 								>
 									Description (optional)
 								</label>
@@ -415,12 +415,12 @@ export function ListsPage({
 			{/* Header */}
 			<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-3">
-					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)]">
+					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
 						<List className="h-5 w-5" />
 					</div>
 					<div>
 						<h1 className="text-display-2">Lists</h1>
-						<p className="text-[var(--foreground-muted)]">
+						<p className="text-(--foreground-muted)">
 							Organize and manage your collections
 						</p>
 					</div>
@@ -447,21 +447,21 @@ export function ListsPage({
 								key={list.id}
 								type="button"
 								onClick={() => handleSelectList(list.slug)}
-								className={`w-full text-left card card-interactive p-4 transition-all ${
+								className={`card card-interactive w-full p-4 text-left transition-all ${
 									selectedListSlug === list.slug
-										? "border-[var(--accent)] bg-[var(--accent-subtle)]"
+										? "border-(--accent) bg-(--accent-subtle)"
 										: ""
 								}`}
 							>
 								<div className="flex items-start gap-3">
 									<div
-										className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${colorClasses[color]} text-white`}
+										className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClasses[color]} text-white`}
 									>
 										<Icon className="h-5 w-5" />
 									</div>
-									<div className="flex-1 min-w-0">
+									<div className="min-w-0 flex-1">
 										<div className="flex items-center gap-2">
-											<h3 className="font-semibold text-[var(--foreground)] truncate">
+											<h3 className="truncate font-semibold text-(--foreground)">
 												{list.name}
 											</h3>
 											{list.isDefault && (
@@ -470,10 +470,10 @@ export function ListsPage({
 												</span>
 											)}
 										</div>
-										<p className="mt-0.5 text-xs text-[var(--foreground-muted)] line-clamp-1">
+										<p className="mt-0.5 line-clamp-1 text-(--foreground-muted) text-xs">
 											{list.description || "No description"}
 										</p>
-										<p className="mt-1 text-xs text-[var(--foreground-subtle)]">
+										<p className="mt-1 text-(--foreground-subtle) text-xs">
 											{list.itemCount} items
 										</p>
 									</div>
@@ -491,7 +491,7 @@ export function ListsPage({
 							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 								<div>
 									<h2 className="text-display-3">{activeList.name}</h2>
-									<p className="text-[var(--foreground-muted)]">
+									<p className="text-(--foreground-muted)">
 										{activeList.description || "No description"}
 									</p>
 								</div>
@@ -499,11 +499,11 @@ export function ListsPage({
 								<div className="flex items-center gap-2">
 									{/* Search */}
 									<div className="relative">
-										<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--foreground-muted)]" />
+										<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--foreground-muted)" />
 										<input
 											type="text"
 											placeholder="Search list..."
-											className="input h-9 w-48 !pl-9 text-sm"
+											className="input h-9 w-48 pl-9! text-sm"
 											value={searchQuery}
 											onChange={(e) => setSearchQuery(e.target.value)}
 										/>
@@ -519,14 +519,14 @@ export function ListsPage({
 									</button>
 
 									{/* View Toggle */}
-									<div className="flex rounded-lg border border-[var(--border)] bg-[var(--background-elevated)] p-0.5">
+									<div className="flex rounded-lg border border-(--border) bg-(--background-elevated) p-0.5">
 										<button
 											type="button"
 											onClick={() => setViewMode("grid")}
 											className={`rounded-md p-1.5 transition-colors ${
 												viewMode === "grid"
-													? "bg-[var(--accent)] text-[#3f2e00]"
-													: "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+													? "bg-(--accent) text-[#3f2e00]"
+													: "text-(--foreground-muted) hover:text-(--foreground)"
 											}`}
 											aria-label="Grid view"
 										>
@@ -537,8 +537,8 @@ export function ListsPage({
 											onClick={() => setViewMode("list")}
 											className={`rounded-md p-1.5 transition-colors ${
 												viewMode === "list"
-													? "bg-[var(--accent)] text-[#3f2e00]"
-													: "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+													? "bg-(--accent) text-[#3f2e00]"
+													: "text-(--foreground-muted) hover:text-(--foreground)"
 											}`}
 											aria-label="List view"
 										>
@@ -559,9 +559,9 @@ export function ListsPage({
 
 							{/* Loading State for List Items */}
 							{listLoading && (
-								<div className="flex items-center justify-center h-64">
-									<Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
-									<span className="ml-2 text-[var(--foreground-muted)]">
+								<div className="flex h-64 items-center justify-center">
+									<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+									<span className="ml-2 text-(--foreground-muted)">
 										Loading items...
 									</span>
 								</div>
@@ -569,13 +569,13 @@ export function ListsPage({
 
 							{/* Error State for List Items */}
 							{listError && !listLoading && (
-								<div className="flex flex-col items-center justify-center h-64 gap-4">
+								<div className="flex h-64 flex-col items-center justify-center gap-4">
 									<AlertCircle className="h-12 w-12 text-red-500" />
 									<div className="text-center">
-										<h3 className="font-semibold text-[var(--foreground)]">
+										<h3 className="font-semibold text-(--foreground)">
 											Failed to load list items
 										</h3>
-										<p className="text-sm text-[var(--foreground-muted)]">
+										<p className="text-(--foreground-muted) text-sm">
 											{listError instanceof Error
 												? listError.message
 												: "An error occurred"}
@@ -592,14 +592,14 @@ export function ListsPage({
 
 							{/* Empty State */}
 							{!listLoading && !listError && filteredItems.length === 0 && (
-								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed border-[var(--border)]">
-									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--background-subtle)]">
-										<List className="h-6 w-6 text-[var(--foreground-subtle)]" />
+								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
+										<List className="h-6 w-6 text-(--foreground-subtle)" />
 									</div>
 									<h3 className="mt-3 font-display font-semibold">
 										{searchQuery ? "No results found" : "List is empty"}
 									</h3>
-									<p className="mt-1 text-sm text-[var(--foreground-muted)]">
+									<p className="mt-1 text-(--foreground-muted) text-sm">
 										{searchQuery
 											? "Try adjusting your search query"
 											: "Add movies and shows to this list to see them here"}
@@ -622,8 +622,13 @@ export function ListsPage({
 											.map((item: MediaInListDto) => (
 												<MediaCard
 													key={item.id}
-													id={item.mediaId}
+													id={String(
+														(item.media as Record<string, unknown>).mediaId ??
+															item.mediaId,
+													)}
 													title={getTitle(item.media)}
+													seasonNumber={item.seasonNumber}
+													episodeNumber={item.episodeNumber}
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
 													type={item.mediaType as "movie" | "show"}
@@ -656,7 +661,7 @@ export function ListsPage({
 														className="h-20 w-14 rounded-lg object-cover"
 														loading="lazy"
 													/>
-													<div className="flex-1 min-w-0">
+													<div className="min-w-0 flex-1">
 														<div className="flex items-center gap-2">
 															<h3 className="font-semibold">
 																{getTitle(item.media)}
@@ -670,8 +675,14 @@ export function ListsPage({
 															>
 																{item.mediaType === "movie" ? "Movie" : "TV"}
 															</span>
+															{item.seasonNumber !== undefined &&
+																item.episodeNumber !== undefined && (
+																	<span className="badge badge-subtle text-[10px]">
+																		S{item.seasonNumber}E{item.episodeNumber}
+																	</span>
+																)}
 														</div>
-														<div className="mt-1 flex items-center gap-3 text-sm text-[var(--foreground-muted)]">
+														<div className="mt-1 flex items-center gap-3 text-(--foreground-muted) text-sm">
 															{getYear(item.media) && (
 																<span>{getYear(item.media)}</span>
 															)}
@@ -700,7 +711,7 @@ export function ListsPage({
 													</div>
 													<button
 														type="button"
-														className="btn btn-ghost h-8 w-8 p-0 text-[var(--foreground-muted)]"
+														className="btn btn-ghost h-8 w-8 p-0 text-(--foreground-muted)"
 													>
 														<MoreHorizontal className="h-4 w-4" />
 													</button>
@@ -710,14 +721,14 @@ export function ListsPage({
 								))}
 						</div>
 					) : (
-						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-2 border-dashed border-[var(--border)]">
-							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--background-subtle)]">
-								<List className="h-8 w-8 text-[var(--foreground-subtle)]" />
+						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
+								<List className="h-8 w-8 text-(--foreground-subtle)" />
 							</div>
-							<h3 className="mt-4 font-display text-lg font-semibold">
+							<h3 className="mt-4 font-display font-semibold text-lg">
 								Select a list
 							</h3>
-							<p className="mt-1 text-[var(--foreground-muted)]">
+							<p className="mt-1 text-(--foreground-muted)">
 								Choose a list from the sidebar to view its contents
 							</p>
 						</div>
@@ -736,7 +747,7 @@ export function ListsPage({
 					</DialogHeader>
 					<div className="space-y-4 py-4">
 						<div className="space-y-2">
-							<label htmlFor="list-name" className="text-sm font-medium">
+							<label htmlFor="list-name" className="font-medium text-sm">
 								List Name
 							</label>
 							<input
@@ -749,7 +760,7 @@ export function ListsPage({
 							/>
 						</div>
 						<div className="space-y-2">
-							<label htmlFor="list-description" className="text-sm font-medium">
+							<label htmlFor="list-description" className="font-medium text-sm">
 								Description (optional)
 							</label>
 							<textarea

@@ -37,11 +37,11 @@ export default function MediaHero({
 						className="h-full w-full object-cover"
 					/>
 				) : (
-					<div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900" />
+					<div className="h-full w-full bg-linear-to-br from-gray-800 to-gray-900" />
 				)}
 				{/* Gradient Overlays */}
-				<div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/60 to-transparent" />
-				<div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent" />
+				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
+				<div className="absolute inset-0 bg-linear-to-r from-(--background) via-(--background)/40 to-transparent" />
 			</div>
 
 			{/* Content */}
@@ -52,16 +52,16 @@ export default function MediaHero({
 						{breadcrumbs.map((crumb, index) => (
 							<span key={crumb.to} className="flex items-center gap-2">
 								{index > 0 && (
-									<span className="text-[var(--foreground-muted)]">/</span>
+									<span className="text-(--foreground-muted)">/</span>
 								)}
 								{index === breadcrumbs.length - 1 ? (
-									<span className="text-[var(--foreground-muted)]">
+									<span className="text-(--foreground-muted)">
 										{crumb.label}
 									</span>
 								) : (
 									<Link
 										to={crumb.to}
-										className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+										className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
 									>
 										{index === 0 && <ChevronLeft className="h-4 w-4" />}
 										{crumb.label}
@@ -81,7 +81,7 @@ export default function MediaHero({
 				<div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
 					{/* Poster */}
 					<div className="hidden lg:block">
-						<div className="aspect-[2/3] overflow-hidden rounded-xl shadow-2xl">
+						<div className="aspect-2/3 overflow-hidden rounded-xl shadow-2xl">
 							{posterUrl ? (
 								<img
 									src={posterUrl}
@@ -89,7 +89,7 @@ export default function MediaHero({
 									className="h-full w-full object-cover"
 								/>
 							) : (
-								<div className="h-full w-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+								<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">
 									<span className="text-gray-400">No Poster</span>
 								</div>
 							)}
@@ -100,7 +100,7 @@ export default function MediaHero({
 					<div className="flex flex-col justify-end pb-8 lg:pb-16">
 						{/* Mobile Poster */}
 						<div className="mb-6 flex gap-4 lg:hidden">
-							<div className="h-40 w-28 flex-shrink-0 overflow-hidden rounded-lg">
+							<div className="h-40 w-28 shrink-0 overflow-hidden rounded-lg">
 								{posterUrl ? (
 									<img
 										src={posterUrl}
@@ -108,7 +108,7 @@ export default function MediaHero({
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<div className="h-full w-full bg-gradient-to-br from-gray-700 to-gray-800" />
+									<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
 								)}
 							</div>
 							<div className="flex flex-col justify-center">

@@ -74,24 +74,22 @@ export default function EpisodeRow({
 				episodeNumber: String(episode.episode_number),
 			}}
 			className={`flex items-center gap-4 p-4 transition-colors ${
-				isUpNext
-					? "bg-[var(--accent-subtle)]"
-					: "hover:bg-[var(--background-subtle)]"
-			} ${!isLast ? "border-b border-[var(--border)]" : ""}`}
+				isUpNext ? "bg-(--accent-subtle)" : "hover:bg-(--background-subtle)"
+			} ${!isLast ? "border-(--border) border-b" : ""}`}
 		>
-			<div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--background-subtle)] font-semibold text-sm">
+			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) font-semibold text-sm">
 				{isWatched ? (
 					<Check className="h-5 w-5 text-green-500" />
 				) : (
 					episode.episode_number
 				)}
 			</div>
-			<div className="flex-1 min-w-0">
+			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<h4 className="font-medium truncate">{episode.name}</h4>
+					<h4 className="truncate font-medium">{episode.name}</h4>
 					{isUpNext && <span className="badge badge-accent">Up Next</span>}
 				</div>
-				<p className="text-sm text-[var(--foreground-muted)]">
+				<p className="text-(--foreground-muted) text-sm">
 					{formatRuntime(episode.runtime || 0)}
 					{episode.air_date &&
 						` • ${formatDate(episode.air_date, userTimezone)}`}
@@ -106,7 +104,7 @@ export default function EpisodeRow({
 						onUnmarkWatched();
 					}}
 					disabled={isUnmarking}
-					className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+					className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
 					title="Remove from shelf"
 				>
 					{isUnmarking ? (

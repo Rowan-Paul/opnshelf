@@ -51,14 +51,14 @@ export default function Header() {
 	// Don't show navigation on login page
 	if (currentPath === "/login") {
 		return (
-			<header className="sticky top-0 z-50 border-b border-transparent bg-[var(--background)]">
+			<header className="sticky top-0 z-50 border-transparent border-b bg-(--background)">
 				<div className="container-app">
 					<nav className="flex h-16 items-center justify-between">
 						<Link to="/" className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-[#3f2e00]">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
 								<Film className="h-4 w-4" />
 							</div>
-							<span className="font-display text-lg font-bold tracking-tight">
+							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
 							</span>
 						</Link>
@@ -72,8 +72,8 @@ export default function Header() {
 		<header
 			className={`sticky top-0 z-50 border-b transition-all duration-200 ${
 				scrolled
-					? "border-[var(--border-strong)] glass"
-					: "border-transparent bg-[var(--background)]"
+					? "glass border-(--border-strong)"
+					: "border-transparent bg-(--background)"
 			}`}
 		>
 			<div className="container-app">
@@ -81,10 +81,10 @@ export default function Header() {
 					{/* Logo */}
 					<div className="flex items-center gap-2">
 						<Link to="/" className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-[#3f2e00]">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
 								<Film className="h-4 w-4" />
 							</div>
-							<span className="font-display text-lg font-bold tracking-tight">
+							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
 							</span>
 						</Link>
@@ -121,13 +121,13 @@ export default function Header() {
 
 						{/* User Menu or Login Button */}
 						{isLoading ? (
-							<div className="h-9 w-9 animate-pulse rounded-full bg-[var(--background-subtle)]" />
+							<div className="h-9 w-9 animate-pulse rounded-full bg-(--background-subtle)" />
 						) : isAuthenticated && user ? (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<button
 										type="button"
-										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--border-strong)] transition-colors sm:flex"
+										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
 										aria-label="User menu"
 									>
 										{user.avatar ? (
@@ -137,13 +137,13 @@ export default function Header() {
 												className="h-full w-full object-cover"
 											/>
 										) : (
-											<User className="h-4 w-4 text-[var(--foreground-muted)]" />
+											<User className="h-4 w-4 text-(--foreground-muted)" />
 										)}
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-56">
 									<div className="flex items-center gap-2 p-2">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
 											{user.avatar ? (
 												<img
 													src={user.avatar}
@@ -151,14 +151,14 @@ export default function Header() {
 													className="h-full w-full rounded-full object-cover"
 												/>
 											) : (
-												<User className="h-4 w-4 text-[var(--accent)]" />
+												<User className="h-4 w-4 text-(--accent)" />
 											)}
 										</div>
 										<div className="flex flex-col">
-											<span className="text-sm font-medium">
+											<span className="font-medium text-sm">
 												{user.displayName || user.handle}
 											</span>
-											<span className="text-xs text-[var(--foreground-muted)]">
+											<span className="text-(--foreground-muted) text-xs">
 												@{user.handle}
 											</span>
 										</div>
@@ -183,7 +183,7 @@ export default function Header() {
 						) : (
 							<Link
 								to="/login"
-								className="hidden items-center justify-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[var(--accent-foreground)] transition-colors hover:bg-[var(--accent-hover)] sm:flex"
+								className="hidden items-center justify-center rounded-md bg-(--accent) px-4 py-2 font-medium text-(--accent-foreground) text-sm transition-colors hover:bg-(--accent-hover) sm:flex"
 							>
 								Sign In
 							</Link>
@@ -192,7 +192,7 @@ export default function Header() {
 						{/* Mobile menu button - only visible on small screens */}
 						<button
 							type="button"
-							className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)] md:hidden"
+							className="flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) md:hidden"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
 							aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
 							aria-expanded={mobileMenuOpen}
@@ -208,7 +208,7 @@ export default function Header() {
 
 				{/* Mobile Navigation - Overlay */}
 				{mobileMenuOpen && (
-					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-t border-[var(--border)] bg-[var(--background)] md:hidden">
+					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-(--border) border-t bg-(--background) md:hidden">
 						<div className="container-app h-full overflow-y-auto py-4">
 							<div className="flex flex-col gap-1">
 								{navigation.map((item) => {
@@ -220,10 +220,10 @@ export default function Header() {
 										<Link
 											key={item.name}
 											to={item.href}
-											className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors ${
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 												isActive
-													? "bg-[var(--accent-subtle)] text-[var(--accent)]"
-													: "text-[var(--foreground-muted)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
 											}`}
 										>
 											<Icon className="h-5 w-5" />
@@ -235,9 +235,9 @@ export default function Header() {
 								{/* Mobile user section */}
 								{isAuthenticated && user && (
 									<>
-										<div className="my-2 border-t border-[var(--border)]" />
+										<div className="my-2 border-(--border) border-t" />
 										<div className="flex items-center gap-3 px-3 py-3">
-											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)]">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
 												{user.avatar ? (
 													<img
 														src={user.avatar}
@@ -245,14 +245,14 @@ export default function Header() {
 														className="h-full w-full rounded-full object-cover"
 													/>
 												) : (
-													<User className="h-4 w-4 text-[var(--accent)]" />
+													<User className="h-4 w-4 text-(--accent)" />
 												)}
 											</div>
 											<div className="flex flex-col">
-												<span className="text-sm font-medium">
+												<span className="font-medium text-sm">
 													{user.displayName || user.handle}
 												</span>
-												<span className="text-xs text-[var(--foreground-muted)]">
+												<span className="text-(--foreground-muted) text-xs">
 													@{user.handle}
 												</span>
 											</div>
@@ -260,7 +260,7 @@ export default function Header() {
 										<button
 											type="button"
 											onClick={logout}
-											className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-red-600 text-sm transition-colors hover:bg-red-50"
 										>
 											<LogOut className="h-5 w-5" />
 											Sign Out
@@ -270,10 +270,10 @@ export default function Header() {
 
 								{!isAuthenticated && (
 									<>
-										<div className="my-2 border-t border-[var(--border)]" />
+										<div className="my-2 border-(--border) border-t" />
 										<Link
 											to="/login"
-											className="flex items-center gap-3 rounded-md bg-[var(--accent)] px-3 py-3 text-sm font-medium text-[var(--accent-foreground)]"
+											className="flex items-center gap-3 rounded-md bg-(--accent) px-3 py-3 font-medium text-(--accent-foreground) text-sm"
 										>
 											Sign In
 										</Link>

@@ -26,16 +26,16 @@ export function ActivityFeed({
 	if (isLoading) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-[var(--accent)] mb-4" />
-				<p className="text-[var(--foreground-muted)]">Loading activity...</p>
+				<Loader2 className="mb-4 h-8 w-8 animate-spin text-(--accent)" />
+				<p className="text-(--foreground-muted)">Loading activity...</p>
 			</div>
 		);
 	}
 
 	if (error) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12 text-[var(--foreground-muted)]">
-				<Activity className="h-12 w-12 mb-4 opacity-50" />
+			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
+				<Activity className="mb-4 h-12 w-12 opacity-50" />
 				<p>Failed to load activity feed</p>
 				<button
 					type="button"
@@ -54,15 +54,15 @@ export function ActivityFeed({
 
 	if (activities.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12 text-[var(--foreground-muted)]">
-				<Activity className="h-12 w-12 mb-4 opacity-50" />
-				<p className="text-lg font-medium mb-2">No activity yet</p>
+			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
+				<Activity className="mb-4 h-12 w-12 opacity-50" />
+				<p className="mb-2 font-medium text-lg">No activity yet</p>
 				<p className="text-sm">
 					Follow people to see what they&apos;re watching
 				</p>
 				{followingCount === 0 && (
 					<Link to={"/following" as const} className="btn btn-primary mt-4">
-						<UserPlus className="h-4 w-4 mr-2" />
+						<UserPlus className="mr-2 h-4 w-4" />
 						Find people to follow
 					</Link>
 				)}

@@ -79,10 +79,10 @@ export default function MediaActionsBar({
 				type="button"
 				onClick={() => toggleFavorites(isInFavorites)}
 				disabled={isPending}
-				className={`inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border transition-all duration-150 ${
+				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 					isInFavorites
-						? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-						: "bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)]"
+						? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 				}`}
 				aria-label={
 					isInFavorites ? "Remove from Favorites" : "Add to Favorites"
@@ -99,7 +99,7 @@ export default function MediaActionsBar({
 			<button
 				type="button"
 				onClick={handleShare}
-				className="inline-flex items-center justify-center h-10 w-10 rounded-[var(--radius-md)] border bg-[var(--background-elevated)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--background-subtle)] hover:border-[var(--border-strong)] transition-all duration-150"
+				className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
 				aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 			>
 				{shareSuccess ? (

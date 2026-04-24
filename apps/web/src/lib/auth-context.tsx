@@ -1,4 +1,5 @@
 import {
+	authControllerMe,
 	authControllerMeOptions,
 	getLoginUrl,
 	getSignupUrl,
@@ -33,9 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-	// Fetch current user
+	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
 	const { data: user, isLoading } = useQuery({
-		...authControllerMeOptions(),
+		queryKey: authControllerMeOptions().queryKey,
+		queryFn: async ({ queryKey, signal }) => {
+			try {
+				const { data } = await authControllerMe({
+					...queryKey[0],
+					signal,
+					throwOnError: true,
+				});
+				return data ?? null;
+			} catch (error: any) {
+				if (error.status === 401 || error.statusCode === 401) {
+					return null;
+				}
+				throw error;
+			}
+		},
 		retry: false,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});

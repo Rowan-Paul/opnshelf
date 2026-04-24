@@ -32,27 +32,27 @@ export default function InYourLists({
 	});
 
 	return (
-		<section className="card p-5 relative">
-			<h3 className="font-display font-semibold mb-4">In Your Lists</h3>
+		<section className="card relative p-5">
+			<h3 className="mb-4 font-display font-semibold">In Your Lists</h3>
 			<div className="space-y-2">
 				{otherLists.length > 0 ? (
 					otherLists.map((list) => (
 						<div
 							key={list.listSlug}
-							className="group flex items-center rounded-lg transition-colors hover:bg-[var(--background-subtle)]"
+							className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
 						>
 							<Link
 								to="/lists/$listSlug"
 								params={{ listSlug: list.listSlug }}
 								className="flex flex-1 items-center p-2"
 							>
-								<span className="text-sm font-medium">{list.listName}</span>
+								<span className="font-medium text-sm">{list.listName}</span>
 							</Link>
 							<button
 								type="button"
 								onClick={() => removeFromList(list.listSlug)}
 								disabled={isPending}
-								className="flex items-center justify-center h-8 w-8 rounded-md text-[var(--foreground-muted)] hover:bg-red-500/10 hover:text-red-500 transition-colors"
+								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								aria-label={`Remove from ${list.listName}`}
 							>
 								<X className="h-4 w-4" />
@@ -62,25 +62,25 @@ export default function InYourLists({
 								params={{ listSlug: list.listSlug }}
 								className="flex items-center p-2"
 							>
-								<ChevronRight className="h-4 w-4 text-[var(--foreground-muted)]" />
+								<ChevronRight className="h-4 w-4 text-(--foreground-muted)" />
 							</Link>
 						</div>
 					))
 				) : availableLists.length === 0 ? (
 					<div className="space-y-3">
-						<p className="text-sm text-[var(--foreground-muted)]">
+						<p className="text-(--foreground-muted) text-sm">
 							Not in any lists yet
 						</p>
 						<Link
 							to="/lists"
-							className="btn btn-secondary w-full text-sm gap-2"
+							className="btn btn-secondary w-full gap-2 text-sm"
 						>
 							<Plus className="h-4 w-4" />
 							Create your first list
 						</Link>
 					</div>
 				) : (
-					<p className="text-sm text-[var(--foreground-muted)]">
+					<p className="text-(--foreground-muted) text-sm">
 						Not in any lists yet
 					</p>
 				)}
@@ -90,7 +90,7 @@ export default function InYourLists({
 					<button
 						type="button"
 						onClick={() => setOpen(true)}
-						className="mt-3 w-full btn btn-secondary text-sm"
+						className="btn btn-secondary mt-3 w-full text-sm"
 					>
 						<Plus className="h-4 w-4" />
 						Add to list

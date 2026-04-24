@@ -19,20 +19,20 @@ export function FollowingList({
 }: FollowingListProps) {
 	return (
 		<section className="card p-5">
-			<h3 className="font-display font-semibold mb-4">
+			<h3 className="mb-4 font-display font-semibold">
 				Following ({following.length})
 			</h3>
 			{isLoading ? (
 				<div className="flex items-center justify-center py-4">
-					<Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+					<Loader2 className="h-6 w-6 animate-spin text-(--accent)" />
 				</div>
 			) : error ? (
-				<div className="text-center text-[var(--foreground-muted)] py-4">
+				<div className="py-4 text-center text-(--foreground-muted)">
 					<p>Failed to load following list</p>
 				</div>
 			) : following.length === 0 ? (
-				<div className="text-center text-[var(--foreground-muted)] py-4">
-					<UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
+				<div className="py-4 text-center text-(--foreground-muted)">
+					<UserX className="mx-auto mb-2 h-8 w-8 opacity-50" />
 					<p className="text-sm">You&apos;re not following anyone yet</p>
 				</div>
 			) : (
@@ -43,11 +43,11 @@ export function FollowingList({
 								src={friend.avatar}
 								alt={String(friend.displayName) || friend.handle}
 							/>
-							<div className="flex-1 min-w-0">
-								<p className="font-medium text-sm truncate">
+							<div className="min-w-0 flex-1">
+								<p className="truncate font-medium text-sm">
 									{String(friend.displayName) || friend.handle}
 								</p>
-								<p className="text-xs text-[var(--foreground-muted)]">
+								<p className="text-(--foreground-muted) text-xs">
 									@{friend.handle}
 								</p>
 							</div>
@@ -71,7 +71,7 @@ export function FollowingList({
 			{following.length > 5 && (
 				<button
 					type="button"
-					className="mt-4 w-full text-center text-sm text-[var(--accent)] hover:text-[var(--accent-hover)]"
+					className="mt-4 w-full text-center text-(--accent) text-sm hover:text-(--accent-hover)"
 				>
 					View all {following.length} following
 				</button>

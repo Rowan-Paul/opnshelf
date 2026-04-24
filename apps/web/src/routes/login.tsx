@@ -38,12 +38,12 @@ function LoginPage() {
 				{/* Logo */}
 				<div className="mb-8 text-center">
 					<div className="mb-4 flex justify-center">
-						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent)] text-[#3f2e00]">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
 							<Film className="h-8 w-8" />
 						</div>
 					</div>
 					<h1 className="text-display-2">Welcome to OpnShelf</h1>
-					<p className="mt-2 text-[var(--foreground-muted)]">
+					<p className="mt-2 text-(--foreground-muted)">
 						Track what you watch with your AT Protocol account
 					</p>
 				</div>
@@ -54,7 +54,7 @@ function LoginPage() {
 						<div>
 							<label
 								htmlFor="handle"
-								className="mb-1.5 block text-sm font-medium"
+								className="mb-1.5 block font-medium text-sm"
 							>
 								Your Handle
 							</label>
@@ -67,7 +67,7 @@ function LoginPage() {
 								className="input"
 								disabled={isLoading}
 							/>
-							<p className="mt-1 text-xs text-[var(--foreground-muted)]">
+							<p className="mt-1 text-(--foreground-muted) text-xs">
 								Enter your Bluesky or AT Protocol handle
 							</p>
 						</div>
@@ -92,9 +92,9 @@ function LoginPage() {
 					</form>
 
 					<div className="my-6 flex items-center gap-4">
-						<div className="h-px flex-1 bg-[var(--border)]" />
-						<span className="text-xs text-[var(--foreground-muted)]">or</span>
-						<div className="h-px flex-1 bg-[var(--border)]" />
+						<div className="h-px flex-1 bg-(--border)" />
+						<span className="text-(--foreground-muted) text-xs">or</span>
+						<div className="h-px flex-1 bg-(--border)" />
 					</div>
 
 					<button
@@ -108,11 +108,11 @@ function LoginPage() {
 				</div>
 
 				{/* Info */}
-				<div className="mt-6 text-center text-sm text-[var(--foreground-muted)]">
+				<div className="mt-6 text-center text-(--foreground-muted) text-sm">
 					<p>
 						By signing in, you agree to our{" "}
-						<span className="text-[var(--accent)]">Terms of Service</span> and{" "}
-						<span className="text-[var(--accent)]">Privacy Policy</span>.
+						<span className="text-(--accent)">Terms of Service</span> and{" "}
+						<span className="text-(--accent)">Privacy Policy</span>.
 					</p>
 					<p className="mt-4">
 						Powered by{" "}
@@ -120,7 +120,7 @@ function LoginPage() {
 							href="https://atproto.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-[var(--accent)] hover:underline"
+							className="text-(--accent) hover:underline"
 						>
 							AT Protocol
 						</a>

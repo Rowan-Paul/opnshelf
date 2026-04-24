@@ -19,14 +19,13 @@ import {
 } from "#/lib/hooks";
 import { buildShowPageMeta } from "#/lib/media-meta";
 import { slugifyName } from "#/lib/url-utils";
-import CastGrid from "../../../../components/CastGrid";
-import CrewGrid from "../../../../components/CrewGrid";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import InYourLists from "../../../../components/InYourLists";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
@@ -208,7 +207,7 @@ function ShowDetailPage() {
 		show.credits?.cast?.slice(0, 6).map((actor) => ({
 			id: actor.id,
 			name: actor.name,
-			character: actor.character || "",
+			role: actor.character || "",
 			photo: actor.profile_path
 				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
@@ -218,7 +217,7 @@ function ShowDetailPage() {
 		show.credits?.crew?.slice(0, 6).map((person) => ({
 			id: person.id,
 			name: person.name,
-			job: person.job || "",
+			role: person.job || "",
 			photo: person.profile_path
 				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
 				: `https://i.pravatar.cc/150?u=${person.id}`,
@@ -258,23 +257,23 @@ function ShowDetailPage() {
 									show.vote_average?.toFixed(1) || "N/A"
 								}
 							</span>
-							<span className="text-[var(--foreground-muted)]">/10</span>
+							<span className="text-(--foreground-muted)">/10</span>
 						</div>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>
 							{show.number_of_seasons || 0} Season
 							{show.number_of_seasons !== 1 ? "s" : ""}
 						</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span>{show.number_of_episodes || 0} Episodes</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<span className="badge badge-accent">
 							{
 								// @ts-expect-error - status may exist on TMDB result
 								show.status || "Unknown"
 							}
 						</span>
-						<span className="text-[var(--border-strong)]">•</span>
+						<span className="text-(--border-strong)">•</span>
 						<div className="flex gap-2">
 							{show.genres?.slice(0, 3).map((genre) => (
 								<span key={genre.id} className="badge badge-subtle">
@@ -318,8 +317,8 @@ function ShowDetailPage() {
 					<div className="space-y-8">
 						{/* Overview */}
 						<section>
-							<h2 className="text-display-3 mb-4">Overview</h2>
-							<p className="text-[var(--foreground-muted)] leading-relaxed">
+							<h2 className="mb-4 text-display-3">Overview</h2>
+							<p className="text-(--foreground-muted) leading-relaxed">
 								{show.overview || "No overview available."}
 							</p>
 						</section>
@@ -327,7 +326,7 @@ function ShowDetailPage() {
 						{/* Episodes */}
 						{show.seasons && show.seasons.length > 0 && (
 							<section>
-								<h2 className="text-display-3 mb-4">Episodes</h2>
+								<h2 className="mb-4 text-display-3">Episodes</h2>
 								<div className="space-y-3">
 									{show.seasons
 										.filter((season) => season.season_number > 0)
@@ -384,7 +383,7 @@ function ShowDetailPage() {
 														showName: slugifyName(show.name),
 														seasonNumber: String(season.season_number),
 													}}
-													className="flex items-center justify-center py-3 text-sm text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--accent)] border-t border-[var(--border)]"
+													className="flex items-center justify-center border-(--border) border-t py-3 text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
 													title="Go to season details"
 												>
 													<span className="flex items-center gap-2">
@@ -398,8 +397,12 @@ function ShowDetailPage() {
 							</section>
 						)}
 
-						<CastGrid cast={cast} />
-						<CrewGrid crew={crew} />
+						<PersonGrid people={cast} />
+						<PersonGrid
+							people={crew}
+							title="Crew"
+							emptyMessage="No crew information available."
+						/>
 						<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 					</div>
 

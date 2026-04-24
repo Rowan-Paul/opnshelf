@@ -16,13 +16,13 @@ const TangledIcon = ({ className }: { className?: string }) => (
 		<img
 			src="/tangled-white.svg"
 			alt="Tangled"
-			className="absolute inset-0 h-full w-full object-contain dark:block hidden"
+			className="absolute inset-0 hidden h-full w-full object-contain dark:block"
 		/>
 		{/* Light mode (black icon) */}
 		<img
 			src="/tangled-black.svg"
 			alt="Tangled"
-			className="absolute inset-0 h-full w-full object-contain block dark:hidden"
+			className="absolute inset-0 block h-full w-full object-contain dark:hidden"
 		/>
 	</div>
 );
@@ -63,18 +63,18 @@ export default function Footer() {
 	const year = new Date().getFullYear();
 
 	return (
-		<footer className="border-t border-[var(--border)] bg-[var(--background)]">
+		<footer className="border-(--border) border-t bg-(--background)">
 			<div className="container-app py-12">
 				<div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
 					{/* Brand */}
 					<div className="lg:col-span-2">
 						<Link to="/" className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-[#3f2e00]">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
 								<Film className="h-4 w-4" />
 							</div>
-							<span className="font-display text-lg font-bold">OpnShelf</span>
+							<span className="font-bold font-display text-lg">OpnShelf</span>
 						</Link>
-						<p className="mt-4 max-w-sm text-sm text-[var(--foreground-muted)]">
+						<p className="mt-4 max-w-sm text-(--foreground-muted) text-sm">
 							Track what you watch and discover what others are watching. A
 							personal media tracker built on the AT Protocol.
 						</p>
@@ -87,7 +87,7 @@ export default function Footer() {
 										href={item.href}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+										className="flex h-9 w-9 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground)"
 										aria-label={item.name}
 									>
 										{item.name === "Tangled" ? (
@@ -103,13 +103,13 @@ export default function Footer() {
 
 					{/* Links */}
 					<div>
-						<h3 className="font-display text-sm font-semibold">Product</h3>
+						<h3 className="font-display font-semibold text-sm">Product</h3>
 						<ul className="mt-4 space-y-3">
 							{footerLinks.product.map((item) => (
 								<li key={item.name}>
 									<Link
 										to={item.href}
-										className="text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+										className="text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 									>
 										{item.name}
 									</Link>
@@ -119,13 +119,13 @@ export default function Footer() {
 					</div>
 
 					<div>
-						<h3 className="font-display text-sm font-semibold">Company</h3>
+						<h3 className="font-display font-semibold text-sm">Company</h3>
 						<ul className="mt-4 space-y-3">
 							{footerLinks.company.map((item) => (
 								<li key={item.name}>
 									<Link
 										to={item.href}
-										className="text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+										className="text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 									>
 										{item.name}
 									</Link>
@@ -135,13 +135,13 @@ export default function Footer() {
 					</div>
 
 					<div>
-						<h3 className="font-display text-sm font-semibold">Legal</h3>
+						<h3 className="font-display font-semibold text-sm">Legal</h3>
 						<ul className="mt-4 space-y-3">
 							{footerLinks.legal.map((item) => (
 								<li key={item.name}>
 									<a
 										href={item.href}
-										className="text-sm text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+										className="text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 									>
 										{item.name}
 									</a>
@@ -152,11 +152,11 @@ export default function Footer() {
 				</div>
 
 				{/* Bottom */}
-				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[var(--border)] pt-8 sm:flex-row">
-					<p className="text-sm text-[var(--foreground-subtle)]">
+				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-(--border) border-t pt-8 sm:flex-row">
+					<p className="text-(--foreground-subtle) text-sm">
 						&copy; {year} OpnShelf. All rights reserved.
 					</p>
-					<p className="text-xs text-[var(--foreground-subtle)]">
+					<p className="text-(--foreground-subtle) text-xs">
 						Built with care on the AT Protocol
 					</p>
 				</div>
