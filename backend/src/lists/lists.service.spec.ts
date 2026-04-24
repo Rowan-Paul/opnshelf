@@ -299,7 +299,7 @@ describe("ListsService", () => {
 			expect(result[0].itemCount).toBe(5);
 			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
-				orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+				orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 				include: { _count: { select: { items: true } } },
 			});
 		});

@@ -13,9 +13,7 @@ import {
 	Activity,
 	Clock,
 	Film,
-	Heart,
 	Loader2,
-	MessageCircle,
 	MoreHorizontal,
 	Search,
 	Tv,
@@ -25,11 +23,22 @@ import {
 	UserX,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import FeedItemActions from "#/components/FeedItemActions";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 
 export const Route = createFileRoute("/following")({
+	head: () => ({
+		meta: [
+			{ title: "Following | OpnShelf" },
+			{
+				name: "description",
+				content:
+					"See what your friends are watching, discover new movies and shows, and manage who you follow on OpnShelf.",
+			},
+		],
+	}),
 	component: FollowingPage,
 });
 
@@ -508,20 +517,19 @@ function FollowingPage() {
 
 										{/* Actions */}
 										<div className="mt-4 flex items-center gap-4 pt-4 border-t border-[var(--border)]">
-											<button
-												type="button"
-												className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-											>
-												<Heart className="h-4 w-4" />
-												Like
-											</button>
-											<button
-												type="button"
-												className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-											>
-												<MessageCircle className="h-4 w-4" />
-												Comment
-											</button>
+											{activity.type === "movie" ? (
+												<FeedItemActions
+													type="movie"
+													mediaId={String(activity.movieId)}
+												/>
+											) : (
+												<FeedItemActions
+													type="show"
+													mediaId={String(activity.showId)}
+													seasonNumber={Number(activity.seasonNumber || 0)}
+													episodeNumber={Number(activity.episodeNumber || 0)}
+												/>
+											)}
 										</div>
 									</article>
 								))

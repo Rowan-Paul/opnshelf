@@ -1,13 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Plus, X } from "lucide-react";
 import { useState } from "react";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "#/components/ui/dialog";
+import ManageListsDialog from "#/components/ManageListsDialog";
 import { useListActions, useListItemStatus } from "#/lib/hooks";
 
 interface InYourListsProps {
@@ -21,7 +15,7 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 		mediaType,
 		mediaId,
 	});
-	const { addToList, removeFromList, isPending } = useListActions({
+	const { removeFromList, isPending } = useListActions({
 		mediaType,
 		mediaId,
 	});
@@ -80,7 +74,7 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 					</p>
 				)}
 			</div>
-			{availableLists.length > 0 && (
+			{(availableLists.length > 0 || otherLists.length > 0) && (
 				<>
 					<button
 						type="button"
@@ -91,31 +85,14 @@ export default function InYourLists({ mediaType, mediaId }: InYourListsProps) {
 						Add to list
 					</button>
 
-					<Dialog open={open} onOpenChange={setOpen}>
-						<DialogContent className="sm:max-w-[425px]">
-							<DialogHeader>
-								<DialogTitle>Add to list</DialogTitle>
-								<DialogDescription>
-									Choose a list to add this item to
-								</DialogDescription>
-							</DialogHeader>
-							<div className="space-y-1 py-2">
-								{availableLists.map((list) => (
-									<button
-										key={list.slug}
-										type="button"
-										onClick={() => {
-											addToList(list.slug);
-											setOpen(false);
-										}}
-										className="w-full text-left px-3 py-2.5 text-sm rounded-md hover:bg-[var(--background-subtle)] transition-colors"
-									>
-										{list.name}
-									</button>
-								))}
-							</div>
-						</DialogContent>
-					</Dialog>
+					<ManageListsDialog
+						mediaType={mediaType}
+						mediaId={mediaId}
+						open={open}
+						onOpenChange={setOpen}
+						title="Add to list"
+						description="Choose a list to add this item to"
+					/>
 				</>
 			)}
 		</section>

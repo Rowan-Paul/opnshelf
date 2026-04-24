@@ -60,6 +60,20 @@ export function useListItemStatus({
 		return userLists.filter((list) => !listIdsInItem.has(list.id));
 	}, [userLists, listsForItem]);
 
+	const customListsWithStatus = useMemo(() => {
+		if (!userLists || !listsForItem) return [];
+		const inListSlugs = new Set(
+			listsForItem.filter((l) => l.isInList).map((l) => l.listSlug),
+		);
+		return userLists
+			.filter((l) => l.slug !== "watchlist" && l.slug !== "favorites")
+			.map((list) => ({
+				slug: list.slug,
+				name: list.name,
+				isInList: inListSlugs.has(list.slug),
+			}));
+	}, [userLists, listsForItem]);
+
 	return {
 		listsForItem,
 		userLists,
@@ -67,6 +81,7 @@ export function useListItemStatus({
 		isInFavorites,
 		otherLists,
 		availableLists,
+		customListsWithStatus,
 		listsForItemKey: listsControllerGetListsForItemQueryKey({
 			path: { mediaType, mediaId },
 		}),
