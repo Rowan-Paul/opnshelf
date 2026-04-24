@@ -5,7 +5,15 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChevronRight, Loader2, Play, Star, X } from "lucide-react";
+import {
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	Loader2,
+	Play,
+	Star,
+	X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -22,6 +30,7 @@ import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import LoadingState from "../../../../../components/LoadingState";
+import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 
@@ -363,50 +372,53 @@ function SeasonDetailPage() {
 							<Play className="h-4 w-4" />
 							{getContinueButtonText()}
 						</Link>
-						{progressPercentage < 100 ? (
-							<button
-								type="button"
-								onClick={handleMarkSeasonWatched}
-								disabled={
-									!isAuthenticated || isMarkSeasonPending || processingSeason
-								}
-								className="btn btn-secondary gap-2"
-							>
-								{processingSeason || isMarkSeasonPending ? (
-									<>
-										<Loader2 className="h-4 w-4 animate-spin" />
-										Loading
-									</>
-								) : (
-									<>
-										<Check className="h-4 w-4" />
-										Mark Season Watched
-									</>
-								)}
-							</button>
-						) : (
-							<button
-								type="button"
-								onClick={handleUnmarkSeasonWatched}
-								disabled={
-									!isAuthenticated || isUnmarkShowPending || processingSeason
-								}
-								className="btn btn-secondary gap-2"
-							>
-								{processingSeason || isUnmarkShowPending ? (
-									<>
-										<Loader2 className="h-4 w-4 animate-spin" />
-										Loading
-									</>
-								) : (
-									<>
-										<X className="h-4 w-4" />
-										Unmark Season Watched
-									</>
-								)}
-							</button>
-						)}
+						<MediaActionsBar mediaType="show" mediaId={showId} />
 					</>
+				}
+				currentProgress={
+					<div className="flex items-center gap-4 text-sm">
+						{previousSeason ? (
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(previousSeason.season_number),
+								}}
+								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+							>
+								<ChevronLeft className="h-4 w-4" />S
+								{previousSeason.season_number}
+							</Link>
+						) : (
+							<span className="inline-flex items-center gap-1 text-[var(--foreground-muted)] opacity-40">
+								<ChevronLeft className="h-4 w-4" />
+								Prev
+							</span>
+						)}
+						<span className="text-[var(--foreground-muted)]">
+							Season {seasonNum} of {sortedSeasons.length}
+						</span>
+						{nextSeason ? (
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(nextSeason.season_number),
+								}}
+								className="inline-flex items-center gap-1 text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
+							>
+								S{nextSeason.season_number}
+								<ChevronRight className="h-4 w-4" />
+							</Link>
+						) : (
+							<span className="inline-flex items-center gap-1 text-[var(--foreground-muted)] opacity-40">
+								Next
+								<ChevronRight className="h-4 w-4" />
+							</span>
+						)}
+					</div>
 				}
 				breadcrumbs={[
 					{
@@ -426,62 +438,17 @@ function SeasonDetailPage() {
 					{/* Left Column */}
 					<div className="space-y-8">
 						{/* Overview */}
-						{season.overview && (
-							<section>
-								<h2 className="text-display-3 mb-4">Overview</h2>
-								<p className="text-[var(--foreground-muted)] leading-relaxed">
-									{season.overview}
-								</p>
-							</section>
-						)}
+						<section>
+							<h2 className="text-display-3 mb-4">Overview</h2>
+							<p className="text-[var(--foreground-muted)] leading-relaxed">
+								{season.overview || "No overview available."}
+							</p>
+						</section>
 
 						{/* Episodes */}
 						{season.episodes && season.episodes.length > 0 && (
 							<section>
-								<div className="flex items-center justify-between mb-4">
-									<h2 className="text-display-3">Episodes</h2>
-									{isAuthenticated && (
-										<div className="flex gap-2">
-											{progressPercentage < 100 ? (
-												<button
-													type="button"
-													onClick={handleMarkSeasonWatched}
-													disabled={
-														!isAuthenticated ||
-														isMarkSeasonPending ||
-														processingSeason
-													}
-													className="btn btn-secondary h-8 px-3 text-xs gap-1.5"
-												>
-													{processingSeason || isMarkSeasonPending ? (
-														<Loader2 className="h-3 w-3 animate-spin" />
-													) : (
-														<Check className="h-3.5 w-3.5" />
-													)}
-													Mark All
-												</button>
-											) : (
-												<button
-													type="button"
-													onClick={handleUnmarkSeasonWatched}
-													disabled={
-														!isAuthenticated ||
-														isUnmarkShowPending ||
-														processingSeason
-													}
-													className="btn btn-secondary h-8 px-3 text-xs gap-1.5"
-												>
-													{processingSeason || isUnmarkShowPending ? (
-														<Loader2 className="h-3 w-3 animate-spin" />
-													) : (
-														<X className="h-3.5 w-3.5" />
-													)}
-													Unmark All
-												</button>
-											)}
-										</div>
-									)}
-								</div>
+								<h2 className="text-display-3 mb-4">Episodes</h2>
 								<div className="card overflow-hidden">
 									<EpisodeList
 										episodes={season.episodes}
@@ -551,7 +518,7 @@ function SeasonDetailPage() {
 											) : (
 												<>
 													<Check className="h-4 w-4" />
-													Mark Season Watched
+													Add Season to Shelf
 												</>
 											)}
 										</button>
@@ -574,7 +541,7 @@ function SeasonDetailPage() {
 											) : (
 												<>
 													<X className="h-4 w-4" />
-													Unmark Season Watched
+													Remove Season from Shelf
 												</>
 											)}
 										</button>
@@ -583,9 +550,9 @@ function SeasonDetailPage() {
 							</section>
 						)}
 
-						{/* Season Details */}
+						{/* Details */}
 						<DetailsCard
-							title="Season Details"
+							title="Details"
 							items={[
 								{
 									label: "Season Number",
@@ -609,53 +576,6 @@ function SeasonDetailPage() {
 								},
 							]}
 						/>
-
-						{/* Season Navigation */}
-						<section className="card p-5">
-							<h3 className="font-display font-semibold mb-4">
-								Season Navigation
-							</h3>
-							<div className="space-y-3">
-								{previousSeason ? (
-									<Link
-										to="/shows/$showId/$showName/seasons/$seasonNumber"
-										params={{
-											showId,
-											showName: slugifyName(show.name),
-											seasonNumber: String(previousSeason.season_number),
-										}}
-										className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-									>
-										<ChevronRight className="h-4 w-4 rotate-180" />← Previous
-										Season ({previousSeason.name})
-									</Link>
-								) : (
-									<span className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] opacity-50">
-										<ChevronRight className="h-4 w-4 rotate-180" />← Previous
-										Season
-									</span>
-								)}
-								{nextSeason ? (
-									<Link
-										to="/shows/$showId/$showName/seasons/$seasonNumber"
-										params={{
-											showId,
-											showName: slugifyName(show.name),
-											seasonNumber: String(nextSeason.season_number),
-										}}
-										className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--accent)] transition-colors"
-									>
-										Next Season ({nextSeason.name}) →
-										<ChevronRight className="h-4 w-4" />
-									</Link>
-								) : (
-									<span className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] opacity-50">
-										Next Season →
-										<ChevronRight className="h-4 w-4" />
-									</span>
-								)}
-							</div>
-						</section>
 					</div>
 				</div>
 			</div>

@@ -1,8 +1,4 @@
-import type {
-	FollowedActivityItemDto,
-	ReleaseCalendarItemDto,
-	UpNextShowDto,
-} from "@opnshelf/api";
+import type { ReleaseCalendarItemDto, UpNextShowDto } from "@opnshelf/api";
 import {
 	showsControllerGetUserReleaseCalendarOptions,
 	socialControllerGetFeedOptions,
@@ -14,12 +10,11 @@ import {
 	ChevronRight,
 	Clock,
 	Film,
-	MessageCircle,
 	TrendingUp,
 	Tv,
-	Users,
 } from "lucide-react";
 import { useEffect } from "react";
+import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
@@ -62,29 +57,6 @@ function formatDate(
 	return date.toLocaleDateString(
 		"en-US",
 		withUserLocale({ month: "short", day: "numeric" }, timezone, timeFormat),
-	);
-}
-
-// Helper function to format relative time for social feed
-function formatRelativeTime(
-	dateString: string,
-	timezone?: string,
-	timeFormat?: "12h" | "24h",
-): string {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-	if (diffInSeconds < 60) return "Just now";
-	if (diffInSeconds < 3600)
-		return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-	if (diffInSeconds < 86400)
-		return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-	if (diffInSeconds < 604800)
-		return `${Math.floor(diffInSeconds / 86400)} days ago`;
-	return date.toLocaleDateString(
-		"en-US",
-		withUserLocale({}, timezone, timeFormat),
 	);
 }
 
@@ -509,105 +481,12 @@ function Dashboard() {
 					</section>
 
 					{/* Social Feed - Activity from people you follow */}
-					<section>
-						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Friend Activity</h2>
-							<Link
-								to="/following"
-								className="flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
-							>
-								<Users className="h-4 w-4" />
-								View all
-							</Link>
-						</div>
-						{feedLoading ? (
-							<div className="card p-8">
-								<div className="space-y-3">
-									{[1, 2, 3].map((i) => (
-										<div
-											key={i}
-											className="flex items-center gap-3 animate-pulse"
-										>
-											<div className="h-10 w-10 rounded-full bg-[var(--background-subtle)]" />
-											<div className="flex-1 space-y-1">
-												<div className="h-4 w-1/2 rounded bg-[var(--background-subtle)]" />
-												<div className="h-3 w-1/3 rounded bg-[var(--background-subtle)]" />
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						) : feedData?.items && feedData.items.length > 0 ? (
-							<div className="card divide-y divide-[var(--border)]">
-								{feedData.items.map((item: FollowedActivityItemDto) => (
-									<div
-										key={item.id}
-										className="flex items-start gap-3 p-4 first:pt-5 last:pb-5"
-									>
-										{/* User Avatar */}
-										<img
-											src={
-												String(item.actor.avatar) ||
-												`https://i.pravatar.cc/150?u=${item.actor.did}`
-											}
-											alt={String(item.actor.displayName || item.actor.handle)}
-											className="h-10 w-10 rounded-full object-cover"
-										/>
-										<div className="flex-1 min-w-0">
-											{/* Activity Header */}
-											<p className="text-sm">
-												<Link
-													to={`/following` as const}
-													className="font-medium hover:text-[var(--accent)]"
-												>
-													{String(item.actor.displayName || item.actor.handle)}
-												</Link>
-												<span className="text-[var(--foreground-muted)]">
-													{" "}
-													watched{" "}
-												</span>
-												<span className="font-medium">
-													{item.type === "movie"
-														? item.title
-														: `${item.showTitle}${item.seasonNumber && item.episodeNumber ? ` S${item.seasonNumber}E${item.episodeNumber}` : ""}`}
-												</span>
-											</p>
-											{/* Timestamp */}
-											<div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--foreground-muted)]">
-												<span>
-													{formatRelativeTime(
-														item.createdAt,
-														userTimezone,
-														userTimeFormat,
-													)}
-												</span>
-											</div>
-										</div>
-										{/* Content Type Badge */}
-										<span
-											className={`badge ${item.type === "movie" ? "badge-subtle" : "badge-accent"}`}
-										>
-											{item.type === "movie" ? "Movie" : "TV"}
-										</span>
-									</div>
-								))}
-							</div>
-						) : (
-							<div className="card p-8 text-center">
-								<MessageCircle className="h-12 w-12 mx-auto mb-3 text-[var(--foreground-muted)]" />
-								<p className="text-[var(--foreground-muted)]">
-									Activity from people you follow will appear here.
-								</p>
-								<Link
-									to="/following"
-									className="btn btn-primary mt-4 inline-flex"
-								>
-									<Users className="h-4 w-4 mr-2" />
-									Find people to follow
-								</Link>
-							</div>
-						)}
-					</section>
+					<FriendsActivitySection
+						items={feedData?.items ?? []}
+						isLoading={feedLoading}
+						userTimezone={userTimezone}
+						userTimeFormat={userTimeFormat}
+					/>
 				</div>
 
 				{/* Sidebar */}
