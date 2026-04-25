@@ -226,8 +226,14 @@ function Dashboard() {
 	// Transform user's tracked content for display from shelf data
 	const userContent =
 		shelfData?.items?.slice(0, 6).map((item) => {
+			const base = {
+				key: item.id, // unique shelf entry id for React key
+				isWatched: !!item.watchedDate,
+				watchedDate: item.watchedDate,
+			};
 			if (item.type === "movie") {
 				return {
+					...base,
 					id: item.movieId,
 					title: item.title,
 					type: "movie" as const,
@@ -238,12 +244,15 @@ function Dashboard() {
 						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
 						: undefined,
 					year: item.releaseYear,
-					isWatched: !!item.watchedDate,
-					watchedDate: item.watchedDate,
+					displayTitle: undefined,
+					seasonNumber: undefined,
+					episodeNumber: undefined,
+					episodeInfo: undefined,
 				};
 			}
 			// Episode type
 			return {
+				...base,
 				id: `${item.showId}-${item.seasonNumber}-${item.episodeNumber}`, // Unique ID for each episode
 				title: item.showTitle, // Use show title for URL building
 				displayTitle:
@@ -260,8 +269,6 @@ function Dashboard() {
 					: undefined,
 				year: item.firstAirYear,
 				episodeInfo: `${item.showTitle} • S${item.seasonNumber}E${item.episodeNumber}`,
-				isWatched: !!item.watchedDate,
-				watchedDate: item.watchedDate,
 			};
 		}) || [];
 
@@ -433,7 +440,7 @@ function Dashboard() {
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{userContent.map((item) => (
 									<MediaCard
-										key={item.id}
+										key={item.key}
 										id={item.id}
 										title={item.title}
 										displayTitle={item.displayTitle}

@@ -45,14 +45,19 @@ export function FriendsActivitySection({
 				</div>
 			) : items.length > 0 ? (
 				<div className="card divide-y divide-(--border)">
-					{items.map((item: FollowedActivityItemDto) => (
-						<MiniActivityCard
-							key={item.id}
-							activity={item}
-							userTimezone={userTimezone}
-							userTimeFormat={userTimeFormat}
-						/>
-					))}
+					{items
+						.filter(
+							(item, index, self) =>
+								index === self.findIndex((a) => a.id === item.id),
+						)
+						.map((item: FollowedActivityItemDto) => (
+							<MiniActivityCard
+								key={item.id}
+								activity={item}
+								userTimezone={userTimezone}
+								userTimeFormat={userTimeFormat}
+							/>
+						))}
 				</div>
 			) : (
 				<div className="card p-8 text-center">
