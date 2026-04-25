@@ -70,14 +70,9 @@ export function ActivityFeed({
 		);
 	}
 
-	const deduped = activities.filter(
-		(activity, index, self) =>
-			index === self.findIndex((a) => a.id === activity.id),
-	);
-
 	return (
 		<div className="space-y-4">
-			{deduped.map((activity: FollowedActivityItemDto) => (
+			{activities.map((activity: FollowedActivityItemDto) => (
 				<ActivityCard
 					key={activity.id}
 					activity={activity}

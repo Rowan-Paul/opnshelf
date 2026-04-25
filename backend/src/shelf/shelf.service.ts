@@ -133,9 +133,9 @@ export class ShelfService {
 					shelf."firstAirDate",
 					shelf."overview"
 				FROM (
-					SELECT
-						tm.id AS "trackedId",
-						'movie' AS "type",
+				SELECT
+					'movie:' || tm.id AS "trackedId",
+					'movie' AS "type",
 						tm."watchedDate" AS "watchedDate",
 						tm."createdAt" AS "createdAt",
 						COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
@@ -158,9 +158,9 @@ export class ShelfService {
 
 					UNION ALL
 
-					SELECT
-						te.id AS "trackedId",
-						'episode' AS "type",
+				SELECT
+					'episode:' || te.id AS "trackedId",
+					'episode' AS "type",
 						te."watchedDate" AS "watchedDate",
 						te."createdAt" AS "createdAt",
 						COALESCE(te."watchedDate", te."createdAt") AS "sortDate",

@@ -394,7 +394,7 @@ export class SocialService {
 			FROM (
 				SELECT
 					tm."userDid" AS "actorDid",
-					tm.id,
+					'movie:' || tm.id AS id,
 					'movie' AS type,
 					COALESCE(tm."watchedDate", tm."createdAt") AS "activityAt",
 					tm."watchedDate",
@@ -421,7 +421,7 @@ export class SocialService {
 
 				SELECT
 					te."userDid" AS "actorDid",
-					te.id,
+					'episode:' || te.id AS id,
 					'episode' AS type,
 					COALESCE(te."watchedDate", te."createdAt") AS "activityAt",
 					te."watchedDate",
