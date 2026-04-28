@@ -66,7 +66,7 @@ export class ListsService {
 	async getUserLists(userDid: string): Promise<ListSummaryDto[]> {
 		const lists = await this.prisma.list.findMany({
 			where: { userDid },
-			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 			include: {
 				_count: { select: { items: true } },
 			},
@@ -185,7 +185,7 @@ export class ListsService {
 
 		const lists = await this.prisma.list.findMany({
 			where: { userDid },
-			orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 			include: {
 				items: {
 					where: { mediaType, mediaId: scopedMediaId },

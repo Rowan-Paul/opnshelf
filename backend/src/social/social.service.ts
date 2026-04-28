@@ -49,6 +49,9 @@ type FollowedActivityRow = {
 	showTitle: string | null;
 	seasonNumber: number | null;
 	episodeNumber: number | null;
+	episodeName: string | null;
+	episodeOverview: string | null;
+	stillPath: string | null;
 	posterPath: string | null;
 	backdropPath: string | null;
 	releaseYear: number | null;
@@ -380,6 +383,9 @@ export class SocialService {
 				activity."showTitle",
 				activity."seasonNumber",
 				activity."episodeNumber",
+				activity."episodeName",
+				activity."episodeOverview",
+				activity."stillPath",
 				activity."posterPath",
 				activity."backdropPath",
 				activity."releaseYear",
@@ -388,7 +394,7 @@ export class SocialService {
 			FROM (
 				SELECT
 					tm."userDid" AS "actorDid",
-					tm.id,
+					'movie:' || tm.id AS id,
 					'movie' AS type,
 					COALESCE(tm."watchedDate", tm."createdAt") AS "activityAt",
 					tm."watchedDate",
@@ -399,6 +405,9 @@ export class SocialService {
 					NULL::text AS "showTitle",
 					NULL::integer AS "seasonNumber",
 					NULL::integer AS "episodeNumber",
+					NULL::text AS "episodeName",
+					NULL::text AS "episodeOverview",
+					NULL::text AS "stillPath",
 					m."posterPath",
 					m."backdropPath",
 					m."releaseYear",
@@ -412,7 +421,7 @@ export class SocialService {
 
 				SELECT
 					te."userDid" AS "actorDid",
-					te.id,
+					'episode:' || te.id AS id,
 					'episode' AS type,
 					COALESCE(te."watchedDate", te."createdAt") AS "activityAt",
 					te."watchedDate",
@@ -423,6 +432,9 @@ export class SocialService {
 					s.title AS "showTitle",
 					te."seasonNumber",
 					te."episodeNumber",
+					e.name AS "episodeName",
+					e.overview AS "episodeOverview",
+					e."stillPath",
 					s."posterPath",
 					s."backdropPath",
 					NULL::integer AS "releaseYear",
@@ -430,6 +442,9 @@ export class SocialService {
 					s.overview
 				FROM "TrackedEpisode" te
 				INNER JOIN "Show" s ON s."showId" = te."showId"
+				LEFT JOIN "Episode" e ON e."showId" = te."showId"
+					AND e."seasonNumber" = te."seasonNumber"
+					AND e."episodeNumber" = te."episodeNumber"
 				WHERE te."userDid" IN (${followedDidValues})
 			) activity
 			ORDER BY
@@ -929,6 +944,9 @@ export class SocialService {
 			showTitle: row.showTitle ?? undefined,
 			seasonNumber: row.seasonNumber ?? undefined,
 			episodeNumber: row.episodeNumber ?? undefined,
+			episodeName: row.episodeName ?? undefined,
+			episodeOverview: row.episodeOverview ?? undefined,
+			stillPath: row.stillPath ?? undefined,
 			posterPath: row.posterPath ?? undefined,
 			backdropPath: row.backdropPath ?? undefined,
 			releaseYear: row.releaseYear ?? undefined,

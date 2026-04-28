@@ -161,7 +161,7 @@ export const showsControllerGetUserShows = <ThrowOnError extends boolean = false
 export const showsControllerGetUserUpNext = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetUserUpNextData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetUserUpNextResponses, unknown, ThrowOnError>({ url: '/shows/user/{userDid}/up-next', ...options });
 
 /**
- * Get upcoming releases for watched shows and future-dated watchlist items
+ * Get releases for watched shows and watchlist items within a date range
  */
 export const showsControllerGetUserReleaseCalendar = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetUserReleaseCalendarData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetUserReleaseCalendarResponses, unknown, ThrowOnError>({ url: '/shows/user/{userDid}/release-calendar', ...options });
 

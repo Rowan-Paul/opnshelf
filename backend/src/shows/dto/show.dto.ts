@@ -611,6 +611,24 @@ export class ReleaseCalendarResponseDto {
 	total: number;
 }
 
+export class ReleaseCalendarQueryDto {
+	@ApiPropertyOptional({
+		description: "Start date for release calendar range (YYYY-MM-DD)",
+		example: "2026-01-01",
+	})
+	@IsOptional()
+	@IsDateString()
+	startDate?: string;
+
+	@ApiPropertyOptional({
+		description: "End date for release calendar range (YYYY-MM-DD)",
+		example: "2026-03-31",
+	})
+	@IsOptional()
+	@IsDateString()
+	endDate?: string;
+}
+
 export class MarkSeasonWatchedDto {
 	@ApiProperty({ description: "TMDB show ID" })
 	@IsString()

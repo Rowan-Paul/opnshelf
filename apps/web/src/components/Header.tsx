@@ -1,454 +1,289 @@
-import { authControllerLogoutMutation, type UserDto } from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
-	BookOpen,
-	CalendarDays,
-	ChevronDown,
-	Home,
+	Calendar,
+	Film,
 	List,
-	LogIn,
 	LogOut,
-	Search,
-	Settings,
-	Tv,
+	Menu,
 	User,
+	Users,
+	X,
 } from "lucide-react";
-import { useState } from "react";
-import { useTheme } from "@/components/theme-provider";
-import { M3Button } from "@/components/ui/m3-button";
+import { useEffect, useState } from "react";
 import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { publishSignedOutAuthState } from "@/lib/auth-cache";
-import { cn } from "@/lib/utils";
-import {
-	type GlobalNavItem,
-	getCalendarRoute,
-	getHomeRoute,
-	getListsRoute,
-	getMyShelfRoute,
-	getSearchRoute,
-	getSettingsRoute,
-	getSignedInPrimaryNav,
-	getSignedOutPrimaryNav,
-	getUpNextRoute,
-	isGlobalNavItemActive,
-} from "@/lib/web-navigation";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
+import { useAuth } from "#/lib/auth-context";
+import SearchCommand from "./SearchCommand";
+import ThemeToggle from "./ThemeToggle";
 
-interface HeaderProps {
-	user: UserDto | null | undefined;
-	isAuthLoading: boolean;
-}
+const navigation = [
+	{ name: "Dashboard", href: "/dashboard", icon: Film },
+	{ name: "Calendar", href: "/calendar", icon: Calendar },
+	{ name: "Following", href: "/following", icon: Users },
+	{ name: "Lists", href: "/lists", icon: List },
+];
 
-type NavLinkTarget =
-	| ReturnType<typeof getHomeRoute>
-	| ReturnType<typeof getSearchRoute>
-	| ReturnType<typeof getMyShelfRoute>
-	| ReturnType<typeof getUpNextRoute>
-	| ReturnType<typeof getListsRoute>
-	| ReturnType<typeof getCalendarRoute>
-	| ReturnType<typeof getSettingsRoute>;
+export default function Header() {
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const [scrolled, setScrolled] = useState(false);
+	const router = useRouterState();
+	const currentPath = router.location.pathname;
+	const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-const navIcons = {
-	home: Home,
-	search: Search,
-	"my-shelf": BookOpen,
-} satisfies Record<GlobalNavItem["id"], typeof Home>;
+	useEffect(() => {
+		const handleScroll = () => {
+			setScrolled(window.scrollY > 10);
+		};
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, []);
 
-export default function Header({ user, isAuthLoading }: HeaderProps) {
-	const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-	const queryClient = useQueryClient();
-	const navigate = useNavigate();
-	const location = useLocation();
-	const { seedColor } = useTheme();
+	// Close mobile menu on route change
+	useEffect(() => {
+		setMobileMenuOpen(false);
+	}, []);
 
-	const primaryNav = user ? getSignedInPrimaryNav() : getSignedOutPrimaryNav();
-	const logoutMutation = useMutation({
-		mutationKey: ["auth", "logout"],
-		...authControllerLogoutMutation(),
-		onSuccess: async () => {
-			await publishSignedOutAuthState(queryClient);
-			navigate({ to: "/" });
-		},
-	});
-
-	const handleLogout = async () => {
-		setIsAccountMenuOpen(false);
-		await logoutMutation.mutateAsync({});
-	};
-
-	return (
-		<header
-			className="sticky top-0 z-40 border-b"
-			style={{
-				backgroundColor: "var(--md-sys-color-surface)",
-				borderColor: "var(--md-sys-color-outline-variant)",
-				boxShadow:
-					"0 18px 40px color-mix(in srgb, var(--md-sys-color-scrim) 28%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--md-sys-color-on-surface) 2%, transparent)",
-			}}
-		>
-			<div
-				className="absolute inset-x-0 top-0 h-px"
-				style={{
-					background: `linear-gradient(90deg, transparent, ${seedColor}, transparent)`,
-					opacity: 0.45,
-				}}
-			/>
-
-			<div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-18">
-				<Brand seedColor={seedColor} />
-
-				<nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
-					{primaryNav.map((item) => (
-						<PrimaryNavLink
-							key={item.id}
-							item={item}
-							currentPath={location.pathname}
-							currentUserHandle={user?.handle}
-							seedColor={seedColor}
-						/>
-					))}
-				</nav>
-
-				<div className="flex items-center gap-2">
-					{isAuthLoading ? (
-						<AuthActionsSkeleton />
-					) : user ? (
-						<AccountMenu
-							user={user}
-							seedColor={seedColor}
-							isOpen={isAccountMenuOpen}
-							onOpenChange={setIsAccountMenuOpen}
-							onLogout={handleLogout}
-							isLoggingOut={logoutMutation.isPending}
-						/>
-					) : (
-						<SignedOutActions />
-					)}
-				</div>
-			</div>
-		</header>
-	);
-}
-
-function Brand({ seedColor }: { seedColor: string }) {
-	return (
-		<Link to="/" className="group flex items-center gap-3">
-			<div
-				className="flex size-10 items-center justify-center rounded-lg border transition-transform duration-300 group-hover:scale-[1.04]"
-				style={{
-					backgroundColor: "var(--md-sys-color-surface-container-high)",
-					borderColor: "var(--md-sys-color-outline-variant)",
-					boxShadow: `0 0 0 1px ${seedColor}24 inset`,
-				}}
-			>
-				<img src="/icon.png" alt="OpnShelf" className="size-7 rounded-xl" />
-			</div>
-
-			<div className="min-w-0">
-				<div className="md-title-large leading-none">OpnShelf</div>
-			</div>
-		</Link>
-	);
-}
-
-function SignedOutActions() {
-	return (
-		<>
-			<Link
-				{...getSearchRoute()}
-				className="inline-flex size-10 items-center justify-center rounded-full border transition-colors md:hidden"
-				style={{
-					backgroundColor: "var(--md-sys-color-surface-container)",
-					borderColor: "var(--md-sys-color-outline-variant)",
-					color: "var(--md-sys-color-on-surface)",
-				}}
-				aria-label="Search"
-			>
-				<Search className="size-4" />
-			</Link>
-
-			<M3Button
-				variant="filled"
-				size="sm"
-				asChild
-				className="rounded-full px-4"
-			>
-				<Link to="/login">
-					<LogIn className="size-4" />
-					<span className="hidden sm:inline">Sign in</span>
-				</Link>
-			</M3Button>
-		</>
-	);
-}
-
-function AuthActionsSkeleton() {
-	return (
-		<div className="flex items-center gap-2">
-			<div
-				className="hidden h-10 w-28 animate-pulse rounded-full md:block"
-				style={{
-					backgroundColor: "var(--md-sys-color-surface-container-high)",
-				}}
-			/>
-			<div
-				className="size-10 animate-pulse rounded-full"
-				style={{
-					backgroundColor: "var(--md-sys-color-surface-container-high)",
-				}}
-			/>
-		</div>
-	);
-}
-
-function PrimaryNavLink({
-	item,
-	currentPath,
-	currentUserHandle,
-	seedColor,
-}: {
-	item: GlobalNavItem;
-	currentPath: string;
-	currentUserHandle?: string;
-	seedColor: string;
-}) {
-	const Icon = navIcons[item.id];
-	const isActive = isGlobalNavItemActive(
-		item.id,
-		currentPath,
-		currentUserHandle,
-	);
-	const target = getNavTarget(item.id, currentUserHandle);
-
-	if (!target) {
-		return null;
-	}
-
-	return (
-		<Link
-			{...target}
-			className={cn(
-				"inline-flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-200",
-				"hover:-translate-y-0.5 hover:bg-(--md-sys-color-surface-container-high) hover:text-(--md-sys-color-on-surface)",
-			)}
-			style={
-				isActive
-					? {
-							backgroundColor: `${seedColor}22`,
-							borderColor: `${seedColor}55`,
-							color: seedColor,
-							boxShadow: `0 10px 24px ${seedColor}14`,
-						}
-					: {
-							backgroundColor: "var(--md-sys-color-surface-container-low)",
-							borderColor: "var(--md-sys-color-outline-variant)",
-							color: "var(--md-sys-color-on-surface-variant)",
-						}
-			}
-		>
-			<Icon className="size-4" />
-			<span className="md-label-large">{item.label}</span>
-		</Link>
-	);
-}
-
-function AccountMenu({
-	user,
-	seedColor,
-	isOpen,
-	onOpenChange,
-	onLogout,
-	isLoggingOut,
-}: {
-	user: UserDto;
-	seedColor: string;
-	isOpen: boolean;
-	onOpenChange: (open: boolean) => void;
-	onLogout: () => Promise<void>;
-	isLoggingOut: boolean;
-}) {
-	const displayName = user.displayName
-		? String(user.displayName)
-		: `@${user.handle}`;
-	const avatar = user.avatar ? String(user.avatar) : null;
-
-	return (
-		<Popover open={isOpen} onOpenChange={onOpenChange}>
-			<PopoverTrigger asChild>
-				<button
-					type="button"
-					className="inline-flex size-10 items-center justify-center rounded-full border transition-transform duration-200 hover:scale-[1.02] md:size-auto md:gap-2 md:px-2.5"
-					style={{
-						backgroundColor: "var(--md-sys-color-surface-container)",
-						borderColor: "var(--md-sys-color-outline-variant)",
-						color: "var(--md-sys-color-on-surface)",
-					}}
-					aria-label="Open account menu"
-				>
-					<Avatar user={user} seedColor={seedColor} className="size-8" />
-					<ChevronDown className="hidden size-4 md:block" />
-				</button>
-			</PopoverTrigger>
-
-			<PopoverContent
-				align="end"
-				sideOffset={10}
-				className="w-[20rem] rounded-xl border p-2"
-				style={{
-					backgroundColor: "var(--md-sys-color-surface-container-high)",
-					borderColor: "var(--md-sys-color-outline-variant)",
-				}}
-			>
-				<div
-					className="mb-2 flex items-center gap-3 rounded-lg border px-3 py-3"
-					style={{
-						backgroundColor: "var(--md-sys-color-surface-container-low)",
-						borderColor: "var(--md-sys-color-outline-variant)",
-					}}
-				>
-					{avatar ? (
-						<img
-							src={avatar}
-							alt={displayName}
-							className="size-11 rounded-full object-cover"
-						/>
-					) : (
-						<Avatar user={user} seedColor={seedColor} className="size-11" />
-					)}
-					<div className="min-w-0">
-						<p className="truncate md-title-medium">{displayName}</p>
-						<p
-							className="truncate md-body-small"
-							style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-						>
-							@{user.handle}
-						</p>
-					</div>
-				</div>
-
-				<div className="space-y-1">
-					<MenuLink
-						target={getMyShelfRoute(user.handle)}
-						icon={User}
-						label="My Profile"
-						onSelect={() => onOpenChange(false)}
-					/>
-					<MenuLink
-						target={getUpNextRoute(user.handle)}
-						icon={Tv}
-						label="Up Next"
-						onSelect={() => onOpenChange(false)}
-					/>
-					<MenuLink
-						target={getListsRoute(user.handle)}
-						icon={List}
-						label="Lists"
-						onSelect={() => onOpenChange(false)}
-					/>
-					<MenuLink
-						target={getCalendarRoute(user.handle)}
-						icon={CalendarDays}
-						label="Calendar"
-						onSelect={() => onOpenChange(false)}
-					/>
-					<MenuLink
-						target={getSettingsRoute(user.handle)}
-						icon={Settings}
-						label="Settings"
-						onSelect={() => onOpenChange(false)}
-					/>
-					<button
-						type="button"
-						onClick={onLogout}
-						disabled={isLoggingOut}
-						className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-(--md-sys-color-surface-container-low) disabled:opacity-60"
-						style={{ color: "var(--md-sys-color-on-surface)" }}
-					>
-						<LogOut className="size-4" />
-						<span className="md-label-large">Sign out</span>
-					</button>
-				</div>
-			</PopoverContent>
-		</Popover>
-	);
-}
-
-function MenuLink({
-	target,
-	icon: Icon,
-	label,
-	onSelect,
-}: {
-	target: NavLinkTarget;
-	icon: typeof User;
-	label: string;
-	onSelect: () => void;
-}) {
-	return (
-		<Link
-			{...target}
-			onClick={onSelect}
-			className="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-(--md-sys-color-surface-container-low)"
-			style={{ color: "var(--md-sys-color-on-surface)" }}
-		>
-			<Icon className="size-4" />
-			<span className="md-label-large">{label}</span>
-		</Link>
-	);
-}
-
-function Avatar({
-	user,
-	seedColor,
-	className,
-}: {
-	user: UserDto;
-	seedColor: string;
-	className?: string;
-}) {
-	if (user.avatar) {
+	// Don't show navigation on login page
+	if (currentPath === "/login") {
 		return (
-			<img
-				src={String(user.avatar)}
-				alt={user.displayName ? String(user.displayName) : user.handle}
-				className={cn("rounded-full object-cover", className)}
-			/>
+			<header className="sticky top-0 z-50 border-transparent border-b bg-(--background)">
+				<div className="container-app">
+					<nav className="flex h-16 items-center justify-between">
+						<Link to="/" className="flex items-center gap-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
+								<Film className="h-4 w-4" />
+							</div>
+							<span className="font-bold font-display text-lg tracking-tight">
+								OpnShelf
+							</span>
+						</Link>
+					</nav>
+				</div>
+			</header>
 		);
 	}
 
 	return (
-		<div
-			className={cn(
-				"flex items-center justify-center rounded-full text-(--md-sys-color-on-primary)",
-				className,
-			)}
-			style={{ backgroundColor: seedColor }}
+		<header
+			className={`sticky top-0 z-50 border-b transition-all duration-200 ${
+				scrolled
+					? "glass border-(--border-strong)"
+					: "border-transparent bg-(--background)"
+			}`}
 		>
-			{user.displayName ? (
-				<span className="text-sm font-bold uppercase">
-					{String(user.displayName).charAt(0)}
-				</span>
-			) : (
-				<User className="size-4" />
-			)}
-		</div>
-	);
-}
+			<div className="container-app">
+				<nav className="flex h-16 items-center justify-between gap-4">
+					{/* Logo */}
+					<div className="flex items-center gap-2">
+						<Link to="/" className="flex items-center gap-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
+								<Film className="h-4 w-4" />
+							</div>
+							<span className="font-bold font-display text-lg tracking-tight">
+								OpnShelf
+							</span>
+						</Link>
+					</div>
 
-function getNavTarget(
-	itemId: GlobalNavItem["id"],
-	currentUserHandle?: string,
-): NavLinkTarget | null {
-	switch (itemId) {
-		case "home":
-			return getHomeRoute();
-		case "search":
-			return getSearchRoute();
-		case "my-shelf":
-			return currentUserHandle ? getMyShelfRoute(currentUserHandle) : null;
-	}
+					{/* Desktop Navigation */}
+					<div className="hidden items-center gap-1 md:flex">
+						{navigation.map((item) => {
+							const isActive =
+								currentPath === item.href ||
+								(item.href !== "/" && currentPath.startsWith(item.href));
+							const Icon = item.icon;
+							return (
+								<Link
+									key={item.name}
+									to={item.href}
+									data-active={isActive}
+									className="nav-link flex items-center gap-2 rounded-md px-3 py-2"
+								>
+									<Icon className="h-4 w-4" />
+									<span>{item.name}</span>
+								</Link>
+							);
+						})}
+					</div>
+
+					{/* Right side actions */}
+					<div className="flex items-center gap-2">
+						{/* Search */}
+						<SearchCommand />
+
+						{/* Theme Toggle */}
+						<ThemeToggle />
+
+						{/* User Menu or Login Button */}
+						{isLoading ? (
+							<div className="h-9 w-9 animate-pulse rounded-full bg-(--background-subtle)" />
+						) : isAuthenticated && user ? (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										type="button"
+										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
+										aria-label="User menu"
+									>
+										{user.avatar ? (
+											<img
+												src={user.avatar}
+												alt={user.displayName || user.handle}
+												className="h-full w-full object-cover"
+											/>
+										) : (
+											<User className="h-4 w-4 text-(--foreground-muted)" />
+										)}
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-56">
+									<div className="flex items-center gap-2 p-2">
+										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
+											{user.avatar ? (
+												<img
+													src={user.avatar}
+													alt={user.displayName || user.handle}
+													className="h-full w-full rounded-full object-cover"
+												/>
+											) : (
+												<User className="h-4 w-4 text-(--accent)" />
+											)}
+										</div>
+										<div className="flex flex-col">
+											<span className="font-medium text-sm">
+												{user.displayName || user.handle}
+											</span>
+											<span className="text-(--foreground-muted) text-xs">
+												@{user.handle}
+											</span>
+										</div>
+									</div>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem asChild>
+										<Link to={"/dashboard" as const} className="cursor-pointer">
+											<User className="mr-2 h-4 w-4" />
+											Profile
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
+										onClick={logout}
+										className="cursor-pointer text-red-600 focus:text-red-600"
+									>
+										<LogOut className="mr-2 h-4 w-4" />
+										Sign Out
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						) : (
+							<Link
+								to="/login"
+								className="hidden items-center justify-center rounded-md bg-(--accent) px-4 py-2 font-medium text-(--accent-foreground) text-sm transition-colors hover:bg-(--accent-hover) sm:flex"
+							>
+								Sign In
+							</Link>
+						)}
+
+						{/* Mobile menu button - only visible on small screens */}
+						<button
+							type="button"
+							className="flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) md:hidden"
+							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+							aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+							aria-expanded={mobileMenuOpen}
+						>
+							{mobileMenuOpen ? (
+								<X className="h-5 w-5" />
+							) : (
+								<Menu className="h-5 w-5" />
+							)}
+						</button>
+					</div>
+				</nav>
+
+				{/* Mobile Navigation - Overlay */}
+				{mobileMenuOpen && (
+					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-(--border) border-t bg-(--background) md:hidden">
+						<div className="container-app h-full overflow-y-auto py-4">
+							<div className="flex flex-col gap-1">
+								{navigation.map((item) => {
+									const isActive =
+										currentPath === item.href ||
+										(item.href !== "/" && currentPath.startsWith(item.href));
+									const Icon = item.icon;
+									return (
+										<Link
+											key={item.name}
+											to={item.href}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												isActive
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
+										>
+											<Icon className="h-5 w-5" />
+											{item.name}
+										</Link>
+									);
+								})}
+
+								{/* Mobile user section */}
+								{isAuthenticated && user && (
+									<>
+										<div className="my-2 border-(--border) border-t" />
+										<div className="flex items-center gap-3 px-3 py-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
+												{user.avatar ? (
+													<img
+														src={user.avatar}
+														alt={user.displayName || user.handle}
+														className="h-full w-full rounded-full object-cover"
+													/>
+												) : (
+													<User className="h-4 w-4 text-(--accent)" />
+												)}
+											</div>
+											<div className="flex flex-col">
+												<span className="font-medium text-sm">
+													{user.displayName || user.handle}
+												</span>
+												<span className="text-(--foreground-muted) text-xs">
+													@{user.handle}
+												</span>
+											</div>
+										</div>
+										<button
+											type="button"
+											onClick={logout}
+											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-red-600 text-sm transition-colors hover:bg-red-50"
+										>
+											<LogOut className="h-5 w-5" />
+											Sign Out
+										</button>
+									</>
+								)}
+
+								{!isAuthenticated && (
+									<>
+										<div className="my-2 border-(--border) border-t" />
+										<Link
+											to="/login"
+											className="flex items-center gap-3 rounded-md bg-(--accent) px-3 py-3 font-medium text-(--accent-foreground) text-sm"
+										>
+											Sign In
+										</Link>
+									</>
+								)}
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
+		</header>
+	);
 }

@@ -14,12 +14,7 @@ export const env = createEnv({
 
 	client: {
 		VITE_APP_TITLE: z.string().min(1).optional(),
-		VITE_API_URL: z.string().url().default("http://127.0.0.1:3001"),
-		VITE_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
-		VITE_PUBLIC_POSTHOG_HOST: z
-			.string()
-			.url()
-			.default("https://eu.i.posthog.com"),
+		VITE_API_URL: z.string().url().optional().default("http://127.0.0.1:3001"),
 	},
 
 	/**

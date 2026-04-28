@@ -151,7 +151,7 @@ export type AuthStateGroupByOutputType = {
   _max: AuthStateMaxAggregateOutputType | null
 }
 
-type GetAuthStateGroupByPayload<T extends AuthStateGroupByArgs> = Prisma.PrismaPromise<
+export type GetAuthStateGroupByPayload<T extends AuthStateGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AuthStateGroupByOutputType, T['by']> &
       {
@@ -926,6 +926,11 @@ export type AuthStateFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Skip the first `n` AuthStates.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AuthStates.
+   */
   distinct?: Prisma.AuthStateScalarFieldEnum | Prisma.AuthStateScalarFieldEnum[]
 }
 

@@ -81,6 +81,16 @@ These should usually stay arbitrary because they are genuinely custom:
 
 If the same arbitrary value repeats across multiple components, consider promoting it to a shared theme token or CSS variable instead of copying the literal everywhere.
 
+## Bulk Conversion
+
+To automatically convert existing classes to their canonical forms across an entire codebase, use Tailwind's official upgrade tool:
+
+```bash
+pnpx @tailwindcss/upgrade
+```
+
+This will scan and rewrite non-canonical classes (e.g., `p-16px` → `p-4`, `mt-[16px]` → `mt-4`, `[display:flex]` → `flex`) in bulk.
+
 ## Workflow
 
 1. Scan the class strings you touch for bracketed arbitrary values.

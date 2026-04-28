@@ -58,6 +58,9 @@ export class ShelfItemEpisodeDto {
 	episodeNumber: number;
 
 	@ApiPropertyOptional()
+	episodeTitle?: string;
+
+	@ApiPropertyOptional()
 	posterPath?: string;
 
 	@ApiPropertyOptional()
@@ -106,6 +109,7 @@ export const SHELF_ITEM_EPISODE_SCHEMA = {
 		showTitle: { type: "string" },
 		seasonNumber: { type: "number" },
 		episodeNumber: { type: "number" },
+		episodeTitle: { type: "string" },
 		posterPath: { type: "string" },
 		backdropPath: { type: "string" },
 		firstAirYear: { type: "number" },

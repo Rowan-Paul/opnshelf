@@ -71,6 +71,7 @@ export class ShelfController {
 				showTitle: string;
 				seasonNumber: number;
 				episodeNumber: number;
+				episodeTitle?: string;
 				posterPath?: string;
 				backdropPath?: string;
 				firstAirYear?: number;
@@ -86,6 +87,7 @@ export class ShelfController {
 				showTitle: episodeData.showTitle,
 				seasonNumber: episodeData.seasonNumber,
 				episodeNumber: episodeData.episodeNumber,
+				episodeTitle: episodeData.episodeTitle,
 				posterPath: episodeData.posterPath,
 				backdropPath: episodeData.backdropPath,
 				firstAirYear: episodeData.firstAirYear,

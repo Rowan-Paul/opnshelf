@@ -197,6 +197,15 @@ export class FollowedActivityItemDto {
 	episodeNumber?: number;
 
 	@ApiPropertyOptional()
+	episodeName?: string;
+
+	@ApiPropertyOptional()
+	episodeOverview?: string;
+
+	@ApiPropertyOptional()
+	stillPath?: string;
+
+	@ApiPropertyOptional()
 	posterPath?: string;
 
 	@ApiPropertyOptional()

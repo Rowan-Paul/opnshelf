@@ -245,7 +245,7 @@ export type TrackedEpisodeGroupByOutputType = {
   _max: TrackedEpisodeMaxAggregateOutputType | null
 }
 
-type GetTrackedEpisodeGroupByPayload<T extends TrackedEpisodeGroupByArgs> = Prisma.PrismaPromise<
+export type GetTrackedEpisodeGroupByPayload<T extends TrackedEpisodeGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TrackedEpisodeGroupByOutputType, T['by']> &
       {
@@ -1579,6 +1579,11 @@ export type TrackedEpisodeFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` TrackedEpisodes.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of TrackedEpisodes.
+   */
   distinct?: Prisma.TrackedEpisodeScalarFieldEnum | Prisma.TrackedEpisodeScalarFieldEnum[]
 }
 

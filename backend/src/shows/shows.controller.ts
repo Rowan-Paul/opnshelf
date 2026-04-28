@@ -35,6 +35,7 @@ import {
 	PaginatedEpisodesResponseDto,
 	PaginatedUpNextQueryDto,
 	PaginatedUpNextResponseDto,
+	ReleaseCalendarQueryDto,
 	ReleaseCalendarResponseDto,
 	SearchShowsResultsDto,
 	TMDBEpisodeDto,
@@ -77,16 +78,14 @@ export class ShowsController {
 	@ApiResponse({ status: 200, type: TMDBShowDetailDto })
 	async getShowDetails(@Param("showId") showId: string) {
 		const showData = await this.showsService.getShowDetails(showId);
-		const [show] = await Promise.all([
-			this.showsService.upsertShow(showData),
-			this.showsService
-				.syncShowMetadata(showId)
-				.catch((err) =>
-					this.logger.warn(
-						`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
-					),
+		const show = await this.showsService.upsertShow(showData);
+		this.showsService
+			.syncShowMetadata(showId)
+			.catch((err) =>
+				this.logger.warn(
+					`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
 				),
-		]);
+			);
 		const credits = await this.showsService.getShowCredits(showId);
 
 		return {
@@ -204,11 +203,14 @@ export class ShowsController {
 	@Get("user/:userDid/release-calendar")
 	@ApiOperation({
 		summary:
-			"Get upcoming releases for watched shows and future-dated watchlist items",
+			"Get releases for watched shows and watchlist items within a date range",
 	})
 	@ApiResponse({ status: 200, type: ReleaseCalendarResponseDto })
-	async getUserReleaseCalendar(@Param("userDid") userDid: string) {
-		return this.showsService.getUserReleaseCalendar(userDid);
+	async getUserReleaseCalendar(
+		@Param("userDid") userDid: string,
+		@Query() query: ReleaseCalendarQueryDto,
+	) {
+		return this.showsService.getUserReleaseCalendar(userDid, query);
 	}
 
 	@Get("user/:userDid/episodes")
