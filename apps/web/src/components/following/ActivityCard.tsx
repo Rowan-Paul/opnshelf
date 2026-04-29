@@ -163,7 +163,7 @@ export function ActivityCard({
 					)}
 
 					{/* Actions */}
-					<div className="flex items-center gap-4 pt-1">
+					<div className="flex flex-wrap items-center gap-4 pt-1">
 						{activity.type === "movie" ? (
 							<FeedItemActions
 								type="movie"

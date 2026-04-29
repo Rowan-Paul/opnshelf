@@ -87,7 +87,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 	}
 
 	return (
-		<div className="flex items-center gap-2">
+		<div className="flex flex-wrap items-center gap-2">
 			{/* Shelf Toggle */}
 			<button
 				type="button"

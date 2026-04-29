@@ -220,6 +220,7 @@ export default function Header() {
 										<Link
 											key={item.name}
 											to={item.href}
+											onClick={() => setMobileMenuOpen(false)}
 											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 												isActive
 													? "bg-(--accent-subtle) text-(--accent)"
@@ -273,6 +274,7 @@ export default function Header() {
 										<div className="my-2 border-(--border) border-t" />
 										<Link
 											to="/login"
+											onClick={() => setMobileMenuOpen(false)}
 											className="flex items-center gap-3 rounded-md bg-(--accent) px-3 py-3 font-medium text-(--accent-foreground) text-sm"
 										>
 											Sign In

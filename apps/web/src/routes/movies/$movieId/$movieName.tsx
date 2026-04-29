@@ -265,7 +265,9 @@ function MovieDetailPage() {
 							</p>
 						</section>
 
-						<PersonGrid people={cast} />
+						<div className="hidden lg:block">
+							<PersonGrid people={cast} />
+						</div>
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 
@@ -377,6 +379,10 @@ function MovieDetailPage() {
 
 						<InYourLists mediaType="movie" mediaId={movieId} />
 					</div>
+				</div>
+
+				<div className="mt-8 lg:hidden">
+					<PersonGrid people={cast} />
 				</div>
 			</div>
 

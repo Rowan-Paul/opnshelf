@@ -397,12 +397,14 @@ function ShowDetailPage() {
 							</section>
 						)}
 
-						<PersonGrid people={cast} />
-						<PersonGrid
-							people={crew}
-							title="Crew"
-							emptyMessage="No crew information available."
-						/>
+						<div className="hidden space-y-8 lg:block">
+							<PersonGrid people={cast} />
+							<PersonGrid
+								people={crew}
+								title="Crew"
+								emptyMessage="No crew information available."
+							/>
+						</div>
 						<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 					</div>
 
@@ -452,6 +454,15 @@ function ShowDetailPage() {
 
 						<InYourLists mediaType="show" mediaId={showId} />
 					</div>
+				</div>
+
+				<div className="mt-8 space-y-8 lg:hidden">
+					<PersonGrid people={cast} />
+					<PersonGrid
+						people={crew}
+						title="Crew"
+						emptyMessage="No crew information available."
+					/>
 				</div>
 			</div>
 		</div>

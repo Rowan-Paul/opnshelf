@@ -160,8 +160,20 @@ function FollowingPage() {
 			<FollowingHeader />
 
 			<div className="grid gap-8 lg:grid-cols-3">
-				{/* Main Feed */}
-				<div className="space-y-6 lg:col-span-2">
+				{/* Sidebar - shown above feed on mobile, right side on desktop */}
+				<div className="order-1 space-y-6 lg:order-2">
+					<FollowingList
+						following={following}
+						isLoading={followingLoading}
+						error={followingError}
+						onUnfollow={handleUnfollow}
+						pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
+					/>
+					<NetworkStats following={following} />
+				</div>
+
+				{/* Main Feed - shown below sidebar on mobile, left side on desktop */}
+				<div className="order-2 space-y-6 lg:order-1 lg:col-span-2">
 					<PeopleSearch
 						query={searchQuery}
 						onQueryChange={setSearchQuery}
@@ -172,8 +184,8 @@ function FollowingPage() {
 						isLoading={searchLoading}
 						onFollow={handleFollow}
 						onUnfollow={handleUnfollow}
-						isFollowPending={followMutation.isPending}
-						isUnfollowPending={unfollowMutation.isPending}
+						pendingFollowDid={followMutation.variables?.path?.targetDid}
+						pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
 					/>
 
 					<ActivityFeed
@@ -198,18 +210,6 @@ function FollowingPage() {
 							</button>
 						</div>
 					)}
-				</div>
-
-				{/* Sidebar */}
-				<div className="space-y-6">
-					<FollowingList
-						following={following}
-						isLoading={followingLoading}
-						error={followingError}
-						onUnfollow={handleUnfollow}
-						isUnfollowPending={unfollowMutation.isPending}
-					/>
-					<NetworkStats following={following} />
 				</div>
 			</div>
 		</div>

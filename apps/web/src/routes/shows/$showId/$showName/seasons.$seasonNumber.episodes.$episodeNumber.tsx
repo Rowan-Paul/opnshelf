@@ -330,19 +330,21 @@ function EpisodeDetailPage() {
 							</p>
 						</section>
 
-						{/* Guest Stars */}
-						<PersonGrid
-							people={guestStars}
-							title="Guest Stars"
-							emptyMessage="No guest stars information available."
-						/>
+						<div className="hidden space-y-8 lg:block">
+							{/* Guest Stars */}
+							<PersonGrid
+								people={guestStars}
+								title="Guest Stars"
+								emptyMessage="No guest stars information available."
+							/>
 
-						{/* Crew */}
-						<PersonGrid
-							people={episodeCrew}
-							title="Crew"
-							emptyMessage="No crew information available."
-						/>
+							{/* Crew */}
+							<PersonGrid
+								people={episodeCrew}
+								title="Crew"
+								emptyMessage="No crew information available."
+							/>
+						</div>
 					</div>
 
 					{/* Right Column - Sidebar */}
@@ -464,6 +466,19 @@ function EpisodeDetailPage() {
 							episodeNumber={episodeNum}
 						/>
 					</div>
+				</div>
+
+				<div className="mt-8 space-y-8 lg:hidden">
+					<PersonGrid
+						people={guestStars}
+						title="Guest Stars"
+						emptyMessage="No guest stars information available."
+					/>
+					<PersonGrid
+						people={episodeCrew}
+						title="Crew"
+						emptyMessage="No crew information available."
+					/>
 				</div>
 			</div>
 

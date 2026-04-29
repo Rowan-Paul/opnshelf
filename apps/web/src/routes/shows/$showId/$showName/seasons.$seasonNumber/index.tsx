@@ -386,12 +386,14 @@ function SeasonDetailPage() {
 							</section>
 						)}
 
-						<PersonGrid people={cast} />
-						<PersonGrid
-							people={crew}
-							title="Crew"
-							emptyMessage="No crew information available."
-						/>
+						<div className="hidden space-y-8 lg:block">
+							<PersonGrid people={cast} />
+							<PersonGrid
+								people={crew}
+								title="Crew"
+								emptyMessage="No crew information available."
+							/>
+						</div>
 					</div>
 
 					{/* Right Column - Sidebar */}
@@ -444,6 +446,15 @@ function SeasonDetailPage() {
 							seasonNumber={seasonNum}
 						/>
 					</div>
+				</div>
+
+				<div className="mt-8 space-y-8 lg:hidden">
+					<PersonGrid people={cast} />
+					<PersonGrid
+						people={crew}
+						title="Crew"
+						emptyMessage="No crew information available."
+					/>
 				</div>
 			</div>
 		</div>

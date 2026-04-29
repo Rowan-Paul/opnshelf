@@ -7,7 +7,7 @@ interface FollowingListProps {
 	isLoading: boolean;
 	error: Error | null;
 	onUnfollow: (did: string) => void;
-	isUnfollowPending: boolean;
+	pendingUnfollowDid?: string;
 }
 
 export function FollowingList({
@@ -15,7 +15,7 @@ export function FollowingList({
 	isLoading,
 	error,
 	onUnfollow,
-	isUnfollowPending,
+	pendingUnfollowDid,
 }: FollowingListProps) {
 	return (
 		<section className="card p-5">
@@ -47,7 +47,7 @@ export function FollowingList({
 								<p className="truncate font-medium text-sm">
 									{String(friend.displayName) || friend.handle}
 								</p>
-								<p className="text-(--foreground-muted) text-xs">
+								<p className="truncate text-(--foreground-muted) text-xs">
 									@{friend.handle}
 								</p>
 							</div>
@@ -55,10 +55,10 @@ export function FollowingList({
 								type="button"
 								className="btn btn-secondary btn-sm h-8 px-2 text-xs"
 								onClick={() => onUnfollow(friend.did)}
-								disabled={isUnfollowPending}
+								disabled={pendingUnfollowDid === friend.did}
 								title="Unfollow"
 							>
-								{isUnfollowPending ? (
+								{pendingUnfollowDid === friend.did ? (
 									<Loader2 className="h-3 w-3 animate-spin" />
 								) : (
 									<UserCheck className="h-3 w-3" />

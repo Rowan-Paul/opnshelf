@@ -12,8 +12,8 @@ interface PeopleSearchProps {
 	isLoading: boolean;
 	onFollow: (did: string) => void;
 	onUnfollow: (did: string) => void;
-	isFollowPending: boolean;
-	isUnfollowPending: boolean;
+	pendingFollowDid?: string;
+	pendingUnfollowDid?: string;
 }
 
 export function PeopleSearch({
@@ -26,8 +26,8 @@ export function PeopleSearch({
 	isLoading,
 	onFollow,
 	onUnfollow,
-	isFollowPending,
-	isUnfollowPending,
+	pendingFollowDid,
+	pendingUnfollowDid,
 }: PeopleSearchProps) {
 	return (
 		<div className="relative">
@@ -79,9 +79,9 @@ export function PeopleSearch({
 											type="button"
 											className="btn btn-secondary btn-sm h-8 px-3 text-xs"
 											onClick={() => onUnfollow(person.did)}
-											disabled={isUnfollowPending}
+											disabled={pendingUnfollowDid === person.did}
 										>
-											{isUnfollowPending ? (
+											{pendingUnfollowDid === person.did ? (
 												<Loader2 className="h-3 w-3 animate-spin" />
 											) : (
 												"Unfollow"
@@ -92,9 +92,9 @@ export function PeopleSearch({
 											type="button"
 											className="btn btn-primary btn-sm h-8 px-3 text-xs"
 											onClick={() => onFollow(person.did)}
-											disabled={isFollowPending}
+											disabled={pendingFollowDid === person.did}
 										>
-											{isFollowPending ? (
+											{pendingFollowDid === person.did ? (
 												<Loader2 className="h-3 w-3 animate-spin" />
 											) : (
 												<>

@@ -312,9 +312,9 @@ export default function MediaCard({
 				)}
 			</Link>
 
-			{/* Actions menu — hover-only remove button for list pages */}
+			{/* Actions menu — visible on mobile, hover-only on desktop */}
 			{onRemove && (
-				<div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+				<div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
 					<button
 						type="button"
 						onClick={(e) => {
