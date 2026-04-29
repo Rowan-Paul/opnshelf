@@ -31,7 +31,6 @@ const footerLinks = {
 	product: [
 		{ name: "Features", href: "#" },
 		{ name: "Calendar", href: "/calendar" },
-		{ name: "Lists", href: "/lists" },
 		{ name: "Import", href: "/import" },
 	],
 	company: [

@@ -2,9 +2,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	Calendar,
 	Film,
-	List,
 	LogOut,
 	Menu,
+	Settings,
 	User,
 	Users,
 	X,
@@ -25,7 +25,6 @@ const navigation = [
 	{ name: "Dashboard", href: "/dashboard", icon: Film },
 	{ name: "Calendar", href: "/calendar", icon: Calendar },
 	{ name: "Following", href: "/following", icon: Users },
-	{ name: "Lists", href: "/lists", icon: List },
 ];
 
 export default function Header() {
@@ -165,9 +164,19 @@ export default function Header() {
 									</div>
 									<DropdownMenuSeparator />
 									<DropdownMenuItem asChild>
-										<Link to={"/dashboard" as const} className="cursor-pointer">
+										<Link
+											to="/profile/$handle"
+											params={{ handle: user.handle }}
+											className="cursor-pointer"
+										>
 											<User className="mr-2 h-4 w-4" />
 											Profile
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link to="/settings" className="cursor-pointer">
+											<Settings className="mr-2 h-4 w-4" />
+											Settings
 										</Link>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />

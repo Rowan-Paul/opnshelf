@@ -355,13 +355,16 @@ function Dashboard() {
 					<section>
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">Up Next</h2>
-							<Link
-								to={"/dashboard" as const}
-								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-							>
-								View all
-								<ChevronRight className="h-4 w-4" />
-							</Link>
+							{user && (
+								<Link
+									to="/profile/$handle/up-next"
+									params={{ handle: user.handle }}
+									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								>
+									View all
+									<ChevronRight className="h-4 w-4" />
+								</Link>
+							)}
 						</div>
 
 						{upNextLoading ? (
@@ -421,13 +424,16 @@ function Dashboard() {
 					<section>
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">Your Shelf</h2>
-							<Link
-								to={"/dashboard" as const}
-								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-							>
-								View all
-								<ChevronRight className="h-4 w-4" />
-							</Link>
+							{user && (
+								<Link
+									to="/profile/$handle/shelf"
+									params={{ handle: user.handle }}
+									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								>
+									View all
+									<ChevronRight className="h-4 w-4" />
+								</Link>
+							)}
 						</div>
 
 						{isLoading ? (

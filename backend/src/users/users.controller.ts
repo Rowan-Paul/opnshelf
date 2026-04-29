@@ -25,7 +25,7 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
@@ -50,12 +50,20 @@ import {
 } from "./dto/user-settings.dto";
 import { parseAccountDeletionData } from "./background-job-data";
 import { UsersService } from "./users.service";
+import { SocialService } from "../social/social.service";
 import type { ATSession } from "../movies/movies.service";
+import {
+	SocialPaginationQueryDto,
+	PaginatedSocialUsersDto,
+} from "../social/dto/social.dto";
 
 @ApiTags("users")
 @Controller("users")
 export class UsersController {
-	constructor(private readonly usersService: UsersService) {}
+	constructor(
+		private readonly usersService: UsersService,
+		private readonly socialService: SocialService,
+	) {}
 
 	@Get(":handle/profile")
 	@ApiOperation({ summary: "Get a public user profile by handle" })
@@ -65,6 +73,42 @@ export class UsersController {
 		@Param("handle") handle: string,
 	): Promise<PublicUserProfileDto> {
 		return this.usersService.getPublicProfileByHandle(handle);
+	}
+
+	@Get(":handle/followers")
+	@ApiOperation({ summary: "Get public followers for a user by handle" })
+	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
+	@ApiResponse({ status: 404, description: "User not found" })
+	async getPublicFollowers(
+		@Param("handle") handle: string,
+		@Query() query: SocialPaginationQueryDto,
+		@Req() req: Request,
+	): Promise<PaginatedSocialUsersDto> {
+		const viewerDid = (req as AuthenticatedRequest).user?.did ?? null;
+		return this.socialService.getFollowers(
+			viewerDid,
+			handle,
+			query.page ?? 1,
+			query.pageSize ?? 20,
+		);
+	}
+
+	@Get(":handle/following")
+	@ApiOperation({ summary: "Get public following for a user by handle" })
+	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
+	@ApiResponse({ status: 404, description: "User not found" })
+	async getPublicFollowing(
+		@Param("handle") handle: string,
+		@Query() query: SocialPaginationQueryDto,
+		@Req() req: Request,
+	): Promise<PaginatedSocialUsersDto> {
+		const viewerDid = (req as AuthenticatedRequest).user?.did ?? null;
+		return this.socialService.getFollowing(
+			viewerDid,
+			handle,
+			query.page ?? 1,
+			query.pageSize ?? 20,
+		);
 	}
 
 	@Get("avatar")

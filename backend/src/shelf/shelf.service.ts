@@ -87,6 +87,8 @@ export class ShelfService {
 		userDid: string,
 		page: number = 1,
 		pageSize: number = 20,
+		type?: "movie" | "episode",
+		search?: string,
 	): Promise<{
 		items: ShelfItem[];
 		total: number;
@@ -98,17 +100,134 @@ export class ShelfService {
 	}> {
 		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
 		const requestedPage = Math.max(page, 1);
+		const searchTerm = search?.trim();
 
-		const [trackedMovieCount, trackedEpisodeCount] = await Promise.all([
-			this.prisma.trackedMovie.count({ where: { userDid } }),
-			this.prisma.trackedEpisode.count({ where: { userDid } }),
-		]);
+		// Build count queries conditionally based on type filter
+		const countPromises: Promise<number>[] = [];
+		if (!type || type === "movie") {
+			countPromises.push(
+				this.prisma.trackedMovie.count({
+					where: {
+						userDid,
+						movie: searchTerm
+							? {
+									title: {
+										contains: searchTerm,
+										mode: "insensitive",
+									},
+								}
+							: undefined,
+					},
+				}),
+			);
+		} else {
+			countPromises.push(Promise.resolve(0));
+		}
+		if (!type || type === "episode") {
+			countPromises.push(
+				this.prisma.trackedEpisode.count({
+					where: {
+						userDid,
+						show: searchTerm
+							? {
+									title: {
+										contains: searchTerm,
+										mode: "insensitive",
+									},
+								}
+							: undefined,
+					},
+				}),
+			);
+		} else {
+			countPromises.push(Promise.resolve(0));
+		}
+
+		const [trackedMovieCount, trackedEpisodeCount] =
+			await Promise.all(countPromises);
 
 		const total = trackedMovieCount + trackedEpisodeCount;
 		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
 		const currentPage =
 			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
 		const offset = (currentPage - 1) * safePageSize;
+
+		// Build search conditions for raw SQL
+		const movieSearchCondition = searchTerm
+			? Prisma.sql`AND m.title ILIKE ${`%${searchTerm}%`}`
+			: Prisma.empty;
+		const episodeSearchCondition = searchTerm
+			? Prisma.sql`AND s.title ILIKE ${`%${searchTerm}%`}`
+			: Prisma.empty;
+
+		// Build the UNION query conditionally based on type filter
+		const movieQuery = Prisma.sql`
+			SELECT
+				'movie:' || tm.id AS "trackedId",
+				'movie' AS "type",
+				tm."watchedDate" AS "watchedDate",
+				tm."createdAt" AS "createdAt",
+				COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
+				tm."movieId" AS "movieId",
+				NULL::text AS "showId",
+				m.title AS "title",
+				m."posterPath" AS "posterPath",
+				m."backdropPath" AS "backdropPath",
+				m."releaseYear" AS "releaseYear",
+				m."releaseDate" AS "releaseDate",
+				NULL::integer AS "seasonNumber",
+				NULL::integer AS "episodeNumber",
+				NULL::text AS "episodeName",
+				NULL::integer AS "firstAirYear",
+				NULL::timestamp AS "firstAirDate",
+				m.overview AS "overview"
+			FROM "TrackedMovie" tm
+			INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
+			WHERE tm."userDid" = ${userDid}
+				${movieSearchCondition}
+		`;
+
+		const episodeQuery = Prisma.sql`
+			SELECT
+				'episode:' || te.id AS "trackedId",
+				'episode' AS "type",
+				te."watchedDate" AS "watchedDate",
+				te."createdAt" AS "createdAt",
+				COALESCE(te."watchedDate", te."createdAt") AS "sortDate",
+				NULL::text AS "movieId",
+				te."showId" AS "showId",
+				s.title AS "title",
+				s."posterPath" AS "posterPath",
+				s."backdropPath" AS "backdropPath",
+				NULL::integer AS "releaseYear",
+				NULL::timestamp AS "releaseDate",
+				te."seasonNumber" AS "seasonNumber",
+				te."episodeNumber" AS "episodeNumber",
+				ep.name AS "episodeName",
+				s."firstAirYear" AS "firstAirYear",
+				s."firstAirDate" AS "firstAirDate",
+				ep.overview AS "overview"
+			FROM "TrackedEpisode" te
+			INNER JOIN "Show" s ON s."showId" = te."showId"
+			LEFT JOIN "Episode" ep ON ep."showId" = te."showId"
+				AND ep."seasonNumber" = te."seasonNumber"
+				AND ep."episodeNumber" = te."episodeNumber"
+			WHERE te."userDid" = ${userDid}
+				${episodeSearchCondition}
+		`;
+
+		let shelfQuery: Prisma.Sql;
+		if (type === "movie") {
+			shelfQuery = Prisma.sql`(${movieQuery})`;
+		} else if (type === "episode") {
+			shelfQuery = Prisma.sql`(${episodeQuery})`;
+		} else {
+			shelfQuery = Prisma.sql`(
+				${movieQuery}
+				UNION ALL
+				${episodeQuery}
+			)`;
+		}
 
 		const rows =
 			total === 0
@@ -126,64 +245,13 @@ export class ShelfService {
 						shelf."backdropPath",
 						shelf."releaseYear",
 						shelf."releaseDate",
-					shelf."seasonNumber",
-					shelf."episodeNumber",
-					shelf."episodeName",
-					shelf."firstAirYear",
-					shelf."firstAirDate",
-					shelf."overview"
-				FROM (
-				SELECT
-					'movie:' || tm.id AS "trackedId",
-					'movie' AS "type",
-						tm."watchedDate" AS "watchedDate",
-						tm."createdAt" AS "createdAt",
-						COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
-						tm."movieId" AS "movieId",
-						NULL::text AS "showId",
-						m.title AS "title",
-						m."posterPath" AS "posterPath",
-						m."backdropPath" AS "backdropPath",
-						m."releaseYear" AS "releaseYear",
-						m."releaseDate" AS "releaseDate",
-						NULL::integer AS "seasonNumber",
-						NULL::integer AS "episodeNumber",
-						NULL::text AS "episodeName",
-						NULL::integer AS "firstAirYear",
-						NULL::timestamp AS "firstAirDate",
-						m.overview AS "overview"
-					FROM "TrackedMovie" tm
-					INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
-					WHERE tm."userDid" = ${userDid}
-
-					UNION ALL
-
-				SELECT
-					'episode:' || te.id AS "trackedId",
-					'episode' AS "type",
-						te."watchedDate" AS "watchedDate",
-						te."createdAt" AS "createdAt",
-						COALESCE(te."watchedDate", te."createdAt") AS "sortDate",
-						NULL::text AS "movieId",
-						te."showId" AS "showId",
-						s.title AS "title",
-						s."posterPath" AS "posterPath",
-						s."backdropPath" AS "backdropPath",
-						NULL::integer AS "releaseYear",
-						NULL::timestamp AS "releaseDate",
-						te."seasonNumber" AS "seasonNumber",
-						te."episodeNumber" AS "episodeNumber",
-						ep.name AS "episodeName",
-						s."firstAirYear" AS "firstAirYear",
-						s."firstAirDate" AS "firstAirDate",
-						ep.overview AS "overview"
-					FROM "TrackedEpisode" te
-					INNER JOIN "Show" s ON s."showId" = te."showId"
-					LEFT JOIN "Episode" ep ON ep."showId" = te."showId" 
-						AND ep."seasonNumber" = te."seasonNumber" 
-						AND ep."episodeNumber" = te."episodeNumber"
-					WHERE te."userDid" = ${userDid}
-				) shelf
+						shelf."seasonNumber",
+						shelf."episodeNumber",
+						shelf."episodeName",
+						shelf."firstAirYear",
+						shelf."firstAirDate",
+						shelf."overview"
+					FROM ${shelfQuery} shelf
 					ORDER BY
 						shelf."sortDate" DESC,
 						shelf."createdAt" DESC,

@@ -34,6 +34,7 @@ import {
 	CommandSeparator,
 	CommandShortcut,
 } from "#/components/ui/command";
+import { useAuth } from "#/lib/auth-context";
 import { buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 interface SearchCommandProps {
@@ -86,6 +87,8 @@ export function SearchCommand({
 
 	const isOpen = controlledOpen !== undefined ? controlledOpen : open;
 	const handleOpenChange = onOpenChange || setOpen;
+	const { user } = useAuth();
+	const currentUserHandle = user?.handle;
 
 	// Search all API - only enabled when there's a search query
 	const { data: searchData, isLoading: isSearching } = useQuery({
@@ -204,12 +207,18 @@ export function SearchCommand({
 								<span>Following</span>
 							</Link>
 						</CommandItem>
-						<CommandItem asChild>
-							<Link to="/lists" className="flex items-center gap-2">
-								<List className="h-4 w-4" />
-								<span>Lists</span>
-							</Link>
-						</CommandItem>
+						{currentUserHandle && (
+							<CommandItem asChild>
+								<Link
+									to="/profile/$handle/lists"
+									params={{ handle: currentUserHandle }}
+									className="flex items-center gap-2"
+								>
+									<List className="h-4 w-4" />
+									<span>Lists</span>
+								</Link>
+							</CommandItem>
+						)}
 					</CommandGroup>
 
 					{/* Movies Section */}
@@ -275,15 +284,18 @@ export function SearchCommand({
 					)}
 
 					{/* Your Lists Section - Always shown when available */}
-					{userLists && userLists.length > 0 && (
+					{userLists && userLists.length > 0 && currentUserHandle && (
 						<>
 							<CommandSeparator />
 							<CommandGroup heading="Your Lists">
 								{userLists.slice(0, 5).map((list: ListSummaryDto) => (
 									<CommandItem key={`list-${list.id}`} asChild>
 										<Link
-											to="/lists/$listSlug"
-											params={{ listSlug: list.slug }}
+											to="/profile/$handle/lists/$listSlug"
+											params={{
+												handle: currentUserHandle,
+												listSlug: list.slug,
+											}}
 											className="flex items-center gap-2"
 										>
 											<List className="h-4 w-4" />
@@ -306,7 +318,8 @@ export function SearchCommand({
 									.map((person: SocialUserCardDto) => (
 										<CommandItem key={`person-${person.did}`} asChild>
 											<Link
-												to={`/profile/${person.handle || person.did}` as any}
+												to="/profile/$handle"
+												params={{ handle: person.handle || person.did }}
 												className="flex items-center gap-2"
 											>
 												<User className="h-4 w-4" />
@@ -338,10 +351,12 @@ export function SearchCommand({
 							<Heart className="h-4 w-4" />
 							<span>Favorites</span>
 						</CommandItem>
-						<CommandItem>
-							<Settings className="h-4 w-4" />
-							<span>Settings</span>
-							<CommandShortcut>⌘S</CommandShortcut>
+						<CommandItem asChild>
+							<Link to="/settings" className="flex items-center gap-2">
+								<Settings className="h-4 w-4" />
+								<span>Settings</span>
+								<CommandShortcut>⌘S</CommandShortcut>
+							</Link>
 						</CommandItem>
 					</CommandGroup>
 				</CommandList>

@@ -38,6 +38,7 @@ import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
+import { YourActivity } from "../../../../components/YourActivity";
 
 setupApiClient();
 
@@ -350,87 +351,13 @@ function EpisodeDetailPage() {
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
 						{/* Your Activity */}
-						<section className="card p-5">
-							<h3 className="mb-4 font-display font-semibold">Your Activity</h3>
-							{episodeWatchHistory.length > 0 ? (
-								<div className="space-y-1">
-									{episodeWatchHistory.map((entry, index) => (
-										<div
-											key={entry.id || index}
-											className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
-										>
-											<div className="flex flex-1 items-center p-2">
-												<span className="font-medium text-sm">
-													{entry.watchedDate
-														? new Date(entry.watchedDate).toLocaleString(
-																"en-US",
-																{
-																	month: "short",
-																	day: "numeric",
-																	year: "numeric",
-																	hour: "numeric",
-																	minute: "2-digit",
-																},
-															)
-														: "Unknown"}
-												</span>
-											</div>
-											<button
-												type="button"
-												onClick={() => deleteEpisodeWatchHistoryEntry(entry.id)}
-												disabled={isDeleteEpisodeHistoryPending}
-												className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
-												aria-label="Remove this play"
-											>
-												<X className="h-4 w-4" />
-											</button>
-										</div>
-									))}
-									<button
-										type="button"
-										onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
-										disabled={isMarkEpisodePending}
-										className="btn btn-secondary mt-3 w-full gap-2"
-									>
-										{isMarkEpisodePending ? (
-											<>
-												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<Plus className="h-4 w-4" />
-												Add to shelf
-											</>
-										)}
-									</button>
-								</div>
-							) : (
-								<div className="space-y-3">
-									<p className="text-(--foreground-muted) text-sm">
-										You haven&apos;t watched this yet
-									</p>
-									<button
-										type="button"
-										onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
-										disabled={isMarkEpisodePending}
-										className="btn btn-secondary w-full gap-2 text-sm"
-									>
-										{isMarkEpisodePending ? (
-											<>
-												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<Plus className="h-4 w-4" />
-												Add to shelf
-											</>
-										)}
-									</button>
-								</div>
-							)}
-						</section>
+						<YourActivity
+							watchHistory={episodeWatchHistory}
+							onAddToShelf={() => markEpisodeWatched(seasonNum, episodeNum)}
+							onDeleteEntry={deleteEpisodeWatchHistoryEntry}
+							isAddPending={isMarkEpisodePending}
+							isDeletePending={isDeleteEpisodeHistoryPending}
+						/>
 
 						{/* Details */}
 						<DetailsCard

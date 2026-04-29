@@ -255,7 +255,7 @@ export class SocialService {
 	}
 
 	async getFollowers(
-		viewerDid: string,
+		viewerDid: string | null,
 		handle: string,
 		page = 1,
 		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
@@ -293,7 +293,7 @@ export class SocialService {
 	}
 
 	async getFollowing(
-		viewerDid: string,
+		viewerDid: string | null,
 		handle: string,
 		page = 1,
 		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
@@ -659,7 +659,7 @@ export class SocialService {
 
 	private async buildSocialUserCards(
 		userDids: string[],
-		viewerDid: string,
+		viewerDid: string | null,
 		baseUsers?: Map<string, SocialUserRecord>,
 	): Promise<Map<string, SocialUserCardDto>> {
 		const uniqueUserDids = [...new Set(userDids)];
@@ -678,29 +678,34 @@ export class SocialService {
 				).map((user) => [user.did, user]),
 			);
 
-		const [viewerFollowing, viewerFollowers] = await Promise.all([
-			this.prisma.follow.findMany({
-				where: {
-					followerDid: viewerDid,
-					followingDid: { in: uniqueUserDids },
-				},
-				select: { followingDid: true },
-			}),
-			this.prisma.follow.findMany({
-				where: {
-					followingDid: viewerDid,
-					followerDid: { in: uniqueUserDids },
-				},
-				select: { followerDid: true },
-			}),
-		]);
+		let followingSet = new Set<string>();
+		let followerSet = new Set<string>();
 
-		const followingSet = new Set(
-			viewerFollowing.map((follow) => follow.followingDid),
-		);
-		const followerSet = new Set(
-			viewerFollowers.map((follow) => follow.followerDid),
-		);
+		if (viewerDid) {
+			const [viewerFollowing, viewerFollowers] = await Promise.all([
+				this.prisma.follow.findMany({
+					where: {
+						followerDid: viewerDid,
+						followingDid: { in: uniqueUserDids },
+					},
+					select: { followingDid: true },
+				}),
+				this.prisma.follow.findMany({
+					where: {
+						followingDid: viewerDid,
+						followerDid: { in: uniqueUserDids },
+					},
+					select: { followerDid: true },
+				}),
+			]);
+
+			followingSet = new Set(
+				viewerFollowing.map((follow) => follow.followingDid),
+			);
+			followerSet = new Set(
+				viewerFollowers.map((follow) => follow.followerDid),
+			);
+		}
 
 		return new Map(
 			uniqueUserDids

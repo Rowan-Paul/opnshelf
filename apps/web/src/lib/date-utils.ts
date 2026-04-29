@@ -22,6 +22,37 @@ export function withUserLocale(
 }
 
 /**
+ * Format a date-time string into a human-readable date and time.
+ * Respects user timezone and 12/24-hour format preferences.
+ * Falls back to the raw string if parsing fails.
+ */
+export function formatDateTime(
+	dateString: string,
+	timezone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
+	if (!dateString) return "Unknown";
+	try {
+		return new Date(dateString).toLocaleString(
+			"en-US",
+			withUserLocale(
+				{
+					month: "short",
+					day: "numeric",
+					year: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+				},
+				timezone,
+				timeFormat,
+			),
+		);
+	} catch {
+		return dateString;
+	}
+}
+
+/**
  * Format a date string into a human-readable date.
  * Falls back to the raw string if parsing fails.
  */

@@ -1,0 +1,536 @@
+import {
+	type AccountDeletionJobDto,
+	authControllerMeOptions,
+	getAccountDeletionProgress,
+	getAccountDeletionStatusMessage,
+	isActiveAccountDeletionStatus,
+	usersControllerDeleteMyAccountMutation,
+	usersControllerDeleteMyAvatarMutation,
+	usersControllerGetMyAccountDeletionOptions,
+	usersControllerGetMySettingsOptions,
+	usersControllerUpdateMyProfileMutation,
+	usersControllerUpdateMySettingsMutation,
+	usersControllerUploadMyAvatarMutation,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+	AlertTriangle,
+	Camera,
+	Loader2,
+	Save,
+	Settings,
+	Trash2,
+	User,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import TimezoneSelector from "#/components/TimezoneSelector";
+import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import { Switch } from "#/components/ui/switch";
+import { useAuth } from "#/lib/auth-context";
+
+function isUnauthorizedError(error: unknown): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		("status" in error || "statusCode" in error) &&
+		((error as Record<string, unknown>).status === 401 ||
+			(error as Record<string, unknown>).statusCode === 401)
+	);
+}
+
+export const Route = createFileRoute("/settings")({
+	beforeLoad: async ({ context }) => {
+		try {
+			await context.queryClient.fetchQuery(authControllerMeOptions());
+		} catch (error) {
+			if (isUnauthorizedError(error)) {
+				throw redirect({
+					to: "/login",
+					search: { message: "Please log in to view settings" },
+				});
+			}
+			throw error;
+		}
+	},
+	component: SettingsPage,
+});
+
+function SettingsPage() {
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+		logout,
+	} = useAuth();
+	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+
+	// Redirect if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [authLoading, isAuthenticated, navigate]);
+
+	// Settings mutations
+	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
+		...usersControllerUpdateMySettingsMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			});
+		},
+	});
+
+	const updateProfileMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "update"],
+		...usersControllerUpdateMyProfileMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+		},
+	});
+
+	const uploadAvatarMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "avatar", "upload"],
+		...usersControllerUploadMyAvatarMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+		},
+	});
+
+	const deleteAvatarMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "avatar", "delete"],
+		...usersControllerDeleteMyAvatarMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+		},
+	});
+
+	const deleteAccountMutation = useMutation({
+		mutationKey: ["users", "me", "account", "delete"],
+		...usersControllerDeleteMyAccountMutation(),
+	});
+
+	// Display name state
+	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+	useEffect(() => {
+		setDisplayName(user?.displayName ?? "");
+	}, [user?.displayName]);
+
+	// Avatar file input ref
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleAvatarUpload = (file: File) => {
+		uploadAvatarMutation.mutate({
+			body: { avatar: file },
+		});
+	};
+
+	// Deletion dialog state
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [confirmChecked, setConfirmChecked] = useState(false);
+	const [deletePDSData, setDeletePDSData] = useState(false);
+	const [deletionJob, setDeletionJob] = useState<AccountDeletionJobDto | null>(
+		null,
+	);
+
+	// Poll deletion status when there's an active job
+	const { data: deletionStatus } = useQuery({
+		...usersControllerGetMyAccountDeletionOptions(),
+		enabled: !!deletionJob && isActiveAccountDeletionStatus(deletionJob.status),
+		refetchInterval: 2000,
+	});
+
+	useEffect(() => {
+		if (deletionStatus) {
+			setDeletionJob(deletionStatus);
+			if (deletionStatus.status === "completed") {
+				logout();
+				window.location.href = "/";
+			}
+		}
+	}, [deletionStatus, logout]);
+
+	const handleDeleteAccount = async () => {
+		try {
+			const result = await deleteAccountMutation.mutateAsync({
+				body: { deletePDSData },
+			});
+			if (!deletePDSData) {
+				// Immediate deletion, no job returned
+				logout();
+				window.location.href = "/";
+				return;
+			}
+			// PDS deletion job started
+			if (result) {
+				setDeletionJob(result);
+				setShowDeleteDialog(false);
+			}
+		} catch {
+			// Error handled by mutation state
+		}
+	};
+
+	const isDeleting =
+		!!deletionJob && isActiveAccountDeletionStatus(deletionJob.status);
+	const deletionProgress = deletionJob
+		? getAccountDeletionProgress(deletionJob)
+		: null;
+	const deletionMessage = deletionJob
+		? getAccountDeletionStatusMessage(deletionJob)
+		: "";
+
+	if (authLoading) {
+		return (
+			<div className="container-app flex min-h-[50vh] items-center justify-center py-8">
+				<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+			</div>
+		);
+	}
+
+	if (!isAuthenticated || !user) {
+		return null;
+	}
+
+	return (
+		<div className="container-app max-w-2xl py-8">
+			{/* Page Header */}
+			<div className="mb-8 flex items-center gap-3">
+				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
+					<Settings className="h-5 w-5" />
+				</div>
+				<div>
+					<h1 className="text-display-2">Settings</h1>
+					<p className="text-(--foreground-muted)">
+						Manage your account and preferences
+					</p>
+				</div>
+			</div>
+
+			<div className="space-y-6">
+				{/* Time & Region */}
+				<section className="card p-6">
+					<h2 className="mb-1 font-semibold text-lg">Time & Region</h2>
+					<p className="mb-6 text-(--foreground-muted) text-sm">
+						Choose how dates and times are displayed
+					</p>
+
+					<div className="space-y-5">
+						<div className="space-y-2">
+							<label htmlFor="timezone" className="font-medium text-sm">
+								Timezone
+							</label>
+							<TimezoneSelector
+								value={userSettings?.timezone}
+								onChange={(timezone) =>
+									updateSettingsMutation.mutate({
+										body: { timezone },
+									})
+								}
+								disabled={updateSettingsMutation.isPending}
+							/>
+						</div>
+
+						<div className="flex items-center justify-between">
+							<div>
+								<label htmlFor="time-format" className="font-medium text-sm">
+									24-hour time
+								</label>
+								<p className="text-(--foreground-muted) text-sm">
+									Display times in 24-hour format
+								</p>
+							</div>
+							<Switch
+								id="time-format"
+								checked={userSettings?.timeFormat === "24h"}
+								onCheckedChange={(checked) =>
+									updateSettingsMutation.mutate({
+										body: { timeFormat: checked ? "24h" : "12h" },
+									})
+								}
+								disabled={updateSettingsMutation.isPending}
+							/>
+						</div>
+					</div>
+				</section>
+
+				{/* Account */}
+				<section className="card p-6">
+					<h2 className="mb-1 font-semibold text-lg">Account</h2>
+					<p className="mb-6 text-(--foreground-muted) text-sm">
+						Update your profile information
+					</p>
+
+					<div className="space-y-5">
+						{/* Avatar */}
+						<div className="flex items-center gap-4">
+							<button
+								type="button"
+								onClick={() => fileInputRef.current?.click()}
+								aria-label="Upload profile photo"
+								className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+							>
+								{user.avatar ? (
+									<img
+										src={user.avatar}
+										alt=""
+										className="h-full w-full object-cover"
+									/>
+								) : (
+									<User className="h-8 w-8 text-(--foreground-muted)" />
+								)}
+								<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+									<Camera className="h-5 w-5 text-white" />
+								</div>
+								{uploadAvatarMutation.isPending && (
+									<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+										<Loader2 className="h-5 w-5 animate-spin text-white" />
+									</div>
+								)}
+							</button>
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="image/*"
+								className="sr-only"
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) handleAvatarUpload(file);
+									e.target.value = "";
+								}}
+							/>
+							<div>
+								<p className="font-medium text-sm">Profile photo</p>
+								<p className="text-(--foreground-muted) text-sm">
+									Click the avatar to upload a new photo
+								</p>
+								{user.avatar && (
+									<button
+										type="button"
+										onClick={() => deleteAvatarMutation.mutate({})}
+										disabled={deleteAvatarMutation.isPending}
+										className="mt-1 font-medium text-red-600 text-sm hover:text-red-700 disabled:opacity-50"
+									>
+										{deleteAvatarMutation.isPending
+											? "Removing…"
+											: "Remove photo"}
+									</button>
+								)}
+							</div>
+						</div>
+
+						{/* Display Name */}
+						<div className="space-y-2">
+							<label htmlFor="display-name" className="font-medium text-sm">
+								Display name
+							</label>
+							<div className="flex gap-2">
+								<input
+									id="display-name"
+									type="text"
+									value={displayName}
+									onChange={(e) => setDisplayName(e.target.value)}
+									placeholder="Your display name"
+									className="input flex-1"
+								/>
+								<Button
+									onClick={() =>
+										updateProfileMutation.mutate({
+											body: { displayName: displayName || undefined },
+										})
+									}
+									disabled={
+										updateProfileMutation.isPending ||
+										displayName === (user.displayName ?? "")
+									}
+								>
+									{updateProfileMutation.isPending ? (
+										<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+									) : (
+										<Save className="mr-1 h-4 w-4" />
+									)}
+									Save
+								</Button>
+							</div>
+						</div>
+
+						{/* Handle */}
+						<div className="space-y-2">
+							<label htmlFor="handle" className="font-medium text-sm">
+								Handle
+							</label>
+							<input
+								id="handle"
+								type="text"
+								value={`@${user.handle}`}
+								disabled
+								className="input bg-(--background-subtle)"
+								readOnly
+							/>
+							<p className="text-(--foreground-muted) text-xs">
+								Your handle is managed by your Bluesky account
+							</p>
+						</div>
+					</div>
+				</section>
+
+				{/* Account Deletion */}
+				<section className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
+					<h2 className="mb-1 font-semibold text-lg text-red-900 dark:text-red-100">
+						Danger Zone
+					</h2>
+					<p className="mb-6 text-red-700 text-sm dark:text-red-300">
+						Permanently delete your account and all associated data
+					</p>
+
+					{isDeleting && deletionJob ? (
+						<div className="space-y-3">
+							<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+								<Loader2 className="h-4 w-4 animate-spin" />
+								<span className="font-medium text-sm">{deletionMessage}</span>
+							</div>
+							{deletionProgress !== null && (
+								<div className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900">
+									<div
+										className="h-full rounded-full bg-red-600 transition-all dark:bg-red-400"
+										style={{ width: `${deletionProgress}%` }}
+									/>
+								</div>
+							)}
+							{deletionJob.status === "failed" && (
+								<div className="space-y-2">
+									<p className="text-red-700 text-sm dark:text-red-300">
+										{deletionJob.lastError}
+									</p>
+									<Button
+										variant="outline"
+										onClick={handleDeleteAccount}
+										disabled={deleteAccountMutation.isPending}
+										className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
+									>
+										{deleteAccountMutation.isPending ? (
+											<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+										) : null}
+										Retry
+									</Button>
+								</div>
+							)}
+						</div>
+					) : (
+						<button
+							type="button"
+							onClick={() => {
+								setConfirmChecked(false);
+								setDeletePDSData(false);
+								setShowDeleteDialog(true);
+							}}
+							className="btn inline-flex items-center gap-2 border-red-300 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
+						>
+							<Trash2 className="h-4 w-4" />
+							Delete Account
+						</button>
+					)}
+				</section>
+			</div>
+
+			{/* Delete Account Dialog */}
+			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+							<AlertTriangle className="h-5 w-5" />
+							Delete your account?
+						</DialogTitle>
+						<DialogDescription>
+							This action cannot be undone. All your data will be permanently
+							removed.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 py-4">
+						<div className="flex items-start gap-3 rounded-lg border border-(--border) p-3">
+							<input
+								type="checkbox"
+								id="confirm-delete"
+								checked={confirmChecked}
+								onChange={(e) => setConfirmChecked(e.target.checked)}
+								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
+							/>
+							<label
+								htmlFor="confirm-delete"
+								className="text-sm leading-relaxed"
+							>
+								I understand that deleting my account is permanent and cannot be
+								undone.
+							</label>
+						</div>
+
+						<div className="flex items-start gap-3 rounded-lg border border-(--border) p-3">
+							<input
+								type="checkbox"
+								id="delete-pds"
+								checked={deletePDSData}
+								onChange={(e) => setDeletePDSData(e.target.checked)}
+								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
+							/>
+							<label htmlFor="delete-pds" className="text-sm leading-relaxed">
+								Also delete my OpnShelf data from my PDS, including watch
+								history, follows, lists, and list items.
+							</label>
+						</div>
+
+						{deleteAccountMutation.isError && (
+							<div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-700 text-sm dark:bg-red-950/50 dark:text-red-300">
+								<AlertTriangle className="h-4 w-4 shrink-0" />
+								<span>
+									{deleteAccountMutation.error instanceof Error
+										? deleteAccountMutation.error.message
+										: "Failed to delete account. Please try again."}
+								</span>
+							</div>
+						)}
+					</div>
+
+					<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+						<Button
+							variant="outline"
+							onClick={() => setShowDeleteDialog(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleDeleteAccount}
+							disabled={!confirmChecked || deleteAccountMutation.isPending}
+							className="bg-red-600 hover:bg-red-700"
+						>
+							{deleteAccountMutation.isPending ? (
+								<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+							) : (
+								<Trash2 className="mr-1 h-4 w-4" />
+							)}
+							Permanently Delete Account
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
+}

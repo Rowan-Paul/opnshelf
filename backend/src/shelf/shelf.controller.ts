@@ -27,6 +27,8 @@ export class ShelfController {
 			userDid,
 			page,
 			pageSize,
+			query.type,
+			query.search,
 		);
 
 		// Transform items to DTO format

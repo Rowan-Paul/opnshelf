@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, Max, Min } from "class-validator";
+import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { MovieColorsDto } from "../movies/dto/movie.dto";
 
 export class ShelfItemMovieDto {
@@ -150,6 +150,21 @@ export class ShelfQueryDto {
 	@Min(1)
 	@Max(50)
 	pageSize?: number;
+
+	@ApiPropertyOptional({
+		description: "Filter by item type",
+		enum: ["movie", "episode"],
+	})
+	@IsOptional()
+	@IsString()
+	type?: "movie" | "episode";
+
+	@ApiPropertyOptional({
+		description: "Search by title (case-insensitive partial match)",
+	})
+	@IsOptional()
+	@IsString()
+	search?: string;
 }
 
 export class ShelfResponseDto {

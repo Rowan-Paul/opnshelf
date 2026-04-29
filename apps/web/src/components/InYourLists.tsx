@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight, Plus, X } from "lucide-react";
 import { useState } from "react";
 import ManageListsDialog from "#/components/ManageListsDialog";
+import { useAuth } from "#/lib/auth-context";
 import { useListActions, useListItemStatus } from "#/lib/hooks";
 
 interface InYourListsProps {
@@ -18,6 +19,8 @@ export default function InYourLists({
 	episodeNumber,
 }: InYourListsProps) {
 	const [open, setOpen] = useState(false);
+	const { user } = useAuth();
+	const userHandle = user?.handle;
 	const { otherLists, availableLists } = useListItemStatus({
 		mediaType,
 		mediaId,
@@ -42,8 +45,11 @@ export default function InYourLists({
 							className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
 						>
 							<Link
-								to="/lists/$listSlug"
-								params={{ listSlug: list.listSlug }}
+								to="/profile/$handle/lists/$listSlug"
+								params={{
+									handle: userHandle || "",
+									listSlug: list.listSlug,
+								}}
 								className="flex flex-1 items-center p-2"
 							>
 								<span className="font-medium text-sm">{list.listName}</span>
@@ -58,8 +64,11 @@ export default function InYourLists({
 								<X className="h-4 w-4" />
 							</button>
 							<Link
-								to="/lists/$listSlug"
-								params={{ listSlug: list.listSlug }}
+								to="/profile/$handle/lists/$listSlug"
+								params={{
+									handle: userHandle || "",
+									listSlug: list.listSlug,
+								}}
 								className="flex items-center p-2"
 							>
 								<ChevronRight className="h-4 w-4 text-(--foreground-muted)" />
@@ -71,13 +80,16 @@ export default function InYourLists({
 						<p className="text-(--foreground-muted) text-sm">
 							Not in any lists yet
 						</p>
-						<Link
-							to="/lists"
-							className="btn btn-secondary w-full gap-2 text-sm"
-						>
-							<Plus className="h-4 w-4" />
-							Create your first list
-						</Link>
+						{userHandle && (
+							<Link
+								to="/profile/$handle/lists"
+								params={{ handle: userHandle }}
+								className="btn btn-secondary w-full gap-2 text-sm"
+							>
+								<Plus className="h-4 w-4" />
+								Create your first list
+							</Link>
+						)}
 					</div>
 				) : (
 					<p className="text-(--foreground-muted) text-sm">

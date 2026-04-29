@@ -5,6 +5,7 @@ import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ShowsModule } from "../shows/shows.module";
+import { SocialModule } from "../social/social.module";
 import { BackgroundJobWorkerService } from "./background-job-worker.service";
 import { ImportHistoryService } from "./import-history.service";
 import { ProfileService } from "./profile.service";
@@ -19,6 +20,7 @@ import { UsersService } from "./users.service";
 		ListsModule,
 		MoviesModule,
 		ShowsModule,
+		SocialModule,
 		forwardRef(() => AuthModule),
 	],
 	controllers: [UsersController],

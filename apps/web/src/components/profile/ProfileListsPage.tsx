@@ -1,17 +1,13 @@
 import {
-	authControllerMeOptions,
-	listsControllerGetListQueryKey,
-	listsControllerGetUserListsQueryKey,
+	listsControllerGetPublicUserListOptions,
+	listsControllerGetPublicUserListQueryKey,
+	listsControllerGetPublicUserListsOptions,
+	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	type MediaInListDto,
 } from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-	createFileRoute,
-	Outlet,
-	redirect,
-	useNavigate,
-} from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	Clock,
@@ -37,29 +33,8 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
-import { useCreateList, useList, useUserLists } from "#/lib/hooks";
-import MediaCard from "../components/MediaCard";
-
-export const LISTS_PAGE_TITLE = "Lists | OpnShelf";
-export const LISTS_PAGE_DESCRIPTION =
-	"Organize movies and shows into watchlists, favorites, and custom collections.";
-
-export const Route = createFileRoute("/lists")({
-	beforeLoad: async ({ context }) => {
-		try {
-			await context.queryClient.fetchQuery(authControllerMeOptions());
-		} catch (error: any) {
-			if (error.status === 401 || error.statusCode === 401) {
-				throw redirect({
-					to: "/login",
-					search: { message: "Please log in to view your lists" },
-				});
-			}
-			throw error;
-		}
-	},
-	component: ListsLayout,
-});
+import { useCreateList } from "#/lib/hooks";
+import MediaCard from "../../components/MediaCard";
 
 const colorClasses: Record<string, string> = {
 	blue: "bg-blue-500",
@@ -82,7 +57,6 @@ const iconComponents: Record<
 	gray: List,
 };
 
-// Helper to get color based on list name
 function getListColor(name: string): string {
 	const nameLower = name.toLowerCase();
 	if (nameLower.includes("watch") || nameLower.includes("later")) return "blue";
@@ -94,7 +68,6 @@ function getListColor(name: string): string {
 	return "gray";
 }
 
-// Helper to format duration from runtime
 function formatDuration(minutes?: number): string | undefined {
 	if (!minutes) return undefined;
 	const hours = Math.floor(minutes / 60);
@@ -102,7 +75,6 @@ function formatDuration(minutes?: number): string | undefined {
 	return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
-// Helper to get poster URL from media data
 function getPosterUrl(media: Record<string, unknown>): string {
 	if (media.poster_path && typeof media.poster_path === "string") {
 		return `https://image.tmdb.org/t/p/w500${media.poster_path}`;
@@ -113,7 +85,6 @@ function getPosterUrl(media: Record<string, unknown>): string {
 	return "";
 }
 
-// Helper to get backdrop URL from media data
 function getBackdropUrl(media: Record<string, unknown>): string | undefined {
 	if (media.backdrop_path && typeof media.backdrop_path === "string") {
 		return `https://image.tmdb.org/t/p/original${media.backdrop_path}`;
@@ -124,14 +95,12 @@ function getBackdropUrl(media: Record<string, unknown>): string | undefined {
 	return undefined;
 }
 
-// Helper to get title from media data
 function getTitle(media: Record<string, unknown>): string {
 	if (media.title && typeof media.title === "string") return media.title;
 	if (media.name && typeof media.name === "string") return media.name;
 	return "Unknown";
 }
 
-// Helper to get year from media data
 function getYear(media: Record<string, unknown>): number | undefined {
 	if (media.release_date && typeof media.release_date === "string") {
 		return new Date(media.release_date).getFullYear();
@@ -145,7 +114,6 @@ function getYear(media: Record<string, unknown>): number | undefined {
 	return undefined;
 }
 
-// Helper to get rating from media data
 function getRating(media: Record<string, unknown>): number | undefined {
 	if (media.vote_average && typeof media.vote_average === "number") {
 		return media.vote_average;
@@ -156,47 +124,21 @@ function getRating(media: Record<string, unknown>): number | undefined {
 	return undefined;
 }
 
-export function buildListPageMeta(
-	list?: {
-		name: string;
-		description?: string;
-		total?: number;
-	} | null,
-) {
-	if (!list) {
-		return {
-			title: LISTS_PAGE_TITLE,
-			description: LISTS_PAGE_DESCRIPTION,
-		};
-	}
-
-	const itemLabel =
-		typeof list.total === "number"
-			? `${list.total} item${list.total === 1 ? "" : "s"}`
-			: "saved items";
-
-	return {
-		title: `${list.name} | Lists | OpnShelf`,
-		description:
-			list.description?.trim() ||
-			`Browse ${itemLabel} in the ${list.name} list on OpnShelf.`,
-	};
+interface ProfileListsPageProps {
+	userDid: string;
+	handle: string;
+	selectedListSlug?: string | null;
+	isOwner: boolean;
 }
 
-export function ListsPage({
+export function ProfileListsPage({
+	userDid,
+	handle,
 	selectedListSlug,
-}: {
-	selectedListSlug?: string | null;
-}) {
-	const { isAuthenticated, isLoading: authLoading } = useAuth();
+	isOwner,
+}: ProfileListsPageProps) {
 	const navigate = useNavigate();
-
-	// Redirect to login if not authenticated
-	useEffect(() => {
-		if (!authLoading && !isAuthenticated) {
-			navigate({ to: "/login" });
-		}
-	}, [authLoading, isAuthenticated, navigate]);
+	const { isAuthenticated } = useAuth();
 
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [showCreateModal, setShowCreateModal] = useState(false);
@@ -204,48 +146,58 @@ export function ListsPage({
 	const [newListDescription, setNewListDescription] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// Fetch user lists
+	// Fetch public lists for this user
 	const {
 		data: userLists,
 		isLoading: listsLoading,
 		error: listsError,
-	} = useUserLists();
+	} = useQuery({
+		...listsControllerGetPublicUserListsOptions({ path: { userDid } }),
+		enabled: !!userDid,
+	});
 
 	// Default to the first list when lists load and none is selected
 	useEffect(() => {
 		if (userLists && userLists.length > 0 && !selectedListSlug) {
 			navigate({
-				to: "/lists/$listSlug",
-				params: { listSlug: userLists[0].slug },
+				to: "/profile/$handle/lists/$listSlug",
+				params: { handle, listSlug: userLists[0].slug },
 				replace: true,
 			});
 		}
-	}, [navigate, selectedListSlug, userLists]);
+	}, [navigate, selectedListSlug, userLists, handle]);
 
-	// Fetch selected list details with items
+	// Fetch selected list details with items using public endpoint
 	const {
 		data: listDetails,
 		isLoading: listLoading,
 		error: listError,
-	} = useList(selectedListSlug || "");
+	} = useQuery({
+		...listsControllerGetPublicUserListOptions({
+			path: { userDid, slug: selectedListSlug || "" },
+		}),
+		enabled: !!userDid && !!selectedListSlug,
+	});
 
-	// Create list mutation
+	// Create list mutation (only works for owner)
 	const createListMutation = useCreateList();
 	const queryClient = useQueryClient();
 
-	// Remove item from list mutation
+	// Remove item from list mutation (only works for owner)
 	const removeItemMutation = useMutation({
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
 			if (selectedListSlug) {
 				queryClient.invalidateQueries({
-					queryKey: listsControllerGetListQueryKey({
-						path: { slug: selectedListSlug },
+					queryKey: listsControllerGetPublicUserListQueryKey({
+						path: { userDid, slug: selectedListSlug },
 					}),
 				});
 			}
 			queryClient.invalidateQueries({
-				queryKey: listsControllerGetUserListsQueryKey(),
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
 			});
 		},
 	});
@@ -269,8 +221,8 @@ export function ListsPage({
 
 	const handleSelectList = (slug: string) => {
 		navigate({
-			to: "/lists/$listSlug",
-			params: { listSlug: slug },
+			to: "/profile/$handle/lists/$listSlug",
+			params: { handle, listSlug: slug },
 			replace: true,
 		});
 	};
@@ -290,8 +242,8 @@ export function ListsPage({
 			setNewListDescription("");
 			if (newList?.slug) {
 				navigate({
-					to: "/lists/$listSlug",
-					params: { listSlug: newList.slug },
+					to: "/profile/$handle/lists/$listSlug",
+					params: { handle, listSlug: newList.slug },
 					replace: true,
 				});
 			}
@@ -303,7 +255,7 @@ export function ListsPage({
 	// Show loading state
 	if (listsLoading) {
 		return (
-			<div className="container-app py-8">
+			<div className="py-8">
 				<div className="flex h-64 items-center justify-center">
 					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
 					<span className="ml-2 text-(--foreground-muted)">
@@ -317,7 +269,7 @@ export function ListsPage({
 	// Show error state
 	if (listsError) {
 		return (
-			<div className="container-app py-8">
+			<div className="py-8">
 				<div className="flex h-64 flex-col items-center justify-center gap-4">
 					<AlertCircle className="h-12 w-12 text-red-500" />
 					<div className="text-center">
@@ -341,7 +293,7 @@ export function ListsPage({
 	// Show empty state when user has no lists
 	if (userLists && userLists.length === 0) {
 		return (
-			<div className="container-app py-8">
+			<div className="py-8">
 				<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex items-center gap-3">
 						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
@@ -350,19 +302,10 @@ export function ListsPage({
 						<div>
 							<h1 className="text-display-2">Lists</h1>
 							<p className="text-(--foreground-muted)">
-								Organize and manage your collections
+								Organize and manage collections
 							</p>
 						</div>
 					</div>
-
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary gap-2"
-					>
-						<Plus className="h-4 w-4" />
-						Create List
-					</button>
 				</div>
 
 				<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
@@ -373,89 +316,17 @@ export function ListsPage({
 						No lists yet
 					</h3>
 					<p className="mt-1 max-w-md text-center text-(--foreground-muted)">
-						Create your first list to start organizing movies and shows you want
-						to watch
+						This user hasn&apos;t created any lists yet.
 					</p>
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary mt-4 gap-2"
-					>
-						<Plus className="h-4 w-4" />
-						Create Your First List
-					</button>
 				</div>
-
-				{/* Create List Modal */}
-				<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-					<DialogContent className="sm:max-w-[425px]">
-						<DialogHeader>
-							<DialogTitle>Create New List</DialogTitle>
-							<DialogDescription>
-								Create a custom list to organize your movies and shows.
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<label htmlFor="list-name" className="font-medium text-sm">
-									List Name
-								</label>
-								<input
-									id="list-name"
-									type="text"
-									placeholder="My Awesome List"
-									className="input"
-									value={newListName}
-									onChange={(e) => setNewListName(e.target.value)}
-								/>
-							</div>
-							<div className="space-y-2">
-								<label
-									htmlFor="list-description"
-									className="font-medium text-sm"
-								>
-									Description (optional)
-								</label>
-								<textarea
-									id="list-description"
-									placeholder="What's this list about?"
-									className="input min-h-[80px] resize-none"
-									value={newListDescription}
-									onChange={(e) => setNewListDescription(e.target.value)}
-								/>
-							</div>
-						</div>
-						<div className="flex justify-end gap-2">
-							<Button
-								variant="outline"
-								onClick={() => setShowCreateModal(false)}
-							>
-								Cancel
-							</Button>
-							<Button
-								onClick={handleCreateList}
-								disabled={!newListName.trim() || createListMutation.isPending}
-							>
-								{createListMutation.isPending ? (
-									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Creating...
-									</>
-								) : (
-									"Create List"
-								)}
-							</Button>
-						</div>
-					</DialogContent>
-				</Dialog>
 			</div>
 		);
 	}
 
 	return (
-		<div className="container-app py-8">
+		<div className="space-y-8">
 			{/* Header */}
-			<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-3">
 					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
 						<List className="h-5 w-5" />
@@ -463,19 +334,21 @@ export function ListsPage({
 					<div>
 						<h1 className="text-display-2">Lists</h1>
 						<p className="text-(--foreground-muted)">
-							Organize and manage your collections
+							Organize and manage collections
 						</p>
 					</div>
 				</div>
 
-				<button
-					type="button"
-					onClick={() => setShowCreateModal(true)}
-					className="btn btn-primary gap-2"
-				>
-					<Plus className="h-4 w-4" />
-					Create List
-				</button>
+				{isOwner && isAuthenticated && (
+					<button
+						type="button"
+						onClick={() => setShowCreateModal(true)}
+						className="btn btn-primary gap-2"
+					>
+						<Plus className="h-4 w-4" />
+						Create List
+					</button>
+				)}
 			</div>
 
 			<div className="grid gap-8 lg:grid-cols-4">
@@ -638,7 +511,6 @@ export function ListsPage({
 								(viewMode === "grid" ? (
 									<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 										{filteredItems
-											// Deduplicate by ID to prevent React key warnings
 											.filter(
 												(item, index, self) =>
 													index === self.findIndex((i) => i.id === item.id),
@@ -663,27 +535,28 @@ export function ListsPage({
 													)}
 													size="md"
 													layout="poster"
-													onRemove={() =>
-														removeItemMutation.mutate({
-															path: {
-																slug: selectedListSlug || "",
-																mediaType: item.mediaType,
-																mediaId: item.mediaId,
-															},
-														})
-													}
-													isRemoving={
-														removeItemMutation.isPending &&
-														removeItemMutation.variables?.path?.mediaId ===
-															item.mediaId
-													}
+													{...(isOwner
+														? {
+																onRemove: () =>
+																	removeItemMutation.mutate({
+																		path: {
+																			slug: selectedListSlug || "",
+																			mediaType: item.mediaType,
+																			mediaId: item.mediaId,
+																		},
+																	}),
+																isRemoving:
+																	removeItemMutation.isPending &&
+																	removeItemMutation.variables?.path
+																		?.mediaId === item.mediaId,
+															}
+														: {})}
 												/>
 											))}
 									</div>
 								) : (
 									<div className="space-y-2">
 										{filteredItems
-											// Deduplicate by ID to prevent React key warnings
 											.filter(
 												(item, index, self) =>
 													index === self.findIndex((i) => i.id === item.id),
@@ -727,7 +600,7 @@ export function ListsPage({
 															)}
 															{getRating(item.media) && (
 																<>
-																	<span>•</span>
+																	<span>&bull;</span>
 																	<span className="flex items-center gap-1">
 																		<Star className="h-3 w-3 fill-current text-yellow-500" />
 																		{getRating(item.media)?.toFixed(1)}
@@ -738,7 +611,7 @@ export function ListsPage({
 																item.media.runtime as number | undefined,
 															) && (
 																<>
-																	<span>•</span>
+																	<span>&bull;</span>
 																	<span>
 																		{formatDuration(
 																			item.media.runtime as number | undefined,
@@ -748,33 +621,35 @@ export function ListsPage({
 															)}
 														</div>
 													</div>
-													<button
-														type="button"
-														onClick={() =>
-															removeItemMutation.mutate({
-																path: {
-																	slug: selectedListSlug || "",
-																	mediaType: item.mediaType,
-																	mediaId: item.mediaId,
-																},
-															})
-														}
-														disabled={
-															removeItemMutation.isPending &&
+													{isOwner && (
+														<button
+															type="button"
+															onClick={() =>
+																removeItemMutation.mutate({
+																	path: {
+																		slug: selectedListSlug || "",
+																		mediaType: item.mediaType,
+																		mediaId: item.mediaId,
+																	},
+																})
+															}
+															disabled={
+																removeItemMutation.isPending &&
+																removeItemMutation.variables?.path?.mediaId ===
+																	item.mediaId
+															}
+															className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:border-red-300 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+															aria-label="Remove from list"
+														>
+															{removeItemMutation.isPending &&
 															removeItemMutation.variables?.path?.mediaId ===
-																item.mediaId
-														}
-														className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:border-red-300 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-														aria-label="Remove from list"
-													>
-														{removeItemMutation.isPending &&
-														removeItemMutation.variables?.path?.mediaId ===
-															item.mediaId ? (
-															<Loader2 className="h-4 w-4 animate-spin" />
-														) : (
-															<X className="h-4 w-4" />
-														)}
-													</button>
+																item.mediaId ? (
+																<Loader2 className="h-4 w-4 animate-spin" />
+															) : (
+																<X className="h-4 w-4" />
+															)}
+														</button>
+													)}
 												</div>
 											))}
 									</div>
@@ -797,65 +672,69 @@ export function ListsPage({
 			</div>
 
 			{/* Create List Modal */}
-			<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-				<DialogContent className="sm:max-w-[425px]">
-					<DialogHeader>
-						<DialogTitle>Create New List</DialogTitle>
-						<DialogDescription>
-							Create a custom list to organize your movies and shows.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-4 py-4">
-						<div className="space-y-2">
-							<label htmlFor="list-name" className="font-medium text-sm">
-								List Name
-							</label>
-							<input
-								id="list-name"
-								type="text"
-								placeholder="My Awesome List"
-								className="input"
-								value={newListName}
-								onChange={(e) => setNewListName(e.target.value)}
-							/>
+			{isOwner && (
+				<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+					<DialogContent className="sm:max-w-[425px]">
+						<DialogHeader>
+							<DialogTitle>Create New List</DialogTitle>
+							<DialogDescription>
+								Create a custom list to organize your movies and shows.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="space-y-4 py-4">
+							<div className="space-y-2">
+								<label htmlFor="list-name" className="font-medium text-sm">
+									List Name
+								</label>
+								<input
+									id="list-name"
+									type="text"
+									placeholder="My Awesome List"
+									className="input"
+									value={newListName}
+									onChange={(e) => setNewListName(e.target.value)}
+								/>
+							</div>
+							<div className="space-y-2">
+								<label
+									htmlFor="list-description"
+									className="font-medium text-sm"
+								>
+									Description (optional)
+								</label>
+								<textarea
+									id="list-description"
+									placeholder="What's this list about?"
+									className="input min-h-[80px] resize-none"
+									value={newListDescription}
+									onChange={(e) => setNewListDescription(e.target.value)}
+								/>
+							</div>
 						</div>
-						<div className="space-y-2">
-							<label htmlFor="list-description" className="font-medium text-sm">
-								Description (optional)
-							</label>
-							<textarea
-								id="list-description"
-								placeholder="What's this list about?"
-								className="input min-h-[80px] resize-none"
-								value={newListDescription}
-								onChange={(e) => setNewListDescription(e.target.value)}
-							/>
+						<div className="flex justify-end gap-2">
+							<Button
+								variant="outline"
+								onClick={() => setShowCreateModal(false)}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={handleCreateList}
+								disabled={!newListName.trim() || createListMutation.isPending}
+							>
+								{createListMutation.isPending ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Creating...
+									</>
+								) : (
+									"Create List"
+								)}
+							</Button>
 						</div>
-					</div>
-					<div className="flex justify-end gap-2">
-						<Button variant="outline" onClick={() => setShowCreateModal(false)}>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleCreateList}
-							disabled={!newListName.trim() || createListMutation.isPending}
-						>
-							{createListMutation.isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Creating...
-								</>
-							) : (
-								"Create List"
-							)}
-						</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
+					</DialogContent>
+				</Dialog>
+			)}
 		</div>
 	);
-}
-
-function ListsLayout() {
-	return <Outlet />;
 }
