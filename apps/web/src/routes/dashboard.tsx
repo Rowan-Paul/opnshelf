@@ -21,7 +21,7 @@ import { withUserLocale } from "#/lib/date-utils";
 import { useDashboardStats, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
-import MediaCard from "../components/MediaCard";
+import DashboardMediaCard from "../components/DashboardMediaCard";
 
 // Initialize API client
 setupApiClient();
@@ -235,6 +235,7 @@ function Dashboard() {
 				return {
 					...base,
 					id: item.movieId,
+					showId: undefined,
 					title: item.title,
 					type: "movie" as const,
 					posterUrl: item.posterPath
@@ -254,6 +255,7 @@ function Dashboard() {
 			return {
 				...base,
 				id: `${item.showId}-${item.seasonNumber}-${item.episodeNumber}`, // Unique ID for each episode
+				showId: item.showId,
 				title: item.showTitle, // Use show title for URL building
 				displayTitle:
 					item.episodeTitle ||
@@ -374,9 +376,10 @@ function Dashboard() {
 						) : upNextContent.length > 0 ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{upNextContent.map((item) => (
-									<MediaCard
+									<DashboardMediaCard
 										key={`${item.id}-${item.seasonNumber}-${item.episodeNumber}`}
 										id={item.id}
+										showId={item.id}
 										title={item.title}
 										displayTitle={item.displayTitle}
 										seasonNumber={item.seasonNumber}
@@ -439,9 +442,10 @@ function Dashboard() {
 						) : userContent.length > 0 ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{userContent.map((item) => (
-									<MediaCard
+									<DashboardMediaCard
 										key={item.key}
 										id={item.id}
+										showId={item.showId}
 										title={item.title}
 										displayTitle={item.displayTitle}
 										seasonNumber={item.seasonNumber}
@@ -451,6 +455,7 @@ function Dashboard() {
 										type={item.type}
 										year={item.year}
 										episodeInfo={item.episodeInfo}
+										isWatched={item.isWatched}
 										watchedDate={
 											item.watchedDate
 												? formatWatchedDate(

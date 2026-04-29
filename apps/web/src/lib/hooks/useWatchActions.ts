@@ -4,6 +4,8 @@ import {
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	shelfControllerGetUserActivitySummaryQueryKey,
+	shelfControllerGetUserShelfQueryKey,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
 	showsControllerGetShowWatchHistoryQueryKey,
@@ -77,6 +79,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 					}),
 				});
 			}
+			invalidateShelfQueries();
 		},
 	});
 
@@ -119,6 +122,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 					}),
 				});
 			}
+			invalidateShelfQueries();
 		},
 	});
 
@@ -137,6 +141,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 					path: { userDid },
 				}),
 			});
+			invalidateShelfQueries();
 		},
 	});
 
@@ -158,10 +163,25 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		queryClient.invalidateQueries({ queryKey: ["shows"] });
 	};
 
+	const invalidateShelfQueries = () => {
+		queryClient.invalidateQueries({
+			queryKey: shelfControllerGetUserShelfQueryKey({
+				path: { userDid },
+				query: { page: 1, pageSize: 6 },
+			}),
+		});
+		queryClient.invalidateQueries({
+			queryKey: shelfControllerGetUserActivitySummaryQueryKey({
+				path: { userDid },
+			}),
+		});
+	};
+
 	const markEpisodeWatched = useMutation({
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 			// Also invalidate season details so season page stays in sync
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
@@ -180,6 +200,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetSeasonDetailsQueryKey({
@@ -197,6 +218,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 		},
 	});
 
@@ -204,6 +226,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 		},
 	});
 
@@ -211,6 +234,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetSeasonDetailsQueryKey({
@@ -228,6 +252,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSettled: () => {
 			invalidateShowQueries();
+			invalidateShelfQueries();
 		},
 	});
 

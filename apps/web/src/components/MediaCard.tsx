@@ -1,13 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-	Check,
-	Clock,
-	Loader2,
-	MoreHorizontal,
-	Play,
-	Star,
-	X,
-} from "lucide-react";
+import { Check, Clock, Library, Loader2, Play, Star, X } from "lucide-react";
 import { useState } from "react";
 import {
 	buildEpisodeUrl,
@@ -16,7 +8,7 @@ import {
 	buildShowUrl,
 } from "#/lib/url-utils";
 
-interface MediaCardProps {
+export interface MediaCardProps {
 	id: string | number;
 	title: string;
 	displayTitle?: string; // Optional different title for display (e.g., episode name)
@@ -38,10 +30,13 @@ interface MediaCardProps {
 	layout?: "poster" | "backdrop";
 	href?: string;
 	onWatch?: () => void;
-	onAddToList?: () => void;
+	onManageLists?: () => void;
 	onMarkWatched?: () => void;
+	onUnmarkWatched?: () => void;
 	onRemove?: () => void;
 	isRemoving?: boolean;
+	isMarkWatchedPending?: boolean;
+	isUnmarkWatchedPending?: boolean;
 }
 
 export default function MediaCard({
@@ -64,10 +59,13 @@ export default function MediaCard({
 	layout = "poster",
 	href,
 	onWatch,
-	onAddToList,
+	onManageLists,
 	onMarkWatched,
+	onUnmarkWatched,
 	onRemove,
 	isRemoving = false,
+	isMarkWatchedPending = false,
+	isUnmarkWatchedPending = false,
 }: MediaCardProps) {
 	const [imageLoaded, setImageLoaded] = useState(false);
 	const [imageError, setImageError] = useState(false);
@@ -172,8 +170,57 @@ export default function MediaCard({
 						</span>
 					</div>
 
-					{/* Watched indicator */}
-					{isWatched && (
+					{/* Shelf toggle + lists button — always visible in top-right corner */}
+					{(onMarkWatched || onUnmarkWatched || onManageLists) && (
+						<div className="absolute top-2 right-2 flex items-center gap-1.5">
+							{(onMarkWatched || onUnmarkWatched) && (
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										if (isWatched && onUnmarkWatched) {
+											onUnmarkWatched();
+										} else if (onMarkWatched) {
+											onMarkWatched();
+										}
+									}}
+									disabled={isMarkWatchedPending || isUnmarkWatchedPending}
+									className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
+										isWatched
+											? "bg-green-500 text-white hover:bg-green-600"
+											: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
+									}`}
+									aria-label={
+										isWatched ? "Remove from shelf" : "Mark as watched"
+									}
+									title={isWatched ? "Remove from shelf" : "Add to shelf"}
+								>
+									{isMarkWatchedPending || isUnmarkWatchedPending ? (
+										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+									) : (
+										<Check className="h-3.5 w-3.5" />
+									)}
+								</button>
+							)}
+							{onManageLists && (
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										onManageLists();
+									}}
+									className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40"
+									aria-label="Manage lists"
+									title="Add to list"
+								>
+									<Library className="h-3.5 w-3.5" />
+								</button>
+							)}
+						</div>
+					)}
+
+					{/* Static watched indicator (no interactive callback) */}
+					{isWatched && !onMarkWatched && !onUnmarkWatched && (
 						<div className="absolute top-2 right-2">
 							<div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
 								<Check className="h-3.5 w-3.5" />
@@ -192,34 +239,19 @@ export default function MediaCard({
 					)}
 
 					{/* Hover actions */}
-					{(onWatch || onMarkWatched) && (
-						<div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-							{onWatch && (
-								<button
-									type="button"
-									onClick={(e) => {
-										e.preventDefault();
-										onWatch();
-									}}
-									className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-110"
-									aria-label="Watch"
-								>
-									<Play className="h-5 w-5 fill-current" />
-								</button>
-							)}
-							{onMarkWatched && !isWatched && (
-								<button
-									type="button"
-									onClick={(e) => {
-										e.preventDefault();
-										onMarkWatched();
-									}}
-									className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-110"
-									aria-label="Mark as watched"
-								>
-									<Check className="h-5 w-5" />
-								</button>
-							)}
+					{onWatch && (
+						<div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+							<button
+								type="button"
+								onClick={(e) => {
+									e.preventDefault();
+									onWatch();
+								}}
+								className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-110"
+								aria-label="Watch"
+							>
+								<Play className="h-5 w-5 fill-current" />
+							</button>
 						</div>
 					)}
 
@@ -280,36 +312,25 @@ export default function MediaCard({
 				)}
 			</Link>
 
-			{/* Actions menu */}
-			{(onAddToList || onMarkWatched || onRemove) && (
+			{/* Actions menu — hover-only remove button for list pages */}
+			{onRemove && (
 				<div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-					{onRemove && (
-						<button
-							type="button"
-							onClick={(e) => {
-								e.preventDefault();
-								onRemove();
-							}}
-							disabled={isRemoving}
-							className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50"
-							aria-label="Remove from list"
-						>
-							{isRemoving ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								<X className="h-4 w-4" />
-							)}
-						</button>
-					)}
-					{(onAddToList || onMarkWatched) && (
-						<button
-							type="button"
-							className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-							aria-label="More options"
-						>
-							<MoreHorizontal className="h-4 w-4" />
-						</button>
-					)}
+					<button
+						type="button"
+						onClick={(e) => {
+							e.preventDefault();
+							onRemove();
+						}}
+						disabled={isRemoving}
+						className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50"
+						aria-label="Remove from list"
+					>
+						{isRemoving ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<X className="h-4 w-4" />
+						)}
+					</button>
 				</div>
 			)}
 		</article>
