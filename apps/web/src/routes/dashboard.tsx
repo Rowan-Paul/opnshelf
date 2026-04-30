@@ -20,6 +20,7 @@ import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 import { useDashboardStats, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
+import { useSearchDialog } from "#/lib/search-dialog-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import DashboardMediaCard from "../components/DashboardMediaCard";
 
@@ -118,6 +119,7 @@ function Dashboard() {
 		isLoading: authLoading,
 	} = useAuth();
 	const navigate = useNavigate();
+	const { setOpen: setSearchOpen } = useSearchDialog();
 	const userDid = user?.did;
 	const userTimezone = userSettings?.timezone;
 	const userTimeFormat = userSettings?.timeFormat;
@@ -408,9 +410,7 @@ function Dashboard() {
 								</p>
 								<button
 									type="button"
-									onClick={() => {
-										/* TODO: open search dialog */
-									}}
+									onClick={() => setSearchOpen(true)}
 									className="btn btn-primary inline-flex gap-2"
 								>
 									<Tv className="h-4 w-4" />
@@ -486,9 +486,7 @@ function Dashboard() {
 								</p>
 								<button
 									type="button"
-									onClick={() => {
-										/* TODO: open search dialog */
-									}}
+									onClick={() => setSearchOpen(true)}
 									className="btn btn-primary inline-flex gap-2"
 								>
 									<Film className="h-4 w-4" />

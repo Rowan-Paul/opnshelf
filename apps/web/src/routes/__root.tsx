@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "#/components/ui/sonner";
 import { AuthProvider } from "#/lib/auth-context";
+import { SearchDialogProvider } from "#/lib/search-dialog-context";
 import {
 	DefaultErrorComponent,
 	NotFoundComponent,
@@ -54,12 +55,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body className="min-h-screen antialiased">
 				<PostHogProvider>
 					<AuthProvider>
-						<div className="flex min-h-screen flex-col">
-							<Header />
-							<main className="flex-1">{children}</main>
-							<Footer />
-						</div>
-						<Toaster />
+						<SearchDialogProvider>
+							<div className="flex min-h-screen flex-col">
+								<Header />
+								<main className="flex-1">{children}</main>
+								<Footer />
+							</div>
+							<Toaster />
+						</SearchDialogProvider>
 					</AuthProvider>
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

@@ -7,26 +7,28 @@ import {
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
 	Calendar,
 	Clock,
 	Film,
-	Heart,
 	Home,
 	List,
 	Loader2,
+	LogOut,
+	Monitor,
+	Moon,
 	Search,
 	Settings,
 	Star,
+	Sun,
 	Tv,
 	User,
 	Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	CommandDialog,
-	CommandEmpty,
 	CommandGroup,
 	CommandInput,
 	CommandItem,
@@ -42,7 +44,6 @@ interface SearchCommandProps {
 	onOpenChange?: (open: boolean) => void;
 }
 
-// Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
 	const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -59,6 +60,8 @@ function useDebounce<T>(value: T, delay: number): T {
 	return debouncedValue;
 }
 
+const RESULTS_PER_SECTION = 8;
+
 export function SearchCommand({
 	open: controlledOpen,
 	onOpenChange,
@@ -67,51 +70,117 @@ export function SearchCommand({
 	const [searchQuery, setSearchQuery] = useState("");
 	const debouncedQuery = useDebounce(searchQuery, 400);
 
+	const isControlled = controlledOpen !== undefined;
+	const isOpen = isControlled ? controlledOpen : open;
+	const handleOpenChange = (value: boolean) => {
+		if (isControlled) {
+			onOpenChange?.(value);
+		} else {
+			setOpen(value);
+		}
+	};
+
+	const isOpenRef = useRef(isOpen);
+	isOpenRef.current = isOpen;
+	const handleOpenChangeRef = useRef(handleOpenChange);
+	handleOpenChangeRef.current = handleOpenChange;
+
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
 			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
-				setOpen((open) => !open);
+				handleOpenChangeRef.current(!isOpenRef.current);
 			}
 		};
 		document.addEventListener("keydown", down);
 		return () => document.removeEventListener("keydown", down);
 	}, []);
 
-	// Reset search when dialog closes
 	useEffect(() => {
-		if (!open) {
+		if (!isOpen) {
 			setSearchQuery("");
 		}
-	}, [open]);
+	}, [isOpen]);
 
-	const isOpen = controlledOpen !== undefined ? controlledOpen : open;
-	const handleOpenChange = onOpenChange || setOpen;
-	const { user } = useAuth();
+	const { user, logout } = useAuth();
 	const currentUserHandle = user?.handle;
+	const navigate = useNavigate();
 
-	// Search all API - only enabled when there's a search query
-	const { data: searchData, isLoading: isSearching } = useQuery({
+	// Theme toggle state
+	const [themeMode, setThemeMode] = useState<"light" | "dark" | "auto">("auto");
+
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const stored = window.localStorage.getItem("theme");
+		if (stored === "light" || stored === "dark" || stored === "auto") {
+			setThemeMode(stored);
+		}
+	}, []);
+
+	function cycleTheme() {
+		if (typeof window === "undefined") return;
+		const nextMode: "light" | "dark" | "auto" =
+			themeMode === "light" ? "dark" : themeMode === "dark" ? "auto" : "light";
+		setThemeMode(nextMode);
+		window.localStorage.setItem("theme", nextMode);
+
+		const prefersDark = window.matchMedia(
+			"(prefers-color-scheme: dark)",
+		).matches;
+		const resolved =
+			nextMode === "auto" ? (prefersDark ? "dark" : "light") : nextMode;
+
+		document.documentElement.classList.remove("light", "dark");
+		document.documentElement.classList.add(resolved);
+
+		if (nextMode === "auto") {
+			document.documentElement.removeAttribute("data-theme");
+		} else {
+			document.documentElement.setAttribute("data-theme", nextMode);
+		}
+		document.documentElement.style.colorScheme = resolved;
+	}
+
+	const themeIcons = {
+		light: Sun,
+		dark: Moon,
+		auto: Monitor,
+	};
+
+	const themeLabels = {
+		light: "Light mode",
+		dark: "Dark mode",
+		auto: "System preference",
+	};
+
+	const ThemeIcon = themeIcons[themeMode];
+
+	const {
+		data: searchData,
+		isLoading: isSearching,
+		isError: isSearchError,
+	} = useQuery({
 		...searchControllerSearchAllOptions({
 			query: { query: debouncedQuery },
 		}),
 		enabled: debouncedQuery.length > 0,
 	});
 
-	// User lists - always fetched
 	const { data: userLists } = useQuery({
 		...listsControllerGetUserListsOptions(),
 	});
 
-	// People search - only enabled when there's a search query
-	const { data: peopleData, isLoading: isSearchingPeople } = useQuery({
+	const {
+		data: peopleData,
+		isLoading: isSearchingPeople,
+		isError: isPeopleError,
+	} = useQuery({
 		...socialControllerSearchPeopleOptions({
 			query: { q: debouncedQuery },
 		}),
 		enabled: debouncedQuery.length > 0,
 	});
 
-	// Filter results by type
 	const movies =
 		searchData?.results?.filter(
 			(item: UnifiedSearchResultDto) => item.media_type === "movie",
@@ -123,18 +192,17 @@ export function SearchCommand({
 		) || [];
 
 	const hasSearchQuery = debouncedQuery.length > 0;
-	const hasResults =
+	const hasSearchResults =
 		movies.length > 0 ||
 		shows.length > 0 ||
-		(userLists && userLists.length > 0);
+		(peopleData?.items && peopleData.items.length > 0);
 	const isLoading = isSearching || isSearchingPeople;
+	const hasError = isSearchError || isPeopleError;
 
-	// Get the display title for a search result
 	const getTitle = (item: UnifiedSearchResultDto): string => {
 		return item.title || item.name || "Unknown";
 	};
 
-	// Get the release year for a search result
 	const getYear = (item: UnifiedSearchResultDto): string => {
 		const date = item.release_date || item.first_air_date;
 		if (date) {
@@ -143,9 +211,28 @@ export function SearchCommand({
 		return "";
 	};
 
+	const goTo = (to: string, params?: Record<string, string>) => {
+		handleOpenChange(false);
+		if (params) {
+			navigate({ to, params });
+		} else {
+			navigate({ to });
+		}
+	};
+
+	const goToSearch = (type?: string) => {
+		handleOpenChange(false);
+		navigate({
+			to: "/search",
+			search: {
+				q: debouncedQuery,
+				...(type ? { type } : {}),
+			},
+		});
+	};
+
 	return (
 		<>
-			{/* Trigger button - can be placed anywhere */}
 			<button
 				type="button"
 				onClick={() => handleOpenChange(true)}
@@ -159,205 +246,292 @@ export function SearchCommand({
 				</kbd>
 			</button>
 
-			<CommandDialog open={isOpen} onOpenChange={handleOpenChange}>
+			<CommandDialog
+				open={isOpen}
+				onOpenChange={handleOpenChange}
+				commandProps={{ shouldFilter: false }}
+			>
 				<CommandInput
 					placeholder="Search movies, shows, lists..."
 					value={searchQuery}
 					onValueChange={setSearchQuery}
 				/>
 				<CommandList>
-					{/* Empty state */}
-					{hasSearchQuery && !isLoading && !hasResults && (
-						<CommandEmpty>
-							<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
-								<Search className="h-8 w-8 opacity-50" />
-								<p>No results found for &quot;{debouncedQuery}&quot;</p>
-								<p className="text-sm">
-									Try searching for movies, TV shows, or people
-								</p>
-							</div>
-						</CommandEmpty>
-					)}
-
-					{/* Loading state */}
-					{isLoading && (
+					{/* Loading */}
+					{hasSearchQuery && isLoading && (
 						<div className="flex items-center justify-center py-8 text-(--foreground-muted)">
 							<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 							<span>Searching...</span>
 						</div>
 					)}
 
-					{/* Navigation - Always shown */}
-					<CommandGroup heading="Navigation">
-						<CommandItem asChild>
-							<Link to="/" className="flex items-center gap-2">
+					{/* Error */}
+					{hasSearchQuery && !isLoading && hasError && (
+						<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
+							<p>Something went wrong.</p>
+							<p className="text-sm">Try again in a moment.</p>
+						</div>
+					)}
+
+					{/* Empty state */}
+					{hasSearchQuery && !isLoading && !hasError && !hasSearchResults && (
+						<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
+							<Search className="h-8 w-8 opacity-50" />
+							<p>No results found for &quot;{debouncedQuery}&quot;</p>
+							<p className="text-sm">
+								Try searching for movies, TV shows, or people
+							</p>
+						</div>
+					)}
+
+					{/* Search results */}
+					{hasSearchQuery && !isLoading && !hasError && hasSearchResults && (
+						<>
+							{/* Movies */}
+							{movies.length > 0 && (
+								<CommandGroup heading="Movies">
+									{movies
+										.slice(0, RESULTS_PER_SECTION)
+										.map((movie: UnifiedSearchResultDto) => {
+											const title = getTitle(movie);
+											return (
+												<CommandItem
+													key={`movie-${movie.id}`}
+													value={`movie ${title} ${getYear(movie)}`}
+													onSelect={() => goTo(buildMovieUrl(movie.id, title))}
+												>
+													<Film className="h-4 w-4 shrink-0" />
+													<span className="truncate">{title}</span>
+													{getYear(movie) && (
+														<span className="shrink-0 text-(--foreground-muted)">
+															({getYear(movie)})
+														</span>
+													)}
+													<CommandShortcut>
+														<span className="flex items-center gap-1">
+															<Star className="h-3 w-3" />
+															{movie.vote_average?.toFixed(1) || "N/A"}
+														</span>
+													</CommandShortcut>
+												</CommandItem>
+											);
+										})}
+									{movies.length > RESULTS_PER_SECTION && (
+										<CommandItem
+											value="more movies"
+											onSelect={() => goToSearch("movies")}
+										>
+											<Search className="h-4 w-4" />
+											<span>Show more results</span>
+										</CommandItem>
+									)}
+								</CommandGroup>
+							)}
+
+							{/* TV Shows */}
+							{shows.length > 0 && (
+								<CommandGroup heading="TV Shows">
+									{shows
+										.slice(0, RESULTS_PER_SECTION)
+										.map((show: UnifiedSearchResultDto) => {
+											const title = getTitle(show);
+											return (
+												<CommandItem
+													key={`show-${show.id}`}
+													value={`show ${title} ${getYear(show)}`}
+													onSelect={() => goTo(buildShowUrl(show.id, title))}
+												>
+													<Tv className="h-4 w-4 shrink-0" />
+													<span className="truncate">{title}</span>
+													{getYear(show) && (
+														<span className="shrink-0 text-(--foreground-muted)">
+															({getYear(show)})
+														</span>
+													)}
+													<CommandShortcut>
+														<span className="flex items-center gap-1">
+															<Star className="h-3 w-3" />
+															{show.vote_average?.toFixed(1) || "N/A"}
+														</span>
+													</CommandShortcut>
+												</CommandItem>
+											);
+										})}
+									{shows.length > RESULTS_PER_SECTION && (
+										<CommandItem
+											value="more shows"
+											onSelect={() => goToSearch("shows")}
+										>
+											<Search className="h-4 w-4" />
+											<span>Show more results</span>
+										</CommandItem>
+									)}
+								</CommandGroup>
+							)}
+
+							{/* People */}
+							{peopleData?.items && peopleData.items.length > 0 && (
+								<CommandGroup
+									heading={`People (${peopleData.items.length} result${peopleData.items.length === 1 ? "" : "s"})`}
+								>
+									{peopleData.items
+										.slice(0, RESULTS_PER_SECTION)
+										.map((person: SocialUserCardDto) => {
+											const name = String(
+												person.displayName || person.handle || "Unknown",
+											);
+											return (
+												<CommandItem
+													key={`person-${person.did}`}
+													value={`person ${name} ${person.handle}`}
+													onSelect={() =>
+														goTo("/profile/$handle", {
+															handle: person.handle || person.did,
+														})
+													}
+												>
+													<User className="h-4 w-4 shrink-0" />
+													<span className="truncate">{name}</span>
+													{person.handle && (
+														<span className="shrink-0 text-(--foreground-muted)">
+															@{String(person.handle)}
+														</span>
+													)}
+												</CommandItem>
+											);
+										})}
+									{peopleData.items.length > RESULTS_PER_SECTION && (
+										<CommandItem
+											value="more people"
+											onSelect={() => goToSearch("people")}
+										>
+											<Search className="h-4 w-4" />
+											<span>Show more results</span>
+										</CommandItem>
+									)}
+								</CommandGroup>
+							)}
+						</>
+					)}
+
+					{/* Navigation — only when not searching */}
+					{!hasSearchQuery && (
+						<CommandGroup heading="Navigation">
+							<CommandItem
+								value="dashboard"
+								onSelect={() => goTo("/dashboard")}
+							>
 								<Home className="h-4 w-4" />
 								<span>Dashboard</span>
-							</Link>
-						</CommandItem>
-						<CommandItem asChild>
-							<Link to="/calendar" className="flex items-center gap-2">
+							</CommandItem>
+							<CommandItem value="calendar" onSelect={() => goTo("/calendar")}>
 								<Calendar className="h-4 w-4" />
 								<span>Calendar</span>
-							</Link>
-						</CommandItem>
-						<CommandItem asChild>
-							<Link to="/following" className="flex items-center gap-2">
+							</CommandItem>
+							<CommandItem
+								value="following"
+								onSelect={() => goTo("/following")}
+							>
 								<Users className="h-4 w-4" />
 								<span>Following</span>
-							</Link>
-						</CommandItem>
-						{currentUserHandle && (
-							<CommandItem asChild>
-								<Link
-									to="/profile/$handle/lists"
-									params={{ handle: currentUserHandle }}
-									className="flex items-center gap-2"
+							</CommandItem>
+							{currentUserHandle && (
+								<CommandItem
+									value="up next"
+									onSelect={() =>
+										goTo("/profile/$handle/up-next", {
+											handle: currentUserHandle,
+										})
+									}
+								>
+									<Clock className="h-4 w-4" />
+									<span>Up Next</span>
+								</CommandItem>
+							)}
+							{currentUserHandle && (
+								<CommandItem
+									value="profile"
+									onSelect={() =>
+										goTo("/profile/$handle", {
+											handle: currentUserHandle,
+										})
+									}
+								>
+									<User className="h-4 w-4" />
+									<span>Profile</span>
+								</CommandItem>
+							)}
+							{currentUserHandle && (
+								<CommandItem
+									value="lists"
+									onSelect={() =>
+										goTo("/profile/$handle/lists", {
+											handle: currentUserHandle,
+										})
+									}
 								>
 									<List className="h-4 w-4" />
 									<span>Lists</span>
-								</Link>
-							</CommandItem>
-						)}
-					</CommandGroup>
-
-					{/* Movies Section */}
-					{movies.length > 0 && (
-						<>
-							<CommandSeparator />
-							<CommandGroup heading={`Movies (${movies.length})`}>
-								{movies.slice(0, 5).map((movie: UnifiedSearchResultDto) => (
-									<CommandItem key={`movie-${movie.id}`} asChild>
-										<Link
-											to={buildMovieUrl(movie.id, getTitle(movie))}
-											className="flex items-center gap-2"
-										>
-											<Film className="h-4 w-4" />
-											<span>{getTitle(movie)}</span>
-											{getYear(movie) && (
-												<span className="text-(--foreground-muted)">
-													({getYear(movie)})
-												</span>
-											)}
-											<CommandShortcut>
-												<span className="flex items-center gap-1">
-													<Star className="h-3 w-3" />
-													{movie.vote_average?.toFixed(1) || "N/A"}
-												</span>
-											</CommandShortcut>
-										</Link>
-									</CommandItem>
-								))}
-							</CommandGroup>
-						</>
+								</CommandItem>
+							)}
+						</CommandGroup>
 					)}
 
-					{/* TV Shows Section */}
-					{shows.length > 0 && (
-						<>
-							<CommandSeparator />
-							<CommandGroup heading={`TV Shows (${shows.length})`}>
-								{shows.slice(0, 5).map((show: UnifiedSearchResultDto) => (
-									<CommandItem key={`show-${show.id}`} asChild>
-										<Link
-											to={buildShowUrl(show.id, getTitle(show))}
-											className="flex items-center gap-2"
-										>
-											<Tv className="h-4 w-4" />
-											<span>{getTitle(show)}</span>
-											{getYear(show) && (
-												<span className="text-(--foreground-muted)">
-													({getYear(show)})
-												</span>
-											)}
-											<CommandShortcut>
-												<span className="flex items-center gap-1">
-													<Star className="h-3 w-3" />
-													{show.vote_average?.toFixed(1) || "N/A"}
-												</span>
-											</CommandShortcut>
-										</Link>
-									</CommandItem>
-								))}
-							</CommandGroup>
-						</>
-					)}
-
-					{/* Your Lists Section - Always shown when available */}
+					{/* Your Lists */}
 					{userLists && userLists.length > 0 && currentUserHandle && (
 						<>
 							<CommandSeparator />
 							<CommandGroup heading="Your Lists">
-								{userLists.slice(0, 5).map((list: ListSummaryDto) => (
-									<CommandItem key={`list-${list.id}`} asChild>
-										<Link
-											to="/profile/$handle/lists/$listSlug"
-											params={{
-												handle: currentUserHandle,
-												listSlug: list.slug,
-											}}
-											className="flex items-center gap-2"
+								{userLists
+									.slice(0, RESULTS_PER_SECTION)
+									.map((list: ListSummaryDto) => (
+										<CommandItem
+											key={`list-${list.id}`}
+											value={`list ${list.name}`}
+											onSelect={() =>
+												goTo("/profile/$handle/lists/$listSlug", {
+													handle: currentUserHandle,
+													listSlug: list.slug,
+												})
+											}
 										>
 											<List className="h-4 w-4" />
 											<span>{list.name}</span>
 											<CommandShortcut>{list.itemCount} items</CommandShortcut>
-										</Link>
-									</CommandItem>
-								))}
-							</CommandGroup>
-						</>
-					)}
-
-					{/* People Section */}
-					{peopleData?.items && peopleData.items.length > 0 && (
-						<>
-							<CommandSeparator />
-							<CommandGroup heading={`People (${peopleData.items.length})`}>
-								{peopleData.items
-									.slice(0, 5)
-									.map((person: SocialUserCardDto) => (
-										<CommandItem key={`person-${person.did}`} asChild>
-											<Link
-												to="/profile/$handle"
-												params={{ handle: person.handle || person.did }}
-												className="flex items-center gap-2"
-											>
-												<User className="h-4 w-4" />
-												<span>
-													{String(
-														person.displayName || person.handle || "Unknown",
-													)}
-												</span>
-												{person.handle && (
-													<span className="text-(--foreground-muted)">
-														@{String(person.handle)}
-													</span>
-												)}
-											</Link>
 										</CommandItem>
 									))}
 							</CommandGroup>
 						</>
 					)}
 
-					{/* Quick Actions Section */}
+					{/* Quick Actions */}
 					<CommandSeparator />
 					<CommandGroup heading="Quick Actions">
-						<CommandItem>
-							<Clock className="h-4 w-4" />
-							<span>Continue Watching</span>
+						<CommandItem value="settings" onSelect={() => goTo("/settings")}>
+							<Settings className="h-4 w-4" />
+							<span>Settings</span>
 						</CommandItem>
-						<CommandItem>
-							<Heart className="h-4 w-4" />
-							<span>Favorites</span>
+						<CommandItem
+							value="theme"
+							onSelect={() => {
+								cycleTheme();
+							}}
+						>
+							<ThemeIcon className="h-4 w-4" />
+							<span>{themeLabels[themeMode]}</span>
 						</CommandItem>
-						<CommandItem asChild>
-							<Link to="/settings" className="flex items-center gap-2">
-								<Settings className="h-4 w-4" />
-								<span>Settings</span>
-								<CommandShortcut>⌘S</CommandShortcut>
-							</Link>
-						</CommandItem>
+						{currentUserHandle && (
+							<CommandItem
+								value="sign out"
+								onSelect={() => {
+									handleOpenChange(false);
+									logout();
+								}}
+							>
+								<LogOut className="h-4 w-4" />
+								<span>Sign Out</span>
+							</CommandItem>
+						)}
 					</CommandGroup>
 				</CommandList>
 			</CommandDialog>

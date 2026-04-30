@@ -18,6 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
+import { useSearchDialog } from "#/lib/search-dialog-context";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
@@ -33,6 +34,9 @@ export default function Header() {
 	const router = useRouterState();
 	const currentPath = router.location.pathname;
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
+	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
+
+	const visibleNavigation = isAuthenticated ? navigation : [];
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -91,7 +95,7 @@ export default function Header() {
 
 					{/* Desktop Navigation */}
 					<div className="hidden items-center gap-1 md:flex">
-						{navigation.map((item) => {
+						{visibleNavigation.map((item) => {
 							const isActive =
 								currentPath === item.href ||
 								(item.href !== "/" && currentPath.startsWith(item.href));
@@ -113,7 +117,7 @@ export default function Header() {
 					{/* Right side actions */}
 					<div className="flex items-center gap-2">
 						{/* Search */}
-						<SearchCommand />
+						<SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
 						{/* Theme Toggle */}
 						<ThemeToggle />
@@ -220,7 +224,7 @@ export default function Header() {
 					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-(--border) border-t bg-(--background) md:hidden">
 						<div className="container-app h-full overflow-y-auto py-4">
 							<div className="flex flex-col gap-1">
-								{navigation.map((item) => {
+								{visibleNavigation.map((item) => {
 									const isActive =
 										currentPath === item.href ||
 										(item.href !== "/" && currentPath.startsWith(item.href));
