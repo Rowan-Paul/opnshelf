@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Clock, Library, Loader2, Play, Star, X } from "lucide-react";
+import {
+	BookmarkX,
+	Check,
+	Clock,
+	Library,
+	Loader2,
+	Play,
+	Star,
+} from "lucide-react";
 import { useState } from "react";
 import {
 	buildEpisodeUrl,
@@ -11,14 +19,12 @@ import {
 export interface MediaCardProps {
 	id: string | number;
 	title: string;
-	displayTitle?: string; // Optional different title for display (e.g., episode name)
-	// Episode-specific props for linking to episode detail page
+	displayTitle?: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
 	posterUrl: string;
 	backdropUrl?: string;
 	type: "movie" | "show";
-	year?: number;
 	rating?: number;
 	duration?: string;
 	episodeInfo?: string;
@@ -48,7 +54,6 @@ export default function MediaCard({
 	posterUrl,
 	backdropUrl,
 	type,
-	year,
 	rating,
 	duration,
 	episodeInfo,
@@ -93,7 +98,6 @@ export default function MediaCard({
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
 
-	// Build URL - scoped show items go to season/episode detail pages
 	const linkHref = (() => {
 		if (href) return href;
 		if (type === "movie") {
@@ -170,61 +174,78 @@ export default function MediaCard({
 						</span>
 					</div>
 
-					{/* Shelf toggle + lists button — always visible in top-right corner */}
-					{(onMarkWatched || onUnmarkWatched || onManageLists) && (
-						<div className="absolute top-2 right-2 flex items-center gap-1.5">
-							{(onMarkWatched || onUnmarkWatched) && (
-								<button
-									type="button"
-									onClick={(e) => {
-										e.preventDefault();
-										if (isWatched && onUnmarkWatched) {
-											onUnmarkWatched();
-										} else if (onMarkWatched) {
-											onMarkWatched();
+					{/* Actions — top-right corner */}
+					{(onMarkWatched || onUnmarkWatched || onManageLists || onRemove) && (
+						<div className="absolute top-2 right-2 flex flex-col gap-1.5">
+							<div className="flex items-center gap-1.5">
+								{(onMarkWatched || onUnmarkWatched) && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.preventDefault();
+											if (isWatched && onUnmarkWatched) {
+												onUnmarkWatched();
+											} else if (onMarkWatched) {
+												onMarkWatched();
+											}
+										}}
+										disabled={isMarkWatchedPending || isUnmarkWatchedPending}
+										className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
+											isWatched
+												? "bg-green-500 text-white hover:bg-green-600"
+												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
+										}`}
+										aria-label={
+											isWatched ? "Remove from shelf" : "Mark as watched"
 										}
-									}}
-									disabled={isMarkWatchedPending || isUnmarkWatchedPending}
-									className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
-										isWatched
-											? "bg-green-500 text-white hover:bg-green-600"
-											: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
-									}`}
-									aria-label={
-										isWatched ? "Remove from shelf" : "Mark as watched"
-									}
-									title={isWatched ? "Remove from shelf" : "Add to shelf"}
-								>
-									{isMarkWatchedPending || isUnmarkWatchedPending ? (
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
-									) : (
-										<Check className="h-3.5 w-3.5" />
-									)}
-								</button>
-							)}
-							{onManageLists && (
-								<button
-									type="button"
-									onClick={(e) => {
-										e.preventDefault();
-										onManageLists();
-									}}
-									className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40"
-									aria-label="Manage lists"
-									title="Add to list"
-								>
-									<Library className="h-3.5 w-3.5" />
-								</button>
-							)}
-						</div>
-					)}
-
-					{/* Static watched indicator (no interactive callback) */}
-					{isWatched && !onMarkWatched && !onUnmarkWatched && (
-						<div className="absolute top-2 right-2">
-							<div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
-								<Check className="h-3.5 w-3.5" />
+										title={isWatched ? "Remove from shelf" : "Add to shelf"}
+									>
+										{isMarkWatchedPending || isUnmarkWatchedPending ? (
+											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+										) : (
+											<Check className="h-3.5 w-3.5" />
+										)}
+									</button>
+								)}
+								{onManageLists && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.preventDefault();
+											onManageLists();
+										}}
+										className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40"
+										aria-label="Manage lists"
+										title="Add to list"
+									>
+										<Library className="h-3.5 w-3.5" />
+									</button>
+								)}
+								{onRemove && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.preventDefault();
+											onRemove();
+										}}
+										disabled={isRemoving}
+										className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50"
+										aria-label="Remove from list"
+									>
+										{isRemoving ? (
+											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+										) : (
+											<BookmarkX className="h-3.5 w-3.5" />
+										)}
+									</button>
+								)}
 							</div>
+							{/* Static watched indicator (no interactive callback) */}
+							{isWatched && !onMarkWatched && !onUnmarkWatched && (
+								<div className="flex h-6 w-6 items-center justify-center self-end rounded-full bg-green-500 text-white">
+									<Check className="h-3.5 w-3.5" />
+								</div>
+							)}
 						</div>
 					)}
 
@@ -277,21 +298,33 @@ export default function MediaCard({
 				{/* Poster layout content below image */}
 				{layout === "poster" && (
 					<div className="mt-2 space-y-1">
-						<h3 className="line-clamp-1 font-medium text-(--foreground) text-sm">
-							{displayName}
-						</h3>
-						<div className="flex items-center gap-2 text-(--foreground-muted) text-xs">
-							{year && <span>{year}</span>}
-							{typeof seasonNumber === "number" && type === "show" && (
-								<>
-									<span>•</span>
-									<span>
-										{typeof episodeNumber === "number"
-											? `S${seasonNumber}E${episodeNumber}`
-											: `Season ${seasonNumber}`}
-									</span>
-								</>
-							)}
+						{episodeInfo ? (
+							<>
+								<h3 className="line-clamp-1 font-medium text-(--foreground) text-sm">
+									{episodeInfo}
+								</h3>
+								<p className="line-clamp-1 text-(--foreground-muted) text-xs">
+									{displayName}
+								</p>
+							</>
+						) : (
+							<h3 className="line-clamp-1 font-medium text-(--foreground) text-sm">
+								{displayName}
+							</h3>
+						)}
+						<div className="flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
+							{typeof seasonNumber === "number" &&
+								type === "show" &&
+								!episodeInfo && (
+									<>
+										<span>•</span>
+										<span>
+											{typeof episodeNumber === "number"
+												? `S${seasonNumber}E${episodeNumber}`
+												: `Season ${seasonNumber}`}
+										</span>
+									</>
+								)}
 							{rating && (
 								<>
 									<span>•</span>
@@ -308,31 +341,15 @@ export default function MediaCard({
 								</>
 							)}
 						</div>
+						{watchedDate && (
+							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">
+								<Clock className="h-3 w-3" />
+								{watchedDate}
+							</p>
+						)}
 					</div>
 				)}
 			</Link>
-
-			{/* Actions menu — visible on mobile, hover-only on desktop */}
-			{onRemove && (
-				<div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-					<button
-						type="button"
-						onClick={(e) => {
-							e.preventDefault();
-							onRemove();
-						}}
-						disabled={isRemoving}
-						className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50"
-						aria-label="Remove from list"
-					>
-						{isRemoving ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<X className="h-4 w-4" />
-						)}
-					</button>
-				</div>
-			)}
 		</article>
 	);
 }

@@ -154,6 +154,49 @@ export class ListsService {
 							: {}),
 					});
 
+		const episodeItems = items.filter(
+			(item) => item.mediaType === "show" && item.showId,
+		);
+		const episodeKeys = episodeItems
+			.map((item) => {
+				const parsed = parseScopedShowMediaId(item.mediaId);
+				if (parsed?.seasonNumber != null && parsed?.episodeNumber != null) {
+					return {
+						showId: parsed.showId,
+						seasonNumber: parsed.seasonNumber,
+						episodeNumber: parsed.episodeNumber,
+					};
+				}
+				return null;
+			})
+			.filter((k): k is NonNullable<typeof k> => k != null);
+
+		const episodes =
+			episodeKeys.length > 0
+				? await this.prisma.episode.findMany({
+						where: {
+							OR: episodeKeys.map((k) => ({
+								showId: k.showId,
+								seasonNumber: k.seasonNumber,
+								episodeNumber: k.episodeNumber,
+							})),
+						},
+						select: {
+							showId: true,
+							seasonNumber: true,
+							episodeNumber: true,
+							name: true,
+						},
+					})
+				: [];
+
+		const episodeMap = new Map(
+			episodes.map((ep) => [
+				`${ep.showId}:${ep.seasonNumber}:${ep.episodeNumber}`,
+				ep.name,
+			]),
+		);
+
 		return {
 			id: list.id,
 			rkey: list.rkey,
@@ -165,7 +208,16 @@ export class ListsService {
 			isDefault: list.isDefault,
 			createdAt: list.createdAt.toISOString(),
 			updatedAt: list.updatedAt.toISOString(),
-			items: items.map((item) => mapItemToDto(item)),
+			items: items.map((item) => {
+				const parsed = parseScopedShowMediaId(item.mediaId);
+				const episodeName =
+					parsed?.seasonNumber != null && parsed?.episodeNumber != null
+						? episodeMap.get(
+								`${parsed.showId}:${parsed.seasonNumber}:${parsed.episodeNumber}`,
+							)
+						: undefined;
+				return mapItemToDto(item, episodeName);
+			}),
 			total,
 			page: currentPage,
 			pageSize: shouldPaginate && safePageSize ? safePageSize : total,

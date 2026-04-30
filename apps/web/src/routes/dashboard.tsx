@@ -392,7 +392,6 @@ function Dashboard() {
 										posterUrl={item.posterUrl}
 										backdropUrl={item.backdropUrl}
 										type={item.type}
-										year={item.year}
 										episodeInfo={item.episodeInfo}
 										layout="backdrop"
 										size="md"
@@ -459,7 +458,6 @@ function Dashboard() {
 										posterUrl={item.posterUrl}
 										backdropUrl={item.backdropUrl}
 										type={item.type}
-										year={item.year}
 										episodeInfo={item.episodeInfo}
 										isWatched={item.isWatched}
 										watchedDate={

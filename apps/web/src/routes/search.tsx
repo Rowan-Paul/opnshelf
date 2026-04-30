@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
-import MediaCard from "#/components/MediaCard";
 import { Pagination } from "#/components/Pagination";
 import { useDebounce } from "#/hooks/useDebounce";
 import { setupApiClient } from "#/lib/api";
@@ -62,14 +62,6 @@ type Tab = "all" | "movies" | "shows" | "people";
 
 function getTitle(item: UnifiedSearchResultDto): string {
 	return item.title || item.name || "Unknown";
-}
-
-function getYear(item: UnifiedSearchResultDto): number | undefined {
-	const date = item.release_date || item.first_air_date;
-	if (date) {
-		return new Date(date).getFullYear();
-	}
-	return undefined;
 }
 
 function getPosterUrl(item: UnifiedSearchResultDto): string {
@@ -281,14 +273,13 @@ function SearchPage() {
 								<section>
 									<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 										{searchData.results.map((item) => (
-											<MediaCard
+											<ActionableMediaCard
 												key={`media-${item.id}-${item.media_type}`}
 												id={item.id}
 												title={getTitle(item)}
 												posterUrl={getPosterUrl(item)}
 												backdropUrl={getBackdropUrl(item)}
 												type={item.media_type === "movie" ? "movie" : "show"}
-												year={getYear(item)}
 												rating={item.vote_average || undefined}
 												size="md"
 												layout="poster"
@@ -303,14 +294,13 @@ function SearchPage() {
 							<section>
 								<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 									{movies.map((item) => (
-										<MediaCard
+										<ActionableMediaCard
 											key={`movie-${item.id}`}
 											id={item.id}
 											title={getTitle(item)}
 											posterUrl={getPosterUrl(item)}
 											backdropUrl={getBackdropUrl(item)}
 											type="movie"
-											year={getYear(item)}
 											rating={item.vote_average || undefined}
 											size="md"
 											layout="poster"
@@ -325,14 +315,13 @@ function SearchPage() {
 							<section>
 								<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 									{shows.map((item) => (
-										<MediaCard
+										<ActionableMediaCard
 											key={`show-${item.id}`}
 											id={item.id}
 											title={getTitle(item)}
 											posterUrl={getPosterUrl(item)}
 											backdropUrl={getBackdropUrl(item)}
 											type="show"
-											year={getYear(item)}
 											rating={item.vote_average || undefined}
 											size="md"
 											layout="poster"

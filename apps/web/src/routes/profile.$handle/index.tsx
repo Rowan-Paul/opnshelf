@@ -1,28 +1,17 @@
 import {
+	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
 	moviesControllerGetUserMoviesPaginatedOptions,
-	moviesControllerUnmarkWatchedMutation,
-	shelfControllerGetUserShelfOptions,
-	shelfControllerGetUserShelfQueryKey,
 	showsControllerGetUserEpisodesPaginatedOptions,
-	showsControllerUnmarkWatchedMutation,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	ChevronRight,
-	Clock,
-	Film,
-	Heart,
-	List,
-	Loader2,
-	Tv,
-	X,
-} from "lucide-react";
+import { ChevronRight, Clock, Film, Heart, List, Tv } from "lucide-react";
+import ActionableMediaCard from "#/components/ActionableMediaCard";
+import MediaCard from "#/components/MediaCard";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { toSlug } from "#/lib/slug";
 
 setupApiClient();
 
@@ -30,21 +19,9 @@ export const Route = createFileRoute("/profile/$handle/")({
 	component: ProfileOverviewPage,
 });
 
-function formatWatchedDate(dateStr?: string): string {
-	if (!dateStr) return "";
-	const date = new Date(dateStr);
-	return date.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year:
-			date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
-	});
-}
-
 function ProfileOverviewPage() {
 	const { handle } = Route.useParams();
 	const { user } = useAuth();
-	const queryClient = useQueryClient();
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -53,20 +30,26 @@ function ProfileOverviewPage() {
 	const displayName = profile?.displayName || profile?.handle || handle;
 	const isOwner = user?.did === userDid;
 
-	// Fetch recent shelf items (mixed, we'll split client-side for overview)
-	const { data: shelfData, isLoading: shelfLoading } = useQuery({
-		...shelfControllerGetUserShelfOptions({
+	// Fetch recent movies
+	const { data: moviesData, isLoading: moviesLoading } = useQuery({
+		...moviesControllerGetUserMoviesPaginatedOptions({
 			path: { userDid },
-			query: { page: 1, pageSize: 24 },
+			query: { limit: 8 },
 		}),
 		enabled: !!userDid,
 	});
 
-	const movies =
-		shelfData?.items?.filter((item) => item.type === "movie").slice(0, 6) ?? [];
-	const episodes =
-		shelfData?.items?.filter((item) => item.type === "episode").slice(0, 6) ??
-		[];
+	// Fetch recent episodes
+	const { data: episodesData, isLoading: episodesLoading } = useQuery({
+		...showsControllerGetUserEpisodesPaginatedOptions({
+			path: { userDid },
+			query: { limit: 8 },
+		}),
+		enabled: !!userDid,
+	});
+
+	const movies = moviesData?.items ?? [];
+	const episodes = episodesData?.items ?? [];
 
 	// Fetch public lists
 	const { data: listsData, isLoading: listsLoading } = useQuery({
@@ -76,51 +59,13 @@ function ProfileOverviewPage() {
 		enabled: !!userDid,
 	});
 
-	// Fetch total counts
-	const { data: moviesCountData } = useQuery({
-		...moviesControllerGetUserMoviesPaginatedOptions({
-			path: { userDid },
-			query: { limit: 1 },
-		}),
-		enabled: !!userDid,
-	});
-	const { data: episodesCountData } = useQuery({
-		...showsControllerGetUserEpisodesPaginatedOptions({
-			path: { userDid },
-			query: { limit: 1 },
-		}),
-		enabled: !!userDid,
-	});
+	const totalMovies = moviesData?.total ?? 0;
+	const totalEpisodes = episodesData?.total ?? 0;
+	const totalLists = listsData?.length ?? 0;
+	const totalWatched = (moviesData?.total ?? 0) + (episodesData?.total ?? 0);
 
 	const watchlist = listsData?.find((l) => l.slug === "watchlist");
 	const favorites = listsData?.find((l) => l.slug === "favorites");
-
-	const totalMovies = moviesCountData?.total ?? 0;
-	const totalEpisodes = episodesCountData?.total ?? 0;
-	const totalLists = listsData?.length ?? 0;
-	const totalWatched = shelfData?.total ?? 0;
-
-	// Mutations for removing from shelf
-	const removeMovieMutation = useMutation({
-		...moviesControllerUnmarkWatchedMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserShelfQueryKey({
-					path: { userDid },
-				}),
-			});
-		},
-	});
-	const removeEpisodeMutation = useMutation({
-		...showsControllerUnmarkWatchedMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserShelfQueryKey({
-					path: { userDid },
-				}),
-			});
-		},
-	});
 
 	return (
 		<div className="space-y-10">
@@ -130,13 +75,13 @@ function ProfileOverviewPage() {
 					label="Movies"
 					value={totalMovies}
 					icon={Film}
-					isLoading={!moviesCountData && !!userDid}
+					isLoading={!moviesData && !!userDid}
 				/>
 				<StatCard
 					label="Episodes"
 					value={totalEpisodes}
 					icon={Tv}
-					isLoading={!episodesCountData && !!userDid}
+					isLoading={!episodesData && !!userDid}
 				/>
 				<StatCard
 					label="Lists"
@@ -148,119 +93,119 @@ function ProfileOverviewPage() {
 					label="Watched"
 					value={totalWatched}
 					icon={Clock}
-					isLoading={shelfLoading}
+					isLoading={!moviesData && !episodesData && !!userDid}
 				/>
 			</div>
 
-			{/* Last 6 Movies */}
-			<section>
-				<div className="mb-4 flex items-center justify-between">
-					<h2 className="flex items-center gap-2 text-display-3">
-						<Film className="h-5 w-5 text-(--accent)" />
-						Last Movies
-					</h2>
-					<Link
-						to="/profile/$handle/shelf"
-						params={{ handle }}
-						search={{ type: "movie" }}
-						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-					>
-						View all
-						<ChevronRight className="h-4 w-4" />
-					</Link>
-				</div>
+			{/* Last Movies & Episodes */}
+			<div className="grid gap-8 lg:grid-cols-2">
+				{/* Last Movies */}
+				<section>
+					<div className="mb-4 flex items-center justify-between">
+						<h2 className="flex items-center gap-2 text-display-3">
+							<Film className="h-5 w-5 text-(--accent)" />
+							Recent Movies
+						</h2>
+						<Link
+							to="/profile/$handle/shelf"
+							params={{ handle }}
+							search={{ type: "movie" }}
+							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+						>
+							View all
+							<ChevronRight className="h-4 w-4" />
+						</Link>
+					</div>
 
-				{shelfLoading ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-						{[1, 2, 3, 4, 5, 6].map((i) => (
-							<div
-								key={i}
-								className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
-							/>
-						))}
-					</div>
-				) : movies.length > 0 ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-						{movies.map((item) => (
-							<ShelfItemCard
-								key={item.id}
-								item={item}
-								isOwner={isOwner}
-								onRemove={() =>
-									removeMovieMutation.mutate({
-										path: { movieId: item.movieId },
-										query: { mode: "all" },
-									})
-								}
-								isRemoving={removeMovieMutation.isPending}
-							/>
-						))}
-					</div>
-				) : (
-					<div className="card p-8 text-center">
-						<p className="text-(--foreground-muted)">
-							{displayName} hasn&apos;t watched any movies yet.
-						</p>
-					</div>
-				)}
-			</section>
+					{moviesLoading ? (
+						<div className="grid grid-cols-4 gap-4">
+							{[1, 2, 3, 4].map((i) => (
+								<div
+									key={i}
+									className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
+								/>
+							))}
+						</div>
+					) : movies.length > 0 ? (
+						<div className="grid grid-cols-4 gap-4">
+							{movies.map((item) => (
+								<div key={item.id} className="[&_article]:!w-full">
+									<ActionableMediaCard
+										id={item.movie.movieId}
+										title={item.movie.title}
+										posterUrl={`https://image.tmdb.org/t/p/w500${item.movie.posterPath}`}
+										type="movie"
+										watchedDate={item.watchedDate}
+										interactive={isOwner}
+										isWatched={true}
+									/>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="card p-8 text-center">
+							<p className="text-(--foreground-muted)">
+								{displayName} hasn&apos;t watched any movies yet.
+							</p>
+						</div>
+					)}
+				</section>
 
-			{/* Last 6 Episodes */}
-			<section>
-				<div className="mb-4 flex items-center justify-between">
-					<h2 className="flex items-center gap-2 text-display-3">
-						<Tv className="h-5 w-5 text-(--accent)" />
-						Last Episodes
-					</h2>
-					<Link
-						to="/profile/$handle/shelf"
-						params={{ handle }}
-						search={{ type: "episode" }}
-						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-					>
-						View all
-						<ChevronRight className="h-4 w-4" />
-					</Link>
-				</div>
+				{/* Last Episodes */}
+				<section>
+					<div className="mb-4 flex items-center justify-between">
+						<h2 className="flex items-center gap-2 text-display-3">
+							<Tv className="h-5 w-5 text-(--accent)" />
+							Recent Episodes
+						</h2>
+						<Link
+							to="/profile/$handle/shelf"
+							params={{ handle }}
+							search={{ type: "episode" }}
+							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+						>
+							View all
+							<ChevronRight className="h-4 w-4" />
+						</Link>
+					</div>
 
-				{shelfLoading ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-						{[1, 2, 3, 4, 5, 6].map((i) => (
-							<div
-								key={i}
-								className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
-							/>
-						))}
-					</div>
-				) : episodes.length > 0 ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-						{episodes.map((item) => (
-							<ShelfItemCard
-								key={item.id}
-								item={item}
-								isOwner={isOwner}
-								onRemove={() =>
-									removeEpisodeMutation.mutate({
-										path: { showId: item.showId },
-										query: {
-											seasonNumber: item.seasonNumber,
-											episodeNumber: item.episodeNumber,
-											mode: "all",
-										},
-									})
-								}
-								isRemoving={removeEpisodeMutation.isPending}
-							/>
-						))}
-					</div>
-				) : (
-					<div className="card p-8 text-center">
-						<p className="text-(--foreground-muted)">
-							{displayName} hasn&apos;t watched any episodes yet.
-						</p>
-					</div>
-				)}
-			</section>
+					{episodesLoading ? (
+						<div className="grid grid-cols-4 gap-4">
+							{[1, 2, 3, 4].map((i) => (
+								<div
+									key={i}
+									className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
+								/>
+							))}
+						</div>
+					) : episodes.length > 0 ? (
+						<div className="grid grid-cols-4 gap-4">
+							{episodes.map((item) => (
+								<div key={item.id} className="[&_article]:!w-full">
+									<ActionableMediaCard
+										id={item.show.showId}
+										title={item.show.title}
+										posterUrl={`https://image.tmdb.org/t/p/w500${item.show.posterPath}`}
+										type="show"
+										seasonNumber={item.seasonNumber}
+										episodeNumber={item.episodeNumber}
+										episodeInfo={`S${item.seasonNumber}E${item.episodeNumber}`}
+										watchedDate={item.watchedDate}
+										interactive={isOwner}
+										isWatched={true}
+									/>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="card p-8 text-center">
+							<p className="text-(--foreground-muted)">
+								{displayName} hasn&apos;t watched any episodes yet.
+							</p>
+						</div>
+					)}
+				</section>
+			</div>
 
 			{/* Lists Preview */}
 			<div className="grid gap-8 lg:grid-cols-2">
@@ -268,7 +213,7 @@ function ProfileOverviewPage() {
 					title="Watchlist"
 					list={watchlist}
 					handle={handle}
-					isLoading={listsLoading}
+					userDid={userDid}
 					icon={Clock}
 					emptyText="Nothing on watchlist"
 				/>
@@ -276,105 +221,11 @@ function ProfileOverviewPage() {
 					title="Favorites"
 					list={favorites}
 					handle={handle}
-					isLoading={listsLoading}
+					userDid={userDid}
 					icon={Heart}
 					emptyText="Nothing on favorites"
 				/>
 			</div>
-		</div>
-	);
-}
-
-function ShelfItemCard({
-	item,
-	isOwner,
-	onRemove,
-	isRemoving,
-}: {
-	item: {
-		id: string;
-		type: "movie" | "episode";
-		posterPath?: string;
-		watchedDate?: string;
-	} & Record<string, unknown>;
-	isOwner: boolean;
-	onRemove: () => void;
-	isRemoving: boolean;
-}) {
-	const isMovie = item.type === "movie";
-	const title = isMovie ? (item.title as string) : (item.showTitle as string);
-	const id = isMovie ? (item.movieId as string) : (item.showId as string);
-	const year = isMovie
-		? (item.releaseYear as number | undefined)
-		: (item.firstAirYear as number | undefined);
-
-	const episodeInfo = !isMovie
-		? `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
-		: undefined;
-
-	return (
-		<div className="group relative">
-			<Link
-				to={
-					isMovie ? "/movies/$movieId/$movieName" : "/shows/$showId/$showName"
-				}
-				params={
-					isMovie
-						? { movieId: id, movieName: toSlug(title) }
-						: { showId: id, showName: toSlug(title) }
-				}
-				className="block"
-			>
-				<div className="aspect-[2/3] overflow-hidden rounded-lg bg-(--background-subtle)">
-					{item.posterPath ? (
-						<img
-							src={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
-							alt={title}
-							className="h-full w-full object-cover transition-transform group-hover:scale-105"
-							loading="lazy"
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center">
-							{isMovie ? (
-								<Film className="h-8 w-8 text-(--foreground-muted)" />
-							) : (
-								<Tv className="h-8 w-8 text-(--foreground-muted)" />
-							)}
-						</div>
-					)}
-				</div>
-				<div className="mt-2">
-					<p className="truncate font-medium text-sm">{title}</p>
-					<div className="flex flex-col gap-0.5 text-(--foreground-muted) text-xs">
-						{year && <span>{year}</span>}
-						{episodeInfo && <span>{episodeInfo}</span>}
-						{item.watchedDate && (
-							<span>{formatWatchedDate(item.watchedDate)}</span>
-						)}
-					</div>
-				</div>
-			</Link>
-
-			{/* Remove button */}
-			{isOwner && (
-				<button
-					type="button"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onRemove();
-					}}
-					disabled={isRemoving}
-					className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-red-500 disabled:opacity-100 group-hover:opacity-100"
-					aria-label="Remove from shelf"
-				>
-					{isRemoving ? (
-						<Loader2 className="h-3.5 w-3.5 animate-spin" />
-					) : (
-						<X className="h-3.5 w-3.5" />
-					)}
-				</button>
-			)}
 		</div>
 	);
 }
@@ -413,17 +264,26 @@ function ListPreview({
 	title,
 	list,
 	handle,
-	isLoading,
+	userDid,
 	icon: Icon,
 	emptyText,
 }: {
 	title: string;
 	list?: { slug: string; itemCount: number };
 	handle: string;
-	isLoading: boolean;
+	userDid: string;
 	icon: React.ComponentType<{ className?: string }>;
 	emptyText: string;
 }) {
+	const { data: listDetails, isLoading: itemsLoading } = useQuery({
+		...listsControllerGetPublicUserListOptions({
+			path: { userDid, slug: list?.slug || "" },
+		}),
+		enabled: !!list && list.itemCount > 0,
+	});
+
+	const items = listDetails?.items?.slice(0, 4) ?? [];
+
 	return (
 		<section>
 			<div className="mb-4 flex items-center justify-between">
@@ -443,7 +303,11 @@ function ListPreview({
 				)}
 			</div>
 
-			{isLoading ? (
+			{!list || list.itemCount === 0 ? (
+				<div className="card p-6 text-center">
+					<p className="text-(--foreground-muted)">{emptyText}</p>
+				</div>
+			) : itemsLoading ? (
 				<div className="grid grid-cols-3 gap-4">
 					{[1, 2, 3].map((i) => (
 						<div
@@ -452,20 +316,48 @@ function ListPreview({
 						/>
 					))}
 				</div>
-			) : list && list.itemCount > 0 ? (
-				<Link
-					to="/profile/$handle/lists/$listSlug"
-					params={{ handle, listSlug: list.slug }}
-					className="card card-interactive flex items-center justify-between p-4"
-				>
-					<div>
-						<h3 className="font-semibold">{title}</h3>
-						<p className="text-(--foreground-muted) text-sm">
-							{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
-						</p>
-					</div>
-					<ChevronRight className="h-5 w-5 text-(--foreground-muted)" />
-				</Link>
+			) : items.length > 0 ? (
+				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+					{items.map((item) => {
+						const media = item.media as Record<string, unknown>;
+						const posterPath = media.posterPath as string | undefined;
+						const title = (media.title as string) || "Unknown";
+						const mediaId = (media.mediaId as string) || item.mediaId;
+						const isEpisode =
+							item.seasonNumber != null && item.episodeNumber != null;
+
+						return (
+							<div key={item.id} className="[&_article]:!w-full">
+								<MediaCard
+									id={mediaId}
+									title={title}
+									seasonNumber={item.seasonNumber}
+									episodeNumber={item.episodeNumber}
+									episodeInfo={
+										isEpisode
+											? item.episodeName
+												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+												: `S${item.seasonNumber}E${item.episodeNumber}`
+											: undefined
+									}
+									posterUrl={
+										posterPath
+											? `https://image.tmdb.org/t/p/w500${posterPath}`
+											: ""
+									}
+									type={item.mediaType as "movie" | "show"}
+									href={
+										isEpisode
+											? `/show/${mediaId}/season/${item.seasonNumber}/episode/${item.episodeNumber}`
+											: item.mediaType === "movie"
+												? `/movie/${mediaId}`
+												: `/show/${mediaId}`
+									}
+								/>
+							</div>
+						);
+					})}
+				</div>
 			) : (
 				<div className="card p-6 text-center">
 					<p className="text-(--foreground-muted)">{emptyText}</p>

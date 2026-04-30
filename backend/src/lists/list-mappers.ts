@@ -45,7 +45,10 @@ type ListRecord = {
 	items: ListItemRecord[];
 };
 
-export function mapItemToDto(item: ListItemRecord): MediaInListDto {
+export function mapItemToDto(
+	item: ListItemRecord,
+	episodeName?: string,
+): MediaInListDto {
 	const parsedShowScope =
 		item.mediaType === "show"
 			? parseScopedShowMediaId(item.mediaId)
@@ -82,6 +85,7 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 		mediaId: item.mediaId,
 		seasonNumber: parsedShowScope?.seasonNumber,
 		episodeNumber: parsedShowScope?.episodeNumber,
+		episodeName,
 		notes: item.notes ?? undefined,
 		position: item.position,
 		createdAt: item.createdAt.toISOString(),
@@ -92,6 +96,7 @@ export function mapItemToDto(item: ListItemRecord): MediaInListDto {
 			showId: item.show?.showId ?? parsedShowScope?.showId,
 			seasonNumber: parsedShowScope?.seasonNumber,
 			episodeNumber: parsedShowScope?.episodeNumber,
+			episodeName,
 			title: mediaTitle ?? "",
 			posterPath: mediaPosterPath ?? undefined,
 			backdropPath: mediaBackdropPath ?? undefined,

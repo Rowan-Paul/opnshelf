@@ -123,6 +123,9 @@ export class MediaInListDto {
 	@ApiPropertyOptional({ description: "Episode number for episode show items" })
 	episodeNumber?: number;
 
+	@ApiPropertyOptional({ description: "Episode name for episode show items" })
+	episodeName?: string;
+
 	@ApiPropertyOptional()
 	notes?: string;
 
@@ -140,6 +143,7 @@ export class MediaInListDto {
 		showId?: string;
 		seasonNumber?: number;
 		episodeNumber?: number;
+		episodeName?: string;
 		title: string;
 		posterPath?: string;
 		backdropPath?: string;

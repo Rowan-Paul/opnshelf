@@ -31,7 +31,6 @@ export default function SimilarMediaGrid({
 						title={item.title}
 						posterUrl={item.posterUrl}
 						type={item.type}
-						year={item.year}
 						rating={item.rating}
 						size="sm"
 						layout="poster"

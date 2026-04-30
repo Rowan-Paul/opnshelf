@@ -767,6 +767,10 @@ export type MediaInListDto = {
      * Episode number for episode show items
      */
     episodeNumber?: number;
+    /**
+     * Episode name for episode show items
+     */
+    episodeName?: string;
     notes?: string;
     position: number;
     createdAt: string;

@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
+	BookmarkX,
 	Clock,
 	Film,
 	Grid3X3,
@@ -21,7 +22,6 @@ import {
 	Search,
 	Star,
 	Tv,
-	X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -34,7 +34,7 @@ import {
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
 import { useCreateList } from "#/lib/hooks";
-import MediaCard from "../../components/MediaCard";
+import ActionableMediaCard from "../../components/ActionableMediaCard";
 
 const colorClasses: Record<string, string> = {
 	blue: "bg-blue-500",
@@ -357,15 +357,16 @@ export function ProfileListsPage({
 					{userLists?.map((list) => {
 						const color = getListColor(list.name);
 						const Icon = iconComponents[color] || List;
+						const isSelected = selectedListSlug === list.slug;
 						return (
 							<button
 								key={list.id}
 								type="button"
 								onClick={() => handleSelectList(list.slug)}
 								className={`card card-interactive w-full p-4 text-left transition-all ${
-									selectedListSlug === list.slug
-										? "border-(--accent) bg-(--accent-subtle)"
-										: ""
+									isSelected
+										? "border-(--accent) border-2 bg-(--accent-subtle) shadow-sm"
+										: "hover:border-(--accent)/40"
 								}`}
 							>
 								<div className="flex items-start gap-3">
@@ -404,11 +405,22 @@ export function ProfileListsPage({
 						<div className="space-y-6">
 							{/* List Header */}
 							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-								<div>
-									<h2 className="text-display-3">{activeList.name}</h2>
-									<p className="text-(--foreground-muted)">
-										{activeList.description || "No description"}
-									</p>
+								<div className="flex items-center gap-3">
+									<div
+										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClasses[getListColor(activeList.name)]} text-white`}
+									>
+										{(() => {
+											const ListIcon =
+												iconComponents[getListColor(activeList.name)] || List;
+											return <ListIcon className="h-4.5 w-4.5" />;
+										})()}
+									</div>
+									<div>
+										<h2 className="text-display-3">{activeList.name}</h2>
+										<p className="text-(--foreground-muted)">
+											{activeList.description || "No description"}
+										</p>
+									</div>
 								</div>
 
 								<div className="flex items-center gap-2">
@@ -516,7 +528,7 @@ export function ProfileListsPage({
 													index === self.findIndex((i) => i.id === item.id),
 											)
 											.map((item: MediaInListDto) => (
-												<MediaCard
+												<ActionableMediaCard
 													key={item.id}
 													id={String(
 														(item.media as Record<string, unknown>).mediaId ??
@@ -525,32 +537,41 @@ export function ProfileListsPage({
 													title={getTitle(item.media)}
 													seasonNumber={item.seasonNumber}
 													episodeNumber={item.episodeNumber}
+													episodeInfo={
+														item.seasonNumber !== undefined &&
+														item.episodeNumber !== undefined
+															? item.episodeName
+																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+																: `S${item.seasonNumber}E${item.episodeNumber}`
+															: item.seasonNumber !== undefined
+																? `Season ${item.seasonNumber}`
+																: undefined
+													}
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
 													type={item.mediaType as "movie" | "show"}
-													year={getYear(item.media)}
 													rating={getRating(item.media)}
 													duration={formatDuration(
 														item.media.runtime as number | undefined,
 													)}
-													size="md"
-													layout="poster"
-													{...(isOwner
-														? {
-																onRemove: () =>
+													onRemove={
+														isOwner
+															? () =>
 																	removeItemMutation.mutate({
 																		path: {
 																			slug: selectedListSlug || "",
 																			mediaType: item.mediaType,
 																			mediaId: item.mediaId,
 																		},
-																	}),
-																isRemoving:
-																	removeItemMutation.isPending &&
-																	removeItemMutation.variables?.path
-																		?.mediaId === item.mediaId,
-															}
-														: {})}
+																	})
+															: undefined
+													}
+													isRemoving={
+														isOwner &&
+														removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId
+													}
 												/>
 											))}
 									</div>
@@ -573,10 +594,17 @@ export function ProfileListsPage({
 														loading="lazy"
 													/>
 													<div className="min-w-0 flex-1">
-														<div className="flex items-center gap-2">
-															<h3 className="font-semibold">
-																{getTitle(item.media)}
-															</h3>
+														<h3 className="font-semibold">
+															{getTitle(item.media)}
+														</h3>
+														{item.seasonNumber !== undefined && (
+															<p className="mt-0.5 text-(--foreground-muted) text-sm">
+																{item.episodeNumber !== undefined
+																	? `Season ${item.seasonNumber}, Episode ${item.episodeNumber}${item.episodeName ? ` — ${item.episodeName}` : ""}`
+																	: `Season ${item.seasonNumber}`}
+															</p>
+														)}
+														<div className="mt-1 flex items-center gap-2">
 															<span
 																className={`badge ${
 																	item.mediaType === "movie"
@@ -586,38 +614,25 @@ export function ProfileListsPage({
 															>
 																{item.mediaType === "movie" ? "Movie" : "TV"}
 															</span>
-															{item.seasonNumber !== undefined && (
-																<span className="badge badge-subtle text-[10px]">
-																	{item.episodeNumber !== undefined
-																		? `S${item.seasonNumber}E${item.episodeNumber}`
-																		: `Season ${item.seasonNumber}`}
+															{getYear(item.media) && (
+																<span className="text-(--foreground-subtle) text-sm">
+																	{getYear(item.media)}
 																</span>
 															)}
-														</div>
-														<div className="mt-1 flex items-center gap-3 text-(--foreground-muted) text-sm">
-															{getYear(item.media) && (
-																<span>{getYear(item.media)}</span>
-															)}
 															{getRating(item.media) && (
-																<>
-																	<span>&bull;</span>
-																	<span className="flex items-center gap-1">
-																		<Star className="h-3 w-3 fill-current text-yellow-500" />
-																		{getRating(item.media)?.toFixed(1)}
-																	</span>
-																</>
+																<span className="flex items-center gap-1 text-(--foreground-subtle) text-sm">
+																	<Star className="h-3 w-3 fill-current text-yellow-500" />
+																	{getRating(item.media)?.toFixed(1)}
+																</span>
 															)}
 															{formatDuration(
 																item.media.runtime as number | undefined,
 															) && (
-																<>
-																	<span>&bull;</span>
-																	<span>
-																		{formatDuration(
-																			item.media.runtime as number | undefined,
-																		)}
-																	</span>
-																</>
+																<span className="text-(--foreground-subtle) text-sm">
+																	{formatDuration(
+																		item.media.runtime as number | undefined,
+																	)}
+																</span>
 															)}
 														</div>
 													</div>
@@ -646,7 +661,7 @@ export function ProfileListsPage({
 																item.mediaId ? (
 																<Loader2 className="h-4 w-4 animate-spin" />
 															) : (
-																<X className="h-4 w-4" />
+																<BookmarkX className="h-4 w-4" />
 															)}
 														</button>
 													)}

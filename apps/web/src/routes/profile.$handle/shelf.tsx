@@ -8,15 +8,16 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+	BookmarkX,
 	Film,
 	Grid3X3,
 	List as ListIcon,
 	Loader2,
 	Search,
 	Tv,
-	X,
 } from "lucide-react";
 import { useState } from "react";
+import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -200,32 +201,36 @@ function ProfileShelfPage() {
 				</div>
 			) : viewMode === "grid" ? (
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-					{items.map((item) => (
-						<ShelfGridCard
-							key={item.id}
-							item={item}
-							isOwner={isOwner}
-							onRemoveMovie={(movieId) =>
-								removeMovieMutation.mutate({
-									path: { movieId },
-									query: { mode: "all" },
-								})
-							}
-							onRemoveEpisode={(showId, seasonNumber, episodeNumber) =>
-								removeEpisodeMutation.mutate({
-									path: { showId },
-									query: {
-										seasonNumber,
-										episodeNumber,
-										mode: "all",
-									},
-								})
-							}
-							isRemoving={
-								removeMovieMutation.isPending || removeEpisodeMutation.isPending
-							}
-						/>
-					))}
+					{items.map((item) => {
+						const isMovie = item.type === "movie";
+						return (
+							<ActionableMediaCard
+								key={item.id}
+								id={
+									isMovie ? (item.movieId as string) : (item.showId as string)
+								}
+								title={
+									isMovie ? (item.title as string) : (item.showTitle as string)
+								}
+								posterUrl={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
+								type={isMovie ? "movie" : "show"}
+								seasonNumber={
+									isMovie ? undefined : (item.seasonNumber as number)
+								}
+								episodeNumber={
+									isMovie ? undefined : (item.episodeNumber as number)
+								}
+								episodeInfo={
+									isMovie
+										? undefined
+										: `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
+								}
+								watchedDate={item.watchedDate}
+								interactive={isOwner}
+								isWatched={true}
+							/>
+						);
+					})}
 				</div>
 			) : (
 				<div className="space-y-2">
@@ -267,115 +272,6 @@ function ProfileShelfPage() {
 						onPageChange={setPage}
 					/>
 				</div>
-			)}
-		</div>
-	);
-}
-
-function ShelfGridCard({
-	item,
-	isOwner,
-	onRemoveMovie,
-	onRemoveEpisode,
-	isRemoving,
-}: {
-	item: {
-		id: string;
-		type: "movie" | "episode";
-		posterPath?: string;
-		watchedDate?: string;
-	} & Record<string, unknown>;
-	isOwner: boolean;
-	onRemoveMovie: (movieId: string) => void;
-	onRemoveEpisode: (
-		showId: string,
-		seasonNumber: number,
-		episodeNumber: number,
-	) => void;
-	isRemoving: boolean;
-}) {
-	const isMovie = item.type === "movie";
-	const title = isMovie ? (item.title as string) : (item.showTitle as string);
-	const id = isMovie ? (item.movieId as string) : (item.showId as string);
-	const year = isMovie
-		? (item.releaseYear as number | undefined)
-		: (item.firstAirYear as number | undefined);
-
-	const episodeInfo = !isMovie
-		? `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
-		: undefined;
-
-	const handleRemove = (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		if (isMovie) {
-			onRemoveMovie(id);
-		} else {
-			onRemoveEpisode(
-				id,
-				item.seasonNumber as number,
-				item.episodeNumber as number,
-			);
-		}
-	};
-
-	return (
-		<div className="group relative">
-			<Link
-				to={
-					isMovie ? "/movies/$movieId/$movieName" : "/shows/$showId/$showName"
-				}
-				params={
-					isMovie
-						? { movieId: id, movieName: toSlug(title) }
-						: { showId: id, showName: toSlug(title) }
-				}
-				className="block"
-			>
-				<div className="aspect-[2/3] overflow-hidden rounded-lg bg-(--background-subtle)">
-					{item.posterPath ? (
-						<img
-							src={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
-							alt={title}
-							className="h-full w-full object-cover transition-transform group-hover:scale-105"
-							loading="lazy"
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center">
-							{isMovie ? (
-								<Film className="h-8 w-8 text-(--foreground-muted)" />
-							) : (
-								<Tv className="h-8 w-8 text-(--foreground-muted)" />
-							)}
-						</div>
-					)}
-				</div>
-				<div className="mt-2">
-					<p className="truncate font-medium text-sm">{title}</p>
-					<div className="flex flex-col gap-0.5 text-(--foreground-muted) text-xs">
-						{year && <span>{year}</span>}
-						{episodeInfo && <span>{episodeInfo}</span>}
-						{item.watchedDate && (
-							<span>{formatWatchedDate(item.watchedDate)}</span>
-						)}
-					</div>
-				</div>
-			</Link>
-
-			{isOwner && (
-				<button
-					type="button"
-					onClick={handleRemove}
-					disabled={isRemoving}
-					className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-red-500 disabled:opacity-100 group-hover:opacity-100"
-					aria-label="Remove from shelf"
-				>
-					{isRemoving ? (
-						<Loader2 className="h-3.5 w-3.5 animate-spin" />
-					) : (
-						<X className="h-3.5 w-3.5" />
-					)}
-				</button>
 			)}
 		</div>
 	);
@@ -480,7 +376,7 @@ function ShelfListRow({
 					{isRemoving ? (
 						<Loader2 className="h-4 w-4 animate-spin" />
 					) : (
-						<X className="h-4 w-4" />
+						<BookmarkX className="h-4 w-4" />
 					)}
 				</button>
 			)}
