@@ -1,5 +1,6 @@
 import { Bookmark, BookmarkCheck, Library, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
 import ManageListsDialog from "#/components/ManageListsDialog";
 import {
 	useListItemStatus,
@@ -10,6 +11,7 @@ import {
 interface FeedItemActionsMovieProps {
 	type: "movie";
 	mediaId: string;
+	title?: string;
 }
 
 interface FeedItemActionsShowProps {
@@ -17,6 +19,7 @@ interface FeedItemActionsShowProps {
 	mediaId: string;
 	seasonNumber: number;
 	episodeNumber: number;
+	title?: string;
 }
 
 type FeedItemActionsProps =
@@ -25,9 +28,10 @@ type FeedItemActionsProps =
 
 export default function FeedItemActions(props: FeedItemActionsProps) {
 	const [listDialogOpen, setListDialogOpen] = useState(false);
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
 	const isShow = props.type === "show";
-	const { mediaId } = props;
+	const { mediaId, title } = props;
 
 	// For list operations, use episode-scoped mediaId so we add/remove
 	// the specific episode, not the entire show.
@@ -40,10 +44,19 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 		? ({ mediaType: "show", showId: mediaId } as const)
 		: ({ mediaType: "movie", movieId: mediaId } as const);
 
-	const { isWatched, isEpisodeWatched } =
+	const { isWatched, isEpisodeWatched, movieWatchHistory, watchHistory } =
 		useMediaWatchStatus(watchStatusOptions);
 
 	const watchActions = useWatchActions(watchStatusOptions);
+
+	const episodeWatchHistory = useMemo(() => {
+		if (!isShow || !watchHistory || !Array.isArray(watchHistory)) return [];
+		const { seasonNumber, episodeNumber } = props as FeedItemActionsShowProps;
+		return watchHistory.filter(
+			(ep: { seasonNumber: number; episodeNumber: number }) =>
+				ep.seasonNumber === seasonNumber && ep.episodeNumber === episodeNumber,
+		);
+	}, [isShow, watchHistory, props]);
 
 	const { otherLists, userLists, listsForItem } = useListItemStatus({
 		mediaType: props.type,
@@ -57,6 +70,9 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 	let isInShelf: boolean;
 	let isShelfPending: boolean;
 	let handleToggleShelf: () => void;
+	let confirmEntryCount = 0;
+	let confirmTitle = title || "";
+	let handleConfirmRemove: () => void;
 
 	if (isShow) {
 		const { seasonNumber, episodeNumber } = props;
@@ -68,10 +84,22 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 			watchActions.isMarkEpisodePending || watchActions.isUnmarkEpisodePending;
 		handleToggleShelf = () => {
 			if (episodeWatched) {
-				watchActions.unmarkEpisodeWatched(seasonNumber, episodeNumber);
+				if (episodeWatchHistory.length > 1) {
+					setConfirmRemoveOpen(true);
+				} else {
+					watchActions.unmarkEpisodeWatched(seasonNumber, episodeNumber);
+				}
 			} else {
 				watchActions.markEpisodeWatched(seasonNumber, episodeNumber);
 			}
+		};
+		confirmEntryCount = episodeWatchHistory.length;
+		confirmTitle = title
+			? `${title} S${seasonNumber}E${episodeNumber}`
+			: `S${seasonNumber}E${episodeNumber}`;
+		handleConfirmRemove = () => {
+			watchActions.unmarkEpisodeWatched(seasonNumber, episodeNumber, "all");
+			setConfirmRemoveOpen(false);
 		};
 	} else {
 		isInShelf = !!isWatched;
@@ -79,10 +107,19 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 			watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending;
 		handleToggleShelf = () => {
 			if (isWatched) {
-				watchActions.unmarkMovieWatched();
+				if (movieWatchHistory && movieWatchHistory.length > 1) {
+					setConfirmRemoveOpen(true);
+				} else {
+					watchActions.unmarkMovieWatched();
+				}
 			} else {
 				watchActions.markMovieWatched();
 			}
+		};
+		confirmEntryCount = movieWatchHistory?.length || 0;
+		handleConfirmRemove = () => {
+			watchActions.unmarkMovieWatched();
+			setConfirmRemoveOpen(false);
 		};
 	}
 
@@ -145,6 +182,15 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 				mediaId={listMediaId}
 				open={listDialogOpen}
 				onOpenChange={setListDialogOpen}
+			/>
+
+			<ConfirmRemoveDialog
+				open={confirmRemoveOpen}
+				onOpenChange={setConfirmRemoveOpen}
+				title={confirmTitle}
+				entryCount={confirmEntryCount}
+				onConfirm={handleConfirmRemove}
+				isPending={isShelfPending}
 			/>
 		</div>
 	);

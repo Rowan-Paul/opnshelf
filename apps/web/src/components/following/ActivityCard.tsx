@@ -168,6 +168,7 @@ export function ActivityCard({
 							<FeedItemActions
 								type="movie"
 								mediaId={String(activity.movieId)}
+								title={activity.title || ""}
 							/>
 						) : (
 							<FeedItemActions
@@ -175,6 +176,7 @@ export function ActivityCard({
 								mediaId={String(activity.showId)}
 								seasonNumber={Number(activity.seasonNumber || 0)}
 								episodeNumber={Number(activity.episodeNumber || 0)}
+								title={activity.showTitle || ""}
 							/>
 						)}
 					</div>

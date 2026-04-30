@@ -6,6 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Toaster } from "#/components/ui/sonner";
 import { AuthProvider } from "#/lib/auth-context";
 import {
 	DefaultErrorComponent,
@@ -58,6 +59,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 							<main className="flex-1">{children}</main>
 							<Footer />
 						</div>
+						<Toaster />
 					</AuthProvider>
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

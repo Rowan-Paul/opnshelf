@@ -18,8 +18,14 @@ export const Route = createFileRoute("/profile/$handle")({
 				}),
 			);
 			return { profile };
-		} catch (error: any) {
-			if (error.status === 404 || error.statusCode === 404) {
+		} catch (error) {
+			if (
+				typeof error === "object" &&
+				error !== null &&
+				("status" in error || "statusCode" in error) &&
+				((error as Record<string, unknown>).status === 404 ||
+					(error as Record<string, unknown>).statusCode === 404)
+			) {
 				throw notFound();
 			}
 			throw error;

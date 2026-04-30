@@ -367,6 +367,9 @@ function ShowDetailPage() {
 													nextEpisode={nextEpisode || null}
 													onMarkEpisode={handleMarkEpisode}
 													onUnmarkEpisode={handleUnmarkEpisode}
+													onUnmarkEpisodeAll={(sn, en) =>
+														handleUnmarkEpisode(sn, en, "all")
+													}
 													processingEpisode={processingEpisode}
 													unmarkingEpisode={unmarkingEpisode}
 													isLoading={

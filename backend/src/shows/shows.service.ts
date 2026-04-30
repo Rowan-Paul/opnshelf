@@ -941,10 +941,25 @@ export class ShowsService {
 		watchedAt: string,
 	) {
 		const showData = await this.getShowDetails(showId);
-		await this.upsertShow(showData);
-		await this.syncShowMetadata(showId).catch((err) =>
+
+		if (!showData || !showData.id) {
+			throw new Error(
+				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
+			);
+		}
+
+		const normalizedShowId = showData.id.toString();
+
+		if (normalizedShowId !== showId) {
 			this.logger.warn(
-				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+				`Show ID mismatch: requested ${showId}, TMDB returned ${normalizedShowId}. Using TMDB ID for tracked episode.`,
+			);
+		}
+
+		await this.upsertShow(showData);
+		await this.syncShowMetadata(normalizedShowId).catch((err) =>
+			this.logger.warn(
+				`Failed to sync metadata for show ${normalizedShowId}: ${err instanceof Error ? err.message : String(err)}`,
 			),
 		);
 
@@ -954,7 +969,7 @@ export class ShowsService {
 				rkey,
 				cid,
 				userDid,
-				showId,
+				showId: normalizedShowId,
 				seasonNumber,
 				episodeNumber,
 				watchedDate: new Date(watchedAt),
@@ -1160,10 +1175,19 @@ export class ShowsService {
 		}
 
 		const showData = await this.getShowDetails(showId);
+
+		if (!showData || !showData.id) {
+			throw new Error(
+				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
+			);
+		}
+
+		const normalizedShowId = showData.id.toString();
+
 		await this.upsertShow(showData);
-		await this.syncShowMetadata(showId).catch((err) =>
+		await this.syncShowMetadata(normalizedShowId).catch((err) =>
 			this.logger.warn(
-				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+				`Failed to sync metadata for show ${normalizedShowId}: ${err instanceof Error ? err.message : String(err)}`,
 			),
 		);
 
@@ -1201,7 +1225,7 @@ export class ShowsService {
 						rkey: result.rkey,
 						cid: result.cid,
 						userDid,
-						showId,
+						showId: normalizedShowId,
 						seasonNumber: result.seasonNumber,
 						episodeNumber: result.episodeNumber,
 						watchedDate: new Date(watchedAt),
@@ -1284,10 +1308,19 @@ export class ShowsService {
 		}
 
 		const showData = await this.getShowDetails(showId);
+
+		if (!showData || !showData.id) {
+			throw new Error(
+				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
+			);
+		}
+
+		const normalizedShowId = showData.id.toString();
+
 		await this.upsertShow(showData);
-		await this.syncShowMetadata(showId).catch((err) =>
+		await this.syncShowMetadata(normalizedShowId).catch((err) =>
 			this.logger.warn(
-				`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+				`Failed to sync metadata for show ${normalizedShowId}: ${err instanceof Error ? err.message : String(err)}`,
 			),
 		);
 
@@ -1325,7 +1358,7 @@ export class ShowsService {
 						rkey: result.rkey,
 						cid: result.cid,
 						userDid,
-						showId,
+						showId: normalizedShowId,
 						seasonNumber: result.seasonNumber,
 						episodeNumber: result.episodeNumber,
 						watchedDate: new Date(watchedAt),

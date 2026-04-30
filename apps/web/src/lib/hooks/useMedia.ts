@@ -156,7 +156,12 @@ export function useUnmarkEpisodeWatched() {
 
 	return useMutation({
 		mutationFn: async (variables: {
-			path: { showId: string; seasonNumber: number; episodeNumber: number };
+			path: { showId: string };
+			query?: {
+				mode?: "latest" | "all";
+				seasonNumber?: number;
+				episodeNumber?: number;
+			};
 		}) => {
 			const result = await showsControllerUnmarkWatched(variables);
 			return result.data;
@@ -226,11 +231,18 @@ export function useEpisodeWatchActions(showId: string) {
 		);
 	};
 
-	const handleUnmarkEpisode = (seasonNumber: number, episodeNumber: number) => {
+	const handleUnmarkEpisode = (
+		seasonNumber: number,
+		episodeNumber: number,
+		mode: "latest" | "all" = "latest",
+	) => {
 		if (!isAuthenticated) return;
 		setUnmarkingEpisode({ seasonNumber, episodeNumber });
 		unmarkEpisodeMutation.mutate(
-			{ path: { showId, seasonNumber, episodeNumber } },
+			{
+				path: { showId },
+				query: { seasonNumber, episodeNumber, mode },
+			},
 			{ onSettled: () => setUnmarkingEpisode(null) },
 		);
 	};

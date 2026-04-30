@@ -12,21 +12,25 @@ export function Pagination({
 	if (totalPages <= 1) return null;
 
 	const getPageNumbers = () => {
-		const pages: (number | string)[] = [];
+		type PageItem =
+			| { type: "page"; value: number }
+			| { type: "ellipsis"; id: string };
+		const pages: PageItem[] = [];
 		const maxVisible = 5;
 
 		if (totalPages <= maxVisible + 2) {
-			for (let i = 1; i <= totalPages; i++) pages.push(i);
+			for (let i = 1; i <= totalPages; i++)
+				pages.push({ type: "page", value: i });
 		} else {
-			pages.push(1);
-			if (page > 3) pages.push("...");
+			pages.push({ type: "page", value: 1 });
+			if (page > 3) pages.push({ type: "ellipsis", id: "left" });
 
 			const start = Math.max(2, page - 1);
 			const end = Math.min(totalPages - 1, page + 1);
-			for (let i = start; i <= end; i++) pages.push(i);
+			for (let i = start; i <= end; i++) pages.push({ type: "page", value: i });
 
-			if (page < totalPages - 2) pages.push("...");
-			pages.push(totalPages);
+			if (page < totalPages - 2) pages.push({ type: "ellipsis", id: "right" });
+			pages.push({ type: "page", value: totalPages });
 		}
 		return pages;
 	};
@@ -42,26 +46,26 @@ export function Pagination({
 				← Prev
 			</button>
 
-			{getPageNumbers().map((p, i) =>
-				p === "..." ? (
+			{getPageNumbers().map((item) =>
+				item.type === "ellipsis" ? (
 					<span
-						key={`ellipsis-${i}`}
+						key={item.id}
 						className="flex h-9 w-9 items-center justify-center text-(--foreground-muted) text-sm"
 					>
 						...
 					</span>
 				) : (
 					<button
-						key={p}
+						key={item.value}
 						type="button"
-						onClick={() => onPageChange(p as number)}
+						onClick={() => onPageChange(item.value)}
 						className={`flex h-9 w-9 items-center justify-center rounded-md border font-medium text-sm transition-colors ${
-							page === p
+							page === item.value
 								? "border-(--accent) bg-(--accent) text-[#3f2e00]"
 								: "border-(--border) bg-(--background-elevated) hover:bg-(--background-subtle)"
 						}`}
 					>
-						{p}
+						{item.value}
 					</button>
 				),
 			)}

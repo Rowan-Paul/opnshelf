@@ -4,13 +4,13 @@ import {
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
+	type UserProfileDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
 	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
-	usersControllerUploadMyAvatarMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
@@ -24,6 +24,7 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { Button } from "#/components/ui/button";
 import {
@@ -34,6 +35,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { Switch } from "#/components/ui/switch";
+import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
 function isUnauthorizedError(error: unknown): boolean {
@@ -90,6 +92,11 @@ function SettingsPage() {
 				queryKey: usersControllerGetMySettingsOptions().queryKey,
 			});
 		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update settings",
+			);
+		},
 	});
 
 	const updateProfileMutation = useMutation({
@@ -99,16 +106,53 @@ function SettingsPage() {
 			queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,
 			});
+			toast.success("Display name updated");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update profile",
+			);
 		},
 	});
 
+	async function uploadAvatar(file: File): Promise<UserProfileDto> {
+		const formData = new FormData();
+		formData.append("avatar", file);
+
+		const response = await fetch(
+			`${apiConfig.baseUrl}/users/me/profile/avatar`,
+			{
+				method: "POST",
+				body: formData,
+				credentials: "include",
+			},
+		);
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({
+				message: "Failed to upload avatar",
+			}));
+			throw new Error(errorData.message || "Failed to upload avatar");
+		}
+
+		return response.json();
+	}
+
 	const uploadAvatarMutation = useMutation({
 		mutationKey: ["users", "me", "profile", "avatar", "upload"],
-		...usersControllerUploadMyAvatarMutation(),
+		mutationFn: uploadAvatar,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,
 			});
+			toast.success("Profile photo updated");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to upload profile photo",
+			);
 		},
 	});
 
@@ -119,12 +163,25 @@ function SettingsPage() {
 			queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,
 			});
+			toast.success("Profile photo removed");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove profile photo",
+			);
 		},
 	});
 
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "me", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to delete account",
+			);
+		},
 	});
 
 	// Display name state
@@ -137,9 +194,7 @@ function SettingsPage() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleAvatarUpload = (file: File) => {
-		uploadAvatarMutation.mutate({
-			body: { avatar: file },
-		});
+		uploadAvatarMutation.mutate(file);
 	};
 
 	// Deletion dialog state
@@ -381,7 +436,7 @@ function SettingsPage() {
 								type="text"
 								value={`@${user.handle}`}
 								disabled
-								className="input bg-(--background-subtle)"
+								className="input cursor-not-allowed bg-(--background-subtle)"
 								readOnly
 							/>
 							<p className="text-(--foreground-muted) text-xs">
@@ -401,37 +456,11 @@ function SettingsPage() {
 					</p>
 
 					{isDeleting && deletionJob ? (
-						<div className="space-y-3">
-							<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
-								<Loader2 className="h-4 w-4 animate-spin" />
-								<span className="font-medium text-sm">{deletionMessage}</span>
-							</div>
-							{deletionProgress !== null && (
-								<div className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900">
-									<div
-										className="h-full rounded-full bg-red-600 transition-all dark:bg-red-400"
-										style={{ width: `${deletionProgress}%` }}
-									/>
-								</div>
-							)}
-							{deletionJob.status === "failed" && (
-								<div className="space-y-2">
-									<p className="text-red-700 text-sm dark:text-red-300">
-										{deletionJob.lastError}
-									</p>
-									<Button
-										variant="outline"
-										onClick={handleDeleteAccount}
-										disabled={deleteAccountMutation.isPending}
-										className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
-									>
-										{deleteAccountMutation.isPending ? (
-											<Loader2 className="mr-1 h-4 w-4 animate-spin" />
-										) : null}
-										Retry
-									</Button>
-								</div>
-							)}
+						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+							<Loader2 className="h-4 w-4 animate-spin" />
+							<span className="font-medium text-sm">
+								Account deletion in progress…
+							</span>
 						</div>
 					) : (
 						<button
@@ -450,7 +479,7 @@ function SettingsPage() {
 				</section>
 			</div>
 
-			{/* Delete Account Dialog */}
+			{/* Delete Account Confirmation Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
@@ -528,6 +557,59 @@ function SettingsPage() {
 							)}
 							Permanently Delete Account
 						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Deletion Progress Dialog — non-dismissible */}
+			<Dialog open={isDeleting && !!deletionJob}>
+				<DialogContent
+					showCloseButton={false}
+					onInteractOutside={(e) => e.preventDefault()}
+					onEscapeKeyDown={(e) => e.preventDefault()}
+					className="sm:max-w-[425px]"
+				>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+							<AlertTriangle className="h-5 w-5" />
+							Deleting your account
+						</DialogTitle>
+						<DialogDescription>
+							Please do not close this page until deletion is complete.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 py-4">
+						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+							<Loader2 className="h-4 w-4 animate-spin" />
+							<span className="font-medium text-sm">{deletionMessage}</span>
+						</div>
+						{deletionProgress !== null && (
+							<div className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900">
+								<div
+									className="h-full rounded-full bg-red-600 transition-all dark:bg-red-400"
+									style={{ width: `${deletionProgress}%` }}
+								/>
+							</div>
+						)}
+						{deletionJob?.status === "failed" && (
+							<div className="space-y-2">
+								<p className="text-red-700 text-sm dark:text-red-300">
+									{deletionJob.lastError}
+								</p>
+								<Button
+									variant="outline"
+									onClick={handleDeleteAccount}
+									disabled={deleteAccountMutation.isPending}
+									className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
+								>
+									{deleteAccountMutation.isPending ? (
+										<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+									) : null}
+									Retry
+								</Button>
+							</div>
+						)}
 					</div>
 				</DialogContent>
 			</Dialog>

@@ -321,16 +321,24 @@ export class ProfileService {
 			input.displayName !== undefined
 				? input.displayName
 				: normalizeDisplayName(input.existingRecord?.displayName);
-		const nextAvatar = normalizeProfileBlob(
-			input.avatar !== undefined ? input.avatar : input.existingRecord?.avatar,
-		);
+		const nextAvatar =
+			input.avatar !== undefined ? input.avatar : input.existingRecord?.avatar;
 
-		return profileSchema.build({
+		const record: ProfileRecord = {
+			$type: "xyz.opnshelf.profile",
 			createdAt,
 			updatedAt,
-			...(nextDisplayName ? { displayName: nextDisplayName } : {}),
-			...(nextAvatar ? { avatar: nextAvatar } : {}),
-		});
+		};
+
+		if (nextDisplayName) {
+			record.displayName = nextDisplayName;
+		}
+
+		if (nextAvatar) {
+			record.avatar = nextAvatar;
+		}
+
+		return record;
 	}
 
 	private async putProfileRecord(session: ATSession, record: ProfileRecord) {

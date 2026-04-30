@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
+import { useMediaWatchStatus } from "#/lib/hooks";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
 import ManageListsDialog from "./ManageListsDialog";
 import type { MediaCardProps } from "./MediaCard";
@@ -16,10 +18,19 @@ interface DashboardMediaCardProps
 }
 
 export default function DashboardMediaCard(props: DashboardMediaCardProps) {
-	const { type, id, seasonNumber, episodeNumber, showId, isWatched, ...rest } =
-		props;
+	const {
+		type,
+		id,
+		seasonNumber,
+		episodeNumber,
+		showId,
+		isWatched,
+		title,
+		...rest
+	} = props;
 
 	const [listDialogOpen, setListDialogOpen] = useState(false);
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
 	const isMovie = type === "movie";
 	const actualShowId = showId || (type === "show" ? String(id) : undefined);
@@ -29,6 +40,13 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 			? { mediaType: "movie", movieId: String(id) }
 			: { mediaType: "show", showId: actualShowId || "" },
 	);
+
+	const watchStatusOptions = isMovie
+		? ({ mediaType: "movie", movieId: String(id) } as const)
+		: ({ mediaType: "show", showId: actualShowId || "" } as const);
+
+	const { movieWatchHistory, watchHistory } =
+		useMediaWatchStatus(watchStatusOptions);
 
 	const rawMediaId = isMovie ? String(id) : actualShowId || String(id);
 
@@ -44,7 +62,31 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 		}
 	};
 
+	const episodeWatchHistory = useMemo(() => {
+		if (isMovie || !watchHistory || !Array.isArray(watchHistory)) return [];
+		if (seasonNumber === undefined || episodeNumber === undefined) return [];
+		return watchHistory.filter(
+			(ep: { seasonNumber: number; episodeNumber: number }) =>
+				ep.seasonNumber === seasonNumber && ep.episodeNumber === episodeNumber,
+		);
+	}, [isMovie, watchHistory, seasonNumber, episodeNumber]);
+
+	const confirmEntryCount = isMovie
+		? movieWatchHistory?.length || 0
+		: episodeWatchHistory.length;
+
+	const confirmTitle = isMovie
+		? title || ""
+		: title
+			? `${title} S${seasonNumber}E${episodeNumber}`
+			: `S${seasonNumber}E${episodeNumber}`;
+
 	const handleUnmarkWatched = () => {
+		if (confirmEntryCount > 1) {
+			setConfirmRemoveOpen(true);
+			return;
+		}
+
 		if (isMovie) {
 			watchActions.unmarkMovieWatched();
 		} else if (
@@ -56,11 +98,25 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 		}
 	};
 
+	const handleConfirmRemove = () => {
+		if (isMovie) {
+			watchActions.unmarkMovieWatched();
+		} else if (
+			actualShowId &&
+			seasonNumber !== undefined &&
+			episodeNumber !== undefined
+		) {
+			watchActions.unmarkEpisodeWatched(seasonNumber, episodeNumber, "all");
+		}
+		setConfirmRemoveOpen(false);
+	};
+
 	return (
 		<>
 			<MediaCard
 				{...rest}
 				id={id}
+				title={title}
 				type={type}
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
@@ -86,6 +142,18 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 				episodeNumber={episodeNumber}
 				open={listDialogOpen}
 				onOpenChange={setListDialogOpen}
+			/>
+			<ConfirmRemoveDialog
+				open={confirmRemoveOpen}
+				onOpenChange={setConfirmRemoveOpen}
+				title={confirmTitle}
+				entryCount={confirmEntryCount}
+				onConfirm={handleConfirmRemove}
+				isPending={
+					isMovie
+						? watchActions.isUnmarkMoviePending
+						: watchActions.isUnmarkEpisodePending
+				}
 			/>
 		</>
 	);

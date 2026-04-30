@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Loader2 } from "lucide-react";
+import { useState } from "react";
+import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 
@@ -22,6 +24,8 @@ interface EpisodeRowProps {
 	isUnmarking: boolean;
 	onMarkWatched: () => void;
 	onUnmarkWatched: () => void;
+	onUnmarkAllWatched?: () => void;
+	watchHistoryCount?: number;
 	isLast?: boolean;
 }
 
@@ -59,10 +63,34 @@ export default function EpisodeRow({
 	isUnmarking,
 	onMarkWatched,
 	onUnmarkWatched,
+	onUnmarkAllWatched,
+	watchHistoryCount = 0,
 	isLast = false,
 }: EpisodeRowProps) {
 	const { userSettings } = useAuth();
 	const userTimezone = userSettings?.timezone;
+	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+
+	const dialogTitle = `${episode.name} S${seasonNumber}E${episode.episode_number}`;
+
+	const handleUnmarkClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		if (watchHistoryCount > 1) {
+			setConfirmRemoveOpen(true);
+		} else {
+			onUnmarkWatched();
+		}
+	};
+
+	const handleConfirmRemove = () => {
+		if (onUnmarkAllWatched) {
+			onUnmarkAllWatched();
+		} else {
+			onUnmarkWatched();
+		}
+		setConfirmRemoveOpen(false);
+	};
 
 	return (
 		<Link
@@ -98,11 +126,7 @@ export default function EpisodeRow({
 			{isWatched ? (
 				<button
 					type="button"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onUnmarkWatched();
-					}}
+					onClick={handleUnmarkClick}
 					disabled={isUnmarking}
 					className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
 					title="Remove from shelf"
@@ -141,6 +165,14 @@ export default function EpisodeRow({
 					)}
 				</button>
 			)}
+			<ConfirmRemoveDialog
+				open={confirmRemoveOpen}
+				onOpenChange={setConfirmRemoveOpen}
+				title={dialogTitle}
+				entryCount={watchHistoryCount}
+				onConfirm={handleConfirmRemove}
+				isPending={isUnmarking}
+			/>
 		</Link>
 	);
 }

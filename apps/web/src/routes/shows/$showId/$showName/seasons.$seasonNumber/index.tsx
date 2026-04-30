@@ -378,6 +378,9 @@ function SeasonDetailPage() {
 										nextEpisode={upNextEpisode || null}
 										onMarkEpisode={handleMarkEpisode}
 										onUnmarkEpisode={handleUnmarkEpisode}
+										onUnmarkEpisodeAll={(sn, en) =>
+											handleUnmarkEpisode(sn, en, "all")
+										}
 										processingEpisode={processingEpisode}
 										unmarkingEpisode={unmarkingEpisode}
 										isLoading={false}

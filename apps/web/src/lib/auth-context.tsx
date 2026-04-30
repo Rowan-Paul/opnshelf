@@ -45,8 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					throwOnError: true,
 				});
 				return data ?? null;
-			} catch (error: any) {
-				if (error.status === 401 || error.statusCode === 401) {
+			} catch (error) {
+				if (
+					typeof error === "object" &&
+					error !== null &&
+					("status" in error || "statusCode" in error) &&
+					((error as Record<string, unknown>).status === 401 ||
+						(error as Record<string, unknown>).statusCode === 401)
+				) {
 					return null;
 				}
 				throw error;

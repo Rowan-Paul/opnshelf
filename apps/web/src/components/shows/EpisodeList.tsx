@@ -10,6 +10,7 @@ interface EpisodeListProps {
 	nextEpisode?: { seasonNumber: number; episodeNumber: number } | null;
 	onMarkEpisode: (seasonNumber: number, episodeNumber: number) => void;
 	onUnmarkEpisode: (seasonNumber: number, episodeNumber: number) => void;
+	onUnmarkEpisodeAll?: (seasonNumber: number, episodeNumber: number) => void;
 	processingEpisode: { seasonNumber: number; episodeNumber: number } | null;
 	unmarkingEpisode: { seasonNumber: number; episodeNumber: number } | null;
 	isLoading?: boolean;
@@ -24,6 +25,7 @@ export default function EpisodeList({
 	nextEpisode = null,
 	onMarkEpisode,
 	onUnmarkEpisode,
+	onUnmarkEpisodeAll,
 	processingEpisode,
 	unmarkingEpisode,
 	isLoading = false,
@@ -47,11 +49,12 @@ export default function EpisodeList({
 	return (
 		<div>
 			{episodes.map((episode, index) => {
-				const isWatched = watchHistory.some(
+				const episodeWatchHistory = watchHistory.filter(
 					(ep) =>
 						ep.seasonNumber === seasonNumber &&
 						ep.episodeNumber === episode.episode_number,
 				);
+				const isWatched = episodeWatchHistory.length > 0;
 				const isUpNext =
 					nextEpisode?.seasonNumber === seasonNumber &&
 					nextEpisode?.episodeNumber === episode.episode_number;
@@ -79,6 +82,12 @@ export default function EpisodeList({
 						onUnmarkWatched={() =>
 							onUnmarkEpisode(seasonNumber, episode.episode_number)
 						}
+						onUnmarkAllWatched={
+							onUnmarkEpisodeAll
+								? () => onUnmarkEpisodeAll(seasonNumber, episode.episode_number)
+								: undefined
+						}
+						watchHistoryCount={episodeWatchHistory.length}
 						isLast={index === episodes.length - 1}
 					/>
 				);

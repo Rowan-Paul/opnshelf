@@ -337,6 +337,15 @@ export class MoviesService {
 	) {
 		// Fetch movie details from TMDB and upsert in database
 		const movieData = await this.getMovieDetails(movieId);
+
+		if (!movieData || !movieData.id) {
+			throw new Error(
+				`Failed to fetch movie details for movieId ${movieId}: invalid response from TMDB`,
+			);
+		}
+
+		const normalizedMovieId = movieData.id.toString();
+
 		await this.upsertMovie(movieData);
 
 		// Create new TrackedMovie record (since rkey is unique, each watch is a new record)
@@ -346,7 +355,7 @@ export class MoviesService {
 				rkey,
 				cid,
 				userDid,
-				movieId,
+				movieId: normalizedMovieId,
 				watchedDate: new Date(watchedAt),
 				status: "watched",
 			},
