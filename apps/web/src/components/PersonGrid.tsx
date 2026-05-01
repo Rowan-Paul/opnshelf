@@ -45,7 +45,7 @@ export default function PersonGrid({
 			{uniquePeople.length === 0 ? (
 				<p className="text-(--foreground-muted) text-sm">{emptyMessage}</p>
 			) : (
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{uniquePeople.map((person) => (
 						<Link
 							key={person.id}

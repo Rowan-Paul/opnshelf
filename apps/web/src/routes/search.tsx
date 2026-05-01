@@ -271,7 +271,7 @@ function SearchPage() {
 							searchData?.results &&
 							searchData.results.length > 0 && (
 								<section>
-									<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+									<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 										{searchData.results.map((item) => (
 											<ActionableMediaCard
 												key={`media-${item.id}-${item.media_type}`}
@@ -292,7 +292,7 @@ function SearchPage() {
 						{/* Movies tab only */}
 						{activeTab === "movies" && movies.length > 0 && (
 							<section>
-								<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 									{movies.map((item) => (
 										<ActionableMediaCard
 											key={`movie-${item.id}`}
@@ -313,7 +313,7 @@ function SearchPage() {
 						{/* TV Shows tab only */}
 						{activeTab === "shows" && shows.length > 0 && (
 							<section>
-								<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 									{shows.map((item) => (
 										<ActionableMediaCard
 											key={`show-${item.id}`}
@@ -360,7 +360,7 @@ function SearchPage() {
 										</Link>
 									</div>
 								) : people.length > 0 ? (
-									<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+									<div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 										{people.map((person: SocialUserCardDto) => (
 											<div
 												key={person.did}

@@ -36,7 +36,7 @@ export default function Header() {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
-	const visibleNavigation = isAuthenticated ? navigation : [];
+	const visibleNavigation = isAuthenticated || isLoading ? navigation : [];
 
 	useEffect(() => {
 		const handleScroll = () => {

@@ -124,12 +124,16 @@ function Dashboard() {
 	const userTimezone = userSettings?.timezone;
 	const userTimeFormat = userSettings?.timeFormat;
 
-	// Redirect to login if not authenticated
+	// Redirect to login if not authenticated, or onboarding if needed
 	useEffect(() => {
-		if (!authLoading && !isAuthenticated) {
-			navigate({ to: "/login" });
+		if (!authLoading) {
+			if (!isAuthenticated) {
+				navigate({ to: "/login" });
+			} else if (user?.needsOnboarding) {
+				navigate({ to: "/onboarding" });
+			}
 		}
-	}, [authLoading, isAuthenticated, navigate]);
+	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
 	// Fetch user data from API
 	const { data: shelfData, isLoading: shelfLoading } = useUserShelf(
@@ -308,18 +312,18 @@ function Dashboard() {
 			</div>
 
 			{/* Stats Grid */}
-			<div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
 				{isLoading
 					? // Skeleton stats
 						[1, 2, 3, 4].map((i) => (
-							<div key={i} className="card animate-pulse p-5">
-								<div className="flex items-center justify-between">
-									<div className="space-y-2">
-										<div className="h-4 w-16 rounded bg-(--background-subtle)" />
-										<div className="h-8 w-12 rounded bg-(--background-subtle)" />
-										<div className="h-3 w-20 rounded bg-(--background-subtle)" />
+							<div key={i} className="card animate-pulse p-4 sm:p-5">
+								<div className="flex items-center gap-3 sm:items-center sm:justify-between">
+									<div className="order-1 h-10 w-10 rounded-lg bg-(--background-subtle) sm:order-2 sm:h-12 sm:w-12 sm:rounded-xl" />
+									<div className="order-2 space-y-1 sm:order-1 sm:space-y-2">
+										<div className="h-3 w-14 rounded bg-(--background-subtle) sm:h-4 sm:w-16" />
+										<div className="h-6 w-10 rounded bg-(--background-subtle) sm:h-8 sm:w-12" />
+										<div className="hidden h-3 w-20 rounded bg-(--background-subtle) sm:block" />
 									</div>
-									<div className="h-12 w-12 rounded-xl bg-(--background-subtle)" />
 								</div>
 							</div>
 						))
@@ -328,21 +332,23 @@ function Dashboard() {
 							return (
 								<div
 									key={stat.label}
-									className="card p-5"
+									className="card p-4 sm:p-5"
 									style={{ animationDelay: `${index * 50}ms` }}
 								>
-									<div className="flex items-center justify-between">
-										<div>
+									<div className="flex items-center gap-3 sm:items-center sm:justify-between">
+										<div className="order-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent) sm:order-2 sm:h-12 sm:w-12 sm:rounded-xl">
+											<Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+										</div>
+										<div className="order-2 sm:order-1">
 											<p className="text-(--foreground-muted) text-sm">
 												{stat.label}
 											</p>
-											<p className="mt-1 text-display-3">{stat.value}</p>
-											<p className="mt-1 text-(--accent) text-xs">
+											<p className="font-semibold text-lg sm:mt-1 sm:text-display-3">
+												{stat.value}
+											</p>
+											<p className="hidden text-(--accent) text-xs sm:mt-1 sm:block">
 												{stat.change}
 											</p>
-										</div>
-										<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
-											<Icon className="h-6 w-6" />
 										</div>
 									</div>
 								</div>

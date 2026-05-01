@@ -10,6 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useEffect } from "react";
+import LoadingState from "#/components/LoadingState";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/")({
@@ -17,15 +18,25 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-	const { isAuthenticated, isLoading: authLoading } = useAuth();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
-	// Redirect to dashboard if already authenticated
+	// Redirect to dashboard (or onboarding for new users) if already authenticated
 	useEffect(() => {
 		if (!authLoading && isAuthenticated) {
-			navigate({ to: "/dashboard" });
+			if (user?.needsOnboarding) {
+				navigate({ to: "/onboarding" });
+			} else {
+				navigate({ to: "/dashboard" });
+			}
 		}
-	}, [authLoading, isAuthenticated, navigate]);
+	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
+
+	// Show loading while auth state is resolving to prevent
+	// logged-out content from flashing for logged-in users
+	if (authLoading) {
+		return <LoadingState />;
+	}
 
 	const features = [
 		{
@@ -126,7 +137,7 @@ function LandingPage() {
 						</p>
 					</div>
 
-					<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 						{features.map((feature) => {
 							const Icon = feature.icon;
 							return (

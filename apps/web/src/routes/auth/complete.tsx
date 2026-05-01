@@ -42,11 +42,12 @@ function AuthCompletePage() {
 		// Refetch user data
 		queryClient
 			.fetchQuery(authControllerMeOptions())
-			.then(() => {
+			.then((data) => {
 				setStatus("success");
-				// Redirect to home after a short delay
+				// Redirect to onboarding for new users, otherwise home
+				const redirectTo = data?.needsOnboarding ? "/onboarding" : "/dashboard";
 				setTimeout(() => {
-					window.location.href = "/";
+					window.location.href = redirectTo;
 				}, 1500);
 			})
 			.catch((err) => {

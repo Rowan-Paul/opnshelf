@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FollowingRouteImport } from './routes/following'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -42,6 +43,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/following'
     | '/login'
+    | '/onboarding'
     | '/search'
     | '/settings'
     | '/auth/complete'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/following'
     | '/login'
+    | '/onboarding'
     | '/search'
     | '/settings'
     | '/auth/complete'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/following'
     | '/login'
+    | '/onboarding'
     | '/search'
     | '/settings'
     | '/auth/complete'
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FollowingRoute: typeof FollowingRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -577,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FollowingRoute: FollowingRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   AuthCompleteRoute: AuthCompleteRoute,

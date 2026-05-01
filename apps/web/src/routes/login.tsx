@@ -3,8 +3,9 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { ArrowRight, Film, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Film, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import LoadingState from "#/components/LoadingState";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const { login, signup, isAuthenticated } = useAuth();
+	const { login, signup, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
 	const message = (search as { message?: string }).message;
@@ -25,6 +26,12 @@ function LoginPage() {
 			navigate({ to: "/dashboard" });
 		}
 	}, [isAuthenticated, navigate]);
+
+	// Show loading while auth state is resolving to prevent
+	// login form from flashing for logged-in users
+	if (authLoading) {
+		return <LoadingState />;
+	}
 
 	const handleLogin = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -51,6 +58,16 @@ function LoginPage() {
 					<h1 className="text-display-2">Welcome to OpnShelf</h1>
 					<p className="mt-2 text-(--foreground-muted)">
 						Track what you watch with your AT Protocol account
+					</p>
+				</div>
+
+				{/* Development Warning */}
+				<div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+					<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+					<p>
+						<span className="font-semibold">Development Preview</span> — This
+						app is still in development. Things will change and your data might
+						be reset.
 					</p>
 				</div>
 
