@@ -22,5 +22,12 @@ export function usePersonFilmography(personId: string, pageSize = 20) {
 			query: { pageSize },
 		}),
 		enabled: !!personId,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) => {
+			if (lastPage.page < lastPage.totalPages) {
+				return lastPage.page + 1;
+			}
+			return undefined;
+		},
 	});
 }

@@ -1,18 +1,13 @@
-import {
-	peopleControllerGetPersonDetailsOptions,
-	peopleControllerGetPersonFilmographyInfiniteOptions,
-} from "@opnshelf/api";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { peopleControllerGetPersonDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Calendar,
 	ChevronLeft,
 	Clapperboard,
-	Loader2,
 	MapPin,
 	Star,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
@@ -24,6 +19,8 @@ import ErrorState from "../../../components/ErrorState";
 import LoadingState from "../../../components/LoadingState";
 
 setupApiClient();
+
+const FILMOGRAPHY_PAGE_SIZE = 20;
 
 export const Route = createFileRoute("/people/$personId/$personName")({
 	loader: async ({ context, params }) => {
@@ -54,24 +51,24 @@ function PersonDetailPage() {
 	const userTimezone = userSettings?.timezone;
 
 	const { data: person, isLoading, error } = usePersonDetails(personId);
+	const [filmographyLimit, setFilmographyLimit] = useState(
+		FILMOGRAPHY_PAGE_SIZE,
+	);
 
-	const {
-		data: filmographyData,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
-	} = useInfiniteQuery({
-		...peopleControllerGetPersonFilmographyInfiniteOptions({
-			path: { personId },
-			query: { pageSize: 20 },
-		}),
-		enabled: !!personId,
-	});
+	const allFilmography = useMemo(() => {
+		if (!person?.filmography) return [];
+		return [...person.filmography].sort((a, b) => {
+			const dateA = a.release_date || a.first_air_date || "";
+			const dateB = b.release_date || b.first_air_date || "";
+			return dateB.localeCompare(dateA);
+		});
+	}, [person?.filmography]);
 
 	const filmographyItems = useMemo(() => {
-		if (!filmographyData?.pages) return [];
-		return filmographyData.pages.flatMap((page) => page.items);
-	}, [filmographyData]);
+		return allFilmography.slice(0, filmographyLimit);
+	}, [allFilmography, filmographyLimit]);
+
+	const hasMoreFilmography = filmographyItems.length < allFilmography.length;
 
 	const knownForItems = useMemo(() => {
 		if (!person?.filmography) return [];
@@ -254,7 +251,7 @@ function PersonDetailPage() {
 						{/* Full Filmography */}
 						<section>
 							<h2 className="mb-4 text-display-3">Filmography</h2>
-							{filmographyItems.length === 0 && !isFetchingNextPage ? (
+							{allFilmography.length === 0 ? (
 								<p className="text-(--foreground-muted) text-sm">
 									No filmography available.
 								</p>
@@ -282,22 +279,18 @@ function PersonDetailPage() {
 											/>
 										))}
 									</div>
-									{hasNextPage && (
+									{hasMoreFilmography && (
 										<div className="mt-6 flex justify-center">
 											<button
 												type="button"
-												onClick={() => fetchNextPage()}
-												disabled={isFetchingNextPage}
+												onClick={() =>
+													setFilmographyLimit(
+														(prev) => prev + FILMOGRAPHY_PAGE_SIZE,
+													)
+												}
 												className="btn btn-secondary gap-2"
 											>
-												{isFetchingNextPage ? (
-													<>
-														<Loader2 className="size-4 animate-spin" />
-														Loading...
-													</>
-												) : (
-													"Load more"
-												)}
+												Load more
 											</button>
 										</div>
 									)}
