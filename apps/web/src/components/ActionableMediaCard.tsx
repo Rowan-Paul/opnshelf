@@ -20,6 +20,8 @@ interface ActionableMediaCardProps {
 	watchedDate?: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	role?: string;
+	year?: string | number;
 	size?: "sm" | "md" | "lg";
 	layout?: "poster" | "backdrop";
 	interactive?: boolean;
@@ -41,6 +43,8 @@ export default function ActionableMediaCard({
 	watchedDate,
 	seasonNumber,
 	episodeNumber,
+	role,
+	year,
 	size = "md",
 	layout = "poster",
 	interactive = true,
@@ -171,6 +175,8 @@ export default function ActionableMediaCard({
 				watchedDate={formattedWatchedDate}
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
+				role={role}
+				year={year}
 				size={size}
 				layout={layout}
 				isWatched={watched}

@@ -32,6 +32,8 @@ export interface MediaCardProps {
 	isWatched?: boolean;
 	isInWatchlist?: boolean;
 	watchedDate?: string;
+	role?: string;
+	year?: string | number;
 	size?: "sm" | "md" | "lg";
 	layout?: "poster" | "backdrop";
 	href?: string;
@@ -60,6 +62,8 @@ export default function MediaCard({
 	progress,
 	isWatched = false,
 	watchedDate,
+	role,
+	year,
 	size = "md",
 	layout = "poster",
 	href,
@@ -312,34 +316,55 @@ export default function MediaCard({
 								{displayName}
 							</h3>
 						)}
+						{role && (
+							<p className="line-clamp-1 text-(--foreground-muted) text-xs italic">
+								{role}
+							</p>
+						)}
 						<div className="flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
-							{typeof seasonNumber === "number" &&
-								type === "show" &&
-								!episodeInfo && (
-									<>
-										<span>•</span>
-										<span>
-											{typeof episodeNumber === "number"
-												? `S${seasonNumber}E${episodeNumber}`
-												: `Season ${seasonNumber}`}
-										</span>
-									</>
-								)}
-							{rating && (
-								<>
-									<span>•</span>
-									<span className="flex items-center gap-1">
-										<Star className="size-3 fill-current text-yellow-500" />
-										{rating.toFixed(1)}
+							{(() => {
+								const parts: { key: string; node: React.ReactNode }[] = [];
+								if (year)
+									parts.push({ key: "year", node: <span>{year}</span> });
+								if (
+									typeof seasonNumber === "number" &&
+									type === "show" &&
+									!episodeInfo
+								) {
+									parts.push({
+										key: "season",
+										node: (
+											<span>
+												{typeof episodeNumber === "number"
+													? `S${seasonNumber}E${episodeNumber}`
+													: `Season ${seasonNumber}`}
+											</span>
+										),
+									});
+								}
+								if (rating) {
+									parts.push({
+										key: "rating",
+										node: (
+											<span className="flex items-center gap-1">
+												<Star className="size-3 fill-current text-yellow-500" />
+												{rating.toFixed(1)}
+											</span>
+										),
+									});
+								}
+								if (duration)
+									parts.push({
+										key: "duration",
+										node: <span>{duration}</span>,
+									});
+								return parts.map((part, i) => (
+									<span key={part.key} className="flex items-center gap-2">
+										{i > 0 && <span>•</span>}
+										{part.node}
 									</span>
-								</>
-							)}
-							{duration && (
-								<>
-									<span>•</span>
-									<span>{duration}</span>
-								</>
-							)}
+								));
+							})()}
 						</div>
 						{watchedDate && (
 							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">

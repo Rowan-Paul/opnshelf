@@ -1,3 +1,4 @@
+import type { PersonFilmographyItemDto } from "@opnshelf/api";
 import { peopleControllerGetPersonDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -7,11 +8,11 @@ import {
 	MapPin,
 	Star,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
-import { usePersonDetails } from "#/lib/hooks";
+import { usePersonDetails, usePersonFilmography } from "#/lib/hooks";
 import { buildPersonPageMeta } from "#/lib/media-meta";
 import ActionableMediaCard from "../../../components/ActionableMediaCard";
 import DetailsCard from "../../../components/DetailsCard";
@@ -20,7 +21,22 @@ import LoadingState from "../../../components/LoadingState";
 
 setupApiClient();
 
-const FILMOGRAPHY_PAGE_SIZE = 20;
+function getRoleText(item: PersonFilmographyItemDto): string | undefined {
+	if (item.character) return item.character;
+	if (item.job) return item.job;
+	if (item.roles && item.roles.length > 0) {
+		const roles = item.roles.map((r) => r.character || r.job).filter(Boolean);
+		return [...new Set(roles)].join(" / ") || undefined;
+	}
+	return undefined;
+}
+
+function getYear(item: PersonFilmographyItemDto): string | undefined {
+	const date = item.release_date || item.first_air_date;
+	if (!date) return undefined;
+	const year = new Date(date).getFullYear();
+	return Number.isNaN(year) ? undefined : String(year);
+}
 
 export const Route = createFileRoute("/people/$personId/$personName")({
 	loader: async ({ context, params }) => {
@@ -51,32 +67,29 @@ function PersonDetailPage() {
 	const userTimezone = userSettings?.timezone;
 
 	const { data: person, isLoading, error } = usePersonDetails(personId);
-	const [filmographyLimit, setFilmographyLimit] = useState(
-		FILMOGRAPHY_PAGE_SIZE,
-	);
+	const {
+		data: filmographyData,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = usePersonFilmography(personId);
 
 	const allFilmography = useMemo(() => {
-		if (!person?.filmography) return [];
-		return [...person.filmography].sort((a, b) => {
+		const items = filmographyData?.pages.flatMap((page) => page.items) ?? [];
+		return [...items].sort((a, b) => {
 			const dateA = a.release_date || a.first_air_date || "";
 			const dateB = b.release_date || b.first_air_date || "";
 			return dateB.localeCompare(dateA);
 		});
-	}, [person?.filmography]);
-
-	const filmographyItems = useMemo(() => {
-		return allFilmography.slice(0, filmographyLimit);
-	}, [allFilmography, filmographyLimit]);
-
-	const hasMoreFilmography = filmographyItems.length < allFilmography.length;
+	}, [filmographyData]);
 
 	const knownForItems = useMemo(() => {
-		if (!person?.filmography) return [];
-		return [...person.filmography]
+		if (allFilmography.length === 0) return [];
+		return [...allFilmography]
 			.filter((item) => item.vote_average && item.vote_average > 0)
 			.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
 			.slice(0, 6);
-	}, [person?.filmography]);
+	}, [allFilmography]);
 
 	if (isLoading) return <LoadingState />;
 	if (error || !person) {
@@ -223,7 +236,7 @@ function PersonDetailPage() {
 						{knownForItems.length > 0 && (
 							<section>
 								<h2 className="mb-4 text-display-3">Known For</h2>
-								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+								<div className="flex flex-wrap gap-4">
 									{knownForItems.map((item) => (
 										<ActionableMediaCard
 											key={`known-${item.id}-${item.media_type}`}
@@ -240,7 +253,9 @@ function PersonDetailPage() {
 													? Math.round(item.vote_average * 10) / 10
 													: undefined
 											}
-											size="sm"
+											role={getRoleText(item)}
+											year={getYear(item)}
+											size="md"
 											layout="poster"
 										/>
 									))}
@@ -257,8 +272,8 @@ function PersonDetailPage() {
 								</p>
 							) : (
 								<>
-									<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-										{filmographyItems.map((item) => (
+									<div className="flex flex-wrap gap-4">
+										{allFilmography.map((item) => (
 											<ActionableMediaCard
 												key={`film-${item.id}-${item.media_type}`}
 												id={item.id}
@@ -274,23 +289,22 @@ function PersonDetailPage() {
 														? Math.round(item.vote_average * 10) / 10
 														: undefined
 												}
-												size="sm"
+												role={getRoleText(item)}
+												year={getYear(item)}
+												size="md"
 												layout="poster"
 											/>
 										))}
 									</div>
-									{hasMoreFilmography && (
+									{hasNextPage && (
 										<div className="mt-6 flex justify-center">
 											<button
 												type="button"
-												onClick={() =>
-													setFilmographyLimit(
-														(prev) => prev + FILMOGRAPHY_PAGE_SIZE,
-													)
-												}
+												onClick={() => fetchNextPage()}
+												disabled={isFetchingNextPage}
 												className="btn btn-secondary gap-2"
 											>
-												Load more
+												{isFetchingNextPage ? "Loading..." : "Load more"}
 											</button>
 										</div>
 									)}

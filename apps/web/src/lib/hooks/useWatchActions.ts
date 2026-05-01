@@ -167,7 +167,6 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		queryClient.invalidateQueries({
 			queryKey: shelfControllerGetUserShelfQueryKey({
 				path: { userDid },
-				query: { page: 1, pageSize: 6 },
 			}),
 		});
 		queryClient.invalidateQueries({
