@@ -65,12 +65,12 @@ export default function ProgressCard({
 					>
 						{isUnmarkPending || processing ? (
 							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="size-4 animate-spin" />
 								Loading
 							</>
 						) : (
 							<>
-								<X className="h-4 w-4" />
+								<X className="size-4" />
 								{unmarkLabel}
 							</>
 						)}
@@ -84,12 +84,12 @@ export default function ProgressCard({
 					>
 						{isMarkPending || processing ? (
 							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="size-4 animate-spin" />
 								Loading
 							</>
 						) : (
 							<>
-								<Check className="h-4 w-4" />
+								<Check className="size-4" />
 								{markLabel}
 							</>
 						)}

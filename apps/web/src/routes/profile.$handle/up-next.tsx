@@ -91,7 +91,7 @@ function ProfileUpNextPage() {
 				</div>
 			) : items.length === 0 ? (
 				<div className="card p-8 text-center">
-					<Tv className="mx-auto mb-3 h-12 w-12 text-(--foreground-muted)" />
+					<Tv className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">
 						{displayName} is all caught up!
 					</p>
@@ -133,7 +133,7 @@ function ProfileUpNextPage() {
 											/>
 										) : (
 											<div className="flex h-full w-full items-center justify-center">
-												<Tv className="h-8 w-8 text-(--foreground-muted)" />
+												<Tv className="size-8 text-(--foreground-muted)" />
 											</div>
 										)}
 									</div>
@@ -165,7 +165,7 @@ function ProfileUpNextPage() {
 
 										{nextEp.airDate && (
 											<div className="mt-2 flex items-center gap-2 text-(--foreground-muted) text-sm">
-												<Calendar className="h-4 w-4" />
+												<Calendar className="size-4" />
 												<span>{formatDate(nextEp.airDate)}</span>
 												<span className="text-(--accent)">
 													• {formatRelativeDate(nextEp.airDate)}
@@ -212,9 +212,9 @@ function ProfileUpNextPage() {
 												className="btn btn-primary gap-2 text-sm"
 											>
 												{markEpisodeMutation.isPending ? (
-													<Loader2 className="h-4 w-4 animate-spin" />
+													<Loader2 className="size-4 animate-spin" />
 												) : (
-													<Check className="h-4 w-4" />
+													<Check className="size-4" />
 												)}
 												Mark watched
 											</button>

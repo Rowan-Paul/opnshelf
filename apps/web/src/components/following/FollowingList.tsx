@@ -24,7 +24,7 @@ export function FollowingList({
 			</h3>
 			{isLoading ? (
 				<div className="flex items-center justify-center py-4">
-					<Loader2 className="h-6 w-6 animate-spin text-(--accent)" />
+					<Loader2 className="size-6 animate-spin text-(--accent)" />
 				</div>
 			) : error ? (
 				<div className="py-4 text-center text-(--foreground-muted)">
@@ -32,7 +32,7 @@ export function FollowingList({
 				</div>
 			) : following.length === 0 ? (
 				<div className="py-4 text-center text-(--foreground-muted)">
-					<UserX className="mx-auto mb-2 h-8 w-8 opacity-50" />
+					<UserX className="mx-auto mb-2 size-8 opacity-50" />
 					<p className="text-sm">You&apos;re not following anyone yet</p>
 				</div>
 			) : (
@@ -59,9 +59,9 @@ export function FollowingList({
 								title="Unfollow"
 							>
 								{pendingUnfollowDid === friend.did ? (
-									<Loader2 className="h-3 w-3 animate-spin" />
+									<Loader2 className="size-3 animate-spin" />
 								) : (
-									<UserCheck className="h-3 w-3" />
+									<UserCheck className="size-3" />
 								)}
 							</button>
 						</div>

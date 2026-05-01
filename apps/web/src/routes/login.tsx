@@ -45,7 +45,7 @@ function LoginPage() {
 				<div className="mb-8 text-center">
 					<div className="mb-4 flex justify-center">
 						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
-							<Film className="h-8 w-8" />
+							<Film className="size-8" />
 						</div>
 					</div>
 					<h1 className="text-display-2">Welcome to OpnShelf</h1>
@@ -92,13 +92,13 @@ function LoginPage() {
 						>
 							{isLoading ? (
 								<>
-									<Loader2 className="h-4 w-4 animate-spin" />
+									<Loader2 className="size-4 animate-spin" />
 									Connecting...
 								</>
 							) : (
 								<>
 									Sign In
-									<ArrowRight className="h-4 w-4" />
+									<ArrowRight className="size-4" />
 								</>
 							)}
 						</button>

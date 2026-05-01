@@ -202,7 +202,7 @@ function EpisodeDetailPage() {
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
 								{episode.vote_average?.toFixed(1) || "N/A"}
 							</span>
@@ -239,12 +239,12 @@ function EpisodeDetailPage() {
 							>
 								{isUnmarkEpisodePending ? (
 									<>
-										<Loader2 className="h-4 w-4 animate-spin" />
+										<Loader2 className="size-4 animate-spin" />
 										Loading
 									</>
 								) : (
 									<>
-										<X className="h-4 w-4" />
+										<X className="size-4" />
 										Remove from shelf
 									</>
 								)}
@@ -258,12 +258,12 @@ function EpisodeDetailPage() {
 							>
 								{isMarkEpisodePending ? (
 									<>
-										<Loader2 className="h-4 w-4 animate-spin" />
+										<Loader2 className="size-4 animate-spin" />
 										Loading
 									</>
 								) : (
 									<>
-										<Plus className="h-4 w-4" />
+										<Plus className="size-4" />
 										Add to shelf
 									</>
 								)}
@@ -291,7 +291,7 @@ function EpisodeDetailPage() {
 								}}
 								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
 							>
-								<ChevronLeft className="h-4 w-4" />
+								<ChevronLeft className="size-4" />
 								Prev (S{prevEpisode.seasonNumber}E{prevEpisode.episodeNumber})
 							</Link>
 						)}
@@ -311,7 +311,7 @@ function EpisodeDetailPage() {
 							>
 								Next (S{nextEpisodeCtx.seasonNumber}E
 								{nextEpisodeCtx.episodeNumber})
-								<ChevronRight className="h-4 w-4" />
+								<ChevronRight className="size-4" />
 							</Link>
 						)}
 					</div>
@@ -414,7 +414,7 @@ function EpisodeDetailPage() {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
-							<AlertTriangle className="h-5 w-5 text-amber-500" />
+							<AlertTriangle className="size-5 text-amber-500" />
 							Remove all plays?
 						</DialogTitle>
 						<DialogDescription>
@@ -446,7 +446,7 @@ function EpisodeDetailPage() {
 						>
 							{isUnmarkEpisodePending ? (
 								<>
-									<Loader2 className="h-4 w-4 animate-spin" />
+									<Loader2 className="size-4 animate-spin" />
 									Removing...
 								</>
 							) : (

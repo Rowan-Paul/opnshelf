@@ -29,7 +29,7 @@ export default function ConfirmRemoveDialog({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<AlertTriangle className="h-5 w-5 text-amber-500" />
+						<AlertTriangle className="size-5 text-amber-500" />
 						Remove all plays?
 					</DialogTitle>
 					<DialogDescription>
@@ -55,7 +55,7 @@ export default function ConfirmRemoveDialog({
 					>
 						{isPending ? (
 							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="size-4 animate-spin" />
 								Removing...
 							</>
 						) : (

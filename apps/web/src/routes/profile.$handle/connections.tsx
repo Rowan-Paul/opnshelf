@@ -62,11 +62,11 @@ function ProfileConnectionsPage() {
 			{/* Content */}
 			{activeQuery.isLoading ? (
 				<div className="flex h-64 items-center justify-center">
-					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+					<Loader2 className="size-8 animate-spin text-(--accent)" />
 				</div>
 			) : !activeQuery.data || activeQuery.data.items.length === 0 ? (
 				<div className="card p-8 text-center">
-					<Users className="mx-auto mb-3 h-12 w-12 text-(--foreground-muted)" />
+					<Users className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">
 						{activeTab === "followers"
 							? "No followers yet."
@@ -90,7 +90,7 @@ function ProfileConnectionsPage() {
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<Users className="h-5 w-5 text-(--foreground-muted)" />
+									<Users className="size-5 text-(--foreground-muted)" />
 								)}
 							</div>
 							<div className="min-w-0 flex-1">

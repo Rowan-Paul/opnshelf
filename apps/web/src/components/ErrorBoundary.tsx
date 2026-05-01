@@ -21,7 +21,7 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 		<div className="container-app flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
 			{/* Error Icon */}
 			<div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/20">
-				<AlertTriangle className="h-10 w-10 text-red-500" />
+				<AlertTriangle className="size-10 text-red-500" />
 			</div>
 
 			{/* Error Title */}
@@ -54,7 +54,7 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 					onClick={handleRetry}
 					className="inline-flex items-center justify-center gap-2 rounded-md bg-(--accent) px-6 py-3 font-medium text-[#3f2e00] text-sm transition-colors hover:bg-(--accent-hover)"
 				>
-					<RefreshCw className="h-4 w-4" />
+					<RefreshCw className="size-4" />
 					Try Again
 				</button>
 
@@ -62,7 +62,7 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 					to="/"
 					className="inline-flex items-center justify-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-6 py-3 font-medium text-(--foreground) text-sm transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle)"
 				>
-					<Home className="h-4 w-4" />
+					<Home className="size-4" />
 					Go Home
 				</Link>
 
@@ -71,7 +71,7 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 					onClick={() => router.history.back()}
 					className="inline-flex items-center justify-center gap-2 rounded-md border border-transparent px-6 py-3 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground)"
 				>
-					<ArrowLeft className="h-4 w-4" />
+					<ArrowLeft className="size-4" />
 					Go Back
 				</button>
 			</div>
@@ -105,7 +105,7 @@ export function NotFoundComponent() {
 					to="/"
 					className="inline-flex items-center justify-center gap-2 rounded-md bg-(--accent) px-6 py-3 font-medium text-[#3f2e00] text-sm transition-colors hover:bg-(--accent-hover)"
 				>
-					<Home className="h-4 w-4" />
+					<Home className="size-4" />
 					Go Home
 				</Link>
 
@@ -114,7 +114,7 @@ export function NotFoundComponent() {
 					onClick={() => router.history.back()}
 					className="inline-flex items-center justify-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-6 py-3 font-medium text-(--foreground) text-sm transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle)"
 				>
-					<ArrowLeft className="h-4 w-4" />
+					<ArrowLeft className="size-4" />
 					Go Back
 				</button>
 			</div>

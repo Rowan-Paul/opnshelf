@@ -103,7 +103,7 @@ function ProfileOverviewPage() {
 				<section>
 					<div className="mb-4 flex items-center justify-between">
 						<h2 className="flex items-center gap-2 text-display-3">
-							<Film className="h-5 w-5 text-(--accent)" />
+							<Film className="size-5 text-(--accent)" />
 							Recent Movies
 						</h2>
 						<Link
@@ -113,7 +113,7 @@ function ProfileOverviewPage() {
 							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 						>
 							View all
-							<ChevronRight className="h-4 w-4" />
+							<ChevronRight className="size-4" />
 						</Link>
 					</div>
 
@@ -155,7 +155,7 @@ function ProfileOverviewPage() {
 				<section>
 					<div className="mb-4 flex items-center justify-between">
 						<h2 className="flex items-center gap-2 text-display-3">
-							<Tv className="h-5 w-5 text-(--accent)" />
+							<Tv className="size-5 text-(--accent)" />
 							Recent Episodes
 						</h2>
 						<Link
@@ -165,7 +165,7 @@ function ProfileOverviewPage() {
 							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 						>
 							View all
-							<ChevronRight className="h-4 w-4" />
+							<ChevronRight className="size-4" />
 						</Link>
 					</div>
 
@@ -298,7 +298,7 @@ function ListPreview({
 						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 					>
 						View all
-						<ChevronRight className="h-4 w-4" />
+						<ChevronRight className="size-4" />
 					</Link>
 				)}
 			</div>

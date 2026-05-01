@@ -58,17 +58,17 @@ export default function MediaActionsBar({
 			>
 				{activeListAction === "watchlist" ? (
 					<>
-						<Loader2 className="h-4 w-4 animate-spin" />
+						<Loader2 className="size-4 animate-spin" />
 						Loading
 					</>
 				) : isInWatchlist ? (
 					<>
-						<Bookmark className="h-4 w-4 fill-current" />
+						<Bookmark className="size-4 fill-current" />
 						In Watchlist
 					</>
 				) : (
 					<>
-						<Bookmark className="h-4 w-4" />
+						<Bookmark className="size-4" />
 						Add to Watchlist
 					</>
 				)}
@@ -89,9 +89,9 @@ export default function MediaActionsBar({
 				}
 			>
 				{activeListAction === "favorites" ? (
-					<Loader2 className="h-5 w-5 animate-spin" />
+					<Loader2 className="size-5 animate-spin" />
 				) : (
-					<Heart className={`h-5 w-5 ${isInFavorites ? "fill-current" : ""}`} />
+					<Heart className={`size-5 ${isInFavorites ? "fill-current" : ""}`} />
 				)}
 			</button>
 
@@ -103,9 +103,9 @@ export default function MediaActionsBar({
 				aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 			>
 				{shareSuccess ? (
-					<Check className="h-5 w-5 text-green-500" />
+					<Check className="size-5 text-green-500" />
 				) : (
-					<Share2 className="h-5 w-5" />
+					<Share2 className="size-5" />
 				)}
 			</button>
 		</>

@@ -107,7 +107,7 @@ export function ActivityCard({
 								)}
 							</div>
 							<div className="mt-0.5 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
-								<Clock className="h-3 w-3" />
+								<Clock className="size-3" />
 								{new Date(activity.activityAt).toLocaleString("en-US", {
 									month: "short",
 									day: "numeric",
@@ -123,7 +123,7 @@ export function ActivityCard({
 							className="btn btn-ghost h-8 w-8 shrink-0 p-0 text-(--foreground-muted)"
 							aria-label="More options"
 						>
-							<MoreHorizontal className="h-4 w-4" />
+							<MoreHorizontal className="size-4" />
 						</button>
 					</div>
 

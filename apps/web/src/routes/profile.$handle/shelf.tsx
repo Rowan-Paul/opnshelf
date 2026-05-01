@@ -113,7 +113,7 @@ function ProfileShelfPage() {
 				<div className="flex items-center gap-3">
 					{/* Search */}
 					<div className="relative">
-						<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--foreground-muted)" />
+						<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
 						<input
 							type="text"
 							placeholder="Search shelf..."
@@ -340,9 +340,9 @@ function ShelfListRow({
 				) : (
 					<div className="flex h-full w-full items-center justify-center">
 						{isMovie ? (
-							<Film className="h-4 w-4 text-(--foreground-muted)" />
+							<Film className="size-4 text-(--foreground-muted)" />
 						) : (
-							<Tv className="h-4 w-4 text-(--foreground-muted)" />
+							<Tv className="size-4 text-(--foreground-muted)" />
 						)}
 					</div>
 				)}
@@ -374,9 +374,9 @@ function ShelfListRow({
 					aria-label="Remove from shelf"
 				>
 					{isRemoving ? (
-						<Loader2 className="h-4 w-4 animate-spin" />
+						<Loader2 className="size-4 animate-spin" />
 					) : (
-						<BookmarkX className="h-4 w-4" />
+						<BookmarkX className="size-4" />
 					)}
 				</button>
 			)}

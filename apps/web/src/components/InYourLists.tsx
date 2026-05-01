@@ -61,7 +61,7 @@ export default function InYourLists({
 								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								aria-label={`Remove from ${list.listName}`}
 							>
-								<X className="h-4 w-4" />
+								<X className="size-4" />
 							</button>
 							<Link
 								to="/profile/$handle/lists/$listSlug"
@@ -71,7 +71,7 @@ export default function InYourLists({
 								}}
 								className="flex items-center p-2"
 							>
-								<ChevronRight className="h-4 w-4 text-(--foreground-muted)" />
+								<ChevronRight className="size-4 text-(--foreground-muted)" />
 							</Link>
 						</div>
 					))
@@ -86,7 +86,7 @@ export default function InYourLists({
 								params={{ handle: userHandle }}
 								className="btn btn-secondary w-full gap-2 text-sm"
 							>
-								<Plus className="h-4 w-4" />
+								<Plus className="size-4" />
 								Create your first list
 							</Link>
 						)}
@@ -104,7 +104,7 @@ export default function InYourLists({
 						onClick={() => setOpen(true)}
 						className="btn btn-secondary mt-3 w-full text-sm"
 					>
-						<Plus className="h-4 w-4" />
+						<Plus className="size-4" />
 						Add to list
 					</button>
 

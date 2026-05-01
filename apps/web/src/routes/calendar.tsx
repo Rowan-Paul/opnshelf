@@ -346,7 +346,7 @@ function CalendarPage() {
 					</p>
 				</div>
 				<div className="flex items-center justify-center py-20">
-					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+					<Loader2 className="size-8 animate-spin text-(--accent)" />
 					<span className="ml-3 text-(--foreground-muted)">
 						Loading calendar...
 					</span>
@@ -368,7 +368,7 @@ function CalendarPage() {
 			{/* Desktop: Calendar Navigation */}
 			<div className="mb-6 hidden items-center justify-between lg:flex">
 				<button type="button" onClick={prevMonth} className="btn btn-secondary">
-					<ChevronLeft className="h-4 w-4" />
+					<ChevronLeft className="size-4" />
 					Previous
 				</button>
 
@@ -387,7 +387,7 @@ function CalendarPage() {
 
 				<button type="button" onClick={nextMonth} className="btn btn-secondary">
 					Next
-					<ChevronRight className="h-4 w-4" />
+					<ChevronRight className="size-4" />
 				</button>
 			</div>
 
@@ -399,7 +399,7 @@ function CalendarPage() {
 					className="btn btn-secondary h-12 w-12 p-0"
 					aria-label="Previous week"
 				>
-					<ChevronLeft className="h-6 w-6" />
+					<ChevronLeft className="size-6" />
 				</button>
 
 				<div className="flex flex-col items-center px-4">
@@ -421,7 +421,7 @@ function CalendarPage() {
 					className="btn btn-secondary h-12 w-12 p-0"
 					aria-label="Next week"
 				>
-					<ChevronRight className="h-6 w-6" />
+					<ChevronRight className="size-6" />
 				</button>
 			</div>
 
@@ -462,9 +462,9 @@ function CalendarPage() {
 										) : (
 											<div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-(--background-subtle)">
 												{getReleaseType(release) === "movie" ? (
-													<Film className="h-10 w-10 text-(--foreground-muted)" />
+													<Film className="size-10 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-10 w-10 text-(--foreground-muted)" />
+													<Tv className="size-10 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}
@@ -479,19 +479,19 @@ function CalendarPage() {
 												<span className="flex items-center gap-1">
 													{getReleaseType(release) === "movie" ? (
 														<>
-															<Film className="h-4 w-4" />
+															<Film className="size-4" />
 															Movie
 														</>
 													) : (
 														<>
-															<Tv className="h-4 w-4" />
+															<Tv className="size-4" />
 															TV
 														</>
 													)}
 												</span>
 											</div>
 										</div>
-										<ChevronRight className="h-6 w-6 shrink-0 text-(--foreground-muted)" />
+										<ChevronRight className="size-6 shrink-0 text-(--foreground-muted)" />
 									</Link>
 								))}
 							</div>
@@ -630,7 +630,7 @@ function CalendarPage() {
 							<div className="card p-6 text-center">
 								{selectedWeekStart ? (
 									<>
-										<Clock className="mx-auto mb-3 h-8 w-8 text-(--foreground-muted)" />
+										<Clock className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 										<p className="text-(--foreground-muted)">
 											No releases this week
 										</p>
@@ -661,9 +661,9 @@ function CalendarPage() {
 										) : (
 											<div className="flex h-16 w-12 items-center justify-center rounded bg-(--background-subtle)">
 												{getReleaseType(release) === "movie" ? (
-													<Film className="h-6 w-6 text-(--foreground-muted)" />
+													<Film className="size-6 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-6 w-6 text-(--foreground-muted)" />
+													<Tv className="size-6 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}
@@ -677,9 +677,9 @@ function CalendarPage() {
 											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-xs">
 												<span className="flex items-center gap-1">
 													{getReleaseType(release) === "movie" ? (
-														<Film className="h-3 w-3" />
+														<Film className="size-3" />
 													) : (
-														<Tv className="h-3 w-3" />
+														<Tv className="size-3" />
 													)}
 													{new Date(release.date).toLocaleDateString(
 														"en-US",

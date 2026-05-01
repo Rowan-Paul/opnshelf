@@ -69,7 +69,7 @@ export default function Footer() {
 					<div className="lg:col-span-2">
 						<Link to="/" className="flex items-center gap-2">
 							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
-								<Film className="h-4 w-4" />
+								<Film className="size-4" />
 							</div>
 							<span className="font-bold font-display text-lg">OpnShelf</span>
 						</Link>

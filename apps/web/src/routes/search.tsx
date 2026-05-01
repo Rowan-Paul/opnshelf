@@ -212,7 +212,7 @@ function SearchPage() {
 			<div className="mx-auto mb-8 max-w-2xl">
 				<h1 className="mb-4 text-center text-display-2">Search</h1>
 				<div className="relative">
-					<Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-(--foreground-muted)" />
+					<Search className="absolute top-1/2 left-4 size-5 -translate-y-1/2 text-(--foreground-muted)" />
 					<input
 						type="text"
 						placeholder="Search movies, shows, people..."
@@ -221,7 +221,7 @@ function SearchPage() {
 						onChange={(e) => setQuery(e.target.value)}
 					/>
 					{isLoading && (
-						<Loader2 className="absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
+						<Loader2 className="absolute top-1/2 right-4 size-5 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
 					)}
 				</div>
 			</div>
@@ -253,12 +253,12 @@ function SearchPage() {
 			{hasQuery ? (
 				isLoading ? (
 					<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
-						<Loader2 className="mb-4 h-10 w-10 animate-spin" />
+						<Loader2 className="mb-4 size-10 animate-spin" />
 						<p>Searching...</p>
 					</div>
 				) : !hasResults ? (
 					<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
-						<Search className="mb-4 h-12 w-12 opacity-40" />
+						<Search className="mb-4 size-12 opacity-40" />
 						<p className="text-lg">
 							No results found for &quot;{debouncedQuery}&quot;
 						</p>
@@ -348,7 +348,7 @@ function SearchPage() {
 
 								{!isAuthenticated && activeTab === "people" ? (
 									<div className="card p-8 text-center">
-										<Users className="mx-auto mb-3 h-10 w-10 text-(--foreground-muted)" />
+										<Users className="mx-auto mb-3 size-10 text-(--foreground-muted)" />
 										<p className="mb-2 text-(--foreground-muted)">
 											Sign in to search people
 										</p>
@@ -418,18 +418,18 @@ function SearchPage() {
 														>
 															{followMutation.variables?.path?.targetDid ===
 															person.did ? (
-																<Loader2 className="h-3 w-3 animate-spin" />
+																<Loader2 className="size-3 animate-spin" />
 															) : unfollowMutation.variables?.path
 																	?.targetDid === person.did ? (
-																<Loader2 className="h-3 w-3 animate-spin" />
+																<Loader2 className="size-3 animate-spin" />
 															) : person.isFollowing ? (
 																<>
-																	<UserMinus className="mr-1 h-3 w-3" />
+																	<UserMinus className="mr-1 size-3" />
 																	Unfollow
 																</>
 															) : (
 																<>
-																	<UserPlus className="mr-1 h-3 w-3" />
+																	<UserPlus className="mr-1 size-3" />
 																	Follow
 																</>
 															)}
@@ -465,7 +465,7 @@ function SearchPage() {
 				)
 			) : (
 				<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
-					<Search className="mb-4 h-12 w-12 opacity-40" />
+					<Search className="mb-4 size-12 opacity-40" />
 					<p className="text-lg">What are you looking for?</p>
 					<p className="mt-1 text-sm">Search for movies, TV shows, or people</p>
 				</div>

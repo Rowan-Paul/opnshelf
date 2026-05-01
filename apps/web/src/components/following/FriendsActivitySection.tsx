@@ -24,7 +24,7 @@ export function FriendsActivitySection({
 					to="/following"
 					className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 				>
-					<Users className="h-4 w-4" />
+					<Users className="size-4" />
 					View all
 				</Link>
 			</div>
@@ -56,12 +56,12 @@ export function FriendsActivitySection({
 				</div>
 			) : (
 				<div className="card p-8 text-center">
-					<MessageCircle className="mx-auto mb-3 h-12 w-12 text-(--foreground-muted)" />
+					<MessageCircle className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">
 						Activity from people you follow will appear here.
 					</p>
 					<Link to="/following" className="btn btn-primary mt-4 inline-flex">
-						<Users className="mr-2 h-4 w-4" />
+						<Users className="mr-2 size-4" />
 						Find people to follow
 					</Link>
 				</div>

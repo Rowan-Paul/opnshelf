@@ -146,9 +146,9 @@ export default function MediaCard({
 							<div className="text-center">
 								<div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-(--background-strong)">
 									{type === "movie" ? (
-										<Play className="h-5 w-5 text-(--foreground-muted)" />
+										<Play className="size-5 text-(--foreground-muted)" />
 									) : (
-										<Clock className="h-5 w-5 text-(--foreground-muted)" />
+										<Clock className="size-5 text-(--foreground-muted)" />
 									)}
 								</div>
 								<p className="px-2 text-(--foreground-muted) text-xs">
@@ -201,9 +201,9 @@ export default function MediaCard({
 										title={isWatched ? "Remove from shelf" : "Add to shelf"}
 									>
 										{isMarkWatchedPending || isUnmarkWatchedPending ? (
-											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+											<Loader2 className="size-3.5 animate-spin" />
 										) : (
-											<Check className="h-3.5 w-3.5" />
+											<Check className="size-3.5" />
 										)}
 									</button>
 								)}
@@ -218,7 +218,7 @@ export default function MediaCard({
 										aria-label="Manage lists"
 										title="Add to list"
 									>
-										<Library className="h-3.5 w-3.5" />
+										<Library className="size-3.5" />
 									</button>
 								)}
 								{onRemove && (
@@ -233,9 +233,9 @@ export default function MediaCard({
 										aria-label="Remove from list"
 									>
 										{isRemoving ? (
-											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+											<Loader2 className="size-3.5 animate-spin" />
 										) : (
-											<BookmarkX className="h-3.5 w-3.5" />
+											<BookmarkX className="size-3.5" />
 										)}
 									</button>
 								)}
@@ -243,7 +243,7 @@ export default function MediaCard({
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
 								<div className="flex h-6 w-6 items-center justify-center self-end rounded-full bg-green-500 text-white">
-									<Check className="h-3.5 w-3.5" />
+									<Check className="size-3.5" />
 								</div>
 							)}
 						</div>
@@ -271,7 +271,7 @@ export default function MediaCard({
 								className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-110"
 								aria-label="Watch"
 							>
-								<Play className="h-5 w-5 fill-current" />
+								<Play className="size-5 fill-current" />
 							</button>
 						</div>
 					)}
@@ -287,7 +287,7 @@ export default function MediaCard({
 							)}
 							{watchedDate && (
 								<p className="mt-1 flex items-center gap-1 text-white/50 text-xs">
-									<Clock className="h-3 w-3" />
+									<Clock className="size-3" />
 									{watchedDate}
 								</p>
 							)}
@@ -329,7 +329,7 @@ export default function MediaCard({
 								<>
 									<span>•</span>
 									<span className="flex items-center gap-1">
-										<Star className="h-3 w-3 fill-current text-yellow-500" />
+										<Star className="size-3 fill-current text-yellow-500" />
 										{rating.toFixed(1)}
 									</span>
 								</>
@@ -343,7 +343,7 @@ export default function MediaCard({
 						</div>
 						{watchedDate && (
 							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">
-								<Clock className="h-3 w-3" />
+								<Clock className="size-3" />
 								{watchedDate}
 							</p>
 						)}

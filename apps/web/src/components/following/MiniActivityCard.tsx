@@ -85,7 +85,7 @@ export function MiniActivityCard({
 
 				{/* Timestamp */}
 				<div className="mt-1 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
-					<Clock className="h-3 w-3" />
+					<Clock className="size-3" />
 					{new Date(activity.activityAt).toLocaleString("en-US", {
 						month: "short",
 						day: "numeric",

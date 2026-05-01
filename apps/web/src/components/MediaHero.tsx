@@ -63,7 +63,7 @@ export default function MediaHero({
 										to={crumb.to}
 										className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
 									>
-										{index === 0 && <ChevronLeft className="h-4 w-4" />}
+										{index === 0 && <ChevronLeft className="size-4" />}
 										{crumb.label}
 									</Link>
 								)}
@@ -72,7 +72,7 @@ export default function MediaHero({
 					</nav>
 				) : (
 					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
-						<ChevronLeft className="h-4 w-4" />
+						<ChevronLeft className="size-4" />
 						Back to Dashboard
 					</Link>
 				)}

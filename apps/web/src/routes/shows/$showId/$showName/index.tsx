@@ -250,7 +250,7 @@ function ShowDetailPage() {
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
 								{
 									// @ts-expect-error - vote_average may exist on TMDB result
@@ -296,12 +296,12 @@ function ShowDetailPage() {
 								}}
 								className="btn btn-primary gap-2"
 							>
-								<Play className="h-4 w-4" />
+								<Play className="size-4" />
 								{getCurrentEpisodeText()}
 							</Link>
 						) : (
 							<button type="button" className="btn btn-primary gap-2">
-								<Play className="h-4 w-4" />
+								<Play className="size-4" />
 								{getCurrentEpisodeText()}
 							</button>
 						)}
@@ -391,7 +391,7 @@ function ShowDetailPage() {
 												>
 													<span className="flex items-center gap-2">
 														View Season Details
-														<ChevronRight className="h-4 w-4" />
+														<ChevronRight className="size-4" />
 													</span>
 												</Link>
 											</SeasonAccordion>

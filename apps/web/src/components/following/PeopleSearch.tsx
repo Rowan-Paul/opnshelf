@@ -33,7 +33,7 @@ export function PeopleSearch({
 		<div className="relative">
 			<div className="flex gap-3">
 				<div className="relative flex-1">
-					<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--foreground-muted)" />
+					<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
 					<input
 						type="text"
 						placeholder="Find people to follow..."
@@ -44,7 +44,7 @@ export function PeopleSearch({
 						onBlur={onBlur}
 					/>
 					{isLoading && (
-						<Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
+						<Loader2 className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
 					)}
 				</div>
 			</div>
@@ -82,7 +82,7 @@ export function PeopleSearch({
 											disabled={pendingUnfollowDid === person.did}
 										>
 											{pendingUnfollowDid === person.did ? (
-												<Loader2 className="h-3 w-3 animate-spin" />
+												<Loader2 className="size-3 animate-spin" />
 											) : (
 												"Unfollow"
 											)}
@@ -95,10 +95,10 @@ export function PeopleSearch({
 											disabled={pendingFollowDid === person.did}
 										>
 											{pendingFollowDid === person.did ? (
-												<Loader2 className="h-3 w-3 animate-spin" />
+												<Loader2 className="size-3 animate-spin" />
 											) : (
 												<>
-													<UserPlus className="mr-1 h-3 w-3" />
+													<UserPlus className="mr-1 size-3" />
 													Follow
 												</>
 											)}

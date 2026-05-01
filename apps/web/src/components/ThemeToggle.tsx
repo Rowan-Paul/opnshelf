@@ -54,7 +54,7 @@ export default function ThemeToggle() {
 				className="flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle)"
 				aria-label="Loading theme"
 			>
-				<Monitor className="h-4 w-4" />
+				<Monitor className="size-4" />
 			</button>
 		);
 	}

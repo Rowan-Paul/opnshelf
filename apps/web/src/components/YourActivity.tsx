@@ -52,7 +52,7 @@ export function YourActivity({
 								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								aria-label="Remove this play"
 							>
-								<X className="h-4 w-4" />
+								<X className="size-4" />
 							</button>
 						</div>
 					))}
@@ -64,12 +64,12 @@ export function YourActivity({
 					>
 						{isAddPending ? (
 							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="size-4 animate-spin" />
 								Loading
 							</>
 						) : (
 							<>
-								<Plus className="h-4 w-4" />
+								<Plus className="size-4" />
 								Add to shelf
 							</>
 						)}
@@ -88,12 +88,12 @@ export function YourActivity({
 					>
 						{isAddPending ? (
 							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="size-4 animate-spin" />
 								Loading
 							</>
 						) : (
 							<>
-								<Plus className="h-4 w-4" />
+								<Plus className="size-4" />
 								Add to shelf
 							</>
 						)}

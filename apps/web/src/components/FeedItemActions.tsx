@@ -140,7 +140,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 					if (isShelfPending) {
 						return (
 							<>
-								<Loader2 className="h-3.5 w-3.5 animate-spin" />
+								<Loader2 className="size-3.5 animate-spin" />
 								Loading
 							</>
 						);
@@ -148,14 +148,14 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 					if (isInShelf) {
 						return (
 							<>
-								<BookmarkCheck className="h-3.5 w-3.5" />
+								<BookmarkCheck className="size-3.5" />
 								Remove from shelf
 							</>
 						);
 					}
 					return (
 						<>
-							<Bookmark className="h-3.5 w-3.5" />
+							<Bookmark className="size-3.5" />
 							Add to shelf
 						</>
 					);
@@ -170,9 +170,9 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 				className="btn btn-secondary btn-sm gap-1.5"
 			>
 				{isListsLoading ? (
-					<Loader2 className="h-3.5 w-3.5 animate-spin" />
+					<Loader2 className="size-3.5 animate-spin" />
 				) : (
-					<Library className="h-3.5 w-3.5" />
+					<Library className="size-3.5" />
 				)}
 				{otherLists.length > 0 ? "Manage lists" : "Add to list"}
 			</button>

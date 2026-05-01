@@ -255,7 +255,7 @@ function SettingsPage() {
 	if (authLoading) {
 		return (
 			<div className="container-app flex min-h-[50vh] items-center justify-center py-8">
-				<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+				<Loader2 className="size-8 animate-spin text-(--accent)" />
 			</div>
 		);
 	}
@@ -269,7 +269,7 @@ function SettingsPage() {
 			{/* Page Header */}
 			<div className="mb-8 flex items-center gap-3">
 				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-					<Settings className="h-5 w-5" />
+					<Settings className="size-5" />
 				</div>
 				<div>
 					<h1 className="text-display-2">Settings</h1>
@@ -349,14 +349,14 @@ function SettingsPage() {
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<User className="h-8 w-8 text-(--foreground-muted)" />
+									<User className="size-8 text-(--foreground-muted)" />
 								)}
 								<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-									<Camera className="h-5 w-5 text-white" />
+									<Camera className="size-5 text-white" />
 								</div>
 								{uploadAvatarMutation.isPending && (
 									<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-										<Loader2 className="h-5 w-5 animate-spin text-white" />
+										<Loader2 className="size-5 animate-spin text-white" />
 									</div>
 								)}
 							</button>
@@ -417,9 +417,12 @@ function SettingsPage() {
 									}
 								>
 									{updateProfileMutation.isPending ? (
-										<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+										<Loader2
+											data-icon="inline-start"
+											className="animate-spin"
+										/>
 									) : (
-										<Save className="mr-1 h-4 w-4" />
+										<Save data-icon="inline-start" />
 									)}
 									Save
 								</Button>
@@ -457,7 +460,7 @@ function SettingsPage() {
 
 					{isDeleting && deletionJob ? (
 						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
-							<Loader2 className="h-4 w-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" />
 							<span className="font-medium text-sm">
 								Account deletion in progress…
 							</span>
@@ -472,7 +475,7 @@ function SettingsPage() {
 							}}
 							className="btn inline-flex items-center gap-2 border-red-300 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
 						>
-							<Trash2 className="h-4 w-4" />
+							<Trash2 className="size-4" />
 							Delete Account
 						</button>
 					)}
@@ -484,7 +487,7 @@ function SettingsPage() {
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-							<AlertTriangle className="h-5 w-5" />
+							<AlertTriangle className="size-5" />
 							Delete your account?
 						</DialogTitle>
 						<DialogDescription>
@@ -527,7 +530,7 @@ function SettingsPage() {
 
 						{deleteAccountMutation.isError && (
 							<div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-700 text-sm dark:bg-red-950/50 dark:text-red-300">
-								<AlertTriangle className="h-4 w-4 shrink-0" />
+								<AlertTriangle className="size-4 shrink-0" />
 								<span>
 									{deleteAccountMutation.error instanceof Error
 										? deleteAccountMutation.error.message
@@ -551,9 +554,9 @@ function SettingsPage() {
 							className="bg-red-600 hover:bg-red-700"
 						>
 							{deleteAccountMutation.isPending ? (
-								<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+								<Loader2 data-icon="inline-start" className="animate-spin" />
 							) : (
-								<Trash2 className="mr-1 h-4 w-4" />
+								<Trash2 data-icon="inline-start" />
 							)}
 							Permanently Delete Account
 						</Button>
@@ -571,7 +574,7 @@ function SettingsPage() {
 				>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-							<AlertTriangle className="h-5 w-5" />
+							<AlertTriangle className="size-5" />
 							Deleting your account
 						</DialogTitle>
 						<DialogDescription>
@@ -581,7 +584,7 @@ function SettingsPage() {
 
 					<div className="space-y-4 py-4">
 						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
-							<Loader2 className="h-4 w-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" />
 							<span className="font-medium text-sm">{deletionMessage}</span>
 						</div>
 						{deletionProgress !== null && (
@@ -604,7 +607,10 @@ function SettingsPage() {
 									className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
 								>
 									{deleteAccountMutation.isPending ? (
-										<Loader2 className="mr-1 h-4 w-4 animate-spin" />
+										<Loader2
+											data-icon="inline-start"
+											className="animate-spin"
+										/>
 									) : null}
 									Retry
 								</Button>

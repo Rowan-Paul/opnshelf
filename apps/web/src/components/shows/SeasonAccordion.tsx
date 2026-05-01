@@ -70,12 +70,12 @@ export default function SeasonAccordion({
 							>
 								{isProcessingSeason ? (
 									<>
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+										<Loader2 className="size-3.5 animate-spin" />
 										Loading
 									</>
 								) : (
 									<>
-										<Check className="h-3.5 w-3.5" />
+										<Check className="size-3.5" />
 										On shelf
 									</>
 								)}
@@ -93,12 +93,12 @@ export default function SeasonAccordion({
 							>
 								{isProcessingSeason ? (
 									<>
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+										<Loader2 className="size-3.5 animate-spin" />
 										Loading
 									</>
 								) : (
 									<>
-										<Eye className="h-3.5 w-3.5" />
+										<Eye className="size-3.5" />
 										Add to shelf
 									</>
 								)}

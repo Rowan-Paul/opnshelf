@@ -59,7 +59,7 @@ export default function Header() {
 					<nav className="flex h-16 items-center justify-between">
 						<Link to="/" className="flex items-center gap-2">
 							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
-								<Film className="h-4 w-4" />
+								<Film className="size-4" />
 							</div>
 							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
@@ -85,7 +85,7 @@ export default function Header() {
 					<div className="flex items-center gap-2">
 						<Link to="/" className="flex items-center gap-2">
 							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
-								<Film className="h-4 w-4" />
+								<Film className="size-4" />
 							</div>
 							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
@@ -140,7 +140,7 @@ export default function Header() {
 												className="h-full w-full object-cover"
 											/>
 										) : (
-											<User className="h-4 w-4 text-(--foreground-muted)" />
+											<User className="size-4 text-(--foreground-muted)" />
 										)}
 									</button>
 								</DropdownMenuTrigger>
@@ -154,7 +154,7 @@ export default function Header() {
 													className="h-full w-full rounded-full object-cover"
 												/>
 											) : (
-												<User className="h-4 w-4 text-(--accent)" />
+												<User className="size-4 text-(--accent)" />
 											)}
 										</div>
 										<div className="flex flex-col">
@@ -173,13 +173,13 @@ export default function Header() {
 											params={{ handle: user.handle }}
 											className="cursor-pointer"
 										>
-											<User className="mr-2 h-4 w-4" />
+											<User />
 											Profile
 										</Link>
 									</DropdownMenuItem>
 									<DropdownMenuItem asChild>
 										<Link to="/settings" className="cursor-pointer">
-											<Settings className="mr-2 h-4 w-4" />
+											<Settings />
 											Settings
 										</Link>
 									</DropdownMenuItem>
@@ -188,7 +188,7 @@ export default function Header() {
 										onClick={logout}
 										className="cursor-pointer text-red-600 focus:text-red-600"
 									>
-										<LogOut className="mr-2 h-4 w-4" />
+										<LogOut />
 										Sign Out
 									</DropdownMenuItem>
 								</DropdownMenuContent>
@@ -211,7 +211,7 @@ export default function Header() {
 							aria-expanded={mobileMenuOpen}
 						>
 							{mobileMenuOpen ? (
-								<X className="h-5 w-5" />
+								<X className="size-5" />
 							) : (
 								<Menu className="h-5 w-5" />
 							)}
@@ -259,7 +259,7 @@ export default function Header() {
 														className="h-full w-full rounded-full object-cover"
 													/>
 												) : (
-													<User className="h-4 w-4 text-(--accent)" />
+													<User className="size-4 text-(--accent)" />
 												)}
 											</div>
 											<div className="flex flex-col">
@@ -276,7 +276,7 @@ export default function Header() {
 											onClick={logout}
 											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-red-600 text-sm transition-colors hover:bg-red-50"
 										>
-											<LogOut className="h-5 w-5" />
+											<LogOut className="size-5" />
 											Sign Out
 										</button>
 									</>

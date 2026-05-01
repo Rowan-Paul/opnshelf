@@ -107,7 +107,7 @@ export default function EpisodeRow({
 		>
 			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) font-semibold text-sm">
 				{isWatched ? (
-					<Check className="h-5 w-5 text-green-500" />
+					<Check className="size-5 text-green-500" />
 				) : (
 					episode.episode_number
 				)}
@@ -133,12 +133,12 @@ export default function EpisodeRow({
 				>
 					{isUnmarking ? (
 						<>
-							<Loader2 className="h-3 w-3 animate-spin" />
+							<Loader2 className="size-3 animate-spin" />
 							Loading
 						</>
 					) : (
 						<>
-							<Check className="h-3.5 w-3.5" />
+							<Check className="size-3.5" />
 							On shelf
 						</>
 					)}
@@ -157,7 +157,7 @@ export default function EpisodeRow({
 				>
 					{isProcessing ? (
 						<>
-							<Loader2 className="h-3 w-3 animate-spin" />
+							<Loader2 className="size-3 animate-spin" />
 							Loading
 						</>
 					) : (

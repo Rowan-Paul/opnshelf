@@ -98,7 +98,7 @@ function LandingPage() {
 								className="btn btn-primary inline-flex items-center gap-2 px-8 py-3 text-lg"
 							>
 								Get Started
-								<ArrowRight className="h-5 w-5" />
+								<ArrowRight className="size-5" />
 							</Link>
 							<Link
 								to="/about"
@@ -164,7 +164,7 @@ function LandingPage() {
 							className="btn btn-primary inline-flex items-center gap-2 px-8 py-3 text-lg"
 						>
 							Sign In
-							<ArrowRight className="h-5 w-5" />
+							<ArrowRight className="size-5" />
 						</Link>
 					</div>
 				</div>

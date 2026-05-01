@@ -257,7 +257,7 @@ export function ProfileListsPage({
 		return (
 			<div className="py-8">
 				<div className="flex h-64 items-center justify-center">
-					<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+					<Loader2 className="size-8 animate-spin text-(--accent)" />
 					<span className="ml-2 text-(--foreground-muted)">
 						Loading lists...
 					</span>
@@ -271,7 +271,7 @@ export function ProfileListsPage({
 		return (
 			<div className="py-8">
 				<div className="flex h-64 flex-col items-center justify-center gap-4">
-					<AlertCircle className="h-12 w-12 text-red-500" />
+					<AlertCircle className="size-12 text-red-500" />
 					<div className="text-center">
 						<h3 className="font-semibold text-(--foreground)">
 							Failed to load lists
@@ -297,7 +297,7 @@ export function ProfileListsPage({
 				<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex items-center gap-3">
 						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-							<List className="h-5 w-5" />
+							<List className="size-5" />
 						</div>
 						<div>
 							<h1 className="text-display-2">Lists</h1>
@@ -310,7 +310,7 @@ export function ProfileListsPage({
 
 				<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
 					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
-						<List className="h-8 w-8 text-(--foreground-subtle)" />
+						<List className="size-8 text-(--foreground-subtle)" />
 					</div>
 					<h3 className="mt-4 font-display font-semibold text-lg">
 						No lists yet
@@ -329,7 +329,7 @@ export function ProfileListsPage({
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-3">
 					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-						<List className="h-5 w-5" />
+						<List className="size-5" />
 					</div>
 					<div>
 						<h1 className="text-display-2">Lists</h1>
@@ -345,7 +345,7 @@ export function ProfileListsPage({
 						onClick={() => setShowCreateModal(true)}
 						className="btn btn-primary gap-2"
 					>
-						<Plus className="h-4 w-4" />
+						<Plus className="size-4" />
 						Create List
 					</button>
 				)}
@@ -426,7 +426,7 @@ export function ProfileListsPage({
 								<div className="flex items-center gap-2">
 									{/* Search */}
 									<div className="relative">
-										<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-(--foreground-muted)" />
+										<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
 										<input
 											type="text"
 											placeholder="Search list..."
@@ -469,7 +469,7 @@ export function ProfileListsPage({
 							{/* Loading State for List Items */}
 							{listLoading && (
 								<div className="flex h-64 items-center justify-center">
-									<Loader2 className="h-8 w-8 animate-spin text-(--accent)" />
+									<Loader2 className="size-8 animate-spin text-(--accent)" />
 									<span className="ml-2 text-(--foreground-muted)">
 										Loading items...
 									</span>
@@ -479,7 +479,7 @@ export function ProfileListsPage({
 							{/* Error State for List Items */}
 							{listError && !listLoading && (
 								<div className="flex h-64 flex-col items-center justify-center gap-4">
-									<AlertCircle className="h-12 w-12 text-red-500" />
+									<AlertCircle className="size-12 text-red-500" />
 									<div className="text-center">
 										<h3 className="font-semibold text-(--foreground)">
 											Failed to load list items
@@ -503,7 +503,7 @@ export function ProfileListsPage({
 							{!listLoading && !listError && filteredItems.length === 0 && (
 								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
 									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
-										<List className="h-6 w-6 text-(--foreground-subtle)" />
+										<List className="size-6 text-(--foreground-subtle)" />
 									</div>
 									<h3 className="mt-3 font-display font-semibold">
 										{searchQuery ? "No results found" : "List is empty"}
@@ -621,7 +621,7 @@ export function ProfileListsPage({
 															)}
 															{getRating(item.media) && (
 																<span className="flex items-center gap-1 text-(--foreground-subtle) text-sm">
-																	<Star className="h-3 w-3 fill-current text-yellow-500" />
+																	<Star className="size-3 fill-current text-yellow-500" />
 																	{getRating(item.media)?.toFixed(1)}
 																</span>
 															)}
@@ -659,9 +659,9 @@ export function ProfileListsPage({
 															{removeItemMutation.isPending &&
 															removeItemMutation.variables?.path?.mediaId ===
 																item.mediaId ? (
-																<Loader2 className="h-4 w-4 animate-spin" />
+																<Loader2 className="size-4 animate-spin" />
 															) : (
-																<BookmarkX className="h-4 w-4" />
+																<BookmarkX className="size-4" />
 															)}
 														</button>
 													)}
@@ -673,7 +673,7 @@ export function ProfileListsPage({
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
 							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
-								<List className="h-8 w-8 text-(--foreground-subtle)" />
+								<List className="size-8 text-(--foreground-subtle)" />
 							</div>
 							<h3 className="mt-4 font-display font-semibold text-lg">
 								Select a list
@@ -739,7 +739,10 @@ export function ProfileListsPage({
 							>
 								{createListMutation.isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<Loader2
+											data-icon="inline-start"
+											className="animate-spin"
+										/>
 										Creating...
 									</>
 								) : (

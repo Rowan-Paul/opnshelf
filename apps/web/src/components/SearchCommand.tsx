@@ -239,7 +239,7 @@ export function SearchCommand({
 				className="group flex h-9 items-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-3 text-(--foreground-muted) transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle) hover:text-(--foreground)"
 				aria-label="Search"
 			>
-				<Search className="h-4 w-4" />
+				<Search className="size-4" />
 				<span className="hidden text-sm sm:inline">Search</span>
 				<kbd className="ml-1 hidden h-5 select-none items-center gap-0.5 rounded border border-(--border-strong) bg-(--background-subtle) px-1.5 font-medium font-mono text-(--foreground-muted) text-[10px] sm:flex">
 					<span>⌘</span>K
@@ -260,7 +260,7 @@ export function SearchCommand({
 					{/* Loading */}
 					{hasSearchQuery && isLoading && (
 						<div className="flex items-center justify-center py-8 text-(--foreground-muted)">
-							<Loader2 className="mr-2 h-5 w-5 animate-spin" />
+							<Loader2 className="mr-2 size-5 animate-spin" />
 							<span>Searching...</span>
 						</div>
 					)}
@@ -276,7 +276,7 @@ export function SearchCommand({
 					{/* Empty state */}
 					{hasSearchQuery && !isLoading && !hasError && !hasSearchResults && (
 						<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
-							<Search className="h-8 w-8 opacity-50" />
+							<Search className="size-8 opacity-50" />
 							<p>No results found for &quot;{debouncedQuery}&quot;</p>
 							<p className="text-sm">
 								Try searching for movies, TV shows, or people
@@ -300,7 +300,7 @@ export function SearchCommand({
 													value={`movie ${title} ${getYear(movie)}`}
 													onSelect={() => goTo(buildMovieUrl(movie.id, title))}
 												>
-													<Film className="h-4 w-4 shrink-0" />
+													<Film className="shrink-0" />
 													<span className="truncate">{title}</span>
 													{getYear(movie) && (
 														<span className="shrink-0 text-(--foreground-muted)">
@@ -309,7 +309,7 @@ export function SearchCommand({
 													)}
 													<CommandShortcut>
 														<span className="flex items-center gap-1">
-															<Star className="h-3 w-3" />
+															<Star />
 															{movie.vote_average?.toFixed(1) || "N/A"}
 														</span>
 													</CommandShortcut>
@@ -321,7 +321,7 @@ export function SearchCommand({
 											value="more movies"
 											onSelect={() => goToSearch("movies")}
 										>
-											<Search className="h-4 w-4" />
+											<Search />
 											<span>Show more results</span>
 										</CommandItem>
 									)}
@@ -341,7 +341,7 @@ export function SearchCommand({
 													value={`show ${title} ${getYear(show)}`}
 													onSelect={() => goTo(buildShowUrl(show.id, title))}
 												>
-													<Tv className="h-4 w-4 shrink-0" />
+													<Tv className="shrink-0" />
 													<span className="truncate">{title}</span>
 													{getYear(show) && (
 														<span className="shrink-0 text-(--foreground-muted)">
@@ -350,7 +350,7 @@ export function SearchCommand({
 													)}
 													<CommandShortcut>
 														<span className="flex items-center gap-1">
-															<Star className="h-3 w-3" />
+															<Star />
 															{show.vote_average?.toFixed(1) || "N/A"}
 														</span>
 													</CommandShortcut>
@@ -362,7 +362,7 @@ export function SearchCommand({
 											value="more shows"
 											onSelect={() => goToSearch("shows")}
 										>
-											<Search className="h-4 w-4" />
+											<Search />
 											<span>Show more results</span>
 										</CommandItem>
 									)}
@@ -390,7 +390,7 @@ export function SearchCommand({
 														})
 													}
 												>
-													<User className="h-4 w-4 shrink-0" />
+													<User className="shrink-0" />
 													<span className="truncate">{name}</span>
 													{person.handle && (
 														<span className="shrink-0 text-(--foreground-muted)">
@@ -405,7 +405,7 @@ export function SearchCommand({
 											value="more people"
 											onSelect={() => goToSearch("people")}
 										>
-											<Search className="h-4 w-4" />
+											<Search />
 											<span>Show more results</span>
 										</CommandItem>
 									)}
@@ -421,18 +421,18 @@ export function SearchCommand({
 								value="dashboard"
 								onSelect={() => goTo("/dashboard")}
 							>
-								<Home className="h-4 w-4" />
+								<Home />
 								<span>Dashboard</span>
 							</CommandItem>
 							<CommandItem value="calendar" onSelect={() => goTo("/calendar")}>
-								<Calendar className="h-4 w-4" />
+								<Calendar />
 								<span>Calendar</span>
 							</CommandItem>
 							<CommandItem
 								value="following"
 								onSelect={() => goTo("/following")}
 							>
-								<Users className="h-4 w-4" />
+								<Users />
 								<span>Following</span>
 							</CommandItem>
 							{currentUserHandle && (
@@ -444,7 +444,7 @@ export function SearchCommand({
 										})
 									}
 								>
-									<Clock className="h-4 w-4" />
+									<Clock />
 									<span>Up Next</span>
 								</CommandItem>
 							)}
@@ -457,7 +457,7 @@ export function SearchCommand({
 										})
 									}
 								>
-									<User className="h-4 w-4" />
+									<User />
 									<span>Profile</span>
 								</CommandItem>
 							)}
@@ -470,7 +470,7 @@ export function SearchCommand({
 										})
 									}
 								>
-									<List className="h-4 w-4" />
+									<List />
 									<span>Lists</span>
 								</CommandItem>
 							)}
@@ -495,7 +495,7 @@ export function SearchCommand({
 												})
 											}
 										>
-											<List className="h-4 w-4" />
+											<List />
 											<span>{list.name}</span>
 											<CommandShortcut>{list.itemCount} items</CommandShortcut>
 										</CommandItem>
@@ -508,7 +508,7 @@ export function SearchCommand({
 					<CommandSeparator />
 					<CommandGroup heading="Quick Actions">
 						<CommandItem value="settings" onSelect={() => goTo("/settings")}>
-							<Settings className="h-4 w-4" />
+							<Settings />
 							<span>Settings</span>
 						</CommandItem>
 						<CommandItem
@@ -528,7 +528,7 @@ export function SearchCommand({
 									logout();
 								}}
 							>
-								<LogOut className="h-4 w-4" />
+								<LogOut />
 								<span>Sign Out</span>
 							</CommandItem>
 						)}

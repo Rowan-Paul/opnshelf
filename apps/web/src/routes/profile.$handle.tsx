@@ -74,7 +74,7 @@ function ProfileLayout() {
 							className="h-full w-full object-cover"
 						/>
 					) : (
-						<Users className="h-8 w-8 text-(--foreground-muted)" />
+						<Users className="size-8 text-(--foreground-muted)" />
 					)}
 				</div>
 

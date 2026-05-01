@@ -64,7 +64,7 @@ export default function ManageListsDialog({
 
 				{isLoading ? (
 					<div className="flex items-center justify-center py-8">
-						<Loader2 className="h-6 w-6 animate-spin text-(--accent)" />
+						<Loader2 className="size-6 animate-spin text-(--accent)" />
 					</div>
 				) : (
 					<div className="space-y-1 py-2">
@@ -77,9 +77,9 @@ export default function ManageListsDialog({
 						>
 							<span>Watchlist</span>
 							{isWatchlist ? (
-								<Check className="h-4 w-4 text-green-500" />
+								<Check className="size-4 text-green-500" />
 							) : (
-								<Plus className="h-4 w-4 text-(--foreground-muted)" />
+								<Plus className="size-4 text-(--foreground-muted)" />
 							)}
 						</button>
 
@@ -92,9 +92,9 @@ export default function ManageListsDialog({
 						>
 							<span>Favorites</span>
 							{isFavorites ? (
-								<Check className="h-4 w-4 text-green-500" />
+								<Check className="size-4 text-green-500" />
 							) : (
-								<Plus className="h-4 w-4 text-(--foreground-muted)" />
+								<Plus className="size-4 text-(--foreground-muted)" />
 							)}
 						</button>
 
@@ -113,9 +113,9 @@ export default function ManageListsDialog({
 							>
 								<span>{list.name}</span>
 								{list.isInList ? (
-									<Check className="h-4 w-4 text-green-500" />
+									<Check className="size-4 text-green-500" />
 								) : (
-									<Plus className="h-4 w-4 text-(--foreground-muted)" />
+									<Plus className="size-4 text-(--foreground-muted)" />
 								)}
 							</button>
 						))}
@@ -128,7 +128,7 @@ export default function ManageListsDialog({
 						onClick={() => onOpenChange(false)}
 						className="btn btn-secondary btn-sm gap-1.5"
 					>
-						<X className="h-3.5 w-3.5" />
+						<X className="size-3.5" />
 						Close
 					</button>
 				</div>

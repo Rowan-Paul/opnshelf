@@ -364,7 +364,7 @@ function Dashboard() {
 									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 								>
 									View all
-									<ChevronRight className="h-4 w-4" />
+									<ChevronRight className="size-4" />
 								</Link>
 							)}
 						</div>
@@ -400,7 +400,7 @@ function Dashboard() {
 							</div>
 						) : (
 							<div className="card p-8 text-center">
-								<Tv className="mx-auto mb-3 h-12 w-12 text-(--foreground-muted)" />
+								<Tv className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
 								<p className="mb-2 text-(--foreground-muted)">
 									You're all caught up!
 								</p>
@@ -412,7 +412,7 @@ function Dashboard() {
 									onClick={() => setSearchOpen(true)}
 									className="btn btn-primary inline-flex gap-2"
 								>
-									<Tv className="h-4 w-4" />
+									<Tv className="size-4" />
 									Discover Shows
 								</button>
 							</div>
@@ -430,7 +430,7 @@ function Dashboard() {
 									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 								>
 									View all
-									<ChevronRight className="h-4 w-4" />
+									<ChevronRight className="size-4" />
 								</Link>
 							)}
 						</div>
@@ -487,7 +487,7 @@ function Dashboard() {
 									onClick={() => setSearchOpen(true)}
 									className="btn btn-primary inline-flex gap-2"
 								>
-									<Film className="h-4 w-4" />
+									<Film className="size-4" />
 									Discover Content
 								</button>
 							</div>
@@ -513,7 +513,7 @@ function Dashboard() {
 								to="/calendar"
 								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 							>
-								<Calendar className="h-4 w-4" />
+								<Calendar className="size-4" />
 								Calendar
 							</Link>
 						</div>
@@ -536,7 +536,7 @@ function Dashboard() {
 							</div>
 						) : upcomingReleases.length === 0 ? (
 							<div className="card p-6 text-center">
-								<Clock className="mx-auto mb-3 h-8 w-8 text-(--foreground-muted)" />
+								<Clock className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 								<p className="text-(--foreground-muted) text-sm">
 									No upcoming releases
 								</p>
@@ -578,9 +578,9 @@ function Dashboard() {
 										) : (
 											<div className="flex h-12 w-9 items-center justify-center rounded bg-(--background-subtle)">
 												{release.mediaType === "movie" ? (
-													<Film className="h-5 w-5 text-(--foreground-muted)" />
+													<Film className="size-5 text-(--foreground-muted)" />
 												) : (
-													<Tv className="h-5 w-5 text-(--foreground-muted)" />
+													<Tv className="size-5 text-(--foreground-muted)" />
 												)}
 											</div>
 										)}

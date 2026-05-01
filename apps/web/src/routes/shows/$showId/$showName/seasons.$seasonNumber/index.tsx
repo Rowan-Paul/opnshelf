@@ -265,7 +265,7 @@ function SeasonDetailPage() {
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
 								{season.vote_average?.toFixed(1) || "N/A"}
 							</span>
@@ -294,7 +294,7 @@ function SeasonDetailPage() {
 							params={continueLink.params}
 							className="btn btn-primary gap-2"
 						>
-							<Play className="h-4 w-4" />
+							<Play className="size-4" />
 							{getContinueButtonText()}
 						</Link>
 						<MediaActionsBar
@@ -316,7 +316,7 @@ function SeasonDetailPage() {
 								}}
 								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
 							>
-								<ChevronLeft className="h-4 w-4" />
+								<ChevronLeft className="size-4" />
 								Previous (S{previousSeason.season_number})
 							</Link>
 						)}
@@ -334,7 +334,7 @@ function SeasonDetailPage() {
 								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
 							>
 								Next (S{nextSeason.season_number})
-								<ChevronRight className="h-4 w-4" />
+								<ChevronRight className="size-4" />
 							</Link>
 						)}
 					</div>
