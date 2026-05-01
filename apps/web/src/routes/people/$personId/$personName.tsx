@@ -40,11 +40,15 @@ function getYear(item: PersonFilmographyItemDto): string | undefined {
 
 export const Route = createFileRoute("/people/$personId/$personName")({
 	loader: async ({ context, params }) => {
-		return context.queryClient.ensureQueryData(
-			peopleControllerGetPersonDetailsOptions({
-				path: { personId: params.personId },
-			}),
-		);
+		try {
+			return await context.queryClient.ensureQueryData(
+				peopleControllerGetPersonDetailsOptions({
+					path: { personId: params.personId },
+				}),
+			);
+		} catch {
+			return null;
+		}
 	},
 	head: ({ loaderData, params }) => {
 		const meta = buildPersonPageMeta(loaderData, params.personName);
@@ -95,7 +99,7 @@ function PersonDetailPage() {
 	if (error || !person) {
 		return (
 			<ErrorState
-				message="Failed to load person"
+				message={error ? "Failed to load person" : "Person not found"}
 				backTo="/"
 				backLabel="Back to Dashboard"
 			/>

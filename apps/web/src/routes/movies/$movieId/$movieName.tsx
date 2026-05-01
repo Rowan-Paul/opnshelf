@@ -117,6 +117,16 @@ function MovieDetailPage() {
 				: `https://i.pravatar.cc/150?u=${actor.id}`,
 		})) || [];
 
+	const crew =
+		movie.credits?.crew?.slice(0, 6).map((person) => ({
+			id: person.id,
+			name: person.name,
+			role: person.job || "",
+			photo: person.profile_path
+				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+				: `https://i.pravatar.cc/150?u=${person.id}`,
+		})) || [];
+
 	const similarMovies =
 		similarMoviesData?.results
 			?.filter((m) => m.id !== Number(movieId))
@@ -239,8 +249,13 @@ function MovieDetailPage() {
 							</p>
 						</section>
 
-						<div className="hidden lg:block">
+						<div className="hidden space-y-8 lg:block">
 							<PersonGrid people={cast} />
+							<PersonGrid
+								people={crew}
+								title="Crew"
+								emptyMessage="No crew information available."
+							/>
 						</div>
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
@@ -286,8 +301,13 @@ function MovieDetailPage() {
 					</div>
 				</div>
 
-				<div className="mt-8 lg:hidden">
+				<div className="mt-8 space-y-8 lg:hidden">
 					<PersonGrid people={cast} />
+					<PersonGrid
+						people={crew}
+						title="Crew"
+						emptyMessage="No crew information available."
+					/>
 				</div>
 			</div>
 
