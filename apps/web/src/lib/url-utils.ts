@@ -61,3 +61,15 @@ export function buildMovieUrl(
 	const slug = slugifyName(movieName);
 	return `/movies/${movieId}/${slug}`;
 }
+
+/**
+ * Build a person detail URL
+ * Format: /people/[personId]/[personName]
+ */
+export function buildPersonUrl(
+	personId: string | number,
+	personName: string,
+): string {
+	const slug = slugifyName(personName);
+	return `/people/${personId}/${slug}`;
+}

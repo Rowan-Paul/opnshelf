@@ -1,3 +1,6 @@
+import { Link } from "@tanstack/react-router";
+import { buildPersonUrl } from "#/lib/url-utils";
+
 interface Person {
 	id: number;
 	name: string;
@@ -44,8 +47,9 @@ export default function PersonGrid({
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{uniquePeople.map((person) => (
-						<div
+						<Link
 							key={person.id}
+							to={buildPersonUrl(person.id, person.name)}
 							className="card card-interactive flex items-center gap-3 p-3"
 						>
 							<img
@@ -60,7 +64,7 @@ export default function PersonGrid({
 									{person.role}
 								</p>
 							</div>
-						</div>
+						</Link>
 					))}
 				</div>
 			)}

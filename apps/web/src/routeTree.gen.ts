@@ -25,6 +25,7 @@ import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handl
 import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle/shelf'
 import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle/lists'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
+import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
 import { Route as MoviesMovieIdMovieNameRouteImport } from './routes/movies/$movieId/$movieName'
 import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
 import { Route as ProfileHandleListsIndexRouteImport } from './routes/profile.$handle/lists.index'
@@ -114,6 +115,12 @@ const ProfileHandleConnectionsRoute =
     path: '/connections',
     getParentRoute: () => ProfileHandleRoute,
   } as any)
+const PeoplePersonIdPersonNameRoute =
+  PeoplePersonIdPersonNameRouteImport.update({
+    id: '/people/$personId/$personName',
+    path: '/people/$personId/$personName',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MoviesMovieIdMovieNameRoute = MoviesMovieIdMovieNameRouteImport.update({
   id: '/movies/$movieId/$movieName',
   path: '/movies/$movieId/$movieName',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
+  '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
+  '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
+  '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
+    | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/lists'
     | '/profile/$handle/shelf'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
+    | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
@@ -289,6 +301,7 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
+    | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/lists'
     | '/profile/$handle/shelf'
@@ -315,6 +328,7 @@ export interface RootRouteChildren {
   AuthCompleteRoute: typeof AuthCompleteRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
+  PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
 }
 
@@ -431,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/profile/$handle/connections'
       preLoaderRoute: typeof ProfileHandleConnectionsRouteImport
       parentRoute: typeof ProfileHandleRoute
+    }
+    '/people/$personId/$personName': {
+      id: '/people/$personId/$personName'
+      path: '/people/$personId/$personName'
+      fullPath: '/people/$personId/$personName'
+      preLoaderRoute: typeof PeoplePersonIdPersonNameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/movies/$movieId/$movieName': {
       id: '/movies/$movieId/$movieName'
@@ -561,6 +582,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCompleteRoute: AuthCompleteRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,
+  PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,
 }
 export const routeTree = rootRouteImport

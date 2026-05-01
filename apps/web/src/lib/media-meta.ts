@@ -1,6 +1,7 @@
 import type {
 	TmdbEpisodeDto,
 	TmdbMovieDetailDto,
+	TmdbPersonDetailDto,
 	TmdbSeasonDetailDto,
 	TmdbShowDetailDto,
 } from "@opnshelf/api";
@@ -129,6 +130,26 @@ export function buildEpisodePageMeta(
 		description: getDescription(
 			episode?.overview,
 			`View details for ${showName} ${numbering} on OpnShelf.`.trim(),
+		),
+	};
+}
+
+export function buildPersonPageMeta(
+	person?: TmdbPersonDetailDto | null,
+	fallbackTitle = "Person",
+): PageMeta {
+	if (!person) {
+		return {
+			title: `${fallbackTitle} | People | OpnShelf`,
+			description: `View filmography, biography, and details for ${fallbackTitle} on OpnShelf.`,
+		};
+	}
+
+	return {
+		title: `${person.name} | People | OpnShelf`,
+		description: getDescription(
+			person.biography,
+			`Explore the filmography and biography of ${person.name} on OpnShelf.`,
 		),
 	};
 }
