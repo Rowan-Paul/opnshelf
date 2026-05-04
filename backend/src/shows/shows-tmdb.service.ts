@@ -328,14 +328,7 @@ export class ShowsTmdbService {
 	}
 
 	private isNavigableEpisode(episode: TMDBEpisode): boolean {
-		if (episode.season_number === 0) {
-			return false;
-		}
-
-		if (!episode.air_date) {
-			return false;
-		}
-
-		return new Date(episode.air_date).getTime() <= Date.now();
+		// Exclude specials / bonus content (season 0)
+		return episode.season_number !== 0;
 	}
 }

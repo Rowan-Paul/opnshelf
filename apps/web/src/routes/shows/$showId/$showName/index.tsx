@@ -152,6 +152,14 @@ function ShowDetailPage() {
 		return "Start Watching";
 	};
 
+	const isStartWatching =
+		!nextEpisode && !(isTracking && uniqueEpisodesWatched > 0);
+
+	const firstSeasonNumber =
+		show?.seasons
+			?.filter((s) => s.season_number > 0)
+			.sort((a, b) => a.season_number - b.season_number)[0]?.season_number || 1;
+
 	const handleMarkSeasonWatched = (seasonNumber: number) => {
 		if (!isAuthenticated) return;
 		setProcessingSeason(seasonNumber);
@@ -293,6 +301,20 @@ function ShowDetailPage() {
 									showName: slugifyName(show.name),
 									seasonNumber: String(nextEpisode.seasonNumber),
 									episodeNumber: String(nextEpisode.episodeNumber),
+								}}
+								className="btn btn-primary gap-2"
+							>
+								<Play className="size-4" />
+								{getCurrentEpisodeText()}
+							</Link>
+						) : isStartWatching ? (
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(firstSeasonNumber),
+									episodeNumber: "1",
 								}}
 								className="btn btn-primary gap-2"
 							>

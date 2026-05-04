@@ -174,9 +174,44 @@ function EpisodeDetailPage() {
 				: `https://i.pravatar.cc/150?u=${person.id}`,
 		})) || [];
 
-	// Previous / Next episode navigation
-	const prevEpisode = episode._context?.previous;
-	const nextEpisodeCtx = episode._context?.next;
+	// Previous / Next episode navigation (computed client-side from show data)
+	const seasons =
+		show.seasons
+			?.filter((s) => s.season_number > 0)
+			.sort((a, b) => a.season_number - b.season_number) || [];
+	const currentSeason = seasons.find((s) => s.season_number === seasonNum);
+	const currentSeasonEpisodeCount = currentSeason?.episode_count || 0;
+
+	let prevEpisode: { seasonNumber: number; episodeNumber: number } | null =
+		null;
+	if (episodeNum > 1) {
+		prevEpisode = { seasonNumber: seasonNum, episodeNumber: episodeNum - 1 };
+	} else {
+		const prevSeason = seasons.find((s) => s.season_number === seasonNum - 1);
+		if (prevSeason) {
+			prevEpisode = {
+				seasonNumber: prevSeason.season_number,
+				episodeNumber: prevSeason.episode_count || 1,
+			};
+		}
+	}
+
+	let nextEpisodeCtx: { seasonNumber: number; episodeNumber: number } | null =
+		null;
+	if (episodeNum < currentSeasonEpisodeCount) {
+		nextEpisodeCtx = {
+			seasonNumber: seasonNum,
+			episodeNumber: episodeNum + 1,
+		};
+	} else {
+		const nextSeason = seasons.find((s) => s.season_number === seasonNum + 1);
+		if (nextSeason) {
+			nextEpisodeCtx = {
+				seasonNumber: nextSeason.season_number,
+				episodeNumber: 1,
+			};
+		}
+	}
 
 	const breadcrumbs = [
 		{

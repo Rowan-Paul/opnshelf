@@ -60,7 +60,7 @@ function useDebounce<T>(value: T, delay: number): T {
 	return debouncedValue;
 }
 
-const RESULTS_PER_SECTION = 8;
+const RESULTS_PER_SECTION = 3;
 
 export function SearchCommand({
 	open: controlledOpen,
