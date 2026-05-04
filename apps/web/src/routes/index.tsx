@@ -32,9 +32,10 @@ function LandingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Show loading while auth state is resolving to prevent
+	// Show loading while auth state is resolving (or when already
+	// authenticated but the redirect hasn't fired yet) to prevent
 	// logged-out content from flashing for logged-in users
-	if (authLoading) {
+	if (authLoading || isAuthenticated) {
 		return <LoadingState />;
 	}
 

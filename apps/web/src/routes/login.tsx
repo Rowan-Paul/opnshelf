@@ -27,9 +27,10 @@ function LoginPage() {
 		}
 	}, [isAuthenticated, navigate]);
 
-	// Show loading while auth state is resolving to prevent
+	// Show loading while auth state is resolving (or when already
+	// authenticated but the redirect hasn't fired yet) to prevent
 	// login form from flashing for logged-in users
-	if (authLoading) {
+	if (authLoading || isAuthenticated) {
 		return <LoadingState />;
 	}
 

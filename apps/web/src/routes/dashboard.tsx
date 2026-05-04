@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
+import LoadingState from "#/components/LoadingState";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
@@ -300,6 +301,13 @@ function Dashboard() {
 				episodeInfo: `${item.show.title} • S${item.nextEpisode.seasonNumber}E${item.nextEpisode.episodeNumber}`,
 			};
 		}) || [];
+
+	// Show loading while auth state is resolving (or when not
+	// authenticated but the redirect hasn't fired yet) to prevent
+	// dashboard content from flashing for logged-out users
+	if (authLoading || !isAuthenticated) {
+		return <LoadingState />;
+	}
 
 	return (
 		<div className="container-app py-8">
