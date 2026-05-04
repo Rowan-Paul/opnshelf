@@ -68,6 +68,8 @@ describe("ShelfController", () => {
 			"did:plc:test",
 			2,
 			24,
+			undefined,
+			undefined,
 		);
 		expect(result).toMatchObject({
 			total: 10,

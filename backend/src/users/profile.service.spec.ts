@@ -151,8 +151,11 @@ describe("ProfileService", () => {
 		});
 
 		const [, record] = putRecordMock.mock.calls[0];
-		expect(record.avatar).toEqual(avatar);
-		expect(record.avatar).not.toBeInstanceOf(BlobRef);
+		expect(record.avatar).toMatchObject({
+			mimeType: "image/png",
+			size: 123,
+		});
+		expect(record.avatar?.ref.toString()).toBe(avatar.ref.toString());
 	});
 
 	it("seeds a fallback display name from the handle when none exists", async () => {
@@ -432,7 +435,11 @@ describe("ProfileService", () => {
 		});
 
 		const [, record] = putRecordMock.mock.calls[0];
-		expect(record.avatar).toEqual(avatar);
+		expect(record.avatar).toMatchObject({
+			mimeType: "image/png",
+			size: 123,
+		});
+		expect(record.avatar?.ref.toString()).toBe(avatar.ref.toString());
 		expect(record.avatar).not.toHaveProperty("original");
 	});
 });

@@ -18,6 +18,7 @@ jest.mock("../auth/auth.guard", () => ({
 	},
 }));
 
+import { SocialService } from "../social/social.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 
@@ -47,7 +48,10 @@ describe("UsersController", () => {
 		jest.clearAllMocks();
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [UsersController],
-			providers: [{ provide: UsersService, useValue: usersService }],
+			providers: [
+				{ provide: UsersService, useValue: usersService },
+				{ provide: SocialService, useValue: {} },
+			],
 		}).compile();
 
 		controller = module.get<UsersController>(UsersController);
