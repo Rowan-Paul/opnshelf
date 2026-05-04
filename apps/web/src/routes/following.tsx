@@ -159,7 +159,7 @@ function FollowingPage() {
 		<div className="container-app py-8">
 			<FollowingHeader />
 
-			<div className="grid gap-8 lg:grid-cols-3">
+			<div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
 				{/* Sidebar - shown above feed on mobile, right side on desktop */}
 				<div className="order-1 space-y-6 lg:order-2">
 					<FollowingList

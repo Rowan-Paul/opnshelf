@@ -39,7 +39,10 @@ export function Pagination({
 		<div className="flex items-center justify-center gap-1">
 			<button
 				type="button"
-				onClick={() => onPageChange(page - 1)}
+				onClick={() => {
+					onPageChange(page - 1);
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				}}
 				disabled={page <= 1}
 				className="flex h-9 items-center rounded-md border border-(--border) bg-(--background-elevated) px-3 text-sm transition-colors hover:bg-(--background-subtle) disabled:opacity-40 disabled:hover:bg-(--background-elevated)"
 			>
@@ -58,7 +61,10 @@ export function Pagination({
 					<button
 						key={item.value}
 						type="button"
-						onClick={() => onPageChange(item.value)}
+						onClick={() => {
+							onPageChange(item.value);
+							window.scrollTo({ top: 0, behavior: "smooth" });
+						}}
 						className={`flex h-9 w-9 items-center justify-center rounded-md border font-medium text-sm transition-colors ${
 							page === item.value
 								? "border-(--accent) bg-(--accent) text-[#3f2e00]"
@@ -72,7 +78,10 @@ export function Pagination({
 
 			<button
 				type="button"
-				onClick={() => onPageChange(page + 1)}
+				onClick={() => {
+					onPageChange(page + 1);
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				}}
 				disabled={page >= totalPages}
 				className="flex h-9 items-center rounded-md border border-(--border) bg-(--background-elevated) px-3 text-sm transition-colors hover:bg-(--background-subtle) disabled:opacity-40 disabled:hover:bg-(--background-elevated)"
 			>

@@ -1,27 +1,15 @@
 import {
-	moviesControllerUnmarkWatchedMutation,
 	shelfControllerGetUserShelfOptions,
-	shelfControllerGetUserShelfQueryKey,
-	showsControllerUnmarkWatchedMutation,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	BookmarkX,
-	Film,
-	Grid3X3,
-	List as ListIcon,
-	Loader2,
-	Search,
-	Tv,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Film, Search, Tv } from "lucide-react";
 import { useState } from "react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { toSlug } from "#/lib/slug";
 
 setupApiClient();
 
@@ -30,23 +18,10 @@ export const Route = createFileRoute("/profile/$handle/shelf")({
 });
 
 type FilterType = "all" | "movie" | "episode";
-type ViewMode = "grid" | "list";
-
-function formatWatchedDate(dateStr?: string): string {
-	if (!dateStr) return "";
-	const date = new Date(dateStr);
-	return date.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year:
-			date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
-	});
-}
 
 function ProfileShelfPage() {
 	const { handle } = Route.useParams();
 	const { user } = useAuth();
-	const queryClient = useQueryClient();
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -57,7 +32,6 @@ function ProfileShelfPage() {
 
 	const [filter, setFilter] = useState<FilterType>("all");
 	const [searchQuery, setSearchQuery] = useState("");
-	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 	const [page, setPage] = useState(1);
 
 	// Server-side pagination with filtering
@@ -84,24 +58,6 @@ function ProfileShelfPage() {
 		setPage(1);
 	};
 
-	// Mutations for removing from shelf
-	const removeMovieMutation = useMutation({
-		...moviesControllerUnmarkWatchedMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-			});
-		},
-	});
-	const removeEpisodeMutation = useMutation({
-		...showsControllerUnmarkWatchedMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-			});
-		},
-	});
-
 	const items = data?.items ?? [];
 
 	return (
@@ -121,34 +77,6 @@ function ProfileShelfPage() {
 							value={searchQuery}
 							onChange={(e) => handleSearchChange(e.target.value)}
 						/>
-					</div>
-
-					{/* View Toggle */}
-					<div className="flex rounded-lg border border-(--border) bg-(--background-elevated) p-0.5">
-						<button
-							type="button"
-							onClick={() => setViewMode("grid")}
-							className={`rounded-md p-1.5 transition-colors ${
-								viewMode === "grid"
-									? "bg-(--accent) text-[#3f2e00]"
-									: "text-(--foreground-muted) hover:text-(--foreground)"
-							}`}
-							aria-label="Grid view"
-						>
-							<Grid3X3 className="h-4 w-4" />
-						</button>
-						<button
-							type="button"
-							onClick={() => setViewMode("list")}
-							className={`rounded-md p-1.5 transition-colors ${
-								viewMode === "list"
-									? "bg-(--accent) text-[#3f2e00]"
-									: "text-(--foreground-muted) hover:text-(--foreground)"
-							}`}
-							aria-label="List view"
-						>
-							<ListIcon className="h-4 w-4" />
-						</button>
 					</div>
 				</div>
 			</div>
@@ -199,7 +127,7 @@ function ProfileShelfPage() {
 							: `${displayName}'s shelf is empty.`}
 					</p>
 				</div>
-			) : viewMode === "grid" ? (
+			) : (
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
 					{items.map((item) => {
 						const isMovie = item.type === "movie";
@@ -232,35 +160,6 @@ function ProfileShelfPage() {
 						);
 					})}
 				</div>
-			) : (
-				<div className="space-y-2">
-					{items.map((item) => (
-						<ShelfListRow
-							key={item.id}
-							item={item}
-							isOwner={isOwner}
-							onRemoveMovie={(movieId) =>
-								removeMovieMutation.mutate({
-									path: { movieId },
-									query: { mode: "all" },
-								})
-							}
-							onRemoveEpisode={(showId, seasonNumber, episodeNumber) =>
-								removeEpisodeMutation.mutate({
-									path: { showId },
-									query: {
-										seasonNumber,
-										episodeNumber,
-										mode: "all",
-									},
-								})
-							}
-							isRemoving={
-								removeMovieMutation.isPending || removeEpisodeMutation.isPending
-							}
-						/>
-					))}
-				</div>
 			)}
 
 			{/* Pagination */}
@@ -274,112 +173,5 @@ function ProfileShelfPage() {
 				</div>
 			)}
 		</div>
-	);
-}
-
-function ShelfListRow({
-	item,
-	isOwner,
-	onRemoveMovie,
-	onRemoveEpisode,
-	isRemoving,
-}: {
-	item: {
-		id: string;
-		type: "movie" | "episode";
-		posterPath?: string;
-		watchedDate?: string;
-	} & Record<string, unknown>;
-	isOwner: boolean;
-	onRemoveMovie: (movieId: string) => void;
-	onRemoveEpisode: (
-		showId: string,
-		seasonNumber: number,
-		episodeNumber: number,
-	) => void;
-	isRemoving: boolean;
-}) {
-	const isMovie = item.type === "movie";
-	const title = isMovie ? (item.title as string) : (item.showTitle as string);
-	const id = isMovie ? (item.movieId as string) : (item.showId as string);
-
-	const episodeInfo = !isMovie
-		? `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
-		: undefined;
-
-	const handleRemove = () => {
-		if (isMovie) {
-			onRemoveMovie(id);
-		} else {
-			onRemoveEpisode(
-				id,
-				item.seasonNumber as number,
-				item.episodeNumber as number,
-			);
-		}
-	};
-
-	return (
-		<Link
-			to={isMovie ? "/movies/$movieId/$movieName" : "/shows/$showId/$showName"}
-			params={
-				isMovie
-					? { movieId: id, movieName: toSlug(title) }
-					: { showId: id, showName: toSlug(title) }
-			}
-			className="card card-interactive flex items-center gap-4 p-3"
-		>
-			<div className="h-16 w-11 shrink-0 overflow-hidden rounded-md bg-(--background-subtle)">
-				{item.posterPath ? (
-					<img
-						src={`https://image.tmdb.org/t/p/w200${item.posterPath}`}
-						alt={title}
-						className="h-full w-full object-cover"
-						loading="lazy"
-					/>
-				) : (
-					<div className="flex h-full w-full items-center justify-center">
-						{isMovie ? (
-							<Film className="size-4 text-(--foreground-muted)" />
-						) : (
-							<Tv className="size-4 text-(--foreground-muted)" />
-						)}
-					</div>
-				)}
-			</div>
-			<div className="min-w-0 flex-1">
-				<p className="font-medium text-sm">{title}</p>
-				<div className="flex flex-col gap-0.5 text-(--foreground-muted) text-xs">
-					{episodeInfo && <span>{episodeInfo}</span>}
-					{item.watchedDate && (
-						<span>{formatWatchedDate(item.watchedDate)}</span>
-					)}
-				</div>
-			</div>
-			<span
-				className={`badge ${isMovie ? "badge-subtle" : "badge-accent"} text-xs`}
-			>
-				{isMovie ? "Movie" : "TV"}
-			</span>
-			{isOwner && (
-				<button
-					type="button"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						handleRemove();
-					}}
-					disabled={isRemoving}
-					className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:border-red-300 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-					aria-label="Remove from shelf"
-				>
-					{isRemoving ? (
-						<Loader2 className="size-4 animate-spin" />
-					) : (
-						<BookmarkX className="size-4" />
-					)}
-				</button>
-			)}
-		</Link>
 	);
 }

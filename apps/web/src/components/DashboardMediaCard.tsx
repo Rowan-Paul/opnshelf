@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
-import { useMediaWatchStatus } from "#/lib/hooks";
+import { useListItemStatus, useMediaWatchStatus } from "#/lib/hooks";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
 import ManageListsDialog from "./ManageListsDialog";
 import type { MediaCardProps } from "./MediaCard";
@@ -49,6 +49,15 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 		useMediaWatchStatus(watchStatusOptions);
 
 	const rawMediaId = isMovie ? String(id) : actualShowId || String(id);
+
+	const { isInWatchlist, isInFavorites, otherLists } = useListItemStatus({
+		mediaType: type,
+		mediaId: String(id),
+		seasonNumber,
+		episodeNumber,
+	});
+
+	const isInAnyList = isInWatchlist || isInFavorites || otherLists.length > 0;
 
 	const handleMarkWatched = () => {
 		if (isMovie) {
@@ -134,6 +143,7 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 						? watchActions.isUnmarkMoviePending
 						: watchActions.isUnmarkEpisodePending
 				}
+				isInAnyList={isInAnyList}
 			/>
 			<ManageListsDialog
 				mediaType={type}
@@ -142,6 +152,11 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 				episodeNumber={episodeNumber}
 				open={listDialogOpen}
 				onOpenChange={setListDialogOpen}
+				title={
+					isInAnyList
+						? `Manage lists for "${title}"`
+						: `Add "${title}" to lists`
+				}
 			/>
 			<ConfirmRemoveDialog
 				open={confirmRemoveOpen}

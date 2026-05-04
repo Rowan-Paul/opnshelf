@@ -4,11 +4,12 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, Check, Loader2, Tv } from "lucide-react";
+import { Calendar, Loader2, Plus, Tv } from "lucide-react";
 import { useState } from "react";
 import { Pagination } from "#/components/Pagination";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { formatDate } from "#/lib/date-utils";
 import { useMarkEpisodeWatched } from "#/lib/hooks";
 import { toSlug } from "#/lib/slug";
 
@@ -17,13 +18,6 @@ setupApiClient();
 export const Route = createFileRoute("/profile/$handle/up-next")({
 	component: ProfileUpNextPage,
 });
-
-function formatDate(dateStr: string): string {
-	return new Date(dateStr).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-	});
-}
 
 function formatRelativeDate(dateStr: string): string {
 	const releaseDate = new Date(dateStr);
@@ -39,11 +33,11 @@ function formatRelativeDate(dateStr: string): string {
 	if (diffDays > 0 && diffDays < 7) return `in ${diffDays} days`;
 	if (diffDays > 0 && diffDays < 30)
 		return `in ${Math.ceil(diffDays / 7)} weeks`;
-	if (diffDays > 0) return `in ${Math.ceil(diffDays / 30)} months`;
+	if (diffDays > 0) return formatDate(dateStr);
 	if (diffDays === -1) return "Yesterday";
 	if (diffDays > -7) return `${Math.abs(diffDays)} days ago`;
 	if (diffDays > -30) return `${Math.ceil(Math.abs(diffDays) / 7)} weeks ago`;
-	return `${Math.ceil(Math.abs(diffDays) / 30)} months ago`;
+	return formatDate(dateStr);
 }
 
 function ProfileUpNextPage() {
@@ -167,9 +161,16 @@ function ProfileUpNextPage() {
 											<div className="mt-2 flex items-center gap-2 text-(--foreground-muted) text-sm">
 												<Calendar className="size-4" />
 												<span>{formatDate(nextEp.airDate)}</span>
-												<span className="text-(--accent)">
-													• {formatRelativeDate(nextEp.airDate)}
-												</span>
+												{new Date(nextEp.airDate) >=
+												new Date(new Date().setHours(0, 0, 0, 0)) ? (
+													<span className="text-(--accent)">
+														• {formatRelativeDate(nextEp.airDate)}
+													</span>
+												) : item.latestWatchedDate ? (
+													<span className="text-xs">
+														• Last watched: {formatDate(item.latestWatchedDate)}
+													</span>
+												) : null}
 											</div>
 										)}
 
@@ -214,9 +215,9 @@ function ProfileUpNextPage() {
 												{markEpisodeMutation.isPending ? (
 													<Loader2 className="size-4 animate-spin" />
 												) : (
-													<Check className="size-4" />
+													<Plus className="size-4" />
 												)}
-												Mark watched
+												Add to shelf
 											</button>
 										)}
 									</div>

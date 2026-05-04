@@ -249,7 +249,32 @@ export default function Header() {
 								{/* Mobile user section */}
 								{isAuthenticated && user && (
 									<>
-										<div className="my-2 border-(--border) border-t" />
+										<Link
+											to="/profile/$handle"
+											params={{ handle: user.handle }}
+											onClick={() => setMobileMenuOpen(false)}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												currentPath === `/profile/${user.handle}`
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
+										>
+											<User className="h-5 w-5" />
+											Profile
+										</Link>
+										<Link
+											to="/settings"
+											onClick={() => setMobileMenuOpen(false)}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												currentPath === "/settings"
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
+										>
+											<Settings className="h-5 w-5" />
+											Settings
+										</Link>
+										<div className="my-2 h-px bg-(--border)" />
 										<div className="flex items-center gap-3 px-3 py-3">
 											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
 												{user.avatar ? (

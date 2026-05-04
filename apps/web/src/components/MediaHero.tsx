@@ -111,14 +111,14 @@ export default function MediaHero({
 									<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
 								)}
 							</div>
-							<div className="flex flex-col justify-center">
-								<h1 className="text-display-2">{title}</h1>
+							<div className="flex min-w-0 flex-col justify-center overflow-hidden">
+								<h1 className="break-words text-display-2">{title}</h1>
 							</div>
 						</div>
 
 						{/* Desktop Title */}
 						<div className="hidden lg:block">
-							<h1 className="text-display-2">{title}</h1>
+							<h1 className="break-words text-display-2">{title}</h1>
 						</div>
 
 						{/* Meta Info */}

@@ -17,7 +17,7 @@ export function ActivityCard({
 	userTimeFormat,
 }: ActivityCardProps) {
 	return (
-		<article className="card p-5 transition-shadow hover:shadow-md">
+		<article className="card w-full p-5 transition-shadow hover:shadow-md">
 			<div className="flex gap-4">
 				{/* Poster on the left */}
 				{(activity.posterPath || activity.backdropPath) && (

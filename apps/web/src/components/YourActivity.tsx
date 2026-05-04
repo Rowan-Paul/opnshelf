@@ -1,4 +1,10 @@
 import { Loader2, Plus, X } from "lucide-react";
+import { useState } from "react";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "#/components/ui/popover";
 import { useAuth } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/date-utils";
 
@@ -9,10 +15,111 @@ interface WatchHistoryEntry {
 
 interface YourActivityProps {
 	watchHistory: WatchHistoryEntry[];
-	onAddToShelf: () => void;
+	onAddToShelf: (watchedAt?: string) => void;
 	onDeleteEntry: (id: string) => void;
 	isAddPending?: boolean;
 	isDeletePending?: boolean;
+}
+
+function getCurrentDatetimeLocal(timezone?: string): string {
+	const now = new Date();
+	const options: Intl.DateTimeFormatOptions = {
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+		timeZone: timezone,
+	};
+	const parts = new Intl.DateTimeFormat("en-US", options).formatToParts(now);
+	const getPart = (type: string) =>
+		parts.find((p) => p.type === type)?.value ?? "00";
+	return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
+}
+
+function AddToShelfButton({
+	isPending,
+	onConfirm,
+	className,
+}: {
+	isPending: boolean;
+	onConfirm: (watchedAt: string) => void;
+	className?: string;
+}) {
+	const { userSettings } = useAuth();
+	const userTimezone = userSettings?.timezone;
+	const [open, setOpen] = useState(false);
+	const [watchedAt, setWatchedAt] = useState(() =>
+		getCurrentDatetimeLocal(userTimezone),
+	);
+
+	const handleOpenChange = (isOpen: boolean) => {
+		if (isOpen) {
+			setWatchedAt(getCurrentDatetimeLocal(userTimezone));
+		}
+		setOpen(isOpen);
+	};
+
+	const handleConfirm = () => {
+		onConfirm(watchedAt);
+		setOpen(false);
+	};
+
+	return (
+		<Popover open={open} onOpenChange={handleOpenChange}>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					disabled={isPending}
+					className={`btn btn-secondary gap-2 ${className ?? ""}`}
+				>
+					{isPending ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Loading
+						</>
+					) : (
+						<>
+							<Plus className="size-4" />
+							Add to shelf
+						</>
+					)}
+				</button>
+			</PopoverTrigger>
+			<PopoverContent className="w-80 space-y-3">
+				<div className="space-y-2">
+					<label htmlFor="watched-at" className="block font-medium text-sm">
+						When did you watch this?
+					</label>
+					<input
+						id="watched-at"
+						type="datetime-local"
+						value={watchedAt}
+						onChange={(e) => setWatchedAt(e.target.value)}
+						className="w-full rounded-md border bg-(--background) px-3 py-2 text-sm outline-hidden focus:ring-(--accent) focus:ring-2"
+					/>
+				</div>
+				<div className="flex gap-2">
+					<button
+						type="button"
+						onClick={() => setOpen(false)}
+						className="btn btn-secondary flex-1"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onClick={handleConfirm}
+						disabled={isPending}
+						className="btn btn-primary flex-1"
+					>
+						Confirm
+					</button>
+				</div>
+			</PopoverContent>
+		</Popover>
+	);
 }
 
 export function YourActivity({
@@ -56,48 +163,22 @@ export function YourActivity({
 							</button>
 						</div>
 					))}
-					<button
-						type="button"
-						onClick={onAddToShelf}
-						disabled={isAddPending}
-						className="btn btn-secondary mt-3 w-full gap-2"
-					>
-						{isAddPending ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Loading
-							</>
-						) : (
-							<>
-								<Plus className="size-4" />
-								Add to shelf
-							</>
-						)}
-					</button>
+					<AddToShelfButton
+						isPending={isAddPending}
+						onConfirm={onAddToShelf}
+						className="mt-3 w-full"
+					/>
 				</div>
 			) : (
 				<div className="space-y-3">
 					<p className="text-(--foreground-muted) text-sm">
 						You haven&apos;t watched this yet
 					</p>
-					<button
-						type="button"
-						onClick={onAddToShelf}
-						disabled={isAddPending}
-						className="btn btn-secondary w-full gap-2 text-sm"
-					>
-						{isAddPending ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Loading
-							</>
-						) : (
-							<>
-								<Plus className="size-4" />
-								Add to shelf
-							</>
-						)}
-					</button>
+					<AddToShelfButton
+						isPending={isAddPending}
+						onConfirm={onAddToShelf}
+						className="w-full text-sm"
+					/>
 				</div>
 			)}
 		</section>

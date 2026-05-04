@@ -9,6 +9,7 @@ import {
 	showsControllerDiscoverShowsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
+import { formatDate } from "#/lib/date-utils";
 
 // Utility function to format relative time
 function getRelativeTime(dateString: string): string {
@@ -26,9 +27,7 @@ function getRelativeTime(dateString: string): string {
 	if (diffHours < 24)
 		return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
 	if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-	if (diffDays < 365)
-		return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) === 1 ? "" : "s"} ago`;
-	return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) === 1 ? "" : "s"} ago`;
+	return formatDate(dateString);
 }
 
 // Activity item type

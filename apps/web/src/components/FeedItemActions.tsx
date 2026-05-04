@@ -1,4 +1,10 @@
-import { Bookmark, BookmarkCheck, Library, Loader2 } from "lucide-react";
+import {
+	Bookmark,
+	BookmarkCheck,
+	Library,
+	ListChecks,
+	Loader2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
 import ManageListsDialog from "#/components/ManageListsDialog";
@@ -171,6 +177,8 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 			>
 				{isListsLoading ? (
 					<Loader2 className="size-3.5 animate-spin" />
+				) : otherLists.length > 0 ? (
+					<ListChecks className="size-3.5" />
 				) : (
 					<Library className="size-3.5" />
 				)}

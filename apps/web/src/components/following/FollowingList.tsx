@@ -18,7 +18,7 @@ export function FollowingList({
 	pendingUnfollowDid,
 }: FollowingListProps) {
 	return (
-		<section className="card p-5">
+		<section className="card w-full p-5">
 			<h3 className="mb-4 font-display font-semibold">
 				Following ({following.length})
 			</h3>

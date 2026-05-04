@@ -118,7 +118,7 @@ function ProfileOverviewPage() {
 					</div>
 
 					{moviesLoading ? (
-						<div className="grid grid-cols-4 gap-4">
+						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 							{[1, 2, 3, 4].map((i) => (
 								<div
 									key={i}
@@ -127,7 +127,7 @@ function ProfileOverviewPage() {
 							))}
 						</div>
 					) : movies.length > 0 ? (
-						<div className="grid grid-cols-4 gap-4">
+						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 							{movies.map((item) => (
 								<div key={item.id} className="[&_article]:!w-full">
 									<ActionableMediaCard
@@ -170,7 +170,7 @@ function ProfileOverviewPage() {
 					</div>
 
 					{episodesLoading ? (
-						<div className="grid grid-cols-4 gap-4">
+						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 							{[1, 2, 3, 4].map((i) => (
 								<div
 									key={i}
@@ -179,7 +179,7 @@ function ProfileOverviewPage() {
 							))}
 						</div>
 					) : episodes.length > 0 ? (
-						<div className="grid grid-cols-4 gap-4">
+						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 							{episodes.map((item) => (
 								<div key={item.id} className="[&_article]:!w-full">
 									<ActionableMediaCard

@@ -6,7 +6,7 @@ interface NetworkStatsProps {
 
 export function NetworkStats({ following }: NetworkStatsProps) {
 	return (
-		<section className="card p-5">
+		<section className="card w-full p-5">
 			<h3 className="mb-4 font-display font-semibold">Your Network</h3>
 			<div className="space-y-3 text-sm">
 				<div className="flex justify-between">

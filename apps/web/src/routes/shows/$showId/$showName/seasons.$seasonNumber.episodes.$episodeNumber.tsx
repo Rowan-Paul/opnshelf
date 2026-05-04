@@ -388,7 +388,9 @@ function EpisodeDetailPage() {
 						{/* Your Activity */}
 						<YourActivity
 							watchHistory={episodeWatchHistory}
-							onAddToShelf={() => markEpisodeWatched(seasonNum, episodeNum)}
+							onAddToShelf={(watchedAt) =>
+								markEpisodeWatched(seasonNum, episodeNum, watchedAt)
+							}
 							onDeleteEntry={deleteEpisodeWatchHistoryEntry}
 							isAddPending={isMarkEpisodePending}
 							isDeletePending={isDeleteEpisodeHistoryPending}

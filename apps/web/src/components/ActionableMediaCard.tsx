@@ -4,7 +4,7 @@ import ManageListsDialog from "#/components/ManageListsDialog";
 import MediaCard from "#/components/MediaCard";
 import { useAuth } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/date-utils";
-import { useMediaWatchStatus } from "#/lib/hooks";
+import { useListItemStatus, useMediaWatchStatus } from "#/lib/hooks";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
 
 interface ActionableMediaCardProps {
@@ -69,6 +69,15 @@ export default function ActionableMediaCard({
 		!isMovie &&
 		typeof seasonNumber === "number" &&
 		typeof episodeNumber === "number";
+
+	const { isInWatchlist, isInFavorites, otherLists } = useListItemStatus({
+		mediaType: type,
+		mediaId: String(id),
+		seasonNumber,
+		episodeNumber,
+	});
+
+	const isInAnyList = isInWatchlist || isInFavorites || otherLists.length > 0;
 
 	const watchActions = useWatchActions(
 		isMovie
@@ -201,6 +210,7 @@ export default function ActionableMediaCard({
 							? watchActions.isUnmarkEpisodePending
 							: watchActions.isUnmarkShowPending
 				}
+				isInAnyList={isInAnyList}
 			/>
 			{interactive && (
 				<ManageListsDialog
@@ -210,7 +220,11 @@ export default function ActionableMediaCard({
 					episodeNumber={episodeNumber}
 					open={listDialogOpen}
 					onOpenChange={setListDialogOpen}
-					title={`Add "${title}" to lists`}
+					title={
+						isInAnyList
+							? `Manage lists for "${title}"`
+							: `Add "${title}" to lists`
+					}
 				/>
 			)}
 			{interactive && (

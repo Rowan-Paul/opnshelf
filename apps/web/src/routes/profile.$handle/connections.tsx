@@ -80,7 +80,7 @@ function ProfileConnectionsPage() {
 							key={user.did}
 							to="/profile/$handle"
 							params={{ handle: user.handle }}
-							className="card card-interactive flex items-center gap-4 p-4"
+							className="card card-interactive flex w-full items-center gap-4 p-4"
 						>
 							<div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
 								{typeof user.avatar === "string" ? (

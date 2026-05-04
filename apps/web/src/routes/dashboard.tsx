@@ -202,6 +202,7 @@ function Dashboard() {
 			change: statsData
 				? `${statsData.watchedLast30Days || 0} watched this month`
 				: "Track your first movie",
+			changeMobile: `${statsData?.watchedLast30Days || 0} this month`,
 		},
 		{
 			label: "Shows",
@@ -210,6 +211,7 @@ function Dashboard() {
 			change: statsData
 				? `${statsData.watchedLast7Days || 0} watched this week`
 				: "Track your first show",
+			changeMobile: `${statsData?.watchedLast7Days || 0} this week`,
 		},
 		{
 			label: "Activity",
@@ -218,6 +220,7 @@ function Dashboard() {
 			change: statsData?.dailyActivity?.length
 				? `${statsData.dailyActivity.length} active days`
 				: "Start watching",
+			changeMobile: `${statsData?.watchedLast7Days || 0} this week`,
 		},
 		{
 			label: "This Month",
@@ -227,6 +230,7 @@ function Dashboard() {
 				statsData?.watchedLast30Days && statsData.watchedLast30Days > 0
 					? "total watched"
 					: "Start tracking",
+			changeMobile: `${statsData?.watchedLast30Days || 0} this month`,
 		},
 	];
 
@@ -330,7 +334,7 @@ function Dashboard() {
 									<div className="order-2 space-y-1 sm:order-1 sm:space-y-2">
 										<div className="h-3 w-14 rounded bg-(--background-subtle) sm:h-4 sm:w-16" />
 										<div className="h-6 w-10 rounded bg-(--background-subtle) sm:h-8 sm:w-12" />
-										<div className="hidden h-3 w-20 rounded bg-(--background-subtle) sm:block" />
+										<div className="mt-1 h-3 w-20 rounded bg-(--background-subtle)" />
 									</div>
 								</div>
 							</div>
@@ -353,6 +357,9 @@ function Dashboard() {
 											</p>
 											<p className="font-semibold text-lg sm:mt-1 sm:text-display-3">
 												{stat.value}
+											</p>
+											<p className="mt-0.5 text-(--accent) text-xs sm:mt-1 sm:hidden">
+												{stat.changeMobile}
 											</p>
 											<p className="hidden text-(--accent) text-xs sm:mt-1 sm:block">
 												{stat.change}

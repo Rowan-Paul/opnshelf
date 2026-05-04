@@ -4,6 +4,7 @@ import {
 	Check,
 	Clock,
 	Library,
+	ListChecks,
 	Loader2,
 	Play,
 	Star,
@@ -31,6 +32,7 @@ export interface MediaCardProps {
 	progress?: number;
 	isWatched?: boolean;
 	isInWatchlist?: boolean;
+	isInAnyList?: boolean;
 	watchedDate?: string;
 	role?: string;
 	year?: string | number;
@@ -75,6 +77,7 @@ export default function MediaCard({
 	isRemoving = false,
 	isMarkWatchedPending = false,
 	isUnmarkWatchedPending = false,
+	isInAnyList = false,
 }: MediaCardProps) {
 	const [imageLoaded, setImageLoaded] = useState(false);
 	const [imageError, setImageError] = useState(false);
@@ -219,10 +222,14 @@ export default function MediaCard({
 											onManageLists();
 										}}
 										className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40"
-										aria-label="Manage lists"
-										title="Add to list"
+										aria-label={isInAnyList ? "Manage lists" : "Add to list"}
+										title={isInAnyList ? "Manage list" : "Add to list"}
 									>
-										<Library className="size-3.5" />
+										{isInAnyList ? (
+											<ListChecks className="size-3.5" />
+										) : (
+											<Library className="size-3.5" />
+										)}
 									</button>
 								)}
 								{onRemove && (
@@ -283,7 +290,7 @@ export default function MediaCard({
 					{/* Backdrop layout content */}
 					{layout === "backdrop" && (
 						<div className="absolute right-0 bottom-0 left-0 p-4">
-							<h3 className="line-clamp-1 font-semibold text-white">
+							<h3 className="line-clamp-2 font-semibold text-white">
 								{displayName}
 							</h3>
 							{episodeInfo && (
@@ -304,7 +311,7 @@ export default function MediaCard({
 					<div className="mt-2 space-y-1">
 						{episodeInfo ? (
 							<>
-								<h3 className="line-clamp-1 font-medium text-(--foreground) text-sm">
+								<h3 className="line-clamp-2 font-medium text-(--foreground) text-sm">
 									{episodeInfo}
 								</h3>
 								<p className="line-clamp-1 text-(--foreground-muted) text-xs">
@@ -312,7 +319,7 @@ export default function MediaCard({
 								</p>
 							</>
 						) : (
-							<h3 className="line-clamp-1 font-medium text-(--foreground) text-sm">
+							<h3 className="line-clamp-2 font-medium text-(--foreground) text-sm">
 								{displayName}
 							</h3>
 						)}

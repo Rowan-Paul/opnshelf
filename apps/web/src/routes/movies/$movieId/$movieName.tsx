@@ -215,7 +215,7 @@ function MovieDetailPage() {
 						) : (
 							<button
 								type="button"
-								onClick={markMovieWatched}
+								onClick={() => markMovieWatched()}
 								disabled={isMarkMoviePending}
 								className="btn btn-primary gap-2"
 							>
@@ -291,7 +291,7 @@ function MovieDetailPage() {
 						{/* Your Activity */}
 						<YourActivity
 							watchHistory={movieWatchHistory || []}
-							onAddToShelf={markMovieWatched}
+							onAddToShelf={(watchedAt) => markMovieWatched(watchedAt)}
 							onDeleteEntry={deleteMovieWatchHistoryEntry}
 							isAddPending={isMarkMoviePending}
 							isDeletePending={isDeleteMovieHistoryPending}
