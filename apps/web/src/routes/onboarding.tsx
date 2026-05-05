@@ -7,32 +7,39 @@ import {
 	isTerminalTraktImportStatus,
 	type TraktImportStatusJob,
 	type UserDto,
+	type UserProfileDto,
 	usersControllerCompleteOnboarding,
+	usersControllerDeleteMyAvatarMutation,
 	usersControllerFetchMyTraktPublicHistory,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerImportMyBlueskyFollows,
 	usersControllerStartMyTraktImport,
+	usersControllerUpdateMyProfileMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
+	Camera,
 	CheckCircle,
 	Film,
 	Loader2,
 	Tv,
 	Upload,
+	User,
 	Users,
 	X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/onboarding")({
 	component: OnboardingPage,
 });
 
-type OnboardingStep = "welcome" | "trakt" | "bluesky" | "done";
+type OnboardingStep = "welcome" | "profile" | "trakt" | "bluesky" | "done";
 
 function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	const [error, setError] = useState(false);
@@ -60,6 +67,7 @@ function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const [step, setStep] = useState<OnboardingStep>("welcome");
+	const initialCheckDone = useRef(false);
 
 	// Redirect unauthenticated users to login
 	useEffect(() => {
@@ -68,9 +76,12 @@ function OnboardingPage() {
 		}
 	}, [authLoading, isAuthenticated, navigate]);
 
-	// Redirect already onboarded users to dashboard
+	// Redirect already onboarded users to dashboard (only once after initial auth load)
 	useEffect(() => {
-		if (!authLoading && isAuthenticated && !user?.needsOnboarding) {
+		if (authLoading) return;
+		if (initialCheckDone.current) return;
+		initialCheckDone.current = true;
+		if (isAuthenticated && !user?.needsOnboarding) {
 			navigate({ to: "/dashboard" });
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
@@ -86,7 +97,10 @@ function OnboardingPage() {
 	return (
 		<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
 			<div className="w-full max-w-lg">
-				{step === "welcome" && <WelcomeStep onNext={() => setStep("trakt")} />}
+				{step === "welcome" && (
+					<WelcomeStep onNext={() => setStep("profile")} />
+				)}
+				{step === "profile" && <ProfileStep onNext={() => setStep("trakt")} />}
 				{step === "trakt" && (
 					<TraktStep
 						onNext={() => setStep("bluesky")}
@@ -130,7 +144,241 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 }
 
 /* ------------------------------------------------------------------
-   Step 2: Trakt.tv Import
+   Step 2: Profile Setup
+   ------------------------------------------------------------------ */
+function ProfileStep({ onNext }: { onNext: () => void }) {
+	const { user } = useAuth();
+	const queryClient = useQueryClient();
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+
+	useEffect(() => {
+		setDisplayName(user?.displayName ?? "");
+	}, [user?.displayName]);
+
+	const updateProfileMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "update"],
+		...usersControllerUpdateMyProfileMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+			toast.success("Display name updated");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update profile",
+			);
+		},
+	});
+
+	async function uploadAvatar(file: File): Promise<UserProfileDto> {
+		const formData = new FormData();
+		formData.append("avatar", file);
+
+		const response = await fetch(
+			`${apiConfig.baseUrl}/users/me/profile/avatar`,
+			{
+				method: "POST",
+				body: formData,
+				credentials: "include",
+			},
+		);
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({
+				message: "Failed to upload avatar",
+			}));
+			throw new Error(errorData.message || "Failed to upload avatar");
+		}
+
+		return response.json();
+	}
+
+	const uploadAvatarMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "avatar", "upload"],
+		mutationFn: uploadAvatar,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+			toast.success("Profile photo updated");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to upload profile photo",
+			);
+		},
+	});
+
+	const deleteAvatarMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "avatar", "delete"],
+		...usersControllerDeleteMyAvatarMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+			toast.success("Profile photo removed");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove profile photo",
+			);
+		},
+	});
+
+	const handleAvatarUpload = (file: File) => {
+		uploadAvatarMutation.mutate(file);
+	};
+
+	const isMutating =
+		updateProfileMutation.isPending ||
+		uploadAvatarMutation.isPending ||
+		deleteAvatarMutation.isPending;
+
+	return (
+		<div className="card p-6">
+			<div className="mb-6">
+				<h2 className="text-display-3">Set Up Your Profile</h2>
+				<p className="mt-1 text-(--foreground-muted) text-sm">
+					Customize how you appear on OpnShelf
+				</p>
+			</div>
+
+			<div className="space-y-5">
+				{/* Avatar */}
+				<div className="flex items-center gap-4">
+					<button
+						type="button"
+						onClick={() => fileInputRef.current?.click()}
+						aria-label="Upload profile photo"
+						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+					>
+						{user?.avatar ? (
+							<img
+								src={user.avatar}
+								alt=""
+								className="h-full w-full object-cover"
+							/>
+						) : (
+							<User className="size-8 text-(--foreground-muted)" />
+						)}
+						<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+							<Camera className="size-5 text-white" />
+						</div>
+						{uploadAvatarMutation.isPending && (
+							<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+								<Loader2 className="size-5 animate-spin text-white" />
+							</div>
+						)}
+					</button>
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="image/*"
+						className="sr-only"
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							if (file) handleAvatarUpload(file);
+							e.target.value = "";
+						}}
+					/>
+					<div>
+						<p className="font-medium text-sm">Profile photo</p>
+						<p className="text-(--foreground-muted) text-sm">
+							Click the avatar to upload a new photo
+						</p>
+						{user?.avatar && (
+							<button
+								type="button"
+								onClick={() => deleteAvatarMutation.mutate({})}
+								disabled={deleteAvatarMutation.isPending}
+								className="mt-1 font-medium text-red-600 text-sm hover:text-red-700 disabled:opacity-50"
+							>
+								{deleteAvatarMutation.isPending ? "Removing…" : "Remove photo"}
+							</button>
+						)}
+					</div>
+				</div>
+
+				{/* Display Name */}
+				<div className="space-y-2">
+					<label
+						htmlFor="onboarding-display-name"
+						className="font-medium text-sm"
+					>
+						Display name
+					</label>
+					<input
+						id="onboarding-display-name"
+						type="text"
+						value={displayName}
+						onChange={(e) => setDisplayName(e.target.value)}
+						placeholder="Your display name"
+						className="input"
+					/>
+				</div>
+
+				{/* Handle */}
+				<div className="space-y-2">
+					<label htmlFor="onboarding-handle" className="font-medium text-sm">
+						Handle
+					</label>
+					<input
+						id="onboarding-handle"
+						type="text"
+						value={`@${user?.handle ?? ""}`}
+						disabled
+						className="input cursor-not-allowed bg-(--background-subtle)"
+						readOnly
+					/>
+					<p className="text-(--foreground-muted) text-xs">
+						Your handle is managed by your Bluesky account
+					</p>
+				</div>
+
+				<button
+					type="button"
+					onClick={async () => {
+						if (displayName !== (user?.displayName ?? "")) {
+							try {
+								await updateProfileMutation.mutateAsync({
+									body: { displayName: displayName || undefined },
+								});
+							} catch {
+								// Error handled by mutation onError
+								return;
+							}
+						}
+						onNext();
+					}}
+					disabled={isMutating}
+					className="btn btn-primary w-full"
+				>
+					{updateProfileMutation.isPending ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Saving…
+						</>
+					) : (
+						<>
+							Continue
+							<ArrowRight className="size-4" />
+						</>
+					)}
+				</button>
+			</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------
+   Step 3: Trakt.tv Import
    ------------------------------------------------------------------ */
 function TraktStep({
 	onNext,
@@ -439,7 +687,7 @@ function TraktStep({
 }
 
 /* ------------------------------------------------------------------
-   Step 3: Bluesky Follows
+   Step 4: Bluesky Follows
    ------------------------------------------------------------------ */
 function BlueskyStep({
 	onNext,
@@ -566,7 +814,7 @@ function BlueskyStep({
 }
 
 /* ------------------------------------------------------------------
-   Step 4: Done
+   Step 5: Done
    ------------------------------------------------------------------ */
 function DoneStep() {
 	const navigate = useNavigate();
@@ -593,10 +841,6 @@ function DoneStep() {
 			});
 			// Trigger a background refetch to keep cache in sync
 			queryClient.invalidateQueries({ queryKey: meKey });
-			// Give a moment then redirect
-			setTimeout(() => {
-				navigate({ to: "/dashboard" });
-			}, 800);
 		},
 	});
 
