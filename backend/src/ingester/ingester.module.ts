@@ -1,6 +1,7 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
+import { NotesModule } from "../notes/notes.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SocialModule } from "../social/social.module";
 import { ShowsModule } from "../shows/shows.module";
@@ -13,6 +14,7 @@ import { IngesterService } from "./ingester.service";
 		forwardRef(() => MoviesModule),
 		forwardRef(() => ShowsModule),
 		forwardRef(() => ListsModule),
+		forwardRef(() => NotesModule),
 		forwardRef(() => SocialModule),
 		forwardRef(() => UsersModule),
 	],

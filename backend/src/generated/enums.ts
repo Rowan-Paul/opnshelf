@@ -11,7 +11,9 @@
 
 export const MediaType = {
   movie: 'movie',
-  show: 'show'
+  show: 'show',
+  season: 'season',
+  episode: 'episode'
 } as const
 
 export type MediaType = (typeof MediaType)[keyof typeof MediaType]

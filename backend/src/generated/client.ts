@@ -104,3 +104,8 @@ export type List = Prisma.ListModel
  * 
  */
 export type ListItem = Prisma.ListItemModel
+/**
+ * Model Note
+ * 
+ */
+export type Note = Prisma.NoteModel

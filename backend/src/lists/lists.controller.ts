@@ -17,6 +17,7 @@ import {
 	ApiOkResponse,
 	ApiOperation,
 	ApiParam,
+	ApiQuery,
 	ApiTags,
 	ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
@@ -197,16 +198,33 @@ export class ListsController {
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Remove an item from a list" })
 	@ApiParam({ name: "slug", description: "List slug identifier" })
-	@ApiParam({ name: "mediaType", description: "Media type (movie or show)" })
-	@ApiParam({ name: "mediaId", description: "TMDB media ID" })
+	@ApiParam({
+		name: "mediaType",
+		description: "Media type (movie, show, season, or episode)",
+	})
+	@ApiParam({ name: "mediaId", description: "TMDB movie ID or show ID" })
+	@ApiQuery({
+		name: "seasonNumber",
+		required: false,
+		description: "Season number for season/episode items",
+		type: Number,
+	})
+	@ApiQuery({
+		name: "episodeNumber",
+		required: false,
+		description: "Episode number for episode items",
+		type: Number,
+	})
 	@ApiOkResponse({ description: "Item removed from list" })
 	@ApiNotFoundResponse({ description: "List not found" })
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
 	async removeItemFromList(
 		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
-		@Param("mediaType") mediaType: "movie" | "show",
+		@Param("mediaType") mediaType: "movie" | "show" | "season" | "episode",
 		@Param("mediaId") mediaId: string,
+		@Query("seasonNumber") seasonNumber?: string,
+		@Query("episodeNumber") episodeNumber?: string,
 	): Promise<{ success: boolean }> {
 		await this.listsService.removeFromList(
 			req.user.did,
@@ -214,6 +232,8 @@ export class ListsController {
 			slug,
 			mediaType,
 			mediaId,
+			seasonNumber ? Number(seasonNumber) : undefined,
+			episodeNumber ? Number(episodeNumber) : undefined,
 		);
 		return { success: true };
 	}
@@ -222,8 +242,23 @@ export class ListsController {
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Get all lists with membership status for an item" })
-	@ApiParam({ name: "mediaType", description: "Media type (movie or show)" })
-	@ApiParam({ name: "mediaId", description: "TMDB media ID" })
+	@ApiParam({
+		name: "mediaType",
+		description: "Media type (movie, show, season, or episode)",
+	})
+	@ApiParam({ name: "mediaId", description: "TMDB movie ID or show ID" })
+	@ApiQuery({
+		name: "seasonNumber",
+		required: false,
+		description: "Season number for season/episode items",
+		type: Number,
+	})
+	@ApiQuery({
+		name: "episodeNumber",
+		required: false,
+		description: "Episode number for episode items",
+		type: Number,
+	})
 	@ApiOkResponse({
 		description: "Lists with membership status",
 		type: [ListsForItemDto],
@@ -231,9 +266,17 @@ export class ListsController {
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
 	async getListsForItem(
 		@Req() req: AuthenticatedRequest,
-		@Param("mediaType") mediaType: "movie" | "show",
+		@Param("mediaType") mediaType: "movie" | "show" | "season" | "episode",
 		@Param("mediaId") mediaId: string,
+		@Query("seasonNumber") seasonNumber?: string,
+		@Query("episodeNumber") episodeNumber?: string,
 	): Promise<ListsForItemDto[]> {
-		return this.listsService.getListsForItem(req.user.did, mediaType, mediaId);
+		return this.listsService.getListsForItem(
+			req.user.did,
+			mediaType,
+			mediaId,
+			seasonNumber ? Number(seasonNumber) : undefined,
+			episodeNumber ? Number(episodeNumber) : undefined,
+		);
 	}
 }

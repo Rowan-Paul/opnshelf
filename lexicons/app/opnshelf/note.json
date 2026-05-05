@@ -1,19 +1,15 @@
 {
 	"lexicon": 1,
-	"id": "xyz.opnshelf.listItem",
+	"id": "xyz.opnshelf.note",
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "A media item in a list for OpnShelf",
+			"description": "A user note about a media item",
 			"key": "tid",
 			"record": {
 				"type": "object",
-				"required": ["listRkey", "mediaType", "mediaId", "createdAt"],
+				"required": ["mediaType", "mediaId", "content", "createdAt"],
 				"properties": {
-					"listRkey": {
-						"type": "string",
-						"description": "Rkey of the parent list"
-					},
 					"mediaType": {
 						"type": "string",
 						"description": "Media type",
@@ -31,9 +27,10 @@
 						"type": "integer",
 						"description": "Episode number for episode items"
 					},
-					"notes": {
+					"content": {
 						"type": "string",
-						"description": "Optional user notes about the media in this list"
+						"maxLength": 5000,
+						"description": "Note content"
 					},
 					"createdAt": {
 						"type": "string",

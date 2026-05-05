@@ -46,6 +46,8 @@ function AuthCompletePage() {
 				setStatus("success");
 				// Redirect to onboarding for new users, otherwise home
 				const redirectTo = data?.needsOnboarding ? "/onboarding" : "/dashboard";
+				// Clear any stale query cache from previous sessions
+				queryClient.clear();
 				setTimeout(() => {
 					window.location.href = redirectTo;
 				}, 1500);

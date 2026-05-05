@@ -1,9 +1,12 @@
 import {
+	authControllerMeOptions,
 	getTraktImportStatusMessage,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
+	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 	type TraktImportStatusJob,
+	type UserDto,
 	usersControllerCompleteOnboarding,
 	usersControllerFetchMyTraktPublicHistory,
 	usersControllerGetMyCurrentTraktImportOptions,
@@ -22,7 +25,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/onboarding")({
@@ -57,22 +60,6 @@ function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const [step, setStep] = useState<OnboardingStep>("welcome");
-	const hasSetInitialStep = useRef(false);
-
-	// Check for an existing Trakt import job on mount
-	const { data: existingImport, isLoading: checkingImport } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: !authLoading && isAuthenticated && !!user?.needsOnboarding,
-	});
-
-	useEffect(() => {
-		if (hasSetInitialStep.current || authLoading || checkingImport) return;
-		hasSetInitialStep.current = true;
-
-		if (existingImport) {
-			setStep("trakt");
-		}
-	}, [authLoading, checkingImport, existingImport]);
 
 	// Redirect unauthenticated users to login
 	useEffect(() => {
@@ -88,7 +75,7 @@ function OnboardingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	if (authLoading || checkingImport) {
+	if (authLoading) {
 		return (
 			<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center">
 				<Loader2 className="size-8 animate-spin text-(--accent)" />
@@ -207,19 +194,23 @@ function TraktStep({
 					failedCount: data.job.failedCount,
 					lastError: data.job.lastError,
 				});
+				// Force an immediate refetch of the import status
+				queryClient.invalidateQueries({
+					queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
+				});
 			}
 		},
 	});
 
-	// Poll current import status when there's an active job
+	// Fetch existing import and poll when active
 	const { data: currentImport } = useQuery({
 		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: !!jobData && isActiveTraktImportStatus(jobData.status),
-		refetchInterval: 3000,
+		refetchInterval:
+			!!jobData && isActiveTraktImportStatus(jobData.status) ? 3000 : false,
 	});
 
 	useEffect(() => {
-		if (currentImport) {
+		if (currentImport?.id && isKnownTraktImportStatus(currentImport.status)) {
 			setJobData({
 				status: currentImport.status,
 				currentPage: currentImport.currentPage,
@@ -589,9 +580,19 @@ function DoneStep() {
 			});
 			return data;
 		},
-		onSuccess: () => {
-			// Invalidate user data so needsOnboarding updates
-			queryClient.invalidateQueries({ queryKey: ["authControllerMe"] });
+		onSuccess: (data) => {
+			const meKey = authControllerMeOptions().queryKey;
+			// Optimistically update auth cache so needsOnboarding becomes false
+			queryClient.setQueryData(meKey, (old: UserDto | undefined) => {
+				if (!old) return old;
+				return {
+					...old,
+					onboardingCompletedAt: data.onboardingCompletedAt,
+					needsOnboarding: false,
+				};
+			});
+			// Trigger a background refetch to keep cache in sync
+			queryClient.invalidateQueries({ queryKey: meKey });
 			// Give a moment then redirect
 			setTimeout(() => {
 				navigate({ to: "/dashboard" });

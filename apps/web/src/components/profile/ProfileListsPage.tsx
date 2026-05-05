@@ -549,7 +549,7 @@ export function ProfileListsPage({
 													}
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
-													type={item.mediaType as "movie" | "show"}
+													type={item.mediaType === "movie" ? "movie" : "show"}
 													rating={getRating(item.media)}
 													duration={formatDuration(
 														item.media.runtime as number | undefined,
@@ -562,6 +562,10 @@ export function ProfileListsPage({
 																			slug: selectedListSlug || "",
 																			mediaType: item.mediaType,
 																			mediaId: item.mediaId,
+																		},
+																		query: {
+																			seasonNumber: item.seasonNumber,
+																			episodeNumber: item.episodeNumber,
 																		},
 																	})
 															: undefined
@@ -645,6 +649,10 @@ export function ProfileListsPage({
 																		slug: selectedListSlug || "",
 																		mediaType: item.mediaType,
 																		mediaId: item.mediaId,
+																	},
+																	query: {
+																		seasonNumber: item.seasonNumber,
+																		episodeNumber: item.episodeNumber,
 																	},
 																})
 															}

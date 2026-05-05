@@ -4,18 +4,13 @@
 
 import { l } from '@atproto/lex'
 
-const $nsid = 'xyz.opnshelf.listItem'
+const $nsid = 'xyz.opnshelf.note'
 
 export { $nsid }
 
-/** A media item in a list for OpnShelf */
+/** A user note about a media item */
 type Main = {
-  $type: 'xyz.opnshelf.listItem'
-
-  /**
-   * Rkey of the parent list
-   */
-  listRkey: string
+  $type: 'xyz.opnshelf.note'
 
   /**
    * Media type
@@ -38,9 +33,9 @@ type Main = {
   episodeNumber?: number
 
   /**
-   * Optional user notes about the media in this list
+   * Note content
    */
-  notes?: string
+  content: string
 
   /**
    * Record creation timestamp
@@ -50,17 +45,16 @@ type Main = {
 
 export type { Main }
 
-/** A media item in a list for OpnShelf */
+/** A user note about a media item */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
-    listRkey: l.string(),
     mediaType: l.enum(['movie', 'show', 'season', 'episode']),
     mediaId: l.string(),
     seasonNumber: l.optional(l.integer()),
     episodeNumber: l.optional(l.integer()),
-    notes: l.optional(l.string()),
+    content: l.string({ maxLength: 5000 }),
     createdAt: l.string({ format: 'datetime' }),
   }),
 )

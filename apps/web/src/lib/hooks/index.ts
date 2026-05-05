@@ -4,5 +4,6 @@ export * from "./useListItemStatus";
 export * from "./useLists";
 export * from "./useMedia";
 export * from "./useMediaWatchStatus";
+export * from "./useNotes";
 export * from "./usePerson";
 export * from "./useWatchActions";

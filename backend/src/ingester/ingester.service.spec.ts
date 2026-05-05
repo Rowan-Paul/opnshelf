@@ -39,6 +39,7 @@ import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
+import { NotesService } from "../notes/notes.service";
 import { ProfileService } from "../users/profile.service";
 import { IngesterService } from "./ingester.service";
 
@@ -80,6 +81,10 @@ describe("IngesterService", () => {
 	let mockSocialService: {
 		indexFollowRecord: jest.Mock;
 		deleteFollowRecordIndex: jest.Mock;
+	};
+	let mockNotesService: {
+		indexNoteRecord: jest.Mock;
+		deleteNoteRecord: jest.Mock;
 	};
 	let mockProfileService: {
 		indexProfileRecord: jest.Mock;
@@ -136,6 +141,11 @@ describe("IngesterService", () => {
 			deleteFollowRecordIndex: jest.fn(),
 		};
 
+		mockNotesService = {
+			indexNoteRecord: jest.fn(),
+			deleteNoteRecord: jest.fn(),
+		};
+
 		mockProfileService = {
 			indexProfileRecord: jest.fn(),
 			deleteProfileRecordIndex: jest.fn(),
@@ -149,6 +159,7 @@ describe("IngesterService", () => {
 				{ provide: MoviesService, useValue: mockMoviesService },
 				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },
+				{ provide: NotesService, useValue: mockNotesService },
 				{ provide: SocialService, useValue: mockSocialService },
 				{ provide: ProfileService, useValue: mockProfileService },
 			],

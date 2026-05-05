@@ -497,6 +497,31 @@ export type PublicUserProfileDto = {
     followingCount: number;
 };
 
+export type SocialUserCardDto = {
+    did: string;
+    handle: string;
+    displayName?: {
+        [key: string]: unknown;
+    } | null;
+    avatar?: {
+        [key: string]: unknown;
+    } | null;
+    followersCount: number;
+    followingCount: number;
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+};
+
+export type PaginatedSocialUsersDto = {
+    items: Array<SocialUserCardDto>;
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
 export type UserSettingsDto = {
     /**
      * Time format preference
@@ -757,7 +782,10 @@ export type CreateListDto = {
 export type MediaInListDto = {
     id: string;
     rkey: string;
-    mediaType: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
     mediaId: string;
     /**
      * Season number for season/episode show items
@@ -846,11 +874,19 @@ export type AddToListDto = {
     /**
      * Media type
      */
-    mediaType: 'movie' | 'show';
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
     /**
-     * TMDB media ID
+     * TMDB movie ID or show ID
      */
     mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
     /**
      * Optional notes about the media
      */
@@ -863,31 +899,6 @@ export type ListsForItemDto = {
     listSlug: string;
     isDefault: boolean;
     isInList: boolean;
-};
-
-export type SocialUserCardDto = {
-    did: string;
-    handle: string;
-    displayName?: {
-        [key: string]: unknown;
-    } | null;
-    avatar?: {
-        [key: string]: unknown;
-    } | null;
-    followersCount: number;
-    followingCount: number;
-    isFollowing: boolean;
-    isFollowedBy: boolean;
-};
-
-export type PaginatedSocialUsersDto = {
-    items: Array<SocialUserCardDto>;
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
 };
 
 export type UserRelationshipDto = {
@@ -960,6 +971,41 @@ export type FollowedWatchersDto = {
     items: Array<FollowedWatcherDto>;
     pageSize: number;
     total: number;
+};
+
+export type NoteResponseDto = {
+    id: string;
+    rkey: string;
+    content: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UpsertNoteDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Note content
+     */
+    content: string;
 };
 
 export type ShelfResponseDto = {
@@ -1907,6 +1953,68 @@ export type UsersControllerGetPublicProfileResponses = {
 
 export type UsersControllerGetPublicProfileResponse = UsersControllerGetPublicProfileResponses[keyof UsersControllerGetPublicProfileResponses];
 
+export type UsersControllerGetPublicFollowersData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/users/{handle}/followers';
+};
+
+export type UsersControllerGetPublicFollowersErrors = {
+    /**
+     * User not found
+     */
+    404: unknown;
+};
+
+export type UsersControllerGetPublicFollowersResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type UsersControllerGetPublicFollowersResponse = UsersControllerGetPublicFollowersResponses[keyof UsersControllerGetPublicFollowersResponses];
+
+export type UsersControllerGetPublicFollowingData = {
+    body?: never;
+    path: {
+        handle: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/users/{handle}/following';
+};
+
+export type UsersControllerGetPublicFollowingErrors = {
+    /**
+     * User not found
+     */
+    404: unknown;
+};
+
+export type UsersControllerGetPublicFollowingResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type UsersControllerGetPublicFollowingResponse = UsersControllerGetPublicFollowingResponses[keyof UsersControllerGetPublicFollowingResponses];
+
 export type UsersControllerGetAvatarData = {
     body?: never;
     path?: never;
@@ -2444,15 +2552,24 @@ export type ListsControllerRemoveItemFromListData = {
          */
         slug: string;
         /**
-         * Media type (movie or show)
+         * Media type (movie, show, season, or episode)
          */
         mediaType: string;
         /**
-         * TMDB media ID
+         * TMDB movie ID or show ID
          */
         mediaId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
     url: '/lists/{slug}/items/{mediaType}/{mediaId}';
 };
 
@@ -2478,15 +2595,24 @@ export type ListsControllerGetListsForItemData = {
     body?: never;
     path: {
         /**
-         * Media type (movie or show)
+         * Media type (movie, show, season, or episode)
          */
         mediaType: string;
         /**
-         * TMDB media ID
+         * TMDB movie ID or show ID
          */
         mediaId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
     url: '/lists/for-item/{mediaType}/{mediaId}';
 };
 
@@ -2673,6 +2799,94 @@ export type SocialControllerGetWatchersResponses = {
 
 export type SocialControllerGetWatchersResponse = SocialControllerGetWatchersResponses[keyof SocialControllerGetWatchersResponses];
 
+export type NotesControllerGetNoteData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query: {
+        /**
+         * Media type (movie, show, season, episode)
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/notes/user/{userDid}';
+};
+
+export type NotesControllerGetNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerGetNoteResponses = {
+    /**
+     * Note retrieved
+     */
+    200: NoteResponseDto;
+};
+
+export type NotesControllerGetNoteResponse = NotesControllerGetNoteResponses[keyof NotesControllerGetNoteResponses];
+
+export type NotesControllerUpsertNoteData = {
+    body: UpsertNoteDto;
+    path?: never;
+    query?: never;
+    url: '/notes';
+};
+
+export type NotesControllerUpsertNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerUpsertNoteResponses = {
+    /**
+     * Note upserted
+     */
+    200: NoteResponseDto;
+};
+
+export type NotesControllerUpsertNoteResponse = NotesControllerUpsertNoteResponses[keyof NotesControllerUpsertNoteResponses];
+
+export type NotesControllerDeleteNoteData = {
+    body?: never;
+    path: {
+        noteId: string;
+    };
+    query?: never;
+    url: '/notes/{noteId}';
+};
+
+export type NotesControllerDeleteNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerDeleteNoteResponses = {
+    /**
+     * Note deleted
+     */
+    200: unknown;
+};
+
 export type ShelfControllerGetUserShelfData = {
     body?: never;
     path: {
@@ -2687,6 +2901,14 @@ export type ShelfControllerGetUserShelfData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Filter by item type
+         */
+        type?: 'movie' | 'episode';
+        /**
+         * Search by title (case-insensitive partial match)
+         */
+        search?: string;
     };
     url: '/users/{userDid}/shelf';
 };

@@ -25,10 +25,6 @@ import type {
 	UpdateListDto,
 } from "./dto/list.dto";
 import { mapItemToDto } from "./list-mappers";
-import {
-	buildScopedShowMediaId,
-	parseScopedShowMediaId,
-} from "./list-media-id.util";
 
 export interface ATSession {
 	did: string;
@@ -155,21 +151,13 @@ export class ListsService {
 					});
 
 		const episodeItems = items.filter(
-			(item) => item.mediaType === "show" && item.showId,
+			(item) => item.mediaType === "episode" && item.showId,
 		);
-		const episodeKeys = episodeItems
-			.map((item) => {
-				const parsed = parseScopedShowMediaId(item.mediaId);
-				if (parsed?.seasonNumber != null && parsed?.episodeNumber != null) {
-					return {
-						showId: parsed.showId,
-						seasonNumber: parsed.seasonNumber,
-						episodeNumber: parsed.episodeNumber,
-					};
-				}
-				return null;
-			})
-			.filter((k): k is NonNullable<typeof k> => k != null);
+		const episodeKeys = episodeItems.map((item) => ({
+			showId: item.mediaId,
+			seasonNumber: item.seasonNumber,
+			episodeNumber: item.episodeNumber,
+		}));
 
 		const episodes =
 			episodeKeys.length > 0
@@ -209,11 +197,10 @@ export class ListsService {
 			createdAt: list.createdAt.toISOString(),
 			updatedAt: list.updatedAt.toISOString(),
 			items: items.map((item) => {
-				const parsed = parseScopedShowMediaId(item.mediaId);
 				const episodeName =
-					parsed?.seasonNumber != null && parsed?.episodeNumber != null
+					item.mediaType === "episode"
 						? episodeMap.get(
-								`${parsed.showId}:${parsed.seasonNumber}:${parsed.episodeNumber}`,
+								`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
 							)
 						: undefined;
 				return mapItemToDto(item, episodeName);
@@ -229,18 +216,22 @@ export class ListsService {
 
 	async getListsForItem(
 		userDid: string,
-		mediaType: "movie" | "show",
+		mediaType: "movie" | "show" | "season" | "episode",
 		mediaId: string,
+		seasonNumber?: number,
+		episodeNumber?: number,
 	): Promise<ListsForItemDto[]> {
-		const scopedMediaId =
-			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
-
 		const lists = await this.prisma.list.findMany({
 			where: { userDid },
 			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 			include: {
 				items: {
-					where: { mediaType, mediaId: scopedMediaId },
+					where: {
+						mediaType,
+						mediaId,
+						seasonNumber: seasonNumber ?? 0,
+						episodeNumber: episodeNumber ?? 0,
+					},
 					select: { id: true },
 				},
 			},
@@ -587,21 +578,16 @@ export class ListsService {
 			throw new NotFoundException("List not found");
 		}
 
-		const scopedMediaId =
-			dto.mediaType === "show"
-				? buildScopedShowMediaId(dto.mediaId)
-				: dto.mediaId;
-		const showScope =
-			dto.mediaType === "show"
-				? parseScopedShowMediaId(scopedMediaId)
-				: undefined;
+		const showId = dto.mediaType === "movie" ? null : dto.mediaId;
 
 		const existing = await this.prisma.listItem.findUnique({
 			where: {
-				listId_mediaType_mediaId: {
+				listId_mediaType_mediaId_seasonNumber_episodeNumber: {
 					listId: list.id,
 					mediaType: dto.mediaType,
-					mediaId: scopedMediaId,
+					mediaId: dto.mediaId,
+					seasonNumber: dto.seasonNumber ?? 0,
+					episodeNumber: dto.episodeNumber ?? 0,
 				},
 			},
 			include: { movie: true, show: true },
@@ -615,9 +601,7 @@ export class ListsService {
 			const movieData = await this.moviesService.getMovieDetails(dto.mediaId);
 			await this.moviesService.upsertMovie(movieData);
 		} else {
-			const showData = await this.showsService.getShowDetails(
-				showScope?.showId ?? dto.mediaId,
-			);
+			const showData = await this.showsService.getShowDetails(dto.mediaId);
 			await this.showsService.upsertShow(showData);
 		}
 
@@ -627,7 +611,9 @@ export class ListsService {
 		const record: ListItemRecord = listItemSchema.build({
 			listRkey: list.rkey,
 			mediaType: dto.mediaType,
-			mediaId: scopedMediaId,
+			mediaId: dto.mediaId,
+			seasonNumber: dto.seasonNumber,
+			episodeNumber: dto.episodeNumber,
 			notes: dto.notes,
 			createdAt: now,
 		});
@@ -643,7 +629,7 @@ export class ListsService {
 			validate: false,
 		});
 
-		this.logger.log(`Added ${dto.mediaType} ${scopedMediaId} to list ${slug}`);
+		this.logger.log(`Added ${dto.mediaType} ${dto.mediaId} to list ${slug}`);
 
 		const itemCount = await this.prisma.listItem.count({
 			where: { listId: list.id },
@@ -656,10 +642,11 @@ export class ListsService {
 				cid: response.data.cid,
 				listId: list.id,
 				mediaType: dto.mediaType,
-				mediaId: scopedMediaId,
+				mediaId: dto.mediaId,
+				seasonNumber: dto.seasonNumber ?? 0,
+				episodeNumber: dto.episodeNumber ?? 0,
 				movieId: dto.mediaType === "movie" ? dto.mediaId : null,
-				showId:
-					dto.mediaType === "show" ? (showScope?.showId ?? dto.mediaId) : null,
+				showId: dto.mediaType === "movie" ? null : showId,
 				notes: dto.notes,
 				position: itemCount,
 			},
@@ -673,12 +660,11 @@ export class ListsService {
 		userDid: string,
 		session: ATSession,
 		slug: string,
-		mediaType: "movie" | "show",
+		mediaType: "movie" | "show" | "season" | "episode",
 		mediaId: string,
+		seasonNumber?: number,
+		episodeNumber?: number,
 	): Promise<void> {
-		const scopedMediaId =
-			mediaType === "show" ? buildScopedShowMediaId(mediaId) : mediaId;
-
 		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
 		});
@@ -689,10 +675,12 @@ export class ListsService {
 
 		const item = await this.prisma.listItem.findUnique({
 			where: {
-				listId_mediaType_mediaId: {
+				listId_mediaType_mediaId_seasonNumber_episodeNumber: {
 					listId: list.id,
 					mediaType,
-					mediaId: scopedMediaId,
+					mediaId,
+					seasonNumber: seasonNumber ?? 0,
+					episodeNumber: episodeNumber ?? 0,
 				},
 			},
 		});
@@ -714,7 +702,7 @@ export class ListsService {
 			where: { id: item.id },
 		});
 
-		this.logger.log(`Removed ${mediaType} ${scopedMediaId} from list ${slug}`);
+		this.logger.log(`Removed ${mediaType} ${mediaId} from list ${slug}`);
 	}
 
 	async indexListRecord(
@@ -770,35 +758,54 @@ export class ListsService {
 			return;
 		}
 
-		if (record.mediaType === "movie") {
-			const existingMovie = await this.moviesService.getMovieByTMDBId(
-				record.mediaId,
+		// Backward compatibility: normalize old-format scoped show IDs
+		let mediaType = record.mediaType;
+		let mediaId = record.mediaId;
+		let seasonNumber = record.seasonNumber ?? 0;
+		let episodeNumber = record.episodeNumber ?? 0;
+
+		if (mediaType === "show" && mediaId.includes(":")) {
+			const episodeMatch = mediaId.match(
+				/^([^:]+):season:(\d+):episode:(\d+)$/,
 			);
+			if (episodeMatch) {
+				mediaId = episodeMatch[1];
+				seasonNumber = Number(episodeMatch[2]);
+				episodeNumber = Number(episodeMatch[3]);
+				mediaType = "episode";
+			} else {
+				const seasonMatch = mediaId.match(/^([^:]+):season:(\d+)$/);
+				if (seasonMatch) {
+					mediaId = seasonMatch[1];
+					seasonNumber = Number(seasonMatch[2]);
+					mediaType = "season";
+				}
+			}
+		}
+
+		if (mediaType === "movie") {
+			const existingMovie = await this.moviesService.getMovieByTMDBId(mediaId);
 			if (!existingMovie) {
 				try {
-					const movieData = await this.moviesService.getMovieDetails(
-						record.mediaId,
-					);
+					const movieData = await this.moviesService.getMovieDetails(mediaId);
 					await this.moviesService.upsertMovie(movieData);
 				} catch (err) {
 					this.logger.error(
-						`Failed to fetch movie ${record.mediaId} from TMDB, skipping item`,
+						`Failed to fetch movie ${mediaId} from TMDB, skipping item`,
 						err,
 					);
 					return;
 				}
 			}
 		} else {
-			const scopedShow = parseScopedShowMediaId(record.mediaId);
-			const baseShowId = scopedShow?.showId ?? record.mediaId;
-			const existingShow = await this.showsService.getShowByTMDBId(baseShowId);
+			const existingShow = await this.showsService.getShowByTMDBId(mediaId);
 			if (!existingShow) {
 				try {
-					const showData = await this.showsService.getShowDetails(baseShowId);
+					const showData = await this.showsService.getShowDetails(mediaId);
 					await this.showsService.upsertShow(showData);
 				} catch (err) {
 					this.logger.error(
-						`Failed to fetch show ${baseShowId} from TMDB, skipping item`,
+						`Failed to fetch show ${mediaId} from TMDB, skipping item`,
 						err,
 					);
 					return;
@@ -813,24 +820,22 @@ export class ListsService {
 				uri,
 				cid,
 				listId: list.id,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				movieId: record.mediaType === "movie" ? record.mediaId : null,
-				showId:
-					record.mediaType === "show"
-						? (parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
-						: null,
+				mediaType,
+				mediaId,
+				seasonNumber,
+				episodeNumber,
+				movieId: mediaType === "movie" ? mediaId : null,
+				showId: mediaType === "movie" ? null : mediaId,
 				notes: record.notes,
 			},
 			update: {
 				cid,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				movieId: record.mediaType === "movie" ? record.mediaId : null,
-				showId:
-					record.mediaType === "show"
-						? (parseScopedShowMediaId(record.mediaId)?.showId ?? record.mediaId)
-						: null,
+				mediaType,
+				mediaId,
+				seasonNumber,
+				episodeNumber,
+				movieId: mediaType === "movie" ? mediaId : null,
+				showId: mediaType === "movie" ? null : mediaId,
 				notes: record.notes,
 			},
 		});

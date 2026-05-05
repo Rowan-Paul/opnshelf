@@ -6,7 +6,6 @@ import {
 	main as episodeSchema,
 } from "../lexicons/xyz/opnshelf/episode";
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
-import { parseScopedShowMediaId } from "../lists/list-media-id.util";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "../generated/client";
@@ -799,11 +798,6 @@ export class ShowsService {
 			}
 
 			if (watchlistItem.mediaType === "show" && watchlistItem.show) {
-				// Skip scoped shows (season/episode specific)
-				if (parseScopedShowMediaId(watchlistItem.mediaId)) {
-					return [];
-				}
-
 				return [
 					{
 						source: "watchlist" as const,

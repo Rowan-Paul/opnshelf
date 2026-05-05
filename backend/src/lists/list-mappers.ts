@@ -1,11 +1,12 @@
 import type { MediaInListDto, ListDto } from "./dto/list.dto";
-import { parseScopedShowMediaId } from "./list-media-id.util";
 
 type ListItemRecord = {
 	id: string;
 	rkey: string;
-	mediaType: "movie" | "show";
+	mediaType: "movie" | "show" | "season" | "episode";
 	mediaId: string;
+	seasonNumber: number;
+	episodeNumber: number;
 	notes: string | null;
 	position: number;
 	createdAt: Date;
@@ -49,53 +50,41 @@ export function mapItemToDto(
 	item: ListItemRecord,
 	episodeName?: string,
 ): MediaInListDto {
-	const parsedShowScope =
-		item.mediaType === "show"
-			? parseScopedShowMediaId(item.mediaId)
-			: undefined;
-	const baseMediaId =
-		item.mediaType === "show"
-			? (parsedShowScope?.showId ?? item.mediaId)
-			: item.mediaId;
-	const mediaTitle =
-		item.mediaType === "movie" ? item.movie?.title : item.show?.title;
-	const mediaPosterPath =
-		item.mediaType === "movie" ? item.movie?.posterPath : item.show?.posterPath;
-	const mediaBackdropPath =
-		item.mediaType === "movie"
-			? item.movie?.backdropPath
-			: item.show?.backdropPath;
-	const mediaReleaseYear =
-		item.mediaType === "movie"
-			? item.movie?.releaseYear
-			: item.show?.firstAirYear;
-	const mediaReleaseDate =
-		item.mediaType === "movie"
-			? item.movie?.releaseDate
-			: item.show?.firstAirDate;
-	const mediaOverview =
-		item.mediaType === "movie" ? item.movie?.overview : item.show?.overview;
-	const mediaColors =
-		item.mediaType === "movie" ? item.movie?.colors : item.show?.colors;
+	const isShowLike = item.mediaType !== "movie";
+	const mediaTitle = isShowLike ? item.show?.title : item.movie?.title;
+	const mediaPosterPath = isShowLike
+		? item.show?.posterPath
+		: item.movie?.posterPath;
+	const mediaBackdropPath = isShowLike
+		? item.show?.backdropPath
+		: item.movie?.backdropPath;
+	const mediaReleaseYear = isShowLike
+		? item.show?.firstAirYear
+		: item.movie?.releaseYear;
+	const mediaReleaseDate = isShowLike
+		? item.show?.firstAirDate
+		: item.movie?.releaseDate;
+	const mediaOverview = isShowLike ? item.show?.overview : item.movie?.overview;
+	const mediaColors = isShowLike ? item.show?.colors : item.movie?.colors;
 
 	return {
 		id: item.id,
 		rkey: item.rkey,
 		mediaType: item.mediaType,
 		mediaId: item.mediaId,
-		seasonNumber: parsedShowScope?.seasonNumber,
-		episodeNumber: parsedShowScope?.episodeNumber,
+		seasonNumber: item.seasonNumber || undefined,
+		episodeNumber: item.episodeNumber || undefined,
 		episodeName,
 		notes: item.notes ?? undefined,
 		position: item.position,
 		createdAt: item.createdAt.toISOString(),
 		media: {
 			mediaType: item.mediaType,
-			mediaId: baseMediaId,
+			mediaId: item.mediaId,
 			movieId: item.movie?.movieId,
-			showId: item.show?.showId ?? parsedShowScope?.showId,
-			seasonNumber: parsedShowScope?.seasonNumber,
-			episodeNumber: parsedShowScope?.episodeNumber,
+			showId: isShowLike ? item.show?.showId : undefined,
+			seasonNumber: item.seasonNumber || undefined,
+			episodeNumber: item.episodeNumber || undefined,
 			episodeName,
 			title: mediaTitle ?? "",
 			posterPath: mediaPosterPath ?? undefined,

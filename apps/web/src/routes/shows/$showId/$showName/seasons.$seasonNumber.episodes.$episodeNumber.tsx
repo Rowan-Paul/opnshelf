@@ -37,6 +37,7 @@ import InYourLists from "../../../../components/InYourLists";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
 import { YourActivity } from "../../../../components/YourActivity";
 
@@ -424,6 +425,14 @@ function EpisodeDetailPage() {
 						/>
 
 						<InYourLists
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+							episodeNumber={episodeNum}
+						/>
+
+						{/* Notes */}
+						<NotesSection
 							mediaType="show"
 							mediaId={showId}
 							seasonNumber={seasonNum}

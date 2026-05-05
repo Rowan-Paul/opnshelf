@@ -25,6 +25,7 @@ import InYourLists from "../../../components/InYourLists";
 import LoadingState from "../../../components/LoadingState";
 import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
+import NotesSection from "../../../components/NotesSection";
 import PersonGrid from "../../../components/PersonGrid";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 import { YourActivity } from "../../../components/YourActivity";
@@ -298,6 +299,9 @@ function MovieDetailPage() {
 						/>
 
 						<InYourLists mediaType="movie" mediaId={movieId} />
+
+						{/* Notes */}
+						<NotesSection mediaType="movie" mediaId={movieId} />
 					</div>
 				</div>
 

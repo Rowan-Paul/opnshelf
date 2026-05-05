@@ -562,8 +562,9 @@ describe("ShowsService", () => {
 						},
 					},
 					{
-						mediaType: "show",
-						mediaId: "show-3:season:1",
+						mediaType: "season",
+						mediaId: "show-3",
+						seasonNumber: 1,
 						movie: null,
 						show: {
 							showId: "show-3",

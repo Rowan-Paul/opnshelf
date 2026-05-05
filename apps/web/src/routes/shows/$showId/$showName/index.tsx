@@ -25,6 +25,7 @@ import InYourLists from "../../../../components/InYourLists";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
@@ -478,6 +479,9 @@ function ShowDetailPage() {
 						/>
 
 						<InYourLists mediaType="show" mediaId={showId} />
+
+						{/* Notes */}
+						<NotesSection mediaType="show" mediaId={showId} />
 					</div>
 				</div>
 

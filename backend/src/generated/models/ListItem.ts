@@ -27,10 +27,14 @@ export type AggregateListItem = {
 }
 
 export type ListItemAvgAggregateOutputType = {
+  seasonNumber: number | null
+  episodeNumber: number | null
   position: number | null
 }
 
 export type ListItemSumAggregateOutputType = {
+  seasonNumber: number | null
+  episodeNumber: number | null
   position: number | null
 }
 
@@ -42,6 +46,8 @@ export type ListItemMinAggregateOutputType = {
   listId: string | null
   mediaType: $Enums.MediaType | null
   mediaId: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
   movieId: string | null
   showId: string | null
   notes: string | null
@@ -57,6 +63,8 @@ export type ListItemMaxAggregateOutputType = {
   listId: string | null
   mediaType: $Enums.MediaType | null
   mediaId: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
   movieId: string | null
   showId: string | null
   notes: string | null
@@ -72,6 +80,8 @@ export type ListItemCountAggregateOutputType = {
   listId: number
   mediaType: number
   mediaId: number
+  seasonNumber: number
+  episodeNumber: number
   movieId: number
   showId: number
   notes: number
@@ -82,10 +92,14 @@ export type ListItemCountAggregateOutputType = {
 
 
 export type ListItemAvgAggregateInputType = {
+  seasonNumber?: true
+  episodeNumber?: true
   position?: true
 }
 
 export type ListItemSumAggregateInputType = {
+  seasonNumber?: true
+  episodeNumber?: true
   position?: true
 }
 
@@ -97,6 +111,8 @@ export type ListItemMinAggregateInputType = {
   listId?: true
   mediaType?: true
   mediaId?: true
+  seasonNumber?: true
+  episodeNumber?: true
   movieId?: true
   showId?: true
   notes?: true
@@ -112,6 +128,8 @@ export type ListItemMaxAggregateInputType = {
   listId?: true
   mediaType?: true
   mediaId?: true
+  seasonNumber?: true
+  episodeNumber?: true
   movieId?: true
   showId?: true
   notes?: true
@@ -127,6 +145,8 @@ export type ListItemCountAggregateInputType = {
   listId?: true
   mediaType?: true
   mediaId?: true
+  seasonNumber?: true
+  episodeNumber?: true
   movieId?: true
   showId?: true
   notes?: true
@@ -229,6 +249,8 @@ export type ListItemGroupByOutputType = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber: number
+  episodeNumber: number
   movieId: string | null
   showId: string | null
   notes: string | null
@@ -267,6 +289,8 @@ export type ListItemWhereInput = {
   listId?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
+  seasonNumber?: Prisma.IntFilter<"ListItem"> | number
+  episodeNumber?: Prisma.IntFilter<"ListItem"> | number
   movieId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   showId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   notes?: Prisma.StringNullableFilter<"ListItem"> | string | null
@@ -285,6 +309,8 @@ export type ListItemOrderByWithRelationInput = {
   listId?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   movieId?: Prisma.SortOrderInput | Prisma.SortOrder
   showId?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -298,7 +324,7 @@ export type ListItemOrderByWithRelationInput = {
 export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   rkey?: string
-  listId_mediaType_mediaId?: Prisma.ListItemListIdMediaTypeMediaIdCompoundUniqueInput
+  listId_mediaType_mediaId_seasonNumber_episodeNumber?: Prisma.ListItemListIdMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput
   AND?: Prisma.ListItemWhereInput | Prisma.ListItemWhereInput[]
   OR?: Prisma.ListItemWhereInput[]
   NOT?: Prisma.ListItemWhereInput | Prisma.ListItemWhereInput[]
@@ -307,6 +333,8 @@ export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   listId?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
+  seasonNumber?: Prisma.IntFilter<"ListItem"> | number
+  episodeNumber?: Prisma.IntFilter<"ListItem"> | number
   movieId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   showId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   notes?: Prisma.StringNullableFilter<"ListItem"> | string | null
@@ -315,7 +343,7 @@ export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   list?: Prisma.XOR<Prisma.ListScalarRelationFilter, Prisma.ListWhereInput>
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
   show?: Prisma.XOR<Prisma.ShowNullableScalarRelationFilter, Prisma.ShowWhereInput> | null
-}, "id" | "rkey" | "listId_mediaType_mediaId">
+}, "id" | "rkey" | "listId_mediaType_mediaId_seasonNumber_episodeNumber">
 
 export type ListItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -325,6 +353,8 @@ export type ListItemOrderByWithAggregationInput = {
   listId?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   movieId?: Prisma.SortOrderInput | Prisma.SortOrder
   showId?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -348,6 +378,8 @@ export type ListItemScalarWhereWithAggregatesInput = {
   listId?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeWithAggregatesFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
+  seasonNumber?: Prisma.IntWithAggregatesFilter<"ListItem"> | number
+  episodeNumber?: Prisma.IntWithAggregatesFilter<"ListItem"> | number
   movieId?: Prisma.StringNullableWithAggregatesFilter<"ListItem"> | string | null
   showId?: Prisma.StringNullableWithAggregatesFilter<"ListItem"> | string | null
   notes?: Prisma.StringNullableWithAggregatesFilter<"ListItem"> | string | null
@@ -362,6 +394,8 @@ export type ListItemCreateInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   notes?: string | null
   position?: number
   createdAt?: Date | string
@@ -378,6 +412,8 @@ export type ListItemUncheckedCreateInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   showId?: string | null
   notes?: string | null
@@ -392,6 +428,8 @@ export type ListItemUpdateInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -408,6 +446,8 @@ export type ListItemUncheckedUpdateInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -423,6 +463,8 @@ export type ListItemCreateManyInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   showId?: string | null
   notes?: string | null
@@ -437,6 +479,8 @@ export type ListItemUpdateManyMutationInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -450,6 +494,8 @@ export type ListItemUncheckedUpdateManyInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -467,10 +513,12 @@ export type ListItemOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ListItemListIdMediaTypeMediaIdCompoundUniqueInput = {
+export type ListItemListIdMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber: number
+  episodeNumber: number
 }
 
 export type ListItemCountOrderByAggregateInput = {
@@ -481,6 +529,8 @@ export type ListItemCountOrderByAggregateInput = {
   listId?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   movieId?: Prisma.SortOrder
   showId?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -489,6 +539,8 @@ export type ListItemCountOrderByAggregateInput = {
 }
 
 export type ListItemAvgOrderByAggregateInput = {
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -500,6 +552,8 @@ export type ListItemMaxOrderByAggregateInput = {
   listId?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   movieId?: Prisma.SortOrder
   showId?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -515,6 +569,8 @@ export type ListItemMinOrderByAggregateInput = {
   listId?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   movieId?: Prisma.SortOrder
   showId?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -523,6 +579,8 @@ export type ListItemMinOrderByAggregateInput = {
 }
 
 export type ListItemSumOrderByAggregateInput = {
+  seasonNumber?: Prisma.SortOrder
+  episodeNumber?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -663,6 +721,8 @@ export type ListItemCreateWithoutMovieInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   notes?: string | null
   position?: number
   createdAt?: Date | string
@@ -678,6 +738,8 @@ export type ListItemUncheckedCreateWithoutMovieInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   showId?: string | null
   notes?: string | null
   position?: number
@@ -721,6 +783,8 @@ export type ListItemScalarWhereInput = {
   listId?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
+  seasonNumber?: Prisma.IntFilter<"ListItem"> | number
+  episodeNumber?: Prisma.IntFilter<"ListItem"> | number
   movieId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   showId?: Prisma.StringNullableFilter<"ListItem"> | string | null
   notes?: Prisma.StringNullableFilter<"ListItem"> | string | null
@@ -735,6 +799,8 @@ export type ListItemCreateWithoutShowInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   notes?: string | null
   position?: number
   createdAt?: Date | string
@@ -750,6 +816,8 @@ export type ListItemUncheckedCreateWithoutShowInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   notes?: string | null
   position?: number
@@ -789,6 +857,8 @@ export type ListItemCreateWithoutListInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   notes?: string | null
   position?: number
   createdAt?: Date | string
@@ -803,6 +873,8 @@ export type ListItemUncheckedCreateWithoutListInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   showId?: string | null
   notes?: string | null
@@ -844,6 +916,8 @@ export type ListItemCreateManyMovieInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   showId?: string | null
   notes?: string | null
   position?: number
@@ -857,6 +931,8 @@ export type ListItemUpdateWithoutMovieInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -872,6 +948,8 @@ export type ListItemUncheckedUpdateWithoutMovieInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
@@ -886,6 +964,8 @@ export type ListItemUncheckedUpdateManyWithoutMovieInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
@@ -900,6 +980,8 @@ export type ListItemCreateManyShowInput = {
   listId: string
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   notes?: string | null
   position?: number
@@ -913,6 +995,8 @@ export type ListItemUpdateWithoutShowInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -928,6 +1012,8 @@ export type ListItemUncheckedUpdateWithoutShowInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
@@ -942,6 +1028,8 @@ export type ListItemUncheckedUpdateManyWithoutShowInput = {
   listId?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
@@ -955,6 +1043,8 @@ export type ListItemCreateManyListInput = {
   cid?: string | null
   mediaType: $Enums.MediaType
   mediaId: string
+  seasonNumber?: number
+  episodeNumber?: number
   movieId?: string | null
   showId?: string | null
   notes?: string | null
@@ -969,6 +1059,8 @@ export type ListItemUpdateWithoutListInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -983,6 +1075,8 @@ export type ListItemUncheckedUpdateWithoutListInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -997,6 +1091,8 @@ export type ListItemUncheckedUpdateManyWithoutListInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
+  seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   movieId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1014,6 +1110,8 @@ export type ListItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   listId?: boolean
   mediaType?: boolean
   mediaId?: boolean
+  seasonNumber?: boolean
+  episodeNumber?: boolean
   movieId?: boolean
   showId?: boolean
   notes?: boolean
@@ -1032,6 +1130,8 @@ export type ListItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   listId?: boolean
   mediaType?: boolean
   mediaId?: boolean
+  seasonNumber?: boolean
+  episodeNumber?: boolean
   movieId?: boolean
   showId?: boolean
   notes?: boolean
@@ -1050,6 +1150,8 @@ export type ListItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   listId?: boolean
   mediaType?: boolean
   mediaId?: boolean
+  seasonNumber?: boolean
+  episodeNumber?: boolean
   movieId?: boolean
   showId?: boolean
   notes?: boolean
@@ -1068,6 +1170,8 @@ export type ListItemSelectScalar = {
   listId?: boolean
   mediaType?: boolean
   mediaId?: boolean
+  seasonNumber?: boolean
+  episodeNumber?: boolean
   movieId?: boolean
   showId?: boolean
   notes?: boolean
@@ -1075,7 +1179,7 @@ export type ListItemSelectScalar = {
   createdAt?: boolean
 }
 
-export type ListItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "listId" | "mediaType" | "mediaId" | "movieId" | "showId" | "notes" | "position" | "createdAt", ExtArgs["result"]["listItem"]>
+export type ListItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "listId" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "movieId" | "showId" | "notes" | "position" | "createdAt", ExtArgs["result"]["listItem"]>
 export type ListItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
@@ -1107,6 +1211,8 @@ export type $ListItemPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     listId: string
     mediaType: $Enums.MediaType
     mediaId: string
+    seasonNumber: number
+    episodeNumber: number
     movieId: string | null
     showId: string | null
     notes: string | null
@@ -1545,6 +1651,8 @@ export interface ListItemFieldRefs {
   readonly listId: Prisma.FieldRef<"ListItem", 'String'>
   readonly mediaType: Prisma.FieldRef<"ListItem", 'MediaType'>
   readonly mediaId: Prisma.FieldRef<"ListItem", 'String'>
+  readonly seasonNumber: Prisma.FieldRef<"ListItem", 'Int'>
+  readonly episodeNumber: Prisma.FieldRef<"ListItem", 'Int'>
   readonly movieId: Prisma.FieldRef<"ListItem", 'String'>
   readonly showId: Prisma.FieldRef<"ListItem", 'String'>
   readonly notes: Prisma.FieldRef<"ListItem", 'String'>

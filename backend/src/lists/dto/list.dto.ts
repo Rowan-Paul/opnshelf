@@ -54,13 +54,30 @@ export class UpdateListDto {
 }
 
 export class AddToListDto {
-	@ApiProperty({ description: "Media type", enum: ["movie", "show"] })
+	@ApiProperty({
+		description: "Media type",
+		enum: ["movie", "show", "season", "episode"],
+	})
 	@IsString()
-	mediaType: "movie" | "show";
+	mediaType: "movie" | "show" | "season" | "episode";
 
-	@ApiProperty({ description: "TMDB media ID" })
+	@ApiProperty({ description: "TMDB movie ID or show ID" })
 	@IsString()
 	mediaId: string;
+
+	@ApiPropertyOptional({
+		description: "Season number for season/episode items",
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional({ description: "Episode number for episode items" })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	episodeNumber?: number;
 
 	@ApiPropertyOptional({ description: "Optional notes about the media" })
 	@IsOptional()
@@ -93,13 +110,30 @@ export class GetListQueryDto {
 }
 
 export class RemoveFromListDto {
-	@ApiProperty({ description: "Media type", enum: ["movie", "show"] })
+	@ApiProperty({
+		description: "Media type",
+		enum: ["movie", "show", "season", "episode"],
+	})
 	@IsString()
-	mediaType: "movie" | "show";
+	mediaType: "movie" | "show" | "season" | "episode";
 
-	@ApiProperty({ description: "TMDB media ID" })
+	@ApiProperty({ description: "TMDB movie ID or show ID" })
 	@IsString()
 	mediaId: string;
+
+	@ApiPropertyOptional({
+		description: "Season number for season/episode items",
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional({ description: "Episode number for episode items" })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	episodeNumber?: number;
 }
 
 export class MediaInListDto {
@@ -109,10 +143,10 @@ export class MediaInListDto {
 	@ApiProperty()
 	rkey: string;
 
-	@ApiProperty()
-	mediaType: "movie" | "show";
+	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
+	mediaType: "movie" | "show" | "season" | "episode";
 
-	@ApiProperty()
+	@ApiProperty({ description: "TMDB movie ID or show ID" })
 	mediaId: string;
 
 	@ApiPropertyOptional({
@@ -137,7 +171,7 @@ export class MediaInListDto {
 
 	@ApiProperty()
 	media: {
-		mediaType: "movie" | "show";
+		mediaType: "movie" | "show" | "season" | "episode";
 		mediaId: string;
 		movieId?: string;
 		showId?: string;

@@ -4,6 +4,7 @@ import { AuthModule } from "./auth/auth.module";
 import { IngesterModule } from "./ingester/ingester.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
+import { NotesModule } from "./notes/notes.module";
 import { PeopleModule } from "./people/people.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SearchModule } from "./search/search.module";
@@ -21,6 +22,7 @@ import { UsersModule } from "./users/users.module";
 		IngesterModule,
 		UsersModule,
 		ListsModule,
+		NotesModule,
 		ShowsModule,
 		ShelfModule,
 		SearchModule,

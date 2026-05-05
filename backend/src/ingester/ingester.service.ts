@@ -43,6 +43,12 @@ import {
 import type { Main as MovieRecord } from "../lexicons/xyz/opnshelf/movie.defs";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
+import {
+	$nsid as NOTE_COLLECTION,
+	main as noteSchema,
+} from "../lexicons/xyz/opnshelf/note";
+import type { Main as NoteRecord } from "../lexicons/xyz/opnshelf/note.defs";
+import { NotesService } from "../notes/notes.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
@@ -62,6 +68,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
 		private readonly listsService: ListsService,
+		private readonly notesService: NotesService,
 		private readonly socialService: SocialService,
 		private readonly profileService: ProfileService,
 	) {
@@ -215,6 +222,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleListEvent(evt, uri);
 		} else if (evt.collection === LIST_ITEM_COLLECTION) {
 			await this.handleListItemEvent(evt, uri);
+		} else if (evt.collection === NOTE_COLLECTION) {
+			await this.handleNoteEvent(evt, uri);
 		}
 	}
 
@@ -500,6 +509,42 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.listsService.deleteListItemRecord(evt.rkey);
+		}
+	}
+
+	private async handleNoteEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.debug(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let noteRecord: NoteRecord;
+			try {
+				noteRecord = noteSchema.parse(evt.record);
+			} catch {
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				return;
+			}
+
+			await this.notesService.indexNoteRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				noteRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			await this.notesService.deleteNoteRecord(evt.rkey);
 		}
 	}
 }

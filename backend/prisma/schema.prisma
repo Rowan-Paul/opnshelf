@@ -29,6 +29,7 @@ model User {
   trackedMovies TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
   lists        List[]
+  notes        Note[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
   
@@ -56,6 +57,8 @@ model Follow {
 enum MediaType {
   movie
   show
+  season
+  episode
 }
 
 
@@ -262,27 +265,54 @@ model List {
 }
 
 model ListItem {
-  id        String   @id @default(cuid())
-  rkey      String   @unique
-  uri       String
-  cid       String?
-  
-  listId    String
-  list      List      @relation(fields: [listId], references: [id], onDelete: Cascade)
-  
-  mediaType MediaType
-  mediaId   String
-  movieId   String?
-  movie     Movie?   @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
-  showId    String?
-  show      Show?    @relation(fields: [showId], references: [showId], onDelete: Cascade)
-  
-  notes     String?
-  position  Int      @default(0)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([listId, mediaType, mediaId])
+  id            String    @id @default(cuid())
+  rkey          String    @unique
+  uri           String
+  cid           String?
+
+  listId        String
+  list          List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  mediaType     MediaType
+  mediaId       String
+  seasonNumber  Int       @default(0)
+  episodeNumber Int       @default(0)
+
+  movieId       String?
+  movie         Movie?    @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  showId        String?
+  show          Show?     @relation(fields: [showId], references: [showId], onDelete: Cascade)
+
+  notes         String?
+  position      Int       @default(0)
+
+  createdAt     DateTime  @default(now())
+
+  @@unique([listId, mediaType, mediaId, seasonNumber, episodeNumber])
   @@index([listId])
+  @@index([mediaType, mediaId])
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  rkey          String   @unique
+  uri           String
+  cid           String
+
+  userDid       String
+  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
+  mediaType     MediaType
+  mediaId       String
+  seasonNumber  Int      @default(0)
+  episodeNumber Int      @default(0)
+
+  content       String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
+  @@index([userDid])
   @@index([mediaType, mediaId])
 }
