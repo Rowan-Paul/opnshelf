@@ -301,30 +301,11 @@ export function ProfileListsPage({
 	if (userLists && userLists.length === 0) {
 		return (
 			<div className="py-8">
-				<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-							<List className="size-5" />
-						</div>
-						<div>
-							<h1 className="text-display-2">Lists</h1>
-							<p className="text-(--foreground-muted)">
-								Organize and manage collections
-							</p>
-						</div>
-					</div>
-				</div>
+				<h1 className="text-display-2">Lists</h1>
 
-				<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
-					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
-						<List className="size-8 text-(--foreground-subtle)" />
-					</div>
-					<h3 className="mt-4 font-display font-semibold text-lg">
-						No lists yet
-					</h3>
-					<p className="mt-1 max-w-md text-center text-(--foreground-muted)">
-						This user hasn&apos;t created any lists yet.
-					</p>
+				<div className="card p-8 text-center">
+					<List className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
+					<p className="text-(--foreground-muted)">No lists yet.</p>
 				</div>
 			</div>
 		);
@@ -334,17 +315,7 @@ export function ProfileListsPage({
 		<div className="space-y-8">
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-3">
-					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-						<List className="size-5" />
-					</div>
-					<div>
-						<h1 className="text-display-2">Lists</h1>
-						<p className="text-(--foreground-muted)">
-							Organize and manage collections
-						</p>
-					</div>
-				</div>
+				<h1 className="text-display-2">Lists</h1>
 
 				{isOwner && isAuthenticated && (
 					<button

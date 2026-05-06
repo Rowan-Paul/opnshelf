@@ -348,7 +348,6 @@ function ProfileNotesPage() {
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
 	});
 	const userDid = profile?.did || "";
-	const displayName = profile?.displayName || profile?.handle || handle;
 	const isOwner = user?.did === userDid;
 
 	const { data, isLoading } = useQuery({
@@ -365,7 +364,7 @@ function ProfileNotesPage() {
 		<div className="space-y-6">
 			{/* Title */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-display-2">{displayName}&apos;s Notes</h1>
+				<h1 className="text-display-2">Notes</h1>
 			</div>
 
 			{/* Notes List */}
@@ -385,9 +384,7 @@ function ProfileNotesPage() {
 			) : notes.length === 0 ? (
 				<div className="card p-8 text-center">
 					<StickyNote className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">
-						{displayName} hasn&apos;t written any notes yet.
-					</p>
+					<p className="text-(--foreground-muted)">No notes yet.</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
