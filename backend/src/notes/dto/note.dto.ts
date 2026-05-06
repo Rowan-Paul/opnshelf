@@ -89,3 +89,64 @@ export class GetNoteQueryDto {
 	@IsInt()
 	episodeNumber?: number;
 }
+
+export class PaginatedNotesQueryDto {
+	@ApiPropertyOptional({
+		description: "Number of items to return",
+		default: 20,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	limit?: number;
+
+	@ApiPropertyOptional({
+		description: "Cursor for pagination (last item ID from previous page)",
+	})
+	@IsOptional()
+	@IsString()
+	cursor?: string;
+}
+
+export class UserNoteDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	content: string;
+
+	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
+	mediaType: string;
+
+	@ApiProperty()
+	mediaId: string;
+
+	@ApiPropertyOptional()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional()
+	episodeNumber?: number;
+
+	@ApiPropertyOptional({ description: "Title of the movie or show" })
+	title?: string;
+
+	@ApiPropertyOptional({ description: "Poster path for the movie or show" })
+	posterPath?: string;
+
+	@ApiProperty()
+	createdAt: string;
+
+	@ApiProperty()
+	updatedAt: string;
+}
+
+export class PaginatedNotesResponseDto {
+	@ApiProperty({ type: [UserNoteDto] })
+	items: UserNoteDto[];
+
+	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
+	nextCursor: string | null;
+
+	@ApiProperty({ description: "Total count of items" })
+	total: number;
+}

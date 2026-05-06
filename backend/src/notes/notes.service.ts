@@ -37,6 +37,82 @@ export class NotesService {
 		});
 	}
 
+	async getUserNotes(userDid: string, limit: number = 20, cursor?: string) {
+		const take = limit + 1;
+
+		const notes = await this.prisma.note.findMany({
+			where: { userDid },
+			orderBy: { updatedAt: "desc" },
+			take,
+			...(cursor && {
+				skip: 1,
+				cursor: { id: cursor },
+			}),
+		});
+
+		const hasMore = notes.length > limit;
+		const items = hasMore ? notes.slice(0, limit) : notes;
+		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+		const total = await this.prisma.note.count({
+			where: { userDid },
+		});
+
+		// Fetch related movie/show data for each note
+		const movieIds = items
+			.filter((n) => n.mediaType === "movie")
+			.map((n) => n.mediaId);
+		const showIds = items
+			.filter((n) => n.mediaType !== "movie")
+			.map((n) => n.mediaId);
+
+		const [movies, shows] = await Promise.all([
+			movieIds.length > 0
+				? this.prisma.movie.findMany({
+						where: { movieId: { in: movieIds } },
+					})
+				: Promise.resolve([]),
+			showIds.length > 0
+				? this.prisma.show.findMany({
+						where: { showId: { in: showIds } },
+					})
+				: Promise.resolve([]),
+		]);
+
+		const movieMap = new Map<
+			string,
+			{ title: string; posterPath: string | null }
+		>();
+		for (const m of movies) {
+			movieMap.set(m.movieId, { title: m.title, posterPath: m.posterPath });
+		}
+		const showMap = new Map<
+			string,
+			{ title: string; posterPath: string | null }
+		>();
+		for (const s of shows) {
+			showMap.set(s.showId, { title: s.title, posterPath: s.posterPath });
+		}
+
+		const enrichedItems = items.map((note) => {
+			const media =
+				note.mediaType === "movie"
+					? movieMap.get(note.mediaId)
+					: showMap.get(note.mediaId);
+			return {
+				...note,
+				title: media?.title,
+				posterPath: media?.posterPath,
+			};
+		});
+
+		return {
+			items: enrichedItems,
+			nextCursor,
+			total,
+		};
+	}
+
 	async upsertNote(userDid: string, session: ATSession, dto: UpsertNoteDto) {
 		const existing = await this.prisma.note.findUnique({
 			where: {

@@ -22,6 +22,8 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	GetNoteQueryDto,
 	NoteResponseDto,
+	PaginatedNotesQueryDto,
+	PaginatedNotesResponseDto,
 	UpsertNoteDto,
 } from "./dto/note.dto";
 import { NotesService, type ATSession } from "./notes.service";
@@ -93,6 +95,51 @@ export class NotesController {
 			episodeNumber: note.episodeNumber || undefined,
 			createdAt: note.createdAt.toISOString(),
 			updatedAt: note.updatedAt.toISOString(),
+		};
+	}
+
+	@Get("user/:userDid/notes")
+	@ApiOperation({ summary: "Get paginated notes for a user" })
+	@ApiQuery({
+		name: "limit",
+		required: false,
+		description: "Number of items to return",
+	})
+	@ApiQuery({
+		name: "cursor",
+		required: false,
+		description: "Cursor for pagination",
+	})
+	@ApiOkResponse({
+		description: "Notes retrieved",
+		type: PaginatedNotesResponseDto,
+	})
+	async getUserNotes(
+		@Param("userDid") userDid: string,
+		@Query() query: PaginatedNotesQueryDto,
+	): Promise<PaginatedNotesResponseDto> {
+		const limit = query.limit ?? 20;
+		const result = await this.notesService.getUserNotes(
+			userDid,
+			limit,
+			query.cursor,
+		);
+
+		return {
+			items: result.items.map((note) => ({
+				id: note.id,
+				content: note.content,
+				mediaType: note.mediaType,
+				mediaId: note.mediaId,
+				seasonNumber: note.seasonNumber || undefined,
+				episodeNumber: note.episodeNumber || undefined,
+				title: note.title,
+				posterPath: note.posterPath ?? undefined,
+				createdAt: note.createdAt.toISOString(),
+				updatedAt: note.updatedAt.toISOString(),
+			})),
+			nextCursor: result.nextCursor,
+			total: result.total,
 		};
 	}
 

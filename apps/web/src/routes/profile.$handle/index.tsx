@@ -27,7 +27,6 @@ function ProfileOverviewPage() {
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
 	});
 	const userDid = profile?.did || "";
-	const displayName = profile?.displayName || profile?.handle || handle;
 	const isOwner = user?.did === userDid;
 
 	// Fetch recent movies
@@ -145,7 +144,7 @@ function ProfileOverviewPage() {
 					) : (
 						<div className="card p-8 text-center">
 							<p className="text-(--foreground-muted)">
-								{displayName} hasn&apos;t watched any movies yet.
+								No movies watched yet.
 							</p>
 						</div>
 					)}
@@ -200,7 +199,7 @@ function ProfileOverviewPage() {
 					) : (
 						<div className="card p-8 text-center">
 							<p className="text-(--foreground-muted)">
-								{displayName} hasn&apos;t watched any episodes yet.
+								No episodes watched yet.
 							</p>
 						</div>
 					)}

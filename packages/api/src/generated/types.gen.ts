@@ -985,6 +985,39 @@ export type NoteResponseDto = {
     updatedAt: string;
 };
 
+export type UserNoteDto = {
+    id: string;
+    content: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Title of the movie or show
+     */
+    title?: string;
+    /**
+     * Poster path for the movie or show
+     */
+    posterPath?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PaginatedNotesResponseDto = {
+    items: Array<UserNoteDto>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: {
+        [key: string]: unknown;
+    };
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
 export type UpsertNoteDto = {
     /**
      * Media type
@@ -2840,6 +2873,33 @@ export type NotesControllerGetNoteResponses = {
 };
 
 export type NotesControllerGetNoteResponse = NotesControllerGetNoteResponses[keyof NotesControllerGetNoteResponses];
+
+export type NotesControllerGetUserNotesData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination
+         */
+        cursor?: string;
+    };
+    url: '/notes/user/{userDid}/notes';
+};
+
+export type NotesControllerGetUserNotesResponses = {
+    /**
+     * Notes retrieved
+     */
+    200: PaginatedNotesResponseDto;
+};
+
+export type NotesControllerGetUserNotesResponse = NotesControllerGetUserNotesResponses[keyof NotesControllerGetUserNotesResponses];
 
 export type NotesControllerUpsertNoteData = {
     body: UpsertNoteDto;
