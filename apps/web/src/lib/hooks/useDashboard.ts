@@ -132,11 +132,10 @@ export function useDashboardContent(userDid: string | null) {
 }
 
 // Type exports for convenience
-export type {
-	MoviesControllerDiscoverMoviesResponse,
-	ShowsControllerDiscoverShowsResponse,
-	ShelfActivitySummaryDto,
-};
-
 // Re-export ActivityItem type with explicit naming to avoid conflicts
-export type { ActivityItem as DashboardActivityItem };
+export type {
+	ActivityItem as DashboardActivityItem,
+	MoviesControllerDiscoverMoviesResponse,
+	ShelfActivitySummaryDto,
+	ShowsControllerDiscoverShowsResponse,
+};

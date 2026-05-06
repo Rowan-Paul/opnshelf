@@ -461,7 +461,7 @@ function TraktStep({
 	const { data: currentImport } = useQuery({
 		...usersControllerGetMyCurrentTraktImportOptions(),
 		refetchInterval:
-			!!jobData && isActiveTraktImportStatus(jobData.status) ? 3000 : false,
+			jobData && isActiveTraktImportStatus(jobData.status) ? 3000 : false,
 	});
 
 	useEffect(() => {

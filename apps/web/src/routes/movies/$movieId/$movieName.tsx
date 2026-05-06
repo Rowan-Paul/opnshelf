@@ -188,62 +188,60 @@ function MovieDetailPage() {
 					</>
 				}
 				actions={
-					<>
-						{isAuthenticated ? (
-							<>
-								{isWatched ? (
-									<button
-										type="button"
-										onClick={() => {
-											if (movieWatchHistory && movieWatchHistory.length > 1) {
-												setConfirmRemoveOpen(true);
-											} else {
-												unmarkMovieWatched();
-											}
-										}}
-										disabled={isUnmarkMoviePending}
-										className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
-									>
-										{isUnmarkMoviePending ? (
-											<>
-												<Loader2 className="size-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<X className="size-4" />
-												Remove from shelf
-											</>
-										)}
-									</button>
-								) : (
-									<button
-										type="button"
-										onClick={() => markMovieWatched()}
-										disabled={isMarkMoviePending}
-										className="btn btn-primary gap-2"
-									>
-										{isMarkMoviePending ? (
-											<>
-												<Loader2 className="size-4 animate-spin" />
-												Loading
-											</>
-										) : (
-											<>
-												<Plus className="size-4" />
-												Add to shelf
-											</>
-										)}
-									</button>
-								)}
-								<MediaActionsBar mediaType="movie" mediaId={movieId} />
-							</>
-						) : (
-							<Link to="/login" className="btn btn-primary gap-2">
-								Sign in to add to shelf
-							</Link>
-						)}
-					</>
+					isAuthenticated ? (
+						<>
+							{isWatched ? (
+								<button
+									type="button"
+									onClick={() => {
+										if (movieWatchHistory && movieWatchHistory.length > 1) {
+											setConfirmRemoveOpen(true);
+										} else {
+											unmarkMovieWatched();
+										}
+									}}
+									disabled={isUnmarkMoviePending}
+									className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+								>
+									{isUnmarkMoviePending ? (
+										<>
+											<Loader2 className="size-4 animate-spin" />
+											Loading
+										</>
+									) : (
+										<>
+											<X className="size-4" />
+											Remove from shelf
+										</>
+									)}
+								</button>
+							) : (
+								<button
+									type="button"
+									onClick={() => markMovieWatched()}
+									disabled={isMarkMoviePending}
+									className="btn btn-primary gap-2"
+								>
+									{isMarkMoviePending ? (
+										<>
+											<Loader2 className="size-4 animate-spin" />
+											Loading
+										</>
+									) : (
+										<>
+											<Plus className="size-4" />
+											Add to shelf
+										</>
+									)}
+								</button>
+							)}
+							<MediaActionsBar mediaType="movie" mediaId={movieId} />
+						</>
+					) : (
+						<Link to="/login" className="btn btn-primary gap-2">
+							Sign in to add to shelf
+						</Link>
+					)
 				}
 			/>
 
