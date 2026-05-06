@@ -15,6 +15,7 @@ interface MediaHeroProps {
 	actions?: ReactNode;
 	breadcrumbs?: Breadcrumb[];
 	currentProgress?: ReactNode;
+	backLabel?: string;
 }
 
 export default function MediaHero({
@@ -25,6 +26,7 @@ export default function MediaHero({
 	actions,
 	breadcrumbs,
 	currentProgress,
+	backLabel = "Back to Dashboard",
 }: MediaHeroProps) {
 	return (
 		<div className="relative z-10 min-h-[50vh] overflow-hidden">
@@ -73,7 +75,7 @@ export default function MediaHero({
 				) : (
 					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
 						<ChevronLeft className="size-4" />
-						Back to Dashboard
+						{backLabel}
 					</Link>
 				)}
 

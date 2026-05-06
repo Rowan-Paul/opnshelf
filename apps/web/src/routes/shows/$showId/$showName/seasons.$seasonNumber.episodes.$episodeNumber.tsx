@@ -87,7 +87,7 @@ export const Route = createFileRoute(
 
 function EpisodeDetailPage() {
 	const { showId, showName, seasonNumber, episodeNumber } = Route.useParams();
-	const { userSettings } = useAuth();
+	const { userSettings, isAuthenticated } = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
@@ -260,57 +260,65 @@ function EpisodeDetailPage() {
 				}
 				actions={
 					<>
-						{isWatched ? (
-							<button
-								type="button"
-								onClick={() => {
-									if (episodeWatchHistory && episodeWatchHistory.length > 1) {
-										setConfirmRemoveOpen(true);
-									} else {
-										unmarkEpisodeWatched(seasonNum, episodeNum);
-									}
-								}}
-								disabled={isUnmarkEpisodePending}
-								className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
-							>
-								{isUnmarkEpisodePending ? (
-									<>
-										<Loader2 className="size-4 animate-spin" />
-										Loading
-									</>
+						{isAuthenticated ? (
+							<>
+								{isWatched ? (
+									<button
+										type="button"
+										onClick={() => {
+											if (episodeWatchHistory && episodeWatchHistory.length > 1) {
+												setConfirmRemoveOpen(true);
+											} else {
+												unmarkEpisodeWatched(seasonNum, episodeNum);
+											}
+										}}
+										disabled={isUnmarkEpisodePending}
+										className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+									>
+										{isUnmarkEpisodePending ? (
+											<>
+												<Loader2 className="size-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<X className="size-4" />
+												Remove from shelf
+											</>
+										)}
+									</button>
 								) : (
-									<>
-										<X className="size-4" />
-										Remove from shelf
-									</>
+									<button
+										type="button"
+										onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
+										disabled={isMarkEpisodePending}
+										className="btn btn-primary gap-2"
+									>
+										{isMarkEpisodePending ? (
+											<>
+												<Loader2 className="size-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="size-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
 								)}
-							</button>
+								<MediaActionsBar
+									mediaType="show"
+									mediaId={showId}
+									seasonNumber={seasonNum}
+									episodeNumber={episodeNum}
+								/>
+							</>
 						) : (
-							<button
-								type="button"
-								onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
-								disabled={isMarkEpisodePending}
-								className="btn btn-primary gap-2"
-							>
-								{isMarkEpisodePending ? (
-									<>
-										<Loader2 className="size-4 animate-spin" />
-										Loading
-									</>
-								) : (
-									<>
-										<Plus className="size-4" />
-										Add to shelf
-									</>
-								)}
-							</button>
+							<Link to="/login" className="btn btn-primary gap-2">
+								Sign in to track
+							</Link>
 						)}
-						<MediaActionsBar
-							mediaType="show"
-							mediaId={showId}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
 					</>
 				}
 				breadcrumbs={breadcrumbs}

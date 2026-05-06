@@ -27,7 +27,6 @@ function ProfileShelfPage() {
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
 	});
 	const userDid = profile?.did || "";
-	const displayName = profile?.displayName || profile?.handle || handle;
 	const isOwner = user?.did === userDid;
 
 	const [filter, setFilter] = useState<FilterType>("all");
@@ -64,7 +63,7 @@ function ProfileShelfPage() {
 		<div className="space-y-6">
 			{/* Title & Controls */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<h1 className="text-display-2">{displayName}&apos;s Shelf</h1>
+				<h1 className="text-display-2">Shelf</h1>
 
 				<div className="flex items-center gap-3">
 					{/* Search */}
@@ -122,9 +121,7 @@ function ProfileShelfPage() {
 			) : items.length === 0 ? (
 				<div className="card p-8 text-center">
 					<p className="text-(--foreground-muted)">
-						{searchQuery
-							? "No results found."
-							: `${displayName}'s shelf is empty.`}
+						{searchQuery ? "No results found." : "Shelf is empty."}
 					</p>
 				</div>
 			) : (

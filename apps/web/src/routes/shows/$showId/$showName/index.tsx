@@ -256,6 +256,7 @@ function ShowDetailPage() {
 				title={show.name}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -294,41 +295,49 @@ function ShowDetailPage() {
 				}
 				actions={
 					<>
-						{nextEpisode ? (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(nextEpisode.seasonNumber),
-									episodeNumber: String(nextEpisode.episodeNumber),
-								}}
-								className="btn btn-primary gap-2"
-							>
-								<Play className="size-4" />
-								{getCurrentEpisodeText()}
-							</Link>
-						) : isStartWatching ? (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(firstSeasonNumber),
-									episodeNumber: "1",
-								}}
-								className="btn btn-primary gap-2"
-							>
-								<Play className="size-4" />
-								{getCurrentEpisodeText()}
-							</Link>
+						{isAuthenticated ? (
+							<>
+								{nextEpisode ? (
+									<Link
+										to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+										params={{
+											showId,
+											showName: slugifyName(show.name),
+											seasonNumber: String(nextEpisode.seasonNumber),
+											episodeNumber: String(nextEpisode.episodeNumber),
+										}}
+										className="btn btn-primary gap-2"
+									>
+										<Play className="size-4" />
+										{getCurrentEpisodeText()}
+									</Link>
+								) : isStartWatching ? (
+									<Link
+										to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+										params={{
+											showId,
+											showName: slugifyName(show.name),
+											seasonNumber: String(firstSeasonNumber),
+											episodeNumber: "1",
+										}}
+										className="btn btn-primary gap-2"
+									>
+										<Play className="size-4" />
+										{getCurrentEpisodeText()}
+									</Link>
+								) : (
+									<button type="button" className="btn btn-primary gap-2">
+										<Play className="size-4" />
+										{getCurrentEpisodeText()}
+									</button>
+								)}
+								<MediaActionsBar mediaType="show" mediaId={showId} />
+							</>
 						) : (
-							<button type="button" className="btn btn-primary gap-2">
-								<Play className="size-4" />
-								{getCurrentEpisodeText()}
-							</button>
+							<Link to="/login" className="btn btn-primary gap-2">
+								Sign in to track
+							</Link>
 						)}
-						<MediaActionsBar mediaType="show" mediaId={showId} />
 					</>
 				}
 			/>

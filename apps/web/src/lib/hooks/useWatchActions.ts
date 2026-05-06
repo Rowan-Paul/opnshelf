@@ -16,6 +16,7 @@ import {
 	showsControllerUnmarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
 
 interface WatchActionsMovieOptions {
@@ -60,13 +61,19 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 			return { previousUserMovies, userMoviesKey };
 		},
-		onError: (_err, _variables, context) => {
+		onSuccess: () => {
+			toast.success("Marked as watched");
+		},
+		onError: (error, _variables, context) => {
 			if (context?.previousUserMovies) {
 				queryClient.setQueryData(
 					context.userMoviesKey,
 					context.previousUserMovies,
 				);
 			}
+			toast.error(
+				error instanceof Error ? error.message : "Failed to mark as watched",
+			);
 		},
 		onSettled: (_data, _error, _variables, context) => {
 			if (context?.userMoviesKey) {
@@ -103,13 +110,21 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 			return { previousUserMovies, userMoviesKey };
 		},
-		onError: (_err, _variables, context) => {
+		onSuccess: () => {
+			toast.success("Removed from watched");
+		},
+		onError: (error, _variables, context) => {
 			if (context?.previousUserMovies) {
 				queryClient.setQueryData(
 					context.userMoviesKey,
 					context.previousUserMovies,
 				);
 			}
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove from watched",
+			);
 		},
 		onSettled: (_data, _error, _variables, context) => {
 			if (context?.userMoviesKey) {
@@ -128,6 +143,16 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 	const deleteMovieWatchHistoryEntry = useMutation({
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
+		onSuccess: () => {
+			toast.success("Watch history entry deleted");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to delete watch history entry",
+			);
+		},
 		onSettled: () => {
 			if (options.mediaType === "movie") {
 				queryClient.invalidateQueries({
@@ -179,6 +204,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markEpisodeWatched = useMutation({
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
+			toast.success("Episode marked as watched");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			// Also invalidate season details so season page stays in sync
@@ -193,11 +219,19 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				});
 			}
 		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to mark episode as watched",
+			);
+		},
 	});
 
 	const unmarkEpisodeWatched = useMutation({
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
+			toast.success("Episode removed from watched");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			if (options.mediaType === "show") {
@@ -211,27 +245,51 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				});
 			}
 		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove episode from watched",
+			);
+		},
 	});
 
 	const markShowWatched = useMutation({
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
+			toast.success("Show marked as watched");
 			invalidateShowQueries();
 			invalidateShelfQueries();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to mark show as watched",
+			);
 		},
 	});
 
 	const unmarkShowWatched = useMutation({
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
+			toast.success("Show removed from watched");
 			invalidateShowQueries();
 			invalidateShelfQueries();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove show from watched",
+			);
 		},
 	});
 
 	const markSeasonWatched = useMutation({
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (_data, variables) => {
+			toast.success("Season marked as watched");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			if (options.mediaType === "show") {
@@ -245,10 +303,27 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				});
 			}
 		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to mark season as watched",
+			);
+		},
 	});
 
 	const deleteEpisodeWatchHistoryEntry = useMutation({
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
+		onSuccess: () => {
+			toast.success("Episode watch history deleted");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to delete episode watch history",
+			);
+		},
 		onSettled: () => {
 			invalidateShowQueries();
 			invalidateShelfQueries();

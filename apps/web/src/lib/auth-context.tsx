@@ -9,6 +9,7 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
 	createContext,
 	type ReactNode,
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
+	const navigate = useNavigate();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
@@ -103,8 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Clear all queries and user data
 			queryClient.clear();
 			setIsLoggingOut(false);
+			// Redirect to home page
+			void navigate({ to: "/" });
 		}
-	}, [queryClient]);
+	}, [queryClient, navigate]);
 
 	const value: AuthContextType = {
 		user: user ?? null,

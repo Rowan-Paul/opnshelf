@@ -1,7 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	Calendar,
+	Clock,
 	Film,
+	List,
 	LogOut,
 	Menu,
 	Settings,
@@ -22,12 +24,6 @@ import { useSearchDialog } from "#/lib/search-dialog-context";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
-const navigation = [
-	{ name: "Dashboard", href: "/dashboard", icon: Film },
-	{ name: "Calendar", href: "/calendar", icon: Calendar },
-	{ name: "Following", href: "/following", icon: Users },
-];
-
 export default function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [scrolled, setScrolled] = useState(false);
@@ -35,6 +31,12 @@ export default function Header() {
 	const currentPath = router.location.pathname;
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
+
+	const navigation = [
+		{ name: "Dashboard", href: "/dashboard", icon: Film },
+		{ name: "Calendar", href: "/calendar", icon: Calendar },
+		{ name: "Following", href: "/following", icon: Users },
+	];
 
 	const visibleNavigation = isAuthenticated || isLoading ? navigation : [];
 
@@ -178,6 +180,26 @@ export default function Header() {
 										</Link>
 									</DropdownMenuItem>
 									<DropdownMenuItem asChild>
+										<Link
+											to="/profile/$handle/up-next"
+											params={{ handle: user.handle }}
+											className="cursor-pointer"
+										>
+											<Clock />
+											Up Next
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link
+											to="/profile/$handle/lists"
+											params={{ handle: user.handle }}
+											className="cursor-pointer"
+										>
+											<List />
+											Lists
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
 										<Link to="/settings" className="cursor-pointer">
 											<Settings />
 											Settings
@@ -249,6 +271,7 @@ export default function Header() {
 								{/* Mobile user section */}
 								{isAuthenticated && user && (
 									<>
+										<div className="my-2 h-px bg-(--border)" />
 										<Link
 											to="/profile/$handle"
 											params={{ handle: user.handle }}
@@ -261,6 +284,34 @@ export default function Header() {
 										>
 											<User className="h-5 w-5" />
 											Profile
+										</Link>
+										<Link
+											to="/profile/$handle/up-next"
+											params={{ handle: user.handle }}
+											onClick={() => setMobileMenuOpen(false)}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												currentPath.startsWith(
+													`/profile/${user.handle}/up-next`,
+												)
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
+										>
+											<Clock className="h-5 w-5" />
+											Up Next
+										</Link>
+										<Link
+											to="/profile/$handle/lists"
+											params={{ handle: user.handle }}
+											onClick={() => setMobileMenuOpen(false)}
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												currentPath.startsWith(`/profile/${user.handle}/lists`)
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
+										>
+											<List className="h-5 w-5" />
+											Lists
 										</Link>
 										<Link
 											to="/settings"

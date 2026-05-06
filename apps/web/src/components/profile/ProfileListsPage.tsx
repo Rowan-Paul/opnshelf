@@ -24,6 +24,7 @@ import {
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -187,6 +188,7 @@ export function ProfileListsPage({
 	const removeItemMutation = useMutation({
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
+			toast.success("Removed from list");
 			if (selectedListSlug) {
 				queryClient.invalidateQueries({
 					queryKey: listsControllerGetPublicUserListQueryKey({
@@ -199,6 +201,11 @@ export function ProfileListsPage({
 					path: { userDid },
 				}),
 			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to remove from list",
+			);
 		},
 	});
 

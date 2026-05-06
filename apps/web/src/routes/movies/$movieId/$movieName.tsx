@@ -1,5 +1,5 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -64,7 +64,7 @@ function formatRuntime(minutes: number): string {
 
 function MovieDetailPage() {
 	const { movieId } = Route.useParams();
-	const { userSettings } = useAuth();
+	const { userSettings, isAuthenticated } = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
@@ -155,6 +155,7 @@ function MovieDetailPage() {
 				title={movie.title}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -188,52 +189,60 @@ function MovieDetailPage() {
 				}
 				actions={
 					<>
-						{isWatched ? (
-							<button
-								type="button"
-								onClick={() => {
-									if (movieWatchHistory && movieWatchHistory.length > 1) {
-										setConfirmRemoveOpen(true);
-									} else {
-										unmarkMovieWatched();
-									}
-								}}
-								disabled={isUnmarkMoviePending}
-								className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
-							>
-								{isUnmarkMoviePending ? (
-									<>
-										<Loader2 className="size-4 animate-spin" />
-										Loading
-									</>
+						{isAuthenticated ? (
+							<>
+								{isWatched ? (
+									<button
+										type="button"
+										onClick={() => {
+											if (movieWatchHistory && movieWatchHistory.length > 1) {
+												setConfirmRemoveOpen(true);
+											} else {
+												unmarkMovieWatched();
+											}
+										}}
+										disabled={isUnmarkMoviePending}
+										className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+									>
+										{isUnmarkMoviePending ? (
+											<>
+												<Loader2 className="size-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<X className="size-4" />
+												Remove from shelf
+											</>
+										)}
+									</button>
 								) : (
-									<>
-										<X className="size-4" />
-										Remove from shelf
-									</>
+									<button
+										type="button"
+										onClick={() => markMovieWatched()}
+										disabled={isMarkMoviePending}
+										className="btn btn-primary gap-2"
+									>
+										{isMarkMoviePending ? (
+											<>
+												<Loader2 className="size-4 animate-spin" />
+												Loading
+											</>
+										) : (
+											<>
+												<Plus className="size-4" />
+												Add to shelf
+											</>
+										)}
+									</button>
 								)}
-							</button>
+								<MediaActionsBar mediaType="movie" mediaId={movieId} />
+							</>
 						) : (
-							<button
-								type="button"
-								onClick={() => markMovieWatched()}
-								disabled={isMarkMoviePending}
-								className="btn btn-primary gap-2"
-							>
-								{isMarkMoviePending ? (
-									<>
-										<Loader2 className="size-4 animate-spin" />
-										Loading
-									</>
-								) : (
-									<>
-										<Plus className="size-4" />
-										Add to shelf
-									</>
-								)}
-							</button>
+							<Link to="/login" className="btn btn-primary gap-2">
+								Sign in to add to shelf
+							</Link>
 						)}
-						<MediaActionsBar mediaType="movie" mediaId={movieId} />
 					</>
 				}
 			/>

@@ -8,6 +8,7 @@ import {
 	listsControllerGetUserListsQueryKey,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // Get all lists for the current user
 export function useUserLists() {
@@ -35,6 +36,7 @@ export function useCreateList() {
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
 		onSuccess: async (newList) => {
+			toast.success("List created");
 			queryClient.setQueryData(
 				userListsKey,
 				(currentLists: ListsControllerGetUserListsResponse | undefined) => {
@@ -63,6 +65,11 @@ export function useCreateList() {
 				queryKey: userListsKey,
 				type: "all",
 			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to create list",
+			);
 		},
 	});
 }

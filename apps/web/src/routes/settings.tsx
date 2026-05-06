@@ -88,6 +88,7 @@ function SettingsPage() {
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
+			toast.success("Settings updated");
 			queryClient.invalidateQueries({
 				queryKey: usersControllerGetMySettingsOptions().queryKey,
 			});

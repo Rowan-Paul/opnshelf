@@ -263,6 +263,7 @@ function SeasonDetailPage() {
 				title={`${show.name} — ${season.name}`}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -290,19 +291,27 @@ function SeasonDetailPage() {
 				}
 				actions={
 					<>
-						<Link
-							to={continueLink.to}
-							params={continueLink.params}
-							className="btn btn-primary gap-2"
-						>
-							<Play className="size-4" />
-							{getContinueButtonText()}
-						</Link>
-						<MediaActionsBar
-							mediaType="show"
-							mediaId={showId}
-							seasonNumber={seasonNum}
-						/>
+						{isAuthenticated ? (
+							<>
+								<Link
+									to={continueLink.to}
+									params={continueLink.params}
+									className="btn btn-primary gap-2"
+								>
+									<Play className="size-4" />
+									{getContinueButtonText()}
+								</Link>
+								<MediaActionsBar
+									mediaType="show"
+									mediaId={showId}
+									seasonNumber={seasonNum}
+								/>
+							</>
+						) : (
+							<Link to="/login" className="btn btn-primary gap-2">
+								Sign in to track
+							</Link>
+						)}
 					</>
 				}
 				currentProgress={

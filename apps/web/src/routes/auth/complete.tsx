@@ -75,10 +75,7 @@ function AuthCompletePage() {
 				{status === "success" && (
 					<>
 						<CheckCircle className="mx-auto size-16 text-green-500" />
-						<h1 className="mt-6 text-display-3">Welcome!</h1>
-						<p className="mt-2 text-(--foreground-muted)">
-							You&apos;re signed in. Redirecting to your dashboard...
-						</p>
+						<p className="mt-6 text-(--foreground-muted)">Redirecting...</p>
 					</>
 				)}
 

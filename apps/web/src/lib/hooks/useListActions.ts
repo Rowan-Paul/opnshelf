@@ -6,6 +6,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
 
 interface UseListActionsOptions {
@@ -55,13 +56,19 @@ export function useListActions({
 
 			return { previousListsForItem, listsForItemKey };
 		},
-		onError: (_err, _variables, context) => {
+		onSuccess: () => {
+			toast.success("Added to list");
+		},
+		onError: (error, _variables, context) => {
 			if (context?.previousListsForItem) {
 				queryClient.setQueryData(
 					context.listsForItemKey,
 					context.previousListsForItem,
 				);
 			}
+			toast.error(
+				error instanceof Error ? error.message : "Failed to add to list",
+			);
 		},
 		onSettled: (_data, _error, _variables, context) => {
 			if (context?.listsForItemKey) {
@@ -88,13 +95,19 @@ export function useListActions({
 
 			return { previousListsForItem, listsForItemKey };
 		},
-		onError: (_err, _variables, context) => {
+		onSuccess: () => {
+			toast.success("Removed from list");
+		},
+		onError: (error, _variables, context) => {
 			if (context?.previousListsForItem) {
 				queryClient.setQueryData(
 					context.listsForItemKey,
 					context.previousListsForItem,
 				);
 			}
+			toast.error(
+				error instanceof Error ? error.message : "Failed to remove from list",
+			);
 		},
 		onSettled: (_data, _error, _variables, context) => {
 			if (context?.listsForItemKey) {

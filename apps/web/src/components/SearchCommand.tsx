@@ -102,7 +102,7 @@ export function SearchCommand({
 		}
 	}, [isOpen]);
 
-	const { user, logout } = useAuth();
+	const { user, logout, isAuthenticated } = useAuth();
 	const currentUserHandle = user?.handle;
 	const navigate = useNavigate();
 
@@ -168,6 +168,7 @@ export function SearchCommand({
 
 	const { data: userLists } = useQuery({
 		...listsControllerGetUserListsOptions(),
+		enabled: isAuthenticated,
 	});
 
 	const {
@@ -178,7 +179,7 @@ export function SearchCommand({
 		...socialControllerSearchPeopleOptions({
 			query: { q: debouncedQuery },
 		}),
-		enabled: debouncedQuery.length > 0,
+		enabled: debouncedQuery.length > 0 && isAuthenticated,
 	});
 
 	const movies =

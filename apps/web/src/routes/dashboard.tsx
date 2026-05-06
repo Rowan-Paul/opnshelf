@@ -141,9 +141,7 @@ function Dashboard() {
 		userDid || "",
 		6,
 	);
-	const { data: statsData, isLoading: statsLoading } = useDashboardStats(
-		userDid || "",
-	);
+	const { isLoading: statsLoading } = useDashboardStats(userDid || "");
 	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
 		userDid || "",
 	);
@@ -189,48 +187,54 @@ function Dashboard() {
 		calendarLoading;
 
 	// Calculate real stats from shelf data
-	const movieCount =
-		shelfData?.items?.filter((item) => item.type === "movie").length || 0;
-	const showCount =
-		shelfData?.items?.filter((item) => item.type === "episode").length || 0;
+	const uniqueMovieIds = new Set(
+		shelfData?.items
+			?.filter((item) => item.type === "movie")
+			?.map((item) => item.movieId),
+	);
+	const movieCount = uniqueMovieIds.size;
+
+	const uniqueShowIds = new Set(
+		shelfData?.items
+			?.filter((item) => item.type === "episode")
+			?.map((item) => item.showId),
+	);
+	const showCount = uniqueShowIds.size;
+
+	const now = new Date();
+	const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+	const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+	const addedThisWeek =
+		shelfData?.items?.filter(
+			(item) => item.createdAt && new Date(item.createdAt) >= sevenDaysAgo,
+		).length || 0;
+
+	const addedThisMonth =
+		shelfData?.items?.filter(
+			(item) => item.createdAt && new Date(item.createdAt) >= thirtyDaysAgo,
+		).length || 0;
 
 	const userStats = [
 		{
 			label: "Movies",
 			value: String(movieCount),
 			icon: Film,
-			change: statsData
-				? `${statsData.watchedLast30Days || 0} watched this month`
-				: "Track your first movie",
-			changeMobile: `${statsData?.watchedLast30Days || 0} this month`,
 		},
 		{
 			label: "Shows",
 			value: String(showCount),
 			icon: Tv,
-			change: statsData
-				? `${statsData.watchedLast7Days || 0} watched this week`
-				: "Track your first show",
-			changeMobile: `${statsData?.watchedLast7Days || 0} this week`,
 		},
 		{
-			label: "Activity",
-			value: String(statsData?.watchedLast7Days || 0),
+			label: "This Week",
+			value: String(addedThisWeek),
 			icon: Clock,
-			change: statsData?.dailyActivity?.length
-				? `${statsData.dailyActivity.length} active days`
-				: "Start watching",
-			changeMobile: `${statsData?.watchedLast7Days || 0} this week`,
 		},
 		{
-			label: "This Month",
-			value: String(statsData?.watchedLast30Days || 0),
+			label: "Added This Month",
+			value: String(addedThisMonth),
 			icon: TrendingUp,
-			change:
-				statsData?.watchedLast30Days && statsData.watchedLast30Days > 0
-					? "total watched"
-					: "Start tracking",
-			changeMobile: `${statsData?.watchedLast30Days || 0} this month`,
 		},
 	];
 
@@ -357,12 +361,6 @@ function Dashboard() {
 											</p>
 											<p className="font-semibold text-lg sm:mt-1 sm:text-display-3">
 												{stat.value}
-											</p>
-											<p className="mt-0.5 text-(--accent) text-xs sm:mt-1 sm:hidden">
-												{stat.changeMobile}
-											</p>
-											<p className="hidden text-(--accent) text-xs sm:mt-1 sm:block">
-												{stat.change}
 											</p>
 										</div>
 									</div>

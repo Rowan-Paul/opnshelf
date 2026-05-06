@@ -23,6 +23,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
@@ -155,6 +156,7 @@ function SearchPage() {
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
+			toast.success("Followed");
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
@@ -162,18 +164,27 @@ function SearchPage() {
 				},
 			});
 		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Failed to follow");
+		},
 	});
 
 	const unfollowMutation = useMutation({
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
+			toast.success("Unfollowed");
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
 					return key?._id === "socialControllerSearchPeople";
 				},
 			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to unfollow",
+			);
 		},
 	});
 

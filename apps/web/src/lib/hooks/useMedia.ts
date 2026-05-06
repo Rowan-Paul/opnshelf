@@ -19,6 +19,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
 
 // Movie detail hook
@@ -51,8 +52,14 @@ export function useMarkMovieWatched() {
 			return result.data;
 		},
 		onSuccess: () => {
+			toast.success("Marked as watched");
 			// Invalidate relevant queries
 			queryClient.invalidateQueries({ queryKey: ["movies"] });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to mark as watched",
+			);
 		},
 	});
 }
@@ -67,7 +74,15 @@ export function useUnmarkMovieWatched() {
 			return result.data;
 		},
 		onSuccess: () => {
+			toast.success("Removed from watched");
 			queryClient.invalidateQueries({ queryKey: ["movies"] });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove from watched",
+			);
 		},
 	});
 }
@@ -131,6 +146,7 @@ export function useMarkEpisodeWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
+			toast.success("Episode marked as watched");
 			// Invalidate the specific show's watch history
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
@@ -144,6 +160,13 @@ export function useMarkEpisodeWatched() {
 			});
 			// Invalidate general shows list
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to mark episode as watched",
+			);
 		},
 	});
 }
@@ -167,6 +190,7 @@ export function useUnmarkEpisodeWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
+			toast.success("Episode removed from watched");
 			// Invalidate the specific show's watch history
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
@@ -180,6 +204,13 @@ export function useUnmarkEpisodeWatched() {
 			});
 			// Invalidate general shows list
 			queryClient.invalidateQueries({ queryKey: ["shows"] });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to remove episode from watched",
+			);
 		},
 	});
 }

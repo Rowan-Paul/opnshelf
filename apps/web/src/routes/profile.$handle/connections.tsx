@@ -21,7 +21,6 @@ function ProfileConnectionsPage() {
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
 	});
-	const displayName = profile?.displayName || profile?.handle || handle;
 
 	const followersQuery = usePublicFollowers(handle);
 	const followingQuery = usePublicFollowing(handle);
@@ -31,7 +30,7 @@ function ProfileConnectionsPage() {
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-display-2">{displayName}&apos;s Connections</h1>
+			<h1 className="text-display-2">Connections</h1>
 
 			{/* Sub-tabs */}
 			<div className="flex gap-2 border-(--border) border-b">

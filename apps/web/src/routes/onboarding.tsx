@@ -420,6 +420,7 @@ function TraktStep({
 					? String((error as { message?: string }).message)
 					: "Could not fetch Trakt history. Please check the username and try again.";
 			setFetchError(message);
+			toast.error(message);
 		},
 	});
 
@@ -432,6 +433,7 @@ function TraktStep({
 			return data;
 		},
 		onSuccess: (data) => {
+			toast.success("Import started");
 			if (data.job) {
 				setJobData({
 					status: data.job.status,
@@ -447,6 +449,11 @@ function TraktStep({
 					queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
 				});
 			}
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to start import",
+			);
 		},
 	});
 
@@ -711,7 +718,13 @@ function BlueskyStep({
 			return data;
 		},
 		onSuccess: (data) => {
+			toast.success("Follows imported");
 			setResult(data);
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to import follows",
+			);
 		},
 	});
 
@@ -829,6 +842,7 @@ function DoneStep() {
 			return data;
 		},
 		onSuccess: (data) => {
+			toast.success("Welcome to OpnShelf!");
 			const meKey = authControllerMeOptions().queryKey;
 			// Optimistically update auth cache so needsOnboarding becomes false
 			queryClient.setQueryData(meKey, (old: UserDto | undefined) => {
@@ -841,6 +855,13 @@ function DoneStep() {
 			});
 			// Trigger a background refetch to keep cache in sync
 			queryClient.invalidateQueries({ queryKey: meKey });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to complete onboarding",
+			);
 		},
 	});
 

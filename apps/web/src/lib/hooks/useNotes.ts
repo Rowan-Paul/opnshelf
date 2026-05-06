@@ -5,6 +5,7 @@ import {
 	notesControllerUpsertNoteMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface UseNoteOptions {
 	userDid: string;
@@ -88,7 +89,13 @@ export function useUpsertNote({
 	return useMutation({
 		...notesControllerUpsertNoteMutation(),
 		onSuccess: () => {
+			toast.success("Note saved");
 			queryClient.invalidateQueries({ queryKey: noteKey });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save note",
+			);
 		},
 	});
 }
@@ -128,7 +135,13 @@ export function useDeleteNote({
 	return useMutation({
 		...notesControllerDeleteNoteMutation(),
 		onSuccess: () => {
+			toast.success("Note deleted");
 			queryClient.invalidateQueries({ queryKey: noteKey });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to delete note",
+			);
 		},
 	});
 }

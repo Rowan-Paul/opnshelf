@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ActivityFeed } from "#/components/following/ActivityFeed";
 import { FollowingHeader } from "#/components/following/FollowingHeader";
 import { FollowingList } from "#/components/following/FollowingList";
@@ -96,6 +97,7 @@ function FollowingPage() {
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: async () => {
+			toast.success("Followed");
 			await queryClient.refetchQueries({
 				predicate: (query) => {
 					const queryKey = query.queryKey[0] as { _id?: string } | undefined;
@@ -108,6 +110,9 @@ function FollowingPage() {
 				},
 			});
 		},
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : "Failed to follow");
+		},
 	});
 
 	// Unfollow mutation
@@ -115,6 +120,7 @@ function FollowingPage() {
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: async () => {
+			toast.success("Unfollowed");
 			await queryClient.refetchQueries({
 				predicate: (query) => {
 					const queryKey = query.queryKey[0] as { _id?: string } | undefined;
@@ -126,6 +132,11 @@ function FollowingPage() {
 					);
 				},
 			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to unfollow",
+			);
 		},
 	});
 

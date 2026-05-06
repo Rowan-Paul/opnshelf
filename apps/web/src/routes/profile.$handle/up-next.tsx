@@ -49,7 +49,6 @@ function ProfileUpNextPage() {
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
 	});
 	const userDid = profile?.did || "";
-	const displayName = profile?.displayName || profile?.handle || handle;
 	const isOwner = user?.did === userDid;
 
 	const { data, isLoading } = useQuery({
@@ -66,7 +65,7 @@ function ProfileUpNextPage() {
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-display-2">{displayName}&apos;s Up Next</h1>
+			<h1 className="text-display-2">Up Next</h1>
 
 			{isLoading ? (
 				<div className="space-y-4">
@@ -86,9 +85,7 @@ function ProfileUpNextPage() {
 			) : items.length === 0 ? (
 				<div className="card p-8 text-center">
 					<Tv className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">
-						{displayName} is all caught up!
-					</p>
+					<p className="text-(--foreground-muted)">All caught up!</p>
 					<p className="mt-1 text-(--foreground-muted) text-sm">
 						No upcoming episodes to watch.
 					</p>
