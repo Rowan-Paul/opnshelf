@@ -30,7 +30,13 @@ export function SearchDialogProvider({ children }: { children: ReactNode }) {
 export function useSearchDialog() {
 	const ctx = useContext(SearchDialogContext);
 	if (!ctx) {
-		throw new Error("useSearchDialog must be used within SearchDialogProvider");
+		// Return a safe fallback during HMR to prevent crashes
+		// In production this should never happen since the provider wraps the app
+		return {
+			open: false,
+			setOpen: () => {},
+			toggle: () => {},
+		};
 	}
 	return ctx;
 }
