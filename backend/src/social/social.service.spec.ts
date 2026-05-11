@@ -62,6 +62,9 @@ describe("SocialService", () => {
 		show: {
 			findMany: jest.fn(),
 		},
+		review: {
+			count: jest.fn(),
+		},
 		$queryRaw: jest.fn(),
 	} as unknown as PrismaService;
 	const session = { did: "did:plc:self" };
@@ -386,6 +389,7 @@ describe("SocialService", () => {
 			.mockResolvedValueOnce([{ followingDid: "did:plc:friend-1" }]);
 		prisma.trackedMovie.count = jest.fn().mockResolvedValue(2);
 		prisma.trackedEpisode.count = jest.fn().mockResolvedValue(1);
+		prisma.review.count = jest.fn().mockResolvedValue(0);
 		prisma.$queryRaw = jest.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-1",
