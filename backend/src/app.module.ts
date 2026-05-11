@@ -6,6 +6,7 @@ import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { NotesModule } from "./notes/notes.module";
 import { PeopleModule } from "./people/people.module";
+import { ReviewsModule } from "./reviews/reviews.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SearchModule } from "./search/search.module";
 import { SocialModule } from "./social/social.module";
@@ -23,6 +24,7 @@ import { UsersModule } from "./users/users.module";
 		UsersModule,
 		ListsModule,
 		NotesModule,
+		ReviewsModule,
 		ShowsModule,
 		ShelfModule,
 		SearchModule,

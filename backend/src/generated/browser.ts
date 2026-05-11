@@ -87,3 +87,8 @@ export type ListItem = Prisma.ListItemModel
  * 
  */
 export type Note = Prisma.NoteModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel

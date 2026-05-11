@@ -2,6 +2,7 @@ import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock, MoreHorizontal } from "lucide-react";
 import FeedItemActions from "#/components/FeedItemActions";
+import StarRating from "#/components/StarRating";
 import { toSlug } from "#/lib/slug";
 import { UserAvatar } from "./UserAvatar";
 
@@ -22,7 +23,7 @@ export function ActivityCard({
 				{/* Poster on the left */}
 				{(activity.posterPath || activity.backdropPath) && (
 					<div className="shrink-0">
-						{activity.type === "movie" ? (
+						{activity.type === "movie" || activity.type === "review" ? (
 							<Link
 								to="/movies/$movieId/$movieName"
 								params={{
@@ -80,9 +81,13 @@ export function ActivityCard({
 									{String(activity.actor.displayName) || activity.actor.handle}
 								</Link>
 								<span className="text-(--foreground-muted)">
-									{activity.type === "movie" ? "watched" : "watched episode"}
+									{activity.type === "movie"
+										? "watched"
+										: activity.type === "review"
+											? "reviewed"
+											: "watched episode"}
 								</span>
-								{activity.type === "movie" ? (
+								{activity.type === "movie" || activity.type === "review" ? (
 									<Link
 										to="/movies/$movieId/$movieName"
 										params={{
@@ -151,35 +156,55 @@ export function ActivityCard({
 							</Link>
 						)}
 
-					{/* Description */}
-					{(activity.type === "episode"
-						? activity.episodeOverview
-						: activity.overview) && (
-						<p className="line-clamp-3 text-(--foreground-muted) text-sm">
-							{activity.type === "episode"
-								? activity.episodeOverview
-								: activity.overview}
-						</p>
+					{/* Review rating and content */}
+					{activity.type === "review" && activity.rating && (
+						<div className="space-y-2">
+							<StarRating
+								value={activity.rating}
+								readOnly
+								size="md"
+								showValue
+							/>
+							{activity.reviewContent && (
+								<p className="line-clamp-3 text-(--foreground-muted) text-sm">
+									{activity.reviewContent}
+								</p>
+							)}
+						</div>
 					)}
 
-					{/* Actions */}
-					<div className="flex flex-wrap items-center gap-4 pt-1">
-						{activity.type === "movie" ? (
-							<FeedItemActions
-								type="movie"
-								mediaId={String(activity.movieId)}
-								title={activity.title || ""}
-							/>
-						) : (
-							<FeedItemActions
-								type="show"
-								mediaId={String(activity.showId)}
-								seasonNumber={Number(activity.seasonNumber || 0)}
-								episodeNumber={Number(activity.episodeNumber || 0)}
-								title={activity.showTitle || ""}
-							/>
+					{/* Description */}
+					{activity.type !== "review" &&
+						(activity.type === "episode"
+							? activity.episodeOverview
+							: activity.overview) && (
+							<p className="line-clamp-3 text-(--foreground-muted) text-sm">
+								{activity.type === "episode"
+									? activity.episodeOverview
+									: activity.overview}
+							</p>
 						)}
-					</div>
+
+					{/* Actions */}
+					{activity.type !== "review" && (
+						<div className="flex flex-wrap items-center gap-4 pt-1">
+							{activity.type === "movie" ? (
+								<FeedItemActions
+									type="movie"
+									mediaId={String(activity.movieId)}
+									title={activity.title || ""}
+								/>
+							) : (
+								<FeedItemActions
+									type="show"
+									mediaId={String(activity.showId)}
+									seasonNumber={Number(activity.seasonNumber || 0)}
+									episodeNumber={Number(activity.episodeNumber || 0)}
+									title={activity.showTitle || ""}
+								/>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 		</article>

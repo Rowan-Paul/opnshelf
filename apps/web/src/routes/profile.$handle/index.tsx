@@ -2,16 +2,23 @@ import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
 	moviesControllerGetUserMoviesPaginatedOptions,
+	reviewsControllerGetUserReviewsQueryKey,
+	reviewsControllerUpsertReviewMutation,
 	showsControllerGetUserEpisodesPaginatedOptions,
+	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Film, Heart, List, Tv } from "lucide-react";
+import { ChevronRight, Clock, Film, Heart, List, Star, Tv } from "lucide-react";
+import { toast } from "sonner";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import MediaCard from "#/components/MediaCard";
+import StarRating from "#/components/StarRating";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { useUserReviews } from "#/lib/hooks/useReviews";
+import { toSlug } from "#/lib/slug";
 
 setupApiClient();
 
@@ -63,6 +70,12 @@ function ProfileOverviewPage() {
 	const totalLists = listsData?.length ?? 0;
 	const totalWatched = (moviesData?.total ?? 0) + (episodesData?.total ?? 0);
 
+	const { data: reviewsData, isLoading: reviewsLoading } = useUserReviews({
+		userDid,
+		limit: 4,
+	});
+	const totalReviews = reviewsData?.total ?? 0;
+
 	const watchlist = listsData?.find((l) => l.slug === "watchlist");
 	const favorites = listsData?.find((l) => l.slug === "favorites");
 
@@ -93,6 +106,12 @@ function ProfileOverviewPage() {
 					value={totalWatched}
 					icon={Clock}
 					isLoading={!moviesData && !episodesData && !!userDid}
+				/>
+				<StatCard
+					label="Reviews"
+					value={totalReviews}
+					icon={Star}
+					isLoading={reviewsLoading}
 				/>
 			</div>
 
@@ -225,6 +244,123 @@ function ProfileOverviewPage() {
 					emptyText="Nothing on favorites"
 				/>
 			</div>
+
+			{/* Recent Reviews */}
+			<section>
+				<div className="mb-4 flex items-center justify-between">
+					<h2 className="flex items-center gap-2 text-display-3">
+						<Star className="size-5 text-(--accent)" />
+						Recent Reviews
+					</h2>
+					<Link
+						to="/profile/$handle/reviews"
+						params={{ handle }}
+						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+					>
+						View all
+						<ChevronRight className="size-4" />
+					</Link>
+				</div>
+
+				{reviewsLoading ? (
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						{[1, 2, 3, 4].map((i) => (
+							<div
+								key={i}
+								className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
+							/>
+						))}
+					</div>
+				) : reviewsData?.items && reviewsData.items.length > 0 ? (
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						{reviewsData.items.map((review) => (
+							<ProfileReviewCard
+								key={review.id}
+								review={review}
+								isOwner={isOwner}
+								userDid={userDid}
+							/>
+						))}
+					</div>
+				) : (
+					<div className="card p-8 text-center">
+						<p className="text-(--foreground-muted)">No reviews yet.</p>
+					</div>
+				)}
+			</section>
+		</div>
+	);
+}
+
+function ProfileReviewCard({
+	review,
+	isOwner,
+	userDid,
+}: {
+	review: UserReviewDto;
+	isOwner: boolean;
+	userDid: string;
+}) {
+	const queryClient = useQueryClient();
+
+	const mutation = useMutation({
+		...reviewsControllerUpsertReviewMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: reviewsControllerGetUserReviewsQueryKey({
+					path: { userDid },
+					query: { limit: 4 },
+				}),
+			});
+			toast.success("Rating updated");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update rating",
+			);
+		},
+	});
+
+	const href =
+		review.mediaType === "movie"
+			? `/movies/${review.mediaId}/${toSlug(review.title || "")}`
+			: `/shows/${review.mediaId}/${toSlug(review.title || "")}`;
+
+	const handleRatingChange = (newRating: number) => {
+		if (!isOwner) return;
+		mutation.mutate({
+			body: {
+				mediaType: review.mediaType,
+				mediaId: review.mediaId,
+				seasonNumber: review.seasonNumber,
+				episodeNumber: review.episodeNumber,
+				rating: newRating,
+				content: review.content,
+			},
+		});
+	};
+
+	return (
+		<div key={review.id} className="card p-4">
+			{review.posterPath && (
+				<Link to={href}>
+					<img
+						src={`https://image.tmdb.org/t/p/w300${review.posterPath}`}
+						alt={review.title || "Poster"}
+						className="mb-2 aspect-[2/3] w-full rounded-md object-cover"
+					/>
+				</Link>
+			)}
+			<h3 className="line-clamp-2 font-medium text-sm">
+				{review.title || "Unknown"}
+			</h3>
+			<StarRating
+				value={review.rating}
+				onChange={isOwner ? handleRatingChange : undefined}
+				readOnly={!isOwner}
+				size="sm"
+				showValue
+			/>
 		</div>
 	);
 }
@@ -347,10 +483,10 @@ function ListPreview({
 									type={item.mediaType as "movie" | "show"}
 									href={
 										isEpisode
-											? `/show/${mediaId}/season/${item.seasonNumber}/episode/${item.episodeNumber}`
+											? `/shows/${mediaId}/${toSlug(title)}/seasons/${item.seasonNumber}/episodes/${item.episodeNumber}`
 											: item.mediaType === "movie"
-												? `/movie/${mediaId}`
-												: `/show/${mediaId}`
+												? `/movies/${mediaId}/${toSlug(title)}`
+												: `/shows/${mediaId}/${toSlug(title)}`
 									}
 								/>
 							</div>

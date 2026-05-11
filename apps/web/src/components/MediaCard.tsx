@@ -16,6 +16,7 @@ import {
 	buildSeasonUrl,
 	buildShowUrl,
 } from "#/lib/url-utils";
+import StarRating, { ratingToStars } from "./StarRating";
 
 export interface MediaCardProps {
 	id: string | number;
@@ -26,7 +27,9 @@ export interface MediaCardProps {
 	posterUrl: string;
 	backdropUrl?: string;
 	type: "movie" | "show";
-	rating?: number;
+	tmdbRating?: number;
+	globalRating?: number;
+	userRating?: number;
 	duration?: string;
 	episodeInfo?: string;
 	progress?: number;
@@ -58,7 +61,8 @@ export default function MediaCard({
 	posterUrl,
 	backdropUrl,
 	type,
-	rating,
+	globalRating,
+	userRating,
 	duration,
 	episodeInfo,
 	progress,
@@ -349,13 +353,13 @@ export default function MediaCard({
 										),
 									});
 								}
-								if (rating) {
+								if (globalRating) {
 									parts.push({
-										key: "rating",
+										key: "globalRating",
 										node: (
 											<span className="flex items-center gap-1">
 												<Star className="size-3 fill-current text-yellow-500" />
-												{rating.toFixed(1)}
+												{ratingToStars(globalRating).toFixed(1)}
 											</span>
 										),
 									});
@@ -373,6 +377,11 @@ export default function MediaCard({
 								));
 							})()}
 						</div>
+						{userRating ? (
+							<div className="mt-0.5">
+								<StarRating value={userRating} readOnly size="sm" />
+							</div>
+						) : null}
 						{watchedDate && (
 							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">
 								<Clock className="size-3" />

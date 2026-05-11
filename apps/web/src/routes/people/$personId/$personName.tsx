@@ -252,7 +252,7 @@ function PersonDetailPage() {
 													: ""
 											}
 											type={item.media_type === "movie" ? "movie" : "show"}
-											rating={
+											tmdbRating={
 												item.vote_average
 													? Math.round(item.vote_average * 10) / 10
 													: undefined
@@ -288,7 +288,7 @@ function PersonDetailPage() {
 														: ""
 												}
 												type={item.media_type === "movie" ? "movie" : "show"}
-												rating={
+												tmdbRating={
 													item.vote_average
 														? Math.round(item.vote_average * 10) / 10
 														: undefined

@@ -31,6 +31,7 @@ import { Pagination } from "#/components/Pagination";
 import { useDebounce } from "#/hooks/useDebounce";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { useBatchRatingsQuery } from "#/lib/hooks/useReviews";
 
 setupApiClient();
 
@@ -87,8 +88,15 @@ const tabs: { key: Tab; label: string; icon: typeof Film }[] = [
 function SearchPage() {
 	const search = useSearch({ from: Route.id });
 	const navigate = useNavigate();
-	const { isAuthenticated } = useAuth();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const queryClient = useQueryClient();
+
+	// Redirect authenticated users who still need onboarding
+	useEffect(() => {
+		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
+			navigate({ to: "/onboarding" });
+		}
+	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
 	const initialQuery = search.q || "";
 	const initialType = search.type || "";
@@ -204,6 +212,23 @@ function SearchPage() {
 	);
 	const people = peopleData?.items || [];
 
+	const mediaItems = useMemo(
+		() =>
+			(searchData?.results || [])
+				.filter(
+					(r: UnifiedSearchResultDto) =>
+						r.media_type === "movie" || r.media_type === "tv",
+				)
+				.map((r: UnifiedSearchResultDto) => ({
+					id: r.id,
+					type: (r.media_type === "movie" ? "movie" : "show") as
+						| "movie"
+						| "show",
+				})),
+		[searchData],
+	);
+	const { ratings } = useBatchRatingsQuery(mediaItems);
+
 	const hasQuery = debouncedQuery.length > 0;
 	const isLoading = isSearching || (isAuthenticated && isSearchingPeople);
 	const hasResults = movies.length > 0 || shows.length > 0 || people.length > 0;
@@ -291,7 +316,10 @@ function SearchPage() {
 												posterUrl={getPosterUrl(item)}
 												backdropUrl={getBackdropUrl(item)}
 												type={item.media_type === "movie" ? "movie" : "show"}
-												rating={item.vote_average || undefined}
+												tmdbRating={item.vote_average || undefined}
+												globalRating={
+													ratings.get(String(item.id))?.averageRating
+												}
 												size="md"
 												layout="poster"
 											/>
@@ -312,7 +340,8 @@ function SearchPage() {
 											posterUrl={getPosterUrl(item)}
 											backdropUrl={getBackdropUrl(item)}
 											type="movie"
-											rating={item.vote_average || undefined}
+											tmdbRating={item.vote_average || undefined}
+											globalRating={ratings.get(String(item.id))?.averageRating}
 											size="md"
 											layout="poster"
 										/>
@@ -333,7 +362,8 @@ function SearchPage() {
 											posterUrl={getPosterUrl(item)}
 											backdropUrl={getBackdropUrl(item)}
 											type="show"
-											rating={item.vote_average || undefined}
+											tmdbRating={item.vote_average || undefined}
+											globalRating={ratings.get(String(item.id))?.averageRating}
 											size="md"
 											layout="poster"
 										/>

@@ -30,6 +30,7 @@ model User {
   trackedEpisodes TrackedEpisode[]
   lists        List[]
   notes        Note[]
+  reviews      Review[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
   
@@ -315,4 +316,30 @@ model Note {
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
   @@index([userDid])
   @@index([mediaType, mediaId])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  rkey          String   @unique
+  uri           String
+  cid           String
+
+  userDid       String
+  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
+  mediaType     MediaType
+  mediaId       String
+  seasonNumber  Int      @default(0)
+  episodeNumber Int      @default(0)
+
+  rating        Int
+  content       String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
+  @@index([userDid])
+  @@index([mediaType, mediaId])
+  @@index([rating])
 }

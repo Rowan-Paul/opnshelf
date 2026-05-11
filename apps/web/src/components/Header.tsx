@@ -53,8 +53,8 @@ export default function Header() {
 		setMobileMenuOpen(false);
 	}, []);
 
-	// Don't show navigation on login page
-	if (currentPath === "/login") {
+	// Don't show navigation on login or onboarding pages
+	if (currentPath === "/login" || currentPath === "/onboarding") {
 		return (
 			<header className="sticky top-0 z-50 border-transparent border-b bg-(--background)">
 				<div className="container-app">

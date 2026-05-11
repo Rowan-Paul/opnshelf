@@ -8,7 +8,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Film,
 	Loader2,
-	MoreHorizontal,
 	Pencil,
 	Save,
 	StickyNote,
@@ -105,7 +104,6 @@ function NoteCard({
 	const queryClient = useQueryClient();
 	const [isEditing, setIsEditing] = useState(false);
 	const [editContent, setEditContent] = useState(note.content);
-	const [showActions, setShowActions] = useState(false);
 
 	const resolvedMediaType =
 		note.episodeNumber != null
@@ -241,53 +239,35 @@ function NoteCard({
 								{formatMediaLabel(note)}
 							</span>
 						</div>
-						<span className="text-(--foreground-subtle) text-xs">
-							{new Date(note.updatedAt).toLocaleDateString()}
-						</span>
 					</div>
 
 					{/* Actions */}
-					{isOwner && (
-						<div className="relative">
+					{isOwner && !isEditing && (
+						<div className="flex items-center gap-1">
+							<span className="text-(--foreground-subtle) text-xs">
+								{new Date(note.updatedAt).toLocaleDateString()}
+							</span>
 							<button
 								type="button"
-								onClick={() => setShowActions(!showActions)}
-								className="btn btn-ghost h-8 w-8 shrink-0 p-0 text-(--foreground-muted)"
-								aria-label="More options"
+								onClick={() => setIsEditing(true)}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit note"
 							>
-								<MoreHorizontal className="size-4" />
+								<Pencil className="size-3.5" />
 							</button>
-							{showActions && (
-								<div className="absolute right-0 z-10 mt-1 w-32 rounded-lg border border-(--border) bg-(--background-elevated) py-1 shadow-lg">
-									<button
-										type="button"
-										onClick={() => {
-											setIsEditing(true);
-											setShowActions(false);
-										}}
-										className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-(--background-subtle)"
-									>
-										<Pencil className="size-4" />
-										Edit
-									</button>
-									<button
-										type="button"
-										onClick={() => {
-											handleDelete();
-											setShowActions(false);
-										}}
-										disabled={deleteMutation.isPending}
-										className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-500 text-sm hover:bg-red-500/10 disabled:opacity-50"
-									>
-										{deleteMutation.isPending ? (
-											<Loader2 className="size-4 animate-spin" />
-										) : (
-											<Trash2 className="size-4" />
-										)}
-										Delete
-									</button>
-								</div>
-							)}
+							<button
+								type="button"
+								onClick={handleDelete}
+								disabled={deleteMutation.isPending}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete note"
+							>
+								{deleteMutation.isPending ? (
+									<Loader2 className="size-3.5 animate-spin" />
+								) : (
+									<Trash2 className="size-3.5" />
+								)}
+							</button>
 						</div>
 					)}
 				</div>

@@ -274,6 +274,7 @@ export type UserWhereInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
   lists?: Prisma.ListListRelationFilter
   notes?: Prisma.NoteListRelationFilter
+  reviews?: Prisma.ReviewListRelationFilter
   following?: Prisma.FollowListRelationFilter
   followers?: Prisma.FollowListRelationFilter
 }
@@ -299,6 +300,7 @@ export type UserOrderByWithRelationInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeOrderByRelationAggregateInput
   lists?: Prisma.ListOrderByRelationAggregateInput
   notes?: Prisma.NoteOrderByRelationAggregateInput
+  reviews?: Prisma.ReviewOrderByRelationAggregateInput
   following?: Prisma.FollowOrderByRelationAggregateInput
   followers?: Prisma.FollowOrderByRelationAggregateInput
 }
@@ -327,6 +329,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
   lists?: Prisma.ListListRelationFilter
   notes?: Prisma.NoteListRelationFilter
+  reviews?: Prisma.ReviewListRelationFilter
   following?: Prisma.FollowListRelationFilter
   followers?: Prisma.FollowListRelationFilter
 }, "did" | "handle">
@@ -396,6 +399,7 @@ export type UserCreateInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
@@ -421,6 +425,7 @@ export type UserUncheckedCreateInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
@@ -446,6 +451,7 @@ export type UserUpdateInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
@@ -471,6 +477,7 @@ export type UserUncheckedUpdateInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
@@ -694,6 +701,20 @@ export type UserUpdateOneRequiredWithoutNotesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotesInput, Prisma.UserUpdateWithoutNotesInput>, Prisma.UserUncheckedUpdateWithoutNotesInput>
 }
 
+export type UserCreateNestedOneWithoutReviewsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutReviewsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewsInput
+  upsert?: Prisma.UserUpsertWithoutReviewsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReviewsInput, Prisma.UserUpdateWithoutReviewsInput>, Prisma.UserUncheckedUpdateWithoutReviewsInput>
+}
+
 export type UserCreateWithoutFollowingInput = {
   did: string
   handle: string
@@ -715,6 +736,7 @@ export type UserCreateWithoutFollowingInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
 
@@ -739,6 +761,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
 
@@ -768,6 +791,7 @@ export type UserCreateWithoutFollowersInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
 }
 
@@ -792,6 +816,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
 }
 
@@ -832,6 +857,7 @@ export type UserUpdateWithoutFollowingInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
 
@@ -856,6 +882,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
 
@@ -891,6 +918,7 @@ export type UserUpdateWithoutFollowersInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
 }
 
@@ -915,6 +943,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
 }
 
@@ -938,6 +967,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
@@ -962,6 +992,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
@@ -1002,6 +1033,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
@@ -1026,6 +1058,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
@@ -1050,6 +1083,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
@@ -1074,6 +1108,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
@@ -1114,6 +1149,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
@@ -1138,6 +1174,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
@@ -1162,6 +1199,7 @@ export type UserCreateWithoutListsInput = {
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
@@ -1186,6 +1224,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
@@ -1226,6 +1265,7 @@ export type UserUpdateWithoutListsInput = {
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
@@ -1250,6 +1290,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
@@ -1274,6 +1315,7 @@ export type UserCreateWithoutNotesInput = {
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
 }
@@ -1298,6 +1340,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
 }
@@ -1338,6 +1381,7 @@ export type UserUpdateWithoutNotesInput = {
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
 }
@@ -1362,6 +1406,123 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+}
+
+export type UserCreateWithoutReviewsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+}
+
+export type UserUncheckedCreateWithoutReviewsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  onboardingCompletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+}
+
+export type UserCreateOrConnectWithoutReviewsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
+}
+
+export type UserUpsertWithoutReviewsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReviewsInput, Prisma.UserUncheckedUpdateWithoutReviewsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReviewsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReviewsInput, Prisma.UserUncheckedUpdateWithoutReviewsInput>
+}
+
+export type UserUpdateWithoutReviewsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReviewsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
@@ -1376,6 +1537,7 @@ export type UserCountOutputType = {
   trackedEpisodes: number
   lists: number
   notes: number
+  reviews: number
   following: number
   followers: number
 }
@@ -1385,6 +1547,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   trackedEpisodes?: boolean | UserCountOutputTypeCountTrackedEpisodesArgs
   lists?: boolean | UserCountOutputTypeCountListsArgs
   notes?: boolean | UserCountOutputTypeCountNotesArgs
+  reviews?: boolean | UserCountOutputTypeCountReviewsArgs
   following?: boolean | UserCountOutputTypeCountFollowingArgs
   followers?: boolean | UserCountOutputTypeCountFollowersArgs
 }
@@ -1430,6 +1593,13 @@ export type UserCountOutputTypeCountNotesArgs<ExtArgs extends runtime.Types.Exte
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountReviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReviewWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountFollowingArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.FollowWhereInput
 }
@@ -1463,6 +1633,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   notes?: boolean | Prisma.User$notesArgs<ExtArgs>
+  reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   following?: boolean | Prisma.User$followingArgs<ExtArgs>
   followers?: boolean | Prisma.User$followersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1531,6 +1702,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   notes?: boolean | Prisma.User$notesArgs<ExtArgs>
+  reviews?: boolean | Prisma.User$reviewsArgs<ExtArgs>
   following?: boolean | Prisma.User$followingArgs<ExtArgs>
   followers?: boolean | Prisma.User$followersArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1545,6 +1717,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     trackedEpisodes: Prisma.$TrackedEpisodePayload<ExtArgs>[]
     lists: Prisma.$ListPayload<ExtArgs>[]
     notes: Prisma.$NotePayload<ExtArgs>[]
+    reviews: Prisma.$ReviewPayload<ExtArgs>[]
     following: Prisma.$FollowPayload<ExtArgs>[]
     followers: Prisma.$FollowPayload<ExtArgs>[]
   }
@@ -1963,6 +2136,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   trackedEpisodes<T extends Prisma.User$trackedEpisodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedEpisodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lists<T extends Prisma.User$listsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notes<T extends Prisma.User$notesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviews<T extends Prisma.User$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   following<T extends Prisma.User$followingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$followingArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   followers<T extends Prisma.User$followersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$followersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2496,6 +2670,30 @@ export type User$notesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.NoteScalarFieldEnum | Prisma.NoteScalarFieldEnum[]
+}
+
+/**
+ * User.reviews
+ */
+export type User$reviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Review
+   */
+  select?: Prisma.ReviewSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Review
+   */
+  omit?: Prisma.ReviewOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReviewInclude<ExtArgs> | null
+  where?: Prisma.ReviewWhereInput
+  orderBy?: Prisma.ReviewOrderByWithRelationInput | Prisma.ReviewOrderByWithRelationInput[]
+  cursor?: Prisma.ReviewWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewScalarFieldEnum | Prisma.ReviewScalarFieldEnum[]
 }
 
 /**

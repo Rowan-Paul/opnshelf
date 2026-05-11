@@ -69,6 +69,12 @@ function OnboardingPage() {
 	const [step, setStep] = useState<OnboardingStep>("welcome");
 	const initialCheckDone = useRef(false);
 
+	// Check for an ongoing Trakt import so we can resume at the trakt step
+	const { data: currentImport } = useQuery({
+		...usersControllerGetMyCurrentTraktImportOptions(),
+		enabled: isAuthenticated && !authLoading,
+	});
+
 	// Redirect unauthenticated users to login
 	useEffect(() => {
 		if (!authLoading && !isAuthenticated) {
@@ -85,6 +91,18 @@ function OnboardingPage() {
 			navigate({ to: "/dashboard" });
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
+
+	// Resume at the trakt step when there is an active import
+	useEffect(() => {
+		if (authLoading) return;
+		if (
+			currentImport?.id &&
+			isKnownTraktImportStatus(currentImport.status) &&
+			!isTerminalTraktImportStatus(currentImport.status)
+		) {
+			setStep("trakt");
+		}
+	}, [authLoading, currentImport]);
 
 	if (authLoading) {
 		return (

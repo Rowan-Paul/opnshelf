@@ -46,13 +46,13 @@ export default function Footer() {
 	const year = new Date().getFullYear();
 
 	return (
-		<footer className="border-(--border) border-t bg-(--background)">
+		<footer className="border-border border-t bg-background">
 			<div className="container-app py-12">
 				<div className="flex flex-col items-center gap-8">
 					{/* Brand */}
 					<div className="text-center">
 						<Link to="/" className="inline-flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[#3f2e00]">
 								<Film className="size-4" />
 							</div>
 							<span className="font-bold font-display text-lg">OpnShelf</span>
@@ -70,7 +70,7 @@ export default function Footer() {
 										href={item.href}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-9 w-9 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground)"
+										className="flex h-9 w-9 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-foreground"
 										aria-label={item.name}
 									>
 										{item.name === "Tangled" ? (
@@ -86,12 +86,20 @@ export default function Footer() {
 				</div>
 
 				{/* Bottom */}
-				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-(--border) border-t pt-8 sm:flex-row">
+				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-border border-t pt-8 sm:flex-row">
 					<p className="text-(--foreground-subtle) text-sm">
 						&copy; {year} OpnShelf. All rights reserved.
 					</p>
 					<p className="text-(--foreground-subtle) text-xs">
-						Built with care on the AT Protocol
+						Built with ❤️ by{" "}
+						<a
+							href="https://rowanpaulflynn.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-accent hover:underline"
+						>
+							Rowan Paul Flynn
+						</a>
 					</p>
 				</div>
 			</div>

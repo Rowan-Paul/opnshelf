@@ -1,7 +1,7 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -27,6 +27,7 @@ import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
 import NotesSection from "../../../components/NotesSection";
 import PersonGrid from "../../../components/PersonGrid";
+import ReviewSection from "../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 import { YourActivity } from "../../../components/YourActivity";
 
@@ -64,8 +65,21 @@ function formatRuntime(minutes: number): string {
 
 function MovieDetailPage() {
 	const { movieId } = Route.useParams();
-	const { userSettings, isAuthenticated } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
+	const navigate = useNavigate();
 	const userTimezone = userSettings?.timezone;
+
+	// Redirect authenticated users who still need onboarding
+	useEffect(() => {
+		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
+			navigate({ to: "/onboarding" });
+		}
+	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
 	const { data: similarMoviesData } = useDiscoverMovies(1);
@@ -142,11 +156,6 @@ function MovieDetailPage() {
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
-				rating: (m as { vote_average?: number }).vote_average
-					? Math.round(
-							((m as { vote_average?: number }).vote_average ?? 0) * 10,
-						) / 10
-					: undefined,
 			})) || [];
 
 	return (
@@ -306,6 +315,9 @@ function MovieDetailPage() {
 						/>
 
 						<InYourLists mediaType="movie" mediaId={movieId} />
+
+						{/* Review */}
+						<ReviewSection mediaType="movie" mediaId={movieId} />
 
 						{/* Notes */}
 						<NotesSection mediaType="movie" mediaId={movieId} />

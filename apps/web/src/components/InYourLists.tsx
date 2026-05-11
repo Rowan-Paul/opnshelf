@@ -21,6 +21,8 @@ export default function InYourLists({
 	const [open, setOpen] = useState(false);
 	const { user } = useAuth();
 	const userHandle = user?.handle;
+
+	// Always call hooks before any conditional return
 	const { otherLists, availableLists } = useListItemStatus({
 		mediaType,
 		mediaId,
@@ -33,6 +35,8 @@ export default function InYourLists({
 		seasonNumber,
 		episodeNumber,
 	});
+
+	if (!userHandle) return null;
 
 	return (
 		<section className="card relative p-5">
@@ -80,16 +84,14 @@ export default function InYourLists({
 						<p className="text-(--foreground-muted) text-sm">
 							Not in any lists yet
 						</p>
-						{userHandle && (
-							<Link
-								to="/profile/$handle/lists"
-								params={{ handle: userHandle }}
-								className="btn btn-secondary w-full gap-2 text-sm"
-							>
-								<Plus className="size-4" />
-								Create your first list
-							</Link>
-						)}
+						<Link
+							to="/profile/$handle/lists"
+							params={{ handle: userHandle }}
+							className="btn btn-secondary w-full gap-2 text-sm"
+						>
+							<Plus className="size-4" />
+							Create your first list
+						</Link>
 					</div>
 				) : (
 					<p className="text-(--foreground-muted) text-sm">

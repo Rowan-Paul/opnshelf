@@ -25,6 +25,11 @@
 			"id": "xyz.opnshelf.follow",
 			"path": "lexicons/app/opnshelf/follow.json",
 			"local": true
+		},
+		{
+			"id": "xyz.opnshelf.review",
+			"path": "lexicons/app/opnshelf/review.json",
+			"local": true
 		}
 	]
 }

@@ -64,7 +64,8 @@ export const ModelName = {
   TrackedEpisode: 'TrackedEpisode',
   List: 'List',
   ListItem: 'ListItem',
-  Note: 'Note'
+  Note: 'Note',
+  Review: 'Review'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -308,6 +309,25 @@ export const NoteScalarFieldEnum = {
 } as const
 
 export type NoteScalarFieldEnum = (typeof NoteScalarFieldEnum)[keyof typeof NoteScalarFieldEnum]
+
+
+export const ReviewScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  rating: 'rating',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
 
 
 export const SortOrder = {

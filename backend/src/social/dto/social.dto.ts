@@ -172,8 +172,8 @@ export class FollowedActivityItemDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty({ enum: ["movie", "episode"] })
-	type: "movie" | "episode";
+	@ApiProperty({ enum: ["movie", "episode", "review"] })
+	type: "movie" | "episode" | "review";
 
 	@ApiProperty()
 	activityAt: string;
@@ -225,6 +225,16 @@ export class FollowedActivityItemDto {
 
 	@ApiPropertyOptional()
 	watchedDate?: string;
+
+	@ApiPropertyOptional({
+		description: "Rating for review activities (1-10 scale)",
+	})
+	rating?: number;
+
+	@ApiPropertyOptional({
+		description: "Review text content for review activities",
+	})
+	reviewContent?: string;
 
 	@ApiProperty()
 	createdAt: string;

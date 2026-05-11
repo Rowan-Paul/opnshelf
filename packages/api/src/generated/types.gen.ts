@@ -924,7 +924,7 @@ export type SocialActorDto = {
 export type FollowedActivityItemDto = {
     actor: SocialActorDto;
     id: string;
-    type: 'movie' | 'episode';
+    type: 'movie' | 'episode' | 'review';
     activityAt: string;
     movieId?: string;
     title?: string;
@@ -942,6 +942,14 @@ export type FollowedActivityItemDto = {
     overview?: string;
     colors?: MovieColorsDto;
     watchedDate?: string;
+    /**
+     * Rating for review activities (1-10 scale)
+     */
+    rating?: number;
+    /**
+     * Review text content for review activities
+     */
+    reviewContent?: string;
     createdAt: string;
 };
 
@@ -1039,6 +1047,133 @@ export type UpsertNoteDto = {
      * Note content
      */
     content: string;
+};
+
+export type ReviewResponseDto = {
+    id: string;
+    rkey: string;
+    rating: number;
+    content?: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UserReviewDto = {
+    id: string;
+    rating: number;
+    content?: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Title of the movie or show
+     */
+    title?: string;
+    /**
+     * Poster path for the movie or show
+     */
+    posterPath?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PaginatedReviewsResponseDto = {
+    items: Array<UserReviewDto>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: string | null;
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
+export type MediaReviewItemDto = {
+    id: string;
+    rating: number;
+    content?: string;
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MediaReviewsResponseDto = {
+    items: Array<MediaReviewItemDto>;
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total review count
+     */
+    total: number;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: string | null;
+};
+
+export type BatchRatingRequestDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show';
+    /**
+     * Array of media IDs to fetch ratings for
+     */
+    mediaIds: Array<string>;
+};
+
+export type BatchRatingItemDto = {
+    mediaId: string;
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total review count
+     */
+    reviewCount: number;
+};
+
+export type BatchRatingResponseDto = {
+    items: Array<BatchRatingItemDto>;
+};
+
+export type UpsertReviewDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Rating from 1 to 10 (maps to 0.5-5.0 stars)
+     */
+    rating: number;
+    /**
+     * Review text
+     */
+    content?: string;
 };
 
 export type ShelfResponseDto = {
@@ -2943,6 +3078,178 @@ export type NotesControllerDeleteNoteErrors = {
 export type NotesControllerDeleteNoteResponses = {
     /**
      * Note deleted
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerGetReviewData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query: {
+        /**
+         * Media type (movie, show, season, episode)
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/reviews/user/{userDid}';
+};
+
+export type ReviewsControllerGetReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerGetReviewResponses = {
+    /**
+     * Review retrieved
+     */
+    200: ReviewResponseDto;
+};
+
+export type ReviewsControllerGetReviewResponse = ReviewsControllerGetReviewResponses[keyof ReviewsControllerGetReviewResponses];
+
+export type ReviewsControllerGetUserReviewsData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination
+         */
+        cursor?: string;
+    };
+    url: '/reviews/user/{userDid}/reviews';
+};
+
+export type ReviewsControllerGetUserReviewsResponses = {
+    /**
+     * Reviews retrieved
+     */
+    200: PaginatedReviewsResponseDto;
+};
+
+export type ReviewsControllerGetUserReviewsResponse = ReviewsControllerGetUserReviewsResponses[keyof ReviewsControllerGetUserReviewsResponses];
+
+export type ReviewsControllerGetMediaReviewsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination
+         */
+        cursor?: string;
+    };
+    url: '/reviews/media';
+};
+
+export type ReviewsControllerGetMediaReviewsResponses = {
+    /**
+     * Reviews retrieved
+     */
+    200: MediaReviewsResponseDto;
+};
+
+export type ReviewsControllerGetMediaReviewsResponse = ReviewsControllerGetMediaReviewsResponses[keyof ReviewsControllerGetMediaReviewsResponses];
+
+export type ReviewsControllerGetBatchRatingsData = {
+    body: BatchRatingRequestDto;
+    path?: never;
+    query?: never;
+    url: '/reviews/batch';
+};
+
+export type ReviewsControllerGetBatchRatingsResponses = {
+    /**
+     * Batch ratings retrieved
+     */
+    200: BatchRatingResponseDto;
+};
+
+export type ReviewsControllerGetBatchRatingsResponse = ReviewsControllerGetBatchRatingsResponses[keyof ReviewsControllerGetBatchRatingsResponses];
+
+export type ReviewsControllerUpsertReviewData = {
+    body: UpsertReviewDto;
+    path?: never;
+    query?: never;
+    url: '/reviews';
+};
+
+export type ReviewsControllerUpsertReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerUpsertReviewResponses = {
+    /**
+     * Review upserted
+     */
+    200: ReviewResponseDto;
+};
+
+export type ReviewsControllerUpsertReviewResponse = ReviewsControllerUpsertReviewResponses[keyof ReviewsControllerUpsertReviewResponses];
+
+export type ReviewsControllerDeleteReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}';
+};
+
+export type ReviewsControllerDeleteReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerDeleteReviewResponses = {
+    /**
+     * Review deleted
      */
     200: unknown;
 };

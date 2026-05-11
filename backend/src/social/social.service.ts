@@ -39,7 +39,7 @@ type SocialUserRecord = {
 type FollowedActivityRow = {
 	actorDid: string;
 	id: string;
-	type: "movie" | "episode";
+	type: "movie" | "episode" | "review";
 	activityAt: Date;
 	watchedDate: Date | null;
 	createdAt: Date;
@@ -57,6 +57,8 @@ type FollowedActivityRow = {
 	releaseYear: number | null;
 	firstAirYear: number | null;
 	overview: string | null;
+	rating: number | null;
+	reviewContent: string | null;
 };
 
 type FollowedWatcherRow = {
@@ -348,15 +350,18 @@ export class SocialService {
 			return emptyPaginatedResult(safePage, safePageSize);
 		}
 
-		const [movieCount, episodeCount] = await Promise.all([
+		const [movieCount, episodeCount, reviewCount] = await Promise.all([
 			this.prisma.trackedMovie.count({
 				where: { userDid: { in: followedDids } },
 			}),
 			this.prisma.trackedEpisode.count({
 				where: { userDid: { in: followedDids } },
 			}),
+			this.prisma.review.count({
+				where: { userDid: { in: followedDids } },
+			}),
 		]);
-		const total = movieCount + episodeCount;
+		const total = movieCount + episodeCount + reviewCount;
 		const pagination = getPaginationMeta(total, safePage, safePageSize);
 
 		if (total === 0) {
@@ -390,7 +395,9 @@ export class SocialService {
 				activity."backdropPath",
 				activity."releaseYear",
 				activity."firstAirYear",
-				activity.overview
+				activity.overview,
+				activity.rating,
+				activity."reviewContent"
 			FROM (
 				SELECT
 					tm."userDid" AS "actorDid",
@@ -412,7 +419,9 @@ export class SocialService {
 					m."backdropPath",
 					m."releaseYear",
 					NULL::integer AS "firstAirYear",
-					m.overview
+					m.overview,
+					NULL::integer AS rating,
+					NULL::text AS "reviewContent"
 				FROM "TrackedMovie" tm
 				INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
 				WHERE tm."userDid" IN (${followedDidValues})
@@ -439,13 +448,45 @@ export class SocialService {
 					s."backdropPath",
 					NULL::integer AS "releaseYear",
 					s."firstAirYear",
-					s.overview
+					s.overview,
+					NULL::integer AS rating,
+					NULL::text AS "reviewContent"
 				FROM "TrackedEpisode" te
 				INNER JOIN "Show" s ON s."showId" = te."showId"
 				LEFT JOIN "Episode" e ON e."showId" = te."showId"
 					AND e."seasonNumber" = te."seasonNumber"
 					AND e."episodeNumber" = te."episodeNumber"
 				WHERE te."userDid" IN (${followedDidValues})
+
+				UNION ALL
+
+				SELECT
+					r."userDid" AS "actorDid",
+					'review:' || r.id AS id,
+					'review' AS type,
+					r."createdAt" AS "activityAt",
+					NULL::timestamp AS "watchedDate",
+					r."createdAt",
+					CASE WHEN r."mediaType" = 'movie' THEN r."mediaId" ELSE NULL::text END AS "movieId",
+					COALESCE(m.title, s.title) AS title,
+					CASE WHEN r."mediaType" != 'movie' THEN r."mediaId" ELSE NULL::text END AS "showId",
+					s.title AS "showTitle",
+					CASE WHEN r."mediaType" IN ('season', 'episode') THEN r."seasonNumber" ELSE NULL::integer END AS "seasonNumber",
+					CASE WHEN r."mediaType" = 'episode' THEN r."episodeNumber" ELSE NULL::integer END AS "episodeNumber",
+					NULL::text AS "episodeName",
+					NULL::text AS "episodeOverview",
+					NULL::text AS "stillPath",
+					COALESCE(m."posterPath", s."posterPath") AS "posterPath",
+					COALESCE(m."backdropPath", s."backdropPath") AS "backdropPath",
+					m."releaseYear",
+					s."firstAirYear",
+					COALESCE(m.overview, s.overview) AS overview,
+					r.rating,
+					r.content AS "reviewContent"
+				FROM "Review" r
+				LEFT JOIN "Movie" m ON m."movieId" = r."mediaId" AND r."mediaType" = 'movie'
+				LEFT JOIN "Show" s ON s."showId" = r."mediaId" AND r."mediaType" != 'movie'
+				WHERE r."userDid" IN (${followedDidValues})
 			) activity
 			ORDER BY
 				activity."activityAt" DESC,
@@ -966,6 +1007,8 @@ export class SocialService {
 							| FollowedActivityItemDto["colors"]
 							| undefined),
 			watchedDate: row.watchedDate?.toISOString(),
+			rating: row.rating ?? undefined,
+			reviewContent: row.reviewContent ?? undefined,
 			createdAt: row.createdAt.toISOString(),
 		};
 	}

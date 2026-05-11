@@ -28,6 +28,7 @@ import MediaHero from "../../../../components/MediaHero";
 import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
+import ReviewSection from "../../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
@@ -246,8 +247,6 @@ function ShowDetailPage() {
 				posterUrl: s.poster_path
 					? `https://image.tmdb.org/t/p/w300${s.poster_path}`
 					: "",
-				// @ts-expect-error - vote_average may exist on TMDB result
-				rating: s.vote_average,
 			})) || [];
 
 	return (
@@ -486,6 +485,9 @@ function ShowDetailPage() {
 						/>
 
 						<InYourLists mediaType="show" mediaId={showId} />
+
+						{/* Review */}
+						<ReviewSection mediaType="show" mediaId={showId} />
 
 						{/* Notes */}
 						<NotesSection mediaType="show" mediaId={showId} />

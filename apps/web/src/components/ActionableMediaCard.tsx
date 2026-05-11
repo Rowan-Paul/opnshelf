@@ -14,7 +14,9 @@ interface ActionableMediaCardProps {
 	posterUrl: string;
 	backdropUrl?: string;
 	type: "movie" | "show";
-	rating?: number;
+	tmdbRating?: number;
+	globalRating?: number;
+	userRating?: number;
 	duration?: string;
 	episodeInfo?: string;
 	watchedDate?: string;
@@ -37,7 +39,9 @@ export default function ActionableMediaCard({
 	posterUrl,
 	backdropUrl,
 	type,
-	rating,
+	tmdbRating,
+	globalRating,
+	userRating,
 	duration,
 	episodeInfo,
 	watchedDate,
@@ -178,7 +182,9 @@ export default function ActionableMediaCard({
 				posterUrl={posterUrl}
 				backdropUrl={backdropUrl}
 				type={type}
-				rating={rating}
+				tmdbRating={tmdbRating}
+				globalRating={globalRating}
+				userRating={userRating}
 				duration={duration}
 				episodeInfo={episodeInfo}
 				watchedDate={formattedWatchedDate}

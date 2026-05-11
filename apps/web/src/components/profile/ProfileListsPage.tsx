@@ -528,7 +528,7 @@ export function ProfileListsPage({
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
 													type={item.mediaType === "movie" ? "movie" : "show"}
-													rating={getRating(item.media)}
+													tmdbRating={getRating(item.media)}
 													duration={formatDuration(
 														item.media.runtime as number | undefined,
 													)}

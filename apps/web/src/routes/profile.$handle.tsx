@@ -6,7 +6,15 @@ import {
 	Outlet,
 	useParams,
 } from "@tanstack/react-router";
-import { Clock, Film, LayoutGrid, List, StickyNote, Users } from "lucide-react";
+import {
+	Clock,
+	Film,
+	LayoutGrid,
+	List,
+	Star,
+	StickyNote,
+	Users,
+} from "lucide-react";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/profile/$handle")({
@@ -53,6 +61,7 @@ const tabs = [
 	{ label: "Up Next", to: "/profile/$handle/up-next", icon: Clock },
 	{ label: "Lists", to: "/profile/$handle/lists", icon: List },
 	{ label: "Notes", to: "/profile/$handle/notes", icon: StickyNote },
+	{ label: "Reviews", to: "/profile/$handle/reviews", icon: Star },
 	{ label: "Connections", to: "/profile/$handle/connections", icon: Users },
 ];
 

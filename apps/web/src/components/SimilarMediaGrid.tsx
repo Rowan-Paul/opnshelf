@@ -1,3 +1,4 @@
+import { useBatchRatingsQuery } from "#/lib/hooks/useReviews";
 import MediaCard from "./MediaCard";
 
 interface SimilarItem {
@@ -6,7 +7,6 @@ interface SimilarItem {
 	type: "movie" | "show";
 	year?: number;
 	posterUrl: string;
-	rating?: number;
 }
 
 interface SimilarMediaGridProps {
@@ -18,6 +18,9 @@ export default function SimilarMediaGrid({
 	items,
 	title = "Similar",
 }: SimilarMediaGridProps) {
+	// Always call hooks before any conditional return
+	const { ratings } = useBatchRatingsQuery(items);
+
 	if (items.length === 0) return null;
 
 	return (
@@ -31,7 +34,7 @@ export default function SimilarMediaGrid({
 						title={item.title}
 						posterUrl={item.posterUrl}
 						type={item.type}
-						rating={item.rating}
+						globalRating={ratings.get(String(item.id))?.averageRating}
 						size="sm"
 						layout="poster"
 					/>

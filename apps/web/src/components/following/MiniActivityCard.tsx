@@ -1,6 +1,7 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
+import StarRating from "#/components/StarRating";
 import { toSlug } from "#/lib/slug";
 import { UserAvatar } from "./UserAvatar";
 
@@ -32,9 +33,13 @@ export function MiniActivityCard({
 					</Link>
 					<span className="text-(--foreground-muted)">
 						{" "}
-						{activity.type === "movie" ? "watched" : "watched episode"}{" "}
+						{activity.type === "movie"
+							? "watched"
+							: activity.type === "review"
+								? "reviewed"
+								: "watched episode"}{" "}
 					</span>
-					{activity.type === "movie" ? (
+					{activity.type === "movie" || activity.type === "review" ? (
 						<Link
 							to="/movies/$movieId/$movieName"
 							params={{
@@ -83,6 +88,13 @@ export function MiniActivityCard({
 						</Link>
 					)}
 
+				{/* Review rating */}
+				{activity.type === "review" && activity.rating && (
+					<div className="mt-1">
+						<StarRating value={activity.rating} readOnly size="sm" />
+					</div>
+				)}
+
 				{/* Timestamp */}
 				<div className="mt-1 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
 					<Clock className="size-3" />
@@ -99,9 +111,11 @@ export function MiniActivityCard({
 
 			{/* Content Type Badge */}
 			<span
-				className={`badge shrink-0 ${activity.type === "movie" ? "badge-subtle" : "badge-accent"}`}
+				className={`badge shrink-0 ${activity.type === "movie" || activity.type === "review" ? "badge-subtle" : "badge-accent"}`}
 			>
-				{activity.type === "movie" ? "Movie" : "TV"}
+				{activity.type === "movie" || activity.type === "review"
+					? "Movie"
+					: "TV"}
 			</span>
 		</div>
 	);

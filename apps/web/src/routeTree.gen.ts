@@ -24,6 +24,7 @@ import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
 import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle/shelf'
+import { Route as ProfileHandleReviewsRouteImport } from './routes/profile.$handle/reviews'
 import { Route as ProfileHandleNotesRouteImport } from './routes/profile.$handle/notes'
 import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle/lists'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
@@ -111,6 +112,11 @@ const ProfileHandleShelfRoute = ProfileHandleShelfRouteImport.update({
   path: '/shelf',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
+const ProfileHandleReviewsRoute = ProfileHandleReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
 const ProfileHandleNotesRoute = ProfileHandleNotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
+  '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
+  '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/profile/$handle': typeof ProfileHandleIndexRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
+  '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/profile/$handle/connections'
     | '/profile/$handle/lists'
     | '/profile/$handle/notes'
+    | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
     | '/shows/$showId/$showName'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/notes'
+    | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
     | '/profile/$handle'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/profile/$handle/connections'
     | '/profile/$handle/lists'
     | '/profile/$handle/notes'
+    | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
     | '/shows/$showId/$showName'
@@ -464,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleShelfRouteImport
       parentRoute: typeof ProfileHandleRoute
     }
+    '/profile/$handle/reviews': {
+      id: '/profile/$handle/reviews'
+      path: '/reviews'
+      fullPath: '/profile/$handle/reviews'
+      preLoaderRoute: typeof ProfileHandleReviewsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
     '/profile/$handle/notes': {
       id: '/profile/$handle/notes'
       path: '/notes'
@@ -561,6 +580,7 @@ interface ProfileHandleRouteChildren {
   ProfileHandleConnectionsRoute: typeof ProfileHandleConnectionsRoute
   ProfileHandleListsRoute: typeof ProfileHandleListsRouteWithChildren
   ProfileHandleNotesRoute: typeof ProfileHandleNotesRoute
+  ProfileHandleReviewsRoute: typeof ProfileHandleReviewsRoute
   ProfileHandleShelfRoute: typeof ProfileHandleShelfRoute
   ProfileHandleUpNextRoute: typeof ProfileHandleUpNextRoute
   ProfileHandleIndexRoute: typeof ProfileHandleIndexRoute
@@ -570,6 +590,7 @@ const ProfileHandleRouteChildren: ProfileHandleRouteChildren = {
   ProfileHandleConnectionsRoute: ProfileHandleConnectionsRoute,
   ProfileHandleListsRoute: ProfileHandleListsRouteWithChildren,
   ProfileHandleNotesRoute: ProfileHandleNotesRoute,
+  ProfileHandleReviewsRoute: ProfileHandleReviewsRoute,
   ProfileHandleShelfRoute: ProfileHandleShelfRoute,
   ProfileHandleUpNextRoute: ProfileHandleUpNextRoute,
   ProfileHandleIndexRoute: ProfileHandleIndexRoute,
