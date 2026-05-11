@@ -217,8 +217,7 @@ function SettingsPage() {
 		if (deletionStatus) {
 			setDeletionJob(deletionStatus);
 			if (deletionStatus.status === "completed") {
-				logout();
-				window.location.href = "/";
+				void logout();
 			}
 		}
 	}, [deletionStatus, logout]);
@@ -230,8 +229,7 @@ function SettingsPage() {
 			});
 			if (!deletePDSData) {
 				// Immediate deletion, no job returned
-				logout();
-				window.location.href = "/";
+				await logout();
 				return;
 			}
 			// PDS deletion job started
