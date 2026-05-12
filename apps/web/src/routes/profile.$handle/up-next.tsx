@@ -3,9 +3,14 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
 import { Calendar, Loader2, Plus, Tv } from "lucide-react";
-import { useState } from "react";
+import { z } from "zod";
 import { Pagination } from "#/components/Pagination";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -15,8 +20,13 @@ import { toSlug } from "#/lib/slug";
 
 setupApiClient();
 
+const searchSchema = z.object({
+	page: z.coerce.number().min(1).optional().default(1),
+});
+
 export const Route = createFileRoute("/profile/$handle/up-next")({
 	component: ProfileUpNextPage,
+	validateSearch: searchSchema,
 });
 
 function formatRelativeDate(dateStr: string): string {
@@ -42,8 +52,10 @@ function formatRelativeDate(dateStr: string): string {
 
 function ProfileUpNextPage() {
 	const { handle } = Route.useParams();
+	const search = useSearch({ from: Route.id });
+	const navigate = useNavigate();
 	const { user } = useAuth();
-	const [page, setPage] = useState(1);
+	const page = search.page;
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -62,6 +74,15 @@ function ProfileUpNextPage() {
 	const markEpisodeMutation = useMarkEpisodeWatched();
 
 	const items = data?.items ?? [];
+
+	const handlePageChange = (newPage: number) => {
+		navigate({
+			to: "/profile/$handle/up-next",
+			params: { handle },
+			search: newPage > 1 ? { page: newPage } : undefined,
+			replace: true,
+		});
+	};
 
 	return (
 		<div className="space-y-6">
@@ -231,7 +252,7 @@ function ProfileUpNextPage() {
 					<Pagination
 						page={data.page}
 						totalPages={data.totalPages}
-						onPageChange={setPage}
+						onPageChange={handlePageChange}
 					/>
 				</div>
 			)}

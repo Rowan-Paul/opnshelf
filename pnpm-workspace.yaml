@@ -12,4 +12,5 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
   - protobufjs
+  - lightningcss
   - unrs-resolver

@@ -3,9 +3,14 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
 import { Film, Search, Tv } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
 import { setupApiClient } from "#/lib/api";
@@ -13,15 +18,26 @@ import { useAuth } from "#/lib/auth-context";
 
 setupApiClient();
 
+const searchSchema = z.object({
+	page: z.coerce.number().min(1).optional().default(1),
+	type: z.enum(["all", "movie", "episode"]).optional().default("all"),
+});
+
 export const Route = createFileRoute("/profile/$handle/shelf")({
 	component: ProfileShelfPage,
+	validateSearch: searchSchema,
 });
 
 type FilterType = "all" | "movie" | "episode";
 
 function ProfileShelfPage() {
 	const { handle } = Route.useParams();
+	const search = useSearch({ from: Route.id });
+	const navigate = useNavigate();
 	const { user } = useAuth();
+
+	const page = search.page;
+	const filter = search.type;
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -29,9 +45,7 @@ function ProfileShelfPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const [filter, setFilter] = useState<FilterType>("all");
 	const [searchQuery, setSearchQuery] = useState("");
-	const [page, setPage] = useState(1);
 
 	// Server-side pagination with filtering
 	const { data, isLoading } = useQuery({
@@ -47,14 +61,36 @@ function ProfileShelfPage() {
 		enabled: !!userDid,
 	});
 
+	const buildSearch = (newPage: number, newFilter: FilterType) => {
+		const s: Record<string, unknown> = {};
+		if (newFilter !== "all") s.type = newFilter;
+		if (newPage > 1) s.page = newPage;
+		return Object.keys(s).length > 0 ? s : undefined;
+	};
+
+	const navigateToPage = (newPage: number) => {
+		navigate({
+			to: "/profile/$handle/shelf",
+			params: { handle },
+			search: buildSearch(newPage, filter),
+			replace: true,
+		});
+	};
+
 	const handleFilterChange = (newFilter: FilterType) => {
-		setFilter(newFilter);
-		setPage(1);
+		navigate({
+			to: "/profile/$handle/shelf",
+			params: { handle },
+			search: buildSearch(1, newFilter),
+			replace: true,
+		});
 	};
 
 	const handleSearchChange = (value: string) => {
 		setSearchQuery(value);
-		setPage(1);
+		if (page !== 1) {
+			navigateToPage(1);
+		}
 	};
 
 	const items = data?.items ?? [];
@@ -165,7 +201,7 @@ function ProfileShelfPage() {
 					<Pagination
 						page={data.page}
 						totalPages={data.totalPages}
-						onPageChange={setPage}
+						onPageChange={navigateToPage}
 					/>
 				</div>
 			)}
