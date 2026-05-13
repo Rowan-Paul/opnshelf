@@ -567,7 +567,7 @@ function Dashboard() {
 							<div className="space-y-3">
 								{upcomingReleases.map((release) => (
 									<Link
-										key={`${release.showId || release.movieId || release.title}-${release.releaseDate}`}
+										key={`${release.showId || release.movieId || release.title}-${release.releaseDate}-${release.seasonNumber ?? ""}-${release.episodeNumber ?? ""}`}
 										to={
 											release.mediaType === "movie" && release.movieId
 												? buildMovieUrl(release.movieId, release.title)

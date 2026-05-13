@@ -4,19 +4,11 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Film,
-	Loader2,
-	Pencil,
-	Save,
-	StickyNote,
-	Trash2,
-	Tv,
-	X,
-} from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Loader2, Pencil, Save, StickyNote, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
+import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote, useUpsertNote } from "#/lib/hooks/useNotes";
@@ -67,18 +59,6 @@ function getNoteLink(note: {
 		to: "/shows/$showId/$showName" as const,
 		params: { showId: note.mediaId, showName: nameSlug },
 	};
-}
-
-function formatMediaLabel(note: {
-	mediaType: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-}) {
-	if (note.mediaType === "movie") return "Movie";
-	if (note.episodeNumber != null)
-		return `S${note.seasonNumber}E${note.episodeNumber}`;
-	if (note.seasonNumber != null) return `Season ${note.seasonNumber}`;
-	return "Show";
 }
 
 function NoteCard({
@@ -193,130 +173,85 @@ function NoteCard({
 	const link = getNoteLink(note);
 
 	return (
-		<article className="card flex gap-4 p-4 transition-shadow hover:shadow-md sm:p-5">
-			{/* Poster */}
-			{posterUrl ? (
-				<div className="shrink-0">
-					<Link to={link.to} params={link.params}>
-						<img
-							src={posterUrl}
-							alt={note.title || ""}
-							className="h-28 w-20 rounded-lg object-cover sm:h-36 sm:w-24"
-						/>
-					</Link>
-				</div>
-			) : (
-				<div className="shrink-0">
-					<div className="flex h-28 w-20 items-center justify-center rounded-lg bg-(--background-subtle) sm:h-36 sm:w-24">
-						{note.mediaType === "movie" ? (
-							<Film className="size-8 text-(--foreground-muted)" />
-						) : (
-							<Tv className="size-8 text-(--foreground-muted)" />
-						)}
-					</div>
-				</div>
-			)}
-
-			{/* Content */}
-			<div className="flex min-w-0 flex-1 flex-col gap-2">
-				{/* Header */}
-				<div className="flex items-start justify-between gap-2">
-					<div className="min-w-0 flex-1">
-						<div className="flex items-center gap-2">
-							{note.mediaType === "movie" ? (
-								<Film className="size-4 text-(--accent)" />
+		<ProfileContentCard
+			posterUrl={posterUrl}
+			to={link.to}
+			params={link.params}
+			title={note.title || "Unknown title"}
+			headerRight={
+				isOwner && !isEditing ? (
+					<div className="flex items-center gap-1">
+						<span className="text-(--foreground-subtle) text-xs">
+							{new Date(note.updatedAt).toLocaleDateString()}
+						</span>
+						<button
+							type="button"
+							onClick={() => setIsEditing(true)}
+							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+							aria-label="Edit note"
+						>
+							<Pencil className="size-3.5" />
+						</button>
+						<button
+							type="button"
+							onClick={handleDelete}
+							disabled={deleteMutation.isPending}
+							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+							aria-label="Delete note"
+						>
+							{deleteMutation.isPending ? (
+								<Loader2 className="size-3.5 animate-spin" />
 							) : (
-								<Tv className="size-4 text-(--accent)" />
+								<Trash2 className="size-3.5" />
 							)}
-							<Link
-								to={link.to}
-								params={link.params}
-								className="truncate font-medium text-sm hover:text-(--accent)"
-							>
-								{note.title || "Unknown title"}
-							</Link>
-							<span className="badge badge-subtle shrink-0 text-xs">
-								{formatMediaLabel(note)}
-							</span>
-						</div>
+						</button>
 					</div>
-
-					{/* Actions */}
-					{isOwner && !isEditing && (
-						<div className="flex items-center gap-1">
-							<span className="text-(--foreground-subtle) text-xs">
-								{new Date(note.updatedAt).toLocaleDateString()}
-							</span>
+				) : null
+			}
+		>
+			{isEditing ? (
+				<div className="space-y-2">
+					<textarea
+						value={editContent}
+						onChange={(e) => setEditContent(e.target.value)}
+						className="input min-h-[100px] resize-none text-sm"
+						maxLength={5000}
+					/>
+					<div className="flex items-center justify-between">
+						<span className="text-(--foreground-subtle) text-xs">
+							{editContent.length}/5000
+						</span>
+						<div className="flex gap-2">
 							<button
 								type="button"
-								onClick={() => setIsEditing(true)}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-								aria-label="Edit note"
+								onClick={handleCancel}
+								className="btn btn-secondary btn-sm gap-1"
 							>
-								<Pencil className="size-3.5" />
+								<X className="size-3.5" />
+								Cancel
 							</button>
 							<button
 								type="button"
-								onClick={handleDelete}
-								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-								aria-label="Delete note"
+								onClick={handleSave}
+								disabled={upsertMutation.isPending}
+								className="btn btn-primary btn-sm gap-1"
 							>
-								{deleteMutation.isPending ? (
+								{upsertMutation.isPending ? (
 									<Loader2 className="size-3.5 animate-spin" />
 								) : (
-									<Trash2 className="size-3.5" />
+									<Save className="size-3.5" />
 								)}
+								Save
 							</button>
 						</div>
-					)}
-				</div>
-
-				{/* Note content */}
-				{isEditing ? (
-					<div className="space-y-2">
-						<textarea
-							value={editContent}
-							onChange={(e) => setEditContent(e.target.value)}
-							className="input min-h-[100px] resize-none text-sm"
-							maxLength={5000}
-						/>
-						<div className="flex items-center justify-between">
-							<span className="text-(--foreground-subtle) text-xs">
-								{editContent.length}/5000
-							</span>
-							<div className="flex gap-2">
-								<button
-									type="button"
-									onClick={handleCancel}
-									className="btn btn-secondary btn-sm gap-1"
-								>
-									<X className="size-3.5" />
-									Cancel
-								</button>
-								<button
-									type="button"
-									onClick={handleSave}
-									disabled={upsertMutation.isPending}
-									className="btn btn-primary btn-sm gap-1"
-								>
-									{upsertMutation.isPending ? (
-										<Loader2 className="size-3.5 animate-spin" />
-									) : (
-										<Save className="size-3.5" />
-									)}
-									Save
-								</button>
-							</div>
-						</div>
 					</div>
-				) : (
-					<p className="line-clamp-4 whitespace-pre-wrap text-(--foreground) text-sm leading-relaxed">
-						{note.content}
-					</p>
-				)}
-			</div>
-		</article>
+				</div>
+			) : (
+				<p className="line-clamp-4 whitespace-pre-wrap text-(--foreground) text-sm leading-relaxed">
+					{note.content}
+				</p>
+			)}
+		</ProfileContentCard>
 	);
 }
 

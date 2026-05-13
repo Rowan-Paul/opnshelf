@@ -6,10 +6,12 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { ProfileContentCard } from "#/components/ProfileContentCard";
 import StarRating from "#/components/StarRating";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -43,8 +45,8 @@ function ProfileReviewsPage() {
 			{isLoading ? (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					{[1, 2, 3, 4].map((i) => (
-						<div key={i} className="card flex gap-4 p-4">
-							<div className="h-24 w-16 shrink-0 animate-pulse rounded-md bg-(--background-subtle)" />
+						<div key={i} className="card flex gap-4 p-4 sm:p-5">
+							<div className="h-28 w-20 shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:h-36 sm:w-24" />
 							<div className="flex-1 space-y-2">
 								<div className="h-4 w-3/4 animate-pulse rounded bg-(--background-subtle)" />
 								<div className="h-3 w-1/2 animate-pulse rounded bg-(--background-subtle)" />
@@ -184,116 +186,107 @@ function ReviewCard({
 		});
 	};
 
-	return (
-		<div className="card p-4">
-			<div className="flex gap-4">
-				{review.posterPath && (
-					<Link to={href}>
-						<img
-							src={`https://image.tmdb.org/t/p/w200${review.posterPath}`}
-							alt={review.title || "Poster"}
-							className="h-24 w-16 shrink-0 rounded-md object-cover"
-						/>
-					</Link>
-				)}
-				<div className="flex-1 space-y-2">
-					<div className="flex items-center justify-between">
-						<h3 className="font-medium text-sm">{review.title || "Unknown"}</h3>
-						<div className="flex items-center gap-2">
-							<span className="text-(--foreground-muted) text-xs">
-								{new Date(review.createdAt).toLocaleDateString()}
-							</span>
-							{isOwner && !isEditing && (
-								<div className="flex gap-1">
-									<button
-										type="button"
-										onClick={() => setIsEditing(true)}
-										className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-										aria-label="Edit review"
-									>
-										<Pencil className="size-3.5" />
-									</button>
-									<button
-										type="button"
-										onClick={handleDelete}
-										disabled={deleteMutation.isPending}
-										className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-										aria-label="Delete review"
-									>
-										{deleteMutation.isPending ? (
-											<Loader2 className="size-3.5 animate-spin" />
-										) : (
-											<Trash2 className="size-3.5" />
-										)}
-									</button>
-								</div>
-							)}
-						</div>
-					</div>
+	const posterUrl = review.posterPath
+		? `https://image.tmdb.org/t/p/w300${review.posterPath}`
+		: null;
 
-					{isEditing ? (
-						<div className="space-y-3">
-							<StarRating
-								value={draftRating}
-								onChange={(v) => setDraftRating(v)}
-								size="sm"
-							/>
-							<textarea
-								value={draftContent}
-								onChange={(e) => setDraftContent(e.target.value)}
-								placeholder="Write your review... (optional)"
-								className="input min-h-[80px] resize-none text-sm"
-								maxLength={5000}
-							/>
-							<div className="flex items-center justify-between">
-								<span className="text-(--foreground-subtle) text-xs">
-									{draftContent.length}/5000
-								</span>
-								<div className="flex gap-2">
-									<button
-										type="button"
-										onClick={handleCancel}
-										className="btn btn-secondary btn-sm gap-1"
-									>
-										<X className="size-3.5" />
-										Cancel
-									</button>
-									<button
-										type="button"
-										onClick={handleSave}
-										disabled={
-											upsertMutation.isPending || deleteMutation.isPending
-										}
-										className="btn btn-primary btn-sm gap-1"
-									>
-										{upsertMutation.isPending ? (
-											<Loader2 className="size-3.5 animate-spin" />
-										) : (
-											<Save className="size-3.5" />
-										)}
-										Save
-									</button>
-								</div>
-							</div>
+	return (
+		<ProfileContentCard
+			posterUrl={posterUrl}
+			to={href}
+			title={review.title || "Unknown"}
+			headerRight={
+				<div className="flex items-center gap-2">
+					<span className="text-(--foreground-muted) text-xs">
+						{new Date(review.createdAt).toLocaleDateString()}
+					</span>
+					{isOwner && !isEditing && (
+						<div className="flex gap-1">
+							<button
+								type="button"
+								onClick={() => setIsEditing(true)}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit review"
+							>
+								<Pencil className="size-3.5" />
+							</button>
+							<button
+								type="button"
+								onClick={handleDelete}
+								disabled={deleteMutation.isPending}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete review"
+							>
+								{deleteMutation.isPending ? (
+									<Loader2 className="size-3.5 animate-spin" />
+								) : (
+									<Trash2 className="size-3.5" />
+								)}
+							</button>
 						</div>
-					) : (
-						<>
-							<StarRating
-								value={review.rating}
-								onChange={isOwner ? handleRatingChange : undefined}
-								readOnly={!isOwner}
-								size="sm"
-								showValue
-							/>
-							{review.content && (
-								<p className="text-(--foreground-muted) text-sm leading-relaxed">
-									{review.content}
-								</p>
-							)}
-						</>
 					)}
 				</div>
-			</div>
-		</div>
+			}
+		>
+			{isEditing ? (
+				<div className="space-y-3">
+					<StarRating
+						value={draftRating}
+						onChange={(v) => setDraftRating(v)}
+						size="sm"
+					/>
+					<textarea
+						value={draftContent}
+						onChange={(e) => setDraftContent(e.target.value)}
+						placeholder="Write your review... (optional)"
+						className="input min-h-[80px] resize-none text-sm"
+						maxLength={5000}
+					/>
+					<div className="flex items-center justify-between">
+						<span className="text-(--foreground-subtle) text-xs">
+							{draftContent.length}/5000
+						</span>
+						<div className="flex gap-2">
+							<button
+								type="button"
+								onClick={handleCancel}
+								className="btn btn-secondary btn-sm gap-1"
+							>
+								<X className="size-3.5" />
+								Cancel
+							</button>
+							<button
+								type="button"
+								onClick={handleSave}
+								disabled={upsertMutation.isPending || deleteMutation.isPending}
+								className="btn btn-primary btn-sm gap-1"
+							>
+								{upsertMutation.isPending ? (
+									<Loader2 className="size-3.5 animate-spin" />
+								) : (
+									<Save className="size-3.5" />
+								)}
+								Save
+							</button>
+						</div>
+					</div>
+				</div>
+			) : (
+				<>
+					<StarRating
+						value={review.rating}
+						onChange={isOwner ? handleRatingChange : undefined}
+						readOnly={!isOwner}
+						size="sm"
+						showValue
+					/>
+					{review.content && (
+						<p className="text-(--foreground-muted) text-sm leading-relaxed">
+							{review.content}
+						</p>
+					)}
+				</>
+			)}
+		</ProfileContentCard>
 	);
 }
