@@ -11,7 +11,9 @@ import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
 import { $nsid as LIST_COLLECTION } from "../lexicons/xyz/opnshelf/list";
 import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/listItem";
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
+import { $nsid as NOTE_COLLECTION } from "../lexicons/xyz/opnshelf/note";
 import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";
+import { $nsid as REVIEW_COLLECTION } from "../lexicons/xyz/opnshelf/review";
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -74,16 +76,20 @@ export class UserDeletionService {
 			throw new ConflictException("An account deletion is already in progress");
 		}
 
-		const [movieCount, episodeCount, followCount] = await Promise.all([
-			this.prisma.trackedMovie.count({ where: { userDid: did } }),
-			this.prisma.trackedEpisode.count({ where: { userDid: did } }),
-			this.prisma.follow.count({
-				where: { followerDid: did, rkey: { not: null } },
-			}),
-		]);
+		const [movieCount, episodeCount, followCount, noteCount, reviewCount] =
+			await Promise.all([
+				this.prisma.trackedMovie.count({ where: { userDid: did } }),
+				this.prisma.trackedEpisode.count({ where: { userDid: did } }),
+				this.prisma.follow.count({
+					where: { followerDid: did, rkey: { not: null } },
+				}),
+				this.prisma.note.count({ where: { userDid: did } }),
+				this.prisma.review.count({ where: { userDid: did } }),
+			]);
 
 		// +1 for profile record, list items and lists are counted dynamically
-		const totalRecords = movieCount + episodeCount + followCount + 1;
+		const totalRecords =
+			movieCount + episodeCount + followCount + noteCount + reviewCount + 1;
 
 		return this.prisma.backgroundJob.create({
 			data: {
@@ -241,6 +247,40 @@ export class UserDeletionService {
 				FOLLOW_COLLECTION,
 				follow.rkey,
 				`Failed to delete follow ${follow.rkey} from PDS`,
+			);
+			jobData.deletedRecords++;
+			await this.updateJobData(jobId, jobData);
+		}
+
+		await this.updateJobData(jobId, jobData, { currentStep: "notes" });
+		const notes = await this.prisma.note.findMany({
+			where: { userDid },
+			select: { rkey: true },
+		});
+		for (const note of notes) {
+			await this.tryDeleteRecord(
+				agent,
+				session.did,
+				NOTE_COLLECTION,
+				note.rkey,
+				`Failed to delete note ${note.rkey} from PDS`,
+			);
+			jobData.deletedRecords++;
+			await this.updateJobData(jobId, jobData);
+		}
+
+		await this.updateJobData(jobId, jobData, { currentStep: "reviews" });
+		const reviews = await this.prisma.review.findMany({
+			where: { userDid },
+			select: { rkey: true },
+		});
+		for (const review of reviews) {
+			await this.tryDeleteRecord(
+				agent,
+				session.did,
+				REVIEW_COLLECTION,
+				review.rkey,
+				`Failed to delete review ${review.rkey} from PDS`,
 			);
 			jobData.deletedRecords++;
 			await this.updateJobData(jobId, jobData);

@@ -40,6 +40,14 @@ describe("UserDeletionService", () => {
 			findMany: jest.fn(),
 			count: jest.fn(),
 		},
+		note: {
+			findMany: jest.fn(),
+			count: jest.fn(),
+		},
+		review: {
+			findMany: jest.fn(),
+			count: jest.fn(),
+		},
 		backgroundJob: {
 			findFirst: jest.fn(),
 			findUnique: jest.fn(),
@@ -65,6 +73,10 @@ describe("UserDeletionService", () => {
 		prisma.trackedEpisode.count = jest.fn().mockResolvedValue(0);
 		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
 		prisma.follow.count = jest.fn().mockResolvedValue(0);
+		prisma.note.findMany = jest.fn().mockResolvedValue([]);
+		prisma.note.count = jest.fn().mockResolvedValue(0);
+		prisma.review.findMany = jest.fn().mockResolvedValue([]);
+		prisma.review.count = jest.fn().mockResolvedValue(0);
 		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(null);
 		prisma.backgroundJob.create = jest.fn().mockResolvedValue({
 			id: "job-1",
@@ -104,6 +116,8 @@ describe("UserDeletionService", () => {
 			prisma.trackedMovie.count = jest.fn().mockResolvedValue(5);
 			prisma.trackedEpisode.count = jest.fn().mockResolvedValue(10);
 			prisma.follow.count = jest.fn().mockResolvedValue(3);
+			prisma.note.count = jest.fn().mockResolvedValue(2);
+			prisma.review.count = jest.fn().mockResolvedValue(4);
 
 			await service.createDeletionJob("did:plc:test", true);
 
@@ -114,7 +128,7 @@ describe("UserDeletionService", () => {
 					status: "queued",
 					data: expect.objectContaining({
 						deletePdsData: true,
-						totalRecords: 19,
+						totalRecords: 25,
 						deletedRecords: 0,
 					}),
 				}),
