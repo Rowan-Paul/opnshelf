@@ -51,7 +51,7 @@ export function ProfileContentCard({
 						</Link>
 					</div>
 
-					{headerRight}
+					<div className="shrink-0">{headerRight}</div>
 				</div>
 
 				{children}

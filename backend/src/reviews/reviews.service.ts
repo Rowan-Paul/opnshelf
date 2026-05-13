@@ -62,15 +62,25 @@ export class ReviewsService {
 			where: { userDid },
 		});
 
-		// Fetch related movie/show data for each review
+		// Fetch related movie/show/season/episode data for each review
 		const movieIds = items
 			.filter((r) => r.mediaType === "movie")
 			.map((r) => r.mediaId);
 		const showIds = items
-			.filter((r) => r.mediaType !== "movie")
+			.filter((r) => r.mediaType === "show")
 			.map((r) => r.mediaId);
+		const seasonConditions = items
+			.filter((r) => r.mediaType === "season")
+			.map((r) => ({ showId: r.mediaId, seasonNumber: r.seasonNumber }));
+		const episodeConditions = items
+			.filter((r) => r.mediaType === "episode")
+			.map((r) => ({
+				showId: r.mediaId,
+				seasonNumber: r.seasonNumber,
+				episodeNumber: r.episodeNumber,
+			}));
 
-		const [movies, shows] = await Promise.all([
+		const [movies, shows, seasons, episodes] = await Promise.all([
 			movieIds.length > 0
 				? this.prisma.movie.findMany({
 						where: { movieId: { in: movieIds } },
@@ -79,6 +89,18 @@ export class ReviewsService {
 			showIds.length > 0
 				? this.prisma.show.findMany({
 						where: { showId: { in: showIds } },
+					})
+				: Promise.resolve([]),
+			seasonConditions.length > 0
+				? this.prisma.season.findMany({
+						where: { OR: seasonConditions },
+						include: { show: true },
+					})
+				: Promise.resolve([]),
+			episodeConditions.length > 0
+				? this.prisma.episode.findMany({
+						where: { OR: episodeConditions },
+						include: { season: { include: { show: true } } },
 					})
 				: Promise.resolve([]),
 		]);
@@ -97,12 +119,43 @@ export class ReviewsService {
 		for (const s of shows) {
 			showMap.set(s.showId, { title: s.title, posterPath: s.posterPath });
 		}
+		const seasonMap = new Map<
+			string,
+			{ title: string; posterPath: string | null }
+		>();
+		for (const s of seasons) {
+			const key = `${s.showId}:${s.seasonNumber}`;
+			seasonMap.set(key, {
+				title: `${s.show.title} — ${s.name}`,
+				posterPath: s.posterPath ?? s.show.posterPath,
+			});
+		}
+		const episodeMap = new Map<
+			string,
+			{ title: string; posterPath: string | null }
+		>();
+		for (const e of episodes) {
+			const key = `${e.showId}:${e.seasonNumber}:${e.episodeNumber}`;
+			episodeMap.set(key, {
+				title: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
+				posterPath:
+					e.stillPath ?? e.season.posterPath ?? e.season.show.posterPath,
+			});
+		}
 
 		const enrichedItems = items.map((review) => {
-			const media =
-				review.mediaType === "movie"
-					? movieMap.get(review.mediaId)
-					: showMap.get(review.mediaId);
+			let media: { title: string; posterPath: string | null } | undefined;
+			if (review.mediaType === "movie") {
+				media = movieMap.get(review.mediaId);
+			} else if (review.mediaType === "show") {
+				media = showMap.get(review.mediaId);
+			} else if (review.mediaType === "season") {
+				media = seasonMap.get(`${review.mediaId}:${review.seasonNumber}`);
+			} else if (review.mediaType === "episode") {
+				media = episodeMap.get(
+					`${review.mediaId}:${review.seasonNumber}:${review.episodeNumber}`,
+				);
+			}
 			return {
 				...review,
 				title: media?.title,

@@ -39,6 +39,7 @@ import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
+import ReviewSection from "../../../../components/ReviewSection";
 import { YourActivity } from "../../../../components/YourActivity";
 
 setupApiClient();
@@ -431,6 +432,14 @@ function EpisodeDetailPage() {
 						/>
 
 						<InYourLists
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+							episodeNumber={episodeNum}
+						/>
+
+						{/* Review */}
+						<ReviewSection
 							mediaType="show"
 							mediaId={showId}
 							seasonNumber={seasonNum}

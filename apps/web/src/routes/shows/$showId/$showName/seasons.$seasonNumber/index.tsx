@@ -27,6 +27,7 @@ import MediaHero from "../../../../../components/MediaHero";
 import NotesSection from "../../../../../components/NotesSection";
 import PersonGrid from "../../../../../components/PersonGrid";
 import ProgressCard from "../../../../../components/ProgressCard";
+import ReviewSection from "../../../../../components/ReviewSection";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 
 setupApiClient();
@@ -452,6 +453,13 @@ function SeasonDetailPage() {
 						/>
 
 						<InYourLists
+							mediaType="show"
+							mediaId={showId}
+							seasonNumber={seasonNum}
+						/>
+
+						{/* Review */}
+						<ReviewSection
 							mediaType="show"
 							mediaId={showId}
 							seasonNumber={seasonNum}

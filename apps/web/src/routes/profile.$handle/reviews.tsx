@@ -140,10 +140,24 @@ function ReviewCard({
 		},
 	});
 
-	const href =
-		review.mediaType === "movie"
-			? `/movies/${review.mediaId}/${toSlug(review.title || "")}`
-			: `/shows/${review.mediaId}/${toSlug(review.title || "")}`;
+	const showName = review.title?.split(" — ")[0] ?? "";
+	const slug = toSlug(showName);
+
+	const href = (() => {
+		if (review.mediaType === "movie") {
+			return `/movies/${review.mediaId}/${slug}`;
+		}
+		if (review.mediaType === "show") {
+			return `/shows/${review.mediaId}/${slug}`;
+		}
+		if (review.mediaType === "season") {
+			return `/shows/${review.mediaId}/${slug}/seasons/${review.seasonNumber}`;
+		}
+		if (review.mediaType === "episode") {
+			return `/shows/${review.mediaId}/${slug}/seasons/${review.seasonNumber}/episodes/${review.episodeNumber}`;
+		}
+		return "#";
+	})();
 
 	const handleSave = () => {
 		if (draftRating === 0) {
