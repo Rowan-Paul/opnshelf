@@ -1,18 +1,44 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
+import { ResendService } from "../resend/resend.service";
 import type { CreateFeedbackDto } from "./dto/feedback.dto";
 
 @Injectable()
 export class FeedbackService {
-	constructor(private prisma: PrismaService) {}
+	constructor(
+		private prisma: PrismaService,
+		private resend: ResendService,
+		private config: ConfigService,
+	) {}
 
 	async createFeedback(userDid: string, dto: CreateFeedbackDto) {
-		return this.prisma.feedback.create({
+		const feedback = await this.prisma.feedback.create({
 			data: {
 				userDid,
 				category: dto.category,
 				message: dto.message,
 			},
 		});
+
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { handle: true, displayName: true },
+		});
+
+		const notificationEmail = this.config.get<string>(
+			"FEEDBACK_NOTIFICATION_EMAIL",
+		);
+		if (notificationEmail && user) {
+			await this.resend.sendFeedbackNotification({
+				to: notificationEmail,
+				category: dto.category,
+				message: dto.message,
+				userHandle: user.handle,
+				userDisplayName: user.displayName,
+			});
+		}
+
+		return feedback;
 	}
 }
