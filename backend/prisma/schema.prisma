@@ -31,6 +31,7 @@ model User {
   lists        List[]
   notes        Note[]
   reviews      Review[]
+  feedback     Feedback[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
   
@@ -342,4 +343,17 @@ model Review {
   @@index([userDid])
   @@index([mediaType, mediaId])
   @@index([rating])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userDid   String
+  user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  category  String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userDid])
+  @@index([createdAt])
 }

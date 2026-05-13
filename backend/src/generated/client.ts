@@ -114,3 +114,8 @@ export type Note = Prisma.NoteModel
  * 
  */
 export type Review = Prisma.ReviewModel
+/**
+ * Model Feedback
+ * 
+ */
+export type Feedback = Prisma.FeedbackModel

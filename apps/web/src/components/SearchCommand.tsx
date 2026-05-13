@@ -1,4 +1,5 @@
 import {
+	client,
 	type ListSummaryDto,
 	listsControllerGetUserListsOptions,
 	type SocialUserCardDto,
@@ -6,7 +7,7 @@ import {
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	Calendar,
@@ -16,6 +17,7 @@ import {
 	List,
 	Loader2,
 	LogOut,
+	MessageSquare,
 	Monitor,
 	Moon,
 	Search,
@@ -27,6 +29,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { FeedbackDialog } from "#/components/FeedbackDialog";
 import {
 	CommandDialog,
 	CommandGroup,
@@ -154,6 +157,31 @@ export function SearchCommand({
 	};
 
 	const ThemeIcon = themeIcons[themeMode];
+
+	// Feedback dialog state
+	const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+	const submitFeedbackMutation = useMutation({
+		mutationKey: ["feedback", "submit"],
+		mutationFn: async (data: {
+			category: "bug" | "feature_request";
+			message: string;
+		}) => {
+			const { data: responseData, error } = await client.post({
+				url: "/feedback",
+				body: data,
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (error) {
+				throw error;
+			}
+
+			return responseData;
+		},
+	});
 
 	const {
 		data: searchData,
@@ -521,6 +549,16 @@ export function SearchCommand({
 							<ThemeIcon className="h-4 w-4" />
 							<span>{themeLabels[themeMode]}</span>
 						</CommandItem>
+						<CommandItem
+							value="feedback"
+							onSelect={() => {
+								handleOpenChange(false);
+								setFeedbackOpen(true);
+							}}
+						>
+							<MessageSquare className="h-4 w-4" />
+							<span>Send feedback</span>
+						</CommandItem>
 						{currentUserHandle && (
 							<CommandItem
 								value="sign out"
@@ -536,6 +574,15 @@ export function SearchCommand({
 					</CommandGroup>
 				</CommandList>
 			</CommandDialog>
+
+			<FeedbackDialog
+				open={feedbackOpen}
+				onOpenChange={setFeedbackOpen}
+				onSubmit={async (data) => {
+					await submitFeedbackMutation.mutateAsync(data);
+				}}
+				isSubmitting={submitFeedbackMutation.isPending}
+			/>
 		</>
 	);
 }
