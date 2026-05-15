@@ -852,7 +852,6 @@ function DoneStep() {
 			return data;
 		},
 		onSuccess: (data) => {
-			toast.success("Welcome to OpnShelf!");
 			const meKey = authControllerMeOptions().queryKey;
 			// Optimistically update auth cache so needsOnboarding becomes false
 			queryClient.setQueryData(meKey, (old: UserDto | undefined) => {

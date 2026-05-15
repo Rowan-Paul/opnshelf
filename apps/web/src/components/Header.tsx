@@ -7,7 +7,8 @@ import {
 	LogOut,
 	Menu,
 	Settings,
-	User,
+	Star,
+	StickyNote,
 	Users,
 	X,
 } from "lucide-react";
@@ -40,6 +41,19 @@ export default function Header() {
 	];
 
 	const visibleNavigation = isAuthenticated || isLoading ? navigation : [];
+
+	const profileNavigation = [
+		{ name: "Shelf", to: "/profile/$handle/shelf" as const, icon: Film },
+		{ name: "Up Next", to: "/profile/$handle/up-next" as const, icon: Clock },
+		{ name: "Lists", to: "/profile/$handle/lists" as const, icon: List },
+		{ name: "Notes", to: "/profile/$handle/notes" as const, icon: StickyNote },
+		{ name: "Reviews", to: "/profile/$handle/reviews" as const, icon: Star },
+		{
+			name: "Connections",
+			to: "/profile/$handle/connections" as const,
+			icon: Users,
+		},
+	];
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -144,52 +158,41 @@ export default function Header() {
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-56">
-									<div className="flex items-center gap-2 p-2">
-										<UserAvatar
-											src={user.avatar}
-											alt={user.displayName || user.handle}
-											size="sm"
-										/>
-										<div className="flex flex-col">
-											<span className="font-medium text-sm">
-												{user.displayName || user.handle}
-											</span>
-											<span className="text-(--foreground-muted) text-xs">
-												@{user.handle}
-											</span>
-										</div>
-									</div>
-									<DropdownMenuSeparator />
 									<DropdownMenuItem asChild>
 										<Link
 											to="/profile/$handle"
 											params={{ handle: user.handle }}
-											className="cursor-pointer"
+											className="flex cursor-pointer items-center gap-2 p-2"
 										>
-											<User />
-											Profile
+											<UserAvatar
+												src={user.avatar}
+												alt={user.displayName || user.handle}
+												size="sm"
+											/>
+											<div className="flex flex-col">
+												<span className="font-medium text-sm">
+													{user.displayName || user.handle}
+												</span>
+												<span className="text-xs opacity-60">
+													@{user.handle}
+												</span>
+											</div>
 										</Link>
 									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link
-											to="/profile/$handle/up-next"
-											params={{ handle: user.handle }}
-											className="cursor-pointer"
-										>
-											<Clock />
-											Up Next
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link
-											to="/profile/$handle/lists"
-											params={{ handle: user.handle }}
-											className="cursor-pointer"
-										>
-											<List />
-											Lists
-										</Link>
-									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									{profileNavigation.map(({ name, to, icon: Icon }) => (
+										<DropdownMenuItem key={name} asChild>
+											<Link
+												to={to}
+												params={{ handle: user.handle }}
+												className="cursor-pointer"
+											>
+												<Icon />
+												{name}
+											</Link>
+										</DropdownMenuItem>
+									))}
+									<DropdownMenuSeparator />
 									<DropdownMenuItem asChild>
 										<Link to="/settings" className="cursor-pointer">
 											<Settings />
@@ -263,47 +266,26 @@ export default function Header() {
 								{isAuthenticated && user && (
 									<>
 										<div className="my-2 h-px bg-(--border)" />
-										<Link
-											to="/profile/$handle"
-											params={{ handle: user.handle }}
-											onClick={() => setMobileMenuOpen(false)}
-											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
-												currentPath === `/profile/${user.handle}`
-													? "bg-(--accent-subtle) text-(--accent)"
-													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
-											}`}
-										>
-											<User className="h-5 w-5" />
-											Profile
-										</Link>
-										<Link
-											to="/profile/$handle/up-next"
-											params={{ handle: user.handle }}
-											onClick={() => setMobileMenuOpen(false)}
-											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
-												currentPath.startsWith(
-													`/profile/${user.handle}/up-next`,
-												)
-													? "bg-(--accent-subtle) text-(--accent)"
-													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
-											}`}
-										>
-											<Clock className="h-5 w-5" />
-											Up Next
-										</Link>
-										<Link
-											to="/profile/$handle/lists"
-											params={{ handle: user.handle }}
-											onClick={() => setMobileMenuOpen(false)}
-											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
-												currentPath.startsWith(`/profile/${user.handle}/lists`)
-													? "bg-(--accent-subtle) text-(--accent)"
-													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
-											}`}
-										>
-											<List className="h-5 w-5" />
-											Lists
-										</Link>
+										{profileNavigation.map(({ name, to, icon: Icon }) => {
+											const href = to.replace("$handle", user.handle);
+											const isActive = currentPath.startsWith(href);
+											return (
+												<Link
+													key={name}
+													to={to}
+													params={{ handle: user.handle }}
+													onClick={() => setMobileMenuOpen(false)}
+													className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+														isActive
+															? "bg-(--accent-subtle) text-(--accent)"
+															: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+													}`}
+												>
+													<Icon className="h-5 w-5" />
+													{name}
+												</Link>
+											);
+										})}
 										<Link
 											to="/settings"
 											onClick={() => setMobileMenuOpen(false)}
@@ -317,27 +299,26 @@ export default function Header() {
 											Settings
 										</Link>
 										<div className="my-2 h-px bg-(--border)" />
-										<div className="flex items-center gap-3 px-3 py-3">
-											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
-												{user.avatar ? (
-													<img
-														src={user.avatar}
-														alt={user.displayName || user.handle}
-														className="h-full w-full rounded-full object-cover"
-													/>
-												) : (
-													<User className="size-4 text-(--accent)" />
-												)}
-											</div>
+										<Link
+											to="/profile/$handle"
+											params={{ handle: user.handle }}
+											onClick={() => setMobileMenuOpen(false)}
+											className="flex items-center gap-3 px-3 py-3"
+										>
+											<UserAvatar
+												src={user.avatar}
+												alt={user.displayName || user.handle}
+												size="sm"
+											/>
 											<div className="flex flex-col">
 												<span className="font-medium text-sm">
 													{user.displayName || user.handle}
 												</span>
-												<span className="text-(--foreground-muted) text-xs">
+												<span className="text-xs opacity-60">
 													@{user.handle}
 												</span>
 											</div>
-										</div>
+										</Link>
 										<button
 											type="button"
 											onClick={logout}
