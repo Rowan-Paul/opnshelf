@@ -21,10 +21,10 @@ import {
 	Save,
 	Settings,
 	Trash2,
-	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { Button } from "#/components/ui/button";
 import {
@@ -341,15 +341,11 @@ function SettingsPage() {
 								aria-label="Upload profile photo"
 								className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
 							>
-								{user.avatar ? (
-									<img
-										src={user.avatar}
-										alt=""
-										className="h-full w-full object-cover"
-									/>
-								) : (
-									<User className="size-8 text-(--foreground-muted)" />
-								)}
+								<UserAvatar
+									src={user.avatar}
+									alt=""
+									className="h-full w-full rounded-full"
+								/>
 								<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
 									<Camera className="size-5 text-white" />
 								</div>

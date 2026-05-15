@@ -21,6 +21,7 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
 import { useSearchDialog } from "#/lib/search-dialog-context";
+import { UserAvatar } from "./following/UserAvatar";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
@@ -135,30 +136,20 @@ export default function Header() {
 										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
 										aria-label="User menu"
 									>
-										{user.avatar ? (
-											<img
-												src={user.avatar}
-												alt={user.displayName || user.handle}
-												className="h-full w-full object-cover"
-											/>
-										) : (
-											<User className="size-4 text-(--foreground-muted)" />
-										)}
+										<UserAvatar
+											src={user.avatar}
+											alt={user.displayName || user.handle}
+											className="h-full w-full rounded-full"
+										/>
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-56">
 									<div className="flex items-center gap-2 p-2">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-(--accent-subtle)">
-											{user.avatar ? (
-												<img
-													src={user.avatar}
-													alt={user.displayName || user.handle}
-													className="h-full w-full rounded-full object-cover"
-												/>
-											) : (
-												<User className="size-4 text-(--accent)" />
-											)}
-										</div>
+										<UserAvatar
+											src={user.avatar}
+											alt={user.displayName || user.handle}
+											size="sm"
+										/>
 										<div className="flex flex-col">
 											<span className="font-medium text-sm">
 												{user.displayName || user.handle}
