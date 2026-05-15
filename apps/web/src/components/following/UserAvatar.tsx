@@ -1,4 +1,5 @@
 import { User } from "lucide-react";
+import { useState } from "react";
 
 interface UserAvatarProps {
 	src?: unknown;
@@ -19,13 +20,16 @@ const iconSizes = {
 };
 
 export function UserAvatar({ src, alt, size = "md" }: UserAvatarProps) {
-	const srcStr = typeof src === "string" ? src : null;
+	const [failed, setFailed] = useState(false);
+	const srcStr = typeof src === "string" && !failed ? src : null;
+
 	if (srcStr) {
 		return (
 			<img
 				src={srcStr}
 				alt={alt}
 				className={`${sizeClasses[size]} rounded-full object-cover`}
+				onError={() => setFailed(true)}
 			/>
 		);
 	}

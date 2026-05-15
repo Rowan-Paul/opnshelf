@@ -109,12 +109,15 @@ export class SocialService {
 			...alreadyFollowing.map((f) => f.followingDid),
 		]);
 
-		const blueskyDids = await this.fetchOneBlueskyFollowsPage(viewerDid);
-		const candidateDids = blueskyDids.filter((d) => !excludeDids.has(d));
+		const blueskyMatchDids = await this.fetchBlueskyOpnShelfMatches(
+			viewerDid,
+			excludeDids,
+			safeLimit,
+		);
 		const blueskyMatches =
-			candidateDids.length > 0
+			blueskyMatchDids.length > 0
 				? await this.prisma.user.findMany({
-						where: { did: { in: candidateDids } },
+						where: { did: { in: blueskyMatchDids } },
 						select: socialUserSelect,
 						take: safeLimit,
 					})
@@ -141,13 +144,7 @@ export class SocialService {
 		}
 
 		const activeUsers = await this.prisma.user.findMany({
-			where: {
-				did: { notIn: [...excludeDids] },
-				OR: [
-					{ trackedMovies: { some: {} } },
-					{ trackedEpisodes: { some: {} } },
-				],
-			},
+			where: { did: { notIn: [...excludeDids] } },
 			select: socialUserSelect,
 			orderBy: { trackedMovies: { _count: "desc" } },
 			take: safeLimit,
@@ -1108,22 +1105,54 @@ export class SocialService {
 		};
 	}
 
-	private async fetchOneBlueskyFollowsPage(did: string): Promise<string[]> {
-		try {
-			const url = `https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?actor=${encodeURIComponent(did)}&limit=100`;
-			const response = await fetch(url, {
-				headers: { Accept: "application/json" },
-			});
-			if (!response.ok) return [];
-			const data = (await response.json()) as {
-				follows?: { did?: string }[];
-			};
-			return (data.follows ?? [])
-				.map((f) => f.did)
-				.filter((d): d is string => typeof d === "string" && d.length > 0);
-		} catch {
-			return [];
-		}
+	private async fetchBlueskyOpnShelfMatches(
+		did: string,
+		excludeDids: Set<string>,
+		limit: number,
+	): Promise<string[]> {
+		const matchedDids: string[] = [];
+		let cursor: string | undefined;
+
+		do {
+			let pageDids: string[];
+			let nextCursor: string | undefined;
+
+			try {
+				const params = new URLSearchParams({
+					actor: did,
+					limit: "100",
+					...(cursor ? { cursor } : {}),
+				});
+				const response = await fetch(
+					`https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?${params}`,
+					{ headers: { Accept: "application/json" } },
+				);
+				if (!response.ok) break;
+				const data = (await response.json()) as {
+					follows?: { did?: string }[];
+					cursor?: string;
+				};
+				pageDids = (data.follows ?? [])
+					.map((f) => f.did)
+					.filter((d): d is string => typeof d === "string" && d.length > 0);
+				nextCursor = data.cursor;
+			} catch {
+				break;
+			}
+
+			const candidates = pageDids.filter((d) => !excludeDids.has(d));
+			if (candidates.length > 0) {
+				const found = await this.prisma.user.findMany({
+					where: { did: { in: candidates } },
+					select: { did: true },
+				});
+				matchedDids.push(...found.map((u) => u.did));
+			}
+
+			cursor = nextCursor;
+		} while (cursor !== undefined && matchedDids.length < limit);
+
+		return matchedDids;
 	}
 }
 

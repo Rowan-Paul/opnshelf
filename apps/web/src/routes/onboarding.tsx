@@ -749,7 +749,7 @@ function FollowSuggestionsStep({
 				<div>
 					<h2 className="text-display-3">People to Follow</h2>
 					<p className="mt-1 text-(--foreground-muted) text-sm">
-						OpnShelf users from your Bluesky network, or active members
+						Find people you know on OpnShelf
 					</p>
 				</div>
 				<button
