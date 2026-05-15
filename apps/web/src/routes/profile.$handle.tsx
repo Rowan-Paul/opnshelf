@@ -15,6 +15,7 @@ import {
 	StickyNote,
 	Users,
 } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/profile/$handle")({
@@ -70,6 +71,7 @@ function ProfileLayout() {
 	const { profile } = Route.useLoaderData();
 	const { user } = useAuth();
 	const isOwner = user?.did === profile.did;
+	const [avatarFailed, setAvatarFailed] = useState(false);
 
 	return (
 		<div className="container-app py-8">
@@ -77,11 +79,12 @@ function ProfileLayout() {
 			<div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center">
 				{/* Avatar */}
 				<div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
-					{profile.avatar ? (
+					{profile.avatar && !avatarFailed ? (
 						<img
 							src={profile.avatar}
 							alt={profile.displayName || profile.handle}
 							className="h-full w-full object-cover"
+							onError={() => setAvatarFailed(true)}
 						/>
 					) : (
 						<Users className="size-8 text-(--foreground-muted)" />
