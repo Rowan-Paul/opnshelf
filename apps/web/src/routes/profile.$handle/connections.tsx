@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, Users } from "lucide-react";
 import { useState } from "react";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import {
 	usePublicFollowers,
 	usePublicFollowing,
@@ -81,17 +82,11 @@ function ProfileConnectionsPage() {
 							params={{ handle: user.handle }}
 							className="card card-interactive flex w-full items-center gap-4 p-4"
 						>
-							<div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
-								{typeof user.avatar === "string" ? (
-									<img
-										src={user.avatar}
-										alt={String(user.displayName || user.handle)}
-										className="h-full w-full object-cover"
-									/>
-								) : (
-									<Users className="size-5 text-(--foreground-muted)" />
-								)}
-							</div>
+							<UserAvatar
+								src={user.avatar}
+								alt={String(user.displayName || user.handle)}
+								size="lg"
+							/>
 							<div className="min-w-0 flex-1">
 								<p className="truncate font-medium">
 									{String(user.displayName || user.handle)}
