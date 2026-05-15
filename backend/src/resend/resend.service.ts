@@ -20,17 +20,19 @@ export class ResendService {
 		message: string;
 		userHandle: string;
 		userDisplayName?: string | null;
+		pageUrl?: string;
 	}) {
-		const { to, category, message, userHandle, userDisplayName } = params;
+		const { to, category, message, userHandle, userDisplayName, pageUrl } = params;
 		const subject = `New OpnShelf feedback: ${category}`;
 		const name = userDisplayName || userHandle;
+		const pageLine = pageUrl ? `\nPage: ${pageUrl}` : "";
 
 		try {
 			const { error } = await this.resend.emails.send({
 				from: this.from,
 				to,
 				subject,
-				text: `You received new feedback on OpnShelf.\n\nCategory: ${category}\nFrom: ${name} (@${userHandle})\n\nMessage:\n${message}`,
+				text: `You received new feedback on OpnShelf.\n\nCategory: ${category}\nFrom: ${name} (@${userHandle})${pageLine}\n\nMessage:\n${message}`,
 			});
 
 			if (error) {

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
@@ -124,6 +125,9 @@ export function ReviewDialog({
 						<Star className="size-4 text-yellow-500" />
 						{review?.rating ? "Edit Review" : "Add a Review"}
 					</DialogTitle>
+					<DialogDescription className="sr-only">
+						Add or edit your rating and review for this title.
+					</DialogDescription>
 				</DialogHeader>
 				<div>
 					<p className="mb-2 text-(--foreground-muted) text-sm">Rating</p>

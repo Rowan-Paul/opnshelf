@@ -18,6 +18,7 @@ export class FeedbackService {
 				userDid,
 				category: dto.category,
 				message: dto.message,
+				pageUrl: dto.pageUrl,
 			},
 		});
 
@@ -36,6 +37,7 @@ export class FeedbackService {
 				message: dto.message,
 				userHandle: user.handle,
 				userDisplayName: user.displayName,
+				pageUrl: dto.pageUrl,
 			});
 		}
 

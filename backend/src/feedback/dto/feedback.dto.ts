@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsString, MaxLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsIn, IsOptional, IsString, IsUrl, MaxLength } from "class-validator";
 
 export class CreateFeedbackDto {
 	@ApiProperty({
@@ -14,6 +14,13 @@ export class CreateFeedbackDto {
 	@IsString()
 	@MaxLength(5000)
 	message: string;
+
+	@ApiPropertyOptional({ description: "Page URL where feedback was submitted" })
+	@IsOptional()
+	@IsString()
+	@IsUrl({ require_tld: false })
+	@MaxLength(2048)
+	pageUrl?: string;
 }
 
 export class FeedbackResponseDto {

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
@@ -111,6 +112,9 @@ export function NoteDialog({
 						<StickyNote className="size-4 text-(--accent)" />
 						{note?.content ? "Edit Note" : "Add a Note"}
 					</DialogTitle>
+					<DialogDescription className="sr-only">
+						Add or edit a personal note for this title.
+					</DialogDescription>
 				</DialogHeader>
 				<textarea
 					value={content}

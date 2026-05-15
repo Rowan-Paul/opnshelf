@@ -169,7 +169,7 @@ export function SearchCommand({
 		}) => {
 			const { data: responseData, error } = await client.post({
 				url: "/feedback",
-				body: data,
+				body: { ...data, pageUrl: window.location.href },
 				headers: {
 					"Content-Type": "application/json",
 				},

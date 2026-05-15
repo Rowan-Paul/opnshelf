@@ -71,7 +71,11 @@ function useSeasonDetails(showId: string, seasonNumber: number | null) {
 
 function ShowDetailPage() {
 	const { showId } = Route.useParams();
-	const { user, userSettings, isAuthenticated } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+	} = useAuth();
 	const userDid = user?.did || "";
 	const userTimezone = userSettings?.timezone;
 

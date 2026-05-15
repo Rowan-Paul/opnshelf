@@ -77,7 +77,11 @@ export const Route = createFileRoute(
 
 function SeasonDetailPage() {
 	const { showId, showName, seasonNumber } = Route.useParams();
-	const { user, userSettings, isAuthenticated } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+	} = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);

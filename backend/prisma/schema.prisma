@@ -351,6 +351,7 @@ model Feedback {
   user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
   category  String
   message   String
+  pageUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
