@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, Film, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
 import { useAuth } from "#/lib/auth-context";
 
@@ -34,11 +35,24 @@ function LoginPage() {
 		return <LoadingState />;
 	}
 
-	const handleLogin = (e: React.FormEvent) => {
+	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!handle.trim()) return;
+		const trimmed = handle.trim();
+		if (!trimmed) return;
 		setIsLoading(true);
-		login(handle.trim());
+		try {
+			const res = await fetch(
+				`https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(trimmed)}`,
+			);
+			if (!res.ok) {
+				toast.error("Handle not found. Check your handle and try again.");
+				setIsLoading(false);
+				return;
+			}
+		} catch {
+			// Network error — let the backend handle it
+		}
+		login(trimmed);
 	};
 
 	const handleSignup = () => {

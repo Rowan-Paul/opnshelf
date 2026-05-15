@@ -5,13 +5,14 @@ import {
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, Save, StickyNote, Trash2, X } from "lucide-react";
+import { Loader2, Pencil, StickyNote, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { useDeleteNote, useUpsertNote } from "#/lib/hooks/useNotes";
+import { useDeleteNote } from "#/lib/hooks/useNotes";
 import { toSlug } from "#/lib/slug";
 
 setupApiClient();
@@ -82,31 +83,14 @@ function NoteCard({
 	userDid: string;
 }) {
 	const queryClient = useQueryClient();
-	const [isEditing, setIsEditing] = useState(false);
-	const [editContent, setEditContent] = useState(note.content);
+	const [dialogOpen, setDialogOpen] = useState(false);
 
-	const resolvedMediaType =
-		note.episodeNumber != null
-			? "episode"
-			: note.seasonNumber != null
-				? "season"
-				: note.mediaType === "movie"
-					? "movie"
-					: "show";
-
-	const baseMediaType = note.mediaType === "movie" ? "movie" : "show";
-
-	const upsertMutation = useUpsertNote({
-		userDid,
-		mediaType: baseMediaType as "movie" | "show",
-		mediaId: note.mediaId,
-		seasonNumber: note.seasonNumber,
-		episodeNumber: note.episodeNumber,
-	});
+	const baseMediaType =
+		note.mediaType === "movie" ? "movie" : ("show" as const);
 
 	const deleteMutation = useDeleteNote({
 		userDid,
-		mediaType: baseMediaType as "movie" | "show",
+		mediaType: baseMediaType,
 		mediaId: note.mediaId,
 		seasonNumber: note.seasonNumber,
 		episodeNumber: note.episodeNumber,
@@ -117,53 +101,14 @@ function NoteCard({
 		query: { limit: 50 },
 	});
 
-	const handleSave = () => {
-		if (!editContent.trim()) {
-			deleteMutation.mutate(
-				{ path: { noteId: note.id } },
-				{
-					onSuccess: () => {
-						queryClient.invalidateQueries({ queryKey: noteListKey });
-						setIsEditing(false);
-					},
-				},
-			);
-			return;
-		}
-
-		upsertMutation.mutate(
-			{
-				body: {
-					mediaType: resolvedMediaType,
-					mediaId: note.mediaId,
-					seasonNumber: note.seasonNumber,
-					episodeNumber: note.episodeNumber,
-					content: editContent.trim(),
-				},
-			},
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({ queryKey: noteListKey });
-					setIsEditing(false);
-				},
-			},
-		);
-	};
+	const invalidateList = () =>
+		queryClient.invalidateQueries({ queryKey: noteListKey });
 
 	const handleDelete = () => {
 		deleteMutation.mutate(
 			{ path: { noteId: note.id } },
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({ queryKey: noteListKey });
-				},
-			},
+			{ onSuccess: invalidateList },
 		);
-	};
-
-	const handleCancel = () => {
-		setEditContent(note.content);
-		setIsEditing(false);
 	};
 
 	const posterUrl = note.posterPath
@@ -173,85 +118,57 @@ function NoteCard({
 	const link = getNoteLink(note);
 
 	return (
-		<ProfileContentCard
-			posterUrl={posterUrl}
-			to={link.to}
-			params={link.params}
-			title={note.title || "Unknown title"}
-			headerRight={
-				isOwner && !isEditing ? (
-					<div className="flex items-center gap-1">
-						<span className="text-(--foreground-subtle) text-xs">
-							{new Date(note.updatedAt).toLocaleDateString()}
-						</span>
-						<button
-							type="button"
-							onClick={() => setIsEditing(true)}
-							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-							aria-label="Edit note"
-						>
-							<Pencil className="size-3.5" />
-						</button>
-						<button
-							type="button"
-							onClick={handleDelete}
-							disabled={deleteMutation.isPending}
-							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-							aria-label="Delete note"
-						>
-							{deleteMutation.isPending ? (
-								<Loader2 className="size-3.5 animate-spin" />
-							) : (
-								<Trash2 className="size-3.5" />
-							)}
-						</button>
-					</div>
-				) : null
-			}
-		>
-			{isEditing ? (
-				<div className="space-y-2">
-					<textarea
-						value={editContent}
-						onChange={(e) => setEditContent(e.target.value)}
-						className="input min-h-[100px] resize-none text-sm"
-						maxLength={5000}
-					/>
-					<div className="flex items-center justify-between">
-						<span className="text-(--foreground-subtle) text-xs">
-							{editContent.length}/5000
-						</span>
-						<div className="flex gap-2">
+		<>
+			<ProfileContentCard
+				posterUrl={posterUrl}
+				to={link.to}
+				params={link.params}
+				title={note.title || "Unknown title"}
+				headerRight={
+					isOwner ? (
+						<div className="flex items-center gap-1">
+							<span className="text-(--foreground-subtle) text-xs">
+								{new Date(note.updatedAt).toLocaleDateString()}
+							</span>
 							<button
 								type="button"
-								onClick={handleCancel}
-								className="btn btn-secondary btn-sm gap-1"
+								onClick={() => setDialogOpen(true)}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit note"
 							>
-								<X className="size-3.5" />
-								Cancel
+								<Pencil className="size-3.5" />
 							</button>
 							<button
 								type="button"
-								onClick={handleSave}
-								disabled={upsertMutation.isPending}
-								className="btn btn-primary btn-sm gap-1"
+								onClick={handleDelete}
+								disabled={deleteMutation.isPending}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete note"
 							>
-								{upsertMutation.isPending ? (
+								{deleteMutation.isPending ? (
 									<Loader2 className="size-3.5 animate-spin" />
 								) : (
-									<Save className="size-3.5" />
+									<Trash2 className="size-3.5" />
 								)}
-								Save
 							</button>
 						</div>
-					</div>
-				</div>
-			) : (
+					) : null
+				}
+			>
 				<p className="line-clamp-4 whitespace-pre-wrap text-(--foreground) text-sm leading-relaxed">
 					{note.content}
 				</p>
-			)}
-		</ProfileContentCard>
+			</ProfileContentCard>
+			<NoteDialog
+				open={dialogOpen}
+				onOpenChange={setDialogOpen}
+				mediaType={baseMediaType}
+				mediaId={note.mediaId}
+				seasonNumber={note.seasonNumber}
+				episodeNumber={note.episodeNumber}
+				onSuccess={invalidateList}
+			/>
+		</>
 	);
 }
 
@@ -277,12 +194,10 @@ function ProfileNotesPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Title */}
 			<div className="flex items-center justify-between">
 				<h1 className="text-display-2">Notes</h1>
 			</div>
 
-			{/* Notes List */}
 			{isLoading ? (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					{[1, 2, 3, 4].map((i) => (

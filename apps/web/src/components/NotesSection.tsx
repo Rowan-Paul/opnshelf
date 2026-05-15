@@ -1,7 +1,8 @@
-import { Loader2, Pencil, Save, StickyNote, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Loader2, Pencil, StickyNote, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
-import { useDeleteNote, useNote, useUpsertNote } from "#/lib/hooks/useNotes";
+import { useDeleteNote, useNote } from "#/lib/hooks/useNotes";
+import { NoteDialog } from "./NoteDialog";
 
 interface NotesSectionProps {
 	mediaType: "movie" | "show";
@@ -17,17 +18,10 @@ export default function NotesSection({
 	episodeNumber,
 }: NotesSectionProps) {
 	const { user, isAuthenticated } = useAuth();
-	const userDid = user?.did || "";
+	const userDid = user?.did ?? "";
+	const [dialogOpen, setDialogOpen] = useState(false);
 
 	const { data: note, isLoading } = useNote({
-		userDid,
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
-
-	const upsertMutation = useUpsertNote({
 		userDid,
 		mediaType,
 		mediaId,
@@ -43,68 +37,7 @@ export default function NotesSection({
 		episodeNumber,
 	});
 
-	const [isEditing, setIsEditing] = useState(false);
-	const [content, setContent] = useState("");
-
-	// Sync content state with note data when it loads or when entering edit mode
-	useEffect(() => {
-		if (isEditing) {
-			setContent(note?.content || "");
-		}
-	}, [isEditing, note?.content]);
-
-	if (!isAuthenticated) {
-		return null;
-	}
-
-	const handleSave = () => {
-		if (!content.trim()) {
-			if (note?.id) {
-				deleteMutation.mutate(
-					{ path: { noteId: note.id } },
-					{
-						onSuccess: () => setIsEditing(false),
-					},
-				);
-			}
-			return;
-		}
-
-		upsertMutation.mutate(
-			{
-				body: {
-					mediaType:
-						episodeNumber != null
-							? "episode"
-							: seasonNumber != null
-								? "season"
-								: mediaType,
-					mediaId,
-					seasonNumber,
-					episodeNumber,
-					content: content.trim(),
-				},
-			},
-			{
-				onSuccess: () => setIsEditing(false),
-			},
-		);
-	};
-
-	const handleDelete = () => {
-		if (!note?.id) return;
-		deleteMutation.mutate(
-			{ path: { noteId: note.id } },
-			{
-				onSuccess: () => setIsEditing(false),
-			},
-		);
-	};
-
-	const handleCancel = () => {
-		setContent(note?.content || "");
-		setIsEditing(false);
-	};
+	if (!isAuthenticated) return null;
 
 	if (isLoading) {
 		return (
@@ -117,111 +50,73 @@ export default function NotesSection({
 		);
 	}
 
-	// View mode with existing note
-	if (note?.content && !isEditing) {
-		return (
+	return (
+		<>
 			<section className="card p-5">
 				<div className="mb-3 flex items-center justify-between">
 					<h3 className="flex items-center gap-2 font-display font-semibold">
 						<StickyNote className="size-4 text-(--accent)" />
 						Your Note
 					</h3>
-					<div className="flex gap-1">
-						<button
-							type="button"
-							onClick={() => setIsEditing(true)}
-							className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-							aria-label="Edit note"
-						>
-							<Pencil className="size-4" />
-						</button>
-						<button
-							type="button"
-							onClick={handleDelete}
-							disabled={deleteMutation.isPending}
-							className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-							aria-label="Delete note"
-						>
-							{deleteMutation.isPending ? (
-								<Loader2 className="size-4 animate-spin" />
-							) : (
-								<Trash2 className="size-4" />
-							)}
-						</button>
-					</div>
+					{note?.content && (
+						<div className="flex gap-1">
+							<button
+								type="button"
+								onClick={() => setDialogOpen(true)}
+								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit note"
+							>
+								<Pencil className="size-4" />
+							</button>
+							<button
+								type="button"
+								onClick={() =>
+									note.id &&
+									deleteMutation.mutate({ path: { noteId: note.id } })
+								}
+								disabled={deleteMutation.isPending}
+								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete note"
+							>
+								{deleteMutation.isPending ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Trash2 className="size-4" />
+								)}
+							</button>
+						</div>
+					)}
 				</div>
-				<p className="whitespace-pre-wrap text-(--foreground-muted) text-sm leading-relaxed">
-					{note.content}
-				</p>
-			</section>
-		);
-	}
 
-	// Edit mode (new or existing)
-	if (isEditing) {
-		return (
-			<section className="card p-5">
-				<h3 className="mb-3 flex items-center gap-2 font-display font-semibold">
-					<StickyNote className="size-4 text-(--accent)" />
-					{note?.content ? "Edit Note" : "Add a Note"}
-				</h3>
-				<textarea
-					value={content}
-					onChange={(e) => setContent(e.target.value)}
-					placeholder="Write your thoughts about this..."
-					className="input min-h-[120px] resize-none text-sm"
-					maxLength={5000}
-				/>
-				<div className="mt-3 flex items-center justify-between">
-					<span className="text-(--foreground-subtle) text-xs">
-						{content.length}/5000
-					</span>
-					<div className="flex gap-2">
+				{note?.content ? (
+					<p className="whitespace-pre-wrap text-(--foreground-muted) text-sm leading-relaxed">
+						{note.content}
+					</p>
+				) : (
+					<>
+						<p className="mb-3 text-(--foreground-muted) text-sm">
+							No notes yet. Add your thoughts about this title.
+						</p>
 						<button
 							type="button"
-							onClick={handleCancel}
+							onClick={() => setDialogOpen(true)}
 							className="btn btn-secondary btn-sm gap-1"
 						>
-							<X className="size-3.5" />
-							Cancel
+							<StickyNote className="size-3.5" />
+							Add note
 						</button>
-						<button
-							type="button"
-							onClick={handleSave}
-							disabled={upsertMutation.isPending}
-							className="btn btn-primary btn-sm gap-1"
-						>
-							{upsertMutation.isPending ? (
-								<Loader2 className="size-3.5 animate-spin" />
-							) : (
-								<Save className="size-3.5" />
-							)}
-							Save
-						</button>
-					</div>
-				</div>
+					</>
+				)}
 			</section>
-		);
-	}
 
-	// Empty state
-	return (
-		<section className="card p-5">
-			<h3 className="mb-3 flex items-center gap-2 font-display font-semibold">
-				<StickyNote className="size-4 text-(--accent)" />
-				Your Note
-			</h3>
-			<p className="mb-3 text-(--foreground-muted) text-sm">
-				No notes yet. Add your thoughts about this title.
-			</p>
-			<button
-				type="button"
-				onClick={() => setIsEditing(true)}
-				className="btn btn-secondary btn-sm gap-1"
-			>
-				<StickyNote className="size-3.5" />
-				Add note
-			</button>
-		</section>
+			<NoteDialog
+				open={dialogOpen}
+				onOpenChange={setDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
+		</>
 	);
 }

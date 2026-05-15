@@ -29,6 +29,7 @@ import {
 	useShowWatchHistory,
 	useWatchActions,
 } from "#/lib/hooks";
+import { useMediaReviews } from "#/lib/hooks/useReviews";
 import { buildEpisodePageMeta } from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../components/DetailsCard";
@@ -118,6 +119,13 @@ function EpisodeDetailPage() {
 	} = useWatchActions({ mediaType: "show", showId });
 
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+
+	const { data: mediaReviews } = useMediaReviews({
+		mediaType: "show",
+		mediaId: showId,
+		seasonNumber: seasonNum,
+		episodeNumber: episodeNum,
+	});
 
 	// Episode-specific watch history
 	const episodeWatchHistory = useMemo(() => {
@@ -241,7 +249,9 @@ function EpisodeDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{episode.vote_average?.toFixed(1) || "N/A"}
+								{(mediaReviews?.averageRating ?? episode.vote_average)?.toFixed(
+									1,
+								) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>

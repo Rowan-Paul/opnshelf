@@ -307,7 +307,7 @@ function SearchPage() {
 							searchData?.results &&
 							searchData.results.length > 0 && (
 								<section>
-									<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
 										{searchData.results.map((item) => (
 											<ActionableMediaCard
 												key={`media-${item.id}-${item.media_type}`}
@@ -331,7 +331,7 @@ function SearchPage() {
 						{/* Movies tab only */}
 						{activeTab === "movies" && movies.length > 0 && (
 							<section>
-								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
 									{movies.map((item) => (
 										<ActionableMediaCard
 											key={`movie-${item.id}`}
@@ -353,7 +353,7 @@ function SearchPage() {
 						{/* TV Shows tab only */}
 						{activeTab === "shows" && shows.length > 0 && (
 							<section>
-								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
 									{shows.map((item) => (
 										<ActionableMediaCard
 											key={`show-${item.id}`}

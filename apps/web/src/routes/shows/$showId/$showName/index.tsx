@@ -17,6 +17,7 @@ import {
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
+import { useMediaReviews } from "#/lib/hooks/useReviews";
 import { buildShowPageMeta } from "#/lib/media-meta";
 import { slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../components/DetailsCard";
@@ -119,6 +120,11 @@ function ShowDetailPage() {
 		isMarkShowPending,
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
+
+	const { data: mediaReviews } = useMediaReviews({
+		mediaType: "show",
+		mediaId: showId,
+	});
 
 	const isTracking = !!watchHistory && watchHistory.length > 0;
 
@@ -261,10 +267,11 @@ function ShowDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{
+								{(
+									mediaReviews?.averageRating ??
 									// @ts-expect-error - vote_average may exist on TMDB result
-									show.vote_average?.toFixed(1) || "N/A"
-								}
+									(show.vote_average as number | undefined)
+								)?.toFixed(1) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>

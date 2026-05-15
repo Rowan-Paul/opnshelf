@@ -1,17 +1,16 @@
 import {
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetUserReviewsQueryKey,
-	reviewsControllerUpsertReviewMutation,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, Save, Trash2, X } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { ReviewDialog } from "#/components/ReviewDialog";
 import StarRating from "#/components/StarRating";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -99,46 +98,29 @@ function ReviewCard({
 	userDid: string;
 }) {
 	const queryClient = useQueryClient();
-	const [isEditing, setIsEditing] = useState(false);
-	const [draftRating, setDraftRating] = useState(review.rating);
-	const [draftContent, setDraftContent] = useState(review.content || "");
-
-	const upsertMutation = useMutation({
-		...reviewsControllerUpsertReviewMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: reviewsControllerGetUserReviewsQueryKey({
-					path: { userDid },
-					query: { limit: 20 },
-				}),
-			});
-			toast.success("Review updated");
-			setIsEditing(false);
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to update review",
-			);
-		},
-	});
+	const [dialogOpen, setDialogOpen] = useState(false);
 
 	const deleteMutation = useMutation({
 		...reviewsControllerDeleteReviewMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: reviewsControllerGetUserReviewsQueryKey({
-					path: { userDid },
-					query: { limit: 20 },
-				}),
-			});
-			toast.success("Review deleted");
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to delete review",
-			);
-		},
 	});
+
+	const baseMediaType =
+		review.mediaType === "movie" ? "movie" : ("show" as const);
+
+	const invalidateList = () =>
+		queryClient.invalidateQueries({
+			queryKey: reviewsControllerGetUserReviewsQueryKey({
+				path: { userDid },
+				query: { limit: 20 },
+			}),
+		});
+
+	const handleDelete = () => {
+		deleteMutation.mutate(
+			{ path: { reviewId: review.id } },
+			{ onSuccess: invalidateList },
+		);
+	};
 
 	const showName = review.title?.split(" — ")[0] ?? "";
 	const slug = toSlug(showName);
@@ -159,148 +141,65 @@ function ReviewCard({
 		return "#";
 	})();
 
-	const handleSave = () => {
-		if (draftRating === 0) {
-			deleteMutation.mutate({ path: { reviewId: review.id } });
-			return;
-		}
-		upsertMutation.mutate({
-			body: {
-				mediaType: review.mediaType,
-				mediaId: review.mediaId,
-				seasonNumber: review.seasonNumber,
-				episodeNumber: review.episodeNumber,
-				rating: draftRating,
-				content: draftContent.trim() || undefined,
-			},
-		});
-	};
-
-	const handleCancel = () => {
-		setDraftRating(review.rating);
-		setDraftContent(review.content || "");
-		setIsEditing(false);
-	};
-
-	const handleDelete = () => {
-		deleteMutation.mutate({ path: { reviewId: review.id } });
-	};
-
-	const handleRatingChange = (newRating: number) => {
-		if (!isOwner || isEditing) return;
-		upsertMutation.mutate({
-			body: {
-				mediaType: review.mediaType,
-				mediaId: review.mediaId,
-				seasonNumber: review.seasonNumber,
-				episodeNumber: review.episodeNumber,
-				rating: newRating,
-				content: review.content,
-			},
-		});
-	};
-
 	const posterUrl = review.posterPath
 		? `https://image.tmdb.org/t/p/w300${review.posterPath}`
 		: null;
 
 	return (
-		<ProfileContentCard
-			posterUrl={posterUrl}
-			to={href}
-			title={review.title || "Unknown"}
-			headerRight={
-				<div className="flex items-center gap-2">
-					<span className="text-(--foreground-muted) text-xs">
-						{new Date(review.createdAt).toLocaleDateString()}
-					</span>
-					{isOwner && !isEditing && (
-						<div className="flex gap-1">
-							<button
-								type="button"
-								onClick={() => setIsEditing(true)}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-								aria-label="Edit review"
-							>
-								<Pencil className="size-3.5" />
-							</button>
-							<button
-								type="button"
-								onClick={handleDelete}
-								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-								aria-label="Delete review"
-							>
-								{deleteMutation.isPending ? (
-									<Loader2 className="size-3.5 animate-spin" />
-								) : (
-									<Trash2 className="size-3.5" />
-								)}
-							</button>
-						</div>
-					)}
-				</div>
-			}
-		>
-			{isEditing ? (
-				<div className="space-y-3">
-					<StarRating
-						value={draftRating}
-						onChange={(v) => setDraftRating(v)}
-						size="sm"
-					/>
-					<textarea
-						value={draftContent}
-						onChange={(e) => setDraftContent(e.target.value)}
-						placeholder="Write your review... (optional)"
-						className="input min-h-[80px] resize-none text-sm"
-						maxLength={5000}
-					/>
-					<div className="flex items-center justify-between">
-						<span className="text-(--foreground-subtle) text-xs">
-							{draftContent.length}/5000
+		<>
+			<ProfileContentCard
+				posterUrl={posterUrl}
+				to={href}
+				title={review.title || "Unknown"}
+				headerRight={
+					<div className="flex items-center gap-2">
+						<span className="text-(--foreground-muted) text-xs">
+							{new Date(review.createdAt).toLocaleDateString()}
 						</span>
-						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={handleCancel}
-								className="btn btn-secondary btn-sm gap-1"
-							>
-								<X className="size-3.5" />
-								Cancel
-							</button>
-							<button
-								type="button"
-								onClick={handleSave}
-								disabled={upsertMutation.isPending || deleteMutation.isPending}
-								className="btn btn-primary btn-sm gap-1"
-							>
-								{upsertMutation.isPending ? (
-									<Loader2 className="size-3.5 animate-spin" />
-								) : (
-									<Save className="size-3.5" />
-								)}
-								Save
-							</button>
-						</div>
+						{isOwner && (
+							<div className="flex gap-1">
+								<button
+									type="button"
+									onClick={() => setDialogOpen(true)}
+									className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+									aria-label="Edit review"
+								>
+									<Pencil className="size-3.5" />
+								</button>
+								<button
+									type="button"
+									onClick={handleDelete}
+									disabled={deleteMutation.isPending}
+									className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+									aria-label="Delete review"
+								>
+									{deleteMutation.isPending ? (
+										<Loader2 className="size-3.5 animate-spin" />
+									) : (
+										<Trash2 className="size-3.5" />
+									)}
+								</button>
+							</div>
+						)}
 					</div>
-				</div>
-			) : (
-				<>
-					<StarRating
-						value={review.rating}
-						onChange={isOwner ? handleRatingChange : undefined}
-						readOnly={!isOwner}
-						size="sm"
-						showValue
-					/>
-					{review.content && (
-						<p className="text-(--foreground-muted) text-sm leading-relaxed">
-							{review.content}
-						</p>
-					)}
-				</>
-			)}
-		</ProfileContentCard>
+				}
+			>
+				<StarRating value={review.rating} readOnly size="sm" showValue />
+				{review.content && (
+					<p className="text-(--foreground-muted) text-sm leading-relaxed">
+						{review.content}
+					</p>
+				)}
+			</ProfileContentCard>
+			<ReviewDialog
+				open={dialogOpen}
+				onOpenChange={setDialogOpen}
+				mediaType={baseMediaType}
+				mediaId={review.mediaId}
+				seasonNumber={review.seasonNumber ?? undefined}
+				episodeNumber={review.episodeNumber ?? undefined}
+				onSuccess={invalidateList}
+			/>
+		</>
 	);
 }

@@ -1,6 +1,19 @@
-import { Bookmark, Check, Heart, Loader2, Share2 } from "lucide-react";
+import {
+	Bookmark,
+	Check,
+	Heart,
+	Loader2,
+	Share2,
+	Star,
+	StickyNote,
+} from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "#/lib/auth-context";
 import { useListActions, useListItemStatus } from "#/lib/hooks";
+import { useNote } from "#/lib/hooks/useNotes";
+import { useReview } from "#/lib/hooks/useReviews";
+import { NoteDialog } from "./NoteDialog";
+import { ReviewDialog } from "./ReviewDialog";
 
 interface MediaActionsBarProps {
 	mediaType: "movie" | "show";
@@ -15,7 +28,13 @@ export default function MediaActionsBar({
 	seasonNumber,
 	episodeNumber,
 }: MediaActionsBarProps) {
+	const { user } = useAuth();
+	const userDid = user?.did ?? "";
+
 	const [shareSuccess, setShareSuccess] = useState(false);
+	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+
 	const { isInWatchlist, isInFavorites } = useListItemStatus({
 		mediaType,
 		mediaId,
@@ -25,14 +44,26 @@ export default function MediaActionsBar({
 	const { toggleWatchlist, toggleFavorites, activeListAction, isPending } =
 		useListActions({ mediaType, mediaId, seasonNumber, episodeNumber });
 
+	const { data: note } = useNote({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const { data: review } = useReview({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+
 	const handleShare = async () => {
 		const url = window.location.href;
 		if (navigator.share) {
 			try {
-				await navigator.share({
-					title: document.title,
-					url,
-				});
+				await navigator.share({ title: document.title, url });
 			} catch {
 				// User cancelled or share failed
 			}
@@ -95,6 +126,36 @@ export default function MediaActionsBar({
 				)}
 			</button>
 
+			{/* Note Button */}
+			<button
+				type="button"
+				onClick={() => setNoteDialogOpen(true)}
+				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+					note?.content
+						? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+				}`}
+				aria-label={note?.content ? "Edit note" : "Add note"}
+			>
+				<StickyNote
+					className={`size-5 ${note?.content ? "fill-current" : ""}`}
+				/>
+			</button>
+
+			{/* Review Button */}
+			<button
+				type="button"
+				onClick={() => setReviewDialogOpen(true)}
+				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+					review?.rating
+						? "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
+						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+				}`}
+				aria-label={review?.rating ? "Edit review" : "Add review"}
+			>
+				<Star className={`size-5 ${review?.rating ? "fill-current" : ""}`} />
+			</button>
+
 			{/* Share Button */}
 			<button
 				type="button"
@@ -108,6 +169,23 @@ export default function MediaActionsBar({
 					<Share2 className="size-5" />
 				)}
 			</button>
+
+			<NoteDialog
+				open={noteDialogOpen}
+				onOpenChange={setNoteDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
+			<ReviewDialog
+				open={reviewDialogOpen}
+				onOpenChange={setReviewDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
 		</>
 	);
 }
