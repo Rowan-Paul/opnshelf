@@ -882,6 +882,28 @@ export class ShowsService {
 		});
 	}
 
+	buildEpisodeWatchRecord(
+		showId: string,
+		seasonNumber: number,
+		episodeNumber: number,
+		customWatchedAt?: string,
+	) {
+		const rkey = TID.nextStr();
+		const now = new Date().toISOString();
+		const watchedAt = customWatchedAt
+			? new Date(customWatchedAt).toISOString()
+			: now;
+		const record: EpisodeRecord = episodeSchema.build({
+			showId,
+			seasonNumber,
+			episodeNumber,
+			source: "tmdb",
+			watchedAt,
+			createdAt: now,
+		});
+		return { rkey, record, collection: COLLECTION };
+	}
+
 	async markEpisodeWatched(
 		_userDid: string,
 		session: ATSession,

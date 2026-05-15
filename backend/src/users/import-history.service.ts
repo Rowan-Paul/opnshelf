@@ -1,3 +1,4 @@
+import { Agent } from "@atproto/api";
 import {
 	BadRequestException,
 	HttpException,
@@ -113,6 +114,9 @@ const RECENT_TERMINAL_JOB_WINDOW_MS = 15 * 60 * 1000;
 const TRAKT_RETRY_FALLBACK_SECONDS = 60;
 const TRAKT_RETRY_MAX_SECONDS = 10 * 60;
 const TRAKT_PAGE_DELAY_MS = 800;
+const PDS_APPLY_WRITES_BATCH_SIZE = 200;
+const PDS_RETRY_FALLBACK_SECONDS = 60;
+const PDS_RETRY_MAX_SECONDS = 5 * 60;
 
 class TraktApiError extends Error {
 	constructor(
@@ -121,6 +125,12 @@ class TraktApiError extends Error {
 		public readonly retryAfterSeconds?: number,
 	) {
 		super(message);
+	}
+}
+
+class PdsRateLimitError extends Error {
+	constructor(public readonly retryAfterSeconds?: number) {
+		super("PDS rate limit reached");
 	}
 }
 
@@ -333,6 +343,25 @@ export class ImportHistoryService {
 		const errors: ImportErrorDto[] = [];
 		const dedupeSet = new Set<string>();
 
+		type PendingWrite = {
+			itemIndex: number;
+			item: NormalizedImportItemDto;
+			rkey: string;
+			collection: string;
+			record: unknown;
+		} & (
+			| { type: "movie"; movieTmdbId: string }
+			| {
+					type: "episode";
+					showTmdbId: string;
+					seasonNumber: number;
+					episodeNumber: number;
+			  }
+		);
+
+		// Phase 1: filter duplicates and build PDS records (no network calls)
+		const pendingWrites: PendingWrite[] = [];
+
 		for (let index = 0; index < items.length; index++) {
 			const item = items[index];
 			const dedupeKey = this.buildImportKey(item);
@@ -348,77 +377,176 @@ export class ImportHistoryService {
 				continue;
 			}
 
+			if (item.type === "movie" && item.movieTmdbId) {
+				const { rkey, record, collection } =
+					this.moviesService.buildMovieWatchRecord(
+						String(item.movieTmdbId),
+						item.watchedAt,
+					);
+				pendingWrites.push({
+					type: "movie",
+					itemIndex: index,
+					item,
+					rkey,
+					record,
+					collection,
+					movieTmdbId: String(item.movieTmdbId),
+				});
+				continue;
+			}
+
+			if (
+				item.type === "episode" &&
+				item.showTmdbId &&
+				item.seasonNumber !== undefined &&
+				item.episodeNumber !== undefined
+			) {
+				const { rkey, record, collection } =
+					this.showsService.buildEpisodeWatchRecord(
+						String(item.showTmdbId),
+						item.seasonNumber,
+						item.episodeNumber,
+						item.watchedAt,
+					);
+				pendingWrites.push({
+					type: "episode",
+					itemIndex: index,
+					item,
+					rkey,
+					record,
+					collection,
+					showTmdbId: String(item.showTmdbId),
+					seasonNumber: item.seasonNumber,
+					episodeNumber: item.episodeNumber,
+				});
+				continue;
+			}
+
+			failed += 1;
+			errors.push({
+				index: index + 1,
+				code: "invalid_item",
+				message: "This item is missing required fields.",
+			});
+		}
+
+		if (pendingWrites.length === 0) {
+			return { imported, skipped, failed, errors };
+		}
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		for (
+			let batchStart = 0;
+			batchStart < pendingWrites.length;
+			batchStart += PDS_APPLY_WRITES_BATCH_SIZE
+		) {
+			const batch = pendingWrites.slice(
+				batchStart,
+				batchStart + PDS_APPLY_WRITES_BATCH_SIZE,
+			);
+
+			type WriteResult = { uri: string; cid: string };
+			let batchResults: WriteResult[];
+
+			this.logger.debug(
+				`PDS applyWrites: sending batch of ${batch.length} records (items ${batchStart + 1}–${batchStart + batch.length}) to ${session.did}`,
+			);
 			try {
-				if (item.type === "movie" && item.movieTmdbId) {
-					const write = await this.moviesService.markWatched(
-						userDid,
-						session,
-						String(item.movieTmdbId),
-						item.watchedAt,
-					);
-					await this.moviesService.indexTrackedMovie(
-						write.uri,
-						write.cid,
-						write.rkey,
-						userDid,
-						String(item.movieTmdbId),
-						item.watchedAt,
-					);
-					imported += 1;
-					continue;
-				}
-
-				if (
-					item.type === "episode" &&
-					item.showTmdbId &&
-					item.seasonNumber !== undefined &&
-					item.episodeNumber !== undefined
-				) {
-					const write = await this.showsService.markEpisodeWatched(
-						userDid,
-						session,
-						String(item.showTmdbId),
-						item.seasonNumber,
-						item.episodeNumber,
-						item.watchedAt,
-					);
-					await this.showsService.indexTrackedEpisode(
-						write.uri,
-						write.cid,
-						write.rkey,
-						userDid,
-						String(item.showTmdbId),
-						item.seasonNumber,
-						item.episodeNumber,
-						item.watchedAt,
-					);
-					imported += 1;
-					continue;
-				}
-
-				failed += 1;
-				errors.push({
-					index: index + 1,
-					code: "invalid_item",
-					message: "This item is missing required fields.",
+				const response = await agent.com.atproto.repo.applyWrites({
+					repo: session.did,
+					writes: batch.map((pw) => ({
+						$type: "com.atproto.repo.applyWrites#create" as const,
+						collection: pw.collection,
+						rkey: pw.rkey,
+						value: pw.record as Record<string, unknown>,
+					})),
+					validate: false,
+				});
+				this.logger.debug(
+					`PDS applyWrites: batch of ${batch.length} succeeded (commit ${response.data.commit?.cid ?? "unknown"})`,
+				);
+				batchResults = batch.map((pw, i) => {
+					const result = response.data.results?.[i] as
+						| { uri?: string; cid?: string }
+						| undefined;
+					return {
+						uri:
+							result?.uri ?? `at://${session.did}/${pw.collection}/${pw.rkey}`,
+						cid: result?.cid ?? "",
+					};
 				});
 			} catch (error) {
-				const itemContext = this.describeImportItem(item);
-				const classified = this.classifyImportWriteError(error);
-				this.logger.warn(
-					`Failed to import item at index ${index + 1} (${itemContext}): ${classified.rawMessage}`,
-				);
-				if (classified.reason === "duplicate_record") {
-					skipped += 1;
-					continue;
+				if (this.isPdsRateLimitError(error)) {
+					this.logger.warn(
+						`PDS applyWrites: rate limited on batch ${batchStart + 1}–${batchStart + batch.length}`,
+					);
+					throw new PdsRateLimitError(this.getPdsRetryAfterSeconds(error));
 				}
-				failed += 1;
-				errors.push({
-					index: index + 1,
-					code: "write_failed",
-					reason: classified.reason,
-					message: classified.message,
-				});
+				const errMsg = this.getErrorMessage(error);
+				this.logger.warn(
+					`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} failed: ${errMsg}`,
+				);
+				const classified = this.classifyImportWriteError(error);
+				for (const pw of batch) {
+					failed += 1;
+					errors.push({
+						index: pw.itemIndex + 1,
+						code: "write_failed",
+						reason: classified.reason,
+						message: classified.message,
+					});
+				}
+				continue;
+			}
+
+			// Phase 3: index each result (TMDB fetch + DB write)
+			for (let i = 0; i < batch.length; i++) {
+				const pw = batch[i];
+				const { uri, cid } = batchResults[i];
+				try {
+					if (pw.type === "movie") {
+						await this.moviesService.indexTrackedMovie(
+							uri,
+							cid,
+							pw.rkey,
+							userDid,
+							pw.movieTmdbId,
+							pw.item.watchedAt,
+						);
+					} else {
+						await this.showsService.indexTrackedEpisode(
+							uri,
+							cid,
+							pw.rkey,
+							userDid,
+							pw.showTmdbId,
+							pw.seasonNumber,
+							pw.episodeNumber,
+							pw.item.watchedAt,
+						);
+					}
+					imported += 1;
+				} catch (error) {
+					const itemContext = this.describeImportItem(pw.item);
+					const classified = this.classifyImportWriteError(error);
+					this.logger.warn(
+						`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
+					);
+					if (classified.reason === "duplicate_record") {
+						skipped += 1;
+						continue;
+					}
+					failed += 1;
+					errors.push({
+						index: pw.itemIndex + 1,
+						code: "write_failed",
+						reason: classified.reason,
+						message: classified.message,
+					});
+				}
 			}
 		}
 
@@ -517,6 +645,28 @@ export class ImportHistoryService {
 				},
 			});
 		} catch (error) {
+			if (error instanceof PdsRateLimitError) {
+				const retryAfterSeconds = Math.min(
+					Math.max(
+						error.retryAfterSeconds ?? PDS_RETRY_FALLBACK_SECONDS,
+						PDS_RETRY_FALLBACK_SECONDS,
+					),
+					PDS_RETRY_MAX_SECONDS,
+				);
+				this.logger.warn(
+					`PDS rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s.`,
+				);
+				await this.prisma.backgroundJob.update({
+					where: { id: job.id },
+					data: {
+						status: "waiting_retry",
+						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
+						lastError: `PDS rate limit reached. Retrying in ${retryAfterSeconds} seconds.`,
+					},
+				});
+				return;
+			}
+
 			if (error instanceof TraktApiError && error.status === 429) {
 				const retryAfterSeconds = this.getRetryAfterSeconds(
 					error.retryAfterSeconds,
@@ -1104,6 +1254,27 @@ export class ImportHistoryService {
 			);
 			return null;
 		}
+	}
+
+	private isPdsRateLimitError(error: unknown): boolean {
+		return (
+			typeof error === "object" &&
+			error !== null &&
+			"status" in error &&
+			(error as { status: unknown }).status === 429
+		);
+	}
+
+	private getPdsRetryAfterSeconds(error: unknown): number | undefined {
+		if (typeof error !== "object" || error === null) return undefined;
+		const headers = (error as Record<string, unknown>).headers;
+		if (!headers || typeof headers !== "object") return undefined;
+		const retryAfter =
+			(headers as Record<string, string>)["retry-after"] ??
+			(headers as Record<string, string>)["Retry-After"];
+		if (!retryAfter) return undefined;
+		const parsed = Number(retryAfter);
+		return Number.isFinite(parsed) ? parsed : undefined;
 	}
 
 	private getRetryAfterSeconds(retryAfterSeconds?: number): number {

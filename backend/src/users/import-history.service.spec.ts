@@ -1,9 +1,12 @@
+import { Agent } from "@atproto/api";
 import { ConfigService } from "@nestjs/config";
 import type { AuthService } from "../auth/auth.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
 import { ImportHistoryService } from "./import-history.service";
+
+jest.mock("@atproto/api");
 
 describe("ImportHistoryService", () => {
 	let service: ImportHistoryService;
@@ -72,11 +75,13 @@ describe("ImportHistoryService", () => {
 	} as unknown as PrismaService;
 
 	const moviesService = {
+		buildMovieWatchRecord: jest.fn(),
 		markWatched: jest.fn(),
 		indexTrackedMovie: jest.fn(),
 	} as unknown as MoviesService;
 
 	const showsService = {
+		buildEpisodeWatchRecord: jest.fn(),
 		markEpisodeWatched: jest.fn(),
 		indexTrackedEpisode: jest.fn(),
 	} as unknown as ShowsService;
@@ -102,6 +107,26 @@ describe("ImportHistoryService", () => {
 			authService,
 		);
 		global.fetch = jest.fn() as unknown as typeof fetch;
+
+		(moviesService.buildMovieWatchRecord as jest.Mock).mockReturnValue({
+			rkey: "rkey-movie-1",
+			record: {},
+			collection: "xyz.opnshelf.movie",
+		});
+		(showsService.buildEpisodeWatchRecord as jest.Mock).mockReturnValue({
+			rkey: "rkey-episode-1",
+			record: {},
+			collection: "xyz.opnshelf.episode",
+		});
+		(Agent as unknown as jest.Mock).mockImplementation(() => ({
+			com: {
+				atproto: {
+					repo: {
+						applyWrites: jest.fn().mockResolvedValue({ data: {} }),
+					},
+				},
+			},
+		}));
 	});
 
 	afterEach(() => {
@@ -259,11 +284,6 @@ describe("ImportHistoryService", () => {
 			did: "did:plc:abc",
 		});
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.markWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(moviesService.indexTrackedMovie as jest.Mock).mockResolvedValue(undefined);
 
 		(global.fetch as jest.Mock).mockResolvedValue(
@@ -291,9 +311,7 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		expect(moviesService.markWatched).toHaveBeenCalledWith(
-			"did:plc:abc",
-			{ did: "did:plc:abc" },
+		expect(moviesService.buildMovieWatchRecord).toHaveBeenCalledWith(
 			"329865",
 			"2026-03-22T12:00:00.000Z",
 		);
@@ -322,11 +340,6 @@ describe("ImportHistoryService", () => {
 			did: "did:plc:abc",
 		});
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.markWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(moviesService.indexTrackedMovie as jest.Mock).mockResolvedValue(undefined);
 
 		const payload = Array.from({ length: 99 }, (_, index) => ({
@@ -468,11 +481,6 @@ describe("ImportHistoryService", () => {
 
 	it("treats duplicate tracked movie races as skipped without exposing prisma errors", async () => {
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.markWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
 			new Error("Unique constraint failed on the fields: (`rkey`)"),
 		);
@@ -509,11 +517,6 @@ describe("ImportHistoryService", () => {
 
 	it("treats duplicate tracked episode races as skipped without exposing prisma errors", async () => {
 		prisma.trackedEpisode.findFirst = jest.fn().mockResolvedValue(null);
-		(showsService.markEpisodeWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.episode/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(showsService.indexTrackedEpisode as jest.Mock).mockRejectedValue(
 			new Error("Unique constraint failed on the fields: (`rkey`)"),
 		);
@@ -543,11 +546,6 @@ describe("ImportHistoryService", () => {
 
 	it("returns sanitized unknown write failures", async () => {
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.markWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
 			new Error("database exploded in production"),
 		);
@@ -583,11 +581,6 @@ describe("ImportHistoryService", () => {
 
 	it("returns sanitized metadata failures", async () => {
 		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.markWatched as jest.Mock).mockResolvedValue({
-			uri: "at://did:plc:abc/xyz.opnshelf.movie/1",
-			cid: "cid-1",
-			rkey: "1",
-		});
 		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
 			new Error("TMDB movie details request failed"),
 		);

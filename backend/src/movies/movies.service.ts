@@ -219,6 +219,21 @@ export class MoviesService {
 	 * Mark a movie as watched by creating an AT Protocol record in the user's PDS.
 	 * Database indexing happens via the firehose ingester or optimistic update in controller.
 	 */
+	buildMovieWatchRecord(movieId: string, customWatchedAt?: string) {
+		const rkey = TID.nextStr();
+		const now = new Date().toISOString();
+		const watchedAt = customWatchedAt
+			? new Date(customWatchedAt).toISOString()
+			: now;
+		const record: MovieRecord = movieSchema.build({
+			movieId,
+			source: "tmdb",
+			watchedAt,
+			createdAt: now,
+		});
+		return { rkey, record, collection: COLLECTION };
+	}
+
 	async markWatched(
 		_userDid: string,
 		session: ATSession,
