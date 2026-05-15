@@ -94,6 +94,84 @@ export class SocialService {
 
 	constructor(private readonly prisma: PrismaService) {}
 
+	async getSuggestions(
+		viewerDid: string,
+		limit = 10,
+	): Promise<PaginatedSocialUsersDto> {
+		const safeLimit = Math.min(Math.max(limit, 1), 20);
+
+		const alreadyFollowing = await this.prisma.follow.findMany({
+			where: { followerDid: viewerDid },
+			select: { followingDid: true },
+		});
+		const excludeDids = new Set([
+			viewerDid,
+			...alreadyFollowing.map((f) => f.followingDid),
+		]);
+
+		const blueskyDids = await this.fetchOneBlueskyFollowsPage(viewerDid);
+		const candidateDids = blueskyDids.filter((d) => !excludeDids.has(d));
+		const blueskyMatches =
+			candidateDids.length > 0
+				? await this.prisma.user.findMany({
+						where: { did: { in: candidateDids } },
+						select: socialUserSelect,
+						take: safeLimit,
+					})
+				: [];
+
+		if (blueskyMatches.length > 0) {
+			const cards = await this.buildSocialUserCards(
+				blueskyMatches.map((u) => u.did),
+				viewerDid,
+				new Map(blueskyMatches.map((u) => [u.did, u])),
+			);
+			const items = blueskyMatches
+				.map((u) => cards.get(u.did))
+				.filter((u): u is SocialUserCardDto => Boolean(u));
+			return {
+				items,
+				total: items.length,
+				page: 1,
+				pageSize: safeLimit,
+				totalPages: 1,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			};
+		}
+
+		const activeUsers = await this.prisma.user.findMany({
+			where: {
+				did: { notIn: [...excludeDids] },
+				OR: [
+					{ trackedMovies: { some: {} } },
+					{ trackedEpisodes: { some: {} } },
+				],
+			},
+			select: socialUserSelect,
+			orderBy: { trackedMovies: { _count: "desc" } },
+			take: safeLimit,
+		});
+
+		const cards = await this.buildSocialUserCards(
+			activeUsers.map((u) => u.did),
+			viewerDid,
+			new Map(activeUsers.map((u) => [u.did, u])),
+		);
+		const items = activeUsers
+			.map((u) => cards.get(u.did))
+			.filter((u): u is SocialUserCardDto => Boolean(u));
+		return {
+			items,
+			total: items.length,
+			page: 1,
+			pageSize: safeLimit,
+			totalPages: items.length > 0 ? 1 : 0,
+			hasNextPage: false,
+			hasPreviousPage: false,
+		};
+	}
+
 	async searchPeople(
 		viewerDid: string,
 		query: string,
@@ -1028,6 +1106,24 @@ export class SocialService {
 				} satisfies FollowedWatcherActorDto),
 			activityAt: row.activityAt.toISOString(),
 		};
+	}
+
+	private async fetchOneBlueskyFollowsPage(did: string): Promise<string[]> {
+		try {
+			const url = `https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?actor=${encodeURIComponent(did)}&limit=100`;
+			const response = await fetch(url, {
+				headers: { Accept: "application/json" },
+			});
+			if (!response.ok) return [];
+			const data = (await response.json()) as {
+				follows?: { did?: string }[];
+			};
+			return (data.follows ?? [])
+				.map((f) => f.did)
+				.filter((d): d is string => typeof d === "string" && d.length > 0);
+		} catch {
+			return [];
+		}
 	}
 }
 

@@ -31,6 +31,18 @@ import { type ATSession, SocialService } from "./social.service";
 export class SocialController {
 	constructor(private readonly socialService: SocialService) {}
 
+	@Get("suggestions")
+	@ApiOperation({
+		summary:
+			"Get follow suggestions based on Bluesky follows, falling back to active users",
+	})
+	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
+	async getSuggestions(
+		@Req() req: AuthenticatedRequest,
+	): Promise<PaginatedSocialUsersDto> {
+		return this.socialService.getSuggestions(getViewerDid(req));
+	}
+
 	@Get("search")
 	@ApiOperation({ summary: "Search OpnShelf people by handle or display name" })
 	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })

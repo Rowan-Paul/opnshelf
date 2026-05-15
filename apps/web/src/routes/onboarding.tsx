@@ -5,6 +5,8 @@ import {
 	isActiveTraktImportStatus,
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
+	socialControllerFollowMutation,
+	socialControllerGetSuggestionsOptions,
 	type TraktImportStatusJob,
 	type UserDto,
 	type UserProfileDto,
@@ -12,7 +14,6 @@ import {
 	usersControllerDeleteMyAvatarMutation,
 	usersControllerFetchMyTraktPublicHistory,
 	usersControllerGetMyCurrentTraktImportOptions,
-	usersControllerImportMyBlueskyFollows,
 	usersControllerStartMyTraktImport,
 	usersControllerUpdateMyProfileMutation,
 } from "@opnshelf/api";
@@ -27,11 +28,12 @@ import {
 	Tv,
 	Upload,
 	User,
-	Users,
+	UserPlus,
 	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -39,7 +41,7 @@ export const Route = createFileRoute("/onboarding")({
 	component: OnboardingPage,
 });
 
-type OnboardingStep = "welcome" | "profile" | "trakt" | "bluesky" | "done";
+type OnboardingStep = "welcome" | "profile" | "trakt" | "suggestions" | "done";
 
 function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	const [error, setError] = useState(false);
@@ -121,12 +123,12 @@ function OnboardingPage() {
 				{step === "profile" && <ProfileStep onNext={() => setStep("trakt")} />}
 				{step === "trakt" && (
 					<TraktStep
-						onNext={() => setStep("bluesky")}
-						onSkip={() => setStep("bluesky")}
+						onNext={() => setStep("suggestions")}
+						onSkip={() => setStep("suggestions")}
 					/>
 				)}
-				{step === "bluesky" && (
-					<BlueskyStep
+				{step === "suggestions" && (
+					<FollowSuggestionsStep
 						onNext={() => setStep("done")}
 						onSkip={() => setStep("done")}
 					/>
@@ -712,47 +714,42 @@ function TraktStep({
 }
 
 /* ------------------------------------------------------------------
-   Step 4: Bluesky Follows
+   Step 4: Follow Suggestions
    ------------------------------------------------------------------ */
-function BlueskyStep({
+function FollowSuggestionsStep({
 	onNext,
 	onSkip,
 }: {
 	onNext: () => void;
 	onSkip: () => void;
 }) {
-	const [result, setResult] = useState<{
-		scannedCount: number;
-		matchedCount: number;
-		createdCount: number;
-		alreadyFollowingCount: number;
-	} | null>(null);
+	const queryClient = useQueryClient();
+	const { data, isLoading } = useQuery(socialControllerGetSuggestionsOptions());
 
-	const importFollows = useMutation({
-		mutationFn: async () => {
-			const { data } = await usersControllerImportMyBlueskyFollows({
-				throwOnError: true,
+	const followMutation = useMutation({
+		...socialControllerFollowMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: socialControllerGetSuggestionsOptions().queryKey,
 			});
-			return data;
-		},
-		onSuccess: (data) => {
-			toast.success("Follows imported");
-			setResult(data);
+			toast.success("Followed");
 		},
 		onError: (error) => {
 			toast.error(
-				error instanceof Error ? error.message : "Failed to import follows",
+				error instanceof Error ? error.message : "Failed to follow user",
 			);
 		},
 	});
+
+	const suggestions = data?.items ?? [];
 
 	return (
 		<div className="card p-6">
 			<div className="mb-6 flex items-center justify-between">
 				<div>
-					<h2 className="text-display-3">Connect with Friends</h2>
+					<h2 className="text-display-3">People to Follow</h2>
 					<p className="mt-1 text-(--foreground-muted) text-sm">
-						Import your Bluesky follows who are already on OpnShelf
+						OpnShelf users from your Bluesky network, or active members
 					</p>
 				</div>
 				<button
@@ -764,82 +761,77 @@ function BlueskyStep({
 				</button>
 			</div>
 
-			{!result && (
-				<div className="space-y-4">
-					<div className="flex items-center gap-3 rounded-lg bg-(--background-subtle) p-4">
-						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--accent-subtle)">
-							<Users className="size-5 text-(--accent)" />
-						</div>
-						<div>
-							<p className="font-medium text-sm">
-								Find people you follow on Bluesky
-							</p>
-							<p className="text-(--foreground-muted) text-xs">
-								We&apos;ll scan your follows and auto-follow anyone already
-								here.
-							</p>
-						</div>
-					</div>
-
-					<button
-						type="button"
-						onClick={() => importFollows.mutate()}
-						disabled={importFollows.isPending}
-						className="btn btn-primary w-full"
-					>
-						{importFollows.isPending ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Scanning follows...
-							</>
-						) : (
-							<>
-								<Users className="size-4" />
-								Import Bluesky Follows
-							</>
-						)}
-					</button>
+			{isLoading && (
+				<div className="flex justify-center py-8">
+					<Loader2 className="size-5 animate-spin text-(--foreground-muted)" />
 				</div>
 			)}
 
-			{result && (
-				<div className="space-y-4">
-					<div className="flex items-center gap-3">
-						<CheckCircle className="size-5 text-green-500" />
-						<p className="font-medium text-sm">Follows imported</p>
-					</div>
+			{!isLoading && suggestions.length === 0 && (
+				<p className="py-8 text-center text-(--foreground-muted) text-sm">
+					No suggestions right now
+				</p>
+			)}
 
-					<div className="grid grid-cols-2 gap-3">
-						<div className="rounded-lg bg-(--background-subtle) p-3 text-center">
-							<p className="text-display-3">{result.scannedCount}</p>
-							<p className="text-(--foreground-muted) text-xs">Scanned</p>
+			{suggestions.length > 0 && (
+				<div className="mb-6 space-y-1">
+					{suggestions.map((person) => (
+						<div
+							key={person.did}
+							className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
+						>
+							<UserAvatar
+								src={
+									typeof person.avatar === "string" ? person.avatar : undefined
+								}
+								alt={String(person.displayName) || person.handle}
+							/>
+							<div className="min-w-0 flex-1">
+								<p className="truncate font-medium text-sm">
+									{String(person.displayName) || person.handle}
+								</p>
+								<p className="text-(--foreground-muted) text-xs">
+									@{person.handle}
+								</p>
+							</div>
+							{person.isFollowing ? (
+								<span className="text-(--foreground-muted) text-xs">
+									Following
+								</span>
+							) : (
+								<button
+									type="button"
+									className="btn btn-primary btn-sm"
+									onClick={() =>
+										followMutation.mutate({
+											path: { targetDid: person.did },
+										})
+									}
+									disabled={
+										followMutation.isPending &&
+										followMutation.variables?.path?.targetDid === person.did
+									}
+								>
+									{followMutation.isPending &&
+									followMutation.variables?.path?.targetDid === person.did ? (
+										<Loader2 className="size-3 animate-spin" />
+									) : (
+										<>
+											<UserPlus className="size-3" />
+											Follow
+										</>
+									)}
+								</button>
+							)}
 						</div>
-						<div className="rounded-lg bg-(--background-subtle) p-3 text-center">
-							<p className="text-display-3">{result.matchedCount}</p>
-							<p className="text-(--foreground-muted) text-xs">Matched</p>
-						</div>
-						<div className="rounded-lg bg-(--background-subtle) p-3 text-center">
-							<p className="text-display-3">{result.createdCount}</p>
-							<p className="text-(--foreground-muted) text-xs">New follows</p>
-						</div>
-						<div className="rounded-lg bg-(--background-subtle) p-3 text-center">
-							<p className="text-display-3">{result.alreadyFollowingCount}</p>
-							<p className="text-(--foreground-muted) text-xs">
-								Already following
-							</p>
-						</div>
-					</div>
-
-					<button
-						type="button"
-						onClick={onNext}
-						className="btn btn-primary w-full"
-					>
-						Continue
-						<ArrowRight className="size-4" />
-					</button>
+					))}
 				</div>
 			)}
+
+			<button type="button" onClick={onNext} className="btn btn-primary w-full">
+				Continue
+				<ArrowRight className="size-4" />
+			</button>
 		</div>
 	);
 }

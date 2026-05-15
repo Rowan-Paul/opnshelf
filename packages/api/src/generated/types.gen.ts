@@ -1374,6 +1374,24 @@ export type PersonFilmographyResponseDto = {
     totalPages: number;
 };
 
+export type CreateFeedbackDto = {
+    /**
+     * Feedback category
+     */
+    category: 'bug' | 'feature_request';
+    /**
+     * Feedback message
+     */
+    message: string;
+};
+
+export type FeedbackResponseDto = {
+    id: string;
+    category: string;
+    message: string;
+    createdAt: string;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -2800,6 +2818,19 @@ export type ListsControllerGetListsForItemResponses = {
 
 export type ListsControllerGetListsForItemResponse = ListsControllerGetListsForItemResponses[keyof ListsControllerGetListsForItemResponses];
 
+export type SocialControllerGetSuggestionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/social/suggestions';
+};
+
+export type SocialControllerGetSuggestionsResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetSuggestionsResponse = SocialControllerGetSuggestionsResponses[keyof SocialControllerGetSuggestionsResponses];
+
 export type SocialControllerSearchPeopleData = {
     body?: never;
     path?: never;
@@ -3413,3 +3444,26 @@ export type PeopleControllerGetPersonFilmographyResponses = {
 };
 
 export type PeopleControllerGetPersonFilmographyResponse = PeopleControllerGetPersonFilmographyResponses[keyof PeopleControllerGetPersonFilmographyResponses];
+
+export type FeedbackControllerCreateFeedbackData = {
+    body: CreateFeedbackDto;
+    path?: never;
+    query?: never;
+    url: '/feedback';
+};
+
+export type FeedbackControllerCreateFeedbackErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type FeedbackControllerCreateFeedbackResponses = {
+    /**
+     * Feedback submitted
+     */
+    200: FeedbackResponseDto;
+};
+
+export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
