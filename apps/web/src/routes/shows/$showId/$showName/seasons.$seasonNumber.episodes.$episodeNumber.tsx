@@ -179,6 +179,16 @@ function EpisodeDetailPage() {
 		episode.crew?.find((person) => person.job === "Director")?.name ||
 		"Unknown";
 
+	const cast =
+		show.credits?.cast?.slice(0, 6).map((actor) => ({
+			id: actor.id,
+			name: actor.name,
+			role: actor.character || "",
+			photo: actor.profile_path
+				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+				: `https://i.pravatar.cc/150?u=${actor.id}`,
+		})) || [];
+
 	const guestStars =
 		episode.guest_stars?.slice(0, 6).map((actor) => ({
 			id: actor.id,
@@ -400,14 +410,12 @@ function EpisodeDetailPage() {
 						</section>
 
 						<div className="hidden space-y-8 lg:block">
-							{/* Guest Stars */}
+							<PersonGrid people={cast} />
 							<PersonGrid
 								people={guestStars}
 								title="Guest Stars"
 								emptyMessage="No guest stars information available."
 							/>
-
-							{/* Crew */}
 							<PersonGrid
 								people={episodeCrew}
 								title="Crew"
@@ -489,6 +497,7 @@ function EpisodeDetailPage() {
 				</div>
 
 				<div className="mt-8 space-y-8 lg:hidden">
+					<PersonGrid people={cast} />
 					<PersonGrid
 						people={guestStars}
 						title="Guest Stars"
