@@ -157,6 +157,48 @@ export class TMDBMovieResultDto {
 
 	@ApiPropertyOptional()
 	overview?: string;
+
+	@ApiPropertyOptional()
+	vote_average?: number;
+}
+
+export class WatchProviderDto {
+	@ApiProperty()
+	logo_path: string;
+
+	@ApiProperty()
+	provider_id: number;
+
+	@ApiProperty()
+	provider_name: string;
+
+	@ApiProperty()
+	display_priority: number;
+}
+
+export class WatchProvidersResultDto {
+	@ApiPropertyOptional({ type: [WatchProviderDto] })
+	flatrate?: WatchProviderDto[];
+
+	@ApiPropertyOptional({ type: [WatchProviderDto] })
+	rent?: WatchProviderDto[];
+
+	@ApiPropertyOptional({ type: [WatchProviderDto] })
+	buy?: WatchProviderDto[];
+
+	@ApiPropertyOptional({ type: [WatchProviderDto] })
+	ads?: WatchProviderDto[];
+
+	@ApiPropertyOptional({ type: [WatchProviderDto] })
+	free?: WatchProviderDto[];
+}
+
+export class WatchProvidersResponseDto {
+	@ApiPropertyOptional({ type: WatchProvidersResultDto })
+	providers?: WatchProvidersResultDto;
+
+	@ApiPropertyOptional({ type: [String] })
+	availableCountries?: string[];
 }
 
 export class TMDBGenreDto {
@@ -254,9 +296,6 @@ export class TMDBMovieDetailDto extends TMDBMovieResultDto {
 	@IsOptional()
 	@IsInt()
 	runtime?: number;
-
-	@ApiPropertyOptional()
-	vote_average?: number;
 
 	@ApiPropertyOptional()
 	vote_count?: number;

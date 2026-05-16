@@ -24,6 +24,7 @@ import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
+	useDiscoverShows,
 	useEpisodeDetails,
 	useShowDetails,
 	useShowWatchHistory,
@@ -42,6 +43,7 @@ import MediaHero from "../../../../components/MediaHero";
 import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
 import ReviewSection from "../../../../components/ReviewSection";
+import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
 
@@ -135,6 +137,8 @@ function EpisodeDetailPage() {
 		watchProvidersCountry,
 	);
 
+	const { data: discoverShowsData } = useDiscoverShows(1);
+
 	const { data: mediaReviews } = useMediaReviews({
 		mediaType: "show",
 		mediaId: showId,
@@ -208,6 +212,23 @@ function EpisodeDetailPage() {
 				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
 				: `https://i.pravatar.cc/150?u=${person.id}`,
 		})) || [];
+
+	const similarShows =
+		discoverShowsData?.results
+			?.filter((s) => s.id !== Number(showId))
+			?.slice(0, 6)
+			?.map((s) => ({
+				id: s.id,
+				title: s.name,
+				type: "show" as const,
+				year: s.first_air_date
+					? new Date(s.first_air_date).getFullYear()
+					: undefined,
+				posterUrl: s.poster_path
+					? `https://image.tmdb.org/t/p/w300${s.poster_path}`
+					: "",
+				tmdbRating: s.vote_average || undefined,
+			})) || [];
 
 	// Previous / Next episode navigation (computed client-side from show data)
 	const seasons =
@@ -421,21 +442,24 @@ function EpisodeDetailPage() {
 								title="Crew"
 								emptyMessage="No crew information available."
 							/>
+							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 						</div>
 					</div>
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
 						{/* Your Activity */}
-						<YourActivity
-							watchHistory={episodeWatchHistory}
-							onAddToShelf={(watchedAt) =>
-								markEpisodeWatched(seasonNum, episodeNum, watchedAt)
-							}
-							onDeleteEntry={deleteEpisodeWatchHistoryEntry}
-							isAddPending={isMarkEpisodePending}
-							isDeletePending={isDeleteEpisodeHistoryPending}
-						/>
+						{isAuthenticated && (
+							<YourActivity
+								watchHistory={episodeWatchHistory}
+								onAddToShelf={(watchedAt) =>
+									markEpisodeWatched(seasonNum, episodeNum, watchedAt)
+								}
+								onDeleteEntry={deleteEpisodeWatchHistoryEntry}
+								isAddPending={isMarkEpisodePending}
+								isDeletePending={isDeleteEpisodeHistoryPending}
+							/>
+						)}
 
 						{/* Details */}
 						<DetailsCard
@@ -508,6 +532,7 @@ function EpisodeDetailPage() {
 						title="Crew"
 						emptyMessage="No crew information available."
 					/>
+					<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 				</div>
 			</div>
 

@@ -31,6 +31,7 @@ import {
 	TMDBMovieDetailDto,
 	TrackedMovieDto,
 	WatchHistoryItemDto,
+	WatchProvidersResponseDto,
 } from "./dto/movie.dto";
 import type { ATSession } from "./movies.service";
 import { MoviesService } from "./movies.service";
@@ -86,6 +87,7 @@ export class MoviesController {
 	@ApiOperation({
 		summary: "Get watch providers for a movie from TMDB/JustWatch",
 	})
+	@ApiResponse({ status: 200, type: WatchProvidersResponseDto })
 	@ApiQuery({
 		name: "country",
 		required: false,

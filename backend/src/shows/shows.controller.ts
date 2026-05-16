@@ -44,6 +44,7 @@ import {
 	TrackedEpisodeDto,
 	TrackedShowSummaryDto,
 } from "./dto/show.dto";
+import { WatchProvidersResponseDto } from "../movies/dto/movie.dto";
 import type { ATSession } from "./shows.service";
 import { ShowsService } from "./shows.service";
 
@@ -99,6 +100,7 @@ export class ShowsController {
 	@ApiOperation({
 		summary: "Get watch providers for a show from TMDB/JustWatch",
 	})
+	@ApiResponse({ status: 200, type: WatchProvidersResponseDto })
 	@ApiQuery({
 		name: "country",
 		required: false,

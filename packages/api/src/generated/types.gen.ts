@@ -11,6 +11,7 @@ export type TmdbMovieResultDto = {
     backdrop_path?: string;
     release_date?: string;
     overview?: string;
+    vote_average?: number;
 };
 
 export type SearchResultsDto = {
@@ -70,13 +71,33 @@ export type TmdbMovieDetailDto = {
     backdrop_path?: string;
     release_date?: string;
     overview?: string;
-    runtime?: number;
     vote_average?: number;
+    runtime?: number;
     vote_count?: number;
     genres?: Array<TmdbGenreDto>;
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
     trailer?: TmdbTrailerDto;
+};
+
+export type WatchProviderDto = {
+    logo_path: string;
+    provider_id: number;
+    provider_name: string;
+    display_priority: number;
+};
+
+export type WatchProvidersResultDto = {
+    flatrate?: Array<WatchProviderDto>;
+    rent?: Array<WatchProviderDto>;
+    buy?: Array<WatchProviderDto>;
+    ads?: Array<WatchProviderDto>;
+    free?: Array<WatchProviderDto>;
+};
+
+export type WatchProvidersResponseDto = {
+    providers?: WatchProvidersResultDto;
+    availableCountries?: Array<string>;
 };
 
 export type MovieDto = {
@@ -164,6 +185,7 @@ export type TmdbShowResultDto = {
     backdrop_path?: string;
     first_air_date?: string;
     overview?: string;
+    vote_average?: number;
 };
 
 export type SearchShowsResultsDto = {
@@ -190,6 +212,7 @@ export type TmdbShowDetailDto = {
     backdrop_path?: string;
     first_air_date?: string;
     overview?: string;
+    vote_average?: number;
     genres?: Array<TmdbGenreDto>;
     number_of_seasons?: number;
     number_of_episodes?: number;
@@ -1391,6 +1414,10 @@ export type CreateFeedbackDto = {
      * Feedback message
      */
     message: string;
+    /**
+     * Page URL where feedback was submitted
+     */
+    pageUrl?: string;
 };
 
 export type FeedbackResponseDto = {
@@ -1445,6 +1472,26 @@ export type MoviesControllerGetMovieDetailsResponses = {
 };
 
 export type MoviesControllerGetMovieDetailsResponse = MoviesControllerGetMovieDetailsResponses[keyof MoviesControllerGetMovieDetailsResponses];
+
+export type MoviesControllerGetWatchProvidersData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: {
+        /**
+         * ISO 3166-1 country code (e.g. US, GB)
+         */
+        country?: string;
+    };
+    url: '/movies/tmdb/{movieId}/watch-providers';
+};
+
+export type MoviesControllerGetWatchProvidersResponses = {
+    200: WatchProvidersResponseDto;
+};
+
+export type MoviesControllerGetWatchProvidersResponse = MoviesControllerGetWatchProvidersResponses[keyof MoviesControllerGetWatchProvidersResponses];
 
 export type MoviesControllerGetUserMoviesData = {
     body?: never;
@@ -1795,6 +1842,26 @@ export type ShowsControllerGetShowDetailsResponses = {
 };
 
 export type ShowsControllerGetShowDetailsResponse = ShowsControllerGetShowDetailsResponses[keyof ShowsControllerGetShowDetailsResponses];
+
+export type ShowsControllerGetWatchProvidersData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: {
+        /**
+         * ISO 3166-1 country code (e.g. US, GB)
+         */
+        country?: string;
+    };
+    url: '/shows/tmdb/{showId}/watch-providers';
+};
+
+export type ShowsControllerGetWatchProvidersResponses = {
+    200: WatchProvidersResponseDto;
+};
+
+export type ShowsControllerGetWatchProvidersResponse = ShowsControllerGetWatchProvidersResponses[keyof ShowsControllerGetWatchProvidersResponses];
 
 export type ShowsControllerGetSeasonDetailsData = {
     body?: never;
@@ -3475,58 +3542,3 @@ export type FeedbackControllerCreateFeedbackResponses = {
 };
 
 export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
-
-export type WatchProvider = {
-    logo_path: string;
-    provider_id: number;
-    provider_name: string;
-    display_priority: number;
-};
-
-export type WatchProvidersResult = {
-    link: string;
-    flatrate?: Array<WatchProvider>;
-    rent?: Array<WatchProvider>;
-    buy?: Array<WatchProvider>;
-    ads?: Array<WatchProvider>;
-    free?: Array<WatchProvider>;
-};
-
-export type WatchProvidersResponseDto = {
-    providers: WatchProvidersResult | null;
-    availableCountries: Array<string>;
-};
-
-export type MoviesControllerGetWatchProvidersData = {
-    body?: never;
-    path: {
-        movieId: string;
-    };
-    query?: {
-        country?: string;
-    };
-    url: '/movies/tmdb/{movieId}/watch-providers';
-};
-
-export type MoviesControllerGetWatchProvidersResponses = {
-    200: WatchProvidersResponseDto;
-};
-
-export type MoviesControllerGetWatchProvidersResponse = MoviesControllerGetWatchProvidersResponses[keyof MoviesControllerGetWatchProvidersResponses];
-
-export type ShowsControllerGetWatchProvidersData = {
-    body?: never;
-    path: {
-        showId: string;
-    };
-    query?: {
-        country?: string;
-    };
-    url: '/shows/tmdb/{showId}/watch-providers';
-};
-
-export type ShowsControllerGetWatchProvidersResponses = {
-    200: WatchProvidersResponseDto;
-};
-
-export type ShowsControllerGetWatchProvidersResponse = ShowsControllerGetWatchProvidersResponses[keyof ShowsControllerGetWatchProvidersResponses];

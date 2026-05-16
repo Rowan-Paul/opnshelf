@@ -1,5 +1,6 @@
+import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useReviews";
-import MediaCard from "./MediaCard";
+import ActionableMediaCard from "./ActionableMediaCard";
 
 interface SimilarItem {
 	id: string | number;
@@ -7,6 +8,7 @@ interface SimilarItem {
 	type: "movie" | "show";
 	year?: number;
 	posterUrl: string;
+	tmdbRating?: number;
 }
 
 interface SimilarMediaGridProps {
@@ -18,7 +20,7 @@ export default function SimilarMediaGrid({
 	items,
 	title = "Similar",
 }: SimilarMediaGridProps) {
-	// Always call hooks before any conditional return
+	const { isAuthenticated } = useAuth();
 	const { ratings } = useBatchRatingsQuery(items);
 
 	if (items.length === 0) return null;
@@ -26,18 +28,21 @@ export default function SimilarMediaGrid({
 	return (
 		<section>
 			<h2 className="mb-4 text-display-3">{title}</h2>
-			<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
 				{items.map((item) => (
-					<MediaCard
-						key={item.id}
-						id={item.id}
-						title={item.title}
-						posterUrl={item.posterUrl}
-						type={item.type}
-						globalRating={ratings.get(String(item.id))?.averageRating}
-						size="sm"
-						layout="poster"
-					/>
+					<div key={item.id} className="[&_article]:!w-full">
+						<ActionableMediaCard
+							id={item.id}
+							title={item.title}
+							posterUrl={item.posterUrl}
+							type={item.type}
+							globalRating={ratings.get(String(item.id))?.averageRating}
+							tmdbRating={item.tmdbRating}
+							size="sm"
+							layout="poster"
+							interactive={isAuthenticated}
+						/>
+					</div>
 				))}
 			</div>
 		</section>

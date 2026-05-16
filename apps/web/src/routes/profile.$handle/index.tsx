@@ -263,7 +263,7 @@ function ProfileOverviewPage() {
 				</div>
 
 				{reviewsLoading ? (
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
 						{[1, 2, 3, 4].map((i) => (
 							<div
 								key={i}
@@ -272,7 +272,7 @@ function ProfileOverviewPage() {
 						))}
 					</div>
 				) : reviewsData?.items && reviewsData.items.length > 0 ? (
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
 						{reviewsData.items.map((review) => (
 							<ProfileReviewCard
 								key={review.id}
@@ -355,7 +355,7 @@ function ProfileReviewCard({
 	};
 
 	return (
-		<div key={review.id} className="card p-4">
+		<div key={review.id}>
 			{review.posterPath && (
 				<Link to={href}>
 					<img

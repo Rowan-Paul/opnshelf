@@ -1,16 +1,16 @@
-import type { WatchProvider } from "@opnshelf/api";
+import type { WatchProviderDto } from "@opnshelf/api";
 import { useState } from "react";
 import { COUNTRY_NAMES, SORTED_COUNTRIES } from "#/lib/countries";
 
-interface WatchProvidersProps {
+interface WatchProviderDtosProps {
 	providers:
 		| {
 				link?: string;
-				flatrate?: WatchProvider[];
-				rent?: WatchProvider[];
-				buy?: WatchProvider[];
-				ads?: WatchProvider[];
-				free?: WatchProvider[];
+				flatrate?: WatchProviderDto[];
+				rent?: WatchProviderDto[];
+				buy?: WatchProviderDto[];
+				ads?: WatchProviderDto[];
+				free?: WatchProviderDto[];
 		  }
 		| null
 		| undefined;
@@ -25,7 +25,7 @@ function ProviderChip({
 	provider,
 	link,
 }: {
-	provider: WatchProvider;
+	provider: WatchProviderDto;
 	link?: string;
 }) {
 	const img = (
@@ -66,7 +66,7 @@ function ProviderGroup({
 	link,
 }: {
 	label: string;
-	providers: WatchProvider[];
+	providers: WatchProviderDto[];
 	link?: string;
 }) {
 	if (!providers.length) return null;
@@ -87,12 +87,12 @@ function ProviderGroup({
 	);
 }
 
-export default function WatchProviders({
+export default function WatchProviderDtos({
 	providers,
 	availableCountries = [],
 	country,
 	onCountryChange,
-}: WatchProvidersProps) {
+}: WatchProviderDtosProps) {
 	const [showCountryPicker, setShowCountryPicker] = useState(false);
 	const [showRentBuy, setShowRentBuy] = useState(false);
 

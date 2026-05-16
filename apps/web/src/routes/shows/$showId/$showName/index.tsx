@@ -257,7 +257,7 @@ function ShowDetailPage() {
 	const similarShows =
 		discoverShowsData?.results
 			?.filter((s) => s.id !== Number(showId))
-			?.slice(0, 4)
+			?.slice(0, 6)
 			?.map((s) => ({
 				id: s.id,
 				title: s.name,
@@ -268,6 +268,7 @@ function ShowDetailPage() {
 				posterUrl: s.poster_path
 					? `https://image.tmdb.org/t/p/w300${s.poster_path}`
 					: "",
+				tmdbRating: s.vote_average || undefined,
 			})) || [];
 
 	return (
@@ -282,11 +283,9 @@ function ShowDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{(
-									mediaReviews?.averageRating ??
-									// @ts-expect-error - vote_average may exist on TMDB result
-									(show.vote_average as number | undefined)
-								)?.toFixed(1) || "N/A"}
+								{(mediaReviews?.averageRating ?? show.vote_average)?.toFixed(
+									1,
+								) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>

@@ -166,7 +166,7 @@ function MovieDetailPage() {
 	const similarMovies =
 		similarMoviesData?.results
 			?.filter((m) => m.id !== Number(movieId))
-			?.slice(0, 4)
+			?.slice(0, 6)
 			?.map((m) => ({
 				id: String(m.id),
 				title: m.title,
@@ -177,6 +177,7 @@ function MovieDetailPage() {
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
 					: "",
+				tmdbRating: m.vote_average || undefined,
 			})) || [];
 
 	return (
@@ -281,7 +282,7 @@ function MovieDetailPage() {
 
 			{/* Main Content */}
 			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-x-12 lg:gap-y-8">
 					{/* Left Column */}
 					<div className="space-y-8">
 						<section>
@@ -337,13 +338,15 @@ function MovieDetailPage() {
 						/>
 
 						{/* Your Activity */}
-						<YourActivity
-							watchHistory={movieWatchHistory || []}
-							onAddToShelf={(watchedAt) => markMovieWatched(watchedAt)}
-							onDeleteEntry={deleteMovieWatchHistoryEntry}
-							isAddPending={isMarkMoviePending}
-							isDeletePending={isDeleteMovieHistoryPending}
-						/>
+						{isAuthenticated && (
+							<YourActivity
+								watchHistory={movieWatchHistory || []}
+								onAddToShelf={(watchedAt) => markMovieWatched(watchedAt)}
+								onDeleteEntry={deleteMovieWatchHistoryEntry}
+								isAddPending={isMarkMoviePending}
+								isDeletePending={isDeleteMovieHistoryPending}
+							/>
+						)}
 
 						<InYourLists mediaType="movie" mediaId={movieId} />
 

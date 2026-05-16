@@ -9,6 +9,7 @@ import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
+	useDiscoverShows,
 	useEpisodeWatchActions,
 	useSeasonDetails,
 	useShowDetails,
@@ -30,6 +31,7 @@ import NotesSection from "../../../../../components/NotesSection";
 import PersonGrid from "../../../../../components/PersonGrid";
 import ProgressCard from "../../../../../components/ProgressCard";
 import ReviewSection from "../../../../../components/ReviewSection";
+import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 import WatchProviders from "../../../../../components/WatchProviders";
 
@@ -126,6 +128,8 @@ function SeasonDetailPage() {
 		isMarkSeasonPending,
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
+
+	const { data: discoverShowsData } = useDiscoverShows(1);
 
 	const { data: mediaReviews } = useMediaReviews({
 		mediaType: "show",
@@ -280,6 +284,23 @@ function SeasonDetailPage() {
 
 	const continueLink = getContinueButtonLink();
 
+	const similarShows =
+		discoverShowsData?.results
+			?.filter((s) => s.id !== Number(showId))
+			?.slice(0, 6)
+			?.map((s) => ({
+				id: s.id,
+				title: s.name,
+				type: "show" as const,
+				year: s.first_air_date
+					? new Date(s.first_air_date).getFullYear()
+					: undefined,
+				posterUrl: s.poster_path
+					? `https://image.tmdb.org/t/p/w300${s.poster_path}`
+					: "",
+				tmdbRating: s.vote_average || undefined,
+			})) || [];
+
 	return (
 		<div className="min-h-screen pb-8">
 			<MediaHero
@@ -429,6 +450,7 @@ function SeasonDetailPage() {
 								title="Crew"
 								emptyMessage="No crew information available."
 							/>
+							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 						</div>
 					</div>
 
@@ -512,6 +534,7 @@ function SeasonDetailPage() {
 						title="Crew"
 						emptyMessage="No crew information available."
 					/>
+					<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 				</div>
 			</div>
 		</div>

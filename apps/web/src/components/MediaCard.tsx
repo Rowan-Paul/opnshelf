@@ -175,17 +175,6 @@ export default function MediaCard({
 						<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 					)}
 
-					{/* Type badge */}
-					<div className="absolute top-2 left-2">
-						<span
-							className={`badge ${
-								type === "movie" ? "badge-subtle" : "badge-accent"
-							}`}
-						>
-							{type === "movie" ? "Movie" : "TV"}
-						</span>
-					</div>
-
 					{/* Actions — top-right corner */}
 					{(onMarkWatched || onUnmarkWatched || onManageLists || onRemove) && (
 						<div className="absolute top-2 right-2 flex flex-col gap-2 sm:gap-1.5">
@@ -313,7 +302,7 @@ export default function MediaCard({
 
 				{/* Poster layout content below image */}
 				{layout === "poster" && (
-					<div className="mt-2 space-y-1">
+					<div className="mt-2 flex min-h-[4rem] flex-col gap-1">
 						{episodeInfo ? (
 							<>
 								<h3 className="line-clamp-2 font-medium text-(--foreground) text-sm">
@@ -333,7 +322,7 @@ export default function MediaCard({
 								{role}
 							</p>
 						)}
-						<div className="flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
+						<div className="mt-auto flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
 							{(() => {
 								const parts: { key: string; node: React.ReactNode }[] = [];
 								if (year)

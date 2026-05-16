@@ -171,6 +171,9 @@ export class TMDBShowResultDto {
 
 	@ApiPropertyOptional()
 	overview?: string;
+
+	@ApiPropertyOptional()
+	vote_average?: number;
 }
 
 export class EpisodeReferenceDto {
