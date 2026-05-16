@@ -112,12 +112,6 @@ function LandingPage() {
 								Get Started
 								<ArrowRight className="size-5" />
 							</Link>
-							<Link
-								to="/about"
-								className="text-(--foreground-muted) transition-colors hover:text-(--foreground)"
-							>
-								Learn more
-							</Link>
 						</div>
 					</div>
 				</div>

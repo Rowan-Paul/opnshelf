@@ -457,8 +457,8 @@ function ShowDetailPage() {
 								title="Crew"
 								emptyMessage="No crew information available."
 							/>
+							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 						</div>
-						<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 					</div>
 
 					{/* Right Column - Sidebar */}
@@ -529,6 +529,7 @@ function ShowDetailPage() {
 						title="Crew"
 						emptyMessage="No crew information available."
 					/>
+					<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 				</div>
 			</div>
 		</div>

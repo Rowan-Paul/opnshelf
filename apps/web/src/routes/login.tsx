@@ -16,6 +16,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [isSignupLoading, setIsSignupLoading] = useState(false);
 	const { login, signup, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
@@ -56,7 +57,7 @@ function LoginPage() {
 	};
 
 	const handleSignup = () => {
-		setIsLoading(true);
+		setIsSignupLoading(true);
 		signup();
 	};
 
@@ -119,7 +120,7 @@ function LoginPage() {
 
 						<button
 							type="submit"
-							disabled={isLoading || !handle.trim()}
+							disabled={isLoading || isSignupLoading || !handle.trim()}
 							className="btn btn-primary w-full"
 						>
 							{isLoading ? (
@@ -145,10 +146,17 @@ function LoginPage() {
 					<button
 						type="button"
 						onClick={handleSignup}
-						disabled={isLoading}
+						disabled={isLoading || isSignupLoading}
 						className="btn btn-secondary w-full"
 					>
-						Create New Account
+						{isSignupLoading ? (
+							<>
+								<Loader2 className="size-4 animate-spin" />
+								Connecting...
+							</>
+						) : (
+							"Create New Account"
+						)}
 					</button>
 				</div>
 

@@ -128,7 +128,7 @@ export default function EpisodeRow({
 					type="button"
 					onClick={handleUnmarkClick}
 					disabled={isUnmarking}
-					className="flex items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
+					className="flex shrink-0 items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
 					title="Remove from shelf"
 				>
 					{isUnmarking ? (
@@ -152,7 +152,7 @@ export default function EpisodeRow({
 						onMarkWatched();
 					}}
 					disabled={isProcessing}
-					className="btn btn-secondary h-8 px-3 text-xs"
+					className="btn btn-secondary h-8 shrink-0 px-3 text-xs"
 					title="Add to shelf"
 				>
 					{isProcessing ? (

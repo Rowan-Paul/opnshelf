@@ -120,7 +120,7 @@ export function NoteDialog({
 					value={content}
 					onChange={(e) => setContent(e.target.value)}
 					placeholder="Write your thoughts about this..."
-					className="input min-h-[140px] resize-none text-sm"
+					className="input min-h-[140px] w-full resize-none text-sm"
 					maxLength={5000}
 					autoFocus
 				/>

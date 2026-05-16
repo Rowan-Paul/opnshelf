@@ -67,7 +67,7 @@ export const Route = createFileRoute("/people/$personId/$personName")({
 
 function PersonDetailPage() {
 	const { personId } = Route.useParams();
-	const { userSettings } = useAuth();
+	const { userSettings, isAuthenticated } = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const { data: person, isLoading, error } = usePersonDetails(personId);
@@ -261,6 +261,7 @@ function PersonDetailPage() {
 											year={getYear(item)}
 											size="md"
 											layout="poster"
+											interactive={isAuthenticated}
 										/>
 									))}
 								</div>
@@ -297,6 +298,7 @@ function PersonDetailPage() {
 												year={getYear(item)}
 												size="md"
 												layout="poster"
+												interactive={isAuthenticated}
 											/>
 										))}
 									</div>

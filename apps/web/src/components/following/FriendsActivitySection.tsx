@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { MessageCircle, Users } from "lucide-react";
 import { MiniActivityCard } from "./MiniActivityCard";
 
+const MAX_AGE_DAYS = 30;
+
 interface FriendsActivitySectionProps {
 	items: FollowedActivityItemDto[];
 	isLoading: boolean;
@@ -16,6 +18,11 @@ export function FriendsActivitySection({
 	userTimezone,
 	userTimeFormat,
 }: FriendsActivitySectionProps) {
+	const cutoff = new Date(Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
+	const recentItems = items.filter(
+		(item) => new Date(item.activityAt) >= cutoff,
+	);
+
 	return (
 		<section>
 			<div className="mb-4 flex items-center justify-between">
@@ -43,9 +50,9 @@ export function FriendsActivitySection({
 						))}
 					</div>
 				</div>
-			) : items.length > 0 ? (
+			) : recentItems.length > 0 ? (
 				<div className="card divide-y divide-(--border)">
-					{items.map((item: FollowedActivityItemDto) => (
+					{recentItems.map((item: FollowedActivityItemDto) => (
 						<MiniActivityCard
 							key={item.id}
 							activity={item}

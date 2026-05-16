@@ -16,7 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FollowingRouteImport } from './routes/following'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
@@ -70,11 +69,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -184,7 +178,6 @@ const ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
@@ -213,7 +206,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
@@ -239,7 +231,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/calendar': typeof CalendarRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
@@ -270,7 +261,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/calendar'
     | '/dashboard'
     | '/following'
@@ -299,7 +289,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
     | '/calendar'
     | '/dashboard'
     | '/following'
@@ -324,7 +313,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/about'
     | '/calendar'
     | '/dashboard'
     | '/following'
@@ -354,7 +342,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   CalendarRoute: typeof CalendarRoute
   DashboardRoute: typeof DashboardRoute
   FollowingRoute: typeof FollowingRoute
@@ -418,13 +405,6 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -634,7 +614,6 @@ const ShowsShowIdShowNameRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   CalendarRoute: CalendarRoute,
   DashboardRoute: DashboardRoute,
   FollowingRoute: FollowingRoute,

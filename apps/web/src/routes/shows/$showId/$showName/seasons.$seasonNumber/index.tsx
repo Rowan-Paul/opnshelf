@@ -409,7 +409,7 @@ function SeasonDetailPage() {
 			<div className="container-app relative z-20 mt-8">
 				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="min-w-0 space-y-8">
 						{/* Overview */}
 						<section>
 							<h2 className="mb-4 text-display-3">Overview</h2>

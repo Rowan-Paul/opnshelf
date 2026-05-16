@@ -443,8 +443,8 @@ export function SearchCommand({
 						</>
 					)}
 
-					{/* Navigation — only when not searching */}
-					{!hasSearchQuery && (
+					{/* Navigation — only when not searching and authenticated */}
+					{!hasSearchQuery && isAuthenticated && (
 						<CommandGroup heading="Navigation">
 							<CommandItem
 								value="dashboard"
