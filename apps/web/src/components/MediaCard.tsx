@@ -62,6 +62,7 @@ export default function MediaCard({
 	backdropUrl,
 	type,
 	globalRating,
+	tmdbRating,
 	userRating,
 	duration,
 	episodeInfo,
@@ -360,6 +361,16 @@ export default function MediaCard({
 											<span className="flex items-center gap-1">
 												<Star className="size-3 fill-current text-yellow-500" />
 												{ratingToStars(globalRating).toFixed(1)}
+											</span>
+										),
+									});
+								} else if (tmdbRating) {
+									parts.push({
+										key: "tmdbRating",
+										node: (
+											<span className="flex items-center gap-1">
+												<Star className="size-3 fill-current text-yellow-500/60" />
+												{(tmdbRating / 2).toFixed(1)}
 											</span>
 										),
 									});
