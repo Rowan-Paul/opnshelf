@@ -243,6 +243,11 @@ function EpisodeDetailPage() {
 			.filter((s) => s.season_number < seasonNum)
 			.reduce((sum, s) => sum + (s.episode_count || 0), 0) + episodeNum;
 
+	const totalEpisodesFromSeasons = seasons.reduce(
+		(sum, s) => sum + (s.episode_count || 0),
+		0,
+	);
+
 	let prevEpisode: { seasonNumber: number; episodeNumber: number } | null =
 		null;
 	if (episodeNum > 1) {
@@ -401,8 +406,7 @@ function EpisodeDetailPage() {
 						)}
 						<span className="text-(--foreground-muted)">
 							Episode {overallEpisodeNumber} of{" "}
-							{Math.max(overallEpisodeNumber, show.number_of_episodes || 0) ||
-								"?"}
+							{totalEpisodesFromSeasons || "?"}
 						</span>
 						{nextEpisodeCtx && (
 							<Link
