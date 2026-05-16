@@ -1,5 +1,6 @@
 import {
 	createFileRoute,
+	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
@@ -164,8 +165,14 @@ function LoginPage() {
 				<div className="mt-6 text-center text-(--foreground-muted) text-sm">
 					<p>
 						By signing in, you agree to our{" "}
-						<span className="text-(--accent)">Terms of Service</span> and{" "}
-						<span className="text-(--accent)">Privacy Policy</span>.
+						<Link to="/tos" className="text-(--accent) hover:underline">
+							Terms of Service
+						</Link>{" "}
+						and{" "}
+						<Link to="/privacy" className="text-(--accent) hover:underline">
+							Privacy Policy
+						</Link>
+						.
 					</p>
 					<p className="mt-4">
 						Powered by{" "}

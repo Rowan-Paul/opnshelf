@@ -61,7 +61,11 @@ export function ActivityFeed({
 					Follow people to see what they&apos;re watching
 				</p>
 				{followingCount === 0 && (
-					<Link to={"/following" as const} className="btn btn-primary mt-4">
+					<Link
+						to={"/search" as const}
+						search={{ type: "people" }}
+						className="btn btn-primary mt-4"
+					>
 						<UserPlus className="mr-2 size-4" />
 						Find people to follow
 					</Link>

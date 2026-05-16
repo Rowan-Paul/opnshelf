@@ -128,10 +128,12 @@ function ProfileUpNextPage() {
 							>
 								{/* Poster */}
 								<Link
-									to="/shows/$showId/$showName"
+									to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 									params={{
 										showId: item.showId,
 										showName: toSlug(show.title),
+										seasonNumber: String(nextEp.seasonNumber),
+										episodeNumber: String(nextEp.episodeNumber),
 									}}
 									className="shrink-0"
 								>
@@ -157,10 +159,12 @@ function ProfileUpNextPage() {
 										<div className="flex items-start justify-between gap-2">
 											<div className="min-w-0">
 												<Link
-													to="/shows/$showId/$showName"
+													to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 													params={{
 														showId: item.showId,
 														showName: toSlug(show.title),
+														seasonNumber: String(nextEp.seasonNumber),
+														episodeNumber: String(nextEp.episodeNumber),
 													}}
 													className="font-semibold hover:text-(--accent)"
 												>
@@ -186,7 +190,7 @@ function ProfileUpNextPage() {
 													</span>
 												) : item.latestWatchedDate ? (
 													<span className="text-xs">
-														• Last watched: {formatDate(item.latestWatchedDate)}
+														Last watched: {formatDate(item.latestWatchedDate)}
 													</span>
 												) : null}
 											</div>

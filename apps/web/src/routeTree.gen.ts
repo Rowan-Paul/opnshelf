@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TosRouteImport } from './routes/tos'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FollowingRouteImport } from './routes/following'
@@ -36,6 +38,11 @@ import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './ro
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
 
+const TosRoute = TosRouteImport.update({
+  id: '/tos',
+  path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -44,6 +51,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -183,8 +195,10 @@ export interface FileRoutesByFullPath {
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -211,8 +225,10 @@ export interface FileRoutesByTo {
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -236,8 +252,10 @@ export interface FileRoutesById {
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -266,8 +284,10 @@ export interface FileRouteTypes {
     | '/following'
     | '/login'
     | '/onboarding'
+    | '/privacy'
     | '/search'
     | '/settings'
+    | '/tos'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -294,8 +314,10 @@ export interface FileRouteTypes {
     | '/following'
     | '/login'
     | '/onboarding'
+    | '/privacy'
     | '/search'
     | '/settings'
+    | '/tos'
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -318,8 +340,10 @@ export interface FileRouteTypes {
     | '/following'
     | '/login'
     | '/onboarding'
+    | '/privacy'
     | '/search'
     | '/settings'
+    | '/tos'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -347,8 +371,10 @@ export interface RootRouteChildren {
   FollowingRoute: typeof FollowingRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  TosRoute: typeof TosRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
@@ -358,6 +384,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tos': {
+      id: '/tos'
+      path: '/tos'
+      fullPath: '/tos'
+      preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -370,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -619,8 +659,10 @@ const rootRouteChildren: RootRouteChildren = {
   FollowingRoute: FollowingRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  TosRoute: TosRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,

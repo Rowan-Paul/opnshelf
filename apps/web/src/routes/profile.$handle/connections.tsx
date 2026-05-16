@@ -74,13 +74,13 @@ function ProfileConnectionsPage() {
 					</p>
 				</div>
 			) : (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{activeQuery.data.items.map((user) => (
 						<Link
 							key={user.did}
 							to="/profile/$handle"
 							params={{ handle: user.handle }}
-							className="card card-interactive flex w-full items-center gap-4 p-4"
+							className="card card-interactive flex w-full items-center gap-3 p-4"
 						>
 							<UserAvatar
 								src={user.avatar}
@@ -91,7 +91,7 @@ function ProfileConnectionsPage() {
 								<p className="truncate font-medium">
 									{String(user.displayName || user.handle)}
 								</p>
-								<p className="text-(--foreground-muted) text-sm">
+								<p className="truncate text-(--foreground-muted) text-sm">
 									@{user.handle}
 								</p>
 							</div>

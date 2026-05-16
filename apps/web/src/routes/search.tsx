@@ -82,7 +82,7 @@ const tabs: { key: Tab; label: string; icon: typeof Film }[] = [
 	{ key: "all", label: "All", icon: Search },
 	{ key: "movies", label: "Movies", icon: Film },
 	{ key: "shows", label: "TV Shows", icon: Tv },
-	{ key: "people", label: "People", icon: Users },
+	{ key: "people", label: "Users", icon: Users },
 ];
 
 function SearchPage() {
@@ -230,8 +230,17 @@ function SearchPage() {
 	const { ratings } = useBatchRatingsQuery(mediaItems);
 
 	const hasQuery = debouncedQuery.length > 0;
-	const isLoading = isSearching || (isAuthenticated && isSearchingPeople);
-	const hasResults = movies.length > 0 || shows.length > 0 || people.length > 0;
+	const isLoading =
+		isSearching ||
+		(isAuthenticated && isSearchingPeople && activeTab === "people");
+	const hasResults =
+		activeTab === "people"
+			? people.length > 0
+			: activeTab === "movies"
+				? movies.length > 0
+				: activeTab === "shows"
+					? shows.length > 0
+					: movies.length > 0 || shows.length > 0;
 
 	const handlePageChange = (newPage: number) => {
 		setPage(newPage);
@@ -251,7 +260,7 @@ function SearchPage() {
 					<Search className="absolute top-1/2 left-4 size-5 -translate-y-1/2 text-(--foreground-muted)" />
 					<input
 						type="text"
-						placeholder="Search movies, shows, people..."
+						placeholder="Search movies, shows, users..."
 						className="input h-12 pl-12! text-lg"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
@@ -372,26 +381,13 @@ function SearchPage() {
 							</section>
 						)}
 
-						{(activeTab === "all" || activeTab === "people") && (
+						{activeTab === "people" && (
 							<section>
-								{activeTab === "all" && people.length > 0 && (
-									<div className="mb-4 flex items-center justify-between">
-										<h2 className="text-display-3">People</h2>
-										<button
-											type="button"
-											onClick={() => handleTabChange("people")}
-											className="font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-										>
-											View all
-										</button>
-									</div>
-								)}
-
-								{!isAuthenticated && activeTab === "people" ? (
+								{!isAuthenticated ? (
 									<div className="card p-8 text-center">
 										<Users className="mx-auto mb-3 size-10 text-(--foreground-muted)" />
 										<p className="mb-2 text-(--foreground-muted)">
-											Sign in to search people
+											Sign in to search users
 										</p>
 										<Link
 											to="/login"
@@ -401,7 +397,7 @@ function SearchPage() {
 										</Link>
 									</div>
 								) : people.length > 0 ? (
-									<div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+									<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 										{people.map((person: SocialUserCardDto) => (
 											<div
 												key={person.did}
@@ -422,66 +418,61 @@ function SearchPage() {
 													>
 														{String(person.displayName) || person.handle}
 													</Link>
-													<p className="text-(--foreground-muted) text-xs">
+													<p className="truncate text-(--foreground-muted) text-xs">
 														@{person.handle}
 													</p>
 												</div>
-												{isAuthenticated &&
-													person.isFollowing !== undefined && (
-														<button
-															type="button"
-															className={`btn btn-sm h-8 px-3 text-xs ${
-																person.isFollowing
-																	? "btn-secondary"
-																	: "btn-primary"
-															}`}
-															onClick={() => {
-																if (person.isFollowing) {
-																	unfollowMutation.mutate({
-																		path: {
-																			targetDid: person.did,
-																		},
-																	});
-																} else {
-																	followMutation.mutate({
-																		path: {
-																			targetDid: person.did,
-																		},
-																	});
-																}
-															}}
-															disabled={
-																followMutation.variables?.path?.targetDid ===
-																	person.did ||
-																unfollowMutation.variables?.path?.targetDid ===
-																	person.did
+												{person.isFollowing !== undefined && (
+													<button
+														type="button"
+														className={`btn btn-sm h-8 shrink-0 px-3 text-xs ${
+															person.isFollowing
+																? "btn-secondary"
+																: "btn-primary"
+														}`}
+														onClick={() => {
+															if (person.isFollowing) {
+																unfollowMutation.mutate({
+																	path: { targetDid: person.did },
+																});
+															} else {
+																followMutation.mutate({
+																	path: { targetDid: person.did },
+																});
 															}
-														>
-															{followMutation.variables?.path?.targetDid ===
+														}}
+														disabled={
+															followMutation.variables?.path?.targetDid ===
+																person.did ||
+															unfollowMutation.variables?.path?.targetDid ===
+																person.did
+														}
+													>
+														{followMutation.variables?.path?.targetDid ===
+														person.did ? (
+															<Loader2 className="size-3 animate-spin" />
+														) : unfollowMutation.variables?.path?.targetDid ===
 															person.did ? (
-																<Loader2 className="size-3 animate-spin" />
-															) : unfollowMutation.variables?.path
-																	?.targetDid === person.did ? (
-																<Loader2 className="size-3 animate-spin" />
-															) : person.isFollowing ? (
-																<>
-																	<UserMinus className="mr-1 size-3" />
-																	Unfollow
-																</>
-															) : (
-																<>
-																	<UserPlus className="mr-1 size-3" />
-																	Follow
-																</>
-															)}
-														</button>
-													)}
+															<Loader2 className="size-3 animate-spin" />
+														) : person.isFollowing ? (
+															<>
+																<UserMinus className="mr-1 size-3" />
+																Unfollow
+															</>
+														) : (
+															<>
+																<UserPlus className="mr-1 size-3" />
+																Follow
+															</>
+														)}
+													</button>
+												)}
 											</div>
 										))}
 									</div>
-								) : activeTab === "people" && hasQuery ? (
+								) : hasQuery ? (
 									<div className="py-8 text-center text-(--foreground-muted)">
-										No people found for &quot;{debouncedQuery}&quot;
+										No users found for &quot;{debouncedQuery}&quot;
 									</div>
 								) : null}
 							</section>
@@ -508,7 +499,7 @@ function SearchPage() {
 				<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
 					<Search className="mb-4 size-12 opacity-40" />
 					<p className="text-lg">What are you looking for?</p>
-					<p className="mt-1 text-sm">Search for movies, TV shows, or people</p>
+					<p className="mt-1 text-sm">Search for movies, TV shows, or users</p>
 				</div>
 			)}
 		</div>

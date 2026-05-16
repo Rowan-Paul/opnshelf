@@ -90,17 +90,31 @@ export default function Footer() {
 					<p className="text-(--foreground-subtle) text-sm">
 						&copy; {year} OpnShelf. All rights reserved.
 					</p>
-					<p className="text-(--foreground-subtle) text-xs">
-						Built with ❤️ by{" "}
-						<a
-							href="https://rowanpaulflynn.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-accent hover:underline"
+					<div className="flex items-center gap-4">
+						<Link
+							to="/tos"
+							className="text-(--foreground-subtle) text-xs hover:text-(--foreground)"
 						>
-							Rowan Paul Flynn
-						</a>
-					</p>
+							Terms of Service
+						</Link>
+						<Link
+							to="/privacy"
+							className="text-(--foreground-subtle) text-xs hover:text-(--foreground)"
+						>
+							Privacy Policy
+						</Link>
+						<p className="text-(--foreground-subtle) text-xs">
+							Built with ❤️ by{" "}
+							<a
+								href="https://rowanpaulflynn.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-accent hover:underline"
+							>
+								Rowan Paul Flynn
+							</a>
+						</p>
+					</div>
 				</div>
 			</div>
 		</footer>

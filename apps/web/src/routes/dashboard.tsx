@@ -227,7 +227,7 @@ function Dashboard() {
 			icon: Tv,
 		},
 		{
-			label: "This Week",
+			label: "Added This Week",
 			value: String(addedThisWeek),
 			icon: Clock,
 		},
