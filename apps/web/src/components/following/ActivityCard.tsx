@@ -67,15 +67,23 @@ export function ActivityCard({
 				<div className="flex min-w-0 flex-1 flex-col gap-2">
 					{/* Profile + action header */}
 					<div className="flex items-start gap-2">
-						<UserAvatar
-							src={activity.actor.avatar}
-							alt={String(activity.actor.displayName) || activity.actor.handle}
-							size="sm"
-						/>
+						<Link
+							to="/profile/$handle"
+							params={{ handle: activity.actor.handle }}
+						>
+							<UserAvatar
+								src={activity.actor.avatar}
+								alt={
+									String(activity.actor.displayName) || activity.actor.handle
+								}
+								size="sm"
+							/>
+						</Link>
 						<div className="min-w-0 flex-1">
 							<div className="flex flex-wrap items-center gap-1.5 text-sm">
 								<Link
-									to={"/following" as const}
+									to="/profile/$handle"
+									params={{ handle: activity.actor.handle }}
 									className="font-semibold text-(--foreground) hover:text-(--accent)"
 								>
 									{String(activity.actor.displayName) || activity.actor.handle}

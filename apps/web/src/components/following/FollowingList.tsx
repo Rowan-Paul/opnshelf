@@ -1,4 +1,5 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
+import { Link } from "@tanstack/react-router";
 import { Loader2, UserCheck, UserX } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
 
@@ -39,18 +40,24 @@ export function FollowingList({
 				<div className="space-y-3">
 					{following.slice(0, 5).map((friend: SocialUserCardDto) => (
 						<div key={friend.did} className="flex items-center gap-3">
-							<UserAvatar
-								src={friend.avatar}
-								alt={String(friend.displayName) || friend.handle}
-							/>
-							<div className="min-w-0 flex-1">
-								<p className="truncate font-medium text-sm">
-									{String(friend.displayName) || friend.handle}
-								</p>
-								<p className="truncate text-(--foreground-muted) text-xs">
-									@{friend.handle}
-								</p>
-							</div>
+							<Link
+								to="/profile/$handle"
+								params={{ handle: friend.handle }}
+								className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
+							>
+								<UserAvatar
+									src={friend.avatar}
+									alt={String(friend.displayName) || friend.handle}
+								/>
+								<div className="min-w-0">
+									<p className="truncate font-medium text-sm">
+										{String(friend.displayName) || friend.handle}
+									</p>
+									<p className="truncate text-(--foreground-muted) text-xs">
+										@{friend.handle}
+									</p>
+								</div>
+							</Link>
 							<button
 								type="button"
 								className="btn btn-secondary btn-sm h-8 px-2 text-xs"

@@ -1,4 +1,5 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
+import { Link } from "@tanstack/react-router";
 import { Loader2, Search, UserPlus } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
 
@@ -62,18 +63,24 @@ export function PeopleSearch({
 									key={person.did}
 									className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
 								>
-									<UserAvatar
-										src={person.avatar}
-										alt={String(person.displayName) || person.handle}
-									/>
-									<div className="min-w-0 flex-1">
-										<p className="truncate font-medium text-sm">
-											{String(person.displayName) || person.handle}
-										</p>
-										<p className="text-(--foreground-muted) text-xs">
-											@{person.handle}
-										</p>
-									</div>
+									<Link
+										to="/profile/$handle"
+										params={{ handle: person.handle }}
+										className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
+									>
+										<UserAvatar
+											src={person.avatar}
+											alt={String(person.displayName) || person.handle}
+										/>
+										<div className="min-w-0">
+											<p className="truncate font-medium text-sm">
+												{String(person.displayName) || person.handle}
+											</p>
+											<p className="text-(--foreground-muted) text-xs">
+												@{person.handle}
+											</p>
+										</div>
+									</Link>
 									{person.isFollowing ? (
 										<button
 											type="button"

@@ -1,4 +1,11 @@
-import { usersControllerGetPublicProfileOptions } from "@opnshelf/api";
+import {
+	socialControllerFollowMutation,
+	socialControllerGetRelationshipOptions,
+	socialControllerUnfollowMutation,
+	usersControllerGetPublicProfileOptions,
+	usersControllerGetPublicProfileQueryKey,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -11,8 +18,11 @@ import {
 	Film,
 	LayoutGrid,
 	List,
+	Loader2,
 	Star,
 	StickyNote,
+	UserCheck,
+	UserPlus,
 	Users,
 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
@@ -68,9 +78,49 @@ const tabs = [
 
 function ProfileLayout() {
 	const { handle } = useParams({ from: "/profile/$handle" });
-	const { profile } = Route.useLoaderData();
-	const { user } = useAuth();
+	const { profile: loaderProfile } = Route.useLoaderData();
+	const { user, isAuthenticated } = useAuth();
+	const queryClient = useQueryClient();
+
+	const { data: liveProfile } = useQuery({
+		...usersControllerGetPublicProfileOptions({ path: { handle } }),
+	});
+	const profile = liveProfile ?? loaderProfile;
+
 	const isOwner = user?.did === profile.did;
+
+	const { data: relationship } = useQuery({
+		...socialControllerGetRelationshipOptions({
+			path: { targetDid: profile.did },
+		}),
+		enabled: isAuthenticated && !isOwner,
+	});
+
+	const relationshipQueryKey = socialControllerGetRelationshipOptions({
+		path: { targetDid: profile.did },
+	}).queryKey;
+
+	const profileQueryKey = usersControllerGetPublicProfileQueryKey({
+		path: { handle },
+	});
+
+	const followMutation = useMutation({
+		...socialControllerFollowMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
+			queryClient.invalidateQueries({ queryKey: profileQueryKey });
+		},
+	});
+
+	const unfollowMutation = useMutation({
+		...socialControllerUnfollowMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
+			queryClient.invalidateQueries({ queryKey: profileQueryKey });
+		},
+	});
+
+	const isPending = followMutation.isPending || unfollowMutation.isPending;
 
 	return (
 		<div className="container-app py-8">
@@ -85,7 +135,7 @@ function ProfileLayout() {
 					/>
 				</div>
 
-				{/* Name & Handle */}
+				{/* Name, Handle & Follow */}
 				<div className="flex-1">
 					<div className="flex items-center gap-2">
 						<h1 className="text-display-2">
@@ -94,6 +144,47 @@ function ProfileLayout() {
 						{isOwner && <span className="badge badge-subtle text-xs">You</span>}
 					</div>
 					<p className="text-(--foreground-muted)">@{profile.handle}</p>
+					{isAuthenticated && !isOwner && relationship?.canFollow && (
+						<div className="mt-3">
+							{relationship.isFollowing ? (
+								<button
+									type="button"
+									onClick={() =>
+										unfollowMutation.mutate({
+											path: { targetDid: profile.did },
+										})
+									}
+									disabled={isPending}
+									className="btn btn-secondary gap-2"
+								>
+									{isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<UserCheck className="size-4" />
+									)}
+									Following
+								</button>
+							) : (
+								<button
+									type="button"
+									onClick={() =>
+										followMutation.mutate({
+											path: { targetDid: profile.did },
+										})
+									}
+									disabled={isPending}
+									className="btn btn-primary gap-2"
+								>
+									{isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<UserPlus className="size-4" />
+									)}
+									Follow
+								</button>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* Stats */}
