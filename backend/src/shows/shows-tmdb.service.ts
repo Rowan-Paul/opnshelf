@@ -86,6 +86,27 @@ type TMDBVideosResponse = {
 	results?: TMDBVideo[];
 };
 
+export interface WatchProvider {
+	logo_path: string;
+	provider_id: number;
+	provider_name: string;
+	display_priority: number;
+}
+
+export interface WatchProvidersResult {
+	link: string;
+	flatrate?: WatchProvider[];
+	rent?: WatchProvider[];
+	buy?: WatchProvider[];
+	ads?: WatchProvider[];
+	free?: WatchProvider[];
+}
+
+export interface WatchProvidersResponse {
+	id: number;
+	results: Record<string, WatchProvidersResult>;
+}
+
 @Injectable()
 export class ShowsTmdbService {
 	private readonly logger = new Logger(ShowsTmdbService.name);
@@ -321,6 +342,21 @@ export class ShowsTmdbService {
 		}
 
 		return { previous, next };
+	}
+
+	async getWatchProviders(
+		showId: string,
+	): Promise<WatchProvidersResponse | null> {
+		const response = await fetch(
+			`${this.tmdbBaseUrl}/tv/${showId}/watch/providers?api_key=${this.tmdbApiKey}`,
+		);
+
+		if (!response.ok) {
+			this.logger.warn(`Failed to fetch watch providers for show ${showId}`);
+			return null;
+		}
+
+		return response.json() as Promise<WatchProvidersResponse>;
 	}
 
 	private getNavigableEpisodes(episodes: TMDBEpisode[]): TMDBEpisode[] {

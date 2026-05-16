@@ -1,7 +1,7 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -16,6 +16,7 @@ import {
 	useDiscoverMovies,
 	useMediaWatchStatus,
 	useMovieDetails,
+	useMovieWatchProviders,
 	useWatchActions,
 } from "#/lib/hooks";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
@@ -30,6 +31,7 @@ import NotesSection from "../../../components/NotesSection";
 import PersonGrid from "../../../components/PersonGrid";
 import ReviewSection from "../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
+import WatchProviders from "../../../components/WatchProviders";
 import { YourActivity } from "../../../components/YourActivity";
 
 setupApiClient();
@@ -103,6 +105,19 @@ function MovieDetailPage() {
 	});
 
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
+	const hasSyncedCountry = useRef(false);
+	useEffect(() => {
+		if (!hasSyncedCountry.current && userSettings?.watchCountry) {
+			hasSyncedCountry.current = true;
+			setWatchProvidersCountry(userSettings.watchCountry);
+		}
+	}, [userSettings]);
+
+	const { data: watchProvidersData } = useMovieWatchProviders(
+		movieId,
+		watchProvidersCountry,
+	);
 
 	if (isLoading) return <LoadingState />;
 	if (error || !movie) {
@@ -284,11 +299,10 @@ function MovieDetailPage() {
 								emptyMessage="No crew information available."
 							/>
 						</div>
-						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 
 					{/* Right Column - Sidebar */}
-					<div className="space-y-6">
+					<div className="space-y-6 lg:row-span-2">
 						<DetailsCard
 							items={[
 								{ label: "Director", value: director },
@@ -315,6 +329,13 @@ function MovieDetailPage() {
 							]}
 						/>
 
+						<WatchProviders
+							providers={watchProvidersData?.providers}
+							availableCountries={watchProvidersData?.availableCountries}
+							country={watchProvidersCountry}
+							onCountryChange={setWatchProvidersCountry}
+						/>
+
 						{/* Your Activity */}
 						<YourActivity
 							watchHistory={movieWatchHistory || []}
@@ -332,15 +353,19 @@ function MovieDetailPage() {
 						{/* Notes */}
 						<NotesSection mediaType="movie" mediaId={movieId} />
 					</div>
-				</div>
 
-				<div className="mt-8 space-y-8 lg:hidden">
-					<PersonGrid people={cast} />
-					<PersonGrid
-						people={crew}
-						title="Crew"
-						emptyMessage="No crew information available."
-					/>
+					{/* Similar Movies — last on mobile, below left column on desktop */}
+					<div className="order-last space-y-8 lg:order-none lg:col-start-1 lg:row-start-2">
+						<div className="space-y-8 lg:hidden">
+							<PersonGrid people={cast} />
+							<PersonGrid
+								people={crew}
+								title="Crew"
+								emptyMessage="No crew information available."
+							/>
+						</div>
+						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
+					</div>
 				</div>
 			</div>
 

@@ -3,6 +3,7 @@ import {
 	type MoviesControllerGetUserMoviesResponse,
 	moviesControllerGetMovieDetailsOptions,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetWatchProvidersOptions,
 	moviesControllerMarkWatched,
 	moviesControllerUnmarkWatched,
 	type ShowsControllerGetShowDetailsResponse,
@@ -14,6 +15,7 @@ import {
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsOptions,
 	showsControllerGetUserUpNextOptions,
+	showsControllerGetWatchProvidersOptions,
 	showsControllerMarkWatched,
 	showsControllerUnmarkWatched,
 } from "@opnshelf/api";
@@ -27,6 +29,17 @@ export function useMovieDetails(movieId: string) {
 	return useQuery({
 		...moviesControllerGetMovieDetailsOptions({
 			path: { movieId },
+		}),
+		enabled: !!movieId,
+	});
+}
+
+// Movie watch providers
+export function useMovieWatchProviders(movieId: string, country = "US") {
+	return useQuery({
+		...moviesControllerGetWatchProvidersOptions({
+			path: { movieId },
+			query: { country },
 		}),
 		enabled: !!movieId,
 	});
@@ -92,6 +105,17 @@ export function useShowDetails(showId: string) {
 	return useQuery({
 		...showsControllerGetShowDetailsOptions({
 			path: { showId },
+		}),
+		enabled: !!showId,
+	});
+}
+
+// Show watch providers
+export function useShowWatchProviders(showId: string, country = "US") {
+	return useQuery({
+		...showsControllerGetWatchProvidersOptions({
+			path: { showId },
+			query: { country },
 		}),
 		enabled: !!showId,
 	});

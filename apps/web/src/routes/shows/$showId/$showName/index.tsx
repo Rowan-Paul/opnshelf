@@ -5,7 +5,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Play, Star } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
@@ -14,6 +14,7 @@ import {
 	useEpisodeWatchActions,
 	useShowDetails,
 	useShowWatchHistory,
+	useShowWatchProviders,
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
@@ -33,6 +34,7 @@ import ReviewSection from "../../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
+import WatchProviders from "../../../../components/WatchProviders";
 
 setupApiClient();
 
@@ -78,6 +80,19 @@ function ShowDetailPage() {
 	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
 	const [expandedSeason, setExpandedSeason] = useState<number | null>(null);
 	const [processingSeason, setProcessingSeason] = useState<number | null>(null);
+	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
+	const hasSyncedCountry = useRef(false);
+	useEffect(() => {
+		if (!hasSyncedCountry.current && userSettings?.watchCountry) {
+			hasSyncedCountry.current = true;
+			setWatchProvidersCountry(userSettings.watchCountry);
+		}
+	}, [userSettings]);
+
+	const { data: watchProvidersData } = useShowWatchProviders(
+		showId,
+		watchProvidersCountry,
+	);
 
 	const {
 		data: show,
@@ -489,6 +504,13 @@ function ShowDetailPage() {
 									value: show.genres?.map((g) => g.name).join(", ") || "N/A",
 								},
 							]}
+						/>
+
+						<WatchProviders
+							providers={watchProvidersData?.providers}
+							availableCountries={watchProvidersData?.availableCountries}
+							country={watchProvidersCountry}
+							onCountryChange={setWatchProvidersCountry}
 						/>
 
 						<InYourLists mediaType="show" mediaId={showId} />

@@ -54,6 +54,7 @@ export class UsersService {
 			select: {
 				timezone: true,
 				timeFormat: true,
+				watchCountry: true,
 			},
 		});
 
@@ -64,6 +65,7 @@ export class UsersService {
 		return {
 			timezone: user.timezone,
 			timeFormat: user.timeFormat,
+			watchCountry: user.watchCountry,
 		};
 	}
 
@@ -87,16 +89,21 @@ export class UsersService {
 			data: {
 				...(dto.timezone !== undefined && { timezone: dto.timezone }),
 				...(dto.timeFormat !== undefined && { timeFormat: dto.timeFormat }),
+				...(dto.watchCountry !== undefined && {
+					watchCountry: dto.watchCountry,
+				}),
 			},
 			select: {
 				timezone: true,
 				timeFormat: true,
+				watchCountry: true,
 			},
 		});
 
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
+			watchCountry: updatedUser.watchCountry,
 		};
 	}
 

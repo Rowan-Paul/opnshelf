@@ -16,6 +16,7 @@ import {
 	type TMDBSearchResponse,
 	type TMDBSeason,
 	type TMDBShow,
+	type WatchProvidersResponse,
 } from "./shows-tmdb.service";
 
 export interface ATSession {
@@ -119,6 +120,12 @@ export class ShowsService {
 
 	async getShowCredits(showId: string): Promise<TMDBCredits | null> {
 		return this.showsTmdb.getShowCredits(showId);
+	}
+
+	async getWatchProviders(
+		showId: string,
+	): Promise<WatchProvidersResponse | null> {
+		return this.showsTmdb.getWatchProviders(showId);
 	}
 
 	async getSeasonDetails(

@@ -531,6 +531,10 @@ export type UserSettingsDto = {
      * IANA timezone identifier (e.g., America/New_York)
      */
     timezone: string;
+    /**
+     * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
+     */
+    watchCountry: string;
 };
 
 export type UpdateUserSettingsDto = {
@@ -542,6 +546,10 @@ export type UpdateUserSettingsDto = {
      * IANA timezone identifier (e.g., America/New_York)
      */
     timezone?: string;
+    /**
+     * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
+     */
+    watchCountry?: string;
 };
 
 export type UpdateUserProfileDto = {
@@ -3467,3 +3475,58 @@ export type FeedbackControllerCreateFeedbackResponses = {
 };
 
 export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
+
+export type WatchProvider = {
+    logo_path: string;
+    provider_id: number;
+    provider_name: string;
+    display_priority: number;
+};
+
+export type WatchProvidersResult = {
+    link: string;
+    flatrate?: Array<WatchProvider>;
+    rent?: Array<WatchProvider>;
+    buy?: Array<WatchProvider>;
+    ads?: Array<WatchProvider>;
+    free?: Array<WatchProvider>;
+};
+
+export type WatchProvidersResponseDto = {
+    providers: WatchProvidersResult | null;
+    availableCountries: Array<string>;
+};
+
+export type MoviesControllerGetWatchProvidersData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: {
+        country?: string;
+    };
+    url: '/movies/tmdb/{movieId}/watch-providers';
+};
+
+export type MoviesControllerGetWatchProvidersResponses = {
+    200: WatchProvidersResponseDto;
+};
+
+export type MoviesControllerGetWatchProvidersResponse = MoviesControllerGetWatchProvidersResponses[keyof MoviesControllerGetWatchProvidersResponses];
+
+export type ShowsControllerGetWatchProvidersData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: {
+        country?: string;
+    };
+    url: '/shows/tmdb/{showId}/watch-providers';
+};
+
+export type ShowsControllerGetWatchProvidersResponses = {
+    200: WatchProvidersResponseDto;
+};
+
+export type ShowsControllerGetWatchProvidersResponse = ShowsControllerGetWatchProvidersResponses[keyof ShowsControllerGetWatchProvidersResponses];

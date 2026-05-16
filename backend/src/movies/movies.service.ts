@@ -13,6 +13,7 @@ import {
 	type TMDBCredits,
 	type TMDBMovie,
 	type TMDBSearchResponse,
+	type WatchProvidersResponse,
 } from "./movies-tmdb.service";
 
 export interface ATSession {
@@ -50,6 +51,12 @@ export class MoviesService {
 
 	async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {
 		return this.moviesTmdb.getMovieCredits(movieId);
+	}
+
+	async getWatchProviders(
+		movieId: string,
+	): Promise<WatchProvidersResponse | null> {
+		return this.moviesTmdb.getWatchProviders(movieId);
 	}
 
 	async getUserMovies(userDid: string) {

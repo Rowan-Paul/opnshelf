@@ -95,6 +95,28 @@ export class ShowsController {
 		};
 	}
 
+	@Get("tmdb/:showId/watch-providers")
+	@ApiOperation({
+		summary: "Get watch providers for a show from TMDB/JustWatch",
+	})
+	@ApiQuery({
+		name: "country",
+		required: false,
+		description: "ISO 3166-1 country code (e.g. US, GB)",
+	})
+	async getWatchProviders(
+		@Param("showId") showId: string,
+		@Query("country") country: string = "US",
+	) {
+		const data = await this.showsService.getWatchProviders(showId);
+		if (!data) return { providers: null };
+		const countryData = data.results[country] ?? null;
+		return {
+			providers: countryData,
+			availableCountries: Object.keys(data.results),
+		};
+	}
+
 	@Get("tmdb/:showId/season/:seasonNumber")
 	@ApiOperation({ summary: "Get season details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBSeasonDetailDto })

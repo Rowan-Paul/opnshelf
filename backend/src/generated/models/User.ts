@@ -38,6 +38,7 @@ export type UserMinAggregateOutputType = {
   profileUpdatedAt: Date | null
   timezone: string | null
   timeFormat: string | null
+  watchCountry: string | null
   onboardingCompletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -57,6 +58,7 @@ export type UserMaxAggregateOutputType = {
   profileUpdatedAt: Date | null
   timezone: string | null
   timeFormat: string | null
+  watchCountry: string | null
   onboardingCompletedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -76,6 +78,7 @@ export type UserCountAggregateOutputType = {
   profileUpdatedAt: number
   timezone: number
   timeFormat: number
+  watchCountry: number
   onboardingCompletedAt: number
   createdAt: number
   updatedAt: number
@@ -97,6 +100,7 @@ export type UserMinAggregateInputType = {
   profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
+  watchCountry?: true
   onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -116,6 +120,7 @@ export type UserMaxAggregateInputType = {
   profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
+  watchCountry?: true
   onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -135,6 +140,7 @@ export type UserCountAggregateInputType = {
   profileUpdatedAt?: true
   timezone?: true
   timeFormat?: true
+  watchCountry?: true
   onboardingCompletedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -227,6 +233,7 @@ export type UserGroupByOutputType = {
   profileUpdatedAt: Date | null
   timezone: string
   timeFormat: string
+  watchCountry: string
   onboardingCompletedAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -267,6 +274,7 @@ export type UserWhereInput = {
   profileUpdatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
+  watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -294,6 +302,7 @@ export type UserOrderByWithRelationInput = {
   profileUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -324,6 +333,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   profileUpdatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
+  watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -351,6 +361,7 @@ export type UserOrderByWithAggregationInput = {
   profileUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -376,6 +387,7 @@ export type UserScalarWhereWithAggregatesInput = {
   profileUpdatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
+  watchCountry?: Prisma.StringWithAggregatesFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -395,6 +407,7 @@ export type UserCreateInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -422,6 +435,7 @@ export type UserUncheckedCreateInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -449,6 +463,7 @@ export type UserUpdateInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -476,6 +491,7 @@ export type UserUncheckedUpdateInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -503,6 +519,7 @@ export type UserCreateManyInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -522,6 +539,7 @@ export type UserUpdateManyMutationInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -541,6 +559,7 @@ export type UserUncheckedUpdateManyInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -560,6 +579,7 @@ export type UserCountOrderByAggregateInput = {
   profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -579,6 +599,7 @@ export type UserMaxOrderByAggregateInput = {
   profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -598,6 +619,7 @@ export type UserMinOrderByAggregateInput = {
   profileUpdatedAt?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
+  watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -750,6 +772,7 @@ export type UserCreateWithoutFollowingInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -776,6 +799,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -807,6 +831,7 @@ export type UserCreateWithoutFollowersInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -833,6 +858,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -875,6 +901,7 @@ export type UserUpdateWithoutFollowingInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -901,6 +928,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -938,6 +966,7 @@ export type UserUpdateWithoutFollowersInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -964,6 +993,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -990,6 +1020,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1016,6 +1047,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1058,6 +1090,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1084,6 +1117,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1110,6 +1144,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1136,6 +1171,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1178,6 +1214,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1204,6 +1241,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1230,6 +1268,7 @@ export type UserCreateWithoutListsInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1256,6 +1295,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1298,6 +1338,7 @@ export type UserUpdateWithoutListsInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1324,6 +1365,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1350,6 +1392,7 @@ export type UserCreateWithoutNotesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1376,6 +1419,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1418,6 +1462,7 @@ export type UserUpdateWithoutNotesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1444,6 +1489,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1470,6 +1516,7 @@ export type UserCreateWithoutReviewsInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1496,6 +1543,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1538,6 +1586,7 @@ export type UserUpdateWithoutReviewsInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1564,6 +1613,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1590,6 +1640,7 @@ export type UserCreateWithoutFeedbackInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1616,6 +1667,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   profileUpdatedAt?: Date | string | null
   timezone?: string
   timeFormat?: string
+  watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1658,6 +1710,7 @@ export type UserUpdateWithoutFeedbackInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1684,6 +1737,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1804,6 +1858,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  watchCountry?: boolean
   onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1832,6 +1887,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  watchCountry?: boolean
   onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1851,6 +1907,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  watchCountry?: boolean
   onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1870,12 +1927,13 @@ export type UserSelectScalar = {
   profileUpdatedAt?: boolean
   timezone?: boolean
   timeFormat?: boolean
+  watchCountry?: boolean
   onboardingCompletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -1916,6 +1974,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     profileUpdatedAt: Date | null
     timezone: string
     timeFormat: string
+    watchCountry: string
     onboardingCompletedAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -2363,6 +2422,7 @@ export interface UserFieldRefs {
   readonly profileUpdatedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
+  readonly watchCountry: Prisma.FieldRef<"User", 'String'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

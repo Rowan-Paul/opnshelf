@@ -19,6 +19,15 @@ export class UpdateUserSettingsDto {
 	@IsString()
 	@IsOptional()
 	timezone?: string;
+
+	@ApiProperty({
+		description:
+			"ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)",
+		required: false,
+	})
+	@IsString()
+	@IsOptional()
+	watchCountry?: string;
 }
 
 export class DeleteUserAccountDto {
@@ -68,6 +77,12 @@ export class UserSettingsDto {
 		description: "IANA timezone identifier (e.g., America/New_York)",
 	})
 	timezone!: string;
+
+	@ApiProperty({
+		description:
+			"ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)",
+	})
+	watchCountry!: string;
 }
 
 export class UpdateUserProfileDto {

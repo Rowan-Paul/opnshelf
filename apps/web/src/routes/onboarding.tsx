@@ -16,6 +16,7 @@ import {
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerStartMyTraktImport,
 	usersControllerUpdateMyProfileMutation,
+	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -33,6 +34,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -41,7 +43,13 @@ export const Route = createFileRoute("/onboarding")({
 	component: OnboardingPage,
 });
 
-type OnboardingStep = "welcome" | "profile" | "trakt" | "suggestions" | "done";
+type OnboardingStep =
+	| "welcome"
+	| "profile"
+	| "preferences"
+	| "trakt"
+	| "suggestions"
+	| "done";
 
 function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	const [error, setError] = useState(false);
@@ -120,7 +128,12 @@ function OnboardingPage() {
 				{step === "welcome" && (
 					<WelcomeStep onNext={() => setStep("profile")} />
 				)}
-				{step === "profile" && <ProfileStep onNext={() => setStep("trakt")} />}
+				{step === "profile" && (
+					<ProfileStep onNext={() => setStep("preferences")} />
+				)}
+				{step === "preferences" && (
+					<PreferencesStep onNext={() => setStep("trakt")} />
+				)}
 				{step === "trakt" && (
 					<TraktStep
 						onNext={() => setStep("suggestions")}
@@ -398,7 +411,82 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 }
 
 /* ------------------------------------------------------------------
-   Step 3: Trakt.tv Import
+   Step 3: Preferences
+   ------------------------------------------------------------------ */
+function PreferencesStep({ onNext }: { onNext: () => void }) {
+	const { userSettings } = useAuth();
+	const queryClient = useQueryClient();
+	const [country, setCountry] = useState(userSettings?.watchCountry ?? "US");
+
+	const updateSettingsMutation = useMutation({
+		...usersControllerUpdateMySettingsMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
+		},
+	});
+
+	function handleSave() {
+		updateSettingsMutation.mutate(
+			{ body: { watchCountry: country } },
+			{ onSuccess: onNext },
+		);
+	}
+
+	return (
+		<div className="card p-8">
+			<div className="mb-6 flex justify-center">
+				<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
+					<Film className="size-8" />
+				</div>
+			</div>
+			<h1 className="mb-2 text-center text-display-2">Your Preferences</h1>
+			<p className="mb-8 text-center text-(--foreground-muted)">
+				Tell us where you are so we can show streaming availability in your
+				country.
+			</p>
+
+			<div className="space-y-2">
+				<p className="font-medium text-sm">Streaming country</p>
+				<CountrySelector
+					value={country}
+					onChange={setCountry}
+					disabled={updateSettingsMutation.isPending}
+				/>
+				<p className="text-(--foreground-subtle) text-xs">
+					You can change this at any time in Settings.
+				</p>
+			</div>
+
+			<div className="mt-8 flex flex-col gap-3">
+				<button
+					type="button"
+					onClick={handleSave}
+					disabled={updateSettingsMutation.isPending}
+					className="btn btn-primary w-full"
+				>
+					{updateSettingsMutation.isPending ? (
+						<Loader2 className="size-4 animate-spin" />
+					) : (
+						<>
+							Continue
+							<ArrowRight className="size-4" />
+						</>
+					)}
+				</button>
+				<button
+					type="button"
+					onClick={onNext}
+					className="btn btn-secondary w-full"
+				>
+					Skip for now
+				</button>
+			</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------
+   Step 4: Trakt.tv Import
    ------------------------------------------------------------------ */
 function TraktStep({
 	onNext,

@@ -26,6 +26,27 @@ export interface TMDBSearchResponse {
 	total_pages: number;
 }
 
+export interface WatchProvider {
+	logo_path: string;
+	provider_id: number;
+	provider_name: string;
+	display_priority: number;
+}
+
+export interface WatchProvidersResult {
+	link: string;
+	flatrate?: WatchProvider[];
+	rent?: WatchProvider[];
+	buy?: WatchProvider[];
+	ads?: WatchProvider[];
+	free?: WatchProvider[];
+}
+
+export interface WatchProvidersResponse {
+	id: number;
+	results: Record<string, WatchProvidersResult>;
+}
+
 export interface TMDBCredits {
 	cast: {
 		id: number;
@@ -149,5 +170,20 @@ export class MoviesTmdbService {
 			cast: sortedCast,
 			crew: filteredCrew,
 		};
+	}
+
+	async getWatchProviders(
+		movieId: string,
+	): Promise<WatchProvidersResponse | null> {
+		const response = await fetch(
+			`${this.tmdbBaseUrl}/movie/${movieId}/watch/providers?api_key=${this.tmdbApiKey}`,
+		);
+
+		if (!response.ok) {
+			this.logger.warn(`Failed to fetch watch providers for movie ${movieId}`);
+			return null;
+		}
+
+		return response.json() as Promise<WatchProvidersResponse>;
 	}
 }

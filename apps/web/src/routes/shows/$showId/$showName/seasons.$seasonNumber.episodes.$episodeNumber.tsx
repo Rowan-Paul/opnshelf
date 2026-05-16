@@ -12,7 +12,7 @@ import {
 	Star,
 	X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -27,6 +27,7 @@ import {
 	useEpisodeDetails,
 	useShowDetails,
 	useShowWatchHistory,
+	useShowWatchProviders,
 	useWatchActions,
 } from "#/lib/hooks";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
@@ -41,6 +42,7 @@ import MediaHero from "../../../../components/MediaHero";
 import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
 import ReviewSection from "../../../../components/ReviewSection";
+import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
 
 setupApiClient();
@@ -119,6 +121,19 @@ function EpisodeDetailPage() {
 	} = useWatchActions({ mediaType: "show", showId });
 
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+
+	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
+	const hasSyncedCountry = useRef(false);
+	useEffect(() => {
+		if (!hasSyncedCountry.current && userSettings?.watchCountry) {
+			hasSyncedCountry.current = true;
+			setWatchProvidersCountry(userSettings.watchCountry);
+		}
+	}, [userSettings]);
+	const { data: watchProvidersData } = useShowWatchProviders(
+		showId,
+		watchProvidersCountry,
+	);
 
 	const { data: mediaReviews } = useMediaReviews({
 		mediaType: "show",
@@ -439,6 +454,13 @@ function EpisodeDetailPage() {
 										: "N/A",
 								},
 							]}
+						/>
+
+						<WatchProviders
+							providers={watchProvidersData?.providers}
+							availableCountries={watchProvidersData?.availableCountries}
+							country={watchProvidersCountry}
+							onCountryChange={setWatchProvidersCountry}
 						/>
 
 						<InYourLists

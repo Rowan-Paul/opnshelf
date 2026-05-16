@@ -1656,6 +1656,7 @@ export const UserScalarFieldEnum = {
   profileUpdatedAt: 'profileUpdatedAt',
   timezone: 'timezone',
   timeFormat: 'timeFormat',
+  watchCountry: 'watchCountry',
   onboardingCompletedAt: 'onboardingCompletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { Button } from "#/components/ui/button";
@@ -322,6 +323,29 @@ function SettingsPage() {
 								disabled={updateSettingsMutation.isPending}
 							/>
 						</div>
+					</div>
+				</section>
+
+				{/* Streaming */}
+				<section className="card p-6">
+					<h2 className="mb-1 font-semibold text-lg">Streaming</h2>
+					<p className="mb-6 text-(--foreground-muted) text-sm">
+						Choose your country to see where movies and shows are available to
+						watch
+					</p>
+					<div className="space-y-2">
+						<label htmlFor="watch-country" className="font-medium text-sm">
+							Country
+						</label>
+						<CountrySelector
+							value={userSettings?.watchCountry}
+							onChange={(watchCountry) =>
+								updateSettingsMutation.mutate({
+									body: { watchCountry },
+								})
+							}
+							disabled={updateSettingsMutation.isPending}
+						/>
 					</div>
 				</section>
 

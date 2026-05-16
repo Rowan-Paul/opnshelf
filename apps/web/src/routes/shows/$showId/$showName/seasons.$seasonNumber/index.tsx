@@ -4,7 +4,7 @@ import {
 } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
@@ -13,6 +13,7 @@ import {
 	useSeasonDetails,
 	useShowDetails,
 	useShowWatchHistory,
+	useShowWatchProviders,
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
@@ -30,6 +31,7 @@ import PersonGrid from "../../../../../components/PersonGrid";
 import ProgressCard from "../../../../../components/ProgressCard";
 import ReviewSection from "../../../../../components/ReviewSection";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
+import WatchProviders from "../../../../../components/WatchProviders";
 
 setupApiClient();
 
@@ -82,6 +84,19 @@ function SeasonDetailPage() {
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
 	const [processingSeason, setProcessingSeason] = useState(false);
+
+	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
+	const hasSyncedCountry = useRef(false);
+	useEffect(() => {
+		if (!hasSyncedCountry.current && userSettings?.watchCountry) {
+			hasSyncedCountry.current = true;
+			setWatchProvidersCountry(userSettings.watchCountry);
+		}
+	}, [userSettings]);
+	const { data: watchProvidersData } = useShowWatchProviders(
+		showId,
+		watchProvidersCountry,
+	);
 
 	const {
 		data: show,
@@ -459,6 +474,13 @@ function SeasonDetailPage() {
 										: "N/A",
 								},
 							]}
+						/>
+
+						<WatchProviders
+							providers={watchProvidersData?.providers}
+							availableCountries={watchProvidersData?.availableCountries}
+							country={watchProvidersCountry}
+							onCountryChange={setWatchProvidersCountry}
 						/>
 
 						<InYourLists

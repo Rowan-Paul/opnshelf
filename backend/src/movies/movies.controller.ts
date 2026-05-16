@@ -82,6 +82,28 @@ export class MoviesController {
 		};
 	}
 
+	@Get("tmdb/:movieId/watch-providers")
+	@ApiOperation({
+		summary: "Get watch providers for a movie from TMDB/JustWatch",
+	})
+	@ApiQuery({
+		name: "country",
+		required: false,
+		description: "ISO 3166-1 country code (e.g. US, GB)",
+	})
+	async getWatchProviders(
+		@Param("movieId") movieId: string,
+		@Query("country") country: string = "US",
+	) {
+		const data = await this.moviesService.getWatchProviders(movieId);
+		if (!data) return { providers: null };
+		const countryData = data.results[country] ?? null;
+		return {
+			providers: countryData,
+			availableCountries: Object.keys(data.results),
+		};
+	}
+
 	@Get("user/:userDid")
 	@ApiOperation({ summary: "Get tracked movies for a user" })
 	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
