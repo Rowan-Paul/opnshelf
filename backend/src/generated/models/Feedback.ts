@@ -29,6 +29,7 @@ export type FeedbackMinAggregateOutputType = {
   userDid: string | null
   category: string | null
   message: string | null
+  pageUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +39,7 @@ export type FeedbackMaxAggregateOutputType = {
   userDid: string | null
   category: string | null
   message: string | null
+  pageUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,6 +49,7 @@ export type FeedbackCountAggregateOutputType = {
   userDid: number
   category: number
   message: number
+  pageUrl: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,6 +61,7 @@ export type FeedbackMinAggregateInputType = {
   userDid?: true
   category?: true
   message?: true
+  pageUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +71,7 @@ export type FeedbackMaxAggregateInputType = {
   userDid?: true
   category?: true
   message?: true
+  pageUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +81,7 @@ export type FeedbackCountAggregateInputType = {
   userDid?: true
   category?: true
   message?: true
+  pageUrl?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -158,6 +164,7 @@ export type FeedbackGroupByOutputType = {
   userDid: string
   category: string
   message: string
+  pageUrl: string | null
   createdAt: Date
   updatedAt: Date
   _count: FeedbackCountAggregateOutputType | null
@@ -188,6 +195,7 @@ export type FeedbackWhereInput = {
   userDid?: Prisma.StringFilter<"Feedback"> | string
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
+  pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -198,6 +206,7 @@ export type FeedbackOrderByWithRelationInput = {
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
+  pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -211,6 +220,7 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   userDid?: Prisma.StringFilter<"Feedback"> | string
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
+  pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -221,6 +231,7 @@ export type FeedbackOrderByWithAggregationInput = {
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
+  pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FeedbackCountOrderByAggregateInput
@@ -236,6 +247,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   userDid?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   category?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   message?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
+  pageUrl?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
 }
@@ -244,6 +256,7 @@ export type FeedbackCreateInput = {
   id?: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutFeedbackInput
@@ -254,6 +267,7 @@ export type FeedbackUncheckedCreateInput = {
   userDid: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -262,6 +276,7 @@ export type FeedbackUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutFeedbackNestedInput
@@ -272,6 +287,7 @@ export type FeedbackUncheckedUpdateInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -281,6 +297,7 @@ export type FeedbackCreateManyInput = {
   userDid: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -289,6 +306,7 @@ export type FeedbackUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -298,6 +316,7 @@ export type FeedbackUncheckedUpdateManyInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -317,6 +336,7 @@ export type FeedbackCountOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
+  pageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -326,6 +346,7 @@ export type FeedbackMaxOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
+  pageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -335,6 +356,7 @@ export type FeedbackMinOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
+  pageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -385,6 +407,7 @@ export type FeedbackCreateWithoutUserInput = {
   id?: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -393,6 +416,7 @@ export type FeedbackUncheckedCreateWithoutUserInput = {
   id?: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -431,6 +455,7 @@ export type FeedbackScalarWhereInput = {
   userDid?: Prisma.StringFilter<"Feedback"> | string
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
+  pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
 }
@@ -439,6 +464,7 @@ export type FeedbackCreateManyUserInput = {
   id?: string
   category: string
   message: string
+  pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -447,6 +473,7 @@ export type FeedbackUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,6 +482,7 @@ export type FeedbackUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -463,6 +491,7 @@ export type FeedbackUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
+  pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -474,6 +503,7 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   userDid?: boolean
   category?: boolean
   message?: boolean
+  pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -484,6 +514,7 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userDid?: boolean
   category?: boolean
   message?: boolean
+  pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -494,6 +525,7 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userDid?: boolean
   category?: boolean
   message?: boolean
+  pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -504,11 +536,12 @@ export type FeedbackSelectScalar = {
   userDid?: boolean
   category?: boolean
   message?: boolean
+  pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "category" | "message" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "category" | "message" | "pageUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -529,6 +562,7 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     userDid: string
     category: string
     message: string
+    pageUrl: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["feedback"]>
@@ -959,6 +993,7 @@ export interface FeedbackFieldRefs {
   readonly userDid: Prisma.FieldRef<"Feedback", 'String'>
   readonly category: Prisma.FieldRef<"Feedback", 'String'>
   readonly message: Prisma.FieldRef<"Feedback", 'String'>
+  readonly pageUrl: Prisma.FieldRef<"Feedback", 'String'>
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
 }

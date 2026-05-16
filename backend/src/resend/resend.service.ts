@@ -22,7 +22,8 @@ export class ResendService {
 		userDisplayName?: string | null;
 		pageUrl?: string;
 	}) {
-		const { to, category, message, userHandle, userDisplayName, pageUrl } = params;
+		const { to, category, message, userHandle, userDisplayName, pageUrl } =
+			params;
 		const subject = `New OpnShelf feedback: ${category}`;
 		const name = userDisplayName || userHandle;
 		const pageLine = pageUrl ? `\nPage: ${pageUrl}` : "";
