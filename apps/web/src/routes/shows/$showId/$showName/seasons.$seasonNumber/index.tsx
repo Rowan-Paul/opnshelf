@@ -5,6 +5,7 @@ import {
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { env } from "#/env";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
@@ -19,7 +20,10 @@ import {
 	useWatchActions,
 } from "#/lib/hooks";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
-import { buildSeasonPageMeta } from "#/lib/media-meta";
+import {
+	buildSeasonPageMeta,
+	getOpenGraphMetaDescriptors,
+} from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
@@ -59,12 +63,15 @@ export const Route = createFileRoute(
 
 		return { show, season };
 	},
-	head: ({ loaderData, params }) => {
+	head: ({ loaderData, params, match }) => {
 		const meta = buildSeasonPageMeta(
 			loaderData?.show,
 			loaderData?.season,
 			params.seasonNumber,
 		);
+		const pageUrl = env.VITE_SITE_URL
+			? `${env.VITE_SITE_URL}${match.pathname}`
+			: undefined;
 
 		return {
 			meta: [
@@ -73,6 +80,7 @@ export const Route = createFileRoute(
 					name: "description",
 					content: meta.description,
 				},
+				...getOpenGraphMetaDescriptors(meta, pageUrl),
 			],
 		};
 	},

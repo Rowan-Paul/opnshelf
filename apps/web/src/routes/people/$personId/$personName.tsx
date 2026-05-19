@@ -9,11 +9,15 @@ import {
 	Star,
 } from "lucide-react";
 import { useMemo } from "react";
+import { env } from "#/env";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import { usePersonDetails, usePersonFilmography } from "#/lib/hooks";
-import { buildPersonPageMeta } from "#/lib/media-meta";
+import {
+	buildPersonPageMeta,
+	getOpenGraphMetaDescriptors,
+} from "#/lib/media-meta";
 import ActionableMediaCard from "../../../components/ActionableMediaCard";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
@@ -50,8 +54,12 @@ export const Route = createFileRoute("/people/$personId/$personName")({
 			return null;
 		}
 	},
-	head: ({ loaderData, params }) => {
+	head: ({ loaderData, params, match }) => {
 		const meta = buildPersonPageMeta(loaderData, params.personName);
+		const pageUrl = env.VITE_SITE_URL
+			? `${env.VITE_SITE_URL}${match.pathname}`
+			: undefined;
+
 		return {
 			meta: [
 				{ title: meta.title },
@@ -59,6 +67,7 @@ export const Route = createFileRoute("/people/$personId/$personName")({
 					name: "description",
 					content: meta.description,
 				},
+				...getOpenGraphMetaDescriptors(meta, pageUrl),
 			],
 		};
 	},

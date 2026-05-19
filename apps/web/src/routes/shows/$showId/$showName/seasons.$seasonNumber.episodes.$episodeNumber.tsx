@@ -20,6 +20,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { env } from "#/env";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
@@ -32,7 +33,10 @@ import {
 	useWatchActions,
 } from "#/lib/hooks";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
-import { buildEpisodePageMeta } from "#/lib/media-meta";
+import {
+	buildEpisodePageMeta,
+	getOpenGraphMetaDescriptors,
+} from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
@@ -72,11 +76,14 @@ export const Route = createFileRoute(
 
 		return { show, episode };
 	},
-	head: ({ loaderData, params }) => {
+	head: ({ loaderData, params, match }) => {
 		const meta = buildEpisodePageMeta(loaderData?.show, loaderData?.episode, {
 			seasonNumber: params.seasonNumber,
 			episodeNumber: params.episodeNumber,
 		});
+		const pageUrl = env.VITE_SITE_URL
+			? `${env.VITE_SITE_URL}${match.pathname}`
+			: undefined;
 
 		return {
 			meta: [
@@ -85,6 +92,7 @@ export const Route = createFileRoute(
 					name: "description",
 					content: meta.description,
 				},
+				...getOpenGraphMetaDescriptors(meta, pageUrl),
 			],
 		};
 	},

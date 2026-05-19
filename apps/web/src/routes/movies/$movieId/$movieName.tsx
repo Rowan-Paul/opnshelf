@@ -9,6 +9,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { env } from "#/env";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
@@ -20,7 +21,10 @@ import {
 	useWatchActions,
 } from "#/lib/hooks";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
-import { buildMoviePageMeta } from "#/lib/media-meta";
+import {
+	buildMoviePageMeta,
+	getOpenGraphMetaDescriptors,
+} from "#/lib/media-meta";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
 import InYourLists from "../../../components/InYourLists";
@@ -44,8 +48,11 @@ export const Route = createFileRoute("/movies/$movieId/$movieName")({
 			}),
 		);
 	},
-	head: ({ loaderData, params }) => {
+	head: ({ loaderData, params, match }) => {
 		const meta = buildMoviePageMeta(loaderData, params.movieName);
+		const pageUrl = env.VITE_SITE_URL
+			? `${env.VITE_SITE_URL}${match.pathname}`
+			: undefined;
 
 		return {
 			meta: [
@@ -54,6 +61,7 @@ export const Route = createFileRoute("/movies/$movieId/$movieName")({
 					name: "description",
 					content: meta.description,
 				},
+				...getOpenGraphMetaDescriptors(meta, pageUrl),
 			],
 		};
 	},
