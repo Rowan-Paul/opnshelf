@@ -27,6 +27,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import type { Request, Response } from "express";
 import { AuthGuard } from "../auth/auth.guard";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	CompleteOnboardingResponseDto,
@@ -76,6 +77,7 @@ export class UsersController {
 	}
 
 	@Get(":handle/followers")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get public followers for a user by handle" })
 	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
 	@ApiResponse({ status: 404, description: "User not found" })
@@ -94,6 +96,7 @@ export class UsersController {
 	}
 
 	@Get(":handle/following")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get public following for a user by handle" })
 	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
 	@ApiResponse({ status: 404, description: "User not found" })

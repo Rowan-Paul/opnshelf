@@ -141,7 +141,7 @@ export default function Header() {
 
 						{/* User Menu or Login Button */}
 						{isLoading ? (
-							<div className="h-9 w-9 animate-pulse rounded-full bg-(--background-subtle)" />
+							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) sm:block" />
 						) : isAuthenticated && user ? (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>

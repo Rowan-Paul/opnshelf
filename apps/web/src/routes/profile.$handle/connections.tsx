@@ -1,9 +1,14 @@
-import { usersControllerGetPublicProfileOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import {
+	socialControllerUnfollowMutation,
+	usersControllerGetPublicProfileOptions,
+	usersControllerGetPublicProfileQueryKey,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, UserMinus, Users } from "lucide-react";
 import { useState } from "react";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { useAuth } from "#/lib/auth-context";
 import {
 	usePublicFollowers,
 	usePublicFollowing,
@@ -21,6 +26,27 @@ function ProfileConnectionsPage() {
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
+	});
+
+	const { user } = useAuth();
+	const isOwner = user?.did === profile?.did;
+	const queryClient = useQueryClient();
+
+	const profileQueryKey = usersControllerGetPublicProfileQueryKey({
+		path: { handle },
+	});
+
+	const unfollowMutation = useMutation({
+		...socialControllerUnfollowMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: profileQueryKey });
+			queryClient.invalidateQueries({
+				queryKey: ["public-profile", "following", handle],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["public-profile", "followers", handle],
+			});
+		},
 	});
 
 	const followersQuery = usePublicFollowers(handle);
@@ -76,26 +102,49 @@ function ProfileConnectionsPage() {
 			) : (
 				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{activeQuery.data.items.map((user) => (
-						<Link
+						<div
 							key={user.did}
-							to="/profile/$handle"
-							params={{ handle: user.handle }}
 							className="card card-interactive flex w-full items-center gap-3 p-4"
 						>
-							<UserAvatar
-								src={user.avatar}
-								alt={String(user.displayName || user.handle)}
-								size="lg"
-							/>
-							<div className="min-w-0 flex-1">
-								<p className="truncate font-medium">
-									{String(user.displayName || user.handle)}
-								</p>
-								<p className="truncate text-(--foreground-muted) text-sm">
-									@{user.handle}
-								</p>
-							</div>
-						</Link>
+							<Link
+								to="/profile/$handle"
+								params={{ handle: user.handle }}
+								className="flex min-w-0 flex-1 items-center gap-3"
+							>
+								<UserAvatar
+									src={user.avatar}
+									alt={String(user.displayName || user.handle)}
+									size="lg"
+								/>
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-medium">
+										{String(user.displayName || user.handle)}
+									</p>
+									<p className="truncate text-(--foreground-muted) text-sm">
+										@{user.handle}
+									</p>
+								</div>
+							</Link>
+							{isOwner && user.isFollowing && (
+								<button
+									type="button"
+									onClick={() =>
+										unfollowMutation.mutate({
+											path: { targetDid: user.did },
+										})
+									}
+									disabled={unfollowMutation.isPending}
+									className="btn btn-secondary gap-2"
+								>
+									{unfollowMutation.isPending ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<UserMinus className="size-4" />
+									)}
+									Following
+								</button>
+							)}
+						</div>
 					))}
 				</div>
 			)}

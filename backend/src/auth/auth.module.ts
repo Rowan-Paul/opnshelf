@@ -6,6 +6,7 @@ import { AuthController } from "./auth.controller";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { AUTH_SERVICE } from "./auth.tokens";
+import { OptionalAuthGuard } from "./optional-auth.guard";
 
 @Module({
 	imports: [
@@ -17,11 +18,12 @@ import { AUTH_SERVICE } from "./auth.tokens";
 	providers: [
 		AuthService,
 		AuthGuard,
+		OptionalAuthGuard,
 		{
 			provide: AUTH_SERVICE,
 			useExisting: AuthService,
 		},
 	],
-	exports: [AuthService, AuthGuard, AUTH_SERVICE],
+	exports: [AuthService, AuthGuard, OptionalAuthGuard, AUTH_SERVICE],
 })
 export class AuthModule {}
