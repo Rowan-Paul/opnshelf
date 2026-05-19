@@ -1658,6 +1658,10 @@ export const UserScalarFieldEnum = {
   timeFormat: 'timeFormat',
   watchCountry: 'watchCountry',
   onboardingCompletedAt: 'onboardingCompletedAt',
+  blueskyProfileUrl: 'blueskyProfileUrl',
+  tangledProfileUrl: 'tangledProfileUrl',
+  showBlueskyOnProfile: 'showBlueskyOnProfile',
+  showTangledOnProfile: 'showTangledOnProfile',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1985,6 +1989,13 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -2009,13 +2020,6 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

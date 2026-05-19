@@ -40,6 +40,10 @@ export type UserMinAggregateOutputType = {
   timeFormat: string | null
   watchCountry: string | null
   onboardingCompletedAt: Date | null
+  blueskyProfileUrl: string | null
+  tangledProfileUrl: string | null
+  showBlueskyOnProfile: boolean | null
+  showTangledOnProfile: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -60,6 +64,10 @@ export type UserMaxAggregateOutputType = {
   timeFormat: string | null
   watchCountry: string | null
   onboardingCompletedAt: Date | null
+  blueskyProfileUrl: string | null
+  tangledProfileUrl: string | null
+  showBlueskyOnProfile: boolean | null
+  showTangledOnProfile: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,6 +88,10 @@ export type UserCountAggregateOutputType = {
   timeFormat: number
   watchCountry: number
   onboardingCompletedAt: number
+  blueskyProfileUrl: number
+  tangledProfileUrl: number
+  showBlueskyOnProfile: number
+  showTangledOnProfile: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -102,6 +114,10 @@ export type UserMinAggregateInputType = {
   timeFormat?: true
   watchCountry?: true
   onboardingCompletedAt?: true
+  blueskyProfileUrl?: true
+  tangledProfileUrl?: true
+  showBlueskyOnProfile?: true
+  showTangledOnProfile?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -122,6 +138,10 @@ export type UserMaxAggregateInputType = {
   timeFormat?: true
   watchCountry?: true
   onboardingCompletedAt?: true
+  blueskyProfileUrl?: true
+  tangledProfileUrl?: true
+  showBlueskyOnProfile?: true
+  showTangledOnProfile?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -142,6 +162,10 @@ export type UserCountAggregateInputType = {
   timeFormat?: true
   watchCountry?: true
   onboardingCompletedAt?: true
+  blueskyProfileUrl?: true
+  tangledProfileUrl?: true
+  showBlueskyOnProfile?: true
+  showTangledOnProfile?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -235,6 +259,10 @@ export type UserGroupByOutputType = {
   timeFormat: string
   watchCountry: string
   onboardingCompletedAt: Date | null
+  blueskyProfileUrl: string | null
+  tangledProfileUrl: string | null
+  showBlueskyOnProfile: boolean
+  showTangledOnProfile: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -276,6 +304,10 @@ export type UserWhereInput = {
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  blueskyProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  showBlueskyOnProfile?: Prisma.BoolFilter<"User"> | boolean
+  showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -304,6 +336,10 @@ export type UserOrderByWithRelationInput = {
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  blueskyProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  showBlueskyOnProfile?: Prisma.SortOrder
+  showTangledOnProfile?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
@@ -335,6 +371,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  blueskyProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  showBlueskyOnProfile?: Prisma.BoolFilter<"User"> | boolean
+  showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -363,6 +403,10 @@ export type UserOrderByWithAggregationInput = {
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  blueskyProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  showBlueskyOnProfile?: Prisma.SortOrder
+  showTangledOnProfile?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -389,6 +433,10 @@ export type UserScalarWhereWithAggregatesInput = {
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
   watchCountry?: Prisma.StringWithAggregatesFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  blueskyProfileUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  tangledProfileUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  showBlueskyOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  showTangledOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -409,6 +457,10 @@ export type UserCreateInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -437,6 +489,10 @@ export type UserUncheckedCreateInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -465,6 +521,10 @@ export type UserUpdateInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -493,6 +553,10 @@ export type UserUncheckedUpdateInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -521,6 +585,10 @@ export type UserCreateManyInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -541,6 +609,10 @@ export type UserUpdateManyMutationInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -561,6 +633,10 @@ export type UserUncheckedUpdateManyInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -581,6 +657,10 @@ export type UserCountOrderByAggregateInput = {
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
+  blueskyProfileUrl?: Prisma.SortOrder
+  tangledProfileUrl?: Prisma.SortOrder
+  showBlueskyOnProfile?: Prisma.SortOrder
+  showTangledOnProfile?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -601,6 +681,10 @@ export type UserMaxOrderByAggregateInput = {
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
+  blueskyProfileUrl?: Prisma.SortOrder
+  tangledProfileUrl?: Prisma.SortOrder
+  showBlueskyOnProfile?: Prisma.SortOrder
+  showTangledOnProfile?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -621,6 +705,10 @@ export type UserMinOrderByAggregateInput = {
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
+  blueskyProfileUrl?: Prisma.SortOrder
+  tangledProfileUrl?: Prisma.SortOrder
+  showBlueskyOnProfile?: Prisma.SortOrder
+  showTangledOnProfile?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -640,6 +728,10 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -774,6 +866,10 @@ export type UserCreateWithoutFollowingInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -801,6 +897,10 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -833,6 +933,10 @@ export type UserCreateWithoutFollowersInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -860,6 +964,10 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -903,6 +1011,10 @@ export type UserUpdateWithoutFollowingInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -930,6 +1042,10 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -968,6 +1084,10 @@ export type UserUpdateWithoutFollowersInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -995,6 +1115,10 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1022,6 +1146,10 @@ export type UserCreateWithoutTrackedMoviesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -1049,6 +1177,10 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -1092,6 +1224,10 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -1119,6 +1255,10 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -1146,6 +1286,10 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1173,6 +1317,10 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1216,6 +1364,10 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1243,6 +1395,10 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1270,6 +1426,10 @@ export type UserCreateWithoutListsInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1297,6 +1457,10 @@ export type UserUncheckedCreateWithoutListsInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1340,6 +1504,10 @@ export type UserUpdateWithoutListsInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1367,6 +1535,10 @@ export type UserUncheckedUpdateWithoutListsInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1394,6 +1566,10 @@ export type UserCreateWithoutNotesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1421,6 +1597,10 @@ export type UserUncheckedCreateWithoutNotesInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1464,6 +1644,10 @@ export type UserUpdateWithoutNotesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1491,6 +1675,10 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1518,6 +1706,10 @@ export type UserCreateWithoutReviewsInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1545,6 +1737,10 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1588,6 +1784,10 @@ export type UserUpdateWithoutReviewsInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1615,6 +1815,10 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1642,6 +1846,10 @@ export type UserCreateWithoutFeedbackInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1669,6 +1877,10 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   timeFormat?: string
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1712,6 +1924,10 @@ export type UserUpdateWithoutFeedbackInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1739,6 +1955,10 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1860,6 +2080,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   timeFormat?: boolean
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
+  blueskyProfileUrl?: boolean
+  tangledProfileUrl?: boolean
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
@@ -1889,6 +2113,10 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timeFormat?: boolean
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
+  blueskyProfileUrl?: boolean
+  tangledProfileUrl?: boolean
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1909,6 +2137,10 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timeFormat?: boolean
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
+  blueskyProfileUrl?: boolean
+  tangledProfileUrl?: boolean
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1929,11 +2161,15 @@ export type UserSelectScalar = {
   timeFormat?: boolean
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
+  blueskyProfileUrl?: boolean
+  tangledProfileUrl?: boolean
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -1976,6 +2212,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     timeFormat: string
     watchCountry: string
     onboardingCompletedAt: Date | null
+    blueskyProfileUrl: string | null
+    tangledProfileUrl: string | null
+    showBlueskyOnProfile: boolean
+    showTangledOnProfile: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -2424,6 +2664,10 @@ export interface UserFieldRefs {
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
   readonly watchCountry: Prisma.FieldRef<"User", 'String'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly blueskyProfileUrl: Prisma.FieldRef<"User", 'String'>
+  readonly tangledProfileUrl: Prisma.FieldRef<"User", 'String'>
+  readonly showBlueskyOnProfile: Prisma.FieldRef<"User", 'Boolean'>
+  readonly showTangledOnProfile: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

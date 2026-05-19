@@ -9,6 +9,7 @@ import {
 	usersControllerDeleteMyAvatarMutation,
 	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMySettingsOptions,
+	usersControllerRefreshMySocialLinksMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -17,7 +18,9 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	Camera,
+	ExternalLink,
 	Loader2,
+	RefreshCw,
 	Save,
 	Settings,
 	Trash2,
@@ -191,6 +194,36 @@ function SettingsPage() {
 	useEffect(() => {
 		setDisplayName(user?.displayName ?? "");
 	}, [user?.displayName]);
+
+	// Social links visibility state
+	const [showBluesky, setShowBluesky] = useState(
+		user?.showBlueskyOnProfile ?? true,
+	);
+	const [showTangled, setShowTangled] = useState(
+		user?.showTangledOnProfile ?? true,
+	);
+	useEffect(() => {
+		setShowBluesky(user?.showBlueskyOnProfile ?? true);
+		setShowTangled(user?.showTangledOnProfile ?? true);
+	}, [user?.showBlueskyOnProfile, user?.showTangledOnProfile]);
+
+	const refreshSocialLinksMutation = useMutation({
+		mutationKey: ["users", "me", "profile", "refresh-social-links"],
+		...usersControllerRefreshMySocialLinksMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+			toast.success("Social links refreshed");
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to refresh social links",
+			);
+		},
+	});
 
 	// Avatar file input ref
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -464,6 +497,115 @@ function SettingsPage() {
 							<p className="text-(--foreground-muted) text-xs">
 								Your handle is managed by your Bluesky account
 							</p>
+						</div>
+
+						{/* Social Links */}
+						<div className="space-y-4">
+							<div className="flex items-center justify-between">
+								<h3 className="font-medium text-sm">Social links</h3>
+								<button
+									type="button"
+									onClick={() => refreshSocialLinksMutation.mutate({})}
+									disabled={refreshSocialLinksMutation.isPending}
+									className="inline-flex items-center gap-1.5 text-(--accent) text-sm hover:underline disabled:opacity-50"
+								>
+									{refreshSocialLinksMutation.isPending ? (
+										<Loader2 className="size-3.5 animate-spin" />
+									) : (
+										<RefreshCw className="size-3.5" />
+									)}
+									Refresh
+								</button>
+							</div>
+							<p className="text-(--foreground-muted) text-xs">
+								We automatically detect your Bluesky and Tangled profiles from
+								your PDS. Toggle to control visibility.
+							</p>
+
+							{/* Bluesky */}
+							<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
+								<div className="flex items-center gap-3">
+									<img src="/bluesky.svg" alt="Bluesky" className="size-5" />
+									<div>
+										<p className="font-medium text-sm">Bluesky</p>
+										{user.blueskyProfileUrl ? (
+											<a
+												href={user.blueskyProfileUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+											>
+												View profile
+												<ExternalLink className="size-3" />
+											</a>
+										) : (
+											<p className="text-(--foreground-muted) text-xs">
+												Not found
+											</p>
+										)}
+									</div>
+								</div>
+								<Switch
+									checked={showBluesky}
+									onCheckedChange={(checked) => {
+										setShowBluesky(checked);
+										updateProfileMutation.mutate({
+											body: { showBlueskyOnProfile: checked },
+										});
+									}}
+									disabled={
+										updateProfileMutation.isPending || !user.blueskyProfileUrl
+									}
+								/>
+							</div>
+
+							{/* Tangled */}
+							<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
+								<div className="flex items-center gap-3">
+									<div className="relative size-5">
+										<img
+											src="/tangled-black.svg"
+											alt="Tangled"
+											className="absolute inset-0 block h-full w-full object-contain dark:hidden"
+										/>
+										<img
+											src="/tangled-white.svg"
+											alt="Tangled"
+											className="absolute inset-0 hidden h-full w-full object-contain dark:block"
+										/>
+									</div>
+									<div>
+										<p className="font-medium text-sm">Tangled</p>
+										{user.tangledProfileUrl ? (
+											<a
+												href={user.tangledProfileUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+											>
+												View profile
+												<ExternalLink className="size-3" />
+											</a>
+										) : (
+											<p className="text-(--foreground-muted) text-xs">
+												Not found
+											</p>
+										)}
+									</div>
+								</div>
+								<Switch
+									checked={showTangled}
+									onCheckedChange={(checked) => {
+										setShowTangled(checked);
+										updateProfileMutation.mutate({
+											body: { showTangledOnProfile: checked },
+										});
+									}}
+									disabled={
+										updateProfileMutation.isPending || !user.tangledProfileUrl
+									}
+								/>
+							</div>
 						</div>
 					</div>
 				</section>

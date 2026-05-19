@@ -257,6 +257,23 @@ export class UsersController {
 		return this.usersService.deleteUserAvatar(did, session);
 	}
 
+	@Post("me/profile/refresh-social-links")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Refresh discovered social profile links from PDS" })
+	@ApiResponse({ status: 200, type: UserProfileDto })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async refreshMySocialLinks(
+		@Req() req: AuthenticatedRequest,
+	): Promise<UserProfileDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const handle = await this.usersService.getUserHandle(did);
+		return this.usersService.refreshSocialProfiles(did, handle);
+	}
+
 	@Delete("me/account")
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.OK)

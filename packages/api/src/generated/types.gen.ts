@@ -169,6 +169,22 @@ export type UserDto = {
      * Whether this user should complete onboarding
      */
     needsOnboarding: boolean;
+    /**
+     * Bluesky profile URL
+     */
+    blueskyProfileUrl: string | null;
+    /**
+     * Tangled profile URL
+     */
+    tangledProfileUrl: string | null;
+    /**
+     * Whether Bluesky link is shown on public profile
+     */
+    showBlueskyOnProfile: boolean;
+    /**
+     * Whether Tangled link is shown on public profile
+     */
+    showTangledOnProfile: boolean;
 };
 
 export type BlueskyProfileStatusDto = {
@@ -511,6 +527,22 @@ export type PublicUserProfileDto = {
      */
     avatar: string | null;
     /**
+     * Bluesky profile URL
+     */
+    blueskyProfileUrl: string | null;
+    /**
+     * Tangled profile URL
+     */
+    tangledProfileUrl: string | null;
+    /**
+     * Whether Bluesky link is shown on public profile
+     */
+    showBlueskyOnProfile: boolean;
+    /**
+     * Whether Tangled link is shown on public profile
+     */
+    showTangledOnProfile: boolean;
+    /**
      * Public follower count
      */
     followersCount: number;
@@ -580,6 +612,14 @@ export type UpdateUserProfileDto = {
      * Display name shown in OpnShelf
      */
     displayName?: string;
+    /**
+     * Whether to show Bluesky profile link on public profile
+     */
+    showBlueskyOnProfile?: boolean;
+    /**
+     * Whether to show Tangled profile link on public profile
+     */
+    showTangledOnProfile?: boolean;
 };
 
 export type UserProfileDto = {
@@ -591,6 +631,22 @@ export type UserProfileDto = {
      * OpnShelf profile avatar URL
      */
     avatar: string | null;
+    /**
+     * Bluesky profile URL
+     */
+    blueskyProfileUrl: string | null;
+    /**
+     * Tangled profile URL
+     */
+    tangledProfileUrl: string | null;
+    /**
+     * Whether Bluesky link is shown on public profile
+     */
+    showBlueskyOnProfile: boolean;
+    /**
+     * Whether Tangled link is shown on public profile
+     */
+    showTangledOnProfile: boolean;
 };
 
 export type DeleteUserAccountDto = {
@@ -2371,6 +2427,19 @@ export type UsersControllerDeleteMyAvatarResponses = {
 };
 
 export type UsersControllerDeleteMyAvatarResponse = UsersControllerDeleteMyAvatarResponses[keyof UsersControllerDeleteMyAvatarResponses];
+
+export type UsersControllerRefreshMySocialLinksData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile/refresh-social-links';
+};
+
+export type UsersControllerRefreshMySocialLinksResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerRefreshMySocialLinksResponse = UsersControllerRefreshMySocialLinksResponses[keyof UsersControllerRefreshMySocialLinksResponses];
 
 export type UsersControllerUploadMyAvatarData = {
     body: {

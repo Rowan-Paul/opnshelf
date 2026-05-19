@@ -18,6 +18,14 @@ jest.mock("../auth/auth.guard", () => ({
 	},
 }));
 
+jest.mock("../auth/optional-auth.guard", () => ({
+	OptionalAuthGuard: class MockOptionalAuthGuard {
+		canActivate() {
+			return true;
+		}
+	},
+}));
+
 import { SocialService } from "../social/social.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";

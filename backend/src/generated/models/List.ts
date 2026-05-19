@@ -509,10 +509,6 @@ export type ListUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.ListScalarWhereInput | Prisma.ListScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type ListCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.ListCreateWithoutItemsInput, Prisma.ListUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.ListCreateOrConnectWithoutItemsInput

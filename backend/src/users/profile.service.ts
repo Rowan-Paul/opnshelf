@@ -17,11 +17,14 @@ import {
 } from "../lexicons/xyz/opnshelf/profile.defs";
 import type { Main as ProfileRecord } from "../lexicons/xyz/opnshelf/profile.defs";
 import { PrismaService } from "../prisma/prisma.service";
-import type { UserProfileDto } from "./dto/user-settings.dto";
-
 export interface ATSession {
 	did: string;
 }
+
+type ProfileIndexResult = {
+	displayName: string | null;
+	avatar: string | null;
+};
 
 type UploadableImage = {
 	buffer: Buffer;
@@ -114,7 +117,7 @@ export class ProfileService {
 			avatar?: UploadableImage;
 			clearAvatar?: boolean;
 		},
-	): Promise<UserProfileDto> {
+	): Promise<ProfileIndexResult> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
 			select: {
@@ -161,7 +164,7 @@ export class ProfileService {
 	async deleteAvatar(
 		userDid: string,
 		session: ATSession,
-	): Promise<UserProfileDto> {
+	): Promise<ProfileIndexResult> {
 		return this.updateProfile(userDid, session, { clearAvatar: true });
 	}
 
@@ -219,7 +222,7 @@ export class ProfileService {
 		cid: string | null,
 		uri: string,
 		record: ProfileRecord,
-	): Promise<UserProfileDto | null> {
+	): Promise<ProfileIndexResult | null> {
 		const normalizedDisplayName = normalizeDisplayName(record.displayName);
 		const avatarCid = getBlobCid(record.avatar);
 		const avatarMimeType = getBlobMimeType(record.avatar);
@@ -402,6 +405,101 @@ export class ProfileService {
 			mimetype: mimeType,
 			size: buffer.byteLength,
 		};
+	}
+
+	async discoverSocialProfiles(did: string, handle: string): Promise<void> {
+		let blueskyUrl: string | null = null;
+		let tangledUrl: string | null = null;
+
+		try {
+			const { pds } = await this.idResolver.did.resolveAtprotoData(did);
+
+			try {
+				const record = await this.fetchPdsRecord(
+					pds,
+					did,
+					"app.bsky.actor.profile",
+					"self",
+				);
+				if (record) {
+					blueskyUrl = `https://bsky.app/profile/${handle}`;
+				}
+			} catch (error) {
+				this.logger.debug(
+					`No Bluesky profile record found for ${did}`,
+					error instanceof Error ? error.message : undefined,
+				);
+			}
+
+			try {
+				const record = await this.fetchPdsRecord(
+					pds,
+					did,
+					"sh.tangled.actor.profile",
+					"self",
+				);
+				if (record && typeof record === "object") {
+					const preferredHandle =
+						"preferredHandle" in record &&
+						typeof record.preferredHandle === "string" &&
+						record.preferredHandle.length > 0
+							? record.preferredHandle
+							: handle;
+					tangledUrl = `https://tangled.org/${preferredHandle}`;
+				}
+			} catch (error) {
+				this.logger.debug(
+					`No Tangled profile record found for ${did}`,
+					error instanceof Error ? error.message : undefined,
+				);
+			}
+		} catch (error) {
+			this.logger.warn(
+				`Failed to resolve PDS for social profile discovery: ${did}`,
+				error instanceof Error ? error.message : undefined,
+			);
+		}
+
+		try {
+			await this.prisma.user.update({
+				where: { did },
+				data: {
+					blueskyProfileUrl: blueskyUrl,
+					tangledProfileUrl: tangledUrl,
+				},
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Failed to update social profile URLs for ${did}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+		}
+	}
+
+	private async fetchPdsRecord(
+		pds: string,
+		did: string,
+		collection: string,
+		rkey: string,
+	): Promise<unknown | null> {
+		const url = new URL("/xrpc/com.atproto.repo.getRecord", pds);
+		url.searchParams.set("repo", did);
+		url.searchParams.set("collection", collection);
+		url.searchParams.set("rkey", rkey);
+
+		const response = await fetch(url.toString(), {
+			signal: AbortSignal.timeout(5000),
+		});
+
+		if (!response.ok) {
+			if (response.status === 400 || response.status === 404) {
+				return null;
+			}
+			throw new Error(`PDS returned ${response.status}`);
+		}
+
+		const data = (await response.json()) as { value?: unknown };
+		return data.value ?? null;
 	}
 
 	private getAgent(session: ATSession): Agent {

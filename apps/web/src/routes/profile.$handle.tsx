@@ -144,6 +144,46 @@ function ProfileLayout() {
 						{isOwner && <span className="badge badge-subtle text-xs">You</span>}
 					</div>
 					<p className="text-(--foreground-muted)">@{profile.handle}</p>
+
+					{/* Social Links */}
+					{(profile.blueskyProfileUrl || profile.tangledProfileUrl) && (
+						<div className="mt-2 flex items-center gap-3">
+							{profile.blueskyProfileUrl && profile.showBlueskyOnProfile && (
+								<a
+									href={profile.blueskyProfileUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1.5 rounded-md bg-(--background-subtle) px-2 py-1 text-(--foreground-muted) text-xs transition-colors hover:bg-(--background-elevated) hover:text-(--foreground)"
+								>
+									<img src="/bluesky.svg" alt="Bluesky" className="size-3.5" />
+									Bluesky
+								</a>
+							)}
+							{profile.tangledProfileUrl && profile.showTangledOnProfile && (
+								<a
+									href={profile.tangledProfileUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1.5 rounded-md bg-(--background-subtle) px-2 py-1 text-(--foreground-muted) text-xs transition-colors hover:bg-(--background-elevated) hover:text-(--foreground)"
+								>
+									<div className="relative size-3.5">
+										<img
+											src="/tangled-black.svg"
+											alt="Tangled"
+											className="absolute inset-0 block h-full w-full object-contain dark:hidden"
+										/>
+										<img
+											src="/tangled-white.svg"
+											alt="Tangled"
+											className="absolute inset-0 hidden h-full w-full object-contain dark:block"
+										/>
+									</div>
+									Tangled
+								</a>
+							)}
+						</div>
+					)}
+
 					{isAuthenticated && !isOwner && relationship?.canFollow && (
 						<div className="mt-3">
 							{relationship.isFollowing ? (

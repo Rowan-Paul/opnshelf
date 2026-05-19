@@ -93,6 +93,22 @@ export class UpdateUserProfileDto {
 	@IsString()
 	@IsOptional()
 	displayName?: string;
+
+	@ApiProperty({
+		description: "Whether to show Bluesky profile link on public profile",
+		required: false,
+	})
+	@IsBoolean()
+	@IsOptional()
+	showBlueskyOnProfile?: boolean;
+
+	@ApiProperty({
+		description: "Whether to show Tangled profile link on public profile",
+		required: false,
+	})
+	@IsBoolean()
+	@IsOptional()
+	showTangledOnProfile?: boolean;
 }
 
 export class UserProfileDto {
@@ -109,6 +125,30 @@ export class UserProfileDto {
 		type: String,
 	})
 	avatar!: string | null;
+
+	@ApiProperty({
+		description: "Bluesky profile URL",
+		nullable: true,
+		type: String,
+	})
+	blueskyProfileUrl!: string | null;
+
+	@ApiProperty({
+		description: "Tangled profile URL",
+		nullable: true,
+		type: String,
+	})
+	tangledProfileUrl!: string | null;
+
+	@ApiProperty({
+		description: "Whether Bluesky link is shown on public profile",
+	})
+	showBlueskyOnProfile!: boolean;
+
+	@ApiProperty({
+		description: "Whether Tangled link is shown on public profile",
+	})
+	showTangledOnProfile!: boolean;
 }
 
 export class PublicUserProfileDto {
@@ -135,6 +175,30 @@ export class PublicUserProfileDto {
 		type: String,
 	})
 	avatar!: string | null;
+
+	@ApiProperty({
+		description: "Bluesky profile URL",
+		nullable: true,
+		type: String,
+	})
+	blueskyProfileUrl!: string | null;
+
+	@ApiProperty({
+		description: "Tangled profile URL",
+		nullable: true,
+		type: String,
+	})
+	tangledProfileUrl!: string | null;
+
+	@ApiProperty({
+		description: "Whether Bluesky link is shown on public profile",
+	})
+	showBlueskyOnProfile!: boolean;
+
+	@ApiProperty({
+		description: "Whether Tangled link is shown on public profile",
+	})
+	showTangledOnProfile!: boolean;
 
 	@ApiProperty({
 		description: "Public follower count",

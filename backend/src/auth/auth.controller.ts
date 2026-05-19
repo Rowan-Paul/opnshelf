@@ -400,6 +400,10 @@ export class AuthController {
 				? user.onboardingCompletedAt.toISOString()
 				: null,
 			needsOnboarding: user.onboardingCompletedAt === null,
+			blueskyProfileUrl: user.blueskyProfileUrl ?? null,
+			tangledProfileUrl: user.tangledProfileUrl ?? null,
+			showBlueskyOnProfile: user.showBlueskyOnProfile,
+			showTangledOnProfile: user.showTangledOnProfile,
 		};
 	}
 

@@ -127,7 +127,30 @@ export class UsersService {
 				}),
 		);
 
-		return updatedProfile;
+		const visibilityData: Record<string, boolean> = {};
+		if (dto.showBlueskyOnProfile !== undefined) {
+			visibilityData.showBlueskyOnProfile = dto.showBlueskyOnProfile;
+		}
+		if (dto.showTangledOnProfile !== undefined) {
+			visibilityData.showTangledOnProfile = dto.showTangledOnProfile;
+		}
+
+		if (Object.keys(visibilityData).length > 0) {
+			await this.prisma.user.update({
+				where: { did },
+				data: visibilityData,
+			});
+		}
+
+		return {
+			...updatedProfile,
+			blueskyProfileUrl: user.blueskyProfileUrl,
+			tangledProfileUrl: user.tangledProfileUrl,
+			showBlueskyOnProfile:
+				dto.showBlueskyOnProfile ?? user.showBlueskyOnProfile,
+			showTangledOnProfile:
+				dto.showTangledOnProfile ?? user.showTangledOnProfile,
+		};
 	}
 
 	async uploadUserAvatar(
@@ -153,7 +176,13 @@ export class UsersService {
 					avatar: file,
 				}),
 		);
-		return updatedProfile;
+		return {
+			...updatedProfile,
+			blueskyProfileUrl: user.blueskyProfileUrl,
+			tangledProfileUrl: user.tangledProfileUrl,
+			showBlueskyOnProfile: user.showBlueskyOnProfile,
+			showTangledOnProfile: user.showTangledOnProfile,
+		};
 	}
 
 	async deleteUserAvatar(
@@ -171,7 +200,13 @@ export class UsersService {
 			session,
 			() => this.profileService.deleteAvatar(did, session),
 		);
-		return updatedProfile;
+		return {
+			...updatedProfile,
+			blueskyProfileUrl: user.blueskyProfileUrl,
+			tangledProfileUrl: user.tangledProfileUrl,
+			showBlueskyOnProfile: user.showBlueskyOnProfile,
+			showTangledOnProfile: user.showTangledOnProfile,
+		};
 	}
 
 	async initializeProfileForNewUser(
@@ -186,6 +221,8 @@ export class UsersService {
 		await this.runProfileWriteWithDefaultLists(did, session, () =>
 			this.profileService.seedProfileForNewUser(did, session, seed),
 		);
+		// Discover social profiles asynchronously — don't block onboarding
+		void this.profileService.discoverSocialProfiles(did, seed.handle);
 	}
 
 	async streamUserAvatar(
@@ -194,6 +231,62 @@ export class UsersService {
 		response: import("express").Response,
 	) {
 		return this.profileService.streamAvatar(did, cid, response);
+	}
+
+	async getUserHandle(did: string): Promise<string> {
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: { handle: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+		return user.handle;
+	}
+
+	async refreshSocialProfiles(
+		did: string,
+		handle: string,
+	): Promise<UserProfileDto> {
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: {
+				displayName: true,
+				avatar: true,
+				blueskyProfileUrl: true,
+				tangledProfileUrl: true,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
+			},
+		});
+
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+
+		await this.profileService.discoverSocialProfiles(did, handle);
+
+		// Re-fetch to get updated URLs
+		const updated = await this.prisma.user.findUnique({
+			where: { did },
+			select: {
+				displayName: true,
+				avatar: true,
+				blueskyProfileUrl: true,
+				tangledProfileUrl: true,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
+			},
+		});
+
+		return {
+			displayName: updated?.displayName ?? user.displayName,
+			avatar: updated?.avatar ?? user.avatar,
+			blueskyProfileUrl: updated?.blueskyProfileUrl ?? null,
+			tangledProfileUrl: updated?.tangledProfileUrl ?? null,
+			showBlueskyOnProfile: updated?.showBlueskyOnProfile ?? true,
+			showTangledOnProfile: updated?.showTangledOnProfile ?? true,
+		};
 	}
 
 	async getPublicProfileByHandle(
@@ -207,6 +300,10 @@ export class UsersService {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				blueskyProfileUrl: true,
+				tangledProfileUrl: true,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
 				_count: {
 					select: {
 						followers: true,
@@ -225,6 +322,10 @@ export class UsersService {
 			handle: user.handle,
 			displayName: user.displayName,
 			avatar: user.avatar,
+			blueskyProfileUrl: user.blueskyProfileUrl,
+			tangledProfileUrl: user.tangledProfileUrl,
+			showBlueskyOnProfile: user.showBlueskyOnProfile,
+			showTangledOnProfile: user.showTangledOnProfile,
 			followersCount: user._count.followers,
 			followingCount: user._count.following,
 		};

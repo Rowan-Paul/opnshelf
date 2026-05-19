@@ -1,4 +1,5 @@
 {
+  "exclude": ["prisma.config.ts"],
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",

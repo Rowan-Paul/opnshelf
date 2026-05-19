@@ -608,6 +608,10 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
+				blueskyProfileUrl: null,
+				tangledProfileUrl: null,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
 			};
 			mockAuthService.getUser.mockResolvedValue(mockUser);
 
@@ -626,6 +630,10 @@ describe("AuthController", () => {
 				avatar: "https://example.com/avatar.jpg",
 				onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
 				needsOnboarding: false,
+				blueskyProfileUrl: null,
+				tangledProfileUrl: null,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
 			});
 			expect(mockAuthService.getUser).toHaveBeenCalledWith("did:plc:abc123");
 			expect(mockAuthService.hasBlueskyProfile).not.toHaveBeenCalled();

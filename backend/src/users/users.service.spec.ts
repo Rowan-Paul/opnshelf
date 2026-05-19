@@ -98,6 +98,7 @@ describe("UsersService", () => {
 		deleteAvatar: jest.fn(),
 		deleteProfileRecordIndex: jest.fn(),
 		streamAvatar: jest.fn(),
+		discoverSocialProfiles: jest.fn(),
 	} as unknown as ProfileService;
 
 	const listsService = {
@@ -345,6 +346,9 @@ describe("UsersService", () => {
 			undefined,
 		);
 		(listsService.provisionDefaultLists as jest.Mock).mockResolvedValue([]);
+		(profileService.discoverSocialProfiles as jest.Mock).mockResolvedValue(
+			undefined,
+		);
 
 		await expect(
 			service.initializeProfileForNewUser(
@@ -379,6 +383,10 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			blueskyProfileUrl: null,
+			tangledProfileUrl: null,
+			showBlueskyOnProfile: true,
+			showTangledOnProfile: true,
 			_count: {
 				followers: 4,
 				following: 7,
@@ -392,6 +400,10 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			blueskyProfileUrl: null,
+			tangledProfileUrl: null,
+			showBlueskyOnProfile: true,
+			showTangledOnProfile: true,
 			followersCount: 4,
 			followingCount: 7,
 		});
@@ -402,6 +414,10 @@ describe("UsersService", () => {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				blueskyProfileUrl: true,
+				tangledProfileUrl: true,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
 				_count: {
 					select: {
 						followers: true,
