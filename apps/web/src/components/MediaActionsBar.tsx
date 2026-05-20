@@ -105,70 +105,75 @@ export default function MediaActionsBar({
 				)}
 			</button>
 
-			{/* Favorites Button */}
-			<button
-				type="button"
-				onClick={() => toggleFavorites(isInFavorites)}
-				disabled={isPending}
-				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-					isInFavorites
-						? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
-						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-				}`}
-				aria-label={
-					isInFavorites ? "Remove from Favorites" : "Add to Favorites"
-				}
-			>
-				{activeListAction === "favorites" ? (
-					<Loader2 className="size-5 animate-spin" />
-				) : (
-					<Heart className={`size-5 ${isInFavorites ? "fill-current" : ""}`} />
-				)}
-			</button>
+			{/* Icon-only buttons — wrap to next line on mobile */}
+			<div className="flex w-full flex-wrap gap-3 sm:w-auto">
+				{/* Favorites Button */}
+				<button
+					type="button"
+					onClick={() => toggleFavorites(isInFavorites)}
+					disabled={isPending}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+						isInFavorites
+							? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={
+						isInFavorites ? "Remove from Favorites" : "Add to Favorites"
+					}
+				>
+					{activeListAction === "favorites" ? (
+						<Loader2 className="size-5 animate-spin" />
+					) : (
+						<Heart
+							className={`size-5 ${isInFavorites ? "fill-current" : ""}`}
+						/>
+					)}
+				</button>
 
-			{/* Note Button */}
-			<button
-				type="button"
-				onClick={() => setNoteDialogOpen(true)}
-				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-					note?.content
-						? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-				}`}
-				aria-label={note?.content ? "Edit note" : "Add note"}
-			>
-				<StickyNote
-					className={`size-5 ${note?.content ? "fill-current" : ""}`}
-				/>
-			</button>
+				{/* Note Button */}
+				<button
+					type="button"
+					onClick={() => setNoteDialogOpen(true)}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+						note?.content
+							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={note?.content ? "Edit note" : "Add note"}
+				>
+					<StickyNote
+						className={`size-5 ${note?.content ? "fill-current" : ""}`}
+					/>
+				</button>
 
-			{/* Review Button */}
-			<button
-				type="button"
-				onClick={() => setReviewDialogOpen(true)}
-				className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-					review?.rating
-						? "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
-						: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-				}`}
-				aria-label={review?.rating ? "Edit review" : "Add review"}
-			>
-				<Star className={`size-5 ${review?.rating ? "fill-current" : ""}`} />
-			</button>
+				{/* Review Button */}
+				<button
+					type="button"
+					onClick={() => setReviewDialogOpen(true)}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+						review?.rating
+							? "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={review?.rating ? "Edit review" : "Add review"}
+				>
+					<Star className={`size-5 ${review?.rating ? "fill-current" : ""}`} />
+				</button>
 
-			{/* Share Button */}
-			<button
-				type="button"
-				onClick={handleShare}
-				className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
-				aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
-			>
-				{shareSuccess ? (
-					<Check className="size-5 text-green-500" />
-				) : (
-					<Share2 className="size-5" />
-				)}
-			</button>
+				{/* Share Button */}
+				<button
+					type="button"
+					onClick={handleShare}
+					className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
+				>
+					{shareSuccess ? (
+						<Check className="size-5 text-green-500" />
+					) : (
+						<Share2 className="size-5" />
+					)}
+				</button>
+			</div>
 
 			<NoteDialog
 				open={noteDialogOpen}
