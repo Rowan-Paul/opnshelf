@@ -163,7 +163,7 @@ function LandingPage() {
 
 								{/* Screenshot side */}
 								<div className="w-full flex-1">
-									<BrowserFrame
+									<ScreenshotFrame
 										image={section.image}
 										alt={section.imageAlt}
 										label={section.title}
@@ -229,10 +229,10 @@ function LandingPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Browser Frame — shows a screenshot if available, otherwise a styled  */
-/* placeholder that looks intentional and professional.               */
+/* Screenshot Frame — shows a screenshot if available, otherwise a   */
+/* styled placeholder. No browser chrome — just the raw image.       */
 /* ------------------------------------------------------------------ */
-function BrowserFrame({
+function ScreenshotFrame({
 	image,
 	alt,
 	label,
@@ -246,19 +246,6 @@ function BrowserFrame({
 
 	return (
 		<div className="overflow-hidden rounded-xl border border-(--border) bg-(--background-elevated) shadow-xl">
-			{/* Browser chrome */}
-			<div className="flex items-center gap-2 border-(--border) border-b bg-(--background-subtle) px-4 py-3">
-				<div className="flex gap-1.5">
-					<div className="h-3 w-3 rounded-full bg-red-400" />
-					<div className="h-3 w-3 rounded-full bg-yellow-400" />
-					<div className="h-3 w-3 rounded-full bg-green-400" />
-				</div>
-				<div className="ml-4 flex-1 rounded-md bg-(--background-elevated) px-3 py-1 text-(--foreground-muted) text-xs">
-					opnshelf.app
-				</div>
-			</div>
-
-			{/* Content area */}
 			<div className="relative aspect-video bg-(--background-subtle)">
 				{!error && (
 					<img
