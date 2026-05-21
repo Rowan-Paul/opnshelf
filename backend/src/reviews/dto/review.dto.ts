@@ -244,6 +244,14 @@ export class MediaReviewItemDto {
 	@ApiPropertyOptional()
 	userAvatar?: string;
 
+	@ApiProperty({ description: "Number of likes on this review" })
+	likeCount: number;
+
+	@ApiProperty({
+		description: "Whether the requesting user has liked this review",
+	})
+	hasLiked: boolean;
+
 	@ApiProperty()
 	createdAt: string;
 
@@ -267,6 +275,36 @@ export class MediaReviewsResponseDto {
 		description: "Cursor for next page (null if no more items)",
 	})
 	nextCursor: string | null;
+}
+
+export class ReviewLikeItemDto {
+	@ApiProperty()
+	userDid: string;
+
+	@ApiProperty()
+	userHandle: string;
+
+	@ApiPropertyOptional()
+	userDisplayName?: string;
+
+	@ApiPropertyOptional()
+	userAvatar?: string;
+
+	@ApiProperty()
+	createdAt: string;
+}
+
+export class ReviewLikesResponseDto {
+	@ApiProperty({ type: [ReviewLikeItemDto] })
+	items: ReviewLikeItemDto[];
+
+	@ApiProperty({ description: "Total like count" })
+	total: number;
+
+	@ApiProperty({
+		description: "Whether the requesting user has liked this review",
+	})
+	hasLiked: boolean;
 }
 
 export class BatchRatingRequestDto {

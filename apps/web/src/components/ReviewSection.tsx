@@ -53,7 +53,7 @@ export default function ReviewSection({
 
 	return (
 		<>
-			<section className="card p-5">
+			<section id="your-review" className="card p-5">
 				<div className="mb-3 flex items-center justify-between">
 					<h3 className="flex items-center gap-2 font-display font-semibold">
 						<Star className="size-4 text-yellow-500" />

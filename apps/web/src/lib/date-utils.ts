@@ -70,3 +70,36 @@ export function formatDate(dateString: string, timezone?: string): string {
 		return dateString;
 	}
 }
+
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
+	numeric: "auto",
+});
+
+const timeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
+	["year", 31536000000],
+	["month", 2592000000],
+	["week", 604800000],
+	["day", 86400000],
+	["hour", 3600000],
+	["minute", 60000],
+	["second", 1000],
+];
+
+export function formatRelativeTime(dateString: string): string {
+	if (!dateString) return "";
+	try {
+		const date = new Date(dateString);
+		const now = new Date();
+		const diff = date.getTime() - now.getTime();
+		for (const [unit, ms] of timeUnits) {
+			const value = Math.round(diff / ms);
+			if (Math.abs(value) >= 1) {
+				return relativeTimeFormatter.format(value, unit);
+			}
+		}
+
+		return "just now";
+	} catch {
+		return dateString;
+	}
+}

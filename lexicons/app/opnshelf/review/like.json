@@ -1,0 +1,27 @@
+{
+	"lexicon": 1,
+	"id": "xyz.opnshelf.review.like",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A like on a user review",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["reviewUri", "createdAt"],
+				"properties": {
+					"reviewUri": {
+						"type": "string",
+						"format": "at-uri",
+						"description": "The at:// URI of the review being liked"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

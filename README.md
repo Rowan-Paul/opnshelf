@@ -71,7 +71,7 @@ User data is stored as AT Protocol records in their personal repository:
 - `xyz.opnshelf.movie` - Tracked movies
 - `xyz.opnshelf.episode` - Tracked TV episodes
 - `xyz.opnshelf.list` - Custom lists
-- `xyz.opnshelf.listItem` - Items in lists
+- `xyz.opnshelf.list.item` - Items in lists
 - `xyz.opnshelf.follow` - Social follows
 - `xyz.opnshelf.profile` - User profiles
 

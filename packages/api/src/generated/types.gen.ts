@@ -1189,6 +1189,14 @@ export type MediaReviewItemDto = {
     userHandle: string;
     userDisplayName?: string;
     userAvatar?: string;
+    /**
+     * Number of likes on this review
+     */
+    likeCount: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
     createdAt: string;
     updatedAt: string;
 };
@@ -1207,6 +1215,26 @@ export type MediaReviewsResponseDto = {
      * Cursor for next page (null if no more items)
      */
     nextCursor: string | null;
+};
+
+export type ReviewLikeItemDto = {
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    createdAt: string;
+};
+
+export type ReviewLikesResponseDto = {
+    items: Array<ReviewLikeItemDto>;
+    /**
+     * Total like count
+     */
+    total: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
 };
 
 export type BatchRatingRequestDto = {
@@ -3428,6 +3456,76 @@ export type ReviewsControllerDeleteReviewResponses = {
      */
     200: unknown;
 };
+
+export type ReviewsControllerDeleteReviewResponse = ReviewsControllerDeleteReviewResponses[keyof ReviewsControllerDeleteReviewResponses];
+
+export type ReviewsControllerLikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerLikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerLikeReviewResponses = {
+    /**
+     * Review liked
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerLikeReviewResponse = ReviewsControllerLikeReviewResponses[keyof ReviewsControllerLikeReviewResponses];
+
+export type ReviewsControllerUnlikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerUnlikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerUnlikeReviewResponses = {
+    /**
+     * Review unliked
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerUnlikeReviewResponse = ReviewsControllerUnlikeReviewResponses[keyof ReviewsControllerUnlikeReviewResponses];
+
+export type ReviewsControllerGetReviewLikesData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/likes';
+};
+
+export type ReviewsControllerGetReviewLikesResponses = {
+    /**
+     * Likes retrieved
+     */
+    200: ReviewLikesResponseDto;
+};
+
+export type ReviewsControllerGetReviewLikesResponse = ReviewsControllerGetReviewLikesResponses[keyof ReviewsControllerGetReviewLikesResponses];
 
 export type ShelfControllerGetUserShelfData = {
     body?: never;

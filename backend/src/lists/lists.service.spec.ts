@@ -38,14 +38,14 @@ jest.mock("../lexicons/xyz/opnshelf/list", () => ({
 	$nsid: "xyz.opnshelf.list",
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/listItem", () => ({
+jest.mock("../lexicons/xyz/opnshelf/list/item", () => ({
 	main: {
 		build: jest.fn((data: Record<string, unknown>) => ({
-			$type: "xyz.opnshelf.listItem",
+			$type: "xyz.opnshelf.list.item",
 			...data,
 		})),
 	},
-	$nsid: "xyz.opnshelf.listItem",
+	$nsid: "xyz.opnshelf.list.item",
 }));
 
 import { MoviesService } from "../movies/movies.service";
@@ -544,7 +544,7 @@ describe("ListsService", () => {
 			mockPrismaService.listItem.count.mockResolvedValue(0);
 			mockPutRecord.mockResolvedValue({
 				data: {
-					uri: "at://did:plc:abc123/xyz.opnshelf.listItem/testtid123",
+					uri: "at://did:plc:abc123/xyz.opnshelf.list.item/testtid123",
 					cid: "cid123",
 				},
 			});
@@ -602,7 +602,7 @@ describe("ListsService", () => {
 			mockPrismaService.listItem.count.mockResolvedValue(1);
 			mockPutRecord.mockResolvedValue({
 				data: {
-					uri: "at://did:plc:abc123/xyz.opnshelf.listItem/testtid123",
+					uri: "at://did:plc:abc123/xyz.opnshelf.list.item/testtid123",
 					cid: "cid123",
 				},
 			});
@@ -673,7 +673,7 @@ describe("ListsService", () => {
 
 			expect(mockDeleteRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
-				collection: "xyz.opnshelf.listItem",
+				collection: "xyz.opnshelf.list.item",
 				rkey: "item-abc",
 			});
 			expect(mockPrismaService.listItem.delete).toHaveBeenCalledWith({
@@ -688,12 +688,12 @@ describe("ListsService", () => {
 			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
 
 			await service.indexListItemRecord(
-				"at://did:plc:abc123/xyz.opnshelf.listItem/testtid123",
+				"at://did:plc:abc123/xyz.opnshelf.list.item/testtid123",
 				"cid123",
 				"testtid123",
 				"did:plc:abc123",
 				{
-					$type: "xyz.opnshelf.listItem",
+					$type: "xyz.opnshelf.list.item",
 					listRkey: "watchlist-abc123",
 					mediaType: "movie",
 					mediaId: "123",
@@ -719,12 +719,12 @@ describe("ListsService", () => {
 			mockShowsService.getShowByTMDBId.mockResolvedValue({ showId: "456" });
 
 			await service.indexListItemRecord(
-				"at://did:plc:abc123/xyz.opnshelf.listItem/testtid123",
+				"at://did:plc:abc123/xyz.opnshelf.list.item/testtid123",
 				"cid123",
 				"testtid123",
 				"did:plc:abc123",
 				{
-					$type: "xyz.opnshelf.listItem",
+					$type: "xyz.opnshelf.list.item",
 					listRkey: "favorites-abc123",
 					mediaType: "show",
 					mediaId: "456",

@@ -1,15 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
-	Calendar,
-	Film,
-	Heart,
-	List,
+	Clapperboard,
+	Compass,
+	LayoutDashboard,
 	Sparkles,
-	Tv,
-	Users,
+	UserCircle,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LoadingState from "#/components/LoadingState";
 import { useAuth } from "#/lib/auth-context";
 
@@ -17,11 +15,55 @@ export const Route = createFileRoute("/")({
 	component: LandingPage,
 });
 
+const HERO_BACKDROPS = [
+	"https://image.tmdb.org/t/p/original/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg",
+	"https://image.tmdb.org/t/p/original/2ssWTSVklAEc98frZUQhgtGHx7s.jpg",
+	"https://image.tmdb.org/t/p/original/mVr0UiqyltcfqxbAUcLl9zWL8ah.jpg",
+	"https://image.tmdb.org/t/p/original/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg",
+	"https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg",
+	"https://image.tmdb.org/t/p/original/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg",
+	"https://image.tmdb.org/t/p/original/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg",
+];
+
+const SCREENSHOT_SECTIONS = [
+	{
+		title: "Your Dashboard",
+		description:
+			"Your personal command center. See what you've recently watched, what to watch next, and what your friends are up to — all in one place.",
+		icon: LayoutDashboard,
+		image: "/screenshots/dashboard.png",
+		imageAlt: "Dashboard preview",
+	},
+	{
+		title: "Discover Anything",
+		description:
+			"Search across movies, TV shows, and people. Filter by what's trending, top-rated, or coming soon. Your next favorite is one search away.",
+		icon: Compass,
+		image: "/screenshots/search.png",
+		imageAlt: "Search preview",
+	},
+	{
+		title: "Deep Dives",
+		description:
+			"Every title has a home. Browse cast, crew, seasons, episodes, and where to watch. Read and write reviews that help the community decide.",
+		icon: Clapperboard,
+		image: "/screenshots/media-detail.png",
+		imageAlt: "Media detail preview",
+	},
+	{
+		title: "Your Profile",
+		description:
+			"Showcase your taste. Share your shelf, reviews, lists, and ratings with the world. Follow friends and see what they're loving.",
+		icon: UserCircle,
+		image: "/screenshots/profile.png",
+		imageAlt: "Profile preview",
+	},
+];
+
 function LandingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
-	// Redirect to dashboard (or onboarding for new users) if already authenticated
 	useEffect(() => {
 		if (!authLoading && isAuthenticated) {
 			if (user?.needsOnboarding) {
@@ -32,73 +74,48 @@ function LandingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Show loading while auth state is resolving (or when already
-	// authenticated but the redirect hasn't fired yet) to prevent
-	// logged-out content from flashing for logged-in users
+	const backdropUrl = useMemo(
+		() => HERO_BACKDROPS[Math.floor(Math.random() * HERO_BACKDROPS.length)],
+		[],
+	);
+
 	if (authLoading || isAuthenticated) {
 		return <LoadingState />;
 	}
 
-	const features = [
-		{
-			icon: Film,
-			title: "Track Everything",
-			description:
-				"Log movies and TV shows you watch. Keep a complete history of your viewing journey.",
-		},
-		{
-			icon: Heart,
-			title: "Rate & Review",
-			description:
-				"Share your thoughts and ratings. Help others discover great content.",
-		},
-		{
-			icon: Calendar,
-			title: "Release Calendar",
-			description:
-				"Never miss a premiere. Track upcoming releases for shows you follow.",
-		},
-		{
-			icon: Users,
-			title: "Social Feed",
-			description:
-				"See what your friends are watching. Discover new favorites together.",
-		},
-		{
-			icon: List,
-			title: "Curated Lists",
-			description:
-				"Create and share watchlists. Organize your must-watch content.",
-		},
-		{
-			icon: Tv,
-			title: "Episode Tracking",
-			description:
-				"Track episodes and seasons. Pick up right where you left off.",
-		},
-	];
-
 	return (
 		<div className="min-h-screen">
 			{/* Hero Section */}
-			<section className="relative overflow-hidden pt-16 pb-24 lg:pt-32 lg:pb-40">
-				<div className="container-app">
+			<section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden">
+				{/* Movie backdrop */}
+				<div className="absolute inset-0">
+					<img
+						src={backdropUrl}
+						alt=""
+						className="h-full w-full object-cover"
+						loading="eager"
+					/>
+					{/* Heavy dark gradient overlay for legibility */}
+					<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/50 to-black/30" />
+				</div>
+
+				<div className="container-app relative z-10">
 					<div className="mx-auto max-w-3xl text-center">
 						{/* Badge */}
-						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--background-elevated) px-4 py-1.5 text-sm">
-							<Sparkles className="h-4 w-4 text-(--accent)" />
+						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm text-white/90 backdrop-blur-sm">
+							<Sparkles className="h-4 w-4 text-(--accent-400)" />
 							<span>Powered by AT Protocol</span>
 						</div>
 
 						{/* Headline */}
-						<h1 className="mb-6 text-display-1">
+						<h1 className="mb-6 text-display-1 text-white">
 							Track what you watch.
 							<br />
 							Share with friends.
 						</h1>
 
 						{/* Subheadline */}
-						<p className="mx-auto mb-10 max-w-xl text-(--foreground-muted) text-lg">
+						<p className="mx-auto mb-10 max-w-xl text-lg text-white/75">
 							OpnShelf is your personal media tracker. Log movies and shows, see
 							what friends are watching, and discover your next favorite.
 						</p>
@@ -115,43 +132,75 @@ function LandingPage() {
 						</div>
 					</div>
 				</div>
-
-				{/* Background decoration */}
-				<div className="absolute inset-0 -z-10 overflow-hidden">
-					<div className="absolute top-0 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-(--accent) opacity-[0.03] blur-3xl" />
-				</div>
 			</section>
 
-			{/* Features Grid */}
-			<section className="border-(--border) border-t py-24">
+			{/* Screenshot Feature Sections */}
+			{SCREENSHOT_SECTIONS.map((section, index) => {
+				const Icon = section.icon;
+				const isReversed = index % 2 === 1;
+
+				return (
+					<section
+						key={section.title}
+						className="border-(--border) border-t py-20 lg:py-28"
+					>
+						<div className="container-app">
+							<div
+								className={`flex flex-col items-center gap-12 lg:gap-20 ${
+									isReversed ? "lg:flex-row-reverse" : "lg:flex-row"
+								}`}
+							>
+								{/* Text side */}
+								<div className="flex-1">
+									<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
+										<Icon className="h-6 w-6" />
+									</div>
+									<h2 className="mb-4 text-display-2">{section.title}</h2>
+									<p className="max-w-md text-(--foreground-muted) text-lg leading-relaxed">
+										{section.description}
+									</p>
+								</div>
+
+								{/* Screenshot side */}
+								<div className="w-full flex-1">
+									<BrowserFrame
+										image={section.image}
+										alt={section.imageAlt}
+										label={section.title}
+									/>
+								</div>
+							</div>
+						</div>
+					</section>
+				);
+			})}
+
+			{/* Extra features row (compact) */}
+			<section className="border-(--border) border-t py-20">
 				<div className="container-app">
-					<div className="mb-16 text-center">
-						<h2 className="mb-4 text-display-2">Everything you need</h2>
-						<p className="mx-auto max-w-xl text-(--foreground-muted)">
+					<div className="mb-12 text-center">
+						<h2 className="mb-3 text-display-2">And so much more</h2>
+						<p className="mx-auto max-w-lg text-(--foreground-muted)">
 							A complete toolkit for media tracking and social discovery.
 						</p>
 					</div>
 
-					<div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-						{features.map((feature) => {
-							const Icon = feature.icon;
-							return (
-								<div
-									key={feature.title}
-									className="card p-6 transition-colors hover:border-(--border-strong)"
-								>
-									<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
-										<Icon className="h-6 w-6" />
-									</div>
-									<h3 className="mb-2 font-semibold text-lg">
-										{feature.title}
-									</h3>
-									<p className="text-(--foreground-muted) text-sm">
-										{feature.description}
-									</p>
-								</div>
-							);
-						})}
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+						{[
+							"Release Calendar",
+							"Social Feed",
+							"Curated Lists",
+							"Episode Tracking",
+							"Rate & Review",
+							"Import History",
+						].map((feature) => (
+							<div
+								key={feature}
+								className="rounded-xl border border-(--border) bg-(--background-elevated) px-4 py-6 text-center shadow-sm"
+							>
+								<p className="font-medium text-sm">{feature}</p>
+							</div>
+						))}
 					</div>
 				</div>
 			</section>
@@ -175,6 +224,67 @@ function LandingPage() {
 					</div>
 				</div>
 			</section>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------ */
+/* Browser Frame — shows a screenshot if available, otherwise a styled  */
+/* placeholder that looks intentional and professional.               */
+/* ------------------------------------------------------------------ */
+function BrowserFrame({
+	image,
+	alt,
+	label,
+}: {
+	image: string;
+	alt: string;
+	label: string;
+}) {
+	const [loaded, setLoaded] = useState(false);
+	const [error, setError] = useState(false);
+
+	return (
+		<div className="overflow-hidden rounded-xl border border-(--border) bg-(--background-elevated) shadow-xl">
+			{/* Browser chrome */}
+			<div className="flex items-center gap-2 border-(--border) border-b bg-(--background-subtle) px-4 py-3">
+				<div className="flex gap-1.5">
+					<div className="h-3 w-3 rounded-full bg-red-400" />
+					<div className="h-3 w-3 rounded-full bg-yellow-400" />
+					<div className="h-3 w-3 rounded-full bg-green-400" />
+				</div>
+				<div className="ml-4 flex-1 rounded-md bg-(--background-elevated) px-3 py-1 text-(--foreground-muted) text-xs">
+					opnshelf.app
+				</div>
+			</div>
+
+			{/* Content area */}
+			<div className="relative aspect-video bg-(--background-subtle)">
+				{!error && (
+					<img
+						src={image}
+						alt={alt}
+						className={`h-full w-full object-cover transition-opacity duration-500 ${
+							loaded ? "opacity-100" : "opacity-0"
+						}`}
+						onLoad={() => setLoaded(true)}
+						onError={() => setError(true)}
+					/>
+				)}
+
+				{/* Placeholder shown while loading or on error */}
+				{(!loaded || error) && (
+					<div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent-subtle) text-(--accent)">
+							<Clapperboard className="h-8 w-8" />
+						</div>
+						<p className="font-medium text-(--foreground-muted)">{label}</p>
+						<p className="text-(--foreground-subtle) text-xs">
+							{error ? "Screenshot not yet captured" : "Loading preview…"}
+						</p>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

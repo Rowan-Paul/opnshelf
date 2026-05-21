@@ -9,7 +9,7 @@ import {
 import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
 import { $nsid as LIST_COLLECTION } from "../lexicons/xyz/opnshelf/list";
-import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/listItem";
+import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/list/item";
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
 import { $nsid as NOTE_COLLECTION } from "../lexicons/xyz/opnshelf/note";
 import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";

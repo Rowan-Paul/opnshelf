@@ -25,15 +25,14 @@ import {
 	buildMoviePageMeta,
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
+import CommunityReviews from "../../../components/CommunityReviews";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
-import InYourLists from "../../../components/InYourLists";
 import LoadingState from "../../../components/LoadingState";
 import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
-import NotesSection from "../../../components/NotesSection";
 import PersonGrid from "../../../components/PersonGrid";
-import ReviewSection from "../../../components/ReviewSection";
+import { ReviewDialog } from "../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 import WatchProviders from "../../../components/WatchProviders";
 import { YourActivity } from "../../../components/YourActivity";
@@ -113,6 +112,7 @@ function MovieDetailPage() {
 	});
 
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
 	const hasSyncedCountry = useRef(false);
 	useEffect(() => {
@@ -355,14 +355,6 @@ function MovieDetailPage() {
 								isDeletePending={isDeleteMovieHistoryPending}
 							/>
 						)}
-
-						<InYourLists mediaType="movie" mediaId={movieId} />
-
-						{/* Review */}
-						<ReviewSection mediaType="movie" mediaId={movieId} />
-
-						{/* Notes */}
-						<NotesSection mediaType="movie" mediaId={movieId} />
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
@@ -375,10 +367,22 @@ function MovieDetailPage() {
 								emptyMessage="No crew information available."
 							/>
 						</div>
+						<CommunityReviews
+							mediaType="movie"
+							mediaId={movieId}
+							onAddReview={() => setReviewDialogOpen(true)}
+						/>
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 				</div>
 			</div>
+
+			<ReviewDialog
+				open={reviewDialogOpen}
+				onOpenChange={setReviewDialogOpen}
+				mediaType="movie"
+				mediaId={movieId}
+			/>
 
 			{/* Confirm remove all plays dialog */}
 			<Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>

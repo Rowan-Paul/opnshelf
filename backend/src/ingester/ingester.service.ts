@@ -29,8 +29,8 @@ import type { Main as ListRecord } from "../lexicons/xyz/opnshelf/list.defs";
 import {
 	$nsid as LIST_ITEM_COLLECTION,
 	main as listItemSchema,
-} from "../lexicons/xyz/opnshelf/listItem";
-import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/listItem.defs";
+} from "../lexicons/xyz/opnshelf/list/item";
+import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/list/item.defs";
 import {
 	$nsid as EPISODE_COLLECTION,
 	main as episodeSchema,
@@ -55,6 +55,11 @@ import {
 	main as reviewSchema,
 } from "../lexicons/xyz/opnshelf/review";
 import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
+import {
+	$nsid as REVIEW_LIKE_COLLECTION,
+	main as reviewLikeSchema,
+} from "../lexicons/xyz/opnshelf/review/like";
+import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import { ReviewsService } from "../reviews/reviews.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
@@ -233,6 +238,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleNoteEvent(evt, uri);
 		} else if (evt.collection === REVIEW_COLLECTION) {
 			await this.handleReviewEvent(evt, uri);
+		} else if (evt.collection === REVIEW_LIKE_COLLECTION) {
+			await this.handleReviewLikeEvent(evt, uri);
 		}
 	}
 
@@ -590,6 +597,42 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.reviewsService.deleteReviewRecord(evt.rkey);
+		}
+	}
+
+	private async handleReviewLikeEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.debug(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let reviewLikeRecord: ReviewLikeRecord;
+			try {
+				reviewLikeRecord = reviewLikeSchema.parse(evt.record);
+			} catch {
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				return;
+			}
+
+			await this.reviewsService.indexReviewLikeRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				reviewLikeRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			await this.reviewsService.deleteReviewLikeRecord(evt.rkey);
 		}
 	}
 }

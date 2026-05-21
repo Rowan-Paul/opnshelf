@@ -6,6 +6,8 @@ import {
 	main as reviewSchema,
 } from "../lexicons/xyz/opnshelf/review";
 import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
+import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
+import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	BatchRatingRequestDto,
@@ -170,7 +172,10 @@ export class ReviewsService {
 		};
 	}
 
-	async getMediaReviews(query: MediaReviewsQueryDto) {
+	async getMediaReviews(
+		query: MediaReviewsQueryDto,
+		requestingUserDid?: string,
+	) {
 		const {
 			mediaType,
 			mediaId,
@@ -189,7 +194,11 @@ export class ReviewsService {
 
 		const reviews = await this.prisma.review.findMany({
 			where,
-			orderBy: { createdAt: "desc" },
+			orderBy: [
+				{ likes: { _count: "desc" } },
+				{ rating: "desc" },
+				{ createdAt: "desc" },
+			],
 			take,
 			...(query.cursor && {
 				skip: 1,
@@ -204,6 +213,16 @@ export class ReviewsService {
 						avatar: true,
 					},
 				},
+				_count: {
+					select: { likes: true },
+				},
+				likes: requestingUserDid
+					? {
+							where: { userDid: requestingUserDid },
+							select: { id: true },
+							take: 1,
+						}
+					: false,
 			},
 		});
 
@@ -220,7 +239,11 @@ export class ReviewsService {
 		});
 
 		return {
-			items,
+			items: items.map((review) => ({
+				...review,
+				likeCount: review._count.likes,
+				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
+			})),
 			averageRating: aggregate._avg.rating ?? undefined,
 			total,
 			nextCursor,
@@ -374,6 +397,137 @@ export class ReviewsService {
 		});
 	}
 
+	async likeReview(userDid: string, session: ATSession, reviewId: string) {
+		const review = await this.prisma.review.findUnique({
+			where: { id: reviewId },
+		});
+
+		if (!review) {
+			throw new NotFoundException("Review not found");
+		}
+
+		if (review.userDid === userDid) {
+			throw new Error("Cannot like your own review");
+		}
+
+		const existingLike = await this.prisma.reviewLike.findUnique({
+			where: {
+				userDid_reviewId: {
+					userDid,
+					reviewId,
+				},
+			},
+		});
+
+		if (existingLike) {
+			throw new Error("Already liked this review");
+		}
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const rkey = TID.nextStr();
+		const record: ReviewLikeRecord = {
+			$type: REVIEW_LIKE_COLLECTION,
+			reviewUri: review.uri as unknown as ReviewLikeRecord["reviewUri"],
+			createdAt: new Date().toISOString(),
+		};
+
+		const response = await agent.com.atproto.repo.putRecord({
+			repo: session.did,
+			collection: REVIEW_LIKE_COLLECTION,
+			rkey,
+			record,
+			validate: false,
+		});
+
+		const like = await this.prisma.reviewLike.create({
+			data: {
+				rkey,
+				uri: response.data.uri,
+				cid: response.data.cid,
+				userDid,
+				reviewId,
+			},
+		});
+
+		return like;
+	}
+
+	async unlikeReview(userDid: string, session: ATSession, reviewId: string) {
+		const like = await this.prisma.reviewLike.findUnique({
+			where: {
+				userDid_reviewId: {
+					userDid,
+					reviewId,
+				},
+			},
+		});
+
+		if (!like) {
+			throw new NotFoundException("Like not found");
+		}
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		await agent.com.atproto.repo.deleteRecord({
+			repo: session.did,
+			collection: REVIEW_LIKE_COLLECTION,
+			rkey: like.rkey,
+		});
+
+		await this.prisma.reviewLike.delete({
+			where: { id: like.id },
+		});
+	}
+
+	async getReviewLikes(reviewId: string, requestingUserDid?: string) {
+		const [items, total, hasLiked] = await Promise.all([
+			this.prisma.reviewLike.findMany({
+				where: { reviewId },
+				orderBy: { createdAt: "desc" },
+				include: {
+					user: {
+						select: {
+							did: true,
+							handle: true,
+							displayName: true,
+							avatar: true,
+						},
+					},
+				},
+			}),
+			this.prisma.reviewLike.count({ where: { reviewId } }),
+			requestingUserDid
+				? this.prisma.reviewLike
+						.findUnique({
+							where: {
+								userDid_reviewId: {
+									userDid: requestingUserDid,
+									reviewId,
+								},
+							},
+						})
+						.then((l) => !!l)
+				: false,
+		]);
+
+		return {
+			items: items.map((like) => ({
+				userDid: like.user.did,
+				userHandle: like.user.handle,
+				userDisplayName: like.user.displayName ?? undefined,
+				userAvatar: like.user.avatar ?? undefined,
+				createdAt: like.createdAt.toISOString(),
+			})),
+			total,
+			hasLiked,
+		};
+	}
+
 	async indexReviewRecord(
 		uri: string,
 		cid: string,
@@ -409,6 +563,44 @@ export class ReviewsService {
 
 	async deleteReviewRecord(rkey: string): Promise<void> {
 		await this.prisma.review.deleteMany({
+			where: { rkey },
+		});
+	}
+
+	async indexReviewLikeRecord(
+		uri: string,
+		cid: string,
+		rkey: string,
+		userDid: string,
+		record: ReviewLikeRecord,
+	): Promise<void> {
+		const review = await this.prisma.review.findFirst({
+			where: { uri: record.reviewUri },
+		});
+
+		if (!review) {
+			return;
+		}
+
+		await this.prisma.reviewLike.upsert({
+			where: { rkey },
+			create: {
+				rkey,
+				uri,
+				cid,
+				userDid,
+				reviewId: review.id,
+			},
+			update: {
+				cid,
+				uri,
+				reviewId: review.id,
+			},
+		});
+	}
+
+	async deleteReviewLikeRecord(rkey: string): Promise<void> {
+		await this.prisma.reviewLike.deleteMany({
 			where: { rkey },
 		});
 	}

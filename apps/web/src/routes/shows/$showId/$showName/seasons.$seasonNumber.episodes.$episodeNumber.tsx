@@ -38,15 +38,14 @@ import {
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
 import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
+import CommunityReviews from "../../../../components/CommunityReviews";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
-import InYourLists from "../../../../components/InYourLists";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
-import NotesSection from "../../../../components/NotesSection";
 import PersonGrid from "../../../../components/PersonGrid";
-import ReviewSection from "../../../../components/ReviewSection";
+import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
@@ -131,6 +130,7 @@ function EpisodeDetailPage() {
 	} = useWatchActions({ mediaType: "show", showId });
 
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
 	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
 	const hasSyncedCountry = useRef(false);
@@ -461,6 +461,13 @@ function EpisodeDetailPage() {
 								title="Crew"
 								emptyMessage="No crew information available."
 							/>
+							<CommunityReviews
+								mediaType="show"
+								mediaId={showId}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+								onAddReview={() => setReviewDialogOpen(true)}
+							/>
 							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 						</div>
 					</div>
@@ -513,29 +520,6 @@ function EpisodeDetailPage() {
 							country={watchProvidersCountry}
 							onCountryChange={setWatchProvidersCountry}
 						/>
-
-						<InYourLists
-							mediaType="show"
-							mediaId={showId}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-
-						{/* Review */}
-						<ReviewSection
-							mediaType="show"
-							mediaId={showId}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-
-						{/* Notes */}
-						<NotesSection
-							mediaType="show"
-							mediaId={showId}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
 					</div>
 				</div>
 
@@ -551,9 +535,25 @@ function EpisodeDetailPage() {
 						title="Crew"
 						emptyMessage="No crew information available."
 					/>
+					<CommunityReviews
+						mediaType="show"
+						mediaId={showId}
+						seasonNumber={seasonNum}
+						episodeNumber={episodeNum}
+						onAddReview={() => setReviewDialogOpen(true)}
+					/>
 					<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 				</div>
 			</div>
+
+			<ReviewDialog
+				open={reviewDialogOpen}
+				onOpenChange={setReviewDialogOpen}
+				mediaType="show"
+				mediaId={showId}
+				seasonNumber={seasonNum}
+				episodeNumber={episodeNum}
+			/>
 
 			{/* Confirm remove all plays dialog */}
 			<Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>

@@ -18,6 +18,7 @@ import {
 	ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	BatchRatingRequestDto,
@@ -27,6 +28,7 @@ import {
 	MediaReviewsResponseDto,
 	PaginatedReviewsQueryDto,
 	PaginatedReviewsResponseDto,
+	ReviewLikesResponseDto,
 	ReviewResponseDto,
 	UpsertReviewDto,
 } from "./dto/review.dto";
@@ -150,6 +152,7 @@ export class ReviewsController {
 	}
 
 	@Get("media")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get public reviews for a media item" })
 	@ApiOkResponse({
 		description: "Reviews retrieved",
@@ -157,8 +160,12 @@ export class ReviewsController {
 	})
 	async getMediaReviews(
 		@Query() query: MediaReviewsQueryDto,
+		@Req() req: AuthenticatedRequest,
 	): Promise<MediaReviewsResponseDto> {
-		const result = await this.reviewsService.getMediaReviews(query);
+		const result = await this.reviewsService.getMediaReviews(
+			query,
+			req.user?.did,
+		);
 
 		return {
 			items: result.items.map((review) => ({
@@ -169,6 +176,8 @@ export class ReviewsController {
 				userHandle: review.user.handle,
 				userDisplayName: review.user.displayName ?? undefined,
 				userAvatar: review.user.avatar ?? undefined,
+				likeCount: review.likeCount,
+				hasLiked: review.hasLiked,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),
@@ -240,5 +249,70 @@ export class ReviewsController {
 			reviewId,
 		);
 		return { success: true };
+	}
+
+	@Post(":reviewId/like")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Like a review" })
+	@ApiOkResponse({ description: "Review liked" })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async likeReview(
+		@Param("reviewId") reviewId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<{ success: boolean }> {
+		await this.reviewsService.likeReview(
+			req.user.did,
+			req.user.session as ATSession,
+			reviewId,
+		);
+		return { success: true };
+	}
+
+	@Delete(":reviewId/like")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Unlike a review" })
+	@ApiOkResponse({ description: "Review unliked" })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async unlikeReview(
+		@Param("reviewId") reviewId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<{ success: boolean }> {
+		await this.reviewsService.unlikeReview(
+			req.user.did,
+			req.user.session as ATSession,
+			reviewId,
+		);
+		return { success: true };
+	}
+
+	@Get(":reviewId/likes")
+	@UseGuards(OptionalAuthGuard)
+	@ApiOperation({ summary: "Get likes for a review" })
+	@ApiOkResponse({
+		description: "Likes retrieved",
+		type: ReviewLikesResponseDto,
+	})
+	async getReviewLikes(
+		@Param("reviewId") reviewId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<ReviewLikesResponseDto> {
+		const result = await this.reviewsService.getReviewLikes(
+			reviewId,
+			req.user?.did,
+		);
+
+		return {
+			items: result.items.map((like) => ({
+				userDid: like.userDid,
+				userHandle: like.userHandle,
+				userDisplayName: like.userDisplayName,
+				userAvatar: like.userAvatar,
+				createdAt: like.createdAt,
+			})),
+			total: result.total,
+			hasLiked: result.hasLiked,
+		};
 	}
 }

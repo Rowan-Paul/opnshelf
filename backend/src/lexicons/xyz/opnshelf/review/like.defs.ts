@@ -4,43 +4,18 @@
 
 import { l } from '@atproto/lex'
 
-const $nsid = 'xyz.opnshelf.listItem'
+const $nsid = 'xyz.opnshelf.review.like'
 
 export { $nsid }
 
-/** A media item in a list for OpnShelf */
+/** A like on a user review */
 type Main = {
-  $type: 'xyz.opnshelf.listItem'
+  $type: 'xyz.opnshelf.review.like'
 
   /**
-   * Rkey of the parent list
+   * The at:// URI of the review being liked
    */
-  listRkey: string
-
-  /**
-   * Media type
-   */
-  mediaType: 'movie' | 'show' | 'season' | 'episode'
-
-  /**
-   * TMDB movie ID or show ID
-   */
-  mediaId: string
-
-  /**
-   * Season number for season/episode items
-   */
-  seasonNumber?: number
-
-  /**
-   * Episode number for episode items
-   */
-  episodeNumber?: number
-
-  /**
-   * Optional user notes about the media in this list
-   */
-  notes?: string
+  reviewUri: l.AtUriString
 
   /**
    * Record creation timestamp
@@ -50,17 +25,12 @@ type Main = {
 
 export type { Main }
 
-/** A media item in a list for OpnShelf */
+/** A like on a user review */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
-    listRkey: l.string(),
-    mediaType: l.enum(['movie', 'show', 'season', 'episode']),
-    mediaId: l.string(),
-    seasonNumber: l.optional(l.integer()),
-    episodeNumber: l.optional(l.integer()),
-    notes: l.optional(l.string()),
+    reviewUri: l.string({ format: 'at-uri' }),
     createdAt: l.string({ format: 'datetime' }),
   }),
 )

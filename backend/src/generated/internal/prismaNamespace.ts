@@ -399,6 +399,7 @@ export const ModelName = {
   ListItem: 'ListItem',
   Note: 'Note',
   Review: 'Review',
+  ReviewLike: 'ReviewLike',
   Feedback: 'Feedback'
 } as const
 
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "note" | "review" | "feedback"
+    modelProps: "user" | "follow" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "note" | "review" | "reviewLike" | "feedback"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1529,6 +1530,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ReviewLike: {
+      payload: Prisma.$ReviewLikePayload<ExtArgs>
+      fields: Prisma.ReviewLikeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ReviewLikeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ReviewLikeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        findFirst: {
+          args: Prisma.ReviewLikeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ReviewLikeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        findMany: {
+          args: Prisma.ReviewLikeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>[]
+        }
+        create: {
+          args: Prisma.ReviewLikeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        createMany: {
+          args: Prisma.ReviewLikeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ReviewLikeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>[]
+        }
+        delete: {
+          args: Prisma.ReviewLikeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        update: {
+          args: Prisma.ReviewLikeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        deleteMany: {
+          args: Prisma.ReviewLikeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ReviewLikeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ReviewLikeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>[]
+        }
+        upsert: {
+          args: Prisma.ReviewLikeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReviewLikePayload>
+        }
+        aggregate: {
+          args: Prisma.ReviewLikeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReviewLike>
+        }
+        groupBy: {
+          args: Prisma.ReviewLikeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ReviewLikeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ReviewLikeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ReviewLikeCountAggregateOutputType> | number
+        }
+      }
+    }
     Feedback: {
       payload: Prisma.$FeedbackPayload<ExtArgs>
       fields: Prisma.FeedbackFieldRefs
@@ -1893,6 +1968,19 @@ export const ReviewScalarFieldEnum = {
 export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
 
 
+export const ReviewLikeScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  reviewId: 'reviewId',
+  createdAt: 'createdAt'
+} as const
+
+export type ReviewLikeScalarFieldEnum = (typeof ReviewLikeScalarFieldEnum)[keyof typeof ReviewLikeScalarFieldEnum]
+
+
 export const FeedbackScalarFieldEnum = {
   id: 'id',
   userDid: 'userDid',
@@ -2175,6 +2263,7 @@ export type GlobalOmitConfig = {
   listItem?: Prisma.ListItemOmit
   note?: Prisma.NoteOmit
   review?: Prisma.ReviewOmit
+  reviewLike?: Prisma.ReviewLikeOmit
   feedback?: Prisma.FeedbackOmit
 }
 

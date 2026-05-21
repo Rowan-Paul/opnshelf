@@ -27,6 +27,9 @@ const config = defineConfig({
 		nitro(),
 		viteReact(),
 	],
+	test: {
+		environment: "jsdom",
+	},
 });
 
 export default config;

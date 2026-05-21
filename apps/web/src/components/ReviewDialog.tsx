@@ -1,5 +1,5 @@
 import { Loader2, Save, Star, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -63,6 +63,35 @@ export function ReviewDialog({
 	const [rating, setRating] = useState(0);
 	const [content, setContent] = useState("");
 
+	const prevUpsertPending = useRef(false);
+	const prevDeletePending = useRef(false);
+
+	useEffect(() => {
+		if (
+			prevUpsertPending.current &&
+			!upsertMutation.isPending &&
+			upsertMutation.isSuccess
+		) {
+			onOpenChange(false);
+			onSuccess?.();
+			upsertMutation.reset();
+		}
+		prevUpsertPending.current = upsertMutation.isPending;
+	}, [upsertMutation, onOpenChange, onSuccess]);
+
+	useEffect(() => {
+		if (
+			prevDeletePending.current &&
+			!deleteMutation.isPending &&
+			deleteMutation.isSuccess
+		) {
+			onOpenChange(false);
+			onSuccess?.();
+			deleteMutation.reset();
+		}
+		prevDeletePending.current = deleteMutation.isPending;
+	}, [deleteMutation, onOpenChange, onSuccess]);
+
 	useEffect(() => {
 		if (open) {
 			setRating(review?.rating ?? 0);
@@ -70,49 +99,35 @@ export function ReviewDialog({
 		}
 	}, [open, review?.rating, review?.content]);
 
-	const close = () => {
-		onOpenChange(false);
-		onSuccess?.();
-	};
-
 	const handleSave = () => {
 		if (rating === 0) {
 			if (review?.id) {
-				deleteMutation.mutate(
-					{ path: { reviewId: review.id } },
-					{ onSuccess: close },
-				);
+				deleteMutation.mutate({ path: { reviewId: review.id } });
 			} else {
-				close();
+				onOpenChange(false);
 			}
 			return;
 		}
-		upsertMutation.mutate(
-			{
-				body: {
-					mediaType:
-						episodeNumber != null
-							? "episode"
-							: seasonNumber != null
-								? "season"
-								: mediaType,
-					mediaId,
-					seasonNumber,
-					episodeNumber,
-					rating,
-					content: content.trim() || undefined,
-				},
+		upsertMutation.mutate({
+			body: {
+				mediaType:
+					episodeNumber != null
+						? "episode"
+						: seasonNumber != null
+							? "season"
+							: mediaType,
+				mediaId,
+				seasonNumber,
+				episodeNumber,
+				rating,
+				content: content.trim() || undefined,
 			},
-			{ onSuccess: close },
-		);
+		});
 	};
 
 	const handleDelete = () => {
 		if (!review?.id) return;
-		deleteMutation.mutate(
-			{ path: { reviewId: review.id } },
-			{ onSuccess: close },
-		);
+		deleteMutation.mutate({ path: { reviewId: review.id } });
 	};
 
 	const isPending = upsertMutation.isPending || deleteMutation.isPending;

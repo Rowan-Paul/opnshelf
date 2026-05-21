@@ -17,8 +17,8 @@
 			"local": true
 		},
 		{
-			"id": "xyz.opnshelf.listItem",
-			"path": "lexicons/app/opnshelf/listItem.json",
+			"id": "xyz.opnshelf.list.item",
+			"path": "lexicons/app/opnshelf/list/item.json",
 			"local": true
 		},
 		{

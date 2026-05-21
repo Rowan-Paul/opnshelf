@@ -1,6 +1,6 @@
 {
 	"lexicon": 1,
-	"id": "xyz.opnshelf.listItem",
+	"id": "xyz.opnshelf.list.item",
 	"defs": {
 		"main": {
 			"type": "record",

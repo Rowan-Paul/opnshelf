@@ -94,6 +94,8 @@ describe("IngesterService", () => {
 	let mockReviewsService: {
 		indexReviewRecord: jest.Mock;
 		deleteReviewRecord: jest.Mock;
+		indexReviewLikeRecord: jest.Mock;
+		deleteReviewLikeRecord: jest.Mock;
 	};
 
 	const mockConfigService = {
@@ -159,6 +161,8 @@ describe("IngesterService", () => {
 		mockReviewsService = {
 			indexReviewRecord: jest.fn(),
 			deleteReviewRecord: jest.fn(),
+			indexReviewLikeRecord: jest.fn(),
+			deleteReviewLikeRecord: jest.fn(),
 		};
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -432,10 +436,10 @@ describe("IngesterService", () => {
 				action: "create",
 				did: "did:plc:abc123",
 				rev: "rev126",
-				collection: "xyz.opnshelf.listItem",
+				collection: "xyz.opnshelf.list.item",
 				rkey: "item-1",
 				record: {
-					$type: "xyz.opnshelf.listItem",
+					$type: "xyz.opnshelf.list.item",
 					listRkey: "watchlist",
 					mediaType: "show",
 					mediaId: "456",
@@ -446,6 +450,60 @@ describe("IngesterService", () => {
 			});
 
 			expect(mockListsService.indexListItemRecord).toHaveBeenCalled();
+		});
+
+		it("should index review like for xyz.opnshelf.review.like create", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+
+			await recordHandler({
+				id: 7,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev-like-1",
+				collection: "xyz.opnshelf.review.like",
+				rkey: "like-rkey-1",
+				record: {
+					$type: "xyz.opnshelf.review.like",
+					reviewUri: "at://did:plc:abc123/xyz.opnshelf.review/review-rkey",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				cid: "cid-like-1",
+				live: true,
+			});
+
+			expect(mockReviewsService.indexReviewLikeRecord).toHaveBeenCalledWith(
+				"at://did:plc:abc123/xyz.opnshelf.review.like/like-rkey-1",
+				"cid-like-1",
+				"like-rkey-1",
+				"did:plc:abc123",
+				expect.objectContaining({
+					reviewUri: "at://did:plc:abc123/xyz.opnshelf.review/review-rkey",
+				}),
+			);
+		});
+
+		it("should delete review like for xyz.opnshelf.review.like delete", async () => {
+			const recordHandler = setupRecordHandler();
+
+			await recordHandler({
+				id: 8,
+				type: "record",
+				action: "delete",
+				did: "did:plc:abc123",
+				rev: "rev-like-2",
+				collection: "xyz.opnshelf.review.like",
+				rkey: "like-rkey-1",
+				cid: "cid-like-1",
+				live: true,
+			});
+
+			expect(mockReviewsService.deleteReviewLikeRecord).toHaveBeenCalledWith(
+				"like-rkey-1",
+			);
 		});
 	});
 });
