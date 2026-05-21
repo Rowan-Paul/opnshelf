@@ -18,6 +18,7 @@ export type TraktImportJobData = {
 	profileSlug?: string;
 	profileName?: string;
 	profileAvatarUrl?: string;
+	rateLimitRetries?: number;
 };
 
 export type AccountDeletionJobData = {
@@ -46,6 +47,8 @@ export function parseTraktImportData(json: unknown): TraktImportJobData {
 		profileAvatarUrl: data.profileAvatarUrl
 			? String(data.profileAvatarUrl)
 			: undefined,
+		rateLimitRetries:
+			data.rateLimitRetries != null ? Number(data.rateLimitRetries) : undefined,
 	};
 }
 

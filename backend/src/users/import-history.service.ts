@@ -111,8 +111,7 @@ const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"waiting_retry",
 ];
 const RECENT_TERMINAL_JOB_WINDOW_MS = 15 * 60 * 1000;
-const TRAKT_RETRY_FALLBACK_SECONDS = 60;
-const TRAKT_RETRY_MAX_SECONDS = 10 * 60;
+const TRAKT_RATE_LIMIT_BACKOFF_SECONDS = [60, 300, 600]; // 1min, 5min, 10min, then +5min each time
 const TRAKT_PAGE_DELAY_MS = 800;
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
 const PDS_RETRY_FALLBACK_SECONDS = 60;
@@ -668,16 +667,23 @@ export class ImportHistoryService {
 			}
 
 			if (error instanceof TraktApiError && error.status === 429) {
-				const retryAfterSeconds = this.getRetryAfterSeconds(
-					error.retryAfterSeconds,
+				const retryCount = jobData.rateLimitRetries ?? 0;
+				const backoff =
+					retryCount < TRAKT_RATE_LIMIT_BACKOFF_SECONDS.length
+						? TRAKT_RATE_LIMIT_BACKOFF_SECONDS[retryCount]
+						: 600 + (retryCount - 2) * 300; // 10min, then +5min each time
+				const retryAfterSeconds = Math.max(
+					backoff,
+					error.retryAfterSeconds ?? 0,
 				);
 				this.logger.warn(
-					`Trakt rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s.`,
+					`Trakt rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s (attempt ${retryCount + 1}).`,
 				);
 				await this.prisma.backgroundJob.update({
 					where: { id: job.id },
 					data: {
 						status: "waiting_retry",
+						data: { ...jobData, rateLimitRetries: retryCount + 1 },
 						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
 						lastError: `Trakt rate limit reached. Retrying in ${retryAfterSeconds} seconds.`,
 					},
@@ -1275,11 +1281,6 @@ export class ImportHistoryService {
 		if (!retryAfter) return undefined;
 		const parsed = Number(retryAfter);
 		return Number.isFinite(parsed) ? parsed : undefined;
-	}
-
-	private getRetryAfterSeconds(retryAfterSeconds?: number): number {
-		const boundedRetry = retryAfterSeconds ?? TRAKT_RETRY_FALLBACK_SECONDS;
-		return Math.max(1, Math.min(boundedRetry, TRAKT_RETRY_MAX_SECONDS));
 	}
 
 	private classifyImportWriteError(error: unknown): ClassifiedImportWriteError {

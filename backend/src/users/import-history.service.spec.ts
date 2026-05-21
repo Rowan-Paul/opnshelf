@@ -269,7 +269,10 @@ describe("ImportHistoryService", () => {
 				where: { id: "job-1" },
 				data: expect.objectContaining({
 					status: "waiting_retry",
-					lastError: expect.stringContaining("42 seconds"),
+					lastError: expect.stringContaining("60 seconds"),
+					data: expect.objectContaining({
+						rateLimitRetries: 1,
+					}),
 				}),
 			}),
 		);
