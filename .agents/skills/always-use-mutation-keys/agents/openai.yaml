@@ -1,4 +1,0 @@
-interface:
-  display_name: "Always Use Mutation Keys"
-  short_description: "Require stable mutationKey values on TanStack Query mutations."
-  default_prompt: "Use $always-use-mutation-keys to add stable array-based mutationKey values to every TanStack Query mutation you touch."
