@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
 import { queryClient } from "@/lib/query-client";
 import { darkNavTheme, lightNavTheme } from "@/theme";
@@ -29,7 +30,9 @@ export function Providers({ children }: { children: ReactNode }) {
 					}}
 				>
 					<QueryClientProvider client={queryClient}>
-						<ThemeProvider value={navTheme}>{children}</ThemeProvider>
+						<AuthProvider>
+							<ThemeProvider value={navTheme}>{children}</ThemeProvider>
+						</AuthProvider>
 					</QueryClientProvider>
 				</PostHogProvider>
 			</SafeAreaProvider>

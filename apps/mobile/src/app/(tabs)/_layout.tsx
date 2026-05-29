@@ -1,11 +1,29 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Home, Search, User } from "lucide-react-native";
-import { useColorScheme } from "react-native";
+import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
 export default function TabLayout() {
 	const colorScheme = useColorScheme();
 	const theme = colorScheme === "dark" ? darkNavTheme : lightNavTheme;
+	const { user, isLoading, isAuthenticated } = useAuth();
+
+	// Gate: wait for auth to resolve, then require an authenticated, onboarded
+	// user before rendering the tab group.
+	if (isLoading) {
+		return (
+			<View className="flex-1 items-center justify-center bg-background">
+				<ActivityIndicator size="large" color={theme.colors.primary} />
+			</View>
+		);
+	}
+	if (!isAuthenticated || !user) {
+		return <Redirect href="/login" />;
+	}
+	if (user.needsOnboarding) {
+		return <Redirect href="/onboarding" />;
+	}
 
 	return (
 		<Tabs

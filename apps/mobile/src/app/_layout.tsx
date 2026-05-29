@@ -86,6 +86,8 @@ export default function RootLayout() {
 			<ScreenTracker />
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Screen name="(tabs)" />
+				<Stack.Screen name="login" />
+				<Stack.Screen name="onboarding" />
 				<Stack.Screen name="settings" options={{ headerShown: true }} />
 			</Stack>
 			<StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
