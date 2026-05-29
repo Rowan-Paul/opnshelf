@@ -270,6 +270,7 @@ describe("AuthService", () => {
 					handle: profile.handle,
 					displayName: profile.displayName,
 					timezone: "UTC",
+					emailVerifiedAt: null,
 				},
 			});
 		});
@@ -300,6 +301,7 @@ describe("AuthService", () => {
 					handle: profile.handle,
 					displayName: null,
 					timezone: "UTC",
+					emailVerifiedAt: null,
 				},
 			});
 		});

@@ -54,20 +54,24 @@ function SignupPage() {
 	const registerMutation = useMutation({
 		mutationKey: ["auth", "register"],
 		...authControllerRegisterMutation(),
-		onSuccess: async (data) => {
+		onSuccess: async () => {
 			// Cookie is set; refresh the cached user so the app sees us as logged in.
 			await queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,
 			});
-			toast.success(`Welcome — your account ${data.handle} is ready!`);
-			navigate({ to: "/dashboard" });
+			// Onboarding gates the email-verification step first (the account
+			// can't write records until verified), so everyone funnels there.
+			navigate({ to: "/onboarding" });
 		},
 		onError: (error) => {
 			toast.error(extractRegisterErrorMessage(error));
 			setCaptchaToken(null);
 		},
 	});
-	const isSubmitting = registerMutation.isPending;
+	// Stay disabled through the whole submit lifecycle: while pending, and after
+	// success (the brief async gap before we navigate away would otherwise
+	// re-enable the button and let a fast double-click register twice).
+	const isSubmitting = registerMutation.isPending || registerMutation.isSuccess;
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -81,6 +85,8 @@ function SignupPage() {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		// Guard against a double-submit that beats the disabled re-render.
+		if (isSubmitting) return;
 		const trimmedUsername = username.trim().toLowerCase();
 		if (!trimmedUsername || !email.trim() || !password) return;
 		if (!captchaReady || captchaToken === null) {

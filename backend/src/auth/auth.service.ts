@@ -39,6 +39,18 @@ export class AuthService implements OnModuleInit {
 	private readonly logger = new Logger(AuthService.name);
 	private oauthClient: NodeOAuthClient | null = null;
 
+	/**
+	 * In-flight credential-session restores, keyed by DID. Refresh tokens rotate
+	 * (one-time use), so two concurrent requests each building their own
+	 * CredentialSession would both try to refresh the same token — one wins, the
+	 * other's refresh is rejected. De-duping concurrent restores makes them share
+	 * a single refresh. Cleared as soon as the restore settles.
+	 */
+	private readonly credentialRestoreInFlight = new Map<
+		string,
+		Promise<CredentialSession>
+	>();
+
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly configService: ConfigService,
@@ -224,7 +236,18 @@ export class AuthService implements OnModuleInit {
 		});
 
 		if (record?.kind === "credential") {
-			return this.restoreCredentialSession(did, record.sessionData);
+			const inFlight = this.credentialRestoreInFlight.get(did);
+			if (inFlight) {
+				return inFlight;
+			}
+			const promise = this.restoreCredentialSession(
+				did,
+				record.sessionData,
+			).finally(() => {
+				this.credentialRestoreInFlight.delete(did);
+			});
+			this.credentialRestoreInFlight.set(did, promise);
+			return promise;
 		}
 
 		const client = this.getOAuthClient();
@@ -235,6 +258,67 @@ export class AuthService implements OnModuleInit {
 			this.logger.warn(`Failed to restore session for ${did}`, error);
 			return undefined;
 		}
+	}
+
+	/**
+	 * Confirm the signup verification code for a native PDS account.
+	 *
+	 * The code was emailed by the PDS on `createAccount`. We read the account's
+	 * email from its own session (`getSession`) so the caller only has to supply
+	 * the code, then call `com.atproto.server.confirmEmail`. Verifying the email
+	 * satisfies the PDS's verified-comms-channel gate, after which records can be
+	 * written.
+	 *
+	 * @returns `true` if the account was just verified (or already verified).
+	 * @throws an XRPC error (mapped by the controller) on an invalid/expired code.
+	 */
+	async confirmEmailWithCode(did: string, code: string): Promise<boolean> {
+		const session = await this.restore(did);
+		if (!session) {
+			throw new Error("Session not found");
+		}
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const { data: sessionInfo } = await agent.com.atproto.server.getSession();
+		if (!sessionInfo.email) {
+			throw new Error("Account has no email to verify");
+		}
+		if (sessionInfo.emailConfirmed) {
+			return true;
+		}
+
+		await agent.com.atproto.server.confirmEmail({
+			email: sessionInfo.email,
+			token: code.trim(),
+		});
+		return true;
+	}
+
+	/**
+	 * Ask the PDS to (re)send the signup verification email for this account.
+	 */
+	async resendEmailConfirmation(did: string): Promise<void> {
+		const session = await this.restore(did);
+		if (!session) {
+			throw new Error("Session not found");
+		}
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		await agent.com.atproto.server.requestEmailConfirmation();
+	}
+
+	/**
+	 * Mirror the PDS verification status into our DB so `/auth/me` stays a pure
+	 * DB read. Idempotent.
+	 */
+	async markEmailVerified(did: string): Promise<void> {
+		await this.prisma.user.update({
+			where: { did },
+			data: { emailVerifiedAt: new Date() },
+		});
 	}
 
 	/**
@@ -317,9 +401,21 @@ export class AuthService implements OnModuleInit {
 			(evt, refreshed) => {
 				// Persist rotated tokens whenever the agent refreshes them.
 				if (refreshed && (evt === "create" || evt === "update")) {
+					this.logger.debug(`Credential session ${evt} persisted for ${did}`);
 					void this.persistCredentialSession(did, pdsUrl, refreshed);
-				} else if (evt === "expired" || evt === "create-failed") {
+				} else if (evt === "expired") {
+					// The refresh token itself is dead (14-day TTL or revoked
+					// upstream) — there's nothing left to restore, so drop it.
+					this.logger.warn(`Credential session expired for ${did}; revoking`);
 					void this.revoke(did);
+				} else if (evt === "create-failed") {
+					// A transient refresh failure (e.g. a token-rotation race between
+					// concurrent requests). Do NOT destroy the session — the winning
+					// request persisted fresh tokens, so the next request retries with
+					// them. Destroying here is what logs the user out spuriously.
+					this.logger.warn(
+						`Credential session refresh failed (transient) for ${did}`,
+					);
 				}
 			},
 		);
@@ -479,11 +575,17 @@ export class AuthService implements OnModuleInit {
 			avatar: string | null;
 		},
 		timezone?: string,
+		opts?: { emailVerified?: boolean },
 	) {
 		const existingUser = await this.prisma.user.findUnique({
 			where: { did: profile.did },
 			select: { did: true },
 		});
+
+		// External-PDS accounts (OAuth login) are already verified upstream, so we
+		// mark them verified on creation and never gate them. Native accounts we
+		// create on our own PDS start unverified (null) until they confirm.
+		const createdEmailVerifiedAt = opts?.emailVerified ? new Date() : null;
 
 		try {
 			const user = await this.prisma.user.upsert({
@@ -496,6 +598,7 @@ export class AuthService implements OnModuleInit {
 					handle: profile.handle,
 					displayName: profile.displayName,
 					timezone: timezone || "UTC",
+					emailVerifiedAt: createdEmailVerifiedAt,
 				},
 			});
 			return {
@@ -542,6 +645,7 @@ export class AuthService implements OnModuleInit {
 						handle: profile.handle,
 						displayName: profile.displayName,
 						timezone: timezone || "UTC",
+						emailVerifiedAt: createdEmailVerifiedAt,
 					},
 				});
 			});

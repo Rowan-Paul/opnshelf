@@ -24,6 +24,7 @@ model User {
   timeFormat   String   @default("24h")
   watchCountry String   @default("US")
   onboardingCompletedAt DateTime?
+  emailVerifiedAt DateTime?
   blueskyProfileUrl String?
   tangledProfileUrl String?
   showBlueskyOnProfile Boolean @default(true)

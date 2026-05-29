@@ -28,6 +28,7 @@ import { AuthService } from "./auth.service";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
+import { VerifyEmailDto, VerifyEmailResponseDto } from "./dto/verify-email.dto";
 import type { AuthenticatedRequest } from "./types";
 
 const SESSION_COOKIE_NAME = "session";
@@ -45,6 +46,11 @@ export class AuthController {
 	private readonly registerAttempts = new Map<string, number[]>();
 	private static readonly REGISTER_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 	private static readonly REGISTER_MAX_PER_WINDOW = 5;
+
+	/** Per-DID resend attempts for verification emails (in-memory rate limiter). */
+	private readonly resendAttempts = new Map<string, number[]>();
+	private static readonly RESEND_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+	private static readonly RESEND_MAX_PER_WINDOW = 5;
 
 	constructor(
 		private readonly authService: AuthService,
@@ -332,23 +338,10 @@ export class AuthController {
 			this.logger.error(`Failed to register ${account.did} with TAP`, error);
 		}
 
-		// Seed the user's profile + default lists (best-effort, don't block signup).
-		try {
-			const session = await this.authService.restore(account.did);
-			if (session) {
-				await this.usersService.initializeProfileForNewUser(
-					account.did,
-					session as unknown as { did: string },
-					{
-						handle: account.handle,
-						displayName: null,
-						avatarUrl: null,
-					},
-				);
-			}
-		} catch (error) {
-			this.logger.error(`Profile init failed for ${account.did}`, error);
-		}
+		// NB: we do NOT seed the profile/default lists here. The PDS rejects all
+		// record writes until the account verifies its email (notification
+		// channel), so seeding happens in `verifyEmail` once the code is
+		// confirmed. See docs/adr/0004-verify-email-before-seeding-records.md.
 
 		const sessionRecord = await this.authService.getSessionByUserDid(
 			account.did,
@@ -489,9 +482,13 @@ export class AuthController {
 
 			// Fetch user profile and upsert in database (timezone only set for new users)
 			const profile = await this.authService.fetchProfile(session);
+			// OAuth accounts authenticate against their own (external) PDS, which
+			// has already verified them upstream — mark them verified so they are
+			// never caught by the native verify-email gate.
 			const { isNewUser } = await this.authService.upsertUser(
 				profile,
 				timezone,
+				{ emailVerified: true },
 			);
 
 			// Clear timezone cookie after use
@@ -614,6 +611,10 @@ export class AuthController {
 				? user.onboardingCompletedAt.toISOString()
 				: null,
 			needsOnboarding: user.onboardingCompletedAt === null,
+			emailVerifiedAt: user.emailVerifiedAt
+				? user.emailVerifiedAt.toISOString()
+				: null,
+			needsEmailVerification: user.emailVerifiedAt === null,
 			blueskyProfileUrl: user.blueskyProfileUrl ?? null,
 			tangledProfileUrl: user.tangledProfileUrl ?? null,
 			showBlueskyOnProfile: user.showBlueskyOnProfile,
@@ -642,6 +643,128 @@ export class AuthController {
 		return {
 			hasBlueskyProfile: await this.authService.hasBlueskyProfile(did),
 		};
+	}
+
+	/**
+	 * Confirm the signup verification code for a native PDS account.
+	 *
+	 * On success the account is verified (records can be written), so we seed the
+	 * profile + default lists that signup deliberately skipped, and mirror the
+	 * verified status into our DB.
+	 */
+	@Post("auth/verify-email")
+	@HttpCode(HttpStatus.OK)
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Confirm the signup email verification code" })
+	@ApiResponse({ status: 200, type: VerifyEmailResponseDto })
+	@ApiResponse({ status: 400, description: "Invalid or expired code" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async verifyEmail(
+		@Req() req: AuthenticatedRequest,
+		@Body() dto: VerifyEmailDto,
+	): Promise<VerifyEmailResponseDto> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+
+		const user = await this.authService.getUser(did);
+		if (!user) {
+			throw new BadRequestException("User not found");
+		}
+
+		// Only seed if this verification is the transition from unverified.
+		const wasUnverified = user.emailVerifiedAt === null;
+
+		try {
+			await this.authService.confirmEmailWithCode(did, dto.code);
+		} catch (error) {
+			throw this.mapConfirmEmailError(error);
+		}
+
+		await this.authService.markEmailVerified(did);
+
+		if (wasUnverified) {
+			try {
+				const session = await this.authService.restore(did);
+				if (session) {
+					await this.usersService.initializeProfileForNewUser(
+						did,
+						session as unknown as { did: string },
+						{
+							handle: user.handle,
+							displayName: user.displayName,
+							avatarUrl: null,
+						},
+					);
+				}
+			} catch (error) {
+				// Verification succeeded; seeding is idempotent and retried lazily
+				// on the next profile write, so don't fail the request.
+				this.logger.error(`Profile seeding failed for ${did}`, error);
+			}
+		}
+
+		return { verified: true };
+	}
+
+	/**
+	 * Ask the PDS to resend the signup verification email.
+	 */
+	@Post("auth/resend-verification")
+	@HttpCode(HttpStatus.OK)
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Resend the signup email verification code" })
+	@ApiResponse({ status: 200, description: "Verification email resent" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	@ApiResponse({ status: 429, description: "Too many resend attempts" })
+	async resendVerification(
+		@Req() req: AuthenticatedRequest,
+	): Promise<{ message: string }> {
+		const did = req.user?.did;
+		if (!did) {
+			throw new BadRequestException("User not found in request");
+		}
+		this.enforceResendRateLimit(did);
+		await this.authService.resendEmailConfirmation(did);
+		return { message: "Verification email sent" };
+	}
+
+	private enforceResendRateLimit(did: string): void {
+		const now = Date.now();
+		const windowStart = now - AuthController.RESEND_WINDOW_MS;
+		const recent = (this.resendAttempts.get(did) || []).filter(
+			(t) => t > windowStart,
+		);
+		if (recent.length >= AuthController.RESEND_MAX_PER_WINDOW) {
+			throw new HttpException(
+				"Too many resend attempts. Please try again later.",
+				HttpStatus.TOO_MANY_REQUESTS,
+			);
+		}
+		recent.push(now);
+		this.resendAttempts.set(did, recent);
+	}
+
+	/** Map a PDS confirmEmail XRPC error to an appropriate HTTP response. */
+	private mapConfirmEmailError(error: unknown): HttpException {
+		const code =
+			error && typeof error === "object" && "error" in error
+				? String((error as { error?: unknown }).error)
+				: undefined;
+		switch (code) {
+			case "ExpiredToken":
+				return new BadRequestException(
+					"That code has expired. Request a new one.",
+				);
+			case "InvalidToken":
+				return new BadRequestException("That code is invalid.");
+			default:
+				this.logger.error(`confirmEmail failed (${code})`, error);
+				return new BadRequestException(
+					"Could not verify that code. Please try again.",
+				);
+		}
 	}
 
 	/**

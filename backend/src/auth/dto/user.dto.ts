@@ -28,6 +28,19 @@ export class UserDto {
 	needsOnboarding: boolean;
 
 	@ApiProperty({
+		description: "When the account's email was verified",
+		nullable: true,
+		type: String,
+	})
+	emailVerifiedAt: string | null;
+
+	@ApiProperty({
+		description:
+			"Whether this user must verify their email before writing records",
+	})
+	needsEmailVerification: boolean;
+
+	@ApiProperty({
 		description: "Bluesky profile URL",
 		nullable: true,
 		type: String,

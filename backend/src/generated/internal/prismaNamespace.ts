@@ -1883,6 +1883,7 @@ export const UserScalarFieldEnum = {
   timeFormat: 'timeFormat',
   watchCountry: 'watchCountry',
   onboardingCompletedAt: 'onboardingCompletedAt',
+  emailVerifiedAt: 'emailVerifiedAt',
   blueskyProfileUrl: 'blueskyProfileUrl',
   tangledProfileUrl: 'tangledProfileUrl',
   showBlueskyOnProfile: 'showBlueskyOnProfile',

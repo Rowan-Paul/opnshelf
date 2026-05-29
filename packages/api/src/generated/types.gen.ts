@@ -202,6 +202,14 @@ export type UserDto = {
      */
     needsOnboarding: boolean;
     /**
+     * When the account's email was verified
+     */
+    emailVerifiedAt: string | null;
+    /**
+     * Whether this user must verify their email before writing records
+     */
+    needsEmailVerification: boolean;
+    /**
      * Bluesky profile URL
      */
     blueskyProfileUrl: string | null;
@@ -224,6 +232,20 @@ export type BlueskyProfileStatusDto = {
      * Whether this DID resolves to a real Bluesky/AppView profile
      */
     hasBlueskyProfile: boolean;
+};
+
+export type VerifyEmailDto = {
+    /**
+     * The verification code from the signup email
+     */
+    code: string;
+};
+
+export type VerifyEmailResponseDto = {
+    /**
+     * Whether the account is now verified
+     */
+    verified: boolean;
 };
 
 export type TmdbShowResultDto = {
@@ -2122,6 +2144,55 @@ export type AuthControllerBlueskyProfileStatusResponses = {
 };
 
 export type AuthControllerBlueskyProfileStatusResponse = AuthControllerBlueskyProfileStatusResponses[keyof AuthControllerBlueskyProfileStatusResponses];
+
+export type AuthControllerVerifyEmailData = {
+    body: VerifyEmailDto;
+    path?: never;
+    query?: never;
+    url: '/auth/verify-email';
+};
+
+export type AuthControllerVerifyEmailErrors = {
+    /**
+     * Invalid or expired code
+     */
+    400: unknown;
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type AuthControllerVerifyEmailResponses = {
+    200: VerifyEmailResponseDto;
+};
+
+export type AuthControllerVerifyEmailResponse = AuthControllerVerifyEmailResponses[keyof AuthControllerVerifyEmailResponses];
+
+export type AuthControllerResendVerificationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/resend-verification';
+};
+
+export type AuthControllerResendVerificationErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Too many resend attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerResendVerificationResponses = {
+    /**
+     * Verification email resent
+     */
+    200: unknown;
+};
 
 export type AuthControllerLogoutData = {
     body?: never;

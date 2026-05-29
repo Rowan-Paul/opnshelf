@@ -1,5 +1,7 @@
 import {
 	authControllerMeOptions,
+	authControllerResendVerificationMutation,
+	authControllerVerifyEmailMutation,
 	getTraktImportStatusMessage,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
@@ -26,6 +28,7 @@ import {
 	CheckCircle,
 	Film,
 	Loader2,
+	MailCheck,
 	Tv,
 	Upload,
 	User,
@@ -125,28 +128,181 @@ function OnboardingPage() {
 	return (
 		<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
 			<div className="w-full max-w-lg">
-				{step === "welcome" && (
-					<WelcomeStep onNext={() => setStep("profile")} />
+				{/* Gate: the account can't write any records (profile, lists) until
+				    its email is verified, so this blocks every onboarding step until
+				    it is. Verifying invalidates /auth/me, which re-renders this with
+				    needsEmailVerification === false and falls through to the steps. */}
+				{user?.needsEmailVerification ? (
+					<VerifyEmailStep />
+				) : (
+					<>
+						{step === "welcome" && (
+							<WelcomeStep onNext={() => setStep("profile")} />
+						)}
+						{step === "profile" && (
+							<ProfileStep onNext={() => setStep("preferences")} />
+						)}
+						{step === "preferences" && (
+							<PreferencesStep onNext={() => setStep("trakt")} />
+						)}
+						{step === "trakt" && (
+							<TraktStep
+								onNext={() => setStep("suggestions")}
+								onSkip={() => setStep("suggestions")}
+							/>
+						)}
+						{step === "suggestions" && (
+							<FollowSuggestionsStep onNext={() => setStep("done")} />
+						)}
+						{step === "done" && <DoneStep />}
+					</>
 				)}
-				{step === "profile" && (
-					<ProfileStep onNext={() => setStep("preferences")} />
-				)}
-				{step === "preferences" && (
-					<PreferencesStep onNext={() => setStep("trakt")} />
-				)}
-				{step === "trakt" && (
-					<TraktStep
-						onNext={() => setStep("suggestions")}
-						onSkip={() => setStep("suggestions")}
+			</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------
+   Step 0: Verify email (gate)
+
+   New accounts on our PDS can't write records until their email is verified,
+   so this blocks the rest of onboarding. createAccount already emailed the
+   code; here the user enters it (resend available).
+   ------------------------------------------------------------------ */
+const RESEND_COOLDOWN_SECONDS = 60;
+
+/** Pull a human-readable message out of a NestJS error body (string or string[]). */
+function extractErrorMessage(error: unknown, fallback: string): string {
+	if (error && typeof error === "object" && "message" in error) {
+		const message = (error as { message?: unknown }).message;
+		if (Array.isArray(message)) return message.join(", ");
+		if (typeof message === "string" && message.length > 0) return message;
+	}
+	return fallback;
+}
+
+function VerifyEmailStep() {
+	const { user } = useAuth();
+	const queryClient = useQueryClient();
+	const [code, setCode] = useState("");
+	const [cooldown, setCooldown] = useState(0);
+
+	useEffect(() => {
+		if (cooldown <= 0) return;
+		const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+		return () => clearTimeout(timer);
+	}, [cooldown]);
+
+	const verifyMutation = useMutation({
+		mutationKey: ["auth", "verify-email"],
+		...authControllerVerifyEmailMutation(),
+		onSuccess: async () => {
+			// Flips needsEmailVerification to false; the parent re-renders into the
+			// welcome step, which is where we greet them — no toast needed here.
+			await queryClient.invalidateQueries({
+				queryKey: authControllerMeOptions().queryKey,
+			});
+		},
+		onError: (error) => {
+			toast.error(
+				extractErrorMessage(error, "Could not verify that code. Try again."),
+			);
+		},
+	});
+
+	const resendMutation = useMutation({
+		mutationKey: ["auth", "resend-verification"],
+		...authControllerResendVerificationMutation(),
+		onSuccess: () => {
+			setCooldown(RESEND_COOLDOWN_SECONDS);
+			toast.success("We've sent a fresh code to your email.");
+		},
+		onError: (error) => {
+			toast.error(
+				extractErrorMessage(error, "Could not resend the code. Try again."),
+			);
+		},
+	});
+
+	const isSubmitting = verifyMutation.isPending;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (isSubmitting) return;
+		const trimmed = code.trim();
+		if (!trimmed) return;
+		verifyMutation.mutate({ body: { code: trimmed } });
+	};
+
+	return (
+		<div className="card p-8">
+			<div className="mb-6 flex justify-center">
+				<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
+					<MailCheck className="size-8" />
+				</div>
+			</div>
+			<h1 className="mb-2 text-center text-display-2">Verify your email</h1>
+			<p className="mx-auto mb-8 max-w-sm text-center text-(--foreground-muted)">
+				We sent a verification code to the email you signed up with. Enter it
+				below to finish setting up{" "}
+				{user?.handle ? `@${user.handle}` : "your account"}.
+			</p>
+
+			<form onSubmit={handleSubmit} className="space-y-4">
+				<div>
+					<label
+						htmlFor="verify-code"
+						className="mb-1.5 block font-medium text-sm"
+					>
+						Verification code
+					</label>
+					<input
+						id="verify-code"
+						type="text"
+						placeholder="Paste the code from your email"
+						value={code}
+						onChange={(e) => setCode(e.target.value)}
+						className="input"
+						autoComplete="one-time-code"
+						disabled={isSubmitting}
 					/>
-				)}
-				{step === "suggestions" && (
-					<FollowSuggestionsStep
-						onNext={() => setStep("done")}
-						onSkip={() => setStep("done")}
-					/>
-				)}
-				{step === "done" && <DoneStep />}
+				</div>
+
+				<button
+					type="submit"
+					disabled={isSubmitting || !code.trim()}
+					className="btn btn-primary w-full"
+				>
+					{isSubmitting ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Verifying...
+						</>
+					) : (
+						<>
+							Verify and continue
+							<ArrowRight className="size-4" />
+						</>
+					)}
+				</button>
+			</form>
+
+			<div className="mt-6 text-center text-(--foreground-muted) text-sm">
+				<p>
+					Didn&apos;t get it?{" "}
+					<button
+						type="button"
+						onClick={() => resendMutation.mutate({})}
+						disabled={resendMutation.isPending || cooldown > 0}
+						className="text-(--accent) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
+					>
+						{cooldown > 0
+							? `Resend in ${cooldown}s`
+							: resendMutation.isPending
+								? "Sending..."
+								: "Resend code"}
+					</button>
+				</p>
 			</div>
 		</div>
 	);
@@ -457,7 +613,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 				</p>
 			</div>
 
-			<div className="mt-8 flex flex-col gap-3">
+			<div className="mt-8">
 				<button
 					type="button"
 					onClick={handleSave}
@@ -472,13 +628,6 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 							<ArrowRight className="size-4" />
 						</>
 					)}
-				</button>
-				<button
-					type="button"
-					onClick={onNext}
-					className="btn btn-secondary w-full"
-				>
-					Skip for now
 				</button>
 			</div>
 		</div>
@@ -804,13 +953,7 @@ function TraktStep({
 /* ------------------------------------------------------------------
    Step 4: Follow Suggestions
    ------------------------------------------------------------------ */
-function FollowSuggestionsStep({
-	onNext,
-	onSkip,
-}: {
-	onNext: () => void;
-	onSkip: () => void;
-}) {
+function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
 	const { data, isLoading } = useQuery(socialControllerGetSuggestionsOptions());
 
@@ -833,20 +976,11 @@ function FollowSuggestionsStep({
 
 	return (
 		<div className="card p-6">
-			<div className="mb-6 flex items-center justify-between">
-				<div>
-					<h2 className="text-display-3">People to Follow</h2>
-					<p className="mt-1 text-(--foreground-muted) text-sm">
-						Find people you know on OpnShelf
-					</p>
-				</div>
-				<button
-					type="button"
-					onClick={onSkip}
-					className="text-(--foreground-muted) text-sm hover:text-(--foreground)"
-				>
-					Skip
-				</button>
+			<div className="mb-6">
+				<h2 className="text-display-3">People to Follow</h2>
+				<p className="mt-1 text-(--foreground-muted) text-sm">
+					Find people you know on OpnShelf
+				</p>
 			</div>
 
 			{isLoading && (

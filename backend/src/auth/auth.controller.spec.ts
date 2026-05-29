@@ -1,4 +1,4 @@
-import { BadRequestException, type HttpException } from "@nestjs/common";
+import { BadRequestException, HttpException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
@@ -41,6 +41,9 @@ describe("AuthController", () => {
 		registerAccount: jest.Mock;
 		createCredentialSession: jest.Mock;
 		restore: jest.Mock;
+		confirmEmailWithCode: jest.Mock;
+		resendEmailConfirmation: jest.Mock;
+		markEmailVerified: jest.Mock;
 	} = {
 		getClientMetadata: jest.fn(),
 		authorize: jest.fn(),
@@ -56,6 +59,9 @@ describe("AuthController", () => {
 		registerAccount: jest.fn(),
 		createCredentialSession: jest.fn().mockResolvedValue(undefined),
 		restore: jest.fn().mockResolvedValue(undefined),
+		confirmEmailWithCode: jest.fn().mockResolvedValue(true),
+		resendEmailConfirmation: jest.fn().mockResolvedValue(undefined),
+		markEmailVerified: jest.fn().mockResolvedValue(undefined),
 	};
 
 	const mockIngesterService = {
@@ -311,6 +317,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
@@ -393,6 +400,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(mockIngesterService.addRepo).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -428,6 +436,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/auth/complete",
@@ -463,6 +472,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(res.clearCookie).toHaveBeenCalledWith("auth_platform");
 			expect(res.redirect).toHaveBeenCalledWith(
@@ -534,6 +544,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
@@ -628,6 +639,7 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
+				emailVerifiedAt: new Date("2026-01-01T00:00:00.000Z"),
 				blueskyProfileUrl: null,
 				tangledProfileUrl: null,
 				showBlueskyOnProfile: true,
@@ -650,6 +662,8 @@ describe("AuthController", () => {
 				avatar: "https://example.com/avatar.jpg",
 				onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
 				needsOnboarding: false,
+				emailVerifiedAt: "2026-01-01T00:00:00.000Z",
+				needsEmailVerification: false,
 				blueskyProfileUrl: null,
 				tangledProfileUrl: null,
 				showBlueskyOnProfile: true,
@@ -681,6 +695,119 @@ describe("AuthController", () => {
 					req as unknown as import("../auth/types").AuthenticatedRequest,
 				),
 			).rejects.toThrow(BadRequestException);
+		});
+	});
+
+	describe("verifyEmail", () => {
+		const reqFor = (did = "did:plc:abc123") =>
+			createMockRequest({
+				user: { did, session: {} },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+		it("confirms the code, seeds the profile, and marks verified for an unverified user", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				emailVerifiedAt: null,
+			});
+			mockAuthService.restore.mockResolvedValue({ did: "did:plc:abc123" });
+
+			const result = await controller.verifyEmail(reqFor(), { code: " abc " });
+
+			expect(result).toEqual({ verified: true });
+			expect(mockAuthService.confirmEmailWithCode).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				" abc ",
+			);
+			expect(mockAuthService.markEmailVerified).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
+			expect(mockUsersService.initializeProfileForNewUser).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				{ did: "did:plc:abc123" },
+				{ handle: "jane.opnshelf.xyz", displayName: null, avatarUrl: null },
+			);
+		});
+
+		it("does not re-seed when the user was already verified", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				emailVerifiedAt: new Date(),
+			});
+
+			await controller.verifyEmail(reqFor(), { code: "abc" });
+
+			expect(mockAuthService.confirmEmailWithCode).toHaveBeenCalled();
+			expect(
+				mockUsersService.initializeProfileForNewUser,
+			).not.toHaveBeenCalled();
+		});
+
+		it("maps an invalid code to BadRequestException and does not seed", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				emailVerifiedAt: null,
+			});
+			mockAuthService.confirmEmailWithCode.mockRejectedValueOnce({
+				error: "InvalidToken",
+			});
+
+			await expect(
+				controller.verifyEmail(reqFor(), { code: "nope" }),
+			).rejects.toThrow(BadRequestException);
+			expect(mockAuthService.markEmailVerified).not.toHaveBeenCalled();
+			expect(
+				mockUsersService.initializeProfileForNewUser,
+			).not.toHaveBeenCalled();
+		});
+
+		it("still verifies even if profile seeding fails", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				emailVerifiedAt: null,
+			});
+			mockAuthService.restore.mockResolvedValue({ did: "did:plc:abc123" });
+			mockUsersService.initializeProfileForNewUser.mockRejectedValueOnce(
+				new Error("PDS down"),
+			);
+
+			const result = await controller.verifyEmail(reqFor(), { code: "abc" });
+
+			expect(result).toEqual({ verified: true });
+			expect(mockAuthService.markEmailVerified).toHaveBeenCalled();
+		});
+	});
+
+	describe("resendVerification", () => {
+		const reqFor = (did = "did:plc:abc123") =>
+			createMockRequest({
+				user: { did, session: {} },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+		it("asks the service to resend the verification email", async () => {
+			const result = await controller.resendVerification(reqFor());
+
+			expect(result).toEqual({ message: "Verification email sent" });
+			expect(mockAuthService.resendEmailConfirmation).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
+		});
+
+		it("rate-limits after too many attempts", async () => {
+			const did = "did:plc:ratelimit";
+			for (let i = 0; i < 5; i++) {
+				await controller.resendVerification(reqFor(did));
+			}
+			await expect(controller.resendVerification(reqFor(did))).rejects.toThrow(
+				HttpException,
+			);
 		});
 	});
 
@@ -788,6 +915,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			// In test/dev mode, domain should not be set
 			expect(res.cookie).toHaveBeenCalledWith(
@@ -832,6 +960,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
+				{ emailVerified: true },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
