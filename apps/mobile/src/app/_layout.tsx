@@ -40,7 +40,7 @@ function useScreenTracking() {
 
 	useEffect(() => {
 		if (previous.current !== pathname) {
-			posthog.screen(pathname, {
+			posthog?.screen(pathname, {
 				previous_screen: previous.current ?? null,
 				...params,
 			});

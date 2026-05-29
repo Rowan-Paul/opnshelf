@@ -20,24 +20,32 @@ export function Providers({ children }: { children: ReactNode }) {
 	const colorScheme = useColorScheme();
 	const navTheme = colorScheme === "dark" ? darkNavTheme : lightNavTheme;
 
+	const inner = (
+		<QueryClientProvider client={queryClient}>
+			<AuthProvider>
+				<ThemeProvider value={navTheme}>
+					<ToastProvider>{children}</ToastProvider>
+				</ThemeProvider>
+			</AuthProvider>
+		</QueryClientProvider>
+	);
+
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<SafeAreaProvider>
-				<PostHogProvider
-					client={posthog}
-					autocapture={{
-						captureScreens: false,
-						captureTouches: true,
-					}}
-				>
-					<QueryClientProvider client={queryClient}>
-						<AuthProvider>
-							<ThemeProvider value={navTheme}>
-								<ToastProvider>{children}</ToastProvider>
-							</ThemeProvider>
-						</AuthProvider>
-					</QueryClientProvider>
-				</PostHogProvider>
+				{posthog ? (
+					<PostHogProvider
+						client={posthog}
+						autocapture={{
+							captureScreens: false,
+							captureTouches: true,
+						}}
+					>
+						{inner}
+					</PostHogProvider>
+				) : (
+					inner
+				)}
 			</SafeAreaProvider>
 		</GestureHandlerRootView>
 	);

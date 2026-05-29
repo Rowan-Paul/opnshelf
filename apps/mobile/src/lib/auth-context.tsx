@@ -9,7 +9,6 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { usePostHog } from "posthog-react-native";
 import {
 	createContext,
 	type ReactNode,
@@ -19,6 +18,7 @@ import {
 	useState,
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
+import { posthog } from "@/lib/posthog";
 
 /** Where the PDS OAuth flow redirects back into the app. */
 const AUTH_REDIRECT_URL = "opnshelf://auth/complete";
@@ -51,7 +51,6 @@ function detectTimezone(): string | undefined {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
-	const posthog = usePostHog();
 
 	// Gate the `me` query on (a) the API client being ready with a restored
 	// token and (b) a token actually existing. Without a token the request is
@@ -132,14 +131,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				staleTime: 0,
 			});
 			if (fetchedUser) {
-				posthog.identify(fetchedUser.did, {
+				posthog?.identify(fetchedUser.did, {
 					$set: { handle: fetchedUser.handle, did: fetchedUser.did },
 					$set_once: { first_login_date: new Date().toISOString() },
 				});
-				posthog.capture("user_logged_in", { handle: fetchedUser.handle });
+				posthog?.capture("user_logged_in", { handle: fetchedUser.handle });
 			}
 		},
-		[posthog, queryClient],
+		[queryClient],
 	);
 
 	const login = useCallback(
@@ -155,10 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const signup = useCallback(async () => {
-		posthog.capture("user_signed_up", { method: "atmosphere" });
+		posthog?.capture("user_signed_up", { method: "atmosphere" });
 		const signupUrl = getSignupUrl(detectTimezone(), "mobile");
 		await runAuthFlow(signupUrl);
-	}, [posthog, runAuthFlow]);
+	}, [runAuthFlow]);
 
 	const signOut = useCallback(async () => {
 		await saveSessionToken(null);
