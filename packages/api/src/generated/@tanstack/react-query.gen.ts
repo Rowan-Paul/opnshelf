@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authControllerBlueskyProfileStatus, authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, feedbackControllerCreateFeedback, listsControllerAddItemToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerGetWatchProviders, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, notesControllerDeleteNote, notesControllerGetNote, notesControllerGetUserNotes, notesControllerUpsertNote, type Options, peopleControllerGetPersonDetails, peopleControllerGetPersonFilmography, reviewsControllerDeleteReview, reviewsControllerGetBatchRatings, reviewsControllerGetMediaReviews, reviewsControllerGetReview, reviewsControllerGetReviewLikes, reviewsControllerGetUserReviews, reviewsControllerLikeReview, reviewsControllerUnlikeReview, reviewsControllerUpsertReview, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetLocalEpisodes, showsControllerGetLocalSeasons, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerGetWatchProviders, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, socialControllerFollow, socialControllerGetFeed, socialControllerGetFollowers, socialControllerGetFollowing, socialControllerGetRelationship, socialControllerGetSuggestions, socialControllerGetWatchers, socialControllerSearchPeople, socialControllerUnfollow, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerDeleteMyAvatar, usersControllerRefreshMySocialLinks, usersControllerFetchMyTraktPublicHistory, usersControllerGetAvatar, usersControllerGetMyAccountDeletion, usersControllerGetMyCurrentTraktImport, usersControllerGetMySettings, usersControllerGetPublicFollowers, usersControllerGetPublicFollowing, usersControllerGetPublicProfile, usersControllerImportMyBlueskyFollows, usersControllerImportMyHistory, usersControllerStartMyTraktImport, usersControllerUpdateMyProfile, usersControllerUpdateMySettings, usersControllerUploadMyAvatar } from '../sdk.gen';
-import type { AuthControllerBlueskyProfileStatusData, AuthControllerBlueskyProfileStatusResponse, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, FeedbackControllerCreateFeedbackData, FeedbackControllerCreateFeedbackResponse, ListsControllerAddItemToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerGetWatchProvidersData, MoviesControllerGetWatchProvidersResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, NotesControllerDeleteNoteData, NotesControllerGetNoteData, NotesControllerGetNoteResponse, NotesControllerGetUserNotesData, NotesControllerGetUserNotesResponse, NotesControllerUpsertNoteData, NotesControllerUpsertNoteResponse, PeopleControllerGetPersonDetailsData, PeopleControllerGetPersonDetailsResponse, PeopleControllerGetPersonFilmographyData, PeopleControllerGetPersonFilmographyResponse, ReviewsControllerDeleteReviewData, ReviewsControllerGetBatchRatingsData, ReviewsControllerGetBatchRatingsResponse, ReviewsControllerGetMediaReviewsData, ReviewsControllerGetMediaReviewsResponse, ReviewsControllerGetReviewData, ReviewsControllerGetReviewLikesData, ReviewsControllerGetReviewLikesResponse, ReviewsControllerGetReviewResponse, ReviewsControllerGetUserReviewsData, ReviewsControllerGetUserReviewsResponse, ReviewsControllerLikeReviewData, ReviewsControllerLikeReviewResponse, ReviewsControllerUnlikeReviewData, ReviewsControllerUnlikeReviewResponse, ReviewsControllerUpsertReviewData, ReviewsControllerUpsertReviewResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetLocalEpisodesData, ShowsControllerGetLocalEpisodesResponse, ShowsControllerGetLocalSeasonsData, ShowsControllerGetLocalSeasonsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerGetWatchProvidersData, ShowsControllerGetWatchProvidersResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, SocialControllerFollowData, SocialControllerFollowResponse, SocialControllerGetFeedData, SocialControllerGetFeedResponse, SocialControllerGetFollowersData, SocialControllerGetFollowersResponse, SocialControllerGetFollowingData, SocialControllerGetFollowingResponse, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponse, SocialControllerGetSuggestionsData, SocialControllerGetSuggestionsResponse, SocialControllerGetWatchersData, SocialControllerGetWatchersResponse, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponse, SocialControllerUnfollowData, SocialControllerUnfollowResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerDeleteMyAvatarData, UsersControllerDeleteMyAvatarResponse, UsersControllerRefreshMySocialLinksData, UsersControllerRefreshMySocialLinksResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetAvatarData, UsersControllerGetMyAccountDeletionData, UsersControllerGetMyAccountDeletionResponse, UsersControllerGetMyCurrentTraktImportData, UsersControllerGetMyCurrentTraktImportResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicFollowersData, UsersControllerGetPublicFollowersResponse, UsersControllerGetPublicFollowingData, UsersControllerGetPublicFollowingResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerStartMyTraktImportData, UsersControllerStartMyTraktImportResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse, UsersControllerUploadMyAvatarData, UsersControllerUploadMyAvatarResponse } from '../types.gen';
+import { authControllerBlueskyProfileStatus, authControllerCallback, authControllerGetClientMetadata, authControllerLogin, authControllerLogout, authControllerMe, authControllerSignup, authControllerSuggestions, feedbackControllerCreateFeedback, listsControllerAddItemToList, listsControllerCreateList, listsControllerDeleteList, listsControllerGetList, listsControllerGetListsForItem, listsControllerGetPublicUserList, listsControllerGetPublicUserLists, listsControllerGetUserLists, listsControllerRemoveItemFromList, listsControllerUpdateList, moviesControllerDeleteWatchHistoryEntry, moviesControllerDiscoverMovies, moviesControllerGetMovie, moviesControllerGetMovieDetails, moviesControllerGetMovieWatchHistory, moviesControllerGetUserMovies, moviesControllerGetUserMoviesPaginated, moviesControllerGetWatchProviders, moviesControllerMarkWatched, moviesControllerSearchMovies, moviesControllerUnmarkWatched, notesControllerDeleteNote, notesControllerGetNote, notesControllerGetUserNotes, notesControllerUpsertNote, type Options, peopleControllerGetPersonDetails, peopleControllerGetPersonFilmography, ratingsControllerClearRating, ratingsControllerGetBatchRatings, ratingsControllerGetMediaRating, ratingsControllerGetRating, ratingsControllerSetRating, reviewsControllerDeleteReview, reviewsControllerGetMediaReviews, reviewsControllerGetReview, reviewsControllerGetReviewLikes, reviewsControllerGetUserReviews, reviewsControllerLikeReview, reviewsControllerUnlikeReview, reviewsControllerUpsertReview, searchControllerDiscoverAll, searchControllerSearchAll, shelfControllerGetUserActivitySummary, shelfControllerGetUserShelf, showsControllerDeleteEpisodeWatchHistoryEntry, showsControllerDiscoverShows, showsControllerGetEpisodeDetails, showsControllerGetLocalEpisodes, showsControllerGetLocalSeasons, showsControllerGetSeasonDetails, showsControllerGetShow, showsControllerGetShowDetails, showsControllerGetShowWatchHistory, showsControllerGetUserEpisodesPaginated, showsControllerGetUserReleaseCalendar, showsControllerGetUserShows, showsControllerGetUserUpNext, showsControllerGetWatchProviders, showsControllerMarkSeasonWatched, showsControllerMarkShowWatched, showsControllerMarkWatched, showsControllerSearchShows, showsControllerUnmarkWatched, socialControllerFollow, socialControllerGetFeed, socialControllerGetFollowers, socialControllerGetFollowing, socialControllerGetRelationship, socialControllerGetSuggestions, socialControllerGetWatchers, socialControllerSearchPeople, socialControllerUnfollow, usersControllerCompleteOnboarding, usersControllerDeleteMyAccount, usersControllerDeleteMyAvatar, usersControllerFetchMyTraktPublicHistory, usersControllerGetAvatar, usersControllerGetMyAccountDeletion, usersControllerGetMyCurrentTraktImport, usersControllerGetMySettings, usersControllerGetPublicFollowers, usersControllerGetPublicFollowing, usersControllerGetPublicProfile, usersControllerImportMyBlueskyFollows, usersControllerImportMyHistory, usersControllerRefreshMySocialLinks, usersControllerStartMyTraktImport, usersControllerUpdateMyProfile, usersControllerUpdateMySettings, usersControllerUploadMyAvatar } from '../sdk.gen';
+import type { AuthControllerBlueskyProfileStatusData, AuthControllerBlueskyProfileStatusResponse, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerMeData, AuthControllerMeResponse, AuthControllerSignupData, AuthControllerSuggestionsData, FeedbackControllerCreateFeedbackData, FeedbackControllerCreateFeedbackResponse, ListsControllerAddItemToListData, ListsControllerCreateListData, ListsControllerCreateListResponse, ListsControllerDeleteListData, ListsControllerGetListData, ListsControllerGetListResponse, ListsControllerGetListsForItemData, ListsControllerGetListsForItemResponse, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListResponse, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponse, ListsControllerGetUserListsData, ListsControllerGetUserListsResponse, ListsControllerRemoveItemFromListData, ListsControllerUpdateListData, ListsControllerUpdateListResponse, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryResponse, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponse, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponse, MoviesControllerGetMovieResponse, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryResponse, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponse, MoviesControllerGetUserMoviesResponse, MoviesControllerGetWatchProvidersData, MoviesControllerGetWatchProvidersResponse, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedResponse, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponse, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedResponse, NotesControllerDeleteNoteData, NotesControllerGetNoteData, NotesControllerGetNoteResponse, NotesControllerGetUserNotesData, NotesControllerGetUserNotesResponse, NotesControllerUpsertNoteData, NotesControllerUpsertNoteResponse, PeopleControllerGetPersonDetailsData, PeopleControllerGetPersonDetailsResponse, PeopleControllerGetPersonFilmographyData, PeopleControllerGetPersonFilmographyResponse, RatingsControllerClearRatingData, RatingsControllerGetBatchRatingsData, RatingsControllerGetBatchRatingsResponse, RatingsControllerGetMediaRatingData, RatingsControllerGetMediaRatingResponse, RatingsControllerGetRatingData, RatingsControllerGetRatingResponse, RatingsControllerSetRatingData, RatingsControllerSetRatingResponse, ReviewsControllerDeleteReviewData, ReviewsControllerGetMediaReviewsData, ReviewsControllerGetMediaReviewsResponse, ReviewsControllerGetReviewData, ReviewsControllerGetReviewLikesData, ReviewsControllerGetReviewLikesResponse, ReviewsControllerGetReviewResponse, ReviewsControllerGetUserReviewsData, ReviewsControllerGetUserReviewsResponse, ReviewsControllerLikeReviewData, ReviewsControllerUnlikeReviewData, ReviewsControllerUpsertReviewData, ReviewsControllerUpsertReviewResponse, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponse, SearchControllerSearchAllData, SearchControllerSearchAllResponse, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponse, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponse, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryResponse, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponse, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponse, ShowsControllerGetLocalEpisodesData, ShowsControllerGetLocalEpisodesResponse, ShowsControllerGetLocalSeasonsData, ShowsControllerGetLocalSeasonsResponse, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponse, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponse, ShowsControllerGetShowResponse, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryResponse, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponse, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponse, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponse, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponse, ShowsControllerGetWatchProvidersData, ShowsControllerGetWatchProvidersResponse, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedResponse, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedResponse, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedResponse, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponse, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponse, SocialControllerFollowData, SocialControllerFollowResponse, SocialControllerGetFeedData, SocialControllerGetFeedResponse, SocialControllerGetFollowersData, SocialControllerGetFollowersResponse, SocialControllerGetFollowingData, SocialControllerGetFollowingResponse, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponse, SocialControllerGetSuggestionsData, SocialControllerGetSuggestionsResponse, SocialControllerGetWatchersData, SocialControllerGetWatchersResponse, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponse, SocialControllerUnfollowData, SocialControllerUnfollowResponse, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingResponse, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountResponse, UsersControllerDeleteMyAvatarData, UsersControllerDeleteMyAvatarResponse, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryResponse, UsersControllerGetAvatarData, UsersControllerGetMyAccountDeletionData, UsersControllerGetMyAccountDeletionResponse, UsersControllerGetMyCurrentTraktImportData, UsersControllerGetMyCurrentTraktImportResponse, UsersControllerGetMySettingsData, UsersControllerGetMySettingsResponse, UsersControllerGetPublicFollowersData, UsersControllerGetPublicFollowersResponse, UsersControllerGetPublicFollowingData, UsersControllerGetPublicFollowingResponse, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileResponse, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsResponse, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryResponse, UsersControllerRefreshMySocialLinksData, UsersControllerRefreshMySocialLinksResponse, UsersControllerStartMyTraktImportData, UsersControllerStartMyTraktImportResponse, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileResponse, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsResponse, UsersControllerUploadMyAvatarData, UsersControllerUploadMyAvatarResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -1020,12 +1020,12 @@ export const usersControllerDeleteMyAvatarMutation = (options?: Partial<Options<
 };
 
 /**
- * Refresh discovered social profile links from PDS
+ * Upload current user's profile avatar
  */
-export const usersControllerRefreshMySocialLinksMutation = (options?: Partial<Options<UsersControllerRefreshMySocialLinksData>>): UseMutationOptions<UsersControllerRefreshMySocialLinksResponse, DefaultError, Options<UsersControllerRefreshMySocialLinksData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerRefreshMySocialLinksResponse, DefaultError, Options<UsersControllerRefreshMySocialLinksData>> = {
+export const usersControllerUploadMyAvatarMutation = (options?: Partial<Options<UsersControllerUploadMyAvatarData>>): UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerRefreshMySocialLinks({
+            const { data } = await usersControllerUploadMyAvatar({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1037,12 +1037,12 @@ export const usersControllerRefreshMySocialLinksMutation = (options?: Partial<Op
 };
 
 /**
- * Upload current user's profile avatar
+ * Refresh discovered social profile links from PDS
  */
-export const usersControllerUploadMyAvatarMutation = (options?: Partial<Options<UsersControllerUploadMyAvatarData>>): UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> => {
-    const mutationOptions: UseMutationOptions<UsersControllerUploadMyAvatarResponse, DefaultError, Options<UsersControllerUploadMyAvatarData>> = {
+export const usersControllerRefreshMySocialLinksMutation = (options?: Partial<Options<UsersControllerRefreshMySocialLinksData>>): UseMutationOptions<UsersControllerRefreshMySocialLinksResponse, DefaultError, Options<UsersControllerRefreshMySocialLinksData>> => {
+    const mutationOptions: UseMutationOptions<UsersControllerRefreshMySocialLinksResponse, DefaultError, Options<UsersControllerRefreshMySocialLinksData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await usersControllerUploadMyAvatar({
+            const { data } = await usersControllerRefreshMySocialLinks({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1785,6 +1785,93 @@ export const notesControllerDeleteNoteMutation = (options?: Partial<Options<Note
     return mutationOptions;
 };
 
+export const ratingsControllerGetRatingQueryKey = (options: Options<RatingsControllerGetRatingData>) => createQueryKey('ratingsControllerGetRating', options);
+
+/**
+ * Get a rating for a user and media item
+ */
+export const ratingsControllerGetRatingOptions = (options: Options<RatingsControllerGetRatingData>) => queryOptions<RatingsControllerGetRatingResponse, DefaultError, RatingsControllerGetRatingResponse, ReturnType<typeof ratingsControllerGetRatingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ratingsControllerGetRating({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: ratingsControllerGetRatingQueryKey(options)
+});
+
+export const ratingsControllerGetMediaRatingQueryKey = (options: Options<RatingsControllerGetMediaRatingData>) => createQueryKey('ratingsControllerGetMediaRating', options);
+
+/**
+ * Get aggregate rating for a media item
+ */
+export const ratingsControllerGetMediaRatingOptions = (options: Options<RatingsControllerGetMediaRatingData>) => queryOptions<RatingsControllerGetMediaRatingResponse, DefaultError, RatingsControllerGetMediaRatingResponse, ReturnType<typeof ratingsControllerGetMediaRatingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ratingsControllerGetMediaRating({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: ratingsControllerGetMediaRatingQueryKey(options)
+});
+
+/**
+ * Get batch aggregate ratings for multiple media
+ */
+export const ratingsControllerGetBatchRatingsMutation = (options?: Partial<Options<RatingsControllerGetBatchRatingsData>>): UseMutationOptions<RatingsControllerGetBatchRatingsResponse, DefaultError, Options<RatingsControllerGetBatchRatingsData>> => {
+    const mutationOptions: UseMutationOptions<RatingsControllerGetBatchRatingsResponse, DefaultError, Options<RatingsControllerGetBatchRatingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ratingsControllerGetBatchRatings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Set (create or update) a rating
+ */
+export const ratingsControllerSetRatingMutation = (options?: Partial<Options<RatingsControllerSetRatingData>>): UseMutationOptions<RatingsControllerSetRatingResponse, DefaultError, Options<RatingsControllerSetRatingData>> => {
+    const mutationOptions: UseMutationOptions<RatingsControllerSetRatingResponse, DefaultError, Options<RatingsControllerSetRatingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ratingsControllerSetRating({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Clear a rating
+ */
+export const ratingsControllerClearRatingMutation = (options?: Partial<Options<RatingsControllerClearRatingData>>): UseMutationOptions<unknown, DefaultError, Options<RatingsControllerClearRatingData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<RatingsControllerClearRatingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ratingsControllerClearRating({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const reviewsControllerGetReviewQueryKey = (options: Options<ReviewsControllerGetReviewData>) => createQueryKey('reviewsControllerGetReview', options);
 
 /**
@@ -1894,23 +1981,6 @@ export const reviewsControllerGetMediaReviewsInfiniteOptions = (options: Options
 });
 
 /**
- * Get batch ratings for multiple media items
- */
-export const reviewsControllerGetBatchRatingsMutation = (options?: Partial<Options<ReviewsControllerGetBatchRatingsData>>): UseMutationOptions<ReviewsControllerGetBatchRatingsResponse, DefaultError, Options<ReviewsControllerGetBatchRatingsData>> => {
-    const mutationOptions: UseMutationOptions<ReviewsControllerGetBatchRatingsResponse, DefaultError, Options<ReviewsControllerGetBatchRatingsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await reviewsControllerGetBatchRatings({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
  * Create or update a review
  */
 export const reviewsControllerUpsertReviewMutation = (options?: Partial<Options<ReviewsControllerUpsertReviewData>>): UseMutationOptions<ReviewsControllerUpsertReviewResponse, DefaultError, Options<ReviewsControllerUpsertReviewData>> => {
@@ -1945,12 +2015,12 @@ export const reviewsControllerDeleteReviewMutation = (options?: Partial<Options<
 };
 
 /**
- * Like a review
+ * Unlike a review
  */
-export const reviewsControllerLikeReviewMutation = (options?: Partial<Options<ReviewsControllerLikeReviewData>>): UseMutationOptions<ReviewsControllerLikeReviewResponse, DefaultError, Options<ReviewsControllerLikeReviewData>> => {
-    const mutationOptions: UseMutationOptions<ReviewsControllerLikeReviewResponse, DefaultError, Options<ReviewsControllerLikeReviewData>> = {
+export const reviewsControllerUnlikeReviewMutation = (options?: Partial<Options<ReviewsControllerUnlikeReviewData>>): UseMutationOptions<unknown, DefaultError, Options<ReviewsControllerUnlikeReviewData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ReviewsControllerUnlikeReviewData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await reviewsControllerLikeReview({
+            const { data } = await reviewsControllerUnlikeReview({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1962,12 +2032,12 @@ export const reviewsControllerLikeReviewMutation = (options?: Partial<Options<Re
 };
 
 /**
- * Unlike a review
+ * Like a review
  */
-export const reviewsControllerUnlikeReviewMutation = (options?: Partial<Options<ReviewsControllerUnlikeReviewData>>): UseMutationOptions<ReviewsControllerUnlikeReviewResponse, DefaultError, Options<ReviewsControllerUnlikeReviewData>> => {
-    const mutationOptions: UseMutationOptions<ReviewsControllerUnlikeReviewResponse, DefaultError, Options<ReviewsControllerUnlikeReviewData>> = {
+export const reviewsControllerLikeReviewMutation = (options?: Partial<Options<ReviewsControllerLikeReviewData>>): UseMutationOptions<unknown, DefaultError, Options<ReviewsControllerLikeReviewData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ReviewsControllerLikeReviewData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await reviewsControllerUnlikeReview({
+            const { data } = await reviewsControllerLikeReview({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

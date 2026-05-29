@@ -263,9 +263,6 @@ export class MediaReviewsResponseDto {
 	@ApiProperty({ type: [MediaReviewItemDto] })
 	items: MediaReviewItemDto[];
 
-	@ApiPropertyOptional({ description: "Average rating (1-10 scale)" })
-	averageRating?: number;
-
 	@ApiProperty({ description: "Total review count" })
 	total: number;
 
@@ -305,36 +302,4 @@ export class ReviewLikesResponseDto {
 		description: "Whether the requesting user has liked this review",
 	})
 	hasLiked: boolean;
-}
-
-export class BatchRatingRequestDto {
-	@ApiProperty({
-		description: "Media type",
-		enum: ["movie", "show"],
-	})
-	@IsString()
-	mediaType: "movie" | "show";
-
-	@ApiProperty({
-		description: "Array of media IDs to fetch ratings for",
-		type: [String],
-	})
-	@IsString({ each: true })
-	mediaIds: string[];
-}
-
-export class BatchRatingItemDto {
-	@ApiProperty()
-	mediaId: string;
-
-	@ApiPropertyOptional({ description: "Average rating (1-10 scale)" })
-	averageRating?: number;
-
-	@ApiProperty({ description: "Total review count" })
-	reviewCount: number;
-}
-
-export class BatchRatingResponseDto {
-	@ApiProperty({ type: [BatchRatingItemDto] })
-	items: BatchRatingItemDto[];
 }

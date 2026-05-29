@@ -115,6 +115,11 @@ export type Note = Prisma.NoteModel
  */
 export type Review = Prisma.ReviewModel
 /**
+ * Model Rating
+ * 
+ */
+export type Rating = Prisma.RatingModel
+/**
  * Model ReviewLike
  * 
  */

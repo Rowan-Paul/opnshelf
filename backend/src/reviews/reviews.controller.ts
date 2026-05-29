@@ -21,8 +21,6 @@ import { AuthGuard } from "../auth/auth.guard";
 import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
-	BatchRatingRequestDto,
-	BatchRatingResponseDto,
 	GetReviewQueryDto,
 	MediaReviewsQueryDto,
 	MediaReviewsResponseDto,
@@ -181,23 +179,9 @@ export class ReviewsController {
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),
-			averageRating: result.averageRating,
 			total: result.total,
 			nextCursor: result.nextCursor,
 		};
-	}
-
-	@Post("batch")
-	@ApiOperation({ summary: "Get batch ratings for multiple media items" })
-	@ApiOkResponse({
-		description: "Batch ratings retrieved",
-		type: BatchRatingResponseDto,
-	})
-	async getBatchRatings(
-		@Body() dto: BatchRatingRequestDto,
-	): Promise<BatchRatingResponseDto> {
-		const result = await this.reviewsService.getBatchRatings(dto);
-		return result;
 	}
 
 	@Post()

@@ -9,6 +9,11 @@ import {
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
 import {
+	useClearRating,
+	useRating,
+	useSetRating,
+} from "#/lib/hooks/useRatings";
+import {
 	useDeleteReview,
 	useReview,
 	useUpsertReview,
@@ -37,6 +42,31 @@ export function ReviewDialog({
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
 
+	// The 1-10 score is its own entity (xyz.opnshelf.rating).
+	const { data: ratingRecord } = useRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const setRatingMutation = useSetRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const clearRatingMutation = useClearRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+
+	// The optional long-form text still lives on the legacy review.
+	// TODO(#113): convert review text into a site.standard.document.
 	const { data: review } = useReview({
 		userDid,
 		mediaType,
@@ -63,74 +93,111 @@ export function ReviewDialog({
 	const [rating, setRating] = useState(0);
 	const [content, setContent] = useState("");
 
-	const prevUpsertPending = useRef(false);
-	const prevDeletePending = useRef(false);
+	const wasPending = useRef(false);
+
+	const isPending =
+		setRatingMutation.isPending ||
+		clearRatingMutation.isPending ||
+		upsertMutation.isPending ||
+		deleteMutation.isPending;
 
 	useEffect(() => {
-		if (
-			prevUpsertPending.current &&
-			!upsertMutation.isPending &&
-			upsertMutation.isSuccess
-		) {
+		const succeeded =
+			setRatingMutation.isSuccess ||
+			clearRatingMutation.isSuccess ||
+			upsertMutation.isSuccess ||
+			deleteMutation.isSuccess;
+
+		if (wasPending.current && !isPending && succeeded) {
 			onOpenChange(false);
 			onSuccess?.();
+			setRatingMutation.reset();
+			clearRatingMutation.reset();
 			upsertMutation.reset();
-		}
-		prevUpsertPending.current = upsertMutation.isPending;
-	}, [upsertMutation, onOpenChange, onSuccess]);
-
-	useEffect(() => {
-		if (
-			prevDeletePending.current &&
-			!deleteMutation.isPending &&
-			deleteMutation.isSuccess
-		) {
-			onOpenChange(false);
-			onSuccess?.();
 			deleteMutation.reset();
 		}
-		prevDeletePending.current = deleteMutation.isPending;
-	}, [deleteMutation, onOpenChange, onSuccess]);
+		wasPending.current = isPending;
+	}, [
+		isPending,
+		setRatingMutation,
+		clearRatingMutation,
+		upsertMutation,
+		deleteMutation,
+		onOpenChange,
+		onSuccess,
+	]);
 
 	useEffect(() => {
 		if (open) {
-			setRating(review?.rating ?? 0);
+			setRating(ratingRecord?.rating ?? 0);
 			setContent(review?.content ?? "");
 		}
-	}, [open, review?.rating, review?.content]);
+	}, [open, ratingRecord?.rating, review?.content]);
+
+	const resolvedMediaType =
+		episodeNumber != null
+			? "episode"
+			: seasonNumber != null
+				? "season"
+				: mediaType;
 
 	const handleSave = () => {
+		const trimmed = content.trim();
+
 		if (rating === 0) {
+			// Clearing the score: remove the rating, and any existing review text.
+			if (ratingRecord?.id) {
+				clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
+			}
 			if (review?.id) {
 				deleteMutation.mutate({ path: { reviewId: review.id } });
-			} else {
+			}
+			if (!ratingRecord?.id && !review?.id) {
 				onOpenChange(false);
 			}
 			return;
 		}
-		upsertMutation.mutate({
+
+		// Persist the score as a Rating entity.
+		setRatingMutation.mutate({
 			body: {
-				mediaType:
-					episodeNumber != null
-						? "episode"
-						: seasonNumber != null
-							? "season"
-							: mediaType,
+				mediaType: resolvedMediaType,
 				mediaId,
 				seasonNumber,
 				episodeNumber,
 				rating,
-				content: content.trim() || undefined,
 			},
 		});
+
+		// Long-form text remains a review for now.
+		// TODO(#113): split review text into its own document entity; the
+		// review currently still carries a rating to satisfy the legacy schema.
+		if (trimmed) {
+			upsertMutation.mutate({
+				body: {
+					mediaType: resolvedMediaType,
+					mediaId,
+					seasonNumber,
+					episodeNumber,
+					rating,
+					content: trimmed,
+				},
+			});
+		} else if (review?.id) {
+			deleteMutation.mutate({ path: { reviewId: review.id } });
+		}
 	};
 
 	const handleDelete = () => {
-		if (!review?.id) return;
-		deleteMutation.mutate({ path: { reviewId: review.id } });
+		if (ratingRecord?.id) {
+			clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
+		}
+		if (review?.id) {
+			deleteMutation.mutate({ path: { reviewId: review.id } });
+		}
 	};
 
-	const isPending = upsertMutation.isPending || deleteMutation.isPending;
+	const hasExisting = !!ratingRecord?.id || !!review?.id;
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,7 +205,7 @@ export function ReviewDialog({
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Star className="size-4 text-yellow-500" />
-						{review?.rating ? "Edit Review" : "Add a Review"}
+						{hasExisting ? "Edit Review" : "Add a Review"}
 					</DialogTitle>
 					<DialogDescription className="sr-only">
 						Add or edit your rating and review for this title.
@@ -160,14 +227,15 @@ export function ReviewDialog({
 						{content.length}/5000
 					</span>
 					<div className="flex gap-2">
-						{review?.id && (
+						{hasExisting && (
 							<button
 								type="button"
 								onClick={handleDelete}
 								disabled={isPending}
 								className="btn btn-ghost btn-sm gap-1 text-red-500 hover:text-red-600"
 							>
-								{deleteMutation.isPending && (
+								{(deleteMutation.isPending ||
+									clearRatingMutation.isPending) && (
 									<Loader2 className="size-3.5 animate-spin" />
 								)}
 								Delete
@@ -187,7 +255,7 @@ export function ReviewDialog({
 							disabled={isPending}
 							className="btn btn-primary btn-sm gap-1"
 						>
-							{upsertMutation.isPending ? (
+							{setRatingMutation.isPending || upsertMutation.isPending ? (
 								<Loader2 className="size-3.5 animate-spin" />
 							) : (
 								<Save className="size-3.5" />

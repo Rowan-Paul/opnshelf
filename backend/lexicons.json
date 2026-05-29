@@ -30,6 +30,11 @@
 			"id": "xyz.opnshelf.review",
 			"path": "lexicons/app/opnshelf/review.json",
 			"local": true
+		},
+		{
+			"id": "xyz.opnshelf.rating",
+			"path": "lexicons/app/opnshelf/rating.json",
+			"local": true
 		}
 	]
 }

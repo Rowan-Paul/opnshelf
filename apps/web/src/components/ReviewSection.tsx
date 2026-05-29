@@ -1,6 +1,7 @@
 import { Loader2, Pencil, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
+import { useClearRating, useRating } from "#/lib/hooks/useRatings";
 import { useDeleteReview, useReview } from "#/lib/hooks/useReviews";
 import { ReviewDialog } from "./ReviewDialog";
 import StarRating from "./StarRating";
@@ -22,7 +23,7 @@ export default function ReviewSection({
 	const userDid = user?.did ?? "";
 	const [dialogOpen, setDialogOpen] = useState(false);
 
-	const { data: review, isLoading } = useReview({
+	const { data: ratingRecord, isLoading } = useRating({
 		userDid,
 		mediaType,
 		mediaId,
@@ -30,7 +31,24 @@ export default function ReviewSection({
 		episodeNumber,
 	});
 
-	const deleteMutation = useDeleteReview({
+	// Review text still lives on the legacy review. TODO(#113).
+	const { data: review } = useReview({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+
+	const clearRatingMutation = useClearRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+
+	const deleteReviewMutation = useDeleteReview({
 		userDid,
 		mediaType,
 		mediaId,
@@ -51,6 +69,19 @@ export default function ReviewSection({
 		);
 	}
 
+	const handleDelete = () => {
+		if (ratingRecord?.id) {
+			clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
+		}
+		if (review?.id) {
+			deleteReviewMutation.mutate({ path: { reviewId: review.id } });
+		}
+	};
+
+	const isDeletePending =
+		clearRatingMutation.isPending || deleteReviewMutation.isPending;
+	const hasRating = !!ratingRecord?.rating;
+
 	return (
 		<>
 			<section id="your-review" className="card p-5">
@@ -59,7 +90,7 @@ export default function ReviewSection({
 						<Star className="size-4 text-yellow-500" />
 						Your Review
 					</h3>
-					{review?.rating && (
+					{hasRating && (
 						<div className="flex gap-1">
 							<button
 								type="button"
@@ -71,15 +102,12 @@ export default function ReviewSection({
 							</button>
 							<button
 								type="button"
-								onClick={() =>
-									review.id &&
-									deleteMutation.mutate({ path: { reviewId: review.id } })
-								}
-								disabled={deleteMutation.isPending}
+								onClick={handleDelete}
+								disabled={isDeletePending}
 								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
 								aria-label="Delete review"
 							>
-								{deleteMutation.isPending ? (
+								{isDeletePending ? (
 									<Loader2 className="size-4 animate-spin" />
 								) : (
 									<Trash2 className="size-4" />
@@ -89,12 +117,12 @@ export default function ReviewSection({
 					)}
 				</div>
 
-				{review?.rating ? (
+				{hasRating ? (
 					<>
 						<div className="mb-2">
-							<StarRating value={review.rating} readOnly showValue />
+							<StarRating value={ratingRecord.rating} readOnly showValue />
 						</div>
-						{review.content && (
+						{review?.content && (
 							<p className="whitespace-pre-wrap text-(--foreground-muted) text-sm leading-relaxed">
 								{review.content}
 							</p>

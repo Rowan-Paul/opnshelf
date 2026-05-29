@@ -1,6 +1,5 @@
 import {
 	reviewsControllerDeleteReviewMutation,
-	reviewsControllerGetBatchRatingsMutation,
 	reviewsControllerGetMediaReviewsOptions,
 	reviewsControllerGetMediaReviewsQueryKey,
 	reviewsControllerGetReviewLikesOptions,
@@ -13,7 +12,6 @@ import {
 	reviewsControllerUpsertReviewMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface UseReviewOptions {
@@ -225,75 +223,6 @@ export function useUserReviews({
 		}),
 		enabled: !!userDid,
 	});
-}
-
-export function useBatchRatings() {
-	return useMutation({
-		...reviewsControllerGetBatchRatingsMutation(),
-	});
-}
-
-interface BatchRatingItem {
-	id: string | number;
-	type: "movie" | "show";
-}
-
-export function useBatchRatingsQuery(items: BatchRatingItem[]) {
-	const mutation = useBatchRatings();
-	const [ratings, setRatings] = useState<
-		Map<string, { averageRating?: number; reviewCount: number }>
-	>(new Map());
-
-	useEffect(() => {
-		const movieIds = items
-			.filter((i) => i.type === "movie")
-			.map((i) => String(i.id));
-		const showIds = items
-			.filter((i) => i.type === "show")
-			.map((i) => String(i.id));
-
-		const promises: Promise<void>[] = [];
-
-		if (movieIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "movie", mediaIds: movieIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
-		}
-
-		if (showIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "show", mediaIds: showIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
-		}
-
-		if (promises.length > 0) {
-			Promise.all(promises).catch(() => {
-				// silently ignore batch rating errors
-			});
-		}
-	}, [items, mutation.mutateAsync]);
-
-	return { ratings, isLoading: mutation.isPending };
 }
 
 interface UseReviewLikesOptions {

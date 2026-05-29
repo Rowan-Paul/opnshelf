@@ -1136,6 +1136,79 @@ export type UpsertNoteDto = {
     content: string;
 };
 
+export type RatingResponseDto = {
+    id: string;
+    rkey: string;
+    rating: number;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MediaRatingResponseDto = {
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total number of ratings
+     */
+    ratingCount: number;
+};
+
+export type BatchRatingRequestDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show';
+    /**
+     * Array of media IDs to fetch ratings for
+     */
+    mediaIds: Array<string>;
+};
+
+export type BatchRatingItemDto = {
+    mediaId: string;
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total number of ratings
+     */
+    ratingCount: number;
+};
+
+export type BatchRatingResponseDto = {
+    items: Array<BatchRatingItemDto>;
+};
+
+export type SetRatingDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Rating from 1 to 10 (maps to 0.5-5.0 stars)
+     */
+    rating: number;
+};
+
 export type ReviewResponseDto = {
     id: string;
     rkey: string;
@@ -1204,10 +1277,6 @@ export type MediaReviewItemDto = {
 export type MediaReviewsResponseDto = {
     items: Array<MediaReviewItemDto>;
     /**
-     * Average rating (1-10 scale)
-     */
-    averageRating?: number;
-    /**
      * Total review count
      */
     total: number;
@@ -1215,53 +1284,6 @@ export type MediaReviewsResponseDto = {
      * Cursor for next page (null if no more items)
      */
     nextCursor: string | null;
-};
-
-export type ReviewLikeItemDto = {
-    userDid: string;
-    userHandle: string;
-    userDisplayName?: string;
-    userAvatar?: string;
-    createdAt: string;
-};
-
-export type ReviewLikesResponseDto = {
-    items: Array<ReviewLikeItemDto>;
-    /**
-     * Total like count
-     */
-    total: number;
-    /**
-     * Whether the requesting user has liked this review
-     */
-    hasLiked: boolean;
-};
-
-export type BatchRatingRequestDto = {
-    /**
-     * Media type
-     */
-    mediaType: 'movie' | 'show';
-    /**
-     * Array of media IDs to fetch ratings for
-     */
-    mediaIds: Array<string>;
-};
-
-export type BatchRatingItemDto = {
-    mediaId: string;
-    /**
-     * Average rating (1-10 scale)
-     */
-    averageRating?: number;
-    /**
-     * Total review count
-     */
-    reviewCount: number;
-};
-
-export type BatchRatingResponseDto = {
-    items: Array<BatchRatingItemDto>;
 };
 
 export type UpsertReviewDto = {
@@ -1289,6 +1311,26 @@ export type UpsertReviewDto = {
      * Review text
      */
     content?: string;
+};
+
+export type ReviewLikeItemDto = {
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    createdAt: string;
+};
+
+export type ReviewLikesResponseDto = {
+    items: Array<ReviewLikeItemDto>;
+    /**
+     * Total like count
+     */
+    total: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
 };
 
 export type ShelfResponseDto = {
@@ -2456,19 +2498,6 @@ export type UsersControllerDeleteMyAvatarResponses = {
 
 export type UsersControllerDeleteMyAvatarResponse = UsersControllerDeleteMyAvatarResponses[keyof UsersControllerDeleteMyAvatarResponses];
 
-export type UsersControllerRefreshMySocialLinksData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/profile/refresh-social-links';
-};
-
-export type UsersControllerRefreshMySocialLinksResponses = {
-    200: UserProfileDto;
-};
-
-export type UsersControllerRefreshMySocialLinksResponse = UsersControllerRefreshMySocialLinksResponses[keyof UsersControllerRefreshMySocialLinksResponses];
-
 export type UsersControllerUploadMyAvatarData = {
     body: {
         avatar: Blob | File;
@@ -2483,6 +2512,26 @@ export type UsersControllerUploadMyAvatarResponses = {
 };
 
 export type UsersControllerUploadMyAvatarResponse = UsersControllerUploadMyAvatarResponses[keyof UsersControllerUploadMyAvatarResponses];
+
+export type UsersControllerRefreshMySocialLinksData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile/refresh-social-links';
+};
+
+export type UsersControllerRefreshMySocialLinksErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerRefreshMySocialLinksResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerRefreshMySocialLinksResponse = UsersControllerRefreshMySocialLinksResponses[keyof UsersControllerRefreshMySocialLinksResponses];
 
 export type UsersControllerDeleteMyAccountData = {
     body: DeleteUserAccountDto;
@@ -3285,6 +3334,143 @@ export type NotesControllerDeleteNoteResponses = {
     200: unknown;
 };
 
+export type RatingsControllerGetRatingData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query: {
+        /**
+         * Media type (movie, show, season, episode)
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/ratings/user/{userDid}';
+};
+
+export type RatingsControllerGetRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerGetRatingResponses = {
+    /**
+     * Rating retrieved
+     */
+    200: RatingResponseDto;
+};
+
+export type RatingsControllerGetRatingResponse = RatingsControllerGetRatingResponses[keyof RatingsControllerGetRatingResponses];
+
+export type RatingsControllerGetMediaRatingData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/ratings/media';
+};
+
+export type RatingsControllerGetMediaRatingResponses = {
+    /**
+     * Aggregate rating retrieved
+     */
+    200: MediaRatingResponseDto;
+};
+
+export type RatingsControllerGetMediaRatingResponse = RatingsControllerGetMediaRatingResponses[keyof RatingsControllerGetMediaRatingResponses];
+
+export type RatingsControllerGetBatchRatingsData = {
+    body: BatchRatingRequestDto;
+    path?: never;
+    query?: never;
+    url: '/ratings/batch';
+};
+
+export type RatingsControllerGetBatchRatingsResponses = {
+    /**
+     * Batch ratings retrieved
+     */
+    200: BatchRatingResponseDto;
+};
+
+export type RatingsControllerGetBatchRatingsResponse = RatingsControllerGetBatchRatingsResponses[keyof RatingsControllerGetBatchRatingsResponses];
+
+export type RatingsControllerSetRatingData = {
+    body: SetRatingDto;
+    path?: never;
+    query?: never;
+    url: '/ratings';
+};
+
+export type RatingsControllerSetRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerSetRatingResponses = {
+    /**
+     * Rating set
+     */
+    200: RatingResponseDto;
+};
+
+export type RatingsControllerSetRatingResponse = RatingsControllerSetRatingResponses[keyof RatingsControllerSetRatingResponses];
+
+export type RatingsControllerClearRatingData = {
+    body?: never;
+    path: {
+        ratingId: string;
+    };
+    query?: never;
+    url: '/ratings/{ratingId}';
+};
+
+export type RatingsControllerClearRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerClearRatingResponses = {
+    /**
+     * Rating cleared
+     */
+    200: unknown;
+};
+
 export type ReviewsControllerGetReviewData = {
     body?: never;
     path: {
@@ -3395,22 +3581,6 @@ export type ReviewsControllerGetMediaReviewsResponses = {
 
 export type ReviewsControllerGetMediaReviewsResponse = ReviewsControllerGetMediaReviewsResponses[keyof ReviewsControllerGetMediaReviewsResponses];
 
-export type ReviewsControllerGetBatchRatingsData = {
-    body: BatchRatingRequestDto;
-    path?: never;
-    query?: never;
-    url: '/reviews/batch';
-};
-
-export type ReviewsControllerGetBatchRatingsResponses = {
-    /**
-     * Batch ratings retrieved
-     */
-    200: BatchRatingResponseDto;
-};
-
-export type ReviewsControllerGetBatchRatingsResponse = ReviewsControllerGetBatchRatingsResponses[keyof ReviewsControllerGetBatchRatingsResponses];
-
 export type ReviewsControllerUpsertReviewData = {
     body: UpsertReviewDto;
     path?: never;
@@ -3457,33 +3627,6 @@ export type ReviewsControllerDeleteReviewResponses = {
     200: unknown;
 };
 
-export type ReviewsControllerDeleteReviewResponse = ReviewsControllerDeleteReviewResponses[keyof ReviewsControllerDeleteReviewResponses];
-
-export type ReviewsControllerLikeReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}/like';
-};
-
-export type ReviewsControllerLikeReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerLikeReviewResponses = {
-    /**
-     * Review liked
-     */
-    200: unknown;
-};
-
-export type ReviewsControllerLikeReviewResponse = ReviewsControllerLikeReviewResponses[keyof ReviewsControllerLikeReviewResponses];
-
 export type ReviewsControllerUnlikeReviewData = {
     body?: never;
     path: {
@@ -3507,7 +3650,28 @@ export type ReviewsControllerUnlikeReviewResponses = {
     200: unknown;
 };
 
-export type ReviewsControllerUnlikeReviewResponse = ReviewsControllerUnlikeReviewResponses[keyof ReviewsControllerUnlikeReviewResponses];
+export type ReviewsControllerLikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerLikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerLikeReviewResponses = {
+    /**
+     * Review liked
+     */
+    200: unknown;
+};
 
 export type ReviewsControllerGetReviewLikesData = {
     body?: never;

@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { useListActions, useListItemStatus } from "#/lib/hooks";
 import { useNote } from "#/lib/hooks/useNotes";
-import { useReview } from "#/lib/hooks/useReviews";
+import { useRating } from "#/lib/hooks/useRatings";
 import { NoteDialog } from "./NoteDialog";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -51,7 +51,7 @@ export default function MediaActionsBar({
 		seasonNumber,
 		episodeNumber,
 	});
-	const { data: review } = useReview({
+	const { data: ratingRecord } = useRating({
 		userDid,
 		mediaType,
 		mediaId,
@@ -151,13 +151,15 @@ export default function MediaActionsBar({
 					type="button"
 					onClick={() => setReviewDialogOpen(true)}
 					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-						review?.rating
+						ratingRecord?.rating
 							? "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
 							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 					}`}
-					aria-label={review?.rating ? "Edit review" : "Add review"}
+					aria-label={ratingRecord?.rating ? "Edit review" : "Add review"}
 				>
-					<Star className={`size-5 ${review?.rating ? "fill-current" : ""}`} />
+					<Star
+						className={`size-5 ${ratingRecord?.rating ? "fill-current" : ""}`}
+					/>
 				</button>
 
 				{/* Share Button */}

@@ -51,6 +51,12 @@ import type { Main as NoteRecord } from "../lexicons/xyz/opnshelf/note.defs";
 import { NotesService } from "../notes/notes.service";
 import { PrismaService } from "../prisma/prisma.service";
 import {
+	$nsid as RATING_COLLECTION,
+	main as ratingSchema,
+} from "../lexicons/xyz/opnshelf/rating";
+import type { Main as RatingRecord } from "../lexicons/xyz/opnshelf/rating.defs";
+import { RatingsService } from "../ratings/ratings.service";
+import {
 	$nsid as REVIEW_COLLECTION,
 	main as reviewSchema,
 } from "../lexicons/xyz/opnshelf/review";
@@ -81,6 +87,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly listsService: ListsService,
 		private readonly notesService: NotesService,
 		private readonly reviewsService: ReviewsService,
+		private readonly ratingsService: RatingsService,
 		private readonly socialService: SocialService,
 		private readonly profileService: ProfileService,
 	) {
@@ -238,6 +245,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleNoteEvent(evt, uri);
 		} else if (evt.collection === REVIEW_COLLECTION) {
 			await this.handleReviewEvent(evt, uri);
+		} else if (evt.collection === RATING_COLLECTION) {
+			await this.handleRatingEvent(evt, uri);
 		} else if (evt.collection === REVIEW_LIKE_COLLECTION) {
 			await this.handleReviewLikeEvent(evt, uri);
 		}
@@ -597,6 +606,42 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.reviewsService.deleteReviewRecord(evt.rkey);
+		}
+	}
+
+	private async handleRatingEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.debug(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let ratingRecord: RatingRecord;
+			try {
+				ratingRecord = ratingSchema.parse(evt.record);
+			} catch {
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+			});
+
+			if (!user) {
+				return;
+			}
+
+			await this.ratingsService.indexRatingRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				ratingRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			await this.ratingsService.deleteRatingRecord(evt.rkey);
 		}
 	}
 

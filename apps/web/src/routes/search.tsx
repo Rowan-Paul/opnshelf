@@ -31,7 +31,7 @@ import { Pagination } from "#/components/Pagination";
 import { useDebounce } from "#/hooks/useDebounce";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { useBatchRatingsQuery } from "#/lib/hooks/useReviews";
+import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
 
 setupApiClient();
 

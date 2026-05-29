@@ -66,6 +66,7 @@ export const ModelName = {
   ListItem: 'ListItem',
   Note: 'Note',
   Review: 'Review',
+  Rating: 'Rating',
   ReviewLike: 'ReviewLike',
   Feedback: 'Feedback'
 } as const
@@ -335,6 +336,24 @@ export const ReviewScalarFieldEnum = {
 } as const
 
 export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
+
+
+export const RatingScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  rating: 'rating',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RatingScalarFieldEnum = (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum]
 
 
 export const ReviewLikeScalarFieldEnum = {

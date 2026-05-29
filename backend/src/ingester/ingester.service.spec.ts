@@ -41,6 +41,7 @@ import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
 import { NotesService } from "../notes/notes.service";
 import { ProfileService } from "../users/profile.service";
+import { RatingsService } from "../ratings/ratings.service";
 import { ReviewsService } from "../reviews/reviews.service";
 import { IngesterService } from "./ingester.service";
 
@@ -96,6 +97,10 @@ describe("IngesterService", () => {
 		deleteReviewRecord: jest.Mock;
 		indexReviewLikeRecord: jest.Mock;
 		deleteReviewLikeRecord: jest.Mock;
+	};
+	let mockRatingsService: {
+		indexRatingRecord: jest.Mock;
+		deleteRatingRecord: jest.Mock;
 	};
 
 	const mockConfigService = {
@@ -165,6 +170,11 @@ describe("IngesterService", () => {
 			deleteReviewLikeRecord: jest.fn(),
 		};
 
+		mockRatingsService = {
+			indexRatingRecord: jest.fn(),
+			deleteRatingRecord: jest.fn(),
+		};
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				IngesterService,
@@ -177,6 +187,7 @@ describe("IngesterService", () => {
 				{ provide: SocialService, useValue: mockSocialService },
 				{ provide: ProfileService, useValue: mockProfileService },
 				{ provide: ReviewsService, useValue: mockReviewsService },
+				{ provide: RatingsService, useValue: mockRatingsService },
 			],
 		}).compile();
 

@@ -1,5 +1,5 @@
 import { useAuth } from "#/lib/auth-context";
-import { useBatchRatingsQuery } from "#/lib/hooks/useReviews";
+import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
 import ActionableMediaCard from "./ActionableMediaCard";
 
 interface SimilarItem {

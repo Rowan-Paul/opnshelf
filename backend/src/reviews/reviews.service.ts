@@ -9,11 +9,7 @@ import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs"
 import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import { PrismaService } from "../prisma/prisma.service";
-import type {
-	BatchRatingRequestDto,
-	MediaReviewsQueryDto,
-	UpsertReviewDto,
-} from "./dto/review.dto";
+import type { MediaReviewsQueryDto, UpsertReviewDto } from "./dto/review.dto";
 
 export interface ATSession {
 	did: string;
@@ -232,48 +228,15 @@ export class ReviewsService {
 
 		const total = await this.prisma.review.count({ where });
 
-		// Calculate average rating
-		const aggregate = await this.prisma.review.aggregate({
-			where,
-			_avg: { rating: true },
-		});
-
 		return {
 			items: items.map((review) => ({
 				...review,
 				likeCount: review._count.likes,
 				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
 			})),
-			averageRating: aggregate._avg.rating ?? undefined,
 			total,
 			nextCursor,
 		};
-	}
-
-	async getBatchRatings(dto: BatchRatingRequestDto) {
-		const { mediaType, mediaIds } = dto;
-
-		const results = await Promise.all(
-			mediaIds.map(async (mediaId) => {
-				const [aggregate, count] = await Promise.all([
-					this.prisma.review.aggregate({
-						where: { mediaType, mediaId },
-						_avg: { rating: true },
-					}),
-					this.prisma.review.count({
-						where: { mediaType, mediaId },
-					}),
-				]);
-
-				return {
-					mediaId,
-					averageRating: aggregate._avg.rating ?? undefined,
-					reviewCount: count,
-				};
-			}),
-		);
-
-		return { items: results };
 	}
 
 	async upsertReview(

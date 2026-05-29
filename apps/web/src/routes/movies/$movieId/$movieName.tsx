@@ -20,7 +20,7 @@ import {
 	useMovieWatchProviders,
 	useWatchActions,
 } from "#/lib/hooks";
-import { useMediaReviews } from "#/lib/hooks/useReviews";
+import { useMediaRating } from "#/lib/hooks/useRatings";
 import {
 	buildMoviePageMeta,
 	getOpenGraphMetaDescriptors,
@@ -106,7 +106,7 @@ function MovieDetailPage() {
 		isDeleteMovieHistoryPending,
 	} = useWatchActions({ mediaType: "movie", movieId });
 
-	const { data: mediaReviews } = useMediaReviews({
+	const { data: mediaRating } = useMediaRating({
 		mediaType: "movie",
 		mediaId: movieId,
 	});
@@ -201,7 +201,7 @@ function MovieDetailPage() {
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
 								{(
-									mediaReviews?.averageRating ?? Number(movie.vote_average)
+									mediaRating?.averageRating ?? Number(movie.vote_average)
 								).toFixed(1)}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>

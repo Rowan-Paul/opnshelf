@@ -19,7 +19,7 @@ import {
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
-import { useMediaReviews } from "#/lib/hooks/useReviews";
+import { useMediaRating } from "#/lib/hooks/useRatings";
 import {
 	buildShowPageMeta,
 	getOpenGraphMetaDescriptors,
@@ -144,7 +144,7 @@ function ShowDetailPage() {
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
 
-	const { data: mediaReviews } = useMediaReviews({
+	const { data: mediaRating } = useMediaRating({
 		mediaType: "show",
 		mediaId: showId,
 	});
@@ -291,7 +291,7 @@ function ShowDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{(mediaReviews?.averageRating ?? show.vote_average)?.toFixed(
+								{(mediaRating?.averageRating ?? show.vote_average)?.toFixed(
 									1,
 								) || "N/A"}
 							</span>

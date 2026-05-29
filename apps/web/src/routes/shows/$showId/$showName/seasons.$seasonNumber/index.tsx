@@ -19,7 +19,7 @@ import {
 	useUserUpNext,
 	useWatchActions,
 } from "#/lib/hooks";
-import { useMediaReviews } from "#/lib/hooks/useReviews";
+import { useMediaRating } from "#/lib/hooks/useRatings";
 import {
 	buildSeasonPageMeta,
 	getOpenGraphMetaDescriptors,
@@ -139,7 +139,7 @@ function SeasonDetailPage() {
 
 	const { data: discoverShowsData } = useDiscoverShows(1);
 
-	const { data: mediaReviews } = useMediaReviews({
+	const { data: mediaRating } = useMediaRating({
 		mediaType: "show",
 		mediaId: showId,
 		seasonNumber: seasonNum,
@@ -321,7 +321,7 @@ function SeasonDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{(mediaReviews?.averageRating ?? season.vote_average)?.toFixed(
+								{(mediaRating?.averageRating ?? season.vote_average)?.toFixed(
 									1,
 								) || "N/A"}
 							</span>
