@@ -21,7 +21,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
-import { Route as AthandleSegmentRouteImport } from './routes/@$handle.$segment'
+import { Route as AtChar123handleChar125SegmentRouteImport } from './routes/@{$handle}.$segment'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
@@ -99,11 +99,12 @@ const AuthCompleteRoute = AuthCompleteRouteImport.update({
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AthandleSegmentRoute = AthandleSegmentRouteImport.update({
-  id: '/@$handle/$segment',
-  path: '/@$handle/$segment',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AtChar123handleChar125SegmentRoute =
+  AtChar123handleChar125SegmentRouteImport.update({
+    id: '/@{$handle}/$segment',
+    path: '/@{$handle}/$segment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -205,7 +206,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
-  '/@$handle/$segment': typeof AthandleSegmentRoute
+  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -236,7 +237,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
-  '/@$handle/$segment': typeof AthandleSegmentRoute
+  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -264,7 +265,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
-  '/@$handle/$segment': typeof AthandleSegmentRoute
+  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -297,7 +298,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
-    | '/@$handle/$segment'
+    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -328,7 +329,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
-    | '/@$handle/$segment'
+    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -355,7 +356,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
-    | '/@$handle/$segment'
+    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -387,7 +388,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   TosRoute: typeof TosRoute
-  AthandleSegmentRoute: typeof AthandleSegmentRoute
+  AtChar123handleChar125SegmentRoute: typeof AtChar123handleChar125SegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
@@ -481,11 +482,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/@$handle/$segment': {
-      id: '/@$handle/$segment'
-      path: '/@$handle/$segment'
-      fullPath: '/@$handle/$segment'
-      preLoaderRoute: typeof AthandleSegmentRouteImport
+    '/@{$handle}/$segment': {
+      id: '/@{$handle}/$segment'
+      path: '/@{$handle}/$segment'
+      fullPath: '/@{$handle}/$segment'
+      preLoaderRoute: typeof AtChar123handleChar125SegmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$handle/': {
@@ -683,7 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   TosRoute: TosRoute,
-  AthandleSegmentRoute: AthandleSegmentRoute,
+  AtChar123handleChar125SegmentRoute: AtChar123handleChar125SegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,

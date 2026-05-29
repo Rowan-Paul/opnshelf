@@ -6,7 +6,7 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownPreview } from "#/components/MarkdownPreview";
 import { toSlug } from "#/lib/slug";
 
-export const Route = createFileRoute("/@$handle/$segment")({
+export const Route = createFileRoute("/@{$handle}/$segment")({
 	loader: async ({ context, params }) => {
 		try {
 			const review = await context.queryClient.ensureQueryData(
