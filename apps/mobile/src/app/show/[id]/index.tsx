@@ -5,6 +5,7 @@ import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CastSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
+import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SeasonCard } from "@/components/detail/SeasonCard";
@@ -59,6 +60,8 @@ export default function ShowDetailScreen() {
 							]}
 						/>
 					</DetailHero>
+
+					<MediaTrackingActions mediaType="show" showId={id} />
 
 					<OverviewSection text={data.overview} />
 

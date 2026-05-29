@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Home, Search, User } from "lucide-react-native";
+import { Home, Library, Search, User } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
@@ -49,6 +49,15 @@ export default function TabLayout() {
 				options={{
 					title: "Search",
 					tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+				}}
+			/>
+			<Tabs.Screen
+				name="shelf"
+				options={{
+					title: "Shelf",
+					tabBarIcon: ({ color, size }) => (
+						<Library color={color} size={size} />
+					),
 				}}
 			/>
 			<Tabs.Screen

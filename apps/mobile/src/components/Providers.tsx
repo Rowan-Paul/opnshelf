@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
 import { queryClient } from "@/lib/query-client";
@@ -31,7 +32,9 @@ export function Providers({ children }: { children: ReactNode }) {
 				>
 					<QueryClientProvider client={queryClient}>
 						<AuthProvider>
-							<ThemeProvider value={navTheme}>{children}</ThemeProvider>
+							<ThemeProvider value={navTheme}>
+								<ToastProvider>{children}</ToastProvider>
+							</ThemeProvider>
 						</AuthProvider>
 					</QueryClientProvider>
 				</PostHogProvider>

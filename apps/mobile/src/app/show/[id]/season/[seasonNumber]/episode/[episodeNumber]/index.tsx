@@ -5,6 +5,7 @@ import { Star } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
+import { EpisodeWatchButton } from "@/components/detail/EpisodeWatchButton";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { PosterImage } from "@/components/media/PosterImage";
@@ -70,6 +71,12 @@ export default function EpisodeDetailScreen() {
 
 						<MetadataPills
 							items={[yearFromDate(data.air_date), formatRuntime(data.runtime)]}
+						/>
+
+						<EpisodeWatchButton
+							showId={id}
+							seasonNumber={Number(seasonNumber)}
+							episodeNumber={Number(episodeNumber)}
 						/>
 					</View>
 
