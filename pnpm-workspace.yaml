@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/*
   - backend
+overrides:
+  '@tanstack/query-core': 5.100.14
+  '@tanstack/react-query': 5.100.14
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true

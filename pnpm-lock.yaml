@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@tanstack/query-core': 5.100.14
+  '@tanstack/react-query': 5.100.14
+
 importers:
 
   .:
@@ -27,8 +31,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/api
       '@tanstack/react-query':
-        specifier: ^5.100.11
-        version: 5.100.11(react@19.2.3)
+        specifier: 5.100.14
+        version: 5.100.14(react@19.2.3)
       expo:
         specifier: ~56.0.6
         version: 56.0.6(@babel/core@7.29.0)(@expo/dom-webview@56.0.5)(@expo/metro-runtime@56.0.13)(expo-router@56.2.7)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.8.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -145,7 +149,7 @@ importers:
         specifier: latest
         version: 0.10.5(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(solid-js@1.9.12)
       '@tanstack/react-query':
-        specifier: latest
+        specifier: 5.100.14
         version: 5.100.14(react@19.2.5)
       '@tanstack/react-query-devtools':
         specifier: latest
@@ -390,7 +394,7 @@ importers:
         specifier: ^0.13.1
         version: 0.13.1(@hey-api/openapi-ts@0.91.1(typescript@5.9.3))
       '@tanstack/react-query':
-        specifier: latest
+        specifier: 5.100.14
         version: 5.100.14(react@19.2.6)
     devDependencies:
       '@hey-api/openapi-ts':
@@ -4057,9 +4061,6 @@ packages:
     resolution: {integrity: sha512-79pf/RkhteYZTRgcR4F9kbk84P2N8rugQJswxfIqovlbRiT3yI7eBE+5QorIrZaOKktsgzRlXh1l/du/xpl4iA==}
     engines: {node: '>=20.19'}
 
-  '@tanstack/query-core@5.100.11':
-    resolution: {integrity: sha512-lmE0994apShXPj8CUxgx4ch5yUJhE9k/+tVwihBvPOyerACWdBocfFg24t8+0RhtlTd7tEgchDkhlCxNssvDxw==}
-
   '@tanstack/query-core@5.100.14':
     resolution: {integrity: sha512-5X41dGpxgeaHISCRW2oYwcSycZeULZzAunaudXT9ov1KOTj9xwt0CH6hbwqP1/z74ZWF7rYFnDpyYH07XFcZew==}
 
@@ -4078,12 +4079,7 @@ packages:
   '@tanstack/react-query-devtools@5.100.14':
     resolution: {integrity: sha512-JkP5VDgKOw3t/QSA1OABRHEqx8BuNs5MfvZRooNqdvN57SzTuGq3fKR1a2IH5rqa5HDLUm+FOXUEnB9ueHiLzg==}
     peerDependencies:
-      '@tanstack/react-query': ^5.100.14
-      react: ^18 || ^19
-
-  '@tanstack/react-query@5.100.11':
-    resolution: {integrity: sha512-J0f9s5x3LE1450nNNfYx+e/n0DMa0uOBdFJUy5r0RvmsXd4nB/n0rbHtHI1vYXhikNFan+wf51p6Tmp4c8ucrg==}
-    peerDependencies:
+      '@tanstack/react-query': 5.100.14
       react: ^18 || ^19
 
   '@tanstack/react-query@5.100.14':
@@ -4107,8 +4103,8 @@ packages:
     resolution: {integrity: sha512-lJC/qySnlB0RaPCwCS4BQbdsDwyaPP2C8tzuEUsrwPTxm8TVYonYv3sptoSVhY0C2f8i5041X8gbRL7+lSY8BQ==}
     engines: {node: '>=20.19'}
     peerDependencies:
-      '@tanstack/query-core': '>=5.90.0'
-      '@tanstack/react-query': '>=5.90.0'
+      '@tanstack/query-core': 5.100.14
+      '@tanstack/react-query': 5.100.14
       '@tanstack/react-router': '>=1.127.0'
       react: '>=18.0.0 || >=19.0.0'
       react-dom: '>=18.0.0 || >=19.0.0'
@@ -4249,7 +4245,7 @@ packages:
     resolution: {integrity: sha512-zueXiVsF1BbVc8iaalHILRGURDCVlTTOVdUy/36VVeKVKr778vqJzyus+erEoVu5x4vl4DBGGM8RHqCaus1TQQ==}
     engines: {node: '>=20.19'}
     peerDependencies:
-      '@tanstack/query-core': '>=5.90.0'
+      '@tanstack/query-core': 5.100.14
       '@tanstack/router-core': '>=1.127.0'
 
   '@tanstack/router-utils@1.161.6':
@@ -13785,8 +13781,6 @@ snapshots:
 
   '@tanstack/history@1.162.0': {}
 
-  '@tanstack/query-core@5.100.11': {}
-
   '@tanstack/query-core@5.100.14': {}
 
   '@tanstack/query-devtools@5.100.14': {}
@@ -13810,9 +13804,9 @@ snapshots:
       '@tanstack/react-query': 5.100.14(react@19.2.5)
       react: 19.2.5
 
-  '@tanstack/react-query@5.100.11(react@19.2.3)':
+  '@tanstack/react-query@5.100.14(react@19.2.3)':
     dependencies:
-      '@tanstack/query-core': 5.100.11
+      '@tanstack/query-core': 5.100.14
       react: 19.2.3
 
   '@tanstack/react-query@5.100.14(react@19.2.5)':
