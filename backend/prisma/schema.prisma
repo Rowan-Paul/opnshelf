@@ -76,10 +76,11 @@ enum MediaType {
 model AuthSession {
   id          String   @id @default(cuid())
   userDid     String   @unique
-  sessionData String   // JSON-serialized session from the library
+  sessionData String   // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
+  kind        String   @default("oauth") // "oauth" | "credential"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@index([updatedAt])
 }
 

@@ -1,23 +1,32 @@
 import {
 	BadRequestException,
+	Body,
+	ConflictException,
 	Controller,
+	ForbiddenException,
 	Get,
+	HttpCode,
+	HttpException,
 	HttpStatus,
 	Logger,
 	Post,
 	Query,
 	Req,
 	Res,
+	ServiceUnavailableException,
 	UseGuards,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { IngesterService } from "../ingester/ingester.service";
+import { CaptchaService } from "../pds/captcha.service";
+import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { UsersService } from "../users/users.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
+import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
 import type { AuthenticatedRequest } from "./types";
 
@@ -32,11 +41,18 @@ type AuthPlatform = "mobile" | undefined;
 export class AuthController {
 	private readonly logger = new Logger(AuthController.name);
 
+	/** Per-IP signup attempts, used by a lightweight in-memory rate limiter. */
+	private readonly registerAttempts = new Map<string, number[]>();
+	private static readonly REGISTER_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+	private static readonly REGISTER_MAX_PER_WINDOW = 5;
+
 	constructor(
 		private readonly authService: AuthService,
 		private readonly configService: ConfigService,
 		private readonly ingesterService: IngesterService,
 		private readonly usersService: UsersService,
+		private readonly tranquilAdmin: TranquilAdminService,
+		private readonly captcha: CaptchaService,
 	) {}
 
 	/**
@@ -222,6 +238,204 @@ export class AuthController {
 			return res.redirect(
 				this.resolveErrorRedirect("auth_failed", mobilePlatform),
 			);
+		}
+	}
+
+	/**
+	 * Create an account directly on opnshelf's own Tranquil PDS.
+	 *
+	 * This is the spam-resistant alternative to the OAuth `prompt=create` flow:
+	 * opnshelf is the gatekeeper. A request must clear a captcha, then we mint a
+	 * single-use invite code (our PDS runs with invite_code_required=true) and
+	 * create the account ourselves. The caller never reaches the PDS directly,
+	 * so bots can't self-register.
+	 */
+	@Post("auth/register")
+	@HttpCode(HttpStatus.CREATED)
+	@ApiOperation({
+		summary: "Create an account on opnshelf's PDS (captcha + invite gated)",
+	})
+	@ApiResponse({ status: HttpStatus.CREATED, type: RegisterResponseDto })
+	@ApiResponse({ status: 403, description: "Captcha verification failed" })
+	@ApiResponse({ status: 409, description: "Username or email already taken" })
+	@ApiResponse({ status: 429, description: "Too many signup attempts" })
+	async register(
+		@Body() dto: RegisterDto,
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<RegisterResponseDto> {
+		const ip = this.getClientIp(req);
+		this.enforceRegisterRateLimit(ip);
+
+		const human = await this.captcha.verify(dto.captchaToken, ip);
+		if (!human) {
+			throw new ForbiddenException("Captcha verification failed");
+		}
+
+		const handleDomain = this.configService.get<string>("PDS_HANDLE_DOMAIN");
+		if (!handleDomain) {
+			this.logger.error("PDS_HANDLE_DOMAIN is not configured");
+			throw new ServiceUnavailableException("Signup is not configured");
+		}
+		const handle = `${dto.username.toLowerCase()}.${handleDomain}`;
+
+		// Mint a fresh single-use invite code from our PDS admin account.
+		let inviteCode: string;
+		try {
+			inviteCode = await this.tranquilAdmin.mintInviteCode(1);
+		} catch (error) {
+			this.logger.error("Failed to mint invite code for signup", error);
+			throw new ServiceUnavailableException(
+				"Could not allocate an invite right now",
+			);
+		}
+
+		// Create the account on the PDS. On failure, free the unused code.
+		let account: Awaited<ReturnType<typeof this.authService.registerAccount>>;
+		try {
+			account = await this.authService.registerAccount({
+				handle,
+				email: dto.email,
+				password: dto.password,
+				inviteCode,
+			});
+		} catch (error) {
+			void this.tranquilAdmin
+				.disableInviteCodes([inviteCode])
+				.catch(() => undefined);
+			throw this.mapCreateAccountError(error);
+		}
+
+		// Persist a credential session so the guard can resume it.
+		await this.authService.createCredentialSession({
+			did: account.did,
+			handle: account.handle,
+			accessJwt: account.accessJwt,
+			refreshJwt: account.refreshJwt,
+			pdsUrl: account.pdsUrl,
+		});
+
+		await this.authService.upsertUser(
+			{
+				did: account.did,
+				handle: account.handle,
+				displayName: null,
+				avatar: null,
+			},
+			dto.timezone,
+		);
+
+		// Register the new repo with TAP for tracking/backfill (best-effort).
+		try {
+			await this.ingesterService.addRepo(account.did);
+		} catch (error) {
+			this.logger.error(`Failed to register ${account.did} with TAP`, error);
+		}
+
+		// Seed the user's profile + default lists (best-effort, don't block signup).
+		try {
+			const session = await this.authService.restore(account.did);
+			if (session) {
+				await this.usersService.initializeProfileForNewUser(
+					account.did,
+					session as unknown as { did: string },
+					{
+						handle: account.handle,
+						displayName: null,
+						avatarUrl: null,
+					},
+				);
+			}
+		} catch (error) {
+			this.logger.error(`Profile init failed for ${account.did}`, error);
+		}
+
+		const sessionRecord = await this.authService.getSessionByUserDid(
+			account.did,
+		);
+		if (!sessionRecord) {
+			this.logger.error("AuthSession not found after register");
+			throw new ServiceUnavailableException("Could not establish session");
+		}
+
+		const isProduction =
+			this.configService.get<string>("NODE_ENV") === "production";
+		const cookieDomain = this.getCookieDomain();
+		res.cookie(SESSION_COOKIE_NAME, sessionRecord.id, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax",
+			maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+			path: "/",
+			...(cookieDomain && { domain: cookieDomain }),
+		});
+
+		return {
+			did: account.did,
+			handle: account.handle,
+			sessionId: sessionRecord.id,
+		};
+	}
+
+	private getClientIp(req: Request): string {
+		const forwarded = req.headers["x-forwarded-for"];
+		if (typeof forwarded === "string" && forwarded.length > 0) {
+			return forwarded.split(",")[0].trim();
+		}
+		if (Array.isArray(forwarded) && forwarded.length > 0) {
+			return forwarded[0];
+		}
+		return req.ip || "unknown";
+	}
+
+	private enforceRegisterRateLimit(ip: string): void {
+		const now = Date.now();
+		const windowStart = now - AuthController.REGISTER_WINDOW_MS;
+		const recent = (this.registerAttempts.get(ip) || []).filter(
+			(t) => t > windowStart,
+		);
+		if (recent.length >= AuthController.REGISTER_MAX_PER_WINDOW) {
+			throw new HttpException(
+				"Too many signup attempts. Please try again later.",
+				HttpStatus.TOO_MANY_REQUESTS,
+			);
+		}
+		recent.push(now);
+		this.registerAttempts.set(ip, recent);
+	}
+
+	/** Map a PDS createAccount XRPC error to an appropriate HTTP response. */
+	private mapCreateAccountError(error: unknown): HttpException {
+		const code =
+			error && typeof error === "object" && "error" in error
+				? String((error as { error?: unknown }).error)
+				: undefined;
+		const message =
+			error && typeof error === "object" && "message" in error
+				? String((error as { message?: unknown }).message)
+				: "Account creation failed";
+
+		switch (code) {
+			case "HandleNotAvailable":
+			case "HandleTaken":
+			case "AccountAlreadyExists":
+				return new ConflictException("That username is already taken");
+			case "EmailTaken":
+				return new ConflictException("That email is already in use");
+			case "InvalidHandle":
+				return new BadRequestException("That username is not allowed");
+			case "InvalidEmail":
+				return new BadRequestException("That email address is invalid");
+			case "InvalidInviteCode":
+			case "InviteCodeRequired":
+				// Our minted code was rejected — that's a server-side problem.
+				this.logger.error(`Invite code rejected by PDS: ${message}`);
+				return new ServiceUnavailableException(
+					"Signup is temporarily unavailable",
+				);
+			default:
+				this.logger.error(`createAccount failed (${code}): ${message}`);
+				return new BadRequestException(message);
 		}
 	}
 

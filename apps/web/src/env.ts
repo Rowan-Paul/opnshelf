@@ -16,6 +16,14 @@ export const env = createEnv({
 		VITE_APP_TITLE: z.string().min(1).optional(),
 		VITE_API_URL: z.string().url().optional().default("http://127.0.0.1:3001"),
 		VITE_SITE_URL: z.string().url().optional(),
+		// Cloudflare Turnstile site key for the signup captcha (public key).
+		VITE_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+		// Handle domain accounts are created on, e.g. "opnshelf.xyz".
+		VITE_PDS_HANDLE_DOMAIN: z
+			.string()
+			.min(1)
+			.optional()
+			.default("opnshelf.xyz"),
 	},
 
 	/**

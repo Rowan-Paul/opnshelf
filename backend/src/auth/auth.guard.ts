@@ -38,9 +38,9 @@ export class AuthGuard implements CanActivate {
 				throw new UnauthorizedException("Session not found or expired");
 			}
 
-			// Restore session using OAuth client (refreshes tokens if needed)
+			// Restore session (OAuth or credential), refreshing tokens if needed
 			const session = await this.authService.restore(sessionRecord.userDid);
-			if (!session) {
+			if (!session || !session.did) {
 				throw new UnauthorizedException("Session not found or expired");
 			}
 

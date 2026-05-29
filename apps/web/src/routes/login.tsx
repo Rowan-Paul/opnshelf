@@ -18,7 +18,7 @@ function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSignupLoading, setIsSignupLoading] = useState(false);
-	const { login, signup, isAuthenticated, isLoading: authLoading } = useAuth();
+	const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
 	const message = (search as { message?: string }).message;
@@ -59,7 +59,7 @@ function LoginPage() {
 
 	const handleSignup = () => {
 		setIsSignupLoading(true);
-		signup();
+		navigate({ to: "/signup" });
 	};
 
 	return (

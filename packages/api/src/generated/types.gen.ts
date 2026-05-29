@@ -144,6 +144,38 @@ export type WatchHistoryItemDto = {
     watchedDate: string;
 };
 
+export type RegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz
+     */
+    username: string;
+    /**
+     * Email for the new PDS account
+     */
+    email: string;
+    /**
+     * Password for the new PDS account
+     */
+    password: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type RegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Opaque session id (also set as an httpOnly cookie)
+     */
+    sessionId: string;
+};
+
 export type UserDto = {
     /**
      * User DID (decentralized identifier)
@@ -1217,26 +1249,6 @@ export type MediaReviewsResponseDto = {
     nextCursor: string | null;
 };
 
-export type ReviewLikeItemDto = {
-    userDid: string;
-    userHandle: string;
-    userDisplayName?: string;
-    userAvatar?: string;
-    createdAt: string;
-};
-
-export type ReviewLikesResponseDto = {
-    items: Array<ReviewLikeItemDto>;
-    /**
-     * Total like count
-     */
-    total: number;
-    /**
-     * Whether the requesting user has liked this review
-     */
-    hasLiked: boolean;
-};
-
 export type BatchRatingRequestDto = {
     /**
      * Media type
@@ -1289,6 +1301,26 @@ export type UpsertReviewDto = {
      * Review text
      */
     content?: string;
+};
+
+export type ReviewLikeItemDto = {
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    createdAt: string;
+};
+
+export type ReviewLikesResponseDto = {
+    items: Array<ReviewLikeItemDto>;
+    /**
+     * Total like count
+     */
+    total: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
 };
 
 export type ShelfResponseDto = {
@@ -1800,6 +1832,34 @@ export type AuthControllerSignupData = {
     };
     url: '/auth/signup';
 };
+
+export type AuthControllerRegisterData = {
+    body: RegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/register';
+};
+
+export type AuthControllerRegisterErrors = {
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username or email already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerRegisterResponses = {
+    201: RegisterResponseDto;
+};
+
+export type AuthControllerRegisterResponse = AuthControllerRegisterResponses[keyof AuthControllerRegisterResponses];
 
 export type AuthControllerSuggestionsData = {
     body?: never;
@@ -2456,19 +2516,6 @@ export type UsersControllerDeleteMyAvatarResponses = {
 
 export type UsersControllerDeleteMyAvatarResponse = UsersControllerDeleteMyAvatarResponses[keyof UsersControllerDeleteMyAvatarResponses];
 
-export type UsersControllerRefreshMySocialLinksData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/profile/refresh-social-links';
-};
-
-export type UsersControllerRefreshMySocialLinksResponses = {
-    200: UserProfileDto;
-};
-
-export type UsersControllerRefreshMySocialLinksResponse = UsersControllerRefreshMySocialLinksResponses[keyof UsersControllerRefreshMySocialLinksResponses];
-
 export type UsersControllerUploadMyAvatarData = {
     body: {
         avatar: Blob | File;
@@ -2483,6 +2530,26 @@ export type UsersControllerUploadMyAvatarResponses = {
 };
 
 export type UsersControllerUploadMyAvatarResponse = UsersControllerUploadMyAvatarResponses[keyof UsersControllerUploadMyAvatarResponses];
+
+export type UsersControllerRefreshMySocialLinksData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/profile/refresh-social-links';
+};
+
+export type UsersControllerRefreshMySocialLinksErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerRefreshMySocialLinksResponses = {
+    200: UserProfileDto;
+};
+
+export type UsersControllerRefreshMySocialLinksResponse = UsersControllerRefreshMySocialLinksResponses[keyof UsersControllerRefreshMySocialLinksResponses];
 
 export type UsersControllerDeleteMyAccountData = {
     body: DeleteUserAccountDto;
@@ -3457,33 +3524,6 @@ export type ReviewsControllerDeleteReviewResponses = {
     200: unknown;
 };
 
-export type ReviewsControllerDeleteReviewResponse = ReviewsControllerDeleteReviewResponses[keyof ReviewsControllerDeleteReviewResponses];
-
-export type ReviewsControllerLikeReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}/like';
-};
-
-export type ReviewsControllerLikeReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerLikeReviewResponses = {
-    /**
-     * Review liked
-     */
-    200: unknown;
-};
-
-export type ReviewsControllerLikeReviewResponse = ReviewsControllerLikeReviewResponses[keyof ReviewsControllerLikeReviewResponses];
-
 export type ReviewsControllerUnlikeReviewData = {
     body?: never;
     path: {
@@ -3507,7 +3547,28 @@ export type ReviewsControllerUnlikeReviewResponses = {
     200: unknown;
 };
 
-export type ReviewsControllerUnlikeReviewResponse = ReviewsControllerUnlikeReviewResponses[keyof ReviewsControllerUnlikeReviewResponses];
+export type ReviewsControllerLikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerLikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerLikeReviewResponses = {
+    /**
+     * Review liked
+     */
+    200: unknown;
+};
 
 export type ReviewsControllerGetReviewLikesData = {
     body?: never;
