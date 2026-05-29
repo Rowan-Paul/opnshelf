@@ -545,7 +545,12 @@ export class AuthService implements OnModuleInit {
 		let avatar: string | null = null;
 
 		try {
-			const profile = await agent.getProfile({ actor: session.did });
+			// app.bsky.* methods aren't implemented by the PDS itself; route the
+			// request through the Bluesky AppView via the atproto-proxy header.
+			// The OAuth scope grants rpc:app.bsky.actor.getProfile for this aud.
+			const profile = await agent
+				.withProxy("bsky_appview", "did:web:api.bsky.app")
+				.getProfile({ actor: session.did });
 			displayName = profile.data.displayName || null;
 			avatar = profile.data.avatar || null;
 		} catch (error) {

@@ -36,17 +36,21 @@ jest.mock("@atproto/oauth-client-node", () => ({
 
 // Mock the @atproto/api module
 jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					describeRepo: jest.fn(),
-					getRecord: jest.fn(),
+	Agent: jest.fn().mockImplementation(() => {
+		const getProfile = jest.fn();
+		return {
+			com: {
+				atproto: {
+					repo: {
+						describeRepo: jest.fn(),
+						getRecord: jest.fn(),
+					},
 				},
 			},
-		},
-		getProfile: jest.fn(),
-	})),
+			getProfile,
+			withProxy: jest.fn().mockReturnValue({ getProfile }),
+		};
+	}),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -671,6 +675,9 @@ describe("AuthService", () => {
 					avatar: "https://example.com/avatar.jpg",
 				},
 			});
+			const mockWithProxy = jest
+				.fn()
+				.mockReturnValue({ getProfile: mockGetProfile });
 			Agent.mockImplementation(() => ({
 				com: {
 					atproto: {
@@ -680,6 +687,7 @@ describe("AuthService", () => {
 					},
 				},
 				getProfile: mockGetProfile,
+				withProxy: mockWithProxy,
 			}));
 
 			const mockSession = { did: "did:plc:abc123" };
@@ -692,6 +700,10 @@ describe("AuthService", () => {
 				avatar: "https://example.com/avatar.jpg",
 			});
 			expect(mockDescribeRepo).toHaveBeenCalledWith({ repo: "did:plc:abc123" });
+			expect(mockWithProxy).toHaveBeenCalledWith(
+				"bsky_appview",
+				"did:web:api.bsky.app",
+			);
 			expect(mockGetProfile).toHaveBeenCalledWith({ actor: "did:plc:abc123" });
 		});
 
@@ -716,6 +728,7 @@ describe("AuthService", () => {
 					},
 				},
 				getProfile: mockGetProfile,
+				withProxy: jest.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
 
 			const mockSession = { did: "did:plc:abc123" };
@@ -748,6 +761,7 @@ describe("AuthService", () => {
 					},
 				},
 				getProfile: mockGetProfile,
+				withProxy: jest.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
 
 			const mockSession = { did: "did:plc:abc123" };
