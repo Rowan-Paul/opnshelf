@@ -556,11 +556,16 @@ export class SocialService {
 					m."releaseYear",
 					s."firstAirYear",
 					COALESCE(m.overview, s.overview) AS overview,
-					r.rating,
-					r.content AS "reviewContent"
+					rt.rating,
+					r."textContent" AS "reviewContent"
 				FROM "Review" r
 				LEFT JOIN "Movie" m ON m."movieId" = r."mediaId" AND r."mediaType" = 'movie'
 				LEFT JOIN "Show" s ON s."showId" = r."mediaId" AND r."mediaType" != 'movie'
+				LEFT JOIN "Rating" rt ON rt."userDid" = r."userDid"
+					AND rt."mediaType" = r."mediaType"
+					AND rt."mediaId" = r."mediaId"
+					AND rt."seasonNumber" = r."seasonNumber"
+					AND rt."episodeNumber" = r."episodeNumber"
 				WHERE r."userDid" IN (${followedDidValues})
 			) activity
 			ORDER BY
