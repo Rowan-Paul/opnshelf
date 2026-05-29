@@ -5,3 +5,7 @@ We chose to store review likes as ATProto records (custom lexicon `xyz.opnshelf.
 The obvious choice was a local-only `ReviewLike` table. It's simpler, faster to query, and doesn't require PDS writes or firehose ingestion. But all user-generated content in this codebase — Review, Follow, List, Note, Episode, Movie — is dual-stored in PostgreSQL and ATProto, synced via the TAP firehose ingester. Likes are user-generated content too. Making them an exception would break the architectural consistency of the system.
 
 Storing likes in ATProto means they travel with the user's PDS. If other opnshelf instances or ATProto-aware tools emerge, likes are portable. The cost is a new lexicon, PDS write/delete operations, and ingester wiring — but that cost is already amortized by the existing infrastructure. The alternative (local-only likes) would have been cheaper initially but would have created a permanent exception in an otherwise uniform architecture.
+
+## Follow-up (see ADR-0002)
+
+Reviews are now `site.standard.document` records rather than `xyz.opnshelf.review` records. Accordingly, a like's `reviewUri` now references a `site.standard.document`. Ratings (`xyz.opnshelf.rating`) are a separate entity and are **not** likeable — a Review Like remains an expression of appreciation for another user's long-form Review, never for a bare score.
