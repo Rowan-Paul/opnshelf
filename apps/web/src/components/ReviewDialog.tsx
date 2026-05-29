@@ -1,4 +1,4 @@
-import { Loader2, Save, Star, X } from "lucide-react";
+import { Eye, Loader2, Pencil, Save, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
 	Dialog,
@@ -8,17 +8,14 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
-import {
-	useClearRating,
-	useRating,
-	useSetRating,
-} from "#/lib/hooks/useRatings";
-import {
-	useDeleteReview,
-	useReview,
-	useUpsertReview,
-} from "#/lib/hooks/useReviews";
-import StarRating from "./StarRating";
+import { useCreateReview, useUpdateReview } from "#/lib/hooks/useReviews";
+import { MarkdownPreview } from "./MarkdownPreview";
+
+export interface EditableReview {
+	id: string;
+	title: string;
+	markdown: string;
+}
 
 interface ReviewDialogProps {
 	open: boolean;
@@ -27,6 +24,10 @@ interface ReviewDialogProps {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/** Poster path used as the document cover image (preview only). */
+	posterPath?: string | null;
+	/** When set, the dialog edits this review; otherwise it creates a new one. */
+	review?: EditableReview;
 	onSuccess?: () => void;
 }
 
@@ -37,27 +38,21 @@ export function ReviewDialog({
 	mediaId,
 	seasonNumber,
 	episodeNumber,
+	posterPath,
+	review,
 	onSuccess,
 }: ReviewDialogProps) {
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
 
-	// The 1-10 score is its own entity (xyz.opnshelf.rating).
-	const { data: ratingRecord } = useRating({
+	const createMutation = useCreateReview({
 		userDid,
 		mediaType,
 		mediaId,
 		seasonNumber,
 		episodeNumber,
 	});
-	const setRatingMutation = useSetRating({
-		userDid,
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
-	const clearRatingMutation = useClearRating({
+	const updateMutation = useUpdateReview({
 		userDid,
 		mediaType,
 		mediaId,
@@ -65,74 +60,32 @@ export function ReviewDialog({
 		episodeNumber,
 	});
 
-	// The optional long-form text still lives on the legacy review.
-	// TODO(#113): convert review text into a site.standard.document.
-	const { data: review } = useReview({
-		userDid,
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
-
-	const upsertMutation = useUpsertReview({
-		userDid,
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
-	const deleteMutation = useDeleteReview({
-		userDid,
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
-
-	const [rating, setRating] = useState(0);
-	const [content, setContent] = useState("");
+	const [title, setTitle] = useState("");
+	const [markdown, setMarkdown] = useState("");
+	const [showPreview, setShowPreview] = useState(false);
 
 	const wasPending = useRef(false);
-
-	const isPending =
-		setRatingMutation.isPending ||
-		clearRatingMutation.isPending ||
-		upsertMutation.isPending ||
-		deleteMutation.isPending;
-
-	useEffect(() => {
-		const succeeded =
-			setRatingMutation.isSuccess ||
-			clearRatingMutation.isSuccess ||
-			upsertMutation.isSuccess ||
-			deleteMutation.isSuccess;
-
-		if (wasPending.current && !isPending && succeeded) {
-			onOpenChange(false);
-			onSuccess?.();
-			setRatingMutation.reset();
-			clearRatingMutation.reset();
-			upsertMutation.reset();
-			deleteMutation.reset();
-		}
-		wasPending.current = isPending;
-	}, [
-		isPending,
-		setRatingMutation,
-		clearRatingMutation,
-		upsertMutation,
-		deleteMutation,
-		onOpenChange,
-		onSuccess,
-	]);
+	const isEditing = !!review;
+	const isPending = createMutation.isPending || updateMutation.isPending;
 
 	useEffect(() => {
 		if (open) {
-			setRating(ratingRecord?.rating ?? 0);
-			setContent(review?.content ?? "");
+			setTitle(review?.title ?? "");
+			setMarkdown(review?.markdown ?? "");
+			setShowPreview(false);
 		}
-	}, [open, ratingRecord?.rating, review?.content]);
+	}, [open, review?.title, review?.markdown]);
+
+	useEffect(() => {
+		const succeeded = createMutation.isSuccess || updateMutation.isSuccess;
+		if (wasPending.current && !isPending && succeeded) {
+			onOpenChange(false);
+			onSuccess?.();
+			createMutation.reset();
+			updateMutation.reset();
+		}
+		wasPending.current = isPending;
+	}, [isPending, createMutation, updateMutation, onOpenChange, onSuccess]);
 
 	const resolvedMediaType =
 		episodeNumber != null
@@ -141,106 +94,110 @@ export function ReviewDialog({
 				? "season"
 				: mediaType;
 
-	const handleSave = () => {
-		const trimmed = content.trim();
+	const trimmedTitle = title.trim();
+	const trimmedBody = markdown.trim();
+	const canSave = trimmedTitle.length > 0 && trimmedBody.length > 0;
 
-		if (rating === 0) {
-			// Clearing the score: remove the rating, and any existing review text.
-			if (ratingRecord?.id) {
-				clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
-			}
-			if (review?.id) {
-				deleteMutation.mutate({ path: { reviewId: review.id } });
-			}
-			if (!ratingRecord?.id && !review?.id) {
-				onOpenChange(false);
-			}
+	const handleSave = () => {
+		if (!canSave) return;
+
+		if (isEditing && review) {
+			updateMutation.mutate({
+				path: { reviewId: review.id },
+				body: { title: trimmedTitle, markdown: trimmedBody },
+			});
 			return;
 		}
 
-		// Persist the score as a Rating entity.
-		setRatingMutation.mutate({
+		createMutation.mutate({
 			body: {
 				mediaType: resolvedMediaType,
 				mediaId,
 				seasonNumber,
 				episodeNumber,
-				rating,
+				title: trimmedTitle,
+				markdown: trimmedBody,
+				coverImage: posterPath ?? undefined,
 			},
 		});
-
-		// Long-form text remains a review for now.
-		// TODO(#113): split review text into its own document entity; the
-		// review currently still carries a rating to satisfy the legacy schema.
-		if (trimmed) {
-			upsertMutation.mutate({
-				body: {
-					mediaType: resolvedMediaType,
-					mediaId,
-					seasonNumber,
-					episodeNumber,
-					rating,
-					content: trimmed,
-				},
-			});
-		} else if (review?.id) {
-			deleteMutation.mutate({ path: { reviewId: review.id } });
-		}
 	};
-
-	const handleDelete = () => {
-		if (ratingRecord?.id) {
-			clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
-		}
-		if (review?.id) {
-			deleteMutation.mutate({ path: { reviewId: review.id } });
-		}
-	};
-
-	const hasExisting = !!ratingRecord?.id || !!review?.id;
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-lg">
+			<DialogContent className="sm:max-w-2xl">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<Star className="size-4 text-yellow-500" />
-						{hasExisting ? "Edit Review" : "Add a Review"}
+						<Pencil className="size-4 text-(--accent)" />
+						{isEditing ? "Edit Review" : "Write a Review"}
 					</DialogTitle>
 					<DialogDescription className="sr-only">
-						Add or edit your rating and review for this title.
+						Write a long-form review for this title. A title is required.
 					</DialogDescription>
 				</DialogHeader>
-				<div>
-					<p className="mb-2 text-(--foreground-muted) text-sm">Rating</p>
-					<StarRating value={rating} onChange={setRating} size="lg" />
+
+				<div className="space-y-1">
+					<label
+						htmlFor="review-title"
+						className="text-(--foreground-muted) text-sm"
+					>
+						Title <span className="text-red-500">*</span>
+					</label>
+					<input
+						id="review-title"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder="Give your review a title"
+						className="input text-sm"
+						maxLength={300}
+					/>
 				</div>
-				<textarea
-					value={content}
-					onChange={(e) => setContent(e.target.value)}
-					placeholder="Write your review... (optional)"
-					className="input min-h-[120px] resize-none text-sm"
-					maxLength={5000}
-				/>
+
+				<div className="flex items-center justify-between">
+					<span className="text-(--foreground-muted) text-sm">
+						Review (Markdown)
+					</span>
+					<button
+						type="button"
+						onClick={() => setShowPreview((v) => !v)}
+						className="btn btn-ghost btn-sm gap-1"
+					>
+						{showPreview ? (
+							<>
+								<Pencil className="size-3.5" />
+								Write
+							</>
+						) : (
+							<>
+								<Eye className="size-3.5" />
+								Preview
+							</>
+						)}
+					</button>
+				</div>
+
+				{showPreview ? (
+					<div className="input min-h-[200px] overflow-auto text-sm">
+						{trimmedBody ? (
+							<MarkdownPreview markdown={markdown} />
+						) : (
+							<p className="text-(--foreground-subtle)">Nothing to preview.</p>
+						)}
+					</div>
+				) : (
+					<textarea
+						value={markdown}
+						onChange={(e) => setMarkdown(e.target.value)}
+						placeholder="Write your review using Markdown..."
+						className="input min-h-[200px] resize-y text-sm"
+						maxLength={20000}
+					/>
+				)}
+
 				<div className="flex items-center justify-between">
 					<span className="text-(--foreground-subtle) text-xs">
-						{content.length}/5000
+						{markdown.length}/20000
 					</span>
 					<div className="flex gap-2">
-						{hasExisting && (
-							<button
-								type="button"
-								onClick={handleDelete}
-								disabled={isPending}
-								className="btn btn-ghost btn-sm gap-1 text-red-500 hover:text-red-600"
-							>
-								{(deleteMutation.isPending ||
-									clearRatingMutation.isPending) && (
-									<Loader2 className="size-3.5 animate-spin" />
-								)}
-								Delete
-							</button>
-						)}
 						<button
 							type="button"
 							onClick={() => onOpenChange(false)}
@@ -252,15 +209,15 @@ export function ReviewDialog({
 						<button
 							type="button"
 							onClick={handleSave}
-							disabled={isPending}
+							disabled={isPending || !canSave}
 							className="btn btn-primary btn-sm gap-1"
 						>
-							{setRatingMutation.isPending || upsertMutation.isPending ? (
+							{isPending ? (
 								<Loader2 className="size-3.5 animate-spin" />
 							) : (
 								<Save className="size-3.5" />
 							)}
-							Save
+							{isEditing ? "Save" : "Publish"}
 						</button>
 					</div>
 				</div>

@@ -34,6 +34,7 @@ import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
+import ReviewSection from "../../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
@@ -512,6 +513,12 @@ function ShowDetailPage() {
 									value: show.genres?.map((g) => g.name).join(", ") || "N/A",
 								},
 							]}
+						/>
+
+						<ReviewSection
+							mediaType="show"
+							mediaId={showId}
+							posterPath={show.poster_path}
 						/>
 
 						<WatchProviders

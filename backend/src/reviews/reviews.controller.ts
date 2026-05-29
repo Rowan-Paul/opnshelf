@@ -3,7 +3,9 @@ import {
 	Controller,
 	Delete,
 	Get,
+	NotFoundException,
 	Param,
+	Patch,
 	Post,
 	Query,
 	Req,
@@ -21,14 +23,14 @@ import { AuthGuard } from "../auth/auth.guard";
 import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
-	GetReviewQueryDto,
+	CreateReviewDto,
 	MediaReviewsQueryDto,
 	MediaReviewsResponseDto,
 	PaginatedReviewsQueryDto,
 	PaginatedReviewsResponseDto,
 	ReviewLikesResponseDto,
 	ReviewResponseDto,
-	UpsertReviewDto,
+	UpdateReviewDto,
 } from "./dto/review.dto";
 import { ReviewsService, type ATSession } from "./reviews.service";
 
@@ -36,72 +38,6 @@ import { ReviewsService, type ATSession } from "./reviews.service";
 @Controller("reviews")
 export class ReviewsController {
 	constructor(private readonly reviewsService: ReviewsService) {}
-
-	@Get("user/:userDid")
-	@UseGuards(AuthGuard)
-	@ApiBearerAuth()
-	@ApiOperation({ summary: "Get a review for a user and media item" })
-	@ApiQuery({
-		name: "mediaType",
-		required: true,
-		description: "Media type (movie, show, season, episode)",
-	})
-	@ApiQuery({
-		name: "mediaId",
-		required: true,
-		description: "TMDB movie ID or show ID",
-	})
-	@ApiQuery({
-		name: "seasonNumber",
-		required: false,
-		description: "Season number for season/episode items",
-		type: Number,
-	})
-	@ApiQuery({
-		name: "episodeNumber",
-		required: false,
-		description: "Episode number for episode items",
-		type: Number,
-	})
-	@ApiOkResponse({
-		description: "Review retrieved",
-		type: ReviewResponseDto,
-	})
-	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async getReview(
-		@Param("userDid") userDid: string,
-		@Query() query: GetReviewQueryDto,
-		@Req() req: AuthenticatedRequest,
-	): Promise<ReviewResponseDto | null> {
-		if (req.user.did !== userDid) {
-			throw new Error("Unauthorized");
-		}
-
-		const review = await this.reviewsService.getReview(
-			userDid,
-			query.mediaType,
-			query.mediaId,
-			query.seasonNumber,
-			query.episodeNumber,
-		);
-
-		if (!review) {
-			return null;
-		}
-
-		return {
-			id: review.id,
-			rkey: review.rkey,
-			rating: review.rating,
-			content: review.content ?? undefined,
-			mediaType: review.mediaType,
-			mediaId: review.mediaId,
-			seasonNumber: review.seasonNumber || undefined,
-			episodeNumber: review.episodeNumber || undefined,
-			createdAt: review.createdAt.toISOString(),
-			updatedAt: review.updatedAt.toISOString(),
-		};
-	}
 
 	@Get("user/:userDid/reviews")
 	@ApiOperation({ summary: "Get paginated reviews for a user" })
@@ -133,13 +69,14 @@ export class ReviewsController {
 		return {
 			items: result.items.map((review) => ({
 				id: review.id,
-				rating: review.rating,
-				content: review.content ?? undefined,
+				reviewTitle: review.title,
+				markdown: review.markdown,
+				description: review.description ?? undefined,
 				mediaType: review.mediaType,
 				mediaId: review.mediaId,
 				seasonNumber: review.seasonNumber || undefined,
 				episodeNumber: review.episodeNumber || undefined,
-				title: review.title,
+				title: review.mediaTitle,
 				posterPath: review.posterPath ?? undefined,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
@@ -168,8 +105,9 @@ export class ReviewsController {
 		return {
 			items: result.items.map((review) => ({
 				id: review.id,
-				rating: review.rating,
-				content: review.content ?? undefined,
+				title: review.title,
+				markdown: review.markdown,
+				description: review.description ?? undefined,
 				userDid: review.user.did,
 				userHandle: review.user.handle,
 				userDisplayName: review.user.displayName ?? undefined,
@@ -184,37 +122,61 @@ export class ReviewsController {
 		};
 	}
 
+	@Get(":reviewId")
+	@ApiOperation({ summary: "Get a single review by id" })
+	@ApiOkResponse({ description: "Review retrieved", type: ReviewResponseDto })
+	async getReview(
+		@Param("reviewId") reviewId: string,
+	): Promise<ReviewResponseDto> {
+		const review = await this.reviewsService.getReview(reviewId);
+		if (!review) {
+			throw new NotFoundException("Review not found");
+		}
+		return this.toReviewResponse(review);
+	}
+
 	@Post()
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
-	@ApiOperation({ summary: "Create or update a review" })
+	@ApiOperation({ summary: "Create a review" })
 	@ApiOkResponse({
-		description: "Review upserted",
+		description: "Review created",
 		type: ReviewResponseDto,
 	})
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async upsertReview(
+	async createReview(
 		@Req() req: AuthenticatedRequest,
-		@Body() dto: UpsertReviewDto,
+		@Body() dto: CreateReviewDto,
 	): Promise<ReviewResponseDto> {
-		const review = await this.reviewsService.upsertReview(
+		const review = await this.reviewsService.createReview(
 			req.user.did,
 			req.user.session as ATSession,
 			dto,
 		);
+		return this.toReviewResponse(review);
+	}
 
-		return {
-			id: review.id,
-			rkey: review.rkey,
-			rating: review.rating,
-			content: review.content ?? undefined,
-			mediaType: review.mediaType,
-			mediaId: review.mediaId,
-			seasonNumber: review.seasonNumber || undefined,
-			episodeNumber: review.episodeNumber || undefined,
-			createdAt: review.createdAt.toISOString(),
-			updatedAt: review.updatedAt.toISOString(),
-		};
+	@Patch(":reviewId")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Update a review" })
+	@ApiOkResponse({
+		description: "Review updated",
+		type: ReviewResponseDto,
+	})
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async updateReview(
+		@Param("reviewId") reviewId: string,
+		@Req() req: AuthenticatedRequest,
+		@Body() dto: UpdateReviewDto,
+	): Promise<ReviewResponseDto> {
+		const review = await this.reviewsService.updateReview(
+			req.user.did,
+			req.user.session as ATSession,
+			reviewId,
+			dto,
+		);
+		return this.toReviewResponse(review);
 	}
 
 	@Delete(":reviewId")
@@ -297,6 +259,40 @@ export class ReviewsController {
 			})),
 			total: result.total,
 			hasLiked: result.hasLiked,
+		};
+	}
+
+	private toReviewResponse(review: {
+		id: string;
+		rkey: string;
+		title: string;
+		markdown: string;
+		description: string | null;
+		textContent: string | null;
+		coverImage: string | null;
+		publicationUri: string;
+		mediaType: string;
+		mediaId: string;
+		seasonNumber: number;
+		episodeNumber: number;
+		createdAt: Date;
+		updatedAt: Date;
+	}): ReviewResponseDto {
+		return {
+			id: review.id,
+			rkey: review.rkey,
+			title: review.title,
+			markdown: review.markdown,
+			description: review.description ?? undefined,
+			textContent: review.textContent ?? undefined,
+			coverImage: review.coverImage ?? undefined,
+			publicationUri: review.publicationUri,
+			mediaType: review.mediaType,
+			mediaId: review.mediaId,
+			seasonNumber: review.seasonNumber || undefined,
+			episodeNumber: review.episodeNumber || undefined,
+			createdAt: review.createdAt.toISOString(),
+			updatedAt: review.updatedAt.toISOString(),
 		};
 	}
 }

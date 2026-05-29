@@ -25,15 +25,46 @@ jest.mock("@atproto/common", () => ({
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/review", () => ({
+jest.mock("../lexicons/site/standard/document", () => ({
 	main: {
 		build: jest.fn((data: Record<string, unknown>) => ({
-			$type: "xyz.opnshelf.review",
+			$type: "site.standard.document",
 			...data,
 		})),
 		parse: jest.fn((data: Record<string, unknown>) => data),
 	},
-	$nsid: "xyz.opnshelf.review",
+	$nsid: "site.standard.document",
+}));
+
+jest.mock("../lexicons/site/standard/publication", () => ({
+	main: {
+		build: jest.fn((data: Record<string, unknown>) => ({
+			$type: "site.standard.publication",
+			...data,
+		})),
+		parse: jest.fn((data: Record<string, unknown>) => data),
+	},
+	$nsid: "site.standard.publication",
+}));
+
+jest.mock("../lexicons/at/markpub/markdown.defs", () => ({
+	main: {
+		$type: "at.markpub.markdown",
+		build: jest.fn((data: Record<string, unknown>) => ({
+			$type: "at.markpub.markdown",
+			...data,
+		})),
+	},
+}));
+
+jest.mock("../lexicons/xyz/opnshelf/mediaLink.defs", () => ({
+	main: {
+		$type: "xyz.opnshelf.mediaLink",
+		build: jest.fn((data: Record<string, unknown>) => ({
+			$type: "xyz.opnshelf.mediaLink",
+			...data,
+		})),
+	},
 }));
 
 jest.mock("../lexicons/xyz/opnshelf/review/like", () => ({
@@ -75,6 +106,15 @@ describe("ReviewsService", () => {
 			deleteMany: jest.fn(),
 			upsert: jest.fn(),
 			count: jest.fn(),
+		},
+		publication: {
+			findUnique: jest.fn(),
+			create: jest.fn(),
+			upsert: jest.fn(),
+			deleteMany: jest.fn(),
+		},
+		user: {
+			findUnique: jest.fn(),
 		},
 	};
 
@@ -203,11 +243,13 @@ describe("ReviewsService", () => {
 	});
 
 	describe("getMediaReviews", () => {
-		it("returns reviews sorted by likes, rating, and date", async () => {
+		it("returns reviews sorted by likes and date", async () => {
 			mockPrismaService.review.findMany.mockResolvedValue([
 				{
 					id: "r1",
-					rating: 8,
+					title: "Great film",
+					markdown: "It was great.",
+					description: "It was great.",
 					user: {
 						did: "did:plc:u1",
 						handle: "u1",
@@ -221,9 +263,6 @@ describe("ReviewsService", () => {
 				},
 			]);
 			mockPrismaService.review.count.mockResolvedValue(1);
-			mockPrismaService.review.aggregate.mockResolvedValue({
-				_avg: { rating: 8 },
-			});
 
 			const result = await service.getMediaReviews(
 				{ mediaType: "movie", mediaId: "123" },
@@ -234,11 +273,138 @@ describe("ReviewsService", () => {
 			expect(result.items[0].hasLiked).toBe(false);
 			expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					orderBy: [
-						{ likes: { _count: "desc" } },
-						{ rating: "desc" },
-						{ createdAt: "desc" },
-					],
+					orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
+				}),
+			);
+		});
+	});
+
+	describe("createReview", () => {
+		it("mints a publication on first review and writes a document", async () => {
+			mockPrismaService.publication.findUnique.mockResolvedValue(null);
+			mockPrismaService.user.findUnique.mockResolvedValue({ handle: "alice" });
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.publication/self",
+						cid: "cid-pub",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-doc",
+					},
+				});
+			mockPrismaService.publication.upsert.mockResolvedValue({});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "**Loved** it.",
+			});
+
+			// publication minted with literal `self` rkey
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				1,
+				expect.objectContaining({
+					collection: "site.standard.publication",
+					rkey: "self",
+				}),
+			);
+			// document written
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					collection: "site.standard.document",
+					rkey: "testtid123",
+				}),
+			);
+			expect(result.title).toBe("My take");
+			expect(result.publicationUri).toBe(
+				"at://did:plc:abc123/site.standard.publication/self",
+			);
+		});
+
+		it("reuses an existing publication", async () => {
+			mockPrismaService.publication.findUnique.mockResolvedValue({
+				uri: "at://did:plc:abc123/site.standard.publication/self",
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/site.standard.document/testtid123",
+					cid: "cid-doc",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+			});
+
+			// only the document is written; publication is not re-minted
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ collection: "site.standard.document" }),
+			);
+		});
+	});
+
+	describe("indexDocumentRecord", () => {
+		it("ignores documents without a mediaLink", async () => {
+			await service.indexDocumentRecord(
+				"at://did:plc:u1/site.standard.document/x",
+				"cid",
+				"x",
+				"did:plc:u1",
+				{ title: "Blog", site: "at://pub", links: undefined } as never,
+			);
+			expect(mockPrismaService.review.upsert).not.toHaveBeenCalled();
+		});
+
+		it("indexes documents carrying an opnshelf mediaLink", async () => {
+			mockPrismaService.review.upsert.mockResolvedValue({});
+			await service.indexDocumentRecord(
+				"at://did:plc:u1/site.standard.document/x",
+				"cid",
+				"x",
+				"did:plc:u1",
+				{
+					title: "Review",
+					site: "at://pub",
+					content: {
+						$type: "at.markpub.markdown",
+						text: { markdown: "body" },
+					},
+					links: {
+						$type: "xyz.opnshelf.mediaLink",
+						mediaType: "movie",
+						mediaId: "123",
+					},
+				} as never,
+			);
+			expect(mockPrismaService.review.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						mediaId: "123",
+						markdown: "body",
+						title: "Review",
+					}),
 				}),
 			);
 		});

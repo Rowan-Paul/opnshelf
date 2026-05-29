@@ -1,45 +1,76 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import { Injectable, NotFoundException } from "@nestjs/common";
-import {
-	$nsid as REVIEW_COLLECTION,
-	main as reviewSchema,
-} from "../lexicons/xyz/opnshelf/review";
-import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
+import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
+import { main as mediaLinkDef } from "../lexicons/xyz/opnshelf/mediaLink.defs";
 import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
+import {
+	$nsid as DOCUMENT_COLLECTION,
+	main as documentSchema,
+} from "../lexicons/site/standard/document";
+import type { Main as DocumentRecord } from "../lexicons/site/standard/document.defs";
+import {
+	$nsid as PUBLICATION_COLLECTION,
+	main as publicationSchema,
+} from "../lexicons/site/standard/publication";
+import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
 import { PrismaService } from "../prisma/prisma.service";
-import type { MediaReviewsQueryDto, UpsertReviewDto } from "./dto/review.dto";
+import type {
+	CreateReviewDto,
+	MediaReviewsQueryDto,
+	UpdateReviewDto,
+} from "./dto/review.dto";
 
 export interface ATSession {
 	did: string;
+}
+
+// site.standard.publication uses a literal `self` record key, so minting is
+// idempotent: re-minting simply overwrites the single per-user record.
+const PUBLICATION_RKEY = "self";
+
+// Canonical public site (ADR-0003). NEVER opnshelf.social (that is only the
+// PDS host). Centralised here so #118 can later swap the publication source.
+const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
+
+type MediaType = "movie" | "show" | "season" | "episode";
+
+function publicationUrlForHandle(handle: string): string {
+	return `${PUBLIC_SITE_ORIGIN}/@${handle}`;
+}
+
+function publicationNameForHandle(handle: string): string {
+	return `${handle}'s OpnShelf`;
+}
+
+/** Strip a small plaintext excerpt out of markdown for cross-tool preview. */
+function toPlainText(markdown: string): string {
+	return markdown
+		.replace(/```[\s\S]*?```/g, " ")
+		.replace(/`[^`]*`/g, " ")
+		.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+		.replace(/^#{1,6}\s+/gm, "")
+		.replace(/[*_~>#-]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function excerpt(plain: string, max = 280): string {
+	if (plain.length <= max) return plain;
+	return `${plain.slice(0, max - 1).trimEnd()}…`;
 }
 
 @Injectable()
 export class ReviewsService {
 	constructor(private prisma: PrismaService) {}
 
-	async getReview(
-		userDid: string,
-		mediaType: "movie" | "show" | "season" | "episode",
-		mediaId: string,
-		seasonNumber?: number,
-		episodeNumber?: number,
-	) {
-		return this.prisma.review.findUnique({
-			where: {
-				userDid_mediaType_mediaId_seasonNumber_episodeNumber: {
-					userDid,
-					mediaType,
-					mediaId,
-					seasonNumber: seasonNumber ?? 0,
-					episodeNumber: episodeNumber ?? 0,
-				},
-			},
-		});
+	async getReview(reviewId: string) {
+		return this.prisma.review.findUnique({ where: { id: reviewId } });
 	}
 
-	async getUserReviews(userDid: string, limit: number = 20, cursor?: string) {
+	async getUserReviews(userDid: string, limit = 20, cursor?: string) {
 		const take = limit + 1;
 
 		const reviews = await this.prisma.review.findMany({
@@ -156,7 +187,7 @@ export class ReviewsService {
 			}
 			return {
 				...review,
-				title: media?.title,
+				mediaTitle: media?.title,
 				posterPath: media?.posterPath,
 			};
 		});
@@ -190,11 +221,7 @@ export class ReviewsService {
 
 		const reviews = await this.prisma.review.findMany({
 			where,
-			orderBy: [
-				{ likes: { _count: "desc" } },
-				{ rating: "desc" },
-				{ createdAt: "desc" },
-			],
+			orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
 			take,
 			...(query.cursor && {
 				skip: 1,
@@ -239,82 +266,143 @@ export class ReviewsService {
 		};
 	}
 
-	async upsertReview(
+	/**
+	 * Lazily mint (or refresh) the user's single site.standard.publication.
+	 * Idempotent thanks to the literal `self` record key.
+	 */
+	private async ensurePublication(
 		userDid: string,
 		session: ATSession,
-		dto: UpsertReviewDto,
-	) {
-		const existing = await this.prisma.review.findUnique({
-			where: {
-				userDid_mediaType_mediaId_seasonNumber_episodeNumber: {
-					userDid,
-					mediaType: dto.mediaType,
-					mediaId: dto.mediaId,
-					seasonNumber: dto.seasonNumber ?? 0,
-					episodeNumber: dto.episodeNumber ?? 0,
-				},
-			},
+		agent: Agent,
+	): Promise<{ uri: string }> {
+		const existing = await this.prisma.publication.findUnique({
+			where: { userDid },
 		});
-
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
-
 		if (existing) {
-			// Update existing review in PDS
-			const record: ReviewRecord = reviewSchema.build({
-				mediaType: dto.mediaType,
-				mediaId: dto.mediaId,
-				seasonNumber: dto.seasonNumber,
-				episodeNumber: dto.episodeNumber,
-				rating: dto.rating,
-				content: dto.content,
-				createdAt: existing.createdAt.toISOString(),
-			});
-
-			const response = await agent.com.atproto.repo.putRecord({
-				repo: session.did,
-				collection: REVIEW_COLLECTION,
-				rkey: existing.rkey,
-				record,
-				validate: false,
-			});
-
-			const updated = await this.prisma.review.update({
-				where: { id: existing.id },
-				data: {
-					cid: response.data.cid,
-					rating: dto.rating,
-					content: dto.content ?? null,
-				},
-			});
-
-			return updated;
+			return { uri: existing.uri };
 		}
 
-		// Create new review
-		const rkey = TID.nextStr();
-		const now = new Date().toISOString();
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { handle: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
 
-		const record: ReviewRecord = reviewSchema.build({
-			mediaType: dto.mediaType,
-			mediaId: dto.mediaId,
-			seasonNumber: dto.seasonNumber,
-			episodeNumber: dto.episodeNumber,
-			rating: dto.rating,
-			content: dto.content,
-			createdAt: now,
+		const name = publicationNameForHandle(user.handle);
+		const url = publicationUrlForHandle(user.handle);
+
+		const record: PublicationRecord = publicationSchema.build({
+			url: url as PublicationRecord["url"],
+			name,
 		});
 
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
-			collection: REVIEW_COLLECTION,
+			collection: PUBLICATION_COLLECTION,
+			rkey: PUBLICATION_RKEY,
+			record,
+			validate: false,
+		});
+
+		await this.prisma.publication.upsert({
+			where: { userDid },
+			create: {
+				rkey: PUBLICATION_RKEY,
+				uri: response.data.uri,
+				cid: response.data.cid,
+				userDid,
+				name,
+				url,
+			},
+			update: {
+				rkey: PUBLICATION_RKEY,
+				uri: response.data.uri,
+				cid: response.data.cid,
+				name,
+				url,
+			},
+		});
+
+		return { uri: response.data.uri };
+	}
+
+	private buildDocumentRecord(params: {
+		publicationUri: string;
+		title: string;
+		markdown: string;
+		mediaType: MediaType;
+		mediaId: string;
+		seasonNumber?: number;
+		episodeNumber?: number;
+		publishedAt: string;
+		updatedAt?: string;
+	}): DocumentRecord {
+		const plain = toPlainText(params.markdown);
+
+		const content: DocumentRecord["content"] = markdownDef.build({
+			text: { markdown: params.markdown },
+			flavor: "gfm",
+		});
+
+		const links: DocumentRecord["links"] = mediaLinkDef.build({
+			mediaType: params.mediaType,
+			mediaId: params.mediaId,
+			seasonNumber: params.seasonNumber,
+			episodeNumber: params.episodeNumber,
+		});
+
+		return documentSchema.build({
+			site: params.publicationUri as DocumentRecord["site"],
+			title: params.title,
+			description: plain ? excerpt(plain) : undefined,
+			textContent: plain || undefined,
+			content,
+			links,
+			publishedAt: params.publishedAt as DocumentRecord["publishedAt"],
+			updatedAt: params.updatedAt as DocumentRecord["updatedAt"],
+		});
+	}
+
+	async createReview(
+		userDid: string,
+		session: ATSession,
+		dto: CreateReviewDto,
+	) {
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const { uri: publicationUri } = await this.ensurePublication(
+			userDid,
+			session,
+			agent,
+		);
+
+		const rkey = TID.nextStr();
+		const now = new Date().toISOString();
+
+		const record = this.buildDocumentRecord({
+			publicationUri,
+			title: dto.title,
+			markdown: dto.markdown,
+			mediaType: dto.mediaType,
+			mediaId: dto.mediaId,
+			seasonNumber: dto.seasonNumber,
+			episodeNumber: dto.episodeNumber,
+			publishedAt: now,
+		});
+
+		const response = await agent.com.atproto.repo.putRecord({
+			repo: session.did,
+			collection: DOCUMENT_COLLECTION,
 			rkey,
 			record,
 			validate: false,
 		});
 
-		const review = await this.prisma.review.create({
+		return this.prisma.review.create({
 			data: {
 				rkey,
 				uri: response.data.uri,
@@ -324,12 +412,69 @@ export class ReviewsService {
 				mediaId: dto.mediaId,
 				seasonNumber: dto.seasonNumber ?? 0,
 				episodeNumber: dto.episodeNumber ?? 0,
-				rating: dto.rating,
-				content: dto.content ?? null,
+				title: dto.title,
+				description: record.description ?? null,
+				textContent: record.textContent ?? null,
+				coverImage: dto.coverImage ?? null,
+				markdown: dto.markdown,
+				publicationUri,
 			},
 		});
+	}
 
-		return review;
+	async updateReview(
+		userDid: string,
+		session: ATSession,
+		reviewId: string,
+		dto: UpdateReviewDto,
+	) {
+		const existing = await this.prisma.review.findFirst({
+			where: { id: reviewId, userDid },
+		});
+		if (!existing) {
+			throw new NotFoundException("Review not found");
+		}
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const title = dto.title ?? existing.title;
+		const markdown = dto.markdown ?? existing.markdown;
+		const coverImage =
+			dto.coverImage !== undefined ? dto.coverImage : existing.coverImage;
+
+		const record = this.buildDocumentRecord({
+			publicationUri: existing.publicationUri,
+			title,
+			markdown,
+			mediaType: existing.mediaType,
+			mediaId: existing.mediaId,
+			seasonNumber: existing.seasonNumber,
+			episodeNumber: existing.episodeNumber,
+			publishedAt: existing.createdAt.toISOString(),
+			updatedAt: new Date().toISOString(),
+		});
+
+		const response = await agent.com.atproto.repo.putRecord({
+			repo: session.did,
+			collection: DOCUMENT_COLLECTION,
+			rkey: existing.rkey,
+			record,
+			validate: false,
+		});
+
+		return this.prisma.review.update({
+			where: { id: existing.id },
+			data: {
+				cid: response.data.cid,
+				title,
+				markdown,
+				description: record.description ?? null,
+				textContent: record.textContent ?? null,
+				coverImage: coverImage ?? null,
+			},
+		});
 	}
 
 	async deleteReview(
@@ -351,7 +496,7 @@ export class ReviewsService {
 
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
-			collection: REVIEW_COLLECTION,
+			collection: DOCUMENT_COLLECTION,
 			rkey: review.rkey,
 		});
 
@@ -491,13 +636,36 @@ export class ReviewsService {
 		};
 	}
 
-	async indexReviewRecord(
+	/**
+	 * Index a site.standard.document as a Review. Only documents carrying an
+	 * xyz.opnshelf.mediaLink member are treated as opnshelf reviews; the caller
+	 * (ingester) is responsible for the tracked-user check.
+	 */
+	async indexDocumentRecord(
 		uri: string,
 		cid: string,
 		rkey: string,
 		userDid: string,
-		record: ReviewRecord,
+		record: DocumentRecord,
 	): Promise<void> {
+		const link = record.links;
+		// Not a review document — ignore arbitrary blog posts.
+		if (!link || link.$type !== mediaLinkDef.$type) {
+			return;
+		}
+		const mediaLink = link as {
+			mediaType: MediaType;
+			mediaId: string;
+			seasonNumber?: number;
+			episodeNumber?: number;
+		};
+
+		const markdown =
+			record.content && record.content.$type === markdownDef.$type
+				? ((record.content as { text?: { markdown?: string } }).text
+						?.markdown ?? "")
+				: "";
+
 		await this.prisma.review.upsert({
 			where: { rkey },
 			create: {
@@ -505,27 +673,68 @@ export class ReviewsService {
 				uri,
 				cid,
 				userDid,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				seasonNumber: record.seasonNumber ?? 0,
-				episodeNumber: record.episodeNumber ?? 0,
-				rating: record.rating,
-				content: record.content ?? null,
+				mediaType: mediaLink.mediaType,
+				mediaId: mediaLink.mediaId,
+				seasonNumber: mediaLink.seasonNumber ?? 0,
+				episodeNumber: mediaLink.episodeNumber ?? 0,
+				title: record.title,
+				path: record.path ?? null,
+				description: record.description ?? null,
+				textContent: record.textContent ?? null,
+				markdown,
+				publicationUri: record.site,
 			},
 			update: {
 				cid,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				seasonNumber: record.seasonNumber ?? 0,
-				episodeNumber: record.episodeNumber ?? 0,
-				rating: record.rating,
-				content: record.content ?? null,
+				mediaType: mediaLink.mediaType,
+				mediaId: mediaLink.mediaId,
+				seasonNumber: mediaLink.seasonNumber ?? 0,
+				episodeNumber: mediaLink.episodeNumber ?? 0,
+				title: record.title,
+				path: record.path ?? null,
+				description: record.description ?? null,
+				textContent: record.textContent ?? null,
+				markdown,
+				publicationUri: record.site,
 			},
 		});
 	}
 
-	async deleteReviewRecord(rkey: string): Promise<void> {
+	async deleteDocumentRecord(rkey: string): Promise<void> {
 		await this.prisma.review.deleteMany({
+			where: { rkey },
+		});
+	}
+
+	async indexPublicationRecord(
+		uri: string,
+		cid: string,
+		rkey: string,
+		userDid: string,
+		record: PublicationRecord,
+	): Promise<void> {
+		await this.prisma.publication.upsert({
+			where: { userDid },
+			create: {
+				rkey,
+				uri,
+				cid,
+				userDid,
+				name: record.name,
+				url: record.url,
+			},
+			update: {
+				rkey,
+				uri,
+				cid,
+				name: record.name,
+				url: record.url,
+			},
+		});
+	}
+
+	async deletePublicationRecord(rkey: string): Promise<void> {
+		await this.prisma.publication.deleteMany({
 			where: { rkey },
 		});
 	}

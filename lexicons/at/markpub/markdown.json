@@ -1,0 +1,23 @@
+{
+	"lexicon": 1,
+	"id": "at.markpub.markdown",
+	"defs": {
+		"main": {
+			"type": "object",
+			"description": "A markdown content object intended to be embedded inside other records (e.g. a standard.site document's open `content` union). Vendored subset of at.markpub.markdown.",
+			"required": ["text"],
+			"properties": {
+				"text": {
+					"type": "ref",
+					"ref": "at.markpub.text",
+					"description": "An object that includes the text in markdown"
+				},
+				"flavor": {
+					"type": "string",
+					"description": "Markdown rendering flavor",
+					"knownValues": ["gfm", "commonmark"]
+				}
+			}
+		}
+	}
+}

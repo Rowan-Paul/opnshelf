@@ -4,13 +4,13 @@
 
 import { l } from '@atproto/lex'
 
-const $nsid = 'xyz.opnshelf.review'
+const $nsid = 'xyz.opnshelf.mediaLink'
 
 export { $nsid }
 
-/** A user review and rating for a media item */
+/** An embedded, typed link binding a standard.site document to an OpnShelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
 type Main = {
-  $type: 'xyz.opnshelf.review'
+  $type?: 'xyz.opnshelf.mediaLink'
 
   /**
    * Media type
@@ -31,37 +31,19 @@ type Main = {
    * Episode number for episode items
    */
   episodeNumber?: number
-
-  /**
-   * Rating from 1 to 10 (maps to 0.5-5.0 stars)
-   */
-  rating: number
-
-  /**
-   * Optional review text
-   */
-  content?: string
-
-  /**
-   * Record creation timestamp
-   */
-  createdAt: l.DatetimeString
 }
 
 export type { Main }
 
-/** A user review and rating for a media item */
-const main = l.record<'tid', Main>(
-  'tid',
+/** An embedded, typed link binding a standard.site document to an OpnShelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
+const main = l.typedObject<Main>(
   $nsid,
+  'main',
   l.object({
     mediaType: l.enum(['movie', 'show', 'season', 'episode']),
     mediaId: l.string(),
     seasonNumber: l.optional(l.integer()),
     episodeNumber: l.optional(l.integer()),
-    rating: l.integer({ minimum: 1, maximum: 10 }),
-    content: l.optional(l.string({ maxLength: 5000 })),
-    createdAt: l.string({ format: 'datetime' }),
   }),
 )
 

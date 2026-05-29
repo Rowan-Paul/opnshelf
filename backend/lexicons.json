@@ -27,13 +27,38 @@
 			"local": true
 		},
 		{
-			"id": "xyz.opnshelf.review",
-			"path": "lexicons/app/opnshelf/review.json",
+			"id": "xyz.opnshelf.review.like",
+			"path": "lexicons/app/opnshelf/review/like.json",
 			"local": true
 		},
 		{
 			"id": "xyz.opnshelf.rating",
 			"path": "lexicons/app/opnshelf/rating.json",
+			"local": true
+		},
+		{
+			"id": "xyz.opnshelf.mediaLink",
+			"path": "lexicons/app/opnshelf/mediaLink.json",
+			"local": true
+		},
+		{
+			"id": "at.markpub.text",
+			"path": "lexicons/at/markpub/text.json",
+			"local": true
+		},
+		{
+			"id": "at.markpub.markdown",
+			"path": "lexicons/at/markpub/markdown.json",
+			"local": true
+		},
+		{
+			"id": "site.standard.publication",
+			"path": "lexicons/site/standard/publication.json",
+			"local": true
+		},
+		{
+			"id": "site.standard.document",
+			"path": "lexicons/site/standard/document.json",
 			"local": true
 		}
 	]

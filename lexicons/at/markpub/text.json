@@ -1,0 +1,23 @@
+{
+	"lexicon": 1,
+	"id": "at.markpub.text",
+	"defs": {
+		"main": {
+			"type": "object",
+			"description": "A markpub text object carrying raw markdown (vendored subset).",
+			"required": ["markdown"],
+			"properties": {
+				"markdown": {
+					"type": "string",
+					"description": "Raw text in markdown"
+				},
+				"textBlob": {
+					"type": "blob",
+					"maxSize": 1000000,
+					"accept": ["text/*"],
+					"description": "Optional blob reference overriding the inline markdown string"
+				}
+			}
+		}
+	}
+}

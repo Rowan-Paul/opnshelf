@@ -1,0 +1,66 @@
+{
+	"lexicon": 1,
+	"id": "site.standard.document",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "Metadata for an individual long-form document published to the web. Vendored subset of site.standard.document.",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["site", "title", "publishedAt"],
+				"properties": {
+					"site": {
+						"type": "string",
+						"format": "at-uri",
+						"description": "AT-URI of the site.standard.publication this document belongs to"
+					},
+					"title": {
+						"type": "string",
+						"description": "Document title"
+					},
+					"path": {
+						"type": "string",
+						"description": "URL path segment for the document on the publication"
+					},
+					"description": {
+						"type": "string",
+						"description": "Short plaintext excerpt for cross-tool preview"
+					},
+					"textContent": {
+						"type": "string",
+						"description": "Plaintext rendering of the body for cross-tool preview (must not contain markdown)"
+					},
+					"coverImage": {
+						"type": "blob",
+						"accept": ["image/*"],
+						"maxSize": 1000000,
+						"description": "Optional cover image blob"
+					},
+					"content": {
+						"type": "union",
+						"closed": false,
+						"refs": ["at.markpub.markdown"],
+						"description": "Open content union; opnshelf reviews carry an at.markpub.markdown member"
+					},
+					"links": {
+						"type": "union",
+						"closed": false,
+						"refs": ["xyz.opnshelf.mediaLink"],
+						"description": "Open links union; opnshelf reviews carry an xyz.opnshelf.mediaLink member binding the document to a media item"
+					},
+					"publishedAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Publication timestamp"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Last edit timestamp"
+					}
+				}
+			}
+		}
+	}
+}

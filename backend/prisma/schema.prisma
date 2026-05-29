@@ -36,6 +36,7 @@ model User {
   lists        List[]
   notes        Note[]
   reviews      Review[]
+  publications Publication[]
   ratings      Rating[]
   reviewLikes  ReviewLike[]
   feedback     Feedback[]
@@ -326,6 +327,12 @@ model Note {
   @@index([mediaType, mediaId])
 }
 
+// A long-form Review, backed by a site.standard.document record (ADR-0002).
+// A Review carries NO score (the score is a separate Rating, see #112).
+// There may be ZERO-or-MANY reviews per user per media item (no unique on the
+// media tuple). The document is bound to its media item by an embedded
+// xyz.opnshelf.mediaLink object; opnshelf only treats a document as a Review
+// when it carries that link on a tracked user's repo.
 model Review {
   id            String   @id @default(cuid())
   rkey          String   @unique
@@ -335,23 +342,51 @@ model Review {
   userDid       String
   user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
+  // Media coordinates, derived from the embedded mediaLink, kept so reviews
+  // are queryable by media item.
   mediaType     MediaType
   mediaId       String
   seasonNumber  Int      @default(0)
   episodeNumber Int      @default(0)
 
-  rating        Int
-  content       String?
+  // site.standard.document fields.
+  title          String
+  path           String?
+  description    String?
+  textContent    String?
+  coverImage     String?
+  // Raw markdown source stored in the at.markpub.markdown content member.
+  markdown       String
+  // AT-URI of the site.standard.publication the document references (`site`).
+  publicationUri String
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   likes         ReviewLike[]
 
-  @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
   @@index([userDid])
   @@index([mediaType, mediaId])
-  @@index([rating])
+}
+
+// A site.standard.publication minted lazily (one per user) on their first
+// review (ADR-0003). Lives in the user's own PDS with a literal `self` rkey.
+model Publication {
+  id        String   @id @default(cuid())
+  rkey      String   @unique
+  uri       String
+  cid       String
+
+  userDid   String   @unique
+  user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
+  name      String
+  url       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userDid])
 }
 
 model Rating {

@@ -13,7 +13,8 @@ import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/list/ite
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
 import { $nsid as NOTE_COLLECTION } from "../lexicons/xyz/opnshelf/note";
 import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";
-import { $nsid as REVIEW_COLLECTION } from "../lexicons/xyz/opnshelf/review";
+import { $nsid as DOCUMENT_COLLECTION } from "../lexicons/site/standard/document";
+import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -278,9 +279,25 @@ export class UserDeletionService {
 			await this.tryDeleteRecord(
 				agent,
 				session.did,
-				REVIEW_COLLECTION,
+				DOCUMENT_COLLECTION,
 				review.rkey,
-				`Failed to delete review ${review.rkey} from PDS`,
+				`Failed to delete review document ${review.rkey} from PDS`,
+			);
+			jobData.deletedRecords++;
+			await this.updateJobData(jobId, jobData);
+		}
+
+		const publications = await this.prisma.publication.findMany({
+			where: { userDid },
+			select: { rkey: true },
+		});
+		for (const publication of publications) {
+			await this.tryDeleteRecord(
+				agent,
+				session.did,
+				PUBLICATION_COLLECTION,
+				publication.rkey,
+				`Failed to delete publication ${publication.rkey} from PDS`,
 			);
 			jobData.deletedRecords++;
 			await this.updateJobData(jobId, jobData);

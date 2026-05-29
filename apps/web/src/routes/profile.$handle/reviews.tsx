@@ -9,9 +9,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { MarkdownPreview } from "#/components/MarkdownPreview";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewDialog } from "#/components/ReviewDialog";
-import StarRating from "#/components/StarRating";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
 import { toSlug } from "#/lib/slug";
@@ -184,11 +184,11 @@ function ReviewCard({
 					</div>
 				}
 			>
-				<StarRating value={review.rating} readOnly size="sm" showValue />
-				{review.content && (
-					<p className="text-(--foreground-muted) text-sm leading-relaxed">
-						{review.content}
-					</p>
+				<p className="font-medium text-sm">{review.reviewTitle}</p>
+				{review.markdown && (
+					<div className="text-(--foreground-muted) text-sm leading-relaxed">
+						<MarkdownPreview markdown={review.markdown} />
+					</div>
 				)}
 			</ProfileContentCard>
 			<ReviewDialog
@@ -198,6 +198,11 @@ function ReviewCard({
 				mediaId={review.mediaId}
 				seasonNumber={review.seasonNumber ?? undefined}
 				episodeNumber={review.episodeNumber ?? undefined}
+				review={{
+					id: review.id,
+					title: review.reviewTitle,
+					markdown: review.markdown,
+				}}
 				onSuccess={invalidateList}
 			/>
 		</>

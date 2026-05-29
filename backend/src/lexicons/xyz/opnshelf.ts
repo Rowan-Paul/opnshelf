@@ -5,6 +5,7 @@
 export * as episode from './opnshelf/episode.js'
 export * as follow from './opnshelf/follow.js'
 export * as list from './opnshelf/list.js'
+export * as mediaLink from './opnshelf/mediaLink.js'
 export * as movie from './opnshelf/movie.js'
 export * as note from './opnshelf/note.js'
 export * as profile from './opnshelf/profile.js'

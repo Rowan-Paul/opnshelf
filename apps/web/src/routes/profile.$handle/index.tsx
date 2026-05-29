@@ -2,19 +2,15 @@ import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
 	moviesControllerGetUserMoviesPaginatedOptions,
-	reviewsControllerGetUserReviewsQueryKey,
-	reviewsControllerUpsertReviewMutation,
 	showsControllerGetUserEpisodesPaginatedOptions,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, List, Star, Tv } from "lucide-react";
-import { toast } from "sonner";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import MediaCard from "#/components/MediaCard";
-import StarRating from "#/components/StarRating";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -274,12 +270,7 @@ function ProfileOverviewPage() {
 				) : reviewsData?.items && reviewsData.items.length > 0 ? (
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
 						{reviewsData.items.map((review) => (
-							<ProfileReviewCard
-								key={review.id}
-								review={review}
-								isOwner={isOwner}
-								userDid={userDid}
-							/>
+							<ProfileReviewCard key={review.id} review={review} />
 						))}
 					</div>
 				) : (
@@ -292,35 +283,7 @@ function ProfileOverviewPage() {
 	);
 }
 
-function ProfileReviewCard({
-	review,
-	isOwner,
-	userDid,
-}: {
-	review: UserReviewDto;
-	isOwner: boolean;
-	userDid: string;
-}) {
-	const queryClient = useQueryClient();
-
-	const mutation = useMutation({
-		...reviewsControllerUpsertReviewMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: reviewsControllerGetUserReviewsQueryKey({
-					path: { userDid },
-					query: { limit: 4 },
-				}),
-			});
-			toast.success("Rating updated");
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to update rating",
-			);
-		},
-	});
-
+function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 	const showName = review.title?.split(" — ")[0] ?? "";
 	const slug = toSlug(showName);
 
@@ -340,42 +303,22 @@ function ProfileReviewCard({
 		return "#";
 	})();
 
-	const handleRatingChange = (newRating: number) => {
-		if (!isOwner) return;
-		mutation.mutate({
-			body: {
-				mediaType: review.mediaType,
-				mediaId: review.mediaId,
-				seasonNumber: review.seasonNumber,
-				episodeNumber: review.episodeNumber,
-				rating: newRating,
-				content: review.content,
-			},
-		});
-	};
-
 	return (
-		<div key={review.id}>
+		<Link to={href} key={review.id} className="block">
 			{review.posterPath && (
-				<Link to={href}>
-					<img
-						src={`https://image.tmdb.org/t/p/w300${review.posterPath}`}
-						alt={review.title || "Poster"}
-						className="mb-2 aspect-[2/3] w-full rounded-md object-cover"
-					/>
-				</Link>
+				<img
+					src={`https://image.tmdb.org/t/p/w300${review.posterPath}`}
+					alt={review.title || "Poster"}
+					className="mb-2 aspect-[2/3] w-full rounded-md object-cover"
+				/>
 			)}
 			<h3 className="line-clamp-2 font-medium text-sm">
 				{review.title || "Unknown"}
 			</h3>
-			<StarRating
-				value={review.rating}
-				onChange={isOwner ? handleRatingChange : undefined}
-				readOnly={!isOwner}
-				size="sm"
-				showValue
-			/>
-		</div>
+			<p className="line-clamp-1 text-(--foreground-muted) text-xs">
+				{review.reviewTitle}
+			</p>
+		</Link>
 	);
 }
 

@@ -96,7 +96,9 @@ describe("ReviewsController", () => {
 				items: [
 					{
 						id: "r1",
-						rating: 8,
+						title: "Great film",
+						markdown: "It was great.",
+						description: "It was great.",
 						user: {
 							did: "did:plc:u1",
 							handle: "u1",
@@ -109,7 +111,6 @@ describe("ReviewsController", () => {
 						updatedAt: new Date(),
 					},
 				],
-				averageRating: 8,
 				total: 1,
 				nextCursor: null,
 			});

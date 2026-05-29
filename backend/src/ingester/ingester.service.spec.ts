@@ -93,8 +93,10 @@ describe("IngesterService", () => {
 		deleteProfileRecordIndex: jest.Mock;
 	};
 	let mockReviewsService: {
-		indexReviewRecord: jest.Mock;
-		deleteReviewRecord: jest.Mock;
+		indexDocumentRecord: jest.Mock;
+		deleteDocumentRecord: jest.Mock;
+		indexPublicationRecord: jest.Mock;
+		deletePublicationRecord: jest.Mock;
 		indexReviewLikeRecord: jest.Mock;
 		deleteReviewLikeRecord: jest.Mock;
 	};
@@ -164,8 +166,10 @@ describe("IngesterService", () => {
 		};
 
 		mockReviewsService = {
-			indexReviewRecord: jest.fn(),
-			deleteReviewRecord: jest.fn(),
+			indexDocumentRecord: jest.fn(),
+			deleteDocumentRecord: jest.fn(),
+			indexPublicationRecord: jest.fn(),
+			deletePublicationRecord: jest.fn(),
 			indexReviewLikeRecord: jest.fn(),
 			deleteReviewLikeRecord: jest.fn(),
 		};

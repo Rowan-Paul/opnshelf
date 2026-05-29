@@ -1,0 +1,30 @@
+{
+	"lexicon": 1,
+	"id": "site.standard.publication",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A representation of a collection of documents published to the web. Vendored subset of site.standard.publication.",
+			"key": "literal:self",
+			"record": {
+				"type": "object",
+				"required": ["url", "name"],
+				"properties": {
+					"url": {
+						"type": "string",
+						"format": "uri",
+						"description": "Canonical web URL of the publication"
+					},
+					"name": {
+						"type": "string",
+						"description": "Display name of the publication"
+					},
+					"description": {
+						"type": "string",
+						"description": "Optional description of the publication"
+					}
+				}
+			}
+		}
+	}
+}

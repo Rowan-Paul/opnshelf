@@ -29,13 +29,11 @@ export type AggregateReview = {
 export type ReviewAvgAggregateOutputType = {
   seasonNumber: number | null
   episodeNumber: number | null
-  rating: number | null
 }
 
 export type ReviewSumAggregateOutputType = {
   seasonNumber: number | null
   episodeNumber: number | null
-  rating: number | null
 }
 
 export type ReviewMinAggregateOutputType = {
@@ -48,8 +46,13 @@ export type ReviewMinAggregateOutputType = {
   mediaId: string | null
   seasonNumber: number | null
   episodeNumber: number | null
-  rating: number | null
-  content: string | null
+  title: string | null
+  path: string | null
+  description: string | null
+  textContent: string | null
+  coverImage: string | null
+  markdown: string | null
+  publicationUri: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -64,8 +67,13 @@ export type ReviewMaxAggregateOutputType = {
   mediaId: string | null
   seasonNumber: number | null
   episodeNumber: number | null
-  rating: number | null
-  content: string | null
+  title: string | null
+  path: string | null
+  description: string | null
+  textContent: string | null
+  coverImage: string | null
+  markdown: string | null
+  publicationUri: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,8 +88,13 @@ export type ReviewCountAggregateOutputType = {
   mediaId: number
   seasonNumber: number
   episodeNumber: number
-  rating: number
-  content: number
+  title: number
+  path: number
+  description: number
+  textContent: number
+  coverImage: number
+  markdown: number
+  publicationUri: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -91,13 +104,11 @@ export type ReviewCountAggregateOutputType = {
 export type ReviewAvgAggregateInputType = {
   seasonNumber?: true
   episodeNumber?: true
-  rating?: true
 }
 
 export type ReviewSumAggregateInputType = {
   seasonNumber?: true
   episodeNumber?: true
-  rating?: true
 }
 
 export type ReviewMinAggregateInputType = {
@@ -110,8 +121,13 @@ export type ReviewMinAggregateInputType = {
   mediaId?: true
   seasonNumber?: true
   episodeNumber?: true
-  rating?: true
-  content?: true
+  title?: true
+  path?: true
+  description?: true
+  textContent?: true
+  coverImage?: true
+  markdown?: true
+  publicationUri?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -126,8 +142,13 @@ export type ReviewMaxAggregateInputType = {
   mediaId?: true
   seasonNumber?: true
   episodeNumber?: true
-  rating?: true
-  content?: true
+  title?: true
+  path?: true
+  description?: true
+  textContent?: true
+  coverImage?: true
+  markdown?: true
+  publicationUri?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -142,8 +163,13 @@ export type ReviewCountAggregateInputType = {
   mediaId?: true
   seasonNumber?: true
   episodeNumber?: true
-  rating?: true
-  content?: true
+  title?: true
+  path?: true
+  description?: true
+  textContent?: true
+  coverImage?: true
+  markdown?: true
+  publicationUri?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -245,8 +271,13 @@ export type ReviewGroupByOutputType = {
   mediaId: string
   seasonNumber: number
   episodeNumber: number
-  rating: number
-  content: string | null
+  title: string
+  path: string | null
+  description: string | null
+  textContent: string | null
+  coverImage: string | null
+  markdown: string
+  publicationUri: string
   createdAt: Date
   updatedAt: Date
   _count: ReviewCountAggregateOutputType | null
@@ -284,8 +315,13 @@ export type ReviewWhereInput = {
   mediaId?: Prisma.StringFilter<"Review"> | string
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
-  rating?: Prisma.IntFilter<"Review"> | number
-  content?: Prisma.StringNullableFilter<"Review"> | string | null
+  title?: Prisma.StringFilter<"Review"> | string
+  path?: Prisma.StringNullableFilter<"Review"> | string | null
+  description?: Prisma.StringNullableFilter<"Review"> | string | null
+  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
+  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
+  markdown?: Prisma.StringFilter<"Review"> | string
+  publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -302,8 +338,13 @@ export type ReviewOrderByWithRelationInput = {
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
-  content?: Prisma.SortOrderInput | Prisma.SortOrder
+  title?: Prisma.SortOrder
+  path?: Prisma.SortOrderInput | Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  textContent?: Prisma.SortOrderInput | Prisma.SortOrder
+  coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  markdown?: Prisma.SortOrder
+  publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -313,7 +354,6 @@ export type ReviewOrderByWithRelationInput = {
 export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   rkey?: string
-  userDid_mediaType_mediaId_seasonNumber_episodeNumber?: Prisma.ReviewUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput
   AND?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
   OR?: Prisma.ReviewWhereInput[]
   NOT?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
@@ -324,13 +364,18 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   mediaId?: Prisma.StringFilter<"Review"> | string
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
-  rating?: Prisma.IntFilter<"Review"> | number
-  content?: Prisma.StringNullableFilter<"Review"> | string | null
+  title?: Prisma.StringFilter<"Review"> | string
+  path?: Prisma.StringNullableFilter<"Review"> | string | null
+  description?: Prisma.StringNullableFilter<"Review"> | string | null
+  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
+  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
+  markdown?: Prisma.StringFilter<"Review"> | string
+  publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   likes?: Prisma.ReviewLikeListRelationFilter
-}, "id" | "rkey" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber">
+}, "id" | "rkey">
 
 export type ReviewOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -342,8 +387,13 @@ export type ReviewOrderByWithAggregationInput = {
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
-  content?: Prisma.SortOrderInput | Prisma.SortOrder
+  title?: Prisma.SortOrder
+  path?: Prisma.SortOrderInput | Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  textContent?: Prisma.SortOrderInput | Prisma.SortOrder
+  coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  markdown?: Prisma.SortOrder
+  publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReviewCountOrderByAggregateInput
@@ -366,8 +416,13 @@ export type ReviewScalarWhereWithAggregatesInput = {
   mediaId?: Prisma.StringWithAggregatesFilter<"Review"> | string
   seasonNumber?: Prisma.IntWithAggregatesFilter<"Review"> | number
   episodeNumber?: Prisma.IntWithAggregatesFilter<"Review"> | number
-  rating?: Prisma.IntWithAggregatesFilter<"Review"> | number
-  content?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  title?: Prisma.StringWithAggregatesFilter<"Review"> | string
+  path?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  description?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  textContent?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  coverImage?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  markdown?: Prisma.StringWithAggregatesFilter<"Review"> | string
+  publicationUri?: Prisma.StringWithAggregatesFilter<"Review"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
 }
@@ -381,8 +436,13 @@ export type ReviewCreateInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -399,8 +459,13 @@ export type ReviewUncheckedCreateInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -415,8 +480,13 @@ export type ReviewUpdateInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -433,8 +503,13 @@ export type ReviewUncheckedUpdateInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -450,8 +525,13 @@ export type ReviewCreateManyInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -465,8 +545,13 @@ export type ReviewUpdateManyMutationInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -481,8 +566,13 @@ export type ReviewUncheckedUpdateManyInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -497,14 +587,6 @@ export type ReviewOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ReviewUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput = {
-  userDid: string
-  mediaType: $Enums.MediaType
-  mediaId: string
-  seasonNumber: number
-  episodeNumber: number
-}
-
 export type ReviewCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   rkey?: Prisma.SortOrder
@@ -515,8 +597,13 @@ export type ReviewCountOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
-  content?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  textContent?: Prisma.SortOrder
+  coverImage?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
+  publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -524,7 +611,6 @@ export type ReviewCountOrderByAggregateInput = {
 export type ReviewAvgOrderByAggregateInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
 }
 
 export type ReviewMaxOrderByAggregateInput = {
@@ -537,8 +623,13 @@ export type ReviewMaxOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
-  content?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  textContent?: Prisma.SortOrder
+  coverImage?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
+  publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -553,8 +644,13 @@ export type ReviewMinOrderByAggregateInput = {
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
-  content?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  textContent?: Prisma.SortOrder
+  coverImage?: Prisma.SortOrder
+  markdown?: Prisma.SortOrder
+  publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -562,7 +658,6 @@ export type ReviewMinOrderByAggregateInput = {
 export type ReviewSumOrderByAggregateInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
-  rating?: Prisma.SortOrder
 }
 
 export type ReviewScalarRelationFilter = {
@@ -635,8 +730,13 @@ export type ReviewCreateWithoutUserInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeCreateNestedManyWithoutReviewInput
@@ -651,8 +751,13 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -697,8 +802,13 @@ export type ReviewScalarWhereInput = {
   mediaId?: Prisma.StringFilter<"Review"> | string
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
-  rating?: Prisma.IntFilter<"Review"> | number
-  content?: Prisma.StringNullableFilter<"Review"> | string | null
+  title?: Prisma.StringFilter<"Review"> | string
+  path?: Prisma.StringNullableFilter<"Review"> | string | null
+  description?: Prisma.StringNullableFilter<"Review"> | string | null
+  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
+  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
+  markdown?: Prisma.StringFilter<"Review"> | string
+  publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
 }
@@ -712,8 +822,13 @@ export type ReviewCreateWithoutLikesInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -729,8 +844,13 @@ export type ReviewUncheckedCreateWithoutLikesInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -760,8 +880,13 @@ export type ReviewUpdateWithoutLikesInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -777,8 +902,13 @@ export type ReviewUncheckedUpdateWithoutLikesInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -792,8 +922,13 @@ export type ReviewCreateManyUserInput = {
   mediaId: string
   seasonNumber?: number
   episodeNumber?: number
-  rating: number
-  content?: string | null
+  title: string
+  path?: string | null
+  description?: string | null
+  textContent?: string | null
+  coverImage?: string | null
+  markdown: string
+  publicationUri: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -807,8 +942,13 @@ export type ReviewUpdateWithoutUserInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUpdateManyWithoutReviewNestedInput
@@ -823,8 +963,13 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -839,8 +984,13 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -886,8 +1036,13 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   mediaId?: boolean
   seasonNumber?: boolean
   episodeNumber?: boolean
-  rating?: boolean
-  content?: boolean
+  title?: boolean
+  path?: boolean
+  description?: boolean
+  textContent?: boolean
+  coverImage?: boolean
+  markdown?: boolean
+  publicationUri?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -905,8 +1060,13 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   mediaId?: boolean
   seasonNumber?: boolean
   episodeNumber?: boolean
-  rating?: boolean
-  content?: boolean
+  title?: boolean
+  path?: boolean
+  description?: boolean
+  textContent?: boolean
+  coverImage?: boolean
+  markdown?: boolean
+  publicationUri?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -922,8 +1082,13 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   mediaId?: boolean
   seasonNumber?: boolean
   episodeNumber?: boolean
-  rating?: boolean
-  content?: boolean
+  title?: boolean
+  path?: boolean
+  description?: boolean
+  textContent?: boolean
+  coverImage?: boolean
+  markdown?: boolean
+  publicationUri?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -939,13 +1104,18 @@ export type ReviewSelectScalar = {
   mediaId?: boolean
   seasonNumber?: boolean
   episodeNumber?: boolean
-  rating?: boolean
-  content?: boolean
+  title?: boolean
+  path?: boolean
+  description?: boolean
+  textContent?: boolean
+  coverImage?: boolean
+  markdown?: boolean
+  publicationUri?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "rating" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "path" | "description" | "textContent" | "coverImage" | "markdown" | "publicationUri" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.Review$likesArgs<ExtArgs>
@@ -974,8 +1144,13 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     mediaId: string
     seasonNumber: number
     episodeNumber: number
-    rating: number
-    content: string | null
+    title: string
+    path: string | null
+    description: string | null
+    textContent: string | null
+    coverImage: string | null
+    markdown: string
+    publicationUri: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["review"]>
@@ -1412,8 +1587,13 @@ export interface ReviewFieldRefs {
   readonly mediaId: Prisma.FieldRef<"Review", 'String'>
   readonly seasonNumber: Prisma.FieldRef<"Review", 'Int'>
   readonly episodeNumber: Prisma.FieldRef<"Review", 'Int'>
-  readonly rating: Prisma.FieldRef<"Review", 'Int'>
-  readonly content: Prisma.FieldRef<"Review", 'String'>
+  readonly title: Prisma.FieldRef<"Review", 'String'>
+  readonly path: Prisma.FieldRef<"Review", 'String'>
+  readonly description: Prisma.FieldRef<"Review", 'String'>
+  readonly textContent: Prisma.FieldRef<"Review", 'String'>
+  readonly coverImage: Prisma.FieldRef<"Review", 'String'>
+  readonly markdown: Prisma.FieldRef<"Review", 'String'>
+  readonly publicationUri: Prisma.FieldRef<"Review", 'String'>
   readonly createdAt: Prisma.FieldRef<"Review", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Review", 'DateTime'>
 }

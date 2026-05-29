@@ -2,14 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
 	IsInt,
+	IsNotEmpty,
 	IsOptional,
 	IsString,
-	Max,
 	MaxLength,
-	Min,
 } from "class-validator";
 
-export class UpsertReviewDto {
+export class CreateReviewDto {
 	@ApiProperty({
 		description: "Media type",
 		enum: ["movie", "show", "season", "episode"],
@@ -35,21 +34,52 @@ export class UpsertReviewDto {
 	@IsInt()
 	episodeNumber?: number;
 
-	@ApiProperty({
-		description: "Rating from 1 to 10 (maps to 0.5-5.0 stars)",
-		minimum: 1,
-		maximum: 10,
-	})
-	@IsInt()
-	@Min(1)
-	@Max(10)
-	rating: number;
+	@ApiProperty({ description: "Review title (required)", maxLength: 300 })
+	@IsString()
+	@IsNotEmpty()
+	@MaxLength(300)
+	title: string;
 
-	@ApiPropertyOptional({ description: "Review text", maxLength: 5000 })
+	@ApiProperty({
+		description: "Review body as markdown source",
+		maxLength: 20000,
+	})
+	@IsString()
+	@IsNotEmpty()
+	@MaxLength(20000)
+	markdown: string;
+
+	@ApiPropertyOptional({
+		description: "Cover image (media poster) URL for preview",
+	})
 	@IsOptional()
 	@IsString()
-	@MaxLength(5000)
-	content?: string;
+	coverImage?: string;
+}
+
+export class UpdateReviewDto {
+	@ApiPropertyOptional({ description: "Review title", maxLength: 300 })
+	@IsOptional()
+	@IsString()
+	@IsNotEmpty()
+	@MaxLength(300)
+	title?: string;
+
+	@ApiPropertyOptional({
+		description: "Review body as markdown source",
+		maxLength: 20000,
+	})
+	@IsOptional()
+	@IsString()
+	@MaxLength(20000)
+	markdown?: string;
+
+	@ApiPropertyOptional({
+		description: "Cover image (media poster) URL for preview",
+	})
+	@IsOptional()
+	@IsString()
+	coverImage?: string;
 }
 
 export class ReviewResponseDto {
@@ -59,11 +89,23 @@ export class ReviewResponseDto {
 	@ApiProperty()
 	rkey: string;
 
-	@ApiProperty({ minimum: 1, maximum: 10 })
-	rating: number;
+	@ApiProperty()
+	title: string;
 
-	@ApiPropertyOptional()
-	content?: string;
+	@ApiProperty({ description: "Review body as markdown source" })
+	markdown: string;
+
+	@ApiPropertyOptional({ description: "Short plaintext excerpt" })
+	description?: string;
+
+	@ApiPropertyOptional({ description: "Plaintext rendering for preview" })
+	textContent?: string;
+
+	@ApiPropertyOptional({ description: "Cover image (media poster) URL" })
+	coverImage?: string;
+
+	@ApiProperty({ description: "AT-URI of the document's publication (`site`)" })
+	publicationUri: string;
 
 	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
 	mediaType: string;
@@ -82,33 +124,6 @@ export class ReviewResponseDto {
 
 	@ApiProperty()
 	updatedAt: string;
-}
-
-export class GetReviewQueryDto {
-	@ApiProperty({
-		description: "Media type",
-		enum: ["movie", "show", "season", "episode"],
-	})
-	@IsString()
-	mediaType: "movie" | "show" | "season" | "episode";
-
-	@ApiProperty({ description: "TMDB movie ID or show ID" })
-	@IsString()
-	mediaId: string;
-
-	@ApiPropertyOptional({
-		description: "Season number for season/episode items",
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	seasonNumber?: number;
-
-	@ApiPropertyOptional({ description: "Episode number for episode items" })
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	episodeNumber?: number;
 }
 
 export class PaginatedReviewsQueryDto {
@@ -133,11 +148,14 @@ export class UserReviewDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty({ minimum: 1, maximum: 10 })
-	rating: number;
+	@ApiProperty()
+	reviewTitle: string;
+
+	@ApiProperty({ description: "Review body as markdown source" })
+	markdown: string;
 
 	@ApiPropertyOptional()
-	content?: string;
+	description?: string;
 
 	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
 	mediaType: string;
@@ -226,11 +244,14 @@ export class MediaReviewItemDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty({ minimum: 1, maximum: 10 })
-	rating: number;
+	@ApiProperty()
+	title: string;
+
+	@ApiProperty({ description: "Review body as markdown source" })
+	markdown: string;
 
 	@ApiPropertyOptional()
-	content?: string;
+	description?: string;
 
 	@ApiProperty()
 	userDid: string;

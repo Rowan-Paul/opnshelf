@@ -15,11 +15,21 @@ vi.mock("#/lib/hooks/useReviews", () => ({
 	useToggleReviewLike: () => mockUseToggleReviewLike(),
 }));
 
-vi.mock("./StarRating", () => ({
-	default: ({ value }: { value: number }) => (
-		<div data-testid="star-rating">{value}</div>
-	),
-}));
+function review(overrides: Record<string, unknown>) {
+	return {
+		id: "r1",
+		title: "A title",
+		markdown: "Body text",
+		userDid: "did:plc:u1",
+		userHandle: "user1",
+		userDisplayName: undefined,
+		userAvatar: null,
+		likeCount: 0,
+		hasLiked: false,
+		createdAt: new Date().toISOString(),
+		...overrides,
+	};
+}
 
 describe("CommunityReviews", () => {
 	afterEach(() => {
@@ -47,22 +57,16 @@ describe("CommunityReviews", () => {
 		).toBe(true);
 	});
 
-	it("renders review cards with correct data", () => {
+	it("renders review cards with title and body", () => {
 		mockUseMediaReviews.mockReturnValue({
 			data: {
 				items: [
-					{
-						id: "r1",
-						rating: 8,
-						content: "Great movie!",
-						userDid: "did:plc:u1",
-						userHandle: "user1",
+					review({
+						title: "Great movie!",
+						markdown: "Loved every minute.",
 						userDisplayName: "User One",
-						userAvatar: null,
 						likeCount: 3,
-						hasLiked: false,
-						createdAt: new Date().toISOString(),
-					},
+					}),
 				],
 			},
 			isLoading: false,
@@ -72,34 +76,28 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("User One")).toBeTruthy();
 		expect(screen.getByText("@user1")).toBeTruthy();
 		expect(screen.getByText("Great movie!")).toBeTruthy();
+		expect(screen.getByText("Loved every minute.")).toBeTruthy();
 		expect(screen.getByText("3")).toBeTruthy();
 	});
 
-	it("shows own review at the top with Your Review badge", () => {
+	it("shows own review with Your Review badge", () => {
 		mockUseAuth.mockReturnValue({ user: { did: "did:plc:me" } });
 		mockUseMediaReviews.mockReturnValue({
 			data: {
 				items: [
-					{
+					review({
 						id: "r2",
-						rating: 7,
-						content: "Good",
+						title: "Good",
 						userDid: "did:plc:u2",
 						userHandle: "other",
 						likeCount: 2,
-						hasLiked: false,
-						createdAt: new Date().toISOString(),
-					},
-					{
+					}),
+					review({
 						id: "r1",
-						rating: 8,
-						content: "My take",
+						title: "My take",
 						userDid: "did:plc:me",
 						userHandle: "me",
-						likeCount: 0,
-						hasLiked: false,
-						createdAt: new Date().toISOString(),
-					},
+					}),
 				],
 			},
 			isLoading: false,
@@ -113,40 +111,7 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("@other")).toBeTruthy();
 	});
 
-	it("shows edit button on own review", () => {
-		const onAddReview = vi.fn();
-		mockUseAuth.mockReturnValue({ user: { did: "did:plc:me" } });
-		mockUseMediaReviews.mockReturnValue({
-			data: {
-				items: [
-					{
-						id: "r1",
-						rating: 8,
-						userDid: "did:plc:me",
-						userHandle: "me",
-						likeCount: 0,
-						hasLiked: false,
-						createdAt: new Date().toISOString(),
-					},
-				],
-			},
-			isLoading: false,
-		});
-
-		render(
-			<CommunityReviews
-				mediaType="movie"
-				mediaId="123"
-				onAddReview={onAddReview}
-			/>,
-		);
-		const editButton = screen.getByLabelText("Edit review");
-		expect(editButton).toBeTruthy();
-		fireEvent.click(editButton);
-		expect(onAddReview).toHaveBeenCalled();
-	});
-
-	it("shows empty state with add review button for authenticated users", () => {
+	it("shows empty state with write review button for authenticated users", () => {
 		const onAddReview = vi.fn();
 		mockUseAuth.mockReturnValue({
 			user: { did: "did:plc:me" },
@@ -167,13 +132,13 @@ describe("CommunityReviews", () => {
 		expect(
 			screen.getByText("No reviews yet. Be the first to share your thoughts."),
 		).toBeTruthy();
-		const addButton = screen.getByText("Add review");
+		const addButton = screen.getByText("Write a review");
 		expect(addButton).toBeTruthy();
 		fireEvent.click(addButton);
 		expect(onAddReview).toHaveBeenCalled();
 	});
 
-	it("shows empty state without add review button for guests", () => {
+	it("shows empty state without write review button for guests", () => {
 		mockUseAuth.mockReturnValue({ user: null, isAuthenticated: false });
 		mockUseMediaReviews.mockReturnValue({
 			data: { items: [] },
@@ -184,25 +149,12 @@ describe("CommunityReviews", () => {
 			<CommunityReviews mediaType="movie" mediaId="123" />,
 		);
 		expect(container.textContent).toContain("No reviews yet.");
-		expect(screen.queryByText("Add review")).toBeNull();
+		expect(screen.queryByText("Write a review")).toBeNull();
 	});
 
 	it("shows filled heart when review is liked", () => {
 		mockUseMediaReviews.mockReturnValue({
-			data: {
-				items: [
-					{
-						id: "r1",
-						rating: 8,
-						content: "Great!",
-						userDid: "did:plc:u1",
-						userHandle: "user1",
-						likeCount: 5,
-						hasLiked: true,
-						createdAt: new Date().toISOString(),
-					},
-				],
-			},
+			data: { items: [review({ likeCount: 5, hasLiked: true })] },
 			isLoading: false,
 		});
 
@@ -220,20 +172,7 @@ describe("CommunityReviews", () => {
 			isUnlikePending: false,
 		});
 		mockUseMediaReviews.mockReturnValue({
-			data: {
-				items: [
-					{
-						id: "r1",
-						rating: 8,
-						content: "Great!",
-						userDid: "did:plc:u1",
-						userHandle: "user1",
-						likeCount: 0,
-						hasLiked: false,
-						createdAt: new Date().toISOString(),
-					},
-				],
-			},
+			data: { items: [review({})] },
 			isLoading: false,
 		});
 

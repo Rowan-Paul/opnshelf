@@ -1,26 +1,18 @@
 import {
+	reviewsControllerCreateReviewMutation,
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetMediaReviewsOptions,
 	reviewsControllerGetMediaReviewsQueryKey,
 	reviewsControllerGetReviewLikesOptions,
 	reviewsControllerGetReviewLikesQueryKey,
-	reviewsControllerGetReviewOptions,
-	reviewsControllerGetReviewQueryKey,
 	reviewsControllerGetUserReviewsOptions,
+	reviewsControllerGetUserReviewsQueryKey,
 	reviewsControllerLikeReviewMutation,
 	reviewsControllerUnlikeReviewMutation,
-	reviewsControllerUpsertReviewMutation,
+	reviewsControllerUpdateReviewMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-interface UseReviewOptions {
-	userDid: string;
-	mediaType: "movie" | "show";
-	mediaId: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-}
 
 function resolveMediaType(
 	mediaType: "movie" | "show",
@@ -32,145 +24,6 @@ function resolveMediaType(
 		: seasonNumber != null
 			? "season"
 			: mediaType;
-}
-
-export function useReview({
-	userDid,
-	mediaType,
-	mediaId,
-	seasonNumber,
-	episodeNumber,
-}: UseReviewOptions) {
-	const resolvedMediaType = resolveMediaType(
-		mediaType,
-		seasonNumber,
-		episodeNumber,
-	);
-
-	return useQuery({
-		...reviewsControllerGetReviewOptions({
-			path: { userDid },
-			query: {
-				mediaType: resolvedMediaType,
-				mediaId,
-				seasonNumber,
-				episodeNumber,
-			},
-		}),
-		enabled: !!userDid,
-	});
-}
-
-interface UseUpsertReviewOptions {
-	userDid: string;
-	mediaType: "movie" | "show";
-	mediaId: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-}
-
-export function useUpsertReview({
-	userDid,
-	mediaType,
-	mediaId,
-	seasonNumber,
-	episodeNumber,
-}: UseUpsertReviewOptions) {
-	const queryClient = useQueryClient();
-	const resolvedMediaType = resolveMediaType(
-		mediaType,
-		seasonNumber,
-		episodeNumber,
-	);
-
-	const reviewKey = reviewsControllerGetReviewQueryKey({
-		path: { userDid },
-		query: {
-			mediaType: resolvedMediaType,
-			mediaId,
-			seasonNumber,
-			episodeNumber,
-		},
-	});
-
-	const mediaReviewsKey = reviewsControllerGetMediaReviewsQueryKey({
-		query: {
-			mediaType: resolvedMediaType,
-			mediaId,
-			seasonNumber,
-			episodeNumber,
-		},
-	});
-
-	return useMutation({
-		...reviewsControllerUpsertReviewMutation(),
-		onSuccess: () => {
-			toast.success("Review saved");
-			queryClient.invalidateQueries({ queryKey: reviewKey });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to save review",
-			);
-		},
-	});
-}
-
-interface UseDeleteReviewOptions {
-	userDid: string;
-	mediaType: "movie" | "show";
-	mediaId: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-}
-
-export function useDeleteReview({
-	userDid,
-	mediaType,
-	mediaId,
-	seasonNumber,
-	episodeNumber,
-}: UseDeleteReviewOptions) {
-	const queryClient = useQueryClient();
-	const resolvedMediaType = resolveMediaType(
-		mediaType,
-		seasonNumber,
-		episodeNumber,
-	);
-
-	const reviewKey = reviewsControllerGetReviewQueryKey({
-		path: { userDid },
-		query: {
-			mediaType: resolvedMediaType,
-			mediaId,
-			seasonNumber,
-			episodeNumber,
-		},
-	});
-
-	const mediaReviewsKey = reviewsControllerGetMediaReviewsQueryKey({
-		query: {
-			mediaType: resolvedMediaType,
-			mediaId,
-			seasonNumber,
-			episodeNumber,
-		},
-	});
-
-	return useMutation({
-		...reviewsControllerDeleteReviewMutation(),
-		onSuccess: () => {
-			toast.success("Review deleted");
-			queryClient.invalidateQueries({ queryKey: reviewKey });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to delete review",
-			);
-		},
-	});
 }
 
 interface UseMediaReviewsOptions {
@@ -225,6 +78,139 @@ export function useUserReviews({
 	});
 }
 
+interface UseReviewMutationOptions {
+	userDid: string;
+	mediaType: "movie" | "show";
+	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
+}
+
+/** Invalidate every query that lists this media item's or this user's reviews. */
+function useReviewInvalidation({
+	userDid,
+	mediaType,
+	mediaId,
+	seasonNumber,
+	episodeNumber,
+}: UseReviewMutationOptions) {
+	const queryClient = useQueryClient();
+	const resolvedMediaType = resolveMediaType(
+		mediaType,
+		seasonNumber,
+		episodeNumber,
+	);
+
+	const mediaReviewsKey = reviewsControllerGetMediaReviewsQueryKey({
+		query: {
+			mediaType: resolvedMediaType,
+			mediaId,
+			seasonNumber,
+			episodeNumber,
+		},
+	});
+
+	const userReviewsKey = reviewsControllerGetUserReviewsQueryKey({
+		path: { userDid },
+		query: { limit: 20 },
+	});
+
+	return () => {
+		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+		queryClient.invalidateQueries({ queryKey: userReviewsKey });
+	};
+}
+
+export function useCreateReview(options: UseReviewMutationOptions) {
+	const invalidate = useReviewInvalidation(options);
+	const resolvedMediaType = resolveMediaType(
+		options.mediaType,
+		options.seasonNumber,
+		options.episodeNumber,
+	);
+
+	return useMutation({
+		mutationKey: [
+			"reviews",
+			resolvedMediaType,
+			options.mediaId,
+			options.seasonNumber ?? 0,
+			options.episodeNumber ?? 0,
+			"create",
+		],
+		...reviewsControllerCreateReviewMutation(),
+		onSuccess: () => {
+			toast.success("Review published");
+			invalidate();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to publish review",
+			);
+		},
+	});
+}
+
+export function useUpdateReview(options: UseReviewMutationOptions) {
+	const invalidate = useReviewInvalidation(options);
+	const resolvedMediaType = resolveMediaType(
+		options.mediaType,
+		options.seasonNumber,
+		options.episodeNumber,
+	);
+
+	return useMutation({
+		mutationKey: [
+			"reviews",
+			resolvedMediaType,
+			options.mediaId,
+			options.seasonNumber ?? 0,
+			options.episodeNumber ?? 0,
+			"update",
+		],
+		...reviewsControllerUpdateReviewMutation(),
+		onSuccess: () => {
+			toast.success("Review updated");
+			invalidate();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update review",
+			);
+		},
+	});
+}
+
+export function useDeleteReview(options: UseReviewMutationOptions) {
+	const invalidate = useReviewInvalidation(options);
+	const resolvedMediaType = resolveMediaType(
+		options.mediaType,
+		options.seasonNumber,
+		options.episodeNumber,
+	);
+
+	return useMutation({
+		mutationKey: [
+			"reviews",
+			resolvedMediaType,
+			options.mediaId,
+			options.seasonNumber ?? 0,
+			options.episodeNumber ?? 0,
+			"delete",
+		],
+		...reviewsControllerDeleteReviewMutation(),
+		onSuccess: () => {
+			toast.success("Review deleted");
+			invalidate();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to delete review",
+			);
+		},
+	});
+}
+
 interface UseReviewLikesOptions {
 	reviewId: string;
 	mediaType: "movie" | "show";
@@ -264,6 +250,7 @@ export function useReviewLikes({
 	});
 
 	const likeMutation = useMutation({
+		mutationKey: ["reviews", reviewId, "like"],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -281,6 +268,7 @@ export function useReviewLikes({
 	});
 
 	const unlikeMutation = useMutation({
+		mutationKey: ["reviews", reviewId, "unlike"],
 		...reviewsControllerUnlikeReviewMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -336,6 +324,14 @@ export function useToggleReviewLike({
 	});
 
 	const likeMutation = useMutation({
+		mutationKey: [
+			"reviews",
+			resolvedMediaType,
+			mediaId,
+			seasonNumber ?? 0,
+			episodeNumber ?? 0,
+			"toggle-like",
+		],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
@@ -348,6 +344,14 @@ export function useToggleReviewLike({
 	});
 
 	const unlikeMutation = useMutation({
+		mutationKey: [
+			"reviews",
+			resolvedMediaType,
+			mediaId,
+			seasonNumber ?? 0,
+			episodeNumber ?? 0,
+			"toggle-unlike",
+		],
 		...reviewsControllerUnlikeReviewMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });

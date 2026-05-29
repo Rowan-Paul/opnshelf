@@ -93,6 +93,11 @@ export type Note = Prisma.NoteModel
  */
 export type Review = Prisma.ReviewModel
 /**
+ * Model Publication
+ * 
+ */
+export type Publication = Prisma.PublicationModel
+/**
  * Model Rating
  * 
  */

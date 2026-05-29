@@ -1,8 +1,8 @@
-import { Heart, Loader2, MessageSquare, Pencil, Star } from "lucide-react";
+import { Heart, Loader2, MessageSquare } from "lucide-react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
 import { useMediaReviews, useToggleReviewLike } from "#/lib/hooks/useReviews";
-import StarRating from "./StarRating";
+import { MarkdownPreview } from "./MarkdownPreview";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -19,12 +19,11 @@ function ReviewCard({
 	seasonNumber,
 	episodeNumber,
 	isOwnReview,
-	onEdit,
 }: {
 	review: {
 		id: string;
-		rating: number;
-		content?: string;
+		title: string;
+		markdown: string;
 		userDid: string;
 		userHandle: string;
 		userDisplayName?: string;
@@ -38,7 +37,6 @@ function ReviewCard({
 	seasonNumber?: number;
 	episodeNumber?: number;
 	isOwnReview: boolean;
-	onEdit?: () => void;
 }) {
 	const { likeReview, unlikeReview, isLikePending, isUnlikePending } =
 		useToggleReviewLike({
@@ -88,32 +86,15 @@ function ReviewCard({
 						</p>
 					</div>
 				</div>
-				<div className="flex items-center gap-2">
-					{isOwnReview && onEdit && (
-						<button
-							type="button"
-							onClick={onEdit}
-							className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-							aria-label="Edit review"
-						>
-							<Pencil className="size-4" />
-						</button>
-					)}
-					<span className="text-(--foreground-muted) text-xs">
-						{formatRelativeTime(review.createdAt)}
-					</span>
-				</div>
+				<span className="text-(--foreground-muted) text-xs">
+					{formatRelativeTime(review.createdAt)}
+				</span>
 			</div>
 
-			<div className="mb-2">
-				<StarRating value={review.rating} readOnly size="sm" showValue />
+			<h3 className="mb-1 font-display font-semibold">{review.title}</h3>
+			<div className="mb-3 text-(--foreground-muted)">
+				<MarkdownPreview markdown={review.markdown} />
 			</div>
-
-			{review.content && (
-				<p className="mb-3 whitespace-pre-wrap text-(--foreground-muted) text-sm leading-relaxed">
-					{review.content}
-				</p>
-			)}
 
 			<div className="flex items-center gap-2">
 				<button
@@ -157,7 +138,9 @@ export default function CommunityReviews({
 	});
 
 	const allReviews = data?.items ?? [];
-	const ownReview = allReviews.find((review) => review.userDid === user?.did);
+	const ownReviews = allReviews.filter(
+		(review) => review.userDid === user?.did,
+	);
 	const communityReviews = allReviews.filter(
 		(review) => review.userDid !== user?.did,
 	);
@@ -203,8 +186,8 @@ export default function CommunityReviews({
 								onClick={onAddReview}
 								className="btn btn-secondary btn-sm gap-1"
 							>
-								<Star className="size-3.5" />
-								Add review
+								<MessageSquare className="size-3.5" />
+								Write a review
 							</button>
 						</div>
 					) : (
@@ -213,17 +196,17 @@ export default function CommunityReviews({
 				</div>
 			) : (
 				<div className="space-y-4">
-					{ownReview && (
+					{ownReviews.map((review) => (
 						<ReviewCard
-							review={ownReview}
+							key={review.id}
+							review={review}
 							mediaType={mediaType}
 							mediaId={mediaId}
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
 							isOwnReview={true}
-							onEdit={onAddReview}
 						/>
-					)}
+					))}
 					{communityReviews.map((review) => (
 						<ReviewCard
 							key={review.id}
