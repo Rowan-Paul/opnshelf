@@ -54,7 +54,7 @@ function loadScript(): Promise<void> {
  * Cloudflare Turnstile captcha widget. Calls onVerify with a token the backend
  * verifies before minting a PDS invite code. If no site key is configured the
  * widget renders nothing and reports an empty token (dev convenience — the
- * backend's TURNSTILE_DISABLE handles the matching server side).
+ * backend disables verification when TURNSTILE_SECRET_KEY is unset).
  */
 export function TurnstileWidget({
 	siteKey,

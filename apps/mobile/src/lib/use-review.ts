@@ -1,10 +1,14 @@
 import {
-	type ReviewResponseDto,
+	type MediaReviewItemDto,
+	ratingsControllerClearRatingMutation,
+	ratingsControllerGetRatingOptions,
+	ratingsControllerGetRatingQueryKey,
+	ratingsControllerSetRatingMutation,
+	reviewsControllerCreateReviewMutation,
 	reviewsControllerDeleteReviewMutation,
+	reviewsControllerGetMediaReviewsOptions,
 	reviewsControllerGetMediaReviewsQueryKey,
-	reviewsControllerGetReviewOptions,
-	reviewsControllerGetReviewQueryKey,
-	reviewsControllerUpsertReviewMutation,
+	reviewsControllerUpdateReviewMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
@@ -18,11 +22,6 @@ interface ReviewTarget {
 	episodeNumber?: number;
 }
 
-/**
- * Rating + review live on a single entity: a review carries a required
- * `rating` (1-10) and optional `content`. There is no separate rating endpoint,
- * so upsert handles both "just a rating" and "rating + text".
- */
 function resolveMediaType(
 	mediaType: "movie" | "show",
 	seasonNumber?: number,
@@ -33,11 +32,22 @@ function resolveMediaType(
 	return mediaType;
 }
 
+export interface SaveReviewInput {
+	/** Star rating on the 1-10 scale (0 to leave unrated). */
+	rating: number;
+	/** Long-form review title (required when `markdown` is non-empty). */
+	title?: string;
+	/** Long-form review body as markdown source. */
+	markdown?: string;
+}
+
 /**
- * The current user's own review for a media item, plus upsert + delete mutations
- * with optimistic cache updates and rollback. The rating is part of the review
- * (no separate rating entity), so `useReview().upsert({ rating, content })`
- * covers both rate-only and rate-with-text.
+ * Rating and review are two separate entities on the backend: the star rating
+ * lives on `/ratings` (set/clear), while a review is a long-form markdown
+ * document (`title` + `markdown`) on `/reviews` (create/update/delete). This
+ * hook reads the current user's rating and own review for a media item and
+ * exposes a single `save` that fans the inputs out to both endpoints, so the
+ * detail screen can keep one "rate & review" sheet.
  */
 export function useReview(target: ReviewTarget) {
 	const { user, isAuthenticated } = useAuth();
@@ -51,7 +61,7 @@ export function useReview(target: ReviewTarget) {
 		target.episodeNumber,
 	);
 
-	const reviewQueryArgs = {
+	const ratingKey = ratingsControllerGetRatingQueryKey({
 		path: { userDid },
 		query: {
 			mediaType: resolvedMediaType,
@@ -59,9 +69,8 @@ export function useReview(target: ReviewTarget) {
 			seasonNumber: target.seasonNumber,
 			episodeNumber: target.episodeNumber,
 		},
-	} as const;
+	});
 
-	const reviewKey = reviewsControllerGetReviewQueryKey(reviewQueryArgs);
 	const mediaReviewsKey = reviewsControllerGetMediaReviewsQueryKey({
 		query: {
 			mediaType: resolvedMediaType,
@@ -71,104 +80,168 @@ export function useReview(target: ReviewTarget) {
 		},
 	});
 
-	const reviewQuery = useQuery({
-		...reviewsControllerGetReviewOptions(reviewQueryArgs),
-		enabled: isAuthenticated && !!userDid && !!target.mediaId,
-	});
+	const enabled = isAuthenticated && !!userDid && !!target.mediaId;
 
-	const review = reviewQuery.data ?? null;
-
-	const upsert = useMutation({
-		mutationKey: ["review", "upsert", resolvedMediaType, target.mediaId],
-		...reviewsControllerUpsertReviewMutation(),
-		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: reviewKey });
-			const prevReview = queryClient.getQueryData<ReviewResponseDto>(reviewKey);
-			const now = new Date().toISOString();
-			queryClient.setQueryData<ReviewResponseDto>(reviewKey, (old) => ({
-				id: old?.id ?? `optimistic-${Date.now()}`,
-				rkey: old?.rkey ?? "",
+	const ratingQuery = useQuery({
+		...ratingsControllerGetRatingOptions({
+			path: { userDid },
+			query: {
 				mediaType: resolvedMediaType,
 				mediaId: target.mediaId,
 				seasonNumber: target.seasonNumber,
 				episodeNumber: target.episodeNumber,
-				rating: variables.body.rating,
-				content: variables.body.content,
-				createdAt: old?.createdAt ?? now,
-				updatedAt: now,
-			}));
-			return { prevReview };
-		},
-		onError: (error, _vars, context) => {
-			if (context?.prevReview !== undefined) {
-				queryClient.setQueryData(reviewKey, context.prevReview);
+			},
+		}),
+		enabled,
+	});
+
+	const reviewsQuery = useQuery({
+		...reviewsControllerGetMediaReviewsOptions({
+			query: {
+				mediaType: resolvedMediaType,
+				mediaId: target.mediaId,
+				seasonNumber: target.seasonNumber,
+				episodeNumber: target.episodeNumber,
+			},
+		}),
+		enabled: isAuthenticated && !!target.mediaId,
+	});
+
+	const ratingRecord = ratingQuery.data ?? null;
+	const ownReview: MediaReviewItemDto | null =
+		reviewsQuery.data?.items.find((item) => item.userDid === userDid) ?? null;
+
+	const invalidate = () => {
+		queryClient.invalidateQueries({ queryKey: ratingKey });
+		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+	};
+
+	const setRating = useMutation({
+		mutationKey: ["ratings", "set", resolvedMediaType, target.mediaId],
+		...ratingsControllerSetRatingMutation(),
+	});
+	const clearRating = useMutation({
+		mutationKey: ["ratings", "clear", resolvedMediaType, target.mediaId],
+		...ratingsControllerClearRatingMutation(),
+	});
+	const createReview = useMutation({
+		mutationKey: ["reviews", "create", resolvedMediaType, target.mediaId],
+		...reviewsControllerCreateReviewMutation(),
+	});
+	const updateReview = useMutation({
+		mutationKey: ["reviews", "update", resolvedMediaType, target.mediaId],
+		...reviewsControllerUpdateReviewMutation(),
+	});
+	const deleteReview = useMutation({
+		mutationKey: ["reviews", "delete", resolvedMediaType, target.mediaId],
+		...reviewsControllerDeleteReviewMutation(),
+	});
+
+	/**
+	 * Persist the rating and/or the review in one call. Rating and review are
+	 * independent: a rating is written only when `rating > 0`, and the review is
+	 * created/updated only when a markdown body is supplied (which requires a
+	 * title). Either, both, or neither may be present.
+	 */
+	const saveReview = async ({ rating, title, markdown }: SaveReviewInput) => {
+		if (!isAuthenticated) return;
+
+		const trimmedTitle = title?.trim() ?? "";
+		const trimmedBody = markdown?.trim() ?? "";
+
+		if (rating <= 0 && !trimmedBody) return;
+
+		try {
+			if (rating > 0) {
+				await setRating.mutateAsync({
+					body: {
+						mediaType: resolvedMediaType,
+						mediaId: target.mediaId,
+						seasonNumber: target.seasonNumber,
+						episodeNumber: target.episodeNumber,
+						rating,
+					},
+				});
 			}
-			toast.error(error instanceof Error ? error.message : "Failed to save");
-		},
-		onSuccess: () => {
+
+			if (trimmedBody) {
+				if (ownReview) {
+					await updateReview.mutateAsync({
+						path: { reviewId: ownReview.id },
+						body: { title: trimmedTitle, markdown: trimmedBody },
+					});
+				} else {
+					await createReview.mutateAsync({
+						body: {
+							mediaType: resolvedMediaType,
+							mediaId: target.mediaId,
+							seasonNumber: target.seasonNumber,
+							episodeNumber: target.episodeNumber,
+							title: trimmedTitle,
+							markdown: trimmedBody,
+						},
+					});
+				}
+			}
+
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});
-			toast.success("Review saved");
-		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: reviewKey });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
-	});
+			toast.success(trimmedBody ? "Review saved" : "Rating saved");
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to save");
+		} finally {
+			invalidate();
+		}
+	};
 
-	const remove = useMutation({
-		mutationKey: ["review", "delete", resolvedMediaType, target.mediaId],
-		...reviewsControllerDeleteReviewMutation(),
-		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: reviewKey });
-			const prevReview = queryClient.getQueryData<ReviewResponseDto>(reviewKey);
-			queryClient.setQueryData(reviewKey, null);
-			return { prevReview };
-		},
-		onError: (error, _vars, context) => {
-			if (context?.prevReview !== undefined) {
-				queryClient.setQueryData(reviewKey, context.prevReview);
-			}
-			toast.error(error instanceof Error ? error.message : "Failed to delete");
-		},
-		onSuccess: () => {
+	/** Clear only the star rating, leaving any review intact. */
+	const removeRating = async () => {
+		if (!isAuthenticated || !ratingRecord) return;
+		try {
+			await clearRating.mutateAsync({ path: { ratingId: ratingRecord.id } });
+			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+				() => {},
+			);
+			toast.success("Rating cleared");
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to clear rating",
+			);
+		} finally {
+			invalidate();
+		}
+	};
+
+	/** Delete only the review document, leaving any rating intact. */
+	const removeReview = async () => {
+		if (!isAuthenticated || !ownReview) return;
+		try {
+			await deleteReview.mutateAsync({ path: { reviewId: ownReview.id } });
 			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
 				() => {},
 			);
 			toast.success("Review deleted");
-		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: reviewKey });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
-	});
-
-	const saveReview = (rating: number, content?: string) => {
-		if (!isAuthenticated) return;
-		upsert.mutate({
-			body: {
-				mediaType: resolvedMediaType,
-				mediaId: target.mediaId,
-				seasonNumber: target.seasonNumber,
-				episodeNumber: target.episodeNumber,
-				rating,
-				content: content?.trim() ? content.trim() : undefined,
-			},
-		});
-	};
-
-	const deleteReview = () => {
-		if (!isAuthenticated || !review?.id) return;
-		remove.mutate({ path: { reviewId: review.id } });
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to delete");
+		} finally {
+			invalidate();
+		}
 	};
 
 	return {
-		review,
-		isLoading: reviewQuery.isLoading,
+		rating: ratingRecord?.rating ?? 0,
+		review: ownReview,
+		hasRating: !!ratingRecord,
+		hasReviewDoc: !!ownReview,
+		hasReview: !!ownReview || !!ratingRecord,
+		isLoading: ratingQuery.isLoading || reviewsQuery.isLoading,
 		saveReview,
-		deleteReview,
-		isSaving: upsert.isPending,
-		isDeleting: remove.isPending,
+		clearRating: removeRating,
+		deleteReview: removeReview,
+		isSaving:
+			setRating.isPending || createReview.isPending || updateReview.isPending,
+		isClearingRating: clearRating.isPending,
+		isDeleting: deleteReview.isPending,
 	};
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
 	server: {
-		SERVER_URL: z.string().url().optional(),
+		SERVER_URL: z.url().optional(),
 	},
 
 	/**
@@ -14,16 +14,16 @@ export const env = createEnv({
 
 	client: {
 		VITE_APP_TITLE: z.string().min(1).optional(),
-		VITE_API_URL: z.string().url().optional().default("http://127.0.0.1:3001"),
-		VITE_SITE_URL: z.string().url().optional(),
+		VITE_API_URL: z.url().optional().default("http://127.0.0.1:3001"),
+		VITE_SITE_URL: z.url().optional(),
 		// Cloudflare Turnstile site key for the signup captcha (public key).
 		VITE_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
-		// Handle domain accounts are created on, e.g. "opnshelf.xyz".
+		// Handle domain accounts are created on (the PDS host), e.g. "opnshelf.social".
 		VITE_PDS_HANDLE_DOMAIN: z
 			.string()
 			.min(1)
 			.optional()
-			.default("opnshelf.xyz"),
+			.default("opnshelf.social"),
 	},
 
 	/**

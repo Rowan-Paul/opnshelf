@@ -173,9 +173,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				onPress={() => setReviewVisible(true)}
 				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
 			>
-				{reviewState.review ? (
+				{reviewState.hasReview ? (
 					<>
-						<StarRating rating={reviewState.review.rating} size={16} />
+						<StarRating rating={reviewState.rating} size={16} />
 						<Text className="font-medium text-foreground text-sm">
 							Edit review
 						</Text>
@@ -199,16 +199,24 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			<ReviewSheet
 				visible={reviewVisible}
 				onDismiss={() => setReviewVisible(false)}
-				hasExistingReview={!!reviewState.review}
-				initialRating={reviewState.review?.rating ?? 0}
-				initialContent={reviewState.review?.content ?? ""}
+				hasExistingReview={reviewState.hasReview}
+				hasRating={reviewState.hasRating}
+				hasReviewDoc={reviewState.hasReviewDoc}
+				initialRating={reviewState.rating}
+				initialTitle={reviewState.review?.title ?? ""}
+				initialMarkdown={reviewState.review?.markdown ?? ""}
 				isSaving={reviewState.isSaving}
+				isClearingRating={reviewState.isClearingRating}
 				isDeleting={reviewState.isDeleting}
-				onSave={(rating, content) => {
-					reviewState.saveReview(rating, content);
+				onSave={(input) => {
+					reviewState.saveReview(input);
 					setReviewVisible(false);
 				}}
-				onDelete={() => {
+				onClearRating={() => {
+					reviewState.clearRating();
+					setReviewVisible(false);
+				}}
+				onDeleteReview={() => {
 					reviewState.deleteReview();
 					setReviewVisible(false);
 				}}

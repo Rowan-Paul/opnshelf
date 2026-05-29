@@ -20,13 +20,6 @@ describe("CaptchaService", () => {
 		await expect(service.verify(undefined)).resolves.toBe(true);
 	});
 
-	it("passes through when TURNSTILE_DISABLE=true even with a secret", async () => {
-		const service = new CaptchaService(
-			makeConfig({ TURNSTILE_SECRET_KEY: "s", TURNSTILE_DISABLE: "true" }),
-		);
-		await expect(service.verify(undefined)).resolves.toBe(true);
-	});
-
 	it("rejects an empty token when enabled", async () => {
 		const service = new CaptchaService(
 			makeConfig({ TURNSTILE_SECRET_KEY: "secret" }),

@@ -24,13 +24,12 @@ export class CaptchaService {
 
 	constructor(private readonly config: ConfigService) {
 		this.secret = this.config.get<string>("TURNSTILE_SECRET_KEY");
-		// Explicit opt-out for local dev where running a captcha is impractical.
-		this.disabled =
-			this.config.get<string>("TURNSTILE_DISABLE") === "true" || !this.secret;
+		// No secret configured means no captcha — the local-dev escape hatch.
+		this.disabled = !this.secret;
 
 		if (this.disabled) {
 			this.logger.warn(
-				"Turnstile verification is DISABLED (no secret or TURNSTILE_DISABLE=true). Do not run this in production.",
+				"Turnstile verification is DISABLED (no TURNSTILE_SECRET_KEY configured). Do not run this in production.",
 			);
 		}
 	}
