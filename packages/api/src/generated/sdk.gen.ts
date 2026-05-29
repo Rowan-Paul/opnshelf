@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AuthControllerBlueskyProfileStatusData, AuthControllerBlueskyProfileStatusErrors, AuthControllerBlueskyProfileStatusResponses, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSignupData, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, FeedbackControllerCreateFeedbackData, FeedbackControllerCreateFeedbackErrors, FeedbackControllerCreateFeedbackResponses, ListsControllerAddItemToListData, ListsControllerAddItemToListErrors, ListsControllerAddItemToListResponses, ListsControllerCreateListData, ListsControllerCreateListErrors, ListsControllerCreateListResponses, ListsControllerDeleteListData, ListsControllerDeleteListErrors, ListsControllerDeleteListResponses, ListsControllerGetListData, ListsControllerGetListErrors, ListsControllerGetListResponses, ListsControllerGetListsForItemData, ListsControllerGetListsForItemErrors, ListsControllerGetListsForItemResponses, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListErrors, ListsControllerGetPublicUserListResponses, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponses, ListsControllerGetUserListsData, ListsControllerGetUserListsErrors, ListsControllerGetUserListsResponses, ListsControllerRemoveItemFromListData, ListsControllerRemoveItemFromListErrors, ListsControllerRemoveItemFromListResponses, ListsControllerUpdateListData, ListsControllerUpdateListErrors, ListsControllerUpdateListResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponses, MoviesControllerGetUserMoviesResponses, MoviesControllerGetWatchProvidersData, MoviesControllerGetWatchProvidersResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, NotesControllerDeleteNoteData, NotesControllerDeleteNoteErrors, NotesControllerDeleteNoteResponses, NotesControllerGetNoteData, NotesControllerGetNoteErrors, NotesControllerGetNoteResponses, NotesControllerGetUserNotesData, NotesControllerGetUserNotesResponses, NotesControllerUpsertNoteData, NotesControllerUpsertNoteErrors, NotesControllerUpsertNoteResponses, PeopleControllerGetPersonDetailsData, PeopleControllerGetPersonDetailsErrors, PeopleControllerGetPersonDetailsResponses, PeopleControllerGetPersonFilmographyData, PeopleControllerGetPersonFilmographyErrors, PeopleControllerGetPersonFilmographyResponses, RatingsControllerClearRatingData, RatingsControllerClearRatingErrors, RatingsControllerClearRatingResponses, RatingsControllerGetBatchRatingsData, RatingsControllerGetBatchRatingsResponses, RatingsControllerGetMediaRatingData, RatingsControllerGetMediaRatingResponses, RatingsControllerGetRatingData, RatingsControllerGetRatingErrors, RatingsControllerGetRatingResponses, RatingsControllerSetRatingData, RatingsControllerSetRatingErrors, RatingsControllerSetRatingResponses, ReviewsControllerCreateReviewData, ReviewsControllerCreateReviewErrors, ReviewsControllerCreateReviewResponses, ReviewsControllerDeleteReviewData, ReviewsControllerDeleteReviewErrors, ReviewsControllerDeleteReviewResponses, ReviewsControllerGetCanonicalReviewData, ReviewsControllerGetCanonicalReviewResponses, ReviewsControllerGetMediaReviewsData, ReviewsControllerGetMediaReviewsResponses, ReviewsControllerGetReviewData, ReviewsControllerGetReviewLikesData, ReviewsControllerGetReviewLikesResponses, ReviewsControllerGetReviewResponses, ReviewsControllerGetUserReviewsData, ReviewsControllerGetUserReviewsResponses, ReviewsControllerLikeReviewData, ReviewsControllerLikeReviewErrors, ReviewsControllerLikeReviewResponses, ReviewsControllerUnlikeReviewData, ReviewsControllerUnlikeReviewErrors, ReviewsControllerUnlikeReviewResponses, ReviewsControllerUpdateReviewData, ReviewsControllerUpdateReviewErrors, ReviewsControllerUpdateReviewResponses, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponses, SearchControllerSearchAllData, SearchControllerSearchAllResponses, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponses, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponses, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryErrors, ShowsControllerDeleteEpisodeWatchHistoryEntryResponses, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponses, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponses, ShowsControllerGetLocalEpisodesData, ShowsControllerGetLocalEpisodesResponses, ShowsControllerGetLocalSeasonsData, ShowsControllerGetLocalSeasonsResponses, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponses, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponses, ShowsControllerGetShowResponses, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryErrors, ShowsControllerGetShowWatchHistoryResponses, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponses, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponses, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponses, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponses, ShowsControllerGetWatchProvidersData, ShowsControllerGetWatchProvidersResponses, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedErrors, ShowsControllerMarkSeasonWatchedResponses, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedErrors, ShowsControllerMarkShowWatchedResponses, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedErrors, ShowsControllerMarkWatchedResponses, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponses, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponses, SocialControllerFollowData, SocialControllerFollowResponses, SocialControllerGetFeedData, SocialControllerGetFeedResponses, SocialControllerGetFollowersData, SocialControllerGetFollowersResponses, SocialControllerGetFollowingData, SocialControllerGetFollowingResponses, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponses, SocialControllerGetSuggestionsData, SocialControllerGetSuggestionsResponses, SocialControllerGetWatchersData, SocialControllerGetWatchersResponses, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponses, SocialControllerUnfollowData, SocialControllerUnfollowResponses, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingErrors, UsersControllerCompleteOnboardingResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerDeleteMyAvatarData, UsersControllerDeleteMyAvatarResponses, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryErrors, UsersControllerFetchMyTraktPublicHistoryResponses, UsersControllerGetAvatarData, UsersControllerGetAvatarResponses, UsersControllerGetMyAccountDeletionData, UsersControllerGetMyAccountDeletionErrors, UsersControllerGetMyAccountDeletionResponses, UsersControllerGetMyCurrentTraktImportData, UsersControllerGetMyCurrentTraktImportErrors, UsersControllerGetMyCurrentTraktImportResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerGetPublicFollowersData, UsersControllerGetPublicFollowersErrors, UsersControllerGetPublicFollowersResponses, UsersControllerGetPublicFollowingData, UsersControllerGetPublicFollowingErrors, UsersControllerGetPublicFollowingResponses, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileErrors, UsersControllerGetPublicProfileResponses, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsErrors, UsersControllerImportMyBlueskyFollowsResponses, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryErrors, UsersControllerImportMyHistoryResponses, UsersControllerRefreshMySocialLinksData, UsersControllerRefreshMySocialLinksErrors, UsersControllerRefreshMySocialLinksResponses, UsersControllerStartMyTraktImportData, UsersControllerStartMyTraktImportErrors, UsersControllerStartMyTraktImportResponses, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileErrors, UsersControllerUpdateMyProfileResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses, UsersControllerUploadMyAvatarData, UsersControllerUploadMyAvatarResponses } from './types.gen';
+import type { AuthControllerBlueskyProfileStatusData, AuthControllerBlueskyProfileStatusErrors, AuthControllerBlueskyProfileStatusResponses, AuthControllerCallbackData, AuthControllerGetClientMetadataData, AuthControllerGetClientMetadataResponses, AuthControllerLoginData, AuthControllerLogoutData, AuthControllerLogoutResponses, AuthControllerMeData, AuthControllerMeErrors, AuthControllerMeResponses, AuthControllerSignupData, AuthControllerSuggestionsData, AuthControllerSuggestionsResponses, FeedbackControllerCreateFeedbackData, FeedbackControllerCreateFeedbackErrors, FeedbackControllerCreateFeedbackResponses, ListsControllerAddItemToListData, ListsControllerAddItemToListErrors, ListsControllerAddItemToListResponses, ListsControllerCreateListData, ListsControllerCreateListErrors, ListsControllerCreateListResponses, ListsControllerDeleteListData, ListsControllerDeleteListErrors, ListsControllerDeleteListResponses, ListsControllerGetListData, ListsControllerGetListErrors, ListsControllerGetListResponses, ListsControllerGetListsForItemData, ListsControllerGetListsForItemErrors, ListsControllerGetListsForItemResponses, ListsControllerGetPublicUserListData, ListsControllerGetPublicUserListErrors, ListsControllerGetPublicUserListResponses, ListsControllerGetPublicUserListsData, ListsControllerGetPublicUserListsResponses, ListsControllerGetUserListsData, ListsControllerGetUserListsErrors, ListsControllerGetUserListsResponses, ListsControllerRemoveItemFromListData, ListsControllerRemoveItemFromListErrors, ListsControllerRemoveItemFromListResponses, ListsControllerUpdateListData, ListsControllerUpdateListErrors, ListsControllerUpdateListResponses, MoviesControllerDeleteWatchHistoryEntryData, MoviesControllerDeleteWatchHistoryEntryErrors, MoviesControllerDeleteWatchHistoryEntryResponses, MoviesControllerDiscoverMoviesData, MoviesControllerDiscoverMoviesResponses, MoviesControllerGetMovieData, MoviesControllerGetMovieDetailsData, MoviesControllerGetMovieDetailsResponses, MoviesControllerGetMovieResponses, MoviesControllerGetMovieWatchHistoryData, MoviesControllerGetMovieWatchHistoryErrors, MoviesControllerGetMovieWatchHistoryResponses, MoviesControllerGetUserMoviesData, MoviesControllerGetUserMoviesPaginatedData, MoviesControllerGetUserMoviesPaginatedResponses, MoviesControllerGetUserMoviesResponses, MoviesControllerGetWatchProvidersData, MoviesControllerGetWatchProvidersResponses, MoviesControllerMarkWatchedData, MoviesControllerMarkWatchedErrors, MoviesControllerMarkWatchedResponses, MoviesControllerSearchMoviesData, MoviesControllerSearchMoviesResponses, MoviesControllerUnmarkWatchedData, MoviesControllerUnmarkWatchedErrors, MoviesControllerUnmarkWatchedResponses, NotesControllerDeleteNoteData, NotesControllerDeleteNoteErrors, NotesControllerDeleteNoteResponses, NotesControllerGetNoteData, NotesControllerGetNoteErrors, NotesControllerGetNoteResponses, NotesControllerGetUserNotesData, NotesControllerGetUserNotesResponses, NotesControllerUpsertNoteData, NotesControllerUpsertNoteErrors, NotesControllerUpsertNoteResponses, PeopleControllerGetPersonDetailsData, PeopleControllerGetPersonDetailsErrors, PeopleControllerGetPersonDetailsResponses, PeopleControllerGetPersonFilmographyData, PeopleControllerGetPersonFilmographyErrors, PeopleControllerGetPersonFilmographyResponses, RatingsControllerClearRatingData, RatingsControllerClearRatingErrors, RatingsControllerClearRatingResponses, RatingsControllerGetBatchRatingsData, RatingsControllerGetBatchRatingsResponses, RatingsControllerGetMediaRatingData, RatingsControllerGetMediaRatingResponses, RatingsControllerGetRatingData, RatingsControllerGetRatingErrors, RatingsControllerGetRatingResponses, RatingsControllerSetRatingData, RatingsControllerSetRatingErrors, RatingsControllerSetRatingResponses, ReviewsControllerCreateReviewData, ReviewsControllerCreateReviewErrors, ReviewsControllerCreateReviewResponses, ReviewsControllerDeleteReviewData, ReviewsControllerDeleteReviewErrors, ReviewsControllerDeleteReviewResponses, ReviewsControllerGetCanonicalReviewData, ReviewsControllerGetCanonicalReviewResponses, ReviewsControllerGetMediaReviewsData, ReviewsControllerGetMediaReviewsResponses, ReviewsControllerGetReviewData, ReviewsControllerGetReviewLikesData, ReviewsControllerGetReviewLikesResponses, ReviewsControllerGetReviewResponses, ReviewsControllerGetUserReviewsData, ReviewsControllerGetUserReviewsResponses, ReviewsControllerLikeReviewData, ReviewsControllerLikeReviewErrors, ReviewsControllerLikeReviewResponses, ReviewsControllerListMyPublicationsData, ReviewsControllerListMyPublicationsErrors, ReviewsControllerListMyPublicationsResponses, ReviewsControllerRepointReviewsData, ReviewsControllerRepointReviewsErrors, ReviewsControllerRepointReviewsResponses, ReviewsControllerUnlikeReviewData, ReviewsControllerUnlikeReviewErrors, ReviewsControllerUnlikeReviewResponses, ReviewsControllerUpdateReviewData, ReviewsControllerUpdateReviewErrors, ReviewsControllerUpdateReviewResponses, SearchControllerDiscoverAllData, SearchControllerDiscoverAllResponses, SearchControllerSearchAllData, SearchControllerSearchAllResponses, ShelfControllerGetUserActivitySummaryData, ShelfControllerGetUserActivitySummaryResponses, ShelfControllerGetUserShelfData, ShelfControllerGetUserShelfResponses, ShowsControllerDeleteEpisodeWatchHistoryEntryData, ShowsControllerDeleteEpisodeWatchHistoryEntryErrors, ShowsControllerDeleteEpisodeWatchHistoryEntryResponses, ShowsControllerDiscoverShowsData, ShowsControllerDiscoverShowsResponses, ShowsControllerGetEpisodeDetailsData, ShowsControllerGetEpisodeDetailsResponses, ShowsControllerGetLocalEpisodesData, ShowsControllerGetLocalEpisodesResponses, ShowsControllerGetLocalSeasonsData, ShowsControllerGetLocalSeasonsResponses, ShowsControllerGetSeasonDetailsData, ShowsControllerGetSeasonDetailsResponses, ShowsControllerGetShowData, ShowsControllerGetShowDetailsData, ShowsControllerGetShowDetailsResponses, ShowsControllerGetShowResponses, ShowsControllerGetShowWatchHistoryData, ShowsControllerGetShowWatchHistoryErrors, ShowsControllerGetShowWatchHistoryResponses, ShowsControllerGetUserEpisodesPaginatedData, ShowsControllerGetUserEpisodesPaginatedResponses, ShowsControllerGetUserReleaseCalendarData, ShowsControllerGetUserReleaseCalendarResponses, ShowsControllerGetUserShowsData, ShowsControllerGetUserShowsResponses, ShowsControllerGetUserUpNextData, ShowsControllerGetUserUpNextResponses, ShowsControllerGetWatchProvidersData, ShowsControllerGetWatchProvidersResponses, ShowsControllerMarkSeasonWatchedData, ShowsControllerMarkSeasonWatchedErrors, ShowsControllerMarkSeasonWatchedResponses, ShowsControllerMarkShowWatchedData, ShowsControllerMarkShowWatchedErrors, ShowsControllerMarkShowWatchedResponses, ShowsControllerMarkWatchedData, ShowsControllerMarkWatchedErrors, ShowsControllerMarkWatchedResponses, ShowsControllerSearchShowsData, ShowsControllerSearchShowsResponses, ShowsControllerUnmarkWatchedData, ShowsControllerUnmarkWatchedResponses, SocialControllerFollowData, SocialControllerFollowResponses, SocialControllerGetFeedData, SocialControllerGetFeedResponses, SocialControllerGetFollowersData, SocialControllerGetFollowersResponses, SocialControllerGetFollowingData, SocialControllerGetFollowingResponses, SocialControllerGetRelationshipData, SocialControllerGetRelationshipResponses, SocialControllerGetSuggestionsData, SocialControllerGetSuggestionsResponses, SocialControllerGetWatchersData, SocialControllerGetWatchersResponses, SocialControllerSearchPeopleData, SocialControllerSearchPeopleResponses, SocialControllerUnfollowData, SocialControllerUnfollowResponses, UsersControllerCompleteOnboardingData, UsersControllerCompleteOnboardingErrors, UsersControllerCompleteOnboardingResponses, UsersControllerDeleteMyAccountData, UsersControllerDeleteMyAccountErrors, UsersControllerDeleteMyAccountResponses, UsersControllerDeleteMyAvatarData, UsersControllerDeleteMyAvatarResponses, UsersControllerFetchMyTraktPublicHistoryData, UsersControllerFetchMyTraktPublicHistoryErrors, UsersControllerFetchMyTraktPublicHistoryResponses, UsersControllerGetAvatarData, UsersControllerGetAvatarResponses, UsersControllerGetMyAccountDeletionData, UsersControllerGetMyAccountDeletionErrors, UsersControllerGetMyAccountDeletionResponses, UsersControllerGetMyCurrentTraktImportData, UsersControllerGetMyCurrentTraktImportErrors, UsersControllerGetMyCurrentTraktImportResponses, UsersControllerGetMySettingsData, UsersControllerGetMySettingsErrors, UsersControllerGetMySettingsResponses, UsersControllerGetPublicFollowersData, UsersControllerGetPublicFollowersErrors, UsersControllerGetPublicFollowersResponses, UsersControllerGetPublicFollowingData, UsersControllerGetPublicFollowingErrors, UsersControllerGetPublicFollowingResponses, UsersControllerGetPublicProfileData, UsersControllerGetPublicProfileErrors, UsersControllerGetPublicProfileResponses, UsersControllerImportMyBlueskyFollowsData, UsersControllerImportMyBlueskyFollowsErrors, UsersControllerImportMyBlueskyFollowsResponses, UsersControllerImportMyHistoryData, UsersControllerImportMyHistoryErrors, UsersControllerImportMyHistoryResponses, UsersControllerRefreshMySocialLinksData, UsersControllerRefreshMySocialLinksErrors, UsersControllerRefreshMySocialLinksResponses, UsersControllerStartMyTraktImportData, UsersControllerStartMyTraktImportErrors, UsersControllerStartMyTraktImportResponses, UsersControllerUpdateMyProfileData, UsersControllerUpdateMyProfileErrors, UsersControllerUpdateMyProfileResponses, UsersControllerUpdateMySettingsData, UsersControllerUpdateMySettingsErrors, UsersControllerUpdateMySettingsResponses, UsersControllerUploadMyAvatarData, UsersControllerUploadMyAvatarResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -493,6 +493,87 @@ export const socialControllerGetFeed = <ThrowOnError extends boolean = false>(op
 export const socialControllerGetWatchers = <ThrowOnError extends boolean = false>(options: Options<SocialControllerGetWatchersData, ThrowOnError>) => (options.client ?? client).get<SocialControllerGetWatchersResponses, unknown, ThrowOnError>({ url: '/social/watchers', ...options });
 
 /**
+ * Get paginated reviews for a user
+ */
+export const reviewsControllerGetUserReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetUserReviewsData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetUserReviewsResponses, unknown, ThrowOnError>({ url: '/reviews/user/{userDid}/reviews', ...options });
+
+/**
+ * Get public reviews for a media item
+ */
+export const reviewsControllerGetMediaReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetMediaReviewsData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetMediaReviewsResponses, unknown, ThrowOnError>({ url: '/reviews/media', ...options });
+
+/**
+ * Resolve the canonical public review page for @handle/segment
+ */
+export const reviewsControllerGetCanonicalReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetCanonicalReviewData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetCanonicalReviewResponses, unknown, ThrowOnError>({ url: '/reviews/canonical/{handle}/{segment}', ...options });
+
+/**
+ * List the requesting user's own site.standard.publication records (picker source)
+ */
+export const reviewsControllerListMyPublications = <ThrowOnError extends boolean = false>(options?: Options<ReviewsControllerListMyPublicationsData, ThrowOnError>) => (options?.client ?? client).get<ReviewsControllerListMyPublicationsResponses, ReviewsControllerListMyPublicationsErrors, ThrowOnError>({ url: '/reviews/publications/mine', ...options });
+
+/**
+ * Re-point the user's existing reviews at a new publication
+ */
+export const reviewsControllerRepointReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerRepointReviewsData, ThrowOnError>) => (options.client ?? client).post<ReviewsControllerRepointReviewsResponses, ReviewsControllerRepointReviewsErrors, ThrowOnError>({
+    url: '/reviews/repoint',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a review
+ */
+export const reviewsControllerDeleteReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerDeleteReviewData, ThrowOnError>) => (options.client ?? client).delete<ReviewsControllerDeleteReviewResponses, ReviewsControllerDeleteReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}', ...options });
+
+/**
+ * Get a single review by id
+ */
+export const reviewsControllerGetReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetReviewData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetReviewResponses, unknown, ThrowOnError>({ url: '/reviews/{reviewId}', ...options });
+
+/**
+ * Update a review
+ */
+export const reviewsControllerUpdateReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerUpdateReviewData, ThrowOnError>) => (options.client ?? client).patch<ReviewsControllerUpdateReviewResponses, ReviewsControllerUpdateReviewErrors, ThrowOnError>({
+    url: '/reviews/{reviewId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create a review
+ */
+export const reviewsControllerCreateReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerCreateReviewData, ThrowOnError>) => (options.client ?? client).post<ReviewsControllerCreateReviewResponses, ReviewsControllerCreateReviewErrors, ThrowOnError>({
+    url: '/reviews',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Unlike a review
+ */
+export const reviewsControllerUnlikeReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerUnlikeReviewData, ThrowOnError>) => (options.client ?? client).delete<ReviewsControllerUnlikeReviewResponses, ReviewsControllerUnlikeReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}/like', ...options });
+
+/**
+ * Like a review
+ */
+export const reviewsControllerLikeReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerLikeReviewData, ThrowOnError>) => (options.client ?? client).post<ReviewsControllerLikeReviewResponses, ReviewsControllerLikeReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}/like', ...options });
+
+/**
+ * Get likes for a review
+ */
+export const reviewsControllerGetReviewLikes = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetReviewLikesData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetReviewLikesResponses, unknown, ThrowOnError>({ url: '/reviews/{reviewId}/likes', ...options });
+
+/**
  * Get a note for a user and media item
  */
 export const notesControllerGetNote = <ThrowOnError extends boolean = false>(options: Options<NotesControllerGetNoteData, ThrowOnError>) => (options.client ?? client).get<NotesControllerGetNoteResponses, NotesControllerGetNoteErrors, ThrowOnError>({ url: '/notes/user/{userDid}', ...options });
@@ -557,70 +638,6 @@ export const ratingsControllerSetRating = <ThrowOnError extends boolean = false>
  * Clear a rating
  */
 export const ratingsControllerClearRating = <ThrowOnError extends boolean = false>(options: Options<RatingsControllerClearRatingData, ThrowOnError>) => (options.client ?? client).delete<RatingsControllerClearRatingResponses, RatingsControllerClearRatingErrors, ThrowOnError>({ url: '/ratings/{ratingId}', ...options });
-
-/**
- * Get paginated reviews for a user
- */
-export const reviewsControllerGetUserReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetUserReviewsData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetUserReviewsResponses, unknown, ThrowOnError>({ url: '/reviews/user/{userDid}/reviews', ...options });
-
-/**
- * Get public reviews for a media item
- */
-export const reviewsControllerGetMediaReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetMediaReviewsData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetMediaReviewsResponses, unknown, ThrowOnError>({ url: '/reviews/media', ...options });
-
-/**
- * Resolve the canonical public review page for @handle/segment
- */
-export const reviewsControllerGetCanonicalReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetCanonicalReviewData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetCanonicalReviewResponses, unknown, ThrowOnError>({ url: '/reviews/canonical/{handle}/{segment}', ...options });
-
-/**
- * Delete a review
- */
-export const reviewsControllerDeleteReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerDeleteReviewData, ThrowOnError>) => (options.client ?? client).delete<ReviewsControllerDeleteReviewResponses, ReviewsControllerDeleteReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}', ...options });
-
-/**
- * Get a single review by id
- */
-export const reviewsControllerGetReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetReviewData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetReviewResponses, unknown, ThrowOnError>({ url: '/reviews/{reviewId}', ...options });
-
-/**
- * Update a review
- */
-export const reviewsControllerUpdateReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerUpdateReviewData, ThrowOnError>) => (options.client ?? client).patch<ReviewsControllerUpdateReviewResponses, ReviewsControllerUpdateReviewErrors, ThrowOnError>({
-    url: '/reviews/{reviewId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Create a review
- */
-export const reviewsControllerCreateReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerCreateReviewData, ThrowOnError>) => (options.client ?? client).post<ReviewsControllerCreateReviewResponses, ReviewsControllerCreateReviewErrors, ThrowOnError>({
-    url: '/reviews',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unlike a review
- */
-export const reviewsControllerUnlikeReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerUnlikeReviewData, ThrowOnError>) => (options.client ?? client).delete<ReviewsControllerUnlikeReviewResponses, ReviewsControllerUnlikeReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}/like', ...options });
-
-/**
- * Like a review
- */
-export const reviewsControllerLikeReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerLikeReviewData, ThrowOnError>) => (options.client ?? client).post<ReviewsControllerLikeReviewResponses, ReviewsControllerLikeReviewErrors, ThrowOnError>({ url: '/reviews/{reviewId}/like', ...options });
-
-/**
- * Get likes for a review
- */
-export const reviewsControllerGetReviewLikes = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetReviewLikesData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetReviewLikesResponses, unknown, ThrowOnError>({ url: '/reviews/{reviewId}/likes', ...options });
 
 /**
  * Get paginated shelf items for a user (movies and episodes)

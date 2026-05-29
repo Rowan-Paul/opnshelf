@@ -1887,6 +1887,8 @@ export const UserScalarFieldEnum = {
   tangledProfileUrl: 'tangledProfileUrl',
   showBlueskyOnProfile: 'showBlueskyOnProfile',
   showTangledOnProfile: 'showTangledOnProfile',
+  reviewsPublicationUri: 'reviewsPublicationUri',
+  reviewsPublicationName: 'reviewsPublicationName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

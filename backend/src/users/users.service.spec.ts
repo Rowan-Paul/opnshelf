@@ -20,6 +20,7 @@ jest.mock("./profile.service", () => ({
 	ProfileService: class MockProfileService {},
 }));
 
+import type { ReviewsService } from "../reviews/reviews.service";
 import type { ImportHistoryService } from "./import-history.service";
 import type { ProfileService } from "./profile.service";
 import type { UserDeletionService } from "./user-deletion.service";
@@ -50,6 +51,7 @@ type MockImportHistoryService = {
 describe("UsersService", () => {
 	let service: UsersService;
 	let importHistoryService: MockImportHistoryService;
+	let reviewsService: ReviewsService;
 
 	const prisma = {
 		user: {
@@ -115,17 +117,110 @@ describe("UsersService", () => {
 			importNormalizedItems: jest.fn(),
 		};
 		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(true);
+		reviewsService = {
+			listMyPublications: jest.fn(),
+		} as unknown as ReviewsService;
 		service = new UsersService(
 			prisma,
 			importHistoryService as unknown as ImportHistoryService,
 			userDeletionService,
 			profileService,
 			listsService,
+			reviewsService,
 		);
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+	});
+
+	describe("updateUserSettings reviews publication", () => {
+		it("stores uri + cached name when the target is one of the user's own publications", async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+				did: "did:plc:123",
+			});
+			(reviewsService.listMyPublications as jest.Mock).mockResolvedValue([
+				{
+					uri: "at://did:plc:123/site.standard.publication/leaflet",
+					name: "My Blog",
+					url: "https://leaflet.pub/me",
+					isOpnshelfDefault: false,
+				},
+			]);
+			(prisma.user.update as jest.Mock).mockResolvedValue({
+				timezone: "UTC",
+				timeFormat: "24h",
+				watchCountry: "US",
+				reviewsPublicationUri:
+					"at://did:plc:123/site.standard.publication/leaflet",
+				reviewsPublicationName: "My Blog",
+			});
+
+			const result = await service.updateUserSettings(
+				"did:plc:123",
+				{
+					reviewsPublicationUri:
+						"at://did:plc:123/site.standard.publication/leaflet",
+				},
+				{ did: "did:plc:123" },
+			);
+
+			expect(prisma.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						reviewsPublicationUri:
+							"at://did:plc:123/site.standard.publication/leaflet",
+						reviewsPublicationName: "My Blog",
+					}),
+				}),
+			);
+			expect(result.reviewsPublicationName).toBe("My Blog");
+		});
+
+		it("rejects a target that is not among the user's own publications", async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+				did: "did:plc:123",
+			});
+			(reviewsService.listMyPublications as jest.Mock).mockResolvedValue([]);
+
+			await expect(
+				service.updateUserSettings(
+					"did:plc:123",
+					{ reviewsPublicationUri: "at://did:plc:999/x/y" },
+					{ did: "did:plc:123" },
+				),
+			).rejects.toThrow(BadRequestException);
+		});
+
+		it("clears the override to the opnshelf default when set to null", async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+				did: "did:plc:123",
+			});
+			(prisma.user.update as jest.Mock).mockResolvedValue({
+				timezone: "UTC",
+				timeFormat: "24h",
+				watchCountry: "US",
+				reviewsPublicationUri: null,
+				reviewsPublicationName: null,
+			});
+
+			const result = await service.updateUserSettings(
+				"did:plc:123",
+				{ reviewsPublicationUri: null },
+				{ did: "did:plc:123" },
+			);
+
+			expect(reviewsService.listMyPublications).not.toHaveBeenCalled();
+			expect(prisma.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						reviewsPublicationUri: null,
+						reviewsPublicationName: null,
+					}),
+				}),
+			);
+			expect(result.reviewsPublicationUri).toBeNull();
+		});
 	});
 
 	it("completes onboarding for an existing user", async () => {

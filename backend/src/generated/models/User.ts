@@ -44,6 +44,8 @@ export type UserMinAggregateOutputType = {
   tangledProfileUrl: string | null
   showBlueskyOnProfile: boolean | null
   showTangledOnProfile: boolean | null
+  reviewsPublicationUri: string | null
+  reviewsPublicationName: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +70,8 @@ export type UserMaxAggregateOutputType = {
   tangledProfileUrl: string | null
   showBlueskyOnProfile: boolean | null
   showTangledOnProfile: boolean | null
+  reviewsPublicationUri: string | null
+  reviewsPublicationName: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -92,6 +96,8 @@ export type UserCountAggregateOutputType = {
   tangledProfileUrl: number
   showBlueskyOnProfile: number
   showTangledOnProfile: number
+  reviewsPublicationUri: number
+  reviewsPublicationName: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -118,6 +124,8 @@ export type UserMinAggregateInputType = {
   tangledProfileUrl?: true
   showBlueskyOnProfile?: true
   showTangledOnProfile?: true
+  reviewsPublicationUri?: true
+  reviewsPublicationName?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -142,6 +150,8 @@ export type UserMaxAggregateInputType = {
   tangledProfileUrl?: true
   showBlueskyOnProfile?: true
   showTangledOnProfile?: true
+  reviewsPublicationUri?: true
+  reviewsPublicationName?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -166,6 +176,8 @@ export type UserCountAggregateInputType = {
   tangledProfileUrl?: true
   showBlueskyOnProfile?: true
   showTangledOnProfile?: true
+  reviewsPublicationUri?: true
+  reviewsPublicationName?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -263,6 +275,8 @@ export type UserGroupByOutputType = {
   tangledProfileUrl: string | null
   showBlueskyOnProfile: boolean
   showTangledOnProfile: boolean
+  reviewsPublicationUri: string | null
+  reviewsPublicationName: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -308,6 +322,8 @@ export type UserWhereInput = {
   tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
   showBlueskyOnProfile?: Prisma.BoolFilter<"User"> | boolean
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
+  reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
+  reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -343,6 +359,8 @@ export type UserOrderByWithRelationInput = {
   tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   showBlueskyOnProfile?: Prisma.SortOrder
   showTangledOnProfile?: Prisma.SortOrder
+  reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
@@ -381,6 +399,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
   showBlueskyOnProfile?: Prisma.BoolFilter<"User"> | boolean
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
+  reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
+  reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -416,6 +436,8 @@ export type UserOrderByWithAggregationInput = {
   tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   showBlueskyOnProfile?: Prisma.SortOrder
   showTangledOnProfile?: Prisma.SortOrder
+  reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -446,6 +468,8 @@ export type UserScalarWhereWithAggregatesInput = {
   tangledProfileUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   showBlueskyOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   showTangledOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  reviewsPublicationUri?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  reviewsPublicationName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -470,6 +494,8 @@ export type UserCreateInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -505,6 +531,8 @@ export type UserUncheckedCreateInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -540,6 +568,8 @@ export type UserUpdateInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -575,6 +605,8 @@ export type UserUncheckedUpdateInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -610,6 +642,8 @@ export type UserCreateManyInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -634,6 +668,8 @@ export type UserUpdateManyMutationInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -658,6 +694,8 @@ export type UserUncheckedUpdateManyInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -682,6 +720,8 @@ export type UserCountOrderByAggregateInput = {
   tangledProfileUrl?: Prisma.SortOrder
   showBlueskyOnProfile?: Prisma.SortOrder
   showTangledOnProfile?: Prisma.SortOrder
+  reviewsPublicationUri?: Prisma.SortOrder
+  reviewsPublicationName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -706,6 +746,8 @@ export type UserMaxOrderByAggregateInput = {
   tangledProfileUrl?: Prisma.SortOrder
   showBlueskyOnProfile?: Prisma.SortOrder
   showTangledOnProfile?: Prisma.SortOrder
+  reviewsPublicationUri?: Prisma.SortOrder
+  reviewsPublicationName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -730,6 +772,8 @@ export type UserMinOrderByAggregateInput = {
   tangledProfileUrl?: Prisma.SortOrder
   showBlueskyOnProfile?: Prisma.SortOrder
   showTangledOnProfile?: Prisma.SortOrder
+  reviewsPublicationUri?: Prisma.SortOrder
+  reviewsPublicationName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -933,6 +977,8 @@ export type UserCreateWithoutFollowingInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -967,6 +1013,8 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1006,6 +1054,8 @@ export type UserCreateWithoutFollowersInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1040,6 +1090,8 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1090,6 +1142,8 @@ export type UserUpdateWithoutFollowingInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1124,6 +1178,8 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1169,6 +1225,8 @@ export type UserUpdateWithoutFollowersInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1203,6 +1261,8 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1237,6 +1297,8 @@ export type UserCreateWithoutTrackedMoviesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -1271,6 +1333,8 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -1321,6 +1385,8 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -1355,6 +1421,8 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -1389,6 +1457,8 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1423,6 +1493,8 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1473,6 +1545,8 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1507,6 +1581,8 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1541,6 +1617,8 @@ export type UserCreateWithoutListsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1575,6 +1653,8 @@ export type UserUncheckedCreateWithoutListsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1625,6 +1705,8 @@ export type UserUpdateWithoutListsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1659,6 +1741,8 @@ export type UserUncheckedUpdateWithoutListsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1693,6 +1777,8 @@ export type UserCreateWithoutNotesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1727,6 +1813,8 @@ export type UserUncheckedCreateWithoutNotesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1777,6 +1865,8 @@ export type UserUpdateWithoutNotesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1811,6 +1901,8 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1845,6 +1937,8 @@ export type UserCreateWithoutReviewsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1879,6 +1973,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1929,6 +2025,8 @@ export type UserUpdateWithoutReviewsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1963,6 +2061,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1997,6 +2097,8 @@ export type UserCreateWithoutPublicationsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2031,6 +2133,8 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2081,6 +2185,8 @@ export type UserUpdateWithoutPublicationsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2115,6 +2221,8 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2149,6 +2257,8 @@ export type UserCreateWithoutRatingsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2183,6 +2293,8 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2233,6 +2345,8 @@ export type UserUpdateWithoutRatingsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2267,6 +2381,8 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2301,6 +2417,8 @@ export type UserCreateWithoutReviewLikesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2335,6 +2453,8 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2385,6 +2505,8 @@ export type UserUpdateWithoutReviewLikesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2419,6 +2541,8 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2453,6 +2577,8 @@ export type UserCreateWithoutFeedbackInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2487,6 +2613,8 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   tangledProfileUrl?: string | null
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2537,6 +2665,8 @@ export type UserUpdateWithoutFeedbackInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2571,6 +2701,8 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2726,6 +2858,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   tangledProfileUrl?: boolean
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: boolean
+  reviewsPublicationName?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
@@ -2762,6 +2896,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   tangledProfileUrl?: boolean
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: boolean
+  reviewsPublicationName?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -2786,6 +2922,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   tangledProfileUrl?: boolean
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: boolean
+  reviewsPublicationName?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -2810,11 +2948,13 @@ export type UserSelectScalar = {
   tangledProfileUrl?: boolean
   showBlueskyOnProfile?: boolean
   showTangledOnProfile?: boolean
+  reviewsPublicationUri?: boolean
+  reviewsPublicationName?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -2867,6 +3007,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     tangledProfileUrl: string | null
     showBlueskyOnProfile: boolean
     showTangledOnProfile: boolean
+    reviewsPublicationUri: string | null
+    reviewsPublicationName: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -3322,6 +3464,8 @@ export interface UserFieldRefs {
   readonly tangledProfileUrl: Prisma.FieldRef<"User", 'String'>
   readonly showBlueskyOnProfile: Prisma.FieldRef<"User", 'Boolean'>
   readonly showTangledOnProfile: Prisma.FieldRef<"User", 'Boolean'>
+  readonly reviewsPublicationUri: Prisma.FieldRef<"User", 'String'>
+  readonly reviewsPublicationName: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

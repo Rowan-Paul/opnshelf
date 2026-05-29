@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
+import { ReviewsModule } from "../reviews/reviews.module";
 import { ShowsModule } from "../shows/shows.module";
 import { SocialModule } from "../social/social.module";
 import { BackgroundJobWorkerService } from "./background-job-worker.service";
@@ -21,6 +22,7 @@ import { UsersService } from "./users.service";
 		MoviesModule,
 		ShowsModule,
 		SocialModule,
+		ReviewsModule,
 		forwardRef(() => AuthModule),
 	],
 	controllers: [UsersController],

@@ -4,6 +4,8 @@ import {
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
+	reviewsControllerListMyPublicationsOptions,
+	reviewsControllerRepointReviewsMutation,
 	type UserProfileDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
@@ -17,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import {
 	AlertTriangle,
+	BookOpen,
 	Camera,
 	ExternalLink,
 	Loader2,
@@ -225,6 +228,79 @@ function SettingsPage() {
 		},
 	});
 
+	// Reviews publication (#118). The live picker — not the cached setting — is
+	// the source of truth at selection time; the user can only pick a publication
+	// that exists in their own PDS.
+	const {
+		data: myPublications,
+		isLoading: publicationsLoading,
+		isError: publicationsError,
+	} = useQuery({
+		...reviewsControllerListMyPublicationsOptions(),
+		enabled: isAuthenticated,
+	});
+
+	// The currently-stored target URI (null = opnshelf default).
+	const storedPublicationUri = userSettings?.reviewsPublicationUri ?? null;
+
+	// Pending re-point prompt after a successful target change.
+	const [repointTargetUri, setRepointTargetUri] = useState<string | null>(null);
+
+	const repointReviewsMutation = useMutation({
+		mutationKey: ["reviews", "repoint"],
+		...reviewsControllerRepointReviewsMutation(),
+		onSuccess: (result) => {
+			if (result.failed > 0) {
+				toast.warning(
+					`Moved ${result.moved} of ${result.total} reviews. ${result.failed} failed — try again.`,
+				);
+			} else {
+				toast.success(
+					result.total === 0
+						? "No reviews to move"
+						: `Moved ${result.moved} review${result.moved === 1 ? "" : "s"}`,
+				);
+			}
+			setRepointTargetUri(null);
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to move reviews",
+			);
+		},
+	});
+
+	const handleSelectPublication = (uri: string | null) => {
+		if (uri === storedPublicationUri) {
+			return;
+		}
+		updateSettingsMutation.mutate(
+			{ body: { reviewsPublicationUri: uri } },
+			{
+				onSuccess: () => {
+					// Offer (opt-in) to re-point already-published reviews. Only when
+					// targeting a concrete publication — reverting to the default also
+					// offers re-pointing back, but only if there is a target URI; for
+					// the default we still offer moving reviews onto the opnshelf pub.
+					setRepointTargetUri(uri ?? findDefaultPublicationUri());
+				},
+			},
+		);
+	};
+
+	function findDefaultPublicationUri(): string | null {
+		return (
+			myPublications?.items.find((pub) => pub.isOpnshelfDefault)?.uri ?? null
+		);
+	}
+
+	// D7 soft warning: the stored target is no longer present in the live list.
+	const storedTargetMissing =
+		storedPublicationUri !== null &&
+		!publicationsLoading &&
+		!publicationsError &&
+		!myPublications?.items.some((pub) => pub.uri === storedPublicationUri);
+
 	// Avatar file input ref
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -380,6 +456,118 @@ function SettingsPage() {
 							disabled={updateSettingsMutation.isPending}
 						/>
 					</div>
+				</section>
+
+				{/* Reviews publication */}
+				<section className="card p-6">
+					<div className="mb-1 flex items-center gap-2">
+						<BookOpen className="size-5 text-(--accent)" />
+						<h2 className="font-semibold text-lg">Reviews publication</h2>
+					</div>
+					<p className="mb-6 text-(--foreground-muted) text-sm">
+						Choose which of your own AT Protocol publications new reviews are
+						published to. OpnShelf still renders them at{" "}
+						<span className="font-medium">opnshelf.xyz/@{user.handle}</span>.
+					</p>
+
+					{storedTargetMissing && (
+						<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+							<AlertTriangle className="mt-0.5 size-4 shrink-0" />
+							<span>
+								Your selected publication is no longer in your PDS. New reviews
+								still point at it, but you may want to choose another below.
+							</span>
+						</div>
+					)}
+
+					{publicationsLoading ? (
+						<div className="flex items-center gap-2 text-(--foreground-muted) text-sm">
+							<Loader2 className="size-4 animate-spin" />
+							Loading your publications…
+						</div>
+					) : publicationsError ? (
+						<p className="text-(--foreground-muted) text-sm">
+							Could not load your publications right now.
+						</p>
+					) : (
+						<fieldset
+							className="space-y-2"
+							disabled={updateSettingsMutation.isPending}
+						>
+							{(myPublications?.items ?? []).map((pub) => {
+								const checked = pub.isOpnshelfDefault
+									? storedPublicationUri === null ||
+										storedPublicationUri === pub.uri
+									: storedPublicationUri === pub.uri;
+								return (
+									<label
+										key={pub.uri}
+										className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)"
+									>
+										<div className="flex items-center gap-3">
+											<input
+												type="radio"
+												name="reviews-publication"
+												className="size-4 accent-(--accent)"
+												checked={checked}
+												onChange={() =>
+													handleSelectPublication(
+														pub.isOpnshelfDefault ? null : pub.uri,
+													)
+												}
+											/>
+											<div>
+												<p className="font-medium text-sm">
+													{pub.name}
+													{pub.isOpnshelfDefault && (
+														<span className="ml-2 rounded-full bg-(--accent-subtle) px-2 py-0.5 font-medium text-(--accent) text-xs">
+															Default
+														</span>
+													)}
+												</p>
+												<p className="text-(--foreground-muted) text-xs">
+													{pub.url}
+												</p>
+											</div>
+										</div>
+									</label>
+								);
+							})}
+						</fieldset>
+					)}
+
+					{repointTargetUri !== null && (
+						<div className="mt-4 flex flex-col gap-3 rounded-lg border border-(--border) bg-(--background-subtle) p-4 sm:flex-row sm:items-center sm:justify-between">
+							<p className="text-sm">
+								Also move your existing reviews to this publication?
+							</p>
+							<div className="flex gap-2">
+								<Button
+									variant="outline"
+									onClick={() => setRepointTargetUri(null)}
+									disabled={repointReviewsMutation.isPending}
+								>
+									Not now
+								</Button>
+								<Button
+									onClick={() =>
+										repointReviewsMutation.mutate({
+											body: { targetPublicationUri: repointTargetUri },
+										})
+									}
+									disabled={repointReviewsMutation.isPending}
+								>
+									{repointReviewsMutation.isPending ? (
+										<Loader2
+											data-icon="inline-start"
+											className="animate-spin"
+										/>
+									) : null}
+									Move reviews
+								</Button>
+							</div>
+						</div>
+					)}
 				</section>
 
 				{/* Account */}

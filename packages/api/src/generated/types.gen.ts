@@ -590,6 +590,14 @@ export type UserSettingsDto = {
      * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
      */
     watchCountry: string;
+    /**
+     * AT URI of the publication new reviews point at, or null for the opnshelf default
+     */
+    reviewsPublicationUri: string | null;
+    /**
+     * Cached display name of the chosen reviews publication
+     */
+    reviewsPublicationName: string | null;
 };
 
 export type UpdateUserSettingsDto = {
@@ -605,6 +613,10 @@ export type UpdateUserSettingsDto = {
      * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
      */
     watchCountry?: string;
+    /**
+     * AT URI of the site.standard.publication that new reviews should point at. Must be one of the user's own publications. Pass null to revert to the opnshelf default.
+     */
+    reviewsPublicationUri?: string | null;
 };
 
 export type UpdateUserProfileDto = {
@@ -1068,6 +1080,272 @@ export type FollowedWatchersDto = {
     total: number;
 };
 
+export type UserReviewDto = {
+    id: string;
+    reviewTitle: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    description?: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Title of the movie or show
+     */
+    title?: string;
+    /**
+     * Poster path for the movie or show
+     */
+    posterPath?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PaginatedReviewsResponseDto = {
+    items: Array<UserReviewDto>;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: string | null;
+    /**
+     * Total count of items
+     */
+    total: number;
+};
+
+export type MediaReviewItemDto = {
+    id: string;
+    /**
+     * AT record key of the review document
+     */
+    rkey: string;
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    description?: string;
+    /**
+     * Relative URL of the canonical public review page (#115), e.g. /@handle/path
+     */
+    reviewUrl?: string;
+    /**
+     * Poster path of the underlying media item (the review cover)
+     */
+    posterPath?: string;
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    /**
+     * Number of likes on this review
+     */
+    likeCount: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
+    /**
+     * The author's own rating for this media item (joined from the separate Rating entity). Used only as a sort tiebreak.
+     */
+    authorRating?: number | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MediaReviewsResponseDto = {
+    items: Array<MediaReviewItemDto>;
+    /**
+     * Total review count
+     */
+    total: number;
+    /**
+     * Cursor for next page (null if no more items)
+     */
+    nextCursor: string | null;
+};
+
+export type CanonicalReviewAuthorDto = {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+};
+
+export type CanonicalReviewResponseDto = {
+    id: string;
+    /**
+     * AT record key of the review document
+     */
+    rkey: string;
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    /**
+     * Short plaintext excerpt
+     */
+    description?: string;
+    /**
+     * Human-friendly document path (the canonical URL segment)
+     */
+    path?: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Title of the underlying media item
+     */
+    mediaTitle?: string;
+    /**
+     * Poster path of the underlying media item (the review cover)
+     */
+    posterPath?: string;
+    author: CanonicalReviewAuthorDto;
+    /**
+     * Absolute canonical URL on the public site (opnshelf.xyz), never the PDS host
+     */
+    canonicalUrl: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MyPublicationDto = {
+    /**
+     * AT-URI of the publication record
+     */
+    uri: string;
+    /**
+     * Display name of the publication
+     */
+    name: string;
+    /**
+     * Canonical web URL of the publication
+     */
+    url: string;
+    /**
+     * True for the opnshelf-minted default publication (url === opnshelf.xyz/@<handle>)
+     */
+    isOpnshelfDefault: boolean;
+};
+
+export type MyPublicationsResponseDto = {
+    items: Array<MyPublicationDto>;
+};
+
+export type RepointReviewsDto = {
+    /**
+     * AT-URI of the target publication to re-point reviews at
+     */
+    targetPublicationUri: string;
+};
+
+export type RepointReviewsResponseDto = {
+    /**
+     * Number of reviews successfully re-pointed
+     */
+    moved: number;
+    /**
+     * Number of reviews that failed to re-point
+     */
+    failed: number;
+    /**
+     * Total number of reviews considered
+     */
+    total: number;
+};
+
+export type ReviewResponseDto = {
+    id: string;
+    rkey: string;
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    /**
+     * Short plaintext excerpt
+     */
+    description?: string;
+    /**
+     * Plaintext rendering for preview
+     */
+    textContent?: string;
+    /**
+     * AT-URI of the document's publication (`site`)
+     */
+    publicationUri: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CreateReviewDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Review title (required)
+     */
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+};
+
+export type UpdateReviewDto = {
+    /**
+     * Review title
+     */
+    title?: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown?: string;
+};
+
+export type ReviewLikeItemDto = {
+    userDid: string;
+    userHandle: string;
+    userDisplayName?: string;
+    userAvatar?: string;
+    createdAt: string;
+};
+
+export type ReviewLikesResponseDto = {
+    items: Array<ReviewLikeItemDto>;
+    /**
+     * Total like count
+     */
+    total: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
+};
+
 export type NoteResponseDto = {
     id: string;
     rkey: string;
@@ -1207,227 +1485,6 @@ export type SetRatingDto = {
      * Rating from 1 to 10 (maps to 0.5-5.0 stars)
      */
     rating: number;
-};
-
-export type UserReviewDto = {
-    id: string;
-    reviewTitle: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown: string;
-    description?: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    mediaId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    /**
-     * Title of the movie or show
-     */
-    title?: string;
-    /**
-     * Poster path for the movie or show
-     */
-    posterPath?: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type PaginatedReviewsResponseDto = {
-    items: Array<UserReviewDto>;
-    /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: string | null;
-    /**
-     * Total count of items
-     */
-    total: number;
-};
-
-export type MediaReviewItemDto = {
-    id: string;
-    /**
-     * AT record key of the review document
-     */
-    rkey: string;
-    title: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown: string;
-    description?: string;
-    /**
-     * Relative URL of the canonical public review page (#115), e.g. /@handle/path
-     */
-    reviewUrl?: string;
-    /**
-     * Poster path of the underlying media item (the review cover)
-     */
-    posterPath?: string;
-    userDid: string;
-    userHandle: string;
-    userDisplayName?: string;
-    userAvatar?: string;
-    /**
-     * Number of likes on this review
-     */
-    likeCount: number;
-    /**
-     * Whether the requesting user has liked this review
-     */
-    hasLiked: boolean;
-    /**
-     * The author's own rating for this media item (joined from the separate Rating entity). Used only as a sort tiebreak.
-     */
-    authorRating?: number | null;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type MediaReviewsResponseDto = {
-    items: Array<MediaReviewItemDto>;
-    /**
-     * Total review count
-     */
-    total: number;
-    /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: string | null;
-};
-
-export type CanonicalReviewAuthorDto = {
-    did: string;
-    handle: string;
-    displayName?: string;
-    avatar?: string;
-};
-
-export type CanonicalReviewResponseDto = {
-    id: string;
-    /**
-     * AT record key of the review document
-     */
-    rkey: string;
-    title: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown: string;
-    /**
-     * Short plaintext excerpt
-     */
-    description?: string;
-    /**
-     * Human-friendly document path (the canonical URL segment)
-     */
-    path?: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    mediaId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    /**
-     * Title of the underlying media item
-     */
-    mediaTitle?: string;
-    /**
-     * Poster path of the underlying media item (the review cover)
-     */
-    posterPath?: string;
-    author: CanonicalReviewAuthorDto;
-    /**
-     * Absolute canonical URL on the public site (opnshelf.xyz), never the PDS host
-     */
-    canonicalUrl: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type ReviewResponseDto = {
-    id: string;
-    rkey: string;
-    title: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown: string;
-    /**
-     * Short plaintext excerpt
-     */
-    description?: string;
-    /**
-     * Plaintext rendering for preview
-     */
-    textContent?: string;
-    /**
-     * AT-URI of the document's publication (`site`)
-     */
-    publicationUri: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    mediaId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type CreateReviewDto = {
-    /**
-     * Media type
-     */
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    /**
-     * TMDB movie ID or show ID
-     */
-    mediaId: string;
-    /**
-     * Season number for season/episode items
-     */
-    seasonNumber?: number;
-    /**
-     * Episode number for episode items
-     */
-    episodeNumber?: number;
-    /**
-     * Review title (required)
-     */
-    title: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown: string;
-};
-
-export type UpdateReviewDto = {
-    /**
-     * Review title
-     */
-    title?: string;
-    /**
-     * Review body as markdown source
-     */
-    markdown?: string;
-};
-
-export type ReviewLikeItemDto = {
-    userDid: string;
-    userHandle: string;
-    userDisplayName?: string;
-    userAvatar?: string;
-    createdAt: string;
-};
-
-export type ReviewLikesResponseDto = {
-    items: Array<ReviewLikeItemDto>;
-    /**
-     * Total like count
-     */
-    total: number;
-    /**
-     * Whether the requesting user has liked this review
-     */
-    hasLiked: boolean;
 };
 
 export type ShelfResponseDto = {
@@ -3316,6 +3373,292 @@ export type SocialControllerGetWatchersResponses = {
 
 export type SocialControllerGetWatchersResponse = SocialControllerGetWatchersResponses[keyof SocialControllerGetWatchersResponses];
 
+export type ReviewsControllerGetUserReviewsData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination
+         */
+        cursor?: string;
+    };
+    url: '/reviews/user/{userDid}/reviews';
+};
+
+export type ReviewsControllerGetUserReviewsResponses = {
+    /**
+     * Reviews retrieved
+     */
+    200: PaginatedReviewsResponseDto;
+};
+
+export type ReviewsControllerGetUserReviewsResponse = ReviewsControllerGetUserReviewsResponses[keyof ReviewsControllerGetUserReviewsResponses];
+
+export type ReviewsControllerGetMediaReviewsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+        /**
+         * Number of items to return
+         */
+        limit?: number;
+        /**
+         * Cursor for pagination
+         */
+        cursor?: string;
+    };
+    url: '/reviews/media';
+};
+
+export type ReviewsControllerGetMediaReviewsResponses = {
+    /**
+     * Reviews retrieved
+     */
+    200: MediaReviewsResponseDto;
+};
+
+export type ReviewsControllerGetMediaReviewsResponse = ReviewsControllerGetMediaReviewsResponses[keyof ReviewsControllerGetMediaReviewsResponses];
+
+export type ReviewsControllerGetCanonicalReviewData = {
+    body?: never;
+    path: {
+        handle: string;
+        segment: string;
+    };
+    query?: never;
+    url: '/reviews/canonical/{handle}/{segment}';
+};
+
+export type ReviewsControllerGetCanonicalReviewResponses = {
+    /**
+     * Canonical review resolved
+     */
+    200: CanonicalReviewResponseDto;
+};
+
+export type ReviewsControllerGetCanonicalReviewResponse = ReviewsControllerGetCanonicalReviewResponses[keyof ReviewsControllerGetCanonicalReviewResponses];
+
+export type ReviewsControllerListMyPublicationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/reviews/publications/mine';
+};
+
+export type ReviewsControllerListMyPublicationsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerListMyPublicationsResponses = {
+    /**
+     * Publications listed from the user's PDS
+     */
+    200: MyPublicationsResponseDto;
+};
+
+export type ReviewsControllerListMyPublicationsResponse = ReviewsControllerListMyPublicationsResponses[keyof ReviewsControllerListMyPublicationsResponses];
+
+export type ReviewsControllerRepointReviewsData = {
+    body: RepointReviewsDto;
+    path?: never;
+    query?: never;
+    url: '/reviews/repoint';
+};
+
+export type ReviewsControllerRepointReviewsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerRepointReviewsResponses = {
+    /**
+     * Re-point summary
+     */
+    200: RepointReviewsResponseDto;
+};
+
+export type ReviewsControllerRepointReviewsResponse = ReviewsControllerRepointReviewsResponses[keyof ReviewsControllerRepointReviewsResponses];
+
+export type ReviewsControllerDeleteReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}';
+};
+
+export type ReviewsControllerDeleteReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerDeleteReviewResponses = {
+    /**
+     * Review deleted
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerGetReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}';
+};
+
+export type ReviewsControllerGetReviewResponses = {
+    /**
+     * Review retrieved
+     */
+    200: ReviewResponseDto;
+};
+
+export type ReviewsControllerGetReviewResponse = ReviewsControllerGetReviewResponses[keyof ReviewsControllerGetReviewResponses];
+
+export type ReviewsControllerUpdateReviewData = {
+    body: UpdateReviewDto;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}';
+};
+
+export type ReviewsControllerUpdateReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerUpdateReviewResponses = {
+    /**
+     * Review updated
+     */
+    200: ReviewResponseDto;
+};
+
+export type ReviewsControllerUpdateReviewResponse = ReviewsControllerUpdateReviewResponses[keyof ReviewsControllerUpdateReviewResponses];
+
+export type ReviewsControllerCreateReviewData = {
+    body: CreateReviewDto;
+    path?: never;
+    query?: never;
+    url: '/reviews';
+};
+
+export type ReviewsControllerCreateReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerCreateReviewResponses = {
+    /**
+     * Review created
+     */
+    200: ReviewResponseDto;
+};
+
+export type ReviewsControllerCreateReviewResponse = ReviewsControllerCreateReviewResponses[keyof ReviewsControllerCreateReviewResponses];
+
+export type ReviewsControllerUnlikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerUnlikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerUnlikeReviewResponses = {
+    /**
+     * Review unliked
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerLikeReviewData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/like';
+};
+
+export type ReviewsControllerLikeReviewErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerLikeReviewResponses = {
+    /**
+     * Review liked
+     */
+    200: unknown;
+};
+
+export type ReviewsControllerGetReviewLikesData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/likes';
+};
+
+export type ReviewsControllerGetReviewLikesResponses = {
+    /**
+     * Likes retrieved
+     */
+    200: ReviewLikesResponseDto;
+};
+
+export type ReviewsControllerGetReviewLikesResponse = ReviewsControllerGetReviewLikesResponses[keyof ReviewsControllerGetReviewLikesResponses];
+
 export type NotesControllerGetNoteData = {
     body?: never;
     path: {
@@ -3567,246 +3910,6 @@ export type RatingsControllerClearRatingResponses = {
      */
     200: unknown;
 };
-
-export type ReviewsControllerGetUserReviewsData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: {
-        /**
-         * Number of items to return
-         */
-        limit?: number;
-        /**
-         * Cursor for pagination
-         */
-        cursor?: string;
-    };
-    url: '/reviews/user/{userDid}/reviews';
-};
-
-export type ReviewsControllerGetUserReviewsResponses = {
-    /**
-     * Reviews retrieved
-     */
-    200: PaginatedReviewsResponseDto;
-};
-
-export type ReviewsControllerGetUserReviewsResponse = ReviewsControllerGetUserReviewsResponses[keyof ReviewsControllerGetUserReviewsResponses];
-
-export type ReviewsControllerGetMediaReviewsData = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Media type
-         */
-        mediaType: 'movie' | 'show' | 'season' | 'episode';
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-        /**
-         * Season number for season/episode items
-         */
-        seasonNumber?: number;
-        /**
-         * Episode number for episode items
-         */
-        episodeNumber?: number;
-        /**
-         * Number of items to return
-         */
-        limit?: number;
-        /**
-         * Cursor for pagination
-         */
-        cursor?: string;
-    };
-    url: '/reviews/media';
-};
-
-export type ReviewsControllerGetMediaReviewsResponses = {
-    /**
-     * Reviews retrieved
-     */
-    200: MediaReviewsResponseDto;
-};
-
-export type ReviewsControllerGetMediaReviewsResponse = ReviewsControllerGetMediaReviewsResponses[keyof ReviewsControllerGetMediaReviewsResponses];
-
-export type ReviewsControllerGetCanonicalReviewData = {
-    body?: never;
-    path: {
-        handle: string;
-        segment: string;
-    };
-    query?: never;
-    url: '/reviews/canonical/{handle}/{segment}';
-};
-
-export type ReviewsControllerGetCanonicalReviewResponses = {
-    /**
-     * Canonical review resolved
-     */
-    200: CanonicalReviewResponseDto;
-};
-
-export type ReviewsControllerGetCanonicalReviewResponse = ReviewsControllerGetCanonicalReviewResponses[keyof ReviewsControllerGetCanonicalReviewResponses];
-
-export type ReviewsControllerDeleteReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}';
-};
-
-export type ReviewsControllerDeleteReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerDeleteReviewResponses = {
-    /**
-     * Review deleted
-     */
-    200: unknown;
-};
-
-export type ReviewsControllerGetReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}';
-};
-
-export type ReviewsControllerGetReviewResponses = {
-    /**
-     * Review retrieved
-     */
-    200: ReviewResponseDto;
-};
-
-export type ReviewsControllerGetReviewResponse = ReviewsControllerGetReviewResponses[keyof ReviewsControllerGetReviewResponses];
-
-export type ReviewsControllerUpdateReviewData = {
-    body: UpdateReviewDto;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}';
-};
-
-export type ReviewsControllerUpdateReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerUpdateReviewResponses = {
-    /**
-     * Review updated
-     */
-    200: ReviewResponseDto;
-};
-
-export type ReviewsControllerUpdateReviewResponse = ReviewsControllerUpdateReviewResponses[keyof ReviewsControllerUpdateReviewResponses];
-
-export type ReviewsControllerCreateReviewData = {
-    body: CreateReviewDto;
-    path?: never;
-    query?: never;
-    url: '/reviews';
-};
-
-export type ReviewsControllerCreateReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerCreateReviewResponses = {
-    /**
-     * Review created
-     */
-    200: ReviewResponseDto;
-};
-
-export type ReviewsControllerCreateReviewResponse = ReviewsControllerCreateReviewResponses[keyof ReviewsControllerCreateReviewResponses];
-
-export type ReviewsControllerUnlikeReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}/like';
-};
-
-export type ReviewsControllerUnlikeReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerUnlikeReviewResponses = {
-    /**
-     * Review unliked
-     */
-    200: unknown;
-};
-
-export type ReviewsControllerLikeReviewData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}/like';
-};
-
-export type ReviewsControllerLikeReviewErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerLikeReviewResponses = {
-    /**
-     * Review liked
-     */
-    200: unknown;
-};
-
-export type ReviewsControllerGetReviewLikesData = {
-    body?: never;
-    path: {
-        reviewId: string;
-    };
-    query?: never;
-    url: '/reviews/{reviewId}/likes';
-};
-
-export type ReviewsControllerGetReviewLikesResponses = {
-    /**
-     * Likes retrieved
-     */
-    200: ReviewLikesResponseDto;
-};
-
-export type ReviewsControllerGetReviewLikesResponse = ReviewsControllerGetReviewLikesResponses[keyof ReviewsControllerGetReviewLikesResponses];
 
 export type ShelfControllerGetUserShelfData = {
     body?: never;

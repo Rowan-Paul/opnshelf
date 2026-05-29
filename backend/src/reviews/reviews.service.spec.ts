@@ -6,6 +6,7 @@ jest.mock("../prisma/prisma.service", () => ({
 
 const mockPutRecord = jest.fn();
 const mockDeleteRecord = jest.fn();
+const mockListRecords = jest.fn();
 jest.mock("@atproto/api", () => ({
 	Agent: jest.fn().mockImplementation(() => ({
 		com: {
@@ -13,6 +14,7 @@ jest.mock("@atproto/api", () => ({
 				repo: {
 					putRecord: mockPutRecord,
 					deleteRecord: mockDeleteRecord,
+					listRecords: mockListRecords,
 				},
 			},
 		},
@@ -113,7 +115,9 @@ describe("ReviewsService", () => {
 		},
 		publication: {
 			findUnique: jest.fn(),
+			findFirst: jest.fn(),
 			create: jest.fn(),
+			update: jest.fn(),
 			upsert: jest.fn(),
 			deleteMany: jest.fn(),
 		},
@@ -143,6 +147,7 @@ describe("ReviewsService", () => {
 		jest.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
+		mockListRecords.mockReset();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -463,13 +468,16 @@ describe("ReviewsService", () => {
 	});
 
 	describe("createReview", () => {
-		it("mints a publication on first review and writes a document", async () => {
-			mockPrismaService.publication.findUnique.mockResolvedValue(null);
-			mockPrismaService.user.findUnique.mockResolvedValue({ handle: "alice" });
+		it("mints a publication at a tid rkey on first review and writes a document", async () => {
+			// No user override; no existing opnshelf publication by url.
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce({ reviewsPublicationUri: null }) // createReview override lookup
+				.mockResolvedValueOnce({ handle: "alice" }); // ensurePublication handle lookup
+			mockPrismaService.publication.findFirst.mockResolvedValue(null);
 			mockPutRecord
 				.mockResolvedValueOnce({
 					data: {
-						uri: "at://did:plc:abc123/site.standard.publication/self",
+						uri: "at://did:plc:abc123/site.standard.publication/testtid123",
 						cid: "cid-pub",
 					},
 				})
@@ -494,13 +502,26 @@ describe("ReviewsService", () => {
 				markdown: "**Loved** it.",
 			});
 
-			// publication minted with literal `self` rkey
+			// opnshelf default looked up by url (NOT a fixed rkey)
+			expect(mockPrismaService.publication.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userDid: session.did,
+						url: "https://opnshelf.xyz/@alice",
+					},
+				}),
+			);
+			// publication minted with a tid rkey (NOT literal `self`)
 			expect(mockPutRecord).toHaveBeenNthCalledWith(
 				1,
 				expect.objectContaining({
 					collection: "site.standard.publication",
-					rkey: "self",
+					rkey: "testtid123",
 				}),
+			);
+			// upserted keyed off the unique rkey
+			expect(mockPrismaService.publication.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { rkey: "testtid123" } }),
 			);
 			// document written
 			expect(mockPutRecord).toHaveBeenNthCalledWith(
@@ -512,13 +533,16 @@ describe("ReviewsService", () => {
 			);
 			expect(result.title).toBe("My take");
 			expect(result.publicationUri).toBe(
-				"at://did:plc:abc123/site.standard.publication/self",
+				"at://did:plc:abc123/site.standard.publication/testtid123",
 			);
 		});
 
-		it("reuses an existing publication", async () => {
-			mockPrismaService.publication.findUnique.mockResolvedValue({
-				uri: "at://did:plc:abc123/site.standard.publication/self",
+		it("reuses the existing opnshelf publication found by url", async () => {
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce({ reviewsPublicationUri: null })
+				.mockResolvedValueOnce({ handle: "alice" });
+			mockPrismaService.publication.findFirst.mockResolvedValue({
+				uri: "at://did:plc:abc123/site.standard.publication/existingtid",
 			});
 			mockPutRecord.mockResolvedValue({
 				data: {
@@ -545,6 +569,199 @@ describe("ReviewsService", () => {
 			expect(mockPutRecord).toHaveBeenCalledWith(
 				expect.objectContaining({ collection: "site.standard.document" }),
 			);
+		});
+
+		it("uses the override publication and skips minting when set", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValueOnce({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/site.standard.document/testtid123",
+					cid: "cid-doc",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+			});
+
+			// no publication lookup/mint at all
+			expect(mockPrismaService.publication.findFirst).not.toHaveBeenCalled();
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({
+					collection: "site.standard.document",
+					record: expect.objectContaining({
+						site: "at://did:plc:abc123/site.standard.publication/leaflet",
+					}),
+				}),
+			);
+			expect(result.publicationUri).toBe(
+				"at://did:plc:abc123/site.standard.publication/leaflet",
+			);
+		});
+	});
+
+	describe("listMyPublications", () => {
+		it("maps listRecords output and flags the opnshelf default by url", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({ handle: "alice" });
+			mockListRecords.mockResolvedValue({
+				data: {
+					records: [
+						{
+							uri: "at://did:plc:abc123/site.standard.publication/opnshelf",
+							value: {
+								name: "alice's OpnShelf",
+								url: "https://opnshelf.xyz/@alice",
+							},
+						},
+						{
+							uri: "at://did:plc:abc123/site.standard.publication/leaflet",
+							value: { name: "My Blog", url: "https://leaflet.pub/alice" },
+						},
+					],
+				},
+			});
+
+			const result = await service.listMyPublications(session.did, session);
+
+			expect(mockListRecords).toHaveBeenCalledWith(
+				expect.objectContaining({
+					repo: session.did,
+					collection: "site.standard.publication",
+				}),
+			);
+			expect(result).toEqual([
+				{
+					uri: "at://did:plc:abc123/site.standard.publication/opnshelf",
+					name: "alice's OpnShelf",
+					url: "https://opnshelf.xyz/@alice",
+					isOpnshelfDefault: true,
+				},
+				{
+					uri: "at://did:plc:abc123/site.standard.publication/leaflet",
+					name: "My Blog",
+					url: "https://leaflet.pub/alice",
+					isOpnshelfDefault: false,
+				},
+			]);
+		});
+	});
+
+	describe("repointReviews", () => {
+		const target = "at://did:plc:abc123/site.standard.publication/leaflet";
+
+		it("re-points all reviews and reports a full success summary", async () => {
+			mockPrismaService.review.findMany.mockResolvedValue([
+				{
+					id: "r1",
+					rkey: "rk1",
+					title: "A",
+					markdown: "a",
+					path: "a-path",
+					mediaType: "movie",
+					mediaId: "1",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					publicationUri: "at://did:plc:abc123/site.standard.publication/old",
+					createdAt: new Date("2024-01-01"),
+				},
+				{
+					id: "r2",
+					rkey: "rk2",
+					title: "B",
+					markdown: "b",
+					path: null,
+					mediaType: "movie",
+					mediaId: "2",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					publicationUri: "at://did:plc:abc123/site.standard.publication/old",
+					createdAt: new Date("2024-01-02"),
+				},
+			]);
+			mockPutRecord.mockResolvedValue({ data: { cid: "newcid" } });
+			mockPrismaService.review.update.mockResolvedValue({});
+
+			const summary = await service.repointReviews(
+				session.did,
+				session,
+				target,
+			);
+
+			expect(summary).toEqual({ moved: 2, failed: 0, total: 2 });
+			// site re-pointed; path preserved on the first review
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				1,
+				expect.objectContaining({
+					rkey: "rk1",
+					record: expect.objectContaining({
+						site: target,
+						path: "a-path",
+						updatedAt: expect.any(String),
+					}),
+				}),
+			);
+			expect(mockPrismaService.review.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: "r1" },
+					data: expect.objectContaining({ publicationUri: target }),
+				}),
+			);
+		});
+
+		it("reports partial failure when a putRecord rejects", async () => {
+			mockPrismaService.review.findMany.mockResolvedValue([
+				{
+					id: "r1",
+					rkey: "rk1",
+					title: "A",
+					markdown: "a",
+					path: null,
+					mediaType: "movie",
+					mediaId: "1",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					publicationUri: "at://did:plc:abc123/site.standard.publication/old",
+					createdAt: new Date("2024-01-01"),
+				},
+				{
+					id: "r2",
+					rkey: "rk2",
+					title: "B",
+					markdown: "b",
+					path: null,
+					mediaType: "movie",
+					mediaId: "2",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					publicationUri: "at://did:plc:abc123/site.standard.publication/old",
+					createdAt: new Date("2024-01-02"),
+				},
+			]);
+			mockPutRecord
+				.mockResolvedValueOnce({ data: { cid: "newcid" } })
+				.mockRejectedValueOnce(new Error("PDS down"));
+			mockPrismaService.review.update.mockResolvedValue({});
+
+			const summary = await service.repointReviews(
+				session.did,
+				session,
+				target,
+			);
+
+			expect(summary).toEqual({ moved: 1, failed: 1, total: 2 });
 		});
 	});
 

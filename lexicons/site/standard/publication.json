@@ -5,7 +5,7 @@
 		"main": {
 			"type": "record",
 			"description": "A representation of a collection of documents published to the web. Vendored subset of site.standard.publication.",
-			"key": "literal:self",
+			"key": "tid",
 			"record": {
 				"type": "object",
 				"required": ["url", "name"],

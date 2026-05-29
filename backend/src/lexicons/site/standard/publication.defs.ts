@@ -31,8 +31,8 @@ type Main = {
 export type { Main }
 
 /** A representation of a collection of documents published to the web. Vendored subset of site.standard.publication. */
-const main = l.record<'literal:self', Main>(
-  'literal:self',
+const main = l.record<'tid', Main>(
+  'tid',
   $nsid,
   l.object({
     url: l.string({ format: 'uri' }),

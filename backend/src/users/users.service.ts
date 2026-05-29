@@ -1,10 +1,12 @@
 import {
 	BadGatewayException,
+	BadRequestException,
 	Injectable,
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
 import { ListsService } from "../lists/lists.service";
+import { ReviewsService } from "../reviews/reviews.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
 	CompleteOnboardingResponseDto,
@@ -43,6 +45,7 @@ export class UsersService {
 		private readonly userDeletionService: UserDeletionService,
 		private readonly profileService: ProfileService,
 		private readonly listsService: ListsService,
+		private readonly reviewsService: ReviewsService,
 	) {}
 
 	/**
@@ -55,6 +58,8 @@ export class UsersService {
 				timezone: true,
 				timeFormat: true,
 				watchCountry: true,
+				reviewsPublicationUri: true,
+				reviewsPublicationName: true,
 			},
 		});
 
@@ -66,6 +71,8 @@ export class UsersService {
 			timezone: user.timezone,
 			timeFormat: user.timeFormat,
 			watchCountry: user.watchCountry,
+			reviewsPublicationUri: user.reviewsPublicationUri,
+			reviewsPublicationName: user.reviewsPublicationName,
 		};
 	}
 
@@ -75,6 +82,7 @@ export class UsersService {
 	async updateUserSettings(
 		did: string,
 		dto: UpdateUserSettingsDto,
+		session?: ATSession,
 	): Promise<UserSettingsDto> {
 		const user = await this.prisma.user.findUnique({
 			where: { did },
@@ -82,6 +90,41 @@ export class UsersService {
 
 		if (!user) {
 			throw new NotFoundException("User not found");
+		}
+
+		// Reviews-publication override (#118 / ADR-0003). Setting a URI stores both
+		// the URI and a cached display name; null reverts to the opnshelf default.
+		// When setting, enforce D1 ownership: the URI MUST be among the user's own
+		// publications listed live from their PDS.
+		const reviewsPublicationPatch: {
+			reviewsPublicationUri?: string | null;
+			reviewsPublicationName?: string | null;
+		} = {};
+		if (dto.reviewsPublicationUri !== undefined) {
+			if (dto.reviewsPublicationUri === null) {
+				reviewsPublicationPatch.reviewsPublicationUri = null;
+				reviewsPublicationPatch.reviewsPublicationName = null;
+			} else {
+				if (!session) {
+					throw new BadRequestException(
+						"Session is required to set a reviews publication",
+					);
+				}
+				const myPublications = await this.reviewsService.listMyPublications(
+					did,
+					session,
+				);
+				const target = myPublications.find(
+					(pub) => pub.uri === dto.reviewsPublicationUri,
+				);
+				if (!target) {
+					throw new BadRequestException(
+						"Publication is not one of your own publications",
+					);
+				}
+				reviewsPublicationPatch.reviewsPublicationUri = target.uri;
+				reviewsPublicationPatch.reviewsPublicationName = target.name;
+			}
 		}
 
 		const updatedUser = await this.prisma.user.update({
@@ -92,11 +135,14 @@ export class UsersService {
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
 				}),
+				...reviewsPublicationPatch,
 			},
 			select: {
 				timezone: true,
 				timeFormat: true,
 				watchCountry: true,
+				reviewsPublicationUri: true,
+				reviewsPublicationName: true,
 			},
 		});
 
@@ -104,6 +150,8 @@ export class UsersService {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
 			watchCountry: updatedUser.watchCountry,
+			reviewsPublicationUri: updatedUser.reviewsPublicationUri,
+			reviewsPublicationName: updatedUser.reviewsPublicationName,
 		};
 	}
 

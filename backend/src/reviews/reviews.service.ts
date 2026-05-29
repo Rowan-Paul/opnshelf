@@ -4,6 +4,7 @@ import {
 	ConflictException,
 	ForbiddenException,
 	Injectable,
+	Logger,
 	NotFoundException,
 } from "@nestjs/common";
 import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
@@ -31,13 +32,11 @@ export interface ATSession {
 	did: string;
 }
 
-// site.standard.publication uses a literal `self` record key, so minting is
-// idempotent: re-minting simply overwrites the single per-user record.
-const PUBLICATION_RKEY = "self";
-
 // Canonical public site (ADR-0003). NEVER opnshelf.social (that is only the
-// PDS host). Centralised here so #118 can later swap the publication source.
+// PDS host). Centralised here so #118 can swap the publication source.
 const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
+
+const PUBLICATION_LIST_LIMIT = 100;
 
 type MediaType = "movie" | "show" | "season" | "episode";
 
@@ -69,6 +68,8 @@ function excerpt(plain: string, max = 280): string {
 
 @Injectable()
 export class ReviewsService {
+	private readonly logger = new Logger(ReviewsService.name);
+
 	constructor(private prisma: PrismaService) {}
 
 	async getReview(reviewId: string) {
@@ -422,21 +423,18 @@ export class ReviewsService {
 	}
 
 	/**
-	 * Lazily mint (or refresh) the user's single site.standard.publication.
-	 * Idempotent thanks to the literal `self` record key.
+	 * Lazily mint (or return) the opnshelf-owned site.standard.publication for a
+	 * user. A repo may hold MANY publications (the canonical key is `tid`, not a
+	 * fixed rkey — see ADR-0003), so idempotency CANNOT rely on the rkey. Instead
+	 * opnshelf recognises its own minted publication by the deterministic url
+	 * `opnshelf.xyz/@<handle>`: if such a row already exists we reuse it, else we
+	 * mint a fresh one at a tid rkey.
 	 */
 	private async ensurePublication(
 		userDid: string,
 		session: ATSession,
 		agent: Agent,
 	): Promise<{ uri: string }> {
-		const existing = await this.prisma.publication.findUnique({
-			where: { userDid },
-		});
-		if (existing) {
-			return { uri: existing.uri };
-		}
-
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
 			select: { handle: true },
@@ -448,23 +446,31 @@ export class ReviewsService {
 		const name = publicationNameForHandle(user.handle);
 		const url = publicationUrlForHandle(user.handle);
 
+		const existing = await this.prisma.publication.findFirst({
+			where: { userDid, url },
+		});
+		if (existing) {
+			return { uri: existing.uri };
+		}
+
 		const record: PublicationRecord = publicationSchema.build({
 			url: url as PublicationRecord["url"],
 			name,
 		});
 
+		const rkey = TID.nextStr();
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: PUBLICATION_COLLECTION,
-			rkey: PUBLICATION_RKEY,
+			rkey,
 			record,
 			validate: false,
 		});
 
 		await this.prisma.publication.upsert({
-			where: { userDid },
+			where: { rkey },
 			create: {
-				rkey: PUBLICATION_RKEY,
+				rkey,
 				uri: response.data.uri,
 				cid: response.data.cid,
 				userDid,
@@ -472,7 +478,6 @@ export class ReviewsService {
 				url,
 			},
 			update: {
-				rkey: PUBLICATION_RKEY,
 				uri: response.data.uri,
 				cid: response.data.cid,
 				name,
@@ -483,6 +488,127 @@ export class ReviewsService {
 		return { uri: response.data.uri };
 	}
 
+	/**
+	 * Enumerate the user's own site.standard.publication records straight from
+	 * their PDS (D2). This live list — not the local cache — is the picker's
+	 * source of truth and its ownership validation: only publications that exist
+	 * in the requesting user's own repo can ever be returned. The opnshelf-minted
+	 * publication is flagged via `isOpnshelfDefault` by matching the deterministic
+	 * `opnshelf.xyz/@<handle>` url.
+	 */
+	async listMyPublications(
+		userDid: string,
+		session: ATSession,
+	): Promise<
+		Array<{
+			uri: string;
+			name: string;
+			url: string;
+			isOpnshelfDefault: boolean;
+		}>
+	> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { handle: true },
+		});
+		if (!user) {
+			throw new NotFoundException("User not found");
+		}
+		const defaultUrl = publicationUrlForHandle(user.handle);
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		const response = await agent.com.atproto.repo.listRecords({
+			repo: session.did,
+			collection: PUBLICATION_COLLECTION,
+			limit: PUBLICATION_LIST_LIMIT,
+		});
+
+		return response.data.records.map((rec) => {
+			const value = rec.value as { name?: string; url?: string };
+			const url = value.url ?? "";
+			return {
+				uri: rec.uri,
+				name: value.name ?? url,
+				url,
+				isOpnshelfDefault: url === defaultUrl,
+			};
+		});
+	}
+
+	/**
+	 * Re-point the user's already-published reviews at a new publication (D3/D4).
+	 * Best-effort SEQUENTIAL: each document is rewritten changing ONLY `site`
+	 * (and bumping `updatedAt`) while preserving title, content, mediaLink and
+	 * `path` — so the canonical `opnshelf.xyz/@<handle>/<path>` URL stays stable —
+	 * then `Review.publicationUri` is updated. There is no cross-PDS atomicity and
+	 * no background queue; partial failures are surfaced in the summary.
+	 */
+	async repointReviews(
+		userDid: string,
+		session: ATSession,
+		targetPublicationUri: string,
+	): Promise<{ moved: number; failed: number; total: number }> {
+		const reviews = await this.prisma.review.findMany({
+			where: { userDid },
+		});
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		let moved = 0;
+		let failed = 0;
+
+		for (const review of reviews) {
+			if (review.publicationUri === targetPublicationUri) {
+				moved++;
+				continue;
+			}
+			try {
+				const record = this.buildDocumentRecord({
+					publicationUri: targetPublicationUri,
+					title: review.title,
+					markdown: review.markdown,
+					mediaType: review.mediaType as MediaType,
+					mediaId: review.mediaId,
+					seasonNumber: review.seasonNumber || undefined,
+					episodeNumber: review.episodeNumber || undefined,
+					path: review.path ?? undefined,
+					publishedAt: review.createdAt.toISOString(),
+					updatedAt: new Date().toISOString(),
+				});
+
+				const response = await agent.com.atproto.repo.putRecord({
+					repo: session.did,
+					collection: DOCUMENT_COLLECTION,
+					rkey: review.rkey,
+					record,
+					validate: false,
+				});
+
+				await this.prisma.review.update({
+					where: { id: review.id },
+					data: {
+						cid: response.data.cid,
+						publicationUri: targetPublicationUri,
+					},
+				});
+				moved++;
+			} catch (err) {
+				this.logger.warn(
+					`Failed to re-point review ${review.id} to ${targetPublicationUri}`,
+					err instanceof Error ? err.stack : undefined,
+				);
+				failed++;
+			}
+		}
+
+		return { moved, failed, total: reviews.length };
+	}
+
 	private buildDocumentRecord(params: {
 		publicationUri: string;
 		title: string;
@@ -491,6 +617,7 @@ export class ReviewsService {
 		mediaId: string;
 		seasonNumber?: number;
 		episodeNumber?: number;
+		path?: string;
 		publishedAt: string;
 		updatedAt?: string;
 	}): DocumentRecord {
@@ -511,6 +638,7 @@ export class ReviewsService {
 		return documentSchema.build({
 			site: params.publicationUri as DocumentRecord["site"],
 			title: params.title,
+			path: params.path,
 			description: plain ? excerpt(plain) : undefined,
 			textContent: plain || undefined,
 			content,
@@ -529,11 +657,16 @@ export class ReviewsService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 
-		const { uri: publicationUri } = await this.ensurePublication(
-			userDid,
-			session,
-			agent,
-		);
+		// D6: when the user has chosen an override publication, point the document
+		// `site` at the stored URI and SKIP minting entirely. A null override means
+		// the default opnshelf publication (lazily minted here).
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { reviewsPublicationUri: true },
+		});
+		const publicationUri = user?.reviewsPublicationUri
+			? user.reviewsPublicationUri
+			: (await this.ensurePublication(userDid, session, agent)).uri;
 
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
@@ -864,8 +997,10 @@ export class ReviewsService {
 		userDid: string,
 		record: PublicationRecord,
 	): Promise<void> {
+		// A repo may hold MANY publications (key is `tid`), so index by the unique
+		// rkey — never by userDid, which is no longer unique on Publication.
 		await this.prisma.publication.upsert({
-			where: { userDid },
+			where: { rkey },
 			create: {
 				rkey,
 				uri,
@@ -875,7 +1010,6 @@ export class ReviewsService {
 				url: record.url,
 			},
 			update: {
-				rkey,
 				uri,
 				cid,
 				name: record.name,

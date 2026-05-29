@@ -27,8 +27,11 @@ import {
 	CreateReviewDto,
 	MediaReviewsQueryDto,
 	MediaReviewsResponseDto,
+	MyPublicationsResponseDto,
 	PaginatedReviewsQueryDto,
 	PaginatedReviewsResponseDto,
+	RepointReviewsDto,
+	RepointReviewsResponseDto,
 	ReviewLikesResponseDto,
 	ReviewResponseDto,
 	UpdateReviewDto,
@@ -169,6 +172,50 @@ export class ReviewsController {
 			createdAt: review.createdAt.toISOString(),
 			updatedAt: review.updatedAt.toISOString(),
 		};
+	}
+
+	@Get("publications/mine")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary:
+			"List the requesting user's own site.standard.publication records (picker source)",
+	})
+	@ApiOkResponse({
+		description: "Publications listed from the user's PDS",
+		type: MyPublicationsResponseDto,
+	})
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async listMyPublications(
+		@Req() req: AuthenticatedRequest,
+	): Promise<MyPublicationsResponseDto> {
+		const items = await this.reviewsService.listMyPublications(
+			req.user.did,
+			req.user.session as ATSession,
+		);
+		return { items };
+	}
+
+	@Post("repoint")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: "Re-point the user's existing reviews at a new publication",
+	})
+	@ApiOkResponse({
+		description: "Re-point summary",
+		type: RepointReviewsResponseDto,
+	})
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async repointReviews(
+		@Req() req: AuthenticatedRequest,
+		@Body() dto: RepointReviewsDto,
+	): Promise<RepointReviewsResponseDto> {
+		return this.reviewsService.repointReviews(
+			req.user.did,
+			req.user.session as ATSession,
+			dto.targetPublicationUri,
+		);
 	}
 
 	@Get(":reviewId")

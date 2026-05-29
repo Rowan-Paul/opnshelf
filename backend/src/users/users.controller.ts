@@ -163,7 +163,8 @@ export class UsersController {
 			throw new Error("User not found in request");
 		}
 
-		return this.usersService.updateUserSettings(did, dto);
+		const session = req.user?.session as ATSession | undefined;
+		return this.usersService.updateUserSettings(did, dto, session);
 	}
 
 	/**

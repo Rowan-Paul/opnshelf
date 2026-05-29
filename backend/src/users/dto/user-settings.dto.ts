@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
+import {
+	IsBoolean,
+	IsIn,
+	IsOptional,
+	IsString,
+	ValidateIf,
+} from "class-validator";
 
 export class UpdateUserSettingsDto {
 	@ApiProperty({
@@ -28,6 +34,17 @@ export class UpdateUserSettingsDto {
 	@IsString()
 	@IsOptional()
 	watchCountry?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"AT URI of the site.standard.publication that new reviews should point at. Must be one of the user's own publications. Pass null to revert to the opnshelf default.",
+		nullable: true,
+		type: String,
+	})
+	@IsString()
+	@IsOptional()
+	@ValidateIf((_, value) => value !== null)
+	reviewsPublicationUri?: string | null;
 }
 
 export class DeleteUserAccountDto {
@@ -83,6 +100,21 @@ export class UserSettingsDto {
 			"ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)",
 	})
 	watchCountry!: string;
+
+	@ApiProperty({
+		description:
+			"AT URI of the publication new reviews point at, or null for the opnshelf default",
+		nullable: true,
+		type: String,
+	})
+	reviewsPublicationUri!: string | null;
+
+	@ApiProperty({
+		description: "Cached display name of the chosen reviews publication",
+		nullable: true,
+		type: String,
+	})
+	reviewsPublicationName!: string | null;
 }
 
 export class UpdateUserProfileDto {

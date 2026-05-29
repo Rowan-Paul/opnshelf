@@ -28,6 +28,8 @@ model User {
   tangledProfileUrl String?
   showBlueskyOnProfile Boolean @default(true)
   showTangledOnProfile Boolean @default(true)
+  reviewsPublicationUri String?
+  reviewsPublicationName String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -376,7 +378,7 @@ model Publication {
   uri       String
   cid       String
 
-  userDid   String   @unique
+  userDid   String
   user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
   name      String

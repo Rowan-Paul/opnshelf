@@ -408,3 +408,45 @@ export class ReviewLikesResponseDto {
 	})
 	hasLiked: boolean;
 }
+
+export class MyPublicationDto {
+	@ApiProperty({ description: "AT-URI of the publication record" })
+	uri: string;
+
+	@ApiProperty({ description: "Display name of the publication" })
+	name: string;
+
+	@ApiProperty({ description: "Canonical web URL of the publication" })
+	url: string;
+
+	@ApiProperty({
+		description:
+			"True for the opnshelf-minted default publication (url === opnshelf.xyz/@<handle>)",
+	})
+	isOpnshelfDefault: boolean;
+}
+
+export class MyPublicationsResponseDto {
+	@ApiProperty({ type: [MyPublicationDto] })
+	items: MyPublicationDto[];
+}
+
+export class RepointReviewsDto {
+	@ApiProperty({
+		description: "AT-URI of the target publication to re-point reviews at",
+	})
+	@IsString()
+	@IsNotEmpty()
+	targetPublicationUri: string;
+}
+
+export class RepointReviewsResponseDto {
+	@ApiProperty({ description: "Number of reviews successfully re-pointed" })
+	moved: number;
+
+	@ApiProperty({ description: "Number of reviews that failed to re-point" })
+	failed: number;
+
+	@ApiProperty({ description: "Total number of reviews considered" })
+	total: number;
+}
