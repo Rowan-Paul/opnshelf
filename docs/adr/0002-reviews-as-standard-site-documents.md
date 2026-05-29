@@ -20,7 +20,15 @@ A `site.standard.document` has no media field, and standard.site is explicitly *
 
 ## Consequences
 
-- The full review renders on opnshelf's **canonical page** (`opnshelf.xyz/@<handle>/<path>`); cross-tool interop is **preview-only** (`title`, `description`, `coverImage`, `textContent`), since no tool renders a foreign content union. opnshelf must serve those public pages.
+- The full review renders on opnshelf's **canonical page** (`opnshelf.xyz/@<handle>/<path>`); cross-tool interop is **preview-only** (`title`, `description`, `textContent`), since no tool renders a foreign content union. opnshelf must serve those public pages.
 - Rating and Review are associated by correlation, not a stored pointer — so rating create/change/delete never rewrites a published document.
 - Scope limit: only documents authored by **tracked opnshelf users** and carrying a `mediaLink` are indexed as Reviews; externally-authored blog posts about media are not claimed.
 - Pre-launch: no migration of existing `xyz.opnshelf.review` data — the model ships fresh.
+
+## Follow-up: canonical page scope
+
+opnshelf renders **individual reviews only** — there is deliberately **no publication index / blog page**. The publication is a portability construct (the `site` pointer, see ADR-0003), not a UI surface we build out. A bare hit on the publication base URL `opnshelf.xyz/@<handle>` redirects to the user's profile rather than 404ing or rendering a blog index.
+
+A document's `path` is a **human slug** generated from the title at authoring time, unique within the user's reviews, and **stable across edits** (never re-slugged on a title change) so links don't break. The slug is what external standard.site tools combine with `publication.url` to link to a review; a null path would leave reviews unlinkable off-platform. Pre-existing reviews with a null path still resolve via an rkey fallback.
+
+(The canonical route also requires the TanStack file-route param-with-prefix syntax `@{$handle}` — a plain `@$handle` is parsed as a literal segment and never matches a real handle.)
