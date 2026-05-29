@@ -13,3 +13,4 @@ allowBuilds:
   protobufjs: true
   lightningcss: true
   unrs-resolver: true
+  msgpackr-extract: false

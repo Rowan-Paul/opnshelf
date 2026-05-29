@@ -1,0 +1,21 @@
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Uniwind generated typings
+src/uniwind-env.d.ts
+
+# Native
+/ios
+/android
+
+# Metro
+.metro-health-check*
+
+# Env
+.env*.local
+
+# Misc
+*.log

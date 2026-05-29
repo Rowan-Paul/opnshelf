@@ -1,0 +1,58 @@
+import type { ExpoConfig } from "expo/config";
+
+/**
+ * Expo config. Secrets (PostHog key/host, API URL) are read from the
+ * environment at build time and surfaced via `extra` so the running app can
+ * read them through `expo-constants`. Never hardcode keys here.
+ */
+const config: ExpoConfig = {
+	name: "OpnShelf",
+	slug: "opnshelf",
+	version: "1.0.0",
+	scheme: "opnshelf",
+	orientation: "portrait",
+	icon: "./assets/images/icon.png",
+	userInterfaceStyle: "automatic",
+	ios: {
+		supportsTablet: true,
+		bundleIdentifier: "com.rowanpaul.opnshelf",
+		infoPlist: {
+			ITSAppUsesNonExemptEncryption: false,
+		},
+	},
+	android: {
+		adaptiveIcon: {
+			foregroundImage: "./assets/images/adaptive-icon.png",
+			backgroundColor: "#0f172a",
+		},
+		package: "com.rowanpaul.opnshelf",
+	},
+	web: {
+		bundler: "metro",
+		favicon: "./assets/images/favicon.png",
+	},
+	plugins: [
+		"expo-router",
+		"expo-secure-store",
+		"expo-font",
+		[
+			"expo-splash-screen",
+			{
+				image: "./assets/images/splash-icon.png",
+				resizeMode: "contain",
+				backgroundColor: "#0f172a",
+			},
+		],
+	],
+	experiments: {
+		typedRoutes: true,
+	},
+	extra: {
+		apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3001",
+		posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
+		posthogHost:
+			process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
+	},
+};
+
+export default config;

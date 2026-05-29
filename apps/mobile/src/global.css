@@ -1,0 +1,132 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+/*
+ * Design tokens ported from apps/web/src/styles.css.
+ * Slate neutrals + warm amber accent (--accent-600 #f3bc00), radii, shadows.
+ * Light values live in :root; dark overrides live in `@variant dark`.
+ *
+ * Tailwind v4 reads color/radius scales from `--color-*` / `--radius-*`
+ * theme variables, so utilities like `bg-background`, `text-foreground`,
+ * `border-border`, `rounded-lg` resolve straight from these.
+ */
+@layer theme {
+  :root {
+    /* Palette (theme-agnostic, kept for reference / direct use) */
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
+    --color-slate-950: #020617;
+
+    --color-accent-50: #fffbeb;
+    --color-accent-100: #fef3c7;
+    --color-accent-200: #fde68a;
+    --color-accent-300: #fcd34d;
+    --color-accent-400: #fbbf24;
+    --color-accent-500: #f59e0b;
+    --color-accent-600: #f3bc00;
+    --color-accent-700: #d97706;
+    --color-accent-800: #92400e;
+    --color-accent-900: #78350f;
+
+    /* Semantic tokens (light) */
+    --color-background: #f8fafc;
+    --color-background-elevated: #ffffff;
+    --color-background-subtle: #f1f5f9;
+    --color-background-strong: #e2e8f0;
+
+    --color-foreground: #0f172a;
+    --color-foreground-muted: #64748b;
+    --color-foreground-subtle: #94a3b8;
+
+    --color-accent: #f3bc00;
+    --color-accent-hover: #d97706;
+    --color-accent-foreground: #3f2e00;
+    --color-accent-subtle: #fffbeb;
+    --color-accent-muted: #fef3c7;
+
+    --color-border: #e2e8f0;
+    --color-border-strong: #cbd5e1;
+
+    /* shadcn / react-native-reusables compatibility (light) */
+    --color-card: #ffffff;
+    --color-card-foreground: #0f172a;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #0f172a;
+    --color-primary: #f3bc00;
+    --color-primary-foreground: #3f2e00;
+    --color-secondary: #f1f5f9;
+    --color-secondary-foreground: #0f172a;
+    --color-muted: #f1f5f9;
+    --color-muted-foreground: #64748b;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-input: #e2e8f0;
+    --color-ring: #fcd34d;
+
+    /* Radii (ported) */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+
+    /* Shadows (ported, light) */
+    --shadow-sm: 0 1px 2px 0 rgb(38 50 71 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(38 50 71 / 0.08);
+    --shadow-lg: 0 10px 15px -3px rgb(38 50 71 / 0.08);
+    --shadow-xl: 0 20px 25px -5px rgb(38 50 71 / 0.08);
+
+    /* Fonts */
+    --font-sans: 'Inter';
+    --font-display: 'PlusJakartaSans';
+  }
+
+  @variant dark {
+    --color-background: #020617;
+    --color-background-elevated: #0f172a;
+    --color-background-subtle: #1e293b;
+    --color-background-strong: #334155;
+
+    --color-foreground: #f8fafc;
+    --color-foreground-muted: #94a3b8;
+    --color-foreground-subtle: #64748b;
+
+    --color-accent: #fbbf24;
+    --color-accent-hover: #fcd34d;
+    --color-accent-foreground: #3f2e00;
+    --color-accent-subtle: rgba(251, 191, 36, 0.15);
+    --color-accent-muted: rgba(251, 191, 36, 0.25);
+
+    --color-border: #1e293b;
+    --color-border-strong: #334155;
+
+    --color-card: #0f172a;
+    --color-card-foreground: #f8fafc;
+    --color-popover: #0f172a;
+    --color-popover-foreground: #f8fafc;
+    --color-primary: #fbbf24;
+    --color-primary-foreground: #3f2e00;
+    --color-secondary: #1e293b;
+    --color-secondary-foreground: #f8fafc;
+    --color-muted: #1e293b;
+    --color-muted-foreground: #94a3b8;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-input: #1e293b;
+    --color-ring: #d97706;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4);
+  }
+}
