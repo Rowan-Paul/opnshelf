@@ -46,7 +46,7 @@ export default function ShelfScreen() {
 	const { data, isLoading, isError } = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: { pageSize: 60 },
+			query: { pageSize: 50 },
 		}),
 		enabled: !!userDid,
 	});
