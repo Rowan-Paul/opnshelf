@@ -24,8 +24,6 @@ interface ReviewDialogProps {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
-	/** Poster path used as the document cover image (preview only). */
-	posterPath?: string | null;
 	/** When set, the dialog edits this review; otherwise it creates a new one. */
 	review?: EditableReview;
 	onSuccess?: () => void;
@@ -38,7 +36,6 @@ export function ReviewDialog({
 	mediaId,
 	seasonNumber,
 	episodeNumber,
-	posterPath,
 	review,
 	onSuccess,
 }: ReviewDialogProps) {
@@ -117,7 +114,6 @@ export function ReviewDialog({
 				episodeNumber,
 				title: trimmedTitle,
 				markdown: trimmedBody,
-				coverImage: posterPath ?? undefined,
 			},
 		});
 	};

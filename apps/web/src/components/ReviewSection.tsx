@@ -10,7 +10,6 @@ interface ReviewSectionProps {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
-	posterPath?: string | null;
 }
 
 export default function ReviewSection({
@@ -18,7 +17,6 @@ export default function ReviewSection({
 	mediaId,
 	seasonNumber,
 	episodeNumber,
-	posterPath,
 }: ReviewSectionProps) {
 	const { user, isAuthenticated } = useAuth();
 	const userDid = user?.did ?? "";
@@ -139,7 +137,6 @@ export default function ReviewSection({
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
-				posterPath={posterPath}
 				review={editing}
 			/>
 		</>

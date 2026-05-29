@@ -48,13 +48,6 @@ export class CreateReviewDto {
 	@IsNotEmpty()
 	@MaxLength(20000)
 	markdown: string;
-
-	@ApiPropertyOptional({
-		description: "Cover image (media poster) URL for preview",
-	})
-	@IsOptional()
-	@IsString()
-	coverImage?: string;
 }
 
 export class UpdateReviewDto {
@@ -73,13 +66,6 @@ export class UpdateReviewDto {
 	@IsString()
 	@MaxLength(20000)
 	markdown?: string;
-
-	@ApiPropertyOptional({
-		description: "Cover image (media poster) URL for preview",
-	})
-	@IsOptional()
-	@IsString()
-	coverImage?: string;
 }
 
 export class ReviewResponseDto {
@@ -100,9 +86,6 @@ export class ReviewResponseDto {
 
 	@ApiPropertyOptional({ description: "Plaintext rendering for preview" })
 	textContent?: string;
-
-	@ApiPropertyOptional({ description: "Cover image (media poster) URL" })
-	coverImage?: string;
 
 	@ApiProperty({ description: "AT-URI of the document's publication (`site`)" })
 	publicationUri: string;

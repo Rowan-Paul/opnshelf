@@ -515,11 +515,7 @@ function ShowDetailPage() {
 							]}
 						/>
 
-						<ReviewSection
-							mediaType="show"
-							mediaId={showId}
-							posterPath={show.poster_path}
-						/>
+						<ReviewSection mediaType="show" mediaId={showId} />
 
 						<WatchProviders
 							providers={watchProvidersData?.providers}

@@ -357,11 +357,7 @@ function MovieDetailPage() {
 							/>
 						)}
 
-						<ReviewSection
-							mediaType="movie"
-							mediaId={movieId}
-							posterPath={movie.poster_path}
-						/>
+						<ReviewSection mediaType="movie" mediaId={movieId} />
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}

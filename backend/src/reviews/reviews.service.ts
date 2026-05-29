@@ -415,7 +415,6 @@ export class ReviewsService {
 				title: dto.title,
 				description: record.description ?? null,
 				textContent: record.textContent ?? null,
-				coverImage: dto.coverImage ?? null,
 				markdown: dto.markdown,
 				publicationUri,
 			},
@@ -441,8 +440,6 @@ export class ReviewsService {
 
 		const title = dto.title ?? existing.title;
 		const markdown = dto.markdown ?? existing.markdown;
-		const coverImage =
-			dto.coverImage !== undefined ? dto.coverImage : existing.coverImage;
 
 		const record = this.buildDocumentRecord({
 			publicationUri: existing.publicationUri,
@@ -472,7 +469,6 @@ export class ReviewsService {
 				markdown,
 				description: record.description ?? null,
 				textContent: record.textContent ?? null,
-				coverImage: coverImage ?? null,
 			},
 		});
 	}

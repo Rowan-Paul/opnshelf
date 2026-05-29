@@ -354,7 +354,6 @@ model Review {
   path           String?
   description    String?
   textContent    String?
-  coverImage     String?
   // Raw markdown source stored in the at.markpub.markdown content member.
   markdown       String
   // AT-URI of the site.standard.publication the document references (`site`).

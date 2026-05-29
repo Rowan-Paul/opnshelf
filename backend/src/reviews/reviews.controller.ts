@@ -269,7 +269,6 @@ export class ReviewsController {
 		markdown: string;
 		description: string | null;
 		textContent: string | null;
-		coverImage: string | null;
 		publicationUri: string;
 		mediaType: string;
 		mediaId: string;
@@ -285,7 +284,6 @@ export class ReviewsController {
 			markdown: review.markdown,
 			description: review.description ?? undefined,
 			textContent: review.textContent ?? undefined,
-			coverImage: review.coverImage ?? undefined,
 			publicationUri: review.publicationUri,
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,

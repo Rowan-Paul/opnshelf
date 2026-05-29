@@ -334,7 +334,6 @@ export const ReviewScalarFieldEnum = {
   path: 'path',
   description: 'description',
   textContent: 'textContent',
-  coverImage: 'coverImage',
   markdown: 'markdown',
   publicationUri: 'publicationUri',
   createdAt: 'createdAt',

@@ -3,89 +3,78 @@
  */
 
 import { l } from '@atproto/lex'
-import * as MarkpubMarkdown from '../../at/markpub/markdown.defs.js'
 import * as OpnshelfMediaLink from '../../xyz/opnshelf/mediaLink.defs.js'
+import * as MarkpubMarkdown from '../../at/markpub/markdown.defs.js'
 
 const $nsid = 'site.standard.document'
 
 export { $nsid }
 
-/** Metadata for an individual long-form document published to the web. Vendored subset of site.standard.document. */
+/** A document record representing a published article, blog post, or other content. Documents can belong to a publication or exist independently. Vendored from the canonical site.standard.document; the open `content`/`links` unions declare the opnshelf member refs we author so codegen can emit typed builders (upstream leaves these refs empty). */
 type Main = {
   $type: 'site.standard.document'
 
   /**
-   * AT-URI of the site.standard.publication this document belongs to
-   */
-  site: l.AtUriString
-
-  /**
-   * Document title
-   */
-  title: string
-
-  /**
-   * URL path segment for the document on the publication
+   * Combine with site or publication url to construct a canonical URL to the document. Prepend with a leading slash.
    */
   path?: string
 
   /**
-   * Short plaintext excerpt for cross-tool preview
+   * Points to a publication record (at://) or a publication url (https://) for loose documents. Avoid trailing slashes.
    */
-  description?: string
+  site: l.UriString
 
   /**
-   * Plaintext rendering of the body for cross-tool preview (must not contain markdown)
+   * Array of strings used to tag or categorize the document. Avoid prepending tags with hashtags.
    */
-  textContent?: string
+  tags?: string[]
 
   /**
-   * Optional cover image blob
-   */
-  coverImage?: l.BlobRef
-
-  /**
-   * Open content union; opnshelf reviews carry an at.markpub.markdown member
-   */
-  content?: l.$Typed<MarkpubMarkdown.Main> | l.Unknown$TypedObject
-
-  /**
-   * Open links union; opnshelf reviews carry an xyz.opnshelf.mediaLink member binding the document to a media item
+   * Array of values describing relationships between this document and external resources. opnshelf reviews carry an xyz.opnshelf.mediaLink member binding the document to a media item.
    */
   links?: l.$Typed<OpnshelfMediaLink.Main> | l.Unknown$TypedObject
 
   /**
-   * Publication timestamp
+   * Title of the document.
+   */
+  title: string
+
+  /**
+   * Open union used to define the record's content. Each entry must specify a $type and may be extended with other lexicons to support additional content formats. opnshelf reviews carry an at.markpub.markdown member.
+   */
+  content?: l.$Typed<MarkpubMarkdown.Main> | l.Unknown$TypedObject
+
+  /**
+   * Timestamp of the documents last edit.
+   */
+  updatedAt?: l.DatetimeString
+
+  /**
+   * A brief description or excerpt from the document.
+   */
+  description?: string
+
+  /**
+   * Timestamp of the documents publish time.
    */
   publishedAt: l.DatetimeString
 
   /**
-   * Last edit timestamp
+   * Plaintext representation of the documents contents. Should not contain markdown or other formatting.
    */
-  updatedAt?: l.DatetimeString
+  textContent?: string
 }
 
 export type { Main }
 
-/** Metadata for an individual long-form document published to the web. Vendored subset of site.standard.document. */
+/** A document record representing a published article, blog post, or other content. Documents can belong to a publication or exist independently. Vendored from the canonical site.standard.document; the open `content`/`links` unions declare the opnshelf member refs we author so codegen can emit typed builders (upstream leaves these refs empty). */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,
   l.object({
-    site: l.string({ format: 'at-uri' }),
-    title: l.string(),
     path: l.optional(l.string()),
-    description: l.optional(l.string()),
-    textContent: l.optional(l.string()),
-    coverImage: l.optional(
-      l.blob({ accept: ['image/*'], maxSize: 1000000, allowLegacy: false }),
-    ),
-    content: l.optional(
-      l.typedUnion(
-        [l.typedRef<MarkpubMarkdown.Main>((() => MarkpubMarkdown.main) as any)],
-        false,
-      ),
-    ),
+    site: l.string({ format: 'uri' }),
+    tags: l.optional(l.array(l.string({ maxLength: 1280, maxGraphemes: 128 }))),
     links: l.optional(
       l.typedUnion(
         [
@@ -96,8 +85,17 @@ const main = l.record<'tid', Main>(
         false,
       ),
     ),
-    publishedAt: l.string({ format: 'datetime' }),
+    title: l.string({ maxLength: 5000, maxGraphemes: 500 }),
+    content: l.optional(
+      l.typedUnion(
+        [l.typedRef<MarkpubMarkdown.Main>((() => MarkpubMarkdown.main) as any)],
+        false,
+      ),
+    ),
     updatedAt: l.optional(l.string({ format: 'datetime' })),
+    description: l.optional(l.string({ maxLength: 30000, maxGraphemes: 3000 })),
+    publishedAt: l.string({ format: 'datetime' }),
+    textContent: l.optional(l.string()),
   }),
 )
 

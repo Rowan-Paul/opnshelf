@@ -1298,10 +1298,6 @@ export type ReviewResponseDto = {
      */
     textContent?: string;
     /**
-     * Cover image (media poster) URL
-     */
-    coverImage?: string;
-    /**
      * AT-URI of the document's publication (`site`)
      */
     publicationUri: string;
@@ -1338,10 +1334,6 @@ export type CreateReviewDto = {
      * Review body as markdown source
      */
     markdown: string;
-    /**
-     * Cover image (media poster) URL for preview
-     */
-    coverImage?: string;
 };
 
 export type UpdateReviewDto = {
@@ -1353,10 +1345,6 @@ export type UpdateReviewDto = {
      * Review body as markdown source
      */
     markdown?: string;
-    /**
-     * Cover image (media poster) URL for preview
-     */
-    coverImage?: string;
 };
 
 export type ReviewLikeItemDto = {

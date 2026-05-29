@@ -50,7 +50,6 @@ export type ReviewMinAggregateOutputType = {
   path: string | null
   description: string | null
   textContent: string | null
-  coverImage: string | null
   markdown: string | null
   publicationUri: string | null
   createdAt: Date | null
@@ -71,7 +70,6 @@ export type ReviewMaxAggregateOutputType = {
   path: string | null
   description: string | null
   textContent: string | null
-  coverImage: string | null
   markdown: string | null
   publicationUri: string | null
   createdAt: Date | null
@@ -92,7 +90,6 @@ export type ReviewCountAggregateOutputType = {
   path: number
   description: number
   textContent: number
-  coverImage: number
   markdown: number
   publicationUri: number
   createdAt: number
@@ -125,7 +122,6 @@ export type ReviewMinAggregateInputType = {
   path?: true
   description?: true
   textContent?: true
-  coverImage?: true
   markdown?: true
   publicationUri?: true
   createdAt?: true
@@ -146,7 +142,6 @@ export type ReviewMaxAggregateInputType = {
   path?: true
   description?: true
   textContent?: true
-  coverImage?: true
   markdown?: true
   publicationUri?: true
   createdAt?: true
@@ -167,7 +162,6 @@ export type ReviewCountAggregateInputType = {
   path?: true
   description?: true
   textContent?: true
-  coverImage?: true
   markdown?: true
   publicationUri?: true
   createdAt?: true
@@ -275,7 +269,6 @@ export type ReviewGroupByOutputType = {
   path: string | null
   description: string | null
   textContent: string | null
-  coverImage: string | null
   markdown: string
   publicationUri: string
   createdAt: Date
@@ -319,7 +312,6 @@ export type ReviewWhereInput = {
   path?: Prisma.StringNullableFilter<"Review"> | string | null
   description?: Prisma.StringNullableFilter<"Review"> | string | null
   textContent?: Prisma.StringNullableFilter<"Review"> | string | null
-  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
   publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
@@ -342,7 +334,6 @@ export type ReviewOrderByWithRelationInput = {
   path?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   textContent?: Prisma.SortOrderInput | Prisma.SortOrder
-  coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   markdown?: Prisma.SortOrder
   publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -368,7 +359,6 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   path?: Prisma.StringNullableFilter<"Review"> | string | null
   description?: Prisma.StringNullableFilter<"Review"> | string | null
   textContent?: Prisma.StringNullableFilter<"Review"> | string | null
-  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
   publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
@@ -391,7 +381,6 @@ export type ReviewOrderByWithAggregationInput = {
   path?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   textContent?: Prisma.SortOrderInput | Prisma.SortOrder
-  coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   markdown?: Prisma.SortOrder
   publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -420,7 +409,6 @@ export type ReviewScalarWhereWithAggregatesInput = {
   path?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   description?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   textContent?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
-  coverImage?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   markdown?: Prisma.StringWithAggregatesFilter<"Review"> | string
   publicationUri?: Prisma.StringWithAggregatesFilter<"Review"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
@@ -440,7 +428,6 @@ export type ReviewCreateInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -463,7 +450,6 @@ export type ReviewUncheckedCreateInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -484,7 +470,6 @@ export type ReviewUpdateInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -507,7 +492,6 @@ export type ReviewUncheckedUpdateInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -529,7 +513,6 @@ export type ReviewCreateManyInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -549,7 +532,6 @@ export type ReviewUpdateManyMutationInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -570,7 +552,6 @@ export type ReviewUncheckedUpdateManyInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -601,7 +582,6 @@ export type ReviewCountOrderByAggregateInput = {
   path?: Prisma.SortOrder
   description?: Prisma.SortOrder
   textContent?: Prisma.SortOrder
-  coverImage?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
   publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -627,7 +607,6 @@ export type ReviewMaxOrderByAggregateInput = {
   path?: Prisma.SortOrder
   description?: Prisma.SortOrder
   textContent?: Prisma.SortOrder
-  coverImage?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
   publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -648,7 +627,6 @@ export type ReviewMinOrderByAggregateInput = {
   path?: Prisma.SortOrder
   description?: Prisma.SortOrder
   textContent?: Prisma.SortOrder
-  coverImage?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
   publicationUri?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -734,7 +712,6 @@ export type ReviewCreateWithoutUserInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -755,7 +732,6 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -806,7 +782,6 @@ export type ReviewScalarWhereInput = {
   path?: Prisma.StringNullableFilter<"Review"> | string | null
   description?: Prisma.StringNullableFilter<"Review"> | string | null
   textContent?: Prisma.StringNullableFilter<"Review"> | string | null
-  coverImage?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
   publicationUri?: Prisma.StringFilter<"Review"> | string
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
@@ -826,7 +801,6 @@ export type ReviewCreateWithoutLikesInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -848,7 +822,6 @@ export type ReviewUncheckedCreateWithoutLikesInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -884,7 +857,6 @@ export type ReviewUpdateWithoutLikesInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -906,7 +878,6 @@ export type ReviewUncheckedUpdateWithoutLikesInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -926,7 +897,6 @@ export type ReviewCreateManyUserInput = {
   path?: string | null
   description?: string | null
   textContent?: string | null
-  coverImage?: string | null
   markdown: string
   publicationUri: string
   createdAt?: Date | string
@@ -946,7 +916,6 @@ export type ReviewUpdateWithoutUserInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -967,7 +936,6 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -988,7 +956,6 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1040,7 +1007,6 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   path?: boolean
   description?: boolean
   textContent?: boolean
-  coverImage?: boolean
   markdown?: boolean
   publicationUri?: boolean
   createdAt?: boolean
@@ -1064,7 +1030,6 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   path?: boolean
   description?: boolean
   textContent?: boolean
-  coverImage?: boolean
   markdown?: boolean
   publicationUri?: boolean
   createdAt?: boolean
@@ -1086,7 +1051,6 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   path?: boolean
   description?: boolean
   textContent?: boolean
-  coverImage?: boolean
   markdown?: boolean
   publicationUri?: boolean
   createdAt?: boolean
@@ -1108,14 +1072,13 @@ export type ReviewSelectScalar = {
   path?: boolean
   description?: boolean
   textContent?: boolean
-  coverImage?: boolean
   markdown?: boolean
   publicationUri?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "path" | "description" | "textContent" | "coverImage" | "markdown" | "publicationUri" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "path" | "description" | "textContent" | "markdown" | "publicationUri" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.Review$likesArgs<ExtArgs>
@@ -1148,7 +1111,6 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     path: string | null
     description: string | null
     textContent: string | null
-    coverImage: string | null
     markdown: string
     publicationUri: string
     createdAt: Date
@@ -1591,7 +1553,6 @@ export interface ReviewFieldRefs {
   readonly path: Prisma.FieldRef<"Review", 'String'>
   readonly description: Prisma.FieldRef<"Review", 'String'>
   readonly textContent: Prisma.FieldRef<"Review", 'String'>
-  readonly coverImage: Prisma.FieldRef<"Review", 'String'>
   readonly markdown: Prisma.FieldRef<"Review", 'String'>
   readonly publicationUri: Prisma.FieldRef<"Review", 'String'>
   readonly createdAt: Prisma.FieldRef<"Review", 'DateTime'>
