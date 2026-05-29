@@ -1,4 +1,9 @@
-import { Agent } from "@atproto/api";
+import {
+	Agent,
+	AtpAgent,
+	type AtpSessionData,
+	CredentialSession,
+} from "@atproto/api";
 import { requestLocalLock } from "@atproto/oauth-client-node";
 import {
 	NodeOAuthClient,
@@ -202,11 +207,26 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/**
-	 * Restore a session for a user by DID
+	 * Restore a session for a user by DID.
+	 *
+	 * opnshelf has two kinds of session: OAuth sessions (users who signed in via
+	 * an external PDS) and credential sessions (accounts we created directly on
+	 * our Tranquil PDS via {@link registerAccount}). Both return an object that
+	 * `new Agent(session)` accepts, so every downstream service is agnostic to
+	 * which kind a user has.
+	 *
 	 * @param did - User's DID
 	 * @returns The restored session or undefined if not found
 	 */
 	async restore(did: string) {
+		const record = await this.prisma.authSession.findUnique({
+			where: { userDid: did },
+		});
+
+		if (record?.kind === "credential") {
+			return this.restoreCredentialSession(did, record.sessionData);
+		}
+
 		const client = this.getOAuthClient();
 		try {
 			const session = await client.restore(did);
@@ -215,6 +235,124 @@ export class AuthService implements OnModuleInit {
 			this.logger.warn(`Failed to restore session for ${did}`, error);
 			return undefined;
 		}
+	}
+
+	/**
+	 * Create an account directly on our Tranquil PDS.
+	 *
+	 * Requires a valid (single-use) invite code because the PDS runs with
+	 * `invite_code_required = true`. Returns the credential tokens for the new
+	 * account so the caller can persist a session.
+	 */
+	async registerAccount(params: {
+		handle: string;
+		email: string;
+		password: string;
+		inviteCode: string;
+	}): Promise<{
+		did: string;
+		handle: string;
+		accessJwt: string;
+		refreshJwt: string;
+		pdsUrl: string;
+	}> {
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
+
+		const agent = new AtpAgent({ service: pdsUrl });
+		await agent.createAccount({
+			handle: params.handle,
+			email: params.email,
+			password: params.password,
+			inviteCode: params.inviteCode,
+		});
+
+		const session = agent.session;
+		if (!session) {
+			throw new Error("createAccount returned no session");
+		}
+
+		return {
+			did: session.did,
+			handle: session.handle,
+			accessJwt: session.accessJwt,
+			refreshJwt: session.refreshJwt,
+			pdsUrl,
+		};
+	}
+
+	/**
+	 * Persist a credential session (createAccount tokens) so the guard can
+	 * resume it on subsequent requests. Stored alongside OAuth sessions in the
+	 * same table, discriminated by `kind`.
+	 */
+	async createCredentialSession(params: {
+		did: string;
+		handle: string;
+		accessJwt: string;
+		refreshJwt: string;
+		pdsUrl: string;
+	}): Promise<void> {
+		await this.persistCredentialSession(params.did, params.pdsUrl, {
+			did: params.did,
+			handle: params.handle,
+			accessJwt: params.accessJwt,
+			refreshJwt: params.refreshJwt,
+			active: true,
+		});
+	}
+
+	private async restoreCredentialSession(did: string, sessionDataJson: string) {
+		const stored = JSON.parse(sessionDataJson) as AtpSessionData & {
+			pdsUrl?: string;
+		};
+		const pdsUrl =
+			stored.pdsUrl || this.configService.get<string>("PDS_URL") || "";
+
+		const session = new CredentialSession(
+			new URL(pdsUrl),
+			undefined,
+			(evt, refreshed) => {
+				// Persist rotated tokens whenever the agent refreshes them.
+				if (refreshed && (evt === "create" || evt === "update")) {
+					void this.persistCredentialSession(did, pdsUrl, refreshed);
+				} else if (evt === "expired" || evt === "create-failed") {
+					void this.revoke(did);
+				}
+			},
+		);
+
+		await session.resumeSession({
+			did: stored.did,
+			handle: stored.handle,
+			accessJwt: stored.accessJwt,
+			refreshJwt: stored.refreshJwt,
+			active: stored.active ?? true,
+		});
+
+		return session;
+	}
+
+	private async persistCredentialSession(
+		did: string,
+		pdsUrl: string,
+		session: AtpSessionData,
+	): Promise<void> {
+		const data = JSON.stringify({
+			did: session.did,
+			handle: session.handle,
+			accessJwt: session.accessJwt,
+			refreshJwt: session.refreshJwt,
+			active: session.active ?? true,
+			pdsUrl,
+		});
+		await this.prisma.authSession.upsert({
+			where: { userDid: did },
+			update: { sessionData: data, kind: "credential" },
+			create: { userDid: did, sessionData: data, kind: "credential" },
+		});
 	}
 
 	/**

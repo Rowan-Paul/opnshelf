@@ -1,5 +1,6 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { IngesterModule } from "../ingester/ingester.module";
+import { PdsModule } from "../pds/pds.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { UsersModule } from "../users/users.module";
 import { AuthController } from "./auth.controller";
@@ -11,6 +12,7 @@ import { OptionalAuthGuard } from "./optional-auth.guard";
 @Module({
 	imports: [
 		PrismaModule,
+		PdsModule,
 		forwardRef(() => IngesterModule),
 		forwardRef(() => UsersModule),
 	],

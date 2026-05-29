@@ -28,6 +28,7 @@ export type AuthSessionMinAggregateOutputType = {
   id: string | null
   userDid: string | null
   sessionData: string | null
+  kind: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -36,6 +37,7 @@ export type AuthSessionMaxAggregateOutputType = {
   id: string | null
   userDid: string | null
   sessionData: string | null
+  kind: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +46,7 @@ export type AuthSessionCountAggregateOutputType = {
   id: number
   userDid: number
   sessionData: number
+  kind: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -54,6 +57,7 @@ export type AuthSessionMinAggregateInputType = {
   id?: true
   userDid?: true
   sessionData?: true
+  kind?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -62,6 +66,7 @@ export type AuthSessionMaxAggregateInputType = {
   id?: true
   userDid?: true
   sessionData?: true
+  kind?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -70,6 +75,7 @@ export type AuthSessionCountAggregateInputType = {
   id?: true
   userDid?: true
   sessionData?: true
+  kind?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -151,6 +157,7 @@ export type AuthSessionGroupByOutputType = {
   id: string
   userDid: string
   sessionData: string
+  kind: string
   createdAt: Date
   updatedAt: Date
   _count: AuthSessionCountAggregateOutputType | null
@@ -180,6 +187,7 @@ export type AuthSessionWhereInput = {
   id?: Prisma.StringFilter<"AuthSession"> | string
   userDid?: Prisma.StringFilter<"AuthSession"> | string
   sessionData?: Prisma.StringFilter<"AuthSession"> | string
+  kind?: Prisma.StringFilter<"AuthSession"> | string
   createdAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
 }
@@ -188,6 +196,7 @@ export type AuthSessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -199,6 +208,7 @@ export type AuthSessionWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AuthSessionWhereInput[]
   NOT?: Prisma.AuthSessionWhereInput | Prisma.AuthSessionWhereInput[]
   sessionData?: Prisma.StringFilter<"AuthSession"> | string
+  kind?: Prisma.StringFilter<"AuthSession"> | string
   createdAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
 }, "id" | "userDid">
@@ -207,6 +217,7 @@ export type AuthSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AuthSessionCountOrderByAggregateInput
@@ -221,6 +232,7 @@ export type AuthSessionScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
   userDid?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
   sessionData?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
+  kind?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AuthSession"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AuthSession"> | Date | string
 }
@@ -229,6 +241,7 @@ export type AuthSessionCreateInput = {
   id?: string
   userDid: string
   sessionData: string
+  kind?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -237,6 +250,7 @@ export type AuthSessionUncheckedCreateInput = {
   id?: string
   userDid: string
   sessionData: string
+  kind?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -245,6 +259,7 @@ export type AuthSessionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -253,6 +268,7 @@ export type AuthSessionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -261,6 +277,7 @@ export type AuthSessionCreateManyInput = {
   id?: string
   userDid: string
   sessionData: string
+  kind?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -269,6 +286,7 @@ export type AuthSessionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -277,6 +295,7 @@ export type AuthSessionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -285,6 +304,7 @@ export type AuthSessionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -293,6 +313,7 @@ export type AuthSessionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -301,6 +322,7 @@ export type AuthSessionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -311,6 +333,7 @@ export type AuthSessionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   id?: boolean
   userDid?: boolean
   sessionData?: boolean
+  kind?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["authSession"]>
@@ -319,6 +342,7 @@ export type AuthSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   userDid?: boolean
   sessionData?: boolean
+  kind?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["authSession"]>
@@ -327,6 +351,7 @@ export type AuthSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   userDid?: boolean
   sessionData?: boolean
+  kind?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["authSession"]>
@@ -335,11 +360,12 @@ export type AuthSessionSelectScalar = {
   id?: boolean
   userDid?: boolean
   sessionData?: boolean
+  kind?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AuthSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "sessionData" | "createdAt" | "updatedAt", ExtArgs["result"]["authSession"]>
+export type AuthSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "sessionData" | "kind" | "createdAt" | "updatedAt", ExtArgs["result"]["authSession"]>
 
 export type $AuthSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AuthSession"
@@ -348,6 +374,7 @@ export type $AuthSessionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     id: string
     userDid: string
     sessionData: string
+    kind: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["authSession"]>
@@ -776,6 +803,7 @@ export interface AuthSessionFieldRefs {
   readonly id: Prisma.FieldRef<"AuthSession", 'String'>
   readonly userDid: Prisma.FieldRef<"AuthSession", 'String'>
   readonly sessionData: Prisma.FieldRef<"AuthSession", 'String'>
+  readonly kind: Prisma.FieldRef<"AuthSession", 'String'>
   readonly createdAt: Prisma.FieldRef<"AuthSession", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AuthSession", 'DateTime'>
 }

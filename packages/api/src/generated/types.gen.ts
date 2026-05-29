@@ -144,6 +144,38 @@ export type WatchHistoryItemDto = {
     watchedDate: string;
 };
 
+export type RegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz
+     */
+    username: string;
+    /**
+     * Email for the new PDS account
+     */
+    email: string;
+    /**
+     * Password for the new PDS account
+     */
+    password: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type RegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Opaque session id (also set as an httpOnly cookie)
+     */
+    sessionId: string;
+};
+
 export type UserDto = {
     /**
      * User DID (decentralized identifier)
@@ -1996,6 +2028,34 @@ export type AuthControllerSignupData = {
     };
     url: '/auth/signup';
 };
+
+export type AuthControllerRegisterData = {
+    body: RegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/register';
+};
+
+export type AuthControllerRegisterErrors = {
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username or email already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerRegisterResponses = {
+    201: RegisterResponseDto;
+};
+
+export type AuthControllerRegisterResponse = AuthControllerRegisterResponses[keyof AuthControllerRegisterResponses];
 
 export type AuthControllerSuggestionsData = {
     body?: never;

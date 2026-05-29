@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, type HttpException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
@@ -17,6 +17,8 @@ jest.mock("@atproto/tap", () => ({
 }));
 
 import { IngesterService } from "../ingester/ingester.service";
+import { CaptchaService } from "../pds/captcha.service";
+import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { UsersService } from "../users/users.service";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
@@ -36,6 +38,9 @@ describe("AuthController", () => {
 		getUser: jest.Mock;
 		hasBlueskyProfile: jest.Mock;
 		revokeBySessionId: jest.Mock;
+		registerAccount: jest.Mock;
+		createCredentialSession: jest.Mock;
+		restore: jest.Mock;
 	} = {
 		getClientMetadata: jest.fn(),
 		authorize: jest.fn(),
@@ -48,6 +53,9 @@ describe("AuthController", () => {
 		getUser: jest.fn(),
 		hasBlueskyProfile: jest.fn().mockResolvedValue(false),
 		revokeBySessionId: jest.fn(),
+		registerAccount: jest.fn(),
+		createCredentialSession: jest.fn().mockResolvedValue(undefined),
+		restore: jest.fn().mockResolvedValue(undefined),
 	};
 
 	const mockIngesterService = {
@@ -58,11 +66,21 @@ describe("AuthController", () => {
 		initializeProfileForNewUser: jest.fn().mockResolvedValue(undefined),
 	};
 
+	const mockTranquilAdmin = {
+		mintInviteCode: jest.fn().mockResolvedValue("invite-code"),
+		disableInviteCodes: jest.fn().mockResolvedValue(undefined),
+	};
+
+	const mockCaptcha = {
+		verify: jest.fn().mockResolvedValue(true),
+	};
+
 	const mockConfigService = {
 		get: jest.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
 				NODE_ENV: "test",
+				PDS_HANDLE_DOMAIN: "opnshelf.xyz",
 			};
 			return config[key];
 		}),
@@ -100,6 +118,8 @@ describe("AuthController", () => {
 				{ provide: ConfigService, useValue: mockConfigService },
 				{ provide: IngesterService, useValue: mockIngesterService },
 				{ provide: UsersService, useValue: mockUsersService },
+				{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
+				{ provide: CaptchaService, useValue: mockCaptcha },
 			],
 		}).compile();
 
@@ -821,6 +841,127 @@ describe("AuthController", () => {
 					domain: "opnshelf.xyz",
 				}),
 			);
+		});
+	});
+
+	describe("register", () => {
+		const validBody = {
+			username: "jane",
+			email: "jane@example.com",
+			password: "supersecret",
+			captchaToken: "tok",
+		};
+		const account = {
+			did: "did:plc:jane",
+			handle: "jane.opnshelf.xyz",
+			accessJwt: "a",
+			refreshJwt: "r",
+			pdsUrl: "https://opnshelf.xyz",
+		};
+
+		beforeEach(() => {
+			// An earlier test overrides get() via mockImplementation, which
+			// clearAllMocks() does not reset — restore the full config here.
+			mockConfigService.get.mockImplementation((key: string) => {
+				const config: Record<string, string> = {
+					FRONTEND_URL: "http://127.0.0.1:3000",
+					NODE_ENV: "test",
+					PDS_HANDLE_DOMAIN: "opnshelf.xyz",
+				};
+				return config[key];
+			});
+			mockCaptcha.verify.mockResolvedValue(true);
+			mockTranquilAdmin.mintInviteCode.mockResolvedValue("invite-code");
+			mockAuthService.registerAccount.mockResolvedValue(account);
+			mockAuthService.getSessionByUserDid.mockResolvedValue({
+				id: "sess-1",
+				userDid: account.did,
+			});
+		});
+
+		const captureStatus = async (promise: Promise<unknown>) => {
+			try {
+				await promise;
+				return undefined;
+			} catch (error) {
+				return (error as HttpException).getStatus();
+			}
+		};
+
+		it("creates an account through the captcha + invite gate and sets a cookie", async () => {
+			const req = createMockRequest({ ip: "1.2.3.4", headers: {} });
+			const res = createMockResponse();
+
+			const result = await controller.register(validBody, req, res);
+
+			expect(mockCaptcha.verify).toHaveBeenCalled();
+			expect(mockTranquilAdmin.mintInviteCode).toHaveBeenCalledWith(1);
+			expect(mockAuthService.registerAccount).toHaveBeenCalledWith(
+				expect.objectContaining({
+					handle: "jane.opnshelf.xyz",
+					email: "jane@example.com",
+					inviteCode: "invite-code",
+				}),
+			);
+			expect(mockAuthService.createCredentialSession).toHaveBeenCalled();
+			expect(res.cookie).toHaveBeenCalledWith(
+				"session",
+				"sess-1",
+				expect.objectContaining({ httpOnly: true }),
+			);
+			expect(result).toEqual({
+				did: account.did,
+				handle: account.handle,
+				sessionId: "sess-1",
+			});
+		});
+
+		it("rejects with 403 when the captcha fails", async () => {
+			mockCaptcha.verify.mockResolvedValue(false);
+			const req = createMockRequest({ ip: "1.2.3.5", headers: {} });
+			const res = createMockResponse();
+
+			expect(
+				await captureStatus(controller.register(validBody, req, res)),
+			).toBe(403);
+			expect(mockTranquilAdmin.mintInviteCode).not.toHaveBeenCalled();
+		});
+
+		it("frees the unused invite code and maps a taken handle to 409", async () => {
+			mockAuthService.registerAccount.mockRejectedValue(
+				Object.assign(new Error("taken"), { error: "HandleNotAvailable" }),
+			);
+			const req = createMockRequest({ ip: "1.2.3.6", headers: {} });
+			const res = createMockResponse();
+
+			expect(
+				await captureStatus(controller.register(validBody, req, res)),
+			).toBe(409);
+			expect(mockTranquilAdmin.disableInviteCodes).toHaveBeenCalledWith([
+				"invite-code",
+			]);
+		});
+
+		it("rate-limits repeated attempts from the same IP", async () => {
+			const ip = "9.9.9.9";
+			const res = createMockResponse();
+			for (let i = 0; i < 5; i++) {
+				await controller.register(
+					validBody,
+					createMockRequest({ ip, headers: {} }),
+					res,
+				);
+			}
+
+			expect(
+				await captureStatus(
+					controller.register(
+						validBody,
+						createMockRequest({ ip, headers: {} }),
+						res,
+					),
+				),
+			).toBe(429);
 		});
 	});
 });

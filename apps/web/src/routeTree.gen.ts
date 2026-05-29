@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TosRouteImport } from './routes/tos'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -43,6 +44,11 @@ import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRou
 const TosRoute = TosRouteImport.update({
   id: '/tos',
   path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/settings'
+    | '/signup'
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/settings'
+    | '/signup'
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/settings'
+    | '/signup'
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
@@ -400,6 +412,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   TosRoute: typeof TosRoute
   AtChar123handleChar125SegmentRoute: typeof AtChar123handleChar125SegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/tos'
       fullPath: '/tos'
       preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -704,6 +724,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   TosRoute: TosRoute,
   AtChar123handleChar125SegmentRoute: AtChar123handleChar125SegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
