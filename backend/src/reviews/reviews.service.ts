@@ -71,6 +71,74 @@ export class ReviewsService {
 	}
 
 	/**
+	 * Resolve the canonical public review page (#115) for `/@<handle>/<segment>`.
+	 *
+	 * `segment` is the last URL path segment that #114 emits in community-card
+	 * links: the document `path` when present, otherwise the record key `rkey`
+	 * (see reviews.controller.ts getMediaReviews). We MUST match on
+	 * (path === segment) OR (rkey === segment), scoped to the handle's user, so
+	 * the links already in the wild resolve. Handle is normalised the same way
+	 * as public profile lookups (strip leading `@`, lowercase).
+	 *
+	 * Throws NotFoundException for an unknown handle or no matching document, so
+	 * the controller surfaces a clean 404 (page renders a not-found state).
+	 */
+	async getCanonicalReview(handle: string, segment: string) {
+		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
+		const user = await this.prisma.user.findUnique({
+			where: { handle: normalizedHandle },
+			select: { did: true, handle: true, displayName: true, avatar: true },
+		});
+		if (!user) {
+			throw new NotFoundException("Review not found");
+		}
+
+		const review = await this.prisma.review.findFirst({
+			where: {
+				userDid: user.did,
+				OR: [{ path: segment }, { rkey: segment }],
+			},
+		});
+		if (!review) {
+			throw new NotFoundException("Review not found");
+		}
+
+		const mediaByReviewId = await this.enrichMediaForReviews([review]);
+		const media = mediaByReviewId.get(review.id);
+
+		// Canonical URL on the public site (ADR-0003) — NEVER the PDS host. The
+		// last segment mirrors the link emitted by #114 (path, falling back to
+		// rkey).
+		const canonicalUrl = `${PUBLIC_SITE_ORIGIN}/@${user.handle}/${
+			review.path ?? review.rkey
+		}`;
+
+		return {
+			id: review.id,
+			rkey: review.rkey,
+			title: review.title,
+			markdown: review.markdown,
+			description: review.description,
+			path: review.path,
+			mediaType: review.mediaType,
+			mediaId: review.mediaId,
+			seasonNumber: review.seasonNumber,
+			episodeNumber: review.episodeNumber,
+			mediaTitle: media?.title ?? null,
+			posterPath: media?.posterPath ?? null,
+			author: {
+				did: user.did,
+				handle: user.handle,
+				displayName: user.displayName,
+				avatar: user.avatar,
+			},
+			canonicalUrl,
+			createdAt: review.createdAt,
+			updatedAt: review.updatedAt,
+		};
+	}
+
+	/**
 	 * Resolve `{ title, posterPath }` for each review's media item by joining the
 	 * locally-indexed Movie/Show/Season/Episode tables. This is the canonical way
 	 * to obtain a review "cover" — Review documents carry NO per-document cover

@@ -109,6 +109,85 @@ export class ReviewResponseDto {
 	updatedAt: string;
 }
 
+export class CanonicalReviewAuthorDto {
+	@ApiProperty()
+	did: string;
+
+	@ApiProperty()
+	handle: string;
+
+	@ApiPropertyOptional({ type: String })
+	displayName?: string;
+
+	@ApiPropertyOptional({ type: String })
+	avatar?: string;
+}
+
+export class CanonicalReviewResponseDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty({ description: "AT record key of the review document" })
+	rkey: string;
+
+	@ApiProperty()
+	title: string;
+
+	@ApiProperty({ description: "Review body as markdown source" })
+	markdown: string;
+
+	@ApiPropertyOptional({
+		type: String,
+		description: "Short plaintext excerpt",
+	})
+	description?: string;
+
+	@ApiPropertyOptional({
+		type: String,
+		description: "Human-friendly document path (the canonical URL segment)",
+	})
+	path?: string;
+
+	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
+	mediaType: string;
+
+	@ApiProperty()
+	mediaId: string;
+
+	@ApiPropertyOptional()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional()
+	episodeNumber?: number;
+
+	@ApiPropertyOptional({
+		type: String,
+		description: "Title of the underlying media item",
+	})
+	mediaTitle?: string;
+
+	@ApiPropertyOptional({
+		type: String,
+		description: "Poster path of the underlying media item (the review cover)",
+	})
+	posterPath?: string;
+
+	@ApiProperty({ type: CanonicalReviewAuthorDto })
+	author: CanonicalReviewAuthorDto;
+
+	@ApiProperty({
+		description:
+			"Absolute canonical URL on the public site (opnshelf.xyz), never the PDS host",
+	})
+	canonicalUrl: string;
+
+	@ApiProperty()
+	createdAt: string;
+
+	@ApiProperty()
+	updatedAt: string;
+}
+
 export class PaginatedReviewsQueryDto {
 	@ApiPropertyOptional({
 		description: "Number of items to return",

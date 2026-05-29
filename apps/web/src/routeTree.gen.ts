@@ -21,6 +21,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as AthandleSegmentRouteImport } from './routes/@$handle.$segment'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
@@ -96,6 +97,11 @@ const ProfileHandleRoute = ProfileHandleRouteImport.update({
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AthandleSegmentRoute = AthandleSegmentRouteImport.update({
+  id: '/@$handle/$segment',
+  path: '/@$handle/$segment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
+  '/@$handle/$segment': typeof AthandleSegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
+  '/@$handle/$segment': typeof AthandleSegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/tos': typeof TosRoute
+  '/@$handle/$segment': typeof AthandleSegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
+    | '/@$handle/$segment'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
+    | '/@$handle/$segment'
     | '/auth/complete'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/tos'
+    | '/@$handle/$segment'
     | '/auth/complete'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
@@ -375,6 +387,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   TosRoute: typeof TosRoute
+  AthandleSegmentRoute: typeof AthandleSegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/complete'
       fullPath: '/auth/complete'
       preLoaderRoute: typeof AuthCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/@$handle/$segment': {
+      id: '/@$handle/$segment'
+      path: '/@$handle/$segment'
+      fullPath: '/@$handle/$segment'
+      preLoaderRoute: typeof AthandleSegmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$handle/': {
@@ -663,6 +683,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   TosRoute: TosRoute,
+  AthandleSegmentRoute: AthandleSegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,

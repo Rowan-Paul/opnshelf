@@ -23,6 +23,7 @@ import { AuthGuard } from "../auth/auth.guard";
 import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
+	CanonicalReviewResponseDto,
 	CreateReviewDto,
 	MediaReviewsQueryDto,
 	MediaReviewsResponseDto,
@@ -126,6 +127,47 @@ export class ReviewsController {
 			})),
 			total: result.total,
 			nextCursor: result.nextCursor,
+		};
+	}
+
+	@Get("canonical/:handle/:segment")
+	@ApiOperation({
+		summary: "Resolve the canonical public review page for @handle/segment",
+	})
+	@ApiOkResponse({
+		description: "Canonical review resolved",
+		type: CanonicalReviewResponseDto,
+	})
+	async getCanonicalReview(
+		@Param("handle") handle: string,
+		@Param("segment") segment: string,
+	): Promise<CanonicalReviewResponseDto> {
+		const review = await this.reviewsService.getCanonicalReview(
+			handle,
+			segment,
+		);
+		return {
+			id: review.id,
+			rkey: review.rkey,
+			title: review.title,
+			markdown: review.markdown,
+			description: review.description ?? undefined,
+			path: review.path ?? undefined,
+			mediaType: review.mediaType,
+			mediaId: review.mediaId,
+			seasonNumber: review.seasonNumber || undefined,
+			episodeNumber: review.episodeNumber || undefined,
+			mediaTitle: review.mediaTitle ?? undefined,
+			posterPath: review.posterPath ?? undefined,
+			author: {
+				did: review.author.did,
+				handle: review.author.handle,
+				displayName: review.author.displayName ?? undefined,
+				avatar: review.author.avatar ?? undefined,
+			},
+			canonicalUrl: review.canonicalUrl,
+			createdAt: review.createdAt.toISOString(),
+			updatedAt: review.updatedAt.toISOString(),
 		};
 	}
 

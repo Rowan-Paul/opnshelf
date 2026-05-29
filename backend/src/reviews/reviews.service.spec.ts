@@ -361,6 +361,98 @@ describe("ReviewsService", () => {
 		});
 	});
 
+	describe("getCanonicalReview", () => {
+		const author = {
+			did: "did:plc:author",
+			handle: "alice",
+			displayName: "Alice",
+			avatar: null,
+		};
+
+		const reviewRow = {
+			id: "review-1",
+			rkey: "rkey-abc",
+			path: "great-film",
+			title: "Great film",
+			markdown: "**Loved** it.",
+			description: "Loved it.",
+			userDid: author.did,
+			mediaType: "movie",
+			mediaId: "123",
+			seasonNumber: 0,
+			episodeNumber: 0,
+			createdAt: new Date("2024-01-01"),
+			updatedAt: new Date("2024-01-02"),
+		};
+
+		it("resolves a review matched by document path", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue(author);
+			mockPrismaService.review.findFirst.mockResolvedValue(reviewRow);
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Great Film", posterPath: "/poster.jpg" },
+			]);
+
+			const result = await service.getCanonicalReview("@Alice", "great-film");
+
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { handle: "alice" } }),
+			);
+			expect(mockPrismaService.review.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userDid: author.did,
+						OR: [{ path: "great-film" }, { rkey: "great-film" }],
+					},
+				}),
+			);
+			expect(result.title).toBe("Great film");
+			expect(result.posterPath).toBe("/poster.jpg");
+			expect(result.mediaTitle).toBe("Great Film");
+			expect(result.author.handle).toBe("alice");
+			expect(result.canonicalUrl).toBe(
+				"https://opnshelf.xyz/@alice/great-film",
+			);
+		});
+
+		it("falls back to matching by rkey when no path", async () => {
+			const noPathRow = { ...reviewRow, path: null };
+			mockPrismaService.user.findUnique.mockResolvedValue(author);
+			mockPrismaService.review.findFirst.mockResolvedValue(noPathRow);
+			mockPrismaService.movie.findMany.mockResolvedValue([]);
+
+			const result = await service.getCanonicalReview("alice", "rkey-abc");
+
+			expect(mockPrismaService.review.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userDid: author.did,
+						OR: [{ path: "rkey-abc" }, { rkey: "rkey-abc" }],
+					},
+				}),
+			);
+			// canonical URL uses rkey when the document carries no path
+			expect(result.canonicalUrl).toBe("https://opnshelf.xyz/@alice/rkey-abc");
+		});
+
+		it("throws NotFoundException for an unknown handle", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+			await expect(
+				service.getCanonicalReview("ghost", "anything"),
+			).rejects.toThrow(NotFoundException);
+			expect(mockPrismaService.review.findFirst).not.toHaveBeenCalled();
+		});
+
+		it("throws NotFoundException when no document matches the segment", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue(author);
+			mockPrismaService.review.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.getCanonicalReview("alice", "missing"),
+			).rejects.toThrow(NotFoundException);
+		});
+	});
+
 	describe("createReview", () => {
 		it("mints a publication on first review and writes a document", async () => {
 			mockPrismaService.publication.findUnique.mockResolvedValue(null);

@@ -1297,6 +1297,53 @@ export type MediaReviewsResponseDto = {
     nextCursor: string | null;
 };
 
+export type CanonicalReviewAuthorDto = {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+};
+
+export type CanonicalReviewResponseDto = {
+    id: string;
+    /**
+     * AT record key of the review document
+     */
+    rkey: string;
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    /**
+     * Short plaintext excerpt
+     */
+    description?: string;
+    /**
+     * Human-friendly document path (the canonical URL segment)
+     */
+    path?: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Title of the underlying media item
+     */
+    mediaTitle?: string;
+    /**
+     * Poster path of the underlying media item (the review cover)
+     */
+    posterPath?: string;
+    author: CanonicalReviewAuthorDto;
+    /**
+     * Absolute canonical URL on the public site (opnshelf.xyz), never the PDS host
+     */
+    canonicalUrl: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type ReviewResponseDto = {
     id: string;
     rkey: string;
@@ -3588,6 +3635,25 @@ export type ReviewsControllerGetMediaReviewsResponses = {
 };
 
 export type ReviewsControllerGetMediaReviewsResponse = ReviewsControllerGetMediaReviewsResponses[keyof ReviewsControllerGetMediaReviewsResponses];
+
+export type ReviewsControllerGetCanonicalReviewData = {
+    body?: never;
+    path: {
+        handle: string;
+        segment: string;
+    };
+    query?: never;
+    url: '/reviews/canonical/{handle}/{segment}';
+};
+
+export type ReviewsControllerGetCanonicalReviewResponses = {
+    /**
+     * Canonical review resolved
+     */
+    200: CanonicalReviewResponseDto;
+};
+
+export type ReviewsControllerGetCanonicalReviewResponse = ReviewsControllerGetCanonicalReviewResponses[keyof ReviewsControllerGetCanonicalReviewResponses];
 
 export type ReviewsControllerDeleteReviewData = {
     body?: never;
