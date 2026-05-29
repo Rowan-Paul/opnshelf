@@ -227,6 +227,9 @@ export class MediaReviewItemDto {
 	@ApiProperty()
 	id: string;
 
+	@ApiProperty({ description: "AT record key of the review document" })
+	rkey: string;
+
 	@ApiProperty()
 	title: string;
 
@@ -235,6 +238,17 @@ export class MediaReviewItemDto {
 
 	@ApiPropertyOptional()
 	description?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Relative URL of the canonical public review page (#115), e.g. /@handle/path",
+	})
+	reviewUrl?: string;
+
+	@ApiPropertyOptional({
+		description: "Poster path of the underlying media item (the review cover)",
+	})
+	posterPath?: string;
 
 	@ApiProperty()
 	userDid: string;
@@ -255,6 +269,14 @@ export class MediaReviewItemDto {
 		description: "Whether the requesting user has liked this review",
 	})
 	hasLiked: boolean;
+
+	@ApiPropertyOptional({
+		type: Number,
+		description:
+			"The author's own rating for this media item (joined from the separate Rating entity). Used only as a sort tiebreak.",
+		nullable: true,
+	})
+	authorRating?: number | null;
 
 	@ApiProperty()
 	createdAt: string;

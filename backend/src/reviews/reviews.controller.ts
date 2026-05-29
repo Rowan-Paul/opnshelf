@@ -105,15 +105,22 @@ export class ReviewsController {
 		return {
 			items: result.items.map((review) => ({
 				id: review.id,
+				rkey: review.rkey,
 				title: review.title,
 				markdown: review.markdown,
 				description: review.description ?? undefined,
+				// Canonical public review page (#115). Relative path against the
+				// public site (opnshelf.xyz) — NEVER the PDS host. Falls back to the
+				// record key when the document carries no human-friendly path.
+				reviewUrl: `/@${review.user.handle}/${review.path ?? review.rkey}`,
+				posterPath: review.posterPath ?? undefined,
 				userDid: review.user.did,
 				userHandle: review.user.handle,
 				userDisplayName: review.user.displayName ?? undefined,
 				userAvatar: review.user.avatar ?? undefined,
 				likeCount: review.likeCount,
 				hasLiked: review.hasLiked,
+				authorRating: review.authorRating ?? undefined,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),

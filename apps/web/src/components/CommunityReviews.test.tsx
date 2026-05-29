@@ -80,6 +80,32 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("3")).toBeTruthy();
 	});
 
+	it("renders the media poster cover and links the title to the public review URL", () => {
+		mockUseMediaReviews.mockReturnValue({
+			data: {
+				items: [
+					review({
+						title: "Great movie!",
+						posterPath: "/abc.jpg",
+						reviewUrl: "/@user1/my-rkey",
+					}),
+				],
+			},
+			isLoading: false,
+		});
+
+		render(<CommunityReviews mediaType="movie" mediaId="123" />);
+
+		const titleLink = screen.getByText("Great movie!").closest("a");
+		expect(titleLink).toBeTruthy();
+		expect(titleLink?.getAttribute("href")).toBe("/@user1/my-rkey");
+
+		const cover = document.querySelector(
+			'img[src="https://image.tmdb.org/t/p/w185/abc.jpg"]',
+		);
+		expect(cover).toBeTruthy();
+	});
+
 	it("shows own review with Your Review badge", () => {
 		mockUseAuth.mockReturnValue({ user: { did: "did:plc:me" } });
 		mockUseMediaReviews.mockReturnValue({

@@ -70,38 +70,34 @@ export class ReviewsService {
 		return this.prisma.review.findUnique({ where: { id: reviewId } });
 	}
 
-	async getUserReviews(userDid: string, limit = 20, cursor?: string) {
-		const take = limit + 1;
-
-		const reviews = await this.prisma.review.findMany({
-			where: { userDid },
-			orderBy: { createdAt: "desc" },
-			take,
-			...(cursor && {
-				skip: 1,
-				cursor: { id: cursor },
-			}),
-		});
-
-		const hasMore = reviews.length > limit;
-		const items = hasMore ? reviews.slice(0, limit) : reviews;
-		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
-
-		const total = await this.prisma.review.count({
-			where: { userDid },
-		});
-
-		// Fetch related movie/show/season/episode data for each review
-		const movieIds = items
+	/**
+	 * Resolve `{ title, posterPath }` for each review's media item by joining the
+	 * locally-indexed Movie/Show/Season/Episode tables. This is the canonical way
+	 * to obtain a review "cover" — Review documents carry NO per-document cover
+	 * image (ADR-0002), so the cover is always the underlying media poster.
+	 *
+	 * Returned as a Map keyed by review id so callers can attach posters without
+	 * re-deriving the media coordinate lookup.
+	 */
+	private async enrichMediaForReviews(
+		reviews: Array<{
+			id: string;
+			mediaType: string;
+			mediaId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+		}>,
+	): Promise<Map<string, { title: string; posterPath: string | null }>> {
+		const movieIds = reviews
 			.filter((r) => r.mediaType === "movie")
 			.map((r) => r.mediaId);
-		const showIds = items
+		const showIds = reviews
 			.filter((r) => r.mediaType === "show")
 			.map((r) => r.mediaId);
-		const seasonConditions = items
+		const seasonConditions = reviews
 			.filter((r) => r.mediaType === "season")
 			.map((r) => ({ showId: r.mediaId, seasonNumber: r.seasonNumber }));
-		const episodeConditions = items
+		const episodeConditions = reviews
 			.filter((r) => r.mediaType === "episode")
 			.map((r) => ({
 				showId: r.mediaId,
@@ -172,7 +168,11 @@ export class ReviewsService {
 			});
 		}
 
-		const enrichedItems = items.map((review) => {
+		const byReviewId = new Map<
+			string,
+			{ title: string; posterPath: string | null }
+		>();
+		for (const review of reviews) {
 			let media: { title: string; posterPath: string | null } | undefined;
 			if (review.mediaType === "movie") {
 				media = movieMap.get(review.mediaId);
@@ -185,6 +185,39 @@ export class ReviewsService {
 					`${review.mediaId}:${review.seasonNumber}:${review.episodeNumber}`,
 				);
 			}
+			if (media) {
+				byReviewId.set(review.id, media);
+			}
+		}
+
+		return byReviewId;
+	}
+
+	async getUserReviews(userDid: string, limit = 20, cursor?: string) {
+		const take = limit + 1;
+
+		const reviews = await this.prisma.review.findMany({
+			where: { userDid },
+			orderBy: { createdAt: "desc" },
+			take,
+			...(cursor && {
+				skip: 1,
+				cursor: { id: cursor },
+			}),
+		});
+
+		const hasMore = reviews.length > limit;
+		const items = hasMore ? reviews.slice(0, limit) : reviews;
+		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+		const total = await this.prisma.review.count({
+			where: { userDid },
+		});
+
+		const mediaByReviewId = await this.enrichMediaForReviews(items);
+
+		const enrichedItems = items.map((review) => {
+			const media = mediaByReviewId.get(review.id);
 			return {
 				...review,
 				mediaTitle: media?.title,
@@ -219,6 +252,13 @@ export class ReviewsService {
 			episodeNumber: episodeNumber ?? 0,
 		};
 
+		// Community-appreciation ordering (ADR-0002): most-liked first, then most
+		// recent. The author's own Rating is fetched per item below as a tiebreak
+		// among reviews with identical like counts — the rating MUST come from the
+		// separate Rating entity joined by (userDid + media coordinates), never
+		// from the review document (documents carry no score). The DB-level order
+		// stays (likeCount desc, createdAt desc) so cursor pagination remains
+		// stable; the rating only reorders ties within a returned page.
 		const reviews = await this.prisma.review.findMany({
 			where,
 			orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
@@ -255,12 +295,54 @@ export class ReviewsService {
 
 		const total = await this.prisma.review.count({ where });
 
+		// Join each author's separate Rating for this exact media item. There is
+		// no stored pointer from a review to a rating — they correlate only by
+		// (userDid + media coordinates).
+		const authorDids = Array.from(new Set(items.map((r) => r.userDid)));
+		const authorRatings =
+			authorDids.length > 0
+				? await this.prisma.rating.findMany({
+						where: { ...where, userDid: { in: authorDids } },
+						select: { userDid: true, rating: true },
+					})
+				: [];
+		const ratingByAuthor = new Map<string, number>();
+		for (const r of authorRatings) {
+			ratingByAuthor.set(r.userDid, r.rating);
+		}
+
+		const [mediaByReviewId, enrichedItems] = await Promise.all([
+			this.enrichMediaForReviews(items),
+			Promise.resolve(
+				items.map((review) => ({
+					...review,
+					likeCount: review._count.likes,
+					hasLiked: requestingUserDid ? review.likes.length > 0 : false,
+					authorRating: ratingByAuthor.get(review.userDid) ?? null,
+				})),
+			),
+		]);
+
+		// Apply the rating tiebreak among equal-likeCount neighbours, preserving
+		// the DB createdAt order for items with no rating or identical ratings.
+		// Stable sort keeps the cursor-defining (likeCount desc, createdAt desc)
+		// order intact across pages.
+		enrichedItems.sort((a, b) => {
+			if (b.likeCount !== a.likeCount) return 0;
+			const ra = a.authorRating ?? -1;
+			const rb = b.authorRating ?? -1;
+			return rb - ra;
+		});
+
 		return {
-			items: items.map((review) => ({
-				...review,
-				likeCount: review._count.likes,
-				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
-			})),
+			items: enrichedItems.map((review) => {
+				const media = mediaByReviewId.get(review.id);
+				return {
+					...review,
+					mediaTitle: media?.title,
+					posterPath: media?.posterPath ?? null,
+				};
+			}),
 			total,
 			nextCursor,
 		};

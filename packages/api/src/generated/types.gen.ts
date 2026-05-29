@@ -1247,12 +1247,24 @@ export type PaginatedReviewsResponseDto = {
 
 export type MediaReviewItemDto = {
     id: string;
+    /**
+     * AT record key of the review document
+     */
+    rkey: string;
     title: string;
     /**
      * Review body as markdown source
      */
     markdown: string;
     description?: string;
+    /**
+     * Relative URL of the canonical public review page (#115), e.g. /@handle/path
+     */
+    reviewUrl?: string;
+    /**
+     * Poster path of the underlying media item (the review cover)
+     */
+    posterPath?: string;
     userDid: string;
     userHandle: string;
     userDisplayName?: string;
@@ -1265,6 +1277,10 @@ export type MediaReviewItemDto = {
      * Whether the requesting user has liked this review
      */
     hasLiked: boolean;
+    /**
+     * The author's own rating for this media item (joined from the separate Rating entity). Used only as a sort tiebreak.
+     */
+    authorRating?: number | null;
     createdAt: string;
     updatedAt: string;
 };

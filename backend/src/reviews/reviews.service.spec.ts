@@ -113,6 +113,21 @@ describe("ReviewsService", () => {
 			upsert: jest.fn(),
 			deleteMany: jest.fn(),
 		},
+		rating: {
+			findMany: jest.fn(),
+		},
+		movie: {
+			findMany: jest.fn(),
+		},
+		show: {
+			findMany: jest.fn(),
+		},
+		season: {
+			findMany: jest.fn(),
+		},
+		episode: {
+			findMany: jest.fn(),
+		},
 		user: {
 			findUnique: jest.fn(),
 		},
@@ -243,13 +258,20 @@ describe("ReviewsService", () => {
 	});
 
 	describe("getMediaReviews", () => {
-		it("returns reviews sorted by likes and date", async () => {
+		it("returns reviews sorted by likes and date, enriched with the media poster", async () => {
 			mockPrismaService.review.findMany.mockResolvedValue([
 				{
 					id: "r1",
+					rkey: "rkey1",
+					path: null,
 					title: "Great film",
 					markdown: "It was great.",
 					description: "It was great.",
+					userDid: "did:plc:u1",
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
 					user: {
 						did: "did:plc:u1",
 						handle: "u1",
@@ -263,6 +285,10 @@ describe("ReviewsService", () => {
 				},
 			]);
 			mockPrismaService.review.count.mockResolvedValue(1);
+			mockPrismaService.rating.findMany.mockResolvedValue([]);
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Great Film", posterPath: "/poster.jpg" },
+			]);
 
 			const result = await service.getMediaReviews(
 				{ mediaType: "movie", mediaId: "123" },
@@ -271,9 +297,65 @@ describe("ReviewsService", () => {
 
 			expect(result.items[0].likeCount).toBe(5);
 			expect(result.items[0].hasLiked).toBe(false);
+			expect(result.items[0].posterPath).toBe("/poster.jpg");
 			expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
+				}),
+			);
+		});
+
+		it("breaks like-count ties by the author's separate Rating, not the document", async () => {
+			const base = {
+				rkey: "rk",
+				path: null,
+				title: "t",
+				markdown: "m",
+				description: null,
+				mediaType: "movie",
+				mediaId: "123",
+				seasonNumber: 0,
+				episodeNumber: 0,
+				_count: { likes: 3 },
+				likes: [],
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			mockPrismaService.review.findMany.mockResolvedValue([
+				{
+					...base,
+					id: "low",
+					userDid: "did:plc:low",
+					user: { did: "did:plc:low", handle: "low" },
+				},
+				{
+					...base,
+					id: "high",
+					userDid: "did:plc:high",
+					user: { did: "did:plc:high", handle: "high" },
+				},
+			]);
+			mockPrismaService.review.count.mockResolvedValue(2);
+			mockPrismaService.movie.findMany.mockResolvedValue([]);
+			mockPrismaService.rating.findMany.mockResolvedValue([
+				{ userDid: "did:plc:low", rating: 4 },
+				{ userDid: "did:plc:high", rating: 9 },
+			]);
+
+			const result = await service.getMediaReviews({
+				mediaType: "movie",
+				mediaId: "123",
+			});
+
+			// equal likeCount → higher author rating wins the tiebreak
+			expect(result.items.map((r) => r.id)).toEqual(["high", "low"]);
+			expect(mockPrismaService.rating.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						mediaType: "movie",
+						mediaId: "123",
+						userDid: { in: ["did:plc:low", "did:plc:high"] },
+					}),
 				}),
 			);
 		});

@@ -12,6 +12,13 @@ interface CommunityReviewsProps {
 	onAddReview?: () => void;
 }
 
+/** Build the TMDB poster URL used as the review "cover" (the media poster). */
+function posterUrl(posterPath?: string): string | undefined {
+	return posterPath
+		? `https://image.tmdb.org/t/p/w185${posterPath}`
+		: undefined;
+}
+
 function ReviewCard({
 	review,
 	mediaType,
@@ -24,6 +31,8 @@ function ReviewCard({
 		id: string;
 		title: string;
 		markdown: string;
+		reviewUrl?: string;
+		posterPath?: string;
 		userDid: string;
 		userHandle: string;
 		userDisplayName?: string;
@@ -61,6 +70,22 @@ function ReviewCard({
 	const displayName = review.userDisplayName || review.userHandle;
 	const avatarUrl =
 		review.userAvatar || `https://i.pravatar.cc/150?u=${review.userDid}`;
+	const cover = posterUrl(review.posterPath);
+
+	// The canonical public review page (#115) may not exist as a registered
+	// route yet, so we use a plain anchor rather than the router's typed Link.
+	// The link shape is stable: /@handle/path on the public site (never the PDS
+	// host). Falls back to plain text when the backend could not build a URL.
+	const title = review.reviewUrl ? (
+		<a
+			href={review.reviewUrl}
+			className="transition-colors hover:text-(--accent)"
+		>
+			{review.title}
+		</a>
+	) : (
+		review.title
+	);
 
 	return (
 		<div className={`card p-4 ${isOwnReview ? "border-(--accent)/30" : ""}`}>
@@ -91,12 +116,38 @@ function ReviewCard({
 				</span>
 			</div>
 
-			<h3 className="mb-1 font-display font-semibold">{review.title}</h3>
-			<div className="mb-3 text-(--foreground-muted)">
-				<MarkdownPreview markdown={review.markdown} />
+			<div className="flex gap-3">
+				{cover &&
+					(review.reviewUrl ? (
+						<a
+							href={review.reviewUrl}
+							className="shrink-0"
+							aria-label={`Open review: ${review.title}`}
+						>
+							<img
+								src={cover}
+								alt=""
+								className="h-24 w-16 rounded-md object-cover"
+								loading="lazy"
+							/>
+						</a>
+					) : (
+						<img
+							src={cover}
+							alt=""
+							className="h-24 w-16 shrink-0 rounded-md object-cover"
+							loading="lazy"
+						/>
+					))}
+				<div className="min-w-0 flex-1">
+					<h3 className="mb-1 font-display font-semibold">{title}</h3>
+					<div className="text-(--foreground-muted)">
+						<MarkdownPreview markdown={review.markdown} />
+					</div>
+				</div>
 			</div>
 
-			<div className="flex items-center gap-2">
+			<div className="mt-3 flex items-center gap-2">
 				<button
 					type="button"
 					onClick={handleToggleLike}
