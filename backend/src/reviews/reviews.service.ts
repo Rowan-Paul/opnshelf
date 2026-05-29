@@ -40,6 +40,21 @@ const PUBLICATION_LIST_LIMIT = 100;
 
 type MediaType = "movie" | "show" | "season" | "episode";
 
+const MAX_SLUG_LENGTH = 80;
+
+// Mirrors the web `toSlug` util, capped so a canonical document `path` stays a
+// sane URL segment. Falls back to "review" when a title slugifies to nothing
+// (e.g. an all-emoji title).
+function slugify(title: string): string {
+	const base = title
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-|-$/g, "")
+		.slice(0, MAX_SLUG_LENGTH)
+		.replace(/-$/, "");
+	return base || "review";
+}
+
 function publicationUrlForHandle(handle: string): string {
 	return `${PUBLIC_SITE_ORIGIN}/@${handle}`;
 }
@@ -609,6 +624,27 @@ export class ReviewsService {
 		return { moved, failed, total: reviews.length };
 	}
 
+	// Generate a human, shareable document `path` from the title, unique within
+	// the user's own reviews (the canonical page resolves by handle + path).
+	// External standard.site tools build the canonical URL from publication.url +
+	// document.path, so a real path — not the raw rkey — is what makes reviews
+	// linkable off-platform.
+	private async generateUniqueReviewPath(
+		userDid: string,
+		title: string,
+	): Promise<string> {
+		const base = slugify(title);
+		const existing = await this.prisma.review.findMany({
+			where: { userDid, path: { startsWith: base } },
+			select: { path: true },
+		});
+		const taken = new Set(existing.map((r) => r.path));
+		if (!taken.has(base)) return base;
+		let n = 2;
+		while (taken.has(`${base}-${n}`)) n++;
+		return `${base}-${n}`;
+	}
+
 	private buildDocumentRecord(params: {
 		publicationUri: string;
 		title: string;
@@ -670,6 +706,7 @@ export class ReviewsService {
 
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
+		const path = await this.generateUniqueReviewPath(userDid, dto.title);
 
 		const record = this.buildDocumentRecord({
 			publicationUri,
@@ -679,6 +716,7 @@ export class ReviewsService {
 			mediaId: dto.mediaId,
 			seasonNumber: dto.seasonNumber,
 			episodeNumber: dto.episodeNumber,
+			path,
 			publishedAt: now,
 		});
 
@@ -701,6 +739,7 @@ export class ReviewsService {
 				seasonNumber: dto.seasonNumber ?? 0,
 				episodeNumber: dto.episodeNumber ?? 0,
 				title: dto.title,
+				path,
 				description: record.description ?? null,
 				textContent: record.textContent ?? null,
 				markdown: dto.markdown,
@@ -737,6 +776,9 @@ export class ReviewsService {
 			mediaId: existing.mediaId,
 			seasonNumber: existing.seasonNumber,
 			episodeNumber: existing.episodeNumber,
+			// Keep the canonical path stable across edits (don't re-slug on title
+			// change) so existing links never break.
+			path: existing.path ?? undefined,
 			publishedAt: existing.createdAt.toISOString(),
 			updatedAt: new Date().toISOString(),
 		});

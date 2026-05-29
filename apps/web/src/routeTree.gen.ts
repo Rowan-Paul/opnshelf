@@ -19,6 +19,7 @@ import { Route as FollowingRouteImport } from './routes/following'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AtChar123handleChar125IndexRouteImport } from './routes/@{$handle}.index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as AtChar123handleChar125SegmentRouteImport } from './routes/@{$handle}.$segment'
@@ -89,6 +90,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123handleChar125IndexRoute =
+  AtChar123handleChar125IndexRouteImport.update({
+    id: '/@{$handle}/',
+    path: '/@{$handle}/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
   path: '/profile/$handle',
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/@{$handle}': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/profile/$handle'
+    | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
+    | '/@{$handle}'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -359,6 +371,7 @@ export interface FileRouteTypes {
     | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/profile/$handle'
+    | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -391,6 +404,7 @@ export interface RootRouteChildren {
   AtChar123handleChar125SegmentRoute: typeof AtChar123handleChar125SegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
+  AtChar123handleChar125IndexRoute: typeof AtChar123handleChar125IndexRoute
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
@@ -466,6 +480,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/@{$handle}/': {
+      id: '/@{$handle}/'
+      path: '/@{$handle}'
+      fullPath: '/@{$handle}/'
+      preLoaderRoute: typeof AtChar123handleChar125IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$handle': {
@@ -687,6 +708,7 @@ const rootRouteChildren: RootRouteChildren = {
   AtChar123handleChar125SegmentRoute: AtChar123handleChar125SegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
+  AtChar123handleChar125IndexRoute: AtChar123handleChar125IndexRoute,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,

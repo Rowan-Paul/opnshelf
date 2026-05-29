@@ -611,6 +611,46 @@ describe("ReviewsService", () => {
 				"at://did:plc:abc123/site.standard.publication/leaflet",
 			);
 		});
+
+		it("slugifies the title into a unique document path", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValueOnce({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+			});
+			// the base slug is already taken by an earlier review -> expect "-2"
+			mockPrismaService.review.findMany.mockResolvedValue([
+				{ path: "dune-part-two" },
+			]);
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/site.standard.document/testtid123",
+					cid: "cid-doc",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "Dune: Part Two!",
+				markdown: "Loved it.",
+			});
+
+			// deduped against the existing "dune-part-two", and written into the
+			// document `path` (what external standard.site tools link to).
+			expect(result.path).toBe("dune-part-two-2");
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({
+					collection: "site.standard.document",
+					record: expect.objectContaining({ path: "dune-part-two-2" }),
+				}),
+			);
+		});
 	});
 
 	describe("listMyPublications", () => {
