@@ -42,6 +42,8 @@ function SignupPage() {
 	const queryClient = useQueryClient();
 
 	const handleDomain = env.VITE_PDS_HANDLE_DOMAIN;
+	// Must be set in the Vercel project (Production env) — it's inlined at build
+	// time. If unset, the widget sends an empty token and the backend 403s.
 	const siteKey = env.VITE_TURNSTILE_SITE_KEY;
 	// When no site key is set the widget passes an empty token immediately.
 	const captchaReady = !siteKey || captchaToken !== null;
