@@ -24,7 +24,7 @@ A user's expression of appreciation for another user's review. Only possible on 
 _Avoid_: Heart, upvote, helpful vote
 
 **Publication**:
-A `site.standard.publication` record in a user's PDS that a user's Reviews belong to (a document's `site` field points at it). By default opnshelf mints one per user (e.g. "Jane's OpnShelf" at `opnshelf.xyz/@jane`) so anyone can review without owning a blog; a user may instead point their Reviews at a publication they already own elsewhere. The publication, not opnshelf, is what makes Reviews surface and stay discoverable across the standard.site ecosystem.
+A `site.standard.publication` record in a user's PDS that a user's Reviews belong to (a document's `site` field points at it). By default opnshelf mints one per user (e.g. "Jane's OpnShelf" at `opnshelf.xyz/@jane`) so anyone can review without owning a blog; a user may instead point their Reviews at another `site.standard.publication` they already own in their own PDS (e.g. a Leaflet publication). The publication, not opnshelf, is what makes Reviews surface and stay discoverable across the standard.site ecosystem.
 
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
