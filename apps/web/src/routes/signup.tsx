@@ -4,11 +4,16 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Film, Loader2 } from "lucide-react";
+import { ArrowRight, Film, HelpCircle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
 import { TurnstileWidget } from "#/components/TurnstileWidget";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "#/components/ui/tooltip";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 
@@ -143,9 +148,25 @@ function SignupPage() {
 						<div>
 							<label
 								htmlFor="email"
-								className="mb-1.5 block font-medium text-sm"
+								className="mb-1.5 flex items-center gap-1.5 font-medium text-sm"
 							>
 								Email
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											type="button"
+											aria-label="Why we need your email"
+											className="cursor-help text-(--foreground-muted) hover:text-(--foreground)"
+										>
+											<HelpCircle className="size-3.5" />
+										</button>
+									</TooltipTrigger>
+									<TooltipContent className="max-w-64">
+										Your account is created on OpnShelf's AT Protocol server,
+										which requires an email for account recovery and
+										verification. OpnShelf itself never stores it.
+									</TooltipContent>
+								</Tooltip>
 							</label>
 							<input
 								id="email"
