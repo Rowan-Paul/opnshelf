@@ -78,7 +78,11 @@ jest.mock("../lexicons/xyz/opnshelf/review/like", () => ({
 	$nsid: "xyz.opnshelf.review.like",
 }));
 
-import { NotFoundException } from "@nestjs/common";
+import {
+	ConflictException,
+	ForbiddenException,
+	NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReviewsService, type ATSession } from "./reviews.service";
 
@@ -151,10 +155,10 @@ describe("ReviewsService", () => {
 	});
 
 	describe("likeReview", () => {
-		it("creates a like record in PDS and DB", async () => {
+		it("creates a like record in PDS and DB targeting the document URI", async () => {
 			const review = {
 				id: "review-1",
-				uri: "at://did:plc:other/xyz.opnshelf.review/rkey1",
+				uri: "at://did:plc:other/site.standard.document/rkey1",
 				userDid: "did:plc:other",
 			};
 			mockPrismaService.review.findUnique.mockResolvedValue(review);
@@ -181,6 +185,11 @@ describe("ReviewsService", () => {
 					repo: session.did,
 					collection: "xyz.opnshelf.review.like",
 					rkey: "testtid123",
+					record: expect.objectContaining({
+						// reviewUri must point at the Review document, not a rating
+						// or the legacy review collection (#116 / ADR-0002).
+						reviewUri: "at://did:plc:other/site.standard.document/rkey1",
+					}),
 				}),
 			);
 			expect(mockPrismaService.reviewLike.create).toHaveBeenCalledWith(
@@ -194,23 +203,23 @@ describe("ReviewsService", () => {
 			expect(result).toBeDefined();
 		});
 
-		it("rejects liking own review", async () => {
+		it("rejects liking own review with 403", async () => {
 			const review = {
 				id: "review-1",
-				uri: "at://did:plc:abc123/xyz.opnshelf.review/rkey1",
+				uri: "at://did:plc:abc123/site.standard.document/rkey1",
 				userDid: session.did,
 			};
 			mockPrismaService.review.findUnique.mockResolvedValue(review);
 
 			await expect(
 				service.likeReview(session.did, session, review.id),
-			).rejects.toThrow("Cannot like your own review");
+			).rejects.toThrow(ForbiddenException);
 		});
 
-		it("rejects duplicate like", async () => {
+		it("rejects duplicate like with 409", async () => {
 			const review = {
 				id: "review-1",
-				uri: "at://did:plc:other/xyz.opnshelf.review/rkey1",
+				uri: "at://did:plc:other/site.standard.document/rkey1",
 				userDid: "did:plc:other",
 			};
 			mockPrismaService.review.findUnique.mockResolvedValue(review);
@@ -220,7 +229,7 @@ describe("ReviewsService", () => {
 
 			await expect(
 				service.likeReview(session.did, session, review.id),
-			).rejects.toThrow("Already liked this review");
+			).rejects.toThrow(ConflictException);
 		});
 	});
 

@@ -1,6 +1,11 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+} from "@nestjs/common";
 import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
 import { main as mediaLinkDef } from "../lexicons/xyz/opnshelf/mediaLink.defs";
 import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
@@ -661,7 +666,7 @@ export class ReviewsService {
 		}
 
 		if (review.userDid === userDid) {
-			throw new Error("Cannot like your own review");
+			throw new ForbiddenException("Cannot like your own review");
 		}
 
 		const existingLike = await this.prisma.reviewLike.findUnique({
@@ -674,7 +679,7 @@ export class ReviewsService {
 		});
 
 		if (existingLike) {
-			throw new Error("Already liked this review");
+			throw new ConflictException("Already liked this review");
 		}
 
 		const agent = new Agent(
