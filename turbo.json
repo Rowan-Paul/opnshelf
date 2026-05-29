@@ -4,14 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**", ".output/**", ".expo/**"],
-      "env": [
-        "VITE_API_URL",
-        "VITE_PUBLIC_POSTHOG_HOST",
-        "VITE_PUBLIC_POSTHOG_KEY",
-        "EXPO_PUBLIC_API_URL",
-        "EXPO_PUBLIC_POSTHOG_HOST",
-        "EXPO_PUBLIC_POSTHOG_KEY"
-      ]
+      "env": ["VITE_*", "EXPO_PUBLIC_*"]
     },
     "dev": {
       "cache": false,
