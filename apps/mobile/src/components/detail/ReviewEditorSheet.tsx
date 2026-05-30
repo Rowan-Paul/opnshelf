@@ -5,10 +5,16 @@ import {
 	Modal,
 	Platform,
 	Pressable,
+	ScrollView,
 	TextInput,
 	View,
 } from "react-native";
+import { MarkdownToolbar } from "@/components/detail/MarkdownToolbar";
+import { Markdown } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
+import type { TextSelection } from "@/lib/markdown-format";
+
+const MAX_LENGTH = 20000;
 
 interface ReviewEditorSheetProps {
 	visible: boolean;
@@ -26,10 +32,15 @@ interface ReviewEditorSheetProps {
 }
 
 /**
- * Bottom-anchored modal for writing or editing a single long-form review. The
- * star rating is a separate one-per-media entity handled elsewhere; this sheet
- * is review-only. A review requires both a title and a markdown body.
- * `TextInput` and `Modal` are RN-core so `className` works directly.
+ * Bottom-anchored modal for writing or editing a single long-form review.
+ *
+ * The body is authored as markdown — the source-of-truth format for reviews
+ * across the standard.site ecosystem — with a formatting toolbar over the
+ * `TextInput` and a Write/Preview toggle. The toolbar rewrites the markdown
+ * string directly (rather than holding a separate rich-text model), so the
+ * editor round-trips stored markdown losslessly. The star rating is a separate
+ * one-per-media entity handled elsewhere; this sheet is review-only. A review
+ * requires both a title and a markdown body.
  */
 export function ReviewEditorSheet({
 	visible,
@@ -44,12 +55,22 @@ export function ReviewEditorSheet({
 }: ReviewEditorSheetProps) {
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
+	const [selection, setSelection] = useState<TextSelection>({
+		start: 0,
+		end: 0,
+	});
+	const [mode, setMode] = useState<"write" | "preview">("write");
 
 	// Re-sync local state whenever the sheet is (re)opened for a target.
 	useEffect(() => {
 		if (visible) {
 			setTitle(initialTitle);
 			setMarkdown(initialMarkdown);
+			setSelection({
+				start: initialMarkdown.length,
+				end: initialMarkdown.length,
+			});
+			setMode("write");
 		}
 	}, [visible, initialTitle, initialMarkdown]);
 
@@ -86,25 +107,84 @@ export function ReviewEditorSheet({
 						onChangeText={setTitle}
 						placeholder="Review title"
 						placeholderTextColor="#94a3b8"
+						maxLength={300}
 						className="rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 					/>
 
-					<TextInput
-						value={markdown}
-						onChangeText={setMarkdown}
-						placeholder="Write a review (markdown supported)…"
-						placeholderTextColor="#94a3b8"
-						multiline
-						textAlignVertical="top"
-						maxLength={20000}
-						className="min-h-36 rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
-					/>
+					<View className="flex-row gap-1 self-start rounded-lg bg-background-subtle p-1">
+						<Pressable
+							onPress={() => setMode("write")}
+							className={`rounded-md px-3 py-1.5 ${mode === "write" ? "bg-card" : ""}`}
+						>
+							<Text
+								className={`text-sm ${mode === "write" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+							>
+								Write
+							</Text>
+						</Pressable>
+						<Pressable
+							onPress={() => setMode("preview")}
+							className={`rounded-md px-3 py-1.5 ${mode === "preview" ? "bg-card" : ""}`}
+						>
+							<Text
+								className={`text-sm ${mode === "preview" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+							>
+								Preview
+							</Text>
+						</Pressable>
+					</View>
 
-					{needsTitle ? (
-						<Text className="text-destructive text-xs">
-							A title is required when you write a review.
+					{mode === "write" ? (
+						<View className="gap-2">
+							<MarkdownToolbar
+								value={markdown}
+								selection={selection}
+								onChange={(edit) => {
+									setMarkdown(edit.text);
+									setSelection(edit.selection);
+								}}
+							/>
+							<TextInput
+								value={markdown}
+								onChangeText={setMarkdown}
+								selection={selection}
+								onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+								placeholder="Write a review (markdown supported)…"
+								placeholderTextColor="#94a3b8"
+								multiline
+								textAlignVertical="top"
+								maxLength={MAX_LENGTH}
+								className="min-h-36 rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
+							/>
+						</View>
+					) : (
+						<ScrollView
+							className="min-h-36 rounded-lg border border-border bg-background-subtle"
+							contentContainerClassName="p-3"
+							style={{ maxHeight: 320 }}
+						>
+							{hasBody ? (
+								<Markdown value={markdown} />
+							) : (
+								<Text className="text-muted-foreground text-sm">
+									Nothing to preview yet.
+								</Text>
+							)}
+						</ScrollView>
+					)}
+
+					<View className="flex-row items-center justify-between">
+						{needsTitle ? (
+							<Text className="text-destructive text-xs">
+								A title is required when you write a review.
+							</Text>
+						) : (
+							<View />
+						)}
+						<Text className="text-foreground-subtle text-xs">
+							{markdown.length}/{MAX_LENGTH}
 						</Text>
-					) : null}
+					</View>
 
 					{isEditing && onDelete ? (
 						<Pressable
