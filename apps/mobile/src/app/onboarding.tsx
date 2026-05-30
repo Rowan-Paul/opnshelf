@@ -44,6 +44,9 @@ export default function OnboardingScreen() {
 	if (!isLoading && !isAuthenticated) {
 		return <Redirect href="/login" />;
 	}
+	if (!isLoading && user?.needsEmailVerification) {
+		return <Redirect href="/verify-email" />;
+	}
 	if (!isLoading && user && !user.needsOnboarding) {
 		return <Redirect href="/" />;
 	}

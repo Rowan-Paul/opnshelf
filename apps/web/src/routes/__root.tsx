@@ -74,7 +74,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 					"Track what you watch and discover what others are watching. A personal media tracker built on the AT Protocol.",
 			},
 		],
-		links: [{ rel: "stylesheet", href: appCss }],
+		links: [
+			{ rel: "stylesheet", href: appCss },
+			{ rel: "icon", type: "image/png", href: "/favicon.png" },
+			{ rel: "apple-touch-icon", href: "/icon.png" },
+			{ rel: "manifest", href: "/manifest.json" },
+		],
 	}),
 	errorComponent: DefaultErrorComponent,
 	notFoundComponent: NotFoundComponent,

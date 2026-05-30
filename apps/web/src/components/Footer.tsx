@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Film } from "lucide-react";
+import Logo from "./Logo";
 
 // Bluesky icon component using local SVG
 const BlueskyIcon = ({ className }: { className?: string }) => (
@@ -52,9 +52,7 @@ export default function Footer() {
 					{/* Brand */}
 					<div className="text-center">
 						<Link to="/" className="inline-flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[#3f2e00]">
-								<Film className="size-4" />
-							</div>
+							<Logo className="size-8 rounded-lg" />
 							<span className="font-bold font-display text-lg">OpnShelf</span>
 						</Link>
 						<p className="mx-auto mt-4 max-w-sm text-(--foreground-muted) text-sm">

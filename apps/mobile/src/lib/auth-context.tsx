@@ -1,8 +1,9 @@
 import {
 	authControllerMe,
 	authControllerMeQueryKey,
+	authControllerRegister,
 	getLoginUrl,
-	getSignupUrl,
+	type RegisterDto,
 	setOnUnauthorized,
 	type UserDto,
 } from "@opnshelf/api";
@@ -32,8 +33,12 @@ interface AuthContextType {
 	isAuthenticated: boolean;
 	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
 	login: (handle?: string) => Promise<void>;
-	/** Start the signup OAuth flow (PDS account creation). */
-	signup: () => Promise<void>;
+	/**
+	 * Create a native account on opnshelf's PDS (captcha + invite gated). On
+	 * success the session is established but the account still needs email
+	 * verification before it can write records — callers route to /verify-email.
+	 */
+	register: (input: RegisterDto) => Promise<void>;
 	/** Explicit sign-out: clears the persisted token + query cache. */
 	signOut: () => Promise<void>;
 }
@@ -153,11 +158,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[runAuthFlow],
 	);
 
-	const signup = useCallback(async () => {
-		posthog?.capture("user_signed_up", { method: "atmosphere" });
-		const signupUrl = getSignupUrl(detectTimezone(), "mobile");
-		await runAuthFlow(signupUrl);
-	}, [runAuthFlow]);
+	const register = useCallback(
+		async (input: RegisterDto) => {
+			const { data } = await authControllerRegister({
+				body: input,
+				throwOnError: true,
+			});
+			if (!data?.sessionId) {
+				throw new Error("No session returned from register");
+			}
+			// Native apps can't use the httpOnly cookie the backend also sets, so we
+			// persist the opaque session id from the body and drive the API client
+			// off it (same Bearer-token path as the OAuth flow).
+			await saveSessionToken(data.sessionId);
+			setHasSessionToken(true);
+			const fetchedUser = await queryClient.fetchQuery({
+				queryKey: authControllerMeQueryKey(),
+				queryFn: async () => {
+					const { data } = await authControllerMe({ throwOnError: true });
+					return data ?? null;
+				},
+				staleTime: 0,
+			});
+			if (fetchedUser) {
+				posthog?.identify(fetchedUser.did, {
+					$set: { handle: fetchedUser.handle, did: fetchedUser.did },
+					$set_once: { first_login_date: new Date().toISOString() },
+				});
+				posthog?.capture("user_signed_up", { method: "pds_register" });
+			}
+		},
+		[queryClient],
+	);
 
 	const signOut = useCallback(async () => {
 		await saveSessionToken(null);
@@ -177,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isLoading,
 		isAuthenticated: !!user,
 		login,
-		signup,
+		register,
 		signOut,
 	};
 
