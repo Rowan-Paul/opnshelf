@@ -8,6 +8,7 @@ import { DetailHero } from "@/components/detail/DetailHero";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { YourNote } from "@/components/detail/YourNote";
 import { YourReviews } from "@/components/detail/YourReviews";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import {
@@ -60,6 +61,7 @@ export default function MovieDetailScreen() {
 					<CastSection cast={data.credits?.cast} />
 					<CrewSection crew={data.credits?.crew} />
 					<YourReviews mediaType="movie" mediaId={id} />
+					<YourNote mediaType="movie" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>
