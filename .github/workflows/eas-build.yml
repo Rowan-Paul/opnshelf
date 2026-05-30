@@ -1,0 +1,82 @@
+name: EAS Build
+
+# Manual only: kick off cloud builds from the Actions tab. Keeping this off the
+# PR/push path avoids burning EAS build minutes on every mobile change.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - ios
+          - android
+      profile:
+        description: EAS build profile (see apps/mobile/eas.json)
+        type: choice
+        required: true
+        default: preview
+        options:
+          - development
+          - preview
+          - production
+      submit:
+        description: Submit to the stores after a successful production build
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: eas-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ github.workspace }}
+
+      # --auto-submit (production only) submits straight after the build using the
+      # matching submit profile and implies --wait, so there is no race with a
+      # separate submit step. Plain builds use --no-wait and finish in EAS cloud.
+      - name: Build
+        run: |
+          if [ "${{ github.event.inputs.submit }}" = "true" ] && [ "${{ github.event.inputs.profile }}" = "production" ]; then
+            eas build \
+              --non-interactive \
+              --platform ${{ github.event.inputs.platform }} \
+              --profile production \
+              --auto-submit
+          else
+            eas build \
+              --non-interactive \
+              --no-wait \
+              --platform ${{ github.event.inputs.platform }} \
+              --profile ${{ github.event.inputs.profile }}
+          fi

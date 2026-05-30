@@ -17,5 +17,8 @@ src/uniwind-env.d.ts
 # Env
 .env*.local
 
+# EAS store-submission credentials — never commit
+google-service-account.json
+
 # Misc
 *.log
