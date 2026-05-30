@@ -1,8 +1,14 @@
 import { Link } from "expo-router";
-import { Calendar, Check, Eye, RotateCcw, Star, X } from "lucide-react-native";
+import {
+	Calendar,
+	Check,
+	Eye,
+	RotateCcw,
+	StarOff,
+	X,
+} from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { ReviewSheet } from "@/components/detail/ReviewSheet";
 import { StarRating } from "@/components/detail/StarRating";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import { Text } from "@/components/ui/text";
@@ -43,7 +49,6 @@ function formatWatchedDate(iso?: string) {
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
-	const [reviewVisible, setReviewVisible] = useState(false);
 
 	const isMovie = props.mediaType === "movie";
 	const mediaId = isMovie ? props.movieId : props.showId;
@@ -169,57 +174,38 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				</Pressable>
 			</View>
 
-			<Pressable
-				onPress={() => setReviewVisible(true)}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
-			>
-				{reviewState.hasReview ? (
-					<>
-						<StarRating rating={reviewState.rating} size={16} />
-						<Text className="font-medium text-foreground text-sm">
-							Edit review
-						</Text>
-					</>
-				) : (
-					<>
-						<Star color="#94a3b8" size={18} />
-						<Text className="font-medium text-foreground text-sm">
-							Rate & review
-						</Text>
-					</>
-				)}
-			</Pressable>
+			<View className="flex-row items-center justify-between rounded-lg border border-border px-4 py-3">
+				<View className="flex-row items-center gap-3">
+					<StarRating
+						rating={reviewState.rating}
+						onChange={reviewState.setRating}
+						size={24}
+					/>
+					<Text className="text-muted-foreground text-sm">
+						{reviewState.rating > 0
+							? `${(reviewState.rating / 2).toFixed(1)} / 5`
+							: "Tap to rate"}
+					</Text>
+				</View>
+				{reviewState.hasRating ? (
+					<Pressable
+						hitSlop={8}
+						onPress={reviewState.clearRating}
+						disabled={reviewState.isClearingRating}
+						className="flex-row items-center gap-1"
+						style={{ opacity: reviewState.isClearingRating ? 0.6 : 1 }}
+					>
+						<StarOff color="#94a3b8" size={16} />
+						<Text className="text-muted-foreground text-xs">Clear</Text>
+					</Pressable>
+				) : null}
+			</View>
 
 			<WatchDatePickerModal
 				visible={datePickerVisible}
 				onDismiss={() => setDatePickerVisible(false)}
 				onConfirm={handleDateConfirm}
 				isLoading={isMarkPending}
-			/>
-			<ReviewSheet
-				visible={reviewVisible}
-				onDismiss={() => setReviewVisible(false)}
-				hasExistingReview={reviewState.hasReview}
-				hasRating={reviewState.hasRating}
-				hasReviewDoc={reviewState.hasReviewDoc}
-				initialRating={reviewState.rating}
-				initialTitle={reviewState.review?.title ?? ""}
-				initialMarkdown={reviewState.review?.markdown ?? ""}
-				isSaving={reviewState.isSaving}
-				isClearingRating={reviewState.isClearingRating}
-				isDeleting={reviewState.isDeleting}
-				onSave={(input) => {
-					reviewState.saveReview(input);
-					setReviewVisible(false);
-				}}
-				onClearRating={() => {
-					reviewState.clearRating();
-					setReviewVisible(false);
-				}}
-				onDeleteReview={() => {
-					reviewState.deleteReview();
-					setReviewVisible(false);
-				}}
 			/>
 		</View>
 	);
