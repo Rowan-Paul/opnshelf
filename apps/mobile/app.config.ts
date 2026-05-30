@@ -14,6 +14,12 @@ const config: ExpoConfig = {
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
 	userInterfaceStyle: "automatic",
+	updates: {
+		url: "https://u.expo.dev/87d86952-59ab-4711-9f5f-f9477b2d14f6",
+	},
+	runtimeVersion: {
+		policy: "appVersion",
+	},
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: "com.rowanpaul.opnshelf",
