@@ -5,6 +5,7 @@ import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
+import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
@@ -56,6 +57,8 @@ export default function MovieDetailScreen() {
 					</DetailHero>
 
 					<MediaTrackingActions mediaType="movie" movieId={id} />
+
+					<FriendWatchers mediaType="movie" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
 					<CastSection cast={data.credits?.cast} />
