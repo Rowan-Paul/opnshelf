@@ -1,0 +1,182 @@
+import {
+	type SocialUserCardDto,
+	socialControllerSearchPeopleOptions,
+} from "@opnshelf/api";
+import { FlashList } from "@shopify/flash-list";
+import { useQuery } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import { Search, Users, UserX, X } from "lucide-react-native";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
+import { UserRow } from "@/components/social/UserRow";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
+import { cn } from "@/lib/cn";
+import { useDebounce } from "@/lib/use-debounce";
+import { useFollowers, useFollowing, useFollowToggle } from "@/lib/use-social";
+import { useTwStyle } from "@/lib/use-tw-style";
+
+type Tab = "following" | "followers";
+
+export default function FriendsScreen() {
+	const { user } = useAuth();
+	const handle = user?.handle ?? "";
+	const myDid = user?.did ?? "";
+
+	const [tab, setTab] = useState<Tab>("following");
+	const [query, setQuery] = useState("");
+	const debouncedQuery = useDebounce(query.trim(), 350);
+	const hasQuery = debouncedQuery.length > 0;
+
+	const listStyle = useTwStyle("px-4 pb-8");
+
+	const following = useFollowing(handle);
+	const followers = useFollowers(handle);
+	const { toggle } = useFollowToggle();
+
+	const peopleQuery = useQuery({
+		...socialControllerSearchPeopleOptions({
+			query: { q: debouncedQuery, pageSize: 20 },
+		}),
+		enabled: hasQuery,
+	});
+
+	const active = tab === "following" ? following : followers;
+	const searchResults = peopleQuery.data?.items ?? [];
+
+	const renderRow = (item: SocialUserCardDto) => (
+		<View className="pb-2">
+			<UserRow
+				user={item}
+				isSelf={item.did === myDid}
+				onToggleFollow={toggle}
+			/>
+		</View>
+	);
+
+	function renderBody() {
+		if (hasQuery) {
+			if (peopleQuery.isLoading) return <LoadingState label="Searching…" />;
+			if (peopleQuery.isError) {
+				return <ErrorState message="Couldn't search people. Try again." />;
+			}
+			if (searchResults.length === 0) {
+				return (
+					<EmptyState
+						icon={Users}
+						title="No people found"
+						message={`No users match “${debouncedQuery}”.`}
+					/>
+				);
+			}
+			return (
+				<FlashList
+					data={searchResults}
+					keyExtractor={(item) => item.did}
+					renderItem={({ item }) => renderRow(item)}
+					contentContainerStyle={listStyle}
+					keyboardShouldPersistTaps="handled"
+				/>
+			);
+		}
+
+		if (active.isLoading) return <LoadingState />;
+		if (active.isError) {
+			return <ErrorState message="Couldn't load this list. Try again." />;
+		}
+		if (active.items.length === 0) {
+			return (
+				<EmptyState
+					icon={UserX}
+					title={tab === "following" ? "Not following anyone" : "No followers"}
+					message={
+						tab === "following"
+							? "Search above to find people to follow."
+							: "When people follow you, they'll show up here."
+					}
+				/>
+			);
+		}
+		return (
+			<FlashList
+				data={active.items}
+				keyExtractor={(item) => item.did}
+				renderItem={({ item }) => renderRow(item)}
+				contentContainerStyle={listStyle}
+				keyboardShouldPersistTaps="handled"
+				onEndReachedThreshold={0.5}
+				onEndReached={() => {
+					if (active.hasNextPage && !active.isFetchingNextPage) {
+						active.fetchNextPage();
+					}
+				}}
+				ListFooterComponent={
+					active.isFetchingNextPage ? (
+						<View className="py-6">
+							<ActivityIndicator color="#94a3b8" />
+						</View>
+					) : null
+				}
+			/>
+		);
+	}
+
+	return (
+		<View className="flex-1 bg-background">
+			<Stack.Screen options={{ headerShown: true, title: "Friends" }} />
+
+			<View className="px-4 pt-3 pb-3">
+				<View className="flex-row items-center gap-2 rounded-lg border border-border bg-card px-3">
+					<Search color="#94a3b8" size={18} />
+					<TextInput
+						value={query}
+						onChangeText={setQuery}
+						placeholder="Find people to follow…"
+						placeholderTextColor="#94a3b8"
+						autoCapitalize="none"
+						autoCorrect={false}
+						returnKeyType="search"
+						className="h-11 flex-1 font-sans text-base text-foreground"
+					/>
+					{query.length > 0 ? (
+						<Pressable hitSlop={8} onPress={() => setQuery("")}>
+							<X color="#94a3b8" size={18} />
+						</Pressable>
+					) : null}
+				</View>
+
+				{hasQuery ? null : (
+					<View className="mt-3 flex-row gap-2">
+						{(["following", "followers"] as const).map((key) => {
+							const isActive = tab === key;
+							return (
+								<Pressable
+									key={key}
+									onPress={() => setTab(key)}
+									className={cn(
+										"rounded-full px-3 py-1.5",
+										isActive ? "bg-primary" : "bg-background-subtle",
+									)}
+								>
+									<Text
+										className={cn(
+											"font-medium text-sm capitalize",
+											isActive
+												? "text-primary-foreground"
+												: "text-muted-foreground",
+										)}
+									>
+										{key}
+									</Text>
+								</Pressable>
+							);
+						})}
+					</View>
+				)}
+			</View>
+
+			<View className="flex-1">{renderBody()}</View>
+		</View>
+	);
+}

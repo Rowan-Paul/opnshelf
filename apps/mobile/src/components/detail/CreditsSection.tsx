@@ -1,6 +1,7 @@
 import type { TmdbCastDto, TmdbCrewDto } from "@opnshelf/api";
+import { Link } from "expo-router";
 import { User } from "lucide-react-native";
-import { FlatList, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { profileUrl } from "@/lib/tmdb";
@@ -15,26 +16,28 @@ type CreditPerson = {
 function CreditCard({ person }: { person: CreditPerson }) {
 	const url = profileUrl(person.profile_path);
 	return (
-		<View className="w-20">
-			<View className="aspect-2/3 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-background-subtle">
-				{url ? (
-					<PosterImage url={url} className="aspect-2/3 w-20" />
-				) : (
-					<User color="#94a3b8" size={24} />
-				)}
-			</View>
-			<Text
-				className="mt-1 font-medium text-foreground text-xs"
-				numberOfLines={1}
-			>
-				{person.name}
-			</Text>
-			{person.role ? (
-				<Text className="text-muted-foreground text-xs" numberOfLines={1}>
-					{person.role}
+		<Link href={`/person/${person.id}` as const} asChild>
+			<Pressable className="w-20">
+				<View className="aspect-2/3 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-background-subtle">
+					{url ? (
+						<PosterImage url={url} className="aspect-2/3 w-20" />
+					) : (
+						<User color="#94a3b8" size={24} />
+					)}
+				</View>
+				<Text
+					className="mt-1 font-medium text-foreground text-xs"
+					numberOfLines={1}
+				>
+					{person.name}
 				</Text>
-			) : null}
-		</View>
+				{person.role ? (
+					<Text className="text-muted-foreground text-xs" numberOfLines={1}>
+						{person.role}
+					</Text>
+				) : null}
+			</Pressable>
+		</Link>
 	);
 }
 
