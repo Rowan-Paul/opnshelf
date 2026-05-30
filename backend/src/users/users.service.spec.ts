@@ -14,6 +14,7 @@ import type {
 import type { ListsService } from "../lists/lists.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
+import type { ShelfService } from "../shelf/shelf.service";
 import type { ShowsService } from "../shows/shows.service";
 
 jest.mock("./profile.service", () => ({
@@ -77,7 +78,19 @@ describe("UsersService", () => {
 		show: {
 			findUnique: jest.fn().mockResolvedValue(null),
 		},
+		$queryRaw: jest.fn().mockResolvedValue([{ count: 0 }]),
 	} as unknown as PrismaService;
+
+	const shelfService = {
+		getUserActivitySummary: jest.fn().mockResolvedValue({
+			watchedLast7Days: 0,
+			watchedLast30Days: 0,
+			dailyActivity: Array.from({ length: 30 }, (_, i) => ({
+				date: `2024-03-${String(i + 1).padStart(2, "0")}`,
+				count: 0,
+			})),
+		}),
+	} as unknown as ShelfService;
 
 	const moviesService = {
 		markWatched: jest.fn(),
@@ -135,6 +148,7 @@ describe("UsersService", () => {
 			profileService,
 			listsService,
 			reviewsService,
+			shelfService,
 		);
 	});
 
@@ -486,6 +500,7 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
+			timezone: "UTC",
 			blueskyProfileUrl: null,
 			tangledProfileUrl: null,
 			showBlueskyOnProfile: true,
@@ -525,6 +540,7 @@ describe("UsersService", () => {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				timezone: true,
 				blueskyProfileUrl: true,
 				tangledProfileUrl: true,
 				showBlueskyOnProfile: true,

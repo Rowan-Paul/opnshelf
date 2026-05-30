@@ -352,16 +352,20 @@ export class ShelfService {
 				COUNT(*)::integer AS "count"
 			FROM (
 				SELECT
-					(COALESCE(tm."watchedDate", tm."createdAt") AT TIME ZONE ${user.timezone})::date AS "localDay"
+					(tm."watchedDate" AT TIME ZONE ${user.timezone})::date AS "localDay"
 				FROM "TrackedMovie" tm
 				WHERE tm."userDid" = ${userDid}
+					AND tm."status" = 'watched'
+					AND tm."watchedDate" IS NOT NULL
 
 				UNION ALL
 
 				SELECT
-					(COALESCE(te."watchedDate", te."createdAt") AT TIME ZONE ${user.timezone})::date AS "localDay"
+					(te."watchedDate" AT TIME ZONE ${user.timezone})::date AS "localDay"
 				FROM "TrackedEpisode" te
 				WHERE te."userDid" = ${userDid}
+					AND te."status" = 'watched'
+					AND te."watchedDate" IS NOT NULL
 			) activity
 			WHERE activity."localDay" BETWEEN CAST(${startDayKey} AS DATE) AND CAST(${endDayKey} AS DATE)
 			GROUP BY activity."localDay"

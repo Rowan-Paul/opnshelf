@@ -33,8 +33,8 @@ A movie, show, season, or episode that can be tracked, reviewed, and listed.
 The collection of media items a user has marked as watched or tracked.
 
 **Watch**:
-A single logged instance of a user watching a media item. Rewatches are distinct Watches — there is intentionally no uniqueness constraint per user+item, so watching the same episode twice produces two Watches. Counts of "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles.
-_Avoid_: View, log entry
+A single logged instance of a user watching a media item — a tracked record with a watched status and a watch date. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. Counts of "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
+_Avoid_: View, log entry (a watchlist add is a separate, un-watched state)
 
 **Most-Watched Show**:
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.

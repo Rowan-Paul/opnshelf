@@ -227,8 +227,12 @@ describe("ShelfService", () => {
 			? sql.strings.join(" ")
 			: String(sql);
 
-		expect(queryText).toContain('COALESCE(tm."watchedDate", tm."createdAt")');
-		expect(queryText).toContain('COALESCE(te."watchedDate", te."createdAt")');
+		// Activity counts logged watches only: watchedDate-based, status =
+		// 'watched', no createdAt fallback (see the Watch term in CONTEXT.md).
+		expect(queryText).toContain('(tm."watchedDate" AT TIME ZONE');
+		expect(queryText).toContain('(te."watchedDate" AT TIME ZONE');
+		expect(queryText).toContain("\"status\" = 'watched'");
+		expect(queryText).not.toContain("COALESCE");
 		expect(queryText).toContain("AT TIME ZONE");
 		expect(queryText).toContain("BETWEEN CAST(");
 		expect(mockPrismaService.$queryRaw).toHaveBeenCalledWith(

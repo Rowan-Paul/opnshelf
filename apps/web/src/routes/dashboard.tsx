@@ -2,24 +2,19 @@ import type { ReleaseCalendarItemDto, UpNextShowDto } from "@opnshelf/api";
 import {
 	showsControllerGetUserReleaseCalendarOptions,
 	socialControllerGetFeedOptions,
+	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-	Calendar,
-	ChevronRight,
-	Clock,
-	Film,
-	TrendingUp,
-	Tv,
-} from "lucide-react";
+import { Calendar, ChevronRight, Clock, Film, Tv } from "lucide-react";
 import { useEffect } from "react";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
+import { StatsStrip } from "#/components/StatsStrip";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
-import { useDashboardStats, useUserShelf } from "#/lib/hooks";
+import { useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { useSearchDialog } from "#/lib/search-dialog-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
@@ -141,7 +136,12 @@ function Dashboard() {
 		userDid || "",
 		6,
 	);
-	const { isLoading: statsLoading } = useDashboardStats(userDid || "");
+	const { data: profile, isLoading: profileLoading } = useQuery({
+		...usersControllerGetPublicProfileOptions({
+			path: { handle: user?.handle || "" },
+		}),
+		enabled: !!user?.handle,
+	});
 	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
 		userDid || "",
 	);
@@ -180,63 +180,7 @@ function Dashboard() {
 		: [];
 
 	const isLoading =
-		shelfLoading ||
-		statsLoading ||
-		feedLoading ||
-		authLoading ||
-		calendarLoading;
-
-	// Calculate real stats from shelf data
-	const uniqueMovieIds = new Set(
-		shelfData?.items
-			?.filter((item) => item.type === "movie")
-			?.map((item) => item.movieId),
-	);
-	const movieCount = uniqueMovieIds.size;
-
-	const uniqueShowIds = new Set(
-		shelfData?.items
-			?.filter((item) => item.type === "episode")
-			?.map((item) => item.showId),
-	);
-	const showCount = uniqueShowIds.size;
-
-	const now = new Date();
-	const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-	const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-	const addedThisWeek =
-		shelfData?.items?.filter(
-			(item) => item.createdAt && new Date(item.createdAt) >= sevenDaysAgo,
-		).length || 0;
-
-	const addedThisMonth =
-		shelfData?.items?.filter(
-			(item) => item.createdAt && new Date(item.createdAt) >= thirtyDaysAgo,
-		).length || 0;
-
-	const userStats = [
-		{
-			label: "Movies",
-			value: String(movieCount),
-			icon: Film,
-		},
-		{
-			label: "Shows",
-			value: String(showCount),
-			icon: Tv,
-		},
-		{
-			label: "Added This Week",
-			value: String(addedThisWeek),
-			icon: Clock,
-		},
-		{
-			label: "Added This Month",
-			value: String(addedThisMonth),
-			icon: TrendingUp,
-		},
-	];
+		shelfLoading || feedLoading || authLoading || calendarLoading;
 
 	// Transform user's tracked content for display from shelf data
 	const userContent =
@@ -327,46 +271,15 @@ function Dashboard() {
 				<p className="text-(--foreground-muted)">@{user?.handle}</p>
 			</div>
 
-			{/* Stats Grid */}
-			<div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-				{isLoading
-					? // Skeleton stats
-						[1, 2, 3, 4].map((i) => (
-							<div key={i} className="card animate-pulse p-4 sm:p-5">
-								<div className="flex items-center gap-3 sm:items-center sm:justify-between">
-									<div className="order-1 h-10 w-10 rounded-lg bg-(--background-subtle) sm:order-2 sm:h-12 sm:w-12 sm:rounded-xl" />
-									<div className="order-2 space-y-1 sm:order-1 sm:space-y-2">
-										<div className="h-3 w-14 rounded bg-(--background-subtle) sm:h-4 sm:w-16" />
-										<div className="h-6 w-10 rounded bg-(--background-subtle) sm:h-8 sm:w-12" />
-										<div className="mt-1 h-3 w-20 rounded bg-(--background-subtle)" />
-									</div>
-								</div>
-							</div>
-						))
-					: userStats.map((stat, index) => {
-							const Icon = stat.icon;
-							return (
-								<div
-									key={stat.label}
-									className="card p-4 sm:p-5"
-									style={{ animationDelay: `${index * 50}ms` }}
-								>
-									<div className="flex items-center gap-3 sm:items-center sm:justify-between">
-										<div className="order-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent) sm:order-2 sm:h-12 sm:w-12 sm:rounded-xl">
-											<Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-										</div>
-										<div className="order-2 sm:order-1">
-											<p className="text-(--foreground-muted) text-sm">
-												{stat.label}
-											</p>
-											<p className="font-semibold text-lg sm:mt-1 sm:text-display-3">
-												{stat.value}
-											</p>
-										</div>
-									</div>
-								</div>
-							);
-						})}
+			{/* Stats strip: 30-day activity graph + headline stats */}
+			<div className="mb-8">
+				<StatsStrip
+					activity={profile?.activityLast30Days}
+					mostWatchedShow={profile?.mostWatchedShow ?? null}
+					watchedThisYear={profile?.watchedThisYear ?? 0}
+					reviewsCount={profile?.reviewsCount ?? 0}
+					isLoading={profileLoading || (!profile && !!user?.handle)}
+				/>
 			</div>
 
 			<div className="grid gap-8 lg:grid-cols-3">

@@ -5,9 +5,11 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "../generated/client";
 import { ListsService } from "../lists/lists.service";
 import { ReviewsService } from "../reviews/reviews.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ShelfService } from "../shelf/shelf.service";
 import type {
 	CompleteOnboardingResponseDto,
 	FetchTraktPublicHistoryResponseDto,
@@ -46,6 +48,7 @@ export class UsersService {
 		private readonly profileService: ProfileService,
 		private readonly listsService: ListsService,
 		private readonly reviewsService: ReviewsService,
+		private readonly shelfService: ShelfService,
 	) {}
 
 	/**
@@ -348,6 +351,7 @@ export class UsersService {
 				handle: true,
 				displayName: true,
 				avatar: true,
+				timezone: true,
 				blueskyProfileUrl: true,
 				tangledProfileUrl: true,
 				showBlueskyOnProfile: true,
@@ -366,7 +370,7 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const stats = await this.getProfileStats(user.did);
+		const stats = await this.getProfileStats(user.did, user.timezone);
 
 		return {
 			did: user.did,
@@ -387,10 +391,16 @@ export class UsersService {
 	/**
 	 * Compute the derived stats shown in the profile header: a 30-day watch
 	 * activity graph, the most-watched show, and the current year's watch count.
-	 * A "watch" is one tracked row — rewatches are counted, by design (see
-	 * CONTEXT.md). All windows are computed in UTC.
+	 * A "watch" is one tracked row with status `watched` and a `watchedDate` —
+	 * rewatches are counted, watchlist adds are not (see the Watch term in
+	 * CONTEXT.md). Day/year windows are bucketed in the profile owner's own
+	 * timezone, reusing the same activity logic the dashboard renders so both
+	 * surfaces agree.
 	 */
-	private async getProfileStats(did: string): Promise<{
+	private async getProfileStats(
+		did: string,
+		timezone: string,
+	): Promise<{
 		activityLast30Days: { date: string; count: number }[];
 		mostWatchedShow: {
 			showId: string;
@@ -400,49 +410,25 @@ export class UsersService {
 		} | null;
 		watchedThisYear: number;
 	}> {
-		const now = new Date();
-		const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-		// 30-day window: UTC midnight 29 days ago through today inclusive.
-		const startOfToday = new Date(
-			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-		);
-		const DAY_MS = 24 * 60 * 60 * 1000;
-		const start30 = new Date(startOfToday.getTime() - 29 * DAY_MS);
-
-		const thisYearWhere = {
-			status: "watched",
-			watchedDate: { gte: startOfYear },
-		};
-
-		const [
-			moviesThisYear,
-			episodesThisYear,
-			movieActivity,
-			episodeActivity,
-			topShow,
-		] = await Promise.all([
-			this.prisma.trackedMovie.count({
-				where: { userDid: did, ...thisYearWhere },
-			}),
-			this.prisma.trackedEpisode.count({
-				where: { userDid: did, ...thisYearWhere },
-			}),
-			this.prisma.trackedMovie.findMany({
-				where: {
-					userDid: did,
-					status: "watched",
-					watchedDate: { gte: start30 },
-				},
-				select: { watchedDate: true },
-			}),
-			this.prisma.trackedEpisode.findMany({
-				where: {
-					userDid: did,
-					status: "watched",
-					watchedDate: { gte: start30 },
-				},
-				select: { watchedDate: true },
-			}),
+		const [activitySummary, yearRows, topShow] = await Promise.all([
+			this.shelfService.getUserActivitySummary(did),
+			this.prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
+				SELECT (
+					(SELECT COUNT(*) FROM "TrackedMovie" tm
+						WHERE tm."userDid" = ${did}
+							AND tm."status" = 'watched'
+							AND tm."watchedDate" IS NOT NULL
+							AND (tm."watchedDate" AT TIME ZONE ${timezone})::date
+								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
+					+
+					(SELECT COUNT(*) FROM "TrackedEpisode" te
+						WHERE te."userDid" = ${did}
+							AND te."status" = 'watched'
+							AND te."watchedDate" IS NOT NULL
+							AND (te."watchedDate" AT TIME ZONE ${timezone})::date
+								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
+				)::integer AS "count"
+			`),
 			this.prisma.trackedEpisode.groupBy({
 				by: ["showId"],
 				where: { userDid: did, status: "watched" },
@@ -456,22 +442,8 @@ export class UsersService {
 			}),
 		]);
 
-		// Pre-seed all 30 day buckets to 0 so empty days render as gaps.
-		const buckets = new Map<string, number>();
-		for (let i = 0; i < 30; i++) {
-			const day = new Date(start30.getTime() + i * DAY_MS);
-			buckets.set(day.toISOString().slice(0, 10), 0);
-		}
-		for (const row of [...movieActivity, ...episodeActivity]) {
-			if (!row.watchedDate) continue;
-			const key = row.watchedDate.toISOString().slice(0, 10);
-			const current = buckets.get(key);
-			if (current !== undefined) buckets.set(key, current + 1);
-		}
-		const activityLast30Days = Array.from(buckets, ([date, count]) => ({
-			date,
-			count,
-		}));
+		const activityLast30Days = activitySummary.dailyActivity;
+		const watchedThisYear = Number(yearRows[0]?.count ?? 0);
 
 		let mostWatchedShow: {
 			showId: string;
@@ -498,7 +470,7 @@ export class UsersService {
 		return {
 			activityLast30Days,
 			mostWatchedShow,
-			watchedThisYear: moviesThisYear + episodesThisYear,
+			watchedThisYear,
 		};
 	}
 

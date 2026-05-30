@@ -8,5 +8,6 @@ import { ShelfService } from "./shelf.service";
 	imports: [PrismaModule],
 	controllers: [ShelfController],
 	providers: [ShelfService, ColorExtractionService],
+	exports: [ShelfService],
 })
 export class ShelfModule {}
