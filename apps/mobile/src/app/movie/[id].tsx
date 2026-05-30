@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
@@ -55,6 +56,8 @@ export default function MovieDetailScreen() {
 					</DetailHero>
 
 					<MediaTrackingActions mediaType="movie" movieId={id} />
+
+					<AddToListButton mediaType="movie" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
 					<CastSection cast={data.credits?.cast} />
