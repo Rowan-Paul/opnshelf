@@ -6,10 +6,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CastSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
+import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SeasonCard } from "@/components/detail/SeasonCard";
+import { YourNote } from "@/components/detail/YourNote";
 import { YourReviews } from "@/components/detail/YourReviews";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -65,6 +67,8 @@ export default function ShowDetailScreen() {
 
 					<MediaTrackingActions mediaType="show" showId={id} />
 
+					<FriendWatchers mediaType="show" mediaId={id} />
+
 					<AddToListButton mediaType="show" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
@@ -92,6 +96,7 @@ export default function ShowDetailScreen() {
 
 					<CastSection cast={data.credits?.cast} />
 					<YourReviews mediaType="show" mediaId={id} />
+					<YourNote mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>
