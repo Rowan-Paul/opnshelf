@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { Link, Stack } from "expo-router";
+import { ChevronRight, Download } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
@@ -36,6 +37,16 @@ export default function SettingsScreen() {
 							</Text>
 						</View>
 					)}
+
+					<Link href="/trakt-import" asChild>
+						<Pressable className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
+							<Download color="#94a3b8" size={20} />
+							<Text className="flex-1 font-medium text-foreground">
+								Import from Trakt
+							</Text>
+							<ChevronRight color="#94a3b8" size={18} />
+						</Pressable>
+					</Link>
 
 					<Pressable
 						disabled={isSigningOut}
