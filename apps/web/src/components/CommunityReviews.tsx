@@ -199,7 +199,7 @@ export default function CommunityReviews({
 
 	if (isLoading) {
 		return (
-			<section>
+			<section id="community-reviews">
 				<h2 className="mb-4 text-display-3">Community Reviews</h2>
 				<div className="space-y-4">
 					{[1, 2, 3].map((n) => (
@@ -220,7 +220,7 @@ export default function CommunityReviews({
 	}
 
 	return (
-		<section>
+		<section id="community-reviews">
 			<h2 className="mb-4 text-display-3">
 				<MessageSquare className="mr-2 inline-block size-5" />
 				Community Reviews

@@ -30,6 +30,12 @@ interface ReviewDialogProps {
 	/** When set, the dialog edits this review; otherwise it creates a new one. */
 	review?: EditableReview;
 	onSuccess?: () => void;
+	/**
+	 * Element id to scroll into view after a successful save, so the user lands
+	 * on their freshly published review. Defaults to the community reviews
+	 * section present on every media page; no-ops if no such element exists.
+	 */
+	scrollTargetId?: string;
 }
 
 export function ReviewDialog({
@@ -41,6 +47,7 @@ export function ReviewDialog({
 	episodeNumber,
 	review,
 	onSuccess,
+	scrollTargetId = "community-reviews",
 }: ReviewDialogProps) {
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
@@ -87,11 +94,27 @@ export function ReviewDialog({
 		if (wasPending.current && !isPending && succeeded) {
 			onOpenChange(false);
 			onSuccess?.();
+			if (scrollTargetId) {
+				// Defer so the dialog can start closing and the list can render the
+				// new review before we scroll to it.
+				requestAnimationFrame(() => {
+					document
+						.getElementById(scrollTargetId)
+						?.scrollIntoView({ behavior: "smooth", block: "start" });
+				});
+			}
 			createMutation.reset();
 			updateMutation.reset();
 		}
 		wasPending.current = isPending;
-	}, [isPending, createMutation, updateMutation, onOpenChange, onSuccess]);
+	}, [
+		isPending,
+		createMutation,
+		updateMutation,
+		onOpenChange,
+		onSuccess,
+		scrollTargetId,
+	]);
 
 	const resolvedMediaType =
 		episodeNumber != null

@@ -3,15 +3,15 @@ import {
 	Check,
 	Heart,
 	Loader2,
+	MessageSquarePlus,
 	Share2,
-	Star,
 	StickyNote,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { useListActions, useListItemStatus } from "#/lib/hooks";
 import { useNote } from "#/lib/hooks/useNotes";
-import { useRating } from "#/lib/hooks/useRatings";
+import { useMediaReviews } from "#/lib/hooks/useReviews";
 import { NoteDialog } from "./NoteDialog";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -51,13 +51,18 @@ export default function MediaActionsBar({
 		seasonNumber,
 		episodeNumber,
 	});
-	const { data: ratingRecord } = useRating({
-		userDid,
+	const { data: reviews } = useMediaReviews({
 		mediaType,
 		mediaId,
 		seasonNumber,
 		episodeNumber,
 	});
+	// A user may write several Reviews per title; the button always opens a fresh
+	// one. The active state reflects whether they have *reviewed* this title —
+	// independent of any Rating (those are separate entities).
+	const hasReviewed = (reviews?.items ?? []).some(
+		(review) => review.userDid === userDid,
+	);
 
 	const handleShare = async () => {
 		const url = window.location.href;
@@ -151,15 +156,13 @@ export default function MediaActionsBar({
 					type="button"
 					onClick={() => setReviewDialogOpen(true)}
 					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-						ratingRecord?.rating
-							? "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
+						hasReviewed
+							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
 							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 					}`}
-					aria-label={ratingRecord?.rating ? "Edit review" : "Add review"}
+					aria-label={hasReviewed ? "Write another review" : "Write a review"}
 				>
-					<Star
-						className={`size-5 ${ratingRecord?.rating ? "fill-current" : ""}`}
-					/>
+					<MessageSquarePlus className="size-5" />
 				</button>
 
 				{/* Share Button */}
