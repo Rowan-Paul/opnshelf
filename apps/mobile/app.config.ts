@@ -8,6 +8,7 @@ import type { ExpoConfig } from "expo/config";
 const config: ExpoConfig = {
 	name: "OpnShelf",
 	slug: "opnshelf",
+	owner: "rowanpaul",
 	version: "1.0.0",
 	scheme: "opnshelf",
 	orientation: "portrait",
@@ -52,6 +53,9 @@ const config: ExpoConfig = {
 		posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
 		posthogHost:
 			process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
+		eas: {
+			projectId: "87d86952-59ab-4711-9f5f-f9477b2d14f6",
+		},
 	},
 };
 
