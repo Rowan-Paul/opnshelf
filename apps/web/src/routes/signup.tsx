@@ -4,10 +4,11 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Film, HelpCircle, Loader2 } from "lucide-react";
+import { ArrowRight, HelpCircle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
+import Logo from "#/components/Logo";
 import { TurnstileWidget } from "#/components/TurnstileWidget";
 import {
 	Tooltip,
@@ -111,9 +112,7 @@ function SignupPage() {
 			<div className="w-full max-w-md">
 				<div className="mb-8 text-center">
 					<div className="mb-4 flex justify-center">
-						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
-							<Film className="size-8" />
-						</div>
+						<Logo className="size-16 rounded-2xl" />
 					</div>
 					<h1 className="text-display-2">Create your OpnShelf account</h1>
 					<p className="mt-2 text-(--foreground-muted)">

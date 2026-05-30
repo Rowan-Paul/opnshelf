@@ -39,6 +39,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import Logo from "#/components/Logo";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -315,9 +316,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 	return (
 		<div className="card p-8 text-center">
 			<div className="mb-6 flex justify-center">
-				<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
-					<Film className="size-8" />
-				</div>
+				<Logo className="size-16 rounded-2xl" />
 			</div>
 			<h1 className="mb-3 text-display-2">Welcome to OpnShelf</h1>
 			<p className="mx-auto mb-8 max-w-sm text-(--foreground-muted)">
@@ -591,9 +590,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	return (
 		<div className="card p-8">
 			<div className="mb-6 flex justify-center">
-				<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
-					<Film className="size-8" />
-				</div>
+				<Logo className="size-16 rounded-2xl" />
 			</div>
 			<h1 className="mb-2 text-center text-display-2">Your Preferences</h1>
 			<p className="mb-8 text-center text-(--foreground-muted)">

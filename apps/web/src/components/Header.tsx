@@ -23,6 +23,7 @@ import {
 import { useAuth } from "#/lib/auth-context";
 import { useSearchDialog } from "#/lib/search-dialog-context";
 import { UserAvatar } from "./following/UserAvatar";
+import Logo from "./Logo";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
@@ -75,9 +76,7 @@ export default function Header() {
 				<div className="container-app">
 					<nav className="flex h-16 items-center justify-between">
 						<Link to="/" className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
-								<Film className="size-4" />
-							</div>
+							<Logo className="size-8 rounded-lg" />
 							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
 							</span>
@@ -101,9 +100,7 @@ export default function Header() {
 					{/* Logo */}
 					<div className="flex items-center gap-2">
 						<Link to="/" className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--accent) text-[#3f2e00]">
-								<Film className="size-4" />
-							</div>
+							<Logo className="size-8 rounded-lg" />
 							<span className="font-bold font-display text-lg tracking-tight">
 								OpnShelf
 							</span>

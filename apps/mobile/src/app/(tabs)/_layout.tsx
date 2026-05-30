@@ -21,6 +21,9 @@ export default function TabLayout() {
 	if (!isAuthenticated || !user) {
 		return <Redirect href="/login" />;
 	}
+	if (user.needsEmailVerification) {
+		return <Redirect href="/verify-email" />;
+	}
 	if (user.needsOnboarding) {
 		return <Redirect href="/onboarding" />;
 	}

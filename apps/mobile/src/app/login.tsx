@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
 	ActivityIndicator,
@@ -17,7 +17,7 @@ type LoginParams = {
 };
 
 export default function LoginScreen() {
-	const { user, isLoading, isAuthenticated, login, signup } = useAuth();
+	const { user, isLoading, isAuthenticated, login } = useAuth();
 	const { reason } = useLocalSearchParams<LoginParams>();
 	const [handle, setHandle] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +107,7 @@ export default function LoginScreen() {
 
 						<Pressable
 							disabled={isSubmitting}
-							onPress={() => submit(() => signup())}
+							onPress={() => router.push("/signup")}
 							className="items-center justify-center rounded-lg border border-border px-4 py-3"
 						>
 							<Text className="font-semibold text-accent text-base">

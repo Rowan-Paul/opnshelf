@@ -4,10 +4,11 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { AlertTriangle, ArrowRight, Film, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
+import Logo from "#/components/Logo";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
@@ -68,9 +69,7 @@ function LoginPage() {
 				{/* Logo */}
 				<div className="mb-8 text-center">
 					<div className="mb-4 flex justify-center">
-						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent) text-[#3f2e00]">
-							<Film className="size-8" />
-						</div>
+						<Logo className="size-16 rounded-2xl" />
 					</div>
 					<h1 className="text-display-2">Welcome to OpnShelf</h1>
 					<p className="mt-2 text-(--foreground-muted)">
