@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CastSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -67,6 +68,8 @@ export default function ShowDetailScreen() {
 					<MediaTrackingActions mediaType="show" showId={id} />
 
 					<FriendWatchers mediaType="show" mediaId={id} />
+
+					<AddToListButton mediaType="show" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
 

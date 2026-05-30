@@ -91,6 +91,8 @@ export default function RootLayout() {
 				<Stack.Screen name="settings" options={{ headerShown: true }} />
 				<Stack.Screen name="calendar" options={{ headerShown: true }} />
 				<Stack.Screen name="friends" options={{ headerShown: true }} />
+				<Stack.Screen name="lists/index" options={{ headerShown: true }} />
+				<Stack.Screen name="lists/[slug]" options={{ headerShown: true }} />
 				<Stack.Screen name="movie/[id]" />
 				<Stack.Screen name="person/[id]" />
 				<Stack.Screen name="show/[id]/index" />
