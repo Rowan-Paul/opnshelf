@@ -356,6 +356,7 @@ export class UsersService {
 					select: {
 						followers: true,
 						following: true,
+						reviews: true,
 					},
 				},
 			},
@@ -364,6 +365,8 @@ export class UsersService {
 		if (!user) {
 			throw new NotFoundException("User not found");
 		}
+
+		const stats = await this.getProfileStats(user.did);
 
 		return {
 			did: user.did,
@@ -376,6 +379,126 @@ export class UsersService {
 			showTangledOnProfile: user.showTangledOnProfile,
 			followersCount: user._count.followers,
 			followingCount: user._count.following,
+			reviewsCount: user._count.reviews,
+			...stats,
+		};
+	}
+
+	/**
+	 * Compute the derived stats shown in the profile header: a 30-day watch
+	 * activity graph, the most-watched show, and the current year's watch count.
+	 * A "watch" is one tracked row — rewatches are counted, by design (see
+	 * CONTEXT.md). All windows are computed in UTC.
+	 */
+	private async getProfileStats(did: string): Promise<{
+		activityLast30Days: { date: string; count: number }[];
+		mostWatchedShow: {
+			showId: string;
+			title: string;
+			posterPath: string | null;
+			episodeWatchCount: number;
+		} | null;
+		watchedThisYear: number;
+	}> {
+		const now = new Date();
+		const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+		// 30-day window: UTC midnight 29 days ago through today inclusive.
+		const startOfToday = new Date(
+			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+		);
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		const start30 = new Date(startOfToday.getTime() - 29 * DAY_MS);
+
+		const thisYearWhere = {
+			status: "watched",
+			watchedDate: { gte: startOfYear },
+		};
+
+		const [
+			moviesThisYear,
+			episodesThisYear,
+			movieActivity,
+			episodeActivity,
+			topShow,
+		] = await Promise.all([
+			this.prisma.trackedMovie.count({
+				where: { userDid: did, ...thisYearWhere },
+			}),
+			this.prisma.trackedEpisode.count({
+				where: { userDid: did, ...thisYearWhere },
+			}),
+			this.prisma.trackedMovie.findMany({
+				where: {
+					userDid: did,
+					status: "watched",
+					watchedDate: { gte: start30 },
+				},
+				select: { watchedDate: true },
+			}),
+			this.prisma.trackedEpisode.findMany({
+				where: {
+					userDid: did,
+					status: "watched",
+					watchedDate: { gte: start30 },
+				},
+				select: { watchedDate: true },
+			}),
+			this.prisma.trackedEpisode.groupBy({
+				by: ["showId"],
+				where: { userDid: did, status: "watched" },
+				_count: { showId: true },
+				_max: { watchedDate: true },
+				orderBy: [
+					{ _count: { showId: "desc" } },
+					{ _max: { watchedDate: "desc" } },
+				],
+				take: 1,
+			}),
+		]);
+
+		// Pre-seed all 30 day buckets to 0 so empty days render as gaps.
+		const buckets = new Map<string, number>();
+		for (let i = 0; i < 30; i++) {
+			const day = new Date(start30.getTime() + i * DAY_MS);
+			buckets.set(day.toISOString().slice(0, 10), 0);
+		}
+		for (const row of [...movieActivity, ...episodeActivity]) {
+			if (!row.watchedDate) continue;
+			const key = row.watchedDate.toISOString().slice(0, 10);
+			const current = buckets.get(key);
+			if (current !== undefined) buckets.set(key, current + 1);
+		}
+		const activityLast30Days = Array.from(buckets, ([date, count]) => ({
+			date,
+			count,
+		}));
+
+		let mostWatchedShow: {
+			showId: string;
+			title: string;
+			posterPath: string | null;
+			episodeWatchCount: number;
+		} | null = null;
+		const top = topShow[0];
+		if (top && top._count.showId > 0) {
+			const show = await this.prisma.show.findUnique({
+				where: { showId: top.showId },
+				select: { showId: true, title: true, posterPath: true },
+			});
+			if (show) {
+				mostWatchedShow = {
+					showId: show.showId,
+					title: show.title,
+					posterPath: show.posterPath,
+					episodeWatchCount: top._count.showId,
+				};
+			}
+		}
+
+		return {
+			activityLast30Days,
+			mostWatchedShow,
+			watchedThisYear: moviesThisYear + episodesThisYear,
 		};
 	}
 

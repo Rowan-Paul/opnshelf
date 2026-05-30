@@ -1,5 +1,5 @@
-import { Eye, Loader2, Pencil, Save, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Loader2, Pencil, Save, X } from "lucide-react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -9,7 +9,10 @@ import {
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
 import { useCreateReview, useUpdateReview } from "#/lib/hooks/useReviews";
-import { MarkdownPreview } from "./MarkdownPreview";
+
+// The WYSIWYG editor (Milkdown/ProseMirror) is DOM-only and heavy, so it is
+// lazy-loaded and rendered client-side only (see the `mounted` gate below).
+const MarkdownEditor = lazy(() => import("./MarkdownEditor"));
 
 export interface EditableReview {
 	id: string;
@@ -59,17 +62,23 @@ export function ReviewDialog({
 
 	const [title, setTitle] = useState("");
 	const [markdown, setMarkdown] = useState("");
-	const [showPreview, setShowPreview] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	// Client-only gate: the editor cannot render during SSR.
+	const [mounted, setMounted] = useState(false);
 
 	const wasPending = useRef(false);
 	const isEditing = !!review;
 	const isPending = createMutation.isPending || updateMutation.isPending;
 
 	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
 		if (open) {
 			setTitle(review?.title ?? "");
 			setMarkdown(review?.markdown ?? "");
-			setShowPreview(false);
+			setError(null);
 		}
 	}, [open, review?.title, review?.markdown]);
 
@@ -93,10 +102,24 @@ export function ReviewDialog({
 
 	const trimmedTitle = title.trim();
 	const trimmedBody = markdown.trim();
-	const canSave = trimmedTitle.length > 0 && trimmedBody.length > 0;
+	// The WYSIWYG editor has no hard maxLength, so enforce the cap (counted on
+	// the serialized markdown — what actually gets stored) here on save.
+	const overLimit = markdown.length > 20000;
 
 	const handleSave = () => {
-		if (!canSave) return;
+		if (!trimmedTitle) {
+			setError("Give your review a title before publishing.");
+			return;
+		}
+		if (!trimmedBody) {
+			setError("Write your review before publishing.");
+			return;
+		}
+		if (overLimit) {
+			setError("Your review is over the 20,000 character limit.");
+			return;
+		}
+		setError(null);
 
 		if (isEditing && review) {
 			updateMutation.mutate({
@@ -141,56 +164,49 @@ export function ReviewDialog({
 					<input
 						id="review-title"
 						value={title}
-						onChange={(e) => setTitle(e.target.value)}
+						onChange={(e) => {
+							setTitle(e.target.value);
+							setError(null);
+						}}
 						placeholder="Give your review a title"
 						className="input text-sm"
 						maxLength={300}
 					/>
 				</div>
 
-				<div className="flex items-center justify-between">
-					<span className="text-(--foreground-muted) text-sm">
-						Review (Markdown)
-					</span>
-					<button
-						type="button"
-						onClick={() => setShowPreview((v) => !v)}
-						className="btn btn-ghost btn-sm gap-1"
-					>
-						{showPreview ? (
-							<>
-								<Pencil className="size-3.5" />
-								Write
-							</>
-						) : (
-							<>
-								<Eye className="size-3.5" />
-								Preview
-							</>
-						)}
-					</button>
-				</div>
+				<span className="text-(--foreground-muted) text-sm">Review</span>
 
-				{showPreview ? (
-					<div className="input min-h-[200px] overflow-auto text-sm">
-						{trimmedBody ? (
-							<MarkdownPreview markdown={markdown} />
-						) : (
-							<p className="text-(--foreground-subtle)">Nothing to preview.</p>
-						)}
-					</div>
+				{mounted ? (
+					<Suspense
+						fallback={
+							<div className="input flex min-h-[238px] items-center justify-center">
+								<Loader2 className="size-4 animate-spin text-(--foreground-muted)" />
+							</div>
+						}
+					>
+						<MarkdownEditor
+							key={review?.id ?? "new"}
+							value={review?.markdown ?? ""}
+							onChange={(md) => {
+								setMarkdown(md);
+								setError(null);
+							}}
+						/>
+					</Suspense>
 				) : (
-					<textarea
-						value={markdown}
-						onChange={(e) => setMarkdown(e.target.value)}
-						placeholder="Write your review using Markdown..."
-						className="input min-h-[200px] resize-y text-sm"
-						maxLength={20000}
-					/>
+					<div className="input min-h-[238px]" />
+				)}
+
+				{error && (
+					<p className="text-red-500 text-sm" role="alert">
+						{error}
+					</p>
 				)}
 
 				<div className="flex items-center justify-between">
-					<span className="text-(--foreground-subtle) text-xs">
+					<span
+						className={`text-xs ${overLimit ? "text-red-500" : "text-(--foreground-subtle)"}`}
+					>
 						{markdown.length}/20000
 					</span>
 					<div className="flex gap-2">
@@ -205,7 +221,7 @@ export function ReviewDialog({
 						<button
 							type="button"
 							onClick={handleSave}
-							disabled={isPending || !canSave}
+							disabled={isPending}
 							className="btn btn-primary btn-sm gap-1"
 						>
 							{isPending ? (

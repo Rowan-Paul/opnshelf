@@ -49,7 +49,10 @@ export default function CountrySelector({
 					<ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
 				</button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[280px] p-0" align="start">
+			<PopoverContent
+				className="w-(--radix-popover-trigger-width) p-0"
+				align="start"
+			>
 				<Command>
 					<CommandInput placeholder="Search country…" />
 					<CommandList>

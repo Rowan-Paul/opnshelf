@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@milkdown/kit": "7.21.1",
+    "@milkdown/react": "7.21.1",
     "@opnshelf/api": "workspace:*",
     "@posthog/react": "^1.7.0",
     "@t3-oss/env-core": "^0.13.10",
@@ -37,6 +39,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
     "slugify": "^1.6.9",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.0.2",

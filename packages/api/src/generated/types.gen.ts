@@ -563,6 +563,36 @@ export type MarkShowWatchedDto = {
     watchedAt?: string;
 };
 
+export type ProfileActivityDayDto = {
+    /**
+     * UTC calendar day in YYYY-MM-DD form
+     */
+    date: string;
+    /**
+     * Number of items watched on this day (rewatches included)
+     */
+    count: number;
+};
+
+export type MostWatchedShowDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * Show title
+     */
+    title: string;
+    /**
+     * TMDB poster path
+     */
+    posterPath: string | null;
+    /**
+     * Number of logged episode watches for this show (rewatches included)
+     */
+    episodeWatchCount: number;
+};
+
 export type PublicUserProfileDto = {
     /**
      * Stable DID for the user
@@ -604,6 +634,22 @@ export type PublicUserProfileDto = {
      * Public following count
      */
     followingCount: number;
+    /**
+     * Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)
+     */
+    activityLast30Days: Array<ProfileActivityDayDto>;
+    /**
+     * The show with the most logged episode watches, or null if none tracked
+     */
+    mostWatchedShow: MostWatchedShowDto | null;
+    /**
+     * Items watched (movies + episodes) so far this calendar year, UTC
+     */
+    watchedThisYear: number;
+    /**
+     * Total number of reviews the user has written
+     */
+    reviewsCount: number;
 };
 
 export type SocialUserCardDto = {

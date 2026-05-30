@@ -1,6 +1,7 @@
 import {
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieWatchHistoryQueryKey,
+	moviesControllerGetUserMoviesPaginatedQueryKey,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
@@ -9,6 +10,7 @@ import {
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
 	showsControllerGetShowWatchHistoryQueryKey,
+	showsControllerGetUserEpisodesPaginatedQueryKey,
 	showsControllerGetUserUpNextOptions,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
@@ -75,10 +77,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				error instanceof Error ? error.message : "Failed to mark as watched",
 			);
 		},
-		onSettled: (_data, _error, _variables, context) => {
-			if (context?.userMoviesKey) {
-				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
-			}
+		onSettled: () => {
+			invalidateUserMoviesQueries();
 			if (options.mediaType === "movie") {
 				queryClient.invalidateQueries({
 					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
@@ -126,10 +126,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 					: "Failed to remove from watched",
 			);
 		},
-		onSettled: (_data, _error, _variables, context) => {
-			if (context?.userMoviesKey) {
-				queryClient.invalidateQueries({ queryKey: context.userMoviesKey });
-			}
+		onSettled: () => {
+			invalidateUserMoviesQueries();
 			if (options.mediaType === "movie") {
 				queryClient.invalidateQueries({
 					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
@@ -161,11 +159,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 					}),
 				});
 			}
-			queryClient.invalidateQueries({
-				queryKey: moviesControllerGetUserMoviesQueryKey({
-					path: { userDid },
-				}),
-			});
+			invalidateUserMoviesQueries();
 			invalidateShelfQueries();
 		},
 	});
@@ -185,6 +179,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
 				.queryKey,
 		});
+		// Profile "Recent Episodes" uses the paginated endpoint; partial match
+		// (no `query`) covers any page size.
+		queryClient.invalidateQueries({
+			queryKey: showsControllerGetUserEpisodesPaginatedQueryKey({
+				path: { userDid },
+			}),
+		});
 		queryClient.invalidateQueries({ queryKey: ["shows"] });
 	};
 
@@ -196,6 +197,20 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 		queryClient.invalidateQueries({
 			queryKey: shelfControllerGetUserActivitySummaryQueryKey({
+				path: { userDid },
+			}),
+		});
+	};
+
+	// Invalidate both the non-paginated user-movies list and the paginated
+	// variant used by the profile's "Recent Movies" section. Omitting `query`
+	// makes this a partial match, so any page size (e.g. limit: 8) is covered.
+	const invalidateUserMoviesQueries = () => {
+		queryClient.invalidateQueries({
+			queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
+		});
+		queryClient.invalidateQueries({
+			queryKey: moviesControllerGetUserMoviesPaginatedQueryKey({
 				path: { userDid },
 			}),
 		});

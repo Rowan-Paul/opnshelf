@@ -183,6 +183,43 @@ export class UserProfileDto {
 	showTangledOnProfile!: boolean;
 }
 
+export class ProfileActivityDayDto {
+	@ApiProperty({
+		description: "UTC calendar day in YYYY-MM-DD form",
+	})
+	date!: string;
+
+	@ApiProperty({
+		description: "Number of items watched on this day (rewatches included)",
+	})
+	count!: number;
+}
+
+export class MostWatchedShowDto {
+	@ApiProperty({
+		description: "TMDB show ID",
+	})
+	showId!: string;
+
+	@ApiProperty({
+		description: "Show title",
+	})
+	title!: string;
+
+	@ApiProperty({
+		description: "TMDB poster path",
+		nullable: true,
+		type: String,
+	})
+	posterPath!: string | null;
+
+	@ApiProperty({
+		description:
+			"Number of logged episode watches for this show (rewatches included)",
+	})
+	episodeWatchCount!: number;
+}
+
 export class PublicUserProfileDto {
 	@ApiProperty({
 		description: "Stable DID for the user",
@@ -241,4 +278,30 @@ export class PublicUserProfileDto {
 		description: "Public following count",
 	})
 	followingCount!: number;
+
+	@ApiProperty({
+		description:
+			"Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)",
+		type: [ProfileActivityDayDto],
+	})
+	activityLast30Days!: ProfileActivityDayDto[];
+
+	@ApiProperty({
+		description:
+			"The show with the most logged episode watches, or null if none tracked",
+		nullable: true,
+		type: MostWatchedShowDto,
+	})
+	mostWatchedShow!: MostWatchedShowDto | null;
+
+	@ApiProperty({
+		description:
+			"Items watched (movies + episodes) so far this calendar year, UTC",
+	})
+	watchedThisYear!: number;
+
+	@ApiProperty({
+		description: "Total number of reviews the user has written",
+	})
+	reviewsCount!: number;
 }

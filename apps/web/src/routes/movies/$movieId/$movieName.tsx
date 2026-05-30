@@ -33,7 +33,6 @@ import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
 import PersonGrid from "../../../components/PersonGrid";
 import { ReviewDialog } from "../../../components/ReviewDialog";
-import ReviewSection from "../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 import WatchProviders from "../../../components/WatchProviders";
 import { YourActivity } from "../../../components/YourActivity";
@@ -356,8 +355,6 @@ function MovieDetailPage() {
 								isDeletePending={isDeleteMovieHistoryPending}
 							/>
 						)}
-
-						<ReviewSection mediaType="movie" mediaId={movieId} />
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}

@@ -2,7 +2,7 @@ import { Heart, Loader2, MessageSquare } from "lucide-react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
 import { useMediaReviews, useToggleReviewLike } from "#/lib/hooks/useReviews";
-import { MarkdownPreview } from "./MarkdownPreview";
+import { MarkdownContent } from "./MarkdownContent";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -142,7 +142,7 @@ function ReviewCard({
 				<div className="min-w-0 flex-1">
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
-						<MarkdownPreview markdown={review.markdown} />
+						<MarkdownContent markdown={review.markdown} />
 					</div>
 				</div>
 			</div>

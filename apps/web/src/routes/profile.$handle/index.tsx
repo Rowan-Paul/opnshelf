@@ -1,16 +1,17 @@
 import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
+	type MostWatchedShowDto,
 	moviesControllerGetUserMoviesPaginatedOptions,
+	type ProfileActivityDayDto,
 	showsControllerGetUserEpisodesPaginatedOptions,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Film, Heart, List, Star, Tv } from "lucide-react";
+import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
-import MediaCard from "#/components/MediaCard";
 import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -54,62 +55,31 @@ function ProfileOverviewPage() {
 	const episodes = episodesData?.items ?? [];
 
 	// Fetch public lists
-	const { data: listsData, isLoading: listsLoading } = useQuery({
+	const { data: listsData } = useQuery({
 		...listsControllerGetPublicUserListsOptions({
 			path: { userDid },
 		}),
 		enabled: !!userDid,
 	});
 
-	const totalMovies = moviesData?.total ?? 0;
-	const totalEpisodes = episodesData?.total ?? 0;
-	const totalLists = listsData?.length ?? 0;
-	const totalWatched = (moviesData?.total ?? 0) + (episodesData?.total ?? 0);
-
 	const { data: reviewsData, isLoading: reviewsLoading } = useUserReviews({
 		userDid,
 		limit: 4,
 	});
-	const totalReviews = reviewsData?.total ?? 0;
 
 	const watchlist = listsData?.find((l) => l.slug === "watchlist");
 	const favorites = listsData?.find((l) => l.slug === "favorites");
 
 	return (
 		<div className="space-y-10">
-			{/* Stats Row */}
-			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<StatCard
-					label="Movies"
-					value={totalMovies}
-					icon={Film}
-					isLoading={!moviesData && !!userDid}
-				/>
-				<StatCard
-					label="Episodes"
-					value={totalEpisodes}
-					icon={Tv}
-					isLoading={!episodesData && !!userDid}
-				/>
-				<StatCard
-					label="Lists"
-					value={totalLists}
-					icon={List}
-					isLoading={listsLoading}
-				/>
-				<StatCard
-					label="Watched"
-					value={totalWatched}
-					icon={Clock}
-					isLoading={!moviesData && !episodesData && !!userDid}
-				/>
-				<StatCard
-					label="Reviews"
-					value={totalReviews}
-					icon={Star}
-					isLoading={reviewsLoading}
-				/>
-			</div>
+			{/* Stats strip: 30-day activity graph + a few headline stats */}
+			<StatsStrip
+				activity={profile?.activityLast30Days}
+				mostWatchedShow={profile?.mostWatchedShow ?? null}
+				watchedThisYear={profile?.watchedThisYear ?? 0}
+				reviewsCount={profile?.reviewsCount ?? 0}
+				isLoading={!profile && !!handle}
+			/>
 
 			{/* Last Movies & Episodes */}
 			<div className="grid gap-8 lg:grid-cols-2">
@@ -228,6 +198,7 @@ function ProfileOverviewPage() {
 					list={watchlist}
 					handle={handle}
 					userDid={userDid}
+					isOwner={isOwner}
 					icon={Clock}
 					emptyText="Nothing on watchlist"
 				/>
@@ -236,6 +207,7 @@ function ProfileOverviewPage() {
 					list={favorites}
 					handle={handle}
 					userDid={userDid}
+					isOwner={isOwner}
 					icon={Heart}
 					emptyText="Nothing on favorites"
 				/>
@@ -322,33 +294,107 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 	);
 }
 
-function StatCard({
-	label,
-	value,
-	icon: Icon,
+function StatsStrip({
+	activity,
+	mostWatchedShow,
+	watchedThisYear,
+	reviewsCount,
 	isLoading,
 }: {
-	label: string;
-	value: number;
-	icon: React.ComponentType<{ className?: string }>;
+	activity?: ProfileActivityDayDto[];
+	mostWatchedShow: MostWatchedShowDto | null;
+	watchedThisYear: number;
+	reviewsCount: number;
 	isLoading: boolean;
 }) {
+	if (isLoading) {
+		return <div className="card h-32 animate-pulse" />;
+	}
+
+	const days = activity ?? [];
+	const last30Total = days.reduce((sum, d) => sum + d.count, 0);
+
 	return (
-		<div className="card p-4">
-			<div className="flex items-center gap-3">
-				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
-					<Icon className="h-5 w-5" />
+		<div className="card flex flex-col gap-6 p-5 lg:flex-row">
+			{/* Activity graph */}
+			<div className="min-w-0 flex-1">
+				<div className="mb-3 flex items-baseline justify-between">
+					<h2 className="flex items-center gap-2 font-medium text-(--foreground-muted) text-sm">
+						<Clock className="size-4 text-(--accent)" />
+						Last 30 days
+					</h2>
+					<span className="text-(--foreground-muted) text-xs">
+						{last30Total} watched
+					</span>
 				</div>
-				<div>
-					{isLoading ? (
-						<div className="h-6 w-8 animate-pulse rounded bg-(--background-subtle)" />
-					) : (
-						<p className="font-semibold text-lg">{value}</p>
-					)}
-					<p className="text-(--foreground-muted) text-sm">{label}</p>
-				</div>
+				<ActivityGraph data={days} />
+			</div>
+
+			{/* Headline stats */}
+			<div className="flex items-center gap-6 lg:gap-8 lg:border-(--border) lg:border-l lg:pl-8">
+				{mostWatchedShow && <MostWatchedShowStat show={mostWatchedShow} />}
+				<NumberStat label="This year" value={watchedThisYear} />
+				<NumberStat label="Reviews" value={reviewsCount} />
 			</div>
 		</div>
+	);
+}
+
+function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
+	const max = Math.max(1, ...data.map((d) => d.count));
+
+	return (
+		<div className="flex h-20 items-end gap-[3px]">
+			{data.map((d) => {
+				const pct = (d.count / max) * 100;
+				return (
+					<div
+						key={d.date}
+						title={`${d.date} — ${d.count} watched`}
+						className={`flex-1 rounded-sm ${
+							d.count > 0 ? "bg-(--accent)" : "bg-(--background-subtle)"
+						}`}
+						style={{ height: d.count > 0 ? `${Math.max(12, pct)}%` : "3px" }}
+					/>
+				);
+			})}
+		</div>
+	);
+}
+
+function NumberStat({ label, value }: { label: string; value: number }) {
+	return (
+		<div className="flex flex-col justify-center">
+			<p className="font-semibold text-2xl tabular-nums">{value}</p>
+			<p className="text-(--foreground-muted) text-xs">{label}</p>
+		</div>
+	);
+}
+
+function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
+	return (
+		<Link
+			to="/shows/$showId/$showName"
+			params={{ showId: show.showId, showName: toSlug(show.title) }}
+			className="flex items-center gap-3"
+		>
+			{show.posterPath ? (
+				<img
+					src={`https://image.tmdb.org/t/p/w200${show.posterPath}`}
+					alt={show.title}
+					className="h-14 w-10 shrink-0 rounded object-cover"
+				/>
+			) : (
+				<div className="h-14 w-10 shrink-0 rounded bg-(--background-subtle)" />
+			)}
+			<div className="min-w-0">
+				<p className="text-(--foreground-muted) text-xs">Most watched</p>
+				<p className="line-clamp-1 font-semibold text-sm">{show.title}</p>
+				<p className="text-(--foreground-muted) text-xs">
+					{show.episodeWatchCount} episodes
+				</p>
+			</div>
+		</Link>
 	);
 }
 
@@ -357,6 +403,7 @@ function ListPreview({
 	list,
 	handle,
 	userDid,
+	isOwner,
 	icon: Icon,
 	emptyText,
 }: {
@@ -364,6 +411,7 @@ function ListPreview({
 	list?: { slug: string; itemCount: number };
 	handle: string;
 	userDid: string;
+	isOwner: boolean;
 	icon: React.ComponentType<{ className?: string }>;
 	emptyText: string;
 }) {
@@ -420,7 +468,7 @@ function ListPreview({
 
 						return (
 							<div key={item.id} className="[&_article]:!w-full">
-								<MediaCard
+								<ActionableMediaCard
 									id={mediaId}
 									title={title}
 									seasonNumber={item.seasonNumber}
@@ -438,13 +486,7 @@ function ListPreview({
 											: ""
 									}
 									type={item.mediaType as "movie" | "show"}
-									href={
-										isEpisode
-											? `/shows/${mediaId}/${toSlug(title)}/seasons/${item.seasonNumber}/episodes/${item.episodeNumber}`
-											: item.mediaType === "movie"
-												? `/movies/${mediaId}/${toSlug(title)}`
-												: `/shows/${mediaId}/${toSlug(title)}`
-									}
+									interactive={isOwner}
 								/>
 							</div>
 						);

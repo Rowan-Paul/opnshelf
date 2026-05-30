@@ -9,7 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { MarkdownPreview } from "#/components/MarkdownPreview";
+import { MarkdownContent } from "#/components/MarkdownContent";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewDialog } from "#/components/ReviewDialog";
 import { useAuth } from "#/lib/auth-context";
@@ -187,7 +187,7 @@ function ReviewCard({
 				<p className="font-medium text-sm">{review.reviewTitle}</p>
 				{review.markdown && (
 					<div className="text-(--foreground-muted) text-sm leading-relaxed">
-						<MarkdownPreview markdown={review.markdown} />
+						<MarkdownContent markdown={review.markdown} />
 					</div>
 				)}
 			</ProfileContentCard>

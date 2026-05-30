@@ -2,7 +2,7 @@ import { Loader2, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteReview, useMediaReviews } from "#/lib/hooks/useReviews";
-import { MarkdownPreview } from "./MarkdownPreview";
+import { MarkdownContent } from "./MarkdownContent";
 import { type EditableReview, ReviewDialog } from "./ReviewDialog";
 
 interface ReviewSectionProps {
@@ -122,7 +122,7 @@ export default function ReviewSection({
 									</div>
 								</div>
 								<div className="text-(--foreground-muted)">
-									<MarkdownPreview markdown={review.markdown} />
+									<MarkdownContent markdown={review.markdown} />
 								</div>
 							</li>
 						))}

@@ -32,6 +32,13 @@ A movie, show, season, or episode that can be tracked, reviewed, and listed.
 **Shelf**:
 The collection of media items a user has marked as watched or tracked.
 
+**Watch**:
+A single logged instance of a user watching a media item. Rewatches are distinct Watches — there is intentionally no uniqueness constraint per user+item, so watching the same episode twice produces two Watches. Counts of "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles.
+_Avoid_: View, log entry
+
+**Most-Watched Show**:
+The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
+
 ## Flagged ambiguities
 
 - **"Review" vs "Rating"**: These are now two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (a `site.standard.document`) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.

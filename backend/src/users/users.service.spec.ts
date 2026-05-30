@@ -65,9 +65,17 @@ describe("UsersService", () => {
 		},
 		trackedMovie: {
 			findFirst: jest.fn(),
+			count: jest.fn().mockResolvedValue(0),
+			findMany: jest.fn().mockResolvedValue([]),
 		},
 		trackedEpisode: {
 			findFirst: jest.fn(),
+			count: jest.fn().mockResolvedValue(0),
+			findMany: jest.fn().mockResolvedValue([]),
+			groupBy: jest.fn().mockResolvedValue([]),
+		},
+		show: {
+			findUnique: jest.fn().mockResolvedValue(null),
 		},
 	} as unknown as PrismaService;
 
@@ -485,12 +493,15 @@ describe("UsersService", () => {
 			_count: {
 				followers: 4,
 				following: 7,
+				reviews: 2,
 			},
 		});
 
-		await expect(
-			service.getPublicProfileByHandle(" @Alice.Bsky.Social "),
-		).resolves.toEqual({
+		const profile = await service.getPublicProfileByHandle(
+			" @Alice.Bsky.Social ",
+		);
+
+		expect(profile).toMatchObject({
 			did: "did:plc:123",
 			handle: "alice.bsky.social",
 			displayName: "Alice",
@@ -501,7 +512,12 @@ describe("UsersService", () => {
 			showTangledOnProfile: true,
 			followersCount: 4,
 			followingCount: 7,
+			reviewsCount: 2,
+			watchedThisYear: 0,
+			mostWatchedShow: null,
 		});
+		// 30-day activity graph always has one bucket per day.
+		expect(profile.activityLast30Days).toHaveLength(30);
 		expect(prisma.user.findUnique).toHaveBeenCalledWith({
 			where: { handle: "alice.bsky.social" },
 			select: {
@@ -517,6 +533,7 @@ describe("UsersService", () => {
 					select: {
 						followers: true,
 						following: true,
+						reviews: true,
 					},
 				},
 			},

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
-import { MarkdownPreview } from "#/components/MarkdownPreview";
+import { MarkdownContent } from "#/components/MarkdownContent";
 import { toSlug } from "#/lib/slug";
 
 export const Route = createFileRoute("/@{$handle}/$segment")({
@@ -148,7 +148,7 @@ function CanonicalReviewPage() {
 					</div>
 
 					<div className="mt-6 text-(--foreground)">
-						<MarkdownPreview markdown={review.markdown} />
+						<MarkdownContent markdown={review.markdown} />
 					</div>
 				</div>
 			</div>
