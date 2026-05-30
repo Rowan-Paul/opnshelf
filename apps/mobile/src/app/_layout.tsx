@@ -89,8 +89,10 @@ export default function RootLayout() {
 				<Stack.Screen name="login" />
 				<Stack.Screen name="onboarding" />
 				<Stack.Screen name="settings" options={{ headerShown: true }} />
+				<Stack.Screen name="calendar" options={{ headerShown: true }} />
 				<Stack.Screen name="friends" options={{ headerShown: true }} />
 				<Stack.Screen name="movie/[id]" />
+				<Stack.Screen name="person/[id]" />
 				<Stack.Screen name="show/[id]/index" />
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
