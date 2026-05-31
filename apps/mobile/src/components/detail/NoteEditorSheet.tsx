@@ -5,10 +5,10 @@ import {
 	Modal,
 	Platform,
 	Pressable,
-	TextInput,
 	View,
 } from "react-native";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 
 interface NoteEditorSheetProps {
 	visible: boolean;
@@ -71,15 +71,14 @@ export function NoteEditorSheet({
 						</Pressable>
 					</View>
 
-					<TextInput
+					<TextField
+						variant="subtle"
+						multiline
+						className="min-h-36"
 						value={content}
 						onChangeText={setContent}
 						placeholder="Your thoughts about this title…"
-						placeholderTextColor="#94a3b8"
-						multiline
-						textAlignVertical="top"
 						maxLength={20000}
-						className="min-h-36 rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 					/>
 
 					{isEditing && onDelete ? (

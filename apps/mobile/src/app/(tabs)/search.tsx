@@ -7,12 +7,13 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SearchX, Users, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { Screen } from "@/components/ui/screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
@@ -149,24 +150,22 @@ export default function SearchScreen() {
 		<Screen className="px-0">
 			<View className="px-4 pb-3">
 				<Text className="mb-3 font-bold font-display text-2xl">Search</Text>
-				<View className="flex-row items-center gap-2 rounded-lg border border-border bg-card px-3">
-					<Search color="#94a3b8" size={18} />
-					<TextInput
-						value={query}
-						onChangeText={setQuery}
-						placeholder="Movies, shows, people…"
-						placeholderTextColor="#94a3b8"
-						autoCapitalize="none"
-						autoCorrect={false}
-						returnKeyType="search"
-						className="h-11 flex-1 font-sans text-base text-foreground"
-					/>
-					{query.length > 0 ? (
-						<Pressable hitSlop={8} onPress={() => setQuery("")}>
-							<X color="#94a3b8" size={18} />
-						</Pressable>
-					) : null}
-				</View>
+				<TextField
+					leading={<Search color="#94a3b8" size={18} />}
+					trailing={
+						query.length > 0 ? (
+							<Pressable hitSlop={8} onPress={() => setQuery("")}>
+								<X color="#94a3b8" size={18} />
+							</Pressable>
+						) : null
+					}
+					value={query}
+					onChangeText={setQuery}
+					placeholder="Movies, shows, people…"
+					autoCapitalize="none"
+					autoCorrect={false}
+					returnKeyType="search"
+				/>
 
 				<View className="mt-3 flex-row gap-2">
 					{TABS.map((tab) => {

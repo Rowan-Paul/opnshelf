@@ -2,14 +2,15 @@ import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
 	ActivityIndicator,
+	Image,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
-	TextInput,
 	View,
 } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 
 type LoginParams = {
@@ -51,13 +52,19 @@ export default function LoginScreen() {
 		>
 			<Screen>
 				<View className="flex-1 justify-center gap-6">
-					<View className="gap-2">
-						<Text className="font-bold font-display text-4xl text-foreground">
-							OpnShelf
-						</Text>
-						<Text className="text-base text-muted-foreground">
-							Sign in with your Atmosphere account.
-						</Text>
+					<View className="items-center gap-4">
+						<Image
+							source={require("../../assets/images/icon.png")}
+							style={{ width: 64, height: 64, borderRadius: 16 }}
+						/>
+						<View className="items-center gap-1.5">
+							<Text className="text-center font-bold font-display text-3xl text-foreground">
+								Welcome to OpnShelf
+							</Text>
+							<Text className="text-center text-base text-muted-foreground">
+								Track what you watch with your AT Protocol account
+							</Text>
+						</View>
 					</View>
 
 					{reason === "session_expired" && (
@@ -78,17 +85,17 @@ export default function LoginScreen() {
 					)}
 
 					<View className="gap-3">
-						<TextInput
+						<TextField
+							label="Your Handle"
+							helperText="Enter your Bluesky or AT Protocol handle"
 							value={handle}
 							onChangeText={setHandle}
-							placeholder="alice.example.com"
-							placeholderTextColor="#94a3b8"
+							placeholder="username.bsky.social"
 							autoCapitalize="none"
 							autoCorrect={false}
 							returnKeyType="go"
 							editable={!isSubmitting}
 							onSubmitEditing={() => submit(() => login(handle))}
-							className="rounded-lg border border-border bg-card px-4 py-3 font-sans text-base text-foreground"
 						/>
 
 						<Pressable
@@ -101,7 +108,7 @@ export default function LoginScreen() {
 								<ActivityIndicator size="small" color="#3f2e00" />
 							)}
 							<Text className="font-semibold text-base text-primary-foreground">
-								{isSubmitting ? "Connecting" : "Sign in"}
+								{isSubmitting ? "Connecting..." : "Sign In"}
 							</Text>
 						</Pressable>
 
@@ -111,7 +118,7 @@ export default function LoginScreen() {
 							className="items-center justify-center rounded-lg border border-border px-4 py-3"
 						>
 							<Text className="font-semibold text-accent text-base">
-								Create a new account
+								Create New Account
 							</Text>
 						</Pressable>
 					</View>

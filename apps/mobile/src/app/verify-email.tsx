@@ -13,11 +13,11 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
-	TextInput,
 	View,
 } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 
@@ -132,11 +132,10 @@ export default function VerifyEmailScreen() {
 					</View>
 
 					<View className="gap-3">
-						<TextInput
+						<TextField
 							value={code}
 							onChangeText={setCode}
 							placeholder="Paste the code from your email"
-							placeholderTextColor="#94a3b8"
 							autoCapitalize="none"
 							autoCorrect={false}
 							autoComplete="sms-otp"
@@ -144,7 +143,6 @@ export default function VerifyEmailScreen() {
 							returnKeyType="go"
 							editable={!isSubmitting}
 							onSubmitEditing={handleSubmit}
-							className="rounded-lg border border-border bg-card px-4 py-3 font-sans text-base text-foreground"
 						/>
 
 						<Pressable

@@ -5,10 +5,10 @@ import {
 	Modal,
 	Platform,
 	Pressable,
-	TextInput,
 	View,
 } from "react-native";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 
 interface ListEditorSheetProps {
 	visible: boolean;
@@ -67,24 +67,22 @@ export function ListEditorSheet({
 						</Pressable>
 					</View>
 
-					<TextInput
+					<TextField
+						variant="subtle"
 						value={name}
 						onChangeText={setName}
 						placeholder="List name"
-						placeholderTextColor="#94a3b8"
 						maxLength={200}
-						className="rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 					/>
 
-					<TextInput
+					<TextField
+						variant="subtle"
+						multiline
+						className="min-h-24"
 						value={description}
 						onChangeText={setDescription}
 						placeholder="Description (optional)"
-						placeholderTextColor="#94a3b8"
-						multiline
-						textAlignVertical="top"
 						maxLength={2000}
-						className="min-h-24 rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 					/>
 
 					<Pressable

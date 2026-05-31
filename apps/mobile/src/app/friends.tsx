@@ -7,10 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { Search, Users, UserX, X } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { useDebounce } from "@/lib/use-debounce";
@@ -127,24 +128,22 @@ export default function FriendsScreen() {
 			<Stack.Screen options={{ headerShown: true, title: "Friends" }} />
 
 			<View className="px-4 pt-3 pb-3">
-				<View className="flex-row items-center gap-2 rounded-lg border border-border bg-card px-3">
-					<Search color="#94a3b8" size={18} />
-					<TextInput
-						value={query}
-						onChangeText={setQuery}
-						placeholder="Find people to follow…"
-						placeholderTextColor="#94a3b8"
-						autoCapitalize="none"
-						autoCorrect={false}
-						returnKeyType="search"
-						className="h-11 flex-1 font-sans text-base text-foreground"
-					/>
-					{query.length > 0 ? (
-						<Pressable hitSlop={8} onPress={() => setQuery("")}>
-							<X color="#94a3b8" size={18} />
-						</Pressable>
-					) : null}
-				</View>
+				<TextField
+					leading={<Search color="#94a3b8" size={18} />}
+					trailing={
+						query.length > 0 ? (
+							<Pressable hitSlop={8} onPress={() => setQuery("")}>
+								<X color="#94a3b8" size={18} />
+							</Pressable>
+						) : null
+					}
+					value={query}
+					onChangeText={setQuery}
+					placeholder="Find people to follow…"
+					autoCapitalize="none"
+					autoCorrect={false}
+					returnKeyType="search"
+				/>
 
 				{hasQuery ? null : (
 					<View className="mt-3 flex-row gap-2">

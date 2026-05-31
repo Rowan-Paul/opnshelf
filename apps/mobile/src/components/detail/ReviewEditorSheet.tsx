@@ -6,12 +6,12 @@ import {
 	Platform,
 	Pressable,
 	ScrollView,
-	TextInput,
 	View,
 } from "react-native";
 import { MarkdownToolbar } from "@/components/detail/MarkdownToolbar";
 import { Markdown } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import type { TextSelection } from "@/lib/markdown-format";
 
 const MAX_LENGTH = 20000;
@@ -102,13 +102,12 @@ export function ReviewEditorSheet({
 						</Pressable>
 					</View>
 
-					<TextInput
+					<TextField
+						variant="subtle"
 						value={title}
 						onChangeText={setTitle}
 						placeholder="Review title"
-						placeholderTextColor="#94a3b8"
 						maxLength={300}
-						className="rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 					/>
 
 					<View className="flex-row gap-1 self-start rounded-lg bg-background-subtle p-1">
@@ -144,17 +143,16 @@ export function ReviewEditorSheet({
 									setSelection(edit.selection);
 								}}
 							/>
-							<TextInput
+							<TextField
+								variant="subtle"
+								multiline
+								className="min-h-36"
 								value={markdown}
 								onChangeText={setMarkdown}
 								selection={selection}
 								onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
 								placeholder="Write a review (markdown supported)…"
-								placeholderTextColor="#94a3b8"
-								multiline
-								textAlignVertical="top"
 								maxLength={MAX_LENGTH}
-								className="min-h-36 rounded-lg border border-border bg-background-subtle p-3 font-sans text-base text-foreground"
 							/>
 						</View>
 					) : (

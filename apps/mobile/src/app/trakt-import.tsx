@@ -2,9 +2,10 @@ import { isActiveTraktImportStatus } from "@opnshelf/api";
 import { Stack } from "expo-router";
 import { Download, Film, Tv } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { TraktImportBanner } from "@/components/trakt/TraktImportBanner";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useTraktImport } from "@/lib/use-trakt-import";
 
 export default function TraktImportScreen() {
@@ -44,19 +45,15 @@ export default function TraktImportScreen() {
 				</Text>
 
 				<View className="gap-2">
-					<Text className="font-medium text-foreground text-sm">
-						Trakt username
-					</Text>
-					<TextInput
+					<TextField
+						label="Trakt username"
 						value={username}
 						onChangeText={setUsername}
 						placeholder="your-trakt-username"
-						placeholderTextColor="#94a3b8"
 						autoCapitalize="none"
 						autoCorrect={false}
 						returnKeyType="search"
 						onSubmitEditing={handleFetch}
-						className="rounded-lg border border-border bg-card px-3 py-3 font-sans text-base text-foreground"
 					/>
 					<Pressable
 						onPress={handleFetch}
