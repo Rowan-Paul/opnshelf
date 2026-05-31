@@ -1884,6 +1884,7 @@ export const UserScalarFieldEnum = {
   watchCountry: 'watchCountry',
   onboardingCompletedAt: 'onboardingCompletedAt',
   emailVerifiedAt: 'emailVerifiedAt',
+  isNativePds: 'isNativePds',
   blueskyProfileUrl: 'blueskyProfileUrl',
   tangledProfileUrl: 'tangledProfileUrl',
   showBlueskyOnProfile: 'showBlueskyOnProfile',

@@ -317,7 +317,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",
@@ -400,7 +400,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(mockIngesterService.addRepo).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -436,7 +436,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/auth/complete",
@@ -472,7 +472,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.clearCookie).toHaveBeenCalledWith("auth_platform");
 			expect(res.redirect).toHaveBeenCalledWith(
@@ -544,7 +544,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
 		});
@@ -640,6 +640,7 @@ describe("AuthController", () => {
 				avatar: "https://example.com/avatar.jpg",
 				onboardingCompletedAt: new Date("2026-01-01T00:00:00.000Z"),
 				emailVerifiedAt: new Date("2026-01-01T00:00:00.000Z"),
+				isNativePds: false,
 				blueskyProfileUrl: null,
 				tangledProfileUrl: null,
 				showBlueskyOnProfile: true,
@@ -671,6 +672,54 @@ describe("AuthController", () => {
 			});
 			expect(mockAuthService.getUser).toHaveBeenCalledWith("did:plc:abc123");
 			expect(mockAuthService.hasBlueskyProfile).not.toHaveBeenCalled();
+		});
+
+		it("gates a native account whose email is not yet verified", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:jane",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				avatar: null,
+				onboardingCompletedAt: null,
+				emailVerifiedAt: null,
+				isNativePds: true,
+				blueskyProfileUrl: null,
+				tangledProfileUrl: null,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
+			});
+
+			const result = await controller.me(
+				createMockRequest({
+					user: { did: "did:plc:jane", session: {} },
+				} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest,
+			);
+
+			expect(result.needsEmailVerification).toBe(true);
+		});
+
+		it("never gates an external account even when emailVerifiedAt is null", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+				onboardingCompletedAt: null,
+				emailVerifiedAt: null,
+				isNativePds: false,
+				blueskyProfileUrl: null,
+				tangledProfileUrl: null,
+				showBlueskyOnProfile: true,
+				showTangledOnProfile: true,
+			});
+
+			const result = await controller.me(
+				createMockRequest({
+					user: { did: "did:plc:abc123", session: {} },
+				} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest,
+			);
+
+			expect(result.needsEmailVerification).toBe(false);
 		});
 
 		it("should throw BadRequestException when no user in request", async () => {
@@ -915,7 +964,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			// In test/dev mode, domain should not be set
 			expect(res.cookie).toHaveBeenCalledWith(
@@ -960,7 +1009,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				mockProfile,
 				undefined,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
 				"session",

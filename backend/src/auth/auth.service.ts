@@ -580,23 +580,40 @@ export class AuthService implements OnModuleInit {
 			avatar: string | null;
 		},
 		timezone?: string,
-		opts?: { emailVerified?: boolean },
+		opts?: { emailVerified?: boolean; isNativePds?: boolean },
 	) {
 		const existingUser = await this.prisma.user.findUnique({
 			where: { did: profile.did },
-			select: { did: true },
+			select: { did: true, emailVerifiedAt: true, isNativePds: true },
 		});
 
 		// External-PDS accounts (OAuth login) are already verified upstream, so we
 		// mark them verified on creation and never gate them. Native accounts we
 		// create on our own PDS start unverified (null) until they confirm.
 		const createdEmailVerifiedAt = opts?.emailVerified ? new Date() : null;
+		const isNativePds = opts?.isNativePds ?? false;
+
+		// Heal-on-relogin: legacy external rows predate the verified-on-creation
+		// logic and are stuck at null. Backfill the timestamp when an external
+		// account logs in verified and we don't already have one. Guard on the
+		// *existing* row being external so an unverified native account that signs
+		// in via OAuth isn't silently un-gated; never clobber an existing stamp.
+		const healEmailVerifiedAt =
+			opts?.emailVerified &&
+			existingUser &&
+			existingUser.emailVerifiedAt == null &&
+			!existingUser.isNativePds
+				? new Date()
+				: undefined;
 
 		try {
 			const user = await this.prisma.user.upsert({
 				where: { did: profile.did },
 				update: {
 					handle: profile.handle,
+					...(healEmailVerifiedAt
+						? { emailVerifiedAt: healEmailVerifiedAt }
+						: {}),
 				},
 				create: {
 					did: profile.did,
@@ -604,6 +621,7 @@ export class AuthService implements OnModuleInit {
 					displayName: profile.displayName,
 					timezone: timezone || "UTC",
 					emailVerifiedAt: createdEmailVerifiedAt,
+					isNativePds,
 				},
 			});
 			return {
@@ -644,6 +662,9 @@ export class AuthService implements OnModuleInit {
 					where: { did: profile.did },
 					update: {
 						handle: profile.handle,
+						...(healEmailVerifiedAt
+							? { emailVerifiedAt: healEmailVerifiedAt }
+							: {}),
 					},
 					create: {
 						did: profile.did,
@@ -651,6 +672,7 @@ export class AuthService implements OnModuleInit {
 						displayName: profile.displayName,
 						timezone: timezone || "UTC",
 						emailVerifiedAt: createdEmailVerifiedAt,
+						isNativePds,
 					},
 				});
 			});

@@ -34,6 +34,13 @@ interface AuthContextType {
 	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
 	login: (handle?: string) => Promise<void>;
 	/**
+	 * Persist a session id returned by the OAuth flow and fetch the user. Used by
+	 * the in-app auth session result and by the `auth/complete` deep-link route
+	 * (Android sometimes delivers the redirect there instead of resolving the
+	 * web auth session). Returns the fetched user so callers can route on it.
+	 */
+	completeSession: (sessionId: string) => Promise<UserDto | null>;
+	/**
 	 * Create a native account on opnshelf's PDS (captcha + invite gated). On
 	 * success the session is established but the account still needs email
 	 * verification before it can write records — callers route to /verify-email.
@@ -109,22 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return () => setOnUnauthorized(null);
 	}, [clearSession]);
 
-	// Run the OAuth web flow and persist the returned session token.
-	const runAuthFlow = useCallback(
-		async (authUrl: string) => {
-			const result = await WebBrowser.openAuthSessionAsync(
-				authUrl,
-				AUTH_REDIRECT_URL,
-			);
-			if (result.type !== "success") {
-				return;
-			}
-			const url = new URL(result.url);
-			const session = url.searchParams.get("session");
-			if (!session) {
-				throw new Error("No session returned from auth flow");
-			}
-			await saveSessionToken(session);
+	// Persist a session id and fetch the user. Shared by the in-app auth session
+	// result and the `auth/complete` deep-link route.
+	const completeSession = useCallback(
+		async (sessionId: string): Promise<UserDto | null> => {
+			await saveSessionToken(sessionId);
 			setHasSessionToken(true);
 			// Fetch the user immediately so callers can route on the result.
 			const fetchedUser = await queryClient.fetchQuery({
@@ -142,8 +138,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				});
 				posthog?.capture("user_logged_in", { handle: fetchedUser.handle });
 			}
+			return fetchedUser;
 		},
 		[queryClient],
+	);
+
+	// Run the OAuth web flow and persist the returned session token. On Android
+	// the redirect to AUTH_REDIRECT_URL sometimes leaks to the deep-link handler
+	// instead of resolving here — the `auth/complete` route covers that case.
+	const runAuthFlow = useCallback(
+		async (authUrl: string) => {
+			const result = await WebBrowser.openAuthSessionAsync(
+				authUrl,
+				AUTH_REDIRECT_URL,
+			);
+			if (result.type !== "success") {
+				return;
+			}
+			const url = new URL(result.url);
+			const error = url.searchParams.get("error");
+			if (error) {
+				throw new Error(`Auth flow failed: ${error}`);
+			}
+			const session = url.searchParams.get("session");
+			if (!session) {
+				throw new Error("No session returned from auth flow");
+			}
+			await completeSession(session);
+		},
+		[completeSession],
 	);
 
 	const login = useCallback(
@@ -209,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isLoading,
 		isAuthenticated: !!user,
 		login,
+		completeSession,
 		register,
 		signOut,
 	};

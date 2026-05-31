@@ -25,6 +25,10 @@ model User {
   watchCountry String   @default("US")
   onboardingCompletedAt DateTime?
   emailVerifiedAt DateTime?
+  // True only for accounts created on opnshelf's own PDS (native signup).
+  // External OAuth accounts are verified upstream, so the email-verification
+  // gate must never apply to them — see needsEmailVerification in auth.controller.
+  isNativePds Boolean @default(false)
   blueskyProfileUrl String?
   tangledProfileUrl String?
   showBlueskyOnProfile Boolean @default(true)

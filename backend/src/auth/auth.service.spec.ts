@@ -275,6 +275,7 @@ describe("AuthService", () => {
 					displayName: profile.displayName,
 					timezone: "UTC",
 					emailVerifiedAt: null,
+					isNativePds: false,
 				},
 			});
 		});
@@ -306,8 +307,102 @@ describe("AuthService", () => {
 					displayName: null,
 					timezone: "UTC",
 					emailVerifiedAt: null,
+					isNativePds: false,
 				},
 			});
+		});
+
+		it("creates a native-PDS account unverified and gated", async () => {
+			const profile = {
+				did: "did:plc:jane",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				avatar: null,
+			};
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
+			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
+
+			await service.upsertUser(profile, undefined, { isNativePds: true });
+
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						isNativePds: true,
+						emailVerifiedAt: null,
+					}),
+				}),
+			);
+		});
+
+		it("backfills emailVerifiedAt on re-login for a legacy external account", async () => {
+			const profile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: "Test User",
+				avatar: null,
+			};
+			// Existing external row stuck at null (created before verified-on-creation).
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: profile.did,
+				emailVerifiedAt: null,
+				isNativePds: false,
+			});
+			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
+
+			await service.upsertUser(profile, undefined, { emailVerified: true });
+
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					update: expect.objectContaining({
+						handle: profile.handle,
+						emailVerifiedAt: expect.any(Date),
+					}),
+				}),
+			);
+		});
+
+		it("does not un-gate an unverified native account that re-logs in via OAuth", async () => {
+			const profile = {
+				did: "did:plc:jane",
+				handle: "jane.opnshelf.xyz",
+				displayName: null,
+				avatar: null,
+			};
+			// Native account still awaiting email verification.
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: profile.did,
+				emailVerifiedAt: null,
+				isNativePds: true,
+			});
+			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
+
+			await service.upsertUser(profile, undefined, { emailVerified: true });
+
+			// Only the handle is touched — the verification timestamp stays null.
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({ update: { handle: profile.handle } }),
+			);
+		});
+
+		it("does not clobber an existing emailVerifiedAt on re-login", async () => {
+			const profile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+			};
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: profile.did,
+				emailVerifiedAt: new Date("2026-01-01T00:00:00.000Z"),
+				isNativePds: false,
+			});
+			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
+
+			await service.upsertUser(profile, undefined, { emailVerified: true });
+
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({ update: { handle: profile.handle } }),
+			);
 		});
 
 		it("should recover from handle uniqueness conflicts by reassigning stale handle owner", async () => {

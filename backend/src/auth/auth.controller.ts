@@ -329,6 +329,9 @@ export class AuthController {
 				avatar: null,
 			},
 			dto.timezone,
+			// Native account on our own PDS: starts unverified and is gated until
+			// the email is confirmed (see needsEmailVerification / ADR-0004).
+			{ isNativePds: true },
 		);
 
 		// Register the new repo with TAP for tracking/backfill (best-effort).
@@ -483,12 +486,12 @@ export class AuthController {
 			// Fetch user profile and upsert in database (timezone only set for new users)
 			const profile = await this.authService.fetchProfile(session);
 			// OAuth accounts authenticate against their own (external) PDS, which
-			// has already verified them upstream — mark them verified so they are
-			// never caught by the native verify-email gate.
+			// has already verified them upstream — mark them verified and external
+			// so they are never caught by the native verify-email gate.
 			const { isNewUser } = await this.authService.upsertUser(
 				profile,
 				timezone,
-				{ emailVerified: true },
+				{ emailVerified: true, isNativePds: false },
 			);
 
 			// Clear timezone cookie after use
@@ -614,7 +617,10 @@ export class AuthController {
 			emailVerifiedAt: user.emailVerifiedAt
 				? user.emailVerifiedAt.toISOString()
 				: null,
-			needsEmailVerification: user.emailVerifiedAt === null,
+			// Only native-PDS accounts must verify; external OAuth accounts are
+			// verified upstream and must never be gated, even if the timestamp is
+			// null (e.g. legacy rows created before verified-on-creation existed).
+			needsEmailVerification: user.isNativePds && user.emailVerifiedAt === null,
 			blueskyProfileUrl: user.blueskyProfileUrl ?? null,
 			tangledProfileUrl: user.tangledProfileUrl ?? null,
 			showBlueskyOnProfile: user.showBlueskyOnProfile,
