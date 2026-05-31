@@ -673,6 +673,12 @@ export class AuthController {
 		if (!did) {
 			throw new BadRequestException("User not found in request");
 		}
+		// Reuse the session the guard already restored. Restoring again here would
+		// spin up a competing credential session that races the guard's on the
+		// PDS's single-use refresh token; the loser's refresh is rejected, the
+		// agent treats the session as expired, and revoke() deletes it — logging
+		// the user out mid-verification. One restore per request avoids that.
+		const session = req.user?.session;
 
 		const user = await this.authService.getUser(did);
 		if (!user) {
@@ -683,27 +689,24 @@ export class AuthController {
 		const wasUnverified = user.emailVerifiedAt === null;
 
 		try {
-			await this.authService.confirmEmailWithCode(did, dto.code);
+			await this.authService.confirmEmailWithCode(session, dto.code);
 		} catch (error) {
 			throw this.mapConfirmEmailError(error);
 		}
 
 		await this.authService.markEmailVerified(did);
 
-		if (wasUnverified) {
+		if (wasUnverified && session) {
 			try {
-				const session = await this.authService.restore(did);
-				if (session) {
-					await this.usersService.initializeProfileForNewUser(
-						did,
-						session as unknown as { did: string },
-						{
-							handle: user.handle,
-							displayName: user.displayName,
-							avatarUrl: null,
-						},
-					);
-				}
+				await this.usersService.initializeProfileForNewUser(
+					did,
+					session as unknown as { did: string },
+					{
+						handle: user.handle,
+						displayName: user.displayName,
+						avatarUrl: null,
+					},
+				);
 			} catch (error) {
 				// Verification succeeded; seeding is idempotent and retried lazily
 				// on the next profile write, so don't fail the request.
@@ -732,7 +735,9 @@ export class AuthController {
 			throw new BadRequestException("User not found in request");
 		}
 		this.enforceResendRateLimit(did);
-		await this.authService.resendEmailConfirmation(did);
+		// Reuse the guard's restored session (see verifyEmail) rather than
+		// restoring again and racing the refresh token.
+		await this.authService.resendEmailConfirmation(req.user.session);
 		return { message: "Verification email sent" };
 	}
 

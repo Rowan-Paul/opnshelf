@@ -7,12 +7,12 @@ import {
 	Platform,
 	Pressable,
 	ScrollView,
-	TextInput,
 	View,
 } from "react-native";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { env } from "@/lib/env";
@@ -52,6 +52,13 @@ export default function SignupScreen() {
 
 	const onVerify = useCallback((token: string) => setCaptchaToken(token), []);
 	const onExpire = useCallback(() => setCaptchaToken(null), []);
+	const onCaptchaError = useCallback(
+		(code: string) => {
+			setCaptchaToken(null);
+			toast.error(`Captcha couldn't load (${code}). Pull down to retry.`);
+		},
+		[toast],
+	);
 
 	const registerMutation = useMutation({
 		mutationKey: ["auth", "register"],
@@ -127,76 +134,55 @@ export default function SignupScreen() {
 					</View>
 
 					<View className="gap-4">
-						<View className="gap-1.5">
-							<Text className="font-medium text-foreground text-sm">
-								Username
-							</Text>
-							<View className="flex-row items-center gap-2">
-								<TextInput
-									value={username}
-									onChangeText={setUsername}
-									placeholder="yourname"
-									placeholderTextColor="#94a3b8"
-									autoCapitalize="none"
-									autoCorrect={false}
-									autoComplete="username"
-									editable={!isSubmitting}
-									className="flex-1 rounded-lg border border-border bg-card px-4 py-3 font-sans text-base text-foreground"
-								/>
+						<TextField
+							label="Username"
+							value={username}
+							onChangeText={setUsername}
+							placeholder="yourname"
+							autoCapitalize="none"
+							autoCorrect={false}
+							autoComplete="username"
+							editable={!isSubmitting}
+							trailing={
 								<Text className="text-muted-foreground text-sm">
 									.{handleDomain}
 								</Text>
-							</View>
-							<Text className="text-muted-foreground text-xs">
-								This becomes your handle:{" "}
-								{trimmedUsername
-									? `${trimmedUsername}.${handleDomain}`
-									: `yourname.${handleDomain}`}
-							</Text>
-						</View>
+							}
+							helperText={`This becomes your handle: ${
+								trimmedUsername || "yourname"
+							}.${handleDomain}`}
+						/>
 
-						<View className="gap-1.5">
-							<Text className="font-medium text-foreground text-sm">Email</Text>
-							<TextInput
-								value={email}
-								onChangeText={setEmail}
-								placeholder="you@example.com"
-								placeholderTextColor="#94a3b8"
-								autoCapitalize="none"
-								autoCorrect={false}
-								keyboardType="email-address"
-								autoComplete="email"
-								editable={!isSubmitting}
-								className="rounded-lg border border-border bg-card px-4 py-3 font-sans text-base text-foreground"
-							/>
-							<Text className="text-muted-foreground text-xs">
-								The PDS requires an email for account recovery and verification.
-								OpnShelf itself never stores it.
-							</Text>
-						</View>
+						<TextField
+							label="Email"
+							value={email}
+							onChangeText={setEmail}
+							placeholder="you@example.com"
+							autoCapitalize="none"
+							autoCorrect={false}
+							keyboardType="email-address"
+							autoComplete="email"
+							editable={!isSubmitting}
+							helperText="The PDS requires an email for account recovery and verification. OpnShelf itself never stores it."
+						/>
 
-						<View className="gap-1.5">
-							<Text className="font-medium text-foreground text-sm">
-								Password
-							</Text>
-							<TextInput
-								value={password}
-								onChangeText={setPassword}
-								placeholder="At least 8 characters"
-								placeholderTextColor="#94a3b8"
-								autoCapitalize="none"
-								autoCorrect={false}
-								secureTextEntry
-								autoComplete="new-password"
-								editable={!isSubmitting}
-								className="rounded-lg border border-border bg-card px-4 py-3 font-sans text-base text-foreground"
-							/>
-						</View>
+						<TextField
+							label="Password"
+							value={password}
+							onChangeText={setPassword}
+							placeholder="At least 8 characters"
+							autoCapitalize="none"
+							autoCorrect={false}
+							secureTextEntry
+							autoComplete="new-password"
+							editable={!isSubmitting}
+						/>
 
 						<TurnstileWidget
 							siteKey={siteKey}
 							onVerify={onVerify}
 							onExpire={onExpire}
+							onError={onCaptchaError}
 						/>
 
 						<Pressable

@@ -760,13 +760,15 @@ describe("AuthController", () => {
 				displayName: null,
 				emailVerifiedAt: null,
 			});
-			mockAuthService.restore.mockResolvedValue({ did: "did:plc:abc123" });
 
 			const result = await controller.verifyEmail(reqFor(), { code: " abc " });
 
 			expect(result).toEqual({ verified: true });
+			// Verify reuses the guard's already-restored session (req.user.session),
+			// it does NOT restore again — that double-restore is the logout bug.
+			expect(mockAuthService.restore).not.toHaveBeenCalled();
 			expect(mockAuthService.confirmEmailWithCode).toHaveBeenCalledWith(
-				"did:plc:abc123",
+				{},
 				" abc ",
 			);
 			expect(mockAuthService.markEmailVerified).toHaveBeenCalledWith(
@@ -774,7 +776,7 @@ describe("AuthController", () => {
 			);
 			expect(mockUsersService.initializeProfileForNewUser).toHaveBeenCalledWith(
 				"did:plc:abc123",
-				{ did: "did:plc:abc123" },
+				{},
 				{ handle: "jane.opnshelf.xyz", displayName: null, avatarUrl: null },
 			);
 		});
@@ -822,7 +824,6 @@ describe("AuthController", () => {
 				displayName: null,
 				emailVerifiedAt: null,
 			});
-			mockAuthService.restore.mockResolvedValue({ did: "did:plc:abc123" });
 			mockUsersService.initializeProfileForNewUser.mockRejectedValueOnce(
 				new Error("PDS down"),
 			);
@@ -844,9 +845,7 @@ describe("AuthController", () => {
 			const result = await controller.resendVerification(reqFor());
 
 			expect(result).toEqual({ message: "Verification email sent" });
-			expect(mockAuthService.resendEmailConfirmation).toHaveBeenCalledWith(
-				"did:plc:abc123",
-			);
+			expect(mockAuthService.resendEmailConfirmation).toHaveBeenCalledWith({});
 		});
 
 		it("rate-limits after too many attempts", async () => {

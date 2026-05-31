@@ -264,16 +264,19 @@ export class AuthService implements OnModuleInit {
 	 * Confirm the signup verification code for a native PDS account.
 	 *
 	 * The code was emailed by the PDS on `createAccount`. We read the account's
-	 * email from its own session (`getSession`) so the caller only has to supply
-	 * the code, then call `com.atproto.server.confirmEmail`. Verifying the email
-	 * satisfies the PDS's verified-comms-channel gate, after which records can be
-	 * written.
+	 * email from its own session (`getSession`), then call
+	 * `com.atproto.server.confirmEmail`. Verifying the email satisfies the PDS's
+	 * verified-comms-channel gate, after which records can be written.
+	 *
+	 * Takes the session the request guard already restored rather than restoring
+	 * again: a second restore in the same request spins up a competing credential
+	 * session that races the guard's on the PDS's single-use refresh token, and
+	 * the loser's failure revokes the session — logging the user out mid-verify.
 	 *
 	 * @returns `true` if the account was just verified (or already verified).
 	 * @throws an XRPC error (mapped by the controller) on an invalid/expired code.
 	 */
-	async confirmEmailWithCode(did: string, code: string): Promise<boolean> {
-		const session = await this.restore(did);
+	async confirmEmailWithCode(session: unknown, code: string): Promise<boolean> {
 		if (!session) {
 			throw new Error("Session not found");
 		}
@@ -299,8 +302,7 @@ export class AuthService implements OnModuleInit {
 	/**
 	 * Ask the PDS to (re)send the signup verification email for this account.
 	 */
-	async resendEmailConfirmation(did: string): Promise<void> {
-		const session = await this.restore(did);
+	async resendEmailConfirmation(session: unknown): Promise<void> {
 		if (!session) {
 			throw new Error("Session not found");
 		}
