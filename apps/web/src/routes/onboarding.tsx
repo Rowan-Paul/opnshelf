@@ -2,21 +2,15 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
-	getTraktImportStatusMessage,
-	getTraktImportStatusProgress,
-	isActiveTraktImportStatus,
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 	socialControllerFollowMutation,
 	socialControllerGetSuggestionsOptions,
-	type TraktImportStatusJob,
 	type UserDto,
 	type UserProfileDto,
 	usersControllerCompleteOnboarding,
 	usersControllerDeleteMyAvatarMutation,
-	usersControllerFetchMyTraktPublicHistory,
 	usersControllerGetMyCurrentTraktImportOptions,
-	usersControllerStartMyTraktImport,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -26,20 +20,17 @@ import {
 	ArrowRight,
 	Camera,
 	CheckCircle,
-	Film,
 	Loader2,
 	MailCheck,
-	Tv,
-	Upload,
 	User,
 	UserPlus,
-	X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
+import { TraktImport } from "#/components/trakt/TraktImport";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -54,28 +45,6 @@ type OnboardingStep =
 	| "trakt"
 	| "suggestions"
 	| "done";
-
-function TraktAvatar({ url, name }: { url?: string; name: string }) {
-	const [error, setError] = useState(false);
-
-	if (!url || error) {
-		return (
-			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle)">
-				<Tv className="size-5 text-(--accent)" />
-			</div>
-		);
-	}
-
-	return (
-		<img
-			src={url}
-			alt={name}
-			className="h-10 w-10 shrink-0 rounded-full object-cover"
-			referrerPolicy="no-referrer"
-			onError={() => setError(true)}
-		/>
-	);
-}
 
 function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -641,308 +610,14 @@ function TraktStep({
 	onNext: () => void;
 	onSkip: () => void;
 }) {
-	const [username, setUsername] = useState("");
-	const [previewData, setPreviewData] = useState<{
-		profile: { username: string; name?: string; avatarUrl?: string };
-		importableCount: number;
-		previewItems: Array<{
-			type: "movie" | "episode";
-			title: string;
-			subtitle?: string;
-			watchedAt: string;
-		}>;
-	} | null>(null);
-	const [jobData, setJobData] = useState<TraktImportStatusJob | null>(null);
-	const [fetchError, setFetchError] = useState("");
-	const queryClient = useQueryClient();
-
-	const fetchPreview = useMutation({
-		mutationFn: async (body: { username: string }) => {
-			const { data } = await usersControllerFetchMyTraktPublicHistory({
-				body,
-				throwOnError: true,
-			});
-			return data;
-		},
-		onSuccess: (data) => {
-			setPreviewData(data);
-			setFetchError("");
-		},
-		onError: (error: unknown) => {
-			const message =
-				typeof error === "object" && error !== null && "message" in error
-					? String((error as { message?: string }).message)
-					: "Could not fetch Trakt history. Please check the username and try again.";
-			setFetchError(message);
-			toast.error(message);
-		},
-	});
-
-	const startImport = useMutation({
-		mutationFn: async (body: { username: string }) => {
-			const { data } = await usersControllerStartMyTraktImport({
-				body,
-				throwOnError: true,
-			});
-			return data;
-		},
-		onSuccess: (data) => {
-			toast.success("Import started");
-			if (data.job) {
-				setJobData({
-					status: data.job.status,
-					currentPage: data.job.currentPage,
-					totalPages: data.job.totalPages,
-					importedCount: data.job.importedCount,
-					skippedCount: data.job.skippedCount,
-					failedCount: data.job.failedCount,
-					lastError: data.job.lastError,
-				});
-				// Force an immediate refetch of the import status
-				queryClient.invalidateQueries({
-					queryKey: usersControllerGetMyCurrentTraktImportOptions().queryKey,
-				});
-			}
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to start import",
-			);
-		},
-	});
-
-	// Fetch existing import and poll when active
-	const { data: currentImport } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		refetchInterval:
-			jobData && isActiveTraktImportStatus(jobData.status) ? 3000 : false,
-	});
-
-	useEffect(() => {
-		if (currentImport?.id && isKnownTraktImportStatus(currentImport.status)) {
-			setJobData({
-				status: currentImport.status,
-				currentPage: currentImport.currentPage,
-				totalPages: currentImport.totalPages,
-				importedCount: currentImport.importedCount,
-				skippedCount: currentImport.skippedCount,
-				failedCount: currentImport.failedCount,
-				lastError: currentImport.lastError,
-			});
-		}
-	}, [currentImport]);
-
-	const handleFetch = () => {
-		if (!username.trim()) return;
-		setPreviewData(null);
-		setJobData(null);
-		fetchPreview.mutate({ username: username.trim() });
-	};
-
-	const handleStartImport = () => {
-		if (!username.trim()) return;
-		startImport.mutate({ username: username.trim() });
-	};
-
-	const isImportDone = jobData && isTerminalTraktImportStatus(jobData.status);
-	const progress = jobData ? getTraktImportStatusProgress(jobData) : null;
-	const statusMessage = jobData ? getTraktImportStatusMessage(jobData) : null;
-
 	return (
 		<div className="card p-6">
-			<div className="mb-6 flex items-center justify-between">
-				<div>
-					<h2 className="text-display-3">Import from Trakt</h2>
-					<p className="mt-1 text-(--foreground-muted) text-sm">
-						Import your public watch history from Trakt.tv
-					</p>
-				</div>
-				{!jobData && (
-					<button
-						type="button"
-						onClick={onSkip}
-						className="text-(--foreground-muted) text-sm hover:text-(--foreground)"
-					>
-						Skip
-					</button>
-				)}
-			</div>
-
-			{/* Username input */}
-			{!previewData && !jobData && (
-				<div className="space-y-4">
-					<div>
-						<label
-							htmlFor="trakt-username"
-							className="mb-1.5 block font-medium text-sm"
-						>
-							Trakt Username
-						</label>
-						<input
-							id="trakt-username"
-							type="text"
-							placeholder="your-trakt-username"
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className="input"
-							onKeyDown={(e) => {
-								if (e.key === "Enter") handleFetch();
-							}}
-						/>
-					</div>
-					{fetchError && <p className="text-red-500 text-sm">{fetchError}</p>}
-					<button
-						type="button"
-						onClick={handleFetch}
-						disabled={fetchPreview.isPending || !username.trim()}
-						className="btn btn-primary w-full"
-					>
-						{fetchPreview.isPending ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Fetching preview...
-							</>
-						) : (
-							<>
-								<Upload className="size-4" />
-								Preview History
-							</>
-						)}
-					</button>
-				</div>
-			)}
-
-			{/* Preview results */}
-			{previewData && !jobData && (
-				<div className="space-y-4">
-					<div className="flex items-center gap-3 rounded-lg bg-(--background-subtle) p-3">
-						<TraktAvatar
-							url={previewData.profile.avatarUrl}
-							name={previewData.profile.username}
-						/>
-						<div>
-							<p className="font-medium text-sm">
-								{previewData.profile.name || previewData.profile.username}
-							</p>
-							<p className="text-(--foreground-muted) text-xs">
-								@{previewData.profile.username}
-							</p>
-						</div>
-					</div>
-
-					{previewData.previewItems.length > 0 && (
-						<div className="space-y-2">
-							<p className="font-medium text-sm">Recent items</p>
-							{previewData.previewItems.map((item) => (
-								<div
-									key={`${item.title}-${item.watchedAt}`}
-									className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-elevated) p-3"
-								>
-									<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-(--accent-subtle)">
-										{item.type === "movie" ? (
-											<Film className="size-4 text-(--accent)" />
-										) : (
-											<Tv className="size-4 text-(--accent)" />
-										)}
-									</div>
-									<div className="min-w-0 flex-1">
-										<p className="truncate text-sm">{item.title}</p>
-										{item.subtitle && (
-											<p className="truncate text-(--foreground-muted) text-xs">
-												{item.subtitle}
-											</p>
-										)}
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-
-					<div className="flex gap-3">
-						<button
-							type="button"
-							onClick={() => {
-								setPreviewData(null);
-								setUsername("");
-							}}
-							className="btn btn-secondary flex-1"
-						>
-							<X className="size-4" />
-							Change
-						</button>
-						<button
-							type="button"
-							onClick={handleStartImport}
-							disabled={startImport.isPending}
-							className="btn btn-primary flex-1"
-						>
-							{startImport.isPending ? (
-								<Loader2 className="size-4 animate-spin" />
-							) : (
-								<>
-									<Upload className="size-4" />
-									Start Import
-								</>
-							)}
-						</button>
-					</div>
-				</div>
-			)}
-
-			{/* Import progress */}
-			{jobData && (
-				<div className="space-y-4">
-					<div className="flex items-center gap-3">
-						{isImportDone ? (
-							<CheckCircle className="size-5 text-green-500" />
-						) : (
-							<Loader2 className="size-5 animate-spin text-(--accent)" />
-						)}
-						<div>
-							<p className="font-medium text-sm">
-								{isImportDone ? "Import finished" : "Importing..."}
-							</p>
-							{statusMessage && (
-								<p className="text-(--foreground-muted) text-xs">
-									{statusMessage}
-								</p>
-							)}
-						</div>
-					</div>
-
-					{typeof progress === "number" && (
-						<div className="space-y-1">
-							<div className="h-2 w-full overflow-hidden rounded-full bg-(--background-subtle)">
-								<div
-									className="h-full rounded-full bg-(--accent) transition-all duration-500"
-									style={{ width: `${progress}%` }}
-								/>
-							</div>
-							<p className="text-right text-(--foreground-muted) text-xs">
-								{progress}%
-							</p>
-						</div>
-					)}
-
-					{isImportDone && (
-						<button
-							type="button"
-							onClick={() => {
-								setJobData(null);
-								setPreviewData(null);
-								setUsername("");
-								// Invalidate shelf so the user sees imported items
-								queryClient.invalidateQueries({ queryKey: ["shelf"] });
-								onNext();
-							}}
-							className="btn btn-primary w-full"
-						>
-							Continue
-							<ArrowRight className="size-4" />
-						</button>
-					)}
-				</div>
-			)}
+			<TraktImport
+				title="Import from Trakt"
+				description="Import your public watch history from Trakt.tv"
+				onSkip={onSkip}
+				onComplete={onNext}
+			/>
 		</div>
 	);
 }

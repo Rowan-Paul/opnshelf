@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import TimezoneSelector from "#/components/TimezoneSelector";
+import { TraktImport } from "#/components/trakt/TraktImport";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -456,6 +457,16 @@ function SettingsPage() {
 							disabled={updateSettingsMutation.isPending}
 						/>
 					</div>
+				</section>
+
+				{/* Import history */}
+				<section className="card p-6">
+					<TraktImport
+						idleShowsInput
+						title="Import history"
+						description="Import your public watch history from Trakt.tv. We add anything you haven't logged yet."
+						titleClassName="font-semibold text-lg"
+					/>
 				</section>
 
 				{/* Reviews publication */}
