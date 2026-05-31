@@ -50,6 +50,13 @@ const config: ExpoConfig = {
 				backgroundColor: "#0f172a",
 			},
 		],
+		[
+			"expo-image-picker",
+			{
+				photosPermission:
+					"OpnShelf needs access to your photos so you can set a profile picture.",
+			},
+		],
 	],
 	experiments: {
 		typedRoutes: true,

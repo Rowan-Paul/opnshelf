@@ -2,6 +2,7 @@ import {
 	socialControllerFollowMutation,
 	socialControllerGetFollowersInfiniteOptions,
 	socialControllerGetFollowingInfiniteOptions,
+	socialControllerGetSuggestionsOptions,
 	socialControllerGetWatchersOptions,
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
@@ -66,6 +67,15 @@ export function useFollowers(handle: string, pageSize = 20) {
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
 	};
+}
+
+/** People-to-follow suggestions (used by the onboarding suggestions step). */
+export function useSuggestions() {
+	const { isAuthenticated } = useAuth();
+	return useQuery({
+		...socialControllerGetSuggestionsOptions(),
+		enabled: isAuthenticated,
+	});
 }
 
 /** Followed users who have watched a given media item (for the watchers row). */

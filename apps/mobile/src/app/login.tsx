@@ -122,11 +122,6 @@ export default function LoginScreen() {
 							</Text>
 						</Pressable>
 					</View>
-
-					<Text className="text-center text-muted-foreground text-sm">
-						OpnShelf uses the AT Protocol, so your account moves with you across
-						compatible apps.
-					</Text>
 				</View>
 			</Screen>
 		</KeyboardAvoidingView>
