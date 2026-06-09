@@ -1,12 +1,12 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
+import { EmailModule } from "../email/email.module";
 import { PrismaModule } from "../prisma/prisma.module";
-import { ResendModule } from "../resend/resend.module";
 import { FeedbackController } from "./feedback.controller";
 import { FeedbackService } from "./feedback.service";
 
 @Module({
-	imports: [PrismaModule, AuthModule, ResendModule],
+	imports: [PrismaModule, AuthModule, EmailModule],
 	controllers: [FeedbackController],
 	providers: [FeedbackService],
 	exports: [FeedbackService],

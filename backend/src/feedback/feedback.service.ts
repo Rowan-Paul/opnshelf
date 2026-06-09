@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { EmailService } from "../email/email.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { ResendService } from "../resend/resend.service";
 import type { CreateFeedbackDto } from "./dto/feedback.dto";
 
 @Injectable()
 export class FeedbackService {
 	constructor(
 		private prisma: PrismaService,
-		private resend: ResendService,
+		private email: EmailService,
 		private config: ConfigService,
 	) {}
 
@@ -31,7 +31,7 @@ export class FeedbackService {
 			"FEEDBACK_NOTIFICATION_EMAIL",
 		);
 		if (notificationEmail && user) {
-			await this.resend.sendFeedbackNotification({
+			await this.email.sendFeedbackNotification({
 				to: notificationEmail,
 				category: dto.category,
 				message: dto.message,
