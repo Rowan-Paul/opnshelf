@@ -49,6 +49,10 @@ const server = new SMTPServer({
 	// (Tranquil must be configured MAIL_SMARTHOST_TLS=none with no password.)
 	authOptional: true,
 	disabledCommands: ["AUTH", "STARTTLS"],
+	onConnect(session, callback) {
+		console.log(`connect from ${session.remoteAddress}`);
+		callback();
+	},
 	onData(stream, _session, callback) {
 		simpleParser(stream)
 			.then(async (mail) => {
