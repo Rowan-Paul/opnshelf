@@ -2,7 +2,7 @@
 # Frontend (TanStack Start + Nitro node-server) for the opnshelf pnpm monorepo.
 # Build context is the REPO ROOT — on Railway set RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile.
 
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH"
 RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 WORKDIR /app
@@ -42,7 +42,7 @@ RUN pnpm --filter @opnshelf/web build
 # ---- runtime: self-contained Nitro node-server ----
 # The node-server preset traces its own node_modules into .output, so the runtime
 # image needs nothing but Node and the build output.
-FROM node:22-slim AS runtime
+FROM node:24-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/web/.output ./.output
