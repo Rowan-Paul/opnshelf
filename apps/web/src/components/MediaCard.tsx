@@ -191,7 +191,7 @@ export default function MediaCard({
 											}
 										}}
 										disabled={isMarkWatchedPending || isUnmarkWatchedPending}
-										className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 sm:w-7 ${
+										className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 sm:w-7 ${
 											isWatched
 												? "bg-green-500 text-white hover:bg-green-600"
 												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
@@ -202,9 +202,9 @@ export default function MediaCard({
 										title={isWatched ? "Remove from shelf" : "Add to shelf"}
 									>
 										{isMarkWatchedPending || isUnmarkWatchedPending ? (
-											<Loader2 className="size-6 animate-spin sm:size-3.5" />
+											<Loader2 className="size-7 animate-spin sm:size-3.5" />
 										) : (
-											<Check className="size-6 sm:size-3.5" />
+											<Check className="size-7 sm:size-3.5" />
 										)}
 									</button>
 								)}
@@ -215,14 +215,14 @@ export default function MediaCard({
 											e.preventDefault();
 											onManageLists();
 										}}
-										className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40 sm:h-7 sm:w-7"
+										className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40 sm:h-7 sm:w-7"
 										aria-label={isInAnyList ? "Manage lists" : "Add to list"}
 										title={isInAnyList ? "Manage list" : "Add to list"}
 									>
 										{isInAnyList ? (
-											<ListChecks className="size-6 sm:size-3.5" />
+											<ListChecks className="size-7 sm:size-3.5" />
 										) : (
-											<Library className="size-6 sm:size-3.5" />
+											<Library className="size-7 sm:size-3.5" />
 										)}
 									</button>
 								)}
@@ -234,21 +234,21 @@ export default function MediaCard({
 											onRemove();
 										}}
 										disabled={isRemoving}
-										className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50 sm:h-7 sm:w-7"
+										className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50 sm:h-7 sm:w-7"
 										aria-label="Remove from list"
 									>
 										{isRemoving ? (
-											<Loader2 className="size-6 animate-spin sm:size-3.5" />
+											<Loader2 className="size-7 animate-spin sm:size-3.5" />
 										) : (
-											<BookmarkX className="size-6 sm:size-3.5" />
+											<BookmarkX className="size-7 sm:size-3.5" />
 										)}
 									</button>
 								)}
 							</div>
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
-								<div className="flex h-9 w-9 items-center justify-center self-end rounded-full bg-green-500 text-white sm:h-6 sm:w-6">
-									<Check className="size-6 sm:size-3.5" />
+								<div className="flex h-11 w-11 items-center justify-center self-end rounded-full bg-green-500 text-white sm:h-6 sm:w-6">
+									<Check className="size-7 sm:size-3.5" />
 								</div>
 							)}
 						</div>
