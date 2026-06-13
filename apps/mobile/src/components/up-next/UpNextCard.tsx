@@ -95,7 +95,7 @@ export function UpNextCard({
 						className="flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2"
 						style={{ opacity: isMarking ? 0.6 : 1 }}
 					>
-						<Check color="#3f2e00" size={16} strokeWidth={3} />
+						<Check color="#3f2e00" size={20} strokeWidth={3} />
 						<Text className="font-semibold text-primary-foreground text-sm">
 							Mark watched
 						</Text>

@@ -202,9 +202,9 @@ export default function MediaCard({
 										title={isWatched ? "Remove from shelf" : "Add to shelf"}
 									>
 										{isMarkWatchedPending || isUnmarkWatchedPending ? (
-											<Loader2 className="size-4 animate-spin sm:size-3.5" />
+											<Loader2 className="size-5 animate-spin sm:size-3.5" />
 										) : (
-											<Check className="size-4 sm:size-3.5" />
+											<Check className="size-5 sm:size-3.5" />
 										)}
 									</button>
 								)}
@@ -220,9 +220,9 @@ export default function MediaCard({
 										title={isInAnyList ? "Manage list" : "Add to list"}
 									>
 										{isInAnyList ? (
-											<ListChecks className="size-4 sm:size-3.5" />
+											<ListChecks className="size-5 sm:size-3.5" />
 										) : (
-											<Library className="size-4 sm:size-3.5" />
+											<Library className="size-5 sm:size-3.5" />
 										)}
 									</button>
 								)}
@@ -238,9 +238,9 @@ export default function MediaCard({
 										aria-label="Remove from list"
 									>
 										{isRemoving ? (
-											<Loader2 className="size-4 animate-spin sm:size-3.5" />
+											<Loader2 className="size-5 animate-spin sm:size-3.5" />
 										) : (
-											<BookmarkX className="size-4 sm:size-3.5" />
+											<BookmarkX className="size-5 sm:size-3.5" />
 										)}
 									</button>
 								)}
@@ -248,7 +248,7 @@ export default function MediaCard({
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
 								<div className="flex h-8 w-8 items-center justify-center self-end rounded-full bg-green-500 text-white sm:h-6 sm:w-6">
-									<Check className="size-4 sm:size-3.5" />
+									<Check className="size-5 sm:size-3.5" />
 								</div>
 							)}
 						</div>

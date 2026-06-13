@@ -152,9 +152,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 					style={{ opacity: isMarkPending ? 0.7 : 1 }}
 				>
 					{isWatched ? (
-						<RotateCcw color="#3f2e00" size={18} />
+						<RotateCcw color="#3f2e00" size={20} />
 					) : (
-						<Eye color="#3f2e00" size={18} />
+						<Eye color="#3f2e00" size={20} />
 					)}
 					<Text className="font-semibold text-primary-foreground">
 						{isWatched
