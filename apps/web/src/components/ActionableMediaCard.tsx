@@ -25,6 +25,7 @@ interface ActionableMediaCardProps {
 	role?: string;
 	year?: string | number;
 	size?: "sm" | "md" | "lg";
+	fill?: boolean;
 	layout?: "poster" | "backdrop";
 	interactive?: boolean;
 	isWatched?: boolean;
@@ -50,6 +51,7 @@ export default function ActionableMediaCard({
 	role,
 	year,
 	size = "md",
+	fill = false,
 	layout = "poster",
 	interactive = true,
 	isWatched: isWatchedProp,
@@ -193,6 +195,7 @@ export default function ActionableMediaCard({
 				role={role}
 				year={year}
 				size={size}
+				fill={fill}
 				layout={layout}
 				isWatched={watched}
 				onMarkWatched={interactive ? handleMarkWatched : undefined}

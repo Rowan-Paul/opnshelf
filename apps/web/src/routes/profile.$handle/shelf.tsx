@@ -164,6 +164,7 @@ function ProfileShelfPage() {
 						return (
 							<ActionableMediaCard
 								key={item.id}
+								fill
 								id={
 									isMovie ? (item.movieId as string) : (item.showId as string)
 								}

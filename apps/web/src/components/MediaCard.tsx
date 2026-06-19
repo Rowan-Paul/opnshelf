@@ -40,6 +40,8 @@ export interface MediaCardProps {
 	role?: string;
 	year?: string | number;
 	size?: "sm" | "md" | "lg";
+	/** Stretch to fill the parent grid cell instead of using a fixed width. */
+	fill?: boolean;
 	layout?: "poster" | "backdrop";
 	href?: string;
 	onWatch?: () => void;
@@ -72,6 +74,7 @@ export default function MediaCard({
 	role,
 	year,
 	size = "md",
+	fill = false,
 	layout = "poster",
 	href,
 	onWatch,
@@ -128,7 +131,7 @@ export default function MediaCard({
 
 	return (
 		<article
-			className={`group relative ${sizeClasses[size][layout]} shrink-0`}
+			className={`group relative ${fill ? "w-full" : `${sizeClasses[size][layout]} shrink-0`}`}
 			aria-label={`${title} ${type === "movie" ? "movie" : "TV show"}`}
 		>
 			<Link to={linkHref} className="block">
