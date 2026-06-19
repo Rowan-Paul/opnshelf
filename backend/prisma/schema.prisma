@@ -87,10 +87,18 @@ model AuthSession {
   userDid     String   @unique
   sessionData String   // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
   kind        String   @default("oauth") // "oauth" | "credential"
+  // Absolute lifetime: the guard rejects the session once expiresAt <= now.
+  // Defaults to now() at the DB level so the migration backfills existing rows
+  // safely; the app always sets/extends it explicitly (= now + 14d) on write.
+  expiresAt   DateTime @default(now())
+  // Sliding-refresh marker. Only rewritten when older than a threshold so we
+  // don't write to the DB on every authenticated request (see auth.guard.ts).
+  lastUsedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([updatedAt])
+  @@index([expiresAt])
 }
 
 model AuthState {

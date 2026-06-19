@@ -38,11 +38,26 @@ export class AuthGuard implements CanActivate {
 				throw new UnauthorizedException("Session not found or expired");
 			}
 
+			// Server-side expiry: reject a session whose absolute lifetime has
+			// elapsed, regardless of whether the cookie/Bearer token itself is
+			// still being presented. This is what stops a captured token from
+			// living forever. Applies to both web (cookie) and mobile (Bearer).
+			if (sessionRecord.expiresAt.getTime() <= Date.now()) {
+				throw new UnauthorizedException("Session not found or expired");
+			}
+
 			// Restore session (OAuth or credential), refreshing tokens if needed
 			const session = await this.authService.restore(sessionRecord.userDid);
 			if (!session || !session.did) {
 				throw new UnauthorizedException("Session not found or expired");
 			}
+
+			// Sliding refresh: extend the lifetime on activity (rate-limited
+			// inside touchSession so it isn't a DB write on every request).
+			await this.authService.touchSession(
+				sessionRecord.id,
+				sessionRecord.lastUsedAt,
+			);
 
 			// Attach user info to request
 			const authUser: AuthUser = {

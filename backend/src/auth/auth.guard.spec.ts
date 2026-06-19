@@ -20,7 +20,11 @@ describe("AuthGuard", () => {
 	const mockAuthService = {
 		getSessionById: jest.fn(),
 		restore: jest.fn(),
+		touchSession: jest.fn(),
 	};
+
+	// A session whose absolute lifetime is comfortably in the future.
+	const futureExpiry = () => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
 	const createMockExecutionContext = (
 		cookies: Record<string, string> = {},
@@ -75,11 +79,60 @@ describe("AuthGuard", () => {
 			);
 		});
 
+		it("should throw UnauthorizedException when session is expired", async () => {
+			const expiredRecord = {
+				id: "session-123",
+				userDid: "did:plc:abc123",
+				sessionData: "{}",
+				expiresAt: new Date(Date.now() - 1000), // already past
+				lastUsedAt: new Date(Date.now() - 1000),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			mockAuthService.getSessionById.mockResolvedValue(expiredRecord);
+
+			const context = createMockExecutionContext({ session: "session-123" });
+
+			await expect(guard.canActivate(context)).rejects.toThrow(
+				new UnauthorizedException("Session not found or expired"),
+			);
+			// Expired sessions must never reach restore().
+			expect(mockAuthService.restore).not.toHaveBeenCalled();
+		});
+
+		it("should reject an expired session presented via Bearer token", async () => {
+			const expiredRecord = {
+				id: "session-123",
+				userDid: "did:plc:abc123",
+				sessionData: "{}",
+				expiresAt: new Date(Date.now() - 1000),
+				lastUsedAt: new Date(Date.now() - 1000),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			mockAuthService.getSessionById.mockResolvedValue(expiredRecord);
+
+			const mockRequest = {
+				cookies: {},
+				headers: { authorization: "Bearer session-123" },
+			};
+			const context = {
+				switchToHttp: () => ({ getRequest: () => mockRequest }),
+			} as unknown as ExecutionContext;
+
+			await expect(guard.canActivate(context)).rejects.toThrow(
+				new UnauthorizedException("Session not found or expired"),
+			);
+			expect(mockAuthService.restore).not.toHaveBeenCalled();
+		});
+
 		it("should throw UnauthorizedException when restore returns null", async () => {
 			const mockSessionRecord = {
 				id: "session-123",
 				userDid: "did:plc:abc123",
 				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -99,6 +152,8 @@ describe("AuthGuard", () => {
 				id: "session-123",
 				userDid: "did:plc:abc123",
 				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -128,6 +183,8 @@ describe("AuthGuard", () => {
 				id: "session-123",
 				userDid: "did:plc:abc123",
 				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -146,6 +203,8 @@ describe("AuthGuard", () => {
 				id: "session-123",
 				userDid: "did:plc:abc123",
 				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -177,6 +236,8 @@ describe("AuthGuard", () => {
 				id: "session-123",
 				userDid: "did:plc:abc123",
 				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};

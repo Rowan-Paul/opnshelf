@@ -9,6 +9,7 @@ jest.mock("../prisma/prisma.service", () => ({
 		authSession: {
 			findUnique: jest.fn(),
 			upsert: jest.fn(),
+			update: jest.fn(),
 			deleteMany: jest.fn(),
 		},
 		authState: {
@@ -66,6 +67,7 @@ describe("AuthService", () => {
 		authSession: {
 			findUnique: jest.fn(),
 			upsert: jest.fn(),
+			update: jest.fn(),
 			deleteMany: jest.fn(),
 		},
 		authState: {
@@ -580,6 +582,45 @@ describe("AuthService", () => {
 			await service.cleanupExpiredStates();
 
 			expect(mockPrismaService.authState.deleteMany).toHaveBeenCalled();
+		});
+	});
+
+	describe("cleanupExpiredSessions", () => {
+		it("should delete expired auth sessions", async () => {
+			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 3 });
+
+			await service.cleanupExpiredSessions();
+
+			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+				where: {
+					expiresAt: { lt: expect.any(Date) },
+				},
+			});
+		});
+	});
+
+	describe("touchSession", () => {
+		it("should extend expiry when lastUsedAt is stale", async () => {
+			mockPrismaService.authSession.update.mockResolvedValue({});
+			const stale = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+
+			await service.touchSession("session-123", stale);
+
+			expect(mockPrismaService.authSession.update).toHaveBeenCalledWith({
+				where: { id: "session-123" },
+				data: {
+					lastUsedAt: expect.any(Date),
+					expiresAt: expect.any(Date),
+				},
+			});
+		});
+
+		it("should not write when lastUsedAt is recent", async () => {
+			const recent = new Date(); // within the slide window
+
+			await service.touchSession("session-123", recent);
+
+			expect(mockPrismaService.authSession.update).not.toHaveBeenCalled();
 		});
 	});
 

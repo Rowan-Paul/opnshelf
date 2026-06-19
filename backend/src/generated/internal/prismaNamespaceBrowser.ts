@@ -136,6 +136,8 @@ export const AuthSessionScalarFieldEnum = {
   userDid: 'userDid',
   sessionData: 'sessionData',
   kind: 'kind',
+  expiresAt: 'expiresAt',
+  lastUsedAt: 'lastUsedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

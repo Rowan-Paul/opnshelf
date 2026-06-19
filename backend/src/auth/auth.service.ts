@@ -17,6 +17,21 @@ import { PrismaService } from "../prisma/prisma.service";
 
 const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
 
+/**
+ * Absolute session lifetime, aligned with the 14-day session cookie maxAge set
+ * in auth.controller.ts. A captured Bearer token or copied cookie value is only
+ * valid until this window elapses (sliding: extended on use, see SESSION_SLIDE_MS).
+ */
+export const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+/**
+ * Sliding-refresh cadence. On a successful authenticated request the guard
+ * extends expiresAt back to now + SESSION_TTL_MS, but only writes to the DB if
+ * lastUsedAt is older than this interval — so an active session stays alive
+ * without a DB write on every request, and an idle one expires after 14 days.
+ */
+export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
+
 export const OAUTH_SCOPE =
 	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
@@ -104,14 +119,20 @@ export class AuthService implements OnModuleInit {
 		// Create Prisma-backed session store
 		const sessionStore = {
 			set: async (sub: string, session: NodeSavedSession) => {
+				const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 				await this.prisma.authSession.upsert({
 					where: { userDid: sub },
 					update: {
 						sessionData: JSON.stringify(session),
+						// Writing the session (login or token rotation) is fresh
+						// activity, so slide the absolute lifetime forward.
+						expiresAt,
+						lastUsedAt: new Date(),
 					},
 					create: {
 						userDid: sub,
 						sessionData: JSON.stringify(session),
+						expiresAt,
 					},
 				});
 			},
@@ -446,10 +467,23 @@ export class AuthService implements OnModuleInit {
 			active: session.active ?? true,
 			pdsUrl,
 		});
+		const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 		await this.prisma.authSession.upsert({
 			where: { userDid: did },
-			update: { sessionData: data, kind: "credential" },
-			create: { userDid: did, sessionData: data, kind: "credential" },
+			update: {
+				sessionData: data,
+				kind: "credential",
+				// Persisting credential tokens (signup or refresh) is fresh
+				// activity, so slide the absolute lifetime forward.
+				expiresAt,
+				lastUsedAt: new Date(),
+			},
+			create: {
+				userDid: did,
+				sessionData: data,
+				kind: "credential",
+				expiresAt,
+			},
 		});
 	}
 
@@ -495,6 +529,33 @@ export class AuthService implements OnModuleInit {
 		return this.prisma.authSession.findUnique({
 			where: { id: sessionId },
 		});
+	}
+
+	/**
+	 * Slide a session's absolute lifetime forward on activity.
+	 *
+	 * Called by the guard after a successful authenticated request. To avoid a DB
+	 * write on every request we only extend when lastUsedAt is older than
+	 * SESSION_SLIDE_MS — so an actively-used session never expires, while an idle
+	 * one ages out after SESSION_TTL_MS. Best-effort: failures are swallowed so a
+	 * transient DB hiccup never fails an otherwise-valid request.
+	 */
+	async touchSession(sessionId: string, lastUsedAt: Date): Promise<void> {
+		const now = Date.now();
+		if (now - lastUsedAt.getTime() < SESSION_SLIDE_MS) {
+			return;
+		}
+		try {
+			await this.prisma.authSession.update({
+				where: { id: sessionId },
+				data: {
+					lastUsedAt: new Date(now),
+					expiresAt: new Date(now + SESSION_TTL_MS),
+				},
+			});
+		} catch (error) {
+			this.logger.warn(`Failed to touch session ${sessionId}`, error);
+		}
 	}
 
 	/**
@@ -759,6 +820,22 @@ export class AuthService implements OnModuleInit {
 	 */
 	async cleanupExpiredStates() {
 		const result = await this.prisma.authState.deleteMany({
+			where: {
+				expiresAt: { lt: new Date() },
+			},
+		});
+		void result;
+	}
+
+	/**
+	 * Clean up expired auth sessions (can be called periodically).
+	 *
+	 * Mirrors {@link cleanupExpiredStates}. The guard already refuses an expired
+	 * session, so this is housekeeping to keep the table from accumulating dead
+	 * rows; it is not what enforces expiry.
+	 */
+	async cleanupExpiredSessions() {
+		const result = await this.prisma.authSession.deleteMany({
 			where: {
 				expiresAt: { lt: new Date() },
 			},
