@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { TmdbHttpClient } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -73,24 +74,27 @@ export class MoviesTmdbService {
 	private readonly logger = new Logger(MoviesTmdbService.name);
 	private readonly tmdbApiKey: string;
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
+	private readonly http: TmdbHttpClient;
 
 	constructor(private config: ConfigService) {
 		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
+		this.http = new TmdbHttpClient(this.tmdbApiKey, MoviesTmdbService.name);
 	}
 
 	async searchMovies(
 		query: string,
 		page: number = 1,
 	): Promise<TMDBSearchResponse> {
-		const response = await fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
+			`search:movie:${query}:${page}`,
 		);
 
 		if (!response.ok) {
 			throw new Error("Failed to search movies");
 		}
 
-		return response.json() as Promise<TMDBSearchResponse>;
+		return response.json<TMDBSearchResponse>();
 	}
 
 	async discoverMovies(
@@ -104,20 +108,27 @@ export class MoviesTmdbService {
 			url += `&primary_release_year=${year}`;
 		}
 
-		const response = await fetch(url);
+		const response = await this.http.fetchCached(
+			url,
+			`discover:movie:${sortBy}:${page}:${year ?? ""}`,
+		);
 
 		if (!response.ok) {
 			throw new Error("Failed to discover movies");
 		}
 
-		return response.json() as Promise<TMDBSearchResponse>;
+		return response.json<TMDBSearchResponse>();
 	}
 
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {
 		const [detailResponse, videosResponse] = await Promise.all([
-			fetch(`${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`),
-			fetch(
+			this.http.fetchCached(
+				`${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,
+				`movie:detail:${movieId}`,
+			),
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/movie/${movieId}/videos?api_key=${this.tmdbApiKey}`,
+				`movie:videos:${movieId}`,
 			),
 		]);
 
@@ -125,9 +136,9 @@ export class MoviesTmdbService {
 			throw new Error("Movie not found");
 		}
 
-		const movie = (await detailResponse.json()) as TMDBMovie;
+		const movie = await detailResponse.json<TMDBMovie>();
 		const videosData = videosResponse.ok
-			? ((await videosResponse.json()) as TMDBVideosResponse)
+			? await videosResponse.json<TMDBVideosResponse>()
 			: undefined;
 
 		return {
@@ -137,7 +148,7 @@ export class MoviesTmdbService {
 	}
 
 	async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {
-		const response = await fetch(
+		const response = await this.http.fetch(
 			`${this.tmdbBaseUrl}/movie/${movieId}/credits?api_key=${this.tmdbApiKey}`,
 		);
 
@@ -146,7 +157,7 @@ export class MoviesTmdbService {
 			return null;
 		}
 
-		const data = (await response.json()) as TMDBCredits;
+		const data = await response.json<TMDBCredits>();
 
 		const sortedCast = (data.cast || [])
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -175,7 +186,7 @@ export class MoviesTmdbService {
 	async getWatchProviders(
 		movieId: string,
 	): Promise<WatchProvidersResponse | null> {
-		const response = await fetch(
+		const response = await this.http.fetch(
 			`${this.tmdbBaseUrl}/movie/${movieId}/watch/providers?api_key=${this.tmdbApiKey}`,
 		);
 
@@ -184,6 +195,6 @@ export class MoviesTmdbService {
 			return null;
 		}
 
-		return response.json() as Promise<WatchProvidersResponse>;
+		return response.json<WatchProvidersResponse>();
 	}
 }

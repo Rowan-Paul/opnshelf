@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { TmdbHttpClient } from "../tmdb/tmdb-http";
 import type { PersonFilmographyItemDto } from "./dto/person.dto";
 
 export interface TMDBPerson {
@@ -55,28 +56,32 @@ export class PeopleTmdbService {
 	private readonly logger = new Logger(PeopleTmdbService.name);
 	private readonly tmdbApiKey: string;
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
+	private readonly http: TmdbHttpClient;
 
 	constructor(private config: ConfigService) {
 		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
+		this.http = new TmdbHttpClient(this.tmdbApiKey, PeopleTmdbService.name);
 	}
 
 	async getPersonDetails(personId: string): Promise<TMDBPerson> {
-		const response = await fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}?api_key=${this.tmdbApiKey}`,
+			`person:detail:${personId}`,
 		);
 
 		if (!response.ok) {
 			throw new Error("Person not found");
 		}
 
-		return response.json() as Promise<TMDBPerson>;
+		return response.json<TMDBPerson>();
 	}
 
 	async getPersonMovieCredits(
 		personId: string,
 	): Promise<TMDBMovieCreditsResponse> {
-		const response = await fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}/movie_credits?api_key=${this.tmdbApiKey}`,
+			`person:movieCredits:${personId}`,
 		);
 
 		if (!response.ok) {
@@ -84,12 +89,13 @@ export class PeopleTmdbService {
 			return { cast: [], crew: [] };
 		}
 
-		return response.json() as Promise<TMDBMovieCreditsResponse>;
+		return response.json<TMDBMovieCreditsResponse>();
 	}
 
 	async getPersonTvCredits(personId: string): Promise<TMDBTvCreditsResponse> {
-		const response = await fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}/tv_credits?api_key=${this.tmdbApiKey}`,
+			`person:tvCredits:${personId}`,
 		);
 
 		if (!response.ok) {
@@ -97,7 +103,7 @@ export class PeopleTmdbService {
 			return { cast: [], crew: [] };
 		}
 
-		return response.json() as Promise<TMDBTvCreditsResponse>;
+		return response.json<TMDBTvCreditsResponse>();
 	}
 
 	async getCombinedFilmography(

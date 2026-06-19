@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { TmdbHttpClient } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -112,24 +113,27 @@ export class ShowsTmdbService {
 	private readonly logger = new Logger(ShowsTmdbService.name);
 	private readonly tmdbApiKey: string;
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
+	private readonly http: TmdbHttpClient;
 
 	constructor(private config: ConfigService) {
 		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
+		this.http = new TmdbHttpClient(this.tmdbApiKey, ShowsTmdbService.name);
 	}
 
 	async searchShows(
 		query: string,
 		page: number = 1,
 	): Promise<TMDBSearchResponse> {
-		const response = await fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/search/tv?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
+			`search:tv:${query}:${page}`,
 		);
 
 		if (!response.ok) {
 			throw new Error("Failed to search shows");
 		}
 
-		return response.json() as Promise<TMDBSearchResponse>;
+		return response.json<TMDBSearchResponse>();
 	}
 
 	async discoverShows(
@@ -143,20 +147,27 @@ export class ShowsTmdbService {
 			url += `&first_air_date_year=${year}`;
 		}
 
-		const response = await fetch(url);
+		const response = await this.http.fetchCached(
+			url,
+			`discover:tv:${sortBy}:${page}:${year ?? ""}`,
+		);
 
 		if (!response.ok) {
 			throw new Error("Failed to discover shows");
 		}
 
-		return response.json() as Promise<TMDBSearchResponse>;
+		return response.json<TMDBSearchResponse>();
 	}
 
 	async getShowDetails(showId: string): Promise<TMDBShow> {
 		const [detailResponse, videosResponse] = await Promise.all([
-			fetch(`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`),
-			fetch(
+			this.http.fetchCached(
+				`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`,
+				`tv:detail:${showId}`,
+			),
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/videos?api_key=${this.tmdbApiKey}`,
+				`tv:videos:${showId}`,
 			),
 		]);
 
@@ -164,9 +175,9 @@ export class ShowsTmdbService {
 			throw new Error("Show not found");
 		}
 
-		const show = (await detailResponse.json()) as TMDBShow;
+		const show = await detailResponse.json<TMDBShow>();
 		const videosData = videosResponse.ok
-			? ((await videosResponse.json()) as TMDBVideosResponse)
+			? await videosResponse.json<TMDBVideosResponse>()
 			: undefined;
 
 		return {
@@ -176,7 +187,7 @@ export class ShowsTmdbService {
 	}
 
 	async getShowCredits(showId: string): Promise<TMDBCredits | null> {
-		const response = await fetch(
+		const response = await this.http.fetch(
 			`${this.tmdbBaseUrl}/tv/${showId}/credits?api_key=${this.tmdbApiKey}`,
 		);
 
@@ -185,7 +196,7 @@ export class ShowsTmdbService {
 			return null;
 		}
 
-		const data = (await response.json()) as TMDBCredits;
+		const data = await response.json<TMDBCredits>();
 		const sortedCast = (data.cast || [])
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
 			.slice(0, 15);
@@ -214,19 +225,21 @@ export class ShowsTmdbService {
 		seasonNumber: number,
 	): Promise<TMDBSeason> {
 		const [detailResponse, videosResponse] = await Promise.all([
-			fetch(
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}?api_key=${this.tmdbApiKey}`,
+				`tv:season:detail:${showId}:${seasonNumber}`,
 			),
-			fetch(
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/videos?api_key=${this.tmdbApiKey}`,
+				`tv:season:videos:${showId}:${seasonNumber}`,
 			),
 		]);
 		if (!detailResponse.ok) {
 			throw new Error("Season not found");
 		}
-		const season = (await detailResponse.json()) as TMDBSeason;
+		const season = await detailResponse.json<TMDBSeason>();
 		const videosData = videosResponse.ok
-			? ((await videosResponse.json()) as TMDBVideosResponse)
+			? await videosResponse.json<TMDBVideosResponse>()
 			: undefined;
 		return {
 			...season,
@@ -240,19 +253,21 @@ export class ShowsTmdbService {
 		episodeNumber: number,
 	): Promise<TMDBEpisode> {
 		const [detailResponse, videosResponse] = await Promise.all([
-			fetch(
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/episode/${episodeNumber}?api_key=${this.tmdbApiKey}`,
+				`tv:episode:detail:${showId}:${seasonNumber}:${episodeNumber}`,
 			),
-			fetch(
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/episode/${episodeNumber}/videos?api_key=${this.tmdbApiKey}`,
+				`tv:episode:videos:${showId}:${seasonNumber}:${episodeNumber}`,
 			),
 		]);
 		if (!detailResponse.ok) {
 			throw new Error("Episode not found");
 		}
-		const episode = (await detailResponse.json()) as TMDBEpisode;
+		const episode = await detailResponse.json<TMDBEpisode>();
 		const videosData = videosResponse.ok
-			? ((await videosResponse.json()) as TMDBVideosResponse)
+			? await videosResponse.json<TMDBVideosResponse>()
 			: undefined;
 		return {
 			...episode,
@@ -347,7 +362,7 @@ export class ShowsTmdbService {
 	async getWatchProviders(
 		showId: string,
 	): Promise<WatchProvidersResponse | null> {
-		const response = await fetch(
+		const response = await this.http.fetch(
 			`${this.tmdbBaseUrl}/tv/${showId}/watch/providers?api_key=${this.tmdbApiKey}`,
 		);
 
@@ -356,7 +371,7 @@ export class ShowsTmdbService {
 			return null;
 		}
 
-		return response.json() as Promise<WatchProvidersResponse>;
+		return response.json<WatchProvidersResponse>();
 	}
 
 	private getNavigableEpisodes(episodes: TMDBEpisode[]): TMDBEpisode[] {

@@ -1,5 +1,6 @@
 import { Agent } from "@atproto/api";
 import { ConfigService } from "@nestjs/config";
+import { deterministicMovieWatchRkey } from "../common/watch-rkey";
 import type { AuthService } from "../auth/auth.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -314,9 +315,12 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
+		// The import passes a deterministic rkey so a re-run is an idempotent
+		// overwrite rather than a duplicate Watch.
 		expect(moviesService.buildMovieWatchRecord).toHaveBeenCalledWith(
 			"329865",
 			"2026-03-22T12:00:00.000Z",
+			deterministicMovieWatchRkey("329865", "2026-03-22T12:00:00.000Z"),
 		);
 		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
 			expect.objectContaining({

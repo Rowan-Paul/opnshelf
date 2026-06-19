@@ -114,6 +114,7 @@ describe("MoviesService", () => {
 				expect.stringContaining(
 					"search/movie?api_key=test-api-key&query=test&page=1",
 				),
+				expect.anything(),
 			);
 			expect(result).toEqual(mockResponse);
 		});
@@ -129,6 +130,7 @@ describe("MoviesService", () => {
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("&page=3"),
+				expect.anything(),
 			);
 		});
 
@@ -142,6 +144,7 @@ describe("MoviesService", () => {
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("query=test%20movie%20%26%20stuff"),
+				expect.anything(),
 			);
 		});
 
@@ -201,9 +204,11 @@ describe("MoviesService", () => {
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/movie/123?api_key=test-api-key"),
+				expect.anything(),
 			);
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/movie/123/videos?api_key=test-api-key"),
+				expect.anything(),
 			);
 			expect(result).toEqual({
 				...mockMovie,
@@ -806,7 +811,7 @@ describe("MoviesService", () => {
 				json: () => Promise.resolve(mockMovieDetails),
 			});
 			mockPrismaService.movie.upsert.mockResolvedValue(mockUpsertedMovie);
-			mockPrismaService.trackedMovie.create.mockResolvedValue(mockTrackedMovie);
+			mockPrismaService.trackedMovie.upsert.mockResolvedValue(mockTrackedMovie);
 
 			const result = await service.indexTrackedMovie(
 				"at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
@@ -819,15 +824,24 @@ describe("MoviesService", () => {
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/movie/123?api_key=test-api-key"),
+				expect.anything(),
 			);
 			expect(mockPrismaService.movie.upsert).toHaveBeenCalled();
-			expect(mockPrismaService.trackedMovie.create).toHaveBeenCalledWith({
-				data: expect.objectContaining({
+			// Indexing upserts on the unique rkey (idempotent re-import), staying
+			// consistent with the firehose ingester which also upserts on { rkey }.
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith({
+				where: { rkey: "movie-123-1234567890" },
+				create: expect.objectContaining({
 					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					rkey: "movie-123-1234567890",
 					cid: "cid123",
 					userDid: "did:plc:abc123",
 					movieId: "123",
+					status: "watched",
+				}),
+				update: expect.objectContaining({
+					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
+					cid: "cid123",
 					status: "watched",
 				}),
 				include: { movie: true },

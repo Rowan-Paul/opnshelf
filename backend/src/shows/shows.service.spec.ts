@@ -125,6 +125,7 @@ describe("ShowsService", () => {
 				expect.stringContaining(
 					"search/tv?api_key=test-api-key&query=test&page=1",
 				),
+				expect.anything(),
 			);
 			expect(result).toEqual(mockResponse);
 		});
@@ -171,9 +172,11 @@ describe("ShowsService", () => {
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/tv/123?api_key=test-api-key"),
+				expect.anything(),
 			);
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringContaining("/tv/123/videos?api_key=test-api-key"),
+				expect.anything(),
 			);
 			expect(result).toEqual({
 				...mockShow,

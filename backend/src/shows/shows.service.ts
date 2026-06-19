@@ -1354,7 +1354,9 @@ export class ShowsService {
 			}
 		}
 
-		const showData = await this.getShowDetails(showId);
+		// Reuse the show details already fetched at the top of this method
+		// instead of issuing a second identical getShowDetails call.
+		const showData = show;
 
 		if (!showData || !showData.id) {
 			throw new Error(
