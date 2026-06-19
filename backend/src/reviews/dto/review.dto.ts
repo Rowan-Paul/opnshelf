@@ -300,6 +300,14 @@ export class MediaReviewsQueryDto {
 	@IsOptional()
 	@IsString()
 	cursor?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Guarantee this review id is included in the response even if community ordering would push it past the first page (used by deep links).",
+	})
+	@IsOptional()
+	@IsString()
+	pinnedReviewId?: string;
 }
 
 export class MediaReviewItemDto {

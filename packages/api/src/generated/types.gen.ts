@@ -1446,6 +1446,111 @@ export type ReviewLikesResponseDto = {
     hasLiked: boolean;
 };
 
+export type ShelfResponseDto = {
+    items: Array<{
+        id: string;
+        type: 'movie';
+        movieId: string;
+        title: string;
+        posterPath?: string;
+        backdropPath?: string;
+        releaseYear?: number;
+        overview?: string;
+        colors?: {
+            [key: string]: unknown;
+        };
+        watchedDate?: string;
+        createdAt: string;
+    } | {
+        id: string;
+        type: 'episode';
+        showId: string;
+        showTitle: string;
+        seasonNumber: number;
+        episodeNumber: number;
+        episodeTitle?: string;
+        posterPath?: string;
+        backdropPath?: string;
+        firstAirYear?: number;
+        overview?: string;
+        colors?: {
+            [key: string]: unknown;
+        };
+        watchedDate?: string;
+        createdAt: string;
+    }>;
+    /**
+     * Total count of items
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items returned per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+};
+
+export type ShelfActivityBucketDto = {
+    /**
+     * Local day key in YYYY-MM-DD format
+     */
+    date: string;
+    /**
+     * Number of items watched on that local day
+     */
+    count: number;
+};
+
+export type ShelfActivitySummaryDto = {
+    /**
+     * Total watched in the last 7 days
+     */
+    watchedLast7Days: number;
+    /**
+     * Total watched in the last 30 days
+     */
+    watchedLast30Days: number;
+    dailyActivity: Array<ShelfActivityBucketDto>;
+};
+
+export type ShelfSyncStatusDto = {
+    /**
+     * Whether the user's historical watch records are still being backfilled/ingested from their PDS. Drives the 'syncing your watch history…' indicator; poll while true.
+     */
+    isSyncing: boolean;
+    /**
+     * Number of tracked movies currently indexed
+     */
+    trackedMovieCount: number;
+    /**
+     * Number of tracked episodes currently indexed
+     */
+    trackedEpisodeCount: number;
+    /**
+     * When the most recent backfill window opened (sign-in/sign-up), ISO 8601
+     */
+    backfillStartedAt?: string;
+    /**
+     * When the last watch record was ingested, ISO 8601
+     */
+    lastIngestAt?: string;
+};
+
 export type NoteResponseDto = {
     id: string;
     rkey: string;
@@ -1585,88 +1690,6 @@ export type SetRatingDto = {
      * Rating from 1 to 10 (maps to 0.5-5.0 stars)
      */
     rating: number;
-};
-
-export type ShelfResponseDto = {
-    items: Array<{
-        id: string;
-        type: 'movie';
-        movieId: string;
-        title: string;
-        posterPath?: string;
-        backdropPath?: string;
-        releaseYear?: number;
-        overview?: string;
-        colors?: {
-            [key: string]: unknown;
-        };
-        watchedDate?: string;
-        createdAt: string;
-    } | {
-        id: string;
-        type: 'episode';
-        showId: string;
-        showTitle: string;
-        seasonNumber: number;
-        episodeNumber: number;
-        episodeTitle?: string;
-        posterPath?: string;
-        backdropPath?: string;
-        firstAirYear?: number;
-        overview?: string;
-        colors?: {
-            [key: string]: unknown;
-        };
-        watchedDate?: string;
-        createdAt: string;
-    }>;
-    /**
-     * Total count of items
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items returned per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-};
-
-export type ShelfActivityBucketDto = {
-    /**
-     * Local day key in YYYY-MM-DD format
-     */
-    date: string;
-    /**
-     * Number of items watched on that local day
-     */
-    count: number;
-};
-
-export type ShelfActivitySummaryDto = {
-    /**
-     * Total watched in the last 7 days
-     */
-    watchedLast7Days: number;
-    /**
-     * Total watched in the last 30 days
-     */
-    watchedLast30Days: number;
-    dailyActivity: Array<ShelfActivityBucketDto>;
 };
 
 export type UnifiedSearchResultDto = {
@@ -3605,6 +3628,10 @@ export type ReviewsControllerGetMediaReviewsData = {
          * Cursor for pagination
          */
         cursor?: string;
+        /**
+         * Guarantee this review id is included in the response even if community ordering would push it past the first page (used by deep links).
+         */
+        pinnedReviewId?: string;
     };
     url: '/reviews/media';
 };
@@ -3835,6 +3862,68 @@ export type ReviewsControllerGetReviewLikesResponses = {
 };
 
 export type ReviewsControllerGetReviewLikesResponse = ReviewsControllerGetReviewLikesResponses[keyof ReviewsControllerGetReviewLikesResponses];
+
+export type ShelfControllerGetUserShelfData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        /**
+         * Filter by item type
+         */
+        type?: 'movie' | 'episode';
+        /**
+         * Search by title (case-insensitive partial match)
+         */
+        search?: string;
+    };
+    url: '/users/{userDid}/shelf';
+};
+
+export type ShelfControllerGetUserShelfResponses = {
+    200: ShelfResponseDto;
+};
+
+export type ShelfControllerGetUserShelfResponse = ShelfControllerGetUserShelfResponses[keyof ShelfControllerGetUserShelfResponses];
+
+export type ShelfControllerGetUserActivitySummaryData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/users/{userDid}/shelf/activity-summary';
+};
+
+export type ShelfControllerGetUserActivitySummaryResponses = {
+    200: ShelfActivitySummaryDto;
+};
+
+export type ShelfControllerGetUserActivitySummaryResponse = ShelfControllerGetUserActivitySummaryResponses[keyof ShelfControllerGetUserActivitySummaryResponses];
+
+export type ShelfControllerGetSyncStatusData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/users/{userDid}/shelf/sync-status';
+};
+
+export type ShelfControllerGetSyncStatusResponses = {
+    200: ShelfSyncStatusDto;
+};
+
+export type ShelfControllerGetSyncStatusResponse = ShelfControllerGetSyncStatusResponses[keyof ShelfControllerGetSyncStatusResponses];
 
 export type NotesControllerGetNoteData = {
     body?: never;
@@ -4087,53 +4176,6 @@ export type RatingsControllerClearRatingResponses = {
      */
     200: unknown;
 };
-
-export type ShelfControllerGetUserShelfData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: {
-        /**
-         * Page number to return
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        /**
-         * Filter by item type
-         */
-        type?: 'movie' | 'episode';
-        /**
-         * Search by title (case-insensitive partial match)
-         */
-        search?: string;
-    };
-    url: '/users/{userDid}/shelf';
-};
-
-export type ShelfControllerGetUserShelfResponses = {
-    200: ShelfResponseDto;
-};
-
-export type ShelfControllerGetUserShelfResponse = ShelfControllerGetUserShelfResponses[keyof ShelfControllerGetUserShelfResponses];
-
-export type ShelfControllerGetUserActivitySummaryData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: never;
-    url: '/users/{userDid}/shelf/activity-summary';
-};
-
-export type ShelfControllerGetUserActivitySummaryResponses = {
-    200: ShelfActivitySummaryDto;
-};
-
-export type ShelfControllerGetUserActivitySummaryResponse = ShelfControllerGetUserActivitySummaryResponses[keyof ShelfControllerGetUserActivitySummaryResponses];
 
 export type SearchControllerSearchAllData = {
     body?: never;

@@ -332,6 +332,7 @@ export class ReviewsService {
 			seasonNumber,
 			episodeNumber,
 			limit = 20,
+			pinnedReviewId,
 		} = query;
 		const take = limit + 1;
 
@@ -382,6 +383,36 @@ export class ReviewsService {
 		const hasMore = reviews.length > limit;
 		const items = hasMore ? reviews.slice(0, limit) : reviews;
 		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+		// Deep-link support: guarantee a specifically requested review is present
+		// even when community-appreciation ordering would push it past this page.
+		// It must match the same media coordinates, so it always belongs here.
+		if (pinnedReviewId && !items.some((r) => r.id === pinnedReviewId)) {
+			const pinned = await this.prisma.review.findFirst({
+				where: { ...where, id: pinnedReviewId },
+				include: {
+					user: {
+						select: {
+							did: true,
+							handle: true,
+							displayName: true,
+							avatar: true,
+						},
+					},
+					_count: { select: { likes: true } },
+					likes: requestingUserDid
+						? {
+								where: { userDid: requestingUserDid },
+								select: { id: true },
+								take: 1,
+							}
+						: false,
+				},
+			});
+			if (pinned) {
+				items.unshift(pinned);
+			}
+		}
 
 		const total = await this.prisma.review.count({ where });
 

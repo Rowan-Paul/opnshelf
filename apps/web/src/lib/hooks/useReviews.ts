@@ -31,6 +31,8 @@ interface UseMediaReviewsOptions {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/** Force this review into the response even if it ranks past the first page. */
+	pinnedReviewId?: string;
 }
 
 export function useMediaReviews({
@@ -38,6 +40,7 @@ export function useMediaReviews({
 	mediaId,
 	seasonNumber,
 	episodeNumber,
+	pinnedReviewId,
 }: UseMediaReviewsOptions) {
 	const resolvedMediaType = resolveMediaType(
 		mediaType,
@@ -52,6 +55,7 @@ export function useMediaReviews({
 				mediaId,
 				seasonNumber,
 				episodeNumber,
+				...(pinnedReviewId ? { pinnedReviewId } : {}),
 			},
 		}),
 		enabled: !!mediaId,

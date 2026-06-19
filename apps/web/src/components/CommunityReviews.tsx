@@ -265,11 +265,19 @@ export default function CommunityReviews({
 	onAddReview,
 }: CommunityReviewsProps) {
 	const { user, isAuthenticated } = useAuth();
+
+	// If we were deep-linked to a specific review (#review-<id>), pin it so the
+	// server includes it even when it ranks past the first page of results.
+	const rawHash = useLocation({ select: (l) => l.hash });
+	const pinnedReviewId =
+		(rawHash ?? "").replace(/^#/, "").match(/^review-(.+)$/)?.[1] ?? undefined;
+
 	const { data, isLoading } = useMediaReviews({
 		mediaType,
 		mediaId,
 		seasonNumber,
 		episodeNumber,
+		pinnedReviewId,
 	});
 
 	const allReviews = data?.items ?? [];
