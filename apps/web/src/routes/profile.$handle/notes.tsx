@@ -5,9 +5,10 @@ import {
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, StickyNote, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import ConfirmDialog from "#/components/ConfirmDialog";
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { useAuth } from "#/lib/auth-context";
@@ -80,6 +81,7 @@ function NoteCard({
 }) {
 	const queryClient = useQueryClient();
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const baseMediaType =
 		note.mediaType === "movie" ? "movie" : ("show" as const);
@@ -103,7 +105,12 @@ function NoteCard({
 	const handleDelete = () => {
 		deleteMutation.mutate(
 			{ path: { noteId: note.id } },
-			{ onSuccess: invalidateList },
+			{
+				onSuccess: () => {
+					setConfirmOpen(false);
+					invalidateList();
+				},
+			},
 		);
 	};
 
@@ -120,12 +127,10 @@ function NoteCard({
 				to={link.to}
 				params={link.params}
 				title={note.title || "Unknown title"}
+				meta={new Date(note.updatedAt).toLocaleDateString()}
 				headerRight={
 					isOwner ? (
-						<div className="flex items-center gap-1">
-							<span className="text-(--foreground-subtle) text-xs">
-								{new Date(note.updatedAt).toLocaleDateString()}
-							</span>
+						<div className="flex gap-1">
 							<button
 								type="button"
 								onClick={() => setDialogOpen(true)}
@@ -136,7 +141,7 @@ function NoteCard({
 							</button>
 							<button
 								type="button"
-								onClick={handleDelete}
+								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
 								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
 								aria-label="Delete note"
@@ -148,7 +153,7 @@ function NoteCard({
 								)}
 							</button>
 						</div>
-					) : null
+					) : undefined
 				}
 			>
 				<p className="line-clamp-4 whitespace-pre-wrap text-(--foreground) text-sm leading-relaxed">
@@ -163,6 +168,22 @@ function NoteCard({
 				seasonNumber={note.seasonNumber}
 				episodeNumber={note.episodeNumber}
 				onSuccess={invalidateList}
+			/>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title="Delete note?"
+				description={
+					<>
+						This permanently deletes your note for{" "}
+						<strong>{note.title || "this title"}</strong>. This action cannot be
+						undone.
+					</>
+				}
+				confirmLabel="Delete note"
+				pendingLabel="Deleting..."
+				onConfirm={handleDelete}
+				isPending={deleteMutation.isPending}
 			/>
 		</>
 	);
@@ -190,9 +211,7 @@ function ProfileNotesPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-display-2">Notes</h1>
-			</div>
+			<h1 className="text-display-2">Notes</h1>
 
 			{isLoading ? (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -209,8 +228,9 @@ function ProfileNotesPage() {
 				</div>
 			) : notes.length === 0 ? (
 				<div className="card p-8 text-center">
-					<StickyNote className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">No notes yet.</p>
+					<p className="text-(--foreground-muted)">
+						{isOwner ? "You haven't written any notes yet." : "No notes yet."}
+					</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

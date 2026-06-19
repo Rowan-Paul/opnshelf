@@ -10,13 +10,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
-	BookmarkX,
 	Clock,
 	Film,
-	Grid3X3,
 	Heart,
 	List,
-	List as ListIcon,
 	Loader2,
 	Plus,
 	Search,
@@ -102,19 +99,6 @@ function getTitle(media: Record<string, unknown>): string {
 	return "Unknown";
 }
 
-function getYear(media: Record<string, unknown>): number | undefined {
-	if (media.release_date && typeof media.release_date === "string") {
-		return new Date(media.release_date).getFullYear();
-	}
-	if (media.first_air_date && typeof media.first_air_date === "string") {
-		return new Date(media.first_air_date).getFullYear();
-	}
-	if (media.releaseYear && typeof media.releaseYear === "number") {
-		return media.releaseYear;
-	}
-	return undefined;
-}
-
 function getRating(media: Record<string, unknown>): number | undefined {
 	if (media.vote_average && typeof media.vote_average === "number") {
 		return media.vote_average;
@@ -141,7 +125,6 @@ export function ProfileListsPage({
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
-	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [newListName, setNewListName] = useState("");
 	const [newListDescription, setNewListDescription] = useState("");
@@ -414,34 +397,6 @@ export function ProfileListsPage({
 											onChange={(e) => setSearchQuery(e.target.value)}
 										/>
 									</div>
-
-									{/* View Toggle */}
-									<div className="flex rounded-lg border border-(--border) bg-(--background-elevated) p-0.5">
-										<button
-											type="button"
-											onClick={() => setViewMode("grid")}
-											className={`rounded-md p-1.5 transition-colors ${
-												viewMode === "grid"
-													? "bg-(--accent) text-[#3f2e00]"
-													: "text-(--foreground-muted) hover:text-(--foreground)"
-											}`}
-											aria-label="Grid view"
-										>
-											<Grid3X3 className="h-4 w-4" />
-										</button>
-										<button
-											type="button"
-											onClick={() => setViewMode("list")}
-											className={`rounded-md p-1.5 transition-colors ${
-												viewMode === "list"
-													? "bg-(--accent) text-[#3f2e00]"
-													: "text-(--foreground-muted) hover:text-(--foreground)"
-											}`}
-											aria-label="List view"
-										>
-											<ListIcon className="h-4 w-4" />
-										</button>
-									</div>
 								</div>
 							</div>
 
@@ -496,134 +451,44 @@ export function ProfileListsPage({
 							)}
 
 							{/* Items Grid/List */}
-							{!listLoading &&
-								!listError &&
-								filteredItems.length > 0 &&
-								(viewMode === "grid" ? (
-									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-										{filteredItems
-											.filter(
-												(item, index, self) =>
-													index === self.findIndex((i) => i.id === item.id),
-											)
-											.map((item: MediaInListDto) => (
-												<ActionableMediaCard
-													key={item.id}
-													fill
-													id={String(
-														(item.media as Record<string, unknown>).mediaId ??
-															item.mediaId,
-													)}
-													title={getTitle(item.media)}
-													seasonNumber={item.seasonNumber}
-													episodeNumber={item.episodeNumber}
-													episodeInfo={
-														item.seasonNumber !== undefined &&
-														item.episodeNumber !== undefined
-															? item.episodeName
-																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																: `S${item.seasonNumber}E${item.episodeNumber}`
-															: item.seasonNumber !== undefined
-																? `Season ${item.seasonNumber}`
-																: undefined
-													}
-													posterUrl={getPosterUrl(item.media)}
-													backdropUrl={getBackdropUrl(item.media)}
-													type={item.mediaType === "movie" ? "movie" : "show"}
-													tmdbRating={getRating(item.media)}
-													duration={formatDuration(
-														item.media.runtime as number | undefined,
-													)}
-													onRemove={
-														isOwner
-															? () =>
-																	removeItemMutation.mutate({
-																		path: {
-																			slug: selectedListSlug || "",
-																			mediaType: item.mediaType,
-																			mediaId: item.mediaId,
-																		},
-																		query: {
-																			seasonNumber: item.seasonNumber,
-																			episodeNumber: item.episodeNumber,
-																		},
-																	})
+							{!listLoading && !listError && filteredItems.length > 0 && (
+								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+									{filteredItems
+										.filter(
+											(item, index, self) =>
+												index === self.findIndex((i) => i.id === item.id),
+										)
+										.map((item: MediaInListDto) => (
+											<ActionableMediaCard
+												key={item.id}
+												fill
+												id={String(
+													(item.media as Record<string, unknown>).mediaId ??
+														item.mediaId,
+												)}
+												title={getTitle(item.media)}
+												seasonNumber={item.seasonNumber}
+												episodeNumber={item.episodeNumber}
+												episodeInfo={
+													item.seasonNumber !== undefined &&
+													item.episodeNumber !== undefined
+														? item.episodeName
+															? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+															: `S${item.seasonNumber}E${item.episodeNumber}`
+														: item.seasonNumber !== undefined
+															? `Season ${item.seasonNumber}`
 															: undefined
-													}
-													isRemoving={
-														isOwner &&
-														removeItemMutation.isPending &&
-														removeItemMutation.variables?.path?.mediaId ===
-															item.mediaId
-													}
-												/>
-											))}
-									</div>
-								) : (
-									<div className="space-y-2">
-										{filteredItems
-											.filter(
-												(item, index, self) =>
-													index === self.findIndex((i) => i.id === item.id),
-											)
-											.map((item: MediaInListDto) => (
-												<div
-													key={item.id}
-													className="card card-interactive flex items-center gap-4 p-3"
-												>
-													<img
-														src={getPosterUrl(item.media)}
-														alt={getTitle(item.media)}
-														className="h-20 w-14 rounded-lg object-cover"
-														loading="lazy"
-													/>
-													<div className="min-w-0 flex-1">
-														<h3 className="font-semibold">
-															{getTitle(item.media)}
-														</h3>
-														{item.seasonNumber !== undefined && (
-															<p className="mt-0.5 text-(--foreground-muted) text-sm">
-																{item.episodeNumber !== undefined
-																	? `Season ${item.seasonNumber}, Episode ${item.episodeNumber}${item.episodeName ? ` — ${item.episodeName}` : ""}`
-																	: `Season ${item.seasonNumber}`}
-															</p>
-														)}
-														<div className="mt-1 flex items-center gap-2">
-															<span
-																className={`badge ${
-																	item.mediaType === "movie"
-																		? "badge-subtle"
-																		: "badge-accent"
-																}`}
-															>
-																{item.mediaType === "movie" ? "Movie" : "TV"}
-															</span>
-															{getYear(item.media) && (
-																<span className="text-(--foreground-subtle) text-sm">
-																	{getYear(item.media)}
-																</span>
-															)}
-															{getRating(item.media) && (
-																<span className="flex items-center gap-1 text-(--foreground-subtle) text-sm">
-																	<Star className="size-3 fill-current text-yellow-500" />
-																	{getRating(item.media)?.toFixed(1)}
-																</span>
-															)}
-															{formatDuration(
-																item.media.runtime as number | undefined,
-															) && (
-																<span className="text-(--foreground-subtle) text-sm">
-																	{formatDuration(
-																		item.media.runtime as number | undefined,
-																	)}
-																</span>
-															)}
-														</div>
-													</div>
-													{isOwner && (
-														<button
-															type="button"
-															onClick={() =>
+												}
+												posterUrl={getPosterUrl(item.media)}
+												backdropUrl={getBackdropUrl(item.media)}
+												type={item.mediaType === "movie" ? "movie" : "show"}
+												tmdbRating={getRating(item.media)}
+												duration={formatDuration(
+													item.media.runtime as number | undefined,
+												)}
+												onRemove={
+													isOwner
+														? () =>
 																removeItemMutation.mutate({
 																	path: {
 																		slug: selectedListSlug || "",
@@ -635,28 +500,18 @@ export function ProfileListsPage({
 																		episodeNumber: item.episodeNumber,
 																	},
 																})
-															}
-															disabled={
-																removeItemMutation.isPending &&
-																removeItemMutation.variables?.path?.mediaId ===
-																	item.mediaId
-															}
-															className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:border-red-300 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-															aria-label="Remove from list"
-														>
-															{removeItemMutation.isPending &&
-															removeItemMutation.variables?.path?.mediaId ===
-																item.mediaId ? (
-																<Loader2 className="size-4 animate-spin" />
-															) : (
-																<BookmarkX className="size-4" />
-															)}
-														</button>
-													)}
-												</div>
-											))}
-									</div>
-								))}
+														: undefined
+												}
+												isRemoving={
+													isOwner &&
+													removeItemMutation.isPending &&
+													removeItemMutation.variables?.path?.mediaId ===
+														item.mediaId
+												}
+											/>
+										))}
+								</div>
+							)}
 						</div>
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
