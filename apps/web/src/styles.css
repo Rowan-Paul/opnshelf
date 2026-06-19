@@ -229,7 +229,8 @@ body {
   width: 100%;
   max-width: 1400px;
   margin-inline: auto;
-  padding-inline: 1rem;
+  /* Tight gutter on phones so content uses the full width; roomier from sm up. */
+  padding-inline: 0.5rem;
 }
 
 @media (min-width: 640px) {
