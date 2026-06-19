@@ -529,6 +529,20 @@ body {
   animation: scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* One-shot accent wash used to draw the eye to a deep-linked review card. */
+@keyframes review-flash {
+  0% {
+    background-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-review-flash {
+  animation: review-flash 2s ease-out forwards;
+}
+
 /* Stagger children animations */
 .stagger-children > * {
   opacity: 0;

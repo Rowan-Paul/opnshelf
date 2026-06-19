@@ -73,10 +73,13 @@ function ReviewCard({
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	// When linked-to via #review-<id> (e.g. from the profile reviews list),
-	// scroll this card into view and flag it for the highlight ring.
+	// scroll this card into view and flash it. The card only renders once the
+	// media-reviews query has resolved, so this effect inherently runs after the
+	// target review is loaded. Strip a leading "#" defensively — routers differ.
 	const cardRef = useRef<HTMLDivElement>(null);
-	const hash = useLocation({ select: (l) => l.hash });
-	const isHighlighted = hash === `review-${review.id}`;
+	const rawHash = useLocation({ select: (l) => l.hash });
+	const isHighlighted =
+		(rawHash ?? "").replace(/^#/, "") === `review-${review.id}`;
 	useEffect(() => {
 		if (isHighlighted) {
 			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -126,64 +129,56 @@ function ReviewCard({
 		<div
 			ref={cardRef}
 			id={`review-${review.id}`}
-			className={`card scroll-mt-24 p-4 transition-shadow ${
-				isHighlighted
-					? "ring-(--accent) ring-2"
-					: isOwnReview
-						? "border-(--accent)/30"
-						: ""
+			className={`card relative scroll-mt-24 p-4 ${
+				isOwnReview ? "border-(--accent)/30" : ""
 			}`}
 		>
-			<div className="mb-3 flex items-start justify-between">
-				<div className="flex items-center gap-3">
-					<Link
-						to="/profile/$handle"
-						params={{ handle: review.userHandle }}
-						className="flex items-center gap-3"
-					>
-						<img
-							src={avatarUrl}
-							alt={displayName}
-							className="size-10 rounded-full object-cover"
-							loading="lazy"
-						/>
-						<div>
-							<div className="flex items-center gap-2">
-								<p className="font-medium text-sm transition-colors hover:text-(--accent)">
-									{displayName}
-								</p>
-								{isOwnReview && (
-									<span className="badge badge-accent px-1.5 py-0 text-[10px]">
-										Your Review
-									</span>
-								)}
-							</div>
-							<p className="text-(--foreground-muted) text-xs">
-								@{review.userHandle}
+			{isHighlighted && (
+				<div className="pointer-events-none absolute inset-0 z-[2] animate-review-flash rounded-[inherit]" />
+			)}
+			<div className="relative z-[1] mb-3 flex items-start justify-between gap-2">
+				<Link
+					to="/profile/$handle"
+					params={{ handle: review.userHandle }}
+					className="flex min-w-0 items-center gap-3"
+				>
+					<img
+						src={avatarUrl}
+						alt={displayName}
+						className="size-10 shrink-0 rounded-full object-cover"
+						loading="lazy"
+					/>
+					<div className="min-w-0">
+						<div className="flex items-center gap-2">
+							<p className="truncate font-medium text-sm transition-colors hover:text-(--accent)">
+								{displayName}
 							</p>
-						</div>
-					</Link>
-				</div>
-				<div className="flex items-center gap-2">
-					<span className="text-(--foreground-muted) text-xs">
-						{formatRelativeTime(review.createdAt)}
-					</span>
-					{isOwnReview && (
-						<button
-							type="button"
-							onClick={() => setConfirmOpen(true)}
-							disabled={deleteMutation.isPending}
-							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-							aria-label="Delete review"
-						>
-							{deleteMutation.isPending ? (
-								<Loader2 className="size-3.5 animate-spin" />
-							) : (
-								<Trash2 className="size-3.5" />
+							{isOwnReview && (
+								<span className="badge badge-accent shrink-0 px-1.5 py-0 text-[10px]">
+									Your Review
+								</span>
 							)}
-						</button>
-					)}
-				</div>
+						</div>
+						<p className="truncate text-(--foreground-muted) text-xs">
+							@{review.userHandle} · {formatRelativeTime(review.createdAt)}
+						</p>
+					</div>
+				</Link>
+				{isOwnReview && (
+					<button
+						type="button"
+						onClick={() => setConfirmOpen(true)}
+						disabled={deleteMutation.isPending}
+						className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+						aria-label="Delete review"
+					>
+						{deleteMutation.isPending ? (
+							<Loader2 className="size-3.5 animate-spin" />
+						) : (
+							<Trash2 className="size-3.5" />
+						)}
+					</button>
+				)}
 			</div>
 
 			<div className="flex gap-3">

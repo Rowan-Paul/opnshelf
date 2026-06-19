@@ -56,6 +56,12 @@ function ProfileConnectionsPage() {
 	const activeQuery =
 		activeTab === "followers" ? followersQuery : followingQuery;
 
+	// Only the row whose unfollow is in flight should show a spinner — keying
+	// off the shared mutation's `isPending` would spin every button at once.
+	const pendingUnfollowDid = unfollowMutation.isPending
+		? unfollowMutation.variables?.path?.targetDid
+		: undefined;
+
 	return (
 		<div className="space-y-6">
 			<h1 className="text-display-2">Connections</h1>
@@ -134,10 +140,10 @@ function ProfileConnectionsPage() {
 											path: { targetDid: user.did },
 										})
 									}
-									disabled={unfollowMutation.isPending}
+									disabled={pendingUnfollowDid === user.did}
 									className="btn btn-secondary gap-2"
 								>
-									{unfollowMutation.isPending ? (
+									{pendingUnfollowDid === user.did ? (
 										<Loader2 className="size-4 animate-spin" />
 									) : (
 										<UserMinus className="size-4" />
