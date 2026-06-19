@@ -5,7 +5,10 @@ type ProfileContentCardProps = {
 	posterUrl?: string | null;
 	to: string;
 	params?: Record<string, string | undefined>;
+	hash?: string;
 	title: string;
+	/** Full-width metadata row rendered directly under the title (e.g. a date). */
+	meta?: ReactNode;
 	headerRight?: ReactNode;
 	children: ReactNode;
 };
@@ -14,7 +17,9 @@ export function ProfileContentCard({
 	posterUrl,
 	to,
 	params,
+	hash,
 	title,
+	meta,
 	headerRight,
 	children,
 }: ProfileContentCardProps) {
@@ -41,13 +46,21 @@ export function ProfileContentCard({
 						<Link
 							to={to}
 							params={params}
+							hash={hash}
 							className="relative z-[1] line-clamp-2 font-medium text-sm hover:text-(--accent)"
 						>
 							{title}
 						</Link>
+						{meta && (
+							<div className="mt-0.5 text-(--foreground-muted) text-xs">
+								{meta}
+							</div>
+						)}
 					</div>
 
-					<div className="relative z-[1] shrink-0">{headerRight}</div>
+					{headerRight && (
+						<div className="relative z-[1] shrink-0">{headerRight}</div>
+					)}
 				</div>
 
 				{children}
@@ -57,6 +70,7 @@ export function ProfileContentCard({
 			<Link
 				to={to}
 				params={params}
+				hash={hash}
 				className="absolute inset-0 rounded-[inherit]"
 				aria-hidden
 				tabIndex={-1}

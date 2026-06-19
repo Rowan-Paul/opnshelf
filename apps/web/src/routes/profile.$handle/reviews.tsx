@@ -158,38 +158,35 @@ function ReviewCard({
 			<ProfileContentCard
 				posterUrl={posterUrl}
 				to={href}
+				hash={`review-${review.id}`}
 				title={review.title || "Unknown"}
+				meta={new Date(review.createdAt).toLocaleDateString()}
 				headerRight={
-					<div className="flex items-center gap-2">
-						<span className="text-(--foreground-muted) text-xs">
-							{new Date(review.createdAt).toLocaleDateString()}
-						</span>
-						{isOwner && (
-							<div className="flex gap-1">
-								<button
-									type="button"
-									onClick={() => setDialogOpen(true)}
-									className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-									aria-label="Edit review"
-								>
-									<Pencil className="size-3.5" />
-								</button>
-								<button
-									type="button"
-									onClick={() => setConfirmOpen(true)}
-									disabled={deleteMutation.isPending}
-									className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-									aria-label="Delete review"
-								>
-									{deleteMutation.isPending ? (
-										<Loader2 className="size-3.5 animate-spin" />
-									) : (
-										<Trash2 className="size-3.5" />
-									)}
-								</button>
-							</div>
-						)}
-					</div>
+					isOwner ? (
+						<div className="flex gap-1">
+							<button
+								type="button"
+								onClick={() => setDialogOpen(true)}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit review"
+							>
+								<Pencil className="size-3.5" />
+							</button>
+							<button
+								type="button"
+								onClick={() => setConfirmOpen(true)}
+								disabled={deleteMutation.isPending}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete review"
+							>
+								{deleteMutation.isPending ? (
+									<Loader2 className="size-3.5 animate-spin" />
+								) : (
+									<Trash2 className="size-3.5" />
+								)}
+							</button>
+						</div>
+					) : undefined
 				}
 			>
 				<p className="font-medium text-sm">{review.reviewTitle}</p>

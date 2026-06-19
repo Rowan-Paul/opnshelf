@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Heart, Loader2, MessageSquare, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
 import {
@@ -72,6 +72,17 @@ function ReviewCard({
 
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
+	// When linked-to via #review-<id> (e.g. from the profile reviews list),
+	// scroll this card into view and flag it for the highlight ring.
+	const cardRef = useRef<HTMLDivElement>(null);
+	const hash = useLocation({ select: (l) => l.hash });
+	const isHighlighted = hash === `review-${review.id}`;
+	useEffect(() => {
+		if (isHighlighted) {
+			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
+	}, [isHighlighted]);
+
 	const isPending = isLikePending || isUnlikePending;
 	const isLiked = review.hasLiked;
 
@@ -112,7 +123,17 @@ function ReviewCard({
 	);
 
 	return (
-		<div className={`card p-4 ${isOwnReview ? "border-(--accent)/30" : ""}`}>
+		<div
+			ref={cardRef}
+			id={`review-${review.id}`}
+			className={`card scroll-mt-24 p-4 transition-shadow ${
+				isHighlighted
+					? "ring-(--accent) ring-2"
+					: isOwnReview
+						? "border-(--accent)/30"
+						: ""
+			}`}
+		>
 			<div className="mb-3 flex items-start justify-between">
 				<div className="flex items-center gap-3">
 					<Link
