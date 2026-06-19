@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { TmdbHttpClient } from "../tmdb/tmdb-http";
+import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -130,7 +130,7 @@ export class ShowsTmdbService {
 		);
 
 		if (!response.ok) {
-			throw new Error("Failed to search shows");
+			throw tmdbErrorForResponse(response, "Failed to search shows");
 		}
 
 		return response.json<TMDBSearchResponse>();
@@ -153,7 +153,7 @@ export class ShowsTmdbService {
 		);
 
 		if (!response.ok) {
-			throw new Error("Failed to discover shows");
+			throw tmdbErrorForResponse(response, "Failed to discover shows");
 		}
 
 		return response.json<TMDBSearchResponse>();
@@ -172,7 +172,7 @@ export class ShowsTmdbService {
 		]);
 
 		if (!detailResponse.ok) {
-			throw new Error("Show not found");
+			throw tmdbErrorForResponse(detailResponse, "Show not found");
 		}
 
 		const show = await detailResponse.json<TMDBShow>();
@@ -235,7 +235,7 @@ export class ShowsTmdbService {
 			),
 		]);
 		if (!detailResponse.ok) {
-			throw new Error("Season not found");
+			throw tmdbErrorForResponse(detailResponse, "Season not found");
 		}
 		const season = await detailResponse.json<TMDBSeason>();
 		const videosData = videosResponse.ok
@@ -263,7 +263,7 @@ export class ShowsTmdbService {
 			),
 		]);
 		if (!detailResponse.ok) {
-			throw new Error("Episode not found");
+			throw tmdbErrorForResponse(detailResponse, "Episode not found");
 		}
 		const episode = await detailResponse.json<TMDBEpisode>();
 		const videosData = videosResponse.ok

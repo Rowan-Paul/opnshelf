@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { TmdbHttpClient } from "../tmdb/tmdb-http";
+import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import type { PersonFilmographyItemDto } from "./dto/person.dto";
 
 export interface TMDBPerson {
@@ -70,7 +70,7 @@ export class PeopleTmdbService {
 		);
 
 		if (!response.ok) {
-			throw new Error("Person not found");
+			throw tmdbErrorForResponse(response, "Person not found");
 		}
 
 		return response.json<TMDBPerson>();

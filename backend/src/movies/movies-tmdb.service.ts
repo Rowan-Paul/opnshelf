@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { TmdbHttpClient } from "../tmdb/tmdb-http";
+import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -91,7 +91,7 @@ export class MoviesTmdbService {
 		);
 
 		if (!response.ok) {
-			throw new Error("Failed to search movies");
+			throw tmdbErrorForResponse(response, "Failed to search movies");
 		}
 
 		return response.json<TMDBSearchResponse>();
@@ -114,7 +114,7 @@ export class MoviesTmdbService {
 		);
 
 		if (!response.ok) {
-			throw new Error("Failed to discover movies");
+			throw tmdbErrorForResponse(response, "Failed to discover movies");
 		}
 
 		return response.json<TMDBSearchResponse>();
@@ -133,7 +133,7 @@ export class MoviesTmdbService {
 		]);
 
 		if (!detailResponse.ok) {
-			throw new Error("Movie not found");
+			throw tmdbErrorForResponse(detailResponse, "Movie not found");
 		}
 
 		const movie = await detailResponse.json<TMDBMovie>();

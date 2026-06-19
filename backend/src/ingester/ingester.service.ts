@@ -51,6 +51,7 @@ import {
 import type { Main as NoteRecord } from "../lexicons/xyz/opnshelf/note.defs";
 import { NotesService } from "../notes/notes.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { TmdbServiceError } from "../tmdb/tmdb-http";
 import {
 	$nsid as RATING_COLLECTION,
 	main as ratingSchema,
@@ -116,6 +117,13 @@ function isTransientError(err: unknown): boolean {
 	if (err instanceof Prisma.PrismaClientKnownRequestError) {
 		return TRANSIENT_PRISMA_CODES.has(err.code);
 	}
+	// A TMDB outage (5xx after retries, timeout, network) during indexing is an
+	// upstream failure, not a problem with the record — retry / redeliver. A
+	// genuine 404 surfaces as TmdbNotFoundError (NOT matched here) and stays
+	// permanent so we never loop forever on an invalid TMDB id.
+	if (err instanceof TmdbServiceError) {
+		return true;
+	}
 	// Connection setup failures, engine panics and "unknown request" errors are
 	// all infrastructure-level and not caused by the record contents.
 	if (
@@ -158,6 +166,18 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private channel: ReturnType<Tap["channel"]> | null = null;
 	private readonly tapUrl: string;
 	private readonly tapAdminPassword: string | undefined;
+	/**
+	 * In-memory set of DIDs we know are tracked, used as a fast-path before the
+	 * per-event `user.findUnique` (which otherwise runs on every firehose event).
+	 *
+	 * Safe because TAP only delivers events for repos we explicitly addRepo'd,
+	 * and every addRepo is preceded by persisting the user. We populate this set
+	 * at exactly those points (addRepo, registerExistingUsers). It is purely a
+	 * positive cache: a HIT skips the DB; a MISS falls back to the DB lookup and
+	 * populates the set on success — so a newly-registered user whose entry is
+	 * somehow absent is still checked against the DB and never wrongly skipped.
+	 */
+	private readonly trackedDids = new Set<string>();
 
 	constructor(
 		private readonly prisma: PrismaService,
@@ -266,6 +286,10 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		try {
 			await this.tap.addRepos([did]);
+			// Mark tracked only after TAP accepts the repo, so a failed add doesn't
+			// leave a stale positive entry. (A missing entry is harmless — the
+			// handlers fall back to the DB.)
+			this.trackedDids.add(did);
 		} catch (err) {
 			this.logger.error(`Failed to register repo ${did} with TAP`, err);
 			throw err;
@@ -281,6 +305,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		await this.tap.removeRepos([did]);
+		this.trackedDids.delete(did);
 	}
 
 	/**
@@ -311,6 +336,34 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		} catch (err) {
 			this.logger.error("Failed to register existing users with TAP", err);
 		}
+	}
+
+	/**
+	 * Fast-path check that the record's author is a tracked user.
+	 *
+	 * Cache HIT → no DB round-trip. Cache MISS → fall back to the per-event
+	 * `user.findUnique` (the previous behaviour) and, if the user exists,
+	 * populate the cache so subsequent events for that DID skip the DB. This
+	 * keeps correctness for a brand-new user whose addRepo cache write hasn't
+	 * happened yet (e.g. backfill racing signup, or an out-of-band repo add):
+	 * we never skip a record for a user that is actually in the DB.
+	 *
+	 * Throws are propagated (a DB error here is classified by the caller as
+	 * transient and triggers redelivery rather than a silent skip).
+	 */
+	private async isUserTracked(did: string): Promise<boolean> {
+		if (this.trackedDids.has(did)) {
+			return true;
+		}
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: { did: true },
+		});
+		if (user) {
+			this.trackedDids.add(did);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -414,11 +467,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -452,11 +501,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -471,6 +516,13 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					);
 					await this.moviesService.upsertMovie(movieData);
 				} catch (err) {
+					// A transient TMDB failure (5xx/timeout/network) is an upstream
+					// outage, not a bad record — rethrow so processRecordEventWithRetry
+					// retries and, if still failing, redelivers via TAP. A genuine
+					// not-found (invalid movie id) is permanent: log and drop.
+					if (isTransientError(err)) {
+						throw err;
+					}
 					this.logger.error(
 						`Failed to fetch movie ${movieRecord.movieId} from TMDB, skipping record`,
 						err,
@@ -522,11 +574,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -562,11 +610,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -602,11 +646,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -621,6 +661,11 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					);
 					await this.showsService.upsertShow(showData);
 				} catch (err) {
+					// Transient TMDB outage → rethrow for retry/redelivery; a genuine
+					// not-found (invalid show id) is permanent → log and drop.
+					if (isTransientError(err)) {
+						throw err;
+					}
 					this.logger.error(
 						`Failed to fetch show ${episodeRecord.showId} from TMDB, skipping record`,
 						err,
@@ -683,11 +728,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -723,11 +764,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -767,11 +804,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			// reviews. The service further requires an xyz.opnshelf.mediaLink
 			// member before indexing — arbitrary standard.site blog posts are
 			// ignored.
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -807,11 +840,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -847,11 +876,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
@@ -887,11 +912,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const user = await this.prisma.user.findUnique({
-				where: { did: evt.did },
-			});
-
-			if (!user) {
+			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}

@@ -44,6 +44,7 @@ import { NotesService } from "../notes/notes.service";
 import { ProfileService } from "../users/profile.service";
 import { RatingsService } from "../ratings/ratings.service";
 import { ReviewsService } from "../reviews/reviews.service";
+import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
 import { IngesterService } from "./ingester.service";
 
 type MockPrismaService = {
@@ -533,6 +534,92 @@ describe("IngesterService", () => {
 			// Retried up to the bounded attempt budget (3) before giving up.
 			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(3);
 		}, 10000);
+
+		const movieCreateEvent = (id: number, rkey: string): RecordEvent =>
+			({
+				id,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: `rev-${rkey}`,
+				collection: "xyz.opnshelf.movie",
+				rkey,
+				record: {
+					$type: "xyz.opnshelf.movie",
+					movieId: "123",
+					source: "tmdb",
+					watchedAt: "2024-01-15T10:00:00Z",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				cid: `cid-${rkey}`,
+				live: true,
+			}) as unknown as RecordEvent;
+
+		it("uses the tracked-DID cache fast-path after addRepo (no per-event DB lookup)", async () => {
+			const recordHandler = setupRecordHandler();
+			// Registering the repo populates the in-memory tracked-DID set.
+			await service.addRepo("did:plc:abc123");
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
+
+			await recordHandler(movieCreateEvent(19, "movie-cache-hit"));
+
+			// Cache hit ⇒ the per-event user.findUnique is skipped entirely.
+			expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalled();
+		});
+
+		it("falls back to the DB on a cache miss and never skips a real user", async () => {
+			const recordHandler = setupRecordHandler();
+			// No addRepo ⇒ cache miss ⇒ DB is consulted; the user exists.
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
+
+			await recordHandler(movieCreateEvent(18, "movie-cache-miss"));
+
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalled();
+		});
+
+		it("redelivers when TMDB is down (5xx/timeout) during movie indexing", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue(null);
+			// A TMDB outage surfaces as a typed transient error from the http client.
+			const outage = new TmdbServiceError("TMDB request failed after retries");
+			mockMoviesService.getMovieDetails.mockRejectedValue(outage);
+
+			await expect(
+				recordHandler(movieCreateEvent(20, "movie-tmdb-5xx")),
+			).rejects.toBe(outage);
+
+			// Retried the full budget, then rethrown so TAP does not ack.
+			expect(mockMoviesService.getMovieDetails).toHaveBeenCalledTimes(3);
+			expect(mockPrismaService.trackedMovie.upsert).not.toHaveBeenCalled();
+		}, 10000);
+
+		it("drops the record on a genuine TMDB not-found (invalid id)", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue(null);
+			// A 404 surfaces as a typed not-found error — permanent.
+			mockMoviesService.getMovieDetails.mockRejectedValue(
+				new TmdbNotFoundError("Movie not found", 404),
+			);
+
+			await expect(
+				recordHandler(movieCreateEvent(21, "movie-tmdb-404")),
+			).resolves.toBeUndefined();
+
+			// Not retried — dropped on the first attempt, no DB write.
+			expect(mockMoviesService.getMovieDetails).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.trackedMovie.upsert).not.toHaveBeenCalled();
+		});
 
 		it("swallows permanent errors so the event is acked and dropped", async () => {
 			const recordHandler = setupRecordHandler();

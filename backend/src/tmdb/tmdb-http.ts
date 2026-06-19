@@ -38,6 +38,63 @@ export class MissingTmdbApiKeyError extends Error {
 }
 
 /**
+ * The requested TMDB resource genuinely does not exist (HTTP 404 / not-found).
+ * PERMANENT: the id is invalid and will never resolve, so callers on the
+ * firehose path should drop the record rather than redeliver it.
+ *
+ * Carries the original caller-facing message (e.g. "Movie not found") so
+ * existing `.rejects.toThrow("Movie not found")` expectations and
+ * import-history's substring-based classifier keep working unchanged.
+ */
+export class TmdbNotFoundError extends Error {
+	constructor(
+		message: string,
+		readonly status?: number,
+	) {
+		super(message);
+		this.name = "TmdbNotFoundError";
+	}
+}
+
+/**
+ * TMDB is unreachable or failing in a way that is not the record's fault: a
+ * 5xx after the retry budget is exhausted, a request timeout, or a network
+ * error. TRANSIENT: the same request may succeed later, so callers on the
+ * firehose path should NOT ack (so TAP redelivers) instead of dropping.
+ */
+export class TmdbServiceError extends Error {
+	constructor(
+		message: string,
+		readonly status?: number,
+		readonly cause?: unknown,
+	) {
+		super(message);
+		this.name = "TmdbServiceError";
+	}
+}
+
+/**
+ * Translate a non-ok {@link TmdbResponse} into a typed error a caller can throw.
+ *
+ * A 404 (and any other non-5xx 4xx, e.g. 422 invalid id) is a genuine
+ * not-found → {@link TmdbNotFoundError} (permanent). A 5xx that survived the
+ * client's retries is an upstream outage → {@link TmdbServiceError}
+ * (transient). `message` is the caller's existing not-found message so logs
+ * and the import-history classifier are unchanged.
+ */
+export function tmdbErrorForResponse(
+	response: TmdbResponse,
+	message: string,
+): TmdbNotFoundError | TmdbServiceError {
+	const status =
+		typeof response.status === "number" ? response.status : undefined;
+	if (status !== undefined && status >= 500) {
+		return new TmdbServiceError(message, status);
+	}
+	return new TmdbNotFoundError(message, status);
+}
+
+/**
  * Minimal shape the callers depend on. Mirrors the parts of the Fetch
  * `Response` the existing services already branch on (`ok`, `status`, `json`),
  * so existing `if (!response.ok) { ... }` blocks keep working unchanged and
@@ -156,7 +213,13 @@ export class TmdbHttpClient {
 					await sleep(computeBackoffMs(attempt, null));
 					continue;
 				}
-				throw error;
+				// Retries exhausted on a network/timeout failure: surface a typed
+				// transient error so firehose callers can redeliver rather than drop.
+				throw new TmdbServiceError(
+					`TMDB request failed after ${TMDB_MAX_RETRIES} retries: ${error instanceof Error ? error.message : String(error)}`,
+					undefined,
+					error,
+				);
 			}
 
 			// Only an explicit numeric status drives retry decisions. A response
@@ -183,9 +246,11 @@ export class TmdbHttpClient {
 		}
 
 		// Exhausted retries on a transient failure with no usable response.
-		throw lastError instanceof Error
-			? lastError
-			: new Error("TMDB request failed after retries");
+		throw new TmdbServiceError(
+			"TMDB request failed after retries",
+			undefined,
+			lastError,
+		);
 	}
 
 	/**
