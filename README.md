@@ -39,8 +39,8 @@ opnshelf/
 
 ### Prerequisites
 
-- Node.js 18+
-- pnpm 10+
+- Node.js 24+
+- pnpm 11.1.2+
 - Docker (for local TAP)
 
 ### Setup
@@ -72,6 +72,10 @@ User data is stored as AT Protocol records in their personal repository:
 - `xyz.opnshelf.episode` - Tracked TV episodes
 - `xyz.opnshelf.list` - Custom lists
 - `xyz.opnshelf.list.item` - Items in lists
+- `xyz.opnshelf.rating` - Ratings for movies/episodes
+- `xyz.opnshelf.review.like` - Likes on reviews
+- `xyz.opnshelf.note` - Notes attached to media
+- `xyz.opnshelf.mediaLink` - Links between records and media
 - `xyz.opnshelf.follow` - Social follows
 - `xyz.opnshelf.profile` - User profiles
 
@@ -114,8 +118,8 @@ pnpm generate:api   # Regenerate API client from OpenAPI
 | Variable | Description |
 |----------|-------------|
 | `VITE_API_URL` | Backend API URL |
-| `VITE_PUBLIC_POSTHOG_KEY` | PostHog analytics key |
-| `VITE_PUBLIC_POSTHOG_HOST` | PostHog host URL |
+| `VITE_POSTHOG_KEY` | PostHog analytics key |
+| `VITE_POSTHOG_HOST` | PostHog host URL |
 
 ## License
 
