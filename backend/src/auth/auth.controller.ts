@@ -374,6 +374,12 @@ export class AuthController {
 	}
 
 	private getClientIp(req: Request): string {
+		// With Express "trust proxy" configured (see main.ts), req.ip already
+		// resolves to the real client address from X-Forwarded-For. Prefer it;
+		// fall back to manual header parsing only if req.ip is unavailable.
+		if (req.ip) {
+			return req.ip;
+		}
 		const forwarded = req.headers["x-forwarded-for"];
 		if (typeof forwarded === "string" && forwarded.length > 0) {
 			return forwarded.split(",")[0].trim();
@@ -381,7 +387,7 @@ export class AuthController {
 		if (Array.isArray(forwarded) && forwarded.length > 0) {
 			return forwarded[0];
 		}
-		return req.ip || "unknown";
+		return "unknown";
 	}
 
 	private enforceRegisterRateLimit(ip: string): void {

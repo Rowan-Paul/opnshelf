@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthModule } from "./auth/auth.module";
 import { FeedbackModule } from "./feedback/feedback.module";
 import { IngesterModule } from "./ingester/ingester.module";
@@ -19,6 +21,16 @@ import { UsersModule } from "./users/users.module";
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
+		// Global default rate limit: 100 requests / 60s per client IP. This sits
+		// alongside the custom AuthGuard and the hand-rolled register/resend
+		// limiters as an extra layer. Individual routes may need per-route tuning
+		// (override with @Throttle / @SkipThrottle where appropriate).
+		ThrottlerModule.forRoot([
+			{
+				ttl: 60_000,
+				limit: 100,
+			},
+		]),
 		PrismaModule,
 		MoviesModule,
 		AuthModule,
@@ -34,6 +46,14 @@ import { UsersModule } from "./users/users.module";
 		SocialModule,
 		PeopleModule,
 		FeedbackModule,
+	],
+	providers: [
+		// ThrottlerGuard as an additional global guard — does not replace the
+		// custom AuthGuard, which is applied per-route via @UseGuards.
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerGuard,
+		},
 	],
 })
 export class AppModule {}

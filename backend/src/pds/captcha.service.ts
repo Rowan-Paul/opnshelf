@@ -22,10 +22,13 @@ export class CaptchaService {
 	private readonly secret: string | undefined;
 	private readonly disabled: boolean;
 
+	private readonly isProduction: boolean;
+
 	constructor(private readonly config: ConfigService) {
 		this.secret = this.config.get<string>("TURNSTILE_SECRET_KEY");
 		// No secret configured means no captcha — the local-dev escape hatch.
 		this.disabled = !this.secret;
+		this.isProduction = this.config.get<string>("NODE_ENV") === "production";
 
 		if (this.disabled) {
 			this.logger.warn(
@@ -40,6 +43,14 @@ export class CaptchaService {
 	 */
 	async verify(token: string | undefined, remoteIp?: string): Promise<boolean> {
 		if (this.disabled) {
+			// Fail OPEN in dev (escape hatch), but fail CLOSED in production so a
+			// misconfigured deploy can never silently accept every bot.
+			if (this.isProduction) {
+				this.logger.error(
+					"Turnstile is disabled in production (no TURNSTILE_SECRET_KEY) — failing closed.",
+				);
+				return false;
+			}
 			return true;
 		}
 
