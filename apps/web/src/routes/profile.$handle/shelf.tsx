@@ -143,7 +143,7 @@ function ProfileShelfPage() {
 
 			{/* Content */}
 			{isLoading ? (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+				<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
 					{[1, 2, 3, 4, 5, 6].map((i) => (
 						<div
 							key={i}
@@ -158,7 +158,7 @@ function ProfileShelfPage() {
 					</p>
 				</div>
 			) : (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+				<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
 					{items.map((item) => {
 						const isMovie = item.type === "movie";
 						return (
