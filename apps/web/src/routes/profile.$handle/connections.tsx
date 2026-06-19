@@ -4,9 +4,9 @@ import {
 	usersControllerGetPublicProfileQueryKey,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, UserMinus, Users } from "lucide-react";
-import { useState } from "react";
+import { z } from "zod";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { useAuth } from "#/lib/auth-context";
 import {
@@ -14,15 +14,28 @@ import {
 	usePublicFollowing,
 } from "#/lib/hooks/usePublicProfile";
 
+const connectionsSearchSchema = z.object({
+	tab: z.enum(["followers", "following"]).optional().default("followers"),
+});
+
 export const Route = createFileRoute("/profile/$handle/connections")({
 	component: ProfileConnectionsPage,
+	validateSearch: connectionsSearchSchema,
 });
 
 function ProfileConnectionsPage() {
 	const { handle } = Route.useParams();
-	const [activeTab, setActiveTab] = useState<"followers" | "following">(
-		"followers",
-	);
+	const { tab: activeTab } = Route.useSearch();
+	const navigate = useNavigate();
+
+	const setActiveTab = (tab: "followers" | "following") => {
+		navigate({
+			to: "/profile/$handle/connections",
+			params: { handle },
+			search: { tab },
+			replace: true,
+		});
+	};
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),

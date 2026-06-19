@@ -14,6 +14,13 @@ import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
 import { toSlug } from "#/lib/slug";
+
+// Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
+const SCROLL_ROW =
+	"flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+const SCROLL_SKELETON =
+	"aspect-[2/3] w-[160px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[180px]";
+
 export const Route = createFileRoute("/profile/$handle/")({
 	component: ProfileOverviewPage,
 });
@@ -79,7 +86,7 @@ function ProfileOverviewPage() {
 			{/* Last Movies & Episodes */}
 			<div className="grid gap-8 lg:grid-cols-2">
 				{/* Last Movies */}
-				<section>
+				<section className="min-w-0">
 					<div className="mb-4 flex items-center justify-between">
 						<h2 className="flex items-center gap-2 text-display-3">
 							<Film className="size-5 text-(--accent)" />
@@ -97,18 +104,15 @@ function ProfileOverviewPage() {
 					</div>
 
 					{moviesLoading ? (
-						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+						<div className={SCROLL_ROW}>
 							{[1, 2, 3, 4].map((i) => (
-								<div
-									key={i}
-									className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
-								/>
+								<div key={i} className={SCROLL_SKELETON} />
 							))}
 						</div>
 					) : movies.length > 0 ? (
-						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+						<div className={SCROLL_ROW}>
 							{movies.map((item) => (
-								<div key={item.id} className="[&_article]:!w-full">
+								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
 										id={item.movie.movieId}
 										title={item.movie.title}
@@ -131,7 +135,7 @@ function ProfileOverviewPage() {
 				</section>
 
 				{/* Last Episodes */}
-				<section>
+				<section className="min-w-0">
 					<div className="mb-4 flex items-center justify-between">
 						<h2 className="flex items-center gap-2 text-display-3">
 							<Tv className="size-5 text-(--accent)" />
@@ -149,18 +153,15 @@ function ProfileOverviewPage() {
 					</div>
 
 					{episodesLoading ? (
-						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+						<div className={SCROLL_ROW}>
 							{[1, 2, 3, 4].map((i) => (
-								<div
-									key={i}
-									className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
-								/>
+								<div key={i} className={SCROLL_SKELETON} />
 							))}
 						</div>
 					) : episodes.length > 0 ? (
-						<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+						<div className={SCROLL_ROW}>
 							{episodes.map((item) => (
-								<div key={item.id} className="[&_article]:!w-full">
+								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
 										id={item.show.showId}
 										title={item.show.title}
@@ -226,16 +227,16 @@ function ProfileOverviewPage() {
 				</div>
 
 				{reviewsLoading ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
-						{[1, 2, 3, 4].map((i) => (
+					<div className="grid gap-4 sm:grid-cols-2">
+						{[1, 2].map((i) => (
 							<div
 								key={i}
-								className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
+								className="card h-28 animate-pulse bg-(--background-subtle)"
 							/>
 						))}
 					</div>
 				) : reviewsData?.items && reviewsData.items.length > 0 ? (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+					<div className="grid gap-4 sm:grid-cols-2">
 						{reviewsData.items.map((review) => (
 							<ProfileReviewCard key={review.id} review={review} />
 						))}
@@ -271,20 +272,32 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 	})();
 
 	return (
-		<Link to={href} key={review.id} className="block">
+		<Link
+			to={href}
+			key={review.id}
+			className="card flex gap-3 p-3 transition-shadow hover:shadow-md sm:p-4"
+		>
 			{review.posterPath && (
 				<img
 					src={`https://image.tmdb.org/t/p/w300${review.posterPath}`}
 					alt={review.title || "Poster"}
-					className="mb-2 aspect-[2/3] w-full rounded-md object-cover"
+					className="h-24 w-16 shrink-0 rounded-md object-cover"
 				/>
 			)}
-			<h3 className="line-clamp-2 font-medium text-sm">
-				{review.title || "Unknown"}
-			</h3>
-			<p className="line-clamp-1 text-(--foreground-muted) text-xs">
-				{review.reviewTitle}
-			</p>
+			<div className="flex min-w-0 flex-1 flex-col gap-1">
+				{/* Emphasise the review itself: title + snippet first, media second. */}
+				<h3 className="line-clamp-1 font-display font-semibold">
+					{review.reviewTitle || "Review"}
+				</h3>
+				{review.markdown && (
+					<p className="line-clamp-3 text-(--foreground-muted) text-sm leading-relaxed">
+						{review.markdown}
+					</p>
+				)}
+				<p className="mt-auto line-clamp-1 text-(--foreground-subtle) text-xs">
+					{review.title || "Unknown"}
+				</p>
+			</div>
 		</Link>
 	);
 }
@@ -316,7 +329,7 @@ function ListPreview({
 	const items = listDetails?.items?.slice(0, 4) ?? [];
 
 	return (
-		<section>
+		<section className="min-w-0">
 			<div className="mb-4 flex items-center justify-between">
 				<h2 className="flex items-center gap-2 text-display-3">
 					<Icon className="h-5 w-5 text-(--accent)" />
@@ -339,16 +352,13 @@ function ListPreview({
 					<p className="text-(--foreground-muted)">{emptyText}</p>
 				</div>
 			) : itemsLoading ? (
-				<div className="grid grid-cols-3 gap-4">
+				<div className={SCROLL_ROW}>
 					{[1, 2, 3].map((i) => (
-						<div
-							key={i}
-							className="aspect-[2/3] animate-pulse rounded-lg bg-(--background-subtle)"
-						/>
+						<div key={i} className={SCROLL_SKELETON} />
 					))}
 				</div>
 			) : items.length > 0 ? (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+				<div className={SCROLL_ROW}>
 					{items.map((item) => {
 						const media = item.media as Record<string, unknown>;
 						const posterPath = media.posterPath as string | undefined;
@@ -358,7 +368,7 @@ function ListPreview({
 							item.seasonNumber != null && item.episodeNumber != null;
 
 						return (
-							<div key={item.id} className="[&_article]:!w-full">
+							<div key={item.id} className="shrink-0">
 								<ActionableMediaCard
 									id={mediaId}
 									title={title}

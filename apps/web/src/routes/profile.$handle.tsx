@@ -231,14 +231,24 @@ function ProfileLayout() {
 
 				{/* Stats */}
 				<div className="flex gap-6">
-					<div className="text-center">
+					<Link
+						to="/profile/$handle/connections"
+						params={{ handle }}
+						search={{ tab: "followers" }}
+						className="rounded-md text-center transition-colors hover:text-(--accent)"
+					>
 						<p className="font-semibold text-lg">{profile.followersCount}</p>
 						<p className="text-(--foreground-muted) text-sm">Followers</p>
-					</div>
-					<div className="text-center">
+					</Link>
+					<Link
+						to="/profile/$handle/connections"
+						params={{ handle }}
+						search={{ tab: "following" }}
+						className="rounded-md text-center transition-colors hover:text-(--accent)"
+					>
 						<p className="font-semibold text-lg">{profile.followingCount}</p>
 						<p className="text-(--foreground-muted) text-sm">Following</p>
-					</div>
+					</Link>
 				</div>
 			</div>
 

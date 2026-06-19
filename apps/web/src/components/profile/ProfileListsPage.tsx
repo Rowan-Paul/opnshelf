@@ -500,7 +500,7 @@ export function ProfileListsPage({
 								!listError &&
 								filteredItems.length > 0 &&
 								(viewMode === "grid" ? (
-									<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
 										{filteredItems
 											.filter(
 												(item, index, self) =>
@@ -509,6 +509,7 @@ export function ProfileListsPage({
 											.map((item: MediaInListDto) => (
 												<ActionableMediaCard
 													key={item.id}
+													fill
 													id={String(
 														(item.media as Record<string, unknown>).mediaId ??
 															item.mediaId,
