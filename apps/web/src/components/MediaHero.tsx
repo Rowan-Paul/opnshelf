@@ -50,23 +50,34 @@ export default function MediaHero({
 			<div className="container-app relative pt-8">
 				{/* Breadcrumbs / Back Button */}
 				{breadcrumbs && breadcrumbs.length > 0 ? (
-					<nav className="mb-6 flex items-center gap-2 text-sm">
+					<nav className="mb-6 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 						{breadcrumbs.map((crumb, index) => (
-							<span key={crumb.to} className="flex items-center gap-2">
+							<span
+								key={crumb.to}
+								className="flex min-w-0 shrink-0 items-center gap-2 last:min-w-0 last:shrink"
+							>
 								{index > 0 && (
 									<span className="text-(--foreground-muted)">/</span>
 								)}
 								{index === breadcrumbs.length - 1 ? (
-									<span className="text-(--foreground-muted)">
+									<span className="truncate whitespace-nowrap text-(--foreground-muted)">
 										{crumb.label}
 									</span>
 								) : (
 									<Link
 										to={crumb.to}
-										className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
+										className="inline-flex min-w-0 items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
 									>
-										{index === 0 && <ChevronLeft className="size-4" />}
-										{crumb.label}
+										{index === 0 && <ChevronLeft className="size-4 shrink-0" />}
+										<span
+											className={
+												index === 0
+													? "max-w-[40vw] truncate whitespace-nowrap sm:max-w-xs"
+													: "whitespace-nowrap"
+											}
+										>
+											{crumb.label}
+										</span>
 									</Link>
 								)}
 							</span>
