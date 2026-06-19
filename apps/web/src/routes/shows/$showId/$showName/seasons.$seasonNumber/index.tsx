@@ -6,7 +6,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "#/env";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
@@ -37,9 +36,6 @@ import { ReviewDialog } from "../../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
 import WatchProviders from "../../../../../components/WatchProviders";
-
-setupApiClient();
-
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/",
 )({

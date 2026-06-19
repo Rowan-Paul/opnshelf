@@ -16,7 +16,6 @@ import { FollowingList } from "#/components/following/FollowingList";
 import { NetworkStats } from "#/components/following/NetworkStats";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
 import { useDebounce } from "#/hooks/useDebounce";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/following")({
@@ -32,10 +31,6 @@ export const Route = createFileRoute("/following")({
 	}),
 	component: FollowingPage,
 });
-
-// Initialize API client
-setupApiClient();
-
 function FollowingPage() {
 	const {
 		user,

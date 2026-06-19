@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { env } from "#/env";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import { usePersonDetails, usePersonFilmography } from "#/lib/hooks";
@@ -22,8 +21,6 @@ import ActionableMediaCard from "../../../components/ActionableMediaCard";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
 import LoadingState from "../../../components/LoadingState";
-
-setupApiClient();
 
 function getRoleText(item: PersonFilmographyItemDto): string | undefined {
 	if (item.character) return item.character;

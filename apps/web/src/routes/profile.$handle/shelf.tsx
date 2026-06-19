@@ -13,10 +13,7 @@ import { useState } from "react";
 import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-
-setupApiClient();
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),

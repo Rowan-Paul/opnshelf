@@ -12,13 +12,10 @@ import {
 import { Calendar, Loader2, Plus, Tv } from "lucide-react";
 import { z } from "zod";
 import { Pagination } from "#/components/Pagination";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import { useMarkEpisodeWatched } from "#/lib/hooks";
 import { toSlug } from "#/lib/slug";
-
-setupApiClient();
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),

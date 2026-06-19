@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "#/components/ui/sonner";
+import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
 import {
@@ -50,7 +51,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 		try {
 			const user = await context.queryClient.fetchQuery(
-				authControllerMeOptions(),
+				authControllerMeOptions(ssrAuthOptions()),
 			);
 			if (user?.needsOnboarding) {
 				throw redirect({ to: "/onboarding" });

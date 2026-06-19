@@ -43,7 +43,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { Switch } from "#/components/ui/switch";
-import { apiConfig } from "#/lib/api";
+import { apiConfig, ssrAuthOptions } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
 function isUnauthorizedError(error: unknown): boolean {
@@ -59,7 +59,9 @@ function isUnauthorizedError(error: unknown): boolean {
 export const Route = createFileRoute("/settings")({
 	beforeLoad: async ({ context }) => {
 		try {
-			await context.queryClient.fetchQuery(authControllerMeOptions());
+			await context.queryClient.fetchQuery(
+				authControllerMeOptions(ssrAuthOptions()),
+			);
 		} catch (error) {
 			if (isUnauthorizedError(error)) {
 				throw redirect({

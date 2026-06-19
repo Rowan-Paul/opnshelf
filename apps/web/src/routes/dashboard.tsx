@@ -11,7 +11,6 @@ import { useEffect } from "react";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
 import { StatsStrip } from "#/components/StatsStrip";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 import { useUserShelf } from "#/lib/hooks";
@@ -19,10 +18,6 @@ import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { useSearchDialog } from "#/lib/search-dialog-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import DashboardMediaCard from "../components/DashboardMediaCard";
-
-// Initialize API client
-setupApiClient();
-
 export const Route = createFileRoute("/dashboard")({
 	component: Dashboard,
 });

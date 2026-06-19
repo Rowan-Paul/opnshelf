@@ -10,13 +10,9 @@ import { useState } from "react";
 
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
 import { toSlug } from "#/lib/slug";
-
-setupApiClient();
-
 export const Route = createFileRoute("/profile/$handle/notes")({
 	component: ProfileNotesPage,
 });

@@ -29,11 +29,8 @@ import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
 import { useDebounce } from "#/hooks/useDebounce";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
-
-setupApiClient();
 
 const searchSchema = z.object({
 	q: z.string().optional(),

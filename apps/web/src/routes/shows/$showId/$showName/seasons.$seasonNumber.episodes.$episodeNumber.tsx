@@ -21,7 +21,6 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { env } from "#/env";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
@@ -49,9 +48,6 @@ import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
-
-setupApiClient();
-
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber",
 )({

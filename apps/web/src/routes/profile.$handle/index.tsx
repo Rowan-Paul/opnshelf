@@ -11,13 +11,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { StatsStrip } from "#/components/StatsStrip";
-import { setupApiClient } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
 import { toSlug } from "#/lib/slug";
-
-setupApiClient();
-
 export const Route = createFileRoute("/profile/$handle/")({
 	component: ProfileOverviewPage,
 });
