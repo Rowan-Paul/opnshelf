@@ -37,6 +37,7 @@ function ProfileConnectionsPage() {
 	});
 
 	const unfollowMutation = useMutation({
+		mutationKey: ["social", "unfollow", handle],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });

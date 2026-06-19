@@ -40,8 +40,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const userDid = user?.did || "";
 	const queryClient = useQueryClient();
 
+	const movieId = options.mediaType === "movie" ? options.movieId : "";
+	const showId = options.mediaType === "show" ? options.showId : "";
+
 	// Movie mutations
 	const markMovieWatched = useMutation({
+		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async () => {
 			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
@@ -91,6 +95,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const unmarkMovieWatched = useMutation({
+		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async () => {
 			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
@@ -140,6 +145,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const deleteMovieWatchHistoryEntry = useMutation({
+		mutationKey: ["movies", movieId, "deleteWatchHistoryEntry"],
 		...moviesControllerDeleteWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			toast.success("Watch history entry deleted");
@@ -217,6 +223,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	};
 
 	const markEpisodeWatched = useMutation({
+		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			toast.success("Episode marked as watched");
@@ -244,6 +251,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const unmarkEpisodeWatched = useMutation({
+		mutationKey: ["shows", showId, "episodes", "unmarkWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			toast.success("Episode removed from watched");
@@ -270,6 +278,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const markShowWatched = useMutation({
+		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
 			toast.success("Show marked as watched");
@@ -286,6 +295,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const unmarkShowWatched = useMutation({
+		mutationKey: ["shows", showId, "unmarkShowWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			toast.success("Show removed from watched");
@@ -302,6 +312,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const markSeasonWatched = useMutation({
+		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			toast.success("Season marked as watched");
@@ -328,6 +339,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	const deleteEpisodeWatchHistoryEntry = useMutation({
+		mutationKey: ["shows", showId, "episodes", "deleteWatchHistoryEntry"],
 		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
 		onSuccess: () => {
 			toast.success("Episode watch history deleted");

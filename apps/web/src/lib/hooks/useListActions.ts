@@ -40,6 +40,7 @@ export function useListActions({
 	const userListsKey = listsControllerGetUserListsQueryKey();
 
 	const addToListMutation = useMutation({
+		mutationKey: ["lists", "addItem", resolvedMediaType, mediaId],
 		...listsControllerAddItemToListMutation(),
 		onMutate: async (variables) => {
 			await queryClient.cancelQueries({ queryKey: listsForItemKey });
@@ -79,6 +80,7 @@ export function useListActions({
 	});
 
 	const removeFromListMutation = useMutation({
+		mutationKey: ["lists", "removeItem", resolvedMediaType, mediaId],
 		...listsControllerRemoveItemFromListMutation(),
 		onMutate: async (variables) => {
 			await queryClient.cancelQueries({ queryKey: listsForItemKey });

@@ -186,6 +186,7 @@ export function ProfileListsPage({
 
 	// Remove item from list mutation (only works for owner)
 	const removeItemMutation = useMutation({
+		mutationKey: ["lists", selectedListSlug ?? "", "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
 		onSuccess: () => {
 			toast.success("Removed from list");

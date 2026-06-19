@@ -101,6 +101,7 @@ function ReviewCard({
 	const [dialogOpen, setDialogOpen] = useState(false);
 
 	const deleteMutation = useMutation({
+		mutationKey: ["reviews", review.id, "delete"],
 		...reviewsControllerDeleteReviewMutation(),
 	});
 

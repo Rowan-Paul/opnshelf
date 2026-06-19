@@ -87,6 +87,7 @@ export function useUpsertNote({
 	});
 
 	return useMutation({
+		mutationKey: ["notes", "upsert", resolvedMediaType, mediaId],
 		...notesControllerUpsertNoteMutation(),
 		onSuccess: () => {
 			toast.success("Note saved");
@@ -133,6 +134,7 @@ export function useDeleteNote({
 	});
 
 	return useMutation({
+		mutationKey: ["notes", "delete", resolvedMediaType, mediaId],
 		...notesControllerDeleteNoteMutation(),
 		onSuccess: () => {
 			toast.success("Note deleted");

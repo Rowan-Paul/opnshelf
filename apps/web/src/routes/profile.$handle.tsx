@@ -105,6 +105,7 @@ function ProfileLayout() {
 	});
 
 	const followMutation = useMutation({
+		mutationKey: ["social", profile.did, "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
@@ -113,6 +114,7 @@ function ProfileLayout() {
 	});
 
 	const unfollowMutation = useMutation({
+		mutationKey: ["social", profile.did, "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });

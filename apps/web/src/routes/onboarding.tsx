@@ -543,6 +543,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const [country, setCountry] = useState(userSettings?.watchCountry ?? "US");
 
 	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
@@ -630,6 +631,7 @@ function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
 	const { data, isLoading } = useQuery(socialControllerGetSuggestionsOptions());
 
 	const followMutation = useMutation({
+		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
@@ -739,6 +741,7 @@ function DoneStep() {
 	const { user } = useAuth();
 
 	const completeOnboarding = useMutation({
+		mutationKey: ["users", "me", "completeOnboarding"],
 		mutationFn: async () => {
 			const { data } = await usersControllerCompleteOnboarding({
 				throwOnError: true,

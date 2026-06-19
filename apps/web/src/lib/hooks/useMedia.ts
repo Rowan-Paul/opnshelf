@@ -2,12 +2,17 @@ import {
 	type MoviesControllerGetMovieDetailsResponse,
 	type MoviesControllerGetUserMoviesResponse,
 	moviesControllerGetMovieDetailsOptions,
+	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMoviesPaginatedQueryKey,
+	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerGetWatchProvidersOptions,
 	moviesControllerMarkWatched,
 	moviesControllerUnmarkWatched,
 	type ShowsControllerGetShowDetailsResponse,
 	type ShowsControllerGetUserShowsResponse,
+	shelfControllerGetUserActivitySummaryQueryKey,
+	shelfControllerGetUserShelfQueryKey,
 	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
@@ -55,19 +60,55 @@ export function useUserMovies(userDid: string) {
 	});
 }
 
+// Invalidate the queries actually affected by marking/unmarking a movie:
+// the movie's own watch history, the user's tracked-movies lists (non-paginated
+// + paginated), and the shelf/activity summaries. Mirrors how useWatchActions
+// scopes the equivalent action instead of nuking the whole ["movies"] tree.
+function invalidateMovieWatchQueries(
+	queryClient: ReturnType<typeof useQueryClient>,
+	userDid: string,
+	movieId: string,
+) {
+	if (movieId) {
+		queryClient.invalidateQueries({
+			queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
+				path: { userDid, movieId },
+			}),
+		});
+	}
+	queryClient.invalidateQueries({
+		queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
+	});
+	queryClient.invalidateQueries({
+		queryKey: moviesControllerGetUserMoviesPaginatedQueryKey({
+			path: { userDid },
+		}),
+	});
+	queryClient.invalidateQueries({
+		queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
+	});
+	queryClient.invalidateQueries({
+		queryKey: shelfControllerGetUserActivitySummaryQueryKey({
+			path: { userDid },
+		}),
+	});
+}
+
 // Mark movie as watched mutation
 export function useMarkMovieWatched() {
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
+	const userDid = user?.did || "";
 
 	return useMutation({
+		mutationKey: ["movies", "markWatched"],
 		mutationFn: async (variables: { body: { movieId: string } }) => {
 			const result = await moviesControllerMarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
 			toast.success("Marked as watched");
-			// Invalidate relevant queries
-			queryClient.invalidateQueries({ queryKey: ["movies"] });
+			invalidateMovieWatchQueries(queryClient, userDid, variables.body.movieId);
 		},
 		onError: (error) => {
 			toast.error(
@@ -80,15 +121,18 @@ export function useMarkMovieWatched() {
 // Unmark movie as watched mutation
 export function useUnmarkMovieWatched() {
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
+	const userDid = user?.did || "";
 
 	return useMutation({
+		mutationKey: ["movies", "unmarkWatched"],
 		mutationFn: async (variables: { path: { movieId: string } }) => {
 			const result = await moviesControllerUnmarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
 			toast.success("Removed from watched");
-			queryClient.invalidateQueries({ queryKey: ["movies"] });
+			invalidateMovieWatchQueries(queryClient, userDid, variables.path.movieId);
 		},
 		onError: (error) => {
 			toast.error(
@@ -202,6 +246,7 @@ export function useUnmarkEpisodeWatched() {
 	const userDid = user?.did || "";
 
 	return useMutation({
+		mutationKey: ["shows", "unmarkEpisodeWatched"],
 		mutationFn: async (variables: {
 			path: { showId: string };
 			query?: {
