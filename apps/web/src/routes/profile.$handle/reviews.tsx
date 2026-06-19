@@ -9,6 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import ConfirmDialog from "#/components/ConfirmDialog";
 import { MarkdownContent } from "#/components/MarkdownContent";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewDialog } from "#/components/ReviewDialog";
@@ -99,6 +100,7 @@ function ReviewCard({
 }) {
 	const queryClient = useQueryClient();
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const deleteMutation = useMutation({
 		mutationKey: ["reviews", review.id, "delete"],
@@ -119,7 +121,12 @@ function ReviewCard({
 	const handleDelete = () => {
 		deleteMutation.mutate(
 			{ path: { reviewId: review.id } },
-			{ onSuccess: invalidateList },
+			{
+				onSuccess: () => {
+					setConfirmOpen(false);
+					invalidateList();
+				},
+			},
 		);
 	};
 
@@ -169,7 +176,7 @@ function ReviewCard({
 								</button>
 								<button
 									type="button"
-									onClick={handleDelete}
+									onClick={() => setConfirmOpen(true)}
 									disabled={deleteMutation.isPending}
 									className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
 									aria-label="Delete review"
@@ -205,6 +212,22 @@ function ReviewCard({
 					markdown: review.markdown,
 				}}
 				onSuccess={invalidateList}
+			/>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title="Delete review?"
+				description={
+					<>
+						This permanently deletes your review for{" "}
+						<strong>{review.title || "this title"}</strong> from your shelf.
+						This action cannot be undone.
+					</>
+				}
+				confirmLabel="Delete review"
+				pendingLabel="Deleting..."
+				onConfirm={handleDelete}
+				isPending={deleteMutation.isPending}
 			/>
 		</>
 	);

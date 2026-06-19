@@ -1,7 +1,13 @@
-import { Heart, Loader2, MessageSquare } from "lucide-react";
+import { Heart, Loader2, MessageSquare, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
-import { useMediaReviews, useToggleReviewLike } from "#/lib/hooks/useReviews";
+import {
+	useDeleteReview,
+	useMediaReviews,
+	useToggleReviewLike,
+} from "#/lib/hooks/useReviews";
+import ConfirmDialog from "./ConfirmDialog";
 import { MarkdownContent } from "./MarkdownContent";
 
 interface CommunityReviewsProps {
@@ -55,6 +61,16 @@ function ReviewCard({
 			episodeNumber,
 		});
 
+	const deleteMutation = useDeleteReview({
+		userDid: review.userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+
+	const [confirmOpen, setConfirmOpen] = useState(false);
+
 	const isPending = isLikePending || isUnlikePending;
 	const isLiked = review.hasLiked;
 
@@ -65,6 +81,13 @@ function ReviewCard({
 		} else {
 			likeReview(review.id);
 		}
+	};
+
+	const handleDelete = () => {
+		deleteMutation.mutate(
+			{ path: { reviewId: review.id } },
+			{ onSuccess: () => setConfirmOpen(false) },
+		);
 	};
 
 	const displayName = review.userDisplayName || review.userHandle;
@@ -111,9 +134,26 @@ function ReviewCard({
 						</p>
 					</div>
 				</div>
-				<span className="text-(--foreground-muted) text-xs">
-					{formatRelativeTime(review.createdAt)}
-				</span>
+				<div className="flex items-center gap-2">
+					<span className="text-(--foreground-muted) text-xs">
+						{formatRelativeTime(review.createdAt)}
+					</span>
+					{isOwnReview && (
+						<button
+							type="button"
+							onClick={() => setConfirmOpen(true)}
+							disabled={deleteMutation.isPending}
+							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+							aria-label="Delete review"
+						>
+							{deleteMutation.isPending ? (
+								<Loader2 className="size-3.5 animate-spin" />
+							) : (
+								<Trash2 className="size-3.5" />
+							)}
+						</button>
+					)}
+				</div>
 			</div>
 
 			<div className="flex gap-3">
@@ -169,6 +209,25 @@ function ReviewCard({
 					<span>{review.likeCount}</span>
 				</button>
 			</div>
+
+			{isOwnReview && (
+				<ConfirmDialog
+					open={confirmOpen}
+					onOpenChange={setConfirmOpen}
+					title="Delete review?"
+					description={
+						<>
+							This permanently deletes your review{" "}
+							<strong>{review.title}</strong> from your shelf. This action
+							cannot be undone.
+						</>
+					}
+					confirmLabel="Delete review"
+					pendingLabel="Deleting..."
+					onConfirm={handleDelete}
+					isPending={deleteMutation.isPending}
+				/>
+			)}
 		</div>
 	);
 }
