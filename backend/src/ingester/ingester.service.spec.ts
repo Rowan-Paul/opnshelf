@@ -34,6 +34,7 @@ jest.mock("@atproto/tap", () => ({
 
 import type { RecordEvent } from "@atproto/tap";
 import { SimpleIndexer, Tap } from "@atproto/tap";
+import { Prisma } from "../generated/client";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -499,6 +500,68 @@ describe("IngesterService", () => {
 					reviewUri: "at://did:plc:abc123/xyz.opnshelf.review/review-rkey",
 				}),
 			);
+		});
+
+		it("rethrows transient DB errors so TAP does not ack (redelivery)", async () => {
+			const recordHandler = setupRecordHandler();
+			// A transient Prisma connection error during the user lookup.
+			const transient = new Prisma.PrismaClientKnownRequestError(
+				"Can't reach database server",
+				{ code: "P1001", clientVersion: "test" },
+			);
+			mockPrismaService.user.findUnique.mockRejectedValue(transient);
+
+			await expect(
+				recordHandler({
+					id: 9,
+					type: "record",
+					action: "create",
+					did: "did:plc:abc123",
+					rev: "rev-transient",
+					collection: "xyz.opnshelf.follow",
+					rkey: "follow-rkey-transient",
+					record: {
+						$type: "xyz.opnshelf.follow",
+						subjectDid: "did:plc:friend-1",
+						createdAt: "2026-03-16T10:00:00.000Z",
+					},
+					cid: "cid-transient",
+					live: true,
+				}),
+			).rejects.toBe(transient);
+
+			// Retried up to the bounded attempt budget (3) before giving up.
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(3);
+		}, 10000);
+
+		it("swallows permanent errors so the event is acked and dropped", async () => {
+			const recordHandler = setupRecordHandler();
+			// A non-transient error (not a recognised infra failure) is permanent.
+			mockPrismaService.user.findUnique.mockRejectedValue(
+				new Error("programming bug"),
+			);
+
+			await expect(
+				recordHandler({
+					id: 10,
+					type: "record",
+					action: "create",
+					did: "did:plc:abc123",
+					rev: "rev-permanent",
+					collection: "xyz.opnshelf.follow",
+					rkey: "follow-rkey-permanent",
+					record: {
+						$type: "xyz.opnshelf.follow",
+						subjectDid: "did:plc:friend-1",
+						createdAt: "2026-03-16T10:00:00.000Z",
+					},
+					cid: "cid-permanent",
+					live: true,
+				}),
+			).resolves.toBeUndefined();
+
+			// No retries for a permanent failure — dropped on the first attempt.
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(1);
 		});
 
 		it("should delete review like for xyz.opnshelf.review.like delete", async () => {
