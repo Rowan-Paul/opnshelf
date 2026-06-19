@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
@@ -114,25 +115,33 @@ function ReviewCard({
 		<div className={`card p-4 ${isOwnReview ? "border-(--accent)/30" : ""}`}>
 			<div className="mb-3 flex items-start justify-between">
 				<div className="flex items-center gap-3">
-					<img
-						src={avatarUrl}
-						alt={displayName}
-						className="size-10 rounded-full object-cover"
-						loading="lazy"
-					/>
-					<div>
-						<div className="flex items-center gap-2">
-							<p className="font-medium text-sm">{displayName}</p>
-							{isOwnReview && (
-								<span className="badge badge-accent px-1.5 py-0 text-[10px]">
-									Your Review
-								</span>
-							)}
+					<Link
+						to="/profile/$handle"
+						params={{ handle: review.userHandle }}
+						className="flex items-center gap-3"
+					>
+						<img
+							src={avatarUrl}
+							alt={displayName}
+							className="size-10 rounded-full object-cover"
+							loading="lazy"
+						/>
+						<div>
+							<div className="flex items-center gap-2">
+								<p className="font-medium text-sm transition-colors hover:text-(--accent)">
+									{displayName}
+								</p>
+								{isOwnReview && (
+									<span className="badge badge-accent px-1.5 py-0 text-[10px]">
+										Your Review
+									</span>
+								)}
+							</div>
+							<p className="text-(--foreground-muted) text-xs">
+								@{review.userHandle}
+							</p>
 						</div>
-						<p className="text-(--foreground-muted) text-xs">
-							@{review.userHandle}
-						</p>
-					</div>
+					</Link>
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="text-(--foreground-muted) text-xs">

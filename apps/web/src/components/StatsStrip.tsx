@@ -1,7 +1,22 @@
 import type { MostWatchedShowDto, ProfileActivityDayDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
+import { useState } from "react";
 import { toSlug } from "#/lib/slug";
+
+/** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
+function formatDayLabel(date: string): string {
+	const [year, month, day] = date.split("-").map(Number);
+	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
+		undefined,
+		{
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+			timeZone: "UTC",
+		},
+	);
+}
 
 /**
  * The profile/dashboard stats strip: a 30-day watch-activity graph plus a few
@@ -56,23 +71,56 @@ export function StatsStrip({
 }
 
 function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
+	const [active, setActive] = useState<number | null>(null);
 	const max = Math.max(1, ...data.map((d) => d.count));
+	const activeDay = active != null ? data[active] : null;
+	// Clamp toward the centre so edge tooltips don't overflow the card.
+	const tooltipLeft =
+		active != null
+			? Math.min(94, Math.max(6, ((active + 0.5) / data.length) * 100))
+			: 0;
 
 	return (
-		<div className="flex h-20 items-end gap-[3px]">
-			{data.map((d) => {
-				const pct = (d.count / max) * 100;
-				return (
-					<div
-						key={d.date}
-						title={`${d.date} — ${d.count} watched`}
-						className={`flex-1 rounded-sm ${
-							d.count > 0 ? "bg-(--accent)" : "bg-(--background-subtle)"
-						}`}
-						style={{ height: d.count > 0 ? `${Math.max(12, pct)}%` : "3px" }}
-					/>
-				);
-			})}
+		<div className="relative">
+			{activeDay && (
+				<div
+					className="pointer-events-none absolute bottom-full z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-(--border) bg-(--background) px-2 py-1 text-xs shadow-md"
+					style={{ left: `${tooltipLeft}%` }}
+				>
+					<span className="font-medium">{formatDayLabel(activeDay.date)}</span>
+					<span className="text-(--foreground-muted)">
+						{" · "}
+						{activeDay.count} watched
+					</span>
+				</div>
+			)}
+			<div className="flex h-20 items-end gap-[3px]">
+				{data.map((d, i) => {
+					const pct = (d.count / max) * 100;
+					return (
+						<button
+							type="button"
+							key={d.date}
+							aria-label={`${formatDayLabel(d.date)}: ${d.count} watched`}
+							onMouseEnter={() => setActive(i)}
+							onMouseLeave={() => setActive(null)}
+							onFocus={() => setActive(i)}
+							onBlur={() => setActive(null)}
+							onClick={() => setActive((cur) => (cur === i ? null : i))}
+							className="flex h-full flex-1 items-end"
+						>
+							<span
+								className={`w-full rounded-sm transition-opacity ${
+									d.count > 0 ? "bg-(--accent)" : "bg-(--background-subtle)"
+								} ${active != null && active !== i ? "opacity-50" : "opacity-100"}`}
+								style={{
+									height: d.count > 0 ? `${Math.max(12, pct)}%` : "3px",
+								}}
+							/>
+						</button>
+					);
+				})}
+			</div>
 		</div>
 	);
 }
