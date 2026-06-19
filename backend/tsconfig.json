@@ -17,10 +17,12 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
+    "strict": true,
+    // NestJS DI constructors and DTO classes rely on definite-assignment
+    // patterns that fight strictPropertyInitialization; everything else in
+    // strict mode is enabled.
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
-    "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": false
   }
 }

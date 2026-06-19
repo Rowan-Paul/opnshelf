@@ -4,9 +4,12 @@ import { PrismaService } from "./prisma.service";
 
 // Mock the PrismaPg adapter
 jest.mock("@prisma/adapter-pg", () => ({
-	PrismaPg: jest.fn().mockImplementation(function (config: {
-		connectionString: string;
-	}) {
+	PrismaPg: jest.fn().mockImplementation(function (
+		this: Record<string, unknown>,
+		config: {
+			connectionString: string;
+		},
+	) {
 		this.connectionString = config.connectionString;
 	}),
 }));
@@ -16,9 +19,12 @@ const mockConnect = jest.fn().mockResolvedValue(undefined);
 const mockDisconnect = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("../generated/client", () => ({
-	PrismaClient: jest.fn().mockImplementation(function (config: {
-		adapter: unknown;
-	}) {
+	PrismaClient: jest.fn().mockImplementation(function (
+		this: Record<string, unknown>,
+		config: {
+			adapter: unknown;
+		},
+	) {
 		this.adapter = config.adapter;
 		this.$connect = mockConnect;
 		this.$disconnect = mockDisconnect;
