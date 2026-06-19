@@ -252,8 +252,9 @@ export class ReviewsService {
 			const key = `${e.showId}:${e.seasonNumber}:${e.episodeNumber}`;
 			episodeMap.set(key, {
 				title: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
-				posterPath:
-					e.stillPath ?? e.season.posterPath ?? e.season.show.posterPath,
+				// Cover is always the portrait media poster (ADR-0002), never the
+				// landscape episode still — fall back season → show.
+				posterPath: e.season.posterPath ?? e.season.show.posterPath,
 			});
 		}
 

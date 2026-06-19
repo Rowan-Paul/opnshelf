@@ -41,7 +41,7 @@ export function ProfileContentCard({
 						<Link
 							to={to}
 							params={params}
-							className="relative z-[1] truncate font-medium text-sm hover:text-(--accent)"
+							className="relative z-[1] block truncate font-medium text-sm hover:text-(--accent)"
 						>
 							{title}
 						</Link>
