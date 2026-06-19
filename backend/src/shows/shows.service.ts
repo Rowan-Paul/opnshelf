@@ -891,13 +891,22 @@ export class ShowsService {
 		});
 	}
 
+	/**
+	 * Build an episode Watch record for the PDS.
+	 *
+	 * When `deterministicRkey` is provided (history import), the same logical
+	 * watch always maps to the same rkey, so re-issuing the PDS write is an
+	 * idempotent overwrite rather than a duplicate. Interactive single watches
+	 * omit it and get a fresh chronological TID.
+	 */
 	buildEpisodeWatchRecord(
 		showId: string,
 		seasonNumber: number,
 		episodeNumber: number,
 		customWatchedAt?: string,
+		deterministicRkey?: string,
 	) {
-		const rkey = TID.nextStr();
+		const rkey = deterministicRkey ?? TID.nextStr();
 		const now = new Date().toISOString();
 		const watchedAt = customWatchedAt
 			? new Date(customWatchedAt).toISOString()
@@ -988,13 +997,26 @@ export class ShowsService {
 			),
 		);
 
-		return this.prisma.trackedEpisode.create({
-			data: {
+		// Upsert keyed on the unique rkey so a re-run of an import (e.g. after a
+		// crash between the PDS write and this DB write) overwrites rather than
+		// duplicates. Stays consistent with the firehose ingester, the other
+		// writer of this row, which also upserts on { rkey }.
+		return this.prisma.trackedEpisode.upsert({
+			where: { rkey },
+			create: {
 				uri,
 				rkey,
 				cid,
 				userDid,
 				showId: normalizedShowId,
+				seasonNumber,
+				episodeNumber,
+				watchedDate: new Date(watchedAt),
+				status: "watched",
+			},
+			update: {
+				uri,
+				cid,
 				seasonNumber,
 				episodeNumber,
 				watchedDate: new Date(watchedAt),

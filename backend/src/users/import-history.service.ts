@@ -11,6 +11,10 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
+import {
+	deterministicEpisodeWatchRkey,
+	deterministicMovieWatchRkey,
+} from "../common/watch-rkey";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
@@ -111,6 +115,9 @@ const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"waiting_retry",
 ];
 const RECENT_TERMINAL_JOB_WINDOW_MS = 15 * 60 * 1000;
+// A job stuck in "running" longer than this was almost certainly orphaned by a
+// process crash (the worker is single-instance, so no other instance owns it).
+const STALE_RUNNING_MS = 5 * 60 * 1000;
 const TRAKT_RATE_LIMIT_BACKOFF_SECONDS = [60, 300, 600]; // 1min, 5min, 10min, then +5min each time
 const TRAKT_PAGE_DELAY_MS = 800;
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
@@ -308,6 +315,33 @@ export class ImportHistoryService {
 		return recentTerminalJob ? this.mapTraktImportJob(recentTerminalJob) : null;
 	}
 
+	/**
+	 * Reset Trakt import jobs orphaned in "running" by a crash back to a
+	 * re-pickable state. Resume is idempotent: it re-fetches from the persisted
+	 * currentPage and re-imports via deterministic rkeys (existing records are
+	 * skipped or overwritten in place), so no work is duplicated or lost.
+	 */
+	async reapStaleRunningJobs(): Promise<void> {
+		const threshold = new Date(Date.now() - STALE_RUNNING_MS);
+		const result = await this.prisma.backgroundJob.updateMany({
+			where: {
+				type: TRAKT_IMPORT_JOB_TYPE,
+				status: "running",
+				updatedAt: { lt: threshold },
+			},
+			data: {
+				status: "waiting_retry",
+				nextRunAt: new Date(),
+				lastError: "Recovered after the worker was interrupted. Resuming.",
+			},
+		});
+		if (result.count > 0) {
+			this.logger.warn(
+				`Reaped ${result.count} stale running Trakt import job(s) back to waiting_retry.`,
+			);
+		}
+	}
+
 	async processNextTraktImportJob(): Promise<void> {
 		const job = await this.prisma.backgroundJob.findFirst({
 			where: {
@@ -381,6 +415,10 @@ export class ImportHistoryService {
 					this.moviesService.buildMovieWatchRecord(
 						String(item.movieTmdbId),
 						item.watchedAt,
+						deterministicMovieWatchRkey(
+							String(item.movieTmdbId),
+							item.watchedAt,
+						),
 					);
 				pendingWrites.push({
 					type: "movie",
@@ -406,6 +444,12 @@ export class ImportHistoryService {
 						item.seasonNumber,
 						item.episodeNumber,
 						item.watchedAt,
+						deterministicEpisodeWatchRkey(
+							String(item.showTmdbId),
+							item.seasonNumber,
+							item.episodeNumber,
+							item.watchedAt,
+						),
 					);
 				pendingWrites.push({
 					type: "episode",
@@ -477,7 +521,97 @@ export class ImportHistoryService {
 						cid: result?.cid ?? "",
 					};
 				});
-			} catch (error) {
+			} catch (writeError) {
+				let error: unknown = writeError;
+				// Crash-recovery / idempotent re-import: rkeys are deterministic
+				// content hashes, so if a previous run wrote these records to the
+				// PDS but died before the DB write, the `create` batch fails with
+				// "record already exists". Retry the same batch as `update` ops —
+				// the record at that rkey is byte-identical, so this is an
+				// idempotent overwrite. Keeps batching (one extra round-trip per
+				// affected batch, not per item).
+				if (
+					!this.isPdsRateLimitError(error) &&
+					this.isRecordExistsError(error)
+				) {
+					this.logger.debug(
+						`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} already exists, retrying as update (idempotent re-import)`,
+					);
+					try {
+						const response = await agent.com.atproto.repo.applyWrites({
+							repo: session.did,
+							writes: batch.map((pw) => ({
+								$type: "com.atproto.repo.applyWrites#update" as const,
+								collection: pw.collection,
+								rkey: pw.rkey,
+								value: pw.record as Record<string, unknown>,
+							})),
+							validate: false,
+						});
+						batchResults = batch.map((pw, i) => {
+							const result = response.data.results?.[i] as
+								| { uri?: string; cid?: string }
+								| undefined;
+							return {
+								uri:
+									result?.uri ??
+									`at://${session.did}/${pw.collection}/${pw.rkey}`,
+								cid: result?.cid ?? "",
+							};
+						});
+						// Fall through to indexing with the update results.
+						for (let i = 0; i < batch.length; i++) {
+							const pw = batch[i];
+							const { uri, cid } = batchResults[i];
+							try {
+								if (pw.type === "movie") {
+									await this.moviesService.indexTrackedMovie(
+										uri,
+										cid,
+										pw.rkey,
+										userDid,
+										pw.movieTmdbId,
+										pw.item.watchedAt,
+									);
+								} else {
+									await this.showsService.indexTrackedEpisode(
+										uri,
+										cid,
+										pw.rkey,
+										userDid,
+										pw.showTmdbId,
+										pw.seasonNumber,
+										pw.episodeNumber,
+										pw.item.watchedAt,
+									);
+								}
+								imported += 1;
+							} catch (indexError) {
+								const itemContext = this.describeImportItem(pw.item);
+								const classified = this.classifyImportWriteError(indexError);
+								this.logger.warn(
+									`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
+								);
+								if (classified.reason === "duplicate_record") {
+									skipped += 1;
+									continue;
+								}
+								failed += 1;
+								errors.push({
+									index: pw.itemIndex + 1,
+									code: "write_failed",
+									reason: classified.reason,
+									message: classified.message,
+								});
+							}
+						}
+						continue;
+					} catch (retryError) {
+						// Update retry also failed — fall through to normal error
+						// handling below using the retry error.
+						error = retryError;
+					}
+				}
 				if (this.isPdsRateLimitError(error)) {
 					this.logger.warn(
 						`PDS applyWrites: rate limited on batch ${batchStart + 1}–${batchStart + batch.length}`,
@@ -949,15 +1083,19 @@ export class ImportHistoryService {
 		userDid: string,
 		item: NormalizedImportItemDto,
 	): Promise<boolean> {
-		const watchedDate = new Date(item.watchedAt);
-
+		// Pre-check on the deterministic rkey: the same logical watch (item +
+		// watchedDate) always maps to the same rkey, so this is correct even
+		// after a partial crash. It's purely an optimization — the index write
+		// is an idempotent upsert on the same rkey, so a missed pre-check can't
+		// produce a duplicate. We additionally scope by userDid as a safety
+		// check (rkey is globally unique, but a foreign rkey must never match).
 		if (item.type === "movie" && item.movieTmdbId) {
+			const rkey = deterministicMovieWatchRkey(
+				String(item.movieTmdbId),
+				item.watchedAt,
+			);
 			const existing = await this.prisma.trackedMovie.findFirst({
-				where: {
-					userDid,
-					movieId: String(item.movieTmdbId),
-					watchedDate,
-				},
+				where: { userDid, rkey },
 				select: { id: true },
 			});
 			return !!existing;
@@ -969,14 +1107,14 @@ export class ImportHistoryService {
 			item.seasonNumber !== undefined &&
 			item.episodeNumber !== undefined
 		) {
+			const rkey = deterministicEpisodeWatchRkey(
+				String(item.showTmdbId),
+				item.seasonNumber,
+				item.episodeNumber,
+				item.watchedAt,
+			);
 			const existing = await this.prisma.trackedEpisode.findFirst({
-				where: {
-					userDid,
-					showId: String(item.showTmdbId),
-					seasonNumber: item.seasonNumber,
-					episodeNumber: item.episodeNumber,
-					watchedDate,
-				},
+				where: { userDid, rkey },
 				select: { id: true },
 			});
 			return !!existing;
@@ -1268,6 +1406,23 @@ export class ImportHistoryService {
 			error !== null &&
 			"status" in error &&
 			(error as { status: unknown }).status === 429
+		);
+	}
+
+	/**
+	 * True when an applyWrites batch failed because a record at one of the
+	 * (deterministic) rkeys already exists in the PDS. This is the crash-recovery
+	 * signal: a prior run wrote to the PDS but died before the DB write. The
+	 * caller retries the batch as `update` ops, which is a safe idempotent
+	 * overwrite because the rkey is a content hash (existing record is identical).
+	 */
+	private isRecordExistsError(error: unknown): boolean {
+		const message = this.getErrorMessage(error).toLowerCase();
+		return (
+			message.includes("already exists") ||
+			message.includes("recordalreadyexists") ||
+			message.includes("could not create") ||
+			message.includes("invalidswap")
 		);
 	}
 

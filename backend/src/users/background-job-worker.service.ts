@@ -42,6 +42,9 @@ export class BackgroundJobWorkerService
 
 		this.isProcessing = true;
 		try {
+			// Recover jobs wedged in "running" by a crash before a terminal state.
+			await this.importHistoryService.reapStaleRunningJobs();
+			await this.userDeletionService.reapStaleRunningJobs();
 			await this.importHistoryService.processNextTraktImportJob();
 			await this.userDeletionService.processNextDeletionJob();
 		} catch (error) {

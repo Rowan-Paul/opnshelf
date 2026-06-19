@@ -226,8 +226,20 @@ export class MoviesService {
 	 * Mark a movie as watched by creating an AT Protocol record in the user's PDS.
 	 * Database indexing happens via the firehose ingester or optimistic update in controller.
 	 */
-	buildMovieWatchRecord(movieId: string, customWatchedAt?: string) {
-		const rkey = TID.nextStr();
+	/**
+	 * Build a Watch record for the PDS.
+	 *
+	 * When `deterministicRkey` is provided (history import), the same logical
+	 * watch always maps to the same rkey, so re-issuing the PDS write is an
+	 * idempotent overwrite rather than a duplicate. Interactive single watches
+	 * omit it and get a fresh chronological TID.
+	 */
+	buildMovieWatchRecord(
+		movieId: string,
+		customWatchedAt?: string,
+		deterministicRkey?: string,
+	) {
+		const rkey = deterministicRkey ?? TID.nextStr();
 		const now = new Date().toISOString();
 		const watchedAt = customWatchedAt
 			? new Date(customWatchedAt).toISOString()
@@ -370,14 +382,24 @@ export class MoviesService {
 
 		await this.upsertMovie(movieData);
 
-		// Create new TrackedMovie record (since rkey is unique, each watch is a new record)
-		return this.prisma.trackedMovie.create({
-			data: {
+		// Upsert keyed on the unique rkey so a re-run of an import (e.g. after a
+		// crash between the PDS write and this DB write) overwrites rather than
+		// duplicates. Stays consistent with the firehose ingester, the other
+		// writer of this row, which also upserts on { rkey }.
+		return this.prisma.trackedMovie.upsert({
+			where: { rkey },
+			create: {
 				uri,
 				rkey,
 				cid,
 				userDid,
 				movieId: normalizedMovieId,
+				watchedDate: new Date(watchedAt),
+				status: "watched",
+			},
+			update: {
+				uri,
+				cid,
 				watchedDate: new Date(watchedAt),
 				status: "watched",
 			},

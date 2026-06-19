@@ -30,7 +30,33 @@ interface ATSession {
 }
 
 const RECORDS_PAGE_SIZE = 100;
-const ACTIVE_DELETION_STATUSES = ["queued", "running"];
+const ACTIVE_DELETION_STATUSES = ["queued", "running", "waiting_retry"];
+// A deletion job stuck in "running" longer than this was orphaned by a crash
+// (single-instance worker — nothing else owns it). Reset it so it re-runs and
+// the user is no longer blocked by createDeletionJob's Conflict guard.
+const STALE_RUNNING_MS = 5 * 60 * 1000;
+// Persist progress at most once per this many deleted records (instead of after
+// every single record) to avoid thousands of DB writes in one run.
+const PROGRESS_FLUSH_EVERY = 50;
+// Delete at most this many records per worker tick, then yield so other jobs
+// (Trakt imports + other deletions) get a turn instead of being starved.
+const DELETION_BATCH_SIZE = 200;
+
+// Ordered PDS deletion steps. Resume picks up at the persisted currentStep and
+// skips earlier steps entirely (their records are already gone — re-deleting is
+// a no-op via isRecordMissingError, but skipping avoids needless PDS calls).
+const PDS_DELETION_STEPS = [
+	"movies",
+	"episodes",
+	"follows",
+	"notes",
+	"reviews",
+	"publications",
+	"list_items",
+	"lists",
+	"profile",
+] as const;
+type PdsDeletionStep = (typeof PDS_DELETION_STEPS)[number];
 
 @Injectable()
 export class UserDeletionService {
@@ -115,6 +141,36 @@ export class UserDeletionService {
 		});
 	}
 
+	/**
+	 * Reset deletion jobs orphaned in "running" by a crash back to a re-pickable
+	 * state. Resume is idempotent: PDS deletes for already-removed records are
+	 * no-ops (isRecordMissingError), and resume continues from the persisted
+	 * currentStep. Crucially this also un-wedges the user: createDeletionJob's
+	 * Conflict guard counts the job as active (waiting_retry is an active
+	 * status), but the worker can now pick it up again instead of it sitting in
+	 * "running" forever.
+	 */
+	async reapStaleRunningJobs(): Promise<void> {
+		const threshold = new Date(Date.now() - STALE_RUNNING_MS);
+		const result = await this.prisma.backgroundJob.updateMany({
+			where: {
+				type: ACCOUNT_DELETION_JOB_TYPE,
+				status: "running",
+				updatedAt: { lt: threshold },
+			},
+			data: {
+				status: "waiting_retry",
+				nextRunAt: new Date(),
+				lastError: "Recovered after the worker was interrupted. Resuming.",
+			},
+		});
+		if (result.count > 0) {
+			this.logger.warn(
+				`Reaped ${result.count} stale running account-deletion job(s) back to waiting_retry.`,
+			);
+		}
+	}
+
 	async processNextDeletionJob(): Promise<void> {
 		const job = await this.prisma.backgroundJob.findFirst({
 			where: {
@@ -152,8 +208,28 @@ export class UserDeletionService {
 		});
 
 		try {
-			if (jobData.deletePdsData) {
-				await this.deletePdsRecordsWithProgress(job.id, job.userDid, jobData);
+			if (jobData.deletePdsData && jobData.currentStep !== "db_cleanup") {
+				const finished = await this.deletePdsRecordsWithProgress(
+					job.id,
+					job.userDid,
+					jobData,
+				);
+
+				if (!finished) {
+					// Bounded batch done but more PDS records remain. Persist
+					// progress (incl. currentStep so we resume mid-pipeline) and
+					// yield the worker so other jobs get a turn. Re-pickable on the
+					// next tick via an immediate nextRunAt.
+					await this.prisma.backgroundJob.update({
+						where: { id: job.id },
+						data: {
+							status: "waiting_retry",
+							nextRunAt: new Date(),
+							data: { ...jobData },
+						},
+					});
+					return;
+				}
 			}
 
 			await this.updateJobData(job.id, jobData, { currentStep: "db_cleanup" });
@@ -185,11 +261,23 @@ export class UserDeletionService {
 		}
 	}
 
+	/**
+	 * Delete the user's PDS records, bounded to DELETION_BATCH_SIZE records per
+	 * call so a huge account doesn't monopolize the single-instance worker.
+	 *
+	 * Resumes from jobData.currentStep: earlier steps are skipped (their records
+	 * are already deleted). Within a step we re-list/re-query each tick and rely
+	 * on idempotency — tryDeleteRecord treats missing records as success
+	 * (isRecordMissingError), so re-running deletes nothing twice.
+	 *
+	 * Returns true when all PDS steps are complete, false when the per-tick
+	 * budget was exhausted and the caller should yield and reschedule.
+	 */
 	private async deletePdsRecordsWithProgress(
 		jobId: string,
 		userDid: string,
 		jobData: AccountDeletionJobData,
-	): Promise<void> {
+	): Promise<boolean> {
 		const session = await this.restoreSession(userDid);
 		if (!session) {
 			throw new Error(
@@ -201,157 +289,232 @@ export class UserDeletionService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 
-		await this.updateJobData(jobId, jobData, { currentStep: "movies" });
-		const trackedMovies = await this.prisma.trackedMovie.findMany({
-			where: { userDid },
-		});
-		for (const tracked of trackedMovies) {
-			await this.tryDeleteRecord(
+		const budget = { remaining: DELETION_BATCH_SIZE, sinceFlush: 0 };
+		const startStep = this.resolveStartStepIndex(jobData.currentStep);
+
+		for (let i = startStep; i < PDS_DELETION_STEPS.length; i++) {
+			const step = PDS_DELETION_STEPS[i];
+
+			// Mark the step we're entering before doing work, so a crash mid-step
+			// resumes at this step (idempotent re-delete) rather than skipping it.
+			// On a genuinely new step, snapshot the deletedRecords baseline; on a
+			// resume into the same step we keep the persisted baseline so progress
+			// is recomputed (not double-counted) as the step is re-walked.
+			if (jobData.currentStep !== step) {
+				jobData.stepBaseline = jobData.deletedRecords;
+				await this.updateJobData(jobId, jobData, { currentStep: step });
+			}
+
+			const done = await this.runDeletionStep(
+				step,
 				agent,
 				session.did,
-				MOVIE_COLLECTION,
-				tracked.rkey,
-				`Failed to delete movie record ${tracked.rkey} from PDS`,
+				userDid,
+				jobId,
+				jobData,
+				budget,
 			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
+
+			if (!done) {
+				// Per-tick budget exhausted partway through this step. Persist
+				// progress and signal the caller to yield + reschedule. We stay on
+				// the same currentStep so next tick re-runs it (idempotently).
+				await this.updateJobData(jobId, jobData);
+				return false;
+			}
 		}
 
-		await this.updateJobData(jobId, jobData, { currentStep: "episodes" });
-		const trackedEpisodes = await this.prisma.trackedEpisode.findMany({
-			where: { userDid },
-		});
-		for (const tracked of trackedEpisodes) {
-			await this.tryDeleteRecord(
-				agent,
-				session.did,
-				EPISODE_COLLECTION,
-				tracked.rkey,
-				`Failed to delete episode record ${tracked.rkey} from PDS`,
-			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
-		}
+		await this.updateJobData(jobId, jobData);
+		return true;
+	}
 
-		await this.updateJobData(jobId, jobData, { currentStep: "follows" });
-		const follows = await this.prisma.follow.findMany({
-			where: { followerDid: userDid, rkey: { not: null } },
-			select: { rkey: true },
-		});
-		for (const follow of follows) {
-			if (!follow.rkey) {
-				continue;
+	private resolveStartStepIndex(currentStep: string | undefined): number {
+		if (!currentStep) {
+			return 0;
+		}
+		const index = PDS_DELETION_STEPS.indexOf(currentStep as PdsDeletionStep);
+		return index >= 0 ? index : 0;
+	}
+
+	/**
+	 * Run a single PDS deletion step, consuming from the shared per-tick budget.
+	 * Returns true if the step completed, false if the budget ran out mid-step.
+	 */
+	private async runDeletionStep(
+		step: PdsDeletionStep,
+		agent: Agent,
+		repoDid: string,
+		userDid: string,
+		jobId: string,
+		jobData: AccountDeletionJobData,
+		budget: { remaining: number; sinceFlush: number },
+	): Promise<boolean> {
+		// Progress within a step is derived from this baseline so a resumed run
+		// that re-walks the step recomputes deletedRecords instead of inflating it.
+		const stepBaseline = jobData.stepBaseline ?? jobData.deletedRecords;
+
+		if (step === "profile") {
+			if (budget.remaining <= 0) {
+				return false;
 			}
 			await this.tryDeleteRecord(
 				agent,
-				session.did,
-				FOLLOW_COLLECTION,
-				follow.rkey,
-				`Failed to delete follow ${follow.rkey} from PDS`,
+				repoDid,
+				PROFILE_COLLECTION,
+				"self",
+				"Failed to delete profile record from PDS",
 			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
+			jobData.deletedRecords = stepBaseline + 1;
+			budget.remaining--;
+			return true;
 		}
 
-		await this.updateJobData(jobId, jobData, { currentStep: "notes" });
-		const notes = await this.prisma.note.findMany({
-			where: { userDid },
-			select: { rkey: true },
-		});
-		for (const note of notes) {
-			await this.tryDeleteRecord(
-				agent,
-				session.did,
-				NOTE_COLLECTION,
-				note.rkey,
-				`Failed to delete note ${note.rkey} from PDS`,
-			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
-		}
-
-		await this.updateJobData(jobId, jobData, { currentStep: "reviews" });
-		const reviews = await this.prisma.review.findMany({
-			where: { userDid },
-			select: { rkey: true },
-		});
-		for (const review of reviews) {
-			await this.tryDeleteRecord(
-				agent,
-				session.did,
-				DOCUMENT_COLLECTION,
-				review.rkey,
-				`Failed to delete review document ${review.rkey} from PDS`,
-			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
-		}
-
-		const publications = await this.prisma.publication.findMany({
-			where: { userDid },
-			select: { rkey: true },
-		});
-		for (const publication of publications) {
-			await this.tryDeleteRecord(
-				agent,
-				session.did,
-				PUBLICATION_COLLECTION,
-				publication.rkey,
-				`Failed to delete publication ${publication.rkey} from PDS`,
-			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
-		}
-
-		await this.updateJobData(jobId, jobData, { currentStep: "list_items" });
-		const listItemRkeys = await this.listRepoRecordKeys(
+		const { collection, rkeys } = await this.collectStepRkeys(
+			step,
 			agent,
-			session.did,
-			LIST_ITEM_COLLECTION,
+			repoDid,
+			userDid,
+			jobId,
+			jobData,
 		);
-		jobData.totalRecords += listItemRkeys.length;
-		await this.updateJobData(jobId, jobData);
-		for (const rkey of listItemRkeys) {
+
+		let processedInStep = 0;
+		for (const rkey of rkeys) {
+			if (budget.remaining <= 0) {
+				return false;
+			}
 			await this.tryDeleteRecord(
 				agent,
-				session.did,
-				LIST_ITEM_COLLECTION,
+				repoDid,
+				collection,
 				rkey,
-				`Failed to delete list item ${rkey} from PDS`,
+				`Failed to delete ${step} record ${rkey} from PDS`,
 			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
+			processedInStep++;
+			jobData.deletedRecords = stepBaseline + processedInStep;
+			budget.remaining--;
+			budget.sinceFlush++;
+
+			if (budget.sinceFlush >= PROGRESS_FLUSH_EVERY) {
+				budget.sinceFlush = 0;
+				await this.updateJobData(jobId, jobData);
+			}
 		}
 
-		await this.updateJobData(jobId, jobData, { currentStep: "lists" });
-		const listRkeys = await this.listRepoRecordKeys(
-			agent,
-			session.did,
-			LIST_COLLECTION,
-		);
-		jobData.totalRecords += listRkeys.length;
-		await this.updateJobData(jobId, jobData);
-		for (const rkey of listRkeys) {
-			await this.tryDeleteRecord(
-				agent,
-				session.did,
-				LIST_COLLECTION,
-				rkey,
-				`Failed to delete list ${rkey} from PDS`,
-			);
-			jobData.deletedRecords++;
-			await this.updateJobData(jobId, jobData);
-		}
+		return true;
+	}
 
-		await this.updateJobData(jobId, jobData, { currentStep: "profile" });
-		await this.tryDeleteRecord(
-			agent,
-			session.did,
-			PROFILE_COLLECTION,
-			"self",
-			"Failed to delete profile record from PDS",
-		);
-		jobData.deletedRecords++;
+	private async collectStepRkeys(
+		step: Exclude<PdsDeletionStep, "profile">,
+		agent: Agent,
+		repoDid: string,
+		userDid: string,
+		jobId: string,
+		jobData: AccountDeletionJobData,
+	): Promise<{ collection: string; rkeys: string[] }> {
+		switch (step) {
+			case "movies": {
+				const rows = await this.prisma.trackedMovie.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return {
+					collection: MOVIE_COLLECTION,
+					rkeys: rows.map((r) => r.rkey),
+				};
+			}
+			case "episodes": {
+				const rows = await this.prisma.trackedEpisode.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return {
+					collection: EPISODE_COLLECTION,
+					rkeys: rows.map((r) => r.rkey),
+				};
+			}
+			case "follows": {
+				const rows = await this.prisma.follow.findMany({
+					where: { followerDid: userDid, rkey: { not: null } },
+					select: { rkey: true },
+				});
+				return {
+					collection: FOLLOW_COLLECTION,
+					rkeys: rows
+						.map((r) => r.rkey)
+						.filter((rkey): rkey is string => rkey !== null),
+				};
+			}
+			case "notes": {
+				const rows = await this.prisma.note.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return { collection: NOTE_COLLECTION, rkeys: rows.map((r) => r.rkey) };
+			}
+			case "reviews": {
+				const rows = await this.prisma.review.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return {
+					collection: DOCUMENT_COLLECTION,
+					rkeys: rows.map((r) => r.rkey),
+				};
+			}
+			case "publications": {
+				const rows = await this.prisma.publication.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return {
+					collection: PUBLICATION_COLLECTION,
+					rkeys: rows.map((r) => r.rkey),
+				};
+			}
+			case "list_items": {
+				const rkeys = await this.listRepoRecordKeys(
+					agent,
+					repoDid,
+					LIST_ITEM_COLLECTION,
+				);
+				await this.reconcileDynamicTotal(
+					jobId,
+					jobData,
+					"list_items",
+					rkeys.length,
+				);
+				return { collection: LIST_ITEM_COLLECTION, rkeys };
+			}
+			case "lists": {
+				const rkeys = await this.listRepoRecordKeys(
+					agent,
+					repoDid,
+					LIST_COLLECTION,
+				);
+				await this.reconcileDynamicTotal(jobId, jobData, "lists", rkeys.length);
+				return { collection: LIST_COLLECTION, rkeys };
+			}
+		}
+	}
+
+	/**
+	 * list_items and lists are counted dynamically from the PDS (not known when
+	 * the job was created). Add their count to totalRecords exactly once, even
+	 * across resumes, by tracking which dynamic steps we've already counted.
+	 */
+	private async reconcileDynamicTotal(
+		jobId: string,
+		jobData: AccountDeletionJobData,
+		step: "list_items" | "lists",
+		count: number,
+	): Promise<void> {
+		const counted = jobData.countedDynamicSteps ?? [];
+		if (counted.includes(step)) {
+			return;
+		}
+		jobData.totalRecords += count;
+		jobData.countedDynamicSteps = [...counted, step];
 		await this.updateJobData(jobId, jobData);
 	}
 
