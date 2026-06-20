@@ -1,9 +1,8 @@
 import {
-	Eye,
-	EyeOff,
 	ListPlus,
 	type LucideIcon,
 	Pencil,
+	Plus,
 	Star,
 	StickyNote,
 	X,
@@ -41,15 +40,14 @@ function ActionRow({
 /**
  * Long-press quick-actions launcher for a `MediaCard`. It's a thin action list:
  * each row dismisses this sheet and opens the corresponding real sheet
- * (rating / list / note) owned by `MediaCard`, except the watched toggle which
- * fires inline. Movies expose a watched toggle; shows expose a "start/stop
- * tracking" toggle. Rate / list / note apply to both.
+ * (rating / list / note) owned by `MediaCard`, except the shelf toggle which
+ * fires inline. Both movies and shows expose an add/remove-to-shelf toggle.
+ * Rate / list / note apply to both.
  */
 export function MediaQuickActionsSheet({
 	visible,
 	onDismiss,
 	title,
-	mediaType,
 	watched,
 	onToggleWatched,
 	onRate,
@@ -61,8 +59,7 @@ export function MediaQuickActionsSheet({
 	visible: boolean;
 	onDismiss: () => void;
 	title: string;
-	mediaType: "movie" | "show";
-	/** Movie: watched. Show: currently tracking. */
+	/** Whether the item is currently on the user's shelf. */
 	watched: boolean;
 	onToggleWatched: () => void;
 	onRate: () => void;
@@ -71,14 +68,7 @@ export function MediaQuickActionsSheet({
 	hasNote: boolean;
 	isWatchPending?: boolean;
 }) {
-	const watchLabel =
-		mediaType === "movie"
-			? watched
-				? "Unwatch"
-				: "Mark watched"
-			: watched
-				? "Stop tracking"
-				: "Mark watched";
+	const watchLabel = watched ? "Remove from shelf" : "Add to shelf";
 
 	return (
 		<Modal
@@ -104,7 +94,7 @@ export function MediaQuickActionsSheet({
 
 					<View className="gap-2">
 						<ActionRow
-							icon={watched ? EyeOff : Eye}
+							icon={watched ? X : Plus}
 							label={watchLabel}
 							onPress={onToggleWatched}
 							disabled={isWatchPending}

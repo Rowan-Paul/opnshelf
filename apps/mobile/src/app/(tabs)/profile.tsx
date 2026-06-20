@@ -53,6 +53,7 @@ function toMediaCardItem(
 		title: item.showTitle,
 		posterPath: item.posterPath,
 		year: item.firstAirYear ? String(item.firstAirYear) : undefined,
+		href: `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
 	};
 }
 

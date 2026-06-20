@@ -120,7 +120,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Marked as watched");
+			toast.success("Added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: userMoviesKey });
@@ -161,7 +161,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Light);
-			toast.success("Removed from watched");
+			toast.success("Removed from shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: userMoviesKey });
@@ -206,7 +206,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Episode marked as watched");
+			toast.success("Episode added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -248,7 +248,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Light);
-			toast.success("Episode removed");
+			toast.success("Episode removed from shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -264,7 +264,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Show marked as watched");
+			toast.success("Added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -280,7 +280,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Season marked as watched");
+			toast.success("Season added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -296,7 +296,23 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Light);
-			toast.success("Show removed from watched");
+			toast.success("Removed from shelf");
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: showHistoryKey });
+			invalidateShelf();
+		},
+	});
+
+	const unmarkSeason = useMutation({
+		mutationKey: ["shows", showId, "unmarkSeasonWatched"],
+		...showsControllerUnmarkWatchedMutation(),
+		onError: (error) => {
+			toast.error(errorMessage(error, "Failed to remove season"));
+		},
+		onSuccess: () => {
+			haptic(Haptics.ImpactFeedbackStyle.Light);
+			toast.success("Season removed from shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -361,6 +377,14 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
+	const unmarkSeasonWatched = (seasonNumber: number) => {
+		if (!isAuthenticated || options.mediaType !== "show") return;
+		unmarkSeason.mutate({
+			path: { showId: options.showId },
+			query: { mode: "all", seasonNumber },
+		});
+	};
+
 	return {
 		// Movie
 		markMovieWatched,
@@ -373,10 +397,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		markShowWatched,
 		unmarkShowWatched,
 		markSeasonWatched,
+		unmarkSeasonWatched,
 		isMarkEpisodePending: markEpisode.isPending,
 		isUnmarkEpisodePending: unmarkEpisode.isPending,
 		isMarkShowPending: markShow.isPending,
 		isUnmarkShowPending: unmarkShow.isPending,
 		isMarkSeasonPending: markSeason.isPending,
+		isUnmarkSeasonPending: unmarkSeason.isPending,
 	};
 }

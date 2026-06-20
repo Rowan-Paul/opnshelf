@@ -9,11 +9,12 @@ import { Pressable, ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
-import { EpisodeWatchButton } from "@/components/detail/EpisodeWatchButton";
+import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { PosterImage } from "@/components/media/PosterImage";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -124,32 +125,31 @@ export default function EpisodeDetailScreen() {
 							items={[yearFromDate(data.air_date), formatRuntime(data.runtime)]}
 						/>
 
-						<View className="gap-2">
-							<EpisodeWatchButton
+						<View className="-mx-4 gap-2">
+							<MediaTrackingActions
+								mediaType="episode"
 								showId={id}
 								seasonNumber={seasonNum}
 								episodeNumber={episodeNum}
 							/>
-							<View className="-mx-4 gap-2">
-								<RatingButton
-									mediaType="show"
-									mediaId={id}
-									seasonNumber={seasonNum}
-									episodeNumber={episodeNum}
-								/>
-								<AddToListButton
-									mediaType="show"
-									mediaId={id}
-									seasonNumber={seasonNum}
-									episodeNumber={episodeNum}
-								/>
-								<NoteButton
-									mediaType="show"
-									mediaId={id}
-									seasonNumber={seasonNum}
-									episodeNumber={episodeNum}
-								/>
-							</View>
+							<RatingButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
+							<AddToListButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
+							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
 						</View>
 					</View>
 
@@ -162,6 +162,7 @@ export default function EpisodeDetailScreen() {
 						seasonNumber={seasonNum}
 						episodeNumber={episodeNum}
 					/>
+					<SimilarMedia mediaType="show" mediaId={id} />
 
 					<View className="flex-row gap-2 px-4">
 						<Pressable

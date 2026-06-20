@@ -1,20 +1,22 @@
-import { showsControllerGetSeasonDetailsOptions } from "@opnshelf/api";
+import {
+	showsControllerGetSeasonDetailsOptions,
+	showsControllerGetShowDetailsOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { Check, Eye } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
+import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
+import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { useAuth } from "@/lib/auth-context";
 import { yearFromDate } from "@/lib/tmdb";
-import { useWatchActions } from "@/lib/use-watch-actions";
-import { useWatchStatus } from "@/lib/use-watch-status";
 
 export default function SeasonDetailScreen() {
 	const { id, seasonNumber } = useLocalSearchParams<{
@@ -23,13 +25,6 @@ export default function SeasonDetailScreen() {
 	}>();
 	const showId = Number(id);
 	const seasonNum = Number(seasonNumber);
-	const { isAuthenticated } = useAuth();
-
-	const watchStatus = useWatchStatus({ mediaType: "show", showId: id });
-	const { markSeasonWatched, isMarkSeasonPending } = useWatchActions({
-		mediaType: "show",
-		showId: id,
-	});
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -38,12 +33,14 @@ export default function SeasonDetailScreen() {
 		enabled: Boolean(id) && Boolean(seasonNumber),
 	});
 
+	// The season payload has no credits; reuse the show's aggregate cast/crew
+	// (cached if the show page was visited) so the season page mirrors the web.
+	const { data: showData } = useQuery({
+		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
+		enabled: Boolean(id),
+	});
+
 	const totalEpisodes = data?.episodes.length ?? 0;
-	const episodesWatched =
-		data?.episodes.filter((ep) =>
-			watchStatus.isEpisodeWatched?.(ep.season_number, ep.episode_number),
-		).length ?? 0;
-	const seasonComplete = totalEpisodes > 0 && episodesWatched >= totalEpisodes;
 
 	return (
 		<View className="flex-1 bg-background">
@@ -57,10 +54,10 @@ export default function SeasonDetailScreen() {
 			) : (
 				<ScrollView
 					className="flex-1"
-					contentContainerClassName="gap-4 px-4 pb-12 pt-2"
+					contentContainerClassName="gap-6 pb-12 pt-2"
 					showsVerticalScrollIndicator={false}
 				>
-					<View>
+					<View className="px-4">
 						<Text className="font-bold font-display text-foreground text-xl">
 							{data.name}
 						</Text>
@@ -75,53 +72,29 @@ export default function SeasonDetailScreen() {
 						)}
 					</View>
 
-					{isAuthenticated ? (
-						<View className="-mx-4 gap-2">
-							<Pressable
-								onPress={() => markSeasonWatched(seasonNum)}
-								disabled={isMarkSeasonPending}
-								className={
-									seasonComplete
-										? "mx-4 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
-										: "mx-4 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
-								}
-								style={{ opacity: isMarkSeasonPending ? 0.7 : 1 }}
-							>
-								{seasonComplete ? (
-									<>
-										<View className="rounded-full bg-primary/20 p-1">
-											<Check color="#22c55e" size={14} />
-										</View>
-										<Text className="font-semibold text-foreground">
-											{episodesWatched} / {totalEpisodes} watched
-										</Text>
-									</>
-								) : (
-									<>
-										<Eye color="#3f2e00" size={18} />
-										<Text className="font-semibold text-primary-foreground">
-											Mark season watched
-										</Text>
-									</>
-								)}
-							</Pressable>
-							<RatingButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-							/>
-							<AddToListButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-							/>
-							<NoteButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-							/>
-						</View>
-					) : null}
+					<View className="gap-2">
+						<MediaTrackingActions
+							mediaType="season"
+							showId={id}
+							seasonNumber={seasonNum}
+							episodeCount={totalEpisodes}
+						/>
+						<RatingButton
+							mediaType="show"
+							mediaId={id}
+							seasonNumber={seasonNum}
+						/>
+						<AddToListButton
+							mediaType="show"
+							mediaId={id}
+							seasonNumber={seasonNum}
+						/>
+						<NoteButton
+							mediaType="show"
+							mediaId={id}
+							seasonNumber={seasonNum}
+						/>
+					</View>
 
 					<OverviewSection text={data.overview} />
 
@@ -131,10 +104,11 @@ export default function SeasonDetailScreen() {
 							message="This season has no episodes yet."
 						/>
 					) : (
-						<View className="gap-2">
+						<View className="gap-2 px-4">
 							{data.episodes.map((ep) => (
 								<EpisodeCard
 									key={ep.id}
+									actions
 									episode={{
 										showId,
 										seasonNumber: ep.season_number,
@@ -150,11 +124,14 @@ export default function SeasonDetailScreen() {
 						</View>
 					)}
 
+					<CastSection cast={showData?.credits?.cast} />
+					<CrewSection crew={showData?.credits?.crew} />
 					<CommunityReviews
 						mediaType="show"
 						mediaId={id}
 						seasonNumber={Number(seasonNumber)}
 					/>
+					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>

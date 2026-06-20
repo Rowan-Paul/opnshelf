@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Calendar, Check, Eye, RotateCcw, X } from "lucide-react-native";
+import { Calendar, Check, Plus, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
@@ -8,17 +8,21 @@ import { useAuth } from "@/lib/auth-context";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 
-interface MovieProps {
-	mediaType: "movie";
-	movieId: string;
-}
-
-interface ShowProps {
-	mediaType: "show";
-	showId: string;
-}
-
-type MediaTrackingActionsProps = MovieProps | ShowProps;
+type MediaTrackingActionsProps =
+	| { mediaType: "movie"; movieId: string }
+	| { mediaType: "show"; showId: string }
+	| {
+			mediaType: "season";
+			showId: string;
+			seasonNumber: number;
+			episodeCount: number;
+	  }
+	| {
+			mediaType: "episode";
+			showId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+	  };
 
 function formatWatchedDate(iso?: string) {
 	if (!iso) return undefined;
@@ -32,48 +36,147 @@ function formatWatchedDate(iso?: string) {
 }
 
 /**
- * Tracking action bar for movie + show detail screens: mark watched (with an
- * optional custom date) and unwatch. Watch state is read via the watch-status
- * hook; writes go through the optimistic mutations in `useWatchActions`. Rating
- * and reviews live in their own components (`RatingButton`, `CommunityReviews`).
+ * The shared "shelf" split button for every media detail surface — movie, show,
+ * season and episode. The primary action toggles the item on/off the shelf
+ * ("Add to shelf" / "Remove from shelf"); the trailing calendar button adds it
+ * with a custom date (and, for movies, logs an extra watch while already on the
+ * shelf). When on the shelf it surfaces a small status card with the relevant
+ * progress detail. Watch state is read via `useWatchStatus`; writes go through
+ * the optimistic mutations in `useWatchActions`. Mirrors the web "Add to shelf"
+ * controls so the wording matches across surfaces.
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
 
 	const isMovie = props.mediaType === "movie";
+	const showId = props.mediaType === "movie" ? "" : props.showId;
 
 	const status = useWatchStatus(
 		isMovie
 			? { mediaType: "movie", movieId: props.movieId }
-			: { mediaType: "show", showId: props.showId },
+			: { mediaType: "show", showId },
 	);
 	const actions = useWatchActions(
 		isMovie
 			? { mediaType: "movie", movieId: props.movieId }
-			: { mediaType: "show", showId: props.showId },
+			: { mediaType: "show", showId },
 	);
 
-	const isWatched = isMovie ? !!status.isWatched : !!status.isTracking;
-	const isMarkPending = isMovie
-		? actions.isMarkMoviePending
-		: actions.isMarkShowPending;
-	const isUnmarkPending = isMovie
-		? actions.isUnmarkMoviePending
-		: actions.isUnmarkShowPending;
+	const showHistory = status.showWatchHistory ?? [];
 
-	const markWatched = (watchedAt?: string) => {
-		if (isMovie) actions.markMovieWatched(watchedAt);
-		else actions.markShowWatched(watchedAt);
+	let isOnShelf = false;
+	let detail: string | undefined;
+	switch (props.mediaType) {
+		case "movie": {
+			isOnShelf = !!status.isWatched;
+			const date = formatWatchedDate(status.latestWatchedDate);
+			detail = date
+				? `${date}${status.totalMovieWatches > 1 ? ` · ${status.totalMovieWatches} watches` : ""}`
+				: undefined;
+			break;
+		}
+		case "show": {
+			isOnShelf = !!status.isTracking;
+			detail =
+				status.uniqueEpisodesWatched > 0
+					? `${status.uniqueEpisodesWatched} episode${status.uniqueEpisodesWatched === 1 ? "" : "s"} watched`
+					: undefined;
+			break;
+		}
+		case "season": {
+			isOnShelf =
+				status.isSeasonFullyWatched?.(props.seasonNumber, props.episodeCount) ??
+				false;
+			const watchedInSeason = new Set(
+				showHistory
+					.filter((ep) => ep.seasonNumber === props.seasonNumber)
+					.map((ep) => `${ep.seasonNumber}-${ep.episodeNumber}`),
+			).size;
+			detail = `${watchedInSeason} / ${props.episodeCount} episodes watched`;
+			break;
+		}
+		case "episode": {
+			isOnShelf =
+				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
+				false;
+			const watchedDate = formatWatchedDate(
+				[...showHistory]
+					.filter(
+						(ep) =>
+							ep.seasonNumber === props.seasonNumber &&
+							ep.episodeNumber === props.episodeNumber,
+					)
+					.sort((a, b) => b.watchedDate.localeCompare(a.watchedDate))[0]
+					?.watchedDate,
+			);
+			detail = watchedDate ? `Watched ${watchedDate}` : undefined;
+			break;
+		}
+	}
+
+	const isMarkPending =
+		props.mediaType === "movie"
+			? actions.isMarkMoviePending
+			: props.mediaType === "show"
+				? actions.isMarkShowPending
+				: props.mediaType === "season"
+					? actions.isMarkSeasonPending
+					: actions.isMarkEpisodePending;
+	const isUnmarkPending =
+		props.mediaType === "movie"
+			? actions.isUnmarkMoviePending
+			: props.mediaType === "show"
+				? actions.isUnmarkShowPending
+				: props.mediaType === "season"
+					? actions.isUnmarkSeasonPending
+					: actions.isUnmarkEpisodePending;
+
+	const addToShelf = (watchedAt?: string) => {
+		switch (props.mediaType) {
+			case "movie":
+				actions.markMovieWatched(watchedAt);
+				break;
+			case "show":
+				actions.markShowWatched(watchedAt);
+				break;
+			case "season":
+				actions.markSeasonWatched(props.seasonNumber, watchedAt);
+				break;
+			case "episode":
+				actions.markEpisodeWatched(
+					props.seasonNumber,
+					props.episodeNumber,
+					watchedAt,
+				);
+				break;
+		}
 	};
-	const unmarkWatched = () => {
-		if (isMovie) actions.unmarkMovieWatched();
-		else actions.unmarkShowWatched();
+
+	const removeFromShelf = () => {
+		switch (props.mediaType) {
+			case "movie":
+				actions.unmarkMovieWatched();
+				break;
+			case "show":
+				actions.unmarkShowWatched();
+				break;
+			case "season":
+				actions.unmarkSeasonWatched(props.seasonNumber);
+				break;
+			case "episode":
+				actions.unmarkEpisodeWatched(
+					props.seasonNumber,
+					props.episodeNumber,
+					"all",
+				);
+				break;
+		}
 	};
 
 	const handleDateConfirm = (iso: string) => {
 		setDatePickerVisible(false);
-		markWatched(iso);
+		addToShelf(iso);
 	};
 
 	if (!isAuthenticated) {
@@ -82,7 +185,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				<Link href="/login" asChild>
 					<Pressable className="items-center rounded-lg bg-primary py-3">
 						<Text className="font-semibold text-primary-foreground">
-							Sign in to track
+							Sign in to add to shelf
 						</Text>
 					</Pressable>
 				</Link>
@@ -90,77 +193,63 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		);
 	}
 
-	const watchedDateLabel = formatWatchedDate(status.latestWatchedDate);
+	// Movies can be logged multiple times, so keep the date picker available even
+	// once on the shelf. The other types are binary, so hide it when on the shelf.
+	const showCalendar = !isOnShelf || isMovie;
 
 	return (
 		<View className="gap-3 px-4">
-			{isWatched ? (
-				<View className="gap-2 rounded-xl border border-border bg-card p-3">
-					<View className="flex-row items-center gap-2">
-						<View className="rounded-full bg-primary/20 p-1.5">
-							<Check color="#22c55e" size={16} />
-						</View>
-						<View className="flex-1">
-							<Text className="font-semibold text-foreground text-sm">
-								{isMovie ? "Watched" : "Tracking"}
-							</Text>
-							{isMovie && watchedDateLabel ? (
-								<Text className="text-muted-foreground text-xs">
-									{watchedDateLabel}
-									{status.totalMovieWatches > 1
-										? ` · ${status.totalMovieWatches} watches`
-										: ""}
-								</Text>
-							) : null}
-							{!isMovie && status.uniqueEpisodesWatched > 0 ? (
-								<Text className="text-muted-foreground text-xs">
-									{status.uniqueEpisodesWatched} episode
-									{status.uniqueEpisodesWatched === 1 ? "" : "s"} watched
-								</Text>
-							) : null}
-						</View>
-						<Pressable
-							hitSlop={8}
-							onPress={unmarkWatched}
-							disabled={isUnmarkPending}
-							className="flex-row items-center gap-1 rounded-md border border-border px-2 py-1"
-							style={{ opacity: isUnmarkPending ? 0.6 : 1 }}
-						>
-							<X color="#94a3b8" size={14} />
-							<Text className="text-muted-foreground text-xs">Remove</Text>
-						</Pressable>
+			{isOnShelf ? (
+				<View className="flex-row items-center gap-2 rounded-xl border border-border bg-card p-3">
+					<View className="rounded-full bg-primary/20 p-1.5">
+						<Check color="#22c55e" size={16} />
+					</View>
+					<View className="flex-1">
+						<Text className="font-semibold text-foreground text-sm">
+							On shelf
+						</Text>
+						{detail ? (
+							<Text className="text-muted-foreground text-xs">{detail}</Text>
+						) : null}
 					</View>
 				</View>
 			) : null}
 
 			<View className="flex-row gap-2">
 				<Pressable
-					onPress={() => markWatched()}
-					disabled={isMarkPending}
-					className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
-					style={{ opacity: isMarkPending ? 0.7 : 1 }}
+					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
+					disabled={isMarkPending || isUnmarkPending}
+					className={
+						isOnShelf
+							? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
+							: "flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
+					}
+					style={{ opacity: isMarkPending || isUnmarkPending ? 0.7 : 1 }}
 				>
-					{isWatched ? (
-						<RotateCcw color="#3f2e00" size={18} />
+					{isOnShelf ? (
+						<>
+							<X color="#ef4444" size={18} />
+							<Text className="font-semibold text-foreground">
+								Remove from shelf
+							</Text>
+						</>
 					) : (
-						<Eye color="#3f2e00" size={18} />
+						<>
+							<Plus color="#3f2e00" size={18} strokeWidth={2.5} />
+							<Text className="font-semibold text-primary-foreground">
+								Add to shelf
+							</Text>
+						</>
 					)}
-					<Text className="font-semibold text-primary-foreground">
-						{isWatched
-							? isMovie
-								? "Watch again"
-								: "Mark watched"
-							: isMovie
-								? "Mark watched"
-								: "Mark show watched"}
-					</Text>
 				</Pressable>
-				<Pressable
-					onPress={() => setDatePickerVisible(true)}
-					className="items-center justify-center rounded-lg border border-border px-4"
-				>
-					<Calendar color="#94a3b8" size={20} />
-				</Pressable>
+				{showCalendar ? (
+					<Pressable
+						onPress={() => setDatePickerVisible(true)}
+						className="items-center justify-center rounded-lg border border-border px-4"
+					>
+						<Calendar color="#94a3b8" size={20} />
+					</Pressable>
+				) : null}
 			</View>
 
 			<WatchDatePickerModal

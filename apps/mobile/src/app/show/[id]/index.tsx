@@ -2,7 +2,6 @@ import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection } from "@/components/detail/CreditsSection";
@@ -22,7 +21,6 @@ import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
 
 export default function ShowDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
-	const insets = useSafeAreaInsets();
 	const showId = Number(id);
 
 	const { data, isLoading, isError } = useQuery({
@@ -36,8 +34,10 @@ export default function ShowDetailScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<Stack.Screen options={{ headerShown: false }} />
+		<View className="flex-1 bg-background">
+			<Stack.Screen
+				options={{ headerShown: true, title: data?.name ?? "Show" }}
+			/>
 			{isLoading ? (
 				<LoadingState />
 			) : isError || !data ? (
@@ -90,6 +90,7 @@ export default function ShowDetailScreen() {
 							{seasons.map((s) => (
 								<SeasonCard
 									key={s.id}
+									actions
 									season={{
 										showId,
 										seasonNumber: s.season_number,

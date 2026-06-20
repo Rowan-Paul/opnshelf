@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { type Href, Link } from "expo-router";
 import { Check, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -23,6 +23,12 @@ export type MediaCardItem = {
 	posterPath?: string | null;
 	year?: string;
 	rating?: number;
+	/**
+	 * Optional override for the detail route. Defaults to the movie/show route
+	 * derived from `type` + `id`; callers pass this to deep-link episodes shown
+	 * with their parent show's poster straight to the episode page.
+	 */
+	href?: Href;
 };
 
 /**
@@ -46,10 +52,11 @@ export function MediaCard({
 	return <MediaCardBase item={item} />;
 }
 
-const href = (item: MediaCardItem) =>
-	item.type === "movie"
+const href = (item: MediaCardItem): Href =>
+	item.href ??
+	(item.type === "movie"
 		? (`/movie/${item.id}` as const)
-		: (`/show/${item.id}` as const);
+		: (`/show/${item.id}` as const));
 
 /** Read-only poster card: poster + title/year/rating, linking to detail. */
 function MediaCardBase({
@@ -184,10 +191,9 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 				visible={quickVisible}
 				onDismiss={() => setQuickVisible(false)}
 				title={item.title}
-				mediaType={item.type}
 				watched={watched}
 				isWatchPending={isWatchPending}
-				hasNote={!!note.note}
+				hasNote={!!note.note?.content}
 				onToggleWatched={() => {
 					toggleWatched();
 					setQuickVisible(false);
@@ -227,13 +233,13 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 				visible={noteVisible}
 				onDismiss={() => setNoteVisible(false)}
 				initialContent={note.note?.content ?? ""}
-				isEditing={!!note.note}
+				isEditing={!!note.note?.content}
 				onSave={(content) => {
 					void note.saveNote(content);
 					setNoteVisible(false);
 				}}
 				onDelete={
-					note.note
+					note.note?.content
 						? () => {
 								void note.deleteNote();
 								setNoteVisible(false);

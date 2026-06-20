@@ -43,7 +43,12 @@ export function UpNextCard({
 
 	return (
 		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-			<Link href={`/show/${show.showId}` as const} asChild>
+			<Link
+				href={
+					`/show/${show.showId}/season/${ep.seasonNumber}/episode/${ep.episodeNumber}` as const
+				}
+				asChild
+			>
 				<Pressable className="overflow-hidden rounded-lg border border-border bg-background-subtle">
 					<PosterImage url={posterUrl(show.posterPath)} className="h-32 w-22" />
 				</Pressable>

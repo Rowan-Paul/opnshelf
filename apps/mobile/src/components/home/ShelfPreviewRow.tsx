@@ -82,12 +82,14 @@ function toCardItem(item: ShelfItem): MediaCardItem {
 			year: item.releaseYear ? String(item.releaseYear) : undefined,
 		};
 	}
-	// Episodes link back to their parent show.
+	// Episodes show the parent show's poster but deep-link to the episode page,
+	// matching the web dashboard.
 	return {
 		id: Number(item.showId),
 		type: "show",
 		title: item.showTitle,
 		posterPath: item.posterPath,
 		year: item.firstAirYear ? String(item.firstAirYear) : undefined,
+		href: `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
 	};
 }

@@ -1,9 +1,13 @@
 import { Link } from "expo-router";
-import { Star } from "lucide-react-native";
+import { Check, Plus, Star } from "lucide-react-native";
+import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { stillUrl } from "@/lib/tmdb";
+import { useWatchActions } from "@/lib/use-watch-actions";
+import { useWatchStatus } from "@/lib/use-watch-status";
 
 export type EpisodeCardData = {
 	showId: number;
@@ -20,8 +24,28 @@ export type EpisodeCardData = {
  * Episode list row: still thumbnail, number + title, air date/rating, and a
  * truncated overview. Links to the episode detail route. Reused by the season
  * detail screen and any future "up next" surfaces.
+ *
+ * Pass `actions` to overlay a corner add/remove-to-shelf toggle on the still.
+ * It's off by default so read-only usages stay free of the watch data hooks.
  */
-export function EpisodeCard({ episode }: { episode: EpisodeCardData }) {
+export function EpisodeCard({
+	episode,
+	actions = false,
+}: {
+	episode: EpisodeCardData;
+	actions?: boolean;
+}) {
+	if (actions) return <EpisodeCardWithActions episode={episode} />;
+	return <EpisodeCardBase episode={episode} />;
+}
+
+function EpisodeCardBase({
+	episode,
+	overlay,
+}: {
+	episode: EpisodeCardData;
+	overlay?: ReactNode;
+}) {
 	return (
 		<Link
 			href={`/show/${episode.showId}/season/${episode.seasonNumber}/episode/${episode.episodeNumber}`}
@@ -33,6 +57,7 @@ export function EpisodeCard({ episode }: { episode: EpisodeCardData }) {
 						url={stillUrl(episode.stillPath)}
 						className="aspect-video w-28"
 					/>
+					{overlay}
 				</View>
 				<View className="flex-1 justify-center">
 					<Text
@@ -68,4 +93,56 @@ export function EpisodeCard({ episode }: { episode: EpisodeCardData }) {
 			</Pressable>
 		</Link>
 	);
+}
+
+/** Episode row with a corner add/remove-to-shelf toggle for the episode. */
+function EpisodeCardWithActions({ episode }: { episode: EpisodeCardData }) {
+	const { isAuthenticated } = useAuth();
+	const showId = String(episode.showId);
+
+	const status = useWatchStatus({ mediaType: "show", showId });
+	const actions = useWatchActions({ mediaType: "show", showId });
+
+	const onShelf =
+		status.isEpisodeWatched?.(episode.seasonNumber, episode.episodeNumber) ??
+		false;
+	const pending =
+		actions.isMarkEpisodePending || actions.isUnmarkEpisodePending;
+
+	const toggleShelf = () => {
+		if (onShelf) {
+			actions.unmarkEpisodeWatched(
+				episode.seasonNumber,
+				episode.episodeNumber,
+				"all",
+			);
+		} else {
+			actions.markEpisodeWatched(episode.seasonNumber, episode.episodeNumber);
+		}
+	};
+
+	const overlay = isAuthenticated ? (
+		<Pressable
+			hitSlop={8}
+			onPress={(e) => {
+				e.stopPropagation();
+				toggleShelf();
+			}}
+			disabled={pending}
+			className={
+				onShelf
+					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
+					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+			}
+			style={{ opacity: pending ? 0.6 : 1 }}
+		>
+			{onShelf ? (
+				<Check color="#3f2e00" size={15} strokeWidth={3} />
+			) : (
+				<Plus color="#ffffff" size={15} strokeWidth={2.5} />
+			)}
+		</Pressable>
+	) : undefined;
+
+	return <EpisodeCardBase episode={episode} overlay={overlay} />;
 }
