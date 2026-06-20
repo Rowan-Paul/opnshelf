@@ -1587,9 +1587,7 @@ export type PaginatedNotesResponseDto = {
     /**
      * Cursor for next page (null if no more items)
      */
-    nextCursor: {
-        [key: string]: unknown;
-    };
+    nextCursor: string | null;
     /**
      * Total count of items
      */

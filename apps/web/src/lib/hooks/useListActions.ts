@@ -1,6 +1,8 @@
 import {
 	listsControllerAddItemToListMutation,
 	listsControllerGetListsForItemQueryKey,
+	listsControllerGetPublicUserListQueryKey,
+	listsControllerGetPublicUserListsQueryKey,
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 } from "@opnshelf/api";
@@ -29,7 +31,7 @@ export function useListActions({
 				? "season"
 				: mediaType;
 
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, user } = useAuth();
 	const queryClient = useQueryClient();
 	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 
@@ -38,6 +40,26 @@ export function useListActions({
 		query: { seasonNumber, episodeNumber },
 	});
 	const userListsKey = listsControllerGetUserListsQueryKey();
+
+	// The profile pages read from the PUBLIC list queries, which are keyed by the
+	// owner's did and are separate from the authenticated `getUserLists` cache.
+	// Invalidate them too so profile list views refresh after add/remove.
+	const invalidatePublicLists = (slug?: string) => {
+		const userDid = user?.did;
+		if (!userDid) return;
+		queryClient.invalidateQueries({
+			queryKey: listsControllerGetPublicUserListsQueryKey({
+				path: { userDid },
+			}),
+		});
+		if (slug) {
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListQueryKey({
+					path: { userDid, slug },
+				}),
+			});
+		}
+	};
 
 	const addToListMutation = useMutation({
 		mutationKey: ["lists", "addItem", resolvedMediaType, mediaId],
@@ -71,11 +93,12 @@ export function useListActions({
 				error instanceof Error ? error.message : "Failed to add to list",
 			);
 		},
-		onSettled: (_data, _error, _variables, context) => {
+		onSettled: (_data, _error, variables, context) => {
 			if (context?.listsForItemKey) {
 				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
 			}
 			queryClient.invalidateQueries({ queryKey: userListsKey });
+			invalidatePublicLists(variables?.path?.slug);
 		},
 	});
 
@@ -111,11 +134,12 @@ export function useListActions({
 				error instanceof Error ? error.message : "Failed to remove from list",
 			);
 		},
-		onSettled: (_data, _error, _variables, context) => {
+		onSettled: (_data, _error, variables, context) => {
 			if (context?.listsForItemKey) {
 				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
 			}
 			queryClient.invalidateQueries({ queryKey: userListsKey });
+			invalidatePublicLists(variables?.path?.slug);
 		},
 	});
 

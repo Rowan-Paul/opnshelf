@@ -144,7 +144,11 @@ export class PaginatedNotesResponseDto {
 	@ApiProperty({ type: [UserNoteDto] })
 	items: UserNoteDto[];
 
-	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
+	@ApiProperty({
+		type: String,
+		nullable: true,
+		description: "Cursor for next page (null if no more items)",
+	})
 	nextCursor: string | null;
 
 	@ApiProperty({ description: "Total count of items" })

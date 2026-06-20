@@ -96,7 +96,7 @@ function NoteCard({
 
 	const noteListKey = notesControllerGetUserNotesQueryKey({
 		path: { userDid },
-		query: { limit: 50 },
+		query: { limit: 20 },
 	});
 
 	const invalidateList = () =>
@@ -199,15 +199,18 @@ function ProfileNotesPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
+	const [cursor, setCursor] = useState<string | undefined>(undefined);
+
 	const { data, isLoading } = useQuery({
 		...notesControllerGetUserNotesOptions({
 			path: { userDid },
-			query: { limit: 50 },
+			query: { limit: 20, ...(cursor ? { cursor } : {}) },
 		}),
 		enabled: !!userDid,
 	});
 
 	const notes = data?.items ?? [];
+	const hasMore = data?.nextCursor != null;
 
 	return (
 		<div className="space-y-6">
@@ -242,6 +245,18 @@ function ProfileNotesPage() {
 							userDid={userDid}
 						/>
 					))}
+				</div>
+			)}
+
+			{hasMore && (
+				<div className="flex justify-center">
+					<button
+						type="button"
+						onClick={() => setCursor(data?.nextCursor ?? undefined)}
+						className="btn btn-secondary"
+					>
+						Load more
+					</button>
 				</div>
 			)}
 		</div>
