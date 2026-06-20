@@ -479,6 +479,69 @@ export class ShelfService {
 
 		return colors ?? existingColors ?? null;
 	}
+
+	/**
+	 * Derive whether a user's historical watch records are still streaming in
+	 * from their PDS, so the shelf can show a "syncing your watch history…"
+	 * indicator instead of a misleading empty state right after sign-up.
+	 *
+	 * There is no explicit "backfill complete" signal from TAP, so we infer it
+	 * from two timestamps the ingester maintains (see IngesterService):
+	 *   - backfillStartedAt: stamped when the repo is registered at sign-in/up.
+	 *   - lastIngestAt: bumped on every ingested movie/episode record.
+	 *
+	 * A user is "syncing" while the backfill window is open AND either we're
+	 * still within the initial grace period waiting for the first record, or
+	 * records are still arriving (the gap since the last one is under the
+	 * debounce). The whole thing is hard-capped by a max window so a stalled or
+	 * genuinely-empty repo can never be stuck showing "syncing" forever.
+	 */
+	async getSyncStatus(userDid: string): Promise<{
+		isSyncing: boolean;
+		trackedMovieCount: number;
+		trackedEpisodeCount: number;
+		backfillStartedAt: Date | null;
+		lastIngestAt: Date | null;
+	}> {
+		// No first record within this window of opening backfill ⇒ assume the repo
+		// has nothing to backfill (or TAP never delivered) and stop syncing.
+		const INITIAL_GRACE_MS = 20_000;
+		// No new record within this gap ⇒ the stream has gone quiet, treat caught up.
+		const QUIET_GAP_MS = 8_000;
+		// Absolute ceiling so a slow/stalled backfill can't pin the indicator on.
+		const MAX_WINDOW_MS = 120_000;
+
+		const [user, trackedMovieCount, trackedEpisodeCount] = await Promise.all([
+			this.prisma.user.findUnique({
+				where: { did: userDid },
+				select: { backfillStartedAt: true, lastIngestAt: true },
+			}),
+			this.prisma.trackedMovie.count({ where: { userDid } }),
+			this.prisma.trackedEpisode.count({ where: { userDid } }),
+		]);
+
+		const backfillStartedAt = user?.backfillStartedAt ?? null;
+		const lastIngestAt = user?.lastIngestAt ?? null;
+
+		let isSyncing = false;
+		if (backfillStartedAt) {
+			const now = Date.now();
+			const sinceStart = now - backfillStartedAt.getTime();
+			if (sinceStart < MAX_WINDOW_MS) {
+				isSyncing = lastIngestAt
+					? now - lastIngestAt.getTime() < QUIET_GAP_MS
+					: sinceStart < INITIAL_GRACE_MS;
+			}
+		}
+
+		return {
+			isSyncing,
+			trackedMovieCount,
+			trackedEpisodeCount,
+			backfillStartedAt,
+			lastIngestAt,
+		};
+	}
 }
 
 function buildTrailingDayKeys(

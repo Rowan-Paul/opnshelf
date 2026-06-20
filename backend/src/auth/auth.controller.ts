@@ -335,8 +335,11 @@ export class AuthController {
 		);
 
 		// Register the new repo with TAP for tracking/backfill (best-effort).
+		// markBackfillStart opens the shelf's "syncing your watch history…" window.
 		try {
-			await this.ingesterService.addRepo(account.did);
+			await this.ingesterService.addRepo(account.did, {
+				markBackfillStart: true,
+			});
 		} catch (error) {
 			this.logger.error(`Failed to register ${account.did} with TAP`, error);
 		}
@@ -505,9 +508,14 @@ export class AuthController {
 				res.clearCookie(TIMEZONE_COOKIE_NAME);
 			}
 
-			// Register user's DID with TAP for repo tracking and backfill
+			// Register user's DID with TAP for repo tracking and backfill.
+			// markBackfillStart opens the shelf's "syncing your watch history…"
+			// window so a freshly-linked account isn't shown an empty shelf while
+			// its historical records are still streaming in over the firehose.
 			try {
-				await this.ingesterService.addRepo(session.did);
+				await this.ingesterService.addRepo(session.did, {
+					markBackfillStart: true,
+				});
 			} catch (tapError) {
 				// Log but don't fail login if TAP registration fails
 				this.logger.error(

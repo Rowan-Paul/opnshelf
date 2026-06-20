@@ -41,6 +41,8 @@ export type UserMinAggregateOutputType = {
   watchCountry: string | null
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
+  backfillStartedAt: Date | null
+  lastIngestAt: Date | null
   isNativePds: boolean | null
   blueskyProfileUrl: string | null
   tangledProfileUrl: string | null
@@ -69,6 +71,8 @@ export type UserMaxAggregateOutputType = {
   watchCountry: string | null
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
+  backfillStartedAt: Date | null
+  lastIngestAt: Date | null
   isNativePds: boolean | null
   blueskyProfileUrl: string | null
   tangledProfileUrl: string | null
@@ -97,6 +101,8 @@ export type UserCountAggregateOutputType = {
   watchCountry: number
   onboardingCompletedAt: number
   emailVerifiedAt: number
+  backfillStartedAt: number
+  lastIngestAt: number
   isNativePds: number
   blueskyProfileUrl: number
   tangledProfileUrl: number
@@ -127,6 +133,8 @@ export type UserMinAggregateInputType = {
   watchCountry?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
+  backfillStartedAt?: true
+  lastIngestAt?: true
   isNativePds?: true
   blueskyProfileUrl?: true
   tangledProfileUrl?: true
@@ -155,6 +163,8 @@ export type UserMaxAggregateInputType = {
   watchCountry?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
+  backfillStartedAt?: true
+  lastIngestAt?: true
   isNativePds?: true
   blueskyProfileUrl?: true
   tangledProfileUrl?: true
@@ -183,6 +193,8 @@ export type UserCountAggregateInputType = {
   watchCountry?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
+  backfillStartedAt?: true
+  lastIngestAt?: true
   isNativePds?: true
   blueskyProfileUrl?: true
   tangledProfileUrl?: true
@@ -284,6 +296,8 @@ export type UserGroupByOutputType = {
   watchCountry: string
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
+  backfillStartedAt: Date | null
+  lastIngestAt: Date | null
   isNativePds: boolean
   blueskyProfileUrl: string | null
   tangledProfileUrl: string | null
@@ -333,6 +347,8 @@ export type UserWhereInput = {
   watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lastIngestAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   isNativePds?: Prisma.BoolFilter<"User"> | boolean
   blueskyProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
   tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -372,6 +388,8 @@ export type UserOrderByWithRelationInput = {
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastIngestAt?: Prisma.SortOrderInput | Prisma.SortOrder
   isNativePds?: Prisma.SortOrder
   blueskyProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -414,6 +432,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   watchCountry?: Prisma.StringFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lastIngestAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   isNativePds?: Prisma.BoolFilter<"User"> | boolean
   blueskyProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
   tangledProfileUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -453,6 +473,8 @@ export type UserOrderByWithAggregationInput = {
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastIngestAt?: Prisma.SortOrderInput | Prisma.SortOrder
   isNativePds?: Prisma.SortOrder
   blueskyProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   tangledProfileUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -487,6 +509,8 @@ export type UserScalarWhereWithAggregatesInput = {
   watchCountry?: Prisma.StringWithAggregatesFilter<"User"> | string
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  backfillStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  lastIngestAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   isNativePds?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blueskyProfileUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   tangledProfileUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -515,6 +539,8 @@ export type UserCreateInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -554,6 +580,8 @@ export type UserUncheckedCreateInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -593,6 +621,8 @@ export type UserUpdateInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -632,6 +662,8 @@ export type UserUncheckedUpdateInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -671,6 +703,8 @@ export type UserCreateManyInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -699,6 +733,8 @@ export type UserUpdateManyMutationInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -727,6 +763,8 @@ export type UserUncheckedUpdateManyInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -755,6 +793,8 @@ export type UserCountOrderByAggregateInput = {
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
+  backfillStartedAt?: Prisma.SortOrder
+  lastIngestAt?: Prisma.SortOrder
   isNativePds?: Prisma.SortOrder
   blueskyProfileUrl?: Prisma.SortOrder
   tangledProfileUrl?: Prisma.SortOrder
@@ -783,6 +823,8 @@ export type UserMaxOrderByAggregateInput = {
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
+  backfillStartedAt?: Prisma.SortOrder
+  lastIngestAt?: Prisma.SortOrder
   isNativePds?: Prisma.SortOrder
   blueskyProfileUrl?: Prisma.SortOrder
   tangledProfileUrl?: Prisma.SortOrder
@@ -811,6 +853,8 @@ export type UserMinOrderByAggregateInput = {
   watchCountry?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
+  backfillStartedAt?: Prisma.SortOrder
+  lastIngestAt?: Prisma.SortOrder
   isNativePds?: Prisma.SortOrder
   blueskyProfileUrl?: Prisma.SortOrder
   tangledProfileUrl?: Prisma.SortOrder
@@ -1018,6 +1062,8 @@ export type UserCreateWithoutFollowingInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1056,6 +1102,8 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1099,6 +1147,8 @@ export type UserCreateWithoutFollowersInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1137,6 +1187,8 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1191,6 +1243,8 @@ export type UserUpdateWithoutFollowingInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1229,6 +1283,8 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1278,6 +1334,8 @@ export type UserUpdateWithoutFollowersInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1316,6 +1374,8 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1354,6 +1414,8 @@ export type UserCreateWithoutTrackedMoviesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1392,6 +1454,8 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1446,6 +1510,8 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1484,6 +1550,8 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1522,6 +1590,8 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1560,6 +1630,8 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1614,6 +1686,8 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1652,6 +1726,8 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1690,6 +1766,8 @@ export type UserCreateWithoutListsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1728,6 +1806,8 @@ export type UserUncheckedCreateWithoutListsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1782,6 +1862,8 @@ export type UserUpdateWithoutListsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1820,6 +1902,8 @@ export type UserUncheckedUpdateWithoutListsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1858,6 +1942,8 @@ export type UserCreateWithoutNotesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1896,6 +1982,8 @@ export type UserUncheckedCreateWithoutNotesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -1950,6 +2038,8 @@ export type UserUpdateWithoutNotesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1988,6 +2078,8 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2026,6 +2118,8 @@ export type UserCreateWithoutReviewsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2064,6 +2158,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2118,6 +2214,8 @@ export type UserUpdateWithoutReviewsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2156,6 +2254,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2194,6 +2294,8 @@ export type UserCreateWithoutPublicationsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2232,6 +2334,8 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2286,6 +2390,8 @@ export type UserUpdateWithoutPublicationsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2324,6 +2430,8 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2362,6 +2470,8 @@ export type UserCreateWithoutRatingsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2400,6 +2510,8 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2454,6 +2566,8 @@ export type UserUpdateWithoutRatingsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2492,6 +2606,8 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2530,6 +2646,8 @@ export type UserCreateWithoutReviewLikesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2568,6 +2686,8 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2622,6 +2742,8 @@ export type UserUpdateWithoutReviewLikesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2660,6 +2782,8 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2698,6 +2822,8 @@ export type UserCreateWithoutFeedbackInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2736,6 +2862,8 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   watchCountry?: string
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
   isNativePds?: boolean
   blueskyProfileUrl?: string | null
   tangledProfileUrl?: string | null
@@ -2790,6 +2918,8 @@ export type UserUpdateWithoutFeedbackInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2828,6 +2958,8 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2987,6 +3119,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
+  backfillStartedAt?: boolean
+  lastIngestAt?: boolean
   isNativePds?: boolean
   blueskyProfileUrl?: boolean
   tangledProfileUrl?: boolean
@@ -3027,6 +3161,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
+  backfillStartedAt?: boolean
+  lastIngestAt?: boolean
   isNativePds?: boolean
   blueskyProfileUrl?: boolean
   tangledProfileUrl?: boolean
@@ -3055,6 +3191,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
+  backfillStartedAt?: boolean
+  lastIngestAt?: boolean
   isNativePds?: boolean
   blueskyProfileUrl?: boolean
   tangledProfileUrl?: boolean
@@ -3083,6 +3221,8 @@ export type UserSelectScalar = {
   watchCountry?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
+  backfillStartedAt?: boolean
+  lastIngestAt?: boolean
   isNativePds?: boolean
   blueskyProfileUrl?: boolean
   tangledProfileUrl?: boolean
@@ -3094,7 +3234,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "emailVerifiedAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -3144,6 +3284,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     watchCountry: string
     onboardingCompletedAt: Date | null
     emailVerifiedAt: Date | null
+    backfillStartedAt: Date | null
+    lastIngestAt: Date | null
     isNativePds: boolean
     blueskyProfileUrl: string | null
     tangledProfileUrl: string | null
@@ -3603,6 +3745,8 @@ export interface UserFieldRefs {
   readonly watchCountry: Prisma.FieldRef<"User", 'String'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly backfillStartedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly lastIngestAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly isNativePds: Prisma.FieldRef<"User", 'Boolean'>
   readonly blueskyProfileUrl: Prisma.FieldRef<"User", 'String'>
   readonly tangledProfileUrl: Prisma.FieldRef<"User", 'String'>

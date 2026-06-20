@@ -278,8 +278,17 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	/**
 	 * Register a user's DID with TAP to start tracking their repo.
 	 * TAP will automatically backfill all historical records.
+	 *
+	 * Pass `markBackfillStart: true` from the auth flow (sign-in / sign-up) to
+	 * stamp `User.backfillStartedAt`, which opens the "syncing your watch
+	 * history…" window the shelf reads. The startup re-register sweep
+	 * (`registerExistingUsers`) MUST leave it unset, otherwise every existing
+	 * user would appear to be syncing after a deploy.
 	 */
-	async addRepo(did: string): Promise<void> {
+	async addRepo(
+		did: string,
+		opts: { markBackfillStart?: boolean } = {},
+	): Promise<void> {
 		if (!this.tap) {
 			throw new Error("TAP client not initialized");
 		}
@@ -293,6 +302,41 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		} catch (err) {
 			this.logger.error(`Failed to register repo ${did} with TAP`, err);
 			throw err;
+		}
+
+		if (opts.markBackfillStart) {
+			// Best-effort: the repo is already registered, so a failure to stamp
+			// only costs us the sync indicator — never block sign-in on it.
+			try {
+				await this.prisma.user.update({
+					where: { did },
+					data: { backfillStartedAt: new Date() },
+				});
+			} catch (err) {
+				this.logger.warn(
+					`Failed to stamp backfillStartedAt for ${did}: ${err instanceof Error ? err.message : String(err)}`,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Bump `User.lastIngestAt` to mark that a watch record just landed for this
+	 * repo. The shelf uses the gap since this timestamp to decide when a backfill
+	 * has gone quiet (i.e. caught up). Best-effort: the record is already
+	 * persisted, so a failed bump only costs us indicator precision and must
+	 * never fail the event (which would trigger a needless redelivery).
+	 */
+	private async touchLastIngest(did: string): Promise<void> {
+		try {
+			await this.prisma.user.update({
+				where: { did },
+				data: { lastIngestAt: new Date() },
+			});
+		} catch (err) {
+			this.logger.debug(
+				`Failed to bump lastIngestAt for ${did}: ${err instanceof Error ? err.message : String(err)}`,
+			);
 		}
 	}
 
@@ -548,6 +592,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					status: "watched",
 				},
 			});
+
+			await this.touchLastIngest(evt.did);
 		}
 
 		if (evt.action === "delete") {
@@ -702,6 +748,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					status: "watched",
 				},
 			});
+
+			await this.touchLastIngest(evt.did);
 		}
 
 		if (evt.action === "delete") {

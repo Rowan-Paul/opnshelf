@@ -4,6 +4,7 @@ import {
 	ShelfActivitySummaryDto,
 	ShelfQueryDto,
 	ShelfResponseDto,
+	ShelfSyncStatusDto,
 } from "./shelf.dto";
 import { ShelfService } from "./shelf.service";
 
@@ -127,5 +128,24 @@ export class ShelfController {
 		@Param("userDid") userDid: string,
 	): Promise<ShelfActivitySummaryDto> {
 		return this.shelfService.getUserActivitySummary(userDid);
+	}
+
+	@Get("sync-status")
+	@ApiOperation({
+		summary:
+			"Whether the user's historical watch records are still backfilling from their PDS",
+	})
+	@ApiResponse({ status: 200, type: ShelfSyncStatusDto })
+	async getSyncStatus(
+		@Param("userDid") userDid: string,
+	): Promise<ShelfSyncStatusDto> {
+		const status = await this.shelfService.getSyncStatus(userDid);
+		return {
+			isSyncing: status.isSyncing,
+			trackedMovieCount: status.trackedMovieCount,
+			trackedEpisodeCount: status.trackedEpisodeCount,
+			backfillStartedAt: status.backfillStartedAt?.toISOString(),
+			lastIngestAt: status.lastIngestAt?.toISOString(),
+		};
 	}
 }

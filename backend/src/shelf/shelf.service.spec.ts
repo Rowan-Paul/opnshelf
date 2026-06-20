@@ -213,6 +213,98 @@ describe("ShelfService", () => {
 		expect(result.watchedLast7Days).toBe(9);
 	});
 
+	describe("getSyncStatus", () => {
+		const did = "did:plc:test";
+		const NOW = new Date("2024-03-10T12:00:00.000Z");
+
+		beforeEach(() => {
+			jest.useFakeTimers().setSystemTime(NOW);
+			mockPrismaService.trackedMovie.count.mockResolvedValue(3);
+			mockPrismaService.trackedEpisode.count.mockResolvedValue(7);
+		});
+
+		it("is not syncing when no backfill window was ever opened", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: null,
+				lastIngestAt: null,
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(false);
+			expect(result.trackedMovieCount).toBe(3);
+			expect(result.trackedEpisodeCount).toBe(7);
+		});
+
+		it("syncs during the initial grace period while waiting for the first record", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: new Date(NOW.getTime() - 5_000),
+				lastIngestAt: null,
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(true);
+		});
+
+		it("stops syncing once the initial grace period elapses with no records", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: new Date(NOW.getTime() - 25_000),
+				lastIngestAt: null,
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(false);
+		});
+
+		it("keeps syncing while records are still arriving (within the quiet gap)", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: new Date(NOW.getTime() - 30_000),
+				lastIngestAt: new Date(NOW.getTime() - 2_000),
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(true);
+		});
+
+		it("stops syncing once the stream goes quiet (past the quiet gap)", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: new Date(NOW.getTime() - 60_000),
+				lastIngestAt: new Date(NOW.getTime() - 10_000),
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(false);
+		});
+
+		it("never reports syncing past the max window, even if records keep trickling", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: new Date(NOW.getTime() - 130_000),
+				lastIngestAt: new Date(NOW.getTime() - 1_000),
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(false);
+		});
+
+		it("treats a returning user with only old records as not syncing", async () => {
+			// Re-login stamps backfillStartedAt=now but the last record is ancient,
+			// so the user shouldn't see a syncing indicator.
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				backfillStartedAt: NOW,
+				lastIngestAt: new Date(NOW.getTime() - 86_400_000),
+			});
+
+			const result = await service.getSyncStatus(did);
+
+			expect(result.isSyncing).toBe(false);
+		});
+	});
+
 	it("should use the saved timezone when building the 30-day window", async () => {
 		jest.useFakeTimers().setSystemTime(new Date("2024-03-10T01:30:00.000Z"));
 		mockPrismaService.user.findUnique.mockResolvedValue({

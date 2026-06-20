@@ -4,6 +4,7 @@ import {
 	type ShelfActivitySummaryDto,
 	type ShelfResponseDto,
 	type ShowsControllerDiscoverShowsResponse,
+	shelfControllerGetSyncStatusOptions,
 	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerDiscoverShowsOptions,
@@ -74,14 +75,35 @@ export function useDashboardStats(userDid: string) {
 	});
 }
 
-// User's shelf (library) - combines movies and episodes
-export function useUserShelf(userDid: string, pageSize = 10) {
+// User's shelf (library) - combines movies and episodes.
+// While the user's history is still backfilling from their PDS, pass
+// `refetchInterval` so newly-ingested records appear without a manual reload.
+export function useUserShelf(
+	userDid: string,
+	pageSize = 10,
+	options: { refetchInterval?: number | false } = {},
+) {
 	return useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
 			query: { page: 1, pageSize },
 		}),
 		enabled: !!userDid,
+		refetchInterval: options.refetchInterval ?? false,
+	});
+}
+
+// Whether the user's historical watch records are still being ingested from
+// their PDS. Self-polls every 3s while syncing, then stops. Drives the
+// "syncing your watch history…" indicator on the dashboard/shelf.
+export function useShelfSyncStatus(userDid: string) {
+	return useQuery({
+		...shelfControllerGetSyncStatusOptions({
+			path: { userDid },
+		}),
+		enabled: !!userDid,
+		refetchInterval: (query) =>
+			query.state.data?.isSyncing ? 3000 : (false as const),
 	});
 }
 

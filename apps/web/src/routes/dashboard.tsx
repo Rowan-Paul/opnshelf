@@ -6,14 +6,14 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Calendar, ChevronRight, Clock, Film, Tv } from "lucide-react";
+import { Calendar, ChevronRight, Clock, Film, Loader2, Tv } from "lucide-react";
 import { useEffect } from "react";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
-import { useUserShelf } from "#/lib/hooks";
+import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { useSearchDialog } from "#/lib/search-dialog-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
@@ -126,10 +126,16 @@ function Dashboard() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
+	// Is the user's watch history still backfilling from their PDS? While it is,
+	// poll the shelf so freshly-ingested records appear without a manual reload.
+	const { data: syncStatus } = useShelfSyncStatus(userDid || "");
+	const isSyncing = !!syncStatus?.isSyncing;
+
 	// Fetch user data from API
 	const { data: shelfData, isLoading: shelfLoading } = useUserShelf(
 		userDid || "",
 		6,
+		{ refetchInterval: isSyncing ? 3000 : false },
 	);
 	const { data: profile, isLoading: profileLoading } = useQuery({
 		...usersControllerGetPublicProfileOptions({
@@ -362,6 +368,13 @@ function Dashboard() {
 							)}
 						</div>
 
+						{isSyncing && userContent.length > 0 && (
+							<div className="mb-4 flex items-center gap-2 rounded-lg bg-(--background-subtle) px-4 py-2 text-(--foreground-muted) text-sm">
+								<Loader2 className="size-4 animate-spin" />
+								Syncing more of your watch history…
+							</div>
+						)}
+
 						{isLoading ? (
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 								{[1, 2, 3, 4, 5, 6].map((i) => (
@@ -400,6 +413,17 @@ function Dashboard() {
 										size="md"
 									/>
 								))}
+							</div>
+						) : isSyncing ? (
+							<div className="card p-8 text-center">
+								<Loader2 className="mx-auto mb-3 size-6 animate-spin text-(--accent)" />
+								<p className="mb-2 text-(--foreground-muted)">
+									Syncing your watch history…
+								</p>
+								<p className="text-(--foreground-muted) text-sm">
+									We're pulling in your existing movies and shows. They'll
+									appear here as they load.
+								</p>
 							</div>
 						) : (
 							<div className="card p-8 text-center">

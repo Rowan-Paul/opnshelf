@@ -197,6 +197,31 @@ export class ShelfResponseDto {
 	hasNextPage: boolean;
 }
 
+export class ShelfSyncStatusDto {
+	@ApiProperty({
+		description:
+			"Whether the user's historical watch records are still being backfilled/ingested from their PDS. Drives the 'syncing your watch history…' indicator; poll while true.",
+	})
+	isSyncing: boolean;
+
+	@ApiProperty({ description: "Number of tracked movies currently indexed" })
+	trackedMovieCount: number;
+
+	@ApiProperty({ description: "Number of tracked episodes currently indexed" })
+	trackedEpisodeCount: number;
+
+	@ApiPropertyOptional({
+		description:
+			"When the most recent backfill window opened (sign-in/sign-up), ISO 8601",
+	})
+	backfillStartedAt?: string;
+
+	@ApiPropertyOptional({
+		description: "When the last watch record was ingested, ISO 8601",
+	})
+	lastIngestAt?: string;
+}
+
 export class ShelfActivityBucketDto {
 	@ApiProperty({ description: "Local day key in YYYY-MM-DD format" })
 	date: string;
