@@ -6,14 +6,8 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import { Redirect, router } from "expo-router";
-import {
-	ArrowRight,
-	Camera,
-	CheckCircle2,
-	ChevronLeft,
-} from "lucide-react-native";
+import { ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
 	ActivityIndicator,
@@ -23,6 +17,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -239,28 +234,9 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 /* ------------------------------------------------------------------ Profile */
 function ProfileStep({ onNext }: { onNext: () => void }) {
 	const { user } = useAuth();
-	const toast = useToast();
-	const { updateProfile, uploadAvatar, deleteAvatar } = useProfileSetup();
+	const { updateProfile, uploadAvatar, deleteAvatar, pickAndUploadAvatar } =
+		useProfileSetup();
 	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-
-	const pickAvatar = async () => {
-		const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-		if (!permission.granted) {
-			toast.error("Photo access is needed to set a picture.");
-			return;
-		}
-		const result = await ImagePicker.launchImageLibraryAsync({
-			mediaTypes: ["images"],
-			allowsEditing: true,
-			aspect: [1, 1],
-			quality: 0.7,
-		});
-		const asset = result.canceled ? undefined : result.assets[0];
-		if (!asset) return;
-		// `allowsEditing` makes the picker hand back a JPEG (the backend rejects
-		// the HEIC iOS originals).
-		uploadAvatar.mutate({ uri: asset.uri });
-	};
 
 	const isMutating =
 		updateProfile.isPending || uploadAvatar.isPending || deleteAvatar.isPending;
@@ -300,46 +276,13 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 				</Text>
 			</View>
 
-			<View className="flex-row items-center gap-4">
-				<Pressable
-					onPress={pickAvatar}
-					disabled={uploadAvatar.isPending}
-					className="size-20 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-background-subtle"
-				>
-					{user?.avatar ? (
-						<Image
-							source={{ uri: user.avatar }}
-							style={{ height: 80, width: 80 }}
-							contentFit="cover"
-						/>
-					) : (
-						<Camera color="#94a3b8" size={26} />
-					)}
-					{uploadAvatar.isPending ? (
-						<View className="absolute inset-0 items-center justify-center bg-black/40">
-							<ActivityIndicator size="small" color="#ffffff" />
-						</View>
-					) : null}
-				</Pressable>
-				<View className="flex-1 gap-1">
-					<Text className="font-medium text-foreground text-sm">
-						Profile photo
-					</Text>
-					<Text className="text-muted-foreground text-sm">
-						Tap the avatar to choose a photo.
-					</Text>
-					{user?.avatar ? (
-						<Pressable
-							onPress={() => deleteAvatar.mutate({})}
-							disabled={deleteAvatar.isPending}
-						>
-							<Text className="font-medium text-destructive text-sm">
-								{deleteAvatar.isPending ? "Removing…" : "Remove photo"}
-							</Text>
-						</Pressable>
-					) : null}
-				</View>
-			</View>
+			<AvatarEditor
+				avatarUrl={user?.avatar}
+				uploading={uploadAvatar.isPending}
+				removing={deleteAvatar.isPending}
+				onPick={pickAndUploadAvatar}
+				onRemove={() => deleteAvatar.mutate({})}
+			/>
 
 			<TextField
 				label="Display name"

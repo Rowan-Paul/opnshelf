@@ -2,10 +2,12 @@ import {
 	authControllerMeQueryKey,
 	getSessionToken,
 	usersControllerDeleteMyAvatarMutation,
+	usersControllerRefreshMySocialLinksMutation,
 	usersControllerUpdateMyProfileMutation,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { File as FsFile } from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { useToast } from "@/components/ui/toast";
 import { env } from "@/lib/env";
 
@@ -105,5 +107,50 @@ export function useProfileSetup() {
 			),
 	});
 
-	return { updateProfile, uploadAvatar, deleteAvatar };
+	const refreshSocialLinks = useMutation({
+		mutationKey: ["users", "me", "profile", "refresh-social-links"],
+		...usersControllerRefreshMySocialLinksMutation(),
+		onSuccess: () => {
+			invalidateMe();
+			toast.success("Social links refreshed");
+		},
+		onError: (error) =>
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to refresh social links",
+			),
+	});
+
+	/**
+	 * Open the OS image library and upload the chosen photo. `allowsEditing`
+	 * makes the picker hand back a square JPEG (the backend rejects the HEIC iOS
+	 * originals). Shared by onboarding's profile step and the edit-profile screen.
+	 */
+	const pickAndUploadAvatar = async () => {
+		const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+		if (!permission.granted) {
+			toast.error("Photo access is needed to set a picture.");
+			return;
+		}
+		const result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ["images"],
+			allowsEditing: true,
+			aspect: [1, 1],
+			quality: 0.7,
+		});
+		const asset = result.canceled ? undefined : result.assets[0];
+		if (!asset) {
+			return;
+		}
+		uploadAvatar.mutate({ uri: asset.uri });
+	};
+
+	return {
+		updateProfile,
+		uploadAvatar,
+		deleteAvatar,
+		refreshSocialLinks,
+		pickAndUploadAvatar,
+	};
 }

@@ -18,6 +18,7 @@ import {
 	ChevronRight,
 	Download,
 	Trash2,
+	UserPen,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
@@ -314,6 +315,22 @@ export default function SettingsScreen() {
 							</Text>
 						</View>
 					)}
+
+					{/* Profile */}
+					<View className="gap-3 rounded-xl border border-border bg-card p-4">
+						<Text className="font-display font-semibold text-foreground text-lg">
+							Profile
+						</Text>
+						<Link href="/edit-profile" asChild>
+							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
+								<UserPen color={PRIMARY} size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									Edit profile
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</Link>
+					</View>
 
 					{/* Time & Region */}
 					<SettingsSection

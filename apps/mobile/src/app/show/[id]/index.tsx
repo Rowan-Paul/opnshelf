@@ -12,6 +12,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SeasonCard } from "@/components/detail/SeasonCard";
+import { WatchProviders } from "@/components/detail/WatchProviders";
 import { YourNote } from "@/components/detail/YourNote";
 import { YourReviews } from "@/components/detail/YourReviews";
 import { ErrorState, LoadingState } from "@/components/ui/states";
@@ -73,6 +74,8 @@ export default function ShowDetailScreen() {
 					<AddToListButton mediaType="show" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
+
+					<WatchProviders mediaType="show" mediaId={id} />
 
 					{seasons.length > 0 ? (
 						<View className="gap-2 px-4">
