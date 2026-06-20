@@ -8,13 +8,23 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { type Href, Link } from "expo-router";
-import { Heart, MessageSquare, User } from "lucide-react-native";
+import {
+	Heart,
+	MessageSquare,
+	Pencil,
+	Plus,
+	Trash2,
+	User,
+} from "lucide-react-native";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { StarRating } from "@/components/detail/StarRating";
 import { Markdown } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { useReview } from "@/lib/use-review";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const ACCENT = "#f3bc00";
@@ -118,22 +128,36 @@ function useToggleReviewLike({
 function ReviewCard({
 	review,
 	avatarStyle,
+	isOwn,
 	onToggleLike,
 	likePending,
 	canLike,
+	onEdit,
+	onDelete,
+	isDeleting,
 }: {
 	review: MediaReviewItemDto;
 	avatarStyle: ReturnType<typeof useTwStyle>;
+	isOwn: boolean;
 	onToggleLike: () => void;
 	likePending: boolean;
 	canLike: boolean;
+	onEdit: () => void;
+	onDelete: () => void;
+	isDeleting: boolean;
 }) {
 	const displayName = review.userDisplayName || review.userHandle;
 	const body = review.markdown || review.description || "";
 	const isLiked = review.hasLiked;
 
 	return (
-		<View className="gap-3 rounded-xl border border-border bg-card p-3">
+		<View
+			className={
+				isOwn
+					? "gap-3 rounded-xl border border-primary/40 bg-card p-3"
+					: "gap-3 rounded-xl border border-border bg-card p-3"
+			}
+		>
 			<View className="flex-row items-center gap-3">
 				<Link href={`/profile/${review.userHandle}` as Href} asChild>
 					<Pressable className="min-w-0 flex-1 flex-row items-center gap-3">
@@ -149,12 +173,21 @@ function ReviewCard({
 							)}
 						</View>
 						<View className="min-w-0 flex-1">
-							<Text
-								className="font-medium text-foreground text-sm"
-								numberOfLines={1}
-							>
-								{displayName}
-							</Text>
+							<View className="flex-row items-center gap-2">
+								<Text
+									className="shrink font-medium text-foreground text-sm"
+									numberOfLines={1}
+								>
+									{displayName}
+								</Text>
+								{isOwn ? (
+									<View className="rounded-full bg-primary/20 px-1.5 py-0.5">
+										<Text className="font-medium text-[10px] text-primary">
+											Your review
+										</Text>
+									</View>
+								) : null}
+							</View>
 							<Text className="text-muted-foreground text-xs" numberOfLines={1}>
 								@{review.userHandle}
 							</Text>
@@ -174,41 +207,66 @@ function ReviewCard({
 
 			{body ? <Markdown value={body} /> : null}
 
-			<View className="flex-row items-center">
-				<Pressable
-					onPress={onToggleLike}
-					disabled={!canLike || likePending}
-					hitSlop={8}
-					className="flex-row items-center gap-1.5 rounded-md py-1 pr-2"
-					style={{ opacity: !canLike || likePending ? 0.5 : 1 }}
-				>
-					{likePending ? (
-						<ActivityIndicator size="small" color={LIKE_RED} />
-					) : (
-						<Heart
-							color={isLiked ? LIKE_RED : MUTED}
-							fill={isLiked ? LIKE_RED : "transparent"}
-							size={16}
-						/>
-					)}
-					<Text
-						className="text-sm"
-						style={{ color: isLiked ? LIKE_RED : MUTED }}
+			{isOwn ? (
+				<View className="flex-row items-center gap-1">
+					<Pressable
+						hitSlop={6}
+						onPress={onEdit}
+						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
 					>
-						{review.likeCount}
-					</Text>
-				</Pressable>
-			</View>
+						<Pencil color={MUTED} size={15} />
+						<Text className="text-muted-foreground text-sm">Edit</Text>
+					</Pressable>
+					<Pressable
+						hitSlop={6}
+						onPress={onDelete}
+						disabled={isDeleting}
+						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
+						style={{ opacity: isDeleting ? 0.5 : 1 }}
+					>
+						<Trash2 color={LIKE_RED} size={15} />
+						<Text className="text-sm" style={{ color: LIKE_RED }}>
+							Delete
+						</Text>
+					</Pressable>
+				</View>
+			) : (
+				<View className="flex-row items-center">
+					<Pressable
+						onPress={onToggleLike}
+						disabled={!canLike || likePending}
+						hitSlop={8}
+						className="flex-row items-center gap-1.5 rounded-md py-1 pr-2"
+						style={{ opacity: !canLike || likePending ? 0.5 : 1 }}
+					>
+						{likePending ? (
+							<ActivityIndicator size="small" color={LIKE_RED} />
+						) : (
+							<Heart
+								color={isLiked ? LIKE_RED : MUTED}
+								fill={isLiked ? LIKE_RED : "transparent"}
+								size={16}
+							/>
+						)}
+						<Text
+							className="text-sm"
+							style={{ color: isLiked ? LIKE_RED : MUTED }}
+						>
+							{review.likeCount}
+						</Text>
+					</Pressable>
+				</View>
+			)}
 		</View>
 	);
 }
 
 /**
- * "Community Reviews" section for a media detail screen: lists reviews written
- * by *other* users (the current user's own reviews are handled by the separate
- * `YourReviews` section). Mirrors the web `CommunityReviews`, using the same
- * `reviewsControllerGetMediaReviews` query and like/unlike mutations. Shows the
- * author, their star rating, the markdown body and a like toggle.
+ * The single reviews section on a media detail screen. Mirrors the web
+ * `CommunityReviews`: one list with the current user's own reviews first (badged
+ * and editable/deletable) followed by everyone else's (likeable), plus a "Write"
+ * action that opens the review editor. Uses the same `reviewsControllerGetMediaReviews`
+ * query; writes go through `useReview`.
  */
 export function CommunityReviews({
 	mediaType,
@@ -243,18 +301,59 @@ export function CommunityReviews({
 		episodeNumber,
 	});
 
-	// Other users' reviews only — the user's own reviews live in `YourReviews`.
-	const communityReviews = (data?.items ?? []).filter(
-		(review) => review.userDid !== user?.did,
-	);
+	const {
+		createReview,
+		updateReview,
+		deleteReview,
+		isSavingReview,
+		isDeletingReview,
+	} = useReview({ mediaType, mediaId, seasonNumber, episodeNumber });
+
+	const [editorVisible, setEditorVisible] = useState(false);
+	const [editing, setEditing] = useState<MediaReviewItemDto | null>(null);
+
+	// Own reviews first, then everyone else's — same ordering as web.
+	const allReviews = data?.items ?? [];
+	const ownReviews = allReviews.filter((r) => r.userDid === user?.did);
+	const otherReviews = allReviews.filter((r) => r.userDid !== user?.did);
+	const ordered = [...ownReviews, ...otherReviews];
+
+	const openCreate = () => {
+		setEditing(null);
+		setEditorVisible(true);
+	};
+	const openEdit = (review: MediaReviewItemDto) => {
+		setEditing(review);
+		setEditorVisible(true);
+	};
+	const handleSave = (input: { title: string; markdown: string }) => {
+		if (editing) updateReview(editing.id, input);
+		else createReview(input);
+		setEditorVisible(false);
+	};
+	const handleDeleteFromEditor = () => {
+		if (editing) deleteReview(editing.id);
+		setEditorVisible(false);
+	};
 
 	return (
 		<View className="gap-3 px-4">
-			<View className="flex-row items-center gap-2">
-				<MessageSquare color={ACCENT} size={18} />
-				<Text className="font-display font-semibold text-base text-foreground">
-					Community Reviews
-				</Text>
+			<View className="flex-row items-center justify-between">
+				<View className="flex-row items-center gap-2">
+					<MessageSquare color={ACCENT} size={18} />
+					<Text className="font-display font-semibold text-base text-foreground">
+						Reviews
+					</Text>
+				</View>
+				{isAuthenticated ? (
+					<Pressable
+						onPress={openCreate}
+						className="flex-row items-center gap-1 rounded-lg border border-border px-3 py-1.5"
+					>
+						<Plus color={MUTED} size={16} />
+						<Text className="font-medium text-foreground text-sm">Write</Text>
+					</Pressable>
+				) : null}
 			</View>
 
 			{isLoading ? (
@@ -264,26 +363,49 @@ export function CommunityReviews({
 						Loading reviews…
 					</Text>
 				</View>
-			) : communityReviews.length === 0 ? (
-				<Text className="text-muted-foreground text-sm">No reviews yet.</Text>
+			) : ordered.length === 0 ? (
+				<Text className="text-muted-foreground text-sm">
+					{isAuthenticated
+						? "No reviews yet. Be the first to share your thoughts."
+						: "No reviews yet."}
+				</Text>
 			) : (
 				<View className="gap-3">
-					{communityReviews.map((review) => (
-						<ReviewCard
-							key={review.id}
-							review={review}
-							avatarStyle={avatarStyle}
-							canLike={isAuthenticated}
-							likePending={isPending}
-							onToggleLike={() => {
-								if (!isAuthenticated) return;
-								if (review.hasLiked) unlikeReview(review.id);
-								else likeReview(review.id);
-							}}
-						/>
-					))}
+					{ordered.map((review) => {
+						const isOwn = review.userDid === user?.did;
+						return (
+							<ReviewCard
+								key={review.id}
+								review={review}
+								avatarStyle={avatarStyle}
+								isOwn={isOwn}
+								canLike={isAuthenticated}
+								likePending={isPending}
+								onToggleLike={() => {
+									if (!isAuthenticated) return;
+									if (review.hasLiked) unlikeReview(review.id);
+									else likeReview(review.id);
+								}}
+								onEdit={() => openEdit(review)}
+								onDelete={() => deleteReview(review.id)}
+								isDeleting={isDeletingReview}
+							/>
+						);
+					})}
 				</View>
 			)}
+
+			<ReviewEditorSheet
+				visible={editorVisible}
+				onDismiss={() => setEditorVisible(false)}
+				isEditing={!!editing}
+				initialTitle={editing?.title ?? ""}
+				initialMarkdown={editing?.markdown ?? ""}
+				onSave={handleSave}
+				onDelete={editing ? handleDeleteFromEditor : undefined}
+				isSaving={isSavingReview}
+				isDeleting={isDeletingReview}
+			/>
 		</View>
 	);
 }

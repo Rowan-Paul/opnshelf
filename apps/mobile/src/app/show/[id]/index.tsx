@@ -11,11 +11,11 @@ import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { RatingButton } from "@/components/detail/RatingButton";
 import { SeasonCard } from "@/components/detail/SeasonCard";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { YourNote } from "@/components/detail/YourNote";
-import { YourReviews } from "@/components/detail/YourReviews";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
@@ -72,6 +72,8 @@ export default function ShowDetailScreen() {
 
 					<FriendWatchers mediaType="show" mediaId={id} />
 
+					<RatingButton mediaType="show" mediaId={id} />
+
 					<AddToListButton mediaType="show" mediaId={id} />
 
 					<OverviewSection text={data.overview} />
@@ -100,7 +102,6 @@ export default function ShowDetailScreen() {
 					) : null}
 
 					<CastSection cast={data.credits?.cast} />
-					<YourReviews mediaType="show" mediaId={id} />
 					<CommunityReviews mediaType="show" mediaId={id} />
 					<YourNote mediaType="show" mediaId={id} />
 					<SimilarMedia mediaType="show" mediaId={id} />

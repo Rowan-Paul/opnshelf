@@ -1,20 +1,10 @@
 import { Link } from "expo-router";
-import {
-	Calendar,
-	Check,
-	Eye,
-	RotateCcw,
-	Star,
-	StarOff,
-	X,
-} from "lucide-react-native";
+import { Calendar, Check, Eye, RotateCcw, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { StarRating } from "@/components/detail/StarRating";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { useReview } from "@/lib/use-review";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 
@@ -43,16 +33,15 @@ function formatWatchedDate(iso?: string) {
 
 /**
  * Tracking action bar for movie + show detail screens: mark watched (with an
- * optional custom date), unwatch, and rate/review. State (watched, latest date,
- * existing rating) is read via the watch-status + review hooks; all writes go
- * through the optimistic mutations in `useWatchActions` / `useReview`.
+ * optional custom date) and unwatch. Watch state is read via the watch-status
+ * hook; writes go through the optimistic mutations in `useWatchActions`. Rating
+ * and reviews live in their own components (`RatingButton`, `CommunityReviews`).
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
 
 	const isMovie = props.mediaType === "movie";
-	const mediaId = isMovie ? props.movieId : props.showId;
 
 	const status = useWatchStatus(
 		isMovie
@@ -64,7 +53,6 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			? { mediaType: "movie", movieId: props.movieId }
 			: { mediaType: "show", showId: props.showId },
 	);
-	const reviewState = useReview({ mediaType: props.mediaType, mediaId });
 
 	const isWatched = isMovie ? !!status.isWatched : !!status.isTracking;
 	const isMarkPending = isMovie
@@ -173,53 +161,6 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				>
 					<Calendar color="#94a3b8" size={20} />
 				</Pressable>
-			</View>
-
-			<View className="gap-3 rounded-xl border border-border bg-card p-4">
-				<View className="flex-row items-center justify-between">
-					<View className="flex-row items-center gap-2">
-						<View className="rounded-full bg-primary/20 p-1.5">
-							<Star color="#f3bc00" fill="#f3bc00" size={16} />
-						</View>
-						<Text className="font-semibold text-foreground text-sm">
-							Your rating
-						</Text>
-					</View>
-					{reviewState.rating > 0 ? (
-						<View className="flex-row items-baseline gap-0.5">
-							<Text className="font-bold font-display text-foreground text-xl">
-								{(reviewState.rating / 2).toFixed(1)}
-							</Text>
-							<Text className="text-muted-foreground text-sm">/ 5</Text>
-						</View>
-					) : null}
-				</View>
-
-				<View className="items-center gap-2 py-1">
-					<StarRating
-						rating={reviewState.rating}
-						onChange={reviewState.setRating}
-						size={34}
-					/>
-					{reviewState.rating > 0 ? (
-						<Pressable
-							hitSlop={8}
-							onPress={reviewState.clearRating}
-							disabled={reviewState.isClearingRating}
-							className="flex-row items-center gap-1 pt-0.5"
-							style={{ opacity: reviewState.isClearingRating ? 0.6 : 1 }}
-						>
-							<StarOff color="#94a3b8" size={14} />
-							<Text className="text-muted-foreground text-xs">
-								Clear rating
-							</Text>
-						</Pressable>
-					) : (
-						<Text className="text-muted-foreground text-xs">
-							Tap a star to rate
-						</Text>
-					)}
-				</View>
 			</View>
 
 			<WatchDatePickerModal
