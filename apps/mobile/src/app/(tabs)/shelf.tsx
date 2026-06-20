@@ -77,7 +77,7 @@ export default function ShelfScreen() {
 				keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
 				renderItem={({ item }) => (
 					<View className="flex-1 px-1 pb-3">
-						<MediaCard item={item} />
+						<MediaCard item={item} actions />
 					</View>
 				)}
 				contentContainerStyle={gridListStyle}

@@ -60,7 +60,7 @@ export default function PublicListScreen() {
 					keyExtractor={(item) => item.id}
 					renderItem={({ item }) => (
 						<View className="flex-1 px-1 pb-3">
-							<MediaCard item={listItemToMediaCardItem(item)} />
+							<MediaCard item={listItemToMediaCardItem(item)} actions />
 						</View>
 					)}
 					contentContainerStyle={gridStyle}

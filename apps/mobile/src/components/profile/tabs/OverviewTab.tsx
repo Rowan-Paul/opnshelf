@@ -88,7 +88,7 @@ function PosterRow({
 			<View className="flex-row gap-3">
 				{items.map((item) => (
 					<View key={`${item.type}-${item.id}`} style={{ width: POSTER_W }}>
-						<MediaCard item={item} />
+						<MediaCard item={item} actions />
 					</View>
 				))}
 			</View>

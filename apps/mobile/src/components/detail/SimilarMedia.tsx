@@ -80,7 +80,7 @@ function SimilarRail({
 				keyExtractor={(item) => `${item.type}-${item.id}`}
 				renderItem={({ item }) => (
 					<View className="w-28">
-						<MediaCard item={item} />
+						<MediaCard item={item} actions />
 					</View>
 				)}
 				showsHorizontalScrollIndicator={false}

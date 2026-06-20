@@ -149,7 +149,7 @@ export default function SearchScreen() {
 				keyExtractor={(item) => `${item.type}-${item.id}`}
 				renderItem={({ item }) => (
 					<View className="flex-1 px-1 pb-3">
-						<MediaCard item={item} />
+						<MediaCard item={item} actions />
 					</View>
 				)}
 				contentContainerStyle={gridListStyle}

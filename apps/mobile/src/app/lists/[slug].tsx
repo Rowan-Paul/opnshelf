@@ -26,7 +26,7 @@ function ListItemCard({
 }) {
 	return (
 		<View className="flex-1">
-			<MediaCard item={listItemToMediaCardItem(item)} />
+			<MediaCard item={listItemToMediaCardItem(item)} actions />
 			<Pressable
 				hitSlop={6}
 				onPress={() => onRemove(item)}

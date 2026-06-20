@@ -1,6 +1,6 @@
 import {
 	showsControllerGetEpisodeDetailsOptions,
-	showsControllerGetSeasonDetailsOptions,
+	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -35,23 +35,47 @@ export default function EpisodeDetailScreen() {
 		enabled: Boolean(id) && Boolean(seasonNumber) && Boolean(episodeNumber),
 	});
 
-	// Episode neighbours: the season detail already lists every episode, so we
-	// reuse it to know the current episode's siblings. Navigation stays within
-	// the current season (no cross-season hop at the season boundary).
-	const { data: seasonData } = useQuery({
-		...showsControllerGetSeasonDetailsOptions({
-			path: { showId: id, seasonNumber },
-		}),
-		enabled: Boolean(id) && Boolean(seasonNumber),
+	// Episode neighbours: use the show's season list (each season's
+	// episode_count) to compute prev/next, hopping across season boundaries the
+	// same way web does — at episode 1 go to the previous season's last episode;
+	// at a season's last episode go to the next season's episode 1.
+	const { data: showData } = useQuery({
+		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
+		enabled: Boolean(id),
 	});
 
-	const seasonEpisodeCount = seasonData?.episodes.length ?? 0;
-	const hasPrev = episodeNum > 1;
-	const hasNext = seasonEpisodeCount > 0 && episodeNum < seasonEpisodeCount;
+	const seasons = (showData?.seasons ?? [])
+		.filter((s) => s.season_number > 0)
+		.sort((a, b) => a.season_number - b.season_number);
+	const currentSeasonCount =
+		seasons.find((s) => s.season_number === seasonNum)?.episode_count ?? 0;
 
-	const goToEpisode = (nextEpisode: number) => {
+	let prevEpisode: { season: number; episode: number } | null = null;
+	if (episodeNum > 1) {
+		prevEpisode = { season: seasonNum, episode: episodeNum - 1 };
+	} else {
+		const prevSeason = seasons.find((s) => s.season_number === seasonNum - 1);
+		if (prevSeason) {
+			prevEpisode = {
+				season: prevSeason.season_number,
+				episode: prevSeason.episode_count || 1,
+			};
+		}
+	}
+
+	let nextEpisode: { season: number; episode: number } | null = null;
+	if (currentSeasonCount > 0 && episodeNum < currentSeasonCount) {
+		nextEpisode = { season: seasonNum, episode: episodeNum + 1 };
+	} else {
+		const nextSeason = seasons.find((s) => s.season_number === seasonNum + 1);
+		if (nextSeason) {
+			nextEpisode = { season: nextSeason.season_number, episode: 1 };
+		}
+	}
+
+	const goToEpisode = (target: { season: number; episode: number }) => {
 		router.push(
-			`/show/${id}/season/${seasonNumber}/episode/${nextEpisode}` as const,
+			`/show/${id}/season/${target.season}/episode/${target.episode}` as const,
 		);
 	};
 
@@ -141,19 +165,19 @@ export default function EpisodeDetailScreen() {
 
 					<View className="flex-row gap-2 px-4">
 						<Pressable
-							onPress={() => goToEpisode(episodeNum - 1)}
-							disabled={!hasPrev}
+							onPress={() => prevEpisode && goToEpisode(prevEpisode)}
+							disabled={!prevEpisode}
 							className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-							style={{ opacity: hasPrev ? 1 : 0.4 }}
+							style={{ opacity: prevEpisode ? 1 : 0.4 }}
 						>
 							<ChevronLeft color="#94a3b8" size={18} />
 							<Text className="font-semibold text-foreground">Previous</Text>
 						</Pressable>
 						<Pressable
-							onPress={() => goToEpisode(episodeNum + 1)}
-							disabled={!hasNext}
+							onPress={() => nextEpisode && goToEpisode(nextEpisode)}
+							disabled={!nextEpisode}
 							className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-							style={{ opacity: hasNext ? 1 : 0.4 }}
+							style={{ opacity: nextEpisode ? 1 : 0.4 }}
 						>
 							<Text className="font-semibold text-foreground">Next</Text>
 							<ChevronRight color="#94a3b8" size={18} />
