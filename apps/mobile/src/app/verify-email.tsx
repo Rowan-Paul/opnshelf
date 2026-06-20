@@ -8,13 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
 import { MailCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import {
-	ActivityIndicator,
-	KeyboardAvoidingView,
-	Platform,
-	Pressable,
-	View,
-} from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -111,80 +105,71 @@ export default function VerifyEmailScreen() {
 	};
 
 	return (
-		<KeyboardAvoidingView
-			behavior={Platform.OS === "ios" ? "padding" : undefined}
-			className="flex-1"
-		>
-			<Screen>
-				<View className="flex-1 justify-center gap-6">
-					<View className="items-center gap-4">
-						<View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-							<MailCheck color="#3f2e00" size={32} />
-						</View>
-						<Text className="text-center font-bold font-display text-3xl text-foreground">
-							Verify your email
-						</Text>
-						<Text className="text-center text-base text-muted-foreground">
-							We sent a verification code to the email you signed up with. Enter
-							it below to finish setting up{" "}
-							{user?.handle ? `@${user.handle}` : "your account"}.
-						</Text>
+		<Screen>
+			<View className="flex-1 justify-center gap-6">
+				<View className="items-center gap-4">
+					<View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary">
+						<MailCheck color="#3f2e00" size={32} />
 					</View>
-
-					<View className="gap-3">
-						<TextField
-							value={code}
-							onChangeText={setCode}
-							placeholder="Paste the code from your email"
-							autoCapitalize="none"
-							autoCorrect={false}
-							autoComplete="sms-otp"
-							textContentType="oneTimeCode"
-							returnKeyType="go"
-							editable={!isSubmitting}
-							onSubmitEditing={handleSubmit}
-						/>
-
-						<Pressable
-							disabled={isSubmitting || !trimmedCode}
-							onPress={handleSubmit}
-							className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-							style={{ opacity: isSubmitting || !trimmedCode ? 0.6 : 1 }}
-						>
-							{isSubmitting && (
-								<ActivityIndicator size="small" color="#3f2e00" />
-							)}
-							<Text className="font-semibold text-base text-primary-foreground">
-								{isSubmitting ? "Verifying" : "Verify and continue"}
-							</Text>
-						</Pressable>
-					</View>
-
-					<View className="flex-row items-center justify-center">
-						<Text className="text-muted-foreground text-sm">
-							Didn't get it?{" "}
-						</Text>
-						<Pressable
-							disabled={resendMutation.isPending || cooldown > 0}
-							onPress={() => resendMutation.mutate()}
-						>
-							<Text
-								className={
-									resendMutation.isPending || cooldown > 0
-										? "font-semibold text-muted-foreground text-sm"
-										: "font-semibold text-accent text-sm"
-								}
-							>
-								{cooldown > 0
-									? `Resend in ${cooldown}s`
-									: resendMutation.isPending
-										? "Sending..."
-										: "Resend code"}
-							</Text>
-						</Pressable>
-					</View>
+					<Text className="text-center font-bold font-display text-3xl text-foreground">
+						Verify your email
+					</Text>
+					<Text className="text-center text-base text-muted-foreground">
+						We sent a verification code to the email you signed up with. Enter
+						it below to finish setting up{" "}
+						{user?.handle ? `@${user.handle}` : "your account"}.
+					</Text>
 				</View>
-			</Screen>
-		</KeyboardAvoidingView>
+
+				<View className="gap-3">
+					<TextField
+						value={code}
+						onChangeText={setCode}
+						placeholder="Paste the code from your email"
+						autoCapitalize="none"
+						autoCorrect={false}
+						autoComplete="sms-otp"
+						textContentType="oneTimeCode"
+						returnKeyType="go"
+						editable={!isSubmitting}
+						onSubmitEditing={handleSubmit}
+					/>
+
+					<Pressable
+						disabled={isSubmitting || !trimmedCode}
+						onPress={handleSubmit}
+						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
+						style={{ opacity: isSubmitting || !trimmedCode ? 0.6 : 1 }}
+					>
+						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
+						<Text className="font-semibold text-base text-primary-foreground">
+							{isSubmitting ? "Verifying" : "Verify and continue"}
+						</Text>
+					</Pressable>
+				</View>
+
+				<View className="flex-row items-center justify-center">
+					<Text className="text-muted-foreground text-sm">Didn't get it? </Text>
+					<Pressable
+						disabled={resendMutation.isPending || cooldown > 0}
+						onPress={() => resendMutation.mutate()}
+					>
+						<Text
+							className={
+								resendMutation.isPending || cooldown > 0
+									? "font-semibold text-muted-foreground text-sm"
+									: "font-semibold text-accent text-sm"
+							}
+						>
+							{cooldown > 0
+								? `Resend in ${cooldown}s`
+								: resendMutation.isPending
+									? "Sending..."
+									: "Resend code"}
+						</Text>
+					</Pressable>
+				</View>
+			</View>
+		</Screen>
 	);
 }

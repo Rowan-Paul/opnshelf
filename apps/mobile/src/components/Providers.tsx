@@ -4,6 +4,7 @@ import { PostHogProvider } from "posthog-react-native";
 import type { ReactNode } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/lib/auth-context";
@@ -12,9 +13,10 @@ import { queryClient } from "@/lib/query-client";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
 /**
- * App-wide providers. Order matters: gesture root -> safe area -> analytics ->
- * query -> navigation theme. Screen tracking is handled manually in the root
- * layout (Expo Router), so PostHog autocapture of screens is disabled.
+ * App-wide providers. Order matters: gesture root -> keyboard controller ->
+ * safe area -> analytics -> query -> navigation theme. Screen tracking is
+ * handled manually in the root layout (Expo Router), so PostHog autocapture of
+ * screens is disabled.
  */
 export function Providers({ children }: { children: ReactNode }) {
 	const colorScheme = useColorScheme();
@@ -32,21 +34,23 @@ export function Providers({ children }: { children: ReactNode }) {
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
-			<SafeAreaProvider>
-				{posthog ? (
-					<PostHogProvider
-						client={posthog}
-						autocapture={{
-							captureScreens: false,
-							captureTouches: true,
-						}}
-					>
-						{inner}
-					</PostHogProvider>
-				) : (
-					inner
-				)}
-			</SafeAreaProvider>
+			<KeyboardProvider>
+				<SafeAreaProvider>
+					{posthog ? (
+						<PostHogProvider
+							client={posthog}
+							autocapture={{
+								captureScreens: false,
+								captureTouches: true,
+							}}
+						>
+							{inner}
+						</PostHogProvider>
+					) : (
+						inner
+					)}
+				</SafeAreaProvider>
+			</KeyboardProvider>
 		</GestureHandlerRootView>
 	);
 }

@@ -1,10 +1,13 @@
 import { Stack } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 export default function TraktImportScreen() {
+	const containerStyle = useTwStyle("flex-1 bg-background");
 	return (
-		<View className="flex-1 bg-background">
+		<KeyboardAvoidingView behavior="padding" style={containerStyle}>
 			<Stack.Screen
 				options={{ headerShown: true, title: "Import from Trakt" }}
 			/>
@@ -16,6 +19,6 @@ export default function TraktImportScreen() {
 			>
 				<TraktImportPanel />
 			</ScrollView>
-		</View>
+		</KeyboardAvoidingView>
 	);
 }

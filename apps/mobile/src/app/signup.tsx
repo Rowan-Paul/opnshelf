@@ -1,14 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Redirect, router } from "expo-router";
 import { useCallback, useState } from "react";
-import {
-	ActivityIndicator,
-	KeyboardAvoidingView,
-	Platform,
-	Pressable,
-	ScrollView,
-	View,
-} from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
@@ -115,103 +108,96 @@ export default function SignupScreen() {
 	};
 
 	return (
-		<KeyboardAvoidingView
-			behavior={Platform.OS === "ios" ? "padding" : undefined}
-			className="flex-1"
-		>
-			<Screen>
-				<ScrollView
-					contentContainerClassName="flex-grow justify-center gap-6 py-8"
-					keyboardShouldPersistTaps="handled"
-				>
-					<View className="gap-2">
-						<Text className="font-bold font-display text-4xl text-foreground">
-							Create your account
-						</Text>
-						<Text className="text-base text-muted-foreground">
-							Your account lives on OpnShelf's AT Protocol server.
-						</Text>
-					</View>
+		<Screen>
+			<ScrollView
+				contentContainerClassName="flex-grow justify-center gap-6 py-8"
+				keyboardShouldPersistTaps="handled"
+			>
+				<View className="gap-2">
+					<Text className="font-bold font-display text-4xl text-foreground">
+						Create your account
+					</Text>
+					<Text className="text-base text-muted-foreground">
+						Your account lives on OpnShelf's AT Protocol server.
+					</Text>
+				</View>
 
-					<View className="gap-4">
-						<TextField
-							label="Username"
-							value={username}
-							onChangeText={setUsername}
-							placeholder="yourname"
-							autoCapitalize="none"
-							autoCorrect={false}
-							autoComplete="username"
-							editable={!isSubmitting}
-							trailing={
-								<Text className="text-muted-foreground text-sm">
-									.{handleDomain}
-								</Text>
-							}
-							helperText={`This becomes your handle: ${
-								trimmedUsername || "yourname"
-							}.${handleDomain}`}
-						/>
-
-						<TextField
-							label="Email"
-							value={email}
-							onChangeText={setEmail}
-							placeholder="you@example.com"
-							autoCapitalize="none"
-							autoCorrect={false}
-							keyboardType="email-address"
-							autoComplete="email"
-							editable={!isSubmitting}
-							helperText="The PDS requires an email for account recovery and verification. OpnShelf itself never stores it."
-						/>
-
-						<TextField
-							label="Password"
-							value={password}
-							onChangeText={setPassword}
-							placeholder="At least 8 characters"
-							autoCapitalize="none"
-							autoCorrect={false}
-							secureTextEntry
-							autoComplete="new-password"
-							editable={!isSubmitting}
-						/>
-
-						<TurnstileWidget
-							siteKey={siteKey}
-							onVerify={onVerify}
-							onExpire={onExpire}
-							onError={onCaptchaError}
-						/>
-
-						<Pressable
-							disabled={!canSubmit}
-							onPress={handleSubmit}
-							className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-							style={{ opacity: canSubmit ? 1 : 0.6 }}
-						>
-							{isSubmitting && (
-								<ActivityIndicator size="small" color="#3f2e00" />
-							)}
-							<Text className="font-semibold text-base text-primary-foreground">
-								{isSubmitting ? "Creating account" : "Create account"}
+				<View className="gap-4">
+					<TextField
+						label="Username"
+						value={username}
+						onChangeText={setUsername}
+						placeholder="yourname"
+						autoCapitalize="none"
+						autoCorrect={false}
+						autoComplete="username"
+						editable={!isSubmitting}
+						trailing={
+							<Text className="text-muted-foreground text-sm">
+								.{handleDomain}
 							</Text>
-						</Pressable>
-					</View>
+						}
+						helperText={`This becomes your handle: ${
+							trimmedUsername || "yourname"
+						}.${handleDomain}`}
+					/>
+
+					<TextField
+						label="Email"
+						value={email}
+						onChangeText={setEmail}
+						placeholder="you@example.com"
+						autoCapitalize="none"
+						autoCorrect={false}
+						keyboardType="email-address"
+						autoComplete="email"
+						editable={!isSubmitting}
+						helperText="The PDS requires an email for account recovery and verification. OpnShelf itself never stores it."
+					/>
+
+					<TextField
+						label="Password"
+						value={password}
+						onChangeText={setPassword}
+						placeholder="At least 8 characters"
+						autoCapitalize="none"
+						autoCorrect={false}
+						secureTextEntry
+						autoComplete="new-password"
+						editable={!isSubmitting}
+					/>
+
+					<TurnstileWidget
+						siteKey={siteKey}
+						onVerify={onVerify}
+						onExpire={onExpire}
+						onError={onCaptchaError}
+					/>
 
 					<Pressable
-						disabled={isSubmitting}
-						onPress={() => router.replace("/login")}
-						className="items-center justify-center"
+						disabled={!canSubmit}
+						onPress={handleSubmit}
+						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
+						style={{ opacity: canSubmit ? 1 : 0.6 }}
 					>
-						<Text className="text-muted-foreground text-sm">
-							Already have an account?{" "}
-							<Text className="font-semibold text-accent">Sign in</Text>
+						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
+						<Text className="font-semibold text-base text-primary-foreground">
+							{isSubmitting ? "Creating account" : "Create account"}
 						</Text>
 					</Pressable>
-				</ScrollView>
-			</Screen>
-		</KeyboardAvoidingView>
+				</View>
+
+				<Pressable
+					disabled={isSubmitting}
+					onPress={() => router.replace("/login")}
+					className="items-center justify-center"
+				>
+					<Text className="text-muted-foreground text-sm">
+						Already have an account?{" "}
+						<Text className="font-semibold text-accent">Sign in</Text>
+					</Text>
+				</Pressable>
+			</ScrollView>
+		</Screen>
 	);
 }
