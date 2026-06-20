@@ -12,6 +12,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SeasonCard } from "@/components/detail/SeasonCard";
+import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { YourNote } from "@/components/detail/YourNote";
 import { YourReviews } from "@/components/detail/YourReviews";
@@ -102,6 +103,7 @@ export default function ShowDetailScreen() {
 					<YourReviews mediaType="show" mediaId={id} />
 					<CommunityReviews mediaType="show" mediaId={id} />
 					<YourNote mediaType="show" mediaId={id} />
+					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>

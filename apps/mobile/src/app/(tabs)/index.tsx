@@ -1,5 +1,6 @@
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FriendsActivity } from "@/components/home/FriendsActivity";
 import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
@@ -52,6 +53,7 @@ export default function HomeScreen() {
 					<UpNextPreview handle={user?.handle} />
 
 					{/* Friends Activity (issue #144) slots in here. */}
+					<FriendsActivity />
 
 					<ShelfPreviewRow userDid={userDid} />
 

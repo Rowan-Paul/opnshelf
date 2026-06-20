@@ -11,6 +11,7 @@ import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { YourNote } from "@/components/detail/YourNote";
 import { YourReviews } from "@/components/detail/YourReviews";
@@ -72,6 +73,7 @@ export default function MovieDetailScreen() {
 					<YourReviews mediaType="movie" mediaId={id} />
 					<CommunityReviews mediaType="movie" mediaId={id} />
 					<YourNote mediaType="movie" mediaId={id} />
+					<SimilarMedia mediaType="movie" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>
