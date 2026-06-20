@@ -42,3 +42,6 @@ coverage/
 # Misc
 .turbo
 telemetry-id
+
+# Local editor / agent config
+.claude/
