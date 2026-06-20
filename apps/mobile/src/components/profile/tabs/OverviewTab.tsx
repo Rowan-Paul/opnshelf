@@ -1,0 +1,245 @@
+import type { PublicUserProfileDto } from "@opnshelf/api";
+import {
+	ChevronRight,
+	Clock,
+	Film,
+	Heart,
+	Star,
+	Tv,
+} from "lucide-react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
+import type { ProfileTab } from "@/components/profile/ProfileTabBar";
+import { StatsStrip } from "@/components/profile/StatsStrip";
+import { Markdown } from "@/components/ui/Markdown";
+import { Text } from "@/components/ui/text";
+import { mediaHref } from "@/lib/media-href";
+import {
+	useProfileLists,
+	useProfileRecentEpisodes,
+	useProfileRecentMovies,
+	useProfileReviews,
+} from "@/lib/use-public-profile";
+
+const POSTER_W = 120;
+
+function SectionHeader({
+	icon,
+	title,
+	onPressAll,
+}: {
+	icon: React.ReactNode;
+	title: string;
+	onPressAll?: () => void;
+}) {
+	return (
+		<View className="mb-3 flex-row items-center justify-between">
+			<View className="flex-row items-center gap-2">
+				{icon}
+				<Text className="font-bold font-display text-foreground text-lg">
+					{title}
+				</Text>
+			</View>
+			{onPressAll ? (
+				<Pressable onPress={onPressAll} className="flex-row items-center gap-1">
+					<Text className="font-medium text-primary text-sm">View all</Text>
+					<ChevronRight color="#f3bc00" size={15} />
+				</Pressable>
+			) : null}
+		</View>
+	);
+}
+
+function PosterRow({
+	items,
+	emptyText,
+}: {
+	items: MediaCardItem[];
+	emptyText: string;
+}) {
+	if (items.length === 0) {
+		return (
+			<View className="items-center rounded-xl border border-border bg-card p-6">
+				<Text className="text-muted-foreground text-sm">{emptyText}</Text>
+			</View>
+		);
+	}
+	return (
+		<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+			<View className="flex-row gap-3">
+				{items.map((item) => (
+					<View key={`${item.type}-${item.id}`} style={{ width: POSTER_W }}>
+						<MediaCard item={item} />
+					</View>
+				))}
+			</View>
+		</ScrollView>
+	);
+}
+
+/**
+ * Overview tab: stats strip, recent movies + episodes rows, watchlist /
+ * favorites previews, and recent reviews — mirroring the web profile overview.
+ * `onNavigate` switches the parent screen to a deeper tab on "View all".
+ */
+export function OverviewTab({
+	profile,
+	userDid,
+	onNavigate,
+}: {
+	profile: PublicUserProfileDto | undefined;
+	userDid: string;
+	onNavigate: (tab: ProfileTab) => void;
+}) {
+	const movies = useProfileRecentMovies(userDid, 10);
+	const episodes = useProfileRecentEpisodes(userDid, 10);
+	const lists = useProfileLists(userDid);
+	const reviews = useProfileReviews(userDid, undefined, 4);
+
+	const movieItems: MediaCardItem[] = (movies.data?.items ?? []).map((m) => ({
+		id: Number(m.movie.movieId),
+		type: "movie",
+		title: m.movie.title,
+		posterPath: m.movie.posterPath,
+		year: m.movie.releaseYear ? String(m.movie.releaseYear) : undefined,
+	}));
+
+	const episodeItems: MediaCardItem[] = (episodes.data?.items ?? []).map(
+		(e) => ({
+			id: Number(e.show.showId),
+			type: "show",
+			title: e.show.title,
+			posterPath: e.show.posterPath,
+		}),
+	);
+
+	const watchlist = lists.data?.find((l) => l.slug === "watchlist");
+	const favorites = lists.data?.find((l) => l.slug === "favorites");
+
+	const reviewItems = reviews.data?.items ?? [];
+
+	return (
+		<View className="gap-8 px-4 pt-4 pb-12">
+			<StatsStrip
+				activity={profile?.activityLast30Days}
+				mostWatchedShow={profile?.mostWatchedShow ?? null}
+				watchedThisYear={profile?.watchedThisYear ?? 0}
+				reviewsCount={profile?.reviewsCount ?? 0}
+				isLoading={!profile}
+			/>
+
+			<View>
+				<SectionHeader
+					icon={<Film color="#f3bc00" size={18} />}
+					title="Recent Movies"
+					onPressAll={() => onNavigate("shelf")}
+				/>
+				<PosterRow items={movieItems} emptyText="No movies watched yet." />
+			</View>
+
+			<View>
+				<SectionHeader
+					icon={<Tv color="#f3bc00" size={18} />}
+					title="Recent Episodes"
+					onPressAll={() => onNavigate("shelf")}
+				/>
+				<PosterRow items={episodeItems} emptyText="No episodes watched yet." />
+			</View>
+
+			<ListPreview
+				title="Watchlist"
+				icon={<Clock color="#f3bc00" size={18} />}
+				list={watchlist}
+				emptyText="Nothing on watchlist"
+				onPressAll={() => onNavigate("lists")}
+			/>
+			<ListPreview
+				title="Favorites"
+				icon={<Heart color="#f3bc00" size={18} />}
+				list={favorites}
+				emptyText="Nothing on favorites"
+				onPressAll={() => onNavigate("lists")}
+			/>
+
+			<View>
+				<SectionHeader
+					icon={<Star color="#f3bc00" size={18} />}
+					title="Recent Reviews"
+					onPressAll={() => onNavigate("reviews")}
+				/>
+				{reviewItems.length === 0 ? (
+					<View className="items-center rounded-xl border border-border bg-card p-6">
+						<Text className="text-muted-foreground text-sm">
+							No reviews yet.
+						</Text>
+					</View>
+				) : (
+					<View className="gap-3">
+						{reviewItems.map((review) => (
+							<ProfileContentCard
+								key={review.id}
+								posterUrl={
+									review.posterPath
+										? `https://image.tmdb.org/t/p/w300${review.posterPath}`
+										: undefined
+								}
+								href={mediaHref(review)}
+								title={review.title || "Unknown"}
+								meta={review.reviewTitle}
+							>
+								{review.markdown ? (
+									<View className="max-h-24 overflow-hidden">
+										<Markdown value={review.markdown} />
+									</View>
+								) : null}
+							</ProfileContentCard>
+						))}
+					</View>
+				)}
+			</View>
+		</View>
+	);
+}
+
+function ListPreview({
+	title,
+	icon,
+	list,
+	emptyText,
+	onPressAll,
+}: {
+	title: string;
+	icon: React.ReactNode;
+	list?: { slug: string; itemCount: number };
+	emptyText: string;
+	onPressAll: () => void;
+}) {
+	// Reuse the lists list-summary; the overview doesn't fetch items per list to
+	// keep the request count down — it links straight into the Lists tab.
+	const count = list?.itemCount ?? 0;
+	return (
+		<View>
+			<SectionHeader
+				icon={icon}
+				title={title}
+				onPressAll={list ? onPressAll : undefined}
+			/>
+			{!list || count === 0 ? (
+				<View className="items-center rounded-xl border border-border bg-card p-6">
+					<Text className="text-muted-foreground text-sm">{emptyText}</Text>
+				</View>
+			) : (
+				<Pressable
+					onPress={onPressAll}
+					className="flex-row items-center justify-between rounded-xl border border-border bg-card p-4"
+				>
+					<Text className="font-medium text-foreground text-sm">
+						{count} item{count === 1 ? "" : "s"}
+					</Text>
+					<ChevronRight color="#94a3b8" size={18} />
+				</Pressable>
+			)}
+		</View>
+	);
+}

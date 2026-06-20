@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddToListButton } from "@/components/detail/AddToListButton";
+import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -96,6 +97,7 @@ export default function ShowDetailScreen() {
 
 					<CastSection cast={data.credits?.cast} />
 					<YourReviews mediaType="show" mediaId={id} />
+					<CommunityReviews mediaType="show" mediaId={id} />
 					<YourNote mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}

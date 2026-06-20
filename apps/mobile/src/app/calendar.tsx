@@ -3,10 +3,28 @@ import { Stack } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import { CalendarMonth } from "@/components/calendar/CalendarMonth";
 import { ReleaseRow } from "@/components/calendar/ReleaseRow";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useReleaseCalendar } from "@/lib/use-release-calendar";
+
+type CalendarView = "week" | "month";
+
+const MONTH_NAMES = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 
 /** Monday-anchored start of the week containing `date`, at local midnight. */
 function getWeekStart(date: Date): Date {
@@ -22,6 +40,11 @@ function addDays(date: Date, n: number): Date {
 	const d = new Date(date);
 	d.setDate(d.getDate() + n);
 	return d;
+}
+
+/** First day of the month containing `date`, at local midnight. */
+function getMonthStart(date: Date): Date {
+	return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
 /** Local YYYY-MM-DD key, matching the calendar item's date prefix. */
@@ -51,12 +74,39 @@ function formatDayLabel(date: Date): string {
 	});
 }
 
-export default function CalendarScreen() {
-	const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
+function releaseRowKey(release: ReleaseCalendarItemDto): string {
+	return `${release.releaseKind}-${release.movieId ?? release.showId}-${release.seasonNumber ?? ""}-${release.episodeNumber ?? ""}-${release.releaseDate}`;
+}
 
-	// Fetch a window around the visible week so adjacent navigation is instant.
-	const startDate = dateKey(addDays(weekStart, -7));
-	const endDate = dateKey(addDays(weekStart, 13));
+export default function CalendarScreen() {
+	const [view, setView] = useState<CalendarView>("week");
+	const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
+	const [monthStart, setMonthStart] = useState(() => getMonthStart(new Date()));
+	const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+
+	// Fetch a window that covers the visible range plus padding so adjacent
+	// navigation is instant. Week view needs a fortnight; month view fetches the
+	// surrounding months (matching the web calendar's 3-month window).
+	const { startDate, endDate } = useMemo(() => {
+		if (view === "month") {
+			const start = new Date(
+				monthStart.getFullYear(),
+				monthStart.getMonth() - 1,
+				1,
+			);
+			const end = new Date(
+				monthStart.getFullYear(),
+				monthStart.getMonth() + 2,
+				0,
+			);
+			return { startDate: dateKey(start), endDate: dateKey(end) };
+		}
+		return {
+			startDate: dateKey(addDays(weekStart, -7)),
+			endDate: dateKey(addDays(weekStart, 13)),
+		};
+	}, [view, weekStart, monthStart]);
+
 	const { data, isLoading, isError } = useReleaseCalendar(startDate, endDate);
 
 	const byDate = useMemo(() => {
@@ -83,21 +133,73 @@ export default function CalendarScreen() {
 		[weekStart, byDate],
 	);
 
+	const selectedDayReleases = selectedDayKey
+		? (byDate.get(selectedDayKey) ?? [])
+		: [];
+
+	const goToToday = () => {
+		const now = new Date();
+		setWeekStart(getWeekStart(now));
+		setMonthStart(getMonthStart(now));
+		setSelectedDayKey(null);
+	};
+
+	const stepMonth = (delta: number) => {
+		setMonthStart((m) => new Date(m.getFullYear(), m.getMonth() + delta, 1));
+		setSelectedDayKey(null);
+	};
+
+	const headerTitle =
+		view === "month"
+			? `${MONTH_NAMES[monthStart.getMonth()]} ${monthStart.getFullYear()}`
+			: formatRange(weekStart);
+
 	return (
 		<View className="flex-1 bg-background">
 			<Stack.Screen options={{ headerShown: true, title: "Calendar" }} />
 
+			<View className="flex-row items-center justify-center gap-2 border-border border-b px-4 pt-3">
+				{(["week", "month"] as const).map((v) => {
+					const active = view === v;
+					return (
+						<Pressable
+							key={v}
+							onPress={() => setView(v)}
+							className={
+								active
+									? "rounded-full bg-primary px-4 py-1.5"
+									: "rounded-full bg-background-subtle px-4 py-1.5"
+							}
+						>
+							<Text
+								className={
+									active
+										? "font-medium text-primary-foreground text-sm capitalize"
+										: "font-medium text-muted-foreground text-sm capitalize"
+								}
+							>
+								{v}
+							</Text>
+						</Pressable>
+					);
+				})}
+			</View>
+
 			<View className="flex-row items-center justify-between border-border border-b px-4 py-3">
 				<Pressable
 					hitSlop={8}
-					onPress={() => setWeekStart((w) => addDays(w, -7))}
+					onPress={() =>
+						view === "month"
+							? stepMonth(-1)
+							: setWeekStart((w) => addDays(w, -7))
+					}
 					className="h-10 w-10 items-center justify-center rounded-lg border border-border"
 				>
 					<ChevronLeft color="#94a3b8" size={20} />
 				</Pressable>
-				<Pressable onPress={() => setWeekStart(getWeekStart(new Date()))}>
-					<Text className="font-display font-semibold text-base text-foreground">
-						{formatRange(weekStart)}
+				<Pressable onPress={goToToday}>
+					<Text className="text-center font-display font-semibold text-base text-foreground">
+						{headerTitle}
 					</Text>
 					<Text className="text-center text-muted-foreground text-xs">
 						Tap for today
@@ -105,7 +207,9 @@ export default function CalendarScreen() {
 				</Pressable>
 				<Pressable
 					hitSlop={8}
-					onPress={() => setWeekStart((w) => addDays(w, 7))}
+					onPress={() =>
+						view === "month" ? stepMonth(1) : setWeekStart((w) => addDays(w, 7))
+					}
 					className="h-10 w-10 items-center justify-center rounded-lg border border-border"
 				>
 					<ChevronRight color="#94a3b8" size={20} />
@@ -116,6 +220,40 @@ export default function CalendarScreen() {
 				<LoadingState label="Loading calendar…" />
 			) : isError ? (
 				<ErrorState message="Couldn't load the release calendar. Try again." />
+			) : view === "month" ? (
+				<ScrollView
+					className="flex-1"
+					contentContainerClassName="gap-4 px-4 py-4 pb-12"
+					showsVerticalScrollIndicator={false}
+				>
+					<CalendarMonth
+						monthDate={monthStart}
+						byDate={byDate}
+						selectedKey={selectedDayKey}
+						onSelectDay={setSelectedDayKey}
+					/>
+
+					<View className="gap-2">
+						<Text className="font-display font-semibold text-base text-foreground">
+							{selectedDayKey
+								? formatDayLabel(new Date(`${selectedDayKey}T00:00:00`))
+								: "Releases"}
+						</Text>
+						{!selectedDayKey ? (
+							<Text className="text-muted-foreground text-sm">
+								Tap a day with releases to see what's coming out.
+							</Text>
+						) : selectedDayReleases.length === 0 ? (
+							<Text className="text-muted-foreground text-sm">No releases</Text>
+						) : (
+							<View className="gap-2">
+								{selectedDayReleases.map((release) => (
+									<ReleaseRow key={releaseRowKey(release)} item={release} />
+								))}
+							</View>
+						)}
+					</View>
+				</ScrollView>
 			) : (
 				<ScrollView
 					className="flex-1"
@@ -140,10 +278,7 @@ export default function CalendarScreen() {
 							) : (
 								<View className="gap-2">
 									{day.releases.map((release) => (
-										<ReleaseRow
-											key={`${release.releaseKind}-${release.movieId ?? release.showId}-${release.seasonNumber ?? ""}-${release.episodeNumber ?? ""}-${release.releaseDate}`}
-											item={release}
-										/>
+										<ReleaseRow key={releaseRowKey(release)} item={release} />
 									))}
 								</View>
 							)}

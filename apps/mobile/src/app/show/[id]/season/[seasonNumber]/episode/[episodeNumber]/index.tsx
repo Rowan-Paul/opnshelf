@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { Star } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { EpisodeWatchButton } from "@/components/detail/EpisodeWatchButton";
 import { MetadataPills } from "@/components/detail/MetadataPills";
@@ -83,6 +84,12 @@ export default function EpisodeDetailScreen() {
 					<OverviewSection text={data.overview} />
 					<CastSection cast={data.guest_stars} />
 					<CrewSection crew={data.crew} />
+					<CommunityReviews
+						mediaType="show"
+						mediaId={id}
+						seasonNumber={Number(seasonNumber)}
+						episodeNumber={Number(episodeNumber)}
+					/>
 				</ScrollView>
 			)}
 		</View>
