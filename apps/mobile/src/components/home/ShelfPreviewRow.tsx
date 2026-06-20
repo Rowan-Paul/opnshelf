@@ -1,9 +1,11 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
+import type { Href } from "expo-router";
 import { Film } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { useProfileShelf } from "@/lib/use-public-profile";
 
 type ShelfItem = ShelfResponseDto["items"][number];
@@ -14,18 +16,23 @@ const POSTER_W = 110;
  * "Your Shelf" recent-watched preview: a horizontal poster row of the user's
  * most recently shelved movies + episodes. Mirrors the web dashboard "Your
  * Shelf" section, reading from the same `shelfControllerGetUserShelf` procedure
- * (via `useProfileShelf`). "View all" deep-links to the Shelf tab.
+ * (via `useProfileShelf`). "View all" deep-links to the full Shelf page on the
+ * user's profile.
  */
 export function ShelfPreviewRow({ userDid }: { userDid: string }) {
+	const { user } = useAuth();
 	// The shared shelf query is server-paginated; the first page (newest first)
 	// is exactly the recent-watched preview the dashboard wants.
 	const { data, isLoading, isError } = useProfileShelf(userDid);
 
 	const items = (data?.items ?? []).slice(0, 10).map(toCardItem);
+	const shelfHref = user?.handle
+		? (`/profile/${user.handle}/shelf` as Href)
+		: undefined;
 
 	return (
 		<View>
-			<SectionHeader icon={Film} title="Your Shelf" href="/shelf" />
+			<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
 			{isLoading ? (
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">

@@ -91,6 +91,22 @@ export default function RootLayout() {
 				/>
 				<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
 				<Stack.Screen name="profile/[handle]" options={{ headerShown: true }} />
+				<Stack.Screen
+					name="profile/[handle]/shelf"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen
+					name="profile/[handle]/up-next"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen
+					name="profile/[handle]/reviews"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen
+					name="profile/[handle]/connections"
+					options={{ headerShown: true }}
+				/>
 				<Stack.Screen name="movie/[id]" />
 				<Stack.Screen name="person/[id]" />
 				<Stack.Screen name="show/[id]/index" />
