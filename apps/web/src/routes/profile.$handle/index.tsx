@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
+import { MarkdownContent } from "#/components/MarkdownContent";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -290,9 +291,10 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 					{review.reviewTitle || "Review"}
 				</h3>
 				{review.markdown && (
-					<p className="line-clamp-3 text-(--foreground-muted) text-sm leading-relaxed">
-						{review.markdown}
-					</p>
+					<div className="relative max-h-[4.5rem] overflow-hidden text-(--foreground-muted)">
+						<MarkdownContent markdown={review.markdown} />
+						<div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-(--background-elevated) to-transparent" />
+					</div>
 				)}
 				<p className="mt-auto line-clamp-1 text-(--foreground-subtle) text-xs">
 					{review.title || "Unknown"}
