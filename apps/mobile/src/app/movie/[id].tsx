@@ -64,11 +64,11 @@ export default function MovieDetailScreen() {
 
 					<FriendWatchers mediaType="movie" mediaId={id} />
 
-					<RatingButton mediaType="movie" mediaId={id} />
-
-					<AddToListButton mediaType="movie" mediaId={id} />
-
-					<NoteButton mediaType="movie" mediaId={id} />
+					<View className="gap-2">
+						<RatingButton mediaType="movie" mediaId={id} />
+						<AddToListButton mediaType="movie" mediaId={id} />
+						<NoteButton mediaType="movie" mediaId={id} />
+					</View>
 
 					<OverviewSection text={data.overview} />
 					<WatchProviders mediaType="movie" mediaId={id} />

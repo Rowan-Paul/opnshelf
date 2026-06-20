@@ -17,6 +17,7 @@ import {
 	BookOpen,
 	ChevronRight,
 	Download,
+	Palette,
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
@@ -36,6 +37,8 @@ import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import type { ThemePreference } from "@/lib/theme-context";
+import { useTheme } from "@/lib/theme-context";
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
@@ -68,6 +71,45 @@ function SettingsSection({
 				) : null}
 			</View>
 			{children}
+		</View>
+	);
+}
+
+const APPEARANCE_OPTIONS: { value: ThemePreference; label: string }[] = [
+	{ value: "system", label: "System" },
+	{ value: "light", label: "Light" },
+	{ value: "dark", label: "Dark" },
+];
+
+/** Segmented pill row to pick the app appearance preference. */
+function AppearanceSetting() {
+	const { preference, setPreference } = useTheme();
+	return (
+		<View className="flex-row gap-2">
+			{APPEARANCE_OPTIONS.map((option) => {
+				const selected = preference === option.value;
+				return (
+					<Pressable
+						key={option.value}
+						onPress={() => setPreference(option.value)}
+						className={
+							selected
+								? "flex-1 items-center rounded-lg border border-primary bg-primary/10 px-3 py-2.5"
+								: "flex-1 items-center rounded-lg border border-border px-3 py-2.5"
+						}
+					>
+						<Text
+							className={
+								selected
+									? "font-semibold text-primary text-sm"
+									: "font-medium text-foreground text-sm"
+							}
+						>
+							{option.label}
+						</Text>
+					</Pressable>
+				);
+			})}
 		</View>
 	);
 }
@@ -331,6 +373,15 @@ export default function SettingsScreen() {
 							</Pressable>
 						</Link>
 					</View>
+
+					{/* Appearance */}
+					<SettingsSection
+						title="Appearance"
+						icon={<Palette color={PRIMARY} size={20} />}
+						description="Choose how OpnShelf looks. System follows your device."
+					>
+						<AppearanceSetting />
+					</SettingsSection>
 
 					{/* Time & Region */}
 					<SettingsSection

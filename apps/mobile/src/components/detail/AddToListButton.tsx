@@ -13,15 +13,21 @@ import { useListMembership } from "@/lib/use-lists";
 export function AddToListButton({
 	mediaType,
 	mediaId,
+	seasonNumber,
+	episodeNumber,
 }: {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 }) {
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const { memberships, isLoading, toggle } = useListMembership({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 
 	if (!isAuthenticated) return null;

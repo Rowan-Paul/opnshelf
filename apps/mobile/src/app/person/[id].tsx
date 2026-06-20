@@ -3,7 +3,6 @@ import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FilmographyCard } from "@/components/person/FilmographyCard";
 import { PersonHero } from "@/components/person/PersonHero";
 import { ErrorState, LoadingState } from "@/components/ui/states";
@@ -22,7 +21,6 @@ function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 
 export default function PersonDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
-	const insets = useSafeAreaInsets();
 	const gridStyle = useTwStyle("px-3 pb-12");
 
 	const { data: person, isLoading, isError } = usePersonDetails(id);
@@ -50,8 +48,10 @@ export default function PersonDetailScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<Stack.Screen options={{ headerShown: false }} />
+		<View className="flex-1 bg-background">
+			<Stack.Screen
+				options={{ headerShown: true, title: person?.name ?? "Person" }}
+			/>
 			{isLoading ? (
 				<LoadingState />
 			) : isError || !person ? (

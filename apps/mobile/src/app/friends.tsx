@@ -3,11 +3,16 @@ import {
 	socialControllerSearchPeopleOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { Search, Users, UserX, X } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	RefreshControl,
+	View,
+} from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -27,10 +32,12 @@ export default function FriendsScreen() {
 
 	const [tab, setTab] = useState<Tab>("following");
 	const [query, setQuery] = useState("");
+	const [refreshing, setRefreshing] = useState(false);
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
 
 	const listStyle = useTwStyle("px-4 pb-8");
+	const queryClient = useQueryClient();
 
 	const following = useFollowing(handle);
 	const followers = useFollowers(handle);
@@ -45,6 +52,40 @@ export default function FriendsScreen() {
 
 	const active = tab === "following" ? following : followers;
 	const searchResults = peopleQuery.data?.items ?? [];
+
+	// The following/followers infinite lists come from hooks that don't surface a
+	// refetch, so on pull we refetch the people search (when searching) and
+	// invalidate the active social list via the query client.
+	const onRefresh = async () => {
+		setRefreshing(true);
+		try {
+			if (hasQuery) {
+				await peopleQuery.refetch();
+			} else {
+				const id =
+					tab === "following"
+						? "socialControllerGetFollowing"
+						: "socialControllerGetFollowers";
+				await queryClient.refetchQueries({
+					predicate: (q) => {
+						const key = q.queryKey[0] as { _id?: string } | undefined;
+						return key?._id === id;
+					},
+				});
+			}
+		} finally {
+			setRefreshing(false);
+		}
+	};
+
+	const refreshControl = (
+		<RefreshControl
+			refreshing={refreshing}
+			onRefresh={onRefresh}
+			tintColor="#f3bc00"
+			colors={["#f3bc00"]}
+		/>
+	);
 
 	const renderRow = (item: SocialUserCardDto) => (
 		<View className="pb-2">
@@ -78,6 +119,7 @@ export default function FriendsScreen() {
 					renderItem={({ item }) => renderRow(item)}
 					contentContainerStyle={listStyle}
 					keyboardShouldPersistTaps="handled"
+					refreshControl={refreshControl}
 				/>
 			);
 		}
@@ -106,6 +148,7 @@ export default function FriendsScreen() {
 				renderItem={({ item }) => renderRow(item)}
 				contentContainerStyle={listStyle}
 				keyboardShouldPersistTaps="handled"
+				refreshControl={refreshControl}
 				onEndReachedThreshold={0.5}
 				onEndReached={() => {
 					if (active.hasNextPage && !active.isFetchingNextPage) {

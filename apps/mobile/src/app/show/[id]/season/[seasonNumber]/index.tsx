@@ -1,13 +1,20 @@
 import { showsControllerGetSeasonDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { Check, Eye } from "lucide-react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
+import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { RatingButton } from "@/components/detail/RatingButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { yearFromDate } from "@/lib/tmdb";
+import { useWatchActions } from "@/lib/use-watch-actions";
+import { useWatchStatus } from "@/lib/use-watch-status";
 
 export default function SeasonDetailScreen() {
 	const { id, seasonNumber } = useLocalSearchParams<{
@@ -15,6 +22,14 @@ export default function SeasonDetailScreen() {
 		seasonNumber: string;
 	}>();
 	const showId = Number(id);
+	const seasonNum = Number(seasonNumber);
+	const { isAuthenticated } = useAuth();
+
+	const watchStatus = useWatchStatus({ mediaType: "show", showId: id });
+	const { markSeasonWatched, isMarkSeasonPending } = useWatchActions({
+		mediaType: "show",
+		showId: id,
+	});
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -22,6 +37,13 @@ export default function SeasonDetailScreen() {
 		}),
 		enabled: Boolean(id) && Boolean(seasonNumber),
 	});
+
+	const totalEpisodes = data?.episodes.length ?? 0;
+	const episodesWatched =
+		data?.episodes.filter((ep) =>
+			watchStatus.isEpisodeWatched?.(ep.season_number, ep.episode_number),
+		).length ?? 0;
+	const seasonComplete = totalEpisodes > 0 && episodesWatched >= totalEpisodes;
 
 	return (
 		<View className="flex-1 bg-background">
@@ -52,6 +74,54 @@ export default function SeasonDetailScreen() {
 							</Text>
 						)}
 					</View>
+
+					{isAuthenticated ? (
+						<View className="-mx-4 gap-2">
+							<Pressable
+								onPress={() => markSeasonWatched(seasonNum)}
+								disabled={isMarkSeasonPending}
+								className={
+									seasonComplete
+										? "mx-4 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
+										: "mx-4 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
+								}
+								style={{ opacity: isMarkSeasonPending ? 0.7 : 1 }}
+							>
+								{seasonComplete ? (
+									<>
+										<View className="rounded-full bg-primary/20 p-1">
+											<Check color="#22c55e" size={14} />
+										</View>
+										<Text className="font-semibold text-foreground">
+											{episodesWatched} / {totalEpisodes} watched
+										</Text>
+									</>
+								) : (
+									<>
+										<Eye color="#3f2e00" size={18} />
+										<Text className="font-semibold text-primary-foreground">
+											Mark season watched
+										</Text>
+									</>
+								)}
+							</Pressable>
+							<RatingButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+							<AddToListButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+						</View>
+					) : null}
 
 					<OverviewSection text={data.overview} />
 

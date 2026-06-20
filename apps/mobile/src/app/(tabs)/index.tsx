@@ -1,4 +1,6 @@
-import { ScrollView, View } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FriendsActivity } from "@/components/home/FriendsActivity";
 import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
@@ -23,12 +25,25 @@ export default function HomeScreen() {
 	const insets = useSafeAreaInsets();
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
+	const queryClient = useQueryClient();
+	const [refreshing, setRefreshing] = useState(false);
 
 	// Stats strip is fed by the public profile (same data source as the web
 	// dashboard + the mobile profile screen), keyed by the current user's handle.
 	const { data: profile, isLoading: profileLoading } = usePublicProfile(
 		user?.handle ?? "",
 	);
+
+	// Each dashboard section owns its own query internally, so on pull we refetch
+	// every active query rather than wiring each section's refetch up by hand.
+	const onRefresh = async () => {
+		setRefreshing(true);
+		try {
+			await queryClient.refetchQueries({ type: "active" });
+		} finally {
+			setRefreshing(false);
+		}
+	};
 
 	return (
 		<View className="flex-1 bg-background">
@@ -38,6 +53,14 @@ export default function HomeScreen() {
 					paddingTop: insets.top + 8,
 					paddingBottom: 32,
 				}}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefresh}
+						tintColor="#f3bc00"
+						colors={["#f3bc00"]}
+					/>
+				}
 			>
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />

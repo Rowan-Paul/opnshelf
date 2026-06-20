@@ -6,7 +6,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Library } from "lucide-react-native";
 import { useMemo } from "react";
-import { View } from "react-native";
+import { RefreshControl, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { Screen } from "@/components/ui/screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
@@ -43,7 +43,7 @@ export default function ShelfScreen() {
 	// the padding to a style instead.
 	const gridListStyle = useTwStyle("px-3 pb-8");
 
-	const { data, isLoading, isError } = useQuery({
+	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
 			query: { pageSize: 50 },
@@ -82,6 +82,16 @@ export default function ShelfScreen() {
 				)}
 				contentContainerStyle={gridListStyle}
 				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefetching}
+						onRefresh={() => {
+							void refetch();
+						}}
+						tintColor="#f3bc00"
+						colors={["#f3bc00"]}
+					/>
+				}
 			/>
 		);
 	}

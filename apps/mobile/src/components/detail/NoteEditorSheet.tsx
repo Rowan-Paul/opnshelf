@@ -1,14 +1,13 @@
 import { Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
+import { Modal, Pressable, View } from "react-native";
 import {
 	KeyboardAvoidingView,
-	Modal,
-	Platform,
-	Pressable,
-	View,
-} from "react-native";
+	KeyboardProvider,
+} from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 interface NoteEditorSheetProps {
 	visible: boolean;
@@ -41,6 +40,10 @@ export function NoteEditorSheet({
 	isDeleting = false,
 }: NoteEditorSheetProps) {
 	const [content, setContent] = useState(initialContent);
+	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
+	// its layout classes to a style object (Uniwind className only works on
+	// RN-core components).
+	const avoidingStyle = useTwStyle("flex-1 justify-end");
 
 	// Re-sync local state whenever the sheet is (re)opened for a target.
 	useEffect(() => {
@@ -56,57 +59,63 @@ export function NoteEditorSheet({
 			transparent
 			onRequestClose={onDismiss}
 		>
-			<KeyboardAvoidingView
-				behavior={Platform.OS === "ios" ? "padding" : undefined}
-				className="flex-1 justify-end"
-			>
-				<Pressable className="flex-1" onPress={onDismiss} />
-				<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
-					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
-							{isEditing ? "Edit note" : "Add a note"}
-						</Text>
-						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
-						</Pressable>
-					</View>
+			{/*
+			 * RN <Modal> renders in a separate window outside the root
+			 * KeyboardProvider (notably on Android), so the keyboard controller
+			 * receives no events there. Nesting a KeyboardProvider inside the
+			 * Modal re-bridges those events, letting its KeyboardAvoidingView lift
+			 * the bottom-anchored sheet above the keyboard on both platforms.
+			 */}
+			<KeyboardProvider>
+				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+					<Pressable className="flex-1" onPress={onDismiss} />
+					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+						<View className="flex-row items-center justify-between">
+							<Text className="font-bold font-display text-foreground text-lg">
+								{isEditing ? "Edit note" : "Add a note"}
+							</Text>
+							<Pressable hitSlop={8} onPress={onDismiss}>
+								<X color="#94a3b8" size={22} />
+							</Pressable>
+						</View>
 
-					<TextField
-						variant="subtle"
-						multiline
-						className="min-h-36"
-						value={content}
-						onChangeText={setContent}
-						placeholder="Your thoughts about this title…"
-						maxLength={20000}
-					/>
+						<TextField
+							variant="subtle"
+							multiline
+							className="min-h-36"
+							value={content}
+							onChangeText={setContent}
+							placeholder="Your thoughts about this title…"
+							maxLength={20000}
+						/>
 
-					{isEditing && onDelete ? (
+						{isEditing && onDelete ? (
+							<Pressable
+								onPress={onDelete}
+								disabled={isDeleting}
+								className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
+								style={{ opacity: isDeleting ? 0.6 : 1 }}
+							>
+								<Trash2 color="#ef4444" size={18} />
+								<Text className="font-semibold text-destructive">
+									Delete note
+								</Text>
+							</Pressable>
+						) : null}
+
 						<Pressable
-							onPress={onDelete}
-							disabled={isDeleting}
-							className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-							style={{ opacity: isDeleting ? 0.6 : 1 }}
+							onPress={() => onSave(content)}
+							disabled={!canSave}
+							className="items-center rounded-lg bg-primary py-3"
+							style={{ opacity: canSave ? 1 : 0.5 }}
 						>
-							<Trash2 color="#ef4444" size={18} />
-							<Text className="font-semibold text-destructive">
-								Delete note
+							<Text className="font-semibold text-primary-foreground">
+								{isSaving ? "Saving…" : "Save"}
 							</Text>
 						</Pressable>
-					) : null}
-
-					<Pressable
-						onPress={() => onSave(content)}
-						disabled={!canSave}
-						className="items-center rounded-lg bg-primary py-3"
-						style={{ opacity: canSave ? 1 : 0.5 }}
-					>
-						<Text className="font-semibold text-primary-foreground">
-							{isSaving ? "Saving…" : "Save"}
-						</Text>
-					</Pressable>
-				</View>
-			</KeyboardAvoidingView>
+					</View>
+				</KeyboardAvoidingView>
+			</KeyboardProvider>
 		</Modal>
 	);
 }

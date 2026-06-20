@@ -14,15 +14,21 @@ import { useReview } from "@/lib/use-review";
 export function RatingButton({
 	mediaType,
 	mediaId,
+	seasonNumber,
+	episodeNumber,
 }: {
 	mediaType: "movie" | "show";
 	mediaId: string;
+	seasonNumber?: number;
+	episodeNumber?: number;
 }) {
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const { rating, setRating, clearRating, isClearingRating } = useReview({
 		mediaType,
 		mediaId,
+		seasonNumber,
+		episodeNumber,
 	});
 
 	if (!isAuthenticated) return null;

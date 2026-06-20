@@ -16,21 +16,12 @@ import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
-import { useColorScheme } from "react-native";
-import { Uniwind } from "uniwind";
 import { Providers } from "@/components/Providers";
 import { initializeApiClient } from "@/lib/api";
 import { posthog } from "@/lib/posthog";
+import { useTheme } from "@/lib/theme-context";
 
 SplashScreen.preventAutoHideAsync();
-
-/** Keep Uniwind's active theme in sync with the OS color scheme. */
-function useUniwindColorScheme() {
-	const colorScheme = useColorScheme();
-	useEffect(() => {
-		Uniwind.setTheme(colorScheme === "dark" ? "dark" : "light");
-	}, [colorScheme]);
-}
 
 /** Manual screen tracking for Expo Router + PostHog. */
 function useScreenTracking() {
@@ -64,8 +55,6 @@ export default function RootLayout() {
 		"PlusJakartaSans-Bold": PlusJakartaSans_700Bold,
 	});
 
-	const colorScheme = useColorScheme();
-
 	useEffect(() => {
 		initializeApiClient();
 	}, []);
@@ -82,7 +71,6 @@ export default function RootLayout() {
 
 	return (
 		<Providers>
-			<ThemeSync />
 			<ScreenTracker />
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Screen name="(tabs)" />
@@ -109,14 +97,15 @@ export default function RootLayout() {
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
 			</Stack>
-			<StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+			<ThemedStatusBar />
 		</Providers>
 	);
 }
 
-function ThemeSync() {
-	useUniwindColorScheme();
-	return null;
+/** StatusBar style follows the effective theme scheme from the context. */
+function ThemedStatusBar() {
+	const { scheme } = useTheme();
+	return <StatusBar style={scheme === "dark" ? "light" : "dark"} />;
 }
 
 function ScreenTracker() {

@@ -1,18 +1,16 @@
 import { Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import {
 	KeyboardAvoidingView,
-	Modal,
-	Platform,
-	Pressable,
-	ScrollView,
-	View,
-} from "react-native";
+	KeyboardProvider,
+} from "react-native-keyboard-controller";
 import { MarkdownToolbar } from "@/components/detail/MarkdownToolbar";
 import { Markdown } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import type { TextSelection } from "@/lib/markdown-format";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 const MAX_LENGTH = 20000;
 
@@ -60,6 +58,10 @@ export function ReviewEditorSheet({
 		end: 0,
 	});
 	const [mode, setMode] = useState<"write" | "preview">("write");
+	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
+	// its layout classes to a style object (Uniwind className only works on
+	// RN-core components).
+	const avoidingStyle = useTwStyle("flex-1 justify-end");
 
 	// Re-sync local state whenever the sheet is (re)opened for a target.
 	useEffect(() => {
@@ -87,129 +89,137 @@ export function ReviewEditorSheet({
 			transparent
 			onRequestClose={onDismiss}
 		>
-			<KeyboardAvoidingView
-				behavior={Platform.OS === "ios" ? "padding" : undefined}
-				className="flex-1 justify-end"
-			>
-				<Pressable className="flex-1" onPress={onDismiss} />
-				<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
-					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
-							{isEditing ? "Edit review" : "Write a review"}
-						</Text>
-						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
-						</Pressable>
-					</View>
-
-					<TextField
-						variant="subtle"
-						value={title}
-						onChangeText={setTitle}
-						placeholder="Review title"
-						maxLength={300}
-					/>
-
-					<View className="flex-row gap-1 self-start rounded-lg bg-background-subtle p-1">
-						<Pressable
-							onPress={() => setMode("write")}
-							className={`rounded-md px-3 py-1.5 ${mode === "write" ? "bg-card" : ""}`}
-						>
-							<Text
-								className={`text-sm ${mode === "write" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-							>
-								Write
+			{/*
+			 * RN <Modal> renders in a separate window outside the root
+			 * KeyboardProvider (notably on Android), so the keyboard controller
+			 * receives no events there. Nesting a KeyboardProvider inside the
+			 * Modal re-bridges those events, letting its KeyboardAvoidingView lift
+			 * the bottom-anchored sheet above the keyboard on both platforms.
+			 */}
+			<KeyboardProvider>
+				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+					<Pressable className="flex-1" onPress={onDismiss} />
+					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+						<View className="flex-row items-center justify-between">
+							<Text className="font-bold font-display text-foreground text-lg">
+								{isEditing ? "Edit review" : "Write a review"}
 							</Text>
-						</Pressable>
-						<Pressable
-							onPress={() => setMode("preview")}
-							className={`rounded-md px-3 py-1.5 ${mode === "preview" ? "bg-card" : ""}`}
-						>
-							<Text
-								className={`text-sm ${mode === "preview" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-							>
-								Preview
-							</Text>
-						</Pressable>
-					</View>
-
-					{mode === "write" ? (
-						<View className="gap-2">
-							<MarkdownToolbar
-								value={markdown}
-								selection={selection}
-								onChange={(edit) => {
-									setMarkdown(edit.text);
-									setSelection(edit.selection);
-								}}
-							/>
-							<TextField
-								variant="subtle"
-								multiline
-								className="min-h-36"
-								value={markdown}
-								onChangeText={setMarkdown}
-								selection={selection}
-								onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
-								placeholder="Write a review (markdown supported)…"
-								maxLength={MAX_LENGTH}
-							/>
+							<Pressable hitSlop={8} onPress={onDismiss}>
+								<X color="#94a3b8" size={22} />
+							</Pressable>
 						</View>
-					) : (
-						<ScrollView
-							className="min-h-36 rounded-lg border border-border bg-background-subtle"
-							contentContainerClassName="p-3"
-							style={{ maxHeight: 320 }}
-						>
-							{hasBody ? (
-								<Markdown value={markdown} />
-							) : (
-								<Text className="text-muted-foreground text-sm">
-									Nothing to preview yet.
+
+						<TextField
+							variant="subtle"
+							value={title}
+							onChangeText={setTitle}
+							placeholder="Review title"
+							maxLength={300}
+						/>
+
+						<View className="flex-row gap-1 self-start rounded-lg bg-background-subtle p-1">
+							<Pressable
+								onPress={() => setMode("write")}
+								className={`rounded-md px-3 py-1.5 ${mode === "write" ? "bg-card" : ""}`}
+							>
+								<Text
+									className={`text-sm ${mode === "write" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+								>
+									Write
 								</Text>
-							)}
-						</ScrollView>
-					)}
+							</Pressable>
+							<Pressable
+								onPress={() => setMode("preview")}
+								className={`rounded-md px-3 py-1.5 ${mode === "preview" ? "bg-card" : ""}`}
+							>
+								<Text
+									className={`text-sm ${mode === "preview" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+								>
+									Preview
+								</Text>
+							</Pressable>
+						</View>
 
-					<View className="flex-row items-center justify-between">
-						{needsTitle ? (
-							<Text className="text-destructive text-xs">
-								A title is required when you write a review.
-							</Text>
+						{mode === "write" ? (
+							<View className="gap-2">
+								<MarkdownToolbar
+									value={markdown}
+									selection={selection}
+									onChange={(edit) => {
+										setMarkdown(edit.text);
+										setSelection(edit.selection);
+									}}
+								/>
+								<TextField
+									variant="subtle"
+									multiline
+									className="min-h-36"
+									value={markdown}
+									onChangeText={setMarkdown}
+									selection={selection}
+									onSelectionChange={(e) =>
+										setSelection(e.nativeEvent.selection)
+									}
+									placeholder="Write a review (markdown supported)…"
+									maxLength={MAX_LENGTH}
+								/>
+							</View>
 						) : (
-							<View />
+							<ScrollView
+								className="min-h-36 rounded-lg border border-border bg-background-subtle"
+								contentContainerClassName="p-3"
+								style={{ maxHeight: 320 }}
+							>
+								{hasBody ? (
+									<Markdown value={markdown} />
+								) : (
+									<Text className="text-muted-foreground text-sm">
+										Nothing to preview yet.
+									</Text>
+								)}
+							</ScrollView>
 						)}
-						<Text className="text-foreground-subtle text-xs">
-							{markdown.length}/{MAX_LENGTH}
-						</Text>
-					</View>
 
-					{isEditing && onDelete ? (
+						<View className="flex-row items-center justify-between">
+							{needsTitle ? (
+								<Text className="text-destructive text-xs">
+									A title is required when you write a review.
+								</Text>
+							) : (
+								<View />
+							)}
+							<Text className="text-foreground-subtle text-xs">
+								{markdown.length}/{MAX_LENGTH}
+							</Text>
+						</View>
+
+						{isEditing && onDelete ? (
+							<Pressable
+								onPress={onDelete}
+								disabled={isDeleting}
+								className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
+								style={{ opacity: isDeleting ? 0.6 : 1 }}
+							>
+								<Trash2 color="#ef4444" size={18} />
+								<Text className="font-semibold text-destructive">
+									Delete review
+								</Text>
+							</Pressable>
+						) : null}
+
 						<Pressable
-							onPress={onDelete}
-							disabled={isDeleting}
-							className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-							style={{ opacity: isDeleting ? 0.6 : 1 }}
+							onPress={() => onSave({ title, markdown })}
+							disabled={!canSave}
+							className="items-center rounded-lg bg-primary py-3"
+							style={{ opacity: canSave ? 1 : 0.5 }}
 						>
-							<Trash2 color="#ef4444" size={18} />
-							<Text className="font-semibold text-destructive">
-								Delete review
+							<Text className="font-semibold text-primary-foreground">
+								{isSaving ? "Saving…" : "Save"}
 							</Text>
 						</Pressable>
-					) : null}
-
-					<Pressable
-						onPress={() => onSave({ title, markdown })}
-						disabled={!canSave}
-						className="items-center rounded-lg bg-primary py-3"
-						style={{ opacity: canSave ? 1 : 0.5 }}
-					>
-						<Text className="font-semibold text-primary-foreground">
-							{isSaving ? "Saving…" : "Save"}
-						</Text>
-					</Pressable>
-				</View>
-			</KeyboardAvoidingView>
+					</View>
+				</KeyboardAvoidingView>
+			</KeyboardProvider>
 		</Modal>
 	);
 }

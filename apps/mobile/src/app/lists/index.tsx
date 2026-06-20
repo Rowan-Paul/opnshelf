@@ -3,7 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Link, Stack } from "expo-router";
 import { ChevronRight, ListPlus, Plus } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, RefreshControl, View } from "react-native";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -38,7 +38,13 @@ function ListRow({ list }: { list: ListSummaryDto }) {
 
 export default function ListsScreen() {
 	const listStyle = useTwStyle("px-4 pb-8");
-	const { data: lists, isLoading, isError } = useUserLists();
+	const {
+		data: lists,
+		isLoading,
+		isError,
+		isRefetching,
+		refetch,
+	} = useUserLists();
 	const createList = useCreateList();
 	const [editorVisible, setEditorVisible] = useState(false);
 
@@ -70,6 +76,16 @@ export default function ListsScreen() {
 				)}
 				contentContainerStyle={listStyle}
 				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefetching}
+						onRefresh={() => {
+							void refetch();
+						}}
+						tintColor="#f3bc00"
+						colors={["#f3bc00"]}
+					/>
+				}
 			/>
 		);
 	}

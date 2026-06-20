@@ -72,11 +72,11 @@ export default function ShowDetailScreen() {
 
 					<FriendWatchers mediaType="show" mediaId={id} />
 
-					<RatingButton mediaType="show" mediaId={id} />
-
-					<AddToListButton mediaType="show" mediaId={id} />
-
-					<NoteButton mediaType="show" mediaId={id} />
+					<View className="gap-2">
+						<RatingButton mediaType="show" mediaId={id} />
+						<AddToListButton mediaType="show" mediaId={id} />
+						<NoteButton mediaType="show" mediaId={id} />
+					</View>
 
 					<OverviewSection text={data.overview} />
 

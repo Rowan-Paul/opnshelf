@@ -7,7 +7,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SearchX, Users, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, RefreshControl, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { Screen } from "@/components/ui/screen";
@@ -78,6 +78,17 @@ export default function SearchScreen() {
 	const gridData =
 		activeTab === "movies" ? movies : activeTab === "shows" ? shows : allMedia;
 
+	const refreshControl = (
+		<RefreshControl
+			refreshing={activeQuery.isRefetching}
+			onRefresh={() => {
+				void activeQuery.refetch();
+			}}
+			tintColor="#f3bc00"
+			colors={["#f3bc00"]}
+		/>
+	);
+
 	function renderBody() {
 		if (!hasQuery) {
 			return (
@@ -116,6 +127,7 @@ export default function SearchScreen() {
 					)}
 					contentContainerStyle={peopleListStyle}
 					keyboardShouldPersistTaps="handled"
+					refreshControl={refreshControl}
 				/>
 			);
 		}
@@ -142,6 +154,7 @@ export default function SearchScreen() {
 				)}
 				contentContainerStyle={gridListStyle}
 				keyboardShouldPersistTaps="handled"
+				refreshControl={refreshControl}
 			/>
 		);
 	}

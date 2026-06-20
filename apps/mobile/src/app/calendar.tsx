@@ -2,7 +2,7 @@ import type { ReleaseCalendarItemDto } from "@opnshelf/api";
 import { Stack } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { CalendarMonth } from "@/components/calendar/CalendarMonth";
 import { ReleaseRow } from "@/components/calendar/ReleaseRow";
 import { ErrorState, LoadingState } from "@/components/ui/states";
@@ -107,7 +107,19 @@ export default function CalendarScreen() {
 		};
 	}, [view, weekStart, monthStart]);
 
-	const { data, isLoading, isError } = useReleaseCalendar(startDate, endDate);
+	const { data, isLoading, isError, isRefetching, refetch } =
+		useReleaseCalendar(startDate, endDate);
+
+	const refreshControl = (
+		<RefreshControl
+			refreshing={isRefetching}
+			onRefresh={() => {
+				void refetch();
+			}}
+			tintColor="#f3bc00"
+			colors={["#f3bc00"]}
+		/>
+	);
 
 	const byDate = useMemo(() => {
 		const map = new Map<string, ReleaseCalendarItemDto[]>();
@@ -225,6 +237,7 @@ export default function CalendarScreen() {
 					className="flex-1"
 					contentContainerClassName="gap-4 px-4 py-4 pb-12"
 					showsVerticalScrollIndicator={false}
+					refreshControl={refreshControl}
 				>
 					<CalendarMonth
 						monthDate={monthStart}
@@ -259,6 +272,7 @@ export default function CalendarScreen() {
 					className="flex-1"
 					contentContainerClassName="gap-5 px-4 py-4 pb-12"
 					showsVerticalScrollIndicator={false}
+					refreshControl={refreshControl}
 				>
 					{days.map((day) => (
 						<View key={day.key} className="gap-2">
