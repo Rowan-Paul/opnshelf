@@ -201,7 +201,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 						onChange={reviewState.setRating}
 						size={34}
 					/>
-					{reviewState.hasRating ? (
+					{reviewState.rating > 0 ? (
 						<Pressable
 							hitSlop={8}
 							onPress={reviewState.clearRating}
