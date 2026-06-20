@@ -1,10 +1,25 @@
 import type { MostWatchedShowDto, ProfileActivityDayDto } from "@opnshelf/api";
 import { Link } from "expo-router";
 import { Clock } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { useState } from "react";
+import { type LayoutChangeEvent, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { posterUrl } from "@/lib/tmdb";
+
+/** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
+function formatDayLabel(date: string): string {
+	const [year, month, day] = date.split("-").map(Number);
+	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
+		undefined,
+		{
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+			timeZone: "UTC",
+		},
+	);
+}
 
 /**
  * Profile stats strip: a 30-day watch-activity bar graph plus a few headline
@@ -64,25 +79,84 @@ export function StatsStrip({
 
 function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
 	const max = Math.max(1, ...data.map((d) => d.count));
+	// Tap a bar to reveal its day/count (the touch equivalent of web's hover);
+	// tapping the same bar again dismisses it. Other bars dim while one is active.
+	const [active, setActive] = useState<number | null>(null);
+	const [containerW, setContainerW] = useState(0);
+	const [tooltipW, setTooltipW] = useState(0);
+	const activeDay = active != null ? data[active] : null;
+
+	// Centre the tooltip on the active bar, then clamp so it never overflows the
+	// graph's left/right edges (web does the same with a percentage clamp).
+	const barCentre =
+		active != null && data.length > 0
+			? ((active + 0.5) / data.length) * containerW
+			: 0;
+	const tooltipLeft = Math.min(
+		Math.max(0, barCentre - tooltipW / 2),
+		Math.max(0, containerW - tooltipW),
+	);
 
 	return (
-		<View className="h-20 flex-row items-end gap-[3px]">
-			{data.map((d) => {
-				const pct = (d.count / max) * 100;
-				const heightPct = d.count > 0 ? Math.max(12, pct) : 4;
-				return (
-					<View key={d.date} className="h-full flex-1 justify-end">
-						<View
-							className={
-								d.count > 0
-									? "rounded-sm bg-primary"
-									: "rounded-sm bg-background-subtle"
-							}
-							style={{ height: `${heightPct}%` }}
-						/>
-					</View>
-				);
-			})}
+		<View>
+			{activeDay ? (
+				<View
+					onLayout={(e: LayoutChangeEvent) =>
+						setTooltipW(e.nativeEvent.layout.width)
+					}
+					className="absolute flex-row rounded-md border border-border bg-background px-2 py-1"
+					style={{
+						bottom: "100%",
+						marginBottom: 6,
+						left: tooltipLeft,
+						zIndex: 10,
+						shadowColor: "#000",
+						shadowOpacity: 0.12,
+						shadowRadius: 4,
+						shadowOffset: { width: 0, height: 2 },
+						elevation: 3,
+					}}
+				>
+					<Text className="font-medium text-foreground text-xs">
+						{formatDayLabel(activeDay.date)}
+					</Text>
+					<Text className="text-muted-foreground text-xs">
+						{" · "}
+						{activeDay.count} watched
+					</Text>
+				</View>
+			) : null}
+
+			<View
+				onLayout={(e: LayoutChangeEvent) =>
+					setContainerW(e.nativeEvent.layout.width)
+				}
+				className="h-20 flex-row items-end gap-[3px]"
+			>
+				{data.map((d, i) => {
+					const pct = (d.count / max) * 100;
+					const heightPct = d.count > 0 ? Math.max(12, pct) : 4;
+					const dimmed = active != null && active !== i;
+					return (
+						<Pressable
+							key={d.date}
+							onPress={() => setActive((cur) => (cur === i ? null : i))}
+							accessibilityLabel={`${formatDayLabel(d.date)}: ${d.count} watched`}
+							className="h-full flex-1 justify-end"
+							style={{ opacity: dimmed ? 0.5 : 1 }}
+						>
+							<View
+								className={
+									d.count > 0
+										? "rounded-sm bg-primary"
+										: "rounded-sm bg-background-subtle"
+								}
+								style={{ height: `${heightPct}%` }}
+							/>
+						</Pressable>
+					);
+				})}
+			</View>
 		</View>
 	);
 }
