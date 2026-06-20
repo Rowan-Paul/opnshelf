@@ -1,4 +1,5 @@
 import type { PublicUserProfileDto } from "@opnshelf/api";
+import { type Href, Link } from "expo-router";
 import {
 	ChevronRight,
 	Clock,
@@ -24,14 +25,26 @@ import {
 
 const POSTER_W = 120;
 
+function ViewAll() {
+	return (
+		<View className="flex-row items-center gap-1">
+			<Text className="font-medium text-primary text-sm">View all</Text>
+			<ChevronRight color="#f3bc00" size={15} />
+		</View>
+	);
+}
+
 function SectionHeader({
 	icon,
 	title,
 	onPressAll,
+	href,
 }: {
 	icon: React.ReactNode;
 	title: string;
 	onPressAll?: () => void;
+	/** When set, "View all" is a deep link instead of a callback. */
+	href?: Href;
 }) {
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
@@ -41,10 +54,15 @@ function SectionHeader({
 					{title}
 				</Text>
 			</View>
-			{onPressAll ? (
+			{href ? (
+				<Link href={href} asChild>
+					<Pressable className="flex-row items-center gap-1">
+						<ViewAll />
+					</Pressable>
+				</Link>
+			) : onPressAll ? (
 				<Pressable onPress={onPressAll} className="flex-row items-center gap-1">
-					<Text className="font-medium text-primary text-sm">View all</Text>
-					<ChevronRight color="#f3bc00" size={15} />
+					<ViewAll />
 				</Pressable>
 			) : null}
 		</View>
@@ -90,7 +108,7 @@ export function OverviewTab({
 }: {
 	profile: PublicUserProfileDto | undefined;
 	userDid: string;
-	onNavigate: (tab: ProfileTab) => void;
+	onNavigate: (tab: ProfileTab, shelfType?: "movie" | "episode") => void;
 }) {
 	const movies = useProfileRecentMovies(userDid, 10);
 	const episodes = useProfileRecentEpisodes(userDid, 10);
@@ -133,7 +151,7 @@ export function OverviewTab({
 				<SectionHeader
 					icon={<Film color="#f3bc00" size={18} />}
 					title="Recent Movies"
-					onPressAll={() => onNavigate("shelf")}
+					onPressAll={() => onNavigate("shelf", "movie")}
 				/>
 				<PosterRow items={movieItems} emptyText="No movies watched yet." />
 			</View>
@@ -142,7 +160,7 @@ export function OverviewTab({
 				<SectionHeader
 					icon={<Tv color="#f3bc00" size={18} />}
 					title="Recent Episodes"
-					onPressAll={() => onNavigate("shelf")}
+					onPressAll={() => onNavigate("shelf", "episode")}
 				/>
 				<PosterRow items={episodeItems} emptyText="No episodes watched yet." />
 			</View>

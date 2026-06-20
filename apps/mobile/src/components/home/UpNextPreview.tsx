@@ -34,7 +34,7 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 			<SectionHeader
 				icon={Tv}
 				title="Up Next"
-				href={handle ? (`/profile/${handle}` as const) : undefined}
+				href={handle ? (`/profile/${handle}?tab=up-next` as const) : undefined}
 			/>
 			{isLoading ? (
 				<LoadingState label="Loading your queue…" />

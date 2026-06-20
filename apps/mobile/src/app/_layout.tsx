@@ -97,6 +97,10 @@ export default function RootLayout() {
 				<Stack.Screen name="friends" options={{ headerShown: true }} />
 				<Stack.Screen name="lists/index" options={{ headerShown: true }} />
 				<Stack.Screen name="lists/[slug]" options={{ headerShown: true }} />
+				<Stack.Screen
+					name="list/[handle]/[slug]"
+					options={{ headerShown: true }}
+				/>
 				<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
 				<Stack.Screen name="profile/[handle]" options={{ headerShown: true }} />
 				<Stack.Screen name="movie/[id]" />

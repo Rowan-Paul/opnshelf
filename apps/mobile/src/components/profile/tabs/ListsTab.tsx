@@ -1,23 +1,23 @@
 import type { ListSummaryDto } from "@opnshelf/api";
+import { type Href, Link } from "expo-router";
 import { ChevronRight, ListChecks } from "lucide-react-native";
-import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { MediaCard } from "@/components/media/MediaCard";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { listItemToMediaCardItem } from "@/lib/list-media";
-import { useProfileList, useProfileLists } from "@/lib/use-public-profile";
-
-const POSTER_W = 110;
+import { useProfileLists } from "@/lib/use-public-profile";
 
 /**
- * Lists tab: the user's public list summaries. Tapping a list expands it inline
- * to show a horizontal preview of its items (fetched on demand from the public
- * list endpoint). Mirrors the web Lists page, kept compact for mobile.
+ * Lists tab: the user's public list summaries. Each row links to a dedicated
+ * read-only list page (`/list/[handle]/[slug]`) instead of expanding inline.
+ * Mirrors the web profile Lists page, which also routes to a per-list screen.
+ *
+ * The standalone list route resolves the owner from its `[handle]` segment and
+ * works for both real handles and raw DIDs. Since the parent profile screen
+ * passes only `userDid` here (not the handle), we pass the `userDid` as that
+ * segment — the route handles DID segments directly, so links work for any user.
  */
 export function ListsTab({ userDid }: { userDid: string }) {
 	const { data, isLoading, isError } = useProfileLists(userDid);
-	const [expanded, setExpanded] = useState<string | null>(null);
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -36,15 +36,7 @@ export function ListsTab({ userDid }: { userDid: string }) {
 			) : (
 				<View className="gap-3">
 					{data.map((list) => (
-						<ListRow
-							key={list.id}
-							list={list}
-							userDid={userDid}
-							expanded={expanded === list.slug}
-							onToggle={() =>
-								setExpanded((cur) => (cur === list.slug ? null : list.slug))
-							}
-						/>
+						<ListRow key={list.id} list={list} userDid={userDid} />
 					))}
 				</View>
 			)}
@@ -52,27 +44,12 @@ export function ListsTab({ userDid }: { userDid: string }) {
 	);
 }
 
-function ListRow({
-	list,
-	userDid,
-	expanded,
-	onToggle,
-}: {
-	list: ListSummaryDto;
-	userDid: string;
-	expanded: boolean;
-	onToggle: () => void;
-}) {
-	const { data: detail, isLoading } = useProfileList(
-		userDid,
-		list.slug,
-		expanded && list.itemCount > 0,
-	);
-	const items = detail?.items ?? [];
+function ListRow({ list, userDid }: { list: ListSummaryDto; userDid: string }) {
+	const href = `/list/${encodeURIComponent(userDid)}/${list.slug}` as Href;
 
 	return (
-		<View className="overflow-hidden rounded-xl border border-border bg-card">
-			<Pressable onPress={onToggle} className="flex-row items-center gap-3 p-4">
+		<Link href={href} asChild>
+			<Pressable className="flex-row items-center gap-3 overflow-hidden rounded-xl border border-border bg-card p-4">
 				<View className="min-w-0 flex-1">
 					<Text
 						className="font-semibold text-base text-foreground"
@@ -89,28 +66,8 @@ function ListRow({
 						{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
 					</Text>
 				</View>
-				<View style={{ transform: [{ rotate: expanded ? "90deg" : "0deg" }] }}>
-					<ChevronRight color="#94a3b8" size={18} />
-				</View>
+				<ChevronRight color="#94a3b8" size={18} />
 			</Pressable>
-
-			{expanded ? (
-				<View className="px-4 pb-4">
-					{list.itemCount === 0 ? (
-						<Text className="text-muted-foreground text-sm">Empty list.</Text>
-					) : isLoading ? (
-						<ActivityIndicator color="#94a3b8" />
-					) : (
-						<View className="flex-row flex-wrap gap-2">
-							{items.map((item) => (
-								<View key={item.id} style={{ width: POSTER_W }}>
-									<MediaCard item={listItemToMediaCardItem(item)} />
-								</View>
-							))}
-						</View>
-					)}
-				</View>
-			) : null}
-		</View>
+		</Link>
 	);
 }

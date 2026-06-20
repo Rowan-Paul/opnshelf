@@ -10,11 +10,11 @@ import { DetailHero } from "@/components/detail/DetailHero";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
+import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
-import { YourNote } from "@/components/detail/YourNote";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import {
 	backdropUrl,
@@ -68,12 +68,13 @@ export default function MovieDetailScreen() {
 
 					<AddToListButton mediaType="movie" mediaId={id} />
 
+					<NoteButton mediaType="movie" mediaId={id} />
+
 					<OverviewSection text={data.overview} />
 					<WatchProviders mediaType="movie" mediaId={id} />
 					<CastSection cast={data.credits?.cast} />
 					<CrewSection crew={data.credits?.crew} />
 					<CommunityReviews mediaType="movie" mediaId={id} />
-					<YourNote mediaType="movie" mediaId={id} />
 					<SimilarMedia mediaType="movie" mediaId={id} />
 				</ScrollView>
 			)}

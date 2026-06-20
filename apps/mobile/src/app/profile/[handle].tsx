@@ -27,16 +27,51 @@ import { usePublicProfile } from "@/lib/use-public-profile";
  * Router routes) so the header + profile query are shared and switching tabs is
  * instant; deep tabs are still reachable via the header counts ("View all").
  */
+const PROFILE_TABS: readonly ProfileTab[] = [
+	"overview",
+	"shelf",
+	"up-next",
+	"lists",
+	"notes",
+	"reviews",
+	"connections",
+];
+
+function toProfileTab(value: string | undefined): ProfileTab {
+	return value && (PROFILE_TABS as readonly string[]).includes(value)
+		? (value as ProfileTab)
+		: "overview";
+}
+
 export default function ProfileScreen() {
-	const { handle } = useLocalSearchParams<{ handle: string }>();
+	const {
+		handle,
+		tab: tabParam,
+		type: typeParam,
+	} = useLocalSearchParams<{
+		handle: string;
+		tab?: string;
+		type?: string;
+	}>();
 	const { user, isAuthenticated } = useAuth();
 
 	const { data: profile, isLoading, isError } = usePublicProfile(handle ?? "");
 
-	const [tab, setTab] = useState<ProfileTab>("overview");
+	const [tab, setTab] = useState<ProfileTab>(() => toProfileTab(tabParam));
+	const [shelfFilter, setShelfFilter] = useState<"all" | "movie" | "episode">(
+		() =>
+			typeParam === "movie" || typeParam === "episode" ? typeParam : "all",
+	);
 	const [connectionsTab, setConnectionsTab] = useState<
 		"followers" | "following"
 	>("followers");
+
+	// Switch tab from the Overview "View all" links; for the shelf, also carry
+	// the type filter so e.g. "Recent Movies → View all" lands on movies only.
+	const navigate = (next: ProfileTab, shelfType?: "movie" | "episode") => {
+		if (shelfType) setShelfFilter(shelfType);
+		setTab(next);
+	};
 
 	const userDid = profile?.did ?? "";
 	const isOwner = !!user?.did && user.did === userDid;
@@ -81,10 +116,14 @@ export default function ProfileScreen() {
 						<OverviewTab
 							profile={profile}
 							userDid={userDid}
-							onNavigate={setTab}
+							onNavigate={navigate}
 						/>
 					) : tab === "shelf" ? (
-						<ShelfTab userDid={userDid} />
+						<ShelfTab
+							key={`shelf-${shelfFilter}`}
+							userDid={userDid}
+							initialFilter={shelfFilter}
+						/>
 					) : tab === "up-next" ? (
 						<UpNextTab userDid={userDid} isOwner={isOwner} />
 					) : tab === "lists" ? (

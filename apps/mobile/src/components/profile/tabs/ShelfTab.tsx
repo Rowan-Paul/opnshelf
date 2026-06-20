@@ -1,12 +1,15 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
-import { Film, Search, Tv, X } from "lucide-react-native";
+import { Link } from "expo-router";
+import { Clock, Film, Search, Tv, X } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { PosterImage } from "@/components/media/PosterImage";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
+import { mediaHref } from "@/lib/media-href";
+import { posterUrl } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useProfileShelf } from "@/lib/use-public-profile";
 
@@ -19,22 +22,91 @@ const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
 	{ key: "episode", label: "TV", icon: Tv },
 ];
 
-function toCardItem(item: ShelfItem): MediaCardItem {
-	if (item.type === "movie") {
-		return {
-			id: Number(item.movieId),
-			type: "movie",
-			title: item.title,
-			posterPath: item.posterPath,
-			year: item.releaseYear ? String(item.releaseYear) : undefined,
-		};
-	}
-	return {
-		id: Number(item.showId),
-		type: "show",
-		title: item.showTitle,
-		posterPath: item.posterPath,
-	};
+function formatWatchedDate(iso?: string | null): string | undefined {
+	if (!iso) return undefined;
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return undefined;
+	return d.toLocaleDateString(undefined, {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	});
+}
+
+/**
+ * A single shelf entry. Mirrors the web shelf card: movies show the release
+ * year, episodes show an "S{n}E{n}" label + episode title; both show the
+ * watched date when available. Taps through to the matching detail route.
+ */
+function ShelfCard({ item }: { item: ShelfItem }) {
+	const isMovie = item.type === "movie";
+	const href = isMovie
+		? mediaHref({ mediaType: "movie", mediaId: String(item.movieId) })
+		: mediaHref({
+				mediaType: "episode",
+				mediaId: String(item.showId),
+				seasonNumber: item.seasonNumber,
+				episodeNumber: item.episodeNumber,
+			});
+
+	const watched = formatWatchedDate(item.watchedDate);
+
+	return (
+		<Link href={href} asChild>
+			<Pressable className="flex-1">
+				<View className="overflow-hidden rounded-lg border border-border bg-card">
+					<PosterImage
+						url={posterUrl(item.posterPath)}
+						className="aspect-2/3 w-full"
+					/>
+				</View>
+				{isMovie ? (
+					<>
+						<Text
+							className="mt-2 font-medium text-foreground text-sm"
+							numberOfLines={1}
+						>
+							{item.title}
+						</Text>
+						{item.releaseYear ? (
+							<Text className="mt-0.5 text-muted-foreground text-xs">
+								{item.releaseYear}
+							</Text>
+						) : null}
+					</>
+				) : (
+					<>
+						<Text
+							className="mt-2 font-medium text-foreground text-sm"
+							numberOfLines={1}
+						>
+							S{item.seasonNumber}E{item.episodeNumber}
+						</Text>
+						{item.episodeTitle ? (
+							<Text
+								className="mt-0.5 text-muted-foreground text-xs"
+								numberOfLines={1}
+							>
+								{item.episodeTitle}
+							</Text>
+						) : null}
+						<Text
+							className="mt-0.5 text-muted-foreground text-xs"
+							numberOfLines={1}
+						>
+							{item.showTitle}
+						</Text>
+					</>
+				)}
+				{watched ? (
+					<View className="mt-0.5 flex-row items-center gap-1">
+						<Clock color="#94a3b8" size={11} />
+						<Text className="text-muted-foreground text-xs">{watched}</Text>
+					</View>
+				) : null}
+			</Pressable>
+		</Link>
+	);
 }
 
 /**
@@ -42,8 +114,14 @@ function toCardItem(item: ShelfItem): MediaCardItem {
  * with type filter pills and a search box. Mirrors the web shelf page.
  * Rendered inside the parent screen's scroll view, so it does not own a list.
  */
-export function ShelfTab({ userDid }: { userDid: string }) {
-	const [filter, setFilter] = useState<Filter>("all");
+export function ShelfTab({
+	userDid,
+	initialFilter = "all",
+}: {
+	userDid: string;
+	initialFilter?: Filter;
+}) {
+	const [filter, setFilter] = useState<Filter>(initialFilter);
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState("");
 	const debounced = useDebounce(search.trim(), 350);
@@ -134,7 +212,7 @@ export function ShelfTab({ userDid }: { userDid: string }) {
 				<View className="flex-row flex-wrap">
 					{items.map((item) => (
 						<View key={item.id} className="w-1/3 px-1 pb-3">
-							<MediaCard item={toCardItem(item)} />
+							<ShelfCard item={item} />
 						</View>
 					))}
 				</View>

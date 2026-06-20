@@ -2,7 +2,7 @@ import { showsControllerGetSeasonDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
@@ -14,7 +14,6 @@ export default function SeasonDetailScreen() {
 		id: string;
 		seasonNumber: string;
 	}>();
-	const insets = useSafeAreaInsets();
 	const showId = Number(id);
 
 	const { data, isLoading, isError } = useQuery({
@@ -25,7 +24,7 @@ export default function SeasonDetailScreen() {
 	});
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+		<View className="flex-1 bg-background">
 			<Stack.Screen
 				options={{ headerShown: true, title: data?.name ?? "Season" }}
 			/>
@@ -36,7 +35,7 @@ export default function SeasonDetailScreen() {
 			) : (
 				<ScrollView
 					className="flex-1"
-					contentContainerClassName="gap-4 px-4 pb-12 pt-4"
+					contentContainerClassName="gap-4 px-4 pb-12 pt-2"
 					showsVerticalScrollIndicator={false}
 				>
 					<View>
@@ -80,6 +79,12 @@ export default function SeasonDetailScreen() {
 							))}
 						</View>
 					)}
+
+					<CommunityReviews
+						mediaType="show"
+						mediaId={id}
+						seasonNumber={Number(seasonNumber)}
+					/>
 				</ScrollView>
 			)}
 		</View>

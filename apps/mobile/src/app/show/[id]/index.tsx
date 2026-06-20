@@ -10,12 +10,12 @@ import { DetailHero } from "@/components/detail/DetailHero";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
+import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { SeasonCard } from "@/components/detail/SeasonCard";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
-import { YourNote } from "@/components/detail/YourNote";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
@@ -76,6 +76,8 @@ export default function ShowDetailScreen() {
 
 					<AddToListButton mediaType="show" mediaId={id} />
 
+					<NoteButton mediaType="show" mediaId={id} />
+
 					<OverviewSection text={data.overview} />
 
 					<WatchProviders mediaType="show" mediaId={id} />
@@ -103,7 +105,6 @@ export default function ShowDetailScreen() {
 
 					<CastSection cast={data.credits?.cast} />
 					<CommunityReviews mediaType="show" mediaId={id} />
-					<YourNote mediaType="show" mediaId={id} />
 					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}

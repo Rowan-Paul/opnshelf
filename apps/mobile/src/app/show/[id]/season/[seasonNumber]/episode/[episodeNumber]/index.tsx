@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Star } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { EpisodeWatchButton } from "@/components/detail/EpisodeWatchButton";
@@ -20,7 +19,6 @@ export default function EpisodeDetailScreen() {
 		seasonNumber: string;
 		episodeNumber: string;
 	}>();
-	const insets = useSafeAreaInsets();
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetEpisodeDetailsOptions({
@@ -30,7 +28,7 @@ export default function EpisodeDetailScreen() {
 	});
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+		<View className="flex-1 bg-background">
 			<Stack.Screen
 				options={{ headerShown: true, title: data?.name ?? "Episode" }}
 			/>
