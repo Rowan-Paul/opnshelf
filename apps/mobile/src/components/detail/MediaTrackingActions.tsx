@@ -4,6 +4,7 @@ import {
 	Check,
 	Eye,
 	RotateCcw,
+	Star,
 	StarOff,
 	X,
 } from "lucide-react-native";
@@ -174,31 +175,51 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				</Pressable>
 			</View>
 
-			<View className="flex-row items-center justify-between rounded-lg border border-border px-4 py-3">
-				<View className="flex-row items-center gap-3">
+			<View className="gap-3 rounded-xl border border-border bg-card p-4">
+				<View className="flex-row items-center justify-between">
+					<View className="flex-row items-center gap-2">
+						<View className="rounded-full bg-primary/20 p-1.5">
+							<Star color="#f3bc00" fill="#f3bc00" size={16} />
+						</View>
+						<Text className="font-semibold text-foreground text-sm">
+							Your rating
+						</Text>
+					</View>
+					{reviewState.rating > 0 ? (
+						<View className="flex-row items-baseline gap-0.5">
+							<Text className="font-bold font-display text-foreground text-xl">
+								{(reviewState.rating / 2).toFixed(1)}
+							</Text>
+							<Text className="text-muted-foreground text-sm">/ 5</Text>
+						</View>
+					) : null}
+				</View>
+
+				<View className="items-center gap-2 py-1">
 					<StarRating
 						rating={reviewState.rating}
 						onChange={reviewState.setRating}
-						size={24}
+						size={34}
 					/>
-					<Text className="text-muted-foreground text-sm">
-						{reviewState.rating > 0
-							? `${(reviewState.rating / 2).toFixed(1)} / 5`
-							: "Tap to rate"}
-					</Text>
+					{reviewState.hasRating ? (
+						<Pressable
+							hitSlop={8}
+							onPress={reviewState.clearRating}
+							disabled={reviewState.isClearingRating}
+							className="flex-row items-center gap-1 pt-0.5"
+							style={{ opacity: reviewState.isClearingRating ? 0.6 : 1 }}
+						>
+							<StarOff color="#94a3b8" size={14} />
+							<Text className="text-muted-foreground text-xs">
+								Clear rating
+							</Text>
+						</Pressable>
+					) : (
+						<Text className="text-muted-foreground text-xs">
+							Tap a star to rate
+						</Text>
+					)}
 				</View>
-				{reviewState.hasRating ? (
-					<Pressable
-						hitSlop={8}
-						onPress={reviewState.clearRating}
-						disabled={reviewState.isClearingRating}
-						className="flex-row items-center gap-1"
-						style={{ opacity: reviewState.isClearingRating ? 0.6 : 1 }}
-					>
-						<StarOff color="#94a3b8" size={16} />
-						<Text className="text-muted-foreground text-xs">Clear</Text>
-					</Pressable>
-				) : null}
 			</View>
 
 			<WatchDatePickerModal
