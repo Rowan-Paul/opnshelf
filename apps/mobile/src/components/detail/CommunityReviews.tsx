@@ -7,6 +7,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
+import { type Href, Link } from "expo-router";
 import { Heart, MessageSquare, User } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
@@ -134,28 +135,32 @@ function ReviewCard({
 	return (
 		<View className="gap-3 rounded-xl border border-border bg-card p-3">
 			<View className="flex-row items-center gap-3">
-				<View className="size-10 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
-					{review.userAvatar ? (
-						<Image
-							source={{ uri: review.userAvatar }}
-							style={avatarStyle}
-							contentFit="cover"
-						/>
-					) : (
-						<User color={MUTED} size={18} />
-					)}
-				</View>
-				<View className="min-w-0 flex-1">
-					<Text
-						className="font-medium text-foreground text-sm"
-						numberOfLines={1}
-					>
-						{displayName}
-					</Text>
-					<Text className="text-muted-foreground text-xs" numberOfLines={1}>
-						@{review.userHandle}
-					</Text>
-				</View>
+				<Link href={`/profile/${review.userHandle}` as Href} asChild>
+					<Pressable className="min-w-0 flex-1 flex-row items-center gap-3">
+						<View className="size-10 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+							{review.userAvatar ? (
+								<Image
+									source={{ uri: review.userAvatar }}
+									style={avatarStyle}
+									contentFit="cover"
+								/>
+							) : (
+								<User color={MUTED} size={18} />
+							)}
+						</View>
+						<View className="min-w-0 flex-1">
+							<Text
+								className="font-medium text-foreground text-sm"
+								numberOfLines={1}
+							>
+								{displayName}
+							</Text>
+							<Text className="text-muted-foreground text-xs" numberOfLines={1}>
+								@{review.userHandle}
+							</Text>
+						</View>
+					</Pressable>
+				</Link>
 				{review.authorRating != null && review.authorRating > 0 ? (
 					<StarRating rating={review.authorRating} size={14} />
 				) : null}
