@@ -43,6 +43,20 @@ export function yearFromDate(
 	return /^\d{4}$/.test(year) ? year : undefined;
 }
 
+/** Format an ISO date as a long, readable date (`12 June 2026`). */
+export function formatLongDate(
+	date: string | null | undefined,
+): string | undefined {
+	if (!date) return undefined;
+	const d = new Date(date);
+	if (Number.isNaN(d.getTime())) return undefined;
+	return d.toLocaleDateString(undefined, {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	});
+}
+
 /** Format a runtime in minutes as `1h 42m` / `42m`. */
 export function formatRuntime(
 	minutes: number | null | undefined,

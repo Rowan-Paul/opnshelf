@@ -7,6 +7,7 @@ import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
+import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
@@ -18,6 +19,7 @@ import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import {
 	backdropUrl,
+	formatLongDate,
 	formatRuntime,
 	posterUrl,
 	yearFromDate,
@@ -71,6 +73,25 @@ export default function MovieDetailScreen() {
 					</View>
 
 					<OverviewSection text={data.overview} />
+					<DetailsCard
+						items={[
+							{
+								label: "Director",
+								value:
+									data.credits?.crew?.find((p) => p.job === "Director")?.name ||
+									"Unknown",
+							},
+							{ label: "Runtime", value: formatRuntime(data.runtime) },
+							{
+								label: "Release",
+								value: formatLongDate(data.release_date) ?? "Unknown",
+							},
+							{
+								label: "Genres",
+								value: data.genres?.map((g) => g.name).join(", ") || "N/A",
+							},
+						]}
+					/>
 					<WatchProviders mediaType="movie" mediaId={id} />
 					<CastSection cast={data.credits?.cast} />
 					<CrewSection crew={data.credits?.crew} />

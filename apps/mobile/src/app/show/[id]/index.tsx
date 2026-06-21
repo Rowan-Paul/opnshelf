@@ -4,8 +4,9 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
-import { CastSection } from "@/components/detail/CreditsSection";
+import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
+import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
@@ -17,7 +18,12 @@ import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
+import {
+	backdropUrl,
+	formatLongDate,
+	posterUrl,
+	yearFromDate,
+} from "@/lib/tmdb";
 
 export default function ShowDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
@@ -79,6 +85,28 @@ export default function ShowDetailScreen() {
 					</View>
 
 					<OverviewSection text={data.overview} />
+					<DetailsCard
+						items={[
+							{
+								label: "Creator",
+								value:
+									data.credits?.crew?.find(
+										(p) =>
+											p.job === "Executive Producer" || p.job === "Creator",
+									)?.name || "Unknown",
+							},
+							{ label: "Seasons", value: data.number_of_seasons || 0 },
+							{ label: "Episodes", value: data.number_of_episodes || 0 },
+							{
+								label: "First Aired",
+								value: formatLongDate(data.first_air_date) ?? "Unknown",
+							},
+							{
+								label: "Genres",
+								value: data.genres?.map((g) => g.name).join(", ") || "N/A",
+							},
+						]}
+					/>
 
 					<WatchProviders mediaType="show" mediaId={id} />
 
@@ -105,6 +133,7 @@ export default function ShowDetailScreen() {
 					) : null}
 
 					<CastSection cast={data.credits?.cast} />
+					<CrewSection crew={data.credits?.crew} />
 					<CommunityReviews mediaType="show" mediaId={id} />
 					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
