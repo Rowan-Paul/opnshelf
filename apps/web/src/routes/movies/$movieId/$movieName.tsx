@@ -27,6 +27,7 @@ import {
 import CommunityReviews from "../../../components/CommunityReviews";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
+import { FriendWatchers } from "../../../components/FriendWatchers";
 import LoadingState from "../../../components/LoadingState";
 import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
@@ -308,6 +309,8 @@ function MovieDetailPage() {
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6 lg:row-span-2">
+						<FriendWatchers mediaType="movie" mediaId={movieId} />
+
 						<DetailsCard
 							items={[
 								{ label: "Director", value: director },

@@ -27,13 +27,13 @@ import { slugifyName } from "#/lib/url-utils";
 import CommunityReviews from "../../../../components/CommunityReviews";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
+import { FriendWatchers } from "../../../../components/FriendWatchers";
 import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
-import ReviewSection from "../../../../components/ReviewSection";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
@@ -469,6 +469,8 @@ function ShowDetailPage() {
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
+						<FriendWatchers mediaType="show" mediaId={showId} />
+
 						{/* Your Progress */}
 						{isAuthenticated && (
 							<ProgressCard
@@ -510,8 +512,6 @@ function ShowDetailPage() {
 								},
 							]}
 						/>
-
-						<ReviewSection mediaType="show" mediaId={showId} />
 
 						<WatchProviders
 							providers={watchProvidersData?.providers}

@@ -7,3 +7,4 @@ export * from "./useMediaWatchStatus";
 export * from "./useNotes";
 export * from "./usePerson";
 export * from "./useWatchActions";
+export * from "./useWatchers";

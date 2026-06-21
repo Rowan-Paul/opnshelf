@@ -82,7 +82,9 @@ export function useSuggestions() {
 export function useWatchers(
 	mediaType: "movie" | "show",
 	mediaId: string,
-	pageSize = 12,
+	// Backend caps watchers at 10 (`MAX_WATCHERS_PAGE_SIZE`); requesting more
+	// 400s the whole query, so keep the default at the allowed maximum.
+	pageSize = 10,
 ) {
 	const { isAuthenticated } = useAuth();
 	return useQuery({

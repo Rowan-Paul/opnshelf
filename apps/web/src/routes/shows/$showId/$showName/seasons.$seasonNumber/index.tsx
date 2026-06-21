@@ -27,6 +27,7 @@ import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
 import CommunityReviews from "../../../../../components/CommunityReviews";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
+import { FriendWatchers } from "../../../../../components/FriendWatchers";
 import LoadingState from "../../../../../components/LoadingState";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
@@ -466,6 +467,11 @@ function SeasonDetailPage() {
 
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
+						<FriendWatchers
+							mediaType="show"
+							mediaId={`${showId}:season:${seasonNum}`}
+						/>
+
 						{/* Your Progress */}
 						{isAuthenticated && (
 							<ProgressCard
