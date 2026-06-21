@@ -1,8 +1,12 @@
 import { Link } from "expo-router";
-import { Calendar, Check, Plus, X } from "lucide-react-native";
+import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
+import {
+	type WatchHistoryEntry,
+	WatchHistorySheet,
+} from "@/components/detail/WatchHistorySheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useWatchActions } from "@/lib/use-watch-actions";
@@ -48,6 +52,7 @@ function formatWatchedDate(iso?: string) {
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
+	const [historyVisible, setHistoryVisible] = useState(false);
 
 	const isMovie = props.mediaType === "movie";
 	const showId = props.mediaType === "movie" ? "" : props.showId;
@@ -132,6 +137,37 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 					? actions.isUnmarkSeasonPending
 					: actions.isUnmarkEpisodePending;
 
+	// Movies and episodes can hold multiple plays, so they expose a manageable
+	// watch history (list + per-entry delete); shows/seasons stay binary.
+	const canManageHistory =
+		props.mediaType === "movie" || props.mediaType === "episode";
+	let historyEntries: WatchHistoryEntry[] = [];
+	let historySubtitle: string | undefined;
+	if (props.mediaType === "movie") {
+		historyEntries = (status.movieWatchHistory ?? []).map((e) => ({
+			id: e.id,
+			watchedDate: e.watchedDate,
+		}));
+	} else if (props.mediaType === "episode") {
+		historyEntries = showHistory
+			.filter(
+				(e) =>
+					e.seasonNumber === props.seasonNumber &&
+					e.episodeNumber === props.episodeNumber,
+			)
+			.map((e) => ({ id: e.id, watchedDate: e.watchedDate }));
+		historySubtitle = `S${props.seasonNumber}E${props.episodeNumber}`;
+	}
+	const deleteHistoryEntry = (id: string) => {
+		if (props.mediaType === "movie") actions.deleteMovieWatchHistoryEntry(id);
+		else if (props.mediaType === "episode")
+			actions.deleteEpisodeWatchHistoryEntry(id);
+	};
+	const isDeletingHistoryEntry =
+		props.mediaType === "movie"
+			? actions.isDeleteMovieEntryPending
+			: actions.isDeleteEpisodeEntryPending;
+
 	const addToShelf = (watchedAt?: string) => {
 		switch (props.mediaType) {
 			case "movie":
@@ -200,7 +236,11 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	return (
 		<View className="gap-3 px-4">
 			{isOnShelf ? (
-				<View className="flex-row items-center gap-2 rounded-xl border border-border bg-card p-3">
+				<Pressable
+					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
+					disabled={!canManageHistory}
+					className="flex-row items-center gap-2 rounded-xl border border-border bg-card p-3"
+				>
 					<View className="rounded-full bg-primary/20 p-1.5">
 						<Check color="#22c55e" size={16} />
 					</View>
@@ -212,7 +252,8 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 							<Text className="text-muted-foreground text-xs">{detail}</Text>
 						) : null}
 					</View>
-				</View>
+					{canManageHistory ? <ChevronRight color="#94a3b8" size={18} /> : null}
+				</Pressable>
 			) : null}
 
 			<View className="flex-row gap-2">
@@ -258,6 +299,21 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				onConfirm={handleDateConfirm}
 				isLoading={isMarkPending}
 			/>
+
+			{canManageHistory ? (
+				<WatchHistorySheet
+					visible={historyVisible}
+					onDismiss={() => setHistoryVisible(false)}
+					title={historySubtitle}
+					entries={historyEntries}
+					onDelete={deleteHistoryEntry}
+					isDeleting={isDeletingHistoryEntry}
+					onAddWatch={() => {
+						setHistoryVisible(false);
+						setDatePickerVisible(true);
+					}}
+				/>
+			) : null}
 		</View>
 	);
 }

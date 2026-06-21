@@ -1,11 +1,13 @@
 import {
 	type EpisodeHistoryItemDto,
+	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 	shelfControllerGetUserActivitySummaryQueryKey,
 	shelfControllerGetUserShelfQueryKey,
+	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
@@ -170,6 +172,51 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 	});
 
+	const deleteMovieEntry = useMutation({
+		mutationKey: ["movies", movieId, "deleteWatchHistoryEntry"],
+		...moviesControllerDeleteWatchHistoryEntryMutation(),
+		onMutate: async (variables) => {
+			await Promise.all([
+				queryClient.cancelQueries({ queryKey: movieHistoryKey }),
+				queryClient.cancelQueries({ queryKey: userMoviesKey }),
+			]);
+			const prevHistory =
+				queryClient.getQueryData<WatchHistoryItemDto[]>(movieHistoryKey);
+			const prevUserMovies =
+				queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+			const id = variables.path?.trackedMovieId;
+			const next = (prevHistory ?? []).filter((e) => e.id !== id);
+			queryClient.setQueryData<WatchHistoryItemDto[]>(movieHistoryKey, next);
+			// Last play removed → the movie is no longer on the shelf.
+			if (next.length === 0) {
+				queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) =>
+					Array.isArray(old)
+						? old.filter((m) => String(m.movieId) !== movieId)
+						: old,
+				);
+			}
+			return { prevHistory, prevUserMovies };
+		},
+		onError: (error, _vars, context) => {
+			if (context?.prevHistory !== undefined) {
+				queryClient.setQueryData(movieHistoryKey, context.prevHistory);
+			}
+			if (context?.prevUserMovies !== undefined) {
+				queryClient.setQueryData(userMoviesKey, context.prevUserMovies);
+			}
+			toast.error(errorMessage(error, "Failed to delete watch"));
+		},
+		onSuccess: () => {
+			haptic(Haptics.ImpactFeedbackStyle.Light);
+			toast.success("Watch deleted");
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: movieHistoryKey });
+			queryClient.invalidateQueries({ queryKey: userMoviesKey });
+			invalidateShelf();
+		},
+	});
+
 	// --- Show keys ---
 	const showId = options.mediaType === "show" ? options.showId : "";
 	const showHistoryKey = showsControllerGetShowWatchHistoryQueryKey({
@@ -249,6 +296,36 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Light);
 			toast.success("Episode removed from shelf");
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: showHistoryKey });
+			invalidateShelf();
+		},
+	});
+
+	const deleteEpisodeEntry = useMutation({
+		mutationKey: ["shows", showId, "episodes", "deleteWatchHistoryEntry"],
+		...showsControllerDeleteEpisodeWatchHistoryEntryMutation(),
+		onMutate: async (variables) => {
+			await queryClient.cancelQueries({ queryKey: showHistoryKey });
+			const prevHistory =
+				queryClient.getQueryData<EpisodeHistoryItemDto[]>(showHistoryKey);
+			const id = variables.path?.trackedEpisodeId;
+			queryClient.setQueryData<EpisodeHistoryItemDto[]>(
+				showHistoryKey,
+				(old) => (Array.isArray(old) ? old.filter((e) => e.id !== id) : old),
+			);
+			return { prevHistory };
+		},
+		onError: (error, _vars, context) => {
+			if (context?.prevHistory !== undefined) {
+				queryClient.setQueryData(showHistoryKey, context.prevHistory);
+			}
+			toast.error(errorMessage(error, "Failed to delete watch"));
+		},
+		onSuccess: () => {
+			haptic(Haptics.ImpactFeedbackStyle.Light);
+			toast.success("Watch deleted");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -385,12 +462,24 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
+	const deleteMovieWatchHistoryEntry = (trackedMovieId: string) => {
+		if (!isAuthenticated || options.mediaType !== "movie") return;
+		deleteMovieEntry.mutate({ path: { trackedMovieId } });
+	};
+
+	const deleteEpisodeWatchHistoryEntry = (trackedEpisodeId: string) => {
+		if (!isAuthenticated || options.mediaType !== "show") return;
+		deleteEpisodeEntry.mutate({ path: { trackedEpisodeId } });
+	};
+
 	return {
 		// Movie
 		markMovieWatched,
 		unmarkMovieWatched,
+		deleteMovieWatchHistoryEntry,
 		isMarkMoviePending: markMovie.isPending,
 		isUnmarkMoviePending: unmarkMovie.isPending,
+		isDeleteMovieEntryPending: deleteMovieEntry.isPending,
 		// Show
 		markEpisodeWatched,
 		unmarkEpisodeWatched,
@@ -398,8 +487,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		unmarkShowWatched,
 		markSeasonWatched,
 		unmarkSeasonWatched,
+		deleteEpisodeWatchHistoryEntry,
 		isMarkEpisodePending: markEpisode.isPending,
 		isUnmarkEpisodePending: unmarkEpisode.isPending,
+		isDeleteEpisodeEntryPending: deleteEpisodeEntry.isPending,
 		isMarkShowPending: markShow.isPending,
 		isUnmarkShowPending: unmarkShow.isPending,
 		isMarkSeasonPending: markSeason.isPending,
