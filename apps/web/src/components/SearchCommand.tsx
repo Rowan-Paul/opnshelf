@@ -260,6 +260,119 @@ export function SearchCommand({
 		});
 	};
 
+	// Local, instantly-filterable palette entries (pages + actions). Lists come
+	// from userLists. Matching is plain substring, not cmdk fuzzy — the command
+	// has shouldFilter:false so cmdk never hides server-ranked media/people.
+	// ponytail: substring match; swap in a fuzzy scorer only if users complain.
+	const pages = isAuthenticated
+		? [
+				{
+					key: "dashboard",
+					label: "Dashboard",
+					Icon: Home,
+					run: () => goTo("/dashboard"),
+				},
+				{
+					key: "calendar",
+					label: "Calendar",
+					Icon: Calendar,
+					run: () => goTo("/calendar"),
+				},
+				{
+					key: "following",
+					label: "Following",
+					Icon: Users,
+					run: () => goTo("/following"),
+				},
+				...(currentUserHandle
+					? [
+							{
+								key: "up-next",
+								label: "Up Next",
+								Icon: Clock,
+								run: () =>
+									goTo("/profile/$handle/up-next", {
+										handle: currentUserHandle,
+									}),
+							},
+							{
+								key: "profile",
+								label: "Profile",
+								Icon: User,
+								run: () =>
+									goTo("/profile/$handle", { handle: currentUserHandle }),
+							},
+							{
+								key: "lists",
+								label: "Lists",
+								Icon: List,
+								run: () =>
+									goTo("/profile/$handle/lists", { handle: currentUserHandle }),
+							},
+						]
+					: []),
+			]
+		: [];
+
+	const actions = [
+		{
+			key: "settings",
+			label: "Settings",
+			keywords: "",
+			Icon: Settings,
+			run: () => goTo("/settings"),
+		},
+		{
+			key: "theme",
+			label: themeLabels[themeMode],
+			keywords: "theme appearance dark light system mode",
+			Icon: ThemeIcon,
+			run: cycleTheme,
+		},
+		{
+			key: "feedback",
+			label: "Send feedback",
+			keywords: "bug report feature request",
+			Icon: MessageSquare,
+			run: () => {
+				handleOpenChange(false);
+				setFeedbackOpen(true);
+			},
+		},
+		...(currentUserHandle
+			? [
+					{
+						key: "sign-out",
+						label: "Sign Out",
+						keywords: "logout log out",
+						Icon: LogOut,
+						run: () => {
+							handleOpenChange(false);
+							logout();
+						},
+					},
+				]
+			: []),
+	];
+
+	const q = debouncedQuery.trim().toLowerCase();
+	const matchedPages = q
+		? pages.filter((p) => p.label.toLowerCase().includes(q))
+		: [];
+	const matchedActions = q
+		? actions.filter((a) =>
+				`${a.label} ${a.keywords}`.toLowerCase().includes(q),
+			)
+		: [];
+	const matchedLists =
+		q && userLists
+			? userLists.filter((l) => l.name.toLowerCase().includes(q))
+			: [];
+	const hasLocalMatches =
+		matchedPages.length > 0 ||
+		matchedActions.length > 0 ||
+		matchedLists.length > 0;
+
 	return (
 		<>
 			<button
@@ -286,6 +399,58 @@ export function SearchCommand({
 					onValueChange={setSearchQuery}
 				/>
 				<CommandList>
+					{/* Local matches — pages, lists, actions — surfaced on top while searching */}
+					{hasSearchQuery && matchedPages.length > 0 && (
+						<CommandGroup heading="Pages">
+							{matchedPages.map(({ key, label, Icon, run }) => (
+								<CommandItem
+									key={`page-${key}`}
+									value={`page ${label}`}
+									onSelect={run}
+								>
+									<Icon className="shrink-0" />
+									<span>{label}</span>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					)}
+
+					{hasSearchQuery && matchedLists.length > 0 && currentUserHandle && (
+						<CommandGroup heading="Lists">
+							{matchedLists.map((list: ListSummaryDto) => (
+								<CommandItem
+									key={`list-${list.id}`}
+									value={`list ${list.name}`}
+									onSelect={() =>
+										goTo("/profile/$handle/lists/$listSlug", {
+											handle: currentUserHandle,
+											listSlug: list.slug,
+										})
+									}
+								>
+									<List className="shrink-0" />
+									<span className="truncate">{list.name}</span>
+									<CommandShortcut>{list.itemCount} items</CommandShortcut>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					)}
+
+					{hasSearchQuery && matchedActions.length > 0 && (
+						<CommandGroup heading="Actions">
+							{matchedActions.map(({ key, label, Icon, run }) => (
+								<CommandItem
+									key={`action-${key}`}
+									value={`action ${label}`}
+									onSelect={run}
+								>
+									<Icon className="shrink-0" />
+									<span>{label}</span>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					)}
+
 					{/* Loading */}
 					{hasSearchQuery && isLoading && (
 						<div className="flex items-center justify-center py-8 text-(--foreground-muted)">
@@ -303,15 +468,19 @@ export function SearchCommand({
 					)}
 
 					{/* Empty state */}
-					{hasSearchQuery && !isLoading && !hasError && !hasSearchResults && (
-						<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
-							<Search className="size-8 opacity-50" />
-							<p>No results found for &quot;{debouncedQuery}&quot;</p>
-							<p className="text-sm">
-								Try searching for movies, TV shows, or people
-							</p>
-						</div>
-					)}
+					{hasSearchQuery &&
+						!isLoading &&
+						!hasError &&
+						!hasSearchResults &&
+						!hasLocalMatches && (
+							<div className="flex flex-col items-center gap-2 py-6 text-(--foreground-muted)">
+								<Search className="size-8 opacity-50" />
+								<p>No results found for &quot;{debouncedQuery}&quot;</p>
+								<p className="text-sm">
+									Try searching for movies, TV shows, or people
+								</p>
+							</div>
+						)}
 
 					{/* Search results */}
 					{hasSearchQuery && !isLoading && !hasError && hasSearchResults && (
@@ -507,71 +676,83 @@ export function SearchCommand({
 					)}
 
 					{/* Your Lists */}
-					{userLists && userLists.length > 0 && currentUserHandle && (
+					{!hasSearchQuery &&
+						userLists &&
+						userLists.length > 0 &&
+						currentUserHandle && (
+							<>
+								<CommandSeparator />
+								<CommandGroup heading="Your Lists">
+									{userLists
+										.slice(0, RESULTS_PER_SECTION)
+										.map((list: ListSummaryDto) => (
+											<CommandItem
+												key={`list-${list.id}`}
+												value={`list ${list.name}`}
+												onSelect={() =>
+													goTo("/profile/$handle/lists/$listSlug", {
+														handle: currentUserHandle,
+														listSlug: list.slug,
+													})
+												}
+											>
+												<List />
+												<span>{list.name}</span>
+												<CommandShortcut>
+													{list.itemCount} items
+												</CommandShortcut>
+											</CommandItem>
+										))}
+								</CommandGroup>
+							</>
+						)}
+
+					{/* Quick Actions */}
+					{!hasSearchQuery && (
 						<>
 							<CommandSeparator />
-							<CommandGroup heading="Your Lists">
-								{userLists
-									.slice(0, RESULTS_PER_SECTION)
-									.map((list: ListSummaryDto) => (
-										<CommandItem
-											key={`list-${list.id}`}
-											value={`list ${list.name}`}
-											onSelect={() =>
-												goTo("/profile/$handle/lists/$listSlug", {
-													handle: currentUserHandle,
-													listSlug: list.slug,
-												})
-											}
-										>
-											<List />
-											<span>{list.name}</span>
-											<CommandShortcut>{list.itemCount} items</CommandShortcut>
-										</CommandItem>
-									))}
+							<CommandGroup heading="Quick Actions">
+								<CommandItem
+									value="settings"
+									onSelect={() => goTo("/settings")}
+								>
+									<Settings />
+									<span>Settings</span>
+								</CommandItem>
+								<CommandItem
+									value="theme"
+									onSelect={() => {
+										cycleTheme();
+									}}
+								>
+									<ThemeIcon className="h-4 w-4" />
+									<span>{themeLabels[themeMode]}</span>
+								</CommandItem>
+								<CommandItem
+									value="feedback"
+									onSelect={() => {
+										handleOpenChange(false);
+										setFeedbackOpen(true);
+									}}
+								>
+									<MessageSquare className="h-4 w-4" />
+									<span>Send feedback</span>
+								</CommandItem>
+								{currentUserHandle && (
+									<CommandItem
+										value="sign out"
+										onSelect={() => {
+											handleOpenChange(false);
+											logout();
+										}}
+									>
+										<LogOut />
+										<span>Sign Out</span>
+									</CommandItem>
+								)}
 							</CommandGroup>
 						</>
 					)}
-
-					{/* Quick Actions */}
-					<CommandSeparator />
-					<CommandGroup heading="Quick Actions">
-						<CommandItem value="settings" onSelect={() => goTo("/settings")}>
-							<Settings />
-							<span>Settings</span>
-						</CommandItem>
-						<CommandItem
-							value="theme"
-							onSelect={() => {
-								cycleTheme();
-							}}
-						>
-							<ThemeIcon className="h-4 w-4" />
-							<span>{themeLabels[themeMode]}</span>
-						</CommandItem>
-						<CommandItem
-							value="feedback"
-							onSelect={() => {
-								handleOpenChange(false);
-								setFeedbackOpen(true);
-							}}
-						>
-							<MessageSquare className="h-4 w-4" />
-							<span>Send feedback</span>
-						</CommandItem>
-						{currentUserHandle && (
-							<CommandItem
-								value="sign out"
-								onSelect={() => {
-									handleOpenChange(false);
-									logout();
-								}}
-							>
-								<LogOut />
-								<span>Sign Out</span>
-							</CommandItem>
-						)}
-					</CommandGroup>
 				</CommandList>
 			</CommandDialog>
 
