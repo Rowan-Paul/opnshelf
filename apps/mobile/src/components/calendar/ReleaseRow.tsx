@@ -20,6 +20,30 @@ function displayTitle(item: ReleaseCalendarItemDto): string {
 	return item.title;
 }
 
+/** Short absolute day, e.g. `Jun 25`. */
+function shortDate(dateStr: string): string {
+	const d = new Date(dateStr);
+	if (Number.isNaN(d.getTime())) return "";
+	return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Relative label mirroring the web dashboard: Today / Tomorrow / in N days. */
+function relativeDate(dateStr: string): string | undefined {
+	const release = new Date(dateStr);
+	if (Number.isNaN(release.getTime())) return undefined;
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	release.setHours(0, 0, 0, 0);
+	const diffDays = Math.ceil(
+		(release.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+	);
+	if (diffDays < 0) return undefined;
+	if (diffDays === 0) return "Today";
+	if (diffDays === 1) return "Tomorrow";
+	if (diffDays < 7) return `in ${diffDays} days`;
+	return `in ${Math.ceil(diffDays / 7)} weeks`;
+}
+
 function hrefFor(item: ReleaseCalendarItemDto): Href | null {
 	if (item.mediaType === "movie" && item.movieId) {
 		return `/movie/${item.movieId}` as const;
@@ -64,8 +88,13 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						<Tv color="#94a3b8" size={13} />
 					)}
 					<Text className="text-muted-foreground text-xs">
-						{isMovie ? "Movie" : "TV"}
+						{shortDate(item.releaseDate)}
 					</Text>
+					{relativeDate(item.releaseDate) ? (
+						<Text className="font-medium text-primary text-xs">
+							• {relativeDate(item.releaseDate)}
+						</Text>
+					) : null}
 				</View>
 			</View>
 			<ChevronRight color="#94a3b8" size={18} />

@@ -31,7 +31,7 @@ const PAGE_SIZE = 20;
 export default function ActivityScreen() {
 	const insets = useSafeAreaInsets();
 	const [refreshing, setRefreshing] = useState(false);
-	const listStyle = useTwStyle("gap-3 px-4 pb-8");
+	const listStyle = useTwStyle("px-4 pb-8");
 
 	const {
 		data,
@@ -108,6 +108,7 @@ export default function ActivityScreen() {
 					data={items}
 					keyExtractor={(item) => item.id}
 					renderItem={({ item }) => <ActivityCard activity={item} />}
+					ItemSeparatorComponent={() => <View className="h-5" />}
 					contentContainerStyle={listStyle}
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}

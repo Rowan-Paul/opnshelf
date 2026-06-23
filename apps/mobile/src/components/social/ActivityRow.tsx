@@ -7,22 +7,16 @@ import { StarRating } from "@/components/detail/StarRating";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
 
-/** Format an ISO timestamp as a short relative string ("2h ago", "3d ago"). */
-export function relativeTime(iso: string): string {
-	const then = new Date(iso).getTime();
-	if (Number.isNaN(then)) return "";
-	const diffMs = Date.now() - then;
-	const diffMins = Math.round(diffMs / 60000);
-	if (diffMins < 1) return "just now";
-	if (diffMins < 60) return `${diffMins}m ago`;
-	const diffHours = Math.round(diffMins / 60);
-	if (diffHours < 24) return `${diffHours}h ago`;
-	const diffDays = Math.round(diffHours / 24);
-	if (diffDays < 7) return `${diffDays}d ago`;
-	const diffWeeks = Math.round(diffDays / 7);
-	if (diffWeeks < 4) return `${diffWeeks}w ago`;
-	const diffMonths = Math.round(diffDays / 30);
-	return `${diffMonths}mo ago`;
+/** Absolute date + time, mirroring web ("Jun 18, 3:42 PM"). */
+export function formatActivityDate(iso: string): string {
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return "";
+	return d.toLocaleString(undefined, {
+		month: "short",
+		day: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	});
 }
 
 /** Route to the media detail for an activity item. */
@@ -141,7 +135,7 @@ export function ActivityRow({
 				<View className="mt-1 flex-row items-center gap-1.5">
 					<Clock color="#94a3b8" size={12} />
 					<Text className="text-muted-foreground text-xs">
-						{relativeTime(activity.activityAt)}
+						{formatActivityDate(activity.activityAt)}
 					</Text>
 				</View>
 			</View>

@@ -7,7 +7,7 @@ import { StarRating } from "@/components/detail/StarRating";
 import { PosterImage } from "@/components/media/PosterImage";
 import {
 	activityMediaHref,
-	relativeTime,
+	formatActivityDate,
 } from "@/components/social/ActivityRow";
 import { MediaActionBar } from "@/components/social/MediaActionBar";
 import { Text } from "@/components/ui/text";
@@ -78,121 +78,118 @@ export function ActivityCard({
 			: undefined;
 
 	return (
-		<View
-			className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4"
-			style={
-				accent ? { borderLeftWidth: 3, borderLeftColor: accent } : undefined
-			}
-		>
-			{/* Actor + action header — full width on top so the poster doesn't leave
+		// Whole card taps through to the media page. Nested pressables (the
+		// actor avatar/name → profile, and the action bar buttons) win their own
+		// touch region via RN's responder system, so they don't trigger this.
+		<Link href={mediaHref} asChild>
+			<Pressable
+				className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4"
+				style={
+					accent ? { borderLeftWidth: 3, borderLeftColor: accent } : undefined
+				}
+			>
+				{/* Actor + action header — full width on top so the poster doesn't leave
 			    a gap beside a short content column. */}
-			<View className="flex-row items-start gap-2">
-				<Link href={`/profile/${activity.actor.handle}` as const} asChild>
-					<Pressable className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
-						{avatar ? (
-							<Image
-								source={{ uri: avatar }}
-								style={avatarStyle}
-								contentFit="cover"
-							/>
-						) : (
-							<User color="#94a3b8" size={16} />
-						)}
-					</Pressable>
-				</Link>
-				<View className="min-w-0 flex-1">
-					<Text className="text-foreground text-sm">
-						<Link href={`/profile/${activity.actor.handle}` as const}>
-							<Text className="font-semibold text-foreground text-sm">
-								{name}
-							</Text>
-						</Link>
-						<Text className="text-muted-foreground text-sm"> {verb} </Text>
-						<Link href={mediaHref}>
+				<View className="flex-row items-start gap-2">
+					<Link href={`/profile/${activity.actor.handle}` as const} asChild>
+						<Pressable className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+							{avatar ? (
+								<Image
+									source={{ uri: avatar }}
+									style={avatarStyle}
+									contentFit="cover"
+								/>
+							) : (
+								<User color="#94a3b8" size={16} />
+							)}
+						</Pressable>
+					</Link>
+					<View className="min-w-0 flex-1">
+						<Text className="text-foreground text-sm">
+							<Link href={`/profile/${activity.actor.handle}` as const}>
+								<Text className="font-semibold text-foreground text-sm">
+									{name}
+								</Text>
+							</Link>
+							<Text className="text-muted-foreground text-sm"> {verb} </Text>
 							<Text className="font-medium text-foreground text-sm">
 								{mediaTitle}
 							</Text>
-						</Link>
-					</Text>
-					<View className="mt-0.5 flex-row items-center gap-1.5">
-						<Clock color="#94a3b8" size={12} />
-						<Text className="text-muted-foreground text-xs">
-							{relativeTime(activity.activityAt)}
+						</Text>
+						<View className="mt-0.5 flex-row items-center gap-1.5">
+							<Clock color="#94a3b8" size={12} />
+							<Text className="text-muted-foreground text-xs">
+								{formatActivityDate(activity.activityAt)}
+							</Text>
+						</View>
+					</View>
+					<View
+						className={`shrink-0 rounded-full px-2 py-0.5 ${isMovieish ? "bg-background-subtle" : "bg-primary"}`}
+					>
+						<Text
+							className={`font-medium text-xs ${isMovieish ? "text-muted-foreground" : "text-primary-foreground"}`}
+						>
+							{isMovieish ? "Movie" : "TV"}
 						</Text>
 					</View>
 				</View>
-				<View
-					className={`shrink-0 rounded-full px-2 py-0.5 ${isMovieish ? "bg-background-subtle" : "bg-primary"}`}
-				>
-					<Text
-						className={`font-medium text-xs ${isMovieish ? "text-muted-foreground" : "text-primary-foreground"}`}
-					>
-						{isMovieish ? "Movie" : "TV"}
-					</Text>
-				</View>
-			</View>
 
-			{/* Poster + media details */}
-			<View className="flex-row gap-3">
-				<Link href={mediaHref} asChild>
-					<Pressable className="overflow-hidden rounded-lg border border-border bg-background-subtle">
+				{/* Poster + media details */}
+				<View className="flex-row gap-3">
+					<View className="overflow-hidden rounded-lg border border-border bg-background-subtle">
 						<PosterImage url={poster} className="h-32 w-20" />
-					</Pressable>
-				</Link>
+					</View>
 
-				<View className="min-w-0 flex-1 gap-1.5">
-					{/* Episode identifier */}
-					{episodeLabel ? (
-						<Link href={mediaHref} asChild>
-							<Pressable>
-								<Text
-									className="font-semibold text-foreground text-sm"
-									numberOfLines={1}
-								>
-									{episodeLabel}
-								</Text>
-							</Pressable>
-						</Link>
-					) : null}
+					<View className="min-w-0 flex-1 gap-1.5">
+						{/* Episode identifier */}
+						{episodeLabel ? (
+							<Text
+								className="font-semibold text-foreground text-sm"
+								numberOfLines={1}
+							>
+								{episodeLabel}
+							</Text>
+						) : null}
 
-					{/* Review rating */}
-					{isReview && activity.rating ? (
-						<StarRating rating={activity.rating} size={14} />
-					) : null}
+						{/* Review rating */}
+						{isReview && activity.rating ? (
+							<StarRating rating={activity.rating} size={14} />
+						) : null}
 
-					{/* Excerpt: review content or synopsis */}
-					{excerpt ? (
-						<Text className="text-muted-foreground text-sm" numberOfLines={3}>
-							{excerpt}
-						</Text>
-					) : null}
+						{/* Excerpt: review content or synopsis */}
+						{excerpt ? (
+							<Text className="text-muted-foreground text-sm" numberOfLines={3}>
+								{excerpt}
+							</Text>
+						) : null}
 
-					{/* Inline actions for watch items (reviews stay read-only, as on web) */}
-					{!isReview ? (
-						isMovieish ? (
-							<MediaActionBar
-								type="movie"
-								id={String(activity.movieId)}
-								title={activity.title || ""}
-							/>
-						) : activity.showId ? (
-							<MediaActionBar
-								type="show"
-								id={String(activity.showId)}
-								title={activity.showTitle || ""}
-								episode={
-									activity.seasonNumber && activity.episodeNumber
-										? {
-												seasonNumber: activity.seasonNumber,
-												episodeNumber: activity.episodeNumber,
-											}
-										: undefined
-								}
-							/>
-						) : null
-					) : null}
+						{/* Inline actions for watch items (reviews stay read-only, as on web) */}
+						{!isReview ? (
+							isMovieish ? (
+								<MediaActionBar
+									type="movie"
+									id={String(activity.movieId)}
+									title={activity.title || ""}
+								/>
+							) : activity.showId ? (
+								<MediaActionBar
+									type="show"
+									id={String(activity.showId)}
+									title={activity.showTitle || ""}
+									episode={
+										activity.seasonNumber && activity.episodeNumber
+											? {
+													seasonNumber: activity.seasonNumber,
+													episodeNumber: activity.episodeNumber,
+												}
+											: undefined
+									}
+								/>
+							) : null
+						) : null}
+					</View>
 				</View>
-			</View>
-		</View>
+			</Pressable>
+		</Link>
 	);
 }
