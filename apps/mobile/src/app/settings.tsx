@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Alert,
+	Modal,
 	Pressable,
 	ScrollView,
 	Switch,
@@ -340,7 +341,15 @@ export default function SettingsScreen() {
 
 	return (
 		<>
-			<Stack.Screen options={{ title: "Settings" }} />
+			<Stack.Screen
+				options={{
+					title: "Settings",
+					// While a PDS deletion job runs, lock the user on this screen:
+					// hide the back button and disable the iOS swipe-back gesture.
+					headerBackVisible: !isDeleting,
+					gestureEnabled: !isDeleting,
+				}}
+			/>
 			<Screen topInset={false}>
 				<ScrollView
 					className="flex-1"
@@ -640,6 +649,45 @@ export default function SettingsScreen() {
 					</Pressable>
 				</ScrollView>
 			</Screen>
+
+			{/* Non-dismissible blocking overlay during PDS deletion — mirrors the web
+			    dialog. Covers the screen and the no-op onRequestClose swallows the
+			    Android hardware back, so the user can't navigate away mid-deletion
+			    (back button + swipe are also disabled via the Stack.Screen above). */}
+			<Modal
+				visible={isDeleting}
+				transparent
+				animationType="fade"
+				onRequestClose={() => {}}
+			>
+				<View className="flex-1 items-center justify-center bg-black/70 p-6">
+					<View className="w-full max-w-sm gap-4 rounded-2xl border border-destructive/40 bg-card p-6">
+						<View className="flex-row items-center gap-2">
+							<AlertTriangle color="#ef4444" size={20} />
+							<Text className="font-display font-semibold text-destructive text-lg">
+								Deleting your account
+							</Text>
+						</View>
+						<Text className="text-muted-foreground text-sm leading-5">
+							Please don't close the app until deletion is complete.
+						</Text>
+						<View className="flex-row items-center gap-2">
+							<ActivityIndicator size="small" color="#ef4444" />
+							<Text className="flex-1 font-medium text-destructive text-sm">
+								{deletionMessage}
+							</Text>
+						</View>
+						{deletionProgress !== null ? (
+							<View className="h-2 w-full overflow-hidden rounded-full bg-destructive/20">
+								<View
+									className="h-full rounded-full bg-destructive"
+									style={{ width: `${deletionProgress}%` }}
+								/>
+							</View>
+						) : null}
+					</View>
+				</View>
+			</Modal>
 		</>
 	);
 }

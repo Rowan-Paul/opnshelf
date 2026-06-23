@@ -15,6 +15,7 @@ import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { SeasonCard } from "@/components/detail/SeasonCard";
+import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
@@ -26,6 +27,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { webMediaUrl } from "@/lib/web-url";
 
 export default function ShowDetailScreen() {
 	const { id, reviewId } = useLocalSearchParams<{
@@ -96,6 +98,10 @@ export default function ShowDetailScreen() {
 						<RatingButton mediaType="show" mediaId={id} />
 						<AddToListButton mediaType="show" mediaId={id} />
 						<NoteButton mediaType="show" mediaId={id} />
+						<ShareButton
+							url={webMediaUrl({ type: "show", id, name: data.name })}
+							title={data.name}
+						/>
 					</View>
 
 					<OverviewSection text={data.overview} />

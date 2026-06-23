@@ -13,8 +13,8 @@ import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import type { ProfileTab } from "@/components/profile/ProfileTabBar";
+import { ReviewExcerpt } from "@/components/profile/ReviewExcerpt";
 import { StatsStrip } from "@/components/profile/StatsStrip";
-import { Markdown } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import {
@@ -208,9 +208,10 @@ export function OverviewTab({
 								meta={review.reviewTitle}
 							>
 								{review.markdown ? (
-									<View className="max-h-24 overflow-hidden">
-										<Markdown value={review.markdown} />
-									</View>
+									<ReviewExcerpt
+										markdown={review.markdown}
+										className="max-h-24"
+									/>
 								) : null}
 							</ProfileContentCard>
 						))}

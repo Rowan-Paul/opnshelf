@@ -3,7 +3,7 @@ import { Star } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
-import { Markdown } from "@/components/ui/Markdown";
+import { ReviewExcerpt } from "@/components/profile/ReviewExcerpt";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
@@ -82,9 +82,7 @@ function ReviewCard({ review }: { review: UserReviewDto }) {
 				</Text>
 			) : null}
 			{review.markdown ? (
-				<View className="max-h-40 overflow-hidden">
-					<Markdown value={review.markdown} />
-				</View>
+				<ReviewExcerpt markdown={review.markdown} className="max-h-40" />
 			) : null}
 		</ProfileContentCard>
 	);

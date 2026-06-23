@@ -20,6 +20,7 @@ import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
@@ -33,6 +34,7 @@ import {
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { useUpNext } from "@/lib/use-up-next";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { webMediaUrl } from "@/lib/web-url";
 
 export default function SeasonDetailScreen() {
 	const { id, seasonNumber, reviewId } = useLocalSearchParams<{
@@ -175,6 +177,17 @@ export default function SeasonDetailScreen() {
 							mediaId={id}
 							seasonNumber={seasonNum}
 						/>
+						{showData?.name ? (
+							<ShareButton
+								url={webMediaUrl({
+									type: "season",
+									showId: id,
+									showName: showData.name,
+									seasonNumber: seasonNum,
+								})}
+								title={`${showData.name} — ${data.name}`}
+							/>
+						) : null}
 					</View>
 
 					{prevSeason || nextSeason ? (

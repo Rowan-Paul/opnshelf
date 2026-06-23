@@ -15,6 +15,7 @@ import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
@@ -26,6 +27,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { webMediaUrl } from "@/lib/web-url";
 
 export default function MovieDetailScreen() {
 	const { id, reviewId } = useLocalSearchParams<{
@@ -84,6 +86,10 @@ export default function MovieDetailScreen() {
 						<RatingButton mediaType="movie" mediaId={id} />
 						<AddToListButton mediaType="movie" mediaId={id} />
 						<NoteButton mediaType="movie" mediaId={id} />
+						<ShareButton
+							url={webMediaUrl({ type: "movie", id, name: data.title })}
+							title={data.title}
+						/>
 					</View>
 
 					<OverviewSection text={data.overview} />
