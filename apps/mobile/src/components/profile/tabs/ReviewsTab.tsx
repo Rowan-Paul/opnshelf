@@ -72,7 +72,7 @@ function ReviewCard({ review }: { review: UserReviewDto }) {
 					? `https://image.tmdb.org/t/p/w300${review.posterPath}`
 					: undefined
 			}
-			href={mediaHref(review)}
+			href={mediaHref({ ...review, reviewId: review.id })}
 			title={review.title || "Unknown"}
 			meta={new Date(review.createdAt).toLocaleDateString()}
 		>

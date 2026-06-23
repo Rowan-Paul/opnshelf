@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import type { Href } from "expo-router";
 import { useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -70,6 +71,11 @@ export default function HomeScreen() {
 						mostWatchedShow={profile?.mostWatchedShow ?? null}
 						watchedThisYear={profile?.watchedThisYear ?? 0}
 						reviewsCount={profile?.reviewsCount ?? 0}
+						reviewsHref={
+							user?.handle
+								? (`/profile/${user.handle}/reviews` as Href)
+								: undefined
+						}
 						isLoading={profileLoading || (!profile && !!user?.handle)}
 					/>
 

@@ -1,4 +1,3 @@
-import type { ShelfResponseDto, UpNextShowDto } from "@opnshelf/api";
 import { type Href, Link, router } from "expo-router";
 import {
 	ChevronRight,
@@ -9,21 +8,26 @@ import {
 	Pencil,
 	Settings,
 	Star,
-	Tv,
 } from "lucide-react-native";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import {
+	Alert,
+	Pressable,
+	RefreshControl,
+	ScrollView,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SectionHeader } from "@/components/home/SectionHeader";
-import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
-import { PosterImage } from "@/components/media/PosterImage";
+import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
+import { MediaCard } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { Markdown } from "@/components/ui/Markdown";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
-import { posterUrl } from "@/lib/tmdb";
 import {
 	useProfileLists,
 	useProfileReviews,
@@ -31,31 +35,10 @@ import {
 	useProfileUpNext,
 	usePublicProfile,
 } from "@/lib/use-public-profile";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
 const POSTER_W = 110;
-
-/** Map a shelf entry to a MediaCard item (episodes link to their parent show). */
-function toMediaCardItem(
-	item: ShelfResponseDto["items"][number],
-): MediaCardItem {
-	if (item.type === "movie") {
-		return {
-			id: Number(item.movieId),
-			type: "movie",
-			title: item.title,
-			posterPath: item.posterPath,
-			year: item.releaseYear ? String(item.releaseYear) : undefined,
-		};
-	}
-	return {
-		id: Number(item.showId),
-		type: "show",
-		title: item.showTitle,
-		posterPath: item.posterPath,
-		year: item.firstAirYear ? String(item.firstAirYear) : undefined,
-		href: `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
-	};
-}
 
 /**
  * Self-profile tab (issue #151, nav concept A — hub + drill-down). Replaces the
@@ -77,15 +60,15 @@ export default function ProfileTab() {
 	const upNext = useProfileUpNext(userDid);
 	const lists = useProfileLists(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 3);
+	const markUpNext = useMarkUpNextEpisode();
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	const shelfHref = `/profile/${handle}/shelf` as Href;
 	const upNextHref = `/profile/${handle}/up-next` as Href;
 	const reviewsHref = `/profile/${handle}/reviews` as Href;
 
-	const shelfItems = (shelf.data?.items ?? [])
-		.slice(0, 10)
-		.map(toMediaCardItem);
-	const upNextItems = (upNext.data?.items ?? []).slice(0, 10);
+	const shelfItems = (shelf.data?.items ?? []).slice(0, 10);
+	const upNextItems = (upNext.data?.items ?? []).slice(0, 4);
 	const listItems = (lists.data ?? []).slice(0, 4);
 	const reviewItems = (reviews.data?.items ?? []).slice(0, 3);
 
@@ -111,6 +94,14 @@ export default function ProfileTab() {
 			<ScrollView
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 32 }}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefresh}
+						tintColor="#f3bc00"
+						colors={["#f3bc00"]}
+					/>
+				}
 			>
 				{/* Top bar with quick access to settings. */}
 				<View className="flex-row items-center justify-between px-4 pt-2 pb-1">
@@ -163,11 +154,8 @@ export default function ProfileTab() {
 									<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 										<View className="flex-row gap-3">
 											{shelfItems.map((item) => (
-												<View
-													key={`${item.type}-${item.id}`}
-													style={{ width: POSTER_W }}
-												>
-													<MediaCard item={item} actions />
+												<View key={item.id} style={{ width: POSTER_W }}>
+													<MediaCard item={shelfItemToCardItem(item)} actions />
 												</View>
 											))}
 										</View>
@@ -175,19 +163,27 @@ export default function ProfileTab() {
 								)}
 							</View>
 
-							{/* Up Next preview */}
+							{/* Up Next preview — same card layout as the dashboard + the
+							    full Up Next screen. */}
 							<View>
 								<SectionHeader icon={Clock} title="Up Next" href={upNextHref} />
 								{upNextItems.length === 0 ? (
 									<EmptyPreview text="You're all caught up." />
 								) : (
-									<ScrollView horizontal showsHorizontalScrollIndicator={false}>
-										<View className="flex-row gap-3">
-											{upNextItems.map((item) => (
-												<UpNextPoster key={item.showId} item={item} />
-											))}
-										</View>
-									</ScrollView>
+									<View className="gap-3">
+										{upNextItems.map((item) => (
+											<UpNextCard
+												key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
+												item={item}
+												onMarkWatched={(showId, seasonNumber, episodeNumber) =>
+													markUpNext.mutate({
+														body: { showId, seasonNumber, episodeNumber },
+													})
+												}
+												isMarking={markUpNext.isPending}
+											/>
+										))}
+									</View>
 								)}
 							</View>
 
@@ -242,7 +238,7 @@ export default function ProfileTab() {
 														? `https://image.tmdb.org/t/p/w300${review.posterPath}`
 														: undefined
 												}
-												href={mediaHref(review)}
+												href={mediaHref({ ...review, reviewId: review.id })}
 												title={review.title || "Unknown"}
 												meta={review.reviewTitle}
 											>
@@ -280,44 +276,5 @@ function EmptyPreview({ text }: { text: string }) {
 		<View className="items-center rounded-xl border border-border bg-card p-6">
 			<Text className="text-muted-foreground text-sm">{text}</Text>
 		</View>
-	);
-}
-
-/** Compact Up Next poster linking straight to the next unwatched episode. */
-function UpNextPoster({ item }: { item: UpNextShowDto }) {
-	const next = item.nextEpisode;
-	return (
-		<Link
-			href={{
-				pathname: "/show/[id]/season/[seasonNumber]/episode/[episodeNumber]",
-				params: {
-					id: item.showId,
-					seasonNumber: next.seasonNumber,
-					episodeNumber: next.episodeNumber,
-				},
-			}}
-			asChild
-		>
-			<Pressable style={{ width: POSTER_W }}>
-				<View className="overflow-hidden rounded-lg border border-border bg-card">
-					<PosterImage
-						url={posterUrl(item.show.posterPath, "w342")}
-						className="aspect-2/3 w-full"
-					/>
-				</View>
-				<Text
-					className="mt-2 font-medium text-foreground text-sm"
-					numberOfLines={1}
-				>
-					{item.show.title}
-				</Text>
-				<View className="mt-0.5 flex-row items-center gap-1">
-					<Tv color="#94a3b8" size={11} />
-					<Text className="text-muted-foreground text-xs">
-						S{next.seasonNumber}E{next.episodeNumber}
-					</Text>
-				</View>
-			</Pressable>
-		</Link>
 	);
 }

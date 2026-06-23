@@ -193,25 +193,30 @@ function SearchPage() {
 		},
 	});
 
+	// TMDB multi-search can return the same id twice → dedupe before rendering
+	// so React keys stay unique (was "two children with the same key").
+	const results = useMemo(() => {
+		const seen = new Set<string>();
+		return (searchData?.results || []).filter((r: UnifiedSearchResultDto) => {
+			const k = `${r.media_type}-${r.id}`;
+			if (seen.has(k)) return false;
+			seen.add(k);
+			return true;
+		});
+	}, [searchData]);
 	const movies = useMemo(
-		() =>
-			searchData?.results?.filter(
-				(r: UnifiedSearchResultDto) => r.media_type === "movie",
-			) || [],
-		[searchData],
+		() => results.filter((r) => r.media_type === "movie"),
+		[results],
 	);
 	const shows = useMemo(
-		() =>
-			searchData?.results?.filter(
-				(r: UnifiedSearchResultDto) => r.media_type === "tv",
-			) || [],
-		[searchData],
+		() => results.filter((r) => r.media_type === "tv"),
+		[results],
 	);
 	const people = peopleData?.items || [];
 
 	const mediaItems = useMemo(
 		() =>
-			(searchData?.results || [])
+			results
 				.filter(
 					(r: UnifiedSearchResultDto) =>
 						r.media_type === "movie" || r.media_type === "tv",
@@ -222,7 +227,7 @@ function SearchPage() {
 						| "movie"
 						| "show",
 				})),
-		[searchData],
+		[results],
 	);
 	const { ratings } = useBatchRatingsQuery(mediaItems);
 
@@ -309,30 +314,26 @@ function SearchPage() {
 				) : (
 					<div className="space-y-6">
 						{/* Combined Movies + TV Shows in "all" tab */}
-						{activeTab === "all" &&
-							searchData?.results &&
-							searchData.results.length > 0 && (
-								<section>
-									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-										{searchData.results.map((item) => (
-											<ActionableMediaCard
-												key={`media-${item.id}-${item.media_type}`}
-												id={item.id}
-												title={getTitle(item)}
-												posterUrl={getPosterUrl(item)}
-												backdropUrl={getBackdropUrl(item)}
-												type={item.media_type === "movie" ? "movie" : "show"}
-												tmdbRating={item.vote_average || undefined}
-												globalRating={
-													ratings.get(String(item.id))?.averageRating
-												}
-												size="md"
-												layout="poster"
-											/>
-										))}
-									</div>
-								</section>
-							)}
+						{activeTab === "all" && results.length > 0 && (
+							<section>
+								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+									{results.map((item) => (
+										<ActionableMediaCard
+											key={`media-${item.id}-${item.media_type}`}
+											id={item.id}
+											title={getTitle(item)}
+											posterUrl={getPosterUrl(item)}
+											backdropUrl={getBackdropUrl(item)}
+											type={item.media_type === "movie" ? "movie" : "show"}
+											tmdbRating={item.vote_average || undefined}
+											globalRating={ratings.get(String(item.id))?.averageRating}
+											size="md"
+											layout="poster"
+										/>
+									))}
+								</div>
+							</section>
+						)}
 
 						{/* Movies tab only */}
 						{activeTab === "movies" && movies.length > 0 && (

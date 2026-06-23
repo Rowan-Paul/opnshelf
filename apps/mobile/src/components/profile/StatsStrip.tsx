@@ -1,5 +1,5 @@
 import type { MostWatchedShowDto, ProfileActivityDayDto } from "@opnshelf/api";
-import { Link } from "expo-router";
+import { type Href, Link } from "expo-router";
 import { Clock } from "lucide-react-native";
 import { useState } from "react";
 import { type LayoutChangeEvent, Pressable, View } from "react-native";
@@ -32,12 +32,14 @@ export function StatsStrip({
 	mostWatchedShow,
 	watchedThisYear,
 	reviewsCount,
+	reviewsHref,
 	isLoading,
 }: {
 	activity?: ProfileActivityDayDto[];
 	mostWatchedShow: MostWatchedShowDto | null;
 	watchedThisYear: number;
 	reviewsCount: number;
+	reviewsHref?: Href;
 	isLoading: boolean;
 }) {
 	if (isLoading) {
@@ -71,7 +73,15 @@ export function StatsStrip({
 					<MostWatchedShowStat show={mostWatchedShow} />
 				) : null}
 				<NumberStat label="This year" value={watchedThisYear} />
-				<NumberStat label="Reviews" value={reviewsCount} />
+				{reviewsHref ? (
+					<Link href={reviewsHref} asChild>
+						<Pressable>
+							<NumberStat label="Reviews" value={reviewsCount} />
+						</Pressable>
+					</Link>
+				) : (
+					<NumberStat label="Reviews" value={reviewsCount} />
+				)}
 			</View>
 		</View>
 	);

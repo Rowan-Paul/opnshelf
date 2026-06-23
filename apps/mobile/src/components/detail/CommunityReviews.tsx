@@ -16,8 +16,14 @@ import {
 	Trash2,
 	User,
 } from "lucide-react-native";
-import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { type RefObject, useEffect, useRef, useState } from "react";
+import {
+	ActivityIndicator,
+	type LayoutChangeEvent,
+	Pressable,
+	type ScrollView,
+	View,
+} from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { StarRating } from "@/components/detail/StarRating";
 import { Markdown } from "@/components/ui/Markdown";
@@ -129,6 +135,7 @@ function ReviewCard({
 	review,
 	avatarStyle,
 	isOwn,
+	highlighted,
 	onToggleLike,
 	likePending,
 	canLike,
@@ -139,6 +146,7 @@ function ReviewCard({
 	review: MediaReviewItemDto;
 	avatarStyle: ReturnType<typeof useTwStyle>;
 	isOwn: boolean;
+	highlighted?: boolean;
 	onToggleLike: () => void;
 	likePending: boolean;
 	canLike: boolean;
@@ -153,9 +161,11 @@ function ReviewCard({
 	return (
 		<View
 			className={
-				isOwn
-					? "gap-3 rounded-xl border border-primary/40 bg-card p-3"
-					: "gap-3 rounded-xl border border-border bg-card p-3"
+				highlighted
+					? "gap-3 rounded-xl border-2 border-primary bg-card p-3"
+					: isOwn
+						? "gap-3 rounded-xl border border-primary/40 bg-card p-3"
+						: "gap-3 rounded-xl border border-border bg-card p-3"
 			}
 		>
 			<View className="flex-row items-center gap-3">
@@ -273,7 +283,14 @@ export function CommunityReviews({
 	mediaId,
 	seasonNumber,
 	episodeNumber,
-}: CommunityReviewsProps) {
+	scrollRef,
+	focusReviewId,
+}: CommunityReviewsProps & {
+	/** Parent ScrollView, so a deep-linked review can be scrolled into view. */
+	scrollRef?: RefObject<ScrollView | null>;
+	/** Review to scroll to + highlight (from a `?reviewId=` deep link). */
+	focusReviewId?: string;
+}) {
 	const { user, isAuthenticated } = useAuth();
 	const avatarStyle = useTwStyle("size-10");
 	const resolvedMediaType = resolveMediaType(
@@ -318,6 +335,29 @@ export function CommunityReviews({
 	const otherReviews = allReviews.filter((r) => r.userDid !== user?.did);
 	const ordered = [...ownReviews, ...otherReviews];
 
+	// Deep-link scroll: when arriving via `?reviewId=`, pin the reviews section
+	// into view. The page above (cast, providers, …) loads async and shifts this
+	// section's offset, so we re-scroll on each relayout for a short window, then
+	// release control back to the user.
+	const sectionY = useRef(0);
+	const pinUntil = useRef(0);
+	const hasFocusReview =
+		focusReviewId != null && ordered.some((r) => r.id === focusReviewId);
+
+	useEffect(() => {
+		if (focusReviewId) pinUntil.current = Date.now() + 2500;
+	}, [focusReviewId]);
+
+	const handleSectionLayout = (e: LayoutChangeEvent) => {
+		sectionY.current = e.nativeEvent.layout.y;
+		if (hasFocusReview && Date.now() < pinUntil.current) {
+			scrollRef?.current?.scrollTo({
+				y: Math.max(0, sectionY.current - 12),
+				animated: true,
+			});
+		}
+	};
+
 	const openCreate = () => {
 		setEditing(null);
 		setEditorVisible(true);
@@ -337,7 +377,7 @@ export function CommunityReviews({
 	};
 
 	return (
-		<View className="gap-3 px-4">
+		<View className="gap-3 px-4" onLayout={handleSectionLayout}>
 			<View className="flex-row items-center justify-between">
 				<View className="flex-row items-center gap-2">
 					<MessageSquare color={ACCENT} size={18} />
@@ -379,6 +419,7 @@ export function CommunityReviews({
 								review={review}
 								avatarStyle={avatarStyle}
 								isOwn={isOwn}
+								highlighted={review.id === focusReviewId}
 								canLike={isAuthenticated}
 								likePending={isPending}
 								onToggleLike={() => {

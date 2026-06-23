@@ -1,7 +1,8 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { useRef } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
@@ -24,15 +25,21 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
 
 export default function MovieDetailScreen() {
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { id, reviewId } = useLocalSearchParams<{
+		id: string;
+		reviewId?: string;
+	}>();
 	const insets = useSafeAreaInsets();
+	const scrollRef = useRef<ScrollView>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),
 		enabled: Boolean(id),
 	});
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	return (
 		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
@@ -43,9 +50,18 @@ export default function MovieDetailScreen() {
 				<ErrorState message="Couldn't load this movie." />
 			) : (
 				<ScrollView
+					ref={scrollRef}
 					className="flex-1"
 					contentContainerClassName="gap-6 pb-12"
 					showsVerticalScrollIndicator={false}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#f3bc00"
+							colors={["#f3bc00"]}
+						/>
+					}
 				>
 					<DetailHero
 						title={data.title}
@@ -63,8 +79,6 @@ export default function MovieDetailScreen() {
 					</DetailHero>
 
 					<MediaTrackingActions mediaType="movie" movieId={id} />
-
-					<FriendWatchers mediaType="movie" mediaId={id} />
 
 					<View className="gap-2">
 						<RatingButton mediaType="movie" mediaId={id} />
@@ -92,10 +106,16 @@ export default function MovieDetailScreen() {
 							},
 						]}
 					/>
+					<FriendWatchers mediaType="movie" mediaId={id} />
 					<WatchProviders mediaType="movie" mediaId={id} />
 					<CastSection cast={data.credits?.cast} />
 					<CrewSection crew={data.credits?.crew} />
-					<CommunityReviews mediaType="movie" mediaId={id} />
+					<CommunityReviews
+						mediaType="movie"
+						mediaId={id}
+						scrollRef={scrollRef}
+						focusReviewId={reviewId}
+					/>
 					<SimilarMedia mediaType="movie" mediaId={id} />
 				</ScrollView>
 			)}

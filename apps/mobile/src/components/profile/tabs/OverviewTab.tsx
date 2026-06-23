@@ -88,7 +88,10 @@ function PosterRow({
 		<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 			<View className="flex-row gap-3">
 				{items.map((item) => (
-					<View key={`${item.type}-${item.id}`} style={{ width: POSTER_W }}>
+					<View
+						key={`${item.type}-${item.id}-${item.episode?.seasonNumber ?? ""}-${item.episode?.episodeNumber ?? ""}`}
+						style={{ width: POSTER_W }}
+					>
 						<MediaCard item={item} actions />
 					</View>
 				))}
@@ -200,7 +203,7 @@ export function OverviewTab({
 										? `https://image.tmdb.org/t/p/w300${review.posterPath}`
 										: undefined
 								}
-								href={mediaHref(review)}
+								href={mediaHref({ ...review, reviewId: review.id })}
 								title={review.title || "Unknown"}
 								meta={review.reviewTitle}
 							>

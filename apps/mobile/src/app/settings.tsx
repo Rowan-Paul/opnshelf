@@ -516,11 +516,14 @@ export default function SettingsScreen() {
 											</View>
 											<View className="flex-1">
 												<View className="flex-row items-center gap-2">
-													<Text className="font-medium text-foreground text-sm">
+													<Text
+														className="shrink font-medium text-foreground text-sm"
+														numberOfLines={1}
+													>
 														{pub.name}
 													</Text>
 													{pub.isOpnshelfDefault ? (
-														<View className="rounded-full bg-primary/20 px-2 py-0.5">
+														<View className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5">
 															<Text className="font-medium text-primary text-xs">
 																Default
 															</Text>

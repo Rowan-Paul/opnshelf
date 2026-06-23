@@ -6,7 +6,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, ChevronRight } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -196,13 +196,11 @@ export function WatchProviders({
 								className="flex-row items-center gap-1"
 								onPress={() => setShowRentBuy((v) => !v)}
 							>
-								<ChevronDown
-									color="#94a3b8"
-									size={14}
-									style={{
-										transform: [{ rotate: showRentBuy ? "0deg" : "-90deg" }],
-									}}
-								/>
+								{showRentBuy ? (
+									<ChevronDown color="#94a3b8" size={14} />
+								) : (
+									<ChevronRight color="#94a3b8" size={14} />
+								)}
 								<Text className="font-semibold text-[11px] text-foreground-subtle uppercase tracking-widest">
 									Rent & Buy
 								</Text>

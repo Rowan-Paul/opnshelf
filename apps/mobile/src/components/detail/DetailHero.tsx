@@ -1,7 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { type Href, Link } from "expo-router";
 import { Star } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -17,6 +18,7 @@ export function DetailHero({
 	subtitle,
 	backdropUrl,
 	posterUrl,
+	posterHref,
 	rating,
 	children,
 }: {
@@ -24,10 +26,17 @@ export function DetailHero({
 	subtitle?: string;
 	backdropUrl?: string;
 	posterUrl?: string;
+	/** When set, the poster becomes a link (e.g. season/episode → show page). */
+	posterHref?: Href;
 	rating?: number;
 	children?: ReactNode;
 }) {
 	const scrimStyle = useTwStyle("absolute inset-x-0 bottom-0 h-32");
+	const poster = (
+		<View className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+			<PosterImage url={posterUrl} className="aspect-2/3 w-24" />
+		</View>
+	);
 	return (
 		<View>
 			<View className="relative h-52 w-full bg-background-subtle">
@@ -39,9 +48,13 @@ export function DetailHero({
 			</View>
 
 			<View className="-mt-16 flex-row gap-4 px-4">
-				<View className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-					<PosterImage url={posterUrl} className="aspect-2/3 w-24" />
-				</View>
+				{posterHref ? (
+					<Link href={posterHref} asChild>
+						<Pressable>{poster}</Pressable>
+					</Link>
+				) : (
+					poster
+				)}
 				<View className="flex-1 justify-end pb-1">
 					<Text className="font-bold font-display text-foreground text-xl">
 						{title}

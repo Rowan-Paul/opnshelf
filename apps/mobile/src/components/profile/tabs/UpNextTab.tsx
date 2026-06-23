@@ -1,18 +1,14 @@
 import {
 	showsControllerGetUserUpNextQueryKey,
 	showsControllerMarkWatchedMutation,
-	type UpNextShowDto,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { Calendar, Plus, Tv } from "lucide-react-native";
-import { ActivityIndicator, Pressable, View } from "react-native";
-import { PosterImage } from "@/components/media/PosterImage";
+import { Tv } from "lucide-react-native";
+import { ActivityIndicator, View } from "react-native";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
-import { cn } from "@/lib/cn";
-import { posterUrl } from "@/lib/tmdb";
+import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { useProfileUpNext } from "@/lib/use-public-profile";
 
 /**
@@ -71,126 +67,20 @@ export function UpNextTab({
 			) : (
 				<View className="gap-3">
 					{items.map((item) => (
-						<UpNextRow
+						<UpNextCard
 							key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 							item={item}
 							isOwner={isOwner}
-							onMarkWatched={() =>
+							onMarkWatched={(showId, seasonNumber, episodeNumber) =>
 								markWatched.mutate({
-									body: {
-										showId: item.showId,
-										seasonNumber: item.nextEpisode.seasonNumber,
-										episodeNumber: item.nextEpisode.episodeNumber,
-									},
+									body: { showId, seasonNumber, episodeNumber },
 								})
 							}
-							isPending={markWatched.isPending}
+							isMarking={markWatched.isPending}
 						/>
 					))}
 				</View>
 			)}
-		</View>
-	);
-}
-
-function UpNextRow({
-	item,
-	isOwner,
-	onMarkWatched,
-	isPending,
-}: {
-	item: UpNextShowDto;
-	isOwner: boolean;
-	onMarkWatched: () => void;
-	isPending: boolean;
-}) {
-	const next = item.nextEpisode;
-	const progress =
-		item.totalEpisodes > 0
-			? Math.round((item.episodesWatched / item.totalEpisodes) * 100)
-			: 0;
-
-	return (
-		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-			<Link
-				href={{
-					pathname: "/show/[id]/season/[seasonNumber]/episode/[episodeNumber]",
-					params: {
-						id: item.showId,
-						seasonNumber: next.seasonNumber,
-						episodeNumber: next.episodeNumber,
-					},
-				}}
-				asChild
-			>
-				<Pressable className="shrink-0">
-					<View className="h-32 w-22 overflow-hidden rounded-lg">
-						<PosterImage
-							url={posterUrl(item.show.posterPath, "w342")}
-							className="h-32 w-22"
-						/>
-					</View>
-				</Pressable>
-			</Link>
-
-			<View className="min-w-0 flex-1 justify-between">
-				<View className="gap-1">
-					<View className="flex-row items-start justify-between gap-2">
-						<Text
-							className="font-semibold text-foreground text-sm"
-							numberOfLines={1}
-						>
-							{item.show.title}
-						</Text>
-						<View className="rounded-full bg-primary/20 px-2 py-0.5">
-							<Text className="font-medium text-primary text-xs">
-								S{next.seasonNumber}E{next.episodeNumber}
-							</Text>
-						</View>
-					</View>
-					<Text className="text-foreground text-sm" numberOfLines={1}>
-						{next.name || `Episode ${next.episodeNumber}`}
-					</Text>
-					{next.airDate ? (
-						<View className="flex-row items-center gap-1.5">
-							<Calendar color="#94a3b8" size={13} />
-							<Text className="text-muted-foreground text-xs">
-								{new Date(next.airDate).toLocaleDateString()}
-							</Text>
-						</View>
-					) : null}
-				</View>
-
-				<View className="mt-2 gap-2">
-					<View className="flex-row items-center gap-2">
-						<View className="h-1.5 flex-1 overflow-hidden rounded-full bg-background-subtle">
-							<View
-								className="h-full rounded-full bg-primary"
-								style={{ width: `${progress}%` }}
-							/>
-						</View>
-						<Text className="text-muted-foreground text-xs">
-							{item.episodesWatched}/{item.totalEpisodes}
-						</Text>
-					</View>
-
-					{isOwner ? (
-						<Pressable
-							onPress={onMarkWatched}
-							disabled={isPending}
-							className={cn(
-								"flex-row items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2",
-								isPending && "opacity-60",
-							)}
-						>
-							<Plus color="#3f2e00" size={15} />
-							<Text className="font-medium text-primary-foreground text-sm">
-								Add to shelf
-							</Text>
-						</Pressable>
-					) : null}
-				</View>
-			</View>
 		</View>
 	);
 }

@@ -25,7 +25,7 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 	// is exactly the recent-watched preview the dashboard wants.
 	const { data, isLoading, isError } = useProfileShelf(userDid);
 
-	const items = (data?.items ?? []).slice(0, 10).map(shelfItemToCardItem);
+	const items = (data?.items ?? []).slice(0, 10);
 	const shelfHref = user?.handle
 		? (`/profile/${user.handle}/shelf` as Href)
 		: undefined;
@@ -53,8 +53,8 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">
 						{items.map((item) => (
-							<View key={`${item.type}-${item.id}`} style={{ width: POSTER_W }}>
-								<MediaCard item={item} actions />
+							<View key={item.id} style={{ width: POSTER_W }}>
+								<MediaCard item={shelfItemToCardItem(item)} actions />
 							</View>
 						))}
 					</View>

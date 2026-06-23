@@ -5,7 +5,7 @@ import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { stillUrl } from "@/lib/tmdb";
+import { formatRuntime, stillUrl } from "@/lib/tmdb";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 
@@ -18,85 +18,112 @@ export type EpisodeCardData = {
 	stillPath?: string | null;
 	airDate?: string;
 	rating?: number;
+	runtime?: number;
 };
 
 /**
- * Episode list row: still thumbnail, number + title, air date/rating, and a
- * truncated overview. Links to the episode detail route. Reused by the season
- * detail screen and any future "up next" surfaces.
+ * Episode list row: still thumbnail, number + title, air date/runtime/rating,
+ * and a truncated overview. Links to the episode detail route. Reused by the
+ * season detail screen and any future "up next" surfaces.
  *
- * Pass `actions` to overlay a corner add/remove-to-shelf toggle on the still.
- * It's off by default so read-only usages stay free of the watch data hooks.
+ * Pass `actions` to add an add/remove-to-shelf button below the row. It's off
+ * by default so read-only usages stay free of the watch data hooks. Pass
+ * `upNext` to flag the show's next unwatched episode with a badge.
  */
 export function EpisodeCard({
 	episode,
 	actions = false,
+	upNext = false,
 }: {
 	episode: EpisodeCardData;
 	actions?: boolean;
+	upNext?: boolean;
 }) {
-	if (actions) return <EpisodeCardWithActions episode={episode} />;
-	return <EpisodeCardBase episode={episode} />;
+	if (actions)
+		return <EpisodeCardWithActions episode={episode} upNext={upNext} />;
+	return <EpisodeCardBase episode={episode} upNext={upNext} />;
 }
 
 function EpisodeCardBase({
 	episode,
-	overlay,
+	action,
+	upNext = false,
 }: {
 	episode: EpisodeCardData;
-	overlay?: ReactNode;
+	action?: ReactNode;
+	upNext?: boolean;
 }) {
 	return (
 		<Link
 			href={`/show/${episode.showId}/season/${episode.seasonNumber}/episode/${episode.episodeNumber}`}
 			asChild
 		>
-			<Pressable className="flex-row gap-3 rounded-lg border border-border bg-card p-2">
-				<View className="aspect-video w-28 overflow-hidden rounded-md bg-background-subtle">
-					<PosterImage
-						url={stillUrl(episode.stillPath)}
-						className="aspect-video w-28"
-					/>
-					{overlay}
-				</View>
-				<View className="flex-1 justify-center">
-					<Text
-						className="font-medium text-foreground text-sm"
-						numberOfLines={2}
-					>
-						{episode.episodeNumber}. {episode.name}
-					</Text>
-					<View className="mt-0.5 flex-row items-center gap-2">
-						{episode.airDate ? (
-							<Text className="text-muted-foreground text-xs">
-								{episode.airDate}
-							</Text>
-						) : null}
-						{episode.rating && episode.rating > 0 ? (
-							<View className="flex-row items-center gap-0.5">
-								<Star color="#f3bc00" fill="#f3bc00" size={11} />
-								<Text className="text-muted-foreground text-xs">
-									{episode.rating.toFixed(1)}
+			<Pressable className="rounded-lg border border-border bg-card p-2">
+				<View className="flex-row gap-3">
+					<View className="aspect-video w-28 overflow-hidden rounded-md bg-background-subtle">
+						<PosterImage
+							url={stillUrl(episode.stillPath)}
+							className="aspect-video w-28"
+						/>
+					</View>
+					<View className="flex-1 justify-center">
+						{upNext ? (
+							<View className="mb-1 self-start rounded-full bg-primary px-2 py-0.5">
+								<Text className="font-semibold text-[10px] text-primary-foreground uppercase tracking-wide">
+									Up Next
 								</Text>
 							</View>
 						) : null}
-					</View>
-					{episode.overview ? (
 						<Text
-							className="mt-1 text-muted-foreground text-xs leading-4"
+							className="font-medium text-foreground text-sm"
 							numberOfLines={2}
 						>
-							{episode.overview}
+							{episode.episodeNumber}. {episode.name}
 						</Text>
-					) : null}
+						<View className="mt-0.5 flex-row items-center gap-2">
+							{episode.airDate ? (
+								<Text className="text-muted-foreground text-xs">
+									{episode.airDate}
+								</Text>
+							) : null}
+							{episode.runtime ? (
+								<Text className="text-muted-foreground text-xs">
+									{formatRuntime(episode.runtime)}
+								</Text>
+							) : null}
+							{episode.rating && episode.rating > 0 ? (
+								<View className="flex-row items-center gap-0.5">
+									<Star color="#f3bc00" fill="#f3bc00" size={11} />
+									<Text className="text-muted-foreground text-xs">
+										{episode.rating.toFixed(1)}
+									</Text>
+								</View>
+							) : null}
+						</View>
+						{episode.overview ? (
+							<Text
+								className="mt-1 text-muted-foreground text-xs leading-4"
+								numberOfLines={2}
+							>
+								{episode.overview}
+							</Text>
+						) : null}
+					</View>
 				</View>
+				{action ? <View className="mt-2">{action}</View> : null}
 			</Pressable>
 		</Link>
 	);
 }
 
-/** Episode row with a corner add/remove-to-shelf toggle for the episode. */
-function EpisodeCardWithActions({ episode }: { episode: EpisodeCardData }) {
+/** Episode row with an add/remove-to-shelf button for the episode. */
+function EpisodeCardWithActions({
+	episode,
+	upNext = false,
+}: {
+	episode: EpisodeCardData;
+	upNext?: boolean;
+}) {
 	const { isAuthenticated } = useAuth();
 	const showId = String(episode.showId);
 
@@ -121,9 +148,8 @@ function EpisodeCardWithActions({ episode }: { episode: EpisodeCardData }) {
 		}
 	};
 
-	const overlay = isAuthenticated ? (
+	const action = isAuthenticated ? (
 		<Pressable
-			hitSlop={8}
 			onPress={(e) => {
 				e.stopPropagation();
 				toggleShelf();
@@ -131,18 +157,28 @@ function EpisodeCardWithActions({ episode }: { episode: EpisodeCardData }) {
 			disabled={pending}
 			className={
 				onShelf
-					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
-					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+					? "flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2"
+					: "flex-row items-center justify-center gap-1.5 rounded-lg border border-border py-2"
 			}
 			style={{ opacity: pending ? 0.6 : 1 }}
 		>
 			{onShelf ? (
-				<Check color="#3f2e00" size={15} strokeWidth={3} />
+				<>
+					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Text className="font-semibold text-primary-foreground text-sm">
+						On shelf
+					</Text>
+				</>
 			) : (
-				<Plus color="#ffffff" size={15} strokeWidth={2.5} />
+				<>
+					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
+					<Text className="font-semibold text-foreground text-sm">
+						Add to shelf
+					</Text>
+				</>
 			)}
 		</Pressable>
 	) : undefined;
 
-	return <EpisodeCardBase episode={episode} overlay={overlay} />;
+	return <EpisodeCardBase episode={episode} action={action} upNext={upNext} />;
 }

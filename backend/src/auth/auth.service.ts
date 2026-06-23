@@ -647,7 +647,12 @@ export class AuthService implements OnModuleInit {
 	) {
 		const existingUser = await this.prisma.user.findUnique({
 			where: { did: profile.did },
-			select: { did: true, emailVerifiedAt: true, isNativePds: true },
+			select: {
+				did: true,
+				emailVerifiedAt: true,
+				isNativePds: true,
+				avatar: true,
+			},
 		});
 
 		// External-PDS accounts (OAuth login) are already verified upstream, so we
@@ -669,6 +674,14 @@ export class AuthService implements OnModuleInit {
 				? new Date()
 				: undefined;
 
+		// Heal-on-relogin: older rows never persisted the avatar, so they're stuck
+		// at null. Backfill from the fetched profile when we have one and the row
+		// is empty — but never clobber an avatar the user uploaded themselves.
+		const healAvatar =
+			existingUser && existingUser.avatar == null && profile.avatar
+				? profile.avatar
+				: undefined;
+
 		try {
 			const user = await this.prisma.user.upsert({
 				where: { did: profile.did },
@@ -677,11 +690,13 @@ export class AuthService implements OnModuleInit {
 					...(healEmailVerifiedAt
 						? { emailVerifiedAt: healEmailVerifiedAt }
 						: {}),
+					...(healAvatar ? { avatar: healAvatar } : {}),
 				},
 				create: {
 					did: profile.did,
 					handle: profile.handle,
 					displayName: profile.displayName,
+					avatar: profile.avatar,
 					timezone: timezone || "UTC",
 					emailVerifiedAt: createdEmailVerifiedAt,
 					isNativePds,

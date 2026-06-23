@@ -1,7 +1,8 @@
 import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { useRef } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
@@ -24,15 +25,21 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
 
 export default function ShowDetailScreen() {
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { id, reviewId } = useLocalSearchParams<{
+		id: string;
+		reviewId?: string;
+	}>();
 	const showId = Number(id);
+	const scrollRef = useRef<ScrollView>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
 		enabled: Boolean(id),
 	});
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	// Hide the placeholder "Season 0" specials when there are real seasons.
 	const seasons = (data?.seasons ?? []).filter(
@@ -50,9 +57,18 @@ export default function ShowDetailScreen() {
 				<ErrorState message="Couldn't load this show." />
 			) : (
 				<ScrollView
+					ref={scrollRef}
 					className="flex-1"
 					contentContainerClassName="gap-6 pb-12"
 					showsVerticalScrollIndicator={false}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#f3bc00"
+							colors={["#f3bc00"]}
+						/>
+					}
 				>
 					<DetailHero
 						title={data.name}
@@ -75,8 +91,6 @@ export default function ShowDetailScreen() {
 					</DetailHero>
 
 					<MediaTrackingActions mediaType="show" showId={id} />
-
-					<FriendWatchers mediaType="show" mediaId={id} />
 
 					<View className="gap-2">
 						<RatingButton mediaType="show" mediaId={id} />
@@ -108,6 +122,8 @@ export default function ShowDetailScreen() {
 						]}
 					/>
 
+					<FriendWatchers mediaType="show" mediaId={id} />
+
 					<WatchProviders mediaType="show" mediaId={id} />
 
 					{seasons.length > 0 ? (
@@ -134,7 +150,12 @@ export default function ShowDetailScreen() {
 
 					<CastSection cast={data.credits?.cast} />
 					<CrewSection crew={data.credits?.crew} />
-					<CommunityReviews mediaType="show" mediaId={id} />
+					<CommunityReviews
+						mediaType="show"
+						mediaId={id}
+						scrollRef={scrollRef}
+						focusReviewId={reviewId}
+					/>
 					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}

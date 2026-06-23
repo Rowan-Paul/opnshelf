@@ -3,29 +3,46 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
+import { useRef } from "react";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
+import { DetailHero } from "@/components/detail/DetailHero";
+import { DetailsCard } from "@/components/detail/DetailsCard";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
+import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
+import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
+import { WatchProviders } from "@/components/detail/WatchProviders";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { yearFromDate } from "@/lib/tmdb";
+import {
+	backdropUrl,
+	formatLongDate,
+	posterUrl,
+	yearFromDate,
+} from "@/lib/tmdb";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useUpNext } from "@/lib/use-up-next";
+import { useWatchStatus } from "@/lib/use-watch-status";
 
 export default function SeasonDetailScreen() {
-	const { id, seasonNumber } = useLocalSearchParams<{
+	const { id, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
 		seasonNumber: string;
+		reviewId?: string;
 	}>();
 	const showId = Number(id);
 	const seasonNum = Number(seasonNumber);
+	const scrollRef = useRef<ScrollView>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -40,8 +57,24 @@ export default function SeasonDetailScreen() {
 		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
 		enabled: Boolean(id),
 	});
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
+
+	// Per-episode watched status (for the progress card) + the show's next
+	// unwatched episode (to flag the "Up Next" row), mirroring the web page.
+	const watch = useWatchStatus({ mediaType: "show", showId: id });
+	const { items: upNextItems } = useUpNext();
 
 	const totalEpisodes = data?.episodes.length ?? 0;
+	const episodesWatched = new Set(
+		(watch.showWatchHistory ?? [])
+			.filter((e) => e.seasonNumber === seasonNum)
+			.map((e) => e.episodeNumber),
+	).size;
+	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
+	const upNextEpisodeNumber =
+		nextEpisode?.seasonNumber === seasonNum
+			? nextEpisode.episodeNumber
+			: undefined;
 
 	// Prev/next season navigation, derived from the show's real seasons list.
 	const orderedSeasons = (showData?.seasons ?? [])
@@ -57,7 +90,8 @@ export default function SeasonDetailScreen() {
 			? orderedSeasons[currentIndex + 1]
 			: undefined;
 	const goToSeason = (season: number) => {
-		router.push(`/show/${id}/season/${season}` as const);
+		// Replace rather than push so paging between seasons doesn't stack history.
+		router.replace(`/show/${id}/season/${season}` as const);
 	};
 
 	return (
@@ -71,24 +105,53 @@ export default function SeasonDetailScreen() {
 				<ErrorState message="Couldn't load this season." />
 			) : (
 				<ScrollView
+					ref={scrollRef}
 					className="flex-1"
-					contentContainerClassName="gap-6 pb-12 pt-2"
+					contentContainerClassName="gap-6 pb-12"
 					showsVerticalScrollIndicator={false}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#f3bc00"
+							colors={["#f3bc00"]}
+						/>
+					}
 				>
-					<View className="px-4">
-						<Text className="font-bold font-display text-foreground text-xl">
-							{data.name}
-						</Text>
-						{yearFromDate(data.air_date) ? (
-							<Text className="mt-0.5 text-muted-foreground text-sm">
-								{yearFromDate(data.air_date)} · {data.episodes.length} episodes
-							</Text>
-						) : (
-							<Text className="mt-0.5 text-muted-foreground text-sm">
-								{data.episodes.length} episodes
-							</Text>
-						)}
-					</View>
+					<DetailHero
+						title={data.name}
+						backdropUrl={backdropUrl(showData?.backdrop_path)}
+						posterUrl={posterUrl(data.poster_path)}
+						posterHref={`/show/${id}`}
+						rating={data.vote_average}
+					>
+						<View className="gap-3">
+							<View className="flex-row flex-wrap items-center gap-x-1">
+								{showData?.name ? (
+									<>
+										<Link href={`/show/${id}`} asChild>
+											<Pressable>
+												<Text className="font-medium text-primary text-xs">
+													{showData.name}
+												</Text>
+											</Pressable>
+										</Link>
+										<Text className="text-muted-foreground text-xs">·</Text>
+									</>
+								) : null}
+								<Text className="font-medium text-primary text-xs">
+									Season {data.season_number}
+								</Text>
+							</View>
+
+							<MetadataPills
+								items={[
+									yearFromDate(data.air_date),
+									`${data.episodes.length} episodes`,
+								]}
+							/>
+						</View>
+					</DetailHero>
 
 					<View className="gap-2">
 						<MediaTrackingActions
@@ -113,43 +176,6 @@ export default function SeasonDetailScreen() {
 							seasonNumber={seasonNum}
 						/>
 					</View>
-
-					<OverviewSection text={data.overview} />
-
-					{data.episodes.length === 0 ? (
-						<EmptyState
-							title="No episodes"
-							message="This season has no episodes yet."
-						/>
-					) : (
-						<View className="gap-2 px-4">
-							{data.episodes.map((ep) => (
-								<EpisodeCard
-									key={ep.id}
-									actions
-									episode={{
-										showId,
-										seasonNumber: ep.season_number,
-										episodeNumber: ep.episode_number,
-										name: ep.name,
-										overview: ep.overview,
-										stillPath: ep.still_path,
-										airDate: yearFromDate(ep.air_date),
-										rating: ep.vote_average,
-									}}
-								/>
-							))}
-						</View>
-					)}
-
-					<CastSection cast={showData?.credits?.cast} />
-					<CrewSection crew={showData?.credits?.crew} />
-					<CommunityReviews
-						mediaType="show"
-						mediaId={id}
-						seasonNumber={Number(seasonNumber)}
-					/>
-					<SimilarMedia mediaType="show" mediaId={id} />
 
 					{prevSeason || nextSeason ? (
 						<View className="flex-row gap-2 px-4">
@@ -181,6 +207,80 @@ export default function SeasonDetailScreen() {
 							</Pressable>
 						</View>
 					) : null}
+
+					{watch.isAuthenticated ? (
+						<ProgressCard
+							episodesWatched={episodesWatched}
+							totalEpisodes={totalEpisodes}
+						/>
+					) : null}
+
+					<OverviewSection text={data.overview} />
+
+					<FriendWatchers
+						mediaType="show"
+						mediaId={`${id}:season:${seasonNum}`}
+					/>
+
+					{data.episodes.length === 0 ? (
+						<EmptyState
+							title="No episodes"
+							message="This season has no episodes yet."
+						/>
+					) : (
+						<View className="gap-2 px-4">
+							{data.episodes.map((ep) => (
+								<EpisodeCard
+									key={ep.id}
+									actions
+									upNext={ep.episode_number === upNextEpisodeNumber}
+									episode={{
+										showId,
+										seasonNumber: ep.season_number,
+										episodeNumber: ep.episode_number,
+										name: ep.name,
+										overview: ep.overview,
+										stillPath: ep.still_path,
+										airDate: yearFromDate(ep.air_date),
+										rating: ep.vote_average,
+										runtime: ep.runtime,
+									}}
+								/>
+							))}
+						</View>
+					)}
+
+					<DetailsCard
+						title="Season Details"
+						items={[
+							{ label: "Season", value: data.season_number },
+							{ label: "Episodes", value: data.episodes.length },
+							{
+								label: "Air Date",
+								value: formatLongDate(data.air_date) ?? "Unknown",
+							},
+							{
+								label: "Rating",
+								value:
+									data.vote_average && data.vote_average > 0
+										? `${data.vote_average.toFixed(1)} / 10`
+										: undefined,
+							},
+						]}
+					/>
+
+					<WatchProviders mediaType="show" mediaId={id} />
+
+					<CastSection cast={showData?.credits?.cast} />
+					<CrewSection crew={showData?.credits?.crew} />
+					<CommunityReviews
+						mediaType="show"
+						mediaId={id}
+						seasonNumber={Number(seasonNumber)}
+						scrollRef={scrollRef}
+						focusReviewId={reviewId}
+					/>
+					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>
 			)}
 		</View>
