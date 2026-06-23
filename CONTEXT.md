@@ -43,7 +43,16 @@ The show for which a user has the most logged episode-Watches (rewatches include
 The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → watch-country preference → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup)
 
+**Activity**:
+A single item in the followed-users feed — a followed user's **Watch** (movie or episode) or **Review**, surfaced to the people who follow them. Not a separately stored entity; it is a projection over Watches and Reviews, ordered by when the action happened.
+_Avoid_: Event, feed post
+
+**Activity Feed**:
+The reverse-chronological stream of **Activities** from everyone the authenticated user follows. The full feed is the mobile Activity tab and the web "following" page; the home dashboard shows a short preview of the same feed.
+
 ## Flagged ambiguities
+
+- **"Activity" (feed) vs "activity graph"**: An **Activity** is a feed item (a followed user's Watch or Review). The "profile activity graph" (`ProfileActivityDayDto`) is unrelated — it is a per-day count of the profile owner's own **Watches**, a contribution-style heatmap. The feed is about people you follow; the graph is about one user's watching cadence.
 
 - **"Review" vs "Rating"**: These are now two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (a `site.standard.document`) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
 - **"Top reviews"**: Reviews no longer carry a rating, so the old `likeCount DESC, rating DESC, createdAt DESC` tiebreak no longer applies as-is. A Review's tiebreak rating, if used, comes from the author's separate Rating for the same media (a join), not from the Review itself.

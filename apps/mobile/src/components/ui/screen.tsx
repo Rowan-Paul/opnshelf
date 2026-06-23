@@ -20,12 +20,17 @@ export function Screen({
 	children,
 	className,
 	keyboardAvoiding = true,
+	topInset = true,
 }: {
 	children: ReactNode;
 	className?: string;
 	keyboardAvoiding?: boolean;
+	// Screens rendered under a native Stack header already get the safe-area
+	// space from the header — pass false there to avoid a double top gap.
+	topInset?: boolean;
 }) {
 	const insets = useSafeAreaInsets();
+	const paddingTop = topInset ? insets.top : 0;
 	// Uniwind's `className` only works on RN-core components; the keyboard
 	// controller's KeyboardAvoidingView is third-party, so resolve the classes
 	// to a style object for it (see use-tw-style).
@@ -35,7 +40,7 @@ export function Screen({
 		return (
 			<View
 				className={cn("flex-1 bg-background px-4", className)}
-				style={{ paddingTop: insets.top }}
+				style={{ paddingTop }}
 			>
 				{children}
 			</View>
@@ -43,10 +48,7 @@ export function Screen({
 	}
 
 	return (
-		<KeyboardAvoidingView
-			behavior="padding"
-			style={[twStyle, { paddingTop: insets.top }]}
-		>
+		<KeyboardAvoidingView behavior="padding" style={[twStyle, { paddingTop }]}>
 			{children}
 		</KeyboardAvoidingView>
 	);

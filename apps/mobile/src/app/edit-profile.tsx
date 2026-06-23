@@ -16,7 +16,7 @@ export default function EditProfileScreen() {
 	return (
 		<>
 			<Stack.Screen options={{ title: "Edit profile" }} />
-			<Screen>
+			<Screen topInset={false}>
 				<ScrollView
 					className="flex-1"
 					contentContainerClassName="gap-6 py-6"

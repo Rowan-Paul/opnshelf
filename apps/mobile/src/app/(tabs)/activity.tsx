@@ -14,7 +14,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActivityRow } from "@/components/social/ActivityRow";
+import { ActivityCard } from "@/components/social/ActivityCard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -107,12 +107,7 @@ export default function ActivityScreen() {
 				<FlashList
 					data={items}
 					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => (
-						<ActivityRow
-							activity={item}
-							containerClassName="flex-row items-start gap-3 rounded-xl border border-border bg-card p-4"
-						/>
-					)}
+					renderItem={({ item }) => <ActivityCard activity={item} />}
 					contentContainerStyle={listStyle}
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}

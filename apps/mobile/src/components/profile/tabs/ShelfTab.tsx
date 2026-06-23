@@ -1,19 +1,15 @@
-import type { ShelfResponseDto } from "@opnshelf/api";
-import { Link } from "expo-router";
-import { Clock, Film, Search, Tv, X } from "lucide-react-native";
+import { Film, Search, Tv, X } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { PosterImage } from "@/components/media/PosterImage";
+import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
+import { MediaCard } from "@/components/media/MediaCard";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
-import { mediaHref } from "@/lib/media-href";
-import { posterUrl } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useProfileShelf } from "@/lib/use-public-profile";
 
-type ShelfItem = ShelfResponseDto["items"][number];
 type Filter = "all" | "movie" | "episode";
 
 const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
@@ -21,93 +17,6 @@ const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
 	{ key: "movie", label: "Movies", icon: Film },
 	{ key: "episode", label: "TV", icon: Tv },
 ];
-
-function formatWatchedDate(iso?: string | null): string | undefined {
-	if (!iso) return undefined;
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return undefined;
-	return d.toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-}
-
-/**
- * A single shelf entry. Mirrors the web shelf card: movies show the release
- * year, episodes show an "S{n}E{n}" label + episode title; both show the
- * watched date when available. Taps through to the matching detail route.
- */
-function ShelfCard({ item }: { item: ShelfItem }) {
-	const isMovie = item.type === "movie";
-	const href = isMovie
-		? mediaHref({ mediaType: "movie", mediaId: String(item.movieId) })
-		: mediaHref({
-				mediaType: "episode",
-				mediaId: String(item.showId),
-				seasonNumber: item.seasonNumber,
-				episodeNumber: item.episodeNumber,
-			});
-
-	const watched = formatWatchedDate(item.watchedDate);
-
-	return (
-		<Link href={href} asChild>
-			<Pressable className="flex-1">
-				<View className="overflow-hidden rounded-lg border border-border bg-card">
-					<PosterImage
-						url={posterUrl(item.posterPath)}
-						className="aspect-2/3 w-full"
-					/>
-				</View>
-				{isMovie ? (
-					<>
-						<Text
-							className="mt-2 font-medium text-foreground text-sm"
-							numberOfLines={1}
-						>
-							{item.title}
-						</Text>
-						{item.releaseYear ? (
-							<Text className="mt-0.5 text-muted-foreground text-xs">
-								{item.releaseYear}
-							</Text>
-						) : null}
-					</>
-				) : (
-					<>
-						<Text
-							className="mt-2 font-medium text-foreground text-sm"
-							numberOfLines={1}
-						>
-							S{item.seasonNumber}E{item.episodeNumber}
-						</Text>
-						{item.episodeTitle ? (
-							<Text
-								className="mt-0.5 text-muted-foreground text-xs"
-								numberOfLines={1}
-							>
-								{item.episodeTitle}
-							</Text>
-						) : null}
-						<Text
-							className="mt-0.5 text-muted-foreground text-xs"
-							numberOfLines={1}
-						>
-							{item.showTitle}
-						</Text>
-					</>
-				)}
-				{watched ? (
-					<View className="mt-0.5 flex-row items-center gap-1">
-						<Clock color="#94a3b8" size={11} />
-						<Text className="text-muted-foreground text-xs">{watched}</Text>
-					</View>
-				) : null}
-			</Pressable>
-		</Link>
-	);
-}
 
 /**
  * Shelf tab: server-paginated grid of the user's watched movies + episodes,
@@ -142,10 +51,6 @@ export function ShelfTab({
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
-			<Text className="font-bold font-display text-2xl text-foreground">
-				Shelf
-			</Text>
-
 			<TextField
 				leading={<Search color="#94a3b8" size={18} />}
 				trailing={
@@ -212,7 +117,7 @@ export function ShelfTab({
 				<View className="flex-row flex-wrap">
 					{items.map((item) => (
 						<View key={item.id} className="w-1/3 px-1 pb-3">
-							<ShelfCard item={item} />
+							<MediaCard item={shelfItemToCardItem(item)} actions />
 						</View>
 					))}
 				</View>

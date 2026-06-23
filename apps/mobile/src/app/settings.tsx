@@ -341,7 +341,7 @@ export default function SettingsScreen() {
 	return (
 		<>
 			<Stack.Screen options={{ title: "Settings" }} />
-			<Screen>
+			<Screen topInset={false}>
 				<ScrollView
 					className="flex-1"
 					contentContainerClassName="gap-6 py-6"
