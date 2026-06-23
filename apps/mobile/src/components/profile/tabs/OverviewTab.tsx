@@ -9,6 +9,7 @@ import {
 	Tv,
 } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
+import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import type { ProfileTab } from "@/components/profile/ProfileTabBar";
@@ -18,9 +19,9 @@ import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import {
 	useProfileLists,
-	useProfileRecentEpisodes,
 	useProfileRecentMovies,
 	useProfileReviews,
+	useProfileShelf,
 } from "@/lib/use-public-profile";
 
 const POSTER_W = 120;
@@ -111,7 +112,9 @@ export function OverviewTab({
 	onNavigate: (tab: ProfileTab, shelfType?: "movie" | "episode") => void;
 }) {
 	const movies = useProfileRecentMovies(userDid, 10);
-	const episodes = useProfileRecentEpisodes(userDid, 10);
+	// Reads the shelf endpoint (filtered to episodes) rather than the dedicated
+	// recent-episodes endpoint, whose DTO lacks the episode title.
+	const episodes = useProfileShelf(userDid, { type: "episode" });
 	const lists = useProfileLists(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 4);
 
@@ -123,14 +126,9 @@ export function OverviewTab({
 		year: m.movie.releaseYear ? String(m.movie.releaseYear) : undefined,
 	}));
 
-	const episodeItems: MediaCardItem[] = (episodes.data?.items ?? []).map(
-		(e) => ({
-			id: Number(e.show.showId),
-			type: "show",
-			title: e.show.title,
-			posterPath: e.show.posterPath,
-		}),
-	);
+	const episodeItems: MediaCardItem[] = (episodes.data?.items ?? [])
+		.slice(0, 10)
+		.map(shelfItemToCardItem);
 
 	const watchlist = lists.data?.find((l) => l.slug === "watchlist");
 	const favorites = lists.data?.find((l) => l.slug === "favorites");

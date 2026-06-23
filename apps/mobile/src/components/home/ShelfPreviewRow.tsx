@@ -25,7 +25,7 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 	// is exactly the recent-watched preview the dashboard wants.
 	const { data, isLoading, isError } = useProfileShelf(userDid);
 
-	const items = (data?.items ?? []).slice(0, 10).map(toCardItem);
+	const items = (data?.items ?? []).slice(0, 10).map(shelfItemToCardItem);
 	const shelfHref = user?.handle
 		? (`/profile/${user.handle}/shelf` as Href)
 		: undefined;
@@ -72,7 +72,13 @@ function EmptyCard({ text }: { text: string }) {
 	);
 }
 
-function toCardItem(item: ShelfItem): MediaCardItem {
+/**
+ * Maps a shelf entry to a `MediaCard` item. Episodes keep the parent show's
+ * poster + id (so the show-keyed action hooks resolve) but carry their episode
+ * coordinates and deep-link to the episode page, matching the web dashboard.
+ * Shared with the profile Overview episode row so the two can't drift.
+ */
+export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
 	if (item.type === "movie") {
 		return {
 			id: Number(item.movieId),
@@ -82,14 +88,18 @@ function toCardItem(item: ShelfItem): MediaCardItem {
 			year: item.releaseYear ? String(item.releaseYear) : undefined,
 		};
 	}
-	// Episodes show the parent show's poster but deep-link to the episode page,
-	// matching the web dashboard.
 	return {
 		id: Number(item.showId),
 		type: "show",
-		title: item.showTitle,
+		// Title line shows the episode title; the show drops to the label line.
+		title: item.episodeTitle ?? item.showTitle,
 		posterPath: item.posterPath,
-		year: item.firstAirYear ? String(item.firstAirYear) : undefined,
 		href: `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
+		episode: {
+			seasonNumber: item.seasonNumber,
+			episodeNumber: item.episodeNumber,
+			showTitle: item.showTitle,
+			episodeTitle: item.episodeTitle,
+		},
 	};
 }

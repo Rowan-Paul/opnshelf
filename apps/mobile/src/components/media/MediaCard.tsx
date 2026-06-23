@@ -29,6 +29,18 @@ export type MediaCardItem = {
 	 * with their parent show's poster straight to the episode page.
 	 */
 	href?: Href;
+	/**
+	 * Present when this card represents a watched episode (shown with its parent
+	 * show's poster). Drives the episode label line and scopes the action layer
+	 * to the single episode rather than the whole show. `id`/`type` stay
+	 * show-based so the route base and the show-keyed data hooks still resolve.
+	 */
+	episode?: {
+		seasonNumber: number;
+		episodeNumber: number;
+		showTitle: string;
+		episodeTitle?: string;
+	};
 };
 
 /**
@@ -89,19 +101,33 @@ function MediaCardBase({
 				>
 					{item.title}
 				</Text>
-				<View className="mt-0.5 flex-row items-center gap-2">
-					{item.year ? (
-						<Text className="text-muted-foreground text-xs">{item.year}</Text>
-					) : null}
-					{item.rating && item.rating > 0 ? (
-						<View className="flex-row items-center gap-0.5">
-							<Star color="#f3bc00" fill="#f3bc00" size={11} />
-							<Text className="text-muted-foreground text-xs">
-								{item.rating.toFixed(1)}
-							</Text>
-						</View>
-					) : null}
-				</View>
+				{item.episode ? (
+					// Episode label: "S1E2 · Show", trimmed to just "S1E2" when the
+					// title line already shows the show (i.e. no episode title).
+					<Text
+						className="mt-0.5 text-muted-foreground text-xs"
+						numberOfLines={1}
+					>
+						{`S${item.episode.seasonNumber}E${item.episode.episodeNumber}`}
+						{item.title !== item.episode.showTitle
+							? ` · ${item.episode.showTitle}`
+							: ""}
+					</Text>
+				) : (
+					<View className="mt-0.5 flex-row items-center gap-2">
+						{item.year ? (
+							<Text className="text-muted-foreground text-xs">{item.year}</Text>
+						) : null}
+						{item.rating && item.rating > 0 ? (
+							<View className="flex-row items-center gap-0.5">
+								<Star color="#f3bc00" fill="#f3bc00" size={11} />
+								<Text className="text-muted-foreground text-xs">
+									{item.rating.toFixed(1)}
+								</Text>
+							</View>
+						) : null}
+					</View>
+				)}
 			</Pressable>
 		</Link>
 	);
@@ -109,15 +135,16 @@ function MediaCardBase({
 
 /**
  * Action-enabled card. Mounts the watch/rating/note/list data hooks, overlays a
- * corner watched toggle for movies, and opens a quick-actions sheet on long
- * press. Split out from the base so opting out keeps the read-only path free of
- * any data hooks. Episodes never reach this component (MediaCard is movie/show
- * only).
+ * corner watched toggle for movies and episodes, and opens a quick-actions
+ * sheet on long press. Split out from the base so opting out keeps the
+ * read-only path free of any data hooks. Episode cards (item.episode set) scope
+ * every action to the single episode while keeping the show-based id.
  */
 function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 	const { isAuthenticated } = useAuth();
 	const mediaId = String(item.id);
-	const isMovie = item.type === "movie";
+	const ep = item.episode;
+	const isMovie = item.type === "movie" && !ep;
 
 	const watchStatus = useWatchStatus(
 		isMovie
@@ -129,26 +156,45 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 			? { mediaType: "movie", movieId: mediaId }
 			: { mediaType: "show", showId: mediaId },
 	);
-	const review = useReview({ mediaType: item.type, mediaId });
-	const note = useNote({ mediaType: item.type, mediaId });
-	const listMembership = useListMembership({ mediaType: item.type, mediaId });
+	// Episodes carry their coordinates so rating/note/list resolve to the episode
+	// (mediaType stays "show" + mediaId = showId; the coords narrow it).
+	const coords = ep
+		? { seasonNumber: ep.seasonNumber, episodeNumber: ep.episodeNumber }
+		: {};
+	const review = useReview({ mediaType: item.type, mediaId, ...coords });
+	const note = useNote({ mediaType: item.type, mediaId, ...coords });
+	const listMembership = useListMembership({
+		mediaType: item.type,
+		mediaId,
+		...coords,
+	});
 
 	const [quickVisible, setQuickVisible] = useState(false);
 	const [ratingVisible, setRatingVisible] = useState(false);
 	const [listVisible, setListVisible] = useState(false);
 	const [noteVisible, setNoteVisible] = useState(false);
 
-	// Movie: watched. Show: currently tracking (no single "watched" state).
-	const watched = isMovie ? !!watchStatus.isWatched : !!watchStatus.isTracking;
+	// Movie / episode: watched. Show: currently tracking (no single "watched").
+	const watched = isMovie
+		? !!watchStatus.isWatched
+		: ep
+			? !!watchStatus.isEpisodeWatched?.(ep.seasonNumber, ep.episodeNumber)
+			: !!watchStatus.isTracking;
 	const isWatchPending = isMovie
 		? watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending
-		: watchActions.isMarkShowPending || watchActions.isUnmarkShowPending;
+		: ep
+			? watchActions.isMarkEpisodePending || watchActions.isUnmarkEpisodePending
+			: watchActions.isMarkShowPending || watchActions.isUnmarkShowPending;
 
 	const toggleWatched = () => {
 		if (!isAuthenticated) return;
 		if (isMovie) {
 			if (watched) watchActions.unmarkMovieWatched();
 			else watchActions.markMovieWatched();
+		} else if (ep) {
+			if (watched)
+				watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+			else watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
 		} else {
 			if (watched) watchActions.unmarkShowWatched();
 			else watchActions.markShowWatched();
@@ -156,7 +202,7 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 	};
 
 	const cornerToggle =
-		isAuthenticated && isMovie ? (
+		isAuthenticated && (isMovie || ep) ? (
 			<Pressable
 				hitSlop={8}
 				onPress={(e) => {
