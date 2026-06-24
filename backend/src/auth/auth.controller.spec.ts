@@ -410,6 +410,7 @@ describe("AuthController", () => {
 			);
 			expect(mockIngesterService.addRepo).toHaveBeenCalledWith(
 				"did:plc:abc123",
+				{ markBackfillStart: true },
 			);
 		});
 
