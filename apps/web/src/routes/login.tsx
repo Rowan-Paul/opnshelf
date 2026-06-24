@@ -23,6 +23,7 @@ function LoginPage() {
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
 	const message = (search as { message?: string }).message;
+	const error = (search as { error?: string }).error;
 
 	// Redirect if already authenticated
 	useEffect(() => {
@@ -30,6 +31,19 @@ function LoginPage() {
 			navigate({ to: "/dashboard" });
 		}
 	}, [isAuthenticated, navigate]);
+
+	// Surface OAuth failures the backend redirects back with, then strip the
+	// param so a refresh doesn't re-toast.
+	useEffect(() => {
+		if (!error) return;
+		const messages: Record<string, string> = {
+			handle_required: "Please enter your handle to sign in.",
+			auth_failed: "Sign-in failed. Check your handle and try again.",
+			callback_failed: "We couldn't complete sign-in. Please try again.",
+		};
+		toast.error(messages[error] ?? "Sign-in failed. Please try again.");
+		void navigate({ to: "/login", replace: true });
+	}, [error, navigate]);
 
 	// Show loading while auth state is resolving (or when already
 	// authenticated but the redirect hasn't fired yet) to prevent

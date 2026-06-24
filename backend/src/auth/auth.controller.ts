@@ -85,9 +85,10 @@ export class AuthController {
 	private buildWebErrorUrl(errorCode: OAuthErrorCode): string {
 		const frontendUrl =
 			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
-		// Redirect to clean login route; frontend will show a friendly toast.
-		void errorCode;
-		return new URL("/login", frontendUrl).toString();
+		// Pass the error code so the /login route can show a friendly toast.
+		const url = new URL("/login", frontendUrl);
+		url.searchParams.set("error", errorCode);
+		return url.toString();
 	}
 
 	private buildMobileErrorUrl(errorCode: OAuthErrorCode): string {

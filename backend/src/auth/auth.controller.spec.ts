@@ -172,7 +172,9 @@ describe("AuthController", () => {
 			await controller.login(undefined, undefined, undefined, res);
 
 			expect(mockAuthService.authorize).not.toHaveBeenCalled();
-			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=handle_required",
+			);
 		});
 
 		it("should redirect to mobile login when handle is not provided on mobile", async () => {
@@ -245,7 +247,9 @@ describe("AuthController", () => {
 
 			await controller.login("user.bsky.social", undefined, undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=auth_failed",
+			);
 		});
 
 		it("should redirect to mobile login on failure when platform is mobile", async () => {
@@ -269,7 +273,9 @@ describe("AuthController", () => {
 
 			await controller.signup(undefined, undefined, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=auth_failed",
+			);
 		});
 
 		it("should redirect to mobile login on signup failure when platform is mobile", async () => {
@@ -546,7 +552,9 @@ describe("AuthController", () => {
 				undefined,
 				{ emailVerified: true, isNativePds: false },
 			);
-			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=callback_failed",
+			);
 		});
 
 		it("should redirect to mobile login when session record not found for mobile state", async () => {
@@ -591,7 +599,9 @@ describe("AuthController", () => {
 
 			await controller.callback(req, res);
 
-			expect(res.redirect).toHaveBeenCalledWith("http://127.0.0.1:3000/login");
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=callback_failed",
+			);
 		});
 
 		it("should redirect to mobile deep link on callback failure when error state is mobile", async () => {
