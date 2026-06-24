@@ -127,6 +127,24 @@ const PDS_RETRY_FALLBACK_SECONDS = 60;
 // ratelimit-reset window once instead of retrying early and re-hitting 429.
 const PDS_RETRY_MAX_SECONDS = 60 * 60;
 
+/**
+ * Humanize a retry delay for user-facing status messages. Rate-limit waits can
+ * be many minutes now (PDS write budgets refill hourly), so raw seconds —
+ * "Retrying in 2717 seconds" — read badly.
+ */
+function formatRetryDelay(totalSeconds: number): string {
+	const s = Math.max(0, Math.round(totalSeconds));
+	if (s < 60) return `${s} second${s === 1 ? "" : "s"}`;
+	const minutes = Math.round(s / 60);
+	if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+	const hours = Math.floor(minutes / 60);
+	const remMinutes = minutes % 60;
+	const hourPart = `${hours} hour${hours === 1 ? "" : "s"}`;
+	return remMinutes > 0
+		? `${hourPart} ${remMinutes} minute${remMinutes === 1 ? "" : "s"}`
+		: hourPart;
+}
+
 class TraktApiError extends Error {
 	constructor(
 		message: string,
@@ -797,7 +815,7 @@ export class ImportHistoryService {
 					data: {
 						status: "waiting_retry",
 						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
-						lastError: `PDS rate limit reached. Retrying in ${retryAfterSeconds} seconds.`,
+						lastError: `PDS rate limit reached. Retrying in ${formatRetryDelay(retryAfterSeconds)}.`,
 					},
 				});
 				return;
@@ -822,7 +840,7 @@ export class ImportHistoryService {
 						status: "waiting_retry",
 						data: { ...jobData, rateLimitRetries: retryCount + 1 },
 						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
-						lastError: `Trakt rate limit reached. Retrying in ${retryAfterSeconds} seconds.`,
+						lastError: `Trakt rate limit reached. Retrying in ${formatRetryDelay(retryAfterSeconds)}.`,
 					},
 				});
 				return;

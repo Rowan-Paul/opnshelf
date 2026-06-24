@@ -271,7 +271,8 @@ describe("ImportHistoryService", () => {
 				where: { id: "job-1" },
 				data: expect.objectContaining({
 					status: "waiting_retry",
-					lastError: expect.stringContaining("60 seconds"),
+					// 60s backoff is humanized to "1 minute", not "60 seconds".
+					lastError: expect.stringContaining("1 minute"),
 					data: expect.objectContaining({
 						rateLimitRetries: 1,
 					}),
@@ -331,6 +332,9 @@ describe("ImportHistoryService", () => {
 		// ~30 min: honors the reset header, not the old 60s fallback or 300s cap.
 		expect(delaySeconds).toBeGreaterThan(1700);
 		expect(delaySeconds).toBeLessThanOrEqual(60 * 60);
+		// And the user-facing message is humanized, not raw seconds.
+		expect(retryCall[0].data.lastError).toMatch(/minute/);
+		expect(retryCall[0].data.lastError).not.toMatch(/seconds/);
 	});
 
 	it("processes a Trakt job page and marks the job completed", async () => {
