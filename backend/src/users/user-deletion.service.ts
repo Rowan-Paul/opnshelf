@@ -13,6 +13,7 @@ import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/list/ite
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
 import { $nsid as NOTE_COLLECTION } from "../lexicons/xyz/opnshelf/note";
 import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";
+import { $nsid as RATING_COLLECTION } from "../lexicons/xyz/opnshelf/rating";
 import { $nsid as DOCUMENT_COLLECTION } from "../lexicons/site/standard/document";
 import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import { PrismaService } from "../prisma/prisma.service";
@@ -48,6 +49,7 @@ const DELETION_BATCH_SIZE = 200;
 const PDS_DELETION_STEPS = [
 	"movies",
 	"episodes",
+	"ratings",
 	"follows",
 	"notes",
 	"reviews",
@@ -107,20 +109,33 @@ export class UserDeletionService {
 			throw new ConflictException("An account deletion is already in progress");
 		}
 
-		const [movieCount, episodeCount, followCount, noteCount, reviewCount] =
-			await Promise.all([
-				this.prisma.trackedMovie.count({ where: { userDid: did } }),
-				this.prisma.trackedEpisode.count({ where: { userDid: did } }),
-				this.prisma.follow.count({
-					where: { followerDid: did, rkey: { not: null } },
-				}),
-				this.prisma.note.count({ where: { userDid: did } }),
-				this.prisma.review.count({ where: { userDid: did } }),
-			]);
+		const [
+			movieCount,
+			episodeCount,
+			ratingCount,
+			followCount,
+			noteCount,
+			reviewCount,
+		] = await Promise.all([
+			this.prisma.trackedMovie.count({ where: { userDid: did } }),
+			this.prisma.trackedEpisode.count({ where: { userDid: did } }),
+			this.prisma.rating.count({ where: { userDid: did } }),
+			this.prisma.follow.count({
+				where: { followerDid: did, rkey: { not: null } },
+			}),
+			this.prisma.note.count({ where: { userDid: did } }),
+			this.prisma.review.count({ where: { userDid: did } }),
+		]);
 
 		// +1 for profile record, list items and lists are counted dynamically
 		const totalRecords =
-			movieCount + episodeCount + followCount + noteCount + reviewCount + 1;
+			movieCount +
+			episodeCount +
+			ratingCount +
+			followCount +
+			noteCount +
+			reviewCount +
+			1;
 
 		return this.prisma.backgroundJob.create({
 			data: {
@@ -438,6 +453,16 @@ export class UserDeletionService {
 				});
 				return {
 					collection: EPISODE_COLLECTION,
+					rkeys: rows.map((r) => r.rkey),
+				};
+			}
+			case "ratings": {
+				const rows = await this.prisma.rating.findMany({
+					where: { userDid },
+					select: { rkey: true },
+				});
+				return {
+					collection: RATING_COLLECTION,
 					rkeys: rows.map((r) => r.rkey),
 				};
 			}

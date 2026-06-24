@@ -48,6 +48,10 @@ describe("UserDeletionService", () => {
 			findMany: vi.fn(),
 			count: vi.fn(),
 		},
+		rating: {
+			findMany: vi.fn(),
+			count: vi.fn(),
+		},
 		publication: {
 			findMany: vi.fn(),
 		},
@@ -80,6 +84,8 @@ describe("UserDeletionService", () => {
 		prisma.note.count = vi.fn().mockResolvedValue(0);
 		prisma.review.findMany = vi.fn().mockResolvedValue([]);
 		prisma.review.count = vi.fn().mockResolvedValue(0);
+		prisma.rating.findMany = vi.fn().mockResolvedValue([]);
+		prisma.rating.count = vi.fn().mockResolvedValue(0);
 		prisma.publication.findMany = vi.fn().mockResolvedValue([]);
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
 		prisma.backgroundJob.create = vi.fn().mockResolvedValue({
@@ -122,6 +128,7 @@ describe("UserDeletionService", () => {
 		it("creates a deletion job with record counts", async () => {
 			prisma.trackedMovie.count = vi.fn().mockResolvedValue(5);
 			prisma.trackedEpisode.count = vi.fn().mockResolvedValue(10);
+			prisma.rating.count = vi.fn().mockResolvedValue(6);
 			prisma.follow.count = vi.fn().mockResolvedValue(3);
 			prisma.note.count = vi.fn().mockResolvedValue(2);
 			prisma.review.count = vi.fn().mockResolvedValue(4);
@@ -134,8 +141,9 @@ describe("UserDeletionService", () => {
 					userDid: "did:plc:test",
 					status: "queued",
 					data: expect.objectContaining({
+						// 5 + 10 + 6 ratings + 3 + 2 + 4 + 1 profile
 						deletePdsData: true,
-						totalRecords: 25,
+						totalRecords: 31,
 						deletedRecords: 0,
 					}),
 				}),
@@ -184,11 +192,16 @@ describe("UserDeletionService", () => {
 			prisma.trackedMovie.findMany = vi
 				.fn()
 				.mockResolvedValue([{ rkey: "m1" }]);
+			prisma.rating.findMany = vi.fn().mockResolvedValue([{ rkey: "r1" }]);
 
 			await service.processNextDeletionJob();
 
 			expect(mockDeleteRecord).toHaveBeenCalledWith(
 				expect.objectContaining({ rkey: "m1" }),
+			);
+			// Ratings must be cleaned from the PDS too (previously orphaned).
+			expect(mockDeleteRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ rkey: "r1" }),
 			);
 			expect(mockDeleteRecord).toHaveBeenCalledWith(
 				expect.objectContaining({ rkey: "self" }),
