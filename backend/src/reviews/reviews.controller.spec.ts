@@ -1,35 +1,30 @@
+import type { Mock } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ReviewsController } from "./reviews.controller";
 import { ReviewsService } from "./reviews.service";
 
-jest.mock("../auth/auth.guard", () => ({
-	AuthGuard: jest.fn().mockImplementation(() => ({
-		canActivate: jest.fn(() => true),
+vi.mock("../auth/auth.guard", () => ({
+	AuthGuard: vi.fn().mockImplementation(() => ({
+		canActivate: vi.fn(() => true),
 	})),
 }));
 
-jest.mock("../auth/optional-auth.guard", () => ({
-	OptionalAuthGuard: jest.fn().mockImplementation(() => ({
-		canActivate: jest.fn(() => true),
+vi.mock("../auth/optional-auth.guard", () => ({
+	OptionalAuthGuard: vi.fn().mockImplementation(() => ({
+		canActivate: vi.fn(() => true),
 	})),
 }));
 
+// The like/unlike/getReviewLikes handlers are thin passthroughs (guards are
+// stubbed here, so they verify nothing about auth) — their behavior is covered
+// in reviews.service.spec. The one piece of real controller logic is the
+// canonical reviewUrl assembly in getMediaReviews (#115).
 describe("ReviewsController", () => {
 	let controller: ReviewsController;
-	let mockReviewsService: {
-		getMediaReviews: jest.Mock;
-		likeReview: jest.Mock;
-		unlikeReview: jest.Mock;
-		getReviewLikes: jest.Mock;
-	};
+	let mockReviewsService: { getMediaReviews: Mock };
 
 	beforeEach(async () => {
-		mockReviewsService = {
-			getMediaReviews: jest.fn(),
-			likeReview: jest.fn(),
-			unlikeReview: jest.fn(),
-			getReviewLikes: jest.fn(),
-		};
+		mockReviewsService = { getMediaReviews: vi.fn() };
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ReviewsController],
@@ -39,93 +34,47 @@ describe("ReviewsController", () => {
 		controller = module.get<ReviewsController>(ReviewsController);
 	});
 
-	describe("POST /reviews/:reviewId/like", () => {
-		it("requires auth", async () => {
-			mockReviewsService.likeReview.mockResolvedValue({});
-			const req = { user: { did: "did:plc:abc123", session: {} } } as any;
-
-			const result = await controller.likeReview("review-1", req);
-
-			expect(mockReviewsService.likeReview).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				req.user.session,
-				"review-1",
-			);
-			expect(result).toEqual({ success: true });
+	it("builds the canonical reviewUrl from the human path, falling back to rkey", async () => {
+		const base = {
+			title: "t",
+			markdown: "m",
+			description: null,
+			posterPath: null,
+			likeCount: 0,
+			hasLiked: false,
+			authorRating: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+		mockReviewsService.getMediaReviews.mockResolvedValue({
+			items: [
+				{
+					...base,
+					id: "r1",
+					rkey: "rkey1",
+					path: "my-great-film",
+					user: { did: "did:1", handle: "alice.opnshelf.xyz" },
+				},
+				{
+					...base,
+					id: "r2",
+					rkey: "rkey2",
+					path: null,
+					user: { did: "did:2", handle: "bob.opnshelf.xyz" },
+				},
+			],
+			total: 2,
+			nextCursor: null,
 		});
-	});
 
-	describe("DELETE /reviews/:reviewId/like", () => {
-		it("requires auth", async () => {
-			mockReviewsService.unlikeReview.mockResolvedValue({});
-			const req = { user: { did: "did:plc:abc123", session: {} } } as any;
+		const result = await controller.getMediaReviews(
+			{ mediaType: "movie", mediaId: "123" } as never,
+			{ user: { did: "did:viewer" } } as never,
+		);
 
-			const result = await controller.unlikeReview("review-1", req);
-
-			expect(mockReviewsService.unlikeReview).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				req.user.session,
-				"review-1",
-			);
-			expect(result).toEqual({ success: true });
-		});
-	});
-
-	describe("GET /reviews/:reviewId/likes", () => {
-		it("is public and returns likes", async () => {
-			mockReviewsService.getReviewLikes.mockResolvedValue({
-				items: [],
-				total: 0,
-				hasLiked: false,
-			});
-			const req = { user: undefined } as any;
-
-			const result = await controller.getReviewLikes("review-1", req);
-
-			expect(mockReviewsService.getReviewLikes).toHaveBeenCalledWith(
-				"review-1",
-				undefined,
-			);
-			expect(result).toEqual({ items: [], total: 0, hasLiked: false });
-		});
-	});
-
-	describe("GET /reviews/media", () => {
-		it("uses optional auth to populate hasLiked", async () => {
-			mockReviewsService.getMediaReviews.mockResolvedValue({
-				items: [
-					{
-						id: "r1",
-						title: "Great film",
-						markdown: "It was great.",
-						description: "It was great.",
-						user: {
-							did: "did:plc:u1",
-							handle: "u1",
-							displayName: null,
-							avatar: null,
-						},
-						likeCount: 2,
-						hasLiked: true,
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					},
-				],
-				total: 1,
-				nextCursor: null,
-			});
-			const req = { user: { did: "did:plc:abc123" } } as any;
-
-			const result = await controller.getMediaReviews(
-				{ mediaType: "movie", mediaId: "123" } as any,
-				req,
-			);
-
-			expect(mockReviewsService.getMediaReviews).toHaveBeenCalledWith(
-				{ mediaType: "movie", mediaId: "123" },
-				"did:plc:abc123",
-			);
-			expect(result.items[0].hasLiked).toBe(true);
-		});
+		expect(result.items[0].reviewUrl).toBe(
+			"/@alice.opnshelf.xyz/my-great-film",
+		);
+		expect(result.items[1].reviewUrl).toBe("/@bob.opnshelf.xyz/rkey2");
 	});
 });

@@ -1,46 +1,47 @@
+import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "../auth/auth.guard";
 import { AuthService } from "../auth/auth.service";
 import type { AuthenticatedRequest } from "../auth/types";
 
 // Mock PrismaService before importing
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 // Mock @atproto modules to prevent import errors
-jest.mock("@atproto/oauth-client-node", () => ({}));
-jest.mock("@atproto/api", () => ({}));
+vi.mock("@atproto/oauth-client-node", () => ({}));
+vi.mock("@atproto/api", () => ({}));
 
 import { MoviesController } from "./movies.controller";
 import { MoviesService } from "./movies.service";
 
 describe("MoviesController", () => {
 	let controller: MoviesController;
-	let moviesService: jest.Mocked<MoviesService>;
+	let moviesService: Mocked<MoviesService>;
 
 	const mockMoviesService = {
-		searchMovies: jest.fn(),
-		getMovieDetails: jest.fn(),
-		getMovieCredits: jest.fn(),
-		getUserMovies: jest.fn(),
-		getMovieByTMDBId: jest.fn(),
-		markWatched: jest.fn(),
-		indexTrackedMovie: jest.fn(),
-		unmarkWatched: jest.fn(),
-		removeAllTrackedMovies: jest.fn(),
-		removeLatestTrackedMovie: jest.fn(),
-		ensureMovieHasColors: jest.fn(),
-		upsertMovie: jest.fn(),
+		searchMovies: vi.fn(),
+		getMovieDetails: vi.fn(),
+		getMovieCredits: vi.fn(),
+		getUserMovies: vi.fn(),
+		getMovieByTMDBId: vi.fn(),
+		markWatched: vi.fn(),
+		indexTrackedMovie: vi.fn(),
+		unmarkWatched: vi.fn(),
+		removeAllTrackedMovies: vi.fn(),
+		removeLatestTrackedMovie: vi.fn(),
+		ensureMovieHasColors: vi.fn(),
+		upsertMovie: vi.fn(),
 	};
 
 	const mockAuthService = {
-		getUser: jest.fn(),
-		revokeBySessionId: jest.fn(),
+		getUser: vi.fn(),
+		revokeBySessionId: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [MoviesController],

@@ -1,14 +1,14 @@
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -20,9 +20,9 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/episode", () => ({
+vi.mock("../lexicons/xyz/opnshelf/episode", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.episode",
 			...data,
 		})),
@@ -35,7 +35,7 @@ import { ColorExtractionService } from "../movies/color-extraction.service";
 import { ShowsService } from "./shows.service";
 import { ShowsTmdbService } from "./shows-tmdb.service";
 
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe("ShowsService", () => {
@@ -43,50 +43,50 @@ describe("ShowsService", () => {
 
 	const mockPrismaService = {
 		trackedEpisode: {
-			findMany: jest.fn(),
-			findFirst: jest.fn(),
-			upsert: jest.fn(),
-			create: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			groupBy: jest.fn(),
+			findMany: vi.fn(),
+			findFirst: vi.fn(),
+			upsert: vi.fn(),
+			create: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			groupBy: vi.fn(),
 		},
 		show: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			update: vi.fn(),
 		},
 		season: {
-			findFirst: jest.fn(),
-			findMany: jest.fn(),
-			upsert: jest.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			upsert: vi.fn(),
 		},
 		episode: {
-			findFirst: jest.fn(),
-			findMany: jest.fn(),
-			upsert: jest.fn(),
-			count: jest.fn(),
-			groupBy: jest.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			upsert: vi.fn(),
+			count: vi.fn(),
+			groupBy: vi.fn(),
 		},
 		list: {
-			findFirst: jest.fn(),
+			findFirst: vi.fn(),
 		},
-		$queryRaw: jest.fn(),
+		$queryRaw: vi.fn(),
 	};
 
 	const mockConfigService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "TMDB_API_KEY") return "test-api-key";
 			return undefined;
 		}),
 	};
 
 	const mockColorExtractionService = {
-		extractColorsFromPoster: jest.fn(),
+		extractColorsFromPoster: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockFetch.mockReset();
@@ -437,7 +437,7 @@ describe("ShowsService", () => {
 			]);
 
 			// Query 2: next episodes via raw SQL
-			mockPrismaService.$queryRaw = jest.fn().mockResolvedValue([
+			mockPrismaService.$queryRaw = vi.fn().mockResolvedValue([
 				{
 					showId: "show-1",
 					seasonNumber: 1,
@@ -452,13 +452,11 @@ describe("ShowsService", () => {
 			// Query 3: total aired episodes
 			mockPrismaService.episode = {
 				...mockPrismaService.episode,
-				groupBy: jest
-					.fn()
-					.mockResolvedValue([{ showId: "show-1", _count: 10 }]),
+				groupBy: vi.fn().mockResolvedValue([{ showId: "show-1", _count: 10 }]),
 			};
 
 			// Query 4: watched episodes groupBy
-			mockPrismaService.trackedEpisode.groupBy = jest.fn().mockResolvedValue([
+			mockPrismaService.trackedEpisode.groupBy = vi.fn().mockResolvedValue([
 				{ showId: "show-1", seasonNumber: 1, episodeNumber: 1 },
 				{ showId: "show-1", seasonNumber: 1, episodeNumber: 2 },
 			]);

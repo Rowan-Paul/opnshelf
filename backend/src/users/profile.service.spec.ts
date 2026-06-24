@@ -1,17 +1,18 @@
 import { BlobRef } from "@atproto/api";
 import { ConfigService } from "@nestjs/config";
 
-const mockUploadBlob = jest.fn();
-const mockPutRecord = jest.fn();
-const mockGetRecord = jest.fn();
-const mockResolveAtprotoData = jest.fn();
+const mockUploadBlob = vi.fn();
+const mockPutRecord = vi.fn();
+const mockGetRecord = vi.fn();
+const mockResolveAtprotoData = vi.fn();
 
-jest.mock("@atproto/api", () => {
-	const actual = jest.requireActual("@atproto/api");
+vi.mock("@atproto/api", async () => {
+	const actual =
+		await vi.importActual<typeof import("@atproto/api")>("@atproto/api");
 
 	return {
 		...actual,
-		Agent: jest.fn().mockImplementation(() => ({
+		Agent: vi.fn().mockImplementation(() => ({
 			uploadBlob: mockUploadBlob,
 			com: {
 				atproto: {
@@ -25,8 +26,8 @@ jest.mock("@atproto/api", () => {
 	};
 });
 
-jest.mock("@atproto/identity", () => ({
-	IdResolver: jest.fn().mockImplementation(() => ({
+vi.mock("@atproto/identity", () => ({
+	IdResolver: vi.fn().mockImplementation(() => ({
 		did: {
 			resolveAtprotoData: mockResolveAtprotoData,
 		},
@@ -63,13 +64,13 @@ describe("ProfileService", () => {
 
 	const prisma = {
 		user: {
-			findUnique: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
 		},
 	};
 
 	const configService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "BACKEND_PUBLIC_URL") {
 				return "https://backend.example";
 			}
@@ -82,7 +83,7 @@ describe("ProfileService", () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		service = new ProfileService(
 			prisma as unknown as PrismaService,
 			configService as unknown as ConfigService,
@@ -115,8 +116,13 @@ describe("ProfileService", () => {
 			avatar: blobRef as unknown as ProfileRecord["avatar"],
 		});
 		const serviceInternals = service as unknown as ProfileServiceHarness;
-		const putRecordMock = jest
-			.fn<Promise<PutRecordResponse>, [ATSession, ProfileRecord]>()
+		const putRecordMock = vi
+			.fn<
+				(
+					session: ATSession,
+					record: ProfileRecord,
+				) => Promise<PutRecordResponse>
+			>()
 			.mockResolvedValue({
 				data: {
 					cid: "bafyupdatedcid",
@@ -135,8 +141,8 @@ describe("ProfileService", () => {
 			avatar:
 				"https://backend.example/users/avatar?did=did%3Aplc%3Aalice&cid=bafyavatarcid",
 		});
-		serviceInternals.getProfileRecord = jest
-			.fn<Promise<StoredProfileRecord | null>, [ATSession]>()
+		serviceInternals.getProfileRecord = vi
+			.fn<(session: ATSession) => Promise<StoredProfileRecord | null>>()
 			.mockResolvedValue(createStoredProfileRecord(existingRecord));
 		serviceInternals.putProfileRecord = putRecordMock;
 
@@ -293,8 +299,13 @@ describe("ProfileService", () => {
 			avatar: blobRef as unknown as ProfileRecord["avatar"],
 		});
 		const serviceInternals = service as unknown as ProfileServiceHarness;
-		const putRecordMock = jest
-			.fn<Promise<PutRecordResponse>, [ATSession, ProfileRecord]>()
+		const putRecordMock = vi
+			.fn<
+				(
+					session: ATSession,
+					record: ProfileRecord,
+				) => Promise<PutRecordResponse>
+			>()
 			.mockResolvedValue({
 				data: {
 					cid: "bafyclearedcid",
@@ -312,8 +323,8 @@ describe("ProfileService", () => {
 			displayName: "Old Name",
 			avatar: null,
 		});
-		serviceInternals.getProfileRecord = jest
-			.fn<Promise<StoredProfileRecord | null>, [ATSession]>()
+		serviceInternals.getProfileRecord = vi
+			.fn<(session: ATSession) => Promise<StoredProfileRecord | null>>()
 			.mockResolvedValue(createStoredProfileRecord(existingRecord));
 		serviceInternals.putProfileRecord = putRecordMock;
 
@@ -352,8 +363,8 @@ describe("ProfileService", () => {
 		});
 
 		const serviceInternals = service as unknown as ProfileServiceHarness;
-		serviceInternals.getProfileRecord = jest
-			.fn<Promise<StoredProfileRecord | null>, [ATSession]>()
+		serviceInternals.getProfileRecord = vi
+			.fn<(session: ATSession) => Promise<StoredProfileRecord | null>>()
 			.mockResolvedValue(null);
 
 		await expect(
@@ -399,8 +410,13 @@ describe("ProfileService", () => {
 			avatar,
 		});
 		const serviceInternals = service as unknown as ProfileServiceHarness;
-		const putRecordMock = jest
-			.fn<Promise<PutRecordResponse>, [ATSession, ProfileRecord]>()
+		const putRecordMock = vi
+			.fn<
+				(
+					session: ATSession,
+					record: ProfileRecord,
+				) => Promise<PutRecordResponse>
+			>()
 			.mockResolvedValue({
 				data: {
 					cid: "bafyplaincid",
@@ -419,8 +435,8 @@ describe("ProfileService", () => {
 			avatar:
 				"https://backend.example/users/avatar?did=did%3Aplc%3Aalice&cid=bafyavatarcid",
 		});
-		serviceInternals.getProfileRecord = jest
-			.fn<Promise<StoredProfileRecord | null>, [ATSession]>()
+		serviceInternals.getProfileRecord = vi
+			.fn<(session: ATSession) => Promise<StoredProfileRecord | null>>()
 			.mockResolvedValue(createStoredProfileRecord(existingRecord));
 		serviceInternals.putProfileRecord = putRecordMock;
 

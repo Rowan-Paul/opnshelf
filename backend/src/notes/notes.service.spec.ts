@@ -1,13 +1,13 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -19,19 +19,19 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("@atproto/common", () => ({
+vi.mock("@atproto/common", () => ({
 	TID: {
-		nextStr: jest.fn(() => "testtid123"),
+		nextStr: vi.fn(() => "testtid123"),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/note", () => ({
+vi.mock("../lexicons/xyz/opnshelf/note", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.note",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "xyz.opnshelf.note",
 }));
@@ -45,24 +45,24 @@ describe("NotesService", () => {
 
 	const mockPrismaService = {
 		note: {
-			findUnique: jest.fn(),
-			findFirst: jest.fn(),
-			findMany: jest.fn(),
-			count: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			upsert: jest.fn(),
+			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			upsert: vi.fn(),
 		},
-		movie: { findMany: jest.fn() },
-		show: { findMany: jest.fn() },
+		movie: { findMany: vi.fn() },
+		show: { findMany: vi.fn() },
 	};
 
 	const session: ATSession = { did: "did:plc:abc123" };
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 

@@ -1,10 +1,10 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
 
-const mockDeleteRecord = jest.fn();
-const mockListRecords = jest.fn();
+const mockDeleteRecord = vi.fn();
+const mockListRecords = vi.fn();
 
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -25,61 +25,64 @@ describe("UserDeletionService", () => {
 
 	const prisma = {
 		user: {
-			findUnique: jest.fn(),
-			delete: jest.fn(),
+			findUnique: vi.fn(),
+			delete: vi.fn(),
 		},
 		trackedMovie: {
-			findMany: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
 		},
 		trackedEpisode: {
-			findMany: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
 		},
 		follow: {
-			findMany: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
 		},
 		note: {
-			findMany: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
 		},
 		review: {
-			findMany: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
+		},
+		publication: {
+			findMany: vi.fn(),
 		},
 		backgroundJob: {
-			findFirst: jest.fn(),
-			findUnique: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
+			findFirst: vi.fn(),
+			findUnique: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 	} as unknown as PrismaService;
 
 	const authService = {
-		restore: jest.fn(),
-		revoke: jest.fn(),
+		restore: vi.fn(),
+		revoke: vi.fn(),
 	} as unknown as AuthService;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:test" });
-		prisma.user.delete = jest.fn().mockResolvedValue(undefined);
-		prisma.trackedMovie.findMany = jest.fn().mockResolvedValue([]);
-		prisma.trackedMovie.count = jest.fn().mockResolvedValue(0);
-		prisma.trackedEpisode.findMany = jest.fn().mockResolvedValue([]);
-		prisma.trackedEpisode.count = jest.fn().mockResolvedValue(0);
-		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
-		prisma.follow.count = jest.fn().mockResolvedValue(0);
-		prisma.note.findMany = jest.fn().mockResolvedValue([]);
-		prisma.note.count = jest.fn().mockResolvedValue(0);
-		prisma.review.findMany = jest.fn().mockResolvedValue([]);
-		prisma.review.count = jest.fn().mockResolvedValue(0);
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(null);
-		prisma.backgroundJob.create = jest.fn().mockResolvedValue({
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+		prisma.user.delete = vi.fn().mockResolvedValue(undefined);
+		prisma.trackedMovie.findMany = vi.fn().mockResolvedValue([]);
+		prisma.trackedMovie.count = vi.fn().mockResolvedValue(0);
+		prisma.trackedEpisode.findMany = vi.fn().mockResolvedValue([]);
+		prisma.trackedEpisode.count = vi.fn().mockResolvedValue(0);
+		prisma.follow.findMany = vi.fn().mockResolvedValue([]);
+		prisma.follow.count = vi.fn().mockResolvedValue(0);
+		prisma.note.findMany = vi.fn().mockResolvedValue([]);
+		prisma.note.count = vi.fn().mockResolvedValue(0);
+		prisma.review.findMany = vi.fn().mockResolvedValue([]);
+		prisma.review.count = vi.fn().mockResolvedValue(0);
+		prisma.publication.findMany = vi.fn().mockResolvedValue([]);
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+		prisma.backgroundJob.create = vi.fn().mockResolvedValue({
 			id: "job-1",
 			type: "account_deletion",
 			userDid: "did:plc:test",
@@ -107,7 +110,7 @@ describe("UserDeletionService", () => {
 		});
 
 		it("throws when user not found", async () => {
-			prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+			prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 			await expect(service.deleteUserSync("did:plc:missing")).rejects.toThrow(
 				NotFoundException,
@@ -117,11 +120,11 @@ describe("UserDeletionService", () => {
 
 	describe("createDeletionJob", () => {
 		it("creates a deletion job with record counts", async () => {
-			prisma.trackedMovie.count = jest.fn().mockResolvedValue(5);
-			prisma.trackedEpisode.count = jest.fn().mockResolvedValue(10);
-			prisma.follow.count = jest.fn().mockResolvedValue(3);
-			prisma.note.count = jest.fn().mockResolvedValue(2);
-			prisma.review.count = jest.fn().mockResolvedValue(4);
+			prisma.trackedMovie.count = vi.fn().mockResolvedValue(5);
+			prisma.trackedEpisode.count = vi.fn().mockResolvedValue(10);
+			prisma.follow.count = vi.fn().mockResolvedValue(3);
+			prisma.note.count = vi.fn().mockResolvedValue(2);
+			prisma.review.count = vi.fn().mockResolvedValue(4);
 
 			await service.createDeletionJob("did:plc:test", true);
 
@@ -140,7 +143,7 @@ describe("UserDeletionService", () => {
 		});
 
 		it("throws when user not found", async () => {
-			prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+			prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 			await expect(
 				service.createDeletionJob("did:plc:missing", true),
@@ -148,7 +151,7 @@ describe("UserDeletionService", () => {
 		});
 
 		it("rejects when a deletion is already in progress", async () => {
-			prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue({
+			prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue({
 				id: "existing-job",
 				status: "running",
 			});
@@ -156,6 +159,166 @@ describe("UserDeletionService", () => {
 			await expect(
 				service.createDeletionJob("did:plc:test", true),
 			).rejects.toThrow(ConflictException);
+		});
+	});
+
+	describe("processNextDeletionJob (async worker)", () => {
+		// Make findFirst (the worker's pickup query) and findUnique (the per-job
+		// load) both return the same job record.
+		function queueJob(data: Record<string, unknown>) {
+			const job = {
+				id: "job-1",
+				userDid: "did:plc:test",
+				status: "queued",
+				startedAt: null,
+				data,
+			};
+			prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+			prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+			return job;
+		}
+
+		it("runs the full PDS pipeline, then deletes the user and revokes the session", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			prisma.trackedMovie.findMany = vi
+				.fn()
+				.mockResolvedValue([{ rkey: "m1" }]);
+
+			await service.processNextDeletionJob();
+
+			expect(mockDeleteRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ rkey: "m1" }),
+			);
+			expect(mockDeleteRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ rkey: "self" }),
+			);
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
+			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ status: "completed" }),
+				}),
+			);
+		});
+
+		it("stops after the per-tick batch and reschedules as waiting_retry", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 250, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			prisma.trackedMovie.findMany = vi
+				.fn()
+				.mockResolvedValue(
+					Array.from({ length: 250 }, (_, i) => ({ rkey: `m${i}` })),
+				);
+
+			await service.processNextDeletionJob();
+
+			// DELETION_BATCH_SIZE: one tick deletes at most 200 records, then yields.
+			expect(mockDeleteRecord).toHaveBeenCalledTimes(200);
+			expect(prisma.user.delete).not.toHaveBeenCalled();
+			expect(authService.revoke).not.toHaveBeenCalled();
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						status: "waiting_retry",
+						nextRunAt: expect.any(Date),
+					}),
+				}),
+			);
+		});
+
+		it("resumes from the persisted step, skipping already-deleted steps", async () => {
+			queueJob({
+				deletePdsData: true,
+				totalRecords: 6,
+				deletedRecords: 5,
+				currentStep: "profile",
+			});
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			prisma.trackedMovie.findMany = vi
+				.fn()
+				.mockResolvedValue([{ rkey: "m1" }]);
+
+			await service.processNextDeletionJob();
+
+			// "movies" precedes "profile" in the pipeline — it must be skipped, so
+			// its records are never re-listed or re-deleted.
+			expect(prisma.trackedMovie.findMany).not.toHaveBeenCalled();
+			expect(mockDeleteRecord).not.toHaveBeenCalledWith(
+				expect.objectContaining({ rkey: "m1" }),
+			);
+			expect(mockDeleteRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ rkey: "self" }),
+			);
+			expect(prisma.user.delete).toHaveBeenCalled();
+		});
+
+		it("fails the job when the session can't be restored, leaving the user intact", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue(null);
+
+			await service.processNextDeletionJob();
+
+			expect(prisma.user.delete).not.toHaveBeenCalled();
+			expect(authService.revoke).not.toHaveBeenCalled();
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						status: "failed",
+						lastError: expect.stringContaining("session expired"),
+					}),
+				}),
+			);
+		});
+
+		it("skips PDS deletion entirely when deletePdsData is false", async () => {
+			queueJob({ deletePdsData: false, totalRecords: 0, deletedRecords: 0 });
+
+			await service.processNextDeletionJob();
+
+			expect(authService.restore).not.toHaveBeenCalled();
+			expect(mockDeleteRecord).not.toHaveBeenCalled();
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
+			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ status: "completed" }),
+				}),
+			);
+		});
+
+		it("does nothing when no deletion job is queued", async () => {
+			prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+
+			await service.processNextDeletionJob();
+
+			expect(prisma.backgroundJob.findUnique).not.toHaveBeenCalled();
+			expect(prisma.user.delete).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("reapStaleRunningJobs", () => {
+		it("resets crash-orphaned running jobs back to waiting_retry", async () => {
+			prisma.backgroundJob.updateMany = vi.fn().mockResolvedValue({ count: 2 });
+
+			await service.reapStaleRunningJobs();
+
+			expect(prisma.backgroundJob.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						status: "running",
+						updatedAt: { lt: expect.any(Date) },
+					}),
+					data: expect.objectContaining({
+						status: "waiting_retry",
+						nextRunAt: expect.any(Date),
+					}),
+				}),
+			);
 		});
 	});
 });

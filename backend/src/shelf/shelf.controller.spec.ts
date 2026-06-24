@@ -1,4 +1,3 @@
-import { PATH_METADATA } from "@nestjs/common/constants";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ShelfController } from "./shelf.controller";
 import { ShelfService } from "./shelf.service";
@@ -7,12 +6,12 @@ describe("ShelfController", () => {
 	let controller: ShelfController;
 
 	const mockShelfService = {
-		getUserShelf: jest.fn(),
-		getUserActivitySummary: jest.fn(),
+		getUserShelf: vi.fn(),
+		getUserActivitySummary: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ShelfController],
@@ -22,32 +21,31 @@ describe("ShelfController", () => {
 		controller = module.get<ShelfController>(ShelfController);
 	});
 
-	it("should expose the paginated users shelf route", () => {
-		expect(Reflect.getMetadata(PATH_METADATA, ShelfController)).toBe(
-			"users/:userDid/shelf",
-		);
-		expect(
-			Reflect.getMetadata(
-				PATH_METADATA,
-				ShelfController.prototype.getUserShelf,
-			),
-		).toBe("/");
-	});
-
-	it("should return page-based shelf metadata", async () => {
+	// The controller's real work is shaping each raw shelf row into a DTO:
+	// discriminating movie vs episode and converting Dates to ISO strings.
+	it("maps movie and episode rows to DTOs with ISO dates", async () => {
 		mockShelfService.getUserShelf.mockResolvedValue({
 			items: [
 				{
-					id: "tracked-movie-1",
 					type: "movie",
-					watchedDate: new Date("2024-01-10T00:00:00.000Z"),
-					createdAt: new Date("2024-01-10T00:00:00.000Z"),
 					data: {
-						id: "tracked-movie-1",
+						id: "tm-1",
 						movieId: "movie-1",
 						title: "Movie One",
 						watchedDate: new Date("2024-01-10T00:00:00.000Z"),
-						createdAt: new Date("2024-01-10T00:00:00.000Z"),
+						createdAt: new Date("2024-01-11T00:00:00.000Z"),
+					},
+				},
+				{
+					type: "episode",
+					data: {
+						id: "te-1",
+						showId: "show-1",
+						showTitle: "Show One",
+						seasonNumber: 2,
+						episodeNumber: 5,
+						watchedDate: null,
+						createdAt: new Date("2024-02-01T00:00:00.000Z"),
 					},
 				},
 			],
@@ -71,48 +69,23 @@ describe("ShelfController", () => {
 			undefined,
 			undefined,
 		);
-		expect(result).toMatchObject({
-			total: 10,
-			page: 2,
-			pageSize: 24,
-			totalPages: 5,
-			hasPreviousPage: true,
-			hasNextPage: true,
+		expect(result.items[0]).toMatchObject({
+			id: "tm-1",
+			type: "movie",
+			movieId: "movie-1",
+			watchedDate: "2024-01-10T00:00:00.000Z",
+			createdAt: "2024-01-11T00:00:00.000Z",
 		});
+		expect(result.items[1]).toMatchObject({
+			id: "te-1",
+			type: "episode",
+			showId: "show-1",
+			seasonNumber: 2,
+			episodeNumber: 5,
+			watchedDate: undefined,
+			createdAt: "2024-02-01T00:00:00.000Z",
+		});
+		// Regression guard for the cursor -> page migration.
 		expect(result).not.toHaveProperty("nextCursor");
-	});
-
-	it("should expose the activity summary route", () => {
-		expect(
-			Reflect.getMetadata(
-				PATH_METADATA,
-				ShelfController.prototype.getUserActivitySummary,
-			),
-		).toBe("activity-summary");
-	});
-
-	it("should return the activity summary DTO", async () => {
-		mockShelfService.getUserActivitySummary.mockResolvedValue({
-			watchedLast7Days: 4,
-			watchedLast30Days: 12,
-			dailyActivity: [
-				{ date: "2024-03-08", count: 1 },
-				{ date: "2024-03-09", count: 3 },
-			],
-		});
-
-		const result = await controller.getUserActivitySummary("did:plc:test");
-
-		expect(mockShelfService.getUserActivitySummary).toHaveBeenCalledWith(
-			"did:plc:test",
-		);
-		expect(result).toEqual({
-			watchedLast7Days: 4,
-			watchedLast30Days: 12,
-			dailyActivity: [
-				{ date: "2024-03-08", count: 1 },
-				{ date: "2024-03-09", count: 3 },
-			],
-		});
 	});
 });

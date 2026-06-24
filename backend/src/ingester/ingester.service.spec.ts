@@ -1,20 +1,21 @@
+import type { Mock } from "vitest";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 const mockTapChannel = {
-	start: jest.fn().mockResolvedValue(undefined),
-	destroy: jest.fn().mockResolvedValue(undefined),
+	start: vi.fn().mockResolvedValue(undefined),
+	destroy: vi.fn().mockResolvedValue(undefined),
 };
 
 const mockTapInstance = {
-	channel: jest.fn().mockReturnValue(mockTapChannel),
-	addRepos: jest.fn().mockResolvedValue(undefined),
-	removeRepos: jest.fn().mockResolvedValue(undefined),
-	getRepoInfo: jest.fn().mockResolvedValue({
+	channel: vi.fn().mockReturnValue(mockTapChannel),
+	addRepos: vi.fn().mockResolvedValue(undefined),
+	removeRepos: vi.fn().mockResolvedValue(undefined),
+	getRepoInfo: vi.fn().mockResolvedValue({
 		did: "did:plc:test",
 		handle: "test.bsky.social",
 		state: "active",
@@ -23,12 +24,12 @@ const mockTapInstance = {
 	}),
 };
 
-jest.mock("@atproto/tap", () => ({
-	Tap: jest.fn().mockImplementation(() => mockTapInstance),
-	SimpleIndexer: jest.fn().mockImplementation(() => ({
-		record: jest.fn(),
-		identity: jest.fn(),
-		error: jest.fn(),
+vi.mock("@atproto/tap", () => ({
+	Tap: vi.fn().mockImplementation(() => mockTapInstance),
+	SimpleIndexer: vi.fn().mockImplementation(() => ({
+		record: vi.fn(),
+		identity: vi.fn(),
+		error: vi.fn(),
 	})),
 }));
 
@@ -49,16 +50,16 @@ import { IngesterService } from "./ingester.service";
 
 type MockPrismaService = {
 	user: {
-		findUnique: jest.Mock;
-		findMany: jest.Mock;
+		findUnique: Mock;
+		findMany: Mock;
 	};
 	trackedMovie: {
-		upsert: jest.Mock;
-		deleteMany: jest.Mock;
+		upsert: Mock;
+		deleteMany: Mock;
 	};
 	trackedEpisode: {
-		upsert: jest.Mock;
-		deleteMany: jest.Mock;
+		upsert: Mock;
+		deleteMany: Mock;
 	};
 };
 
@@ -66,119 +67,119 @@ describe("IngesterService", () => {
 	let service: IngesterService;
 	let mockPrismaService: MockPrismaService;
 	let mockMoviesService: {
-		getMovieByTMDBId: jest.Mock;
-		getMovieDetails: jest.Mock;
-		upsertMovie: jest.Mock;
+		getMovieByTMDBId: Mock;
+		getMovieDetails: Mock;
+		upsertMovie: Mock;
 	};
 	let mockShowsService: {
-		getShowByTMDBId: jest.Mock;
-		getShowDetails: jest.Mock;
-		upsertShow: jest.Mock;
-		syncShowMetadata: jest.Mock;
+		getShowByTMDBId: Mock;
+		getShowDetails: Mock;
+		upsertShow: Mock;
+		syncShowMetadata: Mock;
 	};
 	let mockListsService: {
-		indexListRecord: jest.Mock;
-		deleteListRecord: jest.Mock;
-		indexListItemRecord: jest.Mock;
-		deleteListItemRecord: jest.Mock;
+		indexListRecord: Mock;
+		deleteListRecord: Mock;
+		indexListItemRecord: Mock;
+		deleteListItemRecord: Mock;
 	};
 	let mockSocialService: {
-		indexFollowRecord: jest.Mock;
-		deleteFollowRecordIndex: jest.Mock;
+		indexFollowRecord: Mock;
+		deleteFollowRecordIndex: Mock;
 	};
 	let mockNotesService: {
-		indexNoteRecord: jest.Mock;
-		deleteNoteRecord: jest.Mock;
+		indexNoteRecord: Mock;
+		deleteNoteRecord: Mock;
 	};
 	let mockProfileService: {
-		indexProfileRecord: jest.Mock;
-		deleteProfileRecordIndex: jest.Mock;
+		indexProfileRecord: Mock;
+		deleteProfileRecordIndex: Mock;
 	};
 	let mockReviewsService: {
-		indexDocumentRecord: jest.Mock;
-		deleteDocumentRecord: jest.Mock;
-		indexPublicationRecord: jest.Mock;
-		deletePublicationRecord: jest.Mock;
-		indexReviewLikeRecord: jest.Mock;
-		deleteReviewLikeRecord: jest.Mock;
+		indexDocumentRecord: Mock;
+		deleteDocumentRecord: Mock;
+		indexPublicationRecord: Mock;
+		deletePublicationRecord: Mock;
+		indexReviewLikeRecord: Mock;
+		deleteReviewLikeRecord: Mock;
 	};
 	let mockRatingsService: {
-		indexRatingRecord: jest.Mock;
-		deleteRatingRecord: jest.Mock;
+		indexRatingRecord: Mock;
+		deleteRatingRecord: Mock;
 	};
 
 	const mockConfigService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "TAP_URL") return "wss://tap.opnshelf.xyz";
 			return undefined;
 		}),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		mockPrismaService = {
 			user: {
-				findUnique: jest.fn(),
-				findMany: jest.fn().mockResolvedValue([]),
+				findUnique: vi.fn(),
+				findMany: vi.fn().mockResolvedValue([]),
 			},
 			trackedMovie: {
-				upsert: jest.fn(),
-				deleteMany: jest.fn(),
+				upsert: vi.fn(),
+				deleteMany: vi.fn(),
 			},
 			trackedEpisode: {
-				upsert: jest.fn(),
-				deleteMany: jest.fn(),
+				upsert: vi.fn(),
+				deleteMany: vi.fn(),
 			},
 		};
 
 		mockMoviesService = {
-			getMovieByTMDBId: jest.fn(),
-			getMovieDetails: jest.fn(),
-			upsertMovie: jest.fn(),
+			getMovieByTMDBId: vi.fn(),
+			getMovieDetails: vi.fn(),
+			upsertMovie: vi.fn(),
 		};
 
 		mockShowsService = {
-			getShowByTMDBId: jest.fn(),
-			getShowDetails: jest.fn(),
-			upsertShow: jest.fn(),
-			syncShowMetadata: jest.fn().mockResolvedValue(undefined),
+			getShowByTMDBId: vi.fn(),
+			getShowDetails: vi.fn(),
+			upsertShow: vi.fn(),
+			syncShowMetadata: vi.fn().mockResolvedValue(undefined),
 		};
 
 		mockListsService = {
-			indexListRecord: jest.fn(),
-			deleteListRecord: jest.fn(),
-			indexListItemRecord: jest.fn(),
-			deleteListItemRecord: jest.fn(),
+			indexListRecord: vi.fn(),
+			deleteListRecord: vi.fn(),
+			indexListItemRecord: vi.fn(),
+			deleteListItemRecord: vi.fn(),
 		};
 
 		mockSocialService = {
-			indexFollowRecord: jest.fn(),
-			deleteFollowRecordIndex: jest.fn(),
+			indexFollowRecord: vi.fn(),
+			deleteFollowRecordIndex: vi.fn(),
 		};
 
 		mockNotesService = {
-			indexNoteRecord: jest.fn(),
-			deleteNoteRecord: jest.fn(),
+			indexNoteRecord: vi.fn(),
+			deleteNoteRecord: vi.fn(),
 		};
 
 		mockProfileService = {
-			indexProfileRecord: jest.fn(),
-			deleteProfileRecordIndex: jest.fn(),
+			indexProfileRecord: vi.fn(),
+			deleteProfileRecordIndex: vi.fn(),
 		};
 
 		mockReviewsService = {
-			indexDocumentRecord: jest.fn(),
-			deleteDocumentRecord: jest.fn(),
-			indexPublicationRecord: jest.fn(),
-			deletePublicationRecord: jest.fn(),
-			indexReviewLikeRecord: jest.fn(),
-			deleteReviewLikeRecord: jest.fn(),
+			indexDocumentRecord: vi.fn(),
+			deleteDocumentRecord: vi.fn(),
+			indexPublicationRecord: vi.fn(),
+			deletePublicationRecord: vi.fn(),
+			indexReviewLikeRecord: vi.fn(),
+			deleteReviewLikeRecord: vi.fn(),
 		};
 
 		mockRatingsService = {
-			indexRatingRecord: jest.fn(),
-			deleteRatingRecord: jest.fn(),
+			indexRatingRecord: vi.fn(),
+			deleteRatingRecord: vi.fn(),
 		};
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -236,12 +237,12 @@ describe("IngesterService", () => {
 	describe("record ingestion", () => {
 		const setupRecordHandler = (): ((evt: RecordEvent) => Promise<void>) => {
 			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as jest.Mock).mockImplementation(() => ({
-				record: jest.fn((handler) => {
+			(SimpleIndexer as Mock).mockImplementation(() => ({
+				record: vi.fn((handler) => {
 					recordHandler = handler;
 				}),
-				identity: jest.fn(),
-				error: jest.fn(),
+				identity: vi.fn(),
+				error: vi.fn(),
 			}));
 			service.onModuleInit();
 			if (!recordHandler) {
@@ -307,7 +308,7 @@ describe("IngesterService", () => {
 
 		it("logs missing record payloads at debug instead of warn", async () => {
 			const recordHandler = setupRecordHandler();
-			const debugSpy = jest.spyOn(
+			const debugSpy = vi.spyOn(
 				(
 					service as unknown as {
 						logger: { debug: (...args: unknown[]) => void };
@@ -315,7 +316,7 @@ describe("IngesterService", () => {
 				).logger,
 				"debug",
 			);
-			const warnSpy = jest.spyOn(
+			const warnSpy = vi.spyOn(
 				(
 					service as unknown as {
 						logger: { warn: (...args: unknown[]) => void };

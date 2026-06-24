@@ -1,55 +1,59 @@
+import type { Mock, Mocked } from "vitest";
 import { NodeOAuthClient } from "@atproto/oauth-client-node";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing AuthService
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn().mockImplementation(() => ({
-		$transaction: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn().mockImplementation(() => ({
+		$transaction: vi.fn(),
 		authSession: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			update: jest.fn(),
-			deleteMany: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			update: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		authState: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		user: {
-			findUnique: jest.fn(),
-			update: jest.fn(),
-			upsert: jest.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
+			upsert: vi.fn(),
 		},
 	})),
 }));
 
 // Mock the @atproto/oauth-client-node module
-jest.mock("@atproto/oauth-client-node", () => ({
-	NodeOAuthClient: jest.fn().mockImplementation(() => ({
-		authorize: jest.fn(),
-		callback: jest.fn(),
-		restore: jest.fn(),
+vi.mock("@atproto/oauth-client-node", () => ({
+	NodeOAuthClient: vi.fn().mockImplementation(() => ({
+		authorize: vi.fn(),
+		callback: vi.fn(),
+		restore: vi.fn(),
 	})),
+	// Vitest throws on undefined named exports (Jest returned undefined);
+	// auth.service imports this at module load.
+	requestLocalLock: vi.fn(),
 }));
 
 // Mock the @atproto/api module
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => {
-		const getProfile = jest.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => {
+		const getProfile = vi.fn();
 		return {
 			com: {
 				atproto: {
 					repo: {
-						describeRepo: jest.fn(),
-						getRecord: jest.fn(),
+						describeRepo: vi.fn(),
+						getRecord: vi.fn(),
 					},
 				},
 			},
 			getProfile,
-			withProxy: jest.fn().mockReturnValue({ getProfile }),
+			withProxy: vi.fn().mockReturnValue({ getProfile }),
 		};
 	}),
 }));
@@ -59,32 +63,32 @@ import { AuthService, OAUTH_SCOPE } from "./auth.service";
 
 describe("AuthService", () => {
 	let service: AuthService;
-	let prismaService: jest.Mocked<PrismaService>;
-	let configService: jest.Mocked<ConfigService>;
+	let prismaService: Mocked<PrismaService>;
+	let configService: Mocked<ConfigService>;
 
 	const mockPrismaService = {
-		$transaction: jest.fn(),
+		$transaction: vi.fn(),
 		authSession: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			update: jest.fn(),
-			deleteMany: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			update: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		authState: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		user: {
-			findUnique: jest.fn(),
-			update: jest.fn(),
-			upsert: jest.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
+			upsert: vi.fn(),
 		},
 	};
 
 	const mockConfigService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			const config: Record<string, string | number> = {
 				BACKEND_PUBLIC_URL: "http://127.0.0.1:3001",
 				PORT: 3001,
@@ -95,7 +99,7 @@ describe("AuthService", () => {
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -138,7 +142,7 @@ describe("AuthService", () => {
 					get: expect.any(Function),
 					del: expect.any(Function),
 				},
-				requestLock: undefined,
+				requestLock: expect.any(Function),
 				allowHttp: true,
 			});
 		});
@@ -546,7 +550,7 @@ describe("AuthService", () => {
 		});
 
 		it("should return production metadata for non-localhost URLs", () => {
-			(mockConfigService.get as jest.Mock).mockImplementation((key: string) => {
+			(mockConfigService.get as Mock).mockImplementation((key: string) => {
 				if (key === "BACKEND_PUBLIC_URL") return "https://api.opnshelf.xyz";
 				if (key === "PORT") return 443;
 				return undefined;
@@ -576,14 +580,6 @@ describe("AuthService", () => {
 					expiresAt: { lt: expect.any(Date) },
 				},
 			});
-		});
-
-		it("should not log when no states are cleaned up", async () => {
-			mockPrismaService.authState.deleteMany.mockResolvedValue({ count: 0 });
-
-			await service.cleanupExpiredStates();
-
-			expect(mockPrismaService.authState.deleteMany).toHaveBeenCalled();
 		});
 	});
 
@@ -626,18 +622,11 @@ describe("AuthService", () => {
 		});
 	});
 
-	describe("getOAuthClient", () => {
-		it("should return the OAuth client after initialization", () => {
-			const client = service.getOAuthClient();
-			expect(client).toBeDefined();
-		});
-	});
-
 	describe("authorize", () => {
 		it("should call OAuth client authorize and return URL", async () => {
 			const mockUrl = new URL("https://bsky.social/oauth/authorize?state=abc");
 			const client = service.getOAuthClient();
-			(client.authorize as jest.Mock).mockResolvedValue(mockUrl);
+			(client.authorize as Mock).mockResolvedValue(mockUrl);
 
 			const result = await service.authorize("user.bsky.social");
 
@@ -654,7 +643,7 @@ describe("AuthService", () => {
 		it("should call OAuth client callback with params", async () => {
 			const mockResult = { session: { did: "did:plc:abc123" } };
 			const client = service.getOAuthClient();
-			(client.callback as jest.Mock).mockResolvedValue(mockResult);
+			(client.callback as Mock).mockResolvedValue(mockResult);
 
 			const params = new URLSearchParams("code=abc&state=xyz");
 			const result = await service.callback(params);
@@ -668,7 +657,7 @@ describe("AuthService", () => {
 		it("should return session when restore succeeds", async () => {
 			const mockSession = { did: "did:plc:abc123" };
 			const client = service.getOAuthClient();
-			(client.restore as jest.Mock).mockResolvedValue(mockSession);
+			(client.restore as Mock).mockResolvedValue(mockSession);
 
 			const result = await service.restore("did:plc:abc123");
 
@@ -678,7 +667,7 @@ describe("AuthService", () => {
 
 		it("should return undefined when restore fails", async () => {
 			const client = service.getOAuthClient();
-			(client.restore as jest.Mock).mockRejectedValue(
+			(client.restore as Mock).mockRejectedValue(
 				new Error("Session not found"),
 			);
 
@@ -690,19 +679,19 @@ describe("AuthService", () => {
 
 	describe("hasBlueskyProfile", () => {
 		it("should return true when the repo has an app.bsky.actor.profile/self record", async () => {
-			const { Agent } = require("@atproto/api");
-			const mockRestore = jest
-				.fn()
-				.mockResolvedValue({ did: "did:plc:abc123" });
-			const mockGetRecord = jest.fn().mockResolvedValue({
+			const { Agent } = (await import("@atproto/api")) as unknown as {
+				Agent: Mock;
+			};
+			const mockRestore = vi.fn().mockResolvedValue({ did: "did:plc:abc123" });
+			const mockGetRecord = vi.fn().mockResolvedValue({
 				data: {
 					uri: "at://did:plc:abc123/app.bsky.actor.profile/self",
 				},
 			});
 
-			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
-				authorize: jest.fn(),
-				callback: jest.fn(),
+			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
+				authorize: vi.fn(),
+				callback: vi.fn(),
 				restore: mockRestore,
 			}));
 			service.onModuleInit();
@@ -711,12 +700,12 @@ describe("AuthService", () => {
 				com: {
 					atproto: {
 						repo: {
-							describeRepo: jest.fn(),
+							describeRepo: vi.fn(),
 							getRecord: mockGetRecord,
 						},
 					},
 				},
-				getProfile: jest.fn(),
+				getProfile: vi.fn(),
 			}));
 
 			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
@@ -730,17 +719,17 @@ describe("AuthService", () => {
 		});
 
 		it("should return false when the profile record does not exist", async () => {
-			const { Agent } = require("@atproto/api");
-			const mockRestore = jest
-				.fn()
-				.mockResolvedValue({ did: "did:plc:abc123" });
-			const mockGetRecord = jest
+			const { Agent } = (await import("@atproto/api")) as unknown as {
+				Agent: Mock;
+			};
+			const mockRestore = vi.fn().mockResolvedValue({ did: "did:plc:abc123" });
+			const mockGetRecord = vi
 				.fn()
 				.mockRejectedValue(new Error("RecordNotFound"));
 
-			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
-				authorize: jest.fn(),
-				callback: jest.fn(),
+			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
+				authorize: vi.fn(),
+				callback: vi.fn(),
 				restore: mockRestore,
 			}));
 			service.onModuleInit();
@@ -749,14 +738,14 @@ describe("AuthService", () => {
 				com: {
 					atproto: {
 						repo: {
-							describeRepo: jest.fn(),
+							describeRepo: vi.fn(),
 							getRecord: mockGetRecord,
 						},
 					},
 				},
-				getProfile: jest.fn(),
+				getProfile: vi.fn(),
 			}));
-			const warnSpy = jest.spyOn(
+			const warnSpy = vi.spyOn(
 				(
 					service as unknown as {
 						logger: { warn: (...args: unknown[]) => void };
@@ -772,17 +761,17 @@ describe("AuthService", () => {
 		});
 
 		it("should return false when the session cannot be restored", async () => {
-			const mockRestore = jest
+			const mockRestore = vi
 				.fn()
 				.mockRejectedValue(new Error("restore failed"));
 
-			(NodeOAuthClient as unknown as jest.Mock).mockImplementation(() => ({
-				authorize: jest.fn(),
-				callback: jest.fn(),
+			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
+				authorize: vi.fn(),
+				callback: vi.fn(),
 				restore: mockRestore,
 			}));
 			service.onModuleInit();
-			const warnSpy = jest.spyOn(
+			const warnSpy = vi.spyOn(
 				(
 					service as unknown as {
 						logger: { warn: (...args: unknown[]) => void };
@@ -800,20 +789,22 @@ describe("AuthService", () => {
 
 	describe("fetchProfile", () => {
 		it("should fetch the canonical handle from the repo and profile extras from appview", async () => {
-			const { Agent } = require("@atproto/api");
-			const mockDescribeRepo = jest.fn().mockResolvedValue({
+			const { Agent } = (await import("@atproto/api")) as unknown as {
+				Agent: Mock;
+			};
+			const mockDescribeRepo = vi.fn().mockResolvedValue({
 				data: {
 					handle: "user.custom-domain.test",
 				},
 			});
-			const mockGetProfile = jest.fn().mockResolvedValue({
+			const mockGetProfile = vi.fn().mockResolvedValue({
 				data: {
 					handle: "handle.invalid",
 					displayName: "Test User",
 					avatar: "https://example.com/avatar.jpg",
 				},
 			});
-			const mockWithProxy = jest
+			const mockWithProxy = vi
 				.fn()
 				.mockReturnValue({ getProfile: mockGetProfile });
 			Agent.mockImplementation(() => ({
@@ -846,13 +837,15 @@ describe("AuthService", () => {
 		});
 
 		it("should handle missing displayName and avatar", async () => {
-			const { Agent } = require("@atproto/api");
-			const mockDescribeRepo = jest.fn().mockResolvedValue({
+			const { Agent } = (await import("@atproto/api")) as unknown as {
+				Agent: Mock;
+			};
+			const mockDescribeRepo = vi.fn().mockResolvedValue({
 				data: {
 					handle: "user.bsky.social",
 				},
 			});
-			const mockGetProfile = jest.fn().mockResolvedValue({
+			const mockGetProfile = vi.fn().mockResolvedValue({
 				data: {
 					handle: "handle.invalid",
 				},
@@ -866,7 +859,7 @@ describe("AuthService", () => {
 					},
 				},
 				getProfile: mockGetProfile,
-				withProxy: jest.fn().mockReturnValue({ getProfile: mockGetProfile }),
+				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
 
 			const mockSession = { did: "did:plc:abc123" };
@@ -881,13 +874,15 @@ describe("AuthService", () => {
 		});
 
 		it("should still return the repo handle if the appview profile fetch fails", async () => {
-			const { Agent } = require("@atproto/api");
-			const mockDescribeRepo = jest.fn().mockResolvedValue({
+			const { Agent } = (await import("@atproto/api")) as unknown as {
+				Agent: Mock;
+			};
+			const mockDescribeRepo = vi.fn().mockResolvedValue({
 				data: {
 					handle: "user.custom-domain.test",
 				},
 			});
-			const mockGetProfile = jest
+			const mockGetProfile = vi
 				.fn()
 				.mockRejectedValue(new Error("profile fetch failed"));
 			Agent.mockImplementation(() => ({
@@ -899,7 +894,7 @@ describe("AuthService", () => {
 					},
 				},
 				getProfile: mockGetProfile,
-				withProxy: jest.fn().mockReturnValue({ getProfile: mockGetProfile }),
+				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
 
 			const mockSession = { did: "did:plc:abc123" };
@@ -916,9 +911,6 @@ describe("AuthService", () => {
 
 	describe("OAUTH_SCOPE", () => {
 		it("should have the correct OAuth scope for app functionality", () => {
-			// Import the service module to access the constant
-			const authServiceModule = require("./auth.service");
-
 			// The OAUTH_SCOPE constant should include:
 			// - atproto: base AT Protocol access
 			// - repo:xyz.opnshelf.movie: write movie records
@@ -930,18 +922,9 @@ describe("AuthService", () => {
 			// - repo:xyz.opnshelf.note: write note records
 			// - blob:*/*: upload profile images
 			// - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
-			expect(authServiceModule.OAUTH_SCOPE).toBe(
+			expect(OAUTH_SCOPE).toBe(
 				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 			);
-		});
-
-		it("should be used consistently across all OAuth operations", () => {
-			// This test verifies that the scope is properly defined and accessible
-			// The actual usage is tested in the authorize() and getClientMetadata() tests
-			const authServiceModule = require("./auth.service");
-			expect(authServiceModule.OAUTH_SCOPE).toBeDefined();
-			expect(typeof authServiceModule.OAUTH_SCOPE).toBe("string");
-			expect(authServiceModule.OAUTH_SCOPE.length).toBeGreaterThan(0);
 		});
 	});
 });

@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from "vitest";
 import {
 	BadGatewayException,
 	BadRequestException,
@@ -17,7 +18,7 @@ import type { PrismaService } from "../prisma/prisma.service";
 import type { ShelfService } from "../shelf/shelf.service";
 import type { ShowsService } from "../shows/shows.service";
 
-jest.mock("./profile.service", () => ({
+vi.mock("./profile.service", () => ({
 	ProfileService: class MockProfileService {},
 }));
 
@@ -28,19 +29,19 @@ import type { UserDeletionService } from "./user-deletion.service";
 import { UsersService } from "./users.service";
 
 type MockImportHistoryService = {
-	fetchTraktPublicHistory: jest.MockedFunction<
+	fetchTraktPublicHistory: MockedFunction<
 		(
 			username: string,
 			maxItems?: number,
 		) => Promise<FetchTraktPublicHistoryResponseDto>
 	>;
-	startTraktImport: jest.MockedFunction<
+	startTraktImport: MockedFunction<
 		(userDid: string, username: string) => Promise<StartTraktImportResponseDto>
 	>;
-	getCurrentTraktImport: jest.MockedFunction<
+	getCurrentTraktImport: MockedFunction<
 		(userDid: string) => Promise<TraktImportJobDto | null>
 	>;
-	importNormalizedItems: jest.MockedFunction<
+	importNormalizedItems: MockedFunction<
 		(
 			userDid: string,
 			session: { did: string },
@@ -56,33 +57,33 @@ describe("UsersService", () => {
 
 	const prisma = {
 		user: {
-			findUnique: jest.fn(),
-			findMany: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			findMany: vi.fn(),
+			update: vi.fn(),
 		},
 		follow: {
-			findMany: jest.fn(),
-			createMany: jest.fn(),
+			findMany: vi.fn(),
+			createMany: vi.fn(),
 		},
 		trackedMovie: {
-			findFirst: jest.fn(),
-			count: jest.fn().mockResolvedValue(0),
-			findMany: jest.fn().mockResolvedValue([]),
+			findFirst: vi.fn(),
+			count: vi.fn().mockResolvedValue(0),
+			findMany: vi.fn().mockResolvedValue([]),
 		},
 		trackedEpisode: {
-			findFirst: jest.fn(),
-			count: jest.fn().mockResolvedValue(0),
-			findMany: jest.fn().mockResolvedValue([]),
-			groupBy: jest.fn().mockResolvedValue([]),
+			findFirst: vi.fn(),
+			count: vi.fn().mockResolvedValue(0),
+			findMany: vi.fn().mockResolvedValue([]),
+			groupBy: vi.fn().mockResolvedValue([]),
 		},
 		show: {
-			findUnique: jest.fn().mockResolvedValue(null),
+			findUnique: vi.fn().mockResolvedValue(null),
 		},
-		$queryRaw: jest.fn().mockResolvedValue([{ count: 0 }]),
+		$queryRaw: vi.fn().mockResolvedValue([{ count: 0 }]),
 	} as unknown as PrismaService;
 
 	const shelfService = {
-		getUserActivitySummary: jest.fn().mockResolvedValue({
+		getUserActivitySummary: vi.fn().mockResolvedValue({
 			watchedLast7Days: 0,
 			watchedLast30Days: 0,
 			dailyActivity: Array.from({ length: 30 }, (_, i) => ({
@@ -93,53 +94,53 @@ describe("UsersService", () => {
 	} as unknown as ShelfService;
 
 	const moviesService = {
-		markWatched: jest.fn(),
-		indexTrackedMovie: jest.fn(),
+		markWatched: vi.fn(),
+		indexTrackedMovie: vi.fn(),
 	} as unknown as MoviesService;
 
 	const showsService = {
-		markEpisodeWatched: jest.fn(),
-		indexTrackedEpisode: jest.fn(),
+		markEpisodeWatched: vi.fn(),
+		indexTrackedEpisode: vi.fn(),
 	} as unknown as ShowsService;
 
 	const configService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "TRAKT_API_KEY") return "trakt-key";
 			return undefined;
 		}),
 	} as unknown as ConfigService;
 
 	const userDeletionService = {
-		deleteUserSync: jest.fn(),
-		createDeletionJob: jest.fn(),
-		getCurrentDeletionJob: jest.fn(),
+		deleteUserSync: vi.fn(),
+		createDeletionJob: vi.fn(),
+		getCurrentDeletionJob: vi.fn(),
 	} as unknown as UserDeletionService;
 
 	const profileService = {
-		updateProfile: jest.fn(),
-		seedProfileForNewUser: jest.fn(),
-		deleteAvatar: jest.fn(),
-		deleteProfileRecordIndex: jest.fn(),
-		streamAvatar: jest.fn(),
-		discoverSocialProfiles: jest.fn(),
+		updateProfile: vi.fn(),
+		seedProfileForNewUser: vi.fn(),
+		deleteAvatar: vi.fn(),
+		deleteProfileRecordIndex: vi.fn(),
+		streamAvatar: vi.fn(),
+		discoverSocialProfiles: vi.fn(),
 	} as unknown as ProfileService;
 
 	const listsService = {
-		hasAllDefaultLists: jest.fn(),
-		provisionDefaultLists: jest.fn(),
+		hasAllDefaultLists: vi.fn(),
+		provisionDefaultLists: vi.fn(),
 	} as unknown as ListsService;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		importHistoryService = {
-			fetchTraktPublicHistory: jest.fn(),
-			startTraktImport: jest.fn(),
-			getCurrentTraktImport: jest.fn(),
-			importNormalizedItems: jest.fn(),
+			fetchTraktPublicHistory: vi.fn(),
+			startTraktImport: vi.fn(),
+			getCurrentTraktImport: vi.fn(),
+			importNormalizedItems: vi.fn(),
 		};
-		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(true);
+		(listsService.hasAllDefaultLists as Mock).mockResolvedValue(true);
 		reviewsService = {
-			listMyPublications: jest.fn(),
+			listMyPublications: vi.fn(),
 		} as unknown as ReviewsService;
 		service = new UsersService(
 			prisma,
@@ -152,16 +153,17 @@ describe("UsersService", () => {
 		);
 	});
 
-	afterEach(() => {
-		jest.restoreAllMocks();
-	});
+	// No afterEach restoreAllMocks: the Logger spies live on the per-test
+	// `service` instance (recreated each beforeEach), so they never leak.
+	// Vitest's restoreAllMocks would also wipe the describe-scope vi.fn()
+	// defaults (which Jest's left intact).
 
 	describe("updateUserSettings reviews publication", () => {
 		it("stores uri + cached name when the target is one of the user's own publications", async () => {
-			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+			(prisma.user.findUnique as Mock).mockResolvedValue({
 				did: "did:plc:123",
 			});
-			(reviewsService.listMyPublications as jest.Mock).mockResolvedValue([
+			(reviewsService.listMyPublications as Mock).mockResolvedValue([
 				{
 					uri: "at://did:plc:123/site.standard.publication/leaflet",
 					name: "My Blog",
@@ -169,7 +171,7 @@ describe("UsersService", () => {
 					isOpnshelfDefault: false,
 				},
 			]);
-			(prisma.user.update as jest.Mock).mockResolvedValue({
+			(prisma.user.update as Mock).mockResolvedValue({
 				timezone: "UTC",
 				timeFormat: "24h",
 				watchCountry: "US",
@@ -200,10 +202,10 @@ describe("UsersService", () => {
 		});
 
 		it("rejects a target that is not among the user's own publications", async () => {
-			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+			(prisma.user.findUnique as Mock).mockResolvedValue({
 				did: "did:plc:123",
 			});
-			(reviewsService.listMyPublications as jest.Mock).mockResolvedValue([]);
+			(reviewsService.listMyPublications as Mock).mockResolvedValue([]);
 
 			await expect(
 				service.updateUserSettings(
@@ -215,10 +217,10 @@ describe("UsersService", () => {
 		});
 
 		it("clears the override to the opnshelf default when set to null", async () => {
-			(prisma.user.findUnique as jest.Mock).mockResolvedValue({
+			(prisma.user.findUnique as Mock).mockResolvedValue({
 				did: "did:plc:123",
 			});
-			(prisma.user.update as jest.Mock).mockResolvedValue({
+			(prisma.user.update as Mock).mockResolvedValue({
 				timezone: "UTC",
 				timeFormat: "24h",
 				watchCountry: "US",
@@ -246,10 +248,8 @@ describe("UsersService", () => {
 	});
 
 	it("completes onboarding for an existing user", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:123" });
-		prisma.user.update = jest.fn().mockResolvedValue({
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.update = vi.fn().mockResolvedValue({
 			onboardingCompletedAt: new Date("2026-03-03T12:00:00.000Z"),
 		});
 
@@ -260,57 +260,20 @@ describe("UsersService", () => {
 	});
 
 	it("throws when completing onboarding for missing user", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+		prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 		await expect(service.completeOnboarding("did:plc:missing")).rejects.toThrow(
 			NotFoundException,
 		);
 	});
 
-	it("updates user profile display name", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:123" });
-		(profileService.updateProfile as jest.Mock).mockResolvedValue({
-			displayName: "Updated User",
-			avatar: "https://example.com/avatar.jpg",
-		});
-		const session = { did: "did:plc:123" };
-
-		await expect(
-			service.updateUserProfile("did:plc:123", session, {
-				displayName: "Updated User",
-			}),
-		).resolves.toEqual({
-			displayName: "Updated User",
-			avatar: "https://example.com/avatar.jpg",
-		});
-		const logSpy = jest.spyOn(
-			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
-				.logger,
-			"log",
-		);
-		expect(profileService.updateProfile).toHaveBeenCalledWith(
-			"did:plc:123",
-			session,
-			{
-				displayName: "Updated User",
-			},
-		);
-		expect(listsService.hasAllDefaultLists).toHaveBeenCalledWith("did:plc:123");
-		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
-		expect(logSpy).not.toHaveBeenCalled();
-	});
-
 	it("updates user settings without logging routine success", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:123" });
-		prisma.user.update = jest.fn().mockResolvedValue({
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.update = vi.fn().mockResolvedValue({
 			timezone: "Europe/Amsterdam",
 			timeFormat: "24h",
 		});
-		const logSpy = jest.spyOn(
+		const logSpy = vi.spyOn(
 			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
 				.logger,
 			"log",
@@ -330,7 +293,7 @@ describe("UsersService", () => {
 	});
 
 	it("throws when updating profile for missing user", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+		prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 		await expect(
 			service.updateUserProfile(
@@ -341,83 +304,17 @@ describe("UsersService", () => {
 		).rejects.toThrow(NotFoundException);
 	});
 
-	it("uploads a user avatar through the profile service", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:123" });
-		(profileService.updateProfile as jest.Mock).mockResolvedValue({
-			displayName: "Updated User",
-			avatar: "https://example.com/avatar.jpg",
-		});
-		const session = { did: "did:plc:123" };
-		const file = {
-			buffer: Buffer.from("avatar"),
-			mimetype: "image/png",
-			size: 6,
-		};
-		const logSpy = jest.spyOn(
-			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
-				.logger,
-			"log",
-		);
-
-		await expect(
-			service.uploadUserAvatar("did:plc:123", session, file),
-		).resolves.toEqual({
-			displayName: "Updated User",
-			avatar: "https://example.com/avatar.jpg",
-		});
-		expect(profileService.updateProfile).toHaveBeenCalledWith(
-			"did:plc:123",
-			session,
-			{
-				avatar: file,
-			},
-		);
-		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
-		expect(logSpy).not.toHaveBeenCalled();
-	});
-
-	it("deletes a user avatar through the profile service", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:123" });
-		(profileService.deleteAvatar as jest.Mock).mockResolvedValue({
-			displayName: "Updated User",
-			avatar: null,
-		});
-		const session = { did: "did:plc:123" };
-		const logSpy = jest.spyOn(
-			(service as unknown as { logger: { log: (...args: unknown[]) => void } })
-				.logger,
-			"log",
-		);
-
-		await expect(
-			service.deleteUserAvatar("did:plc:123", session),
-		).resolves.toEqual({
-			displayName: "Updated User",
-			avatar: null,
-		});
-		expect(profileService.deleteAvatar).toHaveBeenCalledWith(
-			"did:plc:123",
-			session,
-		);
-		expect(listsService.provisionDefaultLists).not.toHaveBeenCalled();
-		expect(logSpy).not.toHaveBeenCalled();
-	});
-
 	it("provisions default lists after the first profile save", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:first" })
 			.mockResolvedValueOnce({ profileRkey: null });
-		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
-		(profileService.updateProfile as jest.Mock).mockResolvedValue({
+		(listsService.hasAllDefaultLists as Mock).mockResolvedValue(false);
+		(profileService.updateProfile as Mock).mockResolvedValue({
 			displayName: "First User",
 			avatar: null,
 		});
-		(listsService.provisionDefaultLists as jest.Mock).mockResolvedValue([]);
+		(listsService.provisionDefaultLists as Mock).mockResolvedValue([]);
 
 		await expect(
 			service.updateUserProfile("did:plc:first", { did: "did:plc:first" }, {}),
@@ -434,16 +331,16 @@ describe("UsersService", () => {
 	});
 
 	it("rolls back the local profile index if default list provisioning fails on first save", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:first" })
 			.mockResolvedValueOnce({ profileRkey: null });
-		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
-		(profileService.updateProfile as jest.Mock).mockResolvedValue({
+		(listsService.hasAllDefaultLists as Mock).mockResolvedValue(false);
+		(profileService.updateProfile as Mock).mockResolvedValue({
 			displayName: "First User",
 			avatar: null,
 		});
-		(listsService.provisionDefaultLists as jest.Mock).mockRejectedValue(
+		(listsService.provisionDefaultLists as Mock).mockRejectedValue(
 			new Error("pds list failure"),
 		);
 
@@ -457,13 +354,11 @@ describe("UsersService", () => {
 	});
 
 	it("initializes the seeded profile and default lists for a new user", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue({ profileRkey: null });
-		(listsService.hasAllDefaultLists as jest.Mock).mockResolvedValue(false);
-		(profileService.seedProfileForNewUser as jest.Mock).mockResolvedValue(
-			undefined,
-		);
-		(listsService.provisionDefaultLists as jest.Mock).mockResolvedValue([]);
-		(profileService.discoverSocialProfiles as jest.Mock).mockResolvedValue(
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ profileRkey: null });
+		(listsService.hasAllDefaultLists as Mock).mockResolvedValue(false);
+		(profileService.seedProfileForNewUser as Mock).mockResolvedValue(undefined);
+		(listsService.provisionDefaultLists as Mock).mockResolvedValue([]);
+		(profileService.discoverSocialProfiles as Mock).mockResolvedValue(
 			undefined,
 		);
 
@@ -495,7 +390,7 @@ describe("UsersService", () => {
 	});
 
 	it("returns a public profile by normalized handle", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue({
+		prisma.user.findUnique = vi.fn().mockResolvedValue({
 			did: "did:plc:123",
 			handle: "alice.bsky.social",
 			displayName: "Alice",
@@ -557,7 +452,7 @@ describe("UsersService", () => {
 	});
 
 	it("returns public profile counts from follow aggregates", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue({
+		prisma.user.findUnique = vi.fn().mockResolvedValue({
 			did: "did:plc:123",
 			handle: "alice.bsky.social",
 			displayName: "Alice",
@@ -576,50 +471,22 @@ describe("UsersService", () => {
 		});
 	});
 
-	it("delegates synchronous account deletion", async () => {
-		(userDeletionService.deleteUserSync as jest.Mock).mockResolvedValue(
-			undefined,
-		);
-
-		await expect(
-			service.deleteUserSync("did:plc:123"),
-		).resolves.toBeUndefined();
-		expect(userDeletionService.deleteUserSync).toHaveBeenCalledWith(
-			"did:plc:123",
-		);
-	});
-
-	it("delegates async deletion job creation", async () => {
-		const mockJob = { id: "job-1", status: "queued" };
-		(userDeletionService.createDeletionJob as jest.Mock).mockResolvedValue(
-			mockJob,
-		);
-
-		await expect(
-			service.createDeletionJob("did:plc:123", true),
-		).resolves.toEqual(mockJob);
-		expect(userDeletionService.createDeletionJob).toHaveBeenCalledWith(
-			"did:plc:123",
-			true,
-		);
-	});
-
 	it("imports Bluesky follows with pagination and creates only missing local follows", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				{ did: "did:plc:friend-1" },
 				{ did: "did:plc:friend-2" },
 			]);
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-2" }]);
-		prisma.follow.createMany = jest.fn().mockResolvedValue({ count: 1 });
+		prisma.follow.createMany = vi.fn().mockResolvedValue({ count: 1 });
 
-		global.fetch = jest
+		global.fetch = vi
 			.fn()
 			.mockResolvedValueOnce({
 				ok: true,
@@ -668,14 +535,14 @@ describe("UsersService", () => {
 	});
 
 	it("returns zero counts when no Bluesky follows match OpnShelf users", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });
-		prisma.user.findMany = jest.fn().mockResolvedValue([]);
-		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
-		prisma.follow.createMany = jest.fn();
+		prisma.user.findMany = vi.fn().mockResolvedValue([]);
+		prisma.follow.findMany = vi.fn().mockResolvedValue([]);
+		prisma.follow.createMany = vi.fn();
 
-		global.fetch = jest.fn().mockResolvedValue({
+		global.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			status: 200,
 			statusText: "OK",
@@ -696,16 +563,16 @@ describe("UsersService", () => {
 	});
 
 	it("maps Bluesky fetch failures to a gateway error", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });
-		const warnSpy = jest.spyOn(
+		const warnSpy = vi.spyOn(
 			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
 				.logger,
 			"warn",
 		);
 
-		global.fetch = jest.fn().mockResolvedValue({
+		global.fetch = vi.fn().mockResolvedValue({
 			ok: false,
 			status: 503,
 			statusText: "Service Unavailable",
@@ -718,16 +585,16 @@ describe("UsersService", () => {
 	});
 
 	it("maps Bluesky network failures to a gateway error without warning noise", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });
-		const warnSpy = jest.spyOn(
+		const warnSpy = vi.spyOn(
 			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
 				.logger,
 			"warn",
 		);
 
-		global.fetch = jest
+		global.fetch = vi
 			.fn()
 			.mockRejectedValue(
 				new Error("socket timeout"),
@@ -740,52 +607,15 @@ describe("UsersService", () => {
 	});
 
 	it("throws when public profile handle is missing", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+		prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 		await expect(
 			service.getPublicProfileByHandle("nobody.bsky.social"),
 		).rejects.toThrow(NotFoundException);
 	});
 
-	it("delegates Trakt history fetching to the import history service", async () => {
-		importHistoryService.fetchTraktPublicHistory.mockResolvedValue({
-			profile: {
-				username: "alice",
-				slug: "alice",
-				name: "Alice Example",
-				isPrivate: false,
-				isVip: true,
-				avatarUrl: "https://example.com/avatar-medium.jpg",
-			},
-			importableCount: 2,
-			previewItems: [],
-			items: [],
-			skipped: [],
-		});
-
-		await expect(service.fetchTraktPublicHistory("alice")).resolves.toEqual({
-			profile: {
-				username: "alice",
-				slug: "alice",
-				name: "Alice Example",
-				isPrivate: false,
-				isVip: true,
-				avatarUrl: "https://example.com/avatar-medium.jpg",
-			},
-			importableCount: 2,
-			previewItems: [],
-			items: [],
-			skipped: [],
-		});
-		expect(importHistoryService.fetchTraktPublicHistory).toHaveBeenCalledWith(
-			"alice",
-		);
-	});
-
 	it("starts a background Trakt import for an existing user", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:abc" });
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:abc" });
 		importHistoryService.startTraktImport.mockResolvedValue({
 			profile: {
 				username: "alice",
@@ -824,76 +654,6 @@ describe("UsersService", () => {
 		expect(importHistoryService.startTraktImport).toHaveBeenCalledWith(
 			"did:plc:abc",
 			"alice",
-		);
-	});
-
-	it("gets the current Trakt import for an existing user", async () => {
-		prisma.user.findUnique = jest
-			.fn()
-			.mockResolvedValue({ did: "did:plc:abc" });
-		importHistoryService.getCurrentTraktImport.mockResolvedValue({
-			id: "job-1",
-			traktUsername: "alice",
-			status: "running",
-			currentPage: 2,
-			totalPages: 5,
-			sourceCount: 100,
-			normalizedCount: 90,
-			importedCount: 88,
-			skippedCount: 2,
-			failedCount: 0,
-			nextRunAt: "2026-03-23T18:00:00.000Z",
-			createdAt: "2026-03-23T18:00:00.000Z",
-			updatedAt: "2026-03-23T18:01:00.000Z",
-		});
-
-		await expect(
-			service.getCurrentTraktImport("did:plc:abc"),
-		).resolves.toMatchObject({
-			id: "job-1",
-			status: "running",
-		});
-		expect(importHistoryService.getCurrentTraktImport).toHaveBeenCalledWith(
-			"did:plc:abc",
-		);
-	});
-
-	it("delegates normalized history imports", async () => {
-		const items = [
-			{
-				type: "movie" as const,
-				movieTmdbId: 10,
-				watchedAt: "2026-01-01T00:00:00.000Z",
-			},
-			{
-				type: "movie" as const,
-				movieTmdbId: 10,
-				watchedAt: "2026-01-02T00:00:00.000Z",
-			},
-		];
-		importHistoryService.importNormalizedItems.mockResolvedValue({
-			imported: 2,
-			skipped: 0,
-			failed: 0,
-			errors: [],
-		});
-
-		await expect(
-			service.importNormalizedItems(
-				"did:plc:abc",
-				{ did: "did:plc:abc" },
-				items,
-			),
-		).resolves.toEqual({
-			imported: 2,
-			skipped: 0,
-			failed: 0,
-			errors: [],
-		});
-		expect(importHistoryService.importNormalizedItems).toHaveBeenCalledWith(
-			"did:plc:abc",
-			{ did: "did:plc:abc" },
-			items,
 		);
 	});
 

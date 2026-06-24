@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
 import { ConfigService } from "@nestjs/config";
 import { deterministicMovieWatchRkey } from "../common/watch-rkey";
@@ -7,7 +8,7 @@ import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
 import { ImportHistoryService } from "./import-history.service";
 
-jest.mock("@atproto/api");
+vi.mock("@atproto/api");
 
 describe("ImportHistoryService", () => {
 	let service: ImportHistoryService;
@@ -59,47 +60,47 @@ describe("ImportHistoryService", () => {
 
 	const prisma = {
 		trackedMovie: {
-			findFirst: jest.fn(),
+			findFirst: vi.fn(),
 		},
 		trackedEpisode: {
-			findFirst: jest.fn(),
+			findFirst: vi.fn(),
 		},
 		authSession: {
-			findUnique: jest.fn(),
+			findUnique: vi.fn(),
 		},
 		backgroundJob: {
-			findFirst: jest.fn(),
-			findUnique: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
+			findFirst: vi.fn(),
+			findUnique: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
 		},
 	} as unknown as PrismaService;
 
 	const moviesService = {
-		buildMovieWatchRecord: jest.fn(),
-		markWatched: jest.fn(),
-		indexTrackedMovie: jest.fn(),
+		buildMovieWatchRecord: vi.fn(),
+		markWatched: vi.fn(),
+		indexTrackedMovie: vi.fn(),
 	} as unknown as MoviesService;
 
 	const showsService = {
-		buildEpisodeWatchRecord: jest.fn(),
-		markEpisodeWatched: jest.fn(),
-		indexTrackedEpisode: jest.fn(),
+		buildEpisodeWatchRecord: vi.fn(),
+		markEpisodeWatched: vi.fn(),
+		indexTrackedEpisode: vi.fn(),
 	} as unknown as ShowsService;
 
 	const configService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "TRAKT_API_KEY") return "trakt-key";
 			return undefined;
 		}),
 	} as unknown as ConfigService;
 
 	const authService = {
-		restore: jest.fn(),
+		restore: vi.fn(),
 	} as unknown as AuthService;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		service = new ImportHistoryService(
 			prisma,
 			moviesService,
@@ -107,23 +108,23 @@ describe("ImportHistoryService", () => {
 			configService,
 			authService,
 		);
-		global.fetch = jest.fn() as unknown as typeof fetch;
+		global.fetch = vi.fn() as unknown as typeof fetch;
 
-		(moviesService.buildMovieWatchRecord as jest.Mock).mockReturnValue({
+		(moviesService.buildMovieWatchRecord as Mock).mockReturnValue({
 			rkey: "rkey-movie-1",
 			record: {},
 			collection: "xyz.opnshelf.movie",
 		});
-		(showsService.buildEpisodeWatchRecord as jest.Mock).mockReturnValue({
+		(showsService.buildEpisodeWatchRecord as Mock).mockReturnValue({
 			rkey: "rkey-episode-1",
 			record: {},
 			collection: "xyz.opnshelf.episode",
 		});
-		(Agent as unknown as jest.Mock).mockImplementation(() => ({
+		(Agent as unknown as Mock).mockImplementation(() => ({
 			com: {
 				atproto: {
 					repo: {
-						applyWrites: jest.fn().mockResolvedValue({ data: {} }),
+						applyWrites: vi.fn().mockResolvedValue({ data: {} }),
 					},
 				},
 			},
@@ -131,16 +132,16 @@ describe("ImportHistoryService", () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it("starts a new background Trakt import with preview data", async () => {
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(null);
-		prisma.backgroundJob.create = jest
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+		prisma.backgroundJob.create = vi
 			.fn()
 			.mockResolvedValue(buildTraktImportJob());
 
-		(global.fetch as jest.Mock)
+		(global.fetch as Mock)
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
@@ -205,7 +206,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("reuses an existing active Trakt import job", async () => {
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
 				currentPage: 2,
@@ -219,7 +220,7 @@ describe("ImportHistoryService", () => {
 			}),
 		);
 
-		(global.fetch as jest.Mock)
+		(global.fetch as Mock)
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
@@ -247,14 +248,14 @@ describe("ImportHistoryService", () => {
 
 	it("moves a job to waiting_retry when Trakt returns 429", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
-		(authService.restore as jest.Mock).mockResolvedValue({
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
 
-		(global.fetch as jest.Mock).mockResolvedValue(
+		(global.fetch as Mock).mockResolvedValue(
 			new Response(JSON.stringify({}), {
 				status: 429,
 				headers: {
@@ -281,16 +282,16 @@ describe("ImportHistoryService", () => {
 
 	it("processes a Trakt job page and marks the job completed", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
-		(authService.restore as jest.Mock).mockResolvedValue({
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.indexTrackedMovie as jest.Mock).mockResolvedValue(undefined);
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockResolvedValue(undefined);
 
-		(global.fetch as jest.Mock).mockResolvedValue(
+		(global.fetch as Mock).mockResolvedValue(
 			new Response(
 				JSON.stringify([
 					{
@@ -340,14 +341,14 @@ describe("ImportHistoryService", () => {
 
 	it("keeps a Trakt job running when Trakt reports more pages after a short page", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.findUnique = jest.fn().mockResolvedValue(job);
-		prisma.backgroundJob.update = jest.fn().mockResolvedValue(job);
-		(authService.restore as jest.Mock).mockResolvedValue({
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({
 			did: "did:plc:abc",
 		});
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.indexTrackedMovie as jest.Mock).mockResolvedValue(undefined);
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockResolvedValue(undefined);
 
 		const payload = Array.from({ length: 99 }, (_, index) => ({
 			type: "movie",
@@ -360,7 +361,7 @@ describe("ImportHistoryService", () => {
 			},
 		}));
 
-		(global.fetch as jest.Mock).mockResolvedValue(
+		(global.fetch as Mock).mockResolvedValue(
 			new Response(JSON.stringify(payload), {
 				status: 200,
 				headers: {
@@ -390,7 +391,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("prefers the newest active job over recent terminal jobs", async () => {
-		prisma.backgroundJob.findFirst = jest.fn().mockResolvedValue(
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
 				currentPage: 3,
@@ -421,7 +422,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("returns the newest recent terminal job using terminal-aware ordering", async () => {
-		prisma.backgroundJob.findFirst = jest
+		prisma.backgroundJob.findFirst = vi
 			.fn()
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce(
@@ -461,7 +462,7 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("keeps completed jobs completed when they include item-level failures", async () => {
-		prisma.backgroundJob.findFirst = jest
+		prisma.backgroundJob.findFirst = vi
 			.fn()
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce(
@@ -487,12 +488,12 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("treats duplicate tracked movie races as skipped without exposing prisma errors", async () => {
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockRejectedValue(
 			new Error("Unique constraint failed on the fields: (`rkey`)"),
 		);
 
-		const warnSpy = jest.spyOn(
+		const warnSpy = vi.spyOn(
 			(service as unknown as { logger: { warn: (message: string) => void } })
 				.logger,
 			"warn",
@@ -523,8 +524,8 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("treats duplicate tracked episode races as skipped without exposing prisma errors", async () => {
-		prisma.trackedEpisode.findFirst = jest.fn().mockResolvedValue(null);
-		(showsService.indexTrackedEpisode as jest.Mock).mockRejectedValue(
+		prisma.trackedEpisode.findFirst = vi.fn().mockResolvedValue(null);
+		(showsService.indexTrackedEpisode as Mock).mockRejectedValue(
 			new Error("Unique constraint failed on the fields: (`rkey`)"),
 		);
 
@@ -552,8 +553,8 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("returns sanitized unknown write failures", async () => {
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockRejectedValue(
 			new Error("database exploded in production"),
 		);
 
@@ -587,8 +588,8 @@ describe("ImportHistoryService", () => {
 	});
 
 	it("returns sanitized metadata failures", async () => {
-		prisma.trackedMovie.findFirst = jest.fn().mockResolvedValue(null);
-		(moviesService.indexTrackedMovie as jest.Mock).mockRejectedValue(
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockRejectedValue(
 			new Error("TMDB movie details request failed"),
 		);
 

@@ -1,14 +1,14 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-const mockListRecords = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+const mockListRecords = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -21,26 +21,26 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("@atproto/common", () => ({
+vi.mock("@atproto/common", () => ({
 	TID: {
-		nextStr: jest.fn(() => "testtid123"),
+		nextStr: vi.fn(() => "testtid123"),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/list", () => ({
+vi.mock("../lexicons/xyz/opnshelf/list", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.list",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "xyz.opnshelf.list",
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/list/item", () => ({
+vi.mock("../lexicons/xyz/opnshelf/list/item", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.list.item",
 			...data,
 		})),
@@ -58,39 +58,39 @@ describe("ListsService", () => {
 
 	const mockPrismaService = {
 		list: {
-			findMany: jest.fn(),
-			findFirst: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			upsert: jest.fn(),
+			findMany: vi.fn(),
+			findFirst: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			upsert: vi.fn(),
 		},
 		listItem: {
-			findMany: jest.fn(),
-			findUnique: jest.fn(),
-			create: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			upsert: jest.fn(),
-			count: jest.fn(),
+			findMany: vi.fn(),
+			findUnique: vi.fn(),
+			create: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			upsert: vi.fn(),
+			count: vi.fn(),
 		},
 	};
 
 	const mockMoviesService = {
-		getMovieDetails: jest.fn(),
-		upsertMovie: jest.fn(),
-		getMovieByTMDBId: jest.fn(),
+		getMovieDetails: vi.fn(),
+		upsertMovie: vi.fn(),
+		getMovieByTMDBId: vi.fn(),
 	};
 
 	const mockShowsService = {
-		getShowDetails: jest.fn(),
-		upsertShow: jest.fn(),
-		getShowByTMDBId: jest.fn(),
+		getShowDetails: vi.fn(),
+		upsertShow: vi.fn(),
+		getShowByTMDBId: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockListRecords.mockReset();

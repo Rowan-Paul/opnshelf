@@ -1,19 +1,20 @@
+import type { Mock, Mocked } from "vitest";
 import { BadRequestException, HttpException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 
 // Mock PrismaService before importing AuthController/AuthService
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 // Mock @atproto modules to prevent import errors
-jest.mock("@atproto/oauth-client-node", () => ({}));
-jest.mock("@atproto/api", () => ({}));
-jest.mock("@atproto/tap", () => ({
-	Tap: jest.fn(),
-	SimpleIndexer: jest.fn(),
+vi.mock("@atproto/oauth-client-node", () => ({}));
+vi.mock("@atproto/api", () => ({}));
+vi.mock("@atproto/tap", () => ({
+	Tap: vi.fn(),
+	SimpleIndexer: vi.fn(),
 }));
 
 import { IngesterService } from "../ingester/ingester.service";
@@ -27,62 +28,62 @@ describe("AuthController", () => {
 	let controller: AuthController;
 
 	const mockAuthService: {
-		getClientMetadata: jest.Mock;
-		authorize: jest.Mock;
-		authorizeWithPds: jest.Mock;
-		callback: jest.Mock;
-		parseOAuthAppState: jest.Mock;
-		fetchProfile: jest.Mock;
-		upsertUser: jest.Mock;
-		getSessionByUserDid: jest.Mock;
-		getUser: jest.Mock;
-		hasBlueskyProfile: jest.Mock;
-		revokeBySessionId: jest.Mock;
-		registerAccount: jest.Mock;
-		createCredentialSession: jest.Mock;
-		restore: jest.Mock;
-		confirmEmailWithCode: jest.Mock;
-		resendEmailConfirmation: jest.Mock;
-		markEmailVerified: jest.Mock;
+		getClientMetadata: Mock;
+		authorize: Mock;
+		authorizeWithPds: Mock;
+		callback: Mock;
+		parseOAuthAppState: Mock;
+		fetchProfile: Mock;
+		upsertUser: Mock;
+		getSessionByUserDid: Mock;
+		getUser: Mock;
+		hasBlueskyProfile: Mock;
+		revokeBySessionId: Mock;
+		registerAccount: Mock;
+		createCredentialSession: Mock;
+		restore: Mock;
+		confirmEmailWithCode: Mock;
+		resendEmailConfirmation: Mock;
+		markEmailVerified: Mock;
 	} = {
-		getClientMetadata: jest.fn(),
-		authorize: jest.fn(),
-		authorizeWithPds: jest.fn(),
-		callback: jest.fn(),
-		parseOAuthAppState: jest.fn().mockReturnValue({}),
-		fetchProfile: jest.fn(),
-		upsertUser: jest.fn(),
-		getSessionByUserDid: jest.fn(),
-		getUser: jest.fn(),
-		hasBlueskyProfile: jest.fn().mockResolvedValue(false),
-		revokeBySessionId: jest.fn(),
-		registerAccount: jest.fn(),
-		createCredentialSession: jest.fn().mockResolvedValue(undefined),
-		restore: jest.fn().mockResolvedValue(undefined),
-		confirmEmailWithCode: jest.fn().mockResolvedValue(true),
-		resendEmailConfirmation: jest.fn().mockResolvedValue(undefined),
-		markEmailVerified: jest.fn().mockResolvedValue(undefined),
+		getClientMetadata: vi.fn(),
+		authorize: vi.fn(),
+		authorizeWithPds: vi.fn(),
+		callback: vi.fn(),
+		parseOAuthAppState: vi.fn().mockReturnValue({}),
+		fetchProfile: vi.fn(),
+		upsertUser: vi.fn(),
+		getSessionByUserDid: vi.fn(),
+		getUser: vi.fn(),
+		hasBlueskyProfile: vi.fn().mockResolvedValue(false),
+		revokeBySessionId: vi.fn(),
+		registerAccount: vi.fn(),
+		createCredentialSession: vi.fn().mockResolvedValue(undefined),
+		restore: vi.fn().mockResolvedValue(undefined),
+		confirmEmailWithCode: vi.fn().mockResolvedValue(true),
+		resendEmailConfirmation: vi.fn().mockResolvedValue(undefined),
+		markEmailVerified: vi.fn().mockResolvedValue(undefined),
 	};
 
 	const mockIngesterService = {
-		addRepo: jest.fn().mockResolvedValue(undefined),
+		addRepo: vi.fn().mockResolvedValue(undefined),
 	};
 
 	const mockUsersService = {
-		initializeProfileForNewUser: jest.fn().mockResolvedValue(undefined),
+		initializeProfileForNewUser: vi.fn().mockResolvedValue(undefined),
 	};
 
 	const mockTranquilAdmin = {
-		mintInviteCode: jest.fn().mockResolvedValue("invite-code"),
-		disableInviteCodes: jest.fn().mockResolvedValue(undefined),
+		mintInviteCode: vi.fn().mockResolvedValue("invite-code"),
+		disableInviteCodes: vi.fn().mockResolvedValue(undefined),
 	};
 
 	const mockCaptcha = {
-		verify: jest.fn().mockResolvedValue(true),
+		verify: vi.fn().mockResolvedValue(true),
 	};
 
 	const mockConfigService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
 				NODE_ENV: "test",
@@ -94,12 +95,12 @@ describe("AuthController", () => {
 
 	const createMockResponse = () => {
 		const res = {
-			redirect: jest.fn().mockReturnThis(),
-			cookie: jest.fn().mockReturnThis(),
-			clearCookie: jest.fn().mockReturnThis(),
-			status: jest.fn().mockReturnThis(),
-			json: jest.fn().mockReturnThis(),
-		} as unknown as jest.Mocked<Response>;
+			redirect: vi.fn().mockReturnThis(),
+			cookie: vi.fn().mockReturnThis(),
+			clearCookie: vi.fn().mockReturnThis(),
+			status: vi.fn().mockReturnThis(),
+			json: vi.fn().mockReturnThis(),
+		} as unknown as Mocked<Response>;
 		return res;
 	};
 
@@ -114,7 +115,7 @@ describe("AuthController", () => {
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockAuthService.parseOAuthAppState.mockReturnValue({});
 
 		const module: TestingModule = await Test.createTestingModule({

@@ -1,14 +1,14 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-const mockListRecords = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+const mockListRecords = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -21,61 +21,61 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("@atproto/common", () => ({
+vi.mock("@atproto/common", () => ({
 	TID: {
-		nextStr: jest.fn(() => "testtid123"),
+		nextStr: vi.fn(() => "testtid123"),
 	},
 }));
 
-jest.mock("../lexicons/site/standard/document", () => ({
+vi.mock("../lexicons/site/standard/document", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "site.standard.document",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "site.standard.document",
 }));
 
-jest.mock("../lexicons/site/standard/publication", () => ({
+vi.mock("../lexicons/site/standard/publication", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "site.standard.publication",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "site.standard.publication",
 }));
 
-jest.mock("../lexicons/at/markpub/markdown.defs", () => ({
+vi.mock("../lexicons/at/markpub/markdown.defs", () => ({
 	main: {
 		$type: "at.markpub.markdown",
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "at.markpub.markdown",
 			...data,
 		})),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/mediaLink.defs", () => ({
+vi.mock("../lexicons/xyz/opnshelf/mediaLink.defs", () => ({
 	main: {
 		$type: "xyz.opnshelf.mediaLink",
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.mediaLink",
 			...data,
 		})),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/review/like", () => ({
+vi.mock("../lexicons/xyz/opnshelf/review/like", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.review.like",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "xyz.opnshelf.review.like",
 }));
@@ -93,58 +93,58 @@ describe("ReviewsService", () => {
 
 	const mockPrismaService = {
 		review: {
-			findUnique: jest.fn(),
-			findFirst: jest.fn(),
-			findMany: jest.fn(),
-			count: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			upsert: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			aggregate: jest.fn(),
+			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			upsert: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			aggregate: vi.fn(),
 		},
 		reviewLike: {
-			findUnique: jest.fn(),
-			findMany: jest.fn(),
-			create: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			upsert: jest.fn(),
-			count: jest.fn(),
+			findUnique: vi.fn(),
+			findMany: vi.fn(),
+			create: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			upsert: vi.fn(),
+			count: vi.fn(),
 		},
 		publication: {
-			findUnique: jest.fn(),
-			findFirst: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			upsert: jest.fn(),
-			deleteMany: jest.fn(),
+			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			upsert: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		rating: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		movie: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		show: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		season: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		episode: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		user: {
-			findUnique: jest.fn(),
+			findUnique: vi.fn(),
 		},
 	};
 
 	const session: ATSession = { did: "did:plc:abc123" };
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockListRecords.mockReset();

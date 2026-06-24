@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -20,31 +20,31 @@ describe("ShelfService", () => {
 
 	const mockPrismaService = {
 		user: {
-			findUnique: jest.fn(),
+			findUnique: vi.fn(),
 		},
 		trackedMovie: {
-			count: jest.fn(),
+			count: vi.fn(),
 		},
 		trackedEpisode: {
-			count: jest.fn(),
+			count: vi.fn(),
 		},
-		$queryRaw: jest.fn(),
+		$queryRaw: vi.fn(),
 		movie: {
-			findUnique: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
 		},
 		show: {
-			findUnique: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
 		},
 	};
 
 	const mockColorExtractionService = {
-		extractColorsFromPoster: jest.fn(),
+		extractColorsFromPoster: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -61,7 +61,7 @@ describe("ShelfService", () => {
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it("should return mixed shelf items with page metadata", async () => {
@@ -105,15 +105,14 @@ describe("ShelfService", () => {
 				overview: "Episode overview",
 			},
 		]);
-		jest
-			.spyOn(
-				service as unknown as ShelfServiceInternals,
-				"ensureMovieHasColors",
-			)
-			.mockResolvedValue({ primary: "#111111" });
-		jest
-			.spyOn(service as unknown as ShelfServiceInternals, "ensureShowHasColors")
-			.mockResolvedValue({ primary: "#222222" });
+		vi.spyOn(
+			service as unknown as ShelfServiceInternals,
+			"ensureMovieHasColors",
+		).mockResolvedValue({ primary: "#111111" });
+		vi.spyOn(
+			service as unknown as ShelfServiceInternals,
+			"ensureShowHasColors",
+		).mockResolvedValue({ primary: "#222222" });
 
 		const result = await service.getUserShelf("did:plc:test", 1, 20);
 
@@ -183,7 +182,7 @@ describe("ShelfService", () => {
 	});
 
 	it("should return a 30-day activity summary with zero-filled days and matching totals", async () => {
-		jest.useFakeTimers().setSystemTime(new Date("2024-03-10T12:00:00.000Z"));
+		vi.useFakeTimers().setSystemTime(new Date("2024-03-10T12:00:00.000Z"));
 		mockPrismaService.user.findUnique.mockResolvedValue({
 			timezone: "America/New_York",
 		});
@@ -218,7 +217,7 @@ describe("ShelfService", () => {
 		const NOW = new Date("2024-03-10T12:00:00.000Z");
 
 		beforeEach(() => {
-			jest.useFakeTimers().setSystemTime(NOW);
+			vi.useFakeTimers().setSystemTime(NOW);
 			mockPrismaService.trackedMovie.count.mockResolvedValue(3);
 			mockPrismaService.trackedEpisode.count.mockResolvedValue(7);
 		});
@@ -306,7 +305,7 @@ describe("ShelfService", () => {
 	});
 
 	it("should use the saved timezone when building the 30-day window", async () => {
-		jest.useFakeTimers().setSystemTime(new Date("2024-03-10T01:30:00.000Z"));
+		vi.useFakeTimers().setSystemTime(new Date("2024-03-10T01:30:00.000Z"));
 		mockPrismaService.user.findUnique.mockResolvedValue({
 			timezone: "America/Los_Angeles",
 		});

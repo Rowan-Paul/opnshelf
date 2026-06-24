@@ -1,11 +1,12 @@
+import type { Mock } from "vitest";
 import { Logger } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ColorExtractionService } from "./color-extraction.service";
 
 // Mock the jimp module
-jest.mock("jimp", () => ({
+vi.mock("jimp", () => ({
 	Jimp: {
-		read: jest.fn(),
+		read: vi.fn(),
 	},
 }));
 
@@ -54,7 +55,7 @@ describe("ColorExtractionService", () => {
 	let service: ColorExtractionService;
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [ColorExtractionService],
@@ -63,7 +64,7 @@ describe("ColorExtractionService", () => {
 		service = module.get<ColorExtractionService>(ColorExtractionService);
 
 		// Spy on logger to suppress expected errors
-		jest.spyOn(Logger.prototype, "error").mockImplementation(() => {});
+		vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
 	});
 
 	it("should be defined", () => {
@@ -112,12 +113,12 @@ describe("ColorExtractionService", () => {
 			mockPixels[39] = 255;
 
 			const mockImage = {
-				resize: jest.fn().mockReturnThis(),
+				resize: vi.fn().mockReturnThis(),
 				bitmap: {
 					data: mockPixels,
 				},
 			};
-			(Jimp.read as jest.Mock).mockResolvedValue(mockImage);
+			(Jimp.read as Mock).mockResolvedValue(mockImage);
 
 			const result = await service.extractColorsFromPoster("/poster.jpg");
 
@@ -155,9 +156,7 @@ describe("ColorExtractionService", () => {
 		});
 
 		it("should handle image loading errors gracefully", async () => {
-			(Jimp.read as jest.Mock).mockRejectedValue(
-				new Error("Failed to load image"),
-			);
+			(Jimp.read as Mock).mockRejectedValue(new Error("Failed to load image"));
 
 			const result = await service.extractColorsFromPoster("/poster.jpg");
 
@@ -176,12 +175,12 @@ describe("ColorExtractionService", () => {
 			}
 
 			const mockImage = {
-				resize: jest.fn().mockReturnThis(),
+				resize: vi.fn().mockReturnThis(),
 				bitmap: {
 					data: mockPixels,
 				},
 			};
-			(Jimp.read as jest.Mock).mockResolvedValue(mockImage);
+			(Jimp.read as Mock).mockResolvedValue(mockImage);
 
 			const result = await service.extractColorsFromPoster("/dark-poster.jpg");
 
@@ -204,12 +203,12 @@ describe("ColorExtractionService", () => {
 			}
 
 			const mockImage = {
-				resize: jest.fn().mockReturnThis(),
+				resize: vi.fn().mockReturnThis(),
 				bitmap: {
 					data: mockPixels,
 				},
 			};
-			(Jimp.read as jest.Mock).mockResolvedValue(mockImage);
+			(Jimp.read as Mock).mockResolvedValue(mockImage);
 
 			const result =
 				await service.extractColorsFromPoster("/bright-poster.jpg");
@@ -233,12 +232,12 @@ describe("ColorExtractionService", () => {
 			}
 
 			const mockImage = {
-				resize: jest.fn().mockReturnThis(),
+				resize: vi.fn().mockReturnThis(),
 				bitmap: {
 					data: mockPixels,
 				},
 			};
-			(Jimp.read as jest.Mock).mockResolvedValue(mockImage);
+			(Jimp.read as Mock).mockResolvedValue(mockImage);
 
 			const result = await service.extractColorsFromPoster("/mixed-poster.jpg");
 

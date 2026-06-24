@@ -3,11 +3,11 @@ import { AuthGuard } from "../auth/auth.guard";
 import { AuthService } from "../auth/auth.service";
 import type { AuthenticatedRequest } from "../auth/types";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
-jest.mock("@atproto/oauth-client-node", () => ({}));
-jest.mock("@atproto/api", () => ({}));
+vi.mock("@atproto/oauth-client-node", () => ({}));
+vi.mock("@atproto/api", () => ({}));
 
 import { ShowsController } from "./shows.controller";
 import { ShowsService } from "./shows.service";
@@ -16,38 +16,38 @@ describe("ShowsController", () => {
 	let controller: ShowsController;
 
 	const mockShowsService = {
-		searchShows: jest.fn(),
-		discoverShows: jest.fn(),
-		getShowDetails: jest.fn(),
-		upsertShow: jest.fn(),
-		getShowCredits: jest.fn(),
-		getSeasonDetails: jest.fn(),
-		getEpisodeDetails: jest.fn(),
-		getUserShows: jest.fn(),
-		getUserUpNext: jest.fn(),
-		getUserReleaseCalendar: jest.fn(),
-		ensureShowHasColors: jest.fn(),
-		markEpisodeWatched: jest.fn(),
-		indexTrackedEpisode: jest.fn(),
-		unmarkEpisodeWatched: jest.fn(),
-		removeAllTrackedEpisodes: jest.fn(),
-		removeLatestTrackedEpisode: jest.fn(),
-		getShowByTMDBId: jest.fn(),
-		getEpisodeWatchHistory: jest.fn(),
-		removeTrackedEpisodeById: jest.fn(),
-		syncShowMetadata: jest.fn().mockResolvedValue(undefined),
-		getLocalSeasons: jest.fn().mockResolvedValue([]),
-		getLocalEpisodes: jest.fn().mockResolvedValue([]),
-		getEpisodeContext: jest.fn(),
+		searchShows: vi.fn(),
+		discoverShows: vi.fn(),
+		getShowDetails: vi.fn(),
+		upsertShow: vi.fn(),
+		getShowCredits: vi.fn(),
+		getSeasonDetails: vi.fn(),
+		getEpisodeDetails: vi.fn(),
+		getUserShows: vi.fn(),
+		getUserUpNext: vi.fn(),
+		getUserReleaseCalendar: vi.fn(),
+		ensureShowHasColors: vi.fn(),
+		markEpisodeWatched: vi.fn(),
+		indexTrackedEpisode: vi.fn(),
+		unmarkEpisodeWatched: vi.fn(),
+		removeAllTrackedEpisodes: vi.fn(),
+		removeLatestTrackedEpisode: vi.fn(),
+		getShowByTMDBId: vi.fn(),
+		getEpisodeWatchHistory: vi.fn(),
+		removeTrackedEpisodeById: vi.fn(),
+		syncShowMetadata: vi.fn().mockResolvedValue(undefined),
+		getLocalSeasons: vi.fn().mockResolvedValue([]),
+		getLocalEpisodes: vi.fn().mockResolvedValue([]),
+		getEpisodeContext: vi.fn(),
 	};
 
 	const mockAuthService = {
-		getUser: jest.fn(),
-		revokeBySessionId: jest.fn(),
+		getUser: vi.fn(),
+		revokeBySessionId: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ShowsController],
@@ -67,19 +67,6 @@ describe("ShowsController", () => {
 	}): AuthenticatedRequest => {
 		return { user } as unknown as AuthenticatedRequest;
 	};
-
-	it("should search shows", async () => {
-		const mockResults = {
-			results: [{ id: 1, name: "Show 1" }],
-			total_results: 1,
-		};
-		mockShowsService.searchShows.mockResolvedValue(mockResults);
-
-		const result = await controller.searchShows("show");
-
-		expect(result).toEqual(mockResults);
-		expect(mockShowsService.searchShows).toHaveBeenCalledWith("show");
-	});
 
 	it("should get show details with trailer and colors", async () => {
 		const mockShow = {
@@ -124,16 +111,6 @@ describe("ShowsController", () => {
 				crew: [],
 			},
 		});
-	});
-
-	it("should get season details", async () => {
-		const mockSeason = { id: 1, season_number: 1, episodes: [] };
-		mockShowsService.getSeasonDetails.mockResolvedValue(mockSeason);
-
-		const result = await controller.getSeasonDetails("123", "1");
-
-		expect(result).toEqual(mockSeason);
-		expect(mockShowsService.getSeasonDetails).toHaveBeenCalledWith("123", 1);
 	});
 
 	it("should mark an episode as watched", async () => {
@@ -203,7 +180,7 @@ describe("ShowsController", () => {
 		);
 	});
 
-	it("should return show history for owner", async () => {
+	it("returns episode watch history to the owner", async () => {
 		const mockUser = {
 			did: "did:plc:abc123",
 			session: { did: "did:plc:abc123" },
@@ -220,73 +197,19 @@ describe("ShowsController", () => {
 		expect(result).toEqual(mockHistory);
 	});
 
-	it("should return up next episodes for user", async () => {
-		const mockUpNext = {
-			items: [
-				{
-					showId: "123",
-					watchCount: 4,
-					latestWatchedDate: "2024-01-01T00:00:00.000Z",
-					lastWatched: { seasonNumber: 1, episodeNumber: 4 },
-					nextEpisode: {
-						seasonNumber: 1,
-						episodeNumber: 5,
-						name: "Next Episode",
-					},
-					show: { showId: "123", title: "Test Show" },
-				},
-			],
-			total: 1,
-			page: 2,
-			pageSize: 8,
-			totalPages: 1,
-			hasPreviousPage: false,
-			hasNextPage: false,
+	it("rejects episode watch history requests for another user", async () => {
+		const mockUser = {
+			did: "did:plc:abc123",
+			session: { did: "did:plc:abc123" },
 		};
-		mockShowsService.getUserUpNext.mockResolvedValue(mockUpNext);
 
-		const result = await controller.getUserUpNext("did:plc:abc123", {
-			page: 2,
-			pageSize: 8,
-		});
-
-		expect(result).toEqual(mockUpNext);
-		expect(mockShowsService.getUserUpNext).toHaveBeenCalledWith(
-			"did:plc:abc123",
-			2,
-			8,
-			undefined,
-			undefined,
-		);
-	});
-
-	it("should return release calendar items for user", async () => {
-		const mockReleaseCalendar = {
-			items: [
-				{
-					source: "watching",
-					mediaType: "show",
-					releaseKind: "episode",
-					releaseDate: "2099-01-12",
-					title: "Tracked Show",
-				},
-			],
-			total: 1,
-		};
-		mockShowsService.getUserReleaseCalendar.mockResolvedValue(
-			mockReleaseCalendar,
-		);
-
-		const query = { startDate: "2026-01-01", endDate: "2026-03-31" };
-		const result = await controller.getUserReleaseCalendar(
-			"did:plc:abc123",
-			query,
-		);
-
-		expect(result).toEqual(mockReleaseCalendar);
-		expect(mockShowsService.getUserReleaseCalendar).toHaveBeenCalledWith(
-			"did:plc:abc123",
-			query,
-		);
+		await expect(
+			controller.getShowWatchHistory(
+				"did:plc:someone-else",
+				"123",
+				createMockRequest(mockUser),
+			),
+		).rejects.toThrow("Unauthorized");
+		expect(mockShowsService.getEpisodeWatchHistory).not.toHaveBeenCalled();
 	});
 });

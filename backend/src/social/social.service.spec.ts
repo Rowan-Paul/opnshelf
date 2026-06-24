@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "./social.service";
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
 
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -18,15 +19,15 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("@atproto/common", () => ({
+vi.mock("@atproto/common", () => ({
 	TID: {
-		nextStr: jest.fn(() => "follow-rkey-123"),
+		nextStr: vi.fn(() => "follow-rkey-123"),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/follow", () => ({
+vi.mock("../lexicons/xyz/opnshelf/follow", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.follow",
 			...data,
 		})),
@@ -39,57 +40,57 @@ describe("SocialService", () => {
 
 	const prisma = {
 		user: {
-			findUnique: jest.fn(),
-			findMany: jest.fn(),
+			findUnique: vi.fn(),
+			findMany: vi.fn(),
 		},
 		follow: {
-			count: jest.fn(),
-			create: jest.fn(),
-			deleteMany: jest.fn(),
-			findMany: jest.fn(),
-			findFirst: jest.fn(),
-			update: jest.fn(),
+			count: vi.fn(),
+			create: vi.fn(),
+			deleteMany: vi.fn(),
+			findMany: vi.fn(),
+			findFirst: vi.fn(),
+			update: vi.fn(),
 		},
 		trackedMovie: {
-			count: jest.fn(),
+			count: vi.fn(),
 		},
 		trackedEpisode: {
-			count: jest.fn(),
+			count: vi.fn(),
 		},
 		movie: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		show: {
-			findMany: jest.fn(),
+			findMany: vi.fn(),
 		},
 		review: {
-			count: jest.fn(),
+			count: vi.fn(),
 		},
-		$queryRaw: jest.fn(),
+		$queryRaw: vi.fn(),
 	} as unknown as PrismaService;
 	const session = { did: "did:plc:self" };
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		service = new SocialService(prisma);
 	});
 
 	it("creates follows idempotently and returns the current relationship", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
-		prisma.follow.findFirst = jest
+		prisma.follow.findFirst = vi
 			.fn()
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce({ rkey: "follow-rkey-123" });
-		prisma.follow.create = jest.fn().mockResolvedValue({
+		prisma.follow.create = vi.fn().mockResolvedValue({
 			followerDid: "did:plc:self",
 			followingDid: "did:plc:target",
 			rkey: "follow-rkey-123",
 		});
-		prisma.follow.count = jest
+		prisma.follow.count = vi
 			.fn()
 			.mockResolvedValueOnce(1)
 			.mockResolvedValueOnce(0)
@@ -144,14 +145,14 @@ describe("SocialService", () => {
 	});
 
 	it("deletes follows idempotently", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
-		prisma.follow.findFirst = jest
+		prisma.follow.findFirst = vi
 			.fn()
 			.mockResolvedValueOnce({ rkey: "follow-rkey-123" })
 			.mockResolvedValueOnce(null);
-		prisma.follow.deleteMany = jest
+		prisma.follow.deleteMany = vi
 			.fn()
 			.mockResolvedValueOnce({ count: 1 })
 			.mockResolvedValueOnce({ count: 0 });
@@ -180,15 +181,15 @@ describe("SocialService", () => {
 	});
 
 	it("logs best-effort PDS delete failures at debug while still unfollowing locally", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
-		prisma.follow.findFirst = jest
+		prisma.follow.findFirst = vi
 			.fn()
 			.mockResolvedValue({ rkey: "follow-rkey-123" });
-		prisma.follow.deleteMany = jest.fn().mockResolvedValue({ count: 1 });
+		prisma.follow.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
 		mockDeleteRecord.mockRejectedValue(new Error("pds unavailable"));
-		const debugSpy = jest.spyOn(
+		const debugSpy = vi.spyOn(
 			(
 				service as unknown as {
 					logger: { debug: (...args: unknown[]) => void };
@@ -196,7 +197,7 @@ describe("SocialService", () => {
 			).logger,
 			"debug",
 		);
-		const warnSpy = jest.spyOn(
+		const warnSpy = vi.spyOn(
 			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
 				.logger,
 			"warn",
@@ -227,10 +228,10 @@ describe("SocialService", () => {
 	});
 
 	it("returns relationship states for self, following, follower, and mutual cases", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
-		prisma.follow.count = jest
+		prisma.follow.count = vi
 			.fn()
 			.mockResolvedValueOnce(1)
 			.mockResolvedValueOnce(0)
@@ -277,7 +278,7 @@ describe("SocialService", () => {
 	});
 
 	it("searches people without returning the viewer and ranks stronger handle matches first", async () => {
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:exact", "al", "Al Exact", 2, 1),
@@ -285,7 +286,7 @@ describe("SocialService", () => {
 				makeUser("did:plc:display", "bravo", "Alana Display", 99, 1),
 				makeUser("did:plc:substring", "coral", "Coral", 5, 1),
 			]);
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([{ followingDid: "did:plc:prefix" }])
 			.mockResolvedValueOnce([{ followerDid: "did:plc:display" }]);
@@ -319,14 +320,14 @@ describe("SocialService", () => {
 	});
 
 	it("paginates follower and following lists", async () => {
-		prisma.user.findUnique = jest
+		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target", handle: "target" });
-		prisma.follow.count = jest
+		prisma.follow.count = vi
 			.fn()
 			.mockResolvedValueOnce(3)
 			.mockResolvedValueOnce(3);
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([{ followerDid: "did:plc:follower-3" }])
 			.mockResolvedValueOnce([{ followingDid: "did:plc:follower-3" }])
@@ -334,7 +335,7 @@ describe("SocialService", () => {
 			.mockResolvedValueOnce([{ followingDid: "did:plc:following-3" }])
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ followerDid: "did:plc:following-3" }]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([makeUser("did:plc:follower-3", "f3", "F3", 3, 1)])
 			.mockResolvedValueOnce([
@@ -384,13 +385,13 @@ describe("SocialService", () => {
 	});
 
 	it("merges followed movie and episode activity in descending activity order", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([{ followingDid: "did:plc:friend-1" }]);
-		prisma.trackedMovie.count = jest.fn().mockResolvedValue(2);
-		prisma.trackedEpisode.count = jest.fn().mockResolvedValue(1);
-		prisma.review.count = jest.fn().mockResolvedValue(0);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([
+		prisma.trackedMovie.count = vi.fn().mockResolvedValue(2);
+		prisma.trackedEpisode.count = vi.fn().mockResolvedValue(1);
+		prisma.review.count = vi.fn().mockResolvedValue(0);
+		prisma.$queryRaw = vi.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-1",
 				id: "episode-1",
@@ -452,16 +453,16 @@ describe("SocialService", () => {
 				overview: "Another movie overview",
 			},
 		]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
 			]);
-		prisma.movie.findMany = jest.fn().mockResolvedValue([
+		prisma.movie.findMany = vi.fn().mockResolvedValue([
 			{ movieId: "movie-1", colors: { primary: "#111111" } },
 			{ movieId: "movie-2", colors: { primary: "#222222" } },
 		]);
-		prisma.show.findMany = jest
+		prisma.show.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				{ showId: "show-1", colors: { primary: "#333333" } },
@@ -495,7 +496,7 @@ describe("SocialService", () => {
 	});
 
 	it("returns an empty watcher summary when the viewer follows nobody", async () => {
-		prisma.follow.findMany = jest.fn().mockResolvedValue([]);
+		prisma.follow.findMany = vi.fn().mockResolvedValue([]);
 
 		await expect(
 			service.getFollowedWatchers("did:plc:self", "movie", "movie-1", 3),
@@ -510,10 +511,10 @@ describe("SocialService", () => {
 	});
 
 	it("returns an empty watcher summary when followed users have no matching watches", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([]);
+		prisma.$queryRaw = vi.fn().mockResolvedValue([]);
 
 		await expect(
 			service.getFollowedWatchers("did:plc:self", "movie", "movie-1", 3),
@@ -527,10 +528,10 @@ describe("SocialService", () => {
 	});
 
 	it("returns compact movie watchers and preserves total count beyond the avatar limit", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([
+		prisma.$queryRaw = vi.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-3",
 				activityAt: new Date("2026-03-03T12:00:00.000Z"),
@@ -552,7 +553,7 @@ describe("SocialService", () => {
 				createdAt: new Date("2026-02-28T12:00:00.000Z"),
 			},
 		]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend-1", "Friend 1", 10, 5),
@@ -580,17 +581,17 @@ describe("SocialService", () => {
 	});
 
 	it("queries show watchers without season or episode filters for show detail pages", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([
+		prisma.$queryRaw = vi.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-1",
 				activityAt: new Date("2026-03-03T12:00:00.000Z"),
 				createdAt: new Date("2026-03-03T12:00:00.000Z"),
 			},
 		]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
@@ -605,17 +606,17 @@ describe("SocialService", () => {
 	});
 
 	it("filters season watcher queries by season only", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([
+		prisma.$queryRaw = vi.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-1",
 				activityAt: new Date("2026-03-03T12:00:00.000Z"),
 				createdAt: new Date("2026-03-03T12:00:00.000Z"),
 			},
 		]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
@@ -635,17 +636,17 @@ describe("SocialService", () => {
 	});
 
 	it("filters episode watcher queries by exact season and episode", async () => {
-		prisma.follow.findMany = jest
+		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValue([{ followingDid: "did:plc:friend-1" }]);
-		prisma.$queryRaw = jest.fn().mockResolvedValue([
+		prisma.$queryRaw = vi.fn().mockResolvedValue([
 			{
 				actorDid: "did:plc:friend-1",
 				activityAt: new Date("2026-03-03T12:00:00.000Z"),
 				createdAt: new Date("2026-03-03T12:00:00.000Z"),
 			},
 		]);
-		prisma.user.findMany = jest
+		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
@@ -703,7 +704,7 @@ describe("SocialService", () => {
 	});
 
 	it("throws when a relationship target is missing", async () => {
-		prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+		prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
 		await expect(
 			service.getRelationship("did:plc:self", "did:plc:missing"),
@@ -743,7 +744,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 
 	return {
 		user: {
-			findUnique: jest
+			findUnique: vi
 				.fn()
 				.mockImplementation(
 					({ where }: { where: { did?: string; handle?: string } }) => {
@@ -767,7 +768,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 						);
 					},
 				),
-			findMany: jest
+			findMany: vi
 				.fn()
 				.mockImplementation(
 					({ where }: { where: { did: { in: string[] } } }) => {
@@ -790,7 +791,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 				),
 		},
 		follow: {
-			count: jest
+			count: vi
 				.fn()
 				.mockImplementation(
 					({
@@ -813,7 +814,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 						);
 					},
 				),
-			create: jest.fn().mockImplementation(
+			create: vi.fn().mockImplementation(
 				({
 					data,
 				}: {
@@ -829,7 +830,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 					return Promise.resolve(data);
 				},
 			),
-			findFirst: jest
+			findFirst: vi
 				.fn()
 				.mockImplementation(
 					({
@@ -843,7 +844,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 						return Promise.resolve(entry ? { rkey: entry.rkey ?? null } : null);
 					},
 				),
-			update: jest.fn().mockImplementation(
+			update: vi.fn().mockImplementation(
 				({
 					where,
 					data,
@@ -861,7 +862,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 					return Promise.resolve({});
 				},
 			),
-			deleteMany: jest
+			deleteMany: vi
 				.fn()
 				.mockImplementation(
 					({
@@ -873,7 +874,7 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 						return Promise.resolve({ count: 1 });
 					},
 				),
-			findMany: jest
+			findMany: vi
 				.fn()
 				.mockImplementation(({ where }: { where: Record<string, unknown> }) => {
 					const entries = [...follows.keys()]
@@ -906,18 +907,18 @@ function createStatefulPrisma(follows: Map<string, { rkey?: string }>) {
 				}),
 		},
 		trackedMovie: {
-			count: jest.fn().mockResolvedValue(0),
+			count: vi.fn().mockResolvedValue(0),
 		},
 		trackedEpisode: {
-			count: jest.fn().mockResolvedValue(0),
+			count: vi.fn().mockResolvedValue(0),
 		},
 		movie: {
-			findMany: jest.fn().mockResolvedValue([]),
+			findMany: vi.fn().mockResolvedValue([]),
 		},
 		show: {
-			findMany: jest.fn().mockResolvedValue([]),
+			findMany: vi.fn().mockResolvedValue([]),
 		},
-		$queryRaw: jest.fn().mockResolvedValue([]),
+		$queryRaw: vi.fn().mockResolvedValue([]),
 	};
 }
 
@@ -935,5 +936,5 @@ function getSqlText(query: unknown) {
 }
 
 function getQueryRawMock(prisma: PrismaService) {
-	return prisma.$queryRaw as unknown as jest.Mock;
+	return prisma.$queryRaw as unknown as Mock;
 }

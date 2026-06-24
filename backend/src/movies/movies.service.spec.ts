@@ -2,15 +2,15 @@ import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing MoviesService
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 // Mock @atproto/api Agent
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -22,11 +22,14 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-// Mock lexicon module
-const mockValidateMovieRecord = jest.fn();
-jest.mock("../lexicons/xyz/opnshelf/movie", () => ({
+// Mock lexicon module. Hoisted so it exists when the (also-hoisted) factory
+// reads $validate directly, before module-level consts would initialize.
+const { mockValidateMovieRecord } = vi.hoisted(() => ({
+	mockValidateMovieRecord: vi.fn(),
+}));
+vi.mock("../lexicons/xyz/opnshelf/movie", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.movie",
 			...data,
 		})),
@@ -41,7 +44,7 @@ import { MoviesTmdbService } from "./movies-tmdb.service";
 import { MoviesService } from "./movies.service";
 
 // Mock global fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe("MoviesService", () => {
@@ -49,33 +52,33 @@ describe("MoviesService", () => {
 
 	const mockPrismaService = {
 		trackedMovie: {
-			findMany: jest.fn(),
-			findFirst: jest.fn(),
-			upsert: jest.fn(),
-			create: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
+			findMany: vi.fn(),
+			findFirst: vi.fn(),
+			upsert: vi.fn(),
+			create: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		movie: {
-			findUnique: jest.fn(),
-			upsert: jest.fn(),
-			update: jest.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			update: vi.fn(),
 		},
 	};
 
 	const mockConfigService = {
-		get: jest.fn((key: string) => {
+		get: vi.fn((key: string) => {
 			if (key === "TMDB_API_KEY") return "test-api-key";
 			return undefined;
 		}),
 	};
 
 	const mockColorExtractionService = {
-		extractColorsFromPoster: jest.fn(),
+		extractColorsFromPoster: vi.fn(),
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockValidateMovieRecord.mockReturnValue({ success: true });
@@ -270,42 +273,6 @@ describe("MoviesService", () => {
 			const result = await service.getMovieDetails("123");
 
 			expect(result.trailer).toBeUndefined();
-		});
-	});
-
-	describe("getUserMovies", () => {
-		it("should return tracked movies for a user with watch counts", async () => {
-			const mockTrackedMovies = [
-				{
-					id: "1",
-					userDid: "did:plc:abc123",
-					movieId: "123",
-					status: "watched",
-					movie: { movieId: "123", title: "Test Movie" },
-				},
-			];
-			mockPrismaService.trackedMovie.findMany.mockResolvedValue(
-				mockTrackedMovies,
-			);
-
-			const result = await service.getUserMovies("did:plc:abc123");
-
-			expect(result).toHaveLength(1);
-			expect(result[0].movieId).toBe("123");
-			expect((result[0] as { watchCount: number }).watchCount).toBe(1);
-			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123" },
-				include: { movie: true },
-				orderBy: { watchedDate: "desc" },
-			});
-		});
-
-		it("should return empty array when user has no tracked movies", async () => {
-			mockPrismaService.trackedMovie.findMany.mockResolvedValue([]);
-
-			const result = await service.getUserMovies("did:plc:unknown");
-
-			expect(result).toEqual([]);
 		});
 	});
 
@@ -650,8 +617,8 @@ describe("MoviesService", () => {
 
 	describe("unmarkWatched", () => {
 		beforeEach(() => {
-			mockPrismaService.trackedMovie.findFirst = jest.fn();
-			mockPrismaService.trackedMovie.findMany = jest.fn();
+			mockPrismaService.trackedMovie.findFirst = vi.fn();
+			mockPrismaService.trackedMovie.findMany = vi.fn();
 		});
 
 		it("should delete latest AT Protocol record in latest mode", async () => {
@@ -732,7 +699,7 @@ describe("MoviesService", () => {
 			const allWatches = [
 				{ id: "tracked-1", rkey: "movie-123-1234567890", movieId: "123" },
 			];
-			const warnSpy = jest.spyOn(
+			const warnSpy = vi.spyOn(
 				(
 					service as unknown as {
 						logger: { warn: (...args: unknown[]) => void };
@@ -777,7 +744,7 @@ describe("MoviesService", () => {
 
 	describe("indexTrackedMovie", () => {
 		beforeEach(() => {
-			mockPrismaService.trackedMovie.create = jest.fn();
+			mockPrismaService.trackedMovie.create = vi.fn();
 		});
 
 		it("should create tracked movie with movie details", async () => {
@@ -897,8 +864,8 @@ describe("MoviesService", () => {
 
 	describe("removeLatestTrackedMovie", () => {
 		beforeEach(() => {
-			mockPrismaService.trackedMovie.findFirst = jest.fn();
-			mockPrismaService.trackedMovie.delete = jest.fn();
+			mockPrismaService.trackedMovie.findFirst = vi.fn();
+			mockPrismaService.trackedMovie.delete = vi.fn();
 		});
 
 		it("should delete the latest tracked movie record", async () => {
@@ -979,6 +946,14 @@ describe("MoviesService", () => {
 			expect(result[0].watchCount).toBe(2);
 			expect(result[1].movieId).toBe("456");
 			expect(result[1].watchCount).toBe(1);
+		});
+
+		it("should return empty array when user has no tracked movies", async () => {
+			mockPrismaService.trackedMovie.findMany.mockResolvedValue([]);
+
+			const result = await service.getUserMovies("did:plc:unknown");
+
+			expect(result).toEqual([]);
 		});
 	});
 });

@@ -1,26 +1,27 @@
+import type { Mocked } from "vitest";
 import { type ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing AuthService/AuthGuard
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
 // Mock @atproto modules to prevent import errors
-jest.mock("@atproto/oauth-client-node", () => ({}));
-jest.mock("@atproto/api", () => ({}));
+vi.mock("@atproto/oauth-client-node", () => ({}));
+vi.mock("@atproto/api", () => ({}));
 
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 
 describe("AuthGuard", () => {
 	let guard: AuthGuard;
-	let authService: jest.Mocked<AuthService>;
+	let authService: Mocked<AuthService>;
 
 	const mockAuthService = {
-		getSessionById: jest.fn(),
-		restore: jest.fn(),
-		touchSession: jest.fn(),
+		getSessionById: vi.fn(),
+		restore: vi.fn(),
+		touchSession: vi.fn(),
 	};
 
 	// A session whose absolute lifetime is comfortably in the future.
@@ -43,7 +44,7 @@ describe("AuthGuard", () => {
 	};
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [

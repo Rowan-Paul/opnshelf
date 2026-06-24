@@ -70,13 +70,22 @@ export class RatingsService {
 
 		const results = await Promise.all(
 			mediaIds.map(async (mediaId) => {
+				// Scope to the top-level rating (season/episode 0), matching
+				// getMediaRating. Without this, a show's batch average would pool in
+				// every per-episode rating and diverge from the single-item endpoint.
+				const where = {
+					mediaType,
+					mediaId,
+					seasonNumber: 0,
+					episodeNumber: 0,
+				};
 				const [aggregate, count] = await Promise.all([
 					this.prisma.rating.aggregate({
-						where: { mediaType, mediaId },
+						where,
 						_avg: { rating: true },
 					}),
 					this.prisma.rating.count({
-						where: { mediaType, mediaId },
+						where,
 					}),
 				]);
 

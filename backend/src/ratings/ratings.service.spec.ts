@@ -1,13 +1,13 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 
-jest.mock("../prisma/prisma.service", () => ({
-	PrismaService: jest.fn(),
+vi.mock("../prisma/prisma.service", () => ({
+	PrismaService: vi.fn(),
 }));
 
-const mockPutRecord = jest.fn();
-const mockDeleteRecord = jest.fn();
-jest.mock("@atproto/api", () => ({
-	Agent: jest.fn().mockImplementation(() => ({
+const mockPutRecord = vi.fn();
+const mockDeleteRecord = vi.fn();
+vi.mock("@atproto/api", () => ({
+	Agent: vi.fn().mockImplementation(() => ({
 		com: {
 			atproto: {
 				repo: {
@@ -19,19 +19,19 @@ jest.mock("@atproto/api", () => ({
 	})),
 }));
 
-jest.mock("@atproto/common", () => ({
+vi.mock("@atproto/common", () => ({
 	TID: {
-		nextStr: jest.fn(() => "testtid123"),
+		nextStr: vi.fn(() => "testtid123"),
 	},
 }));
 
-jest.mock("../lexicons/xyz/opnshelf/rating", () => ({
+vi.mock("../lexicons/xyz/opnshelf/rating", () => ({
 	main: {
-		build: jest.fn((data: Record<string, unknown>) => ({
+		build: vi.fn((data: Record<string, unknown>) => ({
 			$type: "xyz.opnshelf.rating",
 			...data,
 		})),
-		parse: jest.fn((data: Record<string, unknown>) => data),
+		parse: vi.fn((data: Record<string, unknown>) => data),
 	},
 	$nsid: "xyz.opnshelf.rating",
 }));
@@ -45,22 +45,22 @@ describe("RatingsService", () => {
 
 	const mockPrismaService = {
 		rating: {
-			findUnique: jest.fn(),
-			findFirst: jest.fn(),
-			aggregate: jest.fn(),
-			count: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-			deleteMany: jest.fn(),
-			upsert: jest.fn(),
+			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+			aggregate: vi.fn(),
+			count: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+			deleteMany: vi.fn(),
+			upsert: vi.fn(),
 		},
 	};
 
 	const session: ATSession = { did: "did:plc:abc123" };
 
 	beforeEach(async () => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 
@@ -329,30 +329,33 @@ describe("RatingsService", () => {
 			});
 		});
 
-		it("DOCUMENTS CURRENT BEHAVIOR: batch aggregation does NOT scope to season/episode 0, unlike getMediaRating (suspected bug)", async () => {
+		it("scopes batch aggregation to season/episode 0, matching getMediaRating", async () => {
 			mockPrismaService.rating.aggregate.mockResolvedValue({
 				_avg: { rating: 7 },
 			});
 			mockPrismaService.rating.count.mockResolvedValue(5);
 
 			await service.getBatchRatings({
-				mediaType: "movie",
+				mediaType: "show",
 				mediaIds: ["123"],
 			});
 
-			// getMediaRating filters seasonNumber:0/episodeNumber:0, but
-			// getBatchRatings omits those coords entirely. This means a movie's
-			// batch average lumps together any season/episode rows that happen to
-			// share the mediaId, diverging from the single-item endpoint.
+			// Regression guard: batch must use the same top-level (0/0) scope as the
+			// single-item endpoint, so a show's batch average doesn't pool in every
+			// per-episode rating that shares the mediaId.
+			const expectedWhere = {
+				mediaType: "show",
+				mediaId: "123",
+				seasonNumber: 0,
+				episodeNumber: 0,
+			};
 			expect(mockPrismaService.rating.aggregate).toHaveBeenCalledWith({
-				where: { mediaType: "movie", mediaId: "123" },
+				where: expectedWhere,
 				_avg: { rating: true },
 			});
-			expect(mockPrismaService.rating.aggregate).not.toHaveBeenCalledWith(
-				expect.objectContaining({
-					where: expect.objectContaining({ seasonNumber: 0 }),
-				}),
-			);
+			expect(mockPrismaService.rating.count).toHaveBeenCalledWith({
+				where: expectedWhere,
+			});
 		});
 	});
 

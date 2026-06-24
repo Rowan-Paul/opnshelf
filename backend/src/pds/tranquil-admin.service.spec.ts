@@ -1,13 +1,13 @@
 import { ConfigService } from "@nestjs/config";
 
-const loginMock = jest.fn();
-const createInviteCodeMock = jest.fn();
-const disableInviteCodesMock = jest.fn();
+const loginMock = vi.fn();
+const createInviteCodeMock = vi.fn();
+const disableInviteCodesMock = vi.fn();
 
 // Mock AtpAgent: login() marks the agent authenticated; the XRPC namespaces
 // delegate to our jest mocks.
-jest.mock("@atproto/api", () => ({
-	AtpAgent: jest.fn().mockImplementation(() => {
+vi.mock("@atproto/api", () => ({
+	AtpAgent: vi.fn().mockImplementation(() => {
 		const agent: Record<string, unknown> = {
 			session: undefined,
 			com: {
