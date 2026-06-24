@@ -280,6 +280,59 @@ describe("ImportHistoryService", () => {
 		);
 	});
 
+	it("waits out the PDS ratelimit-reset window instead of a fixed 60s", async () => {
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+
+		// The PDS repo-write budget is exhausted and refills ~30 min out. atproto
+		// signals this via ratelimit-reset (an absolute epoch), NOT Retry-After.
+		const resetEpoch = Math.floor(Date.now() / 1000) + 1800;
+		(Agent as unknown as Mock).mockImplementation(() => ({
+			com: {
+				atproto: {
+					repo: {
+						applyWrites: vi.fn().mockRejectedValue(
+							Object.assign(new Error("Rate Limit Exceeded"), {
+								status: 429,
+								headers: { "ratelimit-reset": String(resetEpoch) },
+							}),
+						),
+					},
+				},
+			},
+		}));
+
+		(global.fetch as Mock).mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						type: "movie",
+						action: "watch",
+						watched_at: "2026-03-22T12:00:00.000Z",
+						movie: { title: "Arrival", year: 2016, ids: { tmdb: 329865 } },
+					},
+				]),
+				{ status: 200, headers: { "x-pagination-page-count": "1" } },
+			),
+		);
+
+		await service.processNextTraktImportJob();
+
+		const retryCall = (prisma.backgroundJob.update as Mock).mock.calls.find(
+			([arg]) => arg?.data?.status === "waiting_retry",
+		);
+		if (!retryCall) throw new Error("expected a waiting_retry update");
+		const nextRunAt = retryCall[0].data.nextRunAt as Date;
+		const delaySeconds = (nextRunAt.getTime() - Date.now()) / 1000;
+		// ~30 min: honors the reset header, not the old 60s fallback or 300s cap.
+		expect(delaySeconds).toBeGreaterThan(1700);
+		expect(delaySeconds).toBeLessThanOrEqual(60 * 60);
+	});
+
 	it("processes a Trakt job page and marks the job completed", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);

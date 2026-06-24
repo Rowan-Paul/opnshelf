@@ -122,7 +122,10 @@ const TRAKT_RATE_LIMIT_BACKOFF_SECONDS = [60, 300, 600]; // 1min, 5min, 10min, t
 const TRAKT_PAGE_DELAY_MS = 800;
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
 const PDS_RETRY_FALLBACK_SECONDS = 60;
-const PDS_RETRY_MAX_SECONDS = 5 * 60;
+// The PDS repo-write limit is hourly, so a depleted budget can take up to an
+// hour to refill. Cap at an hour (not 5 min) so we wait out the real
+// ratelimit-reset window once instead of retrying early and re-hitting 429.
+const PDS_RETRY_MAX_SECONDS = 60 * 60;
 
 class TraktApiError extends Error {
 	constructor(
@@ -1430,12 +1433,30 @@ export class ImportHistoryService {
 		if (typeof error !== "object" || error === null) return undefined;
 		const headers = (error as Record<string, unknown>).headers;
 		if (!headers || typeof headers !== "object") return undefined;
-		const retryAfter =
-			(headers as Record<string, string>)["retry-after"] ??
-			(headers as Record<string, string>)["Retry-After"];
-		if (!retryAfter) return undefined;
-		const parsed = Number(retryAfter);
-		return Number.isFinite(parsed) ? parsed : undefined;
+		const h = headers as Record<string, string>;
+
+		// The atproto PDS throttles repo writes with the IETF RateLimit headers,
+		// NOT Retry-After. `ratelimit-reset` is the absolute Unix epoch (seconds)
+		// when the (hourly) write budget refills — convert it to a delay from now.
+		// Reading the wrong header here is why we used to busy-retry every 60s and
+		// keep re-hitting the limit before the window had actually reset.
+		const reset = h["ratelimit-reset"] ?? h["RateLimit-Reset"];
+		if (reset) {
+			const resetEpoch = Number(reset);
+			if (Number.isFinite(resetEpoch)) {
+				// +1s so we resume just after the window rolls, not on its edge.
+				const delta = Math.ceil(resetEpoch - Date.now() / 1000) + 1;
+				if (delta > 0) return delta;
+			}
+		}
+
+		// Fallback: some proxies send a plain Retry-After (delta seconds).
+		const retryAfter = h["retry-after"] ?? h["Retry-After"];
+		if (retryAfter) {
+			const parsed = Number(retryAfter);
+			if (Number.isFinite(parsed)) return parsed;
+		}
+		return undefined;
 	}
 
 	private classifyImportWriteError(error: unknown): ClassifiedImportWriteError {
