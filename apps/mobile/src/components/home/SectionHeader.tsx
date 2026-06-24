@@ -25,7 +25,7 @@ export function SectionHeader({
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
 			<View className="flex-row items-center gap-2">
-				{Icon ? <Icon color="#f3bc00" size={18} /> : null}
+				{Icon ? <Icon color="#94a3b8" size={18} /> : null}
 				<Text className="font-bold font-display text-foreground text-xl">
 					{title}
 				</Text>
@@ -34,8 +34,10 @@ export function SectionHeader({
 				(href ? (
 					<Link href={href} asChild>
 						<Pressable hitSlop={8} className="flex-row items-center gap-1">
-							<Text className="font-medium text-primary text-sm">View all</Text>
-							<ChevronRight color="#f3bc00" size={15} />
+							<Text className="font-medium text-muted-foreground text-sm">
+								View all
+							</Text>
+							<ChevronRight color="#94a3b8" size={15} />
 						</Pressable>
 					</Link>
 				) : null)}

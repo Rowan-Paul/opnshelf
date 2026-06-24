@@ -19,8 +19,7 @@ import { useTwStyle } from "@/lib/use-tw-style";
  * compact `ActivityRow`). Mirrors the web "following" `ActivityCard`: poster
  * art on the left, actor + action header, episode line, a review rating +
  * excerpt or a synopsis excerpt, timestamp, and inline actions (one-tap
- * add-to-shelf + ⋯ quick actions) for watch items. A subtle left accent uses
- * the media's own colour palette when present, falling back to the border.
+ * add-to-shelf + ⋯ quick actions) for watch items.
  */
 export function ActivityCard({
 	activity,
@@ -72,22 +71,12 @@ export function ActivityCard({
 			? activity.episodeOverview
 			: activity.overview;
 
-	const accent =
-		typeof activity.colors?.primary === "string"
-			? activity.colors.primary
-			: undefined;
-
 	return (
 		// Whole card taps through to the media page. Nested pressables (the
 		// actor avatar/name → profile, and the action bar buttons) win their own
 		// touch region via RN's responder system, so they don't trigger this.
 		<Link href={mediaHref} asChild>
-			<Pressable
-				className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4"
-				style={
-					accent ? { borderLeftWidth: 3, borderLeftColor: accent } : undefined
-				}
-			>
+			<Pressable className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4">
 				{/* Actor + action header — full width on top so the poster doesn't leave
 			    a gap beside a short content column. */}
 				<View className="flex-row items-start gap-2">
@@ -123,12 +112,8 @@ export function ActivityCard({
 							</Text>
 						</View>
 					</View>
-					<View
-						className={`shrink-0 rounded-full px-2 py-0.5 ${isMovieish ? "bg-background-subtle" : "bg-primary"}`}
-					>
-						<Text
-							className={`font-medium text-xs ${isMovieish ? "text-muted-foreground" : "text-primary-foreground"}`}
-						>
+					<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
+						<Text className="font-medium text-muted-foreground text-xs">
 							{isMovieish ? "Movie" : "TV"}
 						</Text>
 					</View>

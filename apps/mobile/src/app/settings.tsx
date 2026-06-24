@@ -14,10 +14,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Stack } from "expo-router";
 import {
 	AlertTriangle,
-	BookOpen,
 	ChevronRight,
 	Download,
-	Palette,
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
@@ -374,7 +372,7 @@ export default function SettingsScreen() {
 						</Text>
 						<Link href="/edit-profile" asChild>
 							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-								<UserPen color={PRIMARY} size={20} />
+								<UserPen color="#94a3b8" size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									Edit profile
 								</Text>
@@ -386,7 +384,6 @@ export default function SettingsScreen() {
 					{/* Appearance */}
 					<SettingsSection
 						title="Appearance"
-						icon={<Palette color={PRIMARY} size={20} />}
 						description="Choose how OpnShelf looks. System follows your device."
 					>
 						<AppearanceSetting />
@@ -469,7 +466,6 @@ export default function SettingsScreen() {
 					{/* Reviews publication */}
 					<SettingsSection
 						title="Reviews publication"
-						icon={<BookOpen color={PRIMARY} size={20} />}
 						description={`Choose which of your own AT Protocol publications new reviews are published to. OpnShelf still renders them at opnshelf.xyz/@${user?.handle ?? ""}.`}
 					>
 						{storedTargetMissing && (
@@ -635,15 +631,16 @@ export default function SettingsScreen() {
 						)}
 					</View>
 
-					{/* Sign out */}
+					{/* Sign out — reversible, so a neutral outline; red stays reserved
+					    for the irreversible Delete Account above. */}
 					<Pressable
 						disabled={isSigningOut}
 						onPress={handleSignOut}
-						className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
+						className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
 						style={{ opacity: isSigningOut ? 0.7 : 1 }}
 					>
-						{isSigningOut && <ActivityIndicator size="small" color="#ef4444" />}
-						<Text className="font-semibold text-base text-destructive">
+						{isSigningOut && <ActivityIndicator size="small" color="#94a3b8" />}
+						<Text className="font-semibold text-base text-foreground">
 							Sign out
 						</Text>
 					</Pressable>

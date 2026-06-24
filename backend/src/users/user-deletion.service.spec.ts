@@ -58,6 +58,7 @@ describe("UserDeletionService", () => {
 
 	const authService = {
 		restore: jest.fn(),
+		revoke: jest.fn(),
 	} as unknown as AuthService;
 
 	beforeEach(() => {
@@ -100,6 +101,9 @@ describe("UserDeletionService", () => {
 			expect(prisma.user.delete).toHaveBeenCalledWith({
 				where: { did: "did:plc:test" },
 			});
+			// The OAuth session must be revoked too — it's a standalone table with
+			// no FK cascade, so a deleted account would otherwise keep a live session.
+			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
 		});
 
 		it("throws when user not found", async () => {

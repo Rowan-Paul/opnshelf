@@ -140,12 +140,8 @@ export function ActivityRow({
 				</View>
 			</View>
 
-			<View
-				className={`shrink-0 rounded-full px-2 py-0.5 ${isMovieish ? "bg-background-subtle" : "bg-primary"}`}
-			>
-				<Text
-					className={`font-medium text-xs ${isMovieish ? "text-muted-foreground" : "text-primary-foreground"}`}
-				>
+			<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
+				<Text className="font-medium text-muted-foreground text-xs">
 					{isMovieish ? "Movie" : "TV"}
 				</Text>
 			</View>

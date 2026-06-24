@@ -67,8 +67,8 @@ export function UpNextCard({
 							>
 								{show.title}
 							</Text>
-							<View className="rounded-full bg-primary px-2 py-0.5">
-								<Text className="font-medium text-primary-foreground text-xs">
+							<View className="rounded-full bg-background-subtle px-2 py-0.5">
+								<Text className="font-medium text-muted-foreground text-xs">
 									S{ep.seasonNumber}E{ep.episodeNumber}
 								</Text>
 							</View>

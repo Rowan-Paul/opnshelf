@@ -253,13 +253,14 @@ export default function ProfileTab() {
 								)}
 							</View>
 
-							{/* Sign out — surfaced per the redesign. */}
+							{/* Sign out — reversible, so a neutral treatment (matches the
+							    settings screen); red stays reserved for destructive actions. */}
 							<Pressable
 								onPress={confirmSignOut}
 								className="mt-2 flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
 							>
-								<LogOut color="#ef4444" size={18} />
-								<Text className="font-semibold text-destructive text-sm">
+								<LogOut color="#94a3b8" size={18} />
+								<Text className="font-semibold text-foreground text-sm">
 									Sign out
 								</Text>
 							</Pressable>

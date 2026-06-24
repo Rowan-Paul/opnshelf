@@ -16,21 +16,34 @@ function ActionRow({
 	label,
 	onPress,
 	disabled,
+	primary,
 }: {
 	icon: LucideIcon;
 	label: string;
 	onPress: () => void;
 	disabled?: boolean;
+	/** Render as the filled accent CTA (the sheet's one focal action). */
+	primary?: boolean;
 }) {
 	return (
 		<Pressable
 			onPress={onPress}
 			disabled={disabled}
-			className="flex-row items-center gap-3 rounded-lg border border-border p-3"
+			className={
+				primary
+					? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary p-3"
+					: "flex-row items-center gap-3 rounded-lg border border-border p-3"
+			}
 			style={{ opacity: disabled ? 0.5 : 1 }}
 		>
-			<Icon color="#94a3b8" size={20} />
-			<Text className="flex-1 font-medium text-foreground text-sm">
+			<Icon color={primary ? "#3f2e00" : "#94a3b8"} size={20} />
+			<Text
+				className={
+					primary
+						? "flex-1 font-medium text-primary-foreground text-sm"
+						: "flex-1 font-medium text-foreground text-sm"
+				}
+			>
 				{label}
 			</Text>
 		</Pressable>
@@ -98,6 +111,7 @@ export function MediaQuickActionsSheet({
 							label={watchLabel}
 							onPress={onToggleWatched}
 							disabled={isWatchPending}
+							primary={!watched}
 						/>
 						<ActionRow icon={Star} label="Rate" onPress={onRate} />
 						<ActionRow

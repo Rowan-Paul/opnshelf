@@ -101,21 +101,21 @@ export function MediaActionBar({
 					disabled={isWatchPending}
 					className={`flex-row items-center gap-1.5 rounded-lg border px-3 py-1.5 ${
 						watched
-							? "border-primary bg-primary"
-							: "border-border bg-background-subtle"
+							? "border-border bg-background-subtle"
+							: "border-primary bg-primary"
 					}`}
 					style={{ opacity: isWatchPending ? 0.6 : 1 }}
 				>
 					{isWatchPending ? (
 						<ActivityIndicator size="small" color="#94a3b8" />
 					) : watched ? (
-						<Check color="#3f2e00" size={15} strokeWidth={3} />
+						<Check color="#94a3b8" size={15} strokeWidth={3} />
 					) : (
-						<Plus color="#94a3b8" size={15} strokeWidth={2.5} />
+						<Plus color="#3f2e00" size={15} strokeWidth={2.5} />
 					)}
 					<Text
 						className={`font-semibold text-xs ${
-							watched ? "text-primary-foreground" : "text-foreground"
+							watched ? "text-muted-foreground" : "text-primary-foreground"
 						}`}
 					>
 						{watched ? "On shelf" : "Add to shelf"}

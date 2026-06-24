@@ -65,7 +65,7 @@ export class UserDeletionService {
 	constructor(
 		private readonly prisma: PrismaService,
 		@Inject(AUTH_SERVICE)
-		private readonly authService: Pick<AuthService, "restore">,
+		private readonly authService: Pick<AuthService, "restore" | "revoke">,
 	) {}
 
 	async deleteUserSync(did: string): Promise<void> {
@@ -80,6 +80,10 @@ export class UserDeletionService {
 		await this.prisma.user.delete({
 			where: { did },
 		});
+
+		// Revoke the OAuth session too — it lives in a standalone table (no FK
+		// cascade), so deleting the user alone leaves a live session behind.
+		await this.authService.revoke(did);
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
@@ -235,6 +239,10 @@ export class UserDeletionService {
 			await this.updateJobData(job.id, jobData, { currentStep: "db_cleanup" });
 
 			await this.prisma.user.delete({ where: { did: job.userDid } });
+
+			// Revoke the OAuth session (standalone table, no FK cascade) so a
+			// deleted account doesn't leave a live session behind.
+			await this.authService.revoke(job.userDid);
 
 			await this.prisma.backgroundJob.update({
 				where: { id: job.id },
