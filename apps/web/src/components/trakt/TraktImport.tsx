@@ -1,4 +1,6 @@
 import {
+	formatRetryCountdown,
+	getRetryReason,
 	getTraktImportStatusMessage,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
@@ -45,29 +47,6 @@ function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	);
 }
 
-/** Humanize a remaining duration for the retry countdown. Rounds up so it never
- *  shows "0 minutes" while a wait is still pending. */
-function formatCountdown(ms: number): string {
-	const seconds = Math.ceil(ms / 1000);
-	if (seconds < 60) return "less than a minute";
-	const minutes = Math.ceil(seconds / 60);
-	if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
-	const hours = Math.floor(minutes / 60);
-	const remMinutes = minutes % 60;
-	const hourPart = `${hours} hour${hours === 1 ? "" : "s"}`;
-	return remMinutes > 0
-		? `${hourPart} ${remMinutes} minute${remMinutes === 1 ? "" : "s"}`
-		: hourPart;
-}
-
-/** Drop the static "Retrying in N seconds." tail from a rate-limit lastError so
- *  we can pair the reason with a live countdown instead. */
-function getRetryReason(lastError?: string): string | undefined {
-	if (!lastError) return undefined;
-	const reason = lastError.replace(/\s*Retrying in [^.]*\.?/i, "").trim();
-	return reason || undefined;
-}
-
 /** Live "retrying in …" countdown for a rate-limited import. Re-renders on an
  *  interval so the displayed time ticks down instead of going stale. */
 function RetryCountdown({
@@ -88,7 +67,7 @@ function RetryCountdown({
 	return (
 		<>
 			{remainingMs > 1000
-				? `${prefix}Retrying in ${formatCountdown(remainingMs)}.`
+				? `${prefix}Retrying in ${formatRetryCountdown(remainingMs)}.`
 				: `${prefix}Retrying now…`}
 		</>
 	);

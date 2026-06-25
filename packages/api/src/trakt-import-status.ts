@@ -66,6 +66,33 @@ export function getTraktImportStatusMessage(
 	return null;
 }
 
+/**
+ * Humanize a remaining duration for a live retry countdown. Rounds up so it
+ * never reads "0 minutes" while a wait is still pending.
+ */
+export function formatRetryCountdown(remainingMs: number): string {
+	const seconds = Math.ceil(remainingMs / 1000);
+	if (seconds < 60) return "less than a minute";
+	const minutes = Math.ceil(seconds / 60);
+	if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+	const hours = Math.floor(minutes / 60);
+	const remMinutes = minutes % 60;
+	const hourPart = `${hours} hour${hours === 1 ? "" : "s"}`;
+	return remMinutes > 0
+		? `${hourPart} ${remMinutes} minute${remMinutes === 1 ? "" : "s"}`
+		: hourPart;
+}
+
+/**
+ * Strip the static "Retrying in N seconds." tail from a rate-limit lastError so
+ * callers can pair the reason with a live countdown instead.
+ */
+export function getRetryReason(lastError?: string): string | undefined {
+	if (!lastError) return undefined;
+	const reason = lastError.replace(/\s*Retrying in [^.]*\.?/i, "").trim();
+	return reason || undefined;
+}
+
 export function getTraktImportStatusProgress(
 	job: TraktImportStatusJob,
 ): number | null {

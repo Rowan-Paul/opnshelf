@@ -1,12 +1,43 @@
 import {
+	formatRetryCountdown,
+	getRetryReason,
 	getTraktImportStatusMessage,
 	getTraktImportStatusProgress,
 	isTerminalTraktImportStatus,
 	type TraktImportJobDto,
 } from "@opnshelf/api";
 import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
+
+/** Live "retrying in …" countdown for a rate-limited import. Re-renders every
+ *  30s so the displayed time ticks down instead of showing the stale write-time
+ *  value. Mirrors the web TraktImport panel. */
+function RetryCountdown({
+	nextRunAt,
+	reason,
+}: {
+	nextRunAt: string;
+	reason?: string;
+}) {
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		const id = setInterval(() => setNow(Date.now()), 30_000);
+		return () => clearInterval(id);
+	}, []);
+
+	const remainingMs = new Date(nextRunAt).getTime() - now;
+	const prefix = reason ? `${reason} ` : "";
+	const text =
+		remainingMs > 1000
+			? `${prefix}Retrying in ${formatRetryCountdown(remainingMs)}.`
+			: `${prefix}Retrying now…`;
+
+	return (
+		<Text className="text-muted-foreground text-sm leading-5">{text}</Text>
+	);
+}
 
 /**
  * Status banner for an in-flight or finished Trakt import job: a progress bar
@@ -47,7 +78,12 @@ export function TraktImportBanner({ job }: { job: TraktImportJobDto }) {
 				</View>
 			) : null}
 
-			{message ? (
+			{job.status === "waiting_retry" && job.nextRunAt ? (
+				<RetryCountdown
+					nextRunAt={job.nextRunAt}
+					reason={getRetryReason(job.lastError)}
+				/>
+			) : message ? (
 				<Text className="text-muted-foreground text-sm leading-5">
 					{message}
 				</Text>

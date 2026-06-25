@@ -40,6 +40,8 @@ export {
 } from "./account-deletion-status";
 export type { TraktImportStatusJob } from "./trakt-import-status";
 export {
+	formatRetryCountdown,
+	getRetryReason,
 	getTraktImportStatusMessage,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
