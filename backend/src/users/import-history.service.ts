@@ -122,10 +122,13 @@ const TRAKT_RATE_LIMIT_BACKOFF_SECONDS = [60, 300, 600]; // 1min, 5min, 10min, t
 const TRAKT_PAGE_DELAY_MS = 800;
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
 const PDS_RETRY_FALLBACK_SECONDS = 60;
-// The PDS repo-write limit is hourly, so a depleted budget can take up to an
-// hour to refill. Cap at an hour (not 5 min) so we wait out the real
-// ratelimit-reset window once instead of retrying early and re-hitting 429.
-const PDS_RETRY_MAX_SECONDS = 60 * 60;
+// PDS repo writes have BOTH an hourly and a daily budget. When the daily budget
+// (atproto: ~35k points/day) is exhausted, ratelimit-reset points at the next
+// day rollover — up to ~24h out. Cap at 25h (24h + 1h margin) so clock skew or a
+// window measured slightly past 24h can't clip a legitimate reset and re-trip us.
+// A 1h cap made us wake hourly, re-trip the still-empty daily budget, and
+// busy-loop forever without progress.
+const PDS_RETRY_MAX_SECONDS = 25 * 60 * 60;
 
 /**
  * Humanize a retry delay for user-facing status messages. Rate-limit waits can
