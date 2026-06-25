@@ -18,6 +18,7 @@ import {
 } from "../components/ErrorBoundary";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import { TraktSyncBanner } from "../components/trakt/TraktSyncBanner";
 import PostHogProvider from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -101,6 +102,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						<SearchDialogProvider>
 							<div className="flex min-h-screen flex-col">
 								<Header />
+								<TraktSyncBanner />
 								<main className="flex-1">{children}</main>
 								<Footer />
 							</div>
