@@ -102,6 +102,13 @@ type ClassifiedImportWriteError = {
 	rawMessage: string;
 };
 
+type PdsRateLimitSnapshot = {
+	/** Points remaining in the current (binding) repo-write window. */
+	remaining?: number;
+	/** Unix epoch (seconds) when that window resets. */
+	reset?: number;
+};
+
 type BackgroundJobRecord = Awaited<
 	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
 >;
@@ -129,6 +136,15 @@ const PDS_RETRY_FALLBACK_SECONDS = 60;
 // A 1h cap made us wake hourly, re-trip the still-empty daily budget, and
 // busy-loop forever without progress.
 const PDS_RETRY_MAX_SECONDS = 25 * 60 * 60;
+// Leave at least this many repo-write points unspent in the current window so
+// the user's own interactive writes (rate, review, mark-watched) are never
+// starved by a background import — they share one per-account PDS budget. We
+// read the live `ratelimit-remaining` after each batch and pause until the
+// window resets once it drops below this. A page costs ≤300 points (≤100
+// creates × 3), so pausing at 1000 both avoids tripping the next 429 and keeps
+// ~300 writes of headroom for the user.
+// ponytail: fixed reserve; revisit only if the PDS exposes per-route budgets.
+const PDS_WRITE_RESERVE_POINTS = 1000;
 
 /**
  * Humanize a retry delay for user-facing status messages. Rate-limit waits can
@@ -387,6 +403,7 @@ export class ImportHistoryService {
 		userDid: string,
 		session: ATSession,
 		items: NormalizedImportItemDto[],
+		options?: { onRateLimit?: (snapshot: PdsRateLimitSnapshot) => void },
 	): Promise<ImportHistoryResponseDto> {
 		if (items.length > 100) {
 			throw new BadRequestException(
@@ -535,6 +552,7 @@ export class ImportHistoryService {
 				this.logger.debug(
 					`PDS applyWrites: batch of ${batch.length} succeeded (commit ${response.data.commit?.cid ?? "unknown"})`,
 				);
+				this.reportPdsRateLimit(response.headers, options);
 				batchResults = batch.map((pw, i) => {
 					const result = response.data.results?.[i] as
 						| { uri?: string; cid?: string }
@@ -583,6 +601,7 @@ export class ImportHistoryService {
 								cid: result?.cid ?? "",
 							};
 						});
+						this.reportPdsRateLimit(response.headers, options);
 						// Fall through to indexing with the update results.
 						for (let i = 0; i < batch.length; i++) {
 							const pw = batch[i];
@@ -761,10 +780,16 @@ export class ImportHistoryService {
 				pageResult.payload,
 				jobData.sourceCount + 1,
 			);
+			let rateLimit: PdsRateLimitSnapshot | undefined;
 			const importResult = await this.importNormalizedItems(
 				job.userDid,
 				session,
 				normalized.items,
+				{
+					onRateLimit: (snapshot) => {
+						rateLimit = snapshot;
+					},
+				},
 			);
 			const nextPage = jobData.currentPage + 1;
 			const hasKnownTotalPages =
@@ -789,15 +814,40 @@ export class ImportHistoryService {
 				failedCount: jobData.failedCount + importResult.failed,
 			};
 
+			// Pace the import against the live repo-write budget: import and user
+			// share one per-account PDS limit, so when remaining points drop below
+			// the reserve we pause until the window resets rather than draining it
+			// and locking the user out of their own account.
+			const lowBudget =
+				!isComplete &&
+				rateLimit?.remaining !== undefined &&
+				rateLimit.remaining < PDS_WRITE_RESERVE_POINTS;
+			const throttleSeconds = lowBudget
+				? this.secondsUntilPdsReset(rateLimit)
+				: 0;
+			if (lowBudget) {
+				this.logger.log(
+					`Pacing import for job ${job.id}: ${rateLimit?.remaining} write points left, pausing ${throttleSeconds}s for budget to refill.`,
+				);
+			}
+
 			await this.prisma.backgroundJob.update({
 				where: { id: job.id },
 				data: {
-					status: isComplete ? "completed" : "running",
+					status: isComplete
+						? "completed"
+						: lowBudget
+							? "waiting_retry"
+							: "running",
 					data: updatedData,
-					lastError: null,
+					lastError: lowBudget
+						? `Pausing so your account stays under its PDS write limit. Retrying in ${formatRetryDelay(throttleSeconds)}.`
+						: null,
 					nextRunAt: isComplete
 						? new Date()
-						: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),
+						: lowBudget
+							? new Date(Date.now() + throttleSeconds * 1000)
+							: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),
 					completedAt: isComplete ? new Date() : null,
 				},
 			});
@@ -1448,6 +1498,49 @@ export class ImportHistoryService {
 			message.includes("could not create") ||
 			message.includes("invalidswap")
 		);
+	}
+
+	/**
+	 * Read the IETF RateLimit headers off a successful applyWrites response so the
+	 * caller can pace itself against the live repo-write budget. Returns undefined
+	 * when the PDS doesn't surface them (older builds) — callers fall back to
+	 * reacting to a 429 instead.
+	 */
+	private parsePdsRateLimitSnapshot(
+		headers: unknown,
+	): PdsRateLimitSnapshot | undefined {
+		if (typeof headers !== "object" || headers === null) return undefined;
+		const h = headers as Record<string, string>;
+		const remainingRaw = h["ratelimit-remaining"] ?? h["RateLimit-Remaining"];
+		const resetRaw = h["ratelimit-reset"] ?? h["RateLimit-Reset"];
+		const remaining =
+			remainingRaw === undefined ? undefined : Number(remainingRaw);
+		const reset = resetRaw === undefined ? undefined : Number(resetRaw);
+		const snapshot: PdsRateLimitSnapshot = {
+			remaining: Number.isFinite(remaining) ? remaining : undefined,
+			reset: Number.isFinite(reset) ? reset : undefined,
+		};
+		return snapshot.remaining === undefined && snapshot.reset === undefined
+			? undefined
+			: snapshot;
+	}
+
+	private reportPdsRateLimit(
+		headers: unknown,
+		options?: { onRateLimit?: (snapshot: PdsRateLimitSnapshot) => void },
+	): void {
+		if (!options?.onRateLimit) return;
+		const snapshot = this.parsePdsRateLimitSnapshot(headers);
+		if (snapshot) options.onRateLimit(snapshot);
+	}
+
+	/** Seconds until the binding repo-write window resets, floored and capped. */
+	private secondsUntilPdsReset(snapshot?: PdsRateLimitSnapshot): number {
+		if (snapshot?.reset !== undefined && Number.isFinite(snapshot.reset)) {
+			const delta = Math.ceil(snapshot.reset - Date.now() / 1000) + 1;
+			if (delta > 0) return Math.min(delta, PDS_RETRY_MAX_SECONDS);
+		}
+		return PDS_RETRY_FALLBACK_SECONDS;
 	}
 
 	private getPdsRetryAfterSeconds(error: unknown): number | undefined {

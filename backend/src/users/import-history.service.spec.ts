@@ -447,6 +447,113 @@ describe("ImportHistoryService", () => {
 		);
 	});
 
+	it("pauses the import to leave PDS write headroom when the budget runs low", async () => {
+		// Multi-page job so the run isn't "complete" after page 1 — only then does
+		// the pacing decision apply.
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockResolvedValue(undefined);
+
+		// applyWrites SUCCEEDS but the response says the write budget is nearly
+		// gone (500 < the 1000-point reserve) and refills ~30 min out. The import
+		// must stop and wait so the user's own writes aren't starved.
+		const resetEpoch = Math.floor(Date.now() / 1000) + 1800;
+		(Agent as unknown as Mock).mockImplementation(() => ({
+			com: {
+				atproto: {
+					repo: {
+						applyWrites: vi.fn().mockResolvedValue({
+							data: {},
+							headers: {
+								"ratelimit-remaining": "500",
+								"ratelimit-reset": String(resetEpoch),
+							},
+						}),
+					},
+				},
+			},
+		}));
+
+		(global.fetch as Mock).mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						type: "movie",
+						action: "watch",
+						watched_at: "2026-03-22T12:00:00.000Z",
+						movie: { title: "Arrival", year: 2016, ids: { tmdb: 329865 } },
+					},
+				]),
+				{ status: 200, headers: { "x-pagination-page-count": "61" } },
+			),
+		);
+
+		await service.processNextTraktImportJob();
+
+		const pauseCall = (prisma.backgroundJob.update as Mock).mock.calls.find(
+			([arg]) => arg?.data?.status === "waiting_retry",
+		);
+		if (!pauseCall) throw new Error("expected a waiting_retry pause update");
+		const nextRunAt = pauseCall[0].data.nextRunAt as Date;
+		const delaySeconds = (nextRunAt.getTime() - Date.now()) / 1000;
+		// Waits out the window (~30 min), not the 800ms inter-page delay.
+		expect(delaySeconds).toBeGreaterThan(1700);
+		expect(pauseCall[0].data.lastError).toMatch(/PDS write limit/);
+		// The page's writes still counted — pacing delays the NEXT page, no rework.
+		expect(pauseCall[0].data.data.importedCount).toBe(1);
+	});
+
+	it("keeps importing at full speed while PDS write budget is healthy", async () => {
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(moviesService.indexTrackedMovie as Mock).mockResolvedValue(undefined);
+
+		// Plenty of budget left (4000 ≥ 1000 reserve) → no pause.
+		(Agent as unknown as Mock).mockImplementation(() => ({
+			com: {
+				atproto: {
+					repo: {
+						applyWrites: vi.fn().mockResolvedValue({
+							data: {},
+							headers: { "ratelimit-remaining": "4000" },
+						}),
+					},
+				},
+			},
+		}));
+
+		(global.fetch as Mock).mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						type: "movie",
+						action: "watch",
+						watched_at: "2026-03-22T12:00:00.000Z",
+						movie: { title: "Arrival", year: 2016, ids: { tmdb: 329865 } },
+					},
+				]),
+				{ status: 200, headers: { "x-pagination-page-count": "61" } },
+			),
+		);
+
+		await service.processNextTraktImportJob();
+
+		const lastCall = (prisma.backgroundJob.update as Mock).mock.calls.at(-1);
+		expect(lastCall?.[0].data.status).toBe("running");
+		expect(lastCall?.[0].data.lastError).toBeNull();
+		const nextRunAt = lastCall?.[0].data.nextRunAt as Date;
+		// Schedules the next page promptly (the 800ms inter-page delay), not a wait.
+		expect((nextRunAt.getTime() - Date.now()) / 1000).toBeLessThan(60);
+	});
+
 	it("prefers the newest active job over recent terminal jobs", async () => {
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
 			buildTraktImportJob({
