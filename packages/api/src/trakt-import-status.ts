@@ -19,6 +19,8 @@ export type TraktImportStatusJob = {
 	skippedCount: number;
 	failedCount: number;
 	lastError?: string;
+	/** ISO timestamp of the next scheduled attempt (drives the retry countdown). */
+	nextRunAt?: string;
 };
 
 export function isActiveTraktImportStatus(status: string): boolean {

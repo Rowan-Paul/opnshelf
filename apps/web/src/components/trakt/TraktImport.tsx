@@ -45,6 +45,55 @@ function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	);
 }
 
+/** Humanize a remaining duration for the retry countdown. Rounds up so it never
+ *  shows "0 minutes" while a wait is still pending. */
+function formatCountdown(ms: number): string {
+	const seconds = Math.ceil(ms / 1000);
+	if (seconds < 60) return "less than a minute";
+	const minutes = Math.ceil(seconds / 60);
+	if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+	const hours = Math.floor(minutes / 60);
+	const remMinutes = minutes % 60;
+	const hourPart = `${hours} hour${hours === 1 ? "" : "s"}`;
+	return remMinutes > 0
+		? `${hourPart} ${remMinutes} minute${remMinutes === 1 ? "" : "s"}`
+		: hourPart;
+}
+
+/** Drop the static "Retrying in N seconds." tail from a rate-limit lastError so
+ *  we can pair the reason with a live countdown instead. */
+function getRetryReason(lastError?: string): string | undefined {
+	if (!lastError) return undefined;
+	const reason = lastError.replace(/\s*Retrying in [^.]*\.?/i, "").trim();
+	return reason || undefined;
+}
+
+/** Live "retrying in …" countdown for a rate-limited import. Re-renders on an
+ *  interval so the displayed time ticks down instead of going stale. */
+function RetryCountdown({
+	nextRunAt,
+	reason,
+}: {
+	nextRunAt: string;
+	reason?: string;
+}) {
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		const id = setInterval(() => setNow(Date.now()), 30_000);
+		return () => clearInterval(id);
+	}, []);
+
+	const remainingMs = new Date(nextRunAt).getTime() - now;
+	const prefix = reason ? `${reason} ` : "";
+	return (
+		<>
+			{remainingMs > 1000
+				? `${prefix}Retrying in ${formatCountdown(remainingMs)}.`
+				: `${prefix}Retrying now…`}
+		</>
+	);
+}
+
 type TraktImportProps = {
 	/** Section title rendered in the header row. */
 	title: string;
@@ -138,6 +187,7 @@ export function TraktImport({
 					skippedCount: data.job.skippedCount,
 					failedCount: data.job.failedCount,
 					lastError: data.job.lastError,
+					nextRunAt: data.job.nextRunAt,
 				});
 				// Force an immediate refetch of the import status
 				queryClient.invalidateQueries({
@@ -177,6 +227,7 @@ export function TraktImport({
 				skippedCount: currentImport.skippedCount,
 				failedCount: currentImport.failedCount,
 				lastError: currentImport.lastError,
+				nextRunAt: currentImport.nextRunAt,
 			};
 		});
 	}, [currentImport, idleShowsInput]);
@@ -389,10 +440,19 @@ export function TraktImport({
 							<p className="font-medium text-sm">
 								{isImportDone ? "Import finished" : "Importing..."}
 							</p>
-							{statusMessage && (
+							{jobData.status === "waiting_retry" && jobData.nextRunAt ? (
 								<p className="text-(--foreground-muted) text-xs">
-									{statusMessage}
+									<RetryCountdown
+										nextRunAt={jobData.nextRunAt}
+										reason={getRetryReason(jobData.lastError)}
+									/>
 								</p>
+							) : (
+								statusMessage && (
+									<p className="text-(--foreground-muted) text-xs">
+										{statusMessage}
+									</p>
+								)
 							)}
 						</div>
 					</div>
