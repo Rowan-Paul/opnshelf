@@ -75,9 +75,17 @@ function OnboardingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Resume at the trakt step when there is an active import
+	// Resume at the trakt step when there is an active import — but only once, on
+	// initial load. Otherwise a background refetch (e.g. on window focus) would
+	// keep yanking the user back here after they chose to continue while the
+	// import runs in the background.
+	const resumeChecked = useRef(false);
 	useEffect(() => {
 		if (authLoading) return;
+		if (resumeChecked.current) return;
+		// Wait for the query to resolve (undefined while loading; null = no job).
+		if (currentImport === undefined) return;
+		resumeChecked.current = true;
 		if (
 			currentImport?.id &&
 			isKnownTraktImportStatus(currentImport.status) &&

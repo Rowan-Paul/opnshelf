@@ -450,7 +450,7 @@ export function TraktImport({
 						</div>
 					)}
 
-					{isImportDone && (
+					{isImportDone ? (
 						<button
 							type="button"
 							onClick={() => {
@@ -468,6 +468,20 @@ export function TraktImport({
 								"Done"
 							)}
 						</button>
+					) : (
+						// Import still running (or rate-limit paused): never trap the
+						// user here. In the wizard, let them move on — the import keeps
+						// running server-side and the site-wide banner tracks it.
+						onComplete && (
+							<button
+								type="button"
+								onClick={() => onComplete()}
+								className="btn btn-secondary w-full"
+							>
+								Continue — we&apos;ll finish in the background
+								<ArrowRight className="size-4" />
+							</button>
+						)
 					)}
 				</div>
 			)}

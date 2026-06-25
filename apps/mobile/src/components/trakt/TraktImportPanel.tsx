@@ -161,6 +161,8 @@ export function TraktImportPanel({
 	}
 
 	// Onboarding step: fill height, scroll content, pin the step footer.
+	// Never trap the user on this step — once an import is running they can move
+	// on and it finishes in the background (the site-wide banner tracks it).
 	const footer =
 		importDone && onDone ? (
 			<Pressable
@@ -169,6 +171,15 @@ export function TraktImportPanel({
 			>
 				<Text className="font-semibold text-base text-primary-foreground">
 					Continue
+				</Text>
+			</Pressable>
+		) : importActive && onSkip ? (
+			<Pressable
+				onPress={onSkip}
+				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3.5"
+			>
+				<Text className="font-semibold text-base text-foreground">
+					Continue — we’ll finish in the background
 				</Text>
 			</Pressable>
 		) : onSkip ? (
