@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
 import { Home, Rss, Search, User } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
@@ -29,45 +30,49 @@ export default function TabLayout() {
 	}
 
 	return (
-		<Tabs
-			screenOptions={{
-				headerShown: false,
-				tabBarActiveTintColor: theme.colors.primary,
-				tabBarInactiveTintColor: theme.colors.text,
-				tabBarStyle: {
-					backgroundColor: theme.colors.card,
-					borderTopColor: theme.colors.border,
-				},
-			}}
-		>
-			<Tabs.Screen
-				name="index"
-				options={{
-					title: "Home",
-					tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+		<TraktSyncBanner>
+			<Tabs
+				screenOptions={{
+					headerShown: false,
+					tabBarActiveTintColor: theme.colors.primary,
+					tabBarInactiveTintColor: theme.colors.text,
+					tabBarStyle: {
+						backgroundColor: theme.colors.card,
+						borderTopColor: theme.colors.border,
+					},
 				}}
-			/>
-			<Tabs.Screen
-				name="search"
-				options={{
-					title: "Search",
-					tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
-				}}
-			/>
-			<Tabs.Screen
-				name="activity"
-				options={{
-					title: "Activity",
-					tabBarIcon: ({ color, size }) => <Rss color={color} size={size} />,
-				}}
-			/>
-			<Tabs.Screen
-				name="profile"
-				options={{
-					title: "Profile",
-					tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
-				}}
-			/>
-		</Tabs>
+			>
+				<Tabs.Screen
+					name="index"
+					options={{
+						title: "Home",
+						tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+					}}
+				/>
+				<Tabs.Screen
+					name="search"
+					options={{
+						title: "Search",
+						tabBarIcon: ({ color, size }) => (
+							<Search color={color} size={size} />
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name="activity"
+					options={{
+						title: "Activity",
+						tabBarIcon: ({ color, size }) => <Rss color={color} size={size} />,
+					}}
+				/>
+				<Tabs.Screen
+					name="profile"
+					options={{
+						title: "Profile",
+						tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+					}}
+				/>
+			</Tabs>
+		</TraktSyncBanner>
 	);
 }
