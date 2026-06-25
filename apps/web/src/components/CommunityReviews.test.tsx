@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CommunityReviews from "./CommunityReviews";
 
@@ -13,6 +14,25 @@ vi.mock("#/lib/auth-context", () => ({
 vi.mock("#/lib/hooks/useReviews", () => ({
 	useMediaReviews: (opts: unknown) => mockUseMediaReviews(opts),
 	useToggleReviewLike: () => mockUseToggleReviewLike(),
+	useDeleteReview: () => ({
+		mutate: vi.fn(),
+		mutateAsync: vi.fn(),
+		isPending: false,
+	}),
+}));
+
+// CommunityReviews uses Link + useLocation from the router. Stub them so the
+// component renders without a RouterProvider (otherwise useLocation reads a null
+// router context and throws "Cannot read properties of null (reading 'isServer')").
+vi.mock("@tanstack/react-router", () => ({
+	Link: ({ to, children }: { to?: string; children?: ReactNode }) => (
+		<a href={typeof to === "string" ? to : "#"}>{children}</a>
+	),
+	useLocation: ({
+		select,
+	}: {
+		select?: (loc: { hash: string }) => unknown;
+	} = {}) => (select ? select({ hash: "" }) : { hash: "" }),
 }));
 
 function review(overrides: Record<string, unknown>) {
@@ -74,7 +94,8 @@ describe("CommunityReviews", () => {
 
 		render(<CommunityReviews mediaType="movie" mediaId="123" />);
 		expect(screen.getByText("User One")).toBeTruthy();
-		expect(screen.getByText("@user1")).toBeTruthy();
+		// Handle renders as "@user1 · {time}" in one element, so match a substring.
+		expect(screen.getByText(/@user1/)).toBeTruthy();
 		expect(screen.getByText("Great movie!")).toBeTruthy();
 		expect(screen.getByText("Loved every minute.")).toBeTruthy();
 		expect(screen.getByText("3")).toBeTruthy();
@@ -132,9 +153,9 @@ describe("CommunityReviews", () => {
 		render(<CommunityReviews mediaType="movie" mediaId="123" />);
 		expect(screen.getByText("Your Review")).toBeTruthy();
 		expect(screen.getByText("My take")).toBeTruthy();
-		expect(screen.getByText("@me")).toBeTruthy();
+		expect(screen.getByText(/@me\b/)).toBeTruthy();
 		expect(screen.getByText("Good")).toBeTruthy();
-		expect(screen.getByText("@other")).toBeTruthy();
+		expect(screen.getByText(/@other/)).toBeTruthy();
 	});
 
 	it("shows empty state with write review button for authenticated users", () => {
