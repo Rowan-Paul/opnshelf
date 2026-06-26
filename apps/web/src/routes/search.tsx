@@ -98,19 +98,25 @@ function DiscoverRow({
 	return (
 		<section>
 			<h2 className="mb-3 font-semibold text-lg">{title}</h2>
-			<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+			{/* Single horizontal row (carousel), matching the mobile discovery
+			    rails — discovery sections scroll sideways instead of wrapping. */}
+			<div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
 				{unique.map((item) => (
-					<ActionableMediaCard
+					<div
 						key={`discover-${item.media_type}-${item.id}`}
-						id={item.id}
-						title={getTitle(item)}
-						posterUrl={getPosterUrl(item)}
-						backdropUrl={getBackdropUrl(item)}
-						type={item.media_type === "movie" ? "movie" : "show"}
-						tmdbRating={item.vote_average || undefined}
-						size="md"
-						layout="poster"
-					/>
+						className="w-32 shrink-0 sm:w-36"
+					>
+						<ActionableMediaCard
+							id={item.id}
+							title={getTitle(item)}
+							posterUrl={getPosterUrl(item)}
+							backdropUrl={getBackdropUrl(item)}
+							type={item.media_type === "movie" ? "movie" : "show"}
+							tmdbRating={item.vote_average || undefined}
+							size="md"
+							layout="poster"
+						/>
+					</div>
 				))}
 			</div>
 		</section>
