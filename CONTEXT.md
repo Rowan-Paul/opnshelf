@@ -50,6 +50,10 @@ _Avoid_: Event, feed post
 **Activity Feed**:
 The reverse-chronological stream of **Activities** from everyone the authenticated user follows. The full feed is the mobile Activity tab and the web "following" page; the home dashboard shows a short preview of the same feed.
 
+**Discover**:
+The surface for finding media the user hasn't tracked yet. Subsumes the old Search surface (web route, mobile tab): it still does keyword search, but adds discovery sections (e.g. trending, similar, surfaced from the people you follow). "Search" is now one capability of Discover, not a separate destination.
+_Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
+
 ## Flagged ambiguities
 
 - **"Activity" (feed) vs "activity graph"**: An **Activity** is a feed item (a followed user's Watch or Review). The "profile activity graph" (`ProfileActivityDayDto`) is unrelated — it is a per-day count of the profile owner's own **Watches**, a contribution-style heatmap. The feed is about people you follow; the graph is about one user's watching cadence.

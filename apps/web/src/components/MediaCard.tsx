@@ -200,7 +200,7 @@ export default function MediaCard({
 												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
 										}`}
 										aria-label={
-											isWatched ? "Remove from shelf" : "Mark as watched"
+											isWatched ? "Remove from shelf" : "Add to shelf"
 										}
 										title={isWatched ? "Remove from shelf" : "Add to shelf"}
 									>

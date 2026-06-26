@@ -108,7 +108,7 @@ export function UpNextCard({
 							>
 								<Check color="#3f2e00" size={16} strokeWidth={3} />
 								<Text className="font-semibold text-primary-foreground text-sm">
-									Mark watched
+									Add to shelf
 								</Text>
 							</Pressable>
 						) : null}

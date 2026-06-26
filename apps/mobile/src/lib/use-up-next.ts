@@ -66,7 +66,7 @@ export function useMarkUpNextEpisode() {
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});
-			toast.success("Episode marked as watched");
+			toast.success("Episode added to shelf");
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
 					path: { userDid, showId: variables.body.showId },
@@ -88,7 +88,7 @@ export function useMarkUpNextEpisode() {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to mark episode as watched",
+					: "Failed to add episode to shelf",
 			);
 		},
 	});

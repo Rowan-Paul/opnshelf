@@ -118,7 +118,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			if (context?.prevHistory !== undefined) {
 				queryClient.setQueryData(movieHistoryKey, context.prevHistory);
 			}
-			toast.error(errorMessage(error, "Failed to mark as watched"));
+			toast.error(errorMessage(error, "Failed to add to shelf"));
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -159,7 +159,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			if (context?.prevHistory !== undefined) {
 				queryClient.setQueryData(movieHistoryKey, context.prevHistory);
 			}
-			toast.error(errorMessage(error, "Failed to remove from watched"));
+			toast.error(errorMessage(error, "Failed to remove from shelf"));
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Light);
@@ -249,7 +249,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			if (context?.prevHistory !== undefined) {
 				queryClient.setQueryData(showHistoryKey, context.prevHistory);
 			}
-			toast.error(errorMessage(error, "Failed to mark episode as watched"));
+			toast.error(errorMessage(error, "Failed to add episode to shelf"));
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -337,7 +337,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onError: (error) => {
-			toast.error(errorMessage(error, "Failed to mark show as watched"));
+			toast.error(errorMessage(error, "Failed to add show to shelf"));
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -353,7 +353,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onError: (error) => {
-			toast.error(errorMessage(error, "Failed to mark season as watched"));
+			toast.error(errorMessage(error, "Failed to add season to shelf"));
 		},
 		onSuccess: () => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);

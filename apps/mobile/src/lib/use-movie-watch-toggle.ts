@@ -78,13 +78,13 @@ export function useMovieWatchToggle() {
 			if (context?.prev !== undefined) {
 				queryClient.setQueryData(userMoviesKey, context.prev);
 			}
-			toast.error(errorMessage(error, "Failed to mark as watched"));
+			toast.error(errorMessage(error, "Failed to add to shelf"));
 		},
 		onSuccess: () => {
 			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
 				() => {},
 			);
-			toast.success("Marked as watched");
+			toast.success("Added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: userMoviesKey });
@@ -110,13 +110,13 @@ export function useMovieWatchToggle() {
 			if (context?.prev !== undefined) {
 				queryClient.setQueryData(userMoviesKey, context.prev);
 			}
-			toast.error(errorMessage(error, "Failed to remove from watched"));
+			toast.error(errorMessage(error, "Failed to remove from shelf"));
 		},
 		onSuccess: () => {
 			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
 				() => {},
 			);
-			toast.success("Removed from watched");
+			toast.success("Removed from shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: userMoviesKey });

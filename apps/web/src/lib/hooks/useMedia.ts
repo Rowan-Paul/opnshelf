@@ -107,12 +107,12 @@ export function useMarkMovieWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
-			toast.success("Marked as watched");
+			toast.success("Added to shelf");
 			invalidateMovieWatchQueries(queryClient, userDid, variables.body.movieId);
 		},
 		onError: (error) => {
 			toast.error(
-				error instanceof Error ? error.message : "Failed to mark as watched",
+				error instanceof Error ? error.message : "Failed to add to shelf",
 			);
 		},
 	});
@@ -131,14 +131,12 @@ export function useUnmarkMovieWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
-			toast.success("Removed from watched");
+			toast.success("Removed from shelf");
 			invalidateMovieWatchQueries(queryClient, userDid, variables.path.movieId);
 		},
 		onError: (error) => {
 			toast.error(
-				error instanceof Error
-					? error.message
-					: "Failed to remove from watched",
+				error instanceof Error ? error.message : "Failed to remove from shelf",
 			);
 		},
 	});
@@ -214,7 +212,7 @@ export function useMarkEpisodeWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
-			toast.success("Episode marked as watched");
+			toast.success("Episode added to shelf");
 			// Invalidate the specific show's watch history
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
@@ -233,7 +231,7 @@ export function useMarkEpisodeWatched() {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to mark episode as watched",
+					: "Failed to add episode to shelf",
 			);
 		},
 	});
@@ -259,7 +257,7 @@ export function useUnmarkEpisodeWatched() {
 			return result.data;
 		},
 		onSuccess: (_data, variables) => {
-			toast.success("Episode removed from watched");
+			toast.success("Episode removed from shelf");
 			// Invalidate the specific show's watch history
 			queryClient.invalidateQueries({
 				queryKey: showsControllerGetShowWatchHistoryQueryKey({
@@ -278,7 +276,7 @@ export function useUnmarkEpisodeWatched() {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to remove episode from watched",
+					: "Failed to remove episode from shelf",
 			);
 		},
 	});

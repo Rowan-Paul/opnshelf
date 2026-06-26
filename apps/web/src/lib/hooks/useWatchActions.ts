@@ -68,7 +68,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			return { previousUserMovies, userMoviesKey };
 		},
 		onSuccess: () => {
-			toast.success("Marked as watched");
+			toast.success("Added to shelf");
 		},
 		onError: (error, _variables, context) => {
 			if (context?.previousUserMovies) {
@@ -78,7 +78,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				);
 			}
 			toast.error(
-				error instanceof Error ? error.message : "Failed to mark as watched",
+				error instanceof Error ? error.message : "Failed to add to shelf",
 			);
 		},
 		onSettled: () => {
@@ -116,7 +116,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			return { previousUserMovies, userMoviesKey };
 		},
 		onSuccess: () => {
-			toast.success("Removed from watched");
+			toast.success("Removed from shelf");
 		},
 		onError: (error, _variables, context) => {
 			if (context?.previousUserMovies) {
@@ -126,9 +126,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				);
 			}
 			toast.error(
-				error instanceof Error
-					? error.message
-					: "Failed to remove from watched",
+				error instanceof Error ? error.message : "Failed to remove from shelf",
 			);
 		},
 		onSettled: () => {
@@ -226,7 +224,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
-			toast.success("Episode marked as watched");
+			toast.success("Episode added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			// Also invalidate season details so season page stays in sync
@@ -245,7 +243,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to mark episode as watched",
+					: "Failed to add episode to shelf",
 			);
 		},
 	});
@@ -254,7 +252,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "episodes", "unmarkWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
-			toast.success("Episode removed from watched");
+			toast.success("Episode removed from shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			if (options.mediaType === "show") {
@@ -272,7 +270,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to remove episode from watched",
+					: "Failed to remove episode from shelf",
 			);
 		},
 	});
@@ -281,15 +279,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
 		onSuccess: () => {
-			toast.success("Show marked as watched");
+			toast.success("Show added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 		},
 		onError: (error) => {
 			toast.error(
-				error instanceof Error
-					? error.message
-					: "Failed to mark show as watched",
+				error instanceof Error ? error.message : "Failed to add show to shelf",
 			);
 		},
 	});
@@ -298,7 +294,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "unmarkShowWatched"],
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
-			toast.success("Show removed from watched");
+			toast.success("Show removed from shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 		},
@@ -306,7 +302,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to remove show from watched",
+					: "Failed to remove show from shelf",
 			);
 		},
 	});
@@ -315,7 +311,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (_data, variables) => {
-			toast.success("Season marked as watched");
+			toast.success("Season added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			if (options.mediaType === "show") {
@@ -333,7 +329,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to mark season as watched",
+					: "Failed to add season to shelf",
 			);
 		},
 	});
