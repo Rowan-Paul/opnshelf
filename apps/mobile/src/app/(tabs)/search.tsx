@@ -2,13 +2,25 @@ import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
 	discoverControllerTrendingOptions,
+	peopleControllerSearchPeopleOptions,
+	type PersonSearchResultDto,
 	searchControllerSearchAllOptions,
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SearchX, Users, X } from "lucide-react-native";
+import { Image } from "expo-image";
+import { Link } from "expo-router";
+import {
+	ChevronRight,
+	Clapperboard,
+	Search,
+	SearchX,
+	User,
+	Users,
+	X,
+} from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
@@ -19,18 +31,59 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
-import { yearFromDate } from "@/lib/tmdb";
+import { profileUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useTwStyle } from "@/lib/use-tw-style";
 
-type Tab = "all" | "movies" | "shows" | "people";
+type Tab = "all" | "movies" | "shows" | "cast" | "people";
 
 const TABS: { key: Tab; label: string }[] = [
 	{ key: "all", label: "All" },
 	{ key: "movies", label: "Movies" },
 	{ key: "shows", label: "Shows" },
+	{ key: "cast", label: "Cast & Crew" },
 	{ key: "people", label: "People" },
 ];
+
+/**
+ * Row for a TMDB person (cast/crew) search result: headshot, name, department.
+ * Tapping opens the person detail page (`/person/[id]`). Distinct from
+ * `PersonRow`, which is for app users (social) and links to a profile.
+ */
+function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
+	const url = profileUrl(person.profile_path);
+	return (
+		<Link href={`/person/${person.id}` as const} asChild>
+			<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-3">
+				<View className="size-11 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+					{url ? (
+						<Image
+							source={{ uri: url }}
+							style={{ width: 44, height: 44 }}
+							contentFit="cover"
+						/>
+					) : (
+						<User color="#94a3b8" size={20} />
+					)}
+				</View>
+				<View className="min-w-0 flex-1">
+					<Text
+						className="font-medium text-foreground text-sm"
+						numberOfLines={1}
+					>
+						{person.name}
+					</Text>
+					{person.known_for_department ? (
+						<Text className="text-muted-foreground text-xs" numberOfLines={1}>
+							{person.known_for_department}
+						</Text>
+					) : null}
+				</View>
+				<ChevronRight color="#94a3b8" size={18} />
+			</Pressable>
+		</Link>
+	);
+}
 
 function toMediaCardItem(r: UnifiedSearchResultDto): MediaCardItem {
 	const isMovie = r.media_type === "movie";
@@ -138,7 +191,7 @@ export default function SearchScreen() {
 
 	const mediaQuery = useQuery({
 		...searchControllerSearchAllOptions({ query: { query: debouncedQuery } }),
-		enabled: hasQuery && activeTab !== "people",
+		enabled: hasQuery && activeTab !== "people" && activeTab !== "cast",
 	});
 
 	const peopleQuery = useQuery({
@@ -146,6 +199,14 @@ export default function SearchScreen() {
 			query: { q: debouncedQuery, pageSize: 20 },
 		}),
 		enabled: hasQuery && activeTab === "people",
+	});
+
+	// Cast & Crew (TMDB people) — public, only fetched on its own tab.
+	const castQuery = useQuery({
+		...peopleControllerSearchPeopleOptions({
+			query: { query: debouncedQuery },
+		}),
+		enabled: hasQuery && activeTab === "cast",
 	});
 
 	const results = mediaQuery.data?.results ?? [];
@@ -159,9 +220,11 @@ export default function SearchScreen() {
 	);
 	const allMedia = useMemo(() => results.map(toMediaCardItem), [results]);
 	const people = peopleQuery.data?.items ?? [];
+	const cast = castQuery.data?.results ?? [];
 
 	const isPeople = activeTab === "people";
-	const activeQuery = isPeople ? peopleQuery : mediaQuery;
+	const isCast = activeTab === "cast";
+	const activeQuery = isPeople ? peopleQuery : isCast ? castQuery : mediaQuery;
 	const gridData =
 		activeTab === "movies" ? movies : activeTab === "shows" ? shows : allMedia;
 
@@ -204,6 +267,32 @@ export default function SearchScreen() {
 					renderItem={({ item }) => (
 						<View className="pb-2">
 							<PersonRow person={item} />
+						</View>
+					)}
+					contentContainerStyle={peopleListStyle}
+					keyboardShouldPersistTaps="handled"
+					refreshControl={refreshControl}
+				/>
+			);
+		}
+
+		if (isCast) {
+			if (cast.length === 0) {
+				return (
+					<EmptyState
+						icon={Clapperboard}
+						title="No cast or crew found"
+						message={`Nobody matched “${debouncedQuery}”.`}
+					/>
+				);
+			}
+			return (
+				<FlashList
+					data={cast}
+					keyExtractor={(p) => String(p.id)}
+					renderItem={({ item }) => (
+						<View className="pb-2">
+							<CastCrewRow person={item} />
 						</View>
 					)}
 					contentContainerStyle={peopleListStyle}
