@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Redirect, Tabs } from "expo-router";
-import { Compass, Contact, Home, Rss, User } from "lucide-react-native";
+import { Compass, Home, Rss, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
@@ -73,7 +73,7 @@ export default function TabLayout() {
 					options={{
 						title: "Connections",
 						tabBarIcon: ({ color, size }) => (
-							<Contact color={color} size={size} />
+							<Users color={color} size={size} />
 						),
 					}}
 				/>
@@ -81,23 +81,29 @@ export default function TabLayout() {
 					name="profile"
 					options={{
 						title: "Profile",
-						// The viewer's own avatar disambiguates Profile from the
-						// Connections (Users) tab; falls back to the User glyph.
-						tabBarIcon: ({ color, size, focused }) =>
-							user.avatar ? (
-								<Image
-									source={{ uri: user.avatar }}
-									style={{
-										width: size,
-										height: size,
-										borderRadius: size / 2,
-										borderWidth: focused ? 2 : 0,
-										borderColor: color,
-									}}
-								/>
-							) : (
-								<User color={color} size={size} />
-							),
+						// The viewer's own avatar (or the circular avatar placeholder
+						// used elsewhere for missing pictures) disambiguates Profile from
+						// the Connections (Users) tab.
+						tabBarIcon: ({ size, focused }) => (
+							<View
+								className="items-center justify-center overflow-hidden rounded-full bg-background-subtle"
+								style={{
+									width: size,
+									height: size,
+									borderWidth: focused ? 2 : 0,
+									borderColor: theme.colors.primary,
+								}}
+							>
+								{user.avatar ? (
+									<Image
+										source={{ uri: user.avatar }}
+										style={{ width: size, height: size }}
+									/>
+								) : (
+									<User color="#94a3b8" size={Math.round(size * 0.6)} />
+								)}
+							</View>
+						),
 					}}
 				/>
 			</Tabs>
