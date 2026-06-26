@@ -399,6 +399,7 @@ export const ModelName = {
   TrackedEpisode: 'TrackedEpisode',
   List: 'List',
   ListItem: 'ListItem',
+  LibraryItem: 'LibraryItem',
   Note: 'Note',
   Review: 'Review',
   Publication: 'Publication',
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback"
+    modelProps: "user" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1534,6 +1535,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LibraryItem: {
+      payload: Prisma.$LibraryItemPayload<ExtArgs>
+      fields: Prisma.LibraryItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LibraryItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LibraryItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        findFirst: {
+          args: Prisma.LibraryItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LibraryItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        findMany: {
+          args: Prisma.LibraryItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>[]
+        }
+        create: {
+          args: Prisma.LibraryItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        createMany: {
+          args: Prisma.LibraryItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LibraryItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>[]
+        }
+        delete: {
+          args: Prisma.LibraryItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        update: {
+          args: Prisma.LibraryItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.LibraryItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LibraryItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LibraryItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.LibraryItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LibraryItemPayload>
+        }
+        aggregate: {
+          args: Prisma.LibraryItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLibraryItem>
+        }
+        groupBy: {
+          args: Prisma.LibraryItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LibraryItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LibraryItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LibraryItemCountAggregateOutputType> | number
+        }
+      }
+    }
     Note: {
       payload: Prisma.$NotePayload<ExtArgs>
       fields: Prisma.NoteFieldRefs
@@ -2261,6 +2336,27 @@ export const ListItemScalarFieldEnum = {
 export type ListItemScalarFieldEnum = (typeof ListItemScalarFieldEnum)[keyof typeof ListItemScalarFieldEnum]
 
 
+export const LibraryItemScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  format: 'format',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  movieId: 'movieId',
+  showId: 'showId',
+  boxSet: 'boxSet',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type LibraryItemScalarFieldEnum = (typeof LibraryItemScalarFieldEnum)[keyof typeof LibraryItemScalarFieldEnum]
+
+
 export const NoteScalarFieldEnum = {
   id: 'id',
   rkey: 'rkey',
@@ -2493,6 +2589,20 @@ export type ListEnumMediaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
+ * Reference to a field of type 'LibraryFormat'
+ */
+export type EnumLibraryFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LibraryFormat'>
+    
+
+
+/**
+ * Reference to a field of type 'LibraryFormat[]'
+ */
+export type ListEnumLibraryFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LibraryFormat[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2630,6 +2740,7 @@ export type GlobalOmitConfig = {
   trackedEpisode?: Prisma.TrackedEpisodeOmit
   list?: Prisma.ListOmit
   listItem?: Prisma.ListItemOmit
+  libraryItem?: Prisma.LibraryItemOmit
   note?: Prisma.NoteOmit
   review?: Prisma.ReviewOmit
   publication?: Prisma.PublicationOmit

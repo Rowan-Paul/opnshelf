@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
+import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
@@ -101,6 +102,7 @@ export default function ShowDetailScreen() {
 					<View className="gap-2">
 						<RatingButton mediaType="show" mediaId={id} />
 						<AddToListButton mediaType="show" mediaId={id} />
+						<AddToLibraryButton mediaType="show" mediaId={id} />
 						<NoteButton mediaType="show" mediaId={id} />
 						<ShareButton
 							url={webMediaUrl({ type: "show", id, name: data.name })}

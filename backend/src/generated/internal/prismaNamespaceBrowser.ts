@@ -66,6 +66,7 @@ export const ModelName = {
   TrackedEpisode: 'TrackedEpisode',
   List: 'List',
   ListItem: 'ListItem',
+  LibraryItem: 'LibraryItem',
   Note: 'Note',
   Review: 'Review',
   Publication: 'Publication',
@@ -332,6 +333,27 @@ export const ListItemScalarFieldEnum = {
 } as const
 
 export type ListItemScalarFieldEnum = (typeof ListItemScalarFieldEnum)[keyof typeof ListItemScalarFieldEnum]
+
+
+export const LibraryItemScalarFieldEnum = {
+  id: 'id',
+  rkey: 'rkey',
+  uri: 'uri',
+  cid: 'cid',
+  userDid: 'userDid',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  format: 'format',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  movieId: 'movieId',
+  showId: 'showId',
+  boxSet: 'boxSet',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type LibraryItemScalarFieldEnum = (typeof LibraryItemScalarFieldEnum)[keyof typeof LibraryItemScalarFieldEnum]
 
 
 export const NoteScalarFieldEnum = {

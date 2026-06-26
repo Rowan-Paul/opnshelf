@@ -33,6 +33,11 @@ import {
 } from "../lexicons/xyz/opnshelf/list/item";
 import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/list/item.defs";
 import {
+	$nsid as LIBRARY_ITEM_COLLECTION,
+	main as libraryItemSchema,
+} from "../lexicons/xyz/opnshelf/library/item";
+import type { Main as LibraryItemRecord } from "../lexicons/xyz/opnshelf/library/item.defs";
+import {
 	$nsid as EPISODE_COLLECTION,
 	main as episodeSchema,
 } from "../lexicons/xyz/opnshelf/episode";
@@ -42,6 +47,7 @@ import {
 	main as movieSchema,
 } from "../lexicons/xyz/opnshelf/movie";
 import type { Main as MovieRecord } from "../lexicons/xyz/opnshelf/movie.defs";
+import { LibraryService } from "../library/library.service";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import {
@@ -185,6 +191,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
 		private readonly listsService: ListsService,
+		private readonly libraryService: LibraryService,
 		private readonly notesService: NotesService,
 		private readonly reviewsService: ReviewsService,
 		private readonly ratingsService: RatingsService,
@@ -481,6 +488,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleListEvent(evt, uri);
 		} else if (evt.collection === LIST_ITEM_COLLECTION) {
 			await this.handleListItemEvent(evt, uri);
+		} else if (evt.collection === LIBRARY_ITEM_COLLECTION) {
+			await this.handleLibraryItemEvent(evt, uri);
 		} else if (evt.collection === NOTE_COLLECTION) {
 			await this.handleNoteEvent(evt, uri);
 		} else if (evt.collection === DOCUMENT_COLLECTION) {
@@ -792,6 +801,42 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.listsService.deleteListItemRecord(evt.rkey);
+		}
+	}
+
+	private async handleLibraryItemEvent(evt: RecordEvent, uri: string) {
+		if (evt.action === "create" || evt.action === "update") {
+			if (!evt.record) {
+				this.logger.debug(`Record event missing record data: ${uri}`);
+				return;
+			}
+
+			let libraryItemRecord: LibraryItemRecord;
+			try {
+				libraryItemRecord = libraryItemSchema.parse(evt.record);
+			} catch (err) {
+				this.logger.debug(
+					`Skipping malformed ${LIBRARY_ITEM_COLLECTION} record ${uri}: ${err instanceof Error ? err.message : String(err)}`,
+				);
+				return;
+			}
+
+			if (!(await this.isUserTracked(evt.did))) {
+				this.logger.debug(`Skipping record for untracked user: ${uri}`);
+				return;
+			}
+
+			await this.libraryService.indexLibraryItemRecord(
+				uri,
+				evt.cid ?? "",
+				evt.rkey,
+				evt.did,
+				libraryItemRecord,
+			);
+		}
+
+		if (evt.action === "delete") {
+			await this.libraryService.deleteLibraryItemRecord(evt.rkey);
 		}
 	}
 

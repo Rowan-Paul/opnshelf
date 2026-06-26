@@ -321,6 +321,23 @@ export type EnumMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
 }
 
+export type EnumLibraryFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.LibraryFormat | Prisma.EnumLibraryFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel> | $Enums.LibraryFormat
+}
+
+export type EnumLibraryFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.LibraryFormat | Prisma.EnumLibraryFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLibraryFormatWithAggregatesFilter<$PrismaModel> | $Enums.LibraryFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -585,6 +602,23 @@ export type NestedEnumMediaTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumMediaTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumLibraryFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.LibraryFormat | Prisma.EnumLibraryFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel> | $Enums.LibraryFormat
+}
+
+export type NestedEnumLibraryFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.LibraryFormat | Prisma.EnumLibraryFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.LibraryFormat[] | Prisma.ListEnumLibraryFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumLibraryFormatWithAggregatesFilter<$PrismaModel> | $Enums.LibraryFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumLibraryFormatFilter<$PrismaModel>
 }
 
 

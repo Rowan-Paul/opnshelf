@@ -6,6 +6,7 @@ import { AuthModule } from "./auth/auth.module";
 import { DiscoverModule } from "./discover/discover.module";
 import { FeedbackModule } from "./feedback/feedback.module";
 import { IngesterModule } from "./ingester/ingester.module";
+import { LibraryModule } from "./library/library.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { NotesModule } from "./notes/notes.module";
@@ -38,6 +39,7 @@ import { UsersModule } from "./users/users.module";
 		IngesterModule,
 		UsersModule,
 		ListsModule,
+		LibraryModule,
 		NotesModule,
 		RatingsModule,
 		ReviewsModule,

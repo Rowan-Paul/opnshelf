@@ -17,3 +17,13 @@ export const MediaType = {
 } as const
 
 export type MediaType = (typeof MediaType)[keyof typeof MediaType]
+
+
+export const LibraryFormat = {
+  digital: 'digital',
+  bluray: 'bluray',
+  bluray4k: 'bluray4k',
+  dvd: 'dvd'
+} as const
+
+export type LibraryFormat = (typeof LibraryFormat)[keyof typeof LibraryFormat]

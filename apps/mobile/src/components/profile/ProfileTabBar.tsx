@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import {
 	Clock,
+	Disc,
 	Film,
 	LayoutGrid,
 	List,
@@ -17,6 +18,7 @@ export type ProfileTab =
 	| "shelf"
 	| "up-next"
 	| "lists"
+	| "library"
 	| "notes"
 	| "reviews"
 	| "connections";
@@ -26,6 +28,7 @@ const TABS: { key: ProfileTab; label: string; icon: LucideIcon }[] = [
 	{ key: "shelf", label: "Shelf", icon: Film },
 	{ key: "up-next", label: "Up Next", icon: Clock },
 	{ key: "lists", label: "Lists", icon: List },
+	{ key: "library", label: "Library", icon: Disc },
 	{ key: "notes", label: "Notes", icon: StickyNote },
 	{ key: "reviews", label: "Reviews", icon: Star },
 	{ key: "connections", label: "Connections", icon: Users },

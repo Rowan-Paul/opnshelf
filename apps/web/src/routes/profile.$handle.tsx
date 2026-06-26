@@ -15,6 +15,7 @@ import {
 } from "@tanstack/react-router";
 import {
 	Clock,
+	Disc,
 	Film,
 	LayoutGrid,
 	List,
@@ -71,6 +72,7 @@ const tabs = [
 	{ label: "Shelf", to: "/profile/$handle/shelf", icon: Film },
 	{ label: "Up Next", to: "/profile/$handle/up-next", icon: Clock },
 	{ label: "Lists", to: "/profile/$handle/lists", icon: List },
+	{ label: "Library", to: "/profile/$handle/library", icon: Disc },
 	{ label: "Notes", to: "/profile/$handle/notes", icon: StickyNote },
 	{ label: "Reviews", to: "/profile/$handle/reviews", icon: Star },
 	{ label: "Connections", to: "/profile/$handle/connections", icon: Users },

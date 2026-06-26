@@ -1,4 +1,5 @@
 export * from "./useDashboard";
+export * from "./useLibrary";
 export * from "./useListActions";
 export * from "./useListItemStatus";
 export * from "./useLists";

@@ -7,6 +7,7 @@ import {
 	ProfileTabBar,
 } from "@/components/profile/ProfileTabBar";
 import { ConnectionsTab } from "@/components/profile/tabs/ConnectionsTab";
+import { LibraryTab } from "@/components/profile/tabs/LibraryTab";
 import { ListsTab } from "@/components/profile/tabs/ListsTab";
 import { NotesTab } from "@/components/profile/tabs/NotesTab";
 import { OverviewTab } from "@/components/profile/tabs/OverviewTab";
@@ -32,6 +33,7 @@ const PROFILE_TABS: readonly ProfileTab[] = [
 	"shelf",
 	"up-next",
 	"lists",
+	"library",
 	"notes",
 	"reviews",
 	"connections",
@@ -128,6 +130,8 @@ export default function ProfileScreen() {
 						<UpNextTab userDid={userDid} isOwner={isOwner} />
 					) : tab === "lists" ? (
 						<ListsTab userDid={userDid} />
+					) : tab === "library" ? (
+						<LibraryTab userDid={userDid} />
 					) : tab === "notes" ? (
 						<NotesTab userDid={userDid} isOwner={isOwner} />
 					) : tab === "reviews" ? (

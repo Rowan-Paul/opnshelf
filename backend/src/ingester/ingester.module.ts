@@ -1,4 +1,5 @@
 import { forwardRef, Module } from "@nestjs/common";
+import { LibraryModule } from "../library/library.module";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
 import { NotesModule } from "../notes/notes.module";
@@ -16,6 +17,7 @@ import { IngesterService } from "./ingester.service";
 		forwardRef(() => MoviesModule),
 		forwardRef(() => ShowsModule),
 		forwardRef(() => ListsModule),
+		forwardRef(() => LibraryModule),
 		forwardRef(() => NotesModule),
 		forwardRef(() => RatingsModule),
 		forwardRef(() => ReviewsModule),

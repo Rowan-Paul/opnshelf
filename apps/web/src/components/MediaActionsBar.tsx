@@ -1,6 +1,7 @@
 import {
 	Bookmark,
 	Check,
+	Disc,
 	Heart,
 	Loader2,
 	MessageSquarePlus,
@@ -9,9 +10,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
-import { useListActions, useListItemStatus } from "#/lib/hooks";
+import {
+	useLibraryForItem,
+	useListActions,
+	useListItemStatus,
+} from "#/lib/hooks";
 import { useNote } from "#/lib/hooks/useNotes";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
+import AddToLibraryDialog from "./AddToLibraryDialog";
 import { NoteDialog } from "./NoteDialog";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -34,6 +40,15 @@ export default function MediaActionsBar({
 	const [shareSuccess, setShareSuccess] = useState(false);
 	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+	const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+
+	const { data: ownedFormats } = useLibraryForItem({
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const ownedCount = ownedFormats?.length ?? 0;
 
 	const { isInWatchlist, isInFavorites } = useListItemStatus({
 		mediaType,
@@ -151,6 +166,23 @@ export default function MediaActionsBar({
 					/>
 				</button>
 
+				{/* Library ("I own this") Button */}
+				<button
+					type="button"
+					onClick={() => setLibraryDialogOpen(true)}
+					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+						ownedCount > 0
+							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={ownedCount > 0 ? "Edit owned formats" : "Add to library"}
+				>
+					<Disc className="size-5" />
+					{ownedCount > 0 ? (
+						<span className="text-sm">Owned · {ownedCount}</span>
+					) : null}
+				</button>
+
 				{/* Review Button */}
 				<button
 					type="button"
@@ -191,6 +223,14 @@ export default function MediaActionsBar({
 			<ReviewDialog
 				open={reviewDialogOpen}
 				onOpenChange={setReviewDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
+			<AddToLibraryDialog
+				open={libraryDialogOpen}
+				onOpenChange={setLibraryDialogOpen}
 				mediaType={mediaType}
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}

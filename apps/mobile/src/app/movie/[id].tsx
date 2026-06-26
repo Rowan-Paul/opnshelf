@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
@@ -85,6 +86,7 @@ export default function MovieDetailScreen() {
 					<View className="gap-2">
 						<RatingButton mediaType="movie" mediaId={id} />
 						<AddToListButton mediaType="movie" mediaId={id} />
+						<AddToLibraryButton mediaType="movie" mediaId={id} />
 						<NoteButton mediaType="movie" mediaId={id} />
 						<ShareButton
 							url={webMediaUrl({ type: "movie", id, name: data.title })}

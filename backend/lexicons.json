@@ -22,6 +22,11 @@
 			"local": true
 		},
 		{
+			"id": "xyz.opnshelf.library.item",
+			"path": "lexicons/app/opnshelf/library/item.json",
+			"local": true
+		},
+		{
 			"id": "xyz.opnshelf.follow",
 			"path": "lexicons/app/opnshelf/follow.json",
 			"local": true

@@ -4,6 +4,7 @@
 
 export * as episode from './opnshelf/episode.js'
 export * as follow from './opnshelf/follow.js'
+export * as library from './opnshelf/library.js'
 export * as list from './opnshelf/list.js'
 export * as mediaLink from './opnshelf/mediaLink.js'
 export * as movie from './opnshelf/movie.js'

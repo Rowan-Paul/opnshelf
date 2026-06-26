@@ -1165,6 +1165,23 @@ export type FollowedActivityFeedDto = {
     hasPreviousPage: boolean;
 };
 
+export type CircleDto = {
+    id: string;
+    name: string;
+    /**
+     * Number of followed users in this circle
+     */
+    memberCount: number;
+    createdAt: string;
+};
+
+export type UpsertCircleDto = {
+    /**
+     * Circle name
+     */
+    name: string;
+};
+
 export type FollowedWatcherActorDto = {
     did: string;
     handle: string;
@@ -1552,6 +1569,63 @@ export type ShelfSyncStatusDto = {
      * When the last watch record was ingested, ISO 8601
      */
     lastIngestAt?: string;
+};
+
+export type LibraryItemDto = {
+    id: string;
+    rkey: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
+    seasonNumber?: number;
+    episodeNumber?: number;
+    episodeName?: string;
+    boxSet?: string;
+    notes?: string;
+    createdAt: string;
+    media: {
+        [key: string]: unknown;
+    };
+};
+
+export type LibraryOwnershipDto = {
+    rkey: string;
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
+    boxSet?: string;
+};
+
+export type AddToLibraryDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Format the item is owned in
+     */
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Optional named box set
+     */
+    boxSet?: string;
+    /**
+     * Optional notes about the owned item
+     */
+    notes?: string;
 };
 
 export type NoteResponseDto = {
@@ -3604,6 +3678,10 @@ export type SocialControllerGetFeedData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Restrict the feed to a single circle of followed users
+         */
+        circleId?: string;
     };
     url: '/social/feed';
 };
@@ -3613,6 +3691,103 @@ export type SocialControllerGetFeedResponses = {
 };
 
 export type SocialControllerGetFeedResponse = SocialControllerGetFeedResponses[keyof SocialControllerGetFeedResponses];
+
+export type SocialControllerListCirclesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/social/circles';
+};
+
+export type SocialControllerListCirclesResponses = {
+    200: Array<CircleDto>;
+};
+
+export type SocialControllerListCirclesResponse = SocialControllerListCirclesResponses[keyof SocialControllerListCirclesResponses];
+
+export type SocialControllerCreateCircleData = {
+    body: UpsertCircleDto;
+    path?: never;
+    query?: never;
+    url: '/social/circles';
+};
+
+export type SocialControllerCreateCircleResponses = {
+    201: CircleDto;
+};
+
+export type SocialControllerCreateCircleResponse = SocialControllerCreateCircleResponses[keyof SocialControllerCreateCircleResponses];
+
+export type SocialControllerDeleteCircleData = {
+    body?: never;
+    path: {
+        circleId: string;
+    };
+    query?: never;
+    url: '/social/circles/{circleId}';
+};
+
+export type SocialControllerDeleteCircleResponses = {
+    /**
+     * Circle removed
+     */
+    204: void;
+};
+
+export type SocialControllerDeleteCircleResponse = SocialControllerDeleteCircleResponses[keyof SocialControllerDeleteCircleResponses];
+
+export type SocialControllerRenameCircleData = {
+    body: UpsertCircleDto;
+    path: {
+        circleId: string;
+    };
+    query?: never;
+    url: '/social/circles/{circleId}';
+};
+
+export type SocialControllerRenameCircleResponses = {
+    200: CircleDto;
+};
+
+export type SocialControllerRenameCircleResponse = SocialControllerRenameCircleResponses[keyof SocialControllerRenameCircleResponses];
+
+export type SocialControllerRemoveCircleMemberData = {
+    body?: never;
+    path: {
+        circleId: string;
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/circles/{circleId}/members/{targetDid}';
+};
+
+export type SocialControllerRemoveCircleMemberResponses = {
+    /**
+     * Member removed
+     */
+    204: void;
+};
+
+export type SocialControllerRemoveCircleMemberResponse = SocialControllerRemoveCircleMemberResponses[keyof SocialControllerRemoveCircleMemberResponses];
+
+export type SocialControllerAddCircleMemberData = {
+    body?: never;
+    path: {
+        circleId: string;
+        targetDid: string;
+    };
+    query?: never;
+    url: '/social/circles/{circleId}/members/{targetDid}';
+};
+
+export type SocialControllerAddCircleMemberResponses = {
+    /**
+     * Member added
+     */
+    204: void;
+};
+
+export type SocialControllerAddCircleMemberResponse = SocialControllerAddCircleMemberResponses[keyof SocialControllerAddCircleMemberResponses];
 
 export type SocialControllerGetWatchersData = {
     body?: never;
@@ -3988,6 +4163,145 @@ export type ShelfControllerGetSyncStatusResponses = {
 };
 
 export type ShelfControllerGetSyncStatusResponse = ShelfControllerGetSyncStatusResponses[keyof ShelfControllerGetSyncStatusResponses];
+
+export type LibraryControllerGetMyLibraryData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/library';
+};
+
+export type LibraryControllerGetMyLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerGetMyLibraryResponses = {
+    /**
+     * Owned items
+     */
+    200: Array<LibraryItemDto>;
+};
+
+export type LibraryControllerGetMyLibraryResponse = LibraryControllerGetMyLibraryResponses[keyof LibraryControllerGetMyLibraryResponses];
+
+export type LibraryControllerGetUserLibraryData = {
+    body?: never;
+    path: {
+        /**
+         * User DID
+         */
+        userDid: string;
+    };
+    query?: never;
+    url: '/library/user/{userDid}';
+};
+
+export type LibraryControllerGetUserLibraryResponses = {
+    /**
+     * Owned items
+     */
+    200: Array<LibraryItemDto>;
+};
+
+export type LibraryControllerGetUserLibraryResponse = LibraryControllerGetUserLibraryResponses[keyof LibraryControllerGetUserLibraryResponses];
+
+export type LibraryControllerGetLibraryForItemData = {
+    body?: never;
+    path: {
+        /**
+         * movie, show, season, or episode
+         */
+        mediaType: string;
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+    };
+    query?: {
+        seasonNumber?: number;
+        episodeNumber?: number;
+    };
+    url: '/library/for-item/{mediaType}/{mediaId}';
+};
+
+export type LibraryControllerGetLibraryForItemErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerGetLibraryForItemResponses = {
+    /**
+     * Owned formats
+     */
+    200: Array<LibraryOwnershipDto>;
+};
+
+export type LibraryControllerGetLibraryForItemResponse = LibraryControllerGetLibraryForItemResponses[keyof LibraryControllerGetLibraryForItemResponses];
+
+export type LibraryControllerAddToLibraryData = {
+    body: AddToLibraryDto;
+    path?: never;
+    query?: never;
+    url: '/library/items';
+};
+
+export type LibraryControllerAddToLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerAddToLibraryResponses = {
+    /**
+     * Item added
+     */
+    200: LibraryItemDto;
+};
+
+export type LibraryControllerAddToLibraryResponse = LibraryControllerAddToLibraryResponses[keyof LibraryControllerAddToLibraryResponses];
+
+export type LibraryControllerRemoveFromLibraryData = {
+    body?: never;
+    path: {
+        /**
+         * movie, show, season, or episode
+         */
+        mediaType: string;
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * digital, bluray, bluray4k, or dvd
+         */
+        format: string;
+    };
+    query?: {
+        seasonNumber?: number;
+        episodeNumber?: number;
+    };
+    url: '/library/items/{mediaType}/{mediaId}/{format}';
+};
+
+export type LibraryControllerRemoveFromLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerRemoveFromLibraryResponses = {
+    /**
+     * Item removed
+     */
+    200: unknown;
+};
 
 export type NotesControllerGetNoteData = {
     body?: never;

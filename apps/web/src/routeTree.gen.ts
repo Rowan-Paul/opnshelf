@@ -31,6 +31,7 @@ import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle
 import { Route as ProfileHandleReviewsRouteImport } from './routes/profile.$handle/reviews'
 import { Route as ProfileHandleNotesRouteImport } from './routes/profile.$handle/notes'
 import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle/lists'
+import { Route as ProfileHandleLibraryRouteImport } from './routes/profile.$handle/library'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
 import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
 import { Route as MoviesMovieIdMovieNameRouteImport } from './routes/movies/$movieId/$movieName'
@@ -153,6 +154,11 @@ const ProfileHandleListsRoute = ProfileHandleListsRouteImport.update({
   path: '/lists',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
+const ProfileHandleLibraryRoute = ProfileHandleLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
 const ProfileHandleConnectionsRoute =
   ProfileHandleConnectionsRouteImport.update({
     id: '/connections',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
+  '/profile/$handle/library': typeof ProfileHandleLibraryRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
+  '/profile/$handle/library': typeof ProfileHandleLibraryRoute
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
+  '/profile/$handle/library': typeof ProfileHandleLibraryRoute
   '/profile/$handle/lists': typeof ProfileHandleListsRouteWithChildren
   '/profile/$handle/notes': typeof ProfileHandleNotesRoute
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
+    | '/profile/$handle/library'
     | '/profile/$handle/lists'
     | '/profile/$handle/notes'
     | '/profile/$handle/reviews'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
+    | '/profile/$handle/library'
     | '/profile/$handle/notes'
     | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
@@ -387,6 +398,7 @@ export interface FileRouteTypes {
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
+    | '/profile/$handle/library'
     | '/profile/$handle/lists'
     | '/profile/$handle/notes'
     | '/profile/$handle/reviews'
@@ -579,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleListsRouteImport
       parentRoute: typeof ProfileHandleRoute
     }
+    '/profile/$handle/library': {
+      id: '/profile/$handle/library'
+      path: '/library'
+      fullPath: '/profile/$handle/library'
+      preLoaderRoute: typeof ProfileHandleLibraryRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
     '/profile/$handle/connections': {
       id: '/profile/$handle/connections'
       path: '/connections'
@@ -660,6 +679,7 @@ const ProfileHandleListsRouteWithChildren =
 
 interface ProfileHandleRouteChildren {
   ProfileHandleConnectionsRoute: typeof ProfileHandleConnectionsRoute
+  ProfileHandleLibraryRoute: typeof ProfileHandleLibraryRoute
   ProfileHandleListsRoute: typeof ProfileHandleListsRouteWithChildren
   ProfileHandleNotesRoute: typeof ProfileHandleNotesRoute
   ProfileHandleReviewsRoute: typeof ProfileHandleReviewsRoute
@@ -670,6 +690,7 @@ interface ProfileHandleRouteChildren {
 
 const ProfileHandleRouteChildren: ProfileHandleRouteChildren = {
   ProfileHandleConnectionsRoute: ProfileHandleConnectionsRoute,
+  ProfileHandleLibraryRoute: ProfileHandleLibraryRoute,
   ProfileHandleListsRoute: ProfileHandleListsRouteWithChildren,
   ProfileHandleNotesRoute: ProfileHandleNotesRoute,
   ProfileHandleReviewsRoute: ProfileHandleReviewsRoute,

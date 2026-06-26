@@ -1,0 +1,52 @@
+{
+	"lexicon": 1,
+	"id": "xyz.opnshelf.library.item",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A film a user owns in a given format (their Library). No parent record — the Library is the umbrella over these items.",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["mediaType", "mediaId", "format", "createdAt"],
+				"properties": {
+					"mediaType": {
+						"type": "string",
+						"description": "Media type",
+						"enum": ["movie", "show", "season", "episode"]
+					},
+					"mediaId": {
+						"type": "string",
+						"description": "TMDB movie ID or show ID"
+					},
+					"format": {
+						"type": "string",
+						"description": "The medium the item is owned in",
+						"enum": ["digital", "bluray", "bluray4k", "dvd"]
+					},
+					"seasonNumber": {
+						"type": "integer",
+						"description": "Season number for season/episode items"
+					},
+					"episodeNumber": {
+						"type": "integer",
+						"description": "Episode number for episode items"
+					},
+					"boxSet": {
+						"type": "string",
+						"description": "Optional named box set this item belongs to"
+					},
+					"notes": {
+						"type": "string",
+						"description": "Optional user notes about the owned item"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					}
+				}
+			}
+		}
+	}
+}

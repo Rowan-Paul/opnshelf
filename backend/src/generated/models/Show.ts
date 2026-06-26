@@ -254,6 +254,7 @@ export type ShowWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Show"> | Date | string
   trackedBy?: Prisma.TrackedEpisodeListRelationFilter
   listItems?: Prisma.ListItemListRelationFilter
+  libraryItems?: Prisma.LibraryItemListRelationFilter
   seasons?: Prisma.SeasonListRelationFilter
 }
 
@@ -270,6 +271,7 @@ export type ShowOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   trackedBy?: Prisma.TrackedEpisodeOrderByRelationAggregateInput
   listItems?: Prisma.ListItemOrderByRelationAggregateInput
+  libraryItems?: Prisma.LibraryItemOrderByRelationAggregateInput
   seasons?: Prisma.SeasonOrderByRelationAggregateInput
 }
 
@@ -289,6 +291,7 @@ export type ShowWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Show"> | Date | string
   trackedBy?: Prisma.TrackedEpisodeListRelationFilter
   listItems?: Prisma.ListItemListRelationFilter
+  libraryItems?: Prisma.LibraryItemListRelationFilter
   seasons?: Prisma.SeasonListRelationFilter
 }, "showId">
 
@@ -339,6 +342,7 @@ export type ShowCreateInput = {
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeCreateNestedManyWithoutShowInput
   listItems?: Prisma.ListItemCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonCreateNestedManyWithoutShowInput
 }
 
@@ -355,6 +359,7 @@ export type ShowUncheckedCreateInput = {
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutShowInput
   listItems?: Prisma.ListItemUncheckedCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonUncheckedCreateNestedManyWithoutShowInput
 }
 
@@ -371,6 +376,7 @@ export type ShowUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUpdateManyWithoutShowNestedInput
   listItems?: Prisma.ListItemUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUpdateManyWithoutShowNestedInput
 }
 
@@ -387,6 +393,7 @@ export type ShowUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutShowNestedInput
   listItems?: Prisma.ListItemUncheckedUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUncheckedUpdateManyWithoutShowNestedInput
 }
 
@@ -528,6 +535,22 @@ export type ShowUpdateOneWithoutListItemsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ShowUpdateToOneWithWhereWithoutListItemsInput, Prisma.ShowUpdateWithoutListItemsInput>, Prisma.ShowUncheckedUpdateWithoutListItemsInput>
 }
 
+export type ShowCreateNestedOneWithoutLibraryItemsInput = {
+  create?: Prisma.XOR<Prisma.ShowCreateWithoutLibraryItemsInput, Prisma.ShowUncheckedCreateWithoutLibraryItemsInput>
+  connectOrCreate?: Prisma.ShowCreateOrConnectWithoutLibraryItemsInput
+  connect?: Prisma.ShowWhereUniqueInput
+}
+
+export type ShowUpdateOneWithoutLibraryItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.ShowCreateWithoutLibraryItemsInput, Prisma.ShowUncheckedCreateWithoutLibraryItemsInput>
+  connectOrCreate?: Prisma.ShowCreateOrConnectWithoutLibraryItemsInput
+  upsert?: Prisma.ShowUpsertWithoutLibraryItemsInput
+  disconnect?: Prisma.ShowWhereInput | boolean
+  delete?: Prisma.ShowWhereInput | boolean
+  connect?: Prisma.ShowWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ShowUpdateToOneWithWhereWithoutLibraryItemsInput, Prisma.ShowUpdateWithoutLibraryItemsInput>, Prisma.ShowUncheckedUpdateWithoutLibraryItemsInput>
+}
+
 export type ShowCreateWithoutSeasonsInput = {
   showId: string
   title: string
@@ -541,6 +564,7 @@ export type ShowCreateWithoutSeasonsInput = {
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeCreateNestedManyWithoutShowInput
   listItems?: Prisma.ListItemCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutShowInput
 }
 
 export type ShowUncheckedCreateWithoutSeasonsInput = {
@@ -556,6 +580,7 @@ export type ShowUncheckedCreateWithoutSeasonsInput = {
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutShowInput
   listItems?: Prisma.ListItemUncheckedCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutShowInput
 }
 
 export type ShowCreateOrConnectWithoutSeasonsInput = {
@@ -587,6 +612,7 @@ export type ShowUpdateWithoutSeasonsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUpdateManyWithoutShowNestedInput
   listItems?: Prisma.ListItemUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutShowNestedInput
 }
 
 export type ShowUncheckedUpdateWithoutSeasonsInput = {
@@ -602,6 +628,7 @@ export type ShowUncheckedUpdateWithoutSeasonsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutShowNestedInput
   listItems?: Prisma.ListItemUncheckedUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutShowNestedInput
 }
 
 export type ShowCreateWithoutTrackedByInput = {
@@ -616,6 +643,7 @@ export type ShowCreateWithoutTrackedByInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   listItems?: Prisma.ListItemCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonCreateNestedManyWithoutShowInput
 }
 
@@ -631,6 +659,7 @@ export type ShowUncheckedCreateWithoutTrackedByInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   listItems?: Prisma.ListItemUncheckedCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonUncheckedCreateNestedManyWithoutShowInput
 }
 
@@ -662,6 +691,7 @@ export type ShowUpdateWithoutTrackedByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   listItems?: Prisma.ListItemUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUpdateManyWithoutShowNestedInput
 }
 
@@ -677,6 +707,7 @@ export type ShowUncheckedUpdateWithoutTrackedByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   listItems?: Prisma.ListItemUncheckedUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUncheckedUpdateManyWithoutShowNestedInput
 }
 
@@ -692,6 +723,7 @@ export type ShowCreateWithoutListItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonCreateNestedManyWithoutShowInput
 }
 
@@ -707,6 +739,7 @@ export type ShowUncheckedCreateWithoutListItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutShowInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutShowInput
   seasons?: Prisma.SeasonUncheckedCreateNestedManyWithoutShowInput
 }
 
@@ -738,6 +771,7 @@ export type ShowUpdateWithoutListItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUpdateManyWithoutShowNestedInput
 }
 
@@ -753,6 +787,87 @@ export type ShowUncheckedUpdateWithoutListItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedBy?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutShowNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutShowNestedInput
+  seasons?: Prisma.SeasonUncheckedUpdateManyWithoutShowNestedInput
+}
+
+export type ShowCreateWithoutLibraryItemsInput = {
+  showId: string
+  title: string
+  posterPath?: string | null
+  backdropPath?: string | null
+  firstAirYear?: number | null
+  firstAirDate?: Date | string | null
+  overview?: string | null
+  colors?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedBy?: Prisma.TrackedEpisodeCreateNestedManyWithoutShowInput
+  listItems?: Prisma.ListItemCreateNestedManyWithoutShowInput
+  seasons?: Prisma.SeasonCreateNestedManyWithoutShowInput
+}
+
+export type ShowUncheckedCreateWithoutLibraryItemsInput = {
+  showId: string
+  title: string
+  posterPath?: string | null
+  backdropPath?: string | null
+  firstAirYear?: number | null
+  firstAirDate?: Date | string | null
+  overview?: string | null
+  colors?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedBy?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutShowInput
+  listItems?: Prisma.ListItemUncheckedCreateNestedManyWithoutShowInput
+  seasons?: Prisma.SeasonUncheckedCreateNestedManyWithoutShowInput
+}
+
+export type ShowCreateOrConnectWithoutLibraryItemsInput = {
+  where: Prisma.ShowWhereUniqueInput
+  create: Prisma.XOR<Prisma.ShowCreateWithoutLibraryItemsInput, Prisma.ShowUncheckedCreateWithoutLibraryItemsInput>
+}
+
+export type ShowUpsertWithoutLibraryItemsInput = {
+  update: Prisma.XOR<Prisma.ShowUpdateWithoutLibraryItemsInput, Prisma.ShowUncheckedUpdateWithoutLibraryItemsInput>
+  create: Prisma.XOR<Prisma.ShowCreateWithoutLibraryItemsInput, Prisma.ShowUncheckedCreateWithoutLibraryItemsInput>
+  where?: Prisma.ShowWhereInput
+}
+
+export type ShowUpdateToOneWithWhereWithoutLibraryItemsInput = {
+  where?: Prisma.ShowWhereInput
+  data: Prisma.XOR<Prisma.ShowUpdateWithoutLibraryItemsInput, Prisma.ShowUncheckedUpdateWithoutLibraryItemsInput>
+}
+
+export type ShowUpdateWithoutLibraryItemsInput = {
+  showId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  posterPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backdropPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  firstAirYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  firstAirDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  overview?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  colors?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedBy?: Prisma.TrackedEpisodeUpdateManyWithoutShowNestedInput
+  listItems?: Prisma.ListItemUpdateManyWithoutShowNestedInput
+  seasons?: Prisma.SeasonUpdateManyWithoutShowNestedInput
+}
+
+export type ShowUncheckedUpdateWithoutLibraryItemsInput = {
+  showId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  posterPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  backdropPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  firstAirYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  firstAirDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  overview?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  colors?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedBy?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutShowNestedInput
+  listItems?: Prisma.ListItemUncheckedUpdateManyWithoutShowNestedInput
   seasons?: Prisma.SeasonUncheckedUpdateManyWithoutShowNestedInput
 }
 
@@ -764,12 +879,14 @@ export type ShowUncheckedUpdateWithoutListItemsInput = {
 export type ShowCountOutputType = {
   trackedBy: number
   listItems: number
+  libraryItems: number
   seasons: number
 }
 
 export type ShowCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedBy?: boolean | ShowCountOutputTypeCountTrackedByArgs
   listItems?: boolean | ShowCountOutputTypeCountListItemsArgs
+  libraryItems?: boolean | ShowCountOutputTypeCountLibraryItemsArgs
   seasons?: boolean | ShowCountOutputTypeCountSeasonsArgs
 }
 
@@ -800,6 +917,13 @@ export type ShowCountOutputTypeCountListItemsArgs<ExtArgs extends runtime.Types.
 /**
  * ShowCountOutputType without action
  */
+export type ShowCountOutputTypeCountLibraryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LibraryItemWhereInput
+}
+
+/**
+ * ShowCountOutputType without action
+ */
 export type ShowCountOutputTypeCountSeasonsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SeasonWhereInput
 }
@@ -818,6 +942,7 @@ export type ShowSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   trackedBy?: boolean | Prisma.Show$trackedByArgs<ExtArgs>
   listItems?: boolean | Prisma.Show$listItemsArgs<ExtArgs>
+  libraryItems?: boolean | Prisma.Show$libraryItemsArgs<ExtArgs>
   seasons?: boolean | Prisma.Show$seasonsArgs<ExtArgs>
   _count?: boolean | Prisma.ShowCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["show"]>
@@ -865,6 +990,7 @@ export type ShowOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type ShowInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedBy?: boolean | Prisma.Show$trackedByArgs<ExtArgs>
   listItems?: boolean | Prisma.Show$listItemsArgs<ExtArgs>
+  libraryItems?: boolean | Prisma.Show$libraryItemsArgs<ExtArgs>
   seasons?: boolean | Prisma.Show$seasonsArgs<ExtArgs>
   _count?: boolean | Prisma.ShowCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -876,6 +1002,7 @@ export type $ShowPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     trackedBy: Prisma.$TrackedEpisodePayload<ExtArgs>[]
     listItems: Prisma.$ListItemPayload<ExtArgs>[]
+    libraryItems: Prisma.$LibraryItemPayload<ExtArgs>[]
     seasons: Prisma.$SeasonPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1285,6 +1412,7 @@ export interface Prisma__ShowClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   trackedBy<T extends Prisma.Show$trackedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Show$trackedByArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   listItems<T extends Prisma.Show$listItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Show$listItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ListItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  libraryItems<T extends Prisma.Show$libraryItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Show$libraryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LibraryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   seasons<T extends Prisma.Show$seasonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Show$seasonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SeasonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1763,6 +1891,30 @@ export type Show$listItemsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.ListItemScalarFieldEnum | Prisma.ListItemScalarFieldEnum[]
+}
+
+/**
+ * Show.libraryItems
+ */
+export type Show$libraryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LibraryItem
+   */
+  select?: Prisma.LibraryItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LibraryItem
+   */
+  omit?: Prisma.LibraryItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LibraryItemInclude<ExtArgs> | null
+  where?: Prisma.LibraryItemWhereInput
+  orderBy?: Prisma.LibraryItemOrderByWithRelationInput | Prisma.LibraryItemOrderByWithRelationInput[]
+  cursor?: Prisma.LibraryItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LibraryItemScalarFieldEnum | Prisma.LibraryItemScalarFieldEnum[]
 }
 
 /**

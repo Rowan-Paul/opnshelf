@@ -93,6 +93,11 @@ export type List = Prisma.ListModel
  */
 export type ListItem = Prisma.ListItemModel
 /**
+ * Model LibraryItem
+ * 
+ */
+export type LibraryItem = Prisma.LibraryItemModel
+/**
  * Model Note
  * 
  */

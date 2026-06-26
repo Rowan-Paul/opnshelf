@@ -48,6 +48,7 @@ model User {
   trackedMovies TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
   lists        List[]
+  libraryItems LibraryItem[]
   notes        Note[]
   reviews      Review[]
   publications Publication[]
@@ -122,6 +123,13 @@ enum MediaType {
   episode
 }
 
+enum LibraryFormat {
+  digital
+  bluray
+  bluray4k
+  dvd
+}
+
 
 // OAuth session storage for @atproto/oauth-client-node sessionStore
 // No FK to User because the OAuth library stores session before we create the User
@@ -186,6 +194,7 @@ model Movie {
 
   trackedBy    TrackedMovie[]
   listItems    ListItem[]
+  libraryItems LibraryItem[]
 
   @@index([title])
 }
@@ -205,6 +214,7 @@ model Show {
 
   trackedBy     TrackedEpisode[]
   listItems     ListItem[]
+  libraryItems  LibraryItem[]
   seasons       Season[]
 
   @@index([title])
@@ -360,6 +370,38 @@ model ListItem {
 
   @@unique([listId, mediaType, mediaId, seasonNumber, episodeNumber])
   @@index([listId])
+  @@index([mediaType, mediaId])
+}
+
+// A film a user owns in a given Format (their Library). No parent record —
+// the Library is an umbrella, not an entity. See ADR 0009.
+model LibraryItem {
+  id            String        @id @default(cuid())
+  rkey          String        @unique
+  uri           String
+  cid           String?
+
+  userDid       String
+  user          User          @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
+  mediaType     MediaType
+  mediaId       String
+  format        LibraryFormat
+  seasonNumber  Int           @default(0)
+  episodeNumber Int           @default(0)
+
+  movieId       String?
+  movie         Movie?        @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  showId        String?
+  show          Show?         @relation(fields: [showId], references: [showId], onDelete: Cascade)
+
+  boxSet        String?
+  notes         String?
+
+  createdAt     DateTime      @default(now())
+
+  @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber, format])
+  @@index([userDid])
   @@index([mediaType, mediaId])
 }
 
