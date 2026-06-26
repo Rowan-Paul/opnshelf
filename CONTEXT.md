@@ -58,6 +58,18 @@ _Avoid_: Actor (too narrow — excludes directors/crew), User (an account holder
 An opnshelf account holder, identified by DID and handle, with a profile at `/profile/{handle}`. Found via social people search. In the ⌘K palette, User results appear under the **People** heading. Distinct from _Person_ (a TMDB cast/crew member with no opnshelf account).
 _Avoid_: Person (reserved for TMDB cast/crew), Member
 
+**Home**:
+The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
+_Avoid_: Dashboard (retired as a label — the canonical word is Home)
+
+**Connections**:
+The destination for growing and organising your network: finding people (people search) and your **Circles**. The "manage people" counterpart to **Activity** (the "consume the feed" surface). The actual **Following**/**Followers** lists are NOT duplicated here — they are canonical on the **Profile** (reached from a profile and reused by Connections, not re-implemented). One name on both web and mobile — supersedes the old split of "Following" (web page), "Connections" (mobile screen) and "Find" (mobile button).
+_Avoid_: Find, Friends, People (collides with the User/Person split), Network, the old "Following" page name
+
+**Following / Followers**:
+The list of Users a given User follows / is followed by. Canonically rendered on that User's **Profile** (a single shared list component), reached from the profile's follower/following counts. On your own Profile the rows carry manage affordances (unfollow, add-to-**Circle**); on others' it is read-only. Counts shown on a Profile are that User's own totals — never derived from the items in a followed list.
+_Avoid_: Connections (reserved for the hub destination)
+
 **Circle**:
 A private, personal, named grouping of Users you follow — used to filter your Activity Feed (e.g. see only "Family" or "Cinephiles" activity). Visible only to its owner; **not** a PDS record (it is local-only view state, never federated). Membership requires an active Follow and is dropped when you unfollow. A followed User may belong to many Circles. Distinct from a _List_ (media curation) and a _Format_ (Library axis).
 _Avoid_: Category (retired — overloaded), List (reserved for media curation), Friend Group, Group (too generic), Friend (opnshelf has no friend/mutual-follow concept — you group Users you **follow**)

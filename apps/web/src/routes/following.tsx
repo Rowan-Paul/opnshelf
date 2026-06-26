@@ -1,6 +1,7 @@
 import {
 	socialControllerFollowMutation,
 	socialControllerGetFeedOptions,
+	socialControllerGetFollowersOptions,
 	socialControllerGetFollowingOptions,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
@@ -82,6 +83,15 @@ function FollowingPage() {
 	} = useQuery({
 		...socialControllerGetFeedOptions({
 			query: { pageSize: 20, circleId: activeCircleId },
+		}),
+		enabled: !!userHandle,
+	});
+
+	// Viewer's own follower total (pageSize 1 — we only need the count).
+	const { data: followersData } = useQuery({
+		...socialControllerGetFollowersOptions({
+			path: { handle: userHandle || "" },
+			query: { pageSize: 1 },
 		}),
 		enabled: !!userHandle,
 	});
@@ -193,7 +203,11 @@ function FollowingPage() {
 						pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
 						circles={circles}
 					/>
-					<NetworkStats following={following} />
+					<NetworkStats
+						following={following}
+						followingCount={followingData?.total ?? following.length}
+						followersCount={followersData?.total ?? 0}
+					/>
 				</div>
 
 				{/* Main Feed - shown below sidebar on mobile, left side on desktop */}

@@ -46,7 +46,11 @@ export function CircleFilterBar({
 		<ScrollView
 			horizontal
 			showsHorizontalScrollIndicator={false}
-			contentContainerClassName="gap-2 px-4 pb-3"
+			// grow-0 keeps the row from expanding to fill the column; items-center
+			// stops the pills stretching to full height (horizontal ScrollView
+			// content defaults to alignItems: stretch on the vertical axis).
+			className="grow-0"
+			contentContainerClassName="items-center gap-2 px-4 pb-3"
 		>
 			{pill("All", !activeCircleId, () => onSelect(undefined), "all")}
 			{circles.map((circle) =>
