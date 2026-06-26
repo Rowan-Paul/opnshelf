@@ -37,7 +37,7 @@ export function PeopleSearch({
 					<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
 					<input
 						type="text"
-						placeholder="Find people to follow..."
+						placeholder="Find new people to follow"
 						className="input pl-10!"
 						value={query}
 						onChange={(e) => onQueryChange(e.target.value)}

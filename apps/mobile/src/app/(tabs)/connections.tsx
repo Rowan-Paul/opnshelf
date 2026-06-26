@@ -1,8 +1,16 @@
 import { socialControllerSearchPeopleOptions } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ChevronRight, Plus, Search, Users, X } from "lucide-react-native";
+import {
+	ChevronRight,
+	Plus,
+	Search,
+	User,
+	Users,
+	X,
+} from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +21,8 @@ import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useCircles, useCreateCircle } from "@/lib/use-circles";
 import { useDebounce } from "@/lib/use-debounce";
-import { useFollowToggle } from "@/lib/use-social";
+import { useFollowers, useFollowToggle } from "@/lib/use-social";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
  * Connections: grow & organise your network. People search (to follow) plus your
@@ -24,12 +33,16 @@ export default function ConnectionsScreen() {
 	const insets = useSafeAreaInsets();
 	const { user } = useAuth();
 	const myDid = user?.did ?? "";
+	const handle = user?.handle ?? "";
+	const avatarStyle = useTwStyle("size-12");
 
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
 
 	const { toggle } = useFollowToggle();
+	const followers = useFollowers(handle);
+	const recentFollowers = followers.items.slice(0, 12);
 	const { data: circles = [] } = useCircles();
 	const createCircle = useCreateCircle();
 	const [newName, setNewName] = useState("");
@@ -74,7 +87,7 @@ export default function ConnectionsScreen() {
 					}
 					value={query}
 					onChangeText={setQuery}
-					placeholder="Find people to follow…"
+					placeholder="Find new people to follow"
 					autoCapitalize="none"
 					autoCorrect={false}
 					returnKeyType="search"
@@ -108,6 +121,69 @@ export default function ConnectionsScreen() {
 				)
 			) : (
 				<ScrollView contentContainerClassName="px-4 pb-8 gap-2">
+					{recentFollowers.length > 0 && handle ? (
+						<View className="gap-2 pb-4">
+							<View className="flex-row items-center justify-between">
+								<Text className="font-display font-semibold text-base text-foreground">
+									Recent followers
+								</Text>
+								<Link
+									href={`/profile/${handle}/connections?tab=followers` as const}
+									asChild
+								>
+									<Pressable hitSlop={8}>
+										<Text className="font-medium text-primary text-sm">
+											See all
+										</Text>
+									</Pressable>
+								</Link>
+							</View>
+							<ScrollView
+								horizontal
+								showsHorizontalScrollIndicator={false}
+								contentContainerClassName="gap-4"
+							>
+								{recentFollowers.map((follower) => {
+									const avatar =
+										typeof follower.avatar === "string"
+											? follower.avatar
+											: undefined;
+									const name =
+										(typeof follower.displayName === "string"
+											? follower.displayName
+											: undefined) || follower.handle;
+									return (
+										<Link
+											key={follower.did}
+											href={`/profile/${follower.handle}` as const}
+											asChild
+										>
+											<Pressable className="w-16 items-center gap-1">
+												<View className="size-12 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+													{avatar ? (
+														<Image
+															source={{ uri: avatar }}
+															style={avatarStyle}
+															contentFit="cover"
+														/>
+													) : (
+														<User color="#94a3b8" size={20} />
+													)}
+												</View>
+												<Text
+													className="text-center text-muted-foreground text-xs"
+													numberOfLines={1}
+												>
+													{name}
+												</Text>
+											</Pressable>
+										</Link>
+									);
+								})}
+							</ScrollView>
+						</View>
+					) : null}
+
 					<View className="flex-row items-center gap-2 pb-1">
 						<Users color="#94a3b8" size={18} />
 						<Text className="font-display font-semibold text-base text-foreground">

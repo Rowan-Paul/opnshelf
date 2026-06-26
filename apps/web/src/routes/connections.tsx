@@ -1,5 +1,6 @@
 import {
 	socialControllerFollowMutation,
+	socialControllerGetFollowersOptions,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
@@ -9,6 +10,7 @@ import { ChevronRight, Loader2, Plus, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 import { useCircles, useCreateCircle } from "#/lib/hooks/useCircles";
@@ -21,9 +23,10 @@ export const Route = createFileRoute("/connections")({
 });
 
 function ConnectionsPage() {
-	const { isAuthenticated, isLoading: authLoading } = useAuth();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const userHandle = user?.handle;
 
 	useEffect(() => {
 		if (!authLoading && !isAuthenticated) {
@@ -45,6 +48,17 @@ function ConnectionsPage() {
 		}),
 		enabled: debouncedSearch.length > 0 && isSearching,
 	});
+
+	// Recent-followers preview (most recent first). A glance + "see all" entry
+	// point — the full list is canonical on the profile (ADR 0012).
+	const { data: followersData } = useQuery({
+		...socialControllerGetFollowersOptions({
+			path: { handle: userHandle || "" },
+			query: { pageSize: 12 },
+		}),
+		enabled: !!userHandle,
+	});
+	const recentFollowers = followersData?.items ?? [];
 
 	const invalidateSocial = useCallback(async () => {
 		await queryClient.refetchQueries({
@@ -123,6 +137,42 @@ function ConnectionsPage() {
 					pendingFollowDid={followMutation.variables?.path?.targetDid}
 					pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
 				/>
+
+				{recentFollowers.length > 0 && userHandle && (
+					<section className="space-y-3">
+						<div className="flex items-center justify-between">
+							<h2 className="font-display font-semibold text-lg">
+								Recent followers
+							</h2>
+							<Link
+								to="/profile/$handle/connections"
+								params={{ handle: userHandle }}
+								search={{ tab: "followers" }}
+								className="text-(--accent) text-sm hover:text-(--accent-hover)"
+							>
+								See all
+							</Link>
+						</div>
+						<div className="flex gap-4 overflow-x-auto pb-2">
+							{recentFollowers.map((follower) => (
+								<Link
+									key={follower.did}
+									to="/profile/$handle"
+									params={{ handle: follower.handle }}
+									className="flex w-16 shrink-0 flex-col items-center gap-1 hover:opacity-80"
+								>
+									<UserAvatar
+										src={follower.avatar}
+										alt={String(follower.displayName) || follower.handle}
+									/>
+									<span className="w-full truncate text-center text-(--foreground-muted) text-xs">
+										{String(follower.displayName) || follower.handle}
+									</span>
+								</Link>
+							))}
+						</div>
+					</section>
+				)}
 
 				<section className="space-y-3">
 					<div className="flex items-center gap-2">

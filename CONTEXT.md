@@ -63,7 +63,7 @@ The personal landing surface (dashboard): your shelf summary, up-next, and a sho
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
 **Connections**:
-The destination for growing and organising your network: finding people (people search) and your **Circles**. The "manage people" counterpart to **Activity** (the "consume the feed" surface). The actual **Following**/**Followers** lists are NOT duplicated here — they are canonical on the **Profile** (reached from a profile and reused by Connections, not re-implemented). One name on both web and mobile — supersedes the old split of "Following" (web page), "Connections" (mobile screen) and "Find" (mobile button).
+The destination for growing and organising your network: finding people (people search) and your **Circles**. The "manage people" counterpart to **Activity** (the "consume the feed" surface). The full **Following**/**Followers** lists are canonical on the **Profile**, not hosted here; Connections may show a small recent-followers *preview* (a glance + "see all" entry point that links to the canonical profile list), but never the managed list itself. One name on both web and mobile — supersedes the old split of "Following" (web page), "Connections" (mobile screen) and "Find" (mobile button).
 _Avoid_: Find, Friends, People (collides with the User/Person split), Network, the old "Following" page name
 
 **Following / Followers**:
