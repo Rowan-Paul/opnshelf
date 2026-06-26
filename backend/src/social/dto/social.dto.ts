@@ -36,6 +36,13 @@ export class SocialUserCardDto {
 
 	@ApiProperty()
 	isFollowedBy: boolean;
+
+	@ApiPropertyOptional({
+		type: [String],
+		description:
+			"Ids of the viewer's circles this user belongs to. Only populated when the viewer requests their own following list.",
+	})
+	circleIds?: string[];
 }
 
 export class SocialActorDto {
@@ -186,13 +193,6 @@ export class CircleDto {
 
 	@ApiProperty()
 	createdAt: string;
-}
-
-export class CircleMemberCardDto extends SocialUserCardDto {
-	@ApiProperty({
-		description: "Ids of the viewer's circles this user belongs to",
-	})
-	circleIds: string[];
 }
 
 export class UpsertCircleDto {

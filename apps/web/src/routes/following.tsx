@@ -11,12 +11,14 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivityFeed } from "#/components/following/ActivityFeed";
+import { CircleFilterBar } from "#/components/following/CircleFilterBar";
 import { FollowingHeader } from "#/components/following/FollowingHeader";
 import { FollowingList } from "#/components/following/FollowingList";
 import { NetworkStats } from "#/components/following/NetworkStats";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
+import { useCircles } from "#/lib/hooks/useCircles";
 
 export const Route = createFileRoute("/following")({
 	head: () => ({
@@ -54,6 +56,11 @@ function FollowingPage() {
 	const [isSearching, setIsSearching] = useState(false);
 	const debouncedSearch = useDebounce(searchQuery, 300);
 
+	// Feed circle filter (undefined = all follows)
+	const [activeCircleId, setActiveCircleId] = useState<string | undefined>();
+
+	const { data: circles = [] } = useCircles();
+
 	// Fetch following list
 	const {
 		data: followingData,
@@ -74,7 +81,7 @@ function FollowingPage() {
 		error: feedError,
 	} = useQuery({
 		...socialControllerGetFeedOptions({
-			query: { pageSize: 20 },
+			query: { pageSize: 20, circleId: activeCircleId },
 		}),
 		enabled: !!userHandle,
 	});
@@ -154,6 +161,16 @@ function FollowingPage() {
 		setTimeout(() => setIsSearching(false), 200);
 	};
 
+	// If the selected circle was deleted, fall back to the full feed.
+	useEffect(() => {
+		if (
+			activeCircleId &&
+			!circles.some((circle) => circle.id === activeCircleId)
+		) {
+			setActiveCircleId(undefined);
+		}
+	}, [activeCircleId, circles]);
+
 	const following = followingData?.items || [];
 	const activities = feedData?.items || [];
 	const searchResults = searchData?.items || [];
@@ -174,6 +191,7 @@ function FollowingPage() {
 						error={followingError}
 						onUnfollow={handleUnfollow}
 						pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
+						circles={circles}
 					/>
 					<NetworkStats following={following} />
 				</div>
@@ -192,6 +210,12 @@ function FollowingPage() {
 						onUnfollow={handleUnfollow}
 						pendingFollowDid={followMutation.variables?.path?.targetDid}
 						pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
+					/>
+
+					<CircleFilterBar
+						circles={circles}
+						activeCircleId={activeCircleId}
+						onSelect={setActiveCircleId}
 					/>
 
 					<ActivityFeed

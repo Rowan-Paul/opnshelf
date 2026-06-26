@@ -400,12 +400,50 @@ export class SocialService {
 			viewerDid,
 		);
 
+		// Circles are the viewer's private grouping of their own follows, so only
+		// attach membership when the viewer is looking at their own following list.
+		if (viewerDid && viewerDid === targetUser.did) {
+			await this.attachCircleMembership(
+				viewerDid,
+				follows.map((follow) => follow.followingDid),
+				cards,
+			);
+		}
+
 		return {
 			...pagination,
 			items: follows
 				.map((follow) => cards.get(follow.followingDid))
 				.filter((item): item is SocialUserCardDto => Boolean(item)),
 		};
+	}
+
+	private async attachCircleMembership(
+		viewerDid: string,
+		followingDids: string[],
+		cards: Map<string, SocialUserCardDto>,
+	) {
+		if (followingDids.length === 0) {
+			return;
+		}
+		const memberships = await this.prisma.circleMember.findMany({
+			where: { followerDid: viewerDid, followingDid: { in: followingDids } },
+			select: { circleId: true, followingDid: true },
+		});
+
+		const byUser = new Map<string, string[]>();
+		for (const member of memberships) {
+			const existing = byUser.get(member.followingDid);
+			if (existing) {
+				existing.push(member.circleId);
+			} else {
+				byUser.set(member.followingDid, [member.circleId]);
+			}
+		}
+
+		for (const [did, card] of cards) {
+			card.circleIds = byUser.get(did) ?? [];
+		}
 	}
 
 	async getFollowedActivityFeed(

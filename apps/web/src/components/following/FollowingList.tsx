@@ -1,6 +1,7 @@
-import type { SocialUserCardDto } from "@opnshelf/api";
+import type { CircleDto, SocialUserCardDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Loader2, UserCheck, UserX } from "lucide-react";
+import { AddToCircleMenu } from "./AddToCircleMenu";
 import { UserAvatar } from "./UserAvatar";
 
 interface FollowingListProps {
@@ -9,6 +10,7 @@ interface FollowingListProps {
 	error: Error | null;
 	onUnfollow: (did: string) => void;
 	pendingUnfollowDid?: string;
+	circles: CircleDto[];
 }
 
 export function FollowingList({
@@ -17,6 +19,7 @@ export function FollowingList({
 	error,
 	onUnfollow,
 	pendingUnfollowDid,
+	circles,
 }: FollowingListProps) {
 	return (
 		<section className="card w-full p-5">
@@ -58,6 +61,11 @@ export function FollowingList({
 									</p>
 								</div>
 							</Link>
+							<AddToCircleMenu
+								targetDid={friend.did}
+								circles={circles}
+								memberOf={friend.circleIds ?? []}
+							/>
 							<button
 								type="button"
 								className="btn btn-secondary btn-sm h-8 px-2 text-xs"

@@ -668,6 +668,10 @@ export type SocialUserCardDto = {
     followingCount: number;
     isFollowing: boolean;
     isFollowedBy: boolean;
+    /**
+     * Ids of the viewer's circles this user belongs to. Only populated when the viewer requests their own following list.
+     */
+    circleIds?: Array<string>;
 };
 
 export type PaginatedSocialUsersDto = {
