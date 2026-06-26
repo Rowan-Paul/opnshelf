@@ -1,4 +1,7 @@
 import {
+	discoverControllerBecauseYouWatchedOptions,
+	discoverControllerFromFollowsOptions,
+	discoverControllerTrendingOptions,
 	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
 	socialControllerFollowMutation,
@@ -73,6 +76,45 @@ function getBackdropUrl(item: UnifiedSearchResultDto): string | undefined {
 	return item.backdrop_path
 		? `https://image.tmdb.org/t/p/original${item.backdrop_path}`
 		: undefined;
+}
+
+function DiscoverRow({
+	title,
+	items,
+}: {
+	title: React.ReactNode;
+	items: UnifiedSearchResultDto[];
+}) {
+	// Cold-start: a section with no items renders nothing at all.
+	if (items.length === 0) return null;
+	// Dedupe so React keys stay unique across rows.
+	const seen = new Set<string>();
+	const unique = items.filter((r) => {
+		const k = `${r.media_type}-${r.id}`;
+		if (seen.has(k)) return false;
+		seen.add(k);
+		return true;
+	});
+	return (
+		<section>
+			<h2 className="mb-3 font-semibold text-lg">{title}</h2>
+			<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+				{unique.map((item) => (
+					<ActionableMediaCard
+						key={`discover-${item.media_type}-${item.id}`}
+						id={item.id}
+						title={getTitle(item)}
+						posterUrl={getPosterUrl(item)}
+						backdropUrl={getBackdropUrl(item)}
+						type={item.media_type === "movie" ? "movie" : "show"}
+						tmdbRating={item.vote_average || undefined}
+						size="md"
+						layout="poster"
+					/>
+				))}
+			</div>
+		</section>
+	);
 }
 
 const tabs: { key: Tab; label: string; icon: typeof Film }[] = [
@@ -191,6 +233,21 @@ function SearchPage() {
 				error instanceof Error ? error.message : "Failed to unfollow",
 			);
 		},
+	});
+
+	// Discovery sections — only fetched on the empty-query (browse) state.
+	const browsing = debouncedQuery.length === 0;
+	const { data: trendingData } = useQuery({
+		...discoverControllerTrendingOptions(),
+		enabled: browsing,
+	});
+	const { data: fromFollowsData } = useQuery({
+		...discoverControllerFromFollowsOptions(),
+		enabled: browsing && isAuthenticated,
+	});
+	const { data: becauseYouWatchedData } = useQuery({
+		...discoverControllerBecauseYouWatchedOptions(),
+		enabled: browsing && isAuthenticated,
 	});
 
 	// TMDB multi-search can return the same id twice → dedupe before rendering
@@ -494,10 +551,31 @@ function SearchPage() {
 					</div>
 				)
 			) : (
-				<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
-					<Search className="mb-4 size-12 opacity-40" />
-					<p className="text-lg">What are you looking for?</p>
-					<p className="mt-1 text-sm">Search for movies, TV shows, or users</p>
+				<div className="space-y-8">
+					{isAuthenticated && (
+						<DiscoverRow
+							title="From your follows"
+							items={fromFollowsData?.results ?? []}
+						/>
+					)}
+
+					{isAuthenticated &&
+						(becauseYouWatchedData?.rows ?? []).map((row) => (
+							<DiscoverRow
+								key={`byw-${row.seedMediaType}-${row.seedId}`}
+								title={
+									<>
+										Because you watched <em>{row.seedTitle}</em>
+									</>
+								}
+								items={row.results}
+							/>
+						))}
+
+					<DiscoverRow
+						title="Trending this week"
+						items={trendingData?.results ?? []}
+					/>
 				</div>
 			)}
 		</div>

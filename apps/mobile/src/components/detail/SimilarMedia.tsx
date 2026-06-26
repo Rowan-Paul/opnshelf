@@ -1,6 +1,6 @@
 import {
-	moviesControllerDiscoverMoviesOptions,
-	showsControllerDiscoverShowsOptions,
+	moviesControllerGetRecommendationsOptions,
+	showsControllerGetRecommendationsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { FlatList, View } from "react-native";
@@ -14,9 +14,9 @@ type SimilarMediaProps =
 
 /**
  * Horizontally-scrolling rail of similar / recommended titles, mirroring the
- * web `SimilarMediaGrid`. Pulls from the same discover endpoints the web
- * `useDiscoverMovies` / `useDiscoverShows` hooks use, filters out the current
- * title, and renders the shared `MediaCard` (each tappable to its detail page).
+ * web `SimilarMediaGrid`. Pulls real per-title TMDB recommendations (with a
+ * /similar fallback server-side) and renders the shared `MediaCard` (each
+ * tappable to its detail page).
  */
 export function SimilarMedia({ mediaType, mediaId }: SimilarMediaProps) {
 	if (mediaType === "movie") {
@@ -26,7 +26,9 @@ export function SimilarMedia({ mediaType, mediaId }: SimilarMediaProps) {
 }
 
 function SimilarMovies({ mediaId }: { mediaId: string }) {
-	const { data } = useQuery(moviesControllerDiscoverMoviesOptions());
+	const { data } = useQuery(
+		moviesControllerGetRecommendationsOptions({ path: { movieId: mediaId } }),
+	);
 
 	const items: MediaCardItem[] = (data?.results ?? [])
 		.filter((m) => m.id !== Number(mediaId))
@@ -44,7 +46,9 @@ function SimilarMovies({ mediaId }: { mediaId: string }) {
 }
 
 function SimilarShows({ mediaId }: { mediaId: string }) {
-	const { data } = useQuery(showsControllerDiscoverShowsOptions());
+	const { data } = useQuery(
+		showsControllerGetRecommendationsOptions({ path: { showId: mediaId } }),
+	);
 
 	const items: MediaCardItem[] = (data?.results ?? [])
 		.filter((s) => s.id !== Number(mediaId))

@@ -13,9 +13,9 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 import {
-	useDiscoverMovies,
 	useMediaWatchStatus,
 	useMovieDetails,
+	useMovieRecommendations,
 	useMovieWatchProviders,
 	useWatchActions,
 } from "#/lib/hooks";
@@ -89,7 +89,7 @@ function MovieDetailPage() {
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
-	const { data: similarMoviesData } = useDiscoverMovies(1);
+	const { data: similarMoviesData } = useMovieRecommendations(movieId);
 	const { isWatched, movieWatchHistory } = useMediaWatchStatus({
 		mediaType: "movie",
 		movieId,

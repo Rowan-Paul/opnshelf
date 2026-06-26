@@ -10,9 +10,9 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
-	useDiscoverShows,
 	useEpisodeWatchActions,
 	useShowDetails,
+	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
 	useUserUpNext,
@@ -106,7 +106,7 @@ function ShowDetailPage() {
 	} = useShowDetails(showId);
 
 	const { data: upNextData } = useUserUpNext(userDid);
-	const { data: discoverShowsData } = useDiscoverShows(1);
+	const { data: discoverShowsData } = useShowRecommendations(showId);
 	const { data: seasonDetails, isLoading: seasonLoading } = useSeasonDetails(
 		showId,
 		expandedSeason,

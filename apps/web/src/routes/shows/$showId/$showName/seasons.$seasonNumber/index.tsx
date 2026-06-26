@@ -9,10 +9,10 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
-	useDiscoverShows,
 	useEpisodeWatchActions,
 	useSeasonDetails,
 	useShowDetails,
+	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
 	useUserUpNext,
@@ -134,7 +134,7 @@ function SeasonDetailPage() {
 		isUnmarkShowPending,
 	} = useWatchActions({ mediaType: "show", showId });
 
-	const { data: discoverShowsData } = useDiscoverShows(1);
+	const { data: discoverShowsData } = useShowRecommendations(showId);
 
 	const { data: mediaRating } = useMediaRating({
 		mediaType: "show",

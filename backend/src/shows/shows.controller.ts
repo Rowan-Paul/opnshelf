@@ -119,6 +119,13 @@ export class ShowsController {
 		};
 	}
 
+	@Get("tmdb/:showId/recommendations")
+	@ApiOperation({ summary: "Get TMDB recommendations (similar shows)" })
+	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
+	async getRecommendations(@Param("showId") showId: string) {
+		return this.showsService.getRecommendations(showId);
+	}
+
 	@Get("tmdb/:showId/season/:seasonNumber")
 	@ApiOperation({ summary: "Get season details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBSeasonDetailDto })

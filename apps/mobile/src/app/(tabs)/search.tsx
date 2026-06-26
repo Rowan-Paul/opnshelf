@@ -1,4 +1,7 @@
 import {
+	discoverControllerBecauseYouWatchedOptions,
+	discoverControllerFromFollowsOptions,
+	discoverControllerTrendingOptions,
 	searchControllerSearchAllOptions,
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
@@ -7,13 +10,14 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SearchX, Users, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, RefreshControl, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { Screen } from "@/components/ui/screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
@@ -40,7 +44,90 @@ function toMediaCardItem(r: UnifiedSearchResultDto): MediaCardItem {
 	};
 }
 
+/** Horizontal rail mirroring SimilarMedia's SimilarRail. Renders nothing when empty. */
+function DiscoverRail({
+	title,
+	items,
+}: {
+	title: string;
+	items: MediaCardItem[];
+}) {
+	if (items.length === 0) return null;
+	return (
+		<View className="pt-2 pb-4">
+			<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
+				{title}
+			</Text>
+			{/* Horizontal ScrollView, not FlatList: these rails live inside a
+			    vertical ScrollView, and nested VirtualizedLists mis-measure their
+			    height (later rails get clipped). Rails are short, so no
+			    virtualization needed. */}
+			<ScrollView
+				horizontal
+				showsHorizontalScrollIndicator={false}
+				contentContainerClassName="gap-3 px-4"
+			>
+				{items.map((item) => (
+					<View key={`${item.type}-${item.id}`} className="w-28">
+						<MediaCard item={item} actions />
+					</View>
+				))}
+			</ScrollView>
+		</View>
+	);
+}
+
+/** Default landing state of the search tab when the query is empty. */
+function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
+	const fromFollows = useQuery({
+		...discoverControllerFromFollowsOptions(),
+		enabled: isAuthenticated,
+	});
+	const becauseYouWatched = useQuery({
+		...discoverControllerBecauseYouWatchedOptions(),
+		enabled: isAuthenticated,
+	});
+	const trending = useQuery(discoverControllerTrendingOptions());
+
+	const followsItems = (fromFollows.data?.results ?? []).map(toMediaCardItem);
+	const trendingItems = (trending.data?.results ?? []).map(toMediaCardItem);
+	const rows = becauseYouWatched.data?.rows ?? [];
+
+	const [refreshing, setRefreshing] = useState(false);
+	const onRefresh = async () => {
+		setRefreshing(true);
+		await Promise.all([
+			trending.refetch(),
+			isAuthenticated ? fromFollows.refetch() : null,
+			isAuthenticated ? becauseYouWatched.refetch() : null,
+		]);
+		setRefreshing(false);
+	};
+
+	return (
+		<ScrollView
+			contentContainerClassName="pb-8"
+			showsVerticalScrollIndicator={false}
+			keyboardShouldPersistTaps="handled"
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+			}
+		>
+			<DiscoverRail title="From your follows" items={followsItems} />
+			{rows.map((row) => (
+				<DiscoverRail
+					key={`${row.seedMediaType}-${row.seedId}`}
+					title={`Because you watched ${row.seedTitle}`}
+					items={row.results.map(toMediaCardItem)}
+				/>
+			))}
+			<DiscoverRail title="Trending this week" items={trendingItems} />
+		</ScrollView>
+	);
+}
+
 export default function SearchScreen() {
+	const { isAuthenticated } = useAuth();
 	const [query, setQuery] = useState("");
 	const [activeTab, setActiveTab] = useState<Tab>("all");
 	const debouncedQuery = useDebounce(query.trim(), 350);
@@ -91,13 +178,7 @@ export default function SearchScreen() {
 
 	function renderBody() {
 		if (!hasQuery) {
-			return (
-				<EmptyState
-					icon={Search}
-					title="Search opnshelf"
-					message="Find movies, shows, and people."
-				/>
-			);
+			return <DiscoverSections isAuthenticated={isAuthenticated} />;
 		}
 		if (activeQuery.isLoading) {
 			return <LoadingState label="Searching…" />;

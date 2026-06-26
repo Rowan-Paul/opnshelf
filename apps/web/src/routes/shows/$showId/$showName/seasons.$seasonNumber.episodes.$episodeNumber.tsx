@@ -24,9 +24,9 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
-	useDiscoverShows,
 	useEpisodeDetails,
 	useShowDetails,
+	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
 	useWatchActions,
@@ -142,7 +142,7 @@ function EpisodeDetailPage() {
 		watchProvidersCountry,
 	);
 
-	const { data: discoverShowsData } = useDiscoverShows(1);
+	const { data: discoverShowsData } = useShowRecommendations(showId);
 
 	const { data: mediaRating } = useMediaRating({
 		mediaType: "show",

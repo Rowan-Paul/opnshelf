@@ -201,29 +201,30 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 		}
 	};
 
-	const cornerToggle =
-		isAuthenticated && (isMovie || ep) ? (
-			<Pressable
-				hitSlop={8}
-				onPress={(e) => {
-					// Keep the tap on the overlay button, never the card's Link.
-					e.stopPropagation();
-					toggleWatched();
-				}}
-				disabled={isWatchPending}
-				className={
-					watched
-						? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
-						: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
-				}
-			>
-				{watched ? (
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
-				) : (
-					<Plus color="#ffffff" size={16} strokeWidth={2.5} />
-				)}
-			</Pressable>
-		) : null;
+	// Movies/episodes toggle a single watched state; shows toggle "on shelf"
+	// (tracking) via markShowWatched — all three handled by toggleWatched above.
+	const cornerToggle = isAuthenticated ? (
+		<Pressable
+			hitSlop={8}
+			onPress={(e) => {
+				// Keep the tap on the overlay button, never the card's Link.
+				e.stopPropagation();
+				toggleWatched();
+			}}
+			disabled={isWatchPending}
+			className={
+				watched
+					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
+					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+			}
+		>
+			{watched ? (
+				<Check color="#3f2e00" size={16} strokeWidth={3} />
+			) : (
+				<Plus color="#ffffff" size={16} strokeWidth={2.5} />
+			)}
+		</Pressable>
+	) : null;
 
 	return (
 		<>

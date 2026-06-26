@@ -159,6 +159,33 @@ export class ShowsTmdbService {
 		return response.json<TMDBSearchResponse>();
 	}
 
+	/**
+	 * TMDB's per-title recommendations, falling back to /similar when
+	 * recommendations come back empty (common for obscure or brand-new titles).
+	 */
+	async getRecommendations(
+		showId: string,
+		page: number = 1,
+	): Promise<TMDBSearchResponse> {
+		const recs = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/tv/${showId}/recommendations?api_key=${this.tmdbApiKey}&page=${page}`,
+			`tv:recommendations:${showId}:${page}`,
+		);
+		if (recs.ok) {
+			const data = await recs.json<TMDBSearchResponse>();
+			if (data.results.length > 0) return data;
+		}
+
+		const similar = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/tv/${showId}/similar?api_key=${this.tmdbApiKey}&page=${page}`,
+			`tv:similar:${showId}:${page}`,
+		);
+		if (!similar.ok) {
+			throw tmdbErrorForResponse(similar, "Failed to fetch recommendations");
+		}
+		return similar.json<TMDBSearchResponse>();
+	}
+
 	async getShowDetails(showId: string): Promise<TMDBShow> {
 		const [detailResponse, videosResponse] = await Promise.all([
 			this.http.fetchCached(

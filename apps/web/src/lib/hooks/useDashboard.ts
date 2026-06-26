@@ -1,6 +1,7 @@
 import {
 	type MoviesControllerDiscoverMoviesResponse,
 	moviesControllerDiscoverMoviesOptions,
+	moviesControllerGetRecommendationsOptions,
 	type ShelfActivitySummaryDto,
 	type ShelfResponseDto,
 	type ShowsControllerDiscoverShowsResponse,
@@ -8,6 +9,7 @@ import {
 	shelfControllerGetUserActivitySummaryOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerDiscoverShowsOptions,
+	showsControllerGetRecommendationsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { formatDate } from "#/lib/date-utils";
@@ -133,6 +135,22 @@ export function useDiscoverMovies(_page = 1) {
 export function useDiscoverShows(_page = 1) {
 	return useQuery({
 		...showsControllerDiscoverShowsOptions(),
+	});
+}
+
+// Per-title "more like this" — real TMDB recommendations for a movie
+export function useMovieRecommendations(movieId: string) {
+	return useQuery({
+		...moviesControllerGetRecommendationsOptions({ path: { movieId } }),
+		enabled: !!movieId,
+	});
+}
+
+// Per-title "more like this" — real TMDB recommendations for a show
+export function useShowRecommendations(showId: string) {
+	return useQuery({
+		...showsControllerGetRecommendationsOptions({ path: { showId } }),
+		enabled: !!showId,
 	});
 }
 

@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthModule } from "./auth/auth.module";
+import { DiscoverModule } from "./discover/discover.module";
 import { FeedbackModule } from "./feedback/feedback.module";
 import { IngesterModule } from "./ingester/ingester.module";
 import { ListsModule } from "./lists/lists.module";
@@ -46,6 +47,7 @@ import { UsersModule } from "./users/users.module";
 		SocialModule,
 		PeopleModule,
 		FeedbackModule,
+		DiscoverModule,
 	],
 	providers: [
 		// ThrottlerGuard as an additional global guard — does not replace the

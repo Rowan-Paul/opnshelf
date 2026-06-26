@@ -1828,6 +1828,21 @@ export type FeedbackResponseDto = {
     createdAt: string;
 };
 
+export type DiscoverSectionResponseDto = {
+    results: Array<UnifiedSearchResultDto>;
+};
+
+export type BecauseYouWatchedRowDto = {
+    seedId: number;
+    seedMediaType: 'movie' | 'tv';
+    seedTitle: string;
+    results: Array<UnifiedSearchResultDto>;
+};
+
+export type BecauseYouWatchedResponseDto = {
+    rows: Array<BecauseYouWatchedRowDto>;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -1893,6 +1908,21 @@ export type MoviesControllerGetWatchProvidersResponses = {
 };
 
 export type MoviesControllerGetWatchProvidersResponse = MoviesControllerGetWatchProvidersResponses[keyof MoviesControllerGetWatchProvidersResponses];
+
+export type MoviesControllerGetRecommendationsData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: never;
+    url: '/movies/tmdb/{movieId}/recommendations';
+};
+
+export type MoviesControllerGetRecommendationsResponses = {
+    200: SearchResultsDto;
+};
+
+export type MoviesControllerGetRecommendationsResponse = MoviesControllerGetRecommendationsResponses[keyof MoviesControllerGetRecommendationsResponses];
 
 export type MoviesControllerGetUserMoviesData = {
     body?: never;
@@ -2340,6 +2370,21 @@ export type ShowsControllerGetWatchProvidersResponses = {
 };
 
 export type ShowsControllerGetWatchProvidersResponse = ShowsControllerGetWatchProvidersResponses[keyof ShowsControllerGetWatchProvidersResponses];
+
+export type ShowsControllerGetRecommendationsData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: never;
+    url: '/shows/tmdb/{showId}/recommendations';
+};
+
+export type ShowsControllerGetRecommendationsResponses = {
+    200: SearchShowsResultsDto;
+};
+
+export type ShowsControllerGetRecommendationsResponse = ShowsControllerGetRecommendationsResponses[keyof ShowsControllerGetRecommendationsResponses];
 
 export type ShowsControllerGetSeasonDetailsData = {
     body?: never;
@@ -4310,3 +4355,42 @@ export type FeedbackControllerCreateFeedbackResponses = {
 };
 
 export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
+
+export type DiscoverControllerTrendingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/trending';
+};
+
+export type DiscoverControllerTrendingResponses = {
+    200: DiscoverSectionResponseDto;
+};
+
+export type DiscoverControllerTrendingResponse = DiscoverControllerTrendingResponses[keyof DiscoverControllerTrendingResponses];
+
+export type DiscoverControllerFromFollowsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/from-follows';
+};
+
+export type DiscoverControllerFromFollowsResponses = {
+    200: DiscoverSectionResponseDto;
+};
+
+export type DiscoverControllerFromFollowsResponse = DiscoverControllerFromFollowsResponses[keyof DiscoverControllerFromFollowsResponses];
+
+export type DiscoverControllerBecauseYouWatchedData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/because-you-watched';
+};
+
+export type DiscoverControllerBecauseYouWatchedResponses = {
+    200: BecauseYouWatchedResponseDto;
+};
+
+export type DiscoverControllerBecauseYouWatchedResponse = DiscoverControllerBecauseYouWatchedResponses[keyof DiscoverControllerBecauseYouWatchedResponses];

@@ -45,6 +45,13 @@ export class MoviesService {
 		return this.moviesTmdb.discoverMovies(sortBy, page, year);
 	}
 
+	async getRecommendations(
+		movieId: string,
+		page: number = 1,
+	): Promise<TMDBSearchResponse> {
+		return this.moviesTmdb.getRecommendations(movieId, page);
+	}
+
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {
 		return this.moviesTmdb.getMovieDetails(movieId);
 	}

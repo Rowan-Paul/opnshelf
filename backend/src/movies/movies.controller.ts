@@ -106,6 +106,13 @@ export class MoviesController {
 		};
 	}
 
+	@Get("tmdb/:movieId/recommendations")
+	@ApiOperation({ summary: "Get TMDB recommendations (similar movies)" })
+	@ApiResponse({ status: 200, type: SearchResultsDto })
+	async getRecommendations(@Param("movieId") movieId: string) {
+		return this.moviesService.getRecommendations(movieId);
+	}
+
 	@Get("user/:userDid")
 	@ApiOperation({ summary: "Get tracked movies for a user" })
 	@ApiResponse({ status: 200, type: [TrackedMovieDto] })

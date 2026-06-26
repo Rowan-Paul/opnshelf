@@ -114,6 +114,13 @@ export class ShowsService {
 		return this.showsTmdb.discoverShows(sortBy, page, year);
 	}
 
+	async getRecommendations(
+		showId: string,
+		page: number = 1,
+	): Promise<TMDBSearchResponse> {
+		return this.showsTmdb.getRecommendations(showId, page);
+	}
+
 	async getShowDetails(showId: string): Promise<TMDBShow> {
 		return this.showsTmdb.getShowDetails(showId);
 	}
