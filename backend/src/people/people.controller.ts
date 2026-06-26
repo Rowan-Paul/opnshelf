@@ -15,6 +15,7 @@ import {
 import {
 	TmdbPersonDetailDto,
 	PersonFilmographyResponseDto,
+	PersonSearchResponseDto,
 } from "./dto/person.dto";
 import { PeopleService } from "./people.service";
 
@@ -22,6 +23,27 @@ import { PeopleService } from "./people.service";
 @Controller("people")
 export class PeopleController {
 	constructor(private readonly peopleService: PeopleService) {}
+
+	// Declared before `tmdb/:personId` so "search" isn't matched as a personId.
+	@Get("tmdb/search")
+	@ApiOperation({ summary: "Search people (cast & crew) on TMDB" })
+	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiQuery({
+		name: "page",
+		required: false,
+		description: "Page number (1-based)",
+		type: Number,
+	})
+	@ApiResponse({ status: 200, type: PersonSearchResponseDto })
+	async searchPeople(
+		@Query("query") query: string,
+		@Query("page") page?: string,
+	): Promise<PersonSearchResponseDto> {
+		return this.peopleService.searchPeople(
+			query ?? "",
+			page ? parseInt(page, 10) : 1,
+		);
+	}
 
 	@Get("tmdb/:personId")
 	@ApiOperation({ summary: "Get person details from TMDB" })

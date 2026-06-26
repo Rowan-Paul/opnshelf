@@ -1723,6 +1723,24 @@ export type UnifiedDiscoverResponseDto = {
     page: number;
 };
 
+export type PersonSearchResultDto = {
+    id: number;
+    name: string;
+    profile_path?: string;
+    /**
+     * Primary department, e.g. Acting, Directing
+     */
+    known_for_department?: string;
+    popularity?: number;
+};
+
+export type PersonSearchResponseDto = {
+    results: Array<PersonSearchResultDto>;
+    page: number;
+    total_results: number;
+    total_pages: number;
+};
+
 export type PersonFilmographyRoleDto = {
     /**
      * Type of role (cast or crew)
@@ -4267,6 +4285,28 @@ export type SearchControllerDiscoverAllResponses = {
 };
 
 export type SearchControllerDiscoverAllResponse = SearchControllerDiscoverAllResponses[keyof SearchControllerDiscoverAllResponses];
+
+export type PeopleControllerSearchPeopleData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Search term
+         */
+        query: string;
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+    };
+    url: '/people/tmdb/search';
+};
+
+export type PeopleControllerSearchPeopleResponses = {
+    200: PersonSearchResponseDto;
+};
+
+export type PeopleControllerSearchPeopleResponse = PeopleControllerSearchPeopleResponses[keyof PeopleControllerSearchPeopleResponses];
 
 export type PeopleControllerGetPersonDetailsData = {
     body?: never;

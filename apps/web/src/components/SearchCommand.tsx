@@ -2,6 +2,8 @@ import {
 	client,
 	type ListSummaryDto,
 	listsControllerGetUserListsOptions,
+	type PersonSearchResultDto,
+	peopleControllerSearchPeopleOptions,
 	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
 	socialControllerSearchPeopleOptions,
@@ -11,6 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	Calendar,
+	Clapperboard,
 	Clock,
 	Film,
 	Home,
@@ -40,7 +43,7 @@ import {
 	CommandShortcut,
 } from "#/components/ui/command";
 import { useAuth } from "#/lib/auth-context";
-import { buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
+import { buildMovieUrl, buildPersonUrl, buildShowUrl } from "#/lib/url-utils";
 
 interface SearchCommandProps {
 	open?: boolean;
@@ -210,6 +213,18 @@ export function SearchCommand({
 		enabled: debouncedQuery.length > 0 && isAuthenticated,
 	});
 
+	// Cast & Crew (TMDB people) — public, unlike the social user search above.
+	const {
+		data: castData,
+		isLoading: isSearchingCast,
+		isError: isCastError,
+	} = useQuery({
+		...peopleControllerSearchPeopleOptions({
+			query: { query: debouncedQuery },
+		}),
+		enabled: debouncedQuery.length > 0,
+	});
+
 	const movies =
 		searchData?.results?.filter(
 			(item: UnifiedSearchResultDto) => item.media_type === "movie",
@@ -220,13 +235,16 @@ export function SearchCommand({
 			(item: UnifiedSearchResultDto) => item.media_type === "tv",
 		) || [];
 
+	const cast = castData?.results || [];
+
 	const hasSearchQuery = debouncedQuery.length > 0;
 	const hasSearchResults =
 		movies.length > 0 ||
 		shows.length > 0 ||
-		(peopleData?.items && peopleData.items.length > 0);
-	const isLoading = isSearching || isSearchingPeople;
-	const hasError = isSearchError || isPeopleError;
+		(peopleData?.items && peopleData.items.length > 0) ||
+		cast.length > 0;
+	const isLoading = isSearching || isSearchingPeople || isSearchingCast;
+	const hasError = isSearchError || isPeopleError || isCastError;
 
 	const getTitle = (item: UnifiedSearchResultDto): string => {
 		return item.title || item.name || "Unknown";
@@ -602,6 +620,40 @@ export function SearchCommand({
 										<CommandItem
 											value="more people"
 											onSelect={() => goToSearch("people")}
+										>
+											<Search />
+											<span>Show more results</span>
+										</CommandItem>
+									)}
+								</CommandGroup>
+							)}
+
+							{/* Cast & Crew (TMDB people — actors, directors, crew) */}
+							{cast.length > 0 && (
+								<CommandGroup heading="Cast & Crew">
+									{cast
+										.slice(0, RESULTS_PER_SECTION)
+										.map((person: PersonSearchResultDto) => (
+											<CommandItem
+												key={`cast-${person.id}`}
+												value={`cast ${person.name} ${person.known_for_department ?? ""}`}
+												onSelect={() =>
+													goTo(buildPersonUrl(person.id, person.name))
+												}
+											>
+												<Clapperboard className="shrink-0" />
+												<span className="truncate">{person.name}</span>
+												{person.known_for_department && (
+													<span className="shrink-0 text-(--foreground-muted)">
+														{person.known_for_department}
+													</span>
+												)}
+											</CommandItem>
+										))}
+									{cast.length > RESULTS_PER_SECTION && (
+										<CommandItem
+											value="more cast"
+											onSelect={() => goToSearch("cast")}
 										>
 											<Search />
 											<span>Show more results</span>

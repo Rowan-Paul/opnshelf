@@ -15,6 +15,13 @@ export interface TMDBPerson {
 	popularity?: number;
 }
 
+export interface TMDBPersonSearchResponse {
+	page: number;
+	results: TMDBPerson[];
+	total_results: number;
+	total_pages: number;
+}
+
 export interface TMDBMovieCredit {
 	id: number;
 	title: string;
@@ -61,6 +68,22 @@ export class PeopleTmdbService {
 	constructor(private config: ConfigService) {
 		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
 		this.http = new TmdbHttpClient(this.tmdbApiKey, PeopleTmdbService.name);
+	}
+
+	async searchPeople(
+		query: string,
+		page: number = 1,
+	): Promise<TMDBPersonSearchResponse> {
+		const response = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/search/person?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
+			`person:search:${query}:${page}`,
+		);
+
+		if (!response.ok) {
+			throw tmdbErrorForResponse(response, "Failed to search people");
+		}
+
+		return response.json<TMDBPersonSearchResponse>();
 	}
 
 	async getPersonDetails(personId: string): Promise<TMDBPerson> {

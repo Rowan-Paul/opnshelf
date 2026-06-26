@@ -2,6 +2,8 @@ import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
 	discoverControllerTrendingOptions,
+	type PersonSearchResultDto,
+	peopleControllerSearchPeopleOptions,
 	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
 	socialControllerFollowMutation,
@@ -17,6 +19,7 @@ import {
 	useSearch,
 } from "@tanstack/react-router";
 import {
+	Clapperboard,
 	Film,
 	Loader2,
 	Search,
@@ -34,6 +37,7 @@ import { Pagination } from "#/components/Pagination";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
+import { buildPersonUrl } from "#/lib/url-utils";
 
 const searchSchema = z.object({
 	q: z.string().optional(),
@@ -60,7 +64,7 @@ export const Route = createFileRoute("/search")({
 	},
 });
 
-type Tab = "all" | "movies" | "shows" | "people";
+type Tab = "all" | "movies" | "shows" | "people" | "cast";
 
 function getTitle(item: UnifiedSearchResultDto): string {
 	return item.title || item.name || "Unknown";
@@ -127,6 +131,7 @@ const tabs: { key: Tab; label: string; icon: typeof Film }[] = [
 	{ key: "all", label: "All", icon: Search },
 	{ key: "movies", label: "Movies", icon: Film },
 	{ key: "shows", label: "TV Shows", icon: Tv },
+	{ key: "cast", label: "Cast & Crew", icon: Clapperboard },
 	{ key: "people", label: "Users", icon: Users },
 ];
 
@@ -205,6 +210,14 @@ function SearchPage() {
 		enabled: debouncedQuery.length > 0 && isAuthenticated,
 	});
 
+	// Cast & Crew (TMDB people) — public, only fetched on its own tab.
+	const { data: castData, isLoading: isSearchingCast } = useQuery({
+		...peopleControllerSearchPeopleOptions({
+			query: { query: debouncedQuery, page },
+		}),
+		enabled: debouncedQuery.length > 0 && activeTab === "cast",
+	});
+
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
@@ -276,6 +289,7 @@ function SearchPage() {
 		[results],
 	);
 	const people = peopleData?.items || [];
+	const cast = castData?.results || [];
 
 	const mediaItems = useMemo(
 		() =>
@@ -297,15 +311,18 @@ function SearchPage() {
 	const hasQuery = debouncedQuery.length > 0;
 	const isLoading =
 		isSearching ||
-		(isAuthenticated && isSearchingPeople && activeTab === "people");
+		(isAuthenticated && isSearchingPeople && activeTab === "people") ||
+		(isSearchingCast && activeTab === "cast");
 	const hasResults =
 		activeTab === "people"
 			? people.length > 0
-			: activeTab === "movies"
-				? movies.length > 0
-				: activeTab === "shows"
-					? shows.length > 0
-					: movies.length > 0 || shows.length > 0;
+			: activeTab === "cast"
+				? cast.length > 0
+				: activeTab === "movies"
+					? movies.length > 0
+					: activeTab === "shows"
+						? shows.length > 0
+						: movies.length > 0 || shows.length > 0;
 
 	const handlePageChange = (newPage: number) => {
 		setPage(newPage);
@@ -539,6 +556,48 @@ function SearchPage() {
 							</section>
 						)}
 
+						{activeTab === "cast" &&
+							(cast.length > 0 ? (
+								<section>
+									<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+										{cast.map((person: PersonSearchResultDto) => (
+											<Link
+												key={person.id}
+												to={buildPersonUrl(person.id, person.name)}
+												className="card card-interactive flex items-center gap-3 p-3"
+											>
+												{person.profile_path ? (
+													<img
+														src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+														alt={person.name}
+														className="h-12 w-12 rounded-full object-cover"
+														loading="lazy"
+													/>
+												) : (
+													<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
+														<Clapperboard className="size-5 text-(--foreground-muted)" />
+													</div>
+												)}
+												<div className="min-w-0">
+													<p className="truncate font-medium text-sm">
+														{person.name}
+													</p>
+													{person.known_for_department && (
+														<p className="truncate text-(--foreground-muted) text-xs">
+															{person.known_for_department}
+														</p>
+													)}
+												</div>
+											</Link>
+										))}
+									</div>
+								</section>
+							) : hasQuery ? (
+								<div className="py-8 text-center text-(--foreground-muted)">
+									No cast or crew found for &quot;{debouncedQuery}&quot;
+								</div>
+							) : null)}
+
 						{(activeTab === "all" ||
 							activeTab === "movies" ||
 							activeTab === "shows") &&
@@ -554,6 +613,16 @@ function SearchPage() {
 									/>
 								</div>
 							)}
+
+						{activeTab === "cast" && cast.length > 0 && (
+							<div className="flex justify-center pt-4">
+								<Pagination
+									page={page}
+									totalPages={Math.max(1, castData?.total_pages || 1)}
+									onPageChange={handlePageChange}
+								/>
+							</div>
+						)}
 					</div>
 				)
 			) : (

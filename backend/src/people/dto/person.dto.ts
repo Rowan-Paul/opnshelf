@@ -138,6 +138,39 @@ export class PersonFilmographyResponseDto {
 	totalPages: number;
 }
 
+export class PersonSearchResultDto {
+	@ApiProperty()
+	id: number;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiPropertyOptional()
+	profile_path?: string;
+
+	@ApiPropertyOptional({
+		description: "Primary department, e.g. Acting, Directing",
+	})
+	known_for_department?: string;
+
+	@ApiPropertyOptional()
+	popularity?: number;
+}
+
+export class PersonSearchResponseDto {
+	@ApiProperty({ type: [PersonSearchResultDto] })
+	results: PersonSearchResultDto[];
+
+	@ApiProperty()
+	page: number;
+
+	@ApiProperty()
+	total_results: number;
+
+	@ApiProperty()
+	total_pages: number;
+}
+
 export class PersonFilmographyQueryDto {
 	@ApiPropertyOptional({ description: "Page number (1-based)", default: 1 })
 	@IsOptional()
