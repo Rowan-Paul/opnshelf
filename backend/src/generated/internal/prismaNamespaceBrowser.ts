@@ -53,6 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Follow: 'Follow',
+  Circle: 'Circle',
+  CircleMember: 'CircleMember',
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   BackgroundJob: 'BackgroundJob',
@@ -131,6 +133,27 @@ export const FollowScalarFieldEnum = {
 } as const
 
 export type FollowScalarFieldEnum = (typeof FollowScalarFieldEnum)[keyof typeof FollowScalarFieldEnum]
+
+
+export const CircleScalarFieldEnum = {
+  id: 'id',
+  ownerDid: 'ownerDid',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CircleScalarFieldEnum = (typeof CircleScalarFieldEnum)[keyof typeof CircleScalarFieldEnum]
+
+
+export const CircleMemberScalarFieldEnum = {
+  circleId: 'circleId',
+  followerDid: 'followerDid',
+  followingDid: 'followingDid',
+  createdAt: 'createdAt'
+} as const
+
+export type CircleMemberScalarFieldEnum = (typeof CircleMemberScalarFieldEnum)[keyof typeof CircleMemberScalarFieldEnum]
 
 
 export const AuthSessionScalarFieldEnum = {

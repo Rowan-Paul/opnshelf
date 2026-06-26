@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import {
+	IsIn,
+	IsInt,
+	IsOptional,
+	IsString,
+	Max,
+	MaxLength,
+	Min,
+	MinLength,
+} from "class-validator";
 import { MovieColorsDto } from "../../movies/dto/movie.dto";
 
 export class SocialUserCardDto {
@@ -163,6 +172,44 @@ export class PaginatedSocialUsersDto {
 
 	@ApiProperty()
 	hasPreviousPage: boolean;
+}
+
+export class CircleDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	name: string;
+
+	@ApiProperty({ description: "Number of followed users in this circle" })
+	memberCount: number;
+
+	@ApiProperty()
+	createdAt: string;
+}
+
+export class CircleMemberCardDto extends SocialUserCardDto {
+	@ApiProperty({
+		description: "Ids of the viewer's circles this user belongs to",
+	})
+	circleIds: string[];
+}
+
+export class UpsertCircleDto {
+	@ApiProperty({ description: "Circle name", maxLength: 50 })
+	@IsString()
+	@MaxLength(50)
+	@MinLength(1)
+	name: string;
+}
+
+export class CircleFeedPaginationQueryDto extends SocialFeedPaginationQueryDto {
+	@ApiPropertyOptional({
+		description: "Restrict the feed to a single circle of followed users",
+	})
+	@IsOptional()
+	@IsString()
+	circleId?: string;
 }
 
 export class FollowedActivityItemDto {

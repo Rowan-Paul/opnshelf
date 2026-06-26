@@ -56,7 +56,8 @@ model User {
   feedback     Feedback[]
   following    Follow[] @relation("UserFollowing")
   followers    Follow[] @relation("UserFollowers")
-  
+  circles      Circle[]
+
   @@index([handle])
   @@index([profileAvatarCid])
 }
@@ -71,11 +72,47 @@ model Follow {
 
   follower     User @relation("UserFollowing", fields: [followerDid], references: [did], onDelete: Cascade)
   following    User @relation("UserFollowers", fields: [followingDid], references: [did], onDelete: Cascade)
+  circleMembers CircleMember[]
 
   @@id([followerDid, followingDid])
   @@index([followerDid, createdAt])
   @@index([followingDid, createdAt])
   @@index([followerDid, rkey])
+}
+
+// A Circle: a private, personal grouping of Users the owner follows, used to
+// filter the activity feed. Local-only — never federated to a PDS (ADR-0010).
+model Circle {
+  id        String   @id @default(cuid())
+  ownerDid  String
+  owner     User     @relation(fields: [ownerDid], references: [did], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   CircleMember[]
+
+  @@unique([ownerDid, name])
+  @@index([ownerDid])
+}
+
+// Membership of a followed User in a Circle. Keyed to the Follow row (composite
+// FK) so unfollowing cascade-deletes the membership — no orphans. followerDid
+// always equals the parent Circle.ownerDid; it is carried only to satisfy the
+// composite FK to Follow.
+// ponytail: DB doesn't enforce followerDid == Circle.ownerDid; the service sets
+// it from the circle owner, so it's controlled in one place.
+model CircleMember {
+  circleId     String
+  circle       Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  followerDid  String
+  followingDid String
+  follow       Follow   @relation(fields: [followerDid, followingDid], references: [followerDid, followingDid], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@id([circleId, followingDid])
+  @@index([followingDid])
+  @@index([followerDid, followingDid])
 }
 
 enum MediaType {

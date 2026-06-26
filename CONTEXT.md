@@ -58,9 +58,27 @@ _Avoid_: Actor (too narrow — excludes directors/crew), User (an account holder
 An opnshelf account holder, identified by DID and handle, with a profile at `/profile/{handle}`. Found via social people search. In the ⌘K palette, User results appear under the **People** heading. Distinct from _Person_ (a TMDB cast/crew member with no opnshelf account).
 _Avoid_: Person (reserved for TMDB cast/crew), Member
 
+**Circle**:
+A private, personal, named grouping of Users you follow — used to filter your Activity Feed (e.g. see only "Family" or "Cinephiles" activity). Visible only to its owner; **not** a PDS record (it is local-only view state, never federated). Membership requires an active Follow and is dropped when you unfollow. A followed User may belong to many Circles. Distinct from a _List_ (media curation) and a _Format_ (Library axis).
+_Avoid_: Category (retired — overloaded), List (reserved for media curation), Friend Group, Group (too generic), Friend (opnshelf has no friend/mutual-follow concept — you group Users you **follow**)
+
 **Discover**:
 The surface for finding media the user hasn't tracked yet. Subsumes the old Search surface (web route, mobile tab): it still does keyword search, but adds discovery sections (e.g. trending, similar, surfaced from the people you follow). "Search" is now one capability of Discover, not a separate destination.
 _Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
+
+**Library**:
+The umbrella term for everything a user **owns** — physical or digital copies of films. Not a stored entity (mirrors _Shelf_, which is the umbrella over Watches). Distinct from a _List_: a List is curation ("want to watch", "favorites"); the Library is ownership ("I own this, in this format"). Replaces the issue-era word "Collection."
+_Avoid_: Collection (retired — too easily confused with _List_), Shelf (reserved for watched/tracked items)
+
+**Library Item**:
+A single stored record meaning "this user owns this film in this Format." The same film owned in two Formats is two Library Items. Optionally belongs to a _Box Set_.
+
+**Format**:
+The medium a film is owned in — e.g. Digital, Blu-ray, Blu-ray 4K, DVD. The organising axis of the Library. Renamed from the issue's "Category" (which is dangerously overloaded — genres, nav, content categories).
+_Avoid_: Category (overloaded), Edition
+
+**Box Set**:
+A named grouping of Library Items within a user's Library (e.g. "The Lord of the Rings Trilogy"). A subdivision of the Library, not of a List.
 
 ## Flagged ambiguities
 

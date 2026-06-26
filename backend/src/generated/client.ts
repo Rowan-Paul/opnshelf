@@ -50,6 +50,16 @@ export type User = Prisma.UserModel
  */
 export type Follow = Prisma.FollowModel
 /**
+ * Model Circle
+ * 
+ */
+export type Circle = Prisma.CircleModel
+/**
+ * Model CircleMember
+ * 
+ */
+export type CircleMember = Prisma.CircleMemberModel
+/**
  * Model AuthSession
  * 
  */

@@ -1,11 +1,14 @@
 import {
+	Body,
 	Controller,
 	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
+	Put,
 	Query,
 	Req,
 	UseGuards,
@@ -14,13 +17,15 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
+	CircleDto,
+	CircleFeedPaginationQueryDto,
 	FollowedActivityFeedDto,
 	PaginatedSocialUsersDto,
 	FollowedWatchersDto,
-	SocialFeedPaginationQueryDto,
 	SocialPaginationQueryDto,
 	SocialSearchQueryDto,
 	SocialWatchersQueryDto,
+	UpsertCircleDto,
 	UserRelationshipDto,
 } from "./dto/social.dto";
 import { type ATSession, SocialService } from "./social.service";
@@ -130,16 +135,95 @@ export class SocialController {
 	}
 
 	@Get("feed")
-	@ApiOperation({ summary: "Get recent watched activity from followed users" })
+	@ApiOperation({
+		summary:
+			"Get recent watched activity from followed users, optionally scoped to a circle",
+	})
 	@ApiResponse({ status: 200, type: FollowedActivityFeedDto })
 	async getFeed(
 		@Req() req: AuthenticatedRequest,
-		@Query() query: SocialFeedPaginationQueryDto,
+		@Query() query: CircleFeedPaginationQueryDto,
 	): Promise<FollowedActivityFeedDto> {
 		return this.socialService.getFollowedActivityFeed(
 			getViewerDid(req),
 			query.page ?? 1,
 			query.pageSize ?? 10,
+			query.circleId,
+		);
+	}
+
+	@Get("circles")
+	@ApiOperation({ summary: "List the viewer's circles" })
+	@ApiResponse({ status: 200, type: [CircleDto] })
+	async listCircles(@Req() req: AuthenticatedRequest): Promise<CircleDto[]> {
+		return this.socialService.listCircles(getViewerDid(req));
+	}
+
+	@Post("circles")
+	@ApiOperation({ summary: "Create a circle" })
+	@ApiResponse({ status: 201, type: CircleDto })
+	async createCircle(
+		@Req() req: AuthenticatedRequest,
+		@Body() body: UpsertCircleDto,
+	): Promise<CircleDto> {
+		return this.socialService.createCircle(getViewerDid(req), body.name);
+	}
+
+	@Patch("circles/:circleId")
+	@ApiOperation({ summary: "Rename a circle" })
+	@ApiResponse({ status: 200, type: CircleDto })
+	async renameCircle(
+		@Req() req: AuthenticatedRequest,
+		@Param("circleId") circleId: string,
+		@Body() body: UpsertCircleDto,
+	): Promise<CircleDto> {
+		return this.socialService.renameCircle(
+			getViewerDid(req),
+			circleId,
+			body.name,
+		);
+	}
+
+	@Delete("circles/:circleId")
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Delete a circle" })
+	@ApiResponse({ status: 204, description: "Circle removed" })
+	async deleteCircle(
+		@Req() req: AuthenticatedRequest,
+		@Param("circleId") circleId: string,
+	): Promise<void> {
+		await this.socialService.deleteCircle(getViewerDid(req), circleId);
+	}
+
+	@Put("circles/:circleId/members/:targetDid")
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Add a followed user to a circle" })
+	@ApiResponse({ status: 204, description: "Member added" })
+	async addCircleMember(
+		@Req() req: AuthenticatedRequest,
+		@Param("circleId") circleId: string,
+		@Param("targetDid") targetDid: string,
+	): Promise<void> {
+		await this.socialService.addCircleMember(
+			getViewerDid(req),
+			circleId,
+			targetDid,
+		);
+	}
+
+	@Delete("circles/:circleId/members/:targetDid")
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Remove a user from a circle" })
+	@ApiResponse({ status: 204, description: "Member removed" })
+	async removeCircleMember(
+		@Req() req: AuthenticatedRequest,
+		@Param("circleId") circleId: string,
+		@Param("targetDid") targetDid: string,
+	): Promise<void> {
+		await this.socialService.removeCircleMember(
+			getViewerDid(req),
+			circleId,
+			targetDid,
 		);
 	}
 

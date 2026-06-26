@@ -1,5 +1,6 @@
 import type { Mock } from "vitest";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { Prisma } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
 import { SocialService } from "./social.service";
 
@@ -938,3 +939,96 @@ function getSqlText(query: unknown) {
 function getQueryRawMock(prisma: PrismaService) {
 	return prisma.$queryRaw as unknown as Mock;
 }
+
+describe("SocialService circles", () => {
+	function buildPrisma(overrides: Record<string, unknown> = {}) {
+		return {
+			circle: {
+				findUnique: vi.fn(),
+				findMany: vi.fn(),
+				create: vi.fn(),
+				update: vi.fn(),
+				delete: vi.fn(),
+			},
+			circleMember: {
+				findMany: vi.fn(),
+				upsert: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+			follow: {
+				findUnique: vi.fn(),
+				findMany: vi.fn(),
+			},
+			trackedMovie: { count: vi.fn().mockResolvedValue(0) },
+			trackedEpisode: { count: vi.fn().mockResolvedValue(0) },
+			review: { count: vi.fn().mockResolvedValue(0) },
+			$queryRaw: vi.fn().mockResolvedValue([]),
+			user: { findMany: vi.fn().mockResolvedValue([]) },
+			...overrides,
+		} as unknown as PrismaService;
+	}
+
+	it("rejects a member who the viewer does not follow", async () => {
+		const prisma = buildPrisma();
+		prisma.circle.findUnique = vi
+			.fn()
+			.mockResolvedValue({ ownerDid: "did:plc:self" });
+		prisma.follow.findUnique = vi.fn().mockResolvedValue(null);
+		const service = new SocialService(prisma);
+
+		await expect(
+			service.addCircleMember("did:plc:self", "circle-1", "did:plc:stranger"),
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect((prisma.circleMember.upsert as Mock).mock.calls).toHaveLength(0);
+	});
+
+	it("refuses to operate on a circle owned by someone else", async () => {
+		const prisma = buildPrisma();
+		prisma.circle.findUnique = vi
+			.fn()
+			.mockResolvedValue({ ownerDid: "did:plc:other" });
+		const service = new SocialService(prisma);
+
+		await expect(
+			service.deleteCircle("did:plc:self", "circle-1"),
+		).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it("maps a duplicate circle name to a friendly error", async () => {
+		const prisma = buildPrisma();
+		prisma.circle.create = vi.fn().mockRejectedValue(
+			new Prisma.PrismaClientKnownRequestError("dup", {
+				code: "P2002",
+				clientVersion: "test",
+			}),
+		);
+		const service = new SocialService(prisma);
+
+		await expect(
+			service.createCircle("did:plc:self", "Family"),
+		).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it("scopes the feed to circle members instead of all follows", async () => {
+		const prisma = buildPrisma();
+		prisma.circle.findUnique = vi
+			.fn()
+			.mockResolvedValue({ ownerDid: "did:plc:self" });
+		prisma.circleMember.findMany = vi
+			.fn()
+			.mockResolvedValue([{ followingDid: "did:plc:a" }]);
+		const service = new SocialService(prisma);
+
+		const feed = await service.getFollowedActivityFeed(
+			"did:plc:self",
+			1,
+			10,
+			"circle-1",
+		);
+
+		// Counts queried for the single member, follow.findMany never used.
+		expect((prisma.circleMember.findMany as Mock).mock.calls).toHaveLength(1);
+		expect((prisma.follow.findMany as Mock).mock.calls).toHaveLength(0);
+		expect(feed.total).toBe(0);
+	});
+});

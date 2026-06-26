@@ -14,6 +14,7 @@ import type { Main as FollowRecord } from "../lexicons/xyz/opnshelf/follow.defs"
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
+	CircleDto,
 	FollowedActivityFeedDto,
 	FollowedActivityItemDto,
 	FollowedWatcherActorDto,
@@ -411,15 +412,19 @@ export class SocialService {
 		viewerDid: string,
 		page = 1,
 		pageSize = DEFAULT_FEED_PAGE_SIZE,
+		circleId?: string,
 	): Promise<FollowedActivityFeedDto> {
 		const safePageSize = clampPageSize(pageSize, MAX_FEED_PAGE_SIZE);
 		const safePage = clampPage(page);
 
-		const followedUsers = await this.prisma.follow.findMany({
-			where: { followerDid: viewerDid },
-			select: { followingDid: true },
-		});
-		const followedDids = followedUsers.map((follow) => follow.followingDid);
+		const followedDids = circleId
+			? await this.getCircleMemberDids(viewerDid, circleId)
+			: (
+					await this.prisma.follow.findMany({
+						where: { followerDid: viewerDid },
+						select: { followingDid: true },
+					})
+				).map((follow) => follow.followingDid);
 
 		if (followedDids.length === 0) {
 			return emptyPaginatedResult(safePage, safePageSize);
@@ -593,6 +598,161 @@ export class SocialService {
 			...pagination,
 			items,
 		};
+	}
+
+	async listCircles(viewerDid: string): Promise<CircleDto[]> {
+		const circles = await this.prisma.circle.findMany({
+			where: { ownerDid: viewerDid },
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				_count: { select: { members: true } },
+			},
+			orderBy: [{ name: "asc" }],
+		});
+
+		return circles.map((circle) => ({
+			id: circle.id,
+			name: circle.name,
+			memberCount: circle._count.members,
+			createdAt: circle.createdAt.toISOString(),
+		}));
+	}
+
+	async createCircle(viewerDid: string, name: string): Promise<CircleDto> {
+		const trimmed = name.trim();
+		if (trimmed.length === 0) {
+			throw new BadRequestException("Circle name is required");
+		}
+
+		try {
+			const circle = await this.prisma.circle.create({
+				data: { ownerDid: viewerDid, name: trimmed },
+				select: { id: true, name: true, createdAt: true },
+			});
+			return {
+				id: circle.id,
+				name: circle.name,
+				memberCount: 0,
+				createdAt: circle.createdAt.toISOString(),
+			};
+		} catch (error) {
+			if (isUniqueConstraintError(error)) {
+				throw new BadRequestException(
+					"You already have a circle with that name",
+				);
+			}
+			throw error;
+		}
+	}
+
+	async renameCircle(
+		viewerDid: string,
+		circleId: string,
+		name: string,
+	): Promise<CircleDto> {
+		const trimmed = name.trim();
+		if (trimmed.length === 0) {
+			throw new BadRequestException("Circle name is required");
+		}
+		await this.assertCircleOwned(viewerDid, circleId);
+
+		try {
+			const circle = await this.prisma.circle.update({
+				where: { id: circleId },
+				data: { name: trimmed },
+				select: {
+					id: true,
+					name: true,
+					createdAt: true,
+					_count: { select: { members: true } },
+				},
+			});
+			return {
+				id: circle.id,
+				name: circle.name,
+				memberCount: circle._count.members,
+				createdAt: circle.createdAt.toISOString(),
+			};
+		} catch (error) {
+			if (isUniqueConstraintError(error)) {
+				throw new BadRequestException(
+					"You already have a circle with that name",
+				);
+			}
+			throw error;
+		}
+	}
+
+	async deleteCircle(viewerDid: string, circleId: string): Promise<void> {
+		await this.assertCircleOwned(viewerDid, circleId);
+		// Members cascade-delete with the circle.
+		await this.prisma.circle.delete({ where: { id: circleId } });
+	}
+
+	async addCircleMember(
+		viewerDid: string,
+		circleId: string,
+		targetDid: string,
+	): Promise<void> {
+		await this.assertCircleOwned(viewerDid, circleId);
+
+		const follow = await this.prisma.follow.findUnique({
+			where: {
+				followerDid_followingDid: {
+					followerDid: viewerDid,
+					followingDid: targetDid,
+				},
+			},
+			select: { followerDid: true },
+		});
+		if (!follow) {
+			throw new BadRequestException(
+				"You can only add users you follow to a circle",
+			);
+		}
+
+		await this.prisma.circleMember.upsert({
+			where: {
+				circleId_followingDid: { circleId, followingDid: targetDid },
+			},
+			create: { circleId, followerDid: viewerDid, followingDid: targetDid },
+			update: {},
+		});
+	}
+
+	async removeCircleMember(
+		viewerDid: string,
+		circleId: string,
+		targetDid: string,
+	): Promise<void> {
+		await this.assertCircleOwned(viewerDid, circleId);
+		await this.prisma.circleMember.deleteMany({
+			where: { circleId, followingDid: targetDid },
+		});
+	}
+
+	private async assertCircleOwned(viewerDid: string, circleId: string) {
+		const circle = await this.prisma.circle.findUnique({
+			where: { id: circleId },
+			select: { ownerDid: true },
+		});
+		if (!circle || circle.ownerDid !== viewerDid) {
+			throw new NotFoundException("Circle not found");
+		}
+	}
+
+	private async getCircleMemberDids(
+		viewerDid: string,
+		circleId: string,
+	): Promise<string[]> {
+		await this.assertCircleOwned(viewerDid, circleId);
+		const members = await this.prisma.circleMember.findMany({
+			where: { circleId },
+			select: { followingDid: true },
+		});
+		return members.map((member) => member.followingDid);
 	}
 
 	async getFollowedWatchers(
@@ -1180,6 +1340,13 @@ const watcherUserSelect = {
 	displayName: true,
 	avatar: true,
 } as const;
+
+function isUniqueConstraintError(error: unknown): boolean {
+	return (
+		error instanceof Prisma.PrismaClientKnownRequestError &&
+		error.code === "P2002"
+	);
+}
 
 function normalizeHandle(handle: string) {
 	return handle.trim().replace(/^@/, "").toLowerCase();

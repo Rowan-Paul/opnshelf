@@ -192,6 +192,7 @@ export type FollowWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Follow"> | Date | string
   follower?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   following?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  circleMembers?: Prisma.CircleMemberListRelationFilter
 }
 
 export type FollowOrderByWithRelationInput = {
@@ -203,6 +204,7 @@ export type FollowOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   follower?: Prisma.UserOrderByWithRelationInput
   following?: Prisma.UserOrderByWithRelationInput
+  circleMembers?: Prisma.CircleMemberOrderByRelationAggregateInput
 }
 
 export type FollowWhereUniqueInput = Prisma.AtLeast<{
@@ -218,6 +220,7 @@ export type FollowWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Follow"> | Date | string
   follower?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   following?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  circleMembers?: Prisma.CircleMemberListRelationFilter
 }, "followerDid_followingDid">
 
 export type FollowOrderByWithAggregationInput = {
@@ -251,6 +254,7 @@ export type FollowCreateInput = {
   createdAt?: Date | string
   follower: Prisma.UserCreateNestedOneWithoutFollowingInput
   following: Prisma.UserCreateNestedOneWithoutFollowersInput
+  circleMembers?: Prisma.CircleMemberCreateNestedManyWithoutFollowInput
 }
 
 export type FollowUncheckedCreateInput = {
@@ -260,6 +264,7 @@ export type FollowUncheckedCreateInput = {
   uri?: string | null
   cid?: string | null
   createdAt?: Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedCreateNestedManyWithoutFollowInput
 }
 
 export type FollowUpdateInput = {
@@ -269,6 +274,7 @@ export type FollowUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   follower?: Prisma.UserUpdateOneRequiredWithoutFollowingNestedInput
   following?: Prisma.UserUpdateOneRequiredWithoutFollowersNestedInput
+  circleMembers?: Prisma.CircleMemberUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowUncheckedUpdateInput = {
@@ -278,6 +284,7 @@ export type FollowUncheckedUpdateInput = {
   uri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowCreateManyInput = {
@@ -345,6 +352,11 @@ export type FollowMinOrderByAggregateInput = {
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type FollowScalarRelationFilter = {
+  is?: Prisma.FollowWhereInput
+  isNot?: Prisma.FollowWhereInput
 }
 
 export type FollowCreateNestedManyWithoutFollowerInput = {
@@ -431,12 +443,27 @@ export type FollowUncheckedUpdateManyWithoutFollowingNestedInput = {
   deleteMany?: Prisma.FollowScalarWhereInput | Prisma.FollowScalarWhereInput[]
 }
 
+export type FollowCreateNestedOneWithoutCircleMembersInput = {
+  create?: Prisma.XOR<Prisma.FollowCreateWithoutCircleMembersInput, Prisma.FollowUncheckedCreateWithoutCircleMembersInput>
+  connectOrCreate?: Prisma.FollowCreateOrConnectWithoutCircleMembersInput
+  connect?: Prisma.FollowWhereUniqueInput
+}
+
+export type FollowUpdateOneRequiredWithoutCircleMembersNestedInput = {
+  create?: Prisma.XOR<Prisma.FollowCreateWithoutCircleMembersInput, Prisma.FollowUncheckedCreateWithoutCircleMembersInput>
+  connectOrCreate?: Prisma.FollowCreateOrConnectWithoutCircleMembersInput
+  upsert?: Prisma.FollowUpsertWithoutCircleMembersInput
+  connect?: Prisma.FollowWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FollowUpdateToOneWithWhereWithoutCircleMembersInput, Prisma.FollowUpdateWithoutCircleMembersInput>, Prisma.FollowUncheckedUpdateWithoutCircleMembersInput>
+}
+
 export type FollowCreateWithoutFollowerInput = {
   rkey?: string | null
   uri?: string | null
   cid?: string | null
   createdAt?: Date | string
   following: Prisma.UserCreateNestedOneWithoutFollowersInput
+  circleMembers?: Prisma.CircleMemberCreateNestedManyWithoutFollowInput
 }
 
 export type FollowUncheckedCreateWithoutFollowerInput = {
@@ -445,6 +472,7 @@ export type FollowUncheckedCreateWithoutFollowerInput = {
   uri?: string | null
   cid?: string | null
   createdAt?: Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedCreateNestedManyWithoutFollowInput
 }
 
 export type FollowCreateOrConnectWithoutFollowerInput = {
@@ -463,6 +491,7 @@ export type FollowCreateWithoutFollowingInput = {
   cid?: string | null
   createdAt?: Date | string
   follower: Prisma.UserCreateNestedOneWithoutFollowingInput
+  circleMembers?: Prisma.CircleMemberCreateNestedManyWithoutFollowInput
 }
 
 export type FollowUncheckedCreateWithoutFollowingInput = {
@@ -471,6 +500,7 @@ export type FollowUncheckedCreateWithoutFollowingInput = {
   uri?: string | null
   cid?: string | null
   createdAt?: Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedCreateNestedManyWithoutFollowInput
 }
 
 export type FollowCreateOrConnectWithoutFollowingInput = {
@@ -527,6 +557,58 @@ export type FollowUpdateManyWithWhereWithoutFollowingInput = {
   data: Prisma.XOR<Prisma.FollowUpdateManyMutationInput, Prisma.FollowUncheckedUpdateManyWithoutFollowingInput>
 }
 
+export type FollowCreateWithoutCircleMembersInput = {
+  rkey?: string | null
+  uri?: string | null
+  cid?: string | null
+  createdAt?: Date | string
+  follower: Prisma.UserCreateNestedOneWithoutFollowingInput
+  following: Prisma.UserCreateNestedOneWithoutFollowersInput
+}
+
+export type FollowUncheckedCreateWithoutCircleMembersInput = {
+  followerDid: string
+  followingDid: string
+  rkey?: string | null
+  uri?: string | null
+  cid?: string | null
+  createdAt?: Date | string
+}
+
+export type FollowCreateOrConnectWithoutCircleMembersInput = {
+  where: Prisma.FollowWhereUniqueInput
+  create: Prisma.XOR<Prisma.FollowCreateWithoutCircleMembersInput, Prisma.FollowUncheckedCreateWithoutCircleMembersInput>
+}
+
+export type FollowUpsertWithoutCircleMembersInput = {
+  update: Prisma.XOR<Prisma.FollowUpdateWithoutCircleMembersInput, Prisma.FollowUncheckedUpdateWithoutCircleMembersInput>
+  create: Prisma.XOR<Prisma.FollowCreateWithoutCircleMembersInput, Prisma.FollowUncheckedCreateWithoutCircleMembersInput>
+  where?: Prisma.FollowWhereInput
+}
+
+export type FollowUpdateToOneWithWhereWithoutCircleMembersInput = {
+  where?: Prisma.FollowWhereInput
+  data: Prisma.XOR<Prisma.FollowUpdateWithoutCircleMembersInput, Prisma.FollowUncheckedUpdateWithoutCircleMembersInput>
+}
+
+export type FollowUpdateWithoutCircleMembersInput = {
+  rkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  follower?: Prisma.UserUpdateOneRequiredWithoutFollowingNestedInput
+  following?: Prisma.UserUpdateOneRequiredWithoutFollowersNestedInput
+}
+
+export type FollowUncheckedUpdateWithoutCircleMembersInput = {
+  followerDid?: Prisma.StringFieldUpdateOperationsInput | string
+  followingDid?: Prisma.StringFieldUpdateOperationsInput | string
+  rkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type FollowCreateManyFollowerInput = {
   followingDid: string
   rkey?: string | null
@@ -549,6 +631,7 @@ export type FollowUpdateWithoutFollowerInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   following?: Prisma.UserUpdateOneRequiredWithoutFollowersNestedInput
+  circleMembers?: Prisma.CircleMemberUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowUncheckedUpdateWithoutFollowerInput = {
@@ -557,6 +640,7 @@ export type FollowUncheckedUpdateWithoutFollowerInput = {
   uri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowUncheckedUpdateManyWithoutFollowerInput = {
@@ -573,6 +657,7 @@ export type FollowUpdateWithoutFollowingInput = {
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   follower?: Prisma.UserUpdateOneRequiredWithoutFollowingNestedInput
+  circleMembers?: Prisma.CircleMemberUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowUncheckedUpdateWithoutFollowingInput = {
@@ -581,6 +666,7 @@ export type FollowUncheckedUpdateWithoutFollowingInput = {
   uri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  circleMembers?: Prisma.CircleMemberUncheckedUpdateManyWithoutFollowNestedInput
 }
 
 export type FollowUncheckedUpdateManyWithoutFollowingInput = {
@@ -592,6 +678,35 @@ export type FollowUncheckedUpdateManyWithoutFollowingInput = {
 }
 
 
+/**
+ * Count Type FollowCountOutputType
+ */
+
+export type FollowCountOutputType = {
+  circleMembers: number
+}
+
+export type FollowCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  circleMembers?: boolean | FollowCountOutputTypeCountCircleMembersArgs
+}
+
+/**
+ * FollowCountOutputType without action
+ */
+export type FollowCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FollowCountOutputType
+   */
+  select?: Prisma.FollowCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * FollowCountOutputType without action
+ */
+export type FollowCountOutputTypeCountCircleMembersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CircleMemberWhereInput
+}
+
 
 export type FollowSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   followerDid?: boolean
@@ -602,6 +717,8 @@ export type FollowSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   follower?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   following?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  circleMembers?: boolean | Prisma.Follow$circleMembersArgs<ExtArgs>
+  _count?: boolean | Prisma.FollowCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["follow"]>
 
 export type FollowSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -639,6 +756,8 @@ export type FollowOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type FollowInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   follower?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   following?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  circleMembers?: boolean | Prisma.Follow$circleMembersArgs<ExtArgs>
+  _count?: boolean | Prisma.FollowCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FollowIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   follower?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -654,6 +773,7 @@ export type $FollowPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     follower: Prisma.$UserPayload<ExtArgs>
     following: Prisma.$UserPayload<ExtArgs>
+    circleMembers: Prisma.$CircleMemberPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     followerDid: string
@@ -1058,6 +1178,7 @@ export interface Prisma__FollowClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   follower<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   following<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  circleMembers<T extends Prisma.Follow$circleMembersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Follow$circleMembersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CircleMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1491,6 +1612,30 @@ export type FollowDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Follows to delete.
    */
   limit?: number
+}
+
+/**
+ * Follow.circleMembers
+ */
+export type Follow$circleMembersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CircleMember
+   */
+  select?: Prisma.CircleMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CircleMember
+   */
+  omit?: Prisma.CircleMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CircleMemberInclude<ExtArgs> | null
+  where?: Prisma.CircleMemberWhereInput
+  orderBy?: Prisma.CircleMemberOrderByWithRelationInput | Prisma.CircleMemberOrderByWithRelationInput[]
+  cursor?: Prisma.CircleMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CircleMemberScalarFieldEnum | Prisma.CircleMemberScalarFieldEnum[]
 }
 
 /**

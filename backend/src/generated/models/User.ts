@@ -369,6 +369,7 @@ export type UserWhereInput = {
   feedback?: Prisma.FeedbackListRelationFilter
   following?: Prisma.FollowListRelationFilter
   followers?: Prisma.FollowListRelationFilter
+  circles?: Prisma.CircleListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -410,6 +411,7 @@ export type UserOrderByWithRelationInput = {
   feedback?: Prisma.FeedbackOrderByRelationAggregateInput
   following?: Prisma.FollowOrderByRelationAggregateInput
   followers?: Prisma.FollowOrderByRelationAggregateInput
+  circles?: Prisma.CircleOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -454,6 +456,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   feedback?: Prisma.FeedbackListRelationFilter
   following?: Prisma.FollowListRelationFilter
   followers?: Prisma.FollowListRelationFilter
+  circles?: Prisma.CircleListRelationFilter
 }, "did" | "handle">
 
 export type UserOrderByWithAggregationInput = {
@@ -561,6 +564,7 @@ export type UserCreateInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -602,6 +606,7 @@ export type UserUncheckedCreateInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUpdateInput = {
@@ -643,6 +648,7 @@ export type UserUpdateInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -684,6 +690,7 @@ export type UserUncheckedUpdateInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -919,6 +926,20 @@ export type UserUpdateOneRequiredWithoutFollowersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFollowersInput, Prisma.UserUpdateWithoutFollowersInput>, Prisma.UserUncheckedUpdateWithoutFollowersInput>
 }
 
+export type UserCreateNestedOneWithoutCirclesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCirclesInput, Prisma.UserUncheckedCreateWithoutCirclesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCirclesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCirclesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCirclesInput, Prisma.UserUncheckedCreateWithoutCirclesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCirclesInput
+  upsert?: Prisma.UserUpsertWithoutCirclesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCirclesInput, Prisma.UserUpdateWithoutCirclesInput>, Prisma.UserUncheckedUpdateWithoutCirclesInput>
+}
+
 export type UserCreateNestedOneWithoutTrackedMoviesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutTrackedMoviesInput, Prisma.UserUncheckedCreateWithoutTrackedMoviesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutTrackedMoviesInput
@@ -1083,6 +1104,7 @@ export type UserCreateWithoutFollowingInput = {
   reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
@@ -1123,6 +1145,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -1168,6 +1191,7 @@ export type UserCreateWithoutFollowersInput = {
   reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
@@ -1208,6 +1232,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -1264,6 +1289,7 @@ export type UserUpdateWithoutFollowingInput = {
   reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
@@ -1304,6 +1330,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -1355,6 +1382,7 @@ export type UserUpdateWithoutFollowersInput = {
   reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
@@ -1395,6 +1423,187 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutCirclesInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  onboardingCompletedAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+}
+
+export type UserUncheckedCreateWithoutCirclesInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  onboardingCompletedAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationUncheckedCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingUncheckedCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+}
+
+export type UserCreateOrConnectWithoutCirclesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCirclesInput, Prisma.UserUncheckedCreateWithoutCirclesInput>
+}
+
+export type UserUpsertWithoutCirclesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCirclesInput, Prisma.UserUncheckedUpdateWithoutCirclesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCirclesInput, Prisma.UserUncheckedCreateWithoutCirclesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCirclesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCirclesInput, Prisma.UserUncheckedUpdateWithoutCirclesInput>
+}
+
+export type UserUpdateWithoutCirclesInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCirclesInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUncheckedUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUncheckedUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
 }
 
 export type UserCreateWithoutTrackedMoviesInput = {
@@ -1435,6 +1644,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutTrackedMoviesInput = {
@@ -1475,6 +1685,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutTrackedMoviesInput = {
@@ -1531,6 +1742,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
@@ -1571,6 +1783,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutTrackedEpisodesInput = {
@@ -1611,6 +1824,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
@@ -1651,6 +1865,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutTrackedEpisodesInput = {
@@ -1707,6 +1922,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
@@ -1747,6 +1963,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutListsInput = {
@@ -1787,6 +2004,7 @@ export type UserCreateWithoutListsInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -1827,6 +2045,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -1883,6 +2102,7 @@ export type UserUpdateWithoutListsInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -1923,6 +2143,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutNotesInput = {
@@ -1963,6 +2184,7 @@ export type UserCreateWithoutNotesInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutNotesInput = {
@@ -2003,6 +2225,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutNotesInput = {
@@ -2059,6 +2282,7 @@ export type UserUpdateWithoutNotesInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotesInput = {
@@ -2099,6 +2323,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -2139,6 +2364,7 @@ export type UserCreateWithoutReviewsInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -2179,6 +2405,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -2235,6 +2462,7 @@ export type UserUpdateWithoutReviewsInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -2275,6 +2503,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutPublicationsInput = {
@@ -2315,6 +2544,7 @@ export type UserCreateWithoutPublicationsInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutPublicationsInput = {
@@ -2355,6 +2585,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutPublicationsInput = {
@@ -2411,6 +2642,7 @@ export type UserUpdateWithoutPublicationsInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPublicationsInput = {
@@ -2451,6 +2683,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutRatingsInput = {
@@ -2491,6 +2724,7 @@ export type UserCreateWithoutRatingsInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutRatingsInput = {
@@ -2531,6 +2765,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutRatingsInput = {
@@ -2587,6 +2822,7 @@ export type UserUpdateWithoutRatingsInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingsInput = {
@@ -2627,6 +2863,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutReviewLikesInput = {
@@ -2667,6 +2904,7 @@ export type UserCreateWithoutReviewLikesInput = {
   feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutReviewLikesInput = {
@@ -2707,6 +2945,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutReviewLikesInput = {
@@ -2763,6 +3002,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewLikesInput = {
@@ -2803,6 +3043,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutFeedbackInput = {
@@ -2843,6 +3084,7 @@ export type UserCreateWithoutFeedbackInput = {
   reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
   following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutFeedbackInput = {
@@ -2883,6 +3125,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
   following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
   followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutFeedbackInput = {
@@ -2939,6 +3182,7 @@ export type UserUpdateWithoutFeedbackInput = {
   reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeedbackInput = {
@@ -2979,6 +3223,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
   following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
   followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 
@@ -2998,6 +3243,7 @@ export type UserCountOutputType = {
   feedback: number
   following: number
   followers: number
+  circles: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3012,6 +3258,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   feedback?: boolean | UserCountOutputTypeCountFeedbackArgs
   following?: boolean | UserCountOutputTypeCountFollowingArgs
   followers?: boolean | UserCountOutputTypeCountFollowersArgs
+  circles?: boolean | UserCountOutputTypeCountCirclesArgs
 }
 
 /**
@@ -3101,6 +3348,13 @@ export type UserCountOutputTypeCountFollowersArgs<ExtArgs extends runtime.Types.
   where?: Prisma.FollowWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCirclesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CircleWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   did?: boolean
@@ -3141,6 +3395,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   feedback?: boolean | Prisma.User$feedbackArgs<ExtArgs>
   following?: boolean | Prisma.User$followingArgs<ExtArgs>
   followers?: boolean | Prisma.User$followersArgs<ExtArgs>
+  circles?: boolean | Prisma.User$circlesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -3247,6 +3502,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   feedback?: boolean | Prisma.User$feedbackArgs<ExtArgs>
   following?: boolean | Prisma.User$followingArgs<ExtArgs>
   followers?: boolean | Prisma.User$followersArgs<ExtArgs>
+  circles?: boolean | Prisma.User$circlesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3266,6 +3522,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     feedback: Prisma.$FeedbackPayload<ExtArgs>[]
     following: Prisma.$FollowPayload<ExtArgs>[]
     followers: Prisma.$FollowPayload<ExtArgs>[]
+    circles: Prisma.$CirclePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     did: string
@@ -3700,6 +3957,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   feedback<T extends Prisma.User$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$feedbackArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   following<T extends Prisma.User$followingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$followingArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   followers<T extends Prisma.User$followersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$followersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  circles<T extends Prisma.User$circlesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$circlesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CirclePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4410,6 +4668,30 @@ export type User$followersArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.FollowScalarFieldEnum | Prisma.FollowScalarFieldEnum[]
+}
+
+/**
+ * User.circles
+ */
+export type User$circlesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Circle
+   */
+  select?: Prisma.CircleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Circle
+   */
+  omit?: Prisma.CircleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CircleInclude<ExtArgs> | null
+  where?: Prisma.CircleWhereInput
+  orderBy?: Prisma.CircleOrderByWithRelationInput | Prisma.CircleOrderByWithRelationInput[]
+  cursor?: Prisma.CircleWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CircleScalarFieldEnum | Prisma.CircleScalarFieldEnum[]
 }
 
 /**
