@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Redirect, Tabs } from "expo-router";
-import { Compass, Home, Rss, User, Users } from "lucide-react-native";
+import { Compass, Contact, Home, Rss, User } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
@@ -73,7 +73,7 @@ export default function TabLayout() {
 					options={{
 						title: "Connections",
 						tabBarIcon: ({ color, size }) => (
-							<Users color={color} size={size} />
+							<Contact color={color} size={size} />
 						),
 					}}
 				/>
