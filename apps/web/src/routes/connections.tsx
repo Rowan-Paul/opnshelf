@@ -1,5 +1,7 @@
 import {
+	type SocialUserCardDto,
 	socialControllerFollowMutation,
+	socialControllerGetFollowersOptions,
 	socialControllerGetFollowingOptions,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
@@ -49,8 +51,8 @@ function ConnectionsPage() {
 		enabled: debouncedSearch.length > 0 && isSearching,
 	});
 
-	// Recent-following preview (most recent first). A glance + "see all" entry
-	// point — the full list is canonical on the profile (ADR 0012).
+	// Recent following/followers previews (most recent first). A glance + "see
+	// all" entry point — the full lists are canonical on the profile (ADR 0012).
 	const { data: followingData } = useQuery({
 		...socialControllerGetFollowingOptions({
 			path: { handle: userHandle || "" },
@@ -59,6 +61,15 @@ function ConnectionsPage() {
 		enabled: !!userHandle,
 	});
 	const recentFollowing = followingData?.items ?? [];
+
+	const { data: followersData } = useQuery({
+		...socialControllerGetFollowersOptions({
+			path: { handle: userHandle || "" },
+			query: { pageSize: 12 },
+		}),
+		enabled: !!userHandle,
+	});
+	const recentFollowers = followersData?.items ?? [];
 
 	const invalidateSocial = useCallback(async () => {
 		await queryClient.refetchQueries({
@@ -138,40 +149,21 @@ function ConnectionsPage() {
 					pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
 				/>
 
-				{recentFollowing.length > 0 && userHandle && (
-					<section className="space-y-3">
-						<div className="flex items-center justify-between">
-							<h2 className="font-display font-semibold text-lg">
-								Recent following
-							</h2>
-							<Link
-								to="/profile/$handle/connections"
-								params={{ handle: userHandle }}
-								search={{ tab: "following" }}
-								className="text-(--accent) text-sm hover:text-(--accent-hover)"
-							>
-								See all
-							</Link>
-						</div>
-						<div className="flex gap-4 overflow-x-auto pb-2">
-							{recentFollowing.map((followed) => (
-								<Link
-									key={followed.did}
-									to="/profile/$handle"
-									params={{ handle: followed.handle }}
-									className="flex w-16 shrink-0 flex-col items-center gap-1 hover:opacity-80"
-								>
-									<UserAvatar
-										src={followed.avatar}
-										alt={String(followed.displayName) || followed.handle}
-									/>
-									<span className="w-full truncate text-center text-(--foreground-muted) text-xs">
-										{String(followed.displayName) || followed.handle}
-									</span>
-								</Link>
-							))}
-						</div>
-					</section>
+				{userHandle && (
+					<FollowPreview
+						title="Recent following"
+						handle={userHandle}
+						tab="following"
+						items={recentFollowing}
+					/>
+				)}
+				{userHandle && (
+					<FollowPreview
+						title="Recent followers"
+						handle={userHandle}
+						tab="followers"
+						items={recentFollowers}
+					/>
 				)}
 
 				<section className="space-y-3">
@@ -233,5 +225,53 @@ function ConnectionsPage() {
 				</section>
 			</div>
 		</div>
+	);
+}
+
+/** A horizontal avatar preview row linking to the full list on the profile. */
+function FollowPreview({
+	title,
+	handle,
+	tab,
+	items,
+}: {
+	title: string;
+	handle: string;
+	tab: "following" | "followers";
+	items: SocialUserCardDto[];
+}) {
+	if (items.length === 0) return null;
+	return (
+		<section className="space-y-3">
+			<div className="flex items-center justify-between">
+				<h2 className="font-display font-semibold text-lg">{title}</h2>
+				<Link
+					to="/profile/$handle/connections"
+					params={{ handle }}
+					search={{ tab }}
+					className="text-(--accent) text-sm hover:text-(--accent-hover)"
+				>
+					See all
+				</Link>
+			</div>
+			<div className="flex gap-4 overflow-x-auto pb-2">
+				{items.map((person) => (
+					<Link
+						key={person.did}
+						to="/profile/$handle"
+						params={{ handle: person.handle }}
+						className="flex w-16 shrink-0 flex-col items-center gap-1 hover:opacity-80"
+					>
+						<UserAvatar
+							src={person.avatar}
+							alt={String(person.displayName) || person.handle}
+						/>
+						<span className="w-full truncate text-center text-(--foreground-muted) text-xs">
+							{String(person.displayName) || person.handle}
+						</span>
+					</Link>
+				))}
+			</div>
+		</section>
 	);
 }
