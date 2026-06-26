@@ -18,10 +18,13 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FollowingRouteImport } from './routes/following'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123handleChar125IndexRouteImport } from './routes/@{$handle}.index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
+import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as AtChar123handleChar125SegmentRouteImport } from './routes/@{$handle}.$segment'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
@@ -87,9 +90,19 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectionsRoute = ConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -106,6 +119,11 @@ const AtChar123handleChar125IndexRoute =
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
   path: '/profile/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CirclesCircleIdRoute = CirclesCircleIdRouteImport.update({
+  id: '/circles/$circleId',
+  path: '/circles/$circleId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
@@ -216,7 +234,9 @@ const ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
@@ -228,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -250,7 +271,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
@@ -262,6 +285,7 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/@{$handle}': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -281,7 +305,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
@@ -293,6 +319,7 @@ export interface FileRoutesById {
   '/tos': typeof TosRoute
   '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
+  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
@@ -317,7 +344,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activity'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/following'
     | '/login'
@@ -329,6 +358,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
+    | '/circles/$circleId'
     | '/profile/$handle'
     | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
@@ -351,7 +381,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activity'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/following'
     | '/login'
@@ -363,6 +395,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
+    | '/circles/$circleId'
     | '/@{$handle}'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -381,7 +414,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activity'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/following'
     | '/login'
@@ -393,6 +428,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/@{$handle}/$segment'
     | '/auth/complete'
+    | '/circles/$circleId'
     | '/profile/$handle'
     | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
@@ -416,7 +452,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
   CalendarRoute: typeof CalendarRoute
+  ConnectionsRoute: typeof ConnectionsRoute
   DashboardRoute: typeof DashboardRoute
   FollowingRoute: typeof FollowingRoute
   LoginRoute: typeof LoginRoute
@@ -428,6 +466,7 @@ export interface RootRouteChildren {
   TosRoute: typeof TosRoute
   AtChar123handleChar125SegmentRoute: typeof AtChar123handleChar125SegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
+  CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   AtChar123handleChar125IndexRoute: typeof AtChar123handleChar125IndexRoute
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
@@ -500,11 +539,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connections': {
+      id: '/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof ConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -526,6 +579,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$handle'
       fullPath: '/profile/$handle'
       preLoaderRoute: typeof ProfileHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/circles/$circleId': {
+      id: '/circles/$circleId'
+      path: '/circles/$circleId'
+      fullPath: '/circles/$circleId'
+      preLoaderRoute: typeof CirclesCircleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/complete': {
@@ -737,7 +797,9 @@ const ShowsShowIdShowNameRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
   CalendarRoute: CalendarRoute,
+  ConnectionsRoute: ConnectionsRoute,
   DashboardRoute: DashboardRoute,
   FollowingRoute: FollowingRoute,
   LoginRoute: LoginRoute,
@@ -749,6 +811,7 @@ const rootRouteChildren: RootRouteChildren = {
   TosRoute: TosRoute,
   AtChar123handleChar125SegmentRoute: AtChar123handleChar125SegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
+  CirclesCircleIdRoute: CirclesCircleIdRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   AtChar123handleChar125IndexRoute: AtChar123handleChar125IndexRoute,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,

@@ -1,12 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-	Calendar,
 	Clock,
 	Compass,
 	Film,
+	Home,
 	List,
 	LogOut,
 	Menu,
+	Rss,
 	Settings,
 	Star,
 	StickyNote,
@@ -37,10 +38,10 @@ export default function Header() {
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
 	const navigation = [
-		{ name: "Dashboard", href: "/dashboard", icon: Film },
+		{ name: "Home", href: "/dashboard", icon: Home },
 		{ name: "Discover", href: "/search", icon: Compass },
-		{ name: "Calendar", href: "/calendar", icon: Calendar },
-		{ name: "Following", href: "/following", icon: Users },
+		{ name: "Activity", href: "/activity", icon: Rss },
+		{ name: "Connections", href: "/connections", icon: Users },
 	];
 
 	const visibleNavigation = isAuthenticated || isLoading ? navigation : [];
@@ -51,11 +52,6 @@ export default function Header() {
 		{ name: "Lists", to: "/profile/$handle/lists" as const, icon: List },
 		{ name: "Notes", to: "/profile/$handle/notes" as const, icon: StickyNote },
 		{ name: "Reviews", to: "/profile/$handle/reviews" as const, icon: Star },
-		{
-			name: "Connections",
-			to: "/profile/$handle/connections" as const,
-			icon: Users,
-		},
 	];
 
 	useEffect(() => {

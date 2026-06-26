@@ -3755,6 +3755,30 @@ export type SocialControllerRenameCircleResponses = {
 
 export type SocialControllerRenameCircleResponse = SocialControllerRenameCircleResponses[keyof SocialControllerRenameCircleResponses];
 
+export type SocialControllerGetCircleMembersData = {
+    body?: never;
+    path: {
+        circleId: string;
+    };
+    query?: {
+        /**
+         * Page number to return
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/social/circles/{circleId}/members';
+};
+
+export type SocialControllerGetCircleMembersResponses = {
+    200: PaginatedSocialUsersDto;
+};
+
+export type SocialControllerGetCircleMembersResponse = SocialControllerGetCircleMembersResponses[keyof SocialControllerGetCircleMembersResponses];
+
 export type SocialControllerRemoveCircleMemberData = {
     body?: never;
     path: {

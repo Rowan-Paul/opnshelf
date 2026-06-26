@@ -771,6 +771,42 @@ export class SocialService {
 		});
 	}
 
+	/** Members of one of the viewer's circles (paginated), as social cards. */
+	async getCircleMembers(
+		viewerDid: string,
+		circleId: string,
+		page = 1,
+		pageSize = DEFAULT_SOCIAL_PAGE_SIZE,
+	): Promise<PaginatedSocialUsersDto> {
+		await this.assertCircleOwned(viewerDid, circleId);
+		const safePageSize = clampPageSize(pageSize, MAX_SOCIAL_PAGE_SIZE);
+		const safePage = clampPage(page);
+
+		const total = await this.prisma.circleMember.count({ where: { circleId } });
+		const pagination = getPaginationMeta(total, safePage, safePageSize);
+		const members =
+			total === 0
+				? []
+				: await this.prisma.circleMember.findMany({
+						where: { circleId },
+						select: { followingDid: true },
+						orderBy: [{ createdAt: "desc" }, { followingDid: "asc" }],
+						skip: (pagination.page - 1) * safePageSize,
+						take: safePageSize,
+					});
+
+		const dids = members.map((member) => member.followingDid);
+		const cards = await this.buildSocialUserCards(dids, viewerDid);
+		await this.attachCircleMembership(viewerDid, dids, cards);
+
+		return {
+			...pagination,
+			items: dids
+				.map((did) => cards.get(did))
+				.filter((item): item is SocialUserCardDto => Boolean(item)),
+		};
+	}
+
 	private async assertCircleOwned(viewerDid: string, circleId: string) {
 		const circle = await this.prisma.circle.findUnique({
 			where: { id: circleId },

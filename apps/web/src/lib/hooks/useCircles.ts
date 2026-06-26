@@ -2,6 +2,7 @@ import {
 	socialControllerAddCircleMemberMutation,
 	socialControllerCreateCircleMutation,
 	socialControllerDeleteCircleMutation,
+	socialControllerGetCircleMembersOptions,
 	socialControllerListCirclesOptions,
 	socialControllerListCirclesQueryKey,
 	socialControllerRemoveCircleMemberMutation,
@@ -17,6 +18,17 @@ export function useCircles() {
 	});
 }
 
+// Members of one circle (the Circle detail view).
+export function useCircleMembers(circleId: string) {
+	return useQuery({
+		...socialControllerGetCircleMembersOptions({
+			path: { circleId },
+			query: { pageSize: 50 },
+		}),
+		enabled: !!circleId,
+	});
+}
+
 // Refetch the circles list, the following list (carries each user's circleIds),
 // and the activity feed (its circle filter may now match more/fewer users).
 function invalidateCircleQueries(
@@ -27,6 +39,7 @@ function invalidateCircleQueries(
 			const id = (query.queryKey[0] as { _id?: string } | undefined)?._id;
 			return (
 				id === "socialControllerListCircles" ||
+				id === "socialControllerGetCircleMembers" ||
 				id === "socialControllerGetFollowing" ||
 				id === "socialControllerGetFeed"
 			);

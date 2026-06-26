@@ -195,6 +195,22 @@ export class SocialController {
 		await this.socialService.deleteCircle(getViewerDid(req), circleId);
 	}
 
+	@Get("circles/:circleId/members")
+	@ApiOperation({ summary: "List the members of one of the viewer's circles" })
+	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
+	async getCircleMembers(
+		@Req() req: AuthenticatedRequest,
+		@Param("circleId") circleId: string,
+		@Query() query: SocialPaginationQueryDto,
+	): Promise<PaginatedSocialUsersDto> {
+		return this.socialService.getCircleMembers(
+			getViewerDid(req),
+			circleId,
+			query.page ?? 1,
+			query.pageSize ?? 20,
+		);
+	}
+
 	@Put("circles/:circleId/members/:targetDid")
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Add a followed user to a circle" })
