@@ -16,6 +16,7 @@ import {
 	AlertTriangle,
 	ChevronRight,
 	Download,
+	MessageSquare,
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
@@ -36,6 +37,7 @@ import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
 
@@ -115,6 +117,7 @@ function AppearanceSetting() {
 
 export default function SettingsScreen() {
 	const { user, signOut } = useAuth();
+	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
 	const queryClient = useQueryClient();
 	const [isSigningOut, setIsSigningOut] = useState(false);
@@ -563,6 +566,26 @@ export default function SettingsScreen() {
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
 						</Link>
+					</View>
+
+					{/* Feedback */}
+					<View className="gap-3 rounded-xl border border-border bg-card p-4">
+						<Text className="font-display font-semibold text-foreground text-lg">
+							Feedback
+						</Text>
+						<Pressable
+							onPress={openFeedback}
+							className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+						>
+							<MessageSquare color="#94a3b8" size={20} />
+							<Text className="flex-1 font-medium text-foreground">
+								Report a bug or send feedback
+							</Text>
+							<ChevronRight color="#94a3b8" size={18} />
+						</Pressable>
+						<Text className="text-muted-foreground text-xs leading-5">
+							Tip: shake your phone anywhere in the app to send feedback.
+						</Text>
 					</View>
 
 					{/* Danger zone */}

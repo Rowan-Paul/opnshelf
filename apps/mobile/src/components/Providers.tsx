@@ -7,6 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/lib/auth-context";
+import { FeedbackProvider } from "@/lib/feedback";
 import { posthog } from "@/lib/posthog";
 import { queryClient } from "@/lib/query-client";
 import { ThemeProvider, useTheme } from "@/lib/theme-context";
@@ -34,7 +35,9 @@ export function Providers({ children }: { children: ReactNode }) {
 			<AuthProvider>
 				<ThemeProvider>
 					<ThemedNavigationProvider>
-						<ToastProvider>{children}</ToastProvider>
+						<ToastProvider>
+							<FeedbackProvider>{children}</FeedbackProvider>
+						</ToastProvider>
 					</ThemedNavigationProvider>
 				</ThemeProvider>
 			</AuthProvider>

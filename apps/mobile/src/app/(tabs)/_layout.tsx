@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
 import { Home, Rss, Search, User } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
@@ -31,6 +32,7 @@ export default function TabLayout() {
 
 	return (
 		<TraktSyncBanner>
+			<ShakeToFeedback />
 			<Tabs
 				screenOptions={{
 					headerShown: false,
