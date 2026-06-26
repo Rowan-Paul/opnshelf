@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Check, User, UserPlus } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -35,6 +36,7 @@ export function ProfileHeader({
 	onPressConnections: (tab: "followers" | "following") => void;
 }) {
 	const avatarStyle = useTwStyle("size-20 rounded-full");
+	const [avatarLoaded, setAvatarLoaded] = useState(false);
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
@@ -91,12 +93,13 @@ export function ProfileHeader({
 		<View className="gap-4 px-4 pt-2 pb-4">
 			<View className="flex-row items-center gap-4">
 				<View className="size-20 items-center justify-center overflow-hidden rounded-full border border-border bg-background-subtle">
-					<User color="#94a3b8" size={32} />
+					{!avatarLoaded ? <User color="#94a3b8" size={32} /> : null}
 					{profile.avatar ? (
 						<Image
 							source={{ uri: profile.avatar }}
 							style={[avatarStyle, StyleSheet.absoluteFill]}
 							contentFit="cover"
+							onLoad={() => setAvatarLoaded(true)}
 						/>
 					) : null}
 				</View>

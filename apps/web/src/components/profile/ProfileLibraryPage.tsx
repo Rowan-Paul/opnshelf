@@ -39,7 +39,7 @@ const CHIP_OFF =
 
 function LibraryGrid({ items }: { items: LibraryItemDto[] }) {
 	return (
-		<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+		<div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
 			{items.map((item) => (
 				<ActionableMediaCard
 					key={item.id}

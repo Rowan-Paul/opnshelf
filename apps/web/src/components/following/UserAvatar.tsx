@@ -30,23 +30,27 @@ export function UserAvatar({
 	className,
 }: UserAvatarProps) {
 	const [failed, setFailed] = useState(false);
+	const [loaded, setLoaded] = useState(false);
 	const srcStr = typeof src === "string" && !failed ? src : null;
 	const sizeClass = className ?? `${sizeClasses[size]} rounded-full`;
 
-	// Fallback icon always rendered underneath; the image overlays it once loaded,
-	// so the fallback shows through while loading (and stays on error).
+	// Fallback icon sits underneath while the image loads (and stays on error),
+	// then unmounts once loaded so transparent avatars don't show it through.
 	return (
 		<div
 			className={`${sizeClass} relative flex items-center justify-center overflow-hidden bg-(--accent-subtle)`}
 		>
-			<User
-				className={`${className ? "h-1/3 w-1/3" : iconSizes[size]} text-(--accent)`}
-			/>
+			{!loaded || failed ? (
+				<User
+					className={`${className ? "h-1/3 w-1/3" : iconSizes[size]} text-(--accent)`}
+				/>
+			) : null}
 			{srcStr ? (
 				<img
 					src={srcStr}
 					alt={alt}
 					className="absolute inset-0 h-full w-full object-cover"
+					onLoad={() => setLoaded(true)}
 					onError={() => setFailed(true)}
 				/>
 			) : null}
