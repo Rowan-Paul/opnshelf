@@ -2,8 +2,15 @@
  * Publish our lexicons to the network per the atproto Lexicon resolution spec.
  *
  * Each lexicon becomes a `com.atproto.lexicon.schema` record (rkey = the NSID)
- * in the admin account's repo. Resolvers find them via a DNS TXT record at
- * `_lexicon.opnshelf.xyz` pointing to that account's DID (printed at the end).
+ * in the opnshelf.xyz account's repo — the same DID the `opnshelf.xyz` handle
+ * resolves to, so the lexicon authority matches the NSID's domain. Resolvers
+ * find them via a DNS TXT record at `_lexicon.opnshelf.xyz` pointing to that
+ * DID (printed at the end).
+ *
+ * Auth: an app password for the opnshelf.xyz account, in backend/.env as
+ *   LEXICON_PUBLISHER_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+ * (identifier defaults to PDS_HANDLE_DOMAIN; override with
+ *  LEXICON_PUBLISHER_IDENTIFIER).
  *
  * Only `xyz.opnshelf.*` is ours to publish — at.markpub.* / site.standard.*
  * belong to other authorities and are skipped.
@@ -41,10 +48,16 @@ function findLexicons(dir: string): string[] {
 
 async function main() {
 	loadEnv();
-	const { PDS_URL, PDS_ADMIN_IDENTIFIER, PDS_ADMIN_PASSWORD } = process.env;
-	if (!PDS_URL || !PDS_ADMIN_IDENTIFIER || !PDS_ADMIN_PASSWORD) {
+	const { PDS_URL } = process.env;
+	// Authority domain = reversed NSID authority (xyz.opnshelf -> opnshelf.xyz),
+	// which is exactly the handle that must own these schemas.
+	const identifier =
+		process.env.LEXICON_PUBLISHER_IDENTIFIER ||
+		AUTHORITY.split(".").reverse().join(".");
+	const password = process.env.LEXICON_PUBLISHER_PASSWORD;
+	if (!PDS_URL || !identifier || !password) {
 		throw new Error(
-			"Need PDS_URL, PDS_ADMIN_IDENTIFIER, PDS_ADMIN_PASSWORD (backend/.env).",
+			"Need PDS_URL, an identifier (LEXICON_PUBLISHER_IDENTIFIER or PDS_HANDLE_DOMAIN), and LEXICON_PUBLISHER_PASSWORD (backend/.env).",
 		);
 	}
 
@@ -56,10 +69,7 @@ async function main() {
 	console.log(`Found ${docs.length} ${AUTHORITY}.* lexicons.`);
 
 	const agent = new AtpAgent({ service: PDS_URL });
-	await agent.login({
-		identifier: PDS_ADMIN_IDENTIFIER,
-		password: PDS_ADMIN_PASSWORD,
-	});
+	await agent.login({ identifier, password });
 	const did = agent.assertDid;
 
 	for (const doc of docs) {
