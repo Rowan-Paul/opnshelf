@@ -104,7 +104,7 @@ function DiscoverRow({
 				{unique.map((item) => (
 					<div
 						key={`discover-${item.media_type}-${item.id}`}
-						className="w-32 shrink-0 sm:w-36"
+						className="w-32 shrink-0 sm:w-40"
 					>
 						<ActionableMediaCard
 							id={item.id}
@@ -113,8 +113,8 @@ function DiscoverRow({
 							backdropUrl={getBackdropUrl(item)}
 							type={item.media_type === "movie" ? "movie" : "show"}
 							tmdbRating={item.vote_average || undefined}
-							size="md"
 							layout="poster"
+							fill
 						/>
 					</div>
 				))}
