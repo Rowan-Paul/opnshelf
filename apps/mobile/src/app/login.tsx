@@ -104,7 +104,7 @@ export default function LoginScreen() {
 						onPress={() => router.push("/signup")}
 						className="items-center justify-center rounded-lg border border-border px-4 py-3"
 					>
-						<Text className="font-semibold text-accent text-base">
+						<Text className="font-semibold text-base text-foreground">
 							Create New Account
 						</Text>
 					</Pressable>

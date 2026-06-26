@@ -81,10 +81,10 @@ export function TraktImportPanel({
 				<Pressable
 					onPress={handleFetch}
 					disabled={!trimmed || fetchPreview.isPending}
-					className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+					className="flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
 					style={{ opacity: !trimmed || fetchPreview.isPending ? 0.5 : 1 }}
 				>
-					<Text className="font-semibold text-foreground">
+					<Text className="font-semibold text-primary-foreground">
 						{fetchPreview.isPending ? "Fetching…" : "Fetch history"}
 					</Text>
 				</Pressable>
