@@ -66,6 +66,10 @@ jobs:
       # matching submit profile and implies --wait, so there is no race with a
       # separate submit step. Plain builds use --no-wait and finish in EAS cloud.
       - name: Build
+        env:
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
+          EXPO_ASC_APP_ID: ${{ secrets.EXPO_ASC_APP_ID }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
         run: |
           if [ "${{ github.event.inputs.submit }}" = "true" ] && [ "${{ github.event.inputs.profile }}" = "production" ]; then
             eas build \
