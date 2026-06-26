@@ -97,7 +97,7 @@ function MediaCardBase({
 				</View>
 				<Text
 					className="mt-2 font-medium text-foreground text-sm"
-					numberOfLines={1}
+					numberOfLines={2}
 				>
 					{item.title}
 				</Text>

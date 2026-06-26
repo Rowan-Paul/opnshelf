@@ -63,7 +63,7 @@ export function UpNextCard({
 						<View className="flex-row items-start justify-between gap-2">
 							<Text
 								className="flex-1 font-semibold text-foreground text-sm"
-								numberOfLines={1}
+								numberOfLines={2}
 							>
 								{show.title}
 							</Text>
