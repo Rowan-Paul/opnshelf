@@ -77,7 +77,7 @@ function ProfileConnectionsPage() {
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-display-2">Connections</h1>
+			<h1 className="text-display-2">@{handle}</h1>
 
 			{/* Sub-tabs */}
 			<div className="flex gap-2 border-(--border) border-b">

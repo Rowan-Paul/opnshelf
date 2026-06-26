@@ -24,7 +24,6 @@ import {
 	StickyNote,
 	UserCheck,
 	UserPlus,
-	Users,
 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { useAuth } from "#/lib/auth-context";
@@ -75,7 +74,8 @@ const tabs = [
 	{ label: "Library", to: "/profile/$handle/library", icon: Disc },
 	{ label: "Notes", to: "/profile/$handle/notes", icon: StickyNote },
 	{ label: "Reviews", to: "/profile/$handle/reviews", icon: Star },
-	{ label: "Connections", to: "/profile/$handle/connections", icon: Users },
+	// Following/Followers are reached via the tappable counts in the profile
+	// header, not a tab — "Connections" is reserved for the social hub (ADR 0012).
 ];
 
 function ProfileLayout() {
