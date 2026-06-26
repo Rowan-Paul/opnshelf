@@ -19,9 +19,16 @@ import { useProfileUpNext } from "@/lib/use-public-profile";
 export function UpNextTab({
 	userDid,
 	isOwner,
+	showHeading = true,
 }: {
 	userDid: string;
 	isOwner: boolean;
+	/**
+	 * Off for the full-screen drill-down route, where the native stack header
+	 * already shows "Up Next" (avoids a duplicate title); on inside the tabbed
+	 * profile hub where the section needs its own label.
+	 */
+	showHeading?: boolean;
 }) {
 	const { data, isLoading, isError } = useProfileUpNext(userDid);
 	const queryClient = useQueryClient();
@@ -48,9 +55,11 @@ export function UpNextTab({
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
-			<Text className="font-bold font-display text-2xl text-foreground">
-				Up Next
-			</Text>
+			{showHeading ? (
+				<Text className="font-bold font-display text-2xl text-foreground">
+					Up Next
+				</Text>
+			) : null}
 
 			{isLoading ? (
 				<View className="py-16">

@@ -270,34 +270,54 @@ export default function CalendarScreen() {
 			) : (
 				<ScrollView
 					className="flex-1"
-					contentContainerClassName="gap-5 px-4 py-4 pb-12"
+					contentContainerClassName="gap-3 px-4 py-4 pb-12"
 					showsVerticalScrollIndicator={false}
 					refreshControl={refreshControl}
 				>
-					{days.map((day) => (
-						<View key={day.key} className="gap-2">
-							<Text
-								className={
-									isSameDay(day.date, new Date())
-										? "font-display font-semibold text-base text-primary"
-										: "font-display font-semibold text-base text-foreground"
-								}
-							>
-								{formatDayLabel(day.date)}
-							</Text>
-							{day.releases.length === 0 ? (
-								<Text className="text-muted-foreground text-sm">
-									No releases
+					{days.map((day) => {
+						const isToday = isSameDay(day.date, new Date());
+						// Empty days collapse to one quiet row so the days that actually
+						// have releases stand out instead of drowning in "No releases".
+						if (day.releases.length === 0) {
+							return (
+								<View
+									key={day.key}
+									className="flex-row items-center justify-between"
+								>
+									<Text
+										className={
+											isToday
+												? "font-display font-medium text-primary text-sm"
+												: "font-display font-medium text-muted-foreground text-sm"
+										}
+									>
+										{formatDayLabel(day.date)}
+									</Text>
+									<Text className="text-muted-foreground text-xs">
+										No releases
+									</Text>
+								</View>
+							);
+						}
+						return (
+							<View key={day.key} className="gap-2 pt-1">
+								<Text
+									className={
+										isToday
+											? "font-display font-semibold text-base text-primary"
+											: "font-display font-semibold text-base text-foreground"
+									}
+								>
+									{formatDayLabel(day.date)}
 								</Text>
-							) : (
 								<View className="gap-2">
 									{day.releases.map((release) => (
 										<ReleaseRow key={releaseRowKey(release)} item={release} />
 									))}
 								</View>
-							)}
-						</View>
-					))}
+							</View>
+						);
+					})}
 				</ScrollView>
 			)}
 		</View>

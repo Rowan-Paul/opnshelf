@@ -168,7 +168,7 @@ export default function FriendsScreen() {
 
 	return (
 		<View className="flex-1 bg-background">
-			<Stack.Screen options={{ headerShown: true, title: "Friends" }} />
+			<Stack.Screen options={{ headerShown: true, title: "Connections" }} />
 
 			<View className="px-4 pt-3 pb-3">
 				<TextField

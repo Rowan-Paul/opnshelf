@@ -1,6 +1,6 @@
 import type { UpNextShowDto } from "@opnshelf/api";
 import { Link } from "expo-router";
-import { Calendar, Check } from "lucide-react-native";
+import { Calendar, Plus } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
@@ -103,10 +103,10 @@ export function UpNextCard({
 									onMarkWatched(item.showId, ep.seasonNumber, ep.episodeNumber);
 								}}
 								disabled={isMarking}
-								className="flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2"
+								className="flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5"
 								style={{ opacity: isMarking ? 0.6 : 1 }}
 							>
-								<Check color="#3f2e00" size={16} strokeWidth={3} />
+								<Plus color="#3f2e00" size={16} strokeWidth={3} />
 								<Text className="font-semibold text-primary-foreground text-sm">
 									Add to shelf
 								</Text>

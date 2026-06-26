@@ -87,9 +87,10 @@ function PosterRow({
 	return (
 		<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 			<View className="flex-row gap-3">
-				{items.map((item) => (
+				{items.map((item, index) => (
 					<View
-						key={`${item.type}-${item.id}-${item.episode?.seasonNumber ?? ""}-${item.episode?.episodeNumber ?? ""}`}
+						// biome-ignore lint/suspicious/noArrayIndexKey: rewatches share a media key in this static, non-reordering row, so index disambiguates
+						key={`${item.type}-${item.id}-${item.episode?.seasonNumber ?? ""}-${item.episode?.episodeNumber ?? ""}-${index}`}
 						style={{ width: POSTER_W }}
 					>
 						<MediaCard item={item} actions />

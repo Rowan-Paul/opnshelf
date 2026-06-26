@@ -18,10 +18,17 @@ export function ConnectionsTab({
 	handle,
 	myDid,
 	initialTab = "followers",
+	showHeading = true,
 }: {
 	handle: string;
 	myDid: string;
 	initialTab?: "followers" | "following";
+	/**
+	 * Off for the full-screen drill-down route, where the native stack header
+	 * already shows "Connections" (avoids a duplicate title); on inside the
+	 * tabbed profile hub where the section needs its own label.
+	 */
+	showHeading?: boolean;
 }) {
 	const [tab, setTab] = useState<"followers" | "following">(initialTab);
 
@@ -38,9 +45,11 @@ export function ConnectionsTab({
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
-			<Text className="font-bold font-display text-2xl text-foreground">
-				Connections
-			</Text>
+			{showHeading ? (
+				<Text className="font-bold font-display text-2xl text-foreground">
+					Connections
+				</Text>
+			) : null}
 
 			<View className="flex-row gap-2 border-border border-b">
 				{(["followers", "following"] as const).map((key) => {

@@ -9,7 +9,7 @@ export default function ProfileUpNextScreen() {
 	return (
 		<ProfileSubScreen handle={handle ?? ""} title="Up Next">
 			{({ userDid, isOwner }) => (
-				<UpNextTab userDid={userDid} isOwner={isOwner} />
+				<UpNextTab userDid={userDid} isOwner={isOwner} showHeading={false} />
 			)}
 		</ProfileSubScreen>
 	);

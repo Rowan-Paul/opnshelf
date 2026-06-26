@@ -21,6 +21,7 @@ export default function ProfileConnectionsScreen() {
 					handle={resolvedHandle}
 					myDid={myDid}
 					initialTab={initialTab}
+					showHeading={false}
 				/>
 			)}
 		</ProfileSubScreen>

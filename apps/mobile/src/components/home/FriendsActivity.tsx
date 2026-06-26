@@ -32,7 +32,7 @@ export function FriendsActivity() {
 
 	return (
 		<View>
-			<SectionHeader icon={Users} title="Friend Activity" href="/activity" />
+			<SectionHeader icon={Users} title="Activity" href="/activity" />
 			{isLoading ? (
 				<LoadingState label="Loading activity…" />
 			) : recentItems.length === 0 ? (
