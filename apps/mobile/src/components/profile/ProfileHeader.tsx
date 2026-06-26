@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { Check, User, UserPlus } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
@@ -91,15 +91,14 @@ export function ProfileHeader({
 		<View className="gap-4 px-4 pt-2 pb-4">
 			<View className="flex-row items-center gap-4">
 				<View className="size-20 items-center justify-center overflow-hidden rounded-full border border-border bg-background-subtle">
+					<User color="#94a3b8" size={32} />
 					{profile.avatar ? (
 						<Image
 							source={{ uri: profile.avatar }}
-							style={avatarStyle}
+							style={[avatarStyle, StyleSheet.absoluteFill]}
 							contentFit="cover"
 						/>
-					) : (
-						<User color="#94a3b8" size={32} />
-					)}
+					) : null}
 				</View>
 
 				<View className="min-w-0 flex-1">
