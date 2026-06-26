@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { Redirect, Tabs } from "expo-router";
 import { Compass, Home, Rss, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
@@ -80,7 +81,23 @@ export default function TabLayout() {
 					name="profile"
 					options={{
 						title: "Profile",
-						tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+						// The viewer's own avatar disambiguates Profile from the
+						// Connections (Users) tab; falls back to the User glyph.
+						tabBarIcon: ({ color, size, focused }) =>
+							user.avatar ? (
+								<Image
+									source={{ uri: user.avatar }}
+									style={{
+										width: size,
+										height: size,
+										borderRadius: size / 2,
+										borderWidth: focused ? 2 : 0,
+										borderColor: color,
+									}}
+								/>
+							) : (
+								<User color={color} size={size} />
+							),
 					}}
 				/>
 			</Tabs>
