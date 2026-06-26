@@ -5,8 +5,8 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
-import { MessageCircle, UserRoundPlus } from "lucide-react-native";
-import { useState } from "react";
+import { MessageCircle, UserRoundPlus, UsersRound } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -15,8 +15,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityCard } from "@/components/social/ActivityCard";
+import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useCircles } from "@/lib/use-circles";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const PAGE_SIZE = 20;
@@ -33,6 +35,16 @@ export default function ActivityScreen() {
 	const [refreshing, setRefreshing] = useState(false);
 	const listStyle = useTwStyle("px-4 pb-8");
 
+	const { data: circles = [] } = useCircles();
+	const [activeCircleId, setActiveCircleId] = useState<string | undefined>();
+
+	// If the selected circle was deleted elsewhere, fall back to the full feed.
+	useEffect(() => {
+		if (activeCircleId && !circles.some((c) => c.id === activeCircleId)) {
+			setActiveCircleId(undefined);
+		}
+	}, [activeCircleId, circles]);
+
 	const {
 		data,
 		isLoading,
@@ -43,7 +55,7 @@ export default function ActivityScreen() {
 		refetch,
 	} = useInfiniteQuery({
 		...socialControllerGetFeedInfiniteOptions({
-			query: { pageSize: PAGE_SIZE },
+			query: { pageSize: PAGE_SIZE, circleId: activeCircleId },
 		}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) =>
@@ -82,16 +94,37 @@ export default function ActivityScreen() {
 						Recent watches and reviews from people you follow
 					</Text>
 				</View>
-				<Link href="/friends" asChild>
-					<Pressable
-						hitSlop={8}
-						className="ml-3 flex-row items-center gap-1.5 rounded-full border border-border px-3 py-2"
-					>
-						<UserRoundPlus color="#94a3b8" size={16} />
-						<Text className="font-medium text-foreground text-sm">Find</Text>
-					</Pressable>
-				</Link>
+				<View className="ml-3 flex-row items-center gap-2">
+					<Link href="/circles" asChild>
+						<Pressable
+							hitSlop={8}
+							className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-2"
+						>
+							<UsersRound color="#94a3b8" size={16} />
+							<Text className="font-medium text-foreground text-sm">
+								Circles
+							</Text>
+						</Pressable>
+					</Link>
+					<Link href="/friends" asChild>
+						<Pressable
+							hitSlop={8}
+							className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-2"
+						>
+							<UserRoundPlus color="#94a3b8" size={16} />
+							<Text className="font-medium text-foreground text-sm">Find</Text>
+						</Pressable>
+					</Link>
+				</View>
 			</View>
+
+			{circles.length > 0 ? (
+				<CircleFilterBar
+					circles={circles}
+					activeCircleId={activeCircleId}
+					onSelect={setActiveCircleId}
+				/>
+			) : null}
 
 			{isLoading ? (
 				<LoadingState label="Loading activity…" />

@@ -13,12 +13,18 @@ import {
 	RefreshControl,
 	View,
 } from "react-native";
+import { AddToCircleSheet } from "@/components/social/AddToCircleSheet";
 import { UserRow } from "@/components/social/UserRow";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
+import {
+	useAddCircleMember,
+	useCircles,
+	useRemoveCircleMember,
+} from "@/lib/use-circles";
 import { useDebounce } from "@/lib/use-debounce";
 import { useFollowers, useFollowing, useFollowToggle } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -42,6 +48,14 @@ export default function FriendsScreen() {
 	const following = useFollowing(handle);
 	const followers = useFollowers(handle);
 	const { toggle } = useFollowToggle();
+
+	// Circle membership management (following tab only).
+	const { data: circles = [] } = useCircles();
+	const addMember = useAddCircleMember();
+	const removeMember = useRemoveCircleMember();
+	const [circleUserDid, setCircleUserDid] = useState<string | null>(null);
+	const circleUser =
+		following.items.find((u) => u.did === circleUserDid) ?? null;
 
 	const peopleQuery = useQuery({
 		...socialControllerSearchPeopleOptions({
@@ -87,12 +101,13 @@ export default function FriendsScreen() {
 		/>
 	);
 
-	const renderRow = (item: SocialUserCardDto) => (
+	const renderRow = (item: SocialUserCardDto, showCircle = false) => (
 		<View className="pb-2">
 			<UserRow
 				user={item}
 				isSelf={item.did === myDid}
 				onToggleFollow={toggle}
+				onAddToCircle={showCircle ? (u) => setCircleUserDid(u.did) : undefined}
 			/>
 		</View>
 	);
@@ -145,7 +160,7 @@ export default function FriendsScreen() {
 			<FlashList
 				data={active.items}
 				keyExtractor={(item) => item.did}
-				renderItem={({ item }) => renderRow(item)}
+				renderItem={({ item }) => renderRow(item, tab === "following")}
 				contentContainerStyle={listStyle}
 				keyboardShouldPersistTaps="handled"
 				refreshControl={refreshControl}
@@ -219,6 +234,22 @@ export default function FriendsScreen() {
 			</View>
 
 			<View className="flex-1">{renderBody()}</View>
+
+			<AddToCircleSheet
+				visible={circleUser !== null}
+				onDismiss={() => setCircleUserDid(null)}
+				circles={circles}
+				memberOf={circleUser?.circleIds ?? []}
+				onToggle={(circleId, isMember) => {
+					if (!circleUserDid) return;
+					const path = { circleId, targetDid: circleUserDid };
+					if (isMember) {
+						removeMember.mutate({ path });
+					} else {
+						addMember.mutate({ path });
+					}
+				}}
+			/>
 		</View>
 	);
 }
