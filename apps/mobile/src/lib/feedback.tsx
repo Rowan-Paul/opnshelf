@@ -12,9 +12,14 @@ import {
 	useState,
 } from "react";
 import { Modal, Platform, Pressable, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	KeyboardProvider,
+} from "react-native-keyboard-controller";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 type Category = "bug" | "feature_request";
 
@@ -49,6 +54,9 @@ function FeedbackSheet({
 }) {
 	const toast = useToast();
 	const pathname = usePathname();
+	// KeyboardAvoidingView is third-party, so resolve its layout classes to a
+	// style object (Uniwind className only works on RN-core components).
+	const avoidingStyle = useTwStyle("flex-1 justify-end");
 	const [category, setCategory] = useState<Category>("bug");
 	const [message, setMessage] = useState("");
 
@@ -92,74 +100,83 @@ function FeedbackSheet({
 			transparent
 			onRequestClose={onDismiss}
 		>
-			<View className="flex-1 justify-end">
-				<Pressable className="flex-1" onPress={onDismiss} />
-				<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
-					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
-							Send feedback
-						</Text>
-						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
-						</Pressable>
-					</View>
+			{/*
+			 * RN <Modal> renders in a separate window outside the root
+			 * KeyboardProvider (notably on Android), so the keyboard controller
+			 * receives no events there. Nesting a KeyboardProvider inside the Modal
+			 * re-bridges those events, letting its KeyboardAvoidingView lift the
+			 * bottom-anchored sheet above the keyboard on both platforms.
+			 */}
+			<KeyboardProvider>
+				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+					<Pressable className="flex-1" onPress={onDismiss} />
+					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+						<View className="flex-row items-center justify-between">
+							<Text className="font-bold font-display text-foreground text-lg">
+								Send feedback
+							</Text>
+							<Pressable hitSlop={8} onPress={onDismiss}>
+								<X color="#94a3b8" size={22} />
+							</Pressable>
+						</View>
 
-					{/* Category toggle */}
-					<View className="flex-row gap-2">
-						{CATEGORIES.map(({ value, label, icon: Icon }) => {
-							const selected = category === value;
-							return (
-								<Pressable
-									key={value}
-									onPress={() => setCategory(value)}
-									className={
-										selected
-											? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2.5"
-											: "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5"
-									}
-								>
-									<Icon color={selected ? "#f3bc00" : "#94a3b8"} size={16} />
-									<Text
+						{/* Category toggle */}
+						<View className="flex-row gap-2">
+							{CATEGORIES.map(({ value, label, icon: Icon }) => {
+								const selected = category === value;
+								return (
+									<Pressable
+										key={value}
+										onPress={() => setCategory(value)}
 										className={
 											selected
-												? "font-semibold text-primary text-sm"
-												: "font-medium text-foreground text-sm"
+												? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2.5"
+												: "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5"
 										}
 									>
-										{label}
-									</Text>
-								</Pressable>
-							);
-						})}
+										<Icon color={selected ? "#f3bc00" : "#94a3b8"} size={16} />
+										<Text
+											className={
+												selected
+													? "font-semibold text-primary text-sm"
+													: "font-medium text-foreground text-sm"
+											}
+										>
+											{label}
+										</Text>
+									</Pressable>
+								);
+							})}
+						</View>
+
+						<TextField
+							variant="subtle"
+							multiline
+							className="min-h-28"
+							placeholder={
+								category === "bug"
+									? "What went wrong? What were you doing?"
+									: "What would you like to see?"
+							}
+							value={message}
+							onChangeText={setMessage}
+							maxLength={MAX_MESSAGE}
+							autoFocus
+						/>
+
+						<Pressable
+							onPress={submit}
+							disabled={!canSubmit}
+							className="items-center rounded-lg bg-primary px-4 py-3"
+							style={{ opacity: canSubmit ? 1 : 0.5 }}
+						>
+							<Text className="font-semibold text-[#3f2e00] text-base">
+								{mutation.isPending ? "Sending…" : "Send"}
+							</Text>
+						</Pressable>
 					</View>
-
-					<TextField
-						variant="subtle"
-						multiline
-						className="min-h-28"
-						placeholder={
-							category === "bug"
-								? "What went wrong? What were you doing?"
-								: "What would you like to see?"
-						}
-						value={message}
-						onChangeText={setMessage}
-						maxLength={MAX_MESSAGE}
-						autoFocus
-					/>
-
-					<Pressable
-						onPress={submit}
-						disabled={!canSubmit}
-						className="items-center rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: canSubmit ? 1 : 0.5 }}
-					>
-						<Text className="font-semibold text-[#3f2e00] text-base">
-							{mutation.isPending ? "Sending…" : "Send"}
-						</Text>
-					</Pressable>
-				</View>
-			</View>
+				</KeyboardAvoidingView>
+			</KeyboardProvider>
 		</Modal>
 	);
 }
