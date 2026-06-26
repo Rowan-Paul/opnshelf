@@ -99,6 +99,36 @@ pnpm prisma:generate
 pnpm generate:api   # Regenerate API client from OpenAPI
 ```
 
+## Testing the mobile app on a physical device
+
+The native app authenticates via AT Protocol OAuth, which needs an **HTTPS** URL the
+phone can reach — `localhost`/LAN IPs won't work for the OAuth callback. The simplest
+way is a Cloudflare quick tunnel pointed at the local backend.
+
+```bash
+# 1. Start a quick tunnel to the backend (leave it running)
+cloudflared tunnel --url http://localhost:3001
+# → prints a URL like https://random-words.trycloudflare.com
+#   (the API returns a transient 1101 error now and then — just rerun)
+
+# 2. Point both env files at that URL, then restart the affected service:
+#    backend/.env       BACKEND_PUBLIC_URL=https://random-words.trycloudflare.com   → restart backend
+#    apps/mobile/.env   EXPO_PUBLIC_API_URL=https://random-words.trycloudflare.com  → restart `expo start`
+```
+
+Notes:
+
+- **Quick tunnels are ephemeral.** The URL changes every time `cloudflared` restarts, so
+  you must re-edit both env files and restart backend + Expo each time. For a stable URL,
+  use a named tunnel with a DNS route instead.
+- **One auth domain at a time.** The backend advertises a single `BACKEND_PUBLIC_URL`, and
+  the login cookie binds to it. So you get a working session on *either* the tunnel (native
+  mobile) *or* `http://127.0.0.1:3001` (web browser) — not both at once. Switch
+  `BACKEND_PUBLIC_URL` (and restart the backend) depending on which you're testing.
+- CORS only allows the localhost web origins, which doesn't affect the native app (no
+  browser origin check). `eas.json` keeps the `127.0.0.1` default — the tunnel URL belongs
+  only in your local `apps/mobile/.env`.
+
 ## Environment Variables
 
 ### Backend (`backend/.env`)
@@ -120,6 +150,14 @@ pnpm generate:api   # Regenerate API client from OpenAPI
 | `VITE_API_URL` | Backend API URL |
 | `VITE_POSTHOG_KEY` | PostHog analytics key |
 | `VITE_POSTHOG_HOST` | PostHog host URL |
+
+### Mobile (`apps/mobile/.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | Backend API URL — the Cloudflare tunnel URL when testing on a device (see [Testing the mobile app on a physical device](#testing-the-mobile-app-on-a-physical-device)) |
+| `EXPO_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key for the signup captcha |
+| `EXPO_PUBLIC_POSTHOG_KEY` | PostHog analytics key |
 
 ## License
 
