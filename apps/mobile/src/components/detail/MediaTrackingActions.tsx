@@ -14,7 +14,7 @@ import { useWatchStatus } from "@/lib/use-watch-status";
 
 type MediaTrackingActionsProps =
 	| { mediaType: "movie"; movieId: string }
-	| { mediaType: "show"; showId: string }
+	| { mediaType: "show"; showId: string; episodeCount?: number }
 	| {
 			mediaType: "season";
 			showId: string;
@@ -174,10 +174,14 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				actions.markMovieWatched(watchedAt);
 				break;
 			case "show":
-				actions.markShowWatched(watchedAt);
+				actions.markShowWatched(watchedAt, props.episodeCount);
 				break;
 			case "season":
-				actions.markSeasonWatched(props.seasonNumber, watchedAt);
+				actions.markSeasonWatched(
+					props.seasonNumber,
+					watchedAt,
+					props.episodeCount,
+				);
 				break;
 			case "episode":
 				actions.markEpisodeWatched(

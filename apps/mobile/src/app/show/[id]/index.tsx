@@ -92,7 +92,11 @@ export default function ShowDetailScreen() {
 						/>
 					</DetailHero>
 
-					<MediaTrackingActions mediaType="show" showId={id} />
+					<MediaTrackingActions
+						mediaType="show"
+						showId={id}
+						episodeCount={data.number_of_episodes}
+					/>
 
 					<View className="gap-2">
 						<RatingButton mediaType="show" mediaId={id} />

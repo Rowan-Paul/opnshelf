@@ -188,7 +188,7 @@ function SeasonDetailPage() {
 	const handleMarkSeasonWatched = () => {
 		if (!isAuthenticated) return;
 		setProcessingSeason(true);
-		markSeasonWatched(seasonNum);
+		markSeasonWatched(seasonNum, undefined, totalEpisodes);
 		setTimeout(() => setProcessingSeason(false), 2000);
 	};
 

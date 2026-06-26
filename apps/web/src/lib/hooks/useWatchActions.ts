@@ -21,6 +21,29 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
 
+// Warn before bulk-logging this many episodes — that volume can exhaust a
+// user's hourly PDS write budget and fail partway (see ADR-0009).
+const BULK_WATCH_WARN_THRESHOLD = 200;
+
+// Toast the outcome of a bulk mark, distinguishing full / partial / total
+// failure from the { count, requested } the backend returns.
+function toastBulkResult(
+	data: { count: number; requested: number },
+	fullSuccess: string,
+) {
+	if (data.count === 0) {
+		toast.error(
+			"Nothing added — your server's rate limit was hit. Try again later.",
+		);
+	} else if (data.count < data.requested) {
+		toast.warning(
+			`Added ${data.count} of ${data.requested} episodes — hit your server's rate limit. Try the rest later.`,
+		);
+	} else {
+		toast.success(fullSuccess);
+	}
+}
+
 interface WatchActionsMovieOptions {
 	mediaType: "movie";
 	movieId: string;
@@ -278,8 +301,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShowWatched = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
-		onSuccess: () => {
-			toast.success("Show added to shelf");
+		onSuccess: (data) => {
+			toastBulkResult(data, "Show added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 		},
@@ -310,8 +333,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markSeasonWatched = useMutation({
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
-		onSuccess: (_data, variables) => {
-			toast.success("Season added to shelf");
+		onSuccess: (data, variables) => {
+			toastBulkResult(data, "Season added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
 			if (options.mediaType === "show") {
@@ -396,8 +419,17 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const handleMarkShowWatched = (watchedAt?: string) => {
+	const handleMarkShowWatched = (watchedAt?: string, episodeCount?: number) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
+		if (
+			episodeCount !== undefined &&
+			episodeCount > BULK_WATCH_WARN_THRESHOLD &&
+			!window.confirm(
+				`This show has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway — continue?`,
+			)
+		) {
+			return;
+		}
 		markShowWatched.mutate({ body: { showId: options.showId, watchedAt } });
 	};
 
@@ -412,8 +444,18 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const handleMarkSeasonWatched = (
 		seasonNumber: number,
 		watchedAt?: string,
+		episodeCount?: number,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
+		if (
+			episodeCount !== undefined &&
+			episodeCount > BULK_WATCH_WARN_THRESHOLD &&
+			!window.confirm(
+				`This season has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway — continue?`,
+			)
+		) {
+			return;
+		}
 		markSeasonWatched.mutate({
 			body: { showId: options.showId, seasonNumber, watchedAt },
 		});

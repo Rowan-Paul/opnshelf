@@ -92,6 +92,8 @@ type ReleaseCalendarItem = {
 @Injectable()
 export class ShowsService {
 	private readonly logger = new Logger(ShowsService.name);
+	// Max records per com.atproto.repo.applyWrites call (PDS limit).
+	private static readonly PDS_BULK_BATCH_SIZE = 200;
 
 	constructor(
 		private prisma: PrismaService,
@@ -1167,6 +1169,108 @@ export class ShowsService {
 		});
 	}
 
+	// Write episode records to the PDS in batches via applyWrites. Best-effort:
+	// stops at the first failed batch (e.g. a 429 rate limit) and returns
+	// whatever succeeded so far — no reserve, no retry. A bulk-mark is the
+	// user's own interactive write, so it ignores the import write-reserve and
+	// cannot pause synchronously (see ADR-0009).
+	private async bulkPutEpisodes(
+		session: ATSession,
+		records: Array<{
+			rkey: string;
+			record: EpisodeRecord;
+			seasonNumber: number;
+			episodeNumber: number;
+		}>,
+	) {
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		const written: Array<{
+			uri: string;
+			cid: string;
+			rkey: string;
+			seasonNumber: number;
+			episodeNumber: number;
+		}> = [];
+
+		for (
+			let start = 0;
+			start < records.length;
+			start += ShowsService.PDS_BULK_BATCH_SIZE
+		) {
+			const batch = records.slice(
+				start,
+				start + ShowsService.PDS_BULK_BATCH_SIZE,
+			);
+			try {
+				const response = await agent.com.atproto.repo.applyWrites({
+					repo: session.did,
+					writes: batch.map((w) => ({
+						$type: "com.atproto.repo.applyWrites#create" as const,
+						collection: COLLECTION,
+						rkey: w.rkey,
+						value: w.record as unknown as Record<string, unknown>,
+					})),
+					validate: false,
+				});
+				batch.forEach((w, i) => {
+					const result = response.data.results?.[i] as
+						| { uri?: string; cid?: string }
+						| undefined;
+					written.push({
+						uri: result?.uri ?? `at://${session.did}/${COLLECTION}/${w.rkey}`,
+						cid: result?.cid ?? "",
+						rkey: w.rkey,
+						seasonNumber: w.seasonNumber,
+						episodeNumber: w.episodeNumber,
+					});
+				});
+			} catch (err: unknown) {
+				this.logger.warn(
+					`Bulk episode applyWrites stopped at batch starting ${start} (${written.length}/${records.length} written): ${err instanceof Error ? err.message : String(err)}`,
+				);
+				break;
+			}
+		}
+
+		return written;
+	}
+
+	// Index the episodes that landed on the PDS in one INSERT. skipDuplicates
+	// absorbs the firehose-double-write race (same rkey). Returns the count of
+	// episodes now logged — written.length, since a skipped duplicate was
+	// already logged and still counts as watched.
+	private async indexWrittenEpisodes(
+		userDid: string,
+		showId: string,
+		watchedAt: string,
+		written: Array<{
+			uri: string;
+			cid: string;
+			rkey: string;
+			seasonNumber: number;
+			episodeNumber: number;
+		}>,
+	) {
+		if (written.length === 0) return 0;
+		await this.prisma.trackedEpisode.createMany({
+			data: written.map((w) => ({
+				uri: w.uri,
+				rkey: w.rkey,
+				cid: w.cid,
+				userDid,
+				showId,
+				seasonNumber: w.seasonNumber,
+				episodeNumber: w.episodeNumber,
+				watchedDate: new Date(watchedAt),
+				status: "watched",
+			})),
+			skipDuplicates: true,
+		});
+		return written.length;
+	}
+
 	async markSeasonWatched(
 		userDid: string,
 		session: ATSession,
@@ -1176,9 +1280,10 @@ export class ShowsService {
 	) {
 		const season = await this.getSeasonDetails(showId, seasonNumber);
 		const episodes = season.episodes || [];
+		const requested = episodes.length;
 
-		if (episodes.length === 0) {
-			return { episodes: [], count: 0 };
+		if (requested === 0) {
+			return { count: 0, requested: 0 };
 		}
 
 		const watchedAt = customWatchedAt
@@ -1186,56 +1291,28 @@ export class ShowsService {
 			: new Date().toISOString();
 		const now = new Date().toISOString();
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
-
-		const results: Array<{
-			uri: string;
-			cid: string;
-			rkey: string;
-			record: EpisodeRecord;
-			seasonNumber: number;
-			episodeNumber: number;
-		}> = [];
-
-		for (const episode of episodes) {
-			const rkey = TID.nextStr();
-			const record: EpisodeRecord = episodeSchema.build({
+		const records = episodes.map((episode) => ({
+			rkey: TID.nextStr(),
+			record: episodeSchema.build({
 				showId,
 				seasonNumber,
 				episodeNumber: episode.episode_number,
 				source: "tmdb",
 				watchedAt,
 				createdAt: now,
-			});
+			}),
+			seasonNumber,
+			episodeNumber: episode.episode_number,
+		}));
 
-			const response = await agent.com.atproto.repo.putRecord({
-				repo: session.did,
-				collection: COLLECTION,
-				rkey,
-				record,
-				validate: false,
-			});
-
-			results.push({
-				uri: response.data.uri,
-				cid: response.data.cid,
-				rkey,
-				record,
-				seasonNumber,
-				episodeNumber: episode.episode_number,
-			});
-		}
+		const written = await this.bulkPutEpisodes(session, records);
 
 		const showData = await this.getShowDetails(showId);
-
 		if (!showData || !showData.id) {
 			throw new Error(
 				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
 			);
 		}
-
 		const normalizedShowId = showData.id.toString();
 
 		await this.upsertShow(showData);
@@ -1245,58 +1322,14 @@ export class ShowsService {
 			),
 		);
 
-		const trackedEpisodes: Array<{
-			id: string;
-			rkey: string;
-			uri: string;
-			cid: string;
-			userDid: string;
-			showId: string;
-			seasonNumber: number;
-			episodeNumber: number;
-			status: string;
-			watchedDate: Date | null;
-			createdAt: Date;
-			updatedAt: Date;
-			show: {
-				showId: string;
-				title: string;
-				posterPath: string | null;
-				backdropPath: string | null;
-				firstAirYear: number | null;
-				firstAirDate: Date | null;
-				overview: string | null;
-				colors: unknown;
-				createdAt: Date;
-				updatedAt: Date;
-			};
-		}> = [];
-		for (const result of results) {
-			try {
-				const tracked = await this.prisma.trackedEpisode.create({
-					data: {
-						uri: result.uri,
-						rkey: result.rkey,
-						cid: result.cid,
-						userDid,
-						showId: normalizedShowId,
-						seasonNumber: result.seasonNumber,
-						episodeNumber: result.episodeNumber,
-						watchedDate: new Date(watchedAt),
-						status: "watched",
-					},
-					include: { show: true },
-				});
-				trackedEpisodes.push(tracked);
-			} catch (err: unknown) {
-				this.logger.warn(
-					{ err: err instanceof Error ? err.message : String(err) },
-					"Failed to index episode, firehose will catch it",
-				);
-			}
-		}
+		const count = await this.indexWrittenEpisodes(
+			userDid,
+			normalizedShowId,
+			watchedAt,
+			written,
+		);
 
-		return { episodes: trackedEpisodes, count: results.length };
+		return { count, requested };
 	}
 
 	async markShowWatched(
@@ -1312,126 +1345,71 @@ export class ShowsService {
 			? new Date(customWatchedAt).toISOString()
 			: new Date().toISOString();
 
-		const allResults: Array<{
-			uri: string;
-			cid: string;
-			rkey: string;
-			record: EpisodeRecord;
-			seasonNumber: number;
-			episodeNumber: number;
-		}> = [];
+		const now = new Date().toISOString();
 
-		for (let seasonNum = 1; seasonNum <= numberOfSeasons; seasonNum++) {
-			const season = await this.getSeasonDetails(showId, seasonNum);
-			const episodes = season.episodes || [];
+		// Fetch every season's episode list in parallel — sequential fetches
+		// were a serial bottleneck before any PDS write. Seasons number in the
+		// tens at most (episodes can run into the hundreds), so no cap needed.
+		const seasonNums = Array.from({ length: numberOfSeasons }, (_, i) => i + 1);
+		const seasons = await Promise.all(
+			seasonNums.map((seasonNum) =>
+				this.getSeasonDetails(showId, seasonNum).catch((err) => {
+					this.logger.warn(
+						`Failed to fetch season ${seasonNum} for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
+					);
+					return null;
+				}),
+			),
+		);
 
-			const now = new Date().toISOString();
-
-			const agent = new Agent(
-				session as unknown as ConstructorParameters<typeof Agent>[0],
-			);
-
-			for (const episode of episodes) {
-				const rkey = TID.nextStr();
-				const record: EpisodeRecord = episodeSchema.build({
+		const records = seasons.flatMap((season, idx) => {
+			const seasonNumber = seasonNums[idx];
+			return (season?.episodes ?? []).map((episode) => ({
+				rkey: TID.nextStr(),
+				record: episodeSchema.build({
 					showId,
-					seasonNumber: seasonNum,
+					seasonNumber,
 					episodeNumber: episode.episode_number,
 					source: "tmdb",
 					watchedAt,
 					createdAt: now,
-				});
+				}),
+				seasonNumber,
+				episodeNumber: episode.episode_number,
+			}));
+		});
 
-				const response = await agent.com.atproto.repo.putRecord({
-					repo: session.did,
-					collection: COLLECTION,
-					rkey,
-					record,
-					validate: false,
-				});
-
-				allResults.push({
-					uri: response.data.uri,
-					cid: response.data.cid,
-					rkey,
-					record,
-					seasonNumber: seasonNum,
-					episodeNumber: episode.episode_number,
-				});
-			}
+		const requested = records.length;
+		if (requested === 0) {
+			return { count: 0, requested: 0 };
 		}
+
+		const written = await this.bulkPutEpisodes(session, records);
 
 		// Reuse the show details already fetched at the top of this method
 		// instead of issuing a second identical getShowDetails call.
-		const showData = show;
-
-		if (!showData || !showData.id) {
+		if (!show || !show.id) {
 			throw new Error(
 				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
 			);
 		}
+		const normalizedShowId = show.id.toString();
 
-		const normalizedShowId = showData.id.toString();
-
-		await this.upsertShow(showData);
+		await this.upsertShow(show);
 		await this.syncShowMetadata(normalizedShowId).catch((err) =>
 			this.logger.warn(
 				`Failed to sync metadata for show ${normalizedShowId}: ${err instanceof Error ? err.message : String(err)}`,
 			),
 		);
 
-		const trackedEpisodes: Array<{
-			id: string;
-			rkey: string;
-			uri: string;
-			cid: string;
-			userDid: string;
-			showId: string;
-			seasonNumber: number;
-			episodeNumber: number;
-			status: string;
-			watchedDate: Date | null;
-			createdAt: Date;
-			updatedAt: Date;
-			show: {
-				showId: string;
-				title: string;
-				posterPath: string | null;
-				backdropPath: string | null;
-				firstAirYear: number | null;
-				firstAirDate: Date | null;
-				overview: string | null;
-				colors: unknown;
-				createdAt: Date;
-				updatedAt: Date;
-			};
-		}> = [];
-		for (const result of allResults) {
-			try {
-				const tracked = await this.prisma.trackedEpisode.create({
-					data: {
-						uri: result.uri,
-						rkey: result.rkey,
-						cid: result.cid,
-						userDid,
-						showId: normalizedShowId,
-						seasonNumber: result.seasonNumber,
-						episodeNumber: result.episodeNumber,
-						watchedDate: new Date(watchedAt),
-						status: "watched",
-					},
-					include: { show: true },
-				});
-				trackedEpisodes.push(tracked);
-			} catch (err: unknown) {
-				this.logger.warn(
-					{ err: err instanceof Error ? err.message : String(err) },
-					"Failed to index episode, firehose will catch it",
-				);
-			}
-		}
+		const count = await this.indexWrittenEpisodes(
+			userDid,
+			normalizedShowId,
+			watchedAt,
+			written,
+		);
 
-		return { episodes: trackedEpisodes, count: allResults.length };
+		return { count, requested };
 	}
 
 	private parseReleaseDate(value: string | Date) {

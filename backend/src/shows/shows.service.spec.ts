@@ -7,6 +7,7 @@ vi.mock("../prisma/prisma.service", () => ({
 
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
+const mockApplyWrites = vi.fn();
 vi.mock("@atproto/api", () => ({
 	Agent: vi.fn().mockImplementation(() => ({
 		com: {
@@ -14,6 +15,7 @@ vi.mock("@atproto/api", () => ({
 				repo: {
 					putRecord: mockPutRecord,
 					deleteRecord: mockDeleteRecord,
+					applyWrites: mockApplyWrites,
 				},
 			},
 		},
@@ -47,6 +49,7 @@ describe("ShowsService", () => {
 			findFirst: vi.fn(),
 			upsert: vi.fn(),
 			create: vi.fn(),
+			createMany: vi.fn(),
 			delete: vi.fn(),
 			deleteMany: vi.fn(),
 			groupBy: vi.fn(),
@@ -89,6 +92,7 @@ describe("ShowsService", () => {
 		vi.clearAllMocks();
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
+		mockApplyWrites.mockReset();
 		mockFetch.mockReset();
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -661,6 +665,93 @@ describe("ShowsService", () => {
 				}),
 			);
 			expect(result.rkey).toBeDefined();
+		});
+	});
+
+	describe("markSeasonWatched (bulk)", () => {
+		const mockSession = { did: "did:plc:abc123" };
+
+		// Every TMDB fetch resolves to one generic body that satisfies
+		// getSeasonDetails (.episodes), getShowDetails (.id/.name) and
+		// syncShowMetadata (.seasons === []), so we don't sequence fetches.
+		const stubTmdb = (episodeCount: number) => {
+			const episodes = Array.from({ length: episodeCount }, (_, i) => ({
+				episode_number: i + 1,
+			}));
+			mockFetch.mockResolvedValue({
+				ok: true,
+				json: () =>
+					Promise.resolve({
+						id: 123,
+						name: "Test Show",
+						episodes,
+						seasons: [],
+						results: [],
+					}),
+			});
+			mockPrismaService.show.upsert.mockResolvedValue({ showId: "123" });
+			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+				null,
+			);
+			mockPrismaService.trackedEpisode.createMany.mockResolvedValue({
+				count: episodeCount,
+			});
+		};
+
+		const okApplyWrites = () =>
+			mockApplyWrites.mockResolvedValue({
+				data: { results: [], commit: { cid: "c" } },
+				headers: {},
+			});
+
+		it("batches episodes into applyWrites calls of 200 and reports the full count", async () => {
+			stubTmdb(250);
+			okApplyWrites();
+
+			const result = await service.markSeasonWatched(
+				"did:plc:abc123",
+				mockSession,
+				"123",
+				1,
+			);
+
+			// 250 episodes => two batches (200 + 50), not 250 putRecord calls.
+			expect(mockApplyWrites).toHaveBeenCalledTimes(2);
+			expect(mockApplyWrites.mock.calls[0][0].writes).toHaveLength(200);
+			expect(mockApplyWrites.mock.calls[1][0].writes).toHaveLength(50);
+			expect(mockPutRecord).not.toHaveBeenCalled();
+			// One bulk insert of every written episode.
+			expect(mockPrismaService.trackedEpisode.createMany).toHaveBeenCalledTimes(
+				1,
+			);
+			expect(
+				mockPrismaService.trackedEpisode.createMany.mock.calls[0][0].data,
+			).toHaveLength(250);
+			expect(result).toEqual({ count: 250, requested: 250 });
+		});
+
+		it("stops at the failing batch and reports a partial count", async () => {
+			stubTmdb(250);
+			mockApplyWrites
+				.mockResolvedValueOnce({
+					data: { results: [], commit: { cid: "c" } },
+					headers: {},
+				})
+				.mockRejectedValueOnce({ status: 429 });
+
+			const result = await service.markSeasonWatched(
+				"did:plc:abc123",
+				mockSession,
+				"123",
+				1,
+			);
+
+			expect(mockApplyWrites).toHaveBeenCalledTimes(2);
+			// Only the first batch's 200 episodes were indexed.
+			expect(
+				mockPrismaService.trackedEpisode.createMany.mock.calls[0][0].data,
+			).toHaveLength(200);
+			expect(result).toEqual({ count: 200, requested: 250 });
 		});
 	});
 

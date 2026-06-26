@@ -545,11 +545,14 @@ export type MarkSeasonWatchedDto = {
 };
 
 export type MarkedEpisodesResponseDto = {
-    episodes: Array<TrackedEpisodeDto>;
     /**
-     * Number of episodes marked as watched
+     * Episodes successfully logged to the PDS and indexed
      */
     count: number;
+    /**
+     * Episodes attempted. count < requested means writes stopped early (e.g. PDS rate limit)
+     */
+    requested: number;
 };
 
 export type MarkShowWatchedDto = {

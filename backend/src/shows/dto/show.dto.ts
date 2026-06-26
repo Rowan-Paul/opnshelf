@@ -666,9 +666,14 @@ export class MarkShowWatchedDto {
 }
 
 export class MarkedEpisodesResponseDto {
-	@ApiProperty({ type: [TrackedEpisodeDto] })
-	episodes: TrackedEpisodeDto[];
-
-	@ApiProperty({ description: "Number of episodes marked as watched" })
+	@ApiProperty({
+		description: "Episodes successfully logged to the PDS and indexed",
+	})
 	count: number;
+
+	@ApiProperty({
+		description:
+			"Episodes attempted. count < requested means writes stopped early (e.g. PDS rate limit)",
+	})
+	requested: number;
 }

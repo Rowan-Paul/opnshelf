@@ -465,23 +465,13 @@ export class ShowsController {
 		@Req() req: AuthenticatedRequest,
 	) {
 		const user = req.user;
-		const result = await this.showsService.markSeasonWatched(
+		return this.showsService.markSeasonWatched(
 			user.did,
 			user.session as ATSession,
 			dto.showId,
 			dto.seasonNumber,
 			dto.watchedAt,
 		);
-
-		return {
-			episodes: result.episodes.map((ep) => ({
-				...ep,
-				watchedDate: ep.watchedDate?.toISOString(),
-				createdAt: ep.createdAt.toISOString(),
-				updatedAt: ep.updatedAt.toISOString(),
-			})),
-			count: result.count,
-		};
 	}
 
 	@Post("show/watched")
@@ -495,21 +485,11 @@ export class ShowsController {
 		@Req() req: AuthenticatedRequest,
 	) {
 		const user = req.user;
-		const result = await this.showsService.markShowWatched(
+		return this.showsService.markShowWatched(
 			user.did,
 			user.session as ATSession,
 			dto.showId,
 			dto.watchedAt,
 		);
-
-		return {
-			episodes: result.episodes.map((ep) => ({
-				...ep,
-				watchedDate: ep.watchedDate?.toISOString(),
-				createdAt: ep.createdAt.toISOString(),
-				updatedAt: ep.updatedAt.toISOString(),
-			})),
-			count: result.count,
-		};
 	}
 }

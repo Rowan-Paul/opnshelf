@@ -188,10 +188,13 @@ function ShowDetailPage() {
 			?.filter((s) => s.season_number > 0)
 			.sort((a, b) => a.season_number - b.season_number)[0]?.season_number || 1;
 
-	const handleMarkSeasonWatched = (seasonNumber: number) => {
+	const handleMarkSeasonWatched = (
+		seasonNumber: number,
+		episodeCount?: number,
+	) => {
 		if (!isAuthenticated) return;
 		setProcessingSeason(seasonNumber);
-		markSeasonWatched(seasonNumber);
+		markSeasonWatched(seasonNumber, undefined, episodeCount);
 		// Reset after a delay since useWatchActions doesn't expose onSettled per-call
 		setTimeout(() => setProcessingSeason(null), 2000);
 	};
@@ -205,7 +208,7 @@ function ShowDetailPage() {
 
 	const handleMarkShowWatched = () => {
 		if (!isAuthenticated) return;
-		markShowWatched();
+		markShowWatched(undefined, totalEpisodes);
 	};
 
 	const handleUnmarkShowWatched = () => {
@@ -403,7 +406,10 @@ function ShowDetailPage() {
 													season.episode_count || 0,
 												)}
 												onMarkSeasonWatched={() =>
-													handleMarkSeasonWatched(season.season_number)
+													handleMarkSeasonWatched(
+														season.season_number,
+														season.episode_count || 0,
+													)
 												}
 												onUnmarkSeasonWatched={() =>
 													handleUnmarkSeasonWatched(season.season_number)

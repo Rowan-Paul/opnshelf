@@ -18,8 +18,31 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import { Alert } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+
+// Warn before bulk-logging this many episodes — that volume can exhaust a
+// user's hourly PDS write budget and fail partway (see ADR-0009).
+const BULK_WATCH_WARN_THRESHOLD = 200;
+
+// Toast the outcome of a bulk mark from the { count, requested } the backend
+// returns: total failure → error, partial → informative success, else full.
+function toastBulkResult(
+	toast: { success: (m: string) => void; error: (m: string) => void },
+	data: { count: number; requested: number },
+	fullSuccess: string,
+) {
+	if (data.count === 0) {
+		toast.error("Nothing added — rate limit hit. Try again later.");
+	} else if (data.count < data.requested) {
+		toast.success(
+			`Added ${data.count} of ${data.requested} — rate limit hit, try the rest later.`,
+		);
+	} else {
+		toast.success(fullSuccess);
+	}
+}
 
 interface WatchActionsMovieOptions {
 	mediaType: "movie";
@@ -339,9 +362,9 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add show to shelf"));
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Added to shelf");
+			toastBulkResult(toast, data, "Added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -355,9 +378,9 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add season to shelf"));
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
-			toast.success("Season added to shelf");
+			toastBulkResult(toast, data, "Season added to shelf");
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: showHistoryKey });
@@ -434,9 +457,25 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const markShowWatched = (watchedAt?: string) => {
+	const markShowWatched = (watchedAt?: string, episodeCount?: number) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
-		markShow.mutate({ body: { showId: options.showId, watchedAt } });
+		const showId = options.showId;
+		const run = () => markShow.mutate({ body: { showId, watchedAt } });
+		if (
+			episodeCount !== undefined &&
+			episodeCount > BULK_WATCH_WARN_THRESHOLD
+		) {
+			Alert.alert(
+				"Log all episodes?",
+				`This show has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
+				[
+					{ text: "Cancel", style: "cancel" },
+					{ text: "Continue", onPress: run },
+				],
+			);
+			return;
+		}
+		run();
 	};
 
 	const unmarkShowWatched = () => {
@@ -447,11 +486,30 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const markSeasonWatched = (seasonNumber: number, watchedAt?: string) => {
+	const markSeasonWatched = (
+		seasonNumber: number,
+		watchedAt?: string,
+		episodeCount?: number,
+	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
-		markSeason.mutate({
-			body: { showId: options.showId, seasonNumber, watchedAt },
-		});
+		const showId = options.showId;
+		const run = () =>
+			markSeason.mutate({ body: { showId, seasonNumber, watchedAt } });
+		if (
+			episodeCount !== undefined &&
+			episodeCount > BULK_WATCH_WARN_THRESHOLD
+		) {
+			Alert.alert(
+				"Log all episodes?",
+				`This season has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
+				[
+					{ text: "Cancel", style: "cancel" },
+					{ text: "Continue", onPress: run },
+				],
+			);
+			return;
+		}
+		run();
 	};
 
 	const unmarkSeasonWatched = (seasonNumber: number) => {

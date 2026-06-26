@@ -93,7 +93,8 @@ function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
 
 	const toggleShelf = () => {
 		if (onShelf) actions.unmarkSeasonWatched(season.seasonNumber);
-		else actions.markSeasonWatched(season.seasonNumber);
+		else
+			actions.markSeasonWatched(season.seasonNumber, undefined, episodeCount);
 	};
 
 	const toggle =
