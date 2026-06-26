@@ -481,6 +481,48 @@ describe("AuthService", () => {
 			);
 			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
 		});
+
+		it("should recover when Prisma reports the conflict as a string target (Prisma 7/Postgres)", async () => {
+			const profile = {
+				did: "did:plc:new123",
+				handle: "user.bsky.social",
+				displayName: "New User",
+				avatar: null,
+			};
+			const mockUser = {
+				...profile,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			// Real Prisma 7 / Postgres shape: target is the constraint name string.
+			const handleConflictError = {
+				code: "P2002",
+				meta: { target: "User_handle_key" },
+			};
+
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: typeof mockPrismaService) => unknown) =>
+					fn(mockPrismaService),
+			);
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({
+					did: "did:plc:old123",
+					handle: "user.bsky.social",
+					emailVerifiedAt: null,
+					isNativePds: false,
+					avatar: null,
+				});
+			mockPrismaService.user.upsert
+				.mockRejectedValueOnce(handleConflictError)
+				.mockResolvedValueOnce(mockUser);
+			mockPrismaService.user.update.mockResolvedValue({});
+
+			const result = await service.upsertUser(profile);
+
+			expect(result).toEqual({ user: mockUser, isNewUser: true });
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
+		});
 	});
 
 	describe("parseOAuthAppState", () => {

@@ -798,7 +798,16 @@ export class AuthService implements OnModuleInit {
 		if (Array.isArray(metaFields)) {
 			return metaFields.includes("handle");
 		}
+		// Prisma 7 / Postgres reports target as the constraint name string
+		// (e.g. "User_handle_key"), not a field array.
+		if (typeof metaFields === "string") {
+			return metaFields.toLowerCase().includes("handle");
+		}
 
+		const constraint = (meta as { constraint?: unknown }).constraint;
+		if (typeof constraint === "string") {
+			return constraint.toLowerCase().includes("handle");
+		}
 		const constraintFields = (meta as { constraint?: { fields?: unknown } })
 			.constraint?.fields;
 		return Array.isArray(constraintFields)
