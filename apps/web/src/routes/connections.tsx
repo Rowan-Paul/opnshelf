@@ -1,6 +1,6 @@
 import {
 	socialControllerFollowMutation,
-	socialControllerGetFollowersOptions,
+	socialControllerGetFollowingOptions,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
@@ -49,16 +49,16 @@ function ConnectionsPage() {
 		enabled: debouncedSearch.length > 0 && isSearching,
 	});
 
-	// Recent-followers preview (most recent first). A glance + "see all" entry
+	// Recent-following preview (most recent first). A glance + "see all" entry
 	// point — the full list is canonical on the profile (ADR 0012).
-	const { data: followersData } = useQuery({
-		...socialControllerGetFollowersOptions({
+	const { data: followingData } = useQuery({
+		...socialControllerGetFollowingOptions({
 			path: { handle: userHandle || "" },
 			query: { pageSize: 12 },
 		}),
 		enabled: !!userHandle,
 	});
-	const recentFollowers = followersData?.items ?? [];
+	const recentFollowing = followingData?.items ?? [];
 
 	const invalidateSocial = useCallback(async () => {
 		await queryClient.refetchQueries({
@@ -138,35 +138,35 @@ function ConnectionsPage() {
 					pendingUnfollowDid={unfollowMutation.variables?.path?.targetDid}
 				/>
 
-				{recentFollowers.length > 0 && userHandle && (
+				{recentFollowing.length > 0 && userHandle && (
 					<section className="space-y-3">
 						<div className="flex items-center justify-between">
 							<h2 className="font-display font-semibold text-lg">
-								Recent followers
+								Recent following
 							</h2>
 							<Link
 								to="/profile/$handle/connections"
 								params={{ handle: userHandle }}
-								search={{ tab: "followers" }}
+								search={{ tab: "following" }}
 								className="text-(--accent) text-sm hover:text-(--accent-hover)"
 							>
 								See all
 							</Link>
 						</div>
 						<div className="flex gap-4 overflow-x-auto pb-2">
-							{recentFollowers.map((follower) => (
+							{recentFollowing.map((followed) => (
 								<Link
-									key={follower.did}
+									key={followed.did}
 									to="/profile/$handle"
-									params={{ handle: follower.handle }}
+									params={{ handle: followed.handle }}
 									className="flex w-16 shrink-0 flex-col items-center gap-1 hover:opacity-80"
 								>
 									<UserAvatar
-										src={follower.avatar}
-										alt={String(follower.displayName) || follower.handle}
+										src={followed.avatar}
+										alt={String(followed.displayName) || followed.handle}
 									/>
 									<span className="w-full truncate text-center text-(--foreground-muted) text-xs">
-										{String(follower.displayName) || follower.handle}
+										{String(followed.displayName) || followed.handle}
 									</span>
 								</Link>
 							))}

@@ -21,7 +21,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useCircles, useCreateCircle } from "@/lib/use-circles";
 import { useDebounce } from "@/lib/use-debounce";
-import { useFollowers, useFollowToggle } from "@/lib/use-social";
+import { useFollowing, useFollowToggle } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -41,8 +41,8 @@ export default function ConnectionsScreen() {
 	const hasQuery = debouncedQuery.length > 0;
 
 	const { toggle } = useFollowToggle();
-	const followers = useFollowers(handle);
-	const recentFollowers = followers.items.slice(0, 12);
+	const following = useFollowing(handle);
+	const recentFollowing = following.items.slice(0, 12);
 	const { data: circles = [] } = useCircles();
 	const createCircle = useCreateCircle();
 	const [newName, setNewName] = useState("");
@@ -121,14 +121,14 @@ export default function ConnectionsScreen() {
 				)
 			) : (
 				<ScrollView contentContainerClassName="px-4 pb-8 gap-2">
-					{recentFollowers.length > 0 && handle ? (
+					{recentFollowing.length > 0 && handle ? (
 						<View className="gap-2 pb-4">
 							<View className="flex-row items-center justify-between">
 								<Text className="font-display font-semibold text-base text-foreground">
-									Recent followers
+									Recent following
 								</Text>
 								<Link
-									href={`/profile/${handle}/connections?tab=followers` as const}
+									href={`/profile/${handle}/connections?tab=following` as const}
 									asChild
 								>
 									<Pressable hitSlop={8}>
@@ -143,19 +143,19 @@ export default function ConnectionsScreen() {
 								showsHorizontalScrollIndicator={false}
 								contentContainerClassName="gap-4"
 							>
-								{recentFollowers.map((follower) => {
+								{recentFollowing.map((followed) => {
 									const avatar =
-										typeof follower.avatar === "string"
-											? follower.avatar
+										typeof followed.avatar === "string"
+											? followed.avatar
 											: undefined;
 									const name =
-										(typeof follower.displayName === "string"
-											? follower.displayName
-											: undefined) || follower.handle;
+										(typeof followed.displayName === "string"
+											? followed.displayName
+											: undefined) || followed.handle;
 									return (
 										<Link
-											key={follower.did}
-											href={`/profile/${follower.handle}` as const}
+											key={followed.did}
+											href={`/profile/${followed.handle}` as const}
 											asChild
 										>
 											<Pressable className="w-16 items-center gap-1">
