@@ -62,6 +62,12 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: ${{ github.workspace }}
 
+      # Android submit reads ./google-service-account.json (gitignored). Decode it
+      # from the base64 secret so --auto-submit can reach the Play Store.
+      - name: Write Google service account key
+        if: ${{ github.event.inputs.submit == 'true' && github.event.inputs.profile == 'production' }}
+        run: echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 }}" | base64 --decode > google-service-account.json
+
       # --auto-submit (production only) submits straight after the build using the
       # matching submit profile and implies --wait, so there is no race with a
       # separate submit step. Plain builds use --no-wait and finish in EAS cloud.
