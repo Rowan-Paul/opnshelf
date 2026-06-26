@@ -9,7 +9,7 @@ Tranquil exposes `server.disable_account_verification_gate` (env `DISABLE_ACCOUN
 ## How
 
 - `createAccount` already auto-sends the signup code (`enqueue_signup_verification`). opnshelf no longer seeds at signup.
-- New backend `POST /auth/verify-email { code }`: restores the caller's credential session, reads the email via `getSession`, calls `com.atproto.server.confirmEmail({ email, token: code })`, and on success seeds the profile + default lists. `POST /auth/resend-verification` → `requestEmailConfirmation`.
+- New backend `POST /auth/verify-email { code }`: restores the caller's credential session, reads the email via `getSession`, calls `com.atproto.server.confirmEmail({ email, token: code })`, and on success seeds the profile + default lists. `POST /auth/resend-verification` → Tranquil's `com.atproto.server.resendVerification` (DID-keyed, unauthenticated; Tranquil does not implement the standard `requestEmailConfirmation`).
 - Verification status is **mirrored** in our DB as `User.emailVerifiedAt` (mirroring the `onboardingCompletedAt` convention) so `/auth/me` stays a pure DB read. External OAuth users (e.g. `bsky.social`) are set verified on first callback so they are never gated; only native unverified accounts are.
 - Web: email verification is the **first gated step inside `/onboarding`**, not a standalone route. `register` → `/onboarding`, which renders the verify step while `needsEmailVerification` and structurally blocks the rest until it flips. A separate `/verify-email` route was tried first but the global `needsOnboarding` redirect in `__root.tsx` yanked it straight to `/onboarding`, so folding it into onboarding is the only race-free placement.
 
