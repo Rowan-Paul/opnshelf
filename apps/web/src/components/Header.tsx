@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	Calendar,
 	Clock,
+	Compass,
 	Film,
 	List,
 	LogOut,
@@ -37,6 +38,7 @@ export default function Header() {
 
 	const navigation = [
 		{ name: "Dashboard", href: "/dashboard", icon: Film },
+		{ name: "Discover", href: "/search", icon: Compass },
 		{ name: "Calendar", href: "/calendar", icon: Calendar },
 		{ name: "Following", href: "/following", icon: Users },
 	];

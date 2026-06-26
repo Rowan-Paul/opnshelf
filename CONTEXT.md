@@ -50,6 +50,14 @@ _Avoid_: Event, feed post
 **Activity Feed**:
 The reverse-chronological stream of **Activities** from everyone the authenticated user follows. The full feed is the mobile Activity tab and the web "following" page; the home dashboard shows a short preview of the same feed.
 
+**Person**:
+A cast or crew member sourced from TMDB — actor, director, writer, composer, etc. — not just actors. Has a TMDB person id and a detail page at `/people/{id}/{name-slug}`. A Person is **not** an opnshelf account holder; see _User_. In the ⌘K palette, Person results appear under the **Cast & Crew** heading (not "Actors", since the set includes directors and crew).
+_Avoid_: Actor (too narrow — excludes directors/crew), User (an account holder, a different entity)
+
+**User**:
+An opnshelf account holder, identified by DID and handle, with a profile at `/profile/{handle}`. Found via social people search. In the ⌘K palette, User results appear under the **People** heading. Distinct from _Person_ (a TMDB cast/crew member with no opnshelf account).
+_Avoid_: Person (reserved for TMDB cast/crew), Member
+
 **Discover**:
 The surface for finding media the user hasn't tracked yet. Subsumes the old Search surface (web route, mobile tab): it still does keyword search, but adds discovery sections (e.g. trending, similar, surfaced from the people you follow). "Search" is now one capability of Discover, not a separate destination.
 _Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
