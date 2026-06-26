@@ -33,7 +33,7 @@ export const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
 
 export const OAUTH_SCOPE =
-	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
+	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
 export interface OAuthAppState {
 	platform?: "mobile";

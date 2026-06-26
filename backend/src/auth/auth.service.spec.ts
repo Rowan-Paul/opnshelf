@@ -582,7 +582,7 @@ describe("AuthService", () => {
 				client_uri: "http://127.0.0.1:3001",
 				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
 				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 				grant_types: ["authorization_code", "refresh_token"],
 				response_types: ["code"],
 				application_type: "native",
@@ -674,7 +674,7 @@ describe("AuthService", () => {
 
 			expect(client.authorize).toHaveBeenCalledWith("user.bsky.social", {
 				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 				state: undefined,
 			});
 			expect(result).toBe(mockUrl.toString());
@@ -959,13 +959,14 @@ describe("AuthService", () => {
 			// - repo:xyz.opnshelf.episode: write episode records
 			// - repo:xyz.opnshelf.list: write list records
 			// - repo:xyz.opnshelf.list.item: write list item records
+			// - repo:xyz.opnshelf.library.item: write owned-copy (Library) records
 			// - repo:xyz.opnshelf.follow: write follow records
 			// - repo:xyz.opnshelf.profile: write profile records
 			// - repo:xyz.opnshelf.note: write note records
 			// - blob:*/*: upload profile images
 			// - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
 			expect(OAUTH_SCOPE).toBe(
-				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
 			);
 		});
 	});
