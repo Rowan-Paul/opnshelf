@@ -2,6 +2,7 @@ import { type Href, Link, router } from "expo-router";
 import {
 	ChevronRight,
 	Clock,
+	Disc,
 	Film,
 	List,
 	LogOut,
@@ -22,12 +23,14 @@ import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { libraryItemToCardItem } from "@/components/profile/tabs/LibraryTab";
 import { Markdown } from "@/components/ui/Markdown";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
+import { useUserLibrary } from "@/lib/use-library";
 import {
 	useProfileLists,
 	useProfileReviews,
@@ -59,6 +62,7 @@ export default function ProfileTab() {
 	const shelf = useProfileShelf(userDid, { page: 1 });
 	const upNext = useProfileUpNext(userDid);
 	const lists = useProfileLists(userDid);
+	const library = useUserLibrary(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 3);
 	const markUpNext = useMarkUpNextEpisode();
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
@@ -66,10 +70,12 @@ export default function ProfileTab() {
 	const shelfHref = `/profile/${handle}/shelf` as Href;
 	const upNextHref = `/profile/${handle}/up-next` as Href;
 	const reviewsHref = `/profile/${handle}/reviews` as Href;
+	const libraryHref = `/profile/${handle}?tab=library` as Href;
 
 	const shelfItems = (shelf.data?.items ?? []).slice(0, 10);
 	const upNextItems = (upNext.data?.items ?? []).slice(0, 4);
 	const listItems = (lists.data ?? []).slice(0, 4);
+	const libraryItems = (library.data ?? []).slice(0, 10);
 	const reviewItems = (reviews.data?.items ?? []).slice(0, 3);
 
 	const goToConnections = (tab: "followers" | "following") => {
@@ -220,6 +226,24 @@ export default function ProfileTab() {
 											</Link>
 										))}
 									</View>
+								)}
+							</View>
+
+							{/* Library preview — owned films, poster row like Shelf */}
+							<View>
+								<SectionHeader icon={Disc} title="Library" href={libraryHref} />
+								{libraryItems.length === 0 ? (
+									<EmptyPreview text="Nothing owned yet." />
+								) : (
+									<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+										<View className="flex-row gap-3">
+											{libraryItems.map((item) => (
+												<View key={item.id} style={{ width: POSTER_W }}>
+													<MediaCard item={libraryItemToCardItem(item)} />
+												</View>
+											))}
+										</View>
+									</ScrollView>
 								)}
 							</View>
 

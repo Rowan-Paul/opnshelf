@@ -12,7 +12,7 @@ import {
 	useUserLibrary,
 } from "@/lib/use-library";
 
-function libraryItemToCardItem(item: LibraryItemDto): MediaCardItem {
+export function libraryItemToCardItem(item: LibraryItemDto): MediaCardItem {
 	const media = item.media as Record<string, unknown>;
 	const title =
 		(typeof media.title === "string" && media.title) ||

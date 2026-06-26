@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	Clock,
 	Compass,
+	Disc,
 	Film,
 	Home,
 	List,
@@ -50,6 +51,7 @@ export default function Header() {
 		{ name: "Shelf", to: "/profile/$handle/shelf" as const, icon: Film },
 		{ name: "Up Next", to: "/profile/$handle/up-next" as const, icon: Clock },
 		{ name: "Lists", to: "/profile/$handle/lists" as const, icon: List },
+		{ name: "Library", to: "/profile/$handle/library" as const, icon: Disc },
 		{ name: "Notes", to: "/profile/$handle/notes" as const, icon: StickyNote },
 		{ name: "Reviews", to: "/profile/$handle/reviews" as const, icon: Star },
 	];
