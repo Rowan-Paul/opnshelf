@@ -322,15 +322,29 @@ export class AuthService implements OnModuleInit {
 
 	/**
 	 * Ask the PDS to (re)send the signup verification email for this account.
+	 *
+	 * Tranquil exposes this as `com.atproto.server.resendVerification` and does
+	 * NOT implement the standard `com.atproto.server.requestEmailConfirmation`.
+	 * The endpoint is unauthenticated and keyed by DID — it re-enqueues the same
+	 * signup code `createAccount` originally sent — so no session/agent is needed.
 	 */
-	async resendEmailConfirmation(session: unknown): Promise<void> {
-		if (!session) {
-			throw new Error("Session not found");
+	async resendEmailConfirmation(did: string): Promise<void> {
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
 		}
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
+		const res = await fetch(
+			`${pdsUrl}/xrpc/com.atproto.server.resendVerification`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ did }),
+			},
 		);
-		await agent.com.atproto.server.requestEmailConfirmation();
+		if (!res.ok) {
+			const body = await res.text().catch(() => "");
+			throw new Error(`resendVerification failed (${res.status}): ${body}`);
+		}
 	}
 
 	/**

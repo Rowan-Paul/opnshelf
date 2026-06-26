@@ -857,7 +857,9 @@ describe("AuthController", () => {
 			const result = await controller.resendVerification(reqFor());
 
 			expect(result).toEqual({ message: "Verification email sent" });
-			expect(mockAuthService.resendEmailConfirmation).toHaveBeenCalledWith({});
+			expect(mockAuthService.resendEmailConfirmation).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
 		});
 
 		it("rate-limits after too many attempts", async () => {

@@ -750,9 +750,9 @@ export class AuthController {
 			throw new BadRequestException("User not found in request");
 		}
 		this.enforceResendRateLimit(did);
-		// Reuse the guard's restored session (see verifyEmail) rather than
-		// restoring again and racing the refresh token.
-		await this.authService.resendEmailConfirmation(req.user.session);
+		// Tranquil's resendVerification is unauthenticated and keyed by DID, so
+		// no session restore is needed (it re-enqueues the signup code).
+		await this.authService.resendEmailConfirmation(did);
 		return { message: "Verification email sent" };
 	}
 
