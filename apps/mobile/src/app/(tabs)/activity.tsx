@@ -4,15 +4,9 @@ import {
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { MessageCircle, UserRoundPlus, UsersRound } from "lucide-react-native";
+import { MessageCircle } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import {
-	ActivityIndicator,
-	Pressable,
-	RefreshControl,
-	View,
-} from "react-native";
+import { ActivityIndicator, RefreshControl, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
@@ -85,37 +79,13 @@ export default function ActivityScreen() {
 
 	return (
 		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<View className="flex-row items-start justify-between px-4 pt-3 pb-3">
-				<View className="min-w-0 flex-1">
-					<Text className="font-bold font-display text-2xl text-foreground">
-						Activity
-					</Text>
-					<Text className="text-muted-foreground text-sm">
-						Recent watches and reviews from people you follow
-					</Text>
-				</View>
-				<View className="ml-3 flex-row items-center gap-2">
-					<Link href="/circles" asChild>
-						<Pressable
-							hitSlop={8}
-							className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-2"
-						>
-							<UsersRound color="#94a3b8" size={16} />
-							<Text className="font-medium text-foreground text-sm">
-								Circles
-							</Text>
-						</Pressable>
-					</Link>
-					<Link href="/friends" asChild>
-						<Pressable
-							hitSlop={8}
-							className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-2"
-						>
-							<UserRoundPlus color="#94a3b8" size={16} />
-							<Text className="font-medium text-foreground text-sm">Find</Text>
-						</Pressable>
-					</Link>
-				</View>
+			<View className="px-4 pt-3 pb-3">
+				<Text className="font-bold font-display text-2xl text-foreground">
+					Activity
+				</Text>
+				<Text className="text-muted-foreground text-sm">
+					Recent watches and reviews from people you follow
+				</Text>
 			</View>
 
 			{circles.length > 0 ? (

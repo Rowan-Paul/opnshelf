@@ -2,6 +2,7 @@ import {
 	socialControllerAddCircleMemberMutation,
 	socialControllerCreateCircleMutation,
 	socialControllerDeleteCircleMutation,
+	socialControllerGetCircleMembersOptions,
 	socialControllerListCirclesOptions,
 	socialControllerListCirclesQueryKey,
 	socialControllerRemoveCircleMemberMutation,
@@ -19,6 +20,7 @@ function errorMessage(error: unknown, fallback: string) {
 // (which carries each user's circleIds), and the feed (its circle filter).
 const CIRCLE_QUERY_IDS = [
 	"socialControllerListCircles",
+	"socialControllerGetCircleMembers",
 	"socialControllerGetFollowing",
 	"socialControllerGetFeed",
 ];
@@ -40,6 +42,17 @@ export function useCircles() {
 	return useQuery({
 		...socialControllerListCirclesOptions(),
 		enabled: isAuthenticated,
+	});
+}
+
+/** Members of one circle (the Circle detail view). */
+export function useCircleMembers(circleId: string) {
+	return useQuery({
+		...socialControllerGetCircleMembersOptions({
+			path: { circleId },
+			query: { pageSize: 50 },
+		}),
+		enabled: !!circleId,
 	});
 }
 

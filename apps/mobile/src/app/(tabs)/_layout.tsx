@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Home, Rss, Search, User } from "lucide-react-native";
+import { Compass, Home, Rss, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
@@ -54,9 +54,9 @@ export default function TabLayout() {
 				<Tabs.Screen
 					name="search"
 					options={{
-						title: "Search",
+						title: "Discover",
 						tabBarIcon: ({ color, size }) => (
-							<Search color={color} size={size} />
+							<Compass color={color} size={size} />
 						),
 					}}
 				/>
@@ -65,6 +65,15 @@ export default function TabLayout() {
 					options={{
 						title: "Activity",
 						tabBarIcon: ({ color, size }) => <Rss color={color} size={size} />,
+					}}
+				/>
+				<Tabs.Screen
+					name="connections"
+					options={{
+						title: "Connections",
+						tabBarIcon: ({ color, size }) => (
+							<Users color={color} size={size} />
+						),
 					}}
 				/>
 				<Tabs.Screen
