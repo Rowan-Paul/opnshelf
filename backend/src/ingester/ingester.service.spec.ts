@@ -36,6 +36,7 @@ vi.mock("@atproto/tap", () => ({
 import type { RecordEvent } from "@atproto/tap";
 import { SimpleIndexer, Tap } from "@atproto/tap";
 import { Prisma } from "../generated/client";
+import { LibraryService } from "../library/library.service";
 import { ListsService } from "../lists/lists.service";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -82,6 +83,10 @@ describe("IngesterService", () => {
 		deleteListRecord: Mock;
 		indexListItemRecord: Mock;
 		deleteListItemRecord: Mock;
+	};
+	let mockLibraryService: {
+		indexLibraryItemRecord: Mock;
+		deleteLibraryItemRecord: Mock;
 	};
 	let mockSocialService: {
 		indexFollowRecord: Mock;
@@ -153,6 +158,11 @@ describe("IngesterService", () => {
 			deleteListItemRecord: vi.fn(),
 		};
 
+		mockLibraryService = {
+			indexLibraryItemRecord: vi.fn(),
+			deleteLibraryItemRecord: vi.fn(),
+		};
+
 		mockSocialService = {
 			indexFollowRecord: vi.fn(),
 			deleteFollowRecordIndex: vi.fn(),
@@ -190,6 +200,7 @@ describe("IngesterService", () => {
 				{ provide: MoviesService, useValue: mockMoviesService },
 				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },
+				{ provide: LibraryService, useValue: mockLibraryService },
 				{ provide: NotesService, useValue: mockNotesService },
 				{ provide: SocialService, useValue: mockSocialService },
 				{ provide: ProfileService, useValue: mockProfileService },
