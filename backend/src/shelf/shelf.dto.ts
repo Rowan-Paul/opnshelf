@@ -67,6 +67,9 @@ export class ShelfItemEpisodeDto {
 	backdropPath?: string;
 
 	@ApiPropertyOptional()
+	stillPath?: string;
+
+	@ApiPropertyOptional()
 	firstAirYear?: number;
 
 	@ApiPropertyOptional()
@@ -112,6 +115,7 @@ export const SHELF_ITEM_EPISODE_SCHEMA = {
 		episodeTitle: { type: "string" },
 		posterPath: { type: "string" },
 		backdropPath: { type: "string" },
+		stillPath: { type: "string" },
 		firstAirYear: { type: "number" },
 		overview: { type: "string" },
 		colors: { type: "object" },

@@ -226,9 +226,12 @@ function Dashboard() {
 				posterUrl: item.posterPath
 					? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 					: "",
-				backdropUrl: item.backdropPath
-					? `https://image.tmdb.org/t/p/original${item.backdropPath}`
-					: undefined,
+				// Prefer the episode still (16:9, matches the backdrop layout); fall back to the show backdrop
+				backdropUrl: item.stillPath
+					? `https://image.tmdb.org/t/p/original${item.stillPath}`
+					: item.backdropPath
+						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						: undefined,
 				year: item.firstAirYear,
 				episodeInfo: `${item.showTitle} • S${item.seasonNumber}E${item.episodeNumber}`,
 			};

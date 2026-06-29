@@ -1495,6 +1495,7 @@ export type ShelfResponseDto = {
         episodeTitle?: string;
         posterPath?: string;
         backdropPath?: string;
+        stillPath?: string;
         firstAirYear?: number;
         overview?: string;
         colors?: {

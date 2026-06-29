@@ -34,6 +34,7 @@ interface EpisodeData {
 	episodeTitle?: string;
 	posterPath?: string;
 	backdropPath?: string;
+	stillPath?: string;
 	firstAirYear?: number;
 	firstAirDate?: Date;
 	overview?: string;
@@ -52,6 +53,7 @@ interface RawShelfRow {
 	title: string;
 	posterPath: string | null;
 	backdropPath: string | null;
+	stillPath: string | null;
 	releaseYear: number | null;
 	releaseDate: Date | null;
 	seasonNumber: number | null;
@@ -173,6 +175,7 @@ export class ShelfService {
 				m.title AS "title",
 				m."posterPath" AS "posterPath",
 				m."backdropPath" AS "backdropPath",
+				NULL::text AS "stillPath",
 				m."releaseYear" AS "releaseYear",
 				m."releaseDate" AS "releaseDate",
 				NULL::integer AS "seasonNumber",
@@ -199,6 +202,7 @@ export class ShelfService {
 				s.title AS "title",
 				s."posterPath" AS "posterPath",
 				s."backdropPath" AS "backdropPath",
+				ep."stillPath" AS "stillPath",
 				NULL::integer AS "releaseYear",
 				NULL::timestamp AS "releaseDate",
 				te."seasonNumber" AS "seasonNumber",
@@ -243,6 +247,7 @@ export class ShelfService {
 						shelf."title",
 						shelf."posterPath",
 						shelf."backdropPath",
+						shelf."stillPath",
 						shelf."releaseYear",
 						shelf."releaseDate",
 						shelf."seasonNumber",
@@ -307,6 +312,7 @@ export class ShelfService {
 							episodeTitle: row.episodeName ?? undefined,
 							posterPath: row.posterPath ?? undefined,
 							backdropPath: row.backdropPath ?? undefined,
+							stillPath: row.stillPath ?? undefined,
 							firstAirYear: row.firstAirYear ?? undefined,
 							firstAirDate: row.firstAirDate ?? undefined,
 							overview: row.overview ?? undefined,
