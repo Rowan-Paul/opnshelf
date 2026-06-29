@@ -20,7 +20,7 @@ describe("AuthGuard", () => {
 
 	const mockAuthService = {
 		getSessionById: vi.fn(),
-		restore: vi.fn(),
+		restoreBySession: vi.fn(),
 		touchSession: vi.fn(),
 	};
 
@@ -98,7 +98,7 @@ describe("AuthGuard", () => {
 				new UnauthorizedException("Session not found or expired"),
 			);
 			// Expired sessions must never reach restore().
-			expect(mockAuthService.restore).not.toHaveBeenCalled();
+			expect(mockAuthService.restoreBySession).not.toHaveBeenCalled();
 		});
 
 		it("should reject an expired session presented via Bearer token", async () => {
@@ -124,7 +124,7 @@ describe("AuthGuard", () => {
 			await expect(guard.canActivate(context)).rejects.toThrow(
 				new UnauthorizedException("Session not found or expired"),
 			);
-			expect(mockAuthService.restore).not.toHaveBeenCalled();
+			expect(mockAuthService.restoreBySession).not.toHaveBeenCalled();
 		});
 
 		it("should throw UnauthorizedException when restore returns null", async () => {
@@ -138,14 +138,16 @@ describe("AuthGuard", () => {
 				updatedAt: new Date(),
 			};
 			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
-			mockAuthService.restore.mockResolvedValue(undefined);
+			mockAuthService.restoreBySession.mockResolvedValue(undefined);
 
 			const context = createMockExecutionContext({ session: "session-123" });
 
 			await expect(guard.canActivate(context)).rejects.toThrow(
 				new UnauthorizedException("Session not found or expired"),
 			);
-			expect(mockAuthService.restore).toHaveBeenCalledWith("did:plc:abc123");
+			expect(mockAuthService.restoreBySession).toHaveBeenCalledWith(
+				mockSessionRecord,
+			);
 		});
 
 		it("should attach user to request and return true when valid session", async () => {
@@ -161,7 +163,7 @@ describe("AuthGuard", () => {
 			const mockSession = { did: "did:plc:abc123" };
 
 			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
-			mockAuthService.restore.mockResolvedValue(mockSession);
+			mockAuthService.restoreBySession.mockResolvedValue(mockSession);
 
 			const mockRequest = { cookies: { session: "session-123" }, headers: {} };
 			const context = {
@@ -190,7 +192,7 @@ describe("AuthGuard", () => {
 				updatedAt: new Date(),
 			};
 			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
-			mockAuthService.restore.mockResolvedValue(null);
+			mockAuthService.restoreBySession.mockResolvedValue(null);
 
 			const context = createMockExecutionContext({ session: "session-123" });
 
@@ -210,7 +212,9 @@ describe("AuthGuard", () => {
 				updatedAt: new Date(),
 			};
 			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
-			mockAuthService.restore.mockRejectedValue(new Error("Database error"));
+			mockAuthService.restoreBySession.mockRejectedValue(
+				new Error("Database error"),
+			);
 
 			const context = createMockExecutionContext({ session: "session-123" });
 
@@ -245,7 +249,7 @@ describe("AuthGuard", () => {
 			const mockSession = { did: "did:plc:abc123" };
 
 			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
-			mockAuthService.restore.mockResolvedValue(mockSession);
+			mockAuthService.restoreBySession.mockResolvedValue(mockSession);
 
 			const mockRequest = {
 				cookies: {},

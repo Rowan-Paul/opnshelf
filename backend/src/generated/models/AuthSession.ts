@@ -221,17 +221,17 @@ export type AuthSessionOrderByWithRelationInput = {
 
 export type AuthSessionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  userDid?: string
   AND?: Prisma.AuthSessionWhereInput | Prisma.AuthSessionWhereInput[]
   OR?: Prisma.AuthSessionWhereInput[]
   NOT?: Prisma.AuthSessionWhereInput | Prisma.AuthSessionWhereInput[]
+  userDid?: Prisma.StringFilter<"AuthSession"> | string
   sessionData?: Prisma.StringFilter<"AuthSession"> | string
   kind?: Prisma.StringFilter<"AuthSession"> | string
   expiresAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   lastUsedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
-}, "id" | "userDid">
+}, "id">
 
 export type AuthSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

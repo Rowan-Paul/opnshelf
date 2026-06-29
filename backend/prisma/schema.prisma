@@ -136,7 +136,9 @@ enum LibraryFormat {
 // Cookie stores opaque id (not DID) for session lookup
 model AuthSession {
   id          String   @id @default(cuid())
-  userDid     String   @unique
+  // Not unique: one row per device session (id is the opaque cookie/Bearer
+  // value). A user can be signed in on several devices at once.
+  userDid     String
   sessionData String   // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
   kind        String   @default("oauth") // "oauth" | "credential"
   // Absolute lifetime: the guard rejects the session once expiresAt <= now.
@@ -151,6 +153,7 @@ model AuthSession {
 
   @@index([updatedAt])
   @@index([expiresAt])
+  @@index([userDid])
 }
 
 model AuthState {

@@ -314,7 +314,7 @@ export class AuthController {
 		}
 
 		// Persist a credential session so the guard can resume it.
-		await this.authService.createCredentialSession({
+		const sessionId = await this.authService.createCredentialSession({
 			did: account.did,
 			handle: account.handle,
 			accessJwt: account.accessJwt,
@@ -350,18 +350,10 @@ export class AuthController {
 		// channel), so seeding happens in `verifyEmail` once the code is
 		// confirmed. See docs/adr/0004-verify-email-before-seeding-records.md.
 
-		const sessionRecord = await this.authService.getSessionByUserDid(
-			account.did,
-		);
-		if (!sessionRecord) {
-			this.logger.error("AuthSession not found after register");
-			throw new ServiceUnavailableException("Could not establish session");
-		}
-
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
 		const cookieDomain = this.getCookieDomain();
-		res.cookie(SESSION_COOKIE_NAME, sessionRecord.id, {
+		res.cookie(SESSION_COOKIE_NAME, sessionId, {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: "lax",
@@ -373,7 +365,7 @@ export class AuthController {
 		return {
 			did: account.did,
 			handle: account.handle,
-			sessionId: sessionRecord.id,
+			sessionId,
 		};
 	}
 
@@ -487,7 +479,8 @@ export class AuthController {
 			// Parse callback query params
 			const params = new URLSearchParams(req.url.split("?")[1] || "");
 
-			const { session, state } = await this.authService.callback(params);
+			const { session, state, sessionId } =
+				await this.authService.callback(params);
 			const statePayload = this.authService.parseOAuthAppState(state);
 
 			// Prefer OAuth state (survives iOS auth sessions), then cookie fallback.
@@ -537,19 +530,9 @@ export class AuthController {
 				);
 			}
 
-			// Resolve opaque session id (cookie stores this, not DID)
-			const sessionRecord = await this.authService.getSessionByUserDid(
-				session.did,
-			);
-			if (!sessionRecord) {
-				this.logger.error("AuthSession not found after callback");
-				return res.redirect(
-					this.resolveErrorRedirect("callback_failed", statePayload.platform),
-				);
-			}
-
-			// Set session cookie with opaque id (domain set so frontend at opnshelf.xyz receives it)
-			res.cookie(SESSION_COOKIE_NAME, sessionRecord.id, {
+			// Set session cookie with the opaque per-device id minted by callback()
+			// (domain set so frontend at opnshelf.xyz receives it).
+			res.cookie(SESSION_COOKIE_NAME, sessionId, {
 				httpOnly: true,
 				secure: isProduction,
 				sameSite: "lax",
@@ -571,7 +554,7 @@ export class AuthController {
 			// Redirect to mobile deep link (with session token) or web frontend (uses cookie)
 			const completeUrl =
 				platform === "mobile"
-					? `opnshelf://auth/complete?session=${encodeURIComponent(sessionRecord.id)}`
+					? `opnshelf://auth/complete?session=${encodeURIComponent(sessionId)}`
 					: new URL("/auth/complete", frontendUrl).toString();
 
 			return res.redirect(completeUrl);
@@ -661,8 +644,12 @@ export class AuthController {
 			throw new BadRequestException("User not found in request");
 		}
 
+		// Reuse the session the guard already restored for this device rather than
+		// restoring again (a second restore races the single-use refresh token).
 		return {
-			hasBlueskyProfile: await this.authService.hasBlueskyProfile(did),
+			hasBlueskyProfile: await this.authService.hasBlueskyProfile(
+				req.user?.session as { did: string } | undefined,
+			),
 		};
 	}
 

@@ -27,13 +27,16 @@ vi.mock("../prisma/prisma.service", () => ({
 	})),
 }));
 
-// Mock the @atproto/oauth-client-node module
+// Mock the @atproto/oauth-client-node module. The service now builds one client
+// per device session, so every `new NodeOAuthClient()` returns the SAME shared
+// mock — tests reference its authorize/callback/restore directly.
+const sharedOAuthClient = vi.hoisted(() => ({
+	authorize: vi.fn(),
+	callback: vi.fn(),
+	restore: vi.fn(),
+}));
 vi.mock("@atproto/oauth-client-node", () => ({
-	NodeOAuthClient: vi.fn().mockImplementation(() => ({
-		authorize: vi.fn(),
-		callback: vi.fn(),
-		restore: vi.fn(),
-	})),
+	NodeOAuthClient: vi.fn().mockImplementation(() => sharedOAuthClient),
 	// Vitest throws on undefined named exports (Jest returned undefined);
 	// auth.service imports this at module load.
 	requestLocalLock: vi.fn(),
@@ -70,6 +73,7 @@ describe("AuthService", () => {
 		$transaction: vi.fn(),
 		authSession: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			upsert: vi.fn(),
 			update: vi.fn(),
 			deleteMany: vi.fn(),
@@ -171,34 +175,6 @@ describe("AuthService", () => {
 			mockPrismaService.authSession.findUnique.mockResolvedValue(null);
 
 			const result = await service.getSessionById("nonexistent");
-
-			expect(result).toBeNull();
-		});
-	});
-
-	describe("getSessionByUserDid", () => {
-		it("should return session record when found", async () => {
-			const mockSession = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-				sessionData: "{}",
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			mockPrismaService.authSession.findUnique.mockResolvedValue(mockSession);
-
-			const result = await service.getSessionByUserDid("did:plc:abc123");
-
-			expect(result).toEqual(mockSession);
-			expect(mockPrismaService.authSession.findUnique).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123" },
-			});
-		});
-
-		it("should return null when session not found", async () => {
-			mockPrismaService.authSession.findUnique.mockResolvedValue(null);
-
-			const result = await service.getSessionByUserDid("did:plc:nonexistent");
 
 			expect(result).toBeNull();
 		});
@@ -667,49 +643,73 @@ describe("AuthService", () => {
 	describe("authorize", () => {
 		it("should call OAuth client authorize and return URL", async () => {
 			const mockUrl = new URL("https://bsky.social/oauth/authorize?state=abc");
-			const client = service.getOAuthClient();
-			(client.authorize as Mock).mockResolvedValue(mockUrl);
+			sharedOAuthClient.authorize.mockResolvedValue(mockUrl);
 
 			const result = await service.authorize("user.bsky.social");
 
-			expect(client.authorize).toHaveBeenCalledWith("user.bsky.social", {
-				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
-				state: undefined,
-			});
+			expect(sharedOAuthClient.authorize).toHaveBeenCalledWith(
+				"user.bsky.social",
+				{
+					scope:
+						"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+					state: undefined,
+				},
+			);
 			expect(result).toBe(mockUrl.toString());
 		});
 	});
 
 	describe("callback", () => {
-		it("should call OAuth client callback with params", async () => {
-			const mockResult = { session: { did: "did:plc:abc123" } };
-			const client = service.getOAuthClient();
-			(client.callback as Mock).mockResolvedValue(mockResult);
+		it("should call the OAuth client and return session + a fresh session id", async () => {
+			const mockResult = { session: { did: "did:plc:abc123" }, state: "xyz" };
+			sharedOAuthClient.callback.mockResolvedValue(mockResult);
 
 			const params = new URLSearchParams("code=abc&state=xyz");
 			const result = await service.callback(params);
 
-			expect(client.callback).toHaveBeenCalledWith(params);
-			expect(result).toEqual(mockResult);
+			expect(sharedOAuthClient.callback).toHaveBeenCalledWith(params);
+			expect(result.session).toEqual(mockResult.session);
+			expect(result.state).toBe("xyz");
+			// A new opaque per-device id is minted for the cookie.
+			expect(typeof result.sessionId).toBe("string");
+			expect(result.sessionId.length).toBeGreaterThan(0);
 		});
 	});
 
 	describe("restore", () => {
-		it("should return session when restore succeeds", async () => {
+		it("should restore the freshest live session for the DID", async () => {
 			const mockSession = { did: "did:plc:abc123" };
-			const client = service.getOAuthClient();
-			(client.restore as Mock).mockResolvedValue(mockSession);
+			mockPrismaService.authSession.findFirst.mockResolvedValue({
+				id: "slot-1",
+				userDid: "did:plc:abc123",
+				kind: "oauth",
+				sessionData: "{}",
+			});
+			sharedOAuthClient.restore.mockResolvedValue(mockSession);
 
 			const result = await service.restore("did:plc:abc123");
 
-			expect(client.restore).toHaveBeenCalledWith("did:plc:abc123");
+			expect(mockPrismaService.authSession.findFirst).toHaveBeenCalled();
+			expect(sharedOAuthClient.restore).toHaveBeenCalledWith("did:plc:abc123");
 			expect(result).toEqual(mockSession);
 		});
 
-		it("should return undefined when restore fails", async () => {
-			const client = service.getOAuthClient();
-			(client.restore as Mock).mockRejectedValue(
+		it("should return undefined when there is no live session", async () => {
+			mockPrismaService.authSession.findFirst.mockResolvedValue(null);
+
+			const result = await service.restore("did:plc:abc123");
+
+			expect(result).toBeUndefined();
+		});
+
+		it("should return undefined when the client restore fails", async () => {
+			mockPrismaService.authSession.findFirst.mockResolvedValue({
+				id: "slot-1",
+				userDid: "did:plc:abc123",
+				kind: "oauth",
+				sessionData: "{}",
+			});
+			sharedOAuthClient.restore.mockRejectedValue(
 				new Error("Session not found"),
 			);
 
@@ -724,35 +724,22 @@ describe("AuthService", () => {
 			const { Agent } = (await import("@atproto/api")) as unknown as {
 				Agent: Mock;
 			};
-			const mockRestore = vi.fn().mockResolvedValue({ did: "did:plc:abc123" });
 			const mockGetRecord = vi.fn().mockResolvedValue({
-				data: {
-					uri: "at://did:plc:abc123/app.bsky.actor.profile/self",
-				},
+				data: { uri: "at://did:plc:abc123/app.bsky.actor.profile/self" },
 			});
-
-			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
-				authorize: vi.fn(),
-				callback: vi.fn(),
-				restore: mockRestore,
-			}));
-			service.onModuleInit();
 
 			Agent.mockImplementation(() => ({
 				com: {
 					atproto: {
-						repo: {
-							describeRepo: vi.fn(),
-							getRecord: mockGetRecord,
-						},
+						repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
 					},
 				},
 				getProfile: vi.fn(),
 			}));
 
-			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
-				true,
-			);
+			await expect(
+				service.hasBlueskyProfile({ did: "did:plc:abc123" }),
+			).resolves.toBe(true);
 			expect(mockGetRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
 				collection: "app.bsky.actor.profile",
@@ -764,68 +751,26 @@ describe("AuthService", () => {
 			const { Agent } = (await import("@atproto/api")) as unknown as {
 				Agent: Mock;
 			};
-			const mockRestore = vi.fn().mockResolvedValue({ did: "did:plc:abc123" });
 			const mockGetRecord = vi
 				.fn()
 				.mockRejectedValue(new Error("RecordNotFound"));
 
-			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
-				authorize: vi.fn(),
-				callback: vi.fn(),
-				restore: mockRestore,
-			}));
-			service.onModuleInit();
-
 			Agent.mockImplementation(() => ({
 				com: {
 					atproto: {
-						repo: {
-							describeRepo: vi.fn(),
-							getRecord: mockGetRecord,
-						},
+						repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
 					},
 				},
 				getProfile: vi.fn(),
 			}));
-			const warnSpy = vi.spyOn(
-				(
-					service as unknown as {
-						logger: { warn: (...args: unknown[]) => void };
-					}
-				).logger,
-				"warn",
-			);
 
-			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
-				false,
-			);
-			expect(warnSpy).not.toHaveBeenCalled();
+			await expect(
+				service.hasBlueskyProfile({ did: "did:plc:abc123" }),
+			).resolves.toBe(false);
 		});
 
-		it("should return false when the session cannot be restored", async () => {
-			const mockRestore = vi
-				.fn()
-				.mockRejectedValue(new Error("restore failed"));
-
-			(NodeOAuthClient as unknown as Mock).mockImplementation(() => ({
-				authorize: vi.fn(),
-				callback: vi.fn(),
-				restore: mockRestore,
-			}));
-			service.onModuleInit();
-			const warnSpy = vi.spyOn(
-				(
-					service as unknown as {
-						logger: { warn: (...args: unknown[]) => void };
-					}
-				).logger,
-				"warn",
-			);
-
-			await expect(service.hasBlueskyProfile("did:plc:abc123")).resolves.toBe(
-				false,
-			);
-			expect(warnSpy).not.toHaveBeenCalled();
+		it("should return false when there is no session", async () => {
+			await expect(service.hasBlueskyProfile(undefined)).resolves.toBe(false);
 		});
 	});
 

@@ -35,7 +35,6 @@ describe("AuthController", () => {
 		parseOAuthAppState: Mock;
 		fetchProfile: Mock;
 		upsertUser: Mock;
-		getSessionByUserDid: Mock;
 		getUser: Mock;
 		hasBlueskyProfile: Mock;
 		revokeBySessionId: Mock;
@@ -53,12 +52,11 @@ describe("AuthController", () => {
 		parseOAuthAppState: vi.fn().mockReturnValue({}),
 		fetchProfile: vi.fn(),
 		upsertUser: vi.fn(),
-		getSessionByUserDid: vi.fn(),
 		getUser: vi.fn(),
 		hasBlueskyProfile: vi.fn().mockResolvedValue(false),
 		revokeBySessionId: vi.fn(),
 		registerAccount: vi.fn(),
-		createCredentialSession: vi.fn().mockResolvedValue(undefined),
+		createCredentialSession: vi.fn().mockResolvedValue("session-123"),
 		restore: vi.fn().mockResolvedValue(undefined),
 		confirmEmailWithCode: vi.fn().mockResolvedValue(true),
 		resendEmailConfirmation: vi.fn().mockResolvedValue(undefined),
@@ -302,15 +300,12 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",
@@ -348,18 +343,15 @@ describe("AuthController", () => {
 				displayName: "New User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:new123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue({
 				user: mockProfile,
 				isNewUser: true,
 			});
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",
@@ -387,15 +379,12 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",
@@ -423,15 +412,12 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 			mockIngesterService.addRepo.mockRejectedValue(new Error("TAP error"));
 
 			const req = createMockRequest({
@@ -459,15 +445,12 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",
@@ -496,21 +479,16 @@ describe("AuthController", () => {
 				displayName: "Test User",
 				avatar: "https://example.com/avatar.jpg",
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
 			mockAuthService.callback.mockResolvedValue({
 				session: mockSession,
 				state: '{"platform":"mobile"}',
+				sessionId: "session-123",
 			});
 			mockAuthService.parseOAuthAppState.mockReturnValue({
 				platform: "mobile",
 			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",
@@ -525,69 +503,6 @@ describe("AuthController", () => {
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"opnshelf://auth/complete?session=session-123",
-			);
-		});
-
-		it("should redirect with error when session record not found", async () => {
-			const mockSession = { did: "did:plc:abc123" };
-			const mockProfile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
-			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
-			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(null);
-
-			const req = createMockRequest({
-				url: "/auth/callback?code=abc&state=xyz",
-			});
-			const res = createMockResponse();
-
-			await controller.callback(req, res);
-
-			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
-				mockProfile,
-				undefined,
-				{ emailVerified: true, isNativePds: false },
-			);
-			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login?error=callback_failed",
-			);
-		});
-
-		it("should redirect to mobile login when session record not found for mobile state", async () => {
-			const mockSession = { did: "did:plc:abc123" };
-			const mockProfile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-			};
-
-			mockAuthService.callback.mockResolvedValue({
-				session: mockSession,
-				state: '{"platform":"mobile"}',
-			});
-			mockAuthService.parseOAuthAppState.mockReturnValue({
-				platform: "mobile",
-			});
-			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
-			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(null);
-
-			const req = createMockRequest({
-				url: "/auth/callback?code=abc&state=xyz",
-			});
-			const res = createMockResponse();
-
-			await controller.callback(req, res);
-
-			expect(res.redirect).toHaveBeenCalledWith(
-				"opnshelf://auth/complete?error=callback_failed",
 			);
 		});
 
@@ -877,8 +792,9 @@ describe("AuthController", () => {
 		it("should return Bluesky profile status when authenticated", async () => {
 			mockAuthService.hasBlueskyProfile.mockResolvedValue(true);
 
+			const session = { did: "did:plc:abc123" };
 			const req = createMockRequest({
-				user: { did: "did:plc:abc123", session: {} },
+				user: { did: "did:plc:abc123", session },
 			} as unknown as import("express").Request);
 
 			const result = await controller.blueskyProfileStatus(
@@ -886,9 +802,8 @@ describe("AuthController", () => {
 			);
 
 			expect(result).toEqual({ hasBlueskyProfile: true });
-			expect(mockAuthService.hasBlueskyProfile).toHaveBeenCalledWith(
-				"did:plc:abc123",
-			);
+			// Reuses the session the guard already restored (no re-restore).
+			expect(mockAuthService.hasBlueskyProfile).toHaveBeenCalledWith(session);
 		});
 
 		it("should throw BadRequestException when no user in request", async () => {
@@ -959,15 +874,12 @@ describe("AuthController", () => {
 				displayName: null,
 				avatar: null,
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({ url: "/auth/callback?code=abc" });
 			const res = createMockResponse();
@@ -1004,15 +916,12 @@ describe("AuthController", () => {
 				displayName: null,
 				avatar: null,
 			};
-			const mockSessionRecord = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-			};
-
-			mockAuthService.callback.mockResolvedValue({ session: mockSession });
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "session-123",
+			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockAuthService.getSessionByUserDid.mockResolvedValue(mockSessionRecord);
 
 			const req = createMockRequest({ url: "/auth/callback?code=abc" });
 			const res = createMockResponse();
@@ -1064,10 +973,7 @@ describe("AuthController", () => {
 			mockCaptcha.verify.mockResolvedValue(true);
 			mockTranquilAdmin.mintInviteCode.mockResolvedValue("invite-code");
 			mockAuthService.registerAccount.mockResolvedValue(account);
-			mockAuthService.getSessionByUserDid.mockResolvedValue({
-				id: "sess-1",
-				userDid: account.did,
-			});
+			mockAuthService.createCredentialSession.mockResolvedValue("sess-1");
 		});
 
 		const captureStatus = async (promise: Promise<unknown>) => {

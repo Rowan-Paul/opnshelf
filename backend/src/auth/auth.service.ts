@@ -4,6 +4,7 @@ import {
 	type AtpSessionData,
 	CredentialSession,
 } from "@atproto/api";
+import { randomUUID } from "node:crypto";
 import { requestLocalLock } from "@atproto/oauth-client-node";
 import {
 	NodeOAuthClient,
@@ -32,6 +33,15 @@ export const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
  */
 export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
 
+/**
+ * Upper bound on the per-device OAuth client cache. Each active device session
+ * keeps one NodeOAuthClient alive (own in-memory token cache + refresh lock);
+ * past this many, the least-recently-used is evicted and simply rebuilt on its
+ * owner's next request.
+ * ponytail: plain insertion-order Map eviction; a real LRU only earns its keep if churn shows up in profiling.
+ */
+const MAX_CACHED_OAUTH_CLIENTS = 1000;
+
 export const OAUTH_SCOPE =
 	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
 
@@ -52,14 +62,40 @@ interface OAuthClientConfig {
 @Injectable()
 export class AuthService implements OnModuleInit {
 	private readonly logger = new Logger(AuthService.name);
-	private oauthClient: NodeOAuthClient | null = null;
 
 	/**
-	 * In-flight credential-session restores, keyed by DID. Refresh tokens rotate
-	 * (one-time use), so two concurrent requests each building their own
-	 * CredentialSession would both try to refresh the same token — one wins, the
-	 * other's refresh is rejected. De-duping concurrent restores makes them share
-	 * a single refresh. Cleared as soon as the restore settles.
+	 * Shared, DB-backed OAuth *state* store (PKCE verifier + DPoP key for the
+	 * login flow). Safe to share across every client instance — keyed by the
+	 * random `state` value, not by user.
+	 */
+	private stateStore: ReturnType<AuthService["buildStateStore"]> | null = null;
+
+	/**
+	 * Client used only to *start* the login flow (authorize). It writes no
+	 * session, so it carries a session store that refuses writes.
+	 */
+	private baseClient: NodeOAuthClient | null = null;
+
+	/**
+	 * Per-device OAuth clients, keyed by the session slot (AuthSession.id, i.e.
+	 * the opaque cookie/Bearer value).
+	 *
+	 * atproto's NodeOAuthClient caches restored sessions and serialises token
+	 * refreshes *per-DID in memory*. A single shared client therefore cannot hold
+	 * two independent sessions for the same DID: a second device would collide in
+	 * that cache and the two would race each other's single-use refresh token,
+	 * revoking one (the "logged out when I sign in elsewhere" bug). One client per
+	 * device session keeps each device's token family isolated.
+	 */
+	private readonly oauthClients = new Map<string, NodeOAuthClient>();
+
+	/**
+	 * In-flight credential-session restores, keyed by session slot. Refresh
+	 * tokens rotate (one-time use), so two concurrent requests on the same device
+	 * each building their own CredentialSession would both try to refresh the
+	 * same token — one wins, the other's refresh is rejected. De-duping
+	 * concurrent restores makes them share a single refresh. Cleared as soon as
+	 * the restore settles.
 	 */
 	private readonly credentialRestoreInFlight = new Map<
 		string,
@@ -72,31 +108,26 @@ export class AuthService implements OnModuleInit {
 	) {}
 
 	onModuleInit() {
-		this.initializeOAuthClient();
+		// Fail fast at boot if the OAuth config is broken, and pre-build the
+		// shared state store + login client.
+		this.stateStore = this.buildStateStore();
+		try {
+			this.baseClient = this.buildClient(this.buildNoopSessionStore());
+		} catch (error) {
+			this.logger.error("Failed to initialize OAuth client", error);
+			throw error;
+		}
 	}
 
-	private initializeOAuthClient() {
-		const oauthClientConfig = this.getOAuthClientConfig();
-		const clientMetadata = this.buildClientMetadata(
-			oauthClientConfig,
-			oauthClientConfig.runtimeClientId,
-		);
-
-		// Create Prisma-backed state store
-		const stateStore = {
+	/** Prisma-backed OAuth state store (login-flow PKCE/DPoP), shared by all clients. */
+	private buildStateStore() {
+		return {
 			set: async (key: string, state: NodeSavedState) => {
 				const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour TTL
 				await this.prisma.authState.upsert({
 					where: { key },
-					update: {
-						stateData: JSON.stringify(state),
-						expiresAt,
-					},
-					create: {
-						key,
-						stateData: JSON.stringify(state),
-						expiresAt,
-					},
+					update: { stateData: JSON.stringify(state), expiresAt },
+					create: { key, stateData: JSON.stringify(state), expiresAt },
 				});
 			},
 			get: async (key: string): Promise<NodeSavedState | undefined> => {
@@ -104,7 +135,6 @@ export class AuthService implements OnModuleInit {
 					where: { key },
 				});
 				if (!record) return undefined;
-				// Check if expired
 				if (record.expiresAt < new Date()) {
 					await this.prisma.authState.delete({ where: { key } });
 					return undefined;
@@ -115,13 +145,20 @@ export class AuthService implements OnModuleInit {
 				await this.prisma.authState.deleteMany({ where: { key } });
 			},
 		};
+	}
 
-		// Create Prisma-backed session store
-		const sessionStore = {
+	/**
+	 * Prisma-backed session store bound to a single device session row (keyed by
+	 * `slot` = AuthSession.id). The library always calls these with the account
+	 * DID (`sub`); we scope every operation to this one row so two devices for
+	 * the same DID never touch each other's tokens.
+	 */
+	private buildSessionStore(slot: string) {
+		return {
 			set: async (sub: string, session: NodeSavedSession) => {
 				const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 				await this.prisma.authSession.upsert({
-					where: { userDid: sub },
+					where: { id: slot },
 					update: {
 						sessionData: JSON.stringify(session),
 						// Writing the session (login or token rotation) is fresh
@@ -130,46 +167,86 @@ export class AuthService implements OnModuleInit {
 						lastUsedAt: new Date(),
 					},
 					create: {
+						id: slot,
 						userDid: sub,
 						sessionData: JSON.stringify(session),
+						kind: "oauth",
 						expiresAt,
 					},
 				});
 			},
 			get: async (sub: string): Promise<NodeSavedSession | undefined> => {
 				const record = await this.prisma.authSession.findUnique({
-					where: { userDid: sub },
+					where: { id: slot },
 				});
-				if (!record) return undefined;
+				// Guard against a slot/DID mismatch (e.g. a recycled cookie value).
+				if (!record || record.userDid !== sub) return undefined;
 				return JSON.parse(record.sessionData) as NodeSavedSession;
 			},
-			del: async (sub: string) => {
-				await this.prisma.authSession.deleteMany({ where: { userDid: sub } });
+			del: async () => {
+				await this.prisma.authSession.deleteMany({ where: { id: slot } });
+				this.oauthClients.delete(slot);
 			},
 		};
-
-		try {
-			// Public client configuration (no keyset for localhost/dev)
-			// The client_id is either http://localhost (dev) or the URL to our client-metadata.json (prod)
-			this.oauthClient = new NodeOAuthClient({
-				clientMetadata,
-				stateStore,
-				sessionStore,
-				requestLock: requestLocalLock,
-				// Allow HTTP for localhost development
-				allowHttp: oauthClientConfig.allowHttp,
-			});
-		} catch (error) {
-			this.logger.error("Failed to initialize OAuth client", error);
-			throw error;
-		}
 	}
 
-	getOAuthClient(): NodeOAuthClient {
-		if (!this.oauthClient) {
+	/** Session store for the login-only base client; it must never persist a session. */
+	private buildNoopSessionStore() {
+		return {
+			set: async () => {
+				throw new Error("base OAuth client must not store sessions");
+			},
+			get: async (): Promise<NodeSavedSession | undefined> => undefined,
+			del: async () => {},
+		};
+	}
+
+	private buildClient(
+		sessionStore: ReturnType<AuthService["buildSessionStore"]>,
+	): NodeOAuthClient {
+		if (!this.stateStore) {
+			this.stateStore = this.buildStateStore();
+		}
+		const oauthClientConfig = this.getOAuthClientConfig();
+		const clientMetadata = this.buildClientMetadata(
+			oauthClientConfig,
+			oauthClientConfig.runtimeClientId,
+		);
+		// Public client (no keyset). client_id is http://localhost (dev) or the
+		// URL to our client-metadata.json (prod).
+		return new NodeOAuthClient({
+			clientMetadata,
+			stateStore: this.stateStore,
+			sessionStore,
+			requestLock: requestLocalLock,
+			allowHttp: oauthClientConfig.allowHttp,
+		});
+	}
+
+	/** Get (or lazily build + cache) the OAuth client bound to one device session. */
+	private getClientForSlot(slot: string): NodeOAuthClient {
+		const existing = this.oauthClients.get(slot);
+		if (existing) {
+			// Bump recency for insertion-order eviction.
+			this.oauthClients.delete(slot);
+			this.oauthClients.set(slot, existing);
+			return existing;
+		}
+		const client = this.buildClient(this.buildSessionStore(slot));
+		if (this.oauthClients.size >= MAX_CACHED_OAUTH_CLIENTS) {
+			const oldest = this.oauthClients.keys().next().value;
+			if (oldest) this.oauthClients.delete(oldest);
+		}
+		this.oauthClients.set(slot, client);
+		return client;
+	}
+
+	/** Client for starting the login flow (authorize). Writes no session. */
+	private getBaseClient(): NodeOAuthClient {
+		if (!this.baseClient) {
 			throw new Error("OAuth client not initialized");
 		}
-		return this.oauthClient;
+		return this.baseClient;
 	}
 
 	/**
@@ -178,7 +255,7 @@ export class AuthService implements OnModuleInit {
 	 * @returns The authorization URL to redirect the user to
 	 */
 	async authorize(handle: string, appState?: OAuthAppState): Promise<string> {
-		const client = this.getOAuthClient();
+		const client = this.getBaseClient();
 		const url = await client.authorize(handle, {
 			scope: OAUTH_SCOPE,
 			state: this.serializeOAuthAppState(appState),
@@ -192,7 +269,7 @@ export class AuthService implements OnModuleInit {
 	 * @returns The authorization URL to redirect the user to the PDS
 	 */
 	async authorizeWithPds(appState?: OAuthAppState): Promise<string> {
-		const client = this.getOAuthClient();
+		const client = this.getBaseClient();
 		const pdsUrl = this.configService.get<string>("PDS_URL");
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
@@ -206,14 +283,20 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/**
-	 * Handle the OAuth callback
+	 * Handle the OAuth callback.
+	 *
+	 * Mints a fresh session slot (the opaque cookie/Bearer value) up front and
+	 * completes the flow on a client bound to that slot, so this login writes its
+	 * own AuthSession row instead of overwriting any other device's.
+	 *
 	 * @param params - URL search params from the callback
-	 * @returns The session with the user's DID
+	 * @returns The restored session, the OAuth app state, and the new session id
 	 */
 	async callback(params: URLSearchParams) {
-		const client = this.getOAuthClient();
+		const sessionId = randomUUID();
+		const client = this.getClientForSlot(sessionId);
 		const result = await client.callback(params);
-		return result;
+		return { ...result, sessionId };
 	}
 
 	parseOAuthAppState(rawState: string | null | undefined): OAuthAppState {
@@ -252,31 +335,54 @@ export class AuthService implements OnModuleInit {
 	 * @returns The restored session or undefined if not found
 	 */
 	async restore(did: string) {
-		const record = await this.prisma.authSession.findUnique({
-			where: { userDid: did },
+		// Background work (deletion, imports) acts on the repo, not a specific
+		// device — restore the freshest live session for this DID.
+		const record = await this.prisma.authSession.findFirst({
+			where: { userDid: did, expiresAt: { gt: new Date() } },
+			orderBy: { lastUsedAt: "desc" },
 		});
+		if (!record) return undefined;
+		return this.restoreBySession(record);
+	}
 
-		if (record?.kind === "credential") {
-			const inFlight = this.credentialRestoreInFlight.get(did);
+	/**
+	 * Restore the session for a single device, given its AuthSession row.
+	 *
+	 * This is the per-request path (the guard resolves the row from the cookie /
+	 * Bearer token, then restores exactly that device's session). Keyed by the
+	 * row's `id` (slot) so each device's OAuth client — and its token family —
+	 * stays isolated. See {@link oauthClients}.
+	 */
+	async restoreBySession(record: {
+		id: string;
+		userDid: string;
+		kind: string;
+		sessionData: string;
+	}) {
+		if (record.kind === "credential") {
+			const inFlight = this.credentialRestoreInFlight.get(record.id);
 			if (inFlight) {
 				return inFlight;
 			}
 			const promise = this.restoreCredentialSession(
-				did,
+				record.id,
+				record.userDid,
 				record.sessionData,
 			).finally(() => {
-				this.credentialRestoreInFlight.delete(did);
+				this.credentialRestoreInFlight.delete(record.id);
 			});
-			this.credentialRestoreInFlight.set(did, promise);
+			this.credentialRestoreInFlight.set(record.id, promise);
 			return promise;
 		}
 
-		const client = this.getOAuthClient();
+		const client = this.getClientForSlot(record.id);
 		try {
-			const session = await client.restore(did);
-			return session;
+			return await client.restore(record.userDid);
 		} catch (error) {
-			this.logger.warn(`Failed to restore session for ${did}`, error);
+			this.logger.warn(
+				`Failed to restore session ${record.id} for ${record.userDid}`,
+				error,
+			);
 			return undefined;
 		}
 	}
@@ -415,17 +521,23 @@ export class AuthService implements OnModuleInit {
 		accessJwt: string;
 		refreshJwt: string;
 		pdsUrl: string;
-	}): Promise<void> {
-		await this.persistCredentialSession(params.did, params.pdsUrl, {
+	}): Promise<string> {
+		const sessionId = randomUUID();
+		await this.persistCredentialSession(sessionId, params.did, params.pdsUrl, {
 			did: params.did,
 			handle: params.handle,
 			accessJwt: params.accessJwt,
 			refreshJwt: params.refreshJwt,
 			active: true,
 		});
+		return sessionId;
 	}
 
-	private async restoreCredentialSession(did: string, sessionDataJson: string) {
+	private async restoreCredentialSession(
+		slot: string,
+		did: string,
+		sessionDataJson: string,
+	) {
 		const stored = JSON.parse(sessionDataJson) as AtpSessionData & {
 			pdsUrl?: string;
 		};
@@ -439,12 +551,15 @@ export class AuthService implements OnModuleInit {
 				// Persist rotated tokens whenever the agent refreshes them.
 				if (refreshed && (evt === "create" || evt === "update")) {
 					this.logger.debug(`Credential session ${evt} persisted for ${did}`);
-					void this.persistCredentialSession(did, pdsUrl, refreshed);
+					void this.persistCredentialSession(slot, did, pdsUrl, refreshed);
 				} else if (evt === "expired") {
 					// The refresh token itself is dead (14-day TTL or revoked
-					// upstream) — there's nothing left to restore, so drop it.
-					this.logger.warn(`Credential session expired for ${did}; revoking`);
-					void this.revoke(did);
+					// upstream) — there's nothing left to restore, so drop just this
+					// device's session (not every device for the DID).
+					this.logger.warn(
+						`Credential session expired for ${did}; revoking device ${slot}`,
+					);
+					void this.revokeBySessionId(slot);
 				} else if (evt === "create-failed") {
 					// A transient refresh failure (e.g. a token-rotation race between
 					// concurrent requests). Do NOT destroy the session — the winning
@@ -469,6 +584,7 @@ export class AuthService implements OnModuleInit {
 	}
 
 	private async persistCredentialSession(
+		slot: string,
 		did: string,
 		pdsUrl: string,
 		session: AtpSessionData,
@@ -483,7 +599,7 @@ export class AuthService implements OnModuleInit {
 		});
 		const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 		await this.prisma.authSession.upsert({
-			where: { userDid: did },
+			where: { id: slot },
 			update: {
 				sessionData: data,
 				kind: "credential",
@@ -493,6 +609,7 @@ export class AuthService implements OnModuleInit {
 				lastUsedAt: new Date(),
 			},
 			create: {
+				id: slot,
 				userDid: did,
 				sessionData: data,
 				kind: "credential",
@@ -506,33 +623,29 @@ export class AuthService implements OnModuleInit {
 	 * A DID may resolve through Bluesky AppView even when the repo has never
 	 * created app.bsky.actor.profile/self, which should not count as linked.
 	 */
-	async hasBlueskyProfile(did: string): Promise<boolean> {
+	async hasBlueskyProfile(
+		session:
+			| {
+					did: string;
+			  }
+			| null
+			| undefined,
+	): Promise<boolean> {
+		if (!session?.did) {
+			return false;
+		}
 		try {
-			const session = await this.getRestoredSessionQuietly(did);
-			if (!session) {
-				return false;
-			}
-
 			const agent = new Agent(
 				session as unknown as ConstructorParameters<typeof Agent>[0],
 			);
 			await agent.com.atproto.repo.getRecord({
-				repo: did,
+				repo: session.did,
 				collection: "app.bsky.actor.profile",
 				rkey: "self",
 			});
 			return true;
 		} catch {
 			return false;
-		}
-	}
-
-	private async getRestoredSessionQuietly(did: string) {
-		const client = this.getOAuthClient();
-		try {
-			return await client.restore(did);
-		} catch {
-			return undefined;
 		}
 	}
 
@@ -573,16 +686,8 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/**
-	 * Get session record by user DID. Used after OAuth callback to get opaque id for cookie.
-	 */
-	async getSessionByUserDid(userDid: string) {
-		return this.prisma.authSession.findUnique({
-			where: { userDid },
-		});
-	}
-
-	/**
-	 * Revoke a user's session by DID (e.g. admin or bulk revoke)
+	 * Revoke ALL of a user's sessions by DID (every device). Used on account
+	 * deletion / bulk revoke.
 	 * @param did - User's DID
 	 */
 	async revoke(did: string) {
