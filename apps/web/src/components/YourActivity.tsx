@@ -6,7 +6,7 @@ import {
 	PopoverTrigger,
 } from "#/components/ui/popover";
 import { useAuth } from "#/lib/auth-context";
-import { formatDateTime } from "#/lib/date-utils";
+import { datetimeLocalToISO, formatDateTime } from "#/lib/date-utils";
 
 interface WatchHistoryEntry {
 	id: string;
@@ -62,7 +62,7 @@ function AddToShelfButton({
 	};
 
 	const handleConfirm = () => {
-		onConfirm(watchedAt);
+		onConfirm(datetimeLocalToISO(watchedAt, userTimezone));
 		setOpen(false);
 	};
 
