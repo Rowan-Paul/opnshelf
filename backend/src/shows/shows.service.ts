@@ -1026,6 +1026,7 @@ export class ShowsService {
 			update: {
 				uri,
 				cid,
+				showId: normalizedShowId,
 				seasonNumber,
 				episodeNumber,
 				watchedDate: new Date(watchedAt),

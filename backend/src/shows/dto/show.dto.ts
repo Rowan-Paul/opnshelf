@@ -3,6 +3,7 @@ import { Type } from "class-transformer";
 import {
 	IsDateString,
 	IsInt,
+	IsNumberString,
 	IsOptional,
 	IsString,
 	Max,
@@ -394,7 +395,8 @@ export class SearchShowsResultsDto {
 
 export class MarkEpisodeWatchedDto {
 	@ApiProperty({ description: "TMDB show ID" })
-	@IsString()
+	// Reject composite ids like "117648-5-3" before they're written to the PDS
+	@IsNumberString({ no_symbols: true })
 	showId: string;
 
 	@ApiProperty({ description: "TMDB season number" })
@@ -634,7 +636,7 @@ export class ReleaseCalendarQueryDto {
 
 export class MarkSeasonWatchedDto {
 	@ApiProperty({ description: "TMDB show ID" })
-	@IsString()
+	@IsNumberString({ no_symbols: true })
 	showId: string;
 
 	@ApiProperty({ description: "TMDB season number" })
@@ -653,7 +655,7 @@ export class MarkSeasonWatchedDto {
 
 export class MarkShowWatchedDto {
 	@ApiProperty({ description: "TMDB show ID" })
-	@IsString()
+	@IsNumberString({ no_symbols: true })
 	showId: string;
 
 	@ApiPropertyOptional({

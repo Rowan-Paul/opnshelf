@@ -214,7 +214,10 @@ function Dashboard() {
 			// Episode type
 			return {
 				...base,
-				id: `${item.showId}-${item.seasonNumber}-${item.episodeNumber}`, // Unique ID for each episode
+				// id feeds MediaCard's episode URL — must be the bare TMDB show id,
+				// or the episode page marks watched with "117648-5-3" as showId.
+				// Uniqueness is handled by base.key.
+				id: item.showId,
 				showId: item.showId,
 				title: item.showTitle, // Use show title for URL building
 				displayTitle:

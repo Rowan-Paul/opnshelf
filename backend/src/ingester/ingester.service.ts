@@ -706,14 +706,14 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const existingShow = await this.showsService.getShowByTMDBId(
-				episodeRecord.showId,
-			);
+			// Older PDS records may carry a composite id like "117648-5-3";
+			// TMDB resolves it to the bare show id, which we use everywhere below.
+			let showId = episodeRecord.showId;
+			const existingShow = await this.showsService.getShowByTMDBId(showId);
 			if (!existingShow) {
 				try {
-					const showData = await this.showsService.getShowDetails(
-						episodeRecord.showId,
-					);
+					const showData = await this.showsService.getShowDetails(showId);
+					showId = showData.id.toString();
 					await this.showsService.upsertShow(showData);
 				} catch (err) {
 					// Transient TMDB outage → rethrow for retry/redelivery; a genuine
@@ -722,17 +722,17 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 						throw err;
 					}
 					this.logger.error(
-						`Failed to fetch show ${episodeRecord.showId} from TMDB, skipping record`,
+						`Failed to fetch show ${showId} from TMDB, skipping record`,
 						err,
 					);
 					return;
 				}
 			}
 			await this.showsService
-				.syncShowMetadata(episodeRecord.showId)
+				.syncShowMetadata(showId)
 				.catch((err) =>
 					this.logger.warn(
-						`Failed to sync metadata for show ${episodeRecord.showId}: ${err instanceof Error ? err.message : String(err)}`,
+						`Failed to sync metadata for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
 					),
 				);
 
@@ -743,7 +743,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					rkey: evt.rkey,
 					cid: evt.cid ?? "",
 					userDid: evt.did,
-					showId: episodeRecord.showId,
+					showId,
 					seasonNumber: episodeRecord.seasonNumber,
 					episodeNumber: episodeRecord.episodeNumber,
 					watchedDate: new Date(episodeRecord.watchedAt),
