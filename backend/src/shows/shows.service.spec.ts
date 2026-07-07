@@ -488,6 +488,99 @@ describe("ShowsService", () => {
 			expect(result.page).toBe(1);
 			expect(result.pageSize).toBe(8);
 		});
+
+		it("anchors on the most recent watch, so a rewatch of an early episode moves up-next back (issue #158 semantics)", async () => {
+			// The user is deep into the show (watched through S3E5), but their
+			// most recent watch is a rewatch of S1E2. The anchor query orders by
+			// watchedDate desc with distinct per show, so the DB hands back the
+			// rewatched episode as the anchor — codified here as the intended
+			// behavior: up-next follows the rewatch, not the furthest progress.
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{
+					id: "tracked-rewatch",
+					showId: "show-1",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					watchedDate: new Date("2024-06-01T00:00:00.000Z"),
+					createdAt: new Date("2024-06-01T00:00:00.000Z"),
+					show: {
+						showId: "show-1",
+						title: "Show One",
+						posterPath: "/show-one.jpg",
+						backdropPath: null,
+						firstAirYear: 2024,
+						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
+						overview: "Overview 1",
+						colors: { primary: "#111111" },
+					},
+				},
+			]);
+
+			// Next aired episode after the S1E2 anchor is S1E3.
+			mockPrismaService.$queryRaw = vi.fn().mockResolvedValue([
+				{
+					showId: "show-1",
+					seasonNumber: 1,
+					episodeNumber: 3,
+					name: "Episode 3",
+					airDate: new Date("2024-01-11T00:00:00.000Z"),
+					overview: "Right after the rewatch",
+					stillPath: "/still-3.jpg",
+				},
+			]);
+
+			mockPrismaService.episode = {
+				...mockPrismaService.episode,
+				groupBy: vi.fn().mockResolvedValue([{ showId: "show-1", _count: 30 }]),
+			};
+
+			// Distinct watched episodes include S1E3 (already seen on the first
+			// run through) — it must still come back as up-next.
+			mockPrismaService.trackedEpisode.groupBy = vi.fn().mockResolvedValue([
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 2 },
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 3 },
+				{ showId: "show-1", seasonNumber: 2, episodeNumber: 1 },
+				{ showId: "show-1", seasonNumber: 3, episodeNumber: 5 },
+			]);
+
+			mockPrismaService.show.findUnique.mockResolvedValue({
+				posterPath: "/show-one.jpg",
+				colors: { primary: "#111111" },
+			});
+
+			const result = await service.getUserUpNext("did:plc:abc123");
+
+			// The anchor query must select the newest watch per show, not the
+			// furthest episode: watchedDate desc first, distinct on showId.
+			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					orderBy: [
+						{ watchedDate: "desc" },
+						{ createdAt: "desc" },
+						{ seasonNumber: "desc" },
+						{ episodeNumber: "desc" },
+					],
+					distinct: ["showId"],
+				}),
+			);
+
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0]).toMatchObject({
+				showId: "show-1",
+				episodesWatched: 5,
+				totalEpisodes: 30,
+				// Anchored on the rewatched early episode…
+				lastWatched: { seasonNumber: 1, episodeNumber: 2 },
+				// …and up-next is its immediate successor, even though the user
+				// already watched it on the first run through the show.
+				nextEpisode: {
+					seasonNumber: 1,
+					episodeNumber: 3,
+					name: "Episode 3",
+				},
+			});
+		});
 	});
 
 	describe("getUserReleaseCalendar", () => {
