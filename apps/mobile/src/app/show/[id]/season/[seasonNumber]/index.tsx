@@ -22,6 +22,7 @@ import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
+import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -161,6 +162,11 @@ export default function SeasonDetailScreen() {
 							showId={id}
 							seasonNumber={seasonNum}
 							episodeCount={totalEpisodes}
+						/>
+						<WatchlistFavoritesButtons
+							mediaType="show"
+							mediaId={id}
+							seasonNumber={seasonNum}
 						/>
 						<RatingButton
 							mediaType="show"

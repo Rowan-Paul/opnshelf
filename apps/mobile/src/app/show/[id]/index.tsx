@@ -18,6 +18,7 @@ import { RatingButton } from "@/components/detail/RatingButton";
 import { SeasonCard } from "@/components/detail/SeasonCard";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
+import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -98,6 +99,8 @@ export default function ShowDetailScreen() {
 						showId={id}
 						episodeCount={data.number_of_episodes}
 					/>
+
+					<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
 
 					<View className="gap-2">
 						<RatingButton mediaType="show" mediaId={id} />

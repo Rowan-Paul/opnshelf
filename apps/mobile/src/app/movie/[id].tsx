@@ -18,6 +18,7 @@ import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
+import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import {
@@ -82,6 +83,8 @@ export default function MovieDetailScreen() {
 					</DetailHero>
 
 					<MediaTrackingActions mediaType="movie" movieId={id} />
+
+					<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
 
 					<View className="gap-2">
 						<RatingButton mediaType="movie" mediaId={id} />

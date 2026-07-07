@@ -24,6 +24,7 @@ import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
+import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -175,6 +176,12 @@ export default function EpisodeDetailScreen() {
 						<MediaTrackingActions
 							mediaType="episode"
 							showId={id}
+							seasonNumber={seasonNum}
+							episodeNumber={episodeNum}
+						/>
+						<WatchlistFavoritesButtons
+							mediaType="show"
+							mediaId={id}
 							seasonNumber={seasonNum}
 							episodeNumber={episodeNum}
 						/>
