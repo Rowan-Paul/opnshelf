@@ -4,11 +4,13 @@ import {
 	listsControllerCreateListMutation,
 	listsControllerGetListOptions,
 	listsControllerGetListQueryKey,
+	listsControllerGetPublicUserListsQueryKey,
 	listsControllerGetUserListsOptions,
 	listsControllerGetUserListsQueryKey,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "#/lib/auth-context";
 
 // Get all lists for the current user
 export function useUserLists() {
@@ -30,6 +32,7 @@ export function useList(slug: string) {
 // Create a new list mutation
 export function useCreateList() {
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
 	const userListsKey = listsControllerGetUserListsQueryKey();
 
 	return useMutation({
@@ -65,6 +68,18 @@ export function useCreateList() {
 				queryKey: userListsKey,
 				type: "all",
 			});
+
+			// The profile pages read from the PUBLIC list queries, which are keyed
+			// by the owner's did and are separate from the authenticated
+			// `getUserLists` cache above. Invalidate them too so the lists
+			// overview refreshes after creating a list without a manual reload.
+			if (user?.did) {
+				await queryClient.invalidateQueries({
+					queryKey: listsControllerGetPublicUserListsQueryKey({
+						path: { userDid: user.did },
+					}),
+				});
+			}
 		},
 		onError: (error) => {
 			toast.error(
