@@ -9,6 +9,7 @@ import {
 	useToggleReviewLike,
 } from "#/lib/hooks/useReviews";
 import ConfirmDialog from "./ConfirmDialog";
+import { UserAvatar } from "./following/UserAvatar";
 import { MarkdownContent } from "./MarkdownContent";
 
 interface CommunityReviewsProps {
@@ -33,6 +34,7 @@ function ReviewCard({
 	seasonNumber,
 	episodeNumber,
 	isOwnReview,
+	isAuthenticated,
 }: {
 	review: {
 		id: string;
@@ -53,6 +55,7 @@ function ReviewCard({
 	seasonNumber?: number;
 	episodeNumber?: number;
 	isOwnReview: boolean;
+	isAuthenticated: boolean;
 }) {
 	const { likeReview, unlikeReview, isLikePending, isUnlikePending } =
 		useToggleReviewLike({
@@ -88,9 +91,12 @@ function ReviewCard({
 
 	const isPending = isLikePending || isUnlikePending;
 	const isLiked = review.hasLiked;
+	// Mirrors mobile's `canLike`: only signed-in viewers can toggle a like, and
+	// never on your own review — logged-out viewers just see the read-only count.
+	const canLike = isAuthenticated && !isOwnReview;
 
 	const handleToggleLike = () => {
-		if (isOwnReview || isPending) return;
+		if (!canLike || isPending) return;
 		if (isLiked) {
 			unlikeReview(review.id);
 		} else {
@@ -106,8 +112,6 @@ function ReviewCard({
 	};
 
 	const displayName = review.userDisplayName || review.userHandle;
-	const avatarUrl =
-		review.userAvatar || `https://i.pravatar.cc/150?u=${review.userDid}`;
 	const cover = posterUrl(review.posterPath);
 
 	// The canonical public review page (#115) may not exist as a registered
@@ -142,11 +146,10 @@ function ReviewCard({
 					params={{ handle: review.userHandle }}
 					className="flex min-w-0 items-center gap-3"
 				>
-					<img
-						src={avatarUrl}
+					<UserAvatar
+						src={review.userAvatar}
 						alt={displayName}
-						className="size-10 shrink-0 rounded-full object-cover"
-						loading="lazy"
+						className="size-10 shrink-0 rounded-full"
 					/>
 					<div className="min-w-0">
 						<div className="flex items-center gap-2">
@@ -216,15 +219,21 @@ function ReviewCard({
 				<button
 					type="button"
 					onClick={handleToggleLike}
-					disabled={isOwnReview || isPending}
+					disabled={!canLike || isPending}
 					className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors ${
-						isOwnReview
+						!canLike
 							? "cursor-not-allowed text-(--foreground-muted) opacity-50"
 							: isLiked
 								? "text-red-500 hover:bg-red-500/10"
 								: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--accent)"
 					}`}
-					aria-label={isLiked ? "Unlike review" : "Like review"}
+					aria-label={
+						!isAuthenticated
+							? `${review.likeCount} likes`
+							: isLiked
+								? "Unlike review"
+								: "Like review"
+					}
 				>
 					{isPending ? (
 						<Loader2 className="size-4 animate-spin" />
@@ -348,6 +357,7 @@ export default function CommunityReviews({
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
 							isOwnReview={true}
+							isAuthenticated={isAuthenticated}
 						/>
 					))}
 					{communityReviews.map((review) => (
@@ -358,6 +368,7 @@ export default function CommunityReviews({
 							mediaId={mediaId}
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
+							isAuthenticated={isAuthenticated}
 							isOwnReview={false}
 						/>
 					))}
