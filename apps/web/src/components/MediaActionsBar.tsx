@@ -3,6 +3,7 @@ import {
 	Check,
 	Disc,
 	Heart,
+	ListPlus,
 	Loader2,
 	MessageSquarePlus,
 	Share2,
@@ -18,6 +19,7 @@ import {
 import { useNote } from "#/lib/hooks/useNotes";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
 import AddToLibraryDialog from "./AddToLibraryDialog";
+import ManageListsDialog from "./ManageListsDialog";
 import { NoteDialog } from "./NoteDialog";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -41,6 +43,7 @@ export default function MediaActionsBar({
 	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 	const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+	const [listsDialogOpen, setListsDialogOpen] = useState(false);
 
 	const { data: ownedFormats } = useLibraryForItem({
 		mediaType,
@@ -50,12 +53,16 @@ export default function MediaActionsBar({
 	});
 	const ownedCount = ownedFormats?.length ?? 0;
 
-	const { isInWatchlist, isInFavorites } = useListItemStatus({
-		mediaType,
-		mediaId,
-		seasonNumber,
-		episodeNumber,
-	});
+	const { isInWatchlist, isInFavorites, customListsWithStatus } =
+		useListItemStatus({
+			mediaType,
+			mediaId,
+			seasonNumber,
+			episodeNumber,
+		});
+	const customListCount = (customListsWithStatus ?? []).filter(
+		(list) => list.isInList,
+	).length;
 	const { toggleWatchlist, toggleFavorites, activeListAction, isPending } =
 		useListActions({ mediaType, mediaId, seasonNumber, episodeNumber });
 
@@ -197,6 +204,23 @@ export default function MediaActionsBar({
 					<MessageSquarePlus className="size-5" />
 				</button>
 
+				{/* Lists Button */}
+				<button
+					type="button"
+					onClick={() => setListsDialogOpen(true)}
+					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+						customListCount > 0
+							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={customListCount > 0 ? "Edit lists" : "Add to a list"}
+				>
+					<ListPlus className="size-5" />
+					{customListCount > 0 ? (
+						<span className="text-sm">Lists · {customListCount}</span>
+					) : null}
+				</button>
+
 				{/* Share Button */}
 				<button
 					type="button"
@@ -231,6 +255,14 @@ export default function MediaActionsBar({
 			<AddToLibraryDialog
 				open={libraryDialogOpen}
 				onOpenChange={setLibraryDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
+			<ManageListsDialog
+				open={listsDialogOpen}
+				onOpenChange={setListsDialogOpen}
 				mediaType={mediaType}
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}
