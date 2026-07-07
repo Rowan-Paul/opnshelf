@@ -390,12 +390,13 @@ export class UsersService {
 
 	/**
 	 * Compute the derived stats shown in the profile header: a 30-day watch
-	 * activity graph, the most-watched show, and the current year's watch count.
-	 * A "watch" is one tracked row with status `watched` and a `watchedDate` —
-	 * rewatches are counted, watchlist adds are not (see the Watch term in
-	 * CONTEXT.md). Day/year windows are bucketed in the profile owner's own
-	 * timezone, reusing the same activity logic the dashboard renders so both
-	 * surfaces agree.
+	 * activity graph, the most-watched show over the trailing 30 days, and the
+	 * current year's watch count. A "watch" is one tracked row with status
+	 * `watched` and a `watchedDate` — rewatches are counted, watchlist adds are
+	 * not (see the Watch term in CONTEXT.md). Day/year windows are bucketed in
+	 * the profile owner's own timezone, reusing the same activity logic the
+	 * dashboard renders so both surfaces agree; the most-watched show uses a
+	 * rolling 30-day cutoff from now, so it doesn't need timezone bucketing.
 	 */
 	private async getProfileStats(
 		did: string,
@@ -431,7 +432,11 @@ export class UsersService {
 			`),
 			this.prisma.trackedEpisode.groupBy({
 				by: ["showId"],
-				where: { userDid: did, status: "watched" },
+				where: {
+					userDid: did,
+					status: "watched",
+					watchedDate: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+				},
 				_count: { showId: true },
 				_max: { watchedDate: true },
 				orderBy: [

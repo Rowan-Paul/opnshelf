@@ -215,7 +215,7 @@ export class MostWatchedShowDto {
 
 	@ApiProperty({
 		description:
-			"Number of logged episode watches for this show (rewatches included)",
+			"Number of logged episode watches for this show in the past 30 days (rewatches included)",
 	})
 	episodeWatchCount!: number;
 }
@@ -288,7 +288,7 @@ export class PublicUserProfileDto {
 
 	@ApiProperty({
 		description:
-			"The show with the most logged episode watches, or null if none tracked",
+			"The show with the most logged episode watches in the past 30 days, or null if none tracked",
 		nullable: true,
 		type: MostWatchedShowDto,
 	})
