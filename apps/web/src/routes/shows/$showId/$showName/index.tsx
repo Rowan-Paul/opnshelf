@@ -249,7 +249,7 @@ function ShowDetailPage() {
 			role: actor.character || "",
 			photo: actor.profile_path
 				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-				: `https://i.pravatar.cc/150?u=${actor.id}`,
+				: undefined,
 		})) || [];
 
 	const crew =
@@ -259,7 +259,7 @@ function ShowDetailPage() {
 			role: person.job || "",
 			photo: person.profile_path
 				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-				: `https://i.pravatar.cc/150?u=${person.id}`,
+				: undefined,
 		})) || [];
 
 	const similarShows =

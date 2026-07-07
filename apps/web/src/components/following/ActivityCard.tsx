@@ -1,6 +1,6 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
-import { Clock, MoreHorizontal } from "lucide-react";
+import { Clock } from "lucide-react";
 import FeedItemActions from "#/components/FeedItemActions";
 import StarRating from "#/components/StarRating";
 import { toSlug } from "#/lib/slug";
@@ -131,13 +131,6 @@ export function ActivityCard({
 								})}
 							</div>
 						</div>
-						<button
-							type="button"
-							className="btn btn-ghost h-8 w-8 shrink-0 p-0 text-(--foreground-muted)"
-							aria-label="More options"
-						>
-							<MoreHorizontal className="size-4" />
-						</button>
 					</div>
 
 					{/* Episode identifier */}

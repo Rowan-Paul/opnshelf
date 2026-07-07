@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import { buildPersonUrl } from "#/lib/url-utils";
 
 interface Person {
 	id: number;
 	name: string;
 	role: string;
-	photo: string;
+	photo?: string;
 }
 
 interface PersonGridProps {
@@ -52,11 +53,10 @@ export default function PersonGrid({
 							to={buildPersonUrl(person.id, person.name)}
 							className="card card-interactive flex items-center gap-3 p-3"
 						>
-							<img
+							<UserAvatar
 								src={person.photo}
 								alt={person.name}
-								className="h-12 w-12 rounded-full object-cover"
-								loading="lazy"
+								className="h-12 w-12 rounded-full"
 							/>
 							<div className="min-w-0">
 								<p className="truncate font-medium text-sm">{person.name}</p>
