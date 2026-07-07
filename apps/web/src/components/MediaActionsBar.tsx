@@ -7,6 +7,7 @@ import {
 	Loader2,
 	MessageSquarePlus,
 	Share2,
+	Star,
 	StickyNote,
 } from "lucide-react";
 import { useState } from "react";
@@ -17,11 +18,14 @@ import {
 	useListItemStatus,
 } from "#/lib/hooks";
 import { useNote } from "#/lib/hooks/useNotes";
+import { useRating } from "#/lib/hooks/useRatings";
 import { useMediaReviews } from "#/lib/hooks/useReviews";
 import AddToLibraryDialog from "./AddToLibraryDialog";
 import ManageListsDialog from "./ManageListsDialog";
 import { NoteDialog } from "./NoteDialog";
+import { RatingDialog } from "./RatingDialog";
 import { ReviewDialog } from "./ReviewDialog";
+import { ratingToStars } from "./StarRating";
 
 interface MediaActionsBarProps {
 	mediaType: "movie" | "show";
@@ -41,6 +45,7 @@ export default function MediaActionsBar({
 
 	const [shareSuccess, setShareSuccess] = useState(false);
 	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+	const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
 	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 	const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
 	const [listsDialogOpen, setListsDialogOpen] = useState(false);
@@ -73,6 +78,14 @@ export default function MediaActionsBar({
 		seasonNumber,
 		episodeNumber,
 	});
+	const { data: ratingRecord } = useRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const rating = ratingRecord?.rating ?? 0;
 	const { data: reviews } = useMediaReviews({
 		mediaType,
 		mediaId,
@@ -173,6 +186,23 @@ export default function MediaActionsBar({
 					/>
 				</button>
 
+				{/* Rate Button */}
+				<button
+					type="button"
+					onClick={() => setRatingDialogOpen(true)}
+					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+						rating > 0
+							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					}`}
+					aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
+				>
+					<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
+					{rating > 0 ? (
+						<span className="text-sm">{ratingToStars(rating).toFixed(1)}</span>
+					) : null}
+				</button>
+
 				{/* Library ("I own this") Button */}
 				<button
 					type="button"
@@ -239,6 +269,15 @@ export default function MediaActionsBar({
 			<NoteDialog
 				open={noteDialogOpen}
 				onOpenChange={setNoteDialogOpen}
+				mediaType={mediaType}
+				mediaId={mediaId}
+				seasonNumber={seasonNumber}
+				episodeNumber={episodeNumber}
+			/>
+			<RatingDialog
+				open={ratingDialogOpen}
+				onOpenChange={setRatingDialogOpen}
+				userDid={userDid}
 				mediaType={mediaType}
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}
