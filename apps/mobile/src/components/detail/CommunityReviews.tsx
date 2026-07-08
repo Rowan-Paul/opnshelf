@@ -366,7 +366,11 @@ export function CommunityReviews({
 		setEditing(review);
 		setEditorVisible(true);
 	};
-	const handleSave = (input: { title: string; markdown: string }) => {
+	const handleSave = (input: {
+		title: string;
+		markdown: string;
+		mirrorToBlog: boolean;
+	}) => {
 		if (editing) updateReview(editing.id, input);
 		else createReview(input);
 		setEditorVisible(false);
@@ -442,6 +446,7 @@ export function CommunityReviews({
 				isEditing={!!editing}
 				initialTitle={editing?.title ?? ""}
 				initialMarkdown={editing?.markdown ?? ""}
+				initialMirrorToBlog={editing?.mirrorToBlog ?? true}
 				onSave={handleSave}
 				onDelete={editing ? handleDeleteFromEditor : undefined}
 				isSaving={isSavingReview}

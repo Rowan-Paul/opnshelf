@@ -114,6 +114,9 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 					});
 					l.selectionUpdated((selCtx) => {
 						const view = selCtx.get(editorViewCtx);
+						// `updateId` and other setup transactions fire selectionUpdated
+						// before the view's state is attached — bail until it exists.
+						if (!view?.state) return;
 						const sel = view.state.selection;
 						const wrap = wrapperRef.current?.getBoundingClientRect();
 						if (sel.empty || !view.hasFocus() || !wrap) {

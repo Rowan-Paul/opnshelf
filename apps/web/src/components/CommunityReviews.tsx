@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Heart, Loader2, MessageSquare, Trash2 } from "lucide-react";
+import { Heart, Loader2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
@@ -11,6 +11,7 @@ import {
 import ConfirmDialog from "./ConfirmDialog";
 import { UserAvatar } from "./following/UserAvatar";
 import { MarkdownContent } from "./MarkdownContent";
+import { ReviewDialog } from "./ReviewDialog";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -48,6 +49,7 @@ function ReviewCard({
 		userAvatar?: string;
 		likeCount: number;
 		hasLiked: boolean;
+		mirrorToBlog?: boolean;
 		createdAt: string;
 	};
 	mediaType: "movie" | "show";
@@ -74,6 +76,7 @@ function ReviewCard({
 	});
 
 	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
 
 	// When linked-to via #review-<id> (e.g. from the profile reviews list),
 	// scroll this card into view and flash it. The card only renders once the
@@ -169,19 +172,29 @@ function ReviewCard({
 					</div>
 				</Link>
 				{isOwnReview && (
-					<button
-						type="button"
-						onClick={() => setConfirmOpen(true)}
-						disabled={deleteMutation.isPending}
-						className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-						aria-label="Delete review"
-					>
-						{deleteMutation.isPending ? (
-							<Loader2 className="size-3.5 animate-spin" />
-						) : (
-							<Trash2 className="size-3.5" />
-						)}
-					</button>
+					<div className="flex shrink-0 items-center gap-1">
+						<button
+							type="button"
+							onClick={() => setEditOpen(true)}
+							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+							aria-label="Edit review"
+						>
+							<Pencil className="size-3.5" />
+						</button>
+						<button
+							type="button"
+							onClick={() => setConfirmOpen(true)}
+							disabled={deleteMutation.isPending}
+							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+							aria-label="Delete review"
+						>
+							{deleteMutation.isPending ? (
+								<Loader2 className="size-3.5 animate-spin" />
+							) : (
+								<Trash2 className="size-3.5" />
+							)}
+						</button>
+					</div>
 				)}
 			</div>
 
@@ -246,22 +259,39 @@ function ReviewCard({
 			</div>
 
 			{isOwnReview && (
-				<ConfirmDialog
-					open={confirmOpen}
-					onOpenChange={setConfirmOpen}
-					title="Delete review?"
-					description={
-						<>
-							This permanently deletes your review{" "}
-							<strong>{review.title}</strong> from your shelf. This action
-							cannot be undone.
-						</>
-					}
-					confirmLabel="Delete review"
-					pendingLabel="Deleting..."
-					onConfirm={handleDelete}
-					isPending={deleteMutation.isPending}
-				/>
+				<>
+					<ReviewDialog
+						open={editOpen}
+						onOpenChange={setEditOpen}
+						mediaType={mediaType}
+						mediaId={mediaId}
+						seasonNumber={seasonNumber}
+						episodeNumber={episodeNumber}
+						review={{
+							id: review.id,
+							title: review.title,
+							markdown: review.markdown,
+							mirrorToBlog: review.mirrorToBlog,
+						}}
+						scrollTargetId={`review-${review.id}`}
+					/>
+					<ConfirmDialog
+						open={confirmOpen}
+						onOpenChange={setConfirmOpen}
+						title="Delete review?"
+						description={
+							<>
+								This permanently deletes your review{" "}
+								<strong>{review.title}</strong> from your shelf. This action
+								cannot be undone.
+							</>
+						}
+						confirmLabel="Delete review"
+						pendingLabel="Deleting..."
+						onConfirm={handleDelete}
+						isPending={deleteMutation.isPending}
+					/>
+				</>
 			)}
 		</div>
 	);

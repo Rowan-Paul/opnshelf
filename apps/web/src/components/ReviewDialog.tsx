@@ -1,3 +1,5 @@
+import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Pencil, Save, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
@@ -18,6 +20,8 @@ export interface EditableReview {
 	id: string;
 	title: string;
 	markdown: string;
+	/** Current mirror state; defaults to on when unset (e.g. a fresh review). */
+	mirrorToBlog?: boolean;
 }
 
 interface ReviewDialogProps {
@@ -69,9 +73,19 @@ export function ReviewDialog({
 
 	const [title, setTitle] = useState("");
 	const [markdown, setMarkdown] = useState("");
+	const [mirrorToBlog, setMirrorToBlog] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	// Client-only gate: the editor cannot render during SSR.
 	const [mounted, setMounted] = useState(false);
+
+	// The mirror toggle only appears when the author has a blog configured.
+	const { data: settings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: !!userDid,
+	});
+	const blogName =
+		settings?.reviewsPublicationName ?? settings?.reviewsPublicationUri ?? null;
+	const hasBlog = !!settings?.reviewsPublicationUri;
 
 	const wasPending = useRef(false);
 	const isEditing = !!review;
@@ -85,9 +99,10 @@ export function ReviewDialog({
 		if (open) {
 			setTitle(review?.title ?? "");
 			setMarkdown(review?.markdown ?? "");
+			setMirrorToBlog(review?.mirrorToBlog ?? true);
 			setError(null);
 		}
-	}, [open, review?.title, review?.markdown]);
+	}, [open, review?.title, review?.markdown, review?.mirrorToBlog]);
 
 	useEffect(() => {
 		const succeeded = createMutation.isSuccess || updateMutation.isSuccess;
@@ -147,7 +162,7 @@ export function ReviewDialog({
 		if (isEditing && review) {
 			updateMutation.mutate({
 				path: { reviewId: review.id },
-				body: { title: trimmedTitle, markdown: trimmedBody },
+				body: { title: trimmedTitle, markdown: trimmedBody, mirrorToBlog },
 			});
 			return;
 		}
@@ -160,6 +175,7 @@ export function ReviewDialog({
 				episodeNumber,
 				title: trimmedTitle,
 				markdown: trimmedBody,
+				mirrorToBlog,
 			},
 		});
 	};
@@ -224,6 +240,23 @@ export function ReviewDialog({
 					<p className="text-red-500 text-sm" role="alert">
 						{error}
 					</p>
+				)}
+
+				{hasBlog && (
+					<label className="flex cursor-pointer items-start gap-2 text-sm">
+						<input
+							type="checkbox"
+							checked={mirrorToBlog}
+							onChange={(e) => setMirrorToBlog(e.target.checked)}
+							className="mt-0.5 size-4 accent-(--accent)"
+						/>
+						<span>
+							Also publish to my blog
+							{blogName ? (
+								<span className="text-(--foreground-muted)"> ({blogName})</span>
+							) : null}
+						</span>
+					</label>
 				)}
 
 				<div className="flex items-center justify-between">

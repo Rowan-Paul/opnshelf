@@ -6,6 +6,7 @@ import {
 	HeadContent,
 	redirect,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "#/components/ui/sonner";
@@ -41,11 +42,14 @@ function isUnauthorizedError(error: unknown): boolean {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context, location }) => {
-		// Allow onboarding, login, and auth callback pages without redirect
+		// Allow onboarding, login, auth callback, and embed pages without redirect.
+		// `/embed/*` is chromeless and consumed inside the mobile app's WebView, so
+		// it must never bounce to onboarding.
 		if (
 			location.pathname === "/onboarding" ||
 			location.pathname === "/login" ||
-			location.pathname === "/auth/complete"
+			location.pathname === "/auth/complete" ||
+			location.pathname.startsWith("/embed")
 		) {
 			return;
 		}
@@ -89,6 +93,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	// `/embed/*` pages render chromeless (no header/footer/banner) because they
+	// are embedded inside the mobile app's WebView, not browsed directly.
+	const isEmbed = useRouterState({
+		select: (s) => s.location.pathname.startsWith("/embed"),
+	});
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
@@ -100,12 +109,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<PostHogProvider>
 					<AuthProvider>
 						<SearchDialogProvider>
-							<div className="flex min-h-screen flex-col">
-								<Header />
-								<TraktSyncBanner />
-								<main className="flex-1">{children}</main>
-								<Footer />
-							</div>
+							{isEmbed ? (
+								children
+							) : (
+								<div className="flex min-h-screen flex-col">
+									<Header />
+									<TraktSyncBanner />
+									<main className="flex-1">{children}</main>
+									<Footer />
+								</div>
+							)}
 							<Toaster />
 						</SearchDialogProvider>
 					</AuthProvider>

@@ -21,6 +21,12 @@ vi.mock("#/lib/hooks/useReviews", () => ({
 	}),
 }));
 
+// The edit dialog (Milkdown + a settings query) is exercised by its own tests;
+// stub it here so an own-review card renders without a QueryClient/editor.
+vi.mock("./ReviewDialog", () => ({
+	ReviewDialog: () => null,
+}));
+
 // CommunityReviews uses Link + useLocation from the router. Stub them so the
 // component renders without a RouterProvider (otherwise useLocation reads a null
 // router context and throws "Cannot read properties of null (reading 'isServer')").
@@ -200,6 +206,11 @@ describe("CommunityReviews", () => {
 	});
 
 	it("shows filled heart when review is liked", () => {
+		// Likes are only interactive for a signed-in, non-owner viewer.
+		mockUseAuth.mockReturnValue({
+			user: { did: "did:plc:viewer" },
+			isAuthenticated: true,
+		});
 		mockUseMediaReviews.mockReturnValue({
 			data: { items: [review({ likeCount: 5, hasLiked: true })] },
 			isLoading: false,
@@ -211,6 +222,10 @@ describe("CommunityReviews", () => {
 	});
 
 	it("calls likeReview when like button is clicked", () => {
+		mockUseAuth.mockReturnValue({
+			user: { did: "did:plc:viewer" },
+			isAuthenticated: true,
+		});
 		const likeReview = vi.fn();
 		mockUseToggleReviewLike.mockReturnValue({
 			likeReview,

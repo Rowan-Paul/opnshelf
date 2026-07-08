@@ -1,15 +1,15 @@
+import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import { Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, Switch, View } from "react-native";
 import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
-import { MarkdownToolbar } from "@/components/detail/MarkdownToolbar";
-import { Markdown } from "@/components/ui/Markdown";
+import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
-import type { TextSelection } from "@/lib/markdown-format";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const MAX_LENGTH = 20000;
@@ -20,9 +20,15 @@ interface ReviewEditorSheetProps {
 	/** Existing review title and body when editing; empty when writing a new one. */
 	initialTitle?: string;
 	initialMarkdown?: string;
+	/** Current mirror state when editing; defaults to on for a new review. */
+	initialMirrorToBlog?: boolean;
 	/** Whether the sheet is editing an existing review (vs. writing a new one). */
 	isEditing?: boolean;
-	onSave: (input: { title: string; markdown: string }) => void;
+	onSave: (input: {
+		title: string;
+		markdown: string;
+		mirrorToBlog: boolean;
+	}) => void;
 	/** Provided only when editing — deletes the review being edited. */
 	onDelete?: () => void;
 	isSaving?: boolean;
@@ -32,19 +38,18 @@ interface ReviewEditorSheetProps {
 /**
  * Bottom-anchored modal for writing or editing a single long-form review.
  *
- * The body is authored as markdown — the source-of-truth format for reviews
- * across the standard.site ecosystem — with a formatting toolbar over the
- * `TextInput` and a Write/Preview toggle. The toolbar rewrites the markdown
- * string directly (rather than holding a separate rich-text model), so the
- * editor round-trips stored markdown losslessly. The star rating is a separate
- * one-per-media entity handled elsewhere; this sheet is review-only. A review
- * requires both a title and a markdown body.
+ * The body is authored in the same Milkdown WYSIWYG editor the web app uses,
+ * hosted in a WebView (see MilkdownWebView) so both platforms share one editor
+ * and one markdown serializer. Markdown stays the source of truth and round-
+ * trips losslessly. The star rating is a separate one-per-media entity handled
+ * elsewhere; this sheet is review-only. A review requires a title and a body.
  */
 export function ReviewEditorSheet({
 	visible,
 	onDismiss,
 	initialTitle = "",
 	initialMarkdown = "",
+	initialMirrorToBlog = true,
 	isEditing = false,
 	onSave,
 	onDelete,
@@ -53,11 +58,16 @@ export function ReviewEditorSheet({
 }: ReviewEditorSheetProps) {
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
-	const [selection, setSelection] = useState<TextSelection>({
-		start: 0,
-		end: 0,
-	});
-	const [mode, setMode] = useState<"write" | "preview">("write");
+	const [mirrorToBlog, setMirrorToBlog] = useState(initialMirrorToBlog);
+	// Bumped on each open so the WebView editor remounts and re-seeds with the
+	// current target's body (the sheet instance is reused across reviews).
+	const [openCount, setOpenCount] = useState(0);
+
+	// The mirror toggle only appears when the author has a blog configured.
+	const { data: settings } = useQuery(usersControllerGetMySettingsOptions());
+	const hasBlog = !!settings?.reviewsPublicationUri;
+	const blogName =
+		settings?.reviewsPublicationName ?? settings?.reviewsPublicationUri ?? null;
 	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
 	// its layout classes to a style object (Uniwind className only works on
 	// RN-core components).
@@ -68,19 +78,19 @@ export function ReviewEditorSheet({
 		if (visible) {
 			setTitle(initialTitle);
 			setMarkdown(initialMarkdown);
-			setSelection({
-				start: initialMarkdown.length,
-				end: initialMarkdown.length,
-			});
-			setMode("write");
+			setMirrorToBlog(initialMirrorToBlog);
+			setOpenCount((n) => n + 1);
 		}
-	}, [visible, initialTitle, initialMarkdown]);
+	}, [visible, initialTitle, initialMarkdown, initialMirrorToBlog]);
 
 	const hasBody = markdown.trim().length > 0;
 	const hasTitle = title.trim().length > 0;
 	const needsTitle = hasBody && !hasTitle;
+	// The WYSIWYG editor has no hard maxLength, so enforce the cap on the
+	// serialized markdown here (mirrors the web ReviewDialog).
+	const overLimit = markdown.length > MAX_LENGTH;
 	// A review requires both a title and a body.
-	const canSave = hasTitle && hasBody && !isSaving;
+	const canSave = hasTitle && hasBody && !overLimit && !isSaving;
 
 	return (
 		<Modal
@@ -117,68 +127,11 @@ export function ReviewEditorSheet({
 							maxLength={300}
 						/>
 
-						<View className="flex-row gap-1 self-start rounded-lg bg-background-subtle p-1">
-							<Pressable
-								onPress={() => setMode("write")}
-								className={`rounded-md px-3 py-1.5 ${mode === "write" ? "bg-card" : ""}`}
-							>
-								<Text
-									className={`text-sm ${mode === "write" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-								>
-									Write
-								</Text>
-							</Pressable>
-							<Pressable
-								onPress={() => setMode("preview")}
-								className={`rounded-md px-3 py-1.5 ${mode === "preview" ? "bg-card" : ""}`}
-							>
-								<Text
-									className={`text-sm ${mode === "preview" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-								>
-									Preview
-								</Text>
-							</Pressable>
-						</View>
-
-						{mode === "write" ? (
-							<View className="gap-2">
-								<MarkdownToolbar
-									value={markdown}
-									selection={selection}
-									onChange={(edit) => {
-										setMarkdown(edit.text);
-										setSelection(edit.selection);
-									}}
-								/>
-								<TextField
-									variant="subtle"
-									multiline
-									className="min-h-36"
-									value={markdown}
-									onChangeText={setMarkdown}
-									selection={selection}
-									onSelectionChange={(e) =>
-										setSelection(e.nativeEvent.selection)
-									}
-									placeholder="Write a review (markdown supported)…"
-									maxLength={MAX_LENGTH}
-								/>
-							</View>
-						) : (
-							<ScrollView
-								className="min-h-36 rounded-lg border border-border bg-background-subtle"
-								contentContainerClassName="p-3"
-								style={{ maxHeight: 320 }}
-							>
-								{hasBody ? (
-									<Markdown value={markdown} />
-								) : (
-									<Text className="text-muted-foreground text-sm">
-										Nothing to preview yet.
-									</Text>
-								)}
-							</ScrollView>
-						)}
+						<MilkdownWebView
+							key={openCount}
+							value={initialMarkdown}
+							onChange={setMarkdown}
+						/>
 
 						<View className="flex-row items-center justify-between">
 							{needsTitle ? (
@@ -188,10 +141,39 @@ export function ReviewEditorSheet({
 							) : (
 								<View />
 							)}
-							<Text className="text-foreground-subtle text-xs">
+							<Text
+								className={
+									overLimit
+										? "text-destructive text-xs"
+										: "text-foreground-subtle text-xs"
+								}
+							>
 								{markdown.length}/{MAX_LENGTH}
 							</Text>
 						</View>
+
+						{hasBlog ? (
+							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
+								<View className="flex-1">
+									<Text className="font-medium text-foreground text-sm">
+										Also publish to my blog
+									</Text>
+									{blogName ? (
+										<Text
+											className="text-muted-foreground text-xs"
+											numberOfLines={1}
+										>
+											{blogName}
+										</Text>
+									) : null}
+								</View>
+								<Switch
+									value={mirrorToBlog}
+									onValueChange={setMirrorToBlog}
+									trackColor={{ true: "#f3bc00" }}
+								/>
+							</View>
+						) : null}
 
 						{isEditing && onDelete ? (
 							<Pressable
@@ -208,7 +190,7 @@ export function ReviewEditorSheet({
 						) : null}
 
 						<Pressable
-							onPress={() => onSave({ title, markdown })}
+							onPress={() => onSave({ title, markdown, mirrorToBlog })}
 							disabled={!canSave}
 							className="items-center rounded-lg bg-primary py-3"
 							style={{ opacity: canSave ? 1 : 0.5 }}

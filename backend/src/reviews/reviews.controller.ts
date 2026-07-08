@@ -121,6 +121,7 @@ export class ReviewsController {
 				userAvatar: review.user.avatar ?? undefined,
 				likeCount: review.likeCount,
 				hasLiked: review.hasLiked,
+				mirrorToBlog: review.mirrorToBlog,
 				authorRating: review.authorRating ?? undefined,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
@@ -335,6 +336,7 @@ export class ReviewsController {
 		title: string;
 		markdown: string;
 		blogDocumentUri: string | null;
+		mirrorToBlog: boolean;
 		mediaType: string;
 		mediaId: string;
 		seasonNumber: number;
@@ -348,6 +350,7 @@ export class ReviewsController {
 			title: review.title,
 			markdown: review.markdown,
 			blogDocumentUri: review.blogDocumentUri,
+			mirrorToBlog: review.mirrorToBlog,
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
 			seasonNumber: review.seasonNumber || undefined,

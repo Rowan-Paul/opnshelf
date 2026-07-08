@@ -149,6 +149,20 @@ export class UsersService {
 			},
 		});
 
+		// Selecting a blog backfills the mirror so reviews written before enabling
+		// it also appear there (ADR-0013). Best-effort — a mirror hiccup must not
+		// fail the settings save. `session` is guaranteed here (checked above).
+		if (reviewsPublicationPatch.reviewsPublicationUri && session) {
+			try {
+				await this.reviewsService.backfillBlogMirror(did, session);
+			} catch (error) {
+				this.logger.warn(
+					`Blog-mirror backfill failed for ${did}`,
+					error instanceof Error ? error.stack : undefined,
+				);
+			}
+		}
+
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,

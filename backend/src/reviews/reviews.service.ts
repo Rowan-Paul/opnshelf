@@ -532,6 +532,7 @@ export class ReviewsService {
 			createdAt: Date;
 			blogDocumentUri: string | null;
 			blogDocumentCid: string | null;
+			mirrorToBlog: boolean;
 		},
 	): Promise<{
 		blogDocumentUri: string | null;
@@ -541,7 +542,10 @@ export class ReviewsService {
 			where: { did: userDid },
 			select: { reviewsPublicationUri: true },
 		});
-		const publicationUri = user?.reviewsPublicationUri ?? null;
+		// Opted out per-review, or no blog configured: ensure no mirror exists.
+		const publicationUri = review.mirrorToBlog
+			? (user?.reviewsPublicationUri ?? null)
+			: null;
 
 		try {
 			if (!publicationUri) {
@@ -606,6 +610,10 @@ export class ReviewsService {
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
 
+		// mirrorToBlog is an opnshelf mirroring preference (like the publication
+		// target on the User row), not review content — it lives only in the DB,
+		// never on the federated review record.
+		const mirrorToBlog = dto.mirrorToBlog ?? true;
 		const record = reviewSchema.build({
 			mediaType: dto.mediaType,
 			mediaId: dto.mediaId,
@@ -637,6 +645,7 @@ export class ReviewsService {
 				episodeNumber: dto.episodeNumber ?? 0,
 				title: dto.title,
 				markdown: dto.markdown,
+				mirrorToBlog,
 			},
 		});
 
@@ -669,6 +678,7 @@ export class ReviewsService {
 
 		const title = dto.title ?? existing.title;
 		const markdown = dto.markdown ?? existing.markdown;
+		const mirrorToBlog = dto.mirrorToBlog ?? existing.mirrorToBlog;
 
 		const record = reviewSchema.build({
 			mediaType: existing.mediaType,
@@ -693,6 +703,7 @@ export class ReviewsService {
 			...existing,
 			title,
 			markdown,
+			mirrorToBlog,
 		});
 
 		return this.prisma.review.update({
@@ -701,6 +712,7 @@ export class ReviewsService {
 				cid: response.data.cid,
 				title,
 				markdown,
+				mirrorToBlog,
 				...mirror,
 			},
 		});
@@ -747,6 +759,37 @@ export class ReviewsService {
 		await this.prisma.review.delete({
 			where: { id: reviewId },
 		});
+	}
+
+	/**
+	 * Mirror all of a user's existing reviews to their currently-configured blog
+	 * (ADR-0013). Called when the author first selects a publication so reviews
+	 * written *before* enabling the blog also appear there — not just new ones.
+	 * Reviews opted out (mirrorToBlog === false) are skipped inside syncBlogMirror.
+	 * Best-effort: each review syncs independently; syncBlogMirror swallows its
+	 * own failures, so one bad write never aborts the rest.
+	 *
+	 * ponytail: inline, one PDS write per mirrored review. Fine for the handful of
+	 * long-form reviews a user typically has; move to a queued job if someone
+	 * turns up with hundreds.
+	 */
+	async backfillBlogMirror(userDid: string, session: ATSession): Promise<void> {
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		const reviews = await this.prisma.review.findMany({ where: { userDid } });
+		for (const review of reviews) {
+			const mirror = await this.syncBlogMirror(userDid, agent, review);
+			if (
+				mirror.blogDocumentUri !== review.blogDocumentUri ||
+				mirror.blogDocumentCid !== review.blogDocumentCid
+			) {
+				await this.prisma.review.update({
+					where: { id: review.id },
+					data: mirror,
+				});
+			}
+		}
 	}
 
 	async likeReview(userDid: string, session: ATSession, reviewId: string) {
@@ -893,6 +936,9 @@ export class ReviewsService {
 		userDid: string,
 		record: ReviewRecord,
 	): Promise<void> {
+		// mirrorToBlog is opnshelf-local (DB-only), not on the record: the create
+		// path takes the column default (true) and updates leave it untouched, so
+		// a per-review opt-out set via the API survives firehose re-indexing.
 		await this.prisma.review.upsert({
 			where: { rkey },
 			create: {

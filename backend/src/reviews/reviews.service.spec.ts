@@ -562,6 +562,38 @@ describe("ReviewsService", () => {
 				}),
 			);
 		});
+
+		it("skips the blog mirror when the review opts out, even with a publication selected", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+					cid: "cid-review",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "Private take",
+				markdown: "Just for opnshelf.",
+				mirrorToBlog: false,
+			});
+
+			// only the review record is written; no mirror document, no delete
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ collection: "xyz.opnshelf.review" }),
+			);
+			expect(mockDeleteRecord).not.toHaveBeenCalled();
+			expect(mockPrismaService.review.update).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("listMyPublications", () => {

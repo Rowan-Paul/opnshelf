@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
@@ -37,7 +36,6 @@ export default function MovieDetailScreen() {
 		id: string;
 		reviewId?: string;
 	}>();
-	const insets = useSafeAreaInsets();
 	const scrollRef = useRef<ScrollView>(null);
 
 	const { data, isLoading, isError } = useQuery({
@@ -47,8 +45,10 @@ export default function MovieDetailScreen() {
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<Stack.Screen options={{ headerShown: false }} />
+		<View className="flex-1 bg-background">
+			<Stack.Screen
+				options={{ headerShown: true, title: data?.title ?? "Movie" }}
+			/>
 			{isLoading ? (
 				<LoadingState />
 			) : isError || !data ? (

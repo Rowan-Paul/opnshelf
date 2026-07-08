@@ -23,6 +23,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
+import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
@@ -112,6 +113,11 @@ const IndexRoute = IndexRouteImport.update({
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
   path: '/profile/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
+  id: '/embed/review-editor',
+  path: '/embed/review-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CirclesCircleIdRoute = CirclesCircleIdRouteImport.update({
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
+  '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
+  '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/tos': typeof TosRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
+  '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/auth/complete'
     | '/circles/$circleId'
+    | '/embed/review-editor'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -383,6 +393,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/auth/complete'
     | '/circles/$circleId'
+    | '/embed/review-editor'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/auth/complete'
     | '/circles/$circleId'
+    | '/embed/review-editor'
     | '/profile/$handle'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
@@ -452,6 +464,7 @@ export interface RootRouteChildren {
   TosRoute: typeof TosRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   CirclesCircleIdRoute: typeof CirclesCircleIdRoute
+  EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$handle'
       fullPath: '/profile/$handle'
       preLoaderRoute: typeof ProfileHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/review-editor': {
+      id: '/embed/review-editor'
+      path: '/embed/review-editor'
+      fullPath: '/embed/review-editor'
+      preLoaderRoute: typeof EmbedReviewEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/circles/$circleId': {
@@ -789,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   TosRoute: TosRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   CirclesCircleIdRoute: CirclesCircleIdRoute,
+  EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,

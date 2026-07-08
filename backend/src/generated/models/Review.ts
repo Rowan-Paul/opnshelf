@@ -50,6 +50,7 @@ export type ReviewMinAggregateOutputType = {
   markdown: string | null
   blogDocumentUri: string | null
   blogDocumentCid: string | null
+  mirrorToBlog: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +69,7 @@ export type ReviewMaxAggregateOutputType = {
   markdown: string | null
   blogDocumentUri: string | null
   blogDocumentCid: string | null
+  mirrorToBlog: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -86,6 +88,7 @@ export type ReviewCountAggregateOutputType = {
   markdown: number
   blogDocumentUri: number
   blogDocumentCid: number
+  mirrorToBlog: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -116,6 +119,7 @@ export type ReviewMinAggregateInputType = {
   markdown?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
+  mirrorToBlog?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -134,6 +138,7 @@ export type ReviewMaxAggregateInputType = {
   markdown?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
+  mirrorToBlog?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -152,6 +157,7 @@ export type ReviewCountAggregateInputType = {
   markdown?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
+  mirrorToBlog?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -257,6 +263,7 @@ export type ReviewGroupByOutputType = {
   markdown: string
   blogDocumentUri: string | null
   blogDocumentCid: string | null
+  mirrorToBlog: boolean
   createdAt: Date
   updatedAt: Date
   _count: ReviewCountAggregateOutputType | null
@@ -298,6 +305,7 @@ export type ReviewWhereInput = {
   markdown?: Prisma.StringFilter<"Review"> | string
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
+  mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -318,6 +326,7 @@ export type ReviewOrderByWithRelationInput = {
   markdown?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  mirrorToBlog?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -341,6 +350,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   markdown?: Prisma.StringFilter<"Review"> | string
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
+  mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -361,6 +371,7 @@ export type ReviewOrderByWithAggregationInput = {
   markdown?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
+  mirrorToBlog?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReviewCountOrderByAggregateInput
@@ -387,6 +398,7 @@ export type ReviewScalarWhereWithAggregatesInput = {
   markdown?: Prisma.StringWithAggregatesFilter<"Review"> | string
   blogDocumentUri?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  mirrorToBlog?: Prisma.BoolWithAggregatesFilter<"Review"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
 }
@@ -404,6 +416,7 @@ export type ReviewCreateInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -424,6 +437,7 @@ export type ReviewUncheckedCreateInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -442,6 +456,7 @@ export type ReviewUpdateInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -462,6 +477,7 @@ export type ReviewUncheckedUpdateInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -481,6 +497,7 @@ export type ReviewCreateManyInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -498,6 +515,7 @@ export type ReviewUpdateManyMutationInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -516,6 +534,7 @@ export type ReviewUncheckedUpdateManyInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -544,6 +563,7 @@ export type ReviewCountOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
+  mirrorToBlog?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -567,6 +587,7 @@ export type ReviewMaxOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
+  mirrorToBlog?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -585,6 +606,7 @@ export type ReviewMinOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
+  mirrorToBlog?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -668,6 +690,7 @@ export type ReviewCreateWithoutUserInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeCreateNestedManyWithoutReviewInput
@@ -686,6 +709,7 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -734,6 +758,7 @@ export type ReviewScalarWhereInput = {
   markdown?: Prisma.StringFilter<"Review"> | string
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
+  mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
 }
@@ -751,6 +776,7 @@ export type ReviewCreateWithoutLikesInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -770,6 +796,7 @@ export type ReviewUncheckedCreateWithoutLikesInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -803,6 +830,7 @@ export type ReviewUpdateWithoutLikesInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -822,6 +850,7 @@ export type ReviewUncheckedUpdateWithoutLikesInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -839,6 +868,7 @@ export type ReviewCreateManyUserInput = {
   markdown: string
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
+  mirrorToBlog?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -856,6 +886,7 @@ export type ReviewUpdateWithoutUserInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUpdateManyWithoutReviewNestedInput
@@ -874,6 +905,7 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -892,6 +924,7 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -941,6 +974,7 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   markdown?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
+  mirrorToBlog?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -962,6 +996,7 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   markdown?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
+  mirrorToBlog?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -981,6 +1016,7 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   markdown?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
+  mirrorToBlog?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1000,11 +1036,12 @@ export type ReviewSelectScalar = {
   markdown?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
+  mirrorToBlog?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "markdown" | "blogDocumentUri" | "blogDocumentCid" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "markdown" | "blogDocumentUri" | "blogDocumentCid" | "mirrorToBlog" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.Review$likesArgs<ExtArgs>
@@ -1037,6 +1074,7 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     markdown: string
     blogDocumentUri: string | null
     blogDocumentCid: string | null
+    mirrorToBlog: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["review"]>
@@ -1477,6 +1515,7 @@ export interface ReviewFieldRefs {
   readonly markdown: Prisma.FieldRef<"Review", 'String'>
   readonly blogDocumentUri: Prisma.FieldRef<"Review", 'String'>
   readonly blogDocumentCid: Prisma.FieldRef<"Review", 'String'>
+  readonly mirrorToBlog: Prisma.FieldRef<"Review", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Review", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Review", 'DateTime'>
 }

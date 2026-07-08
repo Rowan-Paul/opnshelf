@@ -35,7 +35,11 @@ export function ReviewButton({
 
 	const hasReview = reviews.length > 0;
 
-	const handleSave = (input: { title: string; markdown: string }) => {
+	const handleSave = (input: {
+		title: string;
+		markdown: string;
+		mirrorToBlog: boolean;
+	}) => {
 		createReview(input);
 		setSheetVisible(false);
 	};

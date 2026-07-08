@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+	IsBoolean,
 	IsInt,
 	IsNotEmpty,
 	IsOptional,
@@ -48,6 +49,14 @@ export class CreateReviewDto {
 	@IsNotEmpty()
 	@MaxLength(20000)
 	markdown: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Whether to mirror this review to the author's blog (when one is configured). Defaults to true.",
+	})
+	@IsOptional()
+	@IsBoolean()
+	mirrorToBlog?: boolean;
 }
 
 export class UpdateReviewDto {
@@ -66,6 +75,14 @@ export class UpdateReviewDto {
 	@IsString()
 	@MaxLength(20000)
 	markdown?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Whether to mirror this review to the author's blog (when one is configured).",
+	})
+	@IsOptional()
+	@IsBoolean()
+	mirrorToBlog?: boolean;
 }
 
 export class ReviewResponseDto {
@@ -88,6 +105,11 @@ export class ReviewResponseDto {
 			"AT-URI of the standard.site blog-mirror document, or null when not mirrored",
 	})
 	blogDocumentUri?: string | null;
+
+	@ApiProperty({
+		description: "Whether this review is mirrored to the author's blog",
+	})
+	mirrorToBlog: boolean;
 
 	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
 	mediaType: string;
@@ -349,6 +371,12 @@ export class MediaReviewItemDto {
 		description: "Whether the requesting user has liked this review",
 	})
 	hasLiked: boolean;
+
+	@ApiPropertyOptional({
+		description:
+			"Whether the author has this review mirrored to their blog (only meaningful on the author's own reviews)",
+	})
+	mirrorToBlog?: boolean;
 
 	@ApiPropertyOptional({
 		type: Number,

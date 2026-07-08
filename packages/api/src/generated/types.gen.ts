@@ -1288,6 +1288,10 @@ export type MediaReviewItemDto = {
      */
     hasLiked: boolean;
     /**
+     * Whether the author has this review mirrored to their blog (only meaningful on the author's own reviews)
+     */
+    mirrorToBlog?: boolean;
+    /**
      * The author's own rating for this media item (joined from the separate Rating entity). Used only as a sort tiebreak.
      */
     authorRating?: number | null;
@@ -1381,6 +1385,10 @@ export type ReviewResponseDto = {
      * AT-URI of the standard.site blog-mirror document, or null when not mirrored
      */
     blogDocumentUri?: string | null;
+    /**
+     * Whether this review is mirrored to the author's blog
+     */
+    mirrorToBlog: boolean;
     mediaType: 'movie' | 'show' | 'season' | 'episode';
     mediaId: string;
     seasonNumber?: number;
@@ -1414,6 +1422,10 @@ export type CreateReviewDto = {
      * Review body as markdown source
      */
     markdown: string;
+    /**
+     * Whether to mirror this review to the author's blog (when one is configured). Defaults to true.
+     */
+    mirrorToBlog?: boolean;
 };
 
 export type UpdateReviewDto = {
@@ -1425,6 +1437,10 @@ export type UpdateReviewDto = {
      * Review body as markdown source
      */
     markdown?: string;
+    /**
+     * Whether to mirror this review to the author's blog (when one is configured).
+     */
+    mirrorToBlog?: boolean;
 };
 
 export type ReviewLikeItemDto = {

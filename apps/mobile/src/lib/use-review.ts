@@ -37,6 +37,8 @@ export interface ReviewDraft {
 	title: string;
 	/** Long-form review body as markdown source. */
 	markdown: string;
+	/** Whether to mirror this review to the author's blog (when configured). */
+	mirrorToBlog?: boolean;
 }
 
 /**
@@ -183,7 +185,11 @@ export function useReview(target: ReviewTarget) {
 	};
 
 	/** Create a new long-form review for this media item. */
-	const createReview = async ({ title, markdown }: ReviewDraft) => {
+	const createReview = async ({
+		title,
+		markdown,
+		mirrorToBlog,
+	}: ReviewDraft) => {
 		if (!isAuthenticated) return;
 		const trimmedTitle = title.trim();
 		const trimmedBody = markdown.trim();
@@ -197,6 +203,7 @@ export function useReview(target: ReviewTarget) {
 					episodeNumber: target.episodeNumber,
 					title: trimmedTitle,
 					markdown: trimmedBody,
+					mirrorToBlog,
 				},
 			});
 			void Haptics.notificationAsync(
@@ -213,7 +220,7 @@ export function useReview(target: ReviewTarget) {
 	/** Update an existing review's title/body. */
 	const updateReview = async (
 		reviewId: string,
-		{ title, markdown }: ReviewDraft,
+		{ title, markdown, mirrorToBlog }: ReviewDraft,
 	) => {
 		if (!isAuthenticated) return;
 		const trimmedTitle = title.trim();
@@ -222,7 +229,7 @@ export function useReview(target: ReviewTarget) {
 		try {
 			await updateReviewMutation.mutateAsync({
 				path: { reviewId },
-				body: { title: trimmedTitle, markdown: trimmedBody },
+				body: { title: trimmedTitle, markdown: trimmedBody, mirrorToBlog },
 			});
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,

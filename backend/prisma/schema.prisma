@@ -461,6 +461,10 @@ model Review {
   // selected a publication and the mirror write succeeded.
   blogDocumentUri String?
   blogDocumentCid String?
+  // Per-review opt-out: false excludes this single review from the blog mirror
+  // even when the author has a publication configured (mirrors the record's
+  // optional `mirrorToBlog`). Defaults to mirror.
+  mirrorToBlog    Boolean  @default(true)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

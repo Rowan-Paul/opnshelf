@@ -21,8 +21,8 @@ import { Text } from "@/components/ui/text";
  * (e.g. to confirm discarding edits) render the exact same button. */
 export function HeaderBackButton({ onPress }: { onPress: () => void }) {
 	return (
-		<Pressable hitSlop={8} onPress={onPress} className="-ml-2 p-1">
-			<ChevronLeft color="#94a3b8" size={24} />
+		<Pressable hitSlop={12} onPress={onPress} className="-ml-2 p-1">
+			<ChevronLeft color="#94a3b8" size={30} />
 		</Pressable>
 	);
 }
@@ -43,13 +43,13 @@ export function AppHeader({
 			className="border-border border-b bg-background"
 			style={{ paddingTop: insets.top }}
 		>
-			<View className="h-12 flex-row items-center gap-3 px-4">
+			<View className="h-14 flex-row items-center gap-3 px-4">
 				{(left ?? canGoBack)
 					? (left ?? <HeaderBackButton onPress={() => navigation.goBack()} />)
 					: null}
 				<Text
 					numberOfLines={1}
-					className="flex-1 font-display font-semibold text-foreground text-lg"
+					className="flex-1 font-display font-semibold text-foreground text-xl"
 				>
 					{options.title ?? route.name}
 				</Text>
