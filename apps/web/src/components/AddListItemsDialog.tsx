@@ -187,15 +187,19 @@ export default function AddListItemsDialog({
 					)}
 				</div>
 
-				<div className="max-h-[50vh] min-h-[8rem] space-y-1 overflow-y-auto">
+				<div className="h-[24rem] space-y-1 overflow-y-auto">
 					{debouncedQuery.trim().length === 0 ? (
-						<p className="py-8 text-center text-(--foreground-muted) text-sm">
-							Start typing to search.
-						</p>
+						<div className="flex h-full items-center justify-center">
+							<p className="text-center text-(--foreground-muted) text-sm">
+								Start typing to search.
+							</p>
+						</div>
 					) : !isFetching && results.length === 0 ? (
-						<p className="py-8 text-center text-(--foreground-muted) text-sm">
-							No results for &quot;{debouncedQuery}&quot;
-						</p>
+						<div className="flex h-full items-center justify-center">
+							<p className="text-center text-(--foreground-muted) text-sm">
+								No results for &quot;{debouncedQuery}&quot;
+							</p>
+						</div>
 					) : (
 						results.map((result) => {
 							const mediaType =
