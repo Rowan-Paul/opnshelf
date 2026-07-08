@@ -4,14 +4,20 @@ import {
 	listsControllerGetPublicUserListsOptions,
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
+	listsControllerReorderListItemsMutation,
 	type MediaInListDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	Check,
 	Clock,
 	Film,
+	GripVertical,
 	Heart,
 	List,
 	Loader2,
@@ -19,9 +25,11 @@ import {
 	Search,
 	Star,
 	Tv,
+	X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import AddListItemsDialog from "#/components/AddListItemsDialog";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -30,9 +38,39 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "#/components/ui/tooltip";
 import { useAuth } from "#/lib/auth-context";
 import { useCreateList } from "#/lib/hooks";
+import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
+
+type SortOption = "position" | "added" | "title" | "year";
+
+const SORT_LABELS: Record<SortOption, string> = {
+	position: "Order",
+	added: "Added",
+	title: "Title",
+	year: "Year",
+};
+
+function moveItem<T>(arr: T[], from: number, to: number): T[] {
+	if (to < 0 || to >= arr.length || from === to) return arr;
+	const next = arr.slice();
+	const [moved] = next.splice(from, 1);
+	next.splice(to, 0, moved);
+	return next;
+}
 
 const colorClasses: Record<string, string> = {
 	blue: "bg-blue-500",
@@ -129,6 +167,12 @@ export function ProfileListsPage({
 	const [newListName, setNewListName] = useState("");
 	const [newListDescription, setNewListDescription] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
+	const [sort, setSort] = useState<SortOption>("position");
+	const [unwatchedOnly, setUnwatchedOnly] = useState(false);
+	const [showAddDialog, setShowAddDialog] = useState(false);
+	const [reorderMode, setReorderMode] = useState(false);
+	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
+	const [dragIndex, setDragIndex] = useState<number | null>(null);
 
 	// Fetch public lists for this user
 	const {
@@ -159,6 +203,7 @@ export function ProfileListsPage({
 	} = useQuery({
 		...listsControllerGetPublicUserListOptions({
 			path: { userDid, slug: selectedListSlug || "" },
+			query: { sort },
 		}),
 		enabled: !!userDid && !!selectedListSlug,
 	});
@@ -193,28 +238,105 @@ export function ProfileListsPage({
 		},
 	});
 
+	// Reorder items mutation (owner only, position order only)
+	const reorderMutation = useMutation({
+		mutationKey: ["lists", selectedListSlug ?? "", "reorder"],
+		...listsControllerReorderListItemsMutation(),
+		onSuccess: () => {
+			toast.success("Order saved");
+			setReorderMode(false);
+			if (selectedListSlug) {
+				queryClient.invalidateQueries({
+					queryKey: listsControllerGetPublicUserListQueryKey({
+						path: { userDid, slug: selectedListSlug },
+					}),
+				});
+			}
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save order",
+			);
+		},
+	});
+
+	// Reset per-list view controls when switching lists.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: slug is the trigger, not read inside
+	useEffect(() => {
+		setSearchQuery("");
+		setUnwatchedOnly(false);
+		setReorderMode(false);
+	}, [selectedListSlug]);
+
+	// Reorder is only meaningful in manual (position) order — leaving it aborts.
+	useEffect(() => {
+		if (sort !== "position") setReorderMode(false);
+	}, [sort]);
+
 	const activeList = useMemo(() => {
 		if (!userLists) return null;
 		return userLists.find((list) => list.slug === selectedListSlug);
 	}, [userLists, selectedListSlug]);
 
-	// Filter items based on search query
+	// Filter items based on search query + unwatched toggle
 	const filteredItems = useMemo(() => {
 		if (!listDetails?.items) return [];
-		if (!searchQuery.trim()) return listDetails.items;
-
-		const query = searchQuery.toLowerCase();
+		const query = searchQuery.trim().toLowerCase();
 		return listDetails.items.filter((item: MediaInListDto) => {
-			const title = getTitle(item.media).toLowerCase();
-			return title.includes(query);
+			if (unwatchedOnly && item.watched) return false;
+			if (query && !getTitle(item.media).toLowerCase().includes(query)) {
+				return false;
+			}
+			return true;
 		});
-	}, [listDetails?.items, searchQuery]);
+	}, [listDetails?.items, searchQuery, unwatchedOnly]);
 
 	const handleSelectList = (slug: string) => {
 		navigate({
 			to: "/profile/$handle/lists/$listSlug",
 			params: { handle, listSlug: slug },
 			replace: true,
+		});
+	};
+
+	// Dedupe defensively — reorder ids must be unique.
+	const dedupedItems = useMemo(() => {
+		const items = listDetails?.items ?? [];
+		return items.filter(
+			(item, index, self) => index === self.findIndex((i) => i.id === item.id),
+		);
+	}, [listDetails?.items]);
+
+	const total = listDetails?.total ?? 0;
+	const watchedCount = listDetails?.watchedCount ?? 0;
+
+	const enterReorderMode = () => {
+		setSearchQuery("");
+		setUnwatchedOnly(false);
+		setReorderItems(dedupedItems);
+		setReorderMode(true);
+	};
+
+	const cancelReorder = () => {
+		setReorderMode(false);
+		setDragIndex(null);
+	};
+
+	const moveReorderItem = (from: number, to: number) => {
+		setReorderItems((prev) => moveItem(prev, from, to));
+	};
+
+	const handleDrop = (targetIndex: number) => {
+		if (dragIndex === null) return;
+		moveReorderItem(dragIndex, targetIndex);
+		setDragIndex(null);
+	};
+
+	const saveReorder = () => {
+		if (!selectedListSlug) return;
+		reorderMutation.mutate({
+			path: { slug: selectedListSlug },
+			body: { ids: reorderItems.map((item) => item.id) },
 		});
 	};
 
@@ -366,7 +488,7 @@ export function ProfileListsPage({
 					{activeList ? (
 						<div className="space-y-6">
 							{/* List Header */}
-							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 								<div className="flex items-center gap-3">
 									<div
 										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClasses[getListColor(activeList.name)]} text-white`}
@@ -385,20 +507,155 @@ export function ProfileListsPage({
 									</div>
 								</div>
 
-								<div className="flex items-center gap-2">
-									{/* Search */}
-									<div className="relative">
-										<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
-										<input
-											type="text"
-											placeholder="Search list..."
-											className="input h-9 w-48 pl-9! text-sm"
-											value={searchQuery}
-											onChange={(e) => setSearchQuery(e.target.value)}
+								{reorderMode ? (
+									<div className="flex items-center gap-2">
+										<button
+											type="button"
+											onClick={cancelReorder}
+											disabled={reorderMutation.isPending}
+											className="btn btn-secondary btn-sm gap-1.5"
+										>
+											<X className="size-3.5" />
+											Cancel
+										</button>
+										<button
+											type="button"
+											onClick={saveReorder}
+											disabled={reorderMutation.isPending}
+											className="btn btn-primary btn-sm gap-1.5"
+										>
+											{reorderMutation.isPending ? (
+												<Loader2 className="size-3.5 animate-spin" />
+											) : (
+												<Check className="size-3.5" />
+											)}
+											Done
+										</button>
+									</div>
+								) : (
+									<div className="flex flex-wrap items-center gap-2">
+										{/* Search */}
+										<div className="relative">
+											<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
+											<input
+												type="text"
+												placeholder="Search list..."
+												className="input h-9 w-44 pl-9! text-sm"
+												value={searchQuery}
+												onChange={(e) => setSearchQuery(e.target.value)}
+											/>
+										</div>
+
+										{/* Sort */}
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<button
+													type="button"
+													className="btn btn-secondary btn-sm gap-1.5"
+												>
+													<ArrowUpDown className="size-3.5" />
+													{SORT_LABELS[sort]}
+												</button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuRadioGroup
+													value={sort}
+													onValueChange={(value) =>
+														setSort(value as SortOption)
+													}
+												>
+													{(Object.keys(SORT_LABELS) as SortOption[]).map(
+														(option) => (
+															<DropdownMenuRadioItem
+																key={option}
+																value={option}
+															>
+																{SORT_LABELS[option]}
+															</DropdownMenuRadioItem>
+														),
+													)}
+												</DropdownMenuRadioGroup>
+											</DropdownMenuContent>
+										</DropdownMenu>
+
+										{/* Unwatched filter (viewer-relative — only meaningful signed in) */}
+										{isAuthenticated && (
+											<button
+												type="button"
+												onClick={() => setUnwatchedOnly((v) => !v)}
+												aria-pressed={unwatchedOnly}
+												className={cn(
+													"btn btn-sm gap-1.5",
+													unwatchedOnly ? "btn-primary" : "btn-secondary",
+												)}
+											>
+												Unwatched
+											</button>
+										)}
+
+										{/* Owner controls */}
+										{isOwner && isAuthenticated && (
+											<>
+												<button
+													type="button"
+													onClick={() => setShowAddDialog(true)}
+													className="btn btn-primary btn-sm gap-1.5"
+												>
+													<Plus className="size-3.5" />
+													Add items
+												</button>
+												{sort === "position" ? (
+													<button
+														type="button"
+														onClick={enterReorderMode}
+														className="btn btn-secondary btn-sm gap-1.5"
+													>
+														<GripVertical className="size-3.5" />
+														Reorder
+													</button>
+												) : (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<button
+																type="button"
+																aria-disabled
+																onClick={(e) => e.preventDefault()}
+																className="btn btn-secondary btn-sm gap-1.5 opacity-50"
+															>
+																<GripVertical className="size-3.5" />
+																Reorder
+															</button>
+														</TooltipTrigger>
+														<TooltipContent>
+															Switch sort to Order to reorder items
+														</TooltipContent>
+													</Tooltip>
+												)}
+											</>
+										)}
+									</div>
+								)}
+							</div>
+
+							{/* Watched progress (viewer-relative; hidden when signed out) */}
+							{isAuthenticated && total > 0 && (
+								<div className="space-y-1.5">
+									<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
+										<span>
+											{watchedCount} of {total} watched
+										</span>
+										<span>{Math.round((watchedCount / total) * 100)}%</span>
+									</div>
+									<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--background-subtle)">
+										<div
+											className="h-full rounded-full bg-(--accent) transition-all"
+											style={{
+												width: `${Math.min(100, (watchedCount / total) * 100)}%`,
+											}}
 										/>
 									</div>
 								</div>
-							</div>
+							)}
 
 							{/* Loading State for List Items */}
 							{listLoading && (
@@ -433,85 +690,167 @@ export function ProfileListsPage({
 								</div>
 							)}
 
-							{/* Empty State */}
-							{!listLoading && !listError && filteredItems.length === 0 && (
-								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
-									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
-										<List className="size-6 text-(--foreground-subtle)" />
-									</div>
-									<h3 className="mt-3 font-display font-semibold">
-										{searchQuery ? "No results found" : "List is empty"}
-									</h3>
-									<p className="mt-1 text-(--foreground-muted) text-sm">
-										{searchQuery
-											? "Try adjusting your search query"
-											: "Add movies and shows to this list to see them here"}
+							{/* Reorder Mode — vertical list with drag handles + up/down
+							    buttons so it works with both mouse and keyboard. */}
+							{reorderMode && !listLoading && !listError && (
+								<div className="space-y-2">
+									<p className="text-(--foreground-muted) text-xs">
+										Drag rows or use the arrow buttons to reorder, then press
+										Done to save.
 									</p>
+									{reorderItems.map((item, index) => (
+										// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the up/down buttons
+										<div
+											key={item.id}
+											draggable
+											onDragStart={() => setDragIndex(index)}
+											onDragOver={(e) => e.preventDefault()}
+											onDrop={() => handleDrop(index)}
+											onDragEnd={() => setDragIndex(null)}
+											className={cn(
+												"flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-elevated) p-2",
+												dragIndex === index && "opacity-50",
+											)}
+										>
+											<GripVertical className="size-4 shrink-0 cursor-grab text-(--foreground-muted)" />
+											<div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-(--background-subtle)">
+												{getPosterUrl(item.media) ? (
+													<img
+														src={getPosterUrl(item.media)}
+														alt={getTitle(item.media)}
+														className="h-full w-full object-cover"
+														loading="lazy"
+													/>
+												) : (
+													<div className="flex h-full w-full items-center justify-center text-(--foreground-subtle)">
+														{item.mediaType === "movie" ? (
+															<Film className="size-4" />
+														) : (
+															<Tv className="size-4" />
+														)}
+													</div>
+												)}
+											</div>
+											<div className="min-w-0 flex-1">
+												<p className="truncate font-medium text-sm">
+													{getTitle(item.media)}
+												</p>
+												<p className="text-(--foreground-muted) text-xs">
+													{index + 1} / {reorderItems.length}
+												</p>
+											</div>
+											<div className="flex shrink-0 items-center gap-1">
+												<button
+													type="button"
+													aria-label="Move up"
+													disabled={index === 0}
+													onClick={() => moveReorderItem(index, index - 1)}
+													className="btn btn-secondary btn-sm size-8 p-0"
+												>
+													<ArrowUp className="size-3.5" />
+												</button>
+												<button
+													type="button"
+													aria-label="Move down"
+													disabled={index === reorderItems.length - 1}
+													onClick={() => moveReorderItem(index, index + 1)}
+													className="btn btn-secondary btn-sm size-8 p-0"
+												>
+													<ArrowDown className="size-3.5" />
+												</button>
+											</div>
+										</div>
+									))}
 								</div>
 							)}
 
+							{/* Empty State */}
+							{!reorderMode &&
+								!listLoading &&
+								!listError &&
+								filteredItems.length === 0 && (
+									<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+										<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
+											<List className="size-6 text-(--foreground-subtle)" />
+										</div>
+										<h3 className="mt-3 font-display font-semibold">
+											{searchQuery || unwatchedOnly
+												? "No results found"
+												: "List is empty"}
+										</h3>
+										<p className="mt-1 text-(--foreground-muted) text-sm">
+											{searchQuery || unwatchedOnly
+												? "Try adjusting your filters"
+												: "Add movies and shows to this list to see them here"}
+										</p>
+									</div>
+								)}
+
 							{/* Items Grid/List */}
-							{!listLoading && !listError && filteredItems.length > 0 && (
-								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-									{filteredItems
-										.filter(
-											(item, index, self) =>
-												index === self.findIndex((i) => i.id === item.id),
-										)
-										.map((item: MediaInListDto) => (
-											<ActionableMediaCard
-												key={item.id}
-												fill
-												id={String(
-													(item.media as Record<string, unknown>).mediaId ??
-														item.mediaId,
-												)}
-												title={getTitle(item.media)}
-												seasonNumber={item.seasonNumber}
-												episodeNumber={item.episodeNumber}
-												episodeInfo={
-													item.seasonNumber !== undefined &&
-													item.episodeNumber !== undefined
-														? item.episodeName
-															? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-															: `S${item.seasonNumber}E${item.episodeNumber}`
-														: item.seasonNumber !== undefined
-															? `Season ${item.seasonNumber}`
+							{!reorderMode &&
+								!listLoading &&
+								!listError &&
+								filteredItems.length > 0 && (
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+										{filteredItems
+											.filter(
+												(item, index, self) =>
+													index === self.findIndex((i) => i.id === item.id),
+											)
+											.map((item: MediaInListDto) => (
+												<ActionableMediaCard
+													key={item.id}
+													fill
+													id={String(
+														(item.media as Record<string, unknown>).mediaId ??
+															item.mediaId,
+													)}
+													title={getTitle(item.media)}
+													seasonNumber={item.seasonNumber}
+													episodeNumber={item.episodeNumber}
+													episodeInfo={
+														item.seasonNumber !== undefined &&
+														item.episodeNumber !== undefined
+															? item.episodeName
+																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+																: `S${item.seasonNumber}E${item.episodeNumber}`
+															: item.seasonNumber !== undefined
+																? `Season ${item.seasonNumber}`
+																: undefined
+													}
+													posterUrl={getPosterUrl(item.media)}
+													backdropUrl={getBackdropUrl(item.media)}
+													type={item.mediaType === "movie" ? "movie" : "show"}
+													tmdbRating={getRating(item.media)}
+													duration={formatDuration(
+														item.media.runtime as number | undefined,
+													)}
+													onRemove={
+														isOwner
+															? () =>
+																	removeItemMutation.mutate({
+																		path: {
+																			slug: selectedListSlug || "",
+																			mediaType: item.mediaType,
+																			mediaId: item.mediaId,
+																		},
+																		query: {
+																			seasonNumber: item.seasonNumber,
+																			episodeNumber: item.episodeNumber,
+																		},
+																	})
 															: undefined
-												}
-												posterUrl={getPosterUrl(item.media)}
-												backdropUrl={getBackdropUrl(item.media)}
-												type={item.mediaType === "movie" ? "movie" : "show"}
-												tmdbRating={getRating(item.media)}
-												duration={formatDuration(
-													item.media.runtime as number | undefined,
-												)}
-												onRemove={
-													isOwner
-														? () =>
-																removeItemMutation.mutate({
-																	path: {
-																		slug: selectedListSlug || "",
-																		mediaType: item.mediaType,
-																		mediaId: item.mediaId,
-																	},
-																	query: {
-																		seasonNumber: item.seasonNumber,
-																		episodeNumber: item.episodeNumber,
-																	},
-																})
-														: undefined
-												}
-												isRemoving={
-													isOwner &&
-													removeItemMutation.isPending &&
-													removeItemMutation.variables?.path?.mediaId ===
-														item.mediaId
-												}
-											/>
-										))}
-								</div>
-							)}
+													}
+													isRemoving={
+														isOwner &&
+														removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId
+													}
+												/>
+											))}
+									</div>
+								)}
 						</div>
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
@@ -528,6 +867,17 @@ export function ProfileListsPage({
 					)}
 				</div>
 			</div>
+
+			{/* Add Items Dialog */}
+			{isOwner && selectedListSlug && (
+				<AddListItemsDialog
+					open={showAddDialog}
+					onOpenChange={setShowAddDialog}
+					userDid={userDid}
+					slug={selectedListSlug}
+					existingItems={listDetails?.items ?? []}
+				/>
+			)}
 
 			{/* Create List Modal */}
 			{isOwner && (
