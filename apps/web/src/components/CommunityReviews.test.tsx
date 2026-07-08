@@ -107,6 +107,23 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("3")).toBeTruthy();
 	});
 
+	it("collapses a long review behind Read more and expands it on click", () => {
+		const longBody = `${"word ".repeat(120)}END`;
+		mockUseMediaReviews.mockReturnValue({
+			data: { items: [review({ markdown: longBody })] },
+			isLoading: false,
+		});
+
+		render(<CommunityReviews mediaType="movie" mediaId="123" />);
+		// Collapsed: a Read more affordance, no "Show less" yet.
+		const toggle = screen.getByText("Read more");
+		expect(toggle).toBeTruthy();
+		expect(screen.queryByText("Show less")).toBeNull();
+
+		fireEvent.click(toggle);
+		expect(screen.getByText("Show less")).toBeTruthy();
+	});
+
 	it("renders the media poster cover and links the title to the public review URL", () => {
 		mockUseMediaReviews.mockReturnValue({
 			data: {

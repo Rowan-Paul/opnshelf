@@ -10,10 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
-import { MarkdownContent } from "#/components/MarkdownContent";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
+import { reviewExcerpt } from "#/lib/review-excerpt";
 import { toSlug } from "#/lib/slug";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
@@ -274,6 +274,9 @@ function ProfileOverviewPage() {
 function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 	const showName = review.title?.split(" — ")[0] ?? "";
 	const slug = toSlug(showName);
+	// The whole card is a link, so show a plain excerpt with a "Read more" cue
+	// (the card navigates to the full review) rather than an inline expander.
+	const excerpt = review.markdown ? reviewExcerpt(review.markdown) : null;
 
 	const href = (() => {
 		if (review.mediaType === "movie") {
@@ -309,11 +312,15 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 				<h3 className="line-clamp-1 font-display font-semibold">
 					{review.reviewTitle || "Review"}
 				</h3>
-				{review.markdown && (
-					<div className="relative max-h-[4.5rem] overflow-hidden text-(--foreground-muted)">
-						<MarkdownContent markdown={review.markdown} />
-						<div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-(--background-elevated) to-transparent" />
-					</div>
+				{excerpt && (
+					<p className="text-(--foreground-muted) text-sm">
+						{excerpt.text}
+						{excerpt.truncated && (
+							<span className="ml-1 font-medium text-(--accent)">
+								Read more
+							</span>
+						)}
+					</p>
 				)}
 				<p className="mt-auto line-clamp-1 text-(--foreground-subtle) text-xs">
 					{review.title || "Unknown"}

@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { StarRating } from "@/components/detail/StarRating";
-import { Markdown } from "@/components/ui/Markdown";
+import { ReviewBody } from "@/components/ReviewBody";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -215,7 +215,7 @@ function ReviewCard({
 				</Text>
 			) : null}
 
-			{body ? <Markdown value={body} /> : null}
+			{body ? <ReviewBody markdown={body} /> : null}
 
 			{isOwn ? (
 				<View className="flex-row items-center gap-1">

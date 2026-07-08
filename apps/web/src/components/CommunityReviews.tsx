@@ -10,7 +10,7 @@ import {
 } from "#/lib/hooks/useReviews";
 import ConfirmDialog from "./ConfirmDialog";
 import { UserAvatar } from "./following/UserAvatar";
-import { MarkdownContent } from "./MarkdownContent";
+import { ReviewBody } from "./ReviewBody";
 import { ReviewDialog } from "./ReviewDialog";
 
 interface CommunityReviewsProps {
@@ -224,7 +224,7 @@ function ReviewCard({
 				<div className="min-w-0 flex-1">
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
-						<MarkdownContent markdown={review.markdown} />
+						<ReviewBody markdown={review.markdown} />
 					</div>
 				</div>
 			</div>

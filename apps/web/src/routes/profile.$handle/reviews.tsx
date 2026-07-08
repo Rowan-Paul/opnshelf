@@ -10,8 +10,8 @@ import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import ConfirmDialog from "#/components/ConfirmDialog";
-import { MarkdownContent } from "#/components/MarkdownContent";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { ReviewBody } from "#/components/ReviewBody";
 import { ReviewDialog } from "#/components/ReviewDialog";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -211,7 +211,7 @@ function ReviewCard({
 				<p className="font-medium text-sm">{review.reviewTitle}</p>
 				{review.markdown && (
 					<div className="text-(--foreground-muted) text-sm leading-relaxed">
-						<MarkdownContent markdown={review.markdown} />
+						<ReviewBody markdown={review.markdown} />
 					</div>
 				)}
 			</ProfileContentCard>

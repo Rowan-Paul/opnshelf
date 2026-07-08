@@ -10,7 +10,7 @@ import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
-import { ReviewExcerpt } from "@/components/profile/ReviewExcerpt";
+import { ReviewBody } from "@/components/ReviewBody";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -207,9 +207,7 @@ function ReviewCard({
 						{review.reviewTitle}
 					</Text>
 				) : null}
-				{review.markdown ? (
-					<ReviewExcerpt markdown={review.markdown} className="max-h-40" />
-				) : null}
+				{review.markdown ? <ReviewBody markdown={review.markdown} /> : null}
 			</ProfileContentCard>
 
 			{isOwner ? (
