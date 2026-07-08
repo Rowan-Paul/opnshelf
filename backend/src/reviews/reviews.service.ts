@@ -116,9 +116,11 @@ function mediaPageUrl(
 
 /**
  * Frame the review body for the blog mirror: a small media header (poster +
- * linked title + type) on top and an "on opnshelf" backlink at the bottom, so a
- * mirrored post has context and a route home. Any absent media info is simply
- * omitted; the review body is always present.
+ * linked title + type) on top and an opnshelf promo at the bottom. The footer is
+ * a pitch, not a "read this review" backlink — the reader is already reading the
+ * review here (e.g. on Leaflet), so it links to the media's opnshelf page to draw
+ * them in. Any absent media info is simply omitted; the review body is always
+ * present.
  */
 function buildMirrorContentMarkdown(params: {
 	body: string;
@@ -126,7 +128,6 @@ function buildMirrorContentMarkdown(params: {
 	posterPath: string | null;
 	mediaUrl: string;
 	typeLabel: string;
-	canonicalUrl: string;
 }): string {
 	const blocks: string[] = [];
 	if (params.mediaTitle) {
@@ -141,7 +142,9 @@ function buildMirrorContentMarkdown(params: {
 	}
 	blocks.push(params.body);
 	blocks.push("---");
-	blocks.push(`*[Read this review on opnshelf →](${params.canonicalUrl})*`);
+	blocks.push(
+		`*Posted with [opnshelf](${params.mediaUrl}) — track what you're watching and share your reviews on the open social web.*`,
+	);
 	return blocks.join("\n\n");
 }
 
@@ -612,7 +615,7 @@ export class ReviewsService {
 	}> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
-			select: { reviewsPublicationUri: true, handle: true },
+			select: { reviewsPublicationUri: true },
 		});
 		// Opted out per-review, or no blog configured: ensure no mirror exists.
 		const publicationUri = review.mirrorToBlog
@@ -647,9 +650,6 @@ export class ReviewsService {
 						mediaTitle,
 					)
 				: PUBLIC_SITE_ORIGIN;
-			const canonicalUrl = user?.handle
-				? `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`
-				: PUBLIC_SITE_ORIGIN;
 
 			const contentMarkdown = buildMirrorContentMarkdown({
 				body: review.markdown,
@@ -657,7 +657,6 @@ export class ReviewsService {
 				posterPath: media?.posterPath ?? null,
 				mediaUrl,
 				typeLabel: MEDIA_TYPE_LABEL[mediaType],
-				canonicalUrl,
 			});
 
 			const record = this.buildDocumentRecord({

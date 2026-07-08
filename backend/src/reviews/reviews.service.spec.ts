@@ -595,11 +595,10 @@ describe("ReviewsService", () => {
 			expect(mockPrismaService.review.update).not.toHaveBeenCalled();
 		});
 
-		it("frames the blog mirror with a media header and an opnshelf backlink", async () => {
+		it("frames the blog mirror with a media header and an opnshelf promo", async () => {
 			mockPrismaService.user.findUnique.mockResolvedValue({
 				reviewsPublicationUri:
 					"at://did:plc:abc123/site.standard.publication/leaflet",
-				handle: "alice.opnshelf.xyz",
 			});
 			mockPrismaService.movie.findMany.mockResolvedValue([
 				{ movieId: "123", title: "Dune", posterPath: "/dune.jpg" },
@@ -635,7 +634,8 @@ describe("ReviewsService", () => {
 			});
 
 			// The document write is the 2nd putRecord; its rendered markdown carries
-			// the poster, a linked media title, the review body, and the backlink.
+			// the poster, a linked media title, the review body, and an opnshelf
+			// promo footer that links to the media page (not back to the review).
 			const docCall = mockPutRecord.mock.calls[1][0];
 			const rendered = docCall.record.content.text.markdown as string;
 			expect(rendered).toContain("https://image.tmdb.org/t/p/w342/dune.jpg");
@@ -644,8 +644,10 @@ describe("ReviewsService", () => {
 			);
 			expect(rendered).toContain("Loved it.");
 			expect(rendered).toContain(
-				"https://opnshelf.xyz/reviews/alice.opnshelf.xyz/testtid123",
+				"Posted with [opnshelf](https://opnshelf.xyz/movies/123/dune)",
 			);
+			// Not a "read this review" backlink to the canonical review page.
+			expect(rendered).not.toContain("/reviews/");
 		});
 	});
 
