@@ -333,8 +333,10 @@ export default function SearchScreen() {
 
 	return (
 		<Screen className="px-0">
-			<View className="px-4 pb-3">
-				<Text className="mb-3 font-bold font-display text-2xl">Search</Text>
+			<View className="px-4 pt-3 pb-3">
+				<Text className="mb-3 font-bold font-display text-2xl text-foreground">
+					Search
+				</Text>
 				<TextField
 					leading={<Search color="#94a3b8" size={18} />}
 					trailing={

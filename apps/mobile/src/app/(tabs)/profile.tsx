@@ -110,7 +110,7 @@ export default function ProfileTab() {
 				}
 			>
 				{/* Top bar with quick access to settings. */}
-				<View className="flex-row items-center justify-between px-4 pt-2 pb-1">
+				<View className="flex-row items-center justify-between px-4 pt-3 pb-3">
 					<Text className="font-bold font-display text-2xl text-foreground">
 						Profile
 					</Text>

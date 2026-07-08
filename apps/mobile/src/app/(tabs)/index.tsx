@@ -51,7 +51,8 @@ export default function HomeScreen() {
 			<ScrollView
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{
-					paddingTop: insets.top + 8,
+					// + 12 = the pt-3 the other tabs give their title row.
+					paddingTop: insets.top + 12,
 					paddingBottom: 32,
 				}}
 				refreshControl={

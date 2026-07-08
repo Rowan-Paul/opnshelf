@@ -297,6 +297,10 @@ export function ProfileListsPage({
 			to: "/profile/$handle/lists/$listSlug",
 			params: { handle, listSlug: slug },
 			replace: true,
+			// The router's default scroll-to-top lands AFTER the scrollIntoView
+			// below, yanking the viewport back up. Same-page selection keeps its
+			// own scroll handling.
+			resetScroll: false,
 		});
 		// Below lg the sidebar stacks above the content, so a tap otherwise
 		// leaves the user looking at the sidebar. Only scroll in that layout;
@@ -448,7 +452,7 @@ export function ProfileListsPage({
 					<button
 						type="button"
 						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary gap-2"
+						className="btn btn-primary gap-2 rounded-full!"
 					>
 						<Plus className="size-4" />
 						Create List
@@ -531,7 +535,7 @@ export function ProfileListsPage({
 											type="button"
 											onClick={cancelReorder}
 											disabled={reorderMutation.isPending}
-											className="btn btn-secondary btn-sm gap-1.5"
+											className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
 										>
 											<X className="size-3.5" />
 											Cancel
@@ -540,7 +544,7 @@ export function ProfileListsPage({
 											type="button"
 											onClick={saveReorder}
 											disabled={reorderMutation.isPending}
-											className="btn btn-primary btn-sm gap-1.5"
+											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
 										>
 											{reorderMutation.isPending ? (
 												<Loader2 className="size-3.5 animate-spin" />
@@ -558,7 +562,7 @@ export function ProfileListsPage({
 											<input
 												type="text"
 												placeholder="Search list..."
-												className="input h-9 w-44 pl-9! text-sm"
+												className="input h-9 w-44 rounded-full! pl-9! text-sm"
 												value={searchQuery}
 												onChange={(e) => setSearchQuery(e.target.value)}
 											/>
@@ -569,7 +573,7 @@ export function ProfileListsPage({
 											<DropdownMenuTrigger asChild>
 												<button
 													type="button"
-													className="btn btn-secondary btn-sm gap-1.5"
+													className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
 												>
 													<ArrowUpDown className="size-3.5" />
 													{SORT_LABELS[sort]}
@@ -603,7 +607,7 @@ export function ProfileListsPage({
 												onClick={() => setUnwatchedOnly((v) => !v)}
 												aria-pressed={unwatchedOnly}
 												className={cn(
-													"btn btn-sm gap-1.5",
+													"btn btn-sm gap-1.5 rounded-full!",
 													unwatchedOnly ? "btn-primary" : "btn-secondary",
 												)}
 											>
@@ -617,7 +621,7 @@ export function ProfileListsPage({
 												<button
 													type="button"
 													onClick={() => setShowAddDialog(true)}
-													className="btn btn-primary btn-sm gap-1.5"
+													className="btn btn-primary btn-sm gap-1.5 rounded-full!"
 												>
 													<Plus className="size-3.5" />
 													Add items
@@ -626,7 +630,7 @@ export function ProfileListsPage({
 													<button
 														type="button"
 														onClick={enterReorderMode}
-														className="btn btn-secondary btn-sm gap-1.5"
+														className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
 													>
 														<GripVertical className="size-3.5" />
 														Reorder
@@ -638,7 +642,7 @@ export function ProfileListsPage({
 																type="button"
 																aria-disabled
 																onClick={(e) => e.preventDefault()}
-																className="btn btn-secondary btn-sm gap-1.5 opacity-50"
+																className="btn btn-secondary btn-sm gap-1.5 rounded-full! opacity-50"
 															>
 																<GripVertical className="size-3.5" />
 																Reorder
@@ -781,7 +785,7 @@ export function ProfileListsPage({
 													aria-label="Move up"
 													disabled={index === 0}
 													onClick={() => moveReorderItem(index, index - 1)}
-													className="btn btn-secondary btn-sm size-8 p-0!"
+													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
 												>
 													<ArrowUp className="size-3.5" />
 												</button>
@@ -790,7 +794,7 @@ export function ProfileListsPage({
 													aria-label="Move down"
 													disabled={index === reorderItems.length - 1}
 													onClick={() => moveReorderItem(index, index + 1)}
-													className="btn btn-secondary btn-sm size-8 p-0!"
+													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
 												>
 													<ArrowDown className="size-3.5" />
 												</button>

@@ -11,7 +11,8 @@ export function WelcomeHeader({ user }: { user: UserDto | null }) {
 
 	return (
 		<View className="gap-1">
-			<Text className="font-bold font-display text-3xl text-foreground">
+			{/* text-2xl: the shared tab-title size (all five tabs match). */}
+			<Text className="font-bold font-display text-2xl text-foreground">
 				Welcome back{name ? `, ${name}` : ""}
 			</Text>
 			{user?.handle ? (
