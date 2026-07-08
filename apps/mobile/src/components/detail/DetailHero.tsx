@@ -5,14 +5,15 @@ import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
-import { cn } from "@/lib/cn";
+import { useTheme } from "@/lib/theme-context";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
- * Hero header for media detail screens: full-width backdrop with a gradient
- * scrim, an overlapping poster, the title, and an optional rating + subtitle.
- * `children` renders below the title block (e.g. metadata pills). Props-driven
- * so movie and show details share one layout.
+ * Hero header for media detail screens, matching the web `MediaHero`: a
+ * full-bleed backdrop sits behind the content and is dissolved into the page
+ * with two gradients — one fading up from the bottom, one fading in from the
+ * left — so the poster, title and metadata read over it. Props-driven so
+ * movie / show / season / episode share the one layout.
  */
 export function DetailHero({
 	title,
@@ -21,7 +22,6 @@ export function DetailHero({
 	posterUrl,
 	posterHref,
 	rating,
-	inset = false,
 	children,
 }: {
 	title: string;
@@ -31,65 +31,71 @@ export function DetailHero({
 	/** When set, the poster becomes a link (e.g. season/episode → show page). */
 	posterHref?: Href;
 	rating?: number;
-	/** Render the backdrop as an inset rounded card instead of full-bleed.
-	 * Pass on screens rendered under the stack header, where an edge-to-edge
-	 * image cuts hard against the header (a background-colored fade doesn't
-	 * work — it vanishes on bright images). Movie keeps full-bleed: no header. */
-	inset?: boolean;
 	children?: ReactNode;
 }) {
-	const scrimStyle = useTwStyle("absolute inset-x-0 bottom-0 h-32");
+	const { scheme } = useTheme();
+	// The page background as an "r,g,b" triple so the scrims can fade it to
+	// varying alpha, exactly like web's from/via-(--background) overlays.
+	const bg = scheme === "dark" ? "2,6,23" : "248,250,252";
+	const scrimStyle = useTwStyle("absolute inset-0");
+
 	const poster = (
-		<View className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-			<PosterImage url={posterUrl} className="aspect-2/3 w-24" />
+		<View className="h-40 w-28 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+			<PosterImage url={posterUrl} className="h-40 w-28" />
 		</View>
 	);
+
 	return (
-		<View>
-			<View className={cn(inset && "px-4 pt-2")}>
-				<View
-					className={cn(
-						"relative h-52 w-full bg-background-subtle",
-						inset && "overflow-hidden rounded-xl border border-border",
+		<View className="relative">
+			{/* Backdrop + gradient scrims, behind the content. */}
+			<View className="absolute inset-0">
+				<PosterImage url={backdropUrl} className="h-full w-full" />
+				{/* Vertical: transparent at top → solid background at bottom. */}
+				<LinearGradient
+					colors={["transparent", `rgba(${bg},0.6)`, `rgb(${bg})`]}
+					style={scrimStyle}
+				/>
+				{/* Horizontal: solid background at left → transparent at right. */}
+				<LinearGradient
+					colors={[`rgb(${bg})`, `rgba(${bg},0.4)`, "transparent"]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+					style={scrimStyle}
+				/>
+			</View>
+
+			{/* Content, bottom-anchored over the backdrop. */}
+			<View className="px-4 pt-28">
+				<View className="flex-row gap-4">
+					{posterHref ? (
+						<Link href={posterHref} asChild>
+							<Pressable>{poster}</Pressable>
+						</Link>
+					) : (
+						poster
 					)}
-				>
-					<PosterImage url={backdropUrl} className="h-52 w-full" />
-					<LinearGradient
-						colors={["transparent", "rgba(2,6,23,0.85)"]}
-						style={scrimStyle}
-					/>
-				</View>
-			</View>
-
-			<View className="-mt-16 flex-row gap-4 px-4">
-				{posterHref ? (
-					<Link href={posterHref} asChild>
-						<Pressable>{poster}</Pressable>
-					</Link>
-				) : (
-					poster
-				)}
-				<View className="flex-1 justify-end pb-1">
-					<Text className="font-bold font-display text-foreground text-xl">
-						{title}
-					</Text>
-					{subtitle ? (
-						<Text className="mt-0.5 text-muted-foreground text-sm">
-							{subtitle}
+					<View className="flex-1 justify-end pb-1">
+						<Text className="font-bold font-display text-2xl text-foreground">
+							{title}
 						</Text>
-					) : null}
-					{rating && rating > 0 ? (
-						<View className="mt-1 flex-row items-center gap-1">
-							<Star color="#f3bc00" fill="#f3bc00" size={14} />
-							<Text className="font-medium text-foreground text-sm">
-								{rating.toFixed(1)}
+						{subtitle ? (
+							<Text className="mt-0.5 text-muted-foreground text-sm">
+								{subtitle}
 							</Text>
-						</View>
-					) : null}
+						) : null}
+						{rating && rating > 0 ? (
+							<View className="mt-1 flex-row items-center gap-1">
+								<Star color="#f3bc00" fill="#f3bc00" size={14} />
+								<Text className="font-medium text-foreground text-sm">
+									{rating.toFixed(1)}
+								</Text>
+							</View>
+						) : null}
+					</View>
 				</View>
-			</View>
 
-			{children ? <View className="mt-3 px-4">{children}</View> : null}
+				{children ? <View className="mt-4">{children}</View> : null}
+			</View>
 		</View>
 	);
 }

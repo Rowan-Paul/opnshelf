@@ -127,7 +127,6 @@ export default function SeasonDetailScreen() {
 						posterUrl={posterUrl(data.poster_path)}
 						posterHref={`/show/${id}`}
 						rating={data.vote_average}
-						inset
 					>
 						<View className="gap-3">
 							<View className="flex-row flex-wrap items-center gap-x-1">
