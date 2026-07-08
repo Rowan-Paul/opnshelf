@@ -113,27 +113,29 @@ function ReorderRow({
 				) : null}
 			</View>
 			<View className="flex-row items-center gap-1">
+				{/* #94a3b8 like every other muted icon — the old #e2e8f0 was a
+				    dark-theme grey, near-invisible on the light theme. */}
 				<Pressable
 					hitSlop={6}
 					disabled={isFirst}
 					onPress={onUp}
 					className={cn(
-						"size-9 items-center justify-center rounded-lg bg-background-subtle",
+						"size-9 items-center justify-center rounded-full bg-background-subtle",
 						isFirst && "opacity-30",
 					)}
 				>
-					<ChevronUp color="#e2e8f0" size={20} />
+					<ChevronUp color="#94a3b8" size={20} />
 				</Pressable>
 				<Pressable
 					hitSlop={6}
 					disabled={isLast}
 					onPress={onDown}
 					className={cn(
-						"size-9 items-center justify-center rounded-lg bg-background-subtle",
+						"size-9 items-center justify-center rounded-full bg-background-subtle",
 						isLast && "opacity-30",
 					)}
 				>
-					<ChevronDown color="#e2e8f0" size={20} />
+					<ChevronDown color="#94a3b8" size={20} />
 				</Pressable>
 			</View>
 		</View>
