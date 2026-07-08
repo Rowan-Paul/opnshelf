@@ -1,12 +1,13 @@
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { View } from "react-native";
+import { RefreshControl, View } from "react-native";
 import { MediaCard } from "@/components/media/MediaCard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { listItemToMediaCardItem } from "@/lib/list-media";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -26,6 +27,7 @@ export default function PublicListScreen() {
 		slug: string;
 	}>();
 	const gridStyle = useTwStyle("px-3 pb-12");
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	const segment = handleParam ? decodeURIComponent(handleParam) : "";
 	const isDid = segment.startsWith("did:");
@@ -68,6 +70,14 @@ export default function PublicListScreen() {
 					)}
 					contentContainerStyle={gridStyle}
 					showsVerticalScrollIndicator={false}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#f3bc00"
+							colors={["#f3bc00"]}
+						/>
+					}
 					ListHeaderComponent={
 						<View className="gap-3 px-1 pb-4">
 							{list.description ? (

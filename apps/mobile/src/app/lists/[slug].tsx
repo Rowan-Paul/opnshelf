@@ -14,7 +14,14 @@ import {
 	X,
 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Share, View } from "react-native";
+import {
+	ActivityIndicator,
+	Alert,
+	Pressable,
+	RefreshControl,
+	Share,
+	View,
+} from "react-native";
 import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
@@ -39,6 +46,7 @@ import {
 	useUpdateList,
 } from "@/lib/use-lists";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
+import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
 
@@ -152,6 +160,7 @@ export default function ListDetailScreen() {
 	const numColumns = useMediaCardColumns();
 	const { user, isAuthenticated } = useAuth();
 	const toast = useToast();
+	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	const [sort, setSort] = useState<ListSort>("position");
 
@@ -413,6 +422,14 @@ export default function ListDetailScreen() {
 					contentContainerStyle={gridStyle}
 					showsVerticalScrollIndicator={false}
 					keyboardShouldPersistTaps="handled"
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#f3bc00"
+							colors={["#f3bc00"]}
+						/>
+					}
 					onEndReachedThreshold={0.5}
 					onEndReached={() => {
 						if (hasNextPage && !isFetchingNextPage) fetchNextPage();
