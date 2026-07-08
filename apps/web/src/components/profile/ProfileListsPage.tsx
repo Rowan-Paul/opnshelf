@@ -509,11 +509,14 @@ export function ProfileListsPage({
 				</div>
 
 				{/* List Content */}
-				<div ref={listContentRef} className="lg:col-span-3">
+				{/* scroll-mt clears the sticky h-16 header (+ breathing room) when
+				    handleSelectList scrolls this into view on stacked layouts. */}
+				<div ref={listContentRef} className="scroll-mt-20 lg:col-span-3">
 					{activeList ? (
 						<div className="space-y-6">
-							{/* List Header */}
-							<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+							{/* List Header — controls live below it, mirroring the mobile
+							    layout: full-width search, then one row of pills. */}
+							<div className="flex items-center justify-between gap-4">
 								<div className="flex items-center gap-3">
 									<div
 										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClasses[getListColor(activeList.name)]} text-white`}
@@ -524,12 +527,10 @@ export function ProfileListsPage({
 											return <ListIcon className="h-4.5 w-4.5" />;
 										})()}
 									</div>
-									<div>
-										<h2 className="text-display-3">{activeList.name}</h2>
-									</div>
+									<h2 className="text-display-3">{activeList.name}</h2>
 								</div>
 
-								{reorderMode ? (
+								{reorderMode && (
 									<div className="flex items-center gap-2">
 										<button
 											type="button"
@@ -554,20 +555,24 @@ export function ProfileListsPage({
 											Done
 										</button>
 									</div>
-								) : (
-									<div className="flex flex-wrap items-center gap-2">
-										{/* Search */}
-										<div className="relative">
-											<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
-											<input
-												type="text"
-												placeholder="Search list..."
-												className="input h-9 w-44 rounded-full! pl-9! text-sm"
-												value={searchQuery}
-												onChange={(e) => setSearchQuery(e.target.value)}
-											/>
-										</div>
+								)}
+							</div>
 
+							{!reorderMode && (
+								<div className="space-y-3">
+									{/* Search — full width, like the mobile field */}
+									<div className="relative">
+										<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-(--foreground-muted)" />
+										<input
+											type="text"
+											placeholder="Search list..."
+											className="input h-10 w-full pl-9! text-sm"
+											value={searchQuery}
+											onChange={(e) => setSearchQuery(e.target.value)}
+										/>
+									</div>
+
+									<div className="flex flex-wrap items-center gap-2">
 										{/* Sort */}
 										<DropdownMenu>
 											<DropdownMenuTrigger asChild>
@@ -579,7 +584,7 @@ export function ProfileListsPage({
 													{SORT_LABELS[sort]}
 												</button>
 											</DropdownMenuTrigger>
-											<DropdownMenuContent align="end">
+											<DropdownMenuContent align="start">
 												<DropdownMenuRadioGroup
 													value={sort}
 													onValueChange={(value) =>
@@ -615,9 +620,10 @@ export function ProfileListsPage({
 											</button>
 										)}
 
-										{/* Owner controls */}
+										{/* Owner controls — right-aligned, like mobile's
+										    sort-left / reorder-right split */}
 										{isOwner && isAuthenticated && (
-											<>
+											<div className="ml-auto flex items-center gap-2">
 												<button
 													type="button"
 													onClick={() => setShowAddDialog(true)}
@@ -653,11 +659,11 @@ export function ProfileListsPage({
 														</TooltipContent>
 													</Tooltip>
 												)}
-											</>
+											</div>
 										)}
 									</div>
-								)}
-							</div>
+								</div>
+							)}
 
 							{/* Description + watched progress clustered into one card.
 							    Progress is viewer-relative and hidden when signed out. */}

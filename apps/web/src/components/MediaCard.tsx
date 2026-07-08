@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import {
-	BookmarkX,
 	Check,
 	Clock,
 	Library,
@@ -8,6 +7,7 @@ import {
 	Loader2,
 	Play,
 	Star,
+	X,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -178,8 +178,30 @@ export default function MediaCard({
 						<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 					)}
 
+					{/* Remove-from-list — top-LEFT dark X, matching the mobile app
+					    (the watched toggle owns the top-right corner there too). */}
+					{onRemove && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								onRemove();
+							}}
+							disabled={isRemoving}
+							className="absolute top-2 left-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/70 disabled:opacity-50 sm:h-7 sm:w-7"
+							aria-label="Remove from list"
+							title="Remove from list"
+						>
+							{isRemoving ? (
+								<Loader2 className="size-4 animate-spin sm:size-3.5" />
+							) : (
+								<X className="size-4 sm:size-3.5" />
+							)}
+						</button>
+					)}
+
 					{/* Actions — top-right corner */}
-					{(onMarkWatched || onUnmarkWatched || onManageLists || onRemove) && (
+					{(onMarkWatched || onUnmarkWatched || onManageLists) && (
 						<div className="absolute top-2 right-2 flex flex-col gap-2 sm:gap-1.5">
 							<div className="flex items-center gap-2 sm:gap-1.5">
 								{(onMarkWatched || onUnmarkWatched) && (
@@ -226,24 +248,6 @@ export default function MediaCard({
 											<ListChecks className="size-4 sm:size-3.5" />
 										) : (
 											<Library className="size-4 sm:size-3.5" />
-										)}
-									</button>
-								)}
-								{onRemove && (
-									<button
-										type="button"
-										onClick={(e) => {
-											e.preventDefault();
-											onRemove();
-										}}
-										disabled={isRemoving}
-										className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/80 text-white backdrop-blur-sm transition-colors hover:bg-red-600 disabled:opacity-50 sm:h-7 sm:w-7"
-										aria-label="Remove from list"
-									>
-										{isRemoving ? (
-											<Loader2 className="size-4 animate-spin sm:size-3.5" />
-										) : (
-											<BookmarkX className="size-4 sm:size-3.5" />
 										)}
 									</button>
 								)}
