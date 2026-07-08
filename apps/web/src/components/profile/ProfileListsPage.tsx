@@ -20,6 +20,7 @@ import {
 	GripVertical,
 	Heart,
 	List,
+	ListOrdered,
 	Loader2,
 	Plus,
 	Search,
@@ -62,6 +63,15 @@ const SORT_LABELS: Record<SortOption, string> = {
 	added: "Added",
 	title: "Title",
 	year: "Year",
+};
+
+type FilterOption = "all" | "movie" | "show" | "unwatched";
+
+const FILTER_LABELS: Record<FilterOption, string> = {
+	all: "All",
+	movie: "Movies",
+	show: "Shows",
+	unwatched: "Unwatched",
 };
 
 function moveItem<T>(arr: T[], from: number, to: number): T[] {
@@ -168,7 +178,7 @@ export function ProfileListsPage({
 	const [newListDescription, setNewListDescription] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sort, setSort] = useState<SortOption>("position");
-	const [unwatchedOnly, setUnwatchedOnly] = useState(false);
+	const [filter, setFilter] = useState<FilterOption>("all");
 	const [showAddDialog, setShowAddDialog] = useState(false);
 	const [reorderMode, setReorderMode] = useState(false);
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
@@ -265,7 +275,7 @@ export function ProfileListsPage({
 	// biome-ignore lint/correctness/useExhaustiveDependencies: slug is the trigger, not read inside
 	useEffect(() => {
 		setSearchQuery("");
-		setUnwatchedOnly(false);
+		setFilter("all");
 		setReorderMode(false);
 	}, [selectedListSlug]);
 
@@ -279,18 +289,20 @@ export function ProfileListsPage({
 		return userLists.find((list) => list.slug === selectedListSlug);
 	}, [userLists, selectedListSlug]);
 
-	// Filter items based on search query + unwatched toggle
+	// Filter items based on search query + media/unwatched filter
 	const filteredItems = useMemo(() => {
 		if (!listDetails?.items) return [];
 		const query = searchQuery.trim().toLowerCase();
 		return listDetails.items.filter((item: MediaInListDto) => {
-			if (unwatchedOnly && item.watched) return false;
+			if (filter === "movie" && item.mediaType !== "movie") return false;
+			if (filter === "show" && item.mediaType === "movie") return false;
+			if (filter === "unwatched" && item.watched) return false;
 			if (query && !getTitle(item.media).toLowerCase().includes(query)) {
 				return false;
 			}
 			return true;
 		});
-	}, [listDetails?.items, searchQuery, unwatchedOnly]);
+	}, [listDetails?.items, searchQuery, filter]);
 
 	const handleSelectList = (slug: string) => {
 		navigate({
@@ -328,7 +340,7 @@ export function ProfileListsPage({
 
 	const enterReorderMode = () => {
 		setSearchQuery("");
-		setUnwatchedOnly(false);
+		setFilter("all");
 		setReorderItems(dedupedItems);
 		setReorderMode(true);
 	};
@@ -530,7 +542,7 @@ export function ProfileListsPage({
 									<h2 className="text-display-3">{activeList.name}</h2>
 								</div>
 
-								{reorderMode && (
+								{reorderMode ? (
 									<div className="flex items-center gap-2">
 										<button
 											type="button"
@@ -555,6 +567,18 @@ export function ProfileListsPage({
 											Done
 										</button>
 									</div>
+								) : (
+									isOwner &&
+									isAuthenticated && (
+										<button
+											type="button"
+											onClick={() => setShowAddDialog(true)}
+											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+										>
+											<Plus className="size-3.5" />
+											Add items
+										</button>
+									)
 								)}
 							</div>
 
@@ -572,13 +596,14 @@ export function ProfileListsPage({
 										/>
 									</div>
 
-									<div className="flex flex-wrap items-center gap-2">
+									{/* Sort + Reorder row, matching mobile layout */}
+									<div className="flex items-center justify-between gap-2">
 										{/* Sort */}
 										<DropdownMenu>
 											<DropdownMenuTrigger asChild>
 												<button
 													type="button"
-													className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+													className="inline-flex items-center gap-1.5 rounded-full bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 												>
 													<ArrowUpDown className="size-3.5" />
 													{SORT_LABELS[sort]}
@@ -605,61 +630,54 @@ export function ProfileListsPage({
 											</DropdownMenuContent>
 										</DropdownMenu>
 
-										{/* Unwatched filter (viewer-relative — only meaningful signed in) */}
-										{isAuthenticated && (
+										{/* Reorder */}
+										{sort === "position" ? (
 											<button
 												type="button"
-												onClick={() => setUnwatchedOnly((v) => !v)}
-												aria-pressed={unwatchedOnly}
-												className={cn(
-													"btn btn-sm gap-1.5 rounded-full!",
-													unwatchedOnly ? "btn-primary" : "btn-secondary",
-												)}
+												onClick={enterReorderMode}
+												className="inline-flex items-center gap-1.5 rounded-full bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 											>
-												Unwatched
+												<ListOrdered className="size-3.5" />
+												Reorder
 											</button>
-										)}
-
-										{/* Owner controls — right-aligned, like mobile's
-										    sort-left / reorder-right split */}
-										{isOwner && isAuthenticated && (
-											<div className="ml-auto flex items-center gap-2">
-												<button
-													type="button"
-													onClick={() => setShowAddDialog(true)}
-													className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-												>
-													<Plus className="size-3.5" />
-													Add items
-												</button>
-												{sort === "position" ? (
+										) : (
+											<Tooltip>
+												<TooltipTrigger asChild>
 													<button
 														type="button"
-														onClick={enterReorderMode}
-														className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+														aria-disabled
+														onClick={(e) => e.preventDefault()}
+														className="inline-flex items-center gap-1.5 rounded-full bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-sm opacity-50"
 													>
-														<GripVertical className="size-3.5" />
+														<ListOrdered className="size-3.5" />
 														Reorder
 													</button>
-												) : (
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<button
-																type="button"
-																aria-disabled
-																onClick={(e) => e.preventDefault()}
-																className="btn btn-secondary btn-sm gap-1.5 rounded-full! opacity-50"
-															>
-																<GripVertical className="size-3.5" />
-																Reorder
-															</button>
-														</TooltipTrigger>
-														<TooltipContent>
-															Switch sort to Order to reorder items
-														</TooltipContent>
-													</Tooltip>
-												)}
-											</div>
+												</TooltipTrigger>
+												<TooltipContent>
+													Switch sort to Order to reorder items
+												</TooltipContent>
+											</Tooltip>
+										)}
+									</div>
+
+									{/* Filter pills */}
+									<div className="flex flex-wrap items-center gap-2">
+										{(Object.keys(FILTER_LABELS) as FilterOption[]).map(
+											(option) => (
+												<button
+													key={option}
+													type="button"
+													onClick={() => setFilter(option)}
+													className={cn(
+														"rounded-full px-3 py-1.5 font-medium text-sm transition-colors",
+														filter === option
+															? "bg-(--accent) text-(--accent-foreground)"
+															: "bg-(--background-subtle) text-(--foreground-muted) hover:text-(--foreground)",
+													)}
+												>
+													{FILTER_LABELS[option]}
+												</button>
+											),
 										)}
 									</div>
 								</div>
@@ -820,12 +838,12 @@ export function ProfileListsPage({
 											<List className="size-6 text-(--foreground-subtle)" />
 										</div>
 										<h3 className="mt-3 font-display font-semibold">
-											{searchQuery || unwatchedOnly
+											{searchQuery || filter !== "all"
 												? "No results found"
 												: "List is empty"}
 										</h3>
 										<p className="mt-1 text-(--foreground-muted) text-sm">
-											{searchQuery || unwatchedOnly
+											{searchQuery || filter !== "all"
 												? "Try adjusting your filters"
 												: "Add movies and shows to this list to see them here"}
 										</p>
