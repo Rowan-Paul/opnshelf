@@ -643,8 +643,9 @@ describe("ReviewsService", () => {
 				"[Dune](https://opnshelf.xyz/movies/123/dune)",
 			);
 			expect(rendered).toContain("Loved it.");
+			// Entire promo sentence is the clickable link.
 			expect(rendered).toContain(
-				"Posted with [opnshelf](https://opnshelf.xyz/movies/123/dune)",
+				"[Posted with opnshelf — track what you're watching and share your reviews on the open social web.](https://opnshelf.xyz/movies/123/dune)",
 			);
 			// Not a "read this review" backlink to the canonical review page.
 			expect(rendered).not.toContain("/reviews/");

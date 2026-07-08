@@ -142,8 +142,9 @@ function buildMirrorContentMarkdown(params: {
 	}
 	blocks.push(params.body);
 	blocks.push("---");
+	// Whole sentence is the link (bigger, more enticing click target).
 	blocks.push(
-		`*Posted with [opnshelf](${params.mediaUrl}) — track what you're watching and share your reviews on the open social web.*`,
+		`*[Posted with opnshelf — track what you're watching and share your reviews on the open social web.](${params.mediaUrl})*`,
 	);
 	return blocks.join("\n\n");
 }
