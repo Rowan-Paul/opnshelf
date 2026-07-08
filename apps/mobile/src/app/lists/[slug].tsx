@@ -145,8 +145,8 @@ function ReorderRow({
 export default function ListDetailScreen() {
 	const { slug } = useLocalSearchParams<{ slug: string }>();
 	const router = useRouter();
-	const gridStyle = useTwStyle("px-3 pb-12");
-	const reorderStyle = useTwStyle("px-4 pb-12");
+	const gridStyle = useTwStyle("px-3 pt-3 pb-12");
+	const reorderStyle = useTwStyle("px-4 pt-3 pb-12");
 	const { user, isAuthenticated } = useAuth();
 	const toast = useToast();
 
@@ -363,6 +363,10 @@ export default function ListDetailScreen() {
 				<ErrorState message="Couldn't load this list." />
 			) : reorderMode ? (
 				<FlashList
+					// Distinct keys on the two FlashLists: numColumns (3 grid ↔ 1 row)
+					// can't change on a live list, it corrupts the layout — the key
+					// remounts instead.
+					key="reorder"
 					data={orderedItems}
 					keyExtractor={(item) => item.id}
 					contentContainerStyle={reorderStyle}
@@ -384,6 +388,7 @@ export default function ListDetailScreen() {
 				/>
 			) : (
 				<FlashList
+					key="grid"
 					data={filteredItems}
 					numColumns={3}
 					keyExtractor={(item) => item.id}
@@ -401,16 +406,32 @@ export default function ListDetailScreen() {
 					}}
 					ListHeaderComponent={
 						<View className="gap-3 px-1 pb-4">
-							{list.description ? (
-								<Text className="text-muted-foreground text-sm leading-5">
-									{list.description}
-								</Text>
-							) : null}
-
-							{!showProgress ? (
-								<Text className="text-muted-foreground text-xs">
-									{total} item{total === 1 ? "" : "s"}
-								</Text>
+							{/* Description + watched progress clustered in one info card. */}
+							{list.description || total > 0 ? (
+								<View className="gap-2.5 rounded-xl border border-border bg-card p-4">
+									{list.description ? (
+										<Text className="text-muted-foreground text-sm leading-5">
+											{list.description}
+										</Text>
+									) : null}
+									{showProgress ? (
+										<View className="gap-1.5">
+											<Text className="text-muted-foreground text-xs">
+												{watchedCount} of {total} watched
+											</Text>
+											<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
+												<View
+													className="h-full rounded-full bg-primary"
+													style={{ width: `${progressPct}%` }}
+												/>
+											</View>
+										</View>
+									) : (
+										<Text className="text-muted-foreground text-xs">
+											{total} item{total === 1 ? "" : "s"}
+										</Text>
+									)}
+								</View>
 							) : null}
 
 							<TextField
@@ -494,22 +515,6 @@ export default function ListDetailScreen() {
 									);
 								})}
 							</View>
-
-							{/* Watched progress last, directly above the grid: it describes
-							    the items below, and this matches the web list page. */}
-							{showProgress ? (
-								<View className="gap-1.5">
-									<Text className="text-muted-foreground text-xs">
-										{watchedCount} of {total} watched
-									</Text>
-									<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
-										<View
-											className="h-full rounded-full bg-primary"
-											style={{ width: `${progressPct}%` }}
-										/>
-									</View>
-								</View>
-							) : null}
 						</View>
 					}
 					ListEmptyComponent={
