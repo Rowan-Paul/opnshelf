@@ -215,9 +215,7 @@ function ReviewCard({
 				</Text>
 			) : null}
 
-			{body ? (
-				<ReviewBody markdown={body} expandable full={highlighted} />
-			) : null}
+			{body ? <ReviewBody markdown={body} expandable /> : null}
 
 			{isOwn ? (
 				<View className="flex-row items-center gap-1">

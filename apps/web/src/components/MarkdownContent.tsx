@@ -45,10 +45,14 @@ function MarkdownLink({ ...props }: ComponentPropsWithoutRef<"a">) {
 }
 
 export function MarkdownContent({ markdown }: { markdown: string }) {
+	// The editor serialises some hard breaks as literal <br> HTML; react-markdown
+	// doesn't render raw HTML, so turn them into newlines (which remark-breaks
+	// then renders as breaks) rather than showing "<br />" as text.
+	const normalized = markdown.replace(/<br\s*\/?>/gi, "\n");
 	return (
 		<div className={PROSE_CLASS}>
 			<Markdown remarkPlugins={[remarkBreaks]} components={{ a: MarkdownLink }}>
-				{markdown}
+				{normalized}
 			</Markdown>
 		</div>
 	);

@@ -5,6 +5,7 @@ const EXCERPT_MAX = 280;
 /** Strip markdown to a single line of plain text for a preview. */
 function toPlainText(markdown: string): string {
 	return markdown
+		.replace(/<br\s*\/?>/gi, " ")
 		.replace(/```[\s\S]*?```/g, " ")
 		.replace(/`[^`]*`/g, " ")
 		.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")

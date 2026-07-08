@@ -87,9 +87,21 @@ function ReviewCard({
 	const isHighlighted =
 		(rawHash ?? "").replace(/^#/, "") === `review-${review.id}`;
 	useEffect(() => {
-		if (isHighlighted) {
-			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-		}
+		if (!isHighlighted) return;
+		// Land on the TOP of the review (block: "start" + scroll-mt), not its
+		// centre — a long highlighted review is tall, so centring it looks like
+		// stopping "halfway". Re-scroll a couple of times because sections above
+		// (cast, providers, similar) finish loading after this fires and push the
+		// review further down.
+		const scroll = () =>
+			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+		scroll();
+		const t1 = setTimeout(scroll, 400);
+		const t2 = setTimeout(scroll, 1000);
+		return () => {
+			clearTimeout(t1);
+			clearTimeout(t2);
+		};
 	}, [isHighlighted]);
 
 	const isPending = isLikePending || isUnlikePending;

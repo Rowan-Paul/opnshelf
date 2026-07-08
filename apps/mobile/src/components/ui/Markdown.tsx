@@ -116,6 +116,9 @@ function parseBlocks(markdown: string): Block[] {
 	// so the card matches the editor.
 	const lines = markdown
 		.replace(/\r\n/g, "\n")
+		// The editor serialises some hard breaks as literal <br> HTML; render them
+		// as newlines instead of showing "<br />" as text.
+		.replace(/<br\s*\/?>/gi, "\n")
 		.replace(/\\$/gm, "")
 		.split("\n");
 	const blocks: Block[] = [];
@@ -219,6 +222,7 @@ export function MarkdownPreview({
 	numberOfLines: number;
 }) {
 	const text = value
+		.replace(/<br\s*\/?>/gi, "\n")
 		.replace(/```/g, "")
 		.replace(/^#{1,6}\s+/gm, "")
 		.replace(/^>\s?/gm, "")
