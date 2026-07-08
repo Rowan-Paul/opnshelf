@@ -79,6 +79,7 @@ export default function ShowDetailScreen() {
 						backdropUrl={backdropUrl(data.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
 						rating={data.vote_average}
+						topFade
 					>
 						<MetadataPills
 							items={[
@@ -102,7 +103,8 @@ export default function ShowDetailScreen() {
 
 					<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
 
-					<View className="gap-2">
+					{/* Secondary actions as one row of compact tiles. */}
+					<View className="flex-row gap-2 px-4">
 						<RatingButton mediaType="show" mediaId={id} />
 						<AddToListButton mediaType="show" mediaId={id} />
 						<AddToLibraryButton mediaType="show" mediaId={id} />

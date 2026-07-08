@@ -134,6 +134,7 @@ export default function EpisodeDetailScreen() {
 						posterUrl={posterUrl(showData?.poster_path)}
 						posterHref={`/show/${id}`}
 						rating={data.vote_average}
+						topFade
 					>
 						<View className="gap-3">
 							<View className="flex-row flex-wrap items-center gap-x-1">
@@ -185,36 +186,39 @@ export default function EpisodeDetailScreen() {
 							seasonNumber={seasonNum}
 							episodeNumber={episodeNum}
 						/>
-						<RatingButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-						<AddToListButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-						<NoteButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-						{showData?.name ? (
-							<ShareButton
-								url={webMediaUrl({
-									type: "episode",
-									showId: id,
-									showName: showData.name,
-									seasonNumber: seasonNum,
-									episodeNumber: episodeNum,
-								})}
-								title={`${showData.name} — ${data.name}`}
+						{/* Secondary actions as one row of compact tiles. */}
+						<View className="flex-row gap-2 px-4">
+							<RatingButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
 							/>
-						) : null}
+							<AddToListButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
+							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
+							{showData?.name ? (
+								<ShareButton
+									url={webMediaUrl({
+										type: "episode",
+										showId: id,
+										showName: showData.name,
+										seasonNumber: seasonNum,
+										episodeNumber: episodeNum,
+									})}
+									title={`${showData.name} — ${data.name}`}
+								/>
+							) : null}
+						</View>
 					</View>
 
 					<View className="flex-row gap-2 px-4">

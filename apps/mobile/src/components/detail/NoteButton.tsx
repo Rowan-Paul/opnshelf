@@ -43,18 +43,18 @@ export function NoteButton({
 	};
 
 	return (
-		<View className="px-4">
+		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<StickyNote
 					color={hasNote ? "#f3bc00" : "#94a3b8"}
 					fill={hasNote ? "#f3bc00" : "transparent"}
 					size={18}
 				/>
-				<Text className="font-semibold text-foreground">
-					{hasNote ? "Edit note" : "Add note"}
+				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
+					Note
 				</Text>
 			</Pressable>
 

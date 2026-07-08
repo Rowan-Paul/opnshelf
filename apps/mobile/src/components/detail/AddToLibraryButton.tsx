@@ -7,8 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useLibraryOwnership } from "@/lib/use-library";
 
 /**
- * "Add to library" action for media detail screens. Opens a sheet of Formats
- * with ownership toggles. Shows how many formats the item is owned in.
+ * "Add to library" action for media detail screens: a compact tile (flex-1,
+ * laid out in the shared secondary-actions row). Opens a sheet of Formats with
+ * ownership toggles; shows how many formats the item is owned in.
  */
 export function AddToLibraryButton({
 	mediaType,
@@ -35,16 +36,14 @@ export function AddToLibraryButton({
 	const count = ownedFormats.size;
 
 	return (
-		<View className="px-4">
+		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
-				<Disc color="#94a3b8" size={18} />
-				<Text className="font-semibold text-foreground">
-					{count > 0
-						? `Owned · ${count} format${count === 1 ? "" : "s"}`
-						: "Add to library"}
+				<Disc color={count > 0 ? "#f3bc00" : "#94a3b8"} size={18} />
+				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
+					{count > 0 ? `Owned · ${count}` : "Library"}
 				</Text>
 			</Pressable>
 

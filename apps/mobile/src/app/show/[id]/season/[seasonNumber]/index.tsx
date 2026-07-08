@@ -127,6 +127,7 @@ export default function SeasonDetailScreen() {
 						posterUrl={posterUrl(data.poster_path)}
 						posterHref={`/show/${id}`}
 						rating={data.vote_average}
+						topFade
 					>
 						<View className="gap-3">
 							<View className="flex-row flex-wrap items-center gap-x-1">
@@ -168,32 +169,35 @@ export default function SeasonDetailScreen() {
 							mediaId={id}
 							seasonNumber={seasonNum}
 						/>
-						<RatingButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-						/>
-						<AddToListButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-						/>
-						<NoteButton
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-						/>
-						{showData?.name ? (
-							<ShareButton
-								url={webMediaUrl({
-									type: "season",
-									showId: id,
-									showName: showData.name,
-									seasonNumber: seasonNum,
-								})}
-								title={`${showData.name} — ${data.name}`}
+						{/* Secondary actions as one row of compact tiles. */}
+						<View className="flex-row gap-2 px-4">
+							<RatingButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
 							/>
-						) : null}
+							<AddToListButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+							{showData?.name ? (
+								<ShareButton
+									url={webMediaUrl({
+										type: "season",
+										showId: id,
+										showName: showData.name,
+										seasonNumber: seasonNum,
+									})}
+									title={`${showData.name} — ${data.name}`}
+								/>
+							) : null}
+						</View>
 					</View>
 
 					{prevSeason || nextSeason ? (

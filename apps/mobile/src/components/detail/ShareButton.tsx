@@ -16,13 +16,15 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
 	};
 
 	return (
-		<View className="px-4">
+		<View className="flex-1">
 			<Pressable
 				onPress={onShare}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<Share2 color="#94a3b8" size={18} />
-				<Text className="font-semibold text-foreground">Share</Text>
+				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
+					Share
+				</Text>
 			</Pressable>
 		</View>
 	);

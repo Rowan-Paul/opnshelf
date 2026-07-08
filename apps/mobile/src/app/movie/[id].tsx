@@ -86,7 +86,8 @@ export default function MovieDetailScreen() {
 
 					<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
 
-					<View className="gap-2">
+					{/* Secondary actions as one row of compact tiles. */}
+					<View className="flex-row gap-2 px-4">
 						<RatingButton mediaType="movie" mediaId={id} />
 						<AddToListButton mediaType="movie" mediaId={id} />
 						<AddToLibraryButton mediaType="movie" mediaId={id} />

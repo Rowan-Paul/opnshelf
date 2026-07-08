@@ -7,9 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useReview } from "@/lib/use-review";
 
 /**
- * "Rate" action for media detail screens. Mirrors the `AddToListButton` pattern:
- * a single outlined button that opens a sheet, keeping the rating control out of
- * the page's primary surface. Shows the current rating inline when set.
+ * "Rate" action for media detail screens: a compact tile (flex-1, so screens
+ * lay several side by side in one secondary-actions row) that opens the rating
+ * sheet. Shows the current rating inline when set.
  */
 export function RatingButton({
 	mediaType,
@@ -36,18 +36,18 @@ export function RatingButton({
 	const rated = rating > 0;
 
 	return (
-		<View className="px-4">
+		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<Star
 					color={rated ? "#f3bc00" : "#94a3b8"}
 					fill={rated ? "#f3bc00" : "transparent"}
 					size={18}
 				/>
-				<Text className="font-semibold text-foreground">
-					{rated ? `Rated ${(rating / 2).toFixed(1)} / 5` : "Rate"}
+				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
+					{rated ? `${(rating / 2).toFixed(1)} / 5` : "Rate"}
 				</Text>
 			</Pressable>
 

@@ -7,8 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useListMembership } from "@/lib/use-lists";
 
 /**
- * "Add to list" action for media detail screens. Opens a sheet of the user's
- * lists with membership toggles. Shows how many lists the item is in.
+ * "Add to list" action for media detail screens: a compact tile (flex-1, laid
+ * out in the shared secondary-actions row). Opens a sheet of the user's lists
+ * with membership toggles; shows how many lists the item is in.
  */
 export function AddToListButton({
 	mediaType,
@@ -35,16 +36,16 @@ export function AddToListButton({
 	const inCount = memberships.filter((l) => l.isInList).length;
 
 	return (
-		<View className="px-4">
+		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
-				<ListPlus color="#94a3b8" size={18} />
-				<Text className="font-semibold text-foreground">
+				<ListPlus color={inCount > 0 ? "#f3bc00" : "#94a3b8"} size={18} />
+				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
 					{inCount > 0
 						? `In ${inCount} list${inCount === 1 ? "" : "s"}`
-						: "Add to list"}
+						: "List"}
 				</Text>
 			</Pressable>
 
