@@ -95,25 +95,27 @@ export default function ShowDetailScreen() {
 						/>
 					</DetailHero>
 
-					<MediaTrackingActions
-						mediaType="show"
-						showId={id}
-						episodeCount={data.number_of_episodes}
-					/>
-
-					<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
-
-					{/* Secondary actions as one row of compact tiles. */}
-					<View className="flex-row gap-2 px-4">
-						<RatingButton mediaType="show" mediaId={id} />
-						<AddToListButton mediaType="show" mediaId={id} />
-						<AddToLibraryButton mediaType="show" mediaId={id} />
-						<NoteButton mediaType="show" mediaId={id} />
-						<ReviewButton mediaType="show" mediaId={id} />
-						<ShareButton
-							url={webMediaUrl({ type: "show", id, name: data.name })}
-							title={data.name}
+					{/* Shelf, watchlist and secondary tiles form one action cluster,
+					    kept tight (gap-2) like the season/episode screens. */}
+					<View className="gap-2">
+						<MediaTrackingActions
+							mediaType="show"
+							showId={id}
+							episodeCount={data.number_of_episodes}
 						/>
+						<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
+						{/* Secondary actions as one row of compact tiles. */}
+						<View className="flex-row gap-2 px-4">
+							<RatingButton mediaType="show" mediaId={id} />
+							<AddToListButton mediaType="show" mediaId={id} />
+							<AddToLibraryButton mediaType="show" mediaId={id} />
+							<NoteButton mediaType="show" mediaId={id} />
+							<ReviewButton mediaType="show" mediaId={id} />
+							<ShareButton
+								url={webMediaUrl({ type: "show", id, name: data.name })}
+								title={data.name}
+							/>
+						</View>
 					</View>
 
 					<OverviewSection text={data.overview} />

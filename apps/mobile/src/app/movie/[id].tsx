@@ -83,21 +83,23 @@ export default function MovieDetailScreen() {
 						/>
 					</DetailHero>
 
-					<MediaTrackingActions mediaType="movie" movieId={id} />
-
-					<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
-
-					{/* Secondary actions as one row of compact tiles. */}
-					<View className="flex-row gap-2 px-4">
-						<RatingButton mediaType="movie" mediaId={id} />
-						<AddToListButton mediaType="movie" mediaId={id} />
-						<AddToLibraryButton mediaType="movie" mediaId={id} />
-						<NoteButton mediaType="movie" mediaId={id} />
-						<ReviewButton mediaType="movie" mediaId={id} />
-						<ShareButton
-							url={webMediaUrl({ type: "movie", id, name: data.title })}
-							title={data.title}
-						/>
+					{/* Shelf, watchlist and secondary tiles form one action cluster,
+					    kept tight (gap-2) like the show/season/episode screens. */}
+					<View className="gap-2">
+						<MediaTrackingActions mediaType="movie" movieId={id} />
+						<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
+						{/* Secondary actions as one row of compact tiles. */}
+						<View className="flex-row gap-2 px-4">
+							<RatingButton mediaType="movie" mediaId={id} />
+							<AddToListButton mediaType="movie" mediaId={id} />
+							<AddToLibraryButton mediaType="movie" mediaId={id} />
+							<NoteButton mediaType="movie" mediaId={id} />
+							<ReviewButton mediaType="movie" mediaId={id} />
+							<ShareButton
+								url={webMediaUrl({ type: "movie", id, name: data.title })}
+								title={data.title}
+							/>
+						</View>
 					</View>
 
 					<OverviewSection text={data.overview} />
