@@ -11,7 +11,6 @@ import {
 	Star,
 } from "lucide-react-native";
 import {
-	ActivityIndicator,
 	Alert,
 	Pressable,
 	RefreshControl,
@@ -156,7 +155,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={Film} title="Shelf" href={shelfHref} />
 								{shelf.isPending ? (
-									<LoadingPreview />
+									<PosterRowSkeleton />
 								) : shelfItems.length === 0 ? (
 									<EmptyPreview text="Nothing on your shelf yet." />
 								) : (
@@ -177,7 +176,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={Clock} title="Up Next" href={upNextHref} />
 								{upNext.isPending ? (
-									<LoadingPreview />
+									<UpNextSkeleton />
 								) : upNextItems.length === 0 ? (
 									<EmptyPreview text="You're all caught up." />
 								) : (
@@ -202,7 +201,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={List} title="Lists" href="/lists" />
 								{lists.isPending ? (
-									<LoadingPreview />
+									<ListRowsSkeleton />
 								) : listItems.length === 0 ? (
 									<EmptyPreview text="No lists yet." />
 								) : (
@@ -239,7 +238,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={Disc} title="Library" href={libraryHref} />
 								{library.isPending ? (
-									<LoadingPreview />
+									<PosterRowSkeleton />
 								) : libraryItems.length === 0 ? (
 									<EmptyPreview text="Nothing owned yet." />
 								) : (
@@ -259,7 +258,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={Star} title="Reviews" href={reviewsHref} />
 								{reviews.isPending ? (
-									<LoadingPreview />
+									<ReviewSkeleton />
 								) : reviewItems.length === 0 ? (
 									<EmptyPreview text="No reviews yet." />
 								) : (
@@ -314,12 +313,60 @@ function EmptyPreview({ text }: { text: string }) {
 	);
 }
 
-/** Same card frame as EmptyPreview, so sections don't claim to be empty
- * while their query is still pending. */
-function LoadingPreview() {
+/** Shape-matched placeholders, so sections don't claim to be empty (or jump
+ * around when real content arrives) while their query is still pending. */
+function PosterRowSkeleton() {
 	return (
-		<View className="items-center rounded-xl border border-border bg-card p-6">
-			<ActivityIndicator color="#f3bc00" />
+		<View className="flex-row gap-3 overflow-hidden">
+			{[0, 1, 2].map((i) => (
+				<View key={i} style={{ width: POSTER_W }}>
+					<View className="aspect-2/3 w-full rounded-lg bg-background-subtle" />
+					<View className="mt-2 h-3 w-4/5 rounded bg-background-subtle" />
+					<View className="mt-1.5 h-2.5 w-1/2 rounded bg-background-subtle" />
+				</View>
+			))}
+		</View>
+	);
+}
+
+function UpNextRowSkeleton({ extraLine = false }: { extraLine?: boolean }) {
+	return (
+		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
+			<View className="h-24 w-16 rounded-md bg-background-subtle" />
+			<View className="flex-1 justify-center gap-2">
+				<View className="h-3 w-3/4 rounded bg-background-subtle" />
+				<View className="h-2.5 w-1/2 rounded bg-background-subtle" />
+				<View className="h-2.5 w-2/3 rounded bg-background-subtle" />
+				{extraLine ? (
+					<View className="h-2.5 w-1/3 rounded bg-background-subtle" />
+				) : null}
+			</View>
+		</View>
+	);
+}
+
+function UpNextSkeleton() {
+	return (
+		<View className="gap-3">
+			<UpNextRowSkeleton />
+			<UpNextRowSkeleton />
+		</View>
+	);
+}
+
+function ReviewSkeleton() {
+	return <UpNextRowSkeleton extraLine />;
+}
+
+function ListRowsSkeleton() {
+	return (
+		<View className="gap-2">
+			{[0, 1].map((i) => (
+				<View key={i} className="rounded-xl border border-border bg-card p-4">
+					<View className="h-3.5 w-2/5 rounded bg-background-subtle" />
+					<View className="mt-2 h-2.5 w-1/4 rounded bg-background-subtle" />
+				</View>
+			))}
 		</View>
 	);
 }

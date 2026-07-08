@@ -27,7 +27,7 @@ import {
 	Tv,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
 import { Button } from "#/components/ui/button";
@@ -173,6 +173,7 @@ export function ProfileListsPage({
 	const [reorderMode, setReorderMode] = useState(false);
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
+	const listContentRef = useRef<HTMLDivElement>(null);
 
 	// Fetch public lists for this user
 	const {
@@ -297,6 +298,17 @@ export function ProfileListsPage({
 			params: { handle, listSlug: slug },
 			replace: true,
 		});
+		// Below lg the sidebar stacks above the content, so a tap otherwise
+		// leaves the user looking at the sidebar. Only scroll in that layout;
+		// rAF lets the selected list render before we scroll to it.
+		if (window.matchMedia("(max-width: 1023px)").matches) {
+			requestAnimationFrame(() => {
+				listContentRef.current?.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+				});
+			});
+		}
 	};
 
 	// Dedupe defensively — reorder ids must be unique.
@@ -318,6 +330,15 @@ export function ProfileListsPage({
 	};
 
 	const cancelReorder = () => {
+		const isDirty =
+			reorderItems.map((i) => i.id).join() !==
+			dedupedItems.map((i) => i.id).join();
+		if (
+			isDirty &&
+			!window.confirm("Discard changes? Your new order won't be saved.")
+		) {
+			return;
+		}
 		setReorderMode(false);
 		setDragIndex(null);
 	};
@@ -484,7 +505,7 @@ export function ProfileListsPage({
 				</div>
 
 				{/* List Content */}
-				<div className="lg:col-span-3">
+				<div ref={listContentRef} className="lg:col-span-3">
 					{activeList ? (
 						<div className="space-y-6">
 							{/* List Header */}
@@ -501,9 +522,6 @@ export function ProfileListsPage({
 									</div>
 									<div>
 										<h2 className="text-display-3">{activeList.name}</h2>
-										<p className="text-(--foreground-muted)">
-											{activeList.description || "No description"}
-										</p>
 									</div>
 								</div>
 
@@ -637,23 +655,33 @@ export function ProfileListsPage({
 								)}
 							</div>
 
-							{/* Watched progress (viewer-relative; hidden when signed out) */}
-							{isAuthenticated && total > 0 && (
-								<div className="space-y-1.5">
-									<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
-										<span>
-											{watchedCount} of {total} watched
-										</span>
-										<span>{Math.round((watchedCount / total) * 100)}%</span>
-									</div>
-									<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--background-subtle)">
-										<div
-											className="h-full rounded-full bg-(--accent) transition-all"
-											style={{
-												width: `${Math.min(100, (watchedCount / total) * 100)}%`,
-											}}
-										/>
-									</div>
+							{/* Description + watched progress clustered into one card.
+							    Progress is viewer-relative and hidden when signed out. */}
+							{(activeList.description || (isAuthenticated && total > 0)) && (
+								<div className="card space-y-2.5 p-4">
+									{activeList.description && (
+										<p className="text-(--foreground-muted) text-sm">
+											{activeList.description}
+										</p>
+									)}
+									{isAuthenticated && total > 0 && (
+										<div className="space-y-1.5">
+											<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
+												<span>
+													{watchedCount} of {total} watched
+												</span>
+												<span>{Math.round((watchedCount / total) * 100)}%</span>
+											</div>
+											<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--background-subtle)">
+												<div
+													className="h-full rounded-full bg-(--accent) transition-all"
+													style={{
+														width: `${Math.min(100, (watchedCount / total) * 100)}%`,
+													}}
+												/>
+											</div>
+										</div>
+									)}
 								</div>
 							)}
 
@@ -694,9 +722,16 @@ export function ProfileListsPage({
 							    buttons so it works with both mouse and keyboard. */}
 							{reorderMode && !listLoading && !listError && (
 								<div className="space-y-2">
+									{/* Copy toggles by pointer type: HTML5 drag never fires from
+									    touch, so coarse pointers only get the arrow-button path. */}
 									<p className="text-(--foreground-muted) text-xs">
-										Drag rows or use the arrow buttons to reorder, then press
-										Done to save.
+										<span className="[@media(pointer:fine)]:hidden">
+											Use the arrow buttons to reorder, then press Done to save.
+										</span>
+										<span className="hidden [@media(pointer:fine)]:inline">
+											Drag rows or use the arrow buttons to reorder, then press
+											Done to save.
+										</span>
 									</p>
 									{reorderItems.map((item, index) => (
 										// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the up/down buttons
@@ -712,7 +747,8 @@ export function ProfileListsPage({
 												dragIndex === index && "opacity-50",
 											)}
 										>
-											<GripVertical className="size-4 shrink-0 cursor-grab text-(--foreground-muted)" />
+											{/* Drag handle is useless on touch (no HTML5 drag events); show only for fine pointers. */}
+											<GripVertical className="hidden size-4 shrink-0 cursor-grab text-(--foreground-muted) [@media(pointer:fine)]:block" />
 											<div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-(--background-subtle)">
 												{getPosterUrl(item.media) ? (
 													<img
@@ -745,7 +781,7 @@ export function ProfileListsPage({
 													aria-label="Move up"
 													disabled={index === 0}
 													onClick={() => moveReorderItem(index, index - 1)}
-													className="btn btn-secondary btn-sm size-8 p-0"
+													className="btn btn-secondary btn-sm size-8 p-0!"
 												>
 													<ArrowUp className="size-3.5" />
 												</button>
@@ -754,7 +790,7 @@ export function ProfileListsPage({
 													aria-label="Move down"
 													disabled={index === reorderItems.length - 1}
 													onClick={() => moveReorderItem(index, index + 1)}
-													className="btn btn-secondary btn-sm size-8 p-0"
+													className="btn btn-secondary btn-sm size-8 p-0!"
 												>
 													<ArrowDown className="size-3.5" />
 												</button>
