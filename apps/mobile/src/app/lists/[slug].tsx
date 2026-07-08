@@ -8,6 +8,7 @@ import {
 	ListOrdered,
 	Pencil,
 	Plus,
+	Search,
 	Share2,
 	Trash2,
 	X,
@@ -21,11 +22,13 @@ import { MediaCard } from "@/components/media/MediaCard";
 import { PosterImage } from "@/components/media/PosterImage";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
-import { listItemToMediaCardItem } from "@/lib/list-media";
+import { getMediaTitle, listItemToMediaCardItem } from "@/lib/list-media";
 import { posterUrl } from "@/lib/tmdb";
+import { useDebounce } from "@/lib/use-debounce";
 import {
 	type ListSort,
 	useDeleteList,
@@ -165,6 +168,8 @@ export default function ListDetailScreen() {
 	const [addVisible, setAddVisible] = useState(false);
 	const [sortVisible, setSortVisible] = useState(false);
 	const [filter, setFilter] = useState<MediaFilter>("all");
+	const [search, setSearch] = useState("");
+	const debouncedSearch = useDebounce(search.trim(), 350);
 
 	// Reorder mode holds its own working copy of the ordered items; committing
 	// PUTs the full id list. Entering requires every page loaded, since the
@@ -174,17 +179,29 @@ export default function ListDetailScreen() {
 	const [orderedItems, setOrderedItems] = useState<MediaInListDto[]>([]);
 
 	const filteredItems = useMemo(() => {
-		switch (filter) {
-			case "movie":
-				return items.filter((item) => item.mediaType === "movie");
-			case "show":
-				return items.filter((item) => item.mediaType !== "movie");
-			case "unwatched":
-				return items.filter((item) => !item.watched);
-			default:
-				return items;
+		const query = debouncedSearch.toLowerCase();
+		return items.filter((item) => {
+			if (filter === "movie" && item.mediaType !== "movie") return false;
+			if (filter === "show" && item.mediaType === "movie") return false;
+			if (filter === "unwatched" && item.watched) return false;
+			if (!query) return true;
+			return (
+				getMediaTitle(item.media ?? {})
+					.toLowerCase()
+					.includes(query) ||
+				(item.episodeName ?? "").toLowerCase().includes(query)
+			);
+		});
+	}, [items, filter, debouncedSearch]);
+
+	// Search filters client-side (matching the web list page), so eagerly load
+	// the remaining pages while a query is active — otherwise matches on
+	// unloaded pages stay invisible.
+	useEffect(() => {
+		if (debouncedSearch && hasNextPage && !isFetchingNextPage) {
+			void fetchNextPage();
 		}
-	}, [items, filter]);
+	}, [debouncedSearch, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	const existingKeys = useMemo(() => new Set(items.map(itemKey)), [items]);
 
@@ -375,6 +392,7 @@ export default function ListDetailScreen() {
 					)}
 					contentContainerStyle={gridStyle}
 					showsVerticalScrollIndicator={false}
+					keyboardShouldPersistTaps="handled"
 					onEndReachedThreshold={0.5}
 					onEndReached={() => {
 						if (hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -404,6 +422,22 @@ export default function ListDetailScreen() {
 									{total} item{total === 1 ? "" : "s"}
 								</Text>
 							)}
+
+							<TextField
+								leading={<Search color="#94a3b8" size={18} />}
+								trailing={
+									search.length > 0 ? (
+										<Pressable hitSlop={8} onPress={() => setSearch("")}>
+											<X color="#94a3b8" size={18} />
+										</Pressable>
+									) : null
+								}
+								value={search}
+								onChangeText={setSearch}
+								placeholder="Search list…"
+								autoCapitalize="none"
+								autoCorrect={false}
+							/>
 
 							<View className="flex-row items-center justify-between">
 								<Pressable
@@ -473,10 +507,17 @@ export default function ListDetailScreen() {
 						</View>
 					}
 					ListEmptyComponent={
-						<EmptyState
-							title="Empty list"
-							message="Add movies and shows with the + button or from their detail screens."
-						/>
+						debouncedSearch || filter !== "all" ? (
+							<EmptyState
+								title="No matches"
+								message="Try a different search or filter."
+							/>
+						) : (
+							<EmptyState
+								title="Empty list"
+								message="Add movies and shows with the + button or from their detail screens."
+							/>
+						)
 					}
 					ListFooterComponent={
 						isFetchingNextPage ? (
