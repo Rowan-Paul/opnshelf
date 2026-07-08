@@ -60,10 +60,12 @@ function ListItemCard({
 	return (
 		<View className="flex-1">
 			<MediaCard item={listItemToMediaCardItem(item)} actions />
+			{/* Top-LEFT: the card's own watched toggle owns the top-right corner;
+			    stacking both there rendered the remove X on top of the gold check. */}
 			<Pressable
 				hitSlop={6}
 				onPress={() => onRemove(item)}
-				className="absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+				className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			>
 				<X color="#ffffff" size={16} strokeWidth={2.5} />
 			</Pressable>
@@ -86,6 +88,9 @@ function ReorderRow({
 	onDown: () => void;
 }) {
 	const card = listItemToMediaCardItem(item);
+	const sub = card.episode
+		? `S${card.episode.seasonNumber}E${card.episode.episodeNumber} · ${card.episode.showTitle}`
+		: (card.label ?? card.year);
 	return (
 		<View className="flex-row items-center gap-3 border-border border-b py-2">
 			<View className="h-16 w-11 overflow-hidden rounded-md">
@@ -98,8 +103,10 @@ function ReorderRow({
 				<Text className="font-medium text-foreground text-sm" numberOfLines={2}>
 					{card.title}
 				</Text>
-				{card.year ? (
-					<Text className="text-muted-foreground text-xs">{card.year}</Text>
+				{sub ? (
+					<Text className="text-muted-foreground text-xs" numberOfLines={1}>
+						{sub}
+					</Text>
 				) : null}
 			</View>
 			<View className="flex-row items-center gap-1">

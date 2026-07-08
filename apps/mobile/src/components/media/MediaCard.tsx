@@ -41,6 +41,11 @@ export type MediaCardItem = {
 		showTitle: string;
 		episodeTitle?: string;
 	};
+	/**
+	 * Free-form label line replacing the year/rating row (e.g. "Season 2" for
+	 * season-scoped list entries). Ignored when `episode` is set.
+	 */
+	label?: string;
 };
 
 /**
@@ -112,6 +117,13 @@ function MediaCardBase({
 						{item.title !== item.episode.showTitle
 							? ` · ${item.episode.showTitle}`
 							: ""}
+					</Text>
+				) : item.label ? (
+					<Text
+						className="mt-0.5 text-muted-foreground text-xs"
+						numberOfLines={1}
+					>
+						{item.label}
 					</Text>
 				) : (
 					<View className="mt-0.5 flex-row items-center gap-2">

@@ -1,4 +1,5 @@
 import type { MediaInListDto } from "@opnshelf/api";
+import type { Href } from "expo-router";
 import type { MediaCardItem } from "@/components/media/MediaCard";
 
 /**
@@ -39,15 +40,44 @@ export function getMediaRating(media: Media): number | undefined {
 	return num(media.vote_average) ?? num(media.voteAverage);
 }
 
-/** Map a list item to a `MediaCard` item (season/episode entries point at the show). */
+/**
+ * Map a list item to a `MediaCard` item. Season/episode entries keep the parent
+ * show's poster + id (so the show-keyed action hooks resolve) but carry their
+ * scope in the label line and deep-link to the season/episode page — mirroring
+ * the shelf cards and the web list page, so e.g. two specials of the same show
+ * don't render as identical cards.
+ */
 export function listItemToMediaCardItem(item: MediaInListDto): MediaCardItem {
 	const media = (item.media ?? {}) as Media;
-	return {
+	const showTitle = getMediaTitle(media);
+	const base = {
 		id: Number(item.mediaId),
-		type: item.mediaType === "movie" ? "movie" : "show",
-		title: getMediaTitle(media),
+		type: item.mediaType === "movie" ? ("movie" as const) : ("show" as const),
+		title: showTitle,
 		posterPath: getMediaPosterPath(media),
 		year: getMediaYear(media),
 		rating: getMediaRating(media),
 	};
+	if (item.seasonNumber != null && item.episodeNumber != null) {
+		return {
+			...base,
+			// Title line shows the episode title; the show drops to the label line.
+			title: item.episodeName ?? showTitle,
+			href: `/show/${item.mediaId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
+			episode: {
+				seasonNumber: item.seasonNumber,
+				episodeNumber: item.episodeNumber,
+				showTitle,
+				episodeTitle: item.episodeName,
+			},
+		};
+	}
+	if (item.seasonNumber != null) {
+		return {
+			...base,
+			href: `/show/${item.mediaId}/season/${item.seasonNumber}` as Href,
+			label: `Season ${item.seasonNumber}`,
+		};
+	}
+	return base;
 }
