@@ -42,3 +42,8 @@ export function webMediaUrl(t: Target): string {
 			return `${base}/shows/${t.showId}/${slugify(t.showName)}/seasons/${t.seasonNumber}/episodes/${t.episodeNumber}`;
 	}
 }
+
+/** Public web URL for a user's list, mirroring apps/web's `/profile/$handle/lists/$listSlug` route. */
+export function webListUrl(handle: string, listSlug: string): string {
+	return `${env.siteUrl}/profile/${handle}/lists/${listSlug}`;
+}
