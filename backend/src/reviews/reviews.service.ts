@@ -78,6 +78,73 @@ function excerptOf(markdown: string): string {
 	return excerpt(toPlainText(markdown));
 }
 
+// Poster size for the metadata header of the blog mirror (a review-sized image,
+// not a full-bleed backdrop).
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
+
+const MEDIA_TYPE_LABEL: Record<MediaType, string> = {
+	movie: "Movie",
+	show: "TV series",
+	season: "Season",
+	episode: "Episode",
+};
+
+/**
+ * Public opnshelf page for a media item. The trailing slug is cosmetic — web
+ * routes resolve by id (and season/episode numbers) — so a slug of the media
+ * title is fine even for the composite season/episode titles.
+ */
+function mediaPageUrl(
+	mediaType: MediaType,
+	mediaId: string,
+	seasonNumber: number | undefined,
+	episodeNumber: number | undefined,
+	title: string,
+): string {
+	const slug = slugify(title);
+	switch (mediaType) {
+		case "movie":
+			return `${PUBLIC_SITE_ORIGIN}/movies/${mediaId}/${slug}`;
+		case "show":
+			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}`;
+		case "season":
+			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}/seasons/${seasonNumber}`;
+		case "episode":
+			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}/seasons/${seasonNumber}/episodes/${episodeNumber}`;
+	}
+}
+
+/**
+ * Frame the review body for the blog mirror: a small media header (poster +
+ * linked title + type) on top and an "on opnshelf" backlink at the bottom, so a
+ * mirrored post has context and a route home. Any absent media info is simply
+ * omitted; the review body is always present.
+ */
+function buildMirrorContentMarkdown(params: {
+	body: string;
+	mediaTitle: string | null;
+	posterPath: string | null;
+	mediaUrl: string;
+	typeLabel: string;
+	canonicalUrl: string;
+}): string {
+	const blocks: string[] = [];
+	if (params.mediaTitle) {
+		if (params.posterPath) {
+			blocks.push(
+				`[![${params.mediaTitle}](${TMDB_IMAGE_BASE}${params.posterPath})](${params.mediaUrl})`,
+			);
+		}
+		blocks.push(
+			`**[${params.mediaTitle}](${params.mediaUrl})** · ${params.typeLabel}`,
+		);
+	}
+	blocks.push(params.body);
+	blocks.push("---");
+	blocks.push(`*[Read this review on opnshelf →](${params.canonicalUrl})*`);
+	return blocks.join("\n\n");
+}
+
 @Injectable()
 export class ReviewsService {
 	private readonly logger = new Logger(ReviewsService.name);
@@ -470,7 +537,10 @@ export class ReviewsService {
 	private buildDocumentRecord(params: {
 		publicationUri: string;
 		title: string;
-		markdown: string;
+		/** Raw review body — used for the description/textContent excerpt. */
+		body: string;
+		/** Framed markdown (media header + body + backlink) — the rendered content. */
+		contentMarkdown: string;
 		mediaType: MediaType;
 		mediaId: string;
 		seasonNumber?: number;
@@ -479,10 +549,11 @@ export class ReviewsService {
 		publishedAt: string;
 		updatedAt?: string;
 	}): DocumentRecord {
-		const plain = toPlainText(params.markdown);
+		// Preview text stays about the review itself, not the media header/backlink.
+		const plain = toPlainText(params.body);
 
 		const content: DocumentRecord["content"] = markdownDef.build({
-			text: { markdown: params.markdown },
+			text: { markdown: params.contentMarkdown },
 			flavor: "gfm",
 		});
 
@@ -522,6 +593,7 @@ export class ReviewsService {
 		userDid: string,
 		agent: Agent,
 		review: {
+			id: string;
 			rkey: string;
 			title: string;
 			markdown: string;
@@ -540,7 +612,7 @@ export class ReviewsService {
 	}> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
-			select: { reviewsPublicationUri: true },
+			select: { reviewsPublicationUri: true, handle: true },
 		});
 		// Opted out per-review, or no blog configured: ensure no mirror exists.
 		const publicationUri = review.mirrorToBlog
@@ -559,14 +631,44 @@ export class ReviewsService {
 				return { blogDocumentUri: null, blogDocumentCid: null };
 			}
 
+			const mediaType = review.mediaType as MediaType;
+			const seasonNumber = review.seasonNumber || undefined;
+			const episodeNumber = review.episodeNumber || undefined;
+
+			// Resolve the media header (title + poster) and the opnshelf backlink.
+			const media = (await this.enrichMediaForReviews([review])).get(review.id);
+			const mediaTitle = media?.title ?? null;
+			const mediaUrl = mediaTitle
+				? mediaPageUrl(
+						mediaType,
+						review.mediaId,
+						seasonNumber,
+						episodeNumber,
+						mediaTitle,
+					)
+				: PUBLIC_SITE_ORIGIN;
+			const canonicalUrl = user?.handle
+				? `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`
+				: PUBLIC_SITE_ORIGIN;
+
+			const contentMarkdown = buildMirrorContentMarkdown({
+				body: review.markdown,
+				mediaTitle,
+				posterPath: media?.posterPath ?? null,
+				mediaUrl,
+				typeLabel: MEDIA_TYPE_LABEL[mediaType],
+				canonicalUrl,
+			});
+
 			const record = this.buildDocumentRecord({
 				publicationUri,
 				title: review.title,
-				markdown: review.markdown,
-				mediaType: review.mediaType as MediaType,
+				body: review.markdown,
+				contentMarkdown,
+				mediaType,
 				mediaId: review.mediaId,
-				seasonNumber: review.seasonNumber || undefined,
-				episodeNumber: review.episodeNumber || undefined,
+				seasonNumber,
+				episodeNumber,
 				// ponytail: re-slugs on title edit; blog URL is not guaranteed stable
 				// across renames. Store the path on Review if that matters later.
 				path: slugify(review.title),

@@ -594,6 +594,59 @@ describe("ReviewsService", () => {
 			expect(mockDeleteRecord).not.toHaveBeenCalled();
 			expect(mockPrismaService.review.update).not.toHaveBeenCalled();
 		});
+
+		it("frames the blog mirror with a media header and an opnshelf backlink", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+				handle: "alice.opnshelf.xyz",
+			});
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Dune", posterPath: "/dune.jpg" },
+			]);
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-doc",
+					},
+				});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+			mockPrismaService.review.update.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+			});
+
+			// The document write is the 2nd putRecord; its rendered markdown carries
+			// the poster, a linked media title, the review body, and the backlink.
+			const docCall = mockPutRecord.mock.calls[1][0];
+			const rendered = docCall.record.content.text.markdown as string;
+			expect(rendered).toContain("https://image.tmdb.org/t/p/w342/dune.jpg");
+			expect(rendered).toContain(
+				"[Dune](https://opnshelf.xyz/movies/123/dune)",
+			);
+			expect(rendered).toContain("Loved it.");
+			expect(rendered).toContain(
+				"https://opnshelf.xyz/reviews/alice.opnshelf.xyz/testtid123",
+			);
+		});
 	});
 
 	describe("listMyPublications", () => {
