@@ -4,11 +4,13 @@ import { ChevronRight, ListChecks } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { useProfileLists } from "@/lib/use-public-profile";
 
 /**
- * Lists tab: the user's public list summaries. Each row links to a dedicated
- * read-only list page (`/list/[handle]/[slug]`) instead of expanding inline.
+ * Lists tab: the user's public list summaries. Rows link to the owner list
+ * screen (`/lists/[slug]`) for the viewer's own profile, and to the dedicated
+ * read-only list page (`/list/[handle]/[slug]`) for other users.
  * Mirrors the web profile Lists page, which also routes to a per-list screen.
  *
  * The standalone list route resolves the owner from its `[handle]` segment and
@@ -45,7 +47,14 @@ export function ListsTab({ userDid }: { userDid: string }) {
 }
 
 function ListRow({ list, userDid }: { list: ListSummaryDto; userDid: string }) {
-	const href = `/list/${encodeURIComponent(userDid)}/${list.slug}` as Href;
+	const { user } = useAuth();
+	// Own lists open the manageable owner screen (sort/reorder/add/edit);
+	// other users' lists open the read-only public route.
+	const href = (
+		user?.did === userDid
+			? `/lists/${list.slug}`
+			: `/list/${encodeURIComponent(userDid)}/${list.slug}`
+	) as Href;
 
 	return (
 		<Link href={href} asChild>
