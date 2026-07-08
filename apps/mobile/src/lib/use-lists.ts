@@ -10,6 +10,7 @@ import {
 	listsControllerGetUserListsOptions,
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
+	listsControllerReorderListItemsMutation,
 	listsControllerUpdateListMutation,
 } from "@opnshelf/api";
 import {
@@ -35,12 +36,22 @@ export function useUserLists() {
 	});
 }
 
-/** A single list with its items (infinite). */
-export function useList(slug: string, pageSize = 30) {
+/** Item sort orders supported by the list read endpoint. */
+export type ListSort = "position" | "added" | "title" | "year";
+
+/**
+ * A single list with its items (infinite). `sort` is folded into the query key
+ * so switching order refetches from page 1 rather than reusing stale pages.
+ */
+export function useList(
+	slug: string,
+	sort: ListSort = "position",
+	pageSize = 30,
+) {
 	const query = useInfiniteQuery({
 		...listsControllerGetListInfiniteOptions({
 			path: { slug },
-			query: { pageSize },
+			query: { pageSize, sort },
 		}),
 		enabled: !!slug,
 		initialPageParam: 1,
@@ -139,6 +150,51 @@ export function useRemoveListItem(slug: string) {
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to remove from list")),
+	});
+}
+
+/** Add an item to a specific list (used by the add-items sheet on the detail screen). */
+export function useAddListItem(slug: string) {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationKey: ["lists", slug, "addItem"],
+		...listsControllerAddItemToListMutation(),
+		onSuccess: () => {
+			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+				() => {},
+			);
+			toast.success("Added to list");
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetUserListsQueryKey(),
+			});
+		},
+		onError: (error) =>
+			toast.error(errorMessage(error, "Failed to add to list")),
+	});
+}
+
+/** Reorder a list's items (owner only). Body is the full ordered list of item ids. */
+export function useReorderListItems(slug: string) {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	return useMutation({
+		mutationKey: ["lists", slug, "reorder"],
+		...listsControllerReorderListItemsMutation(),
+		onSuccess: () => {
+			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+				() => {},
+			);
+			toast.success("Order saved");
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+		},
+		onError: (error) =>
+			toast.error(errorMessage(error, "Failed to save order")),
 	});
 }
 

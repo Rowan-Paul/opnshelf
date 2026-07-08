@@ -1,32 +1,54 @@
 import type { MediaInListDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Pencil, Share2, Trash2, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import {
+	ArrowUpDown,
+	ChevronDown,
+	ChevronUp,
+	ListOrdered,
+	Pencil,
+	Plus,
+	Share2,
+	Trash2,
+	X,
+} from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Share, View } from "react-native";
+import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
+import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
 import { MediaCard } from "@/components/media/MediaCard";
+import { PosterImage } from "@/components/media/PosterImage";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { listItemToMediaCardItem } from "@/lib/list-media";
+import { posterUrl } from "@/lib/tmdb";
 import {
+	type ListSort,
 	useDeleteList,
 	useList,
 	useRemoveListItem,
+	useReorderListItems,
 	useUpdateList,
 } from "@/lib/use-lists";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
 
-type MediaFilter = "all" | "movie" | "show";
+type MediaFilter = "all" | "movie" | "show" | "unwatched";
 
 const FILTERS: { key: MediaFilter; label: string }[] = [
 	{ key: "all", label: "All" },
 	{ key: "movie", label: "Movies" },
 	{ key: "show", label: "Shows" },
+	{ key: "unwatched", label: "Unwatched" },
 ];
+
+/** `${mediaType}:${mediaId}` key, collapsing season/episode entries onto the show. */
+const itemKey = (item: MediaInListDto) =>
+	`${item.mediaType === "movie" ? "movie" : "show"}:${item.mediaId}`;
 
 function ListItemCard({
 	item,
@@ -49,11 +71,74 @@ function ListItemCard({
 	);
 }
 
+/** Compact reorder row: poster, title, and up/down arrows. */
+function ReorderRow({
+	item,
+	isFirst,
+	isLast,
+	onUp,
+	onDown,
+}: {
+	item: MediaInListDto;
+	isFirst: boolean;
+	isLast: boolean;
+	onUp: () => void;
+	onDown: () => void;
+}) {
+	const card = listItemToMediaCardItem(item);
+	return (
+		<View className="flex-row items-center gap-3 border-border border-b py-2">
+			<View className="h-16 w-11 overflow-hidden rounded-md">
+				<PosterImage
+					url={posterUrl(card.posterPath, "w185")}
+					className="h-16 w-11"
+				/>
+			</View>
+			<View className="min-w-0 flex-1">
+				<Text className="font-medium text-foreground text-sm" numberOfLines={2}>
+					{card.title}
+				</Text>
+				{card.year ? (
+					<Text className="text-muted-foreground text-xs">{card.year}</Text>
+				) : null}
+			</View>
+			<View className="flex-row items-center gap-1">
+				<Pressable
+					hitSlop={6}
+					disabled={isFirst}
+					onPress={onUp}
+					className={cn(
+						"size-9 items-center justify-center rounded-lg bg-background-subtle",
+						isFirst && "opacity-30",
+					)}
+				>
+					<ChevronUp color="#e2e8f0" size={20} />
+				</Pressable>
+				<Pressable
+					hitSlop={6}
+					disabled={isLast}
+					onPress={onDown}
+					className={cn(
+						"size-9 items-center justify-center rounded-lg bg-background-subtle",
+						isLast && "opacity-30",
+					)}
+				>
+					<ChevronDown color="#e2e8f0" size={20} />
+				</Pressable>
+			</View>
+		</View>
+	);
+}
+
 export default function ListDetailScreen() {
 	const { slug } = useLocalSearchParams<{ slug: string }>();
 	const router = useRouter();
 	const gridStyle = useTwStyle("px-3 pb-12");
-	const { user } = useAuth();
+	const reorderStyle = useTwStyle("px-4 pb-12");
+	const { user, isAuthenticated } = useAuth();
+	const toast = useToast();
+
+	const [sort, setSort] = useState<ListSort>("position");
 
 	const {
 		list,
@@ -63,22 +148,50 @@ export default function ListDetailScreen() {
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
-	} = useList(slug);
+	} = useList(slug, sort);
 	const updateList = useUpdateList();
 	const deleteList = useDeleteList();
 	const removeItem = useRemoveListItem(slug);
+	const reorder = useReorderListItems(slug);
 
 	const [editorVisible, setEditorVisible] = useState(false);
+	const [addVisible, setAddVisible] = useState(false);
+	const [sortVisible, setSortVisible] = useState(false);
 	const [filter, setFilter] = useState<MediaFilter>("all");
 
+	// Reorder mode holds its own working copy of the ordered items; committing
+	// PUTs the full id list. Entering requires every page loaded, since the
+	// endpoint wants the complete ordered id set.
+	const [reorderMode, setReorderMode] = useState(false);
+	const [preparingReorder, setPreparingReorder] = useState(false);
+	const [orderedItems, setOrderedItems] = useState<MediaInListDto[]>([]);
+
 	const filteredItems = useMemo(() => {
-		if (filter === "all") return items;
-		return items.filter((item) =>
-			filter === "movie"
-				? item.mediaType === "movie"
-				: item.mediaType !== "movie",
-		);
+		switch (filter) {
+			case "movie":
+				return items.filter((item) => item.mediaType === "movie");
+			case "show":
+				return items.filter((item) => item.mediaType !== "movie");
+			case "unwatched":
+				return items.filter((item) => !item.watched);
+			default:
+				return items;
+		}
 	}, [items, filter]);
+
+	const existingKeys = useMemo(() => new Set(items.map(itemKey)), [items]);
+
+	// Prepare-reorder pump: fetch remaining pages, then enter reorder mode.
+	useEffect(() => {
+		if (!preparingReorder) return;
+		if (hasNextPage) {
+			if (!isFetchingNextPage) void fetchNextPage();
+			return;
+		}
+		setOrderedItems(items);
+		setReorderMode(true);
+		setPreparingReorder(false);
+	}, [preparingReorder, hasNextPage, isFetchingNextPage, fetchNextPage, items]);
 
 	const handleRemove = (item: MediaInListDto) => {
 		removeItem.mutate({
@@ -118,34 +231,101 @@ export default function ListDetailScreen() {
 		}).catch(() => {});
 	};
 
+	const startReorder = () => {
+		if (sort !== "position") {
+			toast.show("Switch to Order sort to reorder", "error");
+			return;
+		}
+		if (hasNextPage) {
+			setPreparingReorder(true);
+		} else {
+			setOrderedItems(items);
+			setReorderMode(true);
+		}
+	};
+
+	const moveItem = (from: number, to: number) => {
+		setOrderedItems((current) => {
+			if (to < 0 || to >= current.length) return current;
+			const next = [...current];
+			const [moved] = next.splice(from, 1);
+			next.splice(to, 0, moved);
+			return next;
+		});
+	};
+
+	const commitReorder = () => {
+		reorder.mutate(
+			{ path: { slug }, body: { ids: orderedItems.map((item) => item.id) } },
+			{ onSuccess: () => setReorderMode(false) },
+		);
+	};
+
 	const canManage = list && !list.isDefault;
+	const total = list?.total ?? 0;
+	const watchedCount = list?.watchedCount ?? 0;
+	const showProgress = isAuthenticated && total > 0;
+	const progressPct = total > 0 ? Math.round((watchedCount / total) * 100) : 0;
 
 	return (
 		<View className="flex-1 bg-background">
 			<Stack.Screen
 				options={{
 					headerShown: true,
-					title: list?.name ?? "List",
-					headerRight: list
-						? () => (
-								<View className="flex-row items-center gap-4">
-									<Pressable hitSlop={8} onPress={handleShare}>
-										<Share2 color="#94a3b8" size={20} />
-									</Pressable>
-									{canManage ? (
+					title: reorderMode ? "Reorder" : (list?.name ?? "List"),
+					headerRight:
+						list && !reorderMode
+							? () => (
+									<View className="flex-row items-center gap-4">
+										<Pressable hitSlop={8} onPress={handleShare}>
+											<Share2 color="#94a3b8" size={20} />
+										</Pressable>
+										<Pressable hitSlop={8} onPress={() => setAddVisible(true)}>
+											<Plus color="#94a3b8" size={22} />
+										</Pressable>
+										{canManage ? (
+											<Pressable
+												hitSlop={8}
+												onPress={() => setEditorVisible(true)}
+											>
+												<Pencil color="#94a3b8" size={20} />
+											</Pressable>
+										) : null}
+										{canManage ? (
+											<Pressable hitSlop={8} onPress={confirmDelete}>
+												<Trash2 color="#ef4444" size={20} />
+											</Pressable>
+										) : null}
+									</View>
+								)
+							: reorderMode
+								? () => (
 										<Pressable
 											hitSlop={8}
-											onPress={() => setEditorVisible(true)}
+											onPress={commitReorder}
+											disabled={reorder.isPending}
 										>
-											<Pencil color="#94a3b8" size={20} />
+											{reorder.isPending ? (
+												<ActivityIndicator color="#f3bc00" />
+											) : (
+												<Text className="font-semibold text-base text-primary">
+													Done
+												</Text>
+											)}
 										</Pressable>
-									) : null}
-									{canManage ? (
-										<Pressable hitSlop={8} onPress={confirmDelete}>
-											<Trash2 color="#ef4444" size={20} />
-										</Pressable>
-									) : null}
-								</View>
+									)
+								: undefined,
+					headerLeft: reorderMode
+						? () => (
+								<Pressable
+									hitSlop={8}
+									onPress={() => setReorderMode(false)}
+									disabled={reorder.isPending}
+								>
+									<Text className="text-base text-muted-foreground">
+										Cancel
+									</Text>
+								</Pressable>
 							)
 						: undefined,
 				}}
@@ -155,6 +335,27 @@ export default function ListDetailScreen() {
 				<LoadingState />
 			) : isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
+			) : reorderMode ? (
+				<FlashList
+					data={orderedItems}
+					keyExtractor={(item) => item.id}
+					contentContainerStyle={reorderStyle}
+					showsVerticalScrollIndicator={false}
+					renderItem={({ item, index }) => (
+						<ReorderRow
+							item={item}
+							isFirst={index === 0}
+							isLast={index === orderedItems.length - 1}
+							onUp={() => moveItem(index, index - 1)}
+							onDown={() => moveItem(index, index + 1)}
+						/>
+					)}
+					ListHeaderComponent={
+						<Text className="pb-3 text-muted-foreground text-sm">
+							Use the arrows to reorder, then tap Done to save.
+						</Text>
+					}
+				/>
 			) : (
 				<FlashList
 					data={filteredItems}
@@ -178,10 +379,65 @@ export default function ListDetailScreen() {
 									{list.description}
 								</Text>
 							) : null}
-							<Text className="text-muted-foreground text-xs">
-								{list.total} item{list.total === 1 ? "" : "s"}
-							</Text>
-							<View className="flex-row gap-2">
+
+							{showProgress ? (
+								<View className="gap-1.5">
+									<Text className="text-muted-foreground text-xs">
+										{watchedCount} of {total} watched
+									</Text>
+									<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
+										<View
+											className="h-full rounded-full bg-primary"
+											style={{ width: `${progressPct}%` }}
+										/>
+									</View>
+								</View>
+							) : (
+								<Text className="text-muted-foreground text-xs">
+									{total} item{total === 1 ? "" : "s"}
+								</Text>
+							)}
+
+							<View className="flex-row items-center justify-between">
+								<Pressable
+									onPress={() => setSortVisible(true)}
+									className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
+								>
+									<ArrowUpDown color="#94a3b8" size={14} />
+									<Text className="font-medium text-muted-foreground text-sm">
+										{sortLabel(sort)}
+									</Text>
+								</Pressable>
+
+								{total > 1 ? (
+									<Pressable
+										onPress={startReorder}
+										disabled={preparingReorder}
+										className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
+									>
+										{preparingReorder ? (
+											<ActivityIndicator color="#94a3b8" size="small" />
+										) : (
+											<ListOrdered
+												color={sort === "position" ? "#94a3b8" : "#64748b"}
+												size={14}
+											/>
+										)}
+										<Text
+											className={cn(
+												"font-medium text-sm",
+												sort === "position"
+													? "text-muted-foreground"
+													: "text-muted-foreground/50",
+											)}
+										>
+											Reorder
+										</Text>
+									</Pressable>
+								) : null}
+							</View>
+
+							<View className="flex-row flex-wrap gap-2">
 								{FILTERS.map((f) => {
 									const isActive = filter === f.key;
 									return (
@@ -212,7 +468,7 @@ export default function ListDetailScreen() {
 					ListEmptyComponent={
 						<EmptyState
 							title="Empty list"
-							message="Add movies and shows from their detail screens."
+							message="Add movies and shows with the + button or from their detail screens."
 						/>
 					}
 					ListFooterComponent={
@@ -224,6 +480,20 @@ export default function ListDetailScreen() {
 					}
 				/>
 			)}
+
+			<ListSortSheet
+				visible={sortVisible}
+				onDismiss={() => setSortVisible(false)}
+				value={sort}
+				onChange={setSort}
+			/>
+
+			<AddItemsToListSheet
+				visible={addVisible}
+				onDismiss={() => setAddVisible(false)}
+				slug={slug}
+				existingKeys={existingKeys}
+			/>
 
 			<ListEditorSheet
 				visible={editorVisible}
