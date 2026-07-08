@@ -9,7 +9,12 @@ export default function ProfileReviewsScreen() {
 	return (
 		<ProfileSubScreen handle={handle ?? ""} title="Reviews">
 			{({ userDid, isOwner }) => (
-				<ReviewsTab userDid={userDid} isOwner={isOwner} showHeading={false} />
+				<ReviewsTab
+					userDid={userDid}
+					handle={handle ?? ""}
+					isOwner={isOwner}
+					showHeading={false}
+				/>
 			)}
 		</ProfileSubScreen>
 	);

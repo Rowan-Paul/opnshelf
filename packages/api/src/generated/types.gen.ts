@@ -1221,6 +1221,10 @@ export type FollowedWatchersDto = {
 
 export type UserReviewDto = {
     id: string;
+    /**
+     * AT record key of the review
+     */
+    rkey: string;
     reviewTitle: string;
     /**
      * Review body as markdown source

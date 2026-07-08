@@ -215,7 +215,12 @@ function ReviewCard({
 				</Text>
 			) : null}
 
-			{body ? <ReviewBody markdown={body} expandable /> : null}
+			{body ? (
+				<ReviewBody
+					markdown={body}
+					href={`/reviews/${review.userHandle}/${review.rkey}` as Href}
+				/>
+			) : null}
 
 			{isOwn ? (
 				<View className="flex-row items-center gap-1">

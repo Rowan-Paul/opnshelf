@@ -71,6 +71,7 @@ export class ReviewsController {
 		return {
 			items: result.items.map((review) => ({
 				id: review.id,
+				rkey: review.rkey,
 				reviewTitle: review.title,
 				markdown: review.markdown,
 				description: review.description ?? undefined,

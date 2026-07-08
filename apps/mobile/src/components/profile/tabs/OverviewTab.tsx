@@ -209,7 +209,14 @@ export function OverviewTab({
 								meta={review.reviewTitle}
 							>
 								{review.markdown ? (
-									<ReviewBody markdown={review.markdown} />
+									<ReviewBody
+										markdown={review.markdown}
+										href={
+											profile?.handle
+												? (`/reviews/${profile.handle}/${review.rkey}` as Href)
+												: undefined
+										}
+									/>
 								) : null}
 							</ProfileContentCard>
 						))}

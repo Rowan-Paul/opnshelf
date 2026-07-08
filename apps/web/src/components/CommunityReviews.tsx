@@ -236,11 +236,7 @@ function ReviewCard({
 				<div className="min-w-0 flex-1">
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
-						<ReviewBody
-							markdown={review.markdown}
-							href={review.reviewUrl}
-							full={isHighlighted}
-						/>
+						<ReviewBody markdown={review.markdown} href={review.reviewUrl} />
 					</div>
 				</div>
 			</div>

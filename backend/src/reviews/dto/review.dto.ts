@@ -225,6 +225,9 @@ export class UserReviewDto {
 	@ApiProperty()
 	id: string;
 
+	@ApiProperty({ description: "AT record key of the review" })
+	rkey: string;
+
 	@ApiProperty()
 	reviewTitle: string;
 

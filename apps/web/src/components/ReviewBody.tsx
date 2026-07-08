@@ -8,21 +8,18 @@ import { MarkdownContent } from "./MarkdownContent";
  * the same as in the editor, and the full review lives on its own page.
  *
  * `href` is the review's permalink; when omitted (e.g. inside a card that is
- * itself a link to the review) "Read more" renders as a plain cue. `full` forces
- * the whole review (used for a deep-linked/highlighted review).
+ * itself a link to the review) "Read more" renders as a plain cue.
  */
 export function ReviewBody({
 	markdown,
 	href,
-	full = false,
 }: {
 	markdown: string;
 	href?: string;
-	full?: boolean;
 }) {
 	const { truncated } = reviewExcerpt(markdown);
 
-	if (full || !truncated) {
+	if (!truncated) {
 		return <MarkdownContent markdown={markdown} />;
 	}
 

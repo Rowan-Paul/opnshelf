@@ -5,6 +5,7 @@ import {
 	type UserReviewDto,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Href } from "expo-router";
 import { Pencil, Star, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
@@ -29,10 +30,12 @@ import { useProfileReviews } from "@/lib/use-public-profile";
  */
 export function ReviewsTab({
 	userDid,
+	handle,
 	isOwner,
 	showHeading = true,
 }: {
 	userDid: string;
+	handle: string;
 	isOwner: boolean;
 	showHeading?: boolean;
 }) {
@@ -69,6 +72,7 @@ export function ReviewsTab({
 							review={review}
 							isOwner={isOwner}
 							userDid={userDid}
+							handle={handle}
 						/>
 					))}
 				</View>
@@ -90,10 +94,12 @@ function ReviewCard({
 	review,
 	isOwner,
 	userDid,
+	handle,
 }: {
 	review: UserReviewDto;
 	isOwner: boolean;
 	userDid: string;
+	handle: string;
 }) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -207,7 +213,12 @@ function ReviewCard({
 						{review.reviewTitle}
 					</Text>
 				) : null}
-				{review.markdown ? <ReviewBody markdown={review.markdown} /> : null}
+				{review.markdown ? (
+					<ReviewBody
+						markdown={review.markdown}
+						href={`/reviews/${handle}/${review.rkey}` as Href}
+					/>
+				) : null}
 			</ProfileContentCard>
 
 			{isOwner ? (

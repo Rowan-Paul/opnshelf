@@ -135,7 +135,11 @@ export default function ProfileScreen() {
 					) : tab === "notes" ? (
 						<NotesTab userDid={userDid} isOwner={isOwner} />
 					) : tab === "reviews" ? (
-						<ReviewsTab userDid={userDid} isOwner={isOwner} />
+						<ReviewsTab
+							userDid={userDid}
+							handle={profile.handle}
+							isOwner={isOwner}
+						/>
 					) : (
 						<ConnectionsTab
 							handle={profile.handle}
