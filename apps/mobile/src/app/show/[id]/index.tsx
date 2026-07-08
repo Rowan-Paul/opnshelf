@@ -15,6 +15,7 @@ import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { ReviewButton } from "@/components/detail/ReviewButton";
 import { SeasonCard } from "@/components/detail/SeasonCard";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -108,6 +109,7 @@ export default function ShowDetailScreen() {
 						<AddToListButton mediaType="show" mediaId={id} />
 						<AddToLibraryButton mediaType="show" mediaId={id} />
 						<NoteButton mediaType="show" mediaId={id} />
+						<ReviewButton mediaType="show" mediaId={id} />
 						<ShareButton
 							url={webMediaUrl({ type: "show", id, name: data.name })}
 							title={data.name}

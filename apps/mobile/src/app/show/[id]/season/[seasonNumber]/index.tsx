@@ -20,6 +20,7 @@ import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { ReviewButton } from "@/components/detail/ReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
@@ -181,6 +182,11 @@ export default function SeasonDetailScreen() {
 								seasonNumber={seasonNum}
 							/>
 							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+							/>
+							<ReviewButton
 								mediaType="show"
 								mediaId={id}
 								seasonNumber={seasonNum}

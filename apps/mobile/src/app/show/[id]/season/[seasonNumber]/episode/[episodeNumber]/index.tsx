@@ -22,6 +22,7 @@ import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { RatingButton } from "@/components/detail/RatingButton";
+import { ReviewButton } from "@/components/detail/ReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
@@ -200,6 +201,12 @@ export default function EpisodeDetailScreen() {
 								episodeNumber={episodeNum}
 							/>
 							<NoteButton
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+							/>
+							<ReviewButton
 								mediaType="show"
 								mediaId={id}
 								seasonNumber={seasonNum}
