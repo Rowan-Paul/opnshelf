@@ -203,9 +203,8 @@ export default function ProfileTab() {
 										{listItems.map((list) => (
 											<Link
 												key={list.id}
-												href={
-													`/list/${encodeURIComponent(userDid)}/${list.slug}` as Href
-												}
+												// Self hub: always the owner's manageable list screen
+												href={`/lists/${list.slug}` as Href}
 												asChild
 											>
 												<Pressable className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
