@@ -4,6 +4,7 @@ import { Compass, Home, Rss, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
@@ -34,6 +35,7 @@ export default function TabLayout() {
 	return (
 		<TraktSyncBanner>
 			<ShakeToFeedback />
+			<UpdateBanner />
 			<Tabs
 				screenOptions={{
 					headerShown: false,

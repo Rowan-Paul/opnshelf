@@ -11,7 +11,9 @@ import {
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { nativeApplicationVersion } from "expo-application";
 import { Link, Stack } from "expo-router";
+import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
 	ChevronRight,
@@ -74,6 +76,25 @@ function SettingsSection({
 			{children}
 		</View>
 	);
+}
+
+/** "v1.0.0 · update 019f40cf · Jul 8, 2026" once an OTA update is running, or
+ * "v1.0.0 · embedded" for the build's own bundle (also what dev/Expo Go shows,
+ * since `Updates.isEnabled` is false there). */
+function formatVersionLine(): string {
+	const version = nativeApplicationVersion ?? "?";
+	if (!Updates.isEnabled || !Updates.updateId) {
+		return `v${version} · embedded`;
+	}
+	const shortId = Updates.updateId.slice(0, 8);
+	const date = Updates.createdAt
+		? Updates.createdAt.toLocaleDateString(undefined, {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			})
+		: null;
+	return `v${version} · update ${shortId}${date ? ` · ${date}` : ""}`;
 }
 
 const APPEARANCE_OPTIONS: { value: ThemePreference; label: string }[] = [
@@ -667,6 +688,10 @@ export default function SettingsScreen() {
 							Sign out
 						</Text>
 					</Pressable>
+
+					<Text className="text-center text-muted-foreground text-xs">
+						{formatVersionLine()}
+					</Text>
 				</ScrollView>
 			</Screen>
 
