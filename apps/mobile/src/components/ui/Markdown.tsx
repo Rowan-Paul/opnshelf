@@ -205,6 +205,37 @@ function parseBlocks(markdown: string): Block[] {
 	return blocks;
 }
 
+/**
+ * A whole-line-clamped preview of a review body. RN can't line-clamp the block
+ * renderer above (multiple Views), so this flattens block markers to a single
+ * inline flow and clamps with `numberOfLines` — keeping inline bold/italic/code/
+ * links while cutting cleanly on a line boundary (no mid-line slice).
+ */
+export function MarkdownPreview({
+	value,
+	numberOfLines,
+}: {
+	value: string;
+	numberOfLines: number;
+}) {
+	const text = value
+		.replace(/```/g, "")
+		.replace(/^#{1,6}\s+/gm, "")
+		.replace(/^>\s?/gm, "")
+		.replace(/^[-*]\s+/gm, "• ")
+		.replace(/\n{2,}/g, "\n")
+		.trim();
+	return (
+		<Text
+			className="text-foreground leading-6"
+			numberOfLines={numberOfLines}
+			ellipsizeMode="tail"
+		>
+			{renderInline(text, "preview")}
+		</Text>
+	);
+}
+
 /** Renders the supported markdown subset as native RN views. */
 export function Markdown({ value }: { value: string }) {
 	const blocks = parseBlocks(value);

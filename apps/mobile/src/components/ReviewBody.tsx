@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type GestureResponderEvent, Pressable, View } from "react-native";
-import { Markdown } from "@/components/ui/Markdown";
+import { Markdown, MarkdownPreview } from "@/components/ui/Markdown";
 import { Text } from "@/components/ui/text";
 import { reviewExcerpt } from "@/lib/review-excerpt";
 
@@ -51,9 +51,7 @@ export function ReviewBody({
 
 	return (
 		<View>
-			<View className="max-h-32 overflow-hidden">
-				<Markdown value={markdown} />
-			</View>
+			<MarkdownPreview value={markdown} numberOfLines={5} />
 			{expandable ? (
 				<Pressable
 					hitSlop={6}

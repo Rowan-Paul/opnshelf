@@ -28,7 +28,7 @@ export function ReviewBody({
 
 	return (
 		<div>
-			<div className="max-h-32 overflow-hidden">
+			<div className="line-clamp-5">
 				<MarkdownContent markdown={markdown} />
 			</div>
 			{href ? (
