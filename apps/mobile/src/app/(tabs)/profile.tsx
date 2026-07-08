@@ -11,6 +11,7 @@ import {
 	Star,
 } from "lucide-react-native";
 import {
+	ActivityIndicator,
 	Alert,
 	Pressable,
 	RefreshControl,
@@ -154,7 +155,9 @@ export default function ProfileTab() {
 							{/* Shelf preview */}
 							<View>
 								<SectionHeader icon={Film} title="Shelf" href={shelfHref} />
-								{shelfItems.length === 0 ? (
+								{shelf.isPending ? (
+									<LoadingPreview />
+								) : shelfItems.length === 0 ? (
 									<EmptyPreview text="Nothing on your shelf yet." />
 								) : (
 									<ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -173,7 +176,9 @@ export default function ProfileTab() {
 							    full Up Next screen. */}
 							<View>
 								<SectionHeader icon={Clock} title="Up Next" href={upNextHref} />
-								{upNextItems.length === 0 ? (
+								{upNext.isPending ? (
+									<LoadingPreview />
+								) : upNextItems.length === 0 ? (
 									<EmptyPreview text="You're all caught up." />
 								) : (
 									<View className="gap-3">
@@ -196,7 +201,9 @@ export default function ProfileTab() {
 							{/* Lists preview */}
 							<View>
 								<SectionHeader icon={List} title="Lists" href="/lists" />
-								{listItems.length === 0 ? (
+								{lists.isPending ? (
+									<LoadingPreview />
+								) : listItems.length === 0 ? (
 									<EmptyPreview text="No lists yet." />
 								) : (
 									<View className="gap-2">
@@ -231,7 +238,9 @@ export default function ProfileTab() {
 							{/* Library preview — owned films, poster row like Shelf */}
 							<View>
 								<SectionHeader icon={Disc} title="Library" href={libraryHref} />
-								{libraryItems.length === 0 ? (
+								{library.isPending ? (
+									<LoadingPreview />
+								) : libraryItems.length === 0 ? (
 									<EmptyPreview text="Nothing owned yet." />
 								) : (
 									<ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -249,7 +258,9 @@ export default function ProfileTab() {
 							{/* Reviews preview */}
 							<View>
 								<SectionHeader icon={Star} title="Reviews" href={reviewsHref} />
-								{reviewItems.length === 0 ? (
+								{reviews.isPending ? (
+									<LoadingPreview />
+								) : reviewItems.length === 0 ? (
 									<EmptyPreview text="No reviews yet." />
 								) : (
 									<View className="gap-3">
@@ -299,6 +310,16 @@ function EmptyPreview({ text }: { text: string }) {
 	return (
 		<View className="items-center rounded-xl border border-border bg-card p-6">
 			<Text className="text-muted-foreground text-sm">{text}</Text>
+		</View>
+	);
+}
+
+/** Same card frame as EmptyPreview, so sections don't claim to be empty
+ * while their query is still pending. */
+function LoadingPreview() {
+	return (
+		<View className="items-center rounded-xl border border-border bg-card p-6">
+			<ActivityIndicator color="#f3bc00" />
 		</View>
 	);
 }
