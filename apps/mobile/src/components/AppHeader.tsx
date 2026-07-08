@@ -17,6 +17,16 @@ import { Text } from "@/components/ui/text";
  * (the list screen has up to four icons) would push a centered title
  * off-center.
  */
+/** The header's back chevron, exported so screens overriding `headerLeft`
+ * (e.g. to confirm discarding edits) render the exact same button. */
+export function HeaderBackButton({ onPress }: { onPress: () => void }) {
+	return (
+		<Pressable hitSlop={8} onPress={onPress} className="-ml-2 p-1">
+			<ChevronLeft color="#94a3b8" size={24} />
+		</Pressable>
+	);
+}
+
 export function AppHeader({
 	navigation,
 	route,
@@ -35,15 +45,7 @@ export function AppHeader({
 		>
 			<View className="h-12 flex-row items-center gap-3 px-4">
 				{(left ?? canGoBack)
-					? (left ?? (
-							<Pressable
-								hitSlop={8}
-								onPress={() => navigation.goBack()}
-								className="-ml-2 p-1"
-							>
-								<ChevronLeft color="#94a3b8" size={24} />
-							</Pressable>
-						))
+					? (left ?? <HeaderBackButton onPress={() => navigation.goBack()} />)
 					: null}
 				<Text
 					numberOfLines={1}

@@ -15,6 +15,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Share, View } from "react-native";
+import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
@@ -287,6 +288,26 @@ export default function ListDetailScreen() {
 		);
 	};
 
+	// Back out of reorder mode; only bother confirming when the order changed.
+	const cancelReorder = () => {
+		if (reorder.isPending) return;
+		const dirty =
+			orderedItems.map((item) => item.id).join() !==
+			items.map((item) => item.id).join();
+		if (!dirty) {
+			setReorderMode(false);
+			return;
+		}
+		Alert.alert("Discard changes?", "Your new order won't be saved.", [
+			{ text: "Keep editing", style: "cancel" },
+			{
+				text: "Discard",
+				style: "destructive",
+				onPress: () => setReorderMode(false),
+			},
+		]);
+	};
+
 	const canManage = list && !list.isDefault;
 	const total = list?.total ?? 0;
 	const watchedCount = list?.watchedCount ?? 0;
@@ -342,17 +363,7 @@ export default function ListDetailScreen() {
 									)
 								: undefined,
 					headerLeft: reorderMode
-						? () => (
-								<Pressable
-									hitSlop={8}
-									onPress={() => setReorderMode(false)}
-									disabled={reorder.isPending}
-								>
-									<Text className="text-base text-muted-foreground">
-										Cancel
-									</Text>
-								</Pressable>
-							)
+						? () => <HeaderBackButton onPress={cancelReorder} />
 						: undefined,
 				}}
 			/>
