@@ -50,10 +50,9 @@ export default function HomeScreen() {
 		<View className="flex-1 bg-background">
 			<ScrollView
 				showsVerticalScrollIndicator={false}
-				contentInset={{ top: insets.top + 12 }}
-				contentOffset={{ x: 0, y: -(insets.top + 12) }}
 				contentContainerStyle={{
 					// + 12 = the pt-3 the other tabs give their title row.
+					paddingTop: insets.top + 12,
 					paddingBottom: 32,
 				}}
 				refreshControl={
