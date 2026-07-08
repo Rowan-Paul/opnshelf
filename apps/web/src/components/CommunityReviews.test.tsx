@@ -107,21 +107,22 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("3")).toBeTruthy();
 	});
 
-	it("collapses a long review behind Read more and expands it on click", () => {
+	it("clamps a long review and links Read more to the review page", () => {
 		const longBody = `${"word ".repeat(120)}END`;
 		mockUseMediaReviews.mockReturnValue({
-			data: { items: [review({ markdown: longBody })] },
+			data: {
+				items: [
+					review({ markdown: longBody, reviewUrl: "/reviews/user1/rkey1" }),
+				],
+			},
 			isLoading: false,
 		});
 
 		render(<CommunityReviews mediaType="movie" mediaId="123" />);
-		// Collapsed: a Read more affordance, no "Show less" yet.
-		const toggle = screen.getByText("Read more");
-		expect(toggle).toBeTruthy();
+		// Read more opens the review's detail page (no inline expand).
+		const link = screen.getByText("Read more");
+		expect(link.getAttribute("href")).toBe("/reviews/user1/rkey1");
 		expect(screen.queryByText("Show less")).toBeNull();
-
-		fireEvent.click(toggle);
-		expect(screen.getByText("Show less")).toBeTruthy();
 	});
 
 	it("renders the media poster cover and links the title to the public review URL", () => {

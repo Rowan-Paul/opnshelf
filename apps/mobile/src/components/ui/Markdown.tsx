@@ -111,7 +111,13 @@ type Block =
 
 /** Group raw markdown lines into renderable blocks with stable ids. */
 function parseBlocks(markdown: string): Block[] {
-	const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+	// A lone `\` at end of line is a markdown hard break (what the editor emits
+	// for a soft return); drop the marker and let the newline render as the break
+	// so the card matches the editor.
+	const lines = markdown
+		.replace(/\r\n/g, "\n")
+		.replace(/\\$/gm, "")
+		.split("\n");
 	const blocks: Block[] = [];
 	let i = 0;
 	let seq = 0;

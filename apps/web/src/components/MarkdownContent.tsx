@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 import Markdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 /**
  * Canonical read renderer for review markdown. Reviews are authored in Milkdown
@@ -12,6 +13,11 @@ import Markdown from "react-markdown";
  * CommonMark only (no GFM): the editor's feature surface is headings, bold,
  * italic, inline code, code blocks, blockquotes, lists, and links. react-markdown
  * does not render raw HTML by default, so user-authored HTML is never injected.
+ *
+ * `remark-breaks` renders single newlines as hard breaks so a line break the
+ * author made in the Milkdown editor shows the same way when the review is read
+ * back (the editor keeps the visual line even where CommonMark would collapse
+ * a lone newline to a space).
  */
 
 // Element styling lives as descendant variants on the wrapper so they apply to
@@ -41,7 +47,9 @@ function MarkdownLink({ ...props }: ComponentPropsWithoutRef<"a">) {
 export function MarkdownContent({ markdown }: { markdown: string }) {
 	return (
 		<div className={PROSE_CLASS}>
-			<Markdown components={{ a: MarkdownLink }}>{markdown}</Markdown>
+			<Markdown remarkPlugins={[remarkBreaks]} components={{ a: MarkdownLink }}>
+				{markdown}
+			</Markdown>
 		</div>
 	);
 }

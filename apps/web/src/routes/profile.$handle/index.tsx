@@ -10,10 +10,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
+import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { ReviewBody } from "#/components/ReviewBody";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
-import { reviewExcerpt } from "#/lib/review-excerpt";
 import { toSlug } from "#/lib/slug";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
@@ -274,9 +275,6 @@ function ProfileOverviewPage() {
 function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 	const showName = review.title?.split(" — ")[0] ?? "";
 	const slug = toSlug(showName);
-	// The whole card is a link, so show a plain excerpt with a "Read more" cue
-	// (the card navigates to the full review) rather than an inline expander.
-	const excerpt = review.markdown ? reviewExcerpt(review.markdown) : null;
 
 	const href = (() => {
 		if (review.mediaType === "movie") {
@@ -294,39 +292,26 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 		return "#";
 	})();
 
+	// Media title on top (like mobile / the Reviews tab), review title as meta.
 	return (
-		<Link
+		<ProfileContentCard
+			posterUrl={
+				review.posterPath
+					? `https://image.tmdb.org/t/p/w300${review.posterPath}`
+					: null
+			}
 			to={href}
-			key={review.id}
-			className="card flex gap-3 p-3 transition-shadow hover:shadow-md sm:p-4"
+			hash={`review-${review.id}`}
+			title={review.title || "Unknown"}
+			meta={review.reviewTitle}
 		>
-			{review.posterPath && (
-				<img
-					src={`https://image.tmdb.org/t/p/w300${review.posterPath}`}
-					alt={review.title || "Poster"}
-					className="h-24 w-16 shrink-0 rounded-md object-cover"
-				/>
+			{review.markdown && (
+				<div className="text-(--foreground-muted) text-sm leading-relaxed">
+					{/* The whole card links to the review, so "Read more" is a cue. */}
+					<ReviewBody markdown={review.markdown} />
+				</div>
 			)}
-			<div className="flex min-w-0 flex-1 flex-col gap-1">
-				{/* Emphasise the review itself: title + snippet first, media second. */}
-				<h3 className="line-clamp-1 font-display font-semibold">
-					{review.reviewTitle || "Review"}
-				</h3>
-				{excerpt && (
-					<p className="text-(--foreground-muted) text-sm">
-						{excerpt.text}
-						{excerpt.truncated && (
-							<span className="ml-1 font-medium text-(--accent)">
-								Read more
-							</span>
-						)}
-					</p>
-				)}
-				<p className="mt-auto line-clamp-1 text-(--foreground-subtle) text-xs">
-					{review.title || "Unknown"}
-				</p>
-			</div>
-		</Link>
+		</ProfileContentCard>
 	);
 }
 

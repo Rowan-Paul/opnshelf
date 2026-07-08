@@ -5,37 +5,70 @@ import { Text } from "@/components/ui/text";
 import { reviewExcerpt } from "@/lib/review-excerpt";
 
 /**
- * A review body in a list. Short reviews render in full (formatted). Long ones
- * show a plain-text excerpt with a "Read more" that expands the full formatted
- * review inline — no gradient fade clipping mid-element. Used on both the media
- * detail cards and the profile reviews tab.
+ * A review body in a list. Short reviews render in full (formatted, so bold /
+ * line breaks / lists read the same as in the editor). Long ones render the same
+ * markdown clamped to a few lines with a "Read more".
+ *
+ * `expandable` makes "Read more" expand the review inline (used on the media
+ * detail, which has no separate review page). Otherwise "Read more" is a cue and
+ * the surrounding card navigates to the review's detail. `full` forces the whole
+ * review (used for the deep-linked/highlighted review on the detail screen).
  */
-export function ReviewBody({ markdown }: { markdown: string }) {
+export function ReviewBody({
+	markdown,
+	full = false,
+	expandable = false,
+}: {
+	markdown: string;
+	full?: boolean;
+	expandable?: boolean;
+}) {
 	const [expanded, setExpanded] = useState(false);
-	const { text, truncated } = reviewExcerpt(markdown);
+	const { truncated } = reviewExcerpt(markdown);
 
-	if (!truncated) {
-		return <Markdown value={markdown} />;
+	const stop = (e: GestureResponderEvent) => e.stopPropagation();
+
+	if (full || expanded || !truncated) {
+		return (
+			<View>
+				<Markdown value={markdown} />
+				{expanded ? (
+					<Pressable
+						hitSlop={6}
+						onPress={(e) => {
+							stop(e);
+							setExpanded(false);
+						}}
+					>
+						<Text className="mt-1 font-medium text-primary text-sm">
+							Show less
+						</Text>
+					</Pressable>
+				) : null}
+			</View>
+		);
 	}
-
-	const toggle = (e: GestureResponderEvent) => {
-		// Don't let a wrapping card link (e.g. the profile card) navigate.
-		e.stopPropagation();
-		setExpanded((v) => !v);
-	};
 
 	return (
 		<View>
-			{expanded ? (
+			<View className="max-h-32 overflow-hidden">
 				<Markdown value={markdown} />
+			</View>
+			{expandable ? (
+				<Pressable
+					hitSlop={6}
+					onPress={(e) => {
+						stop(e);
+						setExpanded(true);
+					}}
+				>
+					<Text className="mt-1 font-medium text-primary text-sm">
+						Read more
+					</Text>
+				</Pressable>
 			) : (
-				<Text className="text-foreground text-sm leading-relaxed">{text}</Text>
+				<Text className="mt-1 font-medium text-primary text-sm">Read more</Text>
 			)}
-			<Pressable hitSlop={6} onPress={toggle}>
-				<Text className="mt-1 font-medium text-primary text-sm">
-					{expanded ? "Show less" : "Read more"}
-				</Text>
-			</Pressable>
 		</View>
 	);
 }

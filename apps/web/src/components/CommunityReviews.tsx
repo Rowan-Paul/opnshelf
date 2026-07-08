@@ -224,7 +224,11 @@ function ReviewCard({
 				<div className="min-w-0 flex-1">
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
-						<ReviewBody markdown={review.markdown} />
+						<ReviewBody
+							markdown={review.markdown}
+							href={review.reviewUrl}
+							full={isHighlighted}
+						/>
 					</div>
 				</div>
 			</div>
@@ -353,29 +357,29 @@ export default function CommunityReviews({
 
 	return (
 		<section id="community-reviews">
-			<h2 className="mb-4 text-display-3">
-				<MessageSquare className="mr-2 inline-block size-5" />
-				Community Reviews
-			</h2>
+			<div className="mb-4 flex items-center justify-between gap-2">
+				<h2 className="text-display-3">
+					<MessageSquare className="mr-2 inline-block size-5" />
+					Community Reviews
+				</h2>
+				{isAuthenticated && (
+					<button
+						type="button"
+						onClick={onAddReview}
+						className="btn btn-secondary btn-sm shrink-0 gap-1"
+					>
+						<MessageSquare className="size-3.5" />
+						Write a review
+					</button>
+				)}
+			</div>
 			{!hasAnyReviews ? (
 				<div className="card p-6 text-center">
-					{isAuthenticated ? (
-						<div className="space-y-3">
-							<p className="text-(--foreground-muted) text-sm">
-								No reviews yet. Be the first to share your thoughts.
-							</p>
-							<button
-								type="button"
-								onClick={onAddReview}
-								className="btn btn-secondary btn-sm gap-1"
-							>
-								<MessageSquare className="size-3.5" />
-								Write a review
-							</button>
-						</div>
-					) : (
-						<p className="text-(--foreground-muted) text-sm">No reviews yet.</p>
-					)}
+					<p className="text-(--foreground-muted) text-sm">
+						{isAuthenticated
+							? "No reviews yet. Be the first to share your thoughts."
+							: "No reviews yet."}
+					</p>
 				</div>
 			) : (
 				<div className="space-y-4">

@@ -211,6 +211,8 @@ function ReviewCard({
 				<p className="font-medium text-sm">{review.reviewTitle}</p>
 				{review.markdown && (
 					<div className="text-(--foreground-muted) text-sm leading-relaxed">
+						{/* No explicit href: the whole card links to the review, so the
+						    "Read more" shows as a cue. */}
 						<ReviewBody markdown={review.markdown} />
 					</div>
 				)}
