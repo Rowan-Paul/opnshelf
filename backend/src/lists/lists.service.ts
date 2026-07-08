@@ -1,6 +1,11 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+	BadRequestException,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from "@nestjs/common";
 import {
 	$nsid as LIST_COLLECTION,
 	main as listSchema,
@@ -17,6 +22,7 @@ import { ShowsService } from "../shows/shows.service";
 import type {
 	AddToListDto,
 	CreateListDto,
+	ListSort,
 	MediaInListDto,
 	ListDto,
 	ListSummaryDto,
@@ -25,6 +31,13 @@ import type {
 	UpdateListDto,
 } from "./dto/list.dto";
 import { mapItemToDto } from "./list-mappers";
+
+type ItemScope = {
+	mediaType: "movie" | "show" | "season" | "episode";
+	mediaId: string;
+	seasonNumber: number;
+	episodeNumber: number;
+};
 
 export interface ATSession {
 	did: string;
@@ -88,17 +101,21 @@ export class ListsService {
 	async getPublicList(
 		userDid: string,
 		slug: string,
+		viewerDid: string | null,
 		page?: number,
 		pageSize?: number,
+		sort?: ListSort,
 	): Promise<ListWithItemsDto | null> {
-		return this.getList(userDid, slug, page, pageSize);
+		return this.getList(userDid, slug, viewerDid, page, pageSize, sort);
 	}
 
 	async getList(
 		userDid: string,
 		slug: string,
+		viewerDid: string | null,
 		page?: number,
 		pageSize?: number,
+		sort: ListSort = "position",
 	): Promise<ListWithItemsDto | null> {
 		const shouldPaginate = page !== undefined || pageSize !== undefined;
 		const safePageSize = shouldPaginate
@@ -135,20 +152,43 @@ export class ListsService {
 		const offset =
 			shouldPaginate && safePageSize ? (currentPage - 1) * safePageSize : 0;
 
-		const items =
-			total === 0
-				? []
-				: await this.prisma.listItem.findMany({
-						where: { listId: list.id },
-						orderBy: { createdAt: "desc" },
-						include: {
-							movie: true,
-							show: true,
-						},
-						...(shouldPaginate && safePageSize
-							? { skip: offset, take: safePageSize }
-							: {}),
-					});
+		const watchState = await this.buildWatchState(viewerDid, list.id);
+
+		// `title`/`year` sort across a mix of movie + show relations can't be
+		// expressed as a single deterministic Prisma orderBy, so we sort the whole
+		// (bounded, user-curated) list in memory and slice the page. `position`
+		// and `added` are plain columns and paginate in the DB.
+		const usesRelationSort = sort === "title" || sort === "year";
+
+		let items: Awaited<ReturnType<ListsService["fetchItemsForSort"]>>;
+		if (total === 0) {
+			items = [];
+		} else if (usesRelationSort) {
+			const allItems = await this.fetchItemsForSort(list.id);
+			allItems.sort(this.compareBySort(sort));
+			items =
+				shouldPaginate && safePageSize
+					? allItems.slice(offset, offset + safePageSize)
+					: allItems;
+		} else {
+			items = await this.prisma.listItem.findMany({
+				where: { listId: list.id },
+				orderBy:
+					sort === "added"
+						? [{ createdAt: "desc" }]
+						: // `position` (default) is insertion/manual order; createdAt is a
+							// deterministic tiebreak for rows that share a position (possible
+							// from concurrent adds before any manual reorder).
+							[{ position: "asc" }, { createdAt: "asc" }],
+				include: {
+					movie: true,
+					show: true,
+				},
+				...(shouldPaginate && safePageSize
+					? { skip: offset, take: safePageSize }
+					: {}),
+			});
+		}
 
 		const episodeItems = items.filter(
 			(item) => item.mediaType === "episode" && item.showId,
@@ -203,15 +243,220 @@ export class ListsService {
 								`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
 							)
 						: undefined;
-				return mapItemToDto(item, episodeName);
+				return mapItemToDto(item, episodeName, watchState.isWatched(item));
 			}),
 			total,
+			watchedCount: watchState.watchedCount,
 			page: currentPage,
 			pageSize: shouldPaginate && safePageSize ? safePageSize : total,
 			totalPages,
 			hasPreviousPage: shouldPaginate && totalPages > 0 && currentPage > 1,
 			hasNextPage: shouldPaginate && totalPages > 0 && currentPage < totalPages,
 		};
+	}
+
+	private fetchItemsForSort(listId: string) {
+		return this.prisma.listItem.findMany({
+			where: { listId },
+			include: { movie: true, show: true },
+		});
+	}
+
+	private compareBySort(
+		sort: "title" | "year",
+	): (
+		a: Awaited<ReturnType<ListsService["fetchItemsForSort"]>>[number],
+		b: Awaited<ReturnType<ListsService["fetchItemsForSort"]>>[number],
+	) => number {
+		const titleOf = (
+			item: Awaited<ReturnType<ListsService["fetchItemsForSort"]>>[number],
+		): string =>
+			(item.mediaType === "movie" ? item.movie?.title : item.show?.title) ?? "";
+		const yearOf = (
+			item: Awaited<ReturnType<ListsService["fetchItemsForSort"]>>[number],
+		): number | null =>
+			item.mediaType === "movie"
+				? (item.movie?.releaseYear ?? null)
+				: (item.show?.firstAirYear ?? null);
+
+		return (a, b) => {
+			if (sort === "title") {
+				const cmp = titleOf(a).localeCompare(titleOf(b), undefined, {
+					sensitivity: "base",
+				});
+				if (cmp !== 0) return cmp;
+			} else {
+				const ay = yearOf(a);
+				const by = yearOf(b);
+				// Nulls sort last regardless of direction.
+				if (ay === null && by !== null) return 1;
+				if (ay !== null && by === null) return -1;
+				if (ay !== null && by !== null && ay !== by) return ay - by;
+			}
+			// Deterministic tiebreak.
+			return a.createdAt.getTime() - b.createdAt.getTime();
+		};
+	}
+
+	/**
+	 * Builds viewer-relative watched lookups for a whole list in a fixed number
+	 * of queries (independent of page size). Returns a predicate for per-item
+	 * `watched` and the list-wide `watchedCount`. When there is no viewer
+	 * (unauthenticated public request) everything is unwatched.
+	 */
+	private async buildWatchState(
+		viewerDid: string | null,
+		listId: string,
+	): Promise<{
+		isWatched: (item: ItemScope) => boolean;
+		watchedCount: number;
+	}> {
+		if (!viewerDid) {
+			return { isWatched: () => false, watchedCount: 0 };
+		}
+
+		const scopes = await this.prisma.listItem.findMany({
+			where: { listId },
+			select: {
+				mediaType: true,
+				mediaId: true,
+				seasonNumber: true,
+				episodeNumber: true,
+			},
+		});
+
+		if (scopes.length === 0) {
+			return { isWatched: () => false, watchedCount: 0 };
+		}
+
+		const movieIds = [
+			...new Set(
+				scopes.filter((s) => s.mediaType === "movie").map((s) => s.mediaId),
+			),
+		];
+		const showIds = [
+			...new Set(
+				scopes.filter((s) => s.mediaType !== "movie").map((s) => s.mediaId),
+			),
+		];
+
+		const [watchedMovies, watchedEpisodes] = await Promise.all([
+			movieIds.length > 0
+				? this.prisma.trackedMovie.findMany({
+						where: {
+							userDid: viewerDid,
+							status: "watched",
+							movieId: { in: movieIds },
+						},
+						select: { movieId: true },
+					})
+				: Promise.resolve([]),
+			showIds.length > 0
+				? this.prisma.trackedEpisode.findMany({
+						where: {
+							userDid: viewerDid,
+							status: "watched",
+							showId: { in: showIds },
+						},
+						select: {
+							showId: true,
+							seasonNumber: true,
+							episodeNumber: true,
+						},
+					})
+				: Promise.resolve([]),
+		]);
+
+		const watchedMovieIds = new Set(watchedMovies.map((m) => m.movieId));
+		const watchedShows = new Set<string>();
+		const watchedSeasons = new Set<string>();
+		const watchedEpisodeKeys = new Set<string>();
+		for (const ep of watchedEpisodes) {
+			watchedShows.add(ep.showId);
+			watchedSeasons.add(`${ep.showId}:${ep.seasonNumber}`);
+			watchedEpisodeKeys.add(
+				`${ep.showId}:${ep.seasonNumber}:${ep.episodeNumber}`,
+			);
+		}
+
+		const isWatched = (item: ItemScope): boolean => {
+			switch (item.mediaType) {
+				case "movie":
+					return watchedMovieIds.has(item.mediaId);
+				case "show":
+					return watchedShows.has(item.mediaId);
+				case "season":
+					return watchedSeasons.has(`${item.mediaId}:${item.seasonNumber}`);
+				case "episode":
+					return watchedEpisodeKeys.has(
+						`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
+					);
+				default:
+					return false;
+			}
+		};
+
+		const watchedCount = scopes.reduce(
+			(count, scope) => count + (isWatched(scope) ? 1 : 0),
+			0,
+		);
+
+		return { isWatched, watchedCount };
+	}
+
+	/**
+	 * Reassigns list-item positions to match the given full ordering. Owner-only.
+	 * `position` is a DB-only projection (not part of the AT Protocol list-item
+	 * record), so reordering does NOT touch the PDS.
+	 */
+	async reorderListItems(
+		userDid: string,
+		slug: string,
+		ids: string[],
+	): Promise<void> {
+		const list = await this.prisma.list.findFirst({
+			where: { userDid, slug },
+		});
+
+		if (!list) {
+			throw new NotFoundException("List not found");
+		}
+
+		const existing = await this.prisma.listItem.findMany({
+			where: { listId: list.id },
+			select: { id: true },
+		});
+		const existingIds = new Set(existing.map((item) => item.id));
+
+		if (ids.length !== existingIds.size) {
+			throw new BadRequestException(
+				"ids must contain every item in the list exactly once",
+			);
+		}
+
+		const seen = new Set<string>();
+		for (const id of ids) {
+			if (!existingIds.has(id)) {
+				throw new BadRequestException(
+					`Item ${id} does not belong to this list`,
+				);
+			}
+			if (seen.has(id)) {
+				throw new BadRequestException(`Duplicate item id ${id}`);
+			}
+			seen.add(id);
+		}
+
+		await this.prisma.$transaction(
+			ids.map((id, index) =>
+				this.prisma.listItem.update({
+					where: { id },
+					data: { position: index },
+				}),
+			),
+		);
+
+		this.logger.log(`Reordered ${ids.length} items in list ${slug}`);
 	}
 
 	async getListsForItem(

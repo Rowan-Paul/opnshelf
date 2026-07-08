@@ -21,7 +21,9 @@ import {
 	ApiTags,
 	ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import type { Request } from "express";
 import { AuthGuard } from "../auth/auth.guard";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import { ListsService, type ATSession } from "./lists.service";
 import {
@@ -32,6 +34,7 @@ import {
 	ListsForItemDto,
 	ListSummaryDto,
 	ListWithItemsDto,
+	ReorderListItemsDto,
 	UpdateListDto,
 } from "./dto/list.dto";
 
@@ -86,6 +89,7 @@ export class ListsController {
 	}
 
 	@Get("user/:userDid/:slug")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get a public list with its items for a user" })
 	@ApiParam({ name: "userDid", description: "User DID" })
 	@ApiParam({ name: "slug", description: "List slug identifier" })
@@ -98,12 +102,16 @@ export class ListsController {
 		@Param("userDid") userDid: string,
 		@Param("slug") slug: string,
 		@Query() query: GetListQueryDto,
+		@Req() req: Request,
 	): Promise<ListWithItemsDto | null> {
+		const viewerDid = (req as AuthenticatedRequest).user?.did ?? null;
 		return this.listsService.getPublicList(
 			userDid,
 			slug,
+			viewerDid,
 			query.page,
 			query.pageSize,
+			query.sort,
 		);
 	}
 
@@ -126,8 +134,10 @@ export class ListsController {
 		return this.listsService.getList(
 			req.user.did,
 			slug,
+			req.user.did,
 			query.page,
 			query.pageSize,
+			query.sort,
 		);
 	}
 
@@ -190,6 +200,23 @@ export class ListsController {
 			slug,
 			dto,
 		);
+		return { success: true };
+	}
+
+	@Put(":slug/items/order")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Reorder the items in a list (owner only)" })
+	@ApiParam({ name: "slug", description: "List slug identifier" })
+	@ApiOkResponse({ description: "Items reordered" })
+	@ApiNotFoundResponse({ description: "List not found" })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async reorderListItems(
+		@Req() req: AuthenticatedRequest,
+		@Param("slug") slug: string,
+		@Body() dto: ReorderListItemsDto,
+	): Promise<{ success: boolean }> {
+		await this.listsService.reorderListItems(req.user.did, slug, dto.ids);
 		return { success: true };
 	}
 

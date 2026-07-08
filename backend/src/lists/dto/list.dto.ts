@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+	ArrayNotEmpty,
+	IsArray,
+	IsIn,
 	IsInt,
 	IsOptional,
 	IsString,
@@ -9,6 +12,9 @@ import {
 	Min,
 	MinLength,
 } from "class-validator";
+
+export const LIST_SORT_VALUES = ["position", "added", "title", "year"] as const;
+export type ListSort = (typeof LIST_SORT_VALUES)[number];
 
 export class CreateListDto {
 	@ApiProperty({
@@ -107,6 +113,28 @@ export class GetListQueryDto {
 	@Min(1)
 	@Max(50)
 	pageSize?: number;
+
+	@ApiPropertyOptional({
+		description:
+			"Sort order for items. `position` (default) is insertion/manual order, `added` is newest-first by creation, `title` is A-Z, `year` is oldest-first by release year.",
+		enum: LIST_SORT_VALUES,
+		default: "position",
+	})
+	@IsOptional()
+	@IsIn(LIST_SORT_VALUES)
+	sort?: ListSort;
+}
+
+export class ReorderListItemsDto {
+	@ApiProperty({
+		description:
+			"Full ordered list of list-item ids. Must contain every item in the list exactly once; items are reassigned position 0..n-1 in this order.",
+		type: [String],
+	})
+	@IsArray()
+	@ArrayNotEmpty()
+	@IsString({ each: true })
+	ids: string[];
 }
 
 export class RemoveFromListDto {
@@ -165,6 +193,12 @@ export class MediaInListDto {
 
 	@ApiProperty()
 	position: number;
+
+	@ApiProperty({
+		description:
+			"Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)",
+	})
+	watched: boolean;
 
 	@ApiProperty()
 	createdAt: string;
@@ -293,6 +327,12 @@ export class ListWithItemsDto {
 
 	@ApiProperty({ description: "Total count of items" })
 	total: number;
+
+	@ApiProperty({
+		description:
+			"Number of items in the whole list the requesting viewer has watched (0 when unauthenticated)",
+	})
+	watchedCount: number;
 
 	@ApiProperty({
 		description: "Current page number after server-side clamping",

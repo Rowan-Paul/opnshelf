@@ -70,11 +70,23 @@ describe("ListsService", () => {
 			findMany: vi.fn(),
 			findUnique: vi.fn(),
 			create: vi.fn(),
+			update: vi.fn(),
 			delete: vi.fn(),
 			deleteMany: vi.fn(),
 			upsert: vi.fn(),
 			count: vi.fn(),
 		},
+		trackedMovie: {
+			findMany: vi.fn(),
+		},
+		trackedEpisode: {
+			findMany: vi.fn(),
+		},
+		episode: {
+			findMany: vi.fn(),
+		},
+		// $transaction receives an array of prepared prisma promises; resolve them.
+		$transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
 	};
 
 	const mockMoviesService = {
@@ -94,6 +106,15 @@ describe("ListsService", () => {
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockListRecords.mockReset();
+
+		// Default: viewer has watched nothing and there are no episode names to
+		// resolve. Individual tests override where needed.
+		mockPrismaService.trackedMovie.findMany.mockResolvedValue([]);
+		mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+		mockPrismaService.episode.findMany.mockResolvedValue([]);
+		mockPrismaService.$transaction.mockImplementation((ops: unknown[]) =>
+			Promise.all(ops),
+		);
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -345,7 +366,7 @@ describe("ListsService", () => {
 			});
 
 			await expect(
-				service.getPublicList("did:plc:public123", "favorites"),
+				service.getPublicList("did:plc:public123", "favorites", null),
 			).resolves.toMatchObject({
 				slug: "favorites",
 				userDid: "did:plc:public123",
@@ -450,11 +471,12 @@ describe("ListsService", () => {
 				},
 			]);
 
-			const result = await service.getList("did:plc:abc123", "favorites");
+			const result = await service.getList("did:plc:abc123", "favorites", null);
 
 			expect(result).toMatchObject({
 				slug: "favorites",
 				total: 2,
+				watchedCount: 0,
 				page: 1,
 				pageSize: 2,
 				totalPages: 1,
@@ -462,9 +484,12 @@ describe("ListsService", () => {
 				hasNextPage: false,
 			});
 			expect(result?.items).toHaveLength(2);
+			expect(result?.items[0].watched).toBe(false);
+			// Default sort is now `position` (insertion/manual order) with a
+			// deterministic createdAt tiebreak.
 			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
 				where: { listId: "list-1" },
-				orderBy: { createdAt: "desc" },
+				orderBy: [{ position: "asc" }, { createdAt: "asc" }],
 				include: {
 					movie: true,
 					show: true,
@@ -509,7 +534,13 @@ describe("ListsService", () => {
 				},
 			]);
 
-			const result = await service.getList("did:plc:abc123", "watchlist", 9, 2);
+			const result = await service.getList(
+				"did:plc:abc123",
+				"watchlist",
+				null,
+				9,
+				2,
+			);
 
 			expect(result).toMatchObject({
 				total: 5,
@@ -521,7 +552,7 @@ describe("ListsService", () => {
 			});
 			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
 				where: { listId: "list-1" },
-				orderBy: { createdAt: "desc" },
+				orderBy: [{ position: "asc" }, { createdAt: "asc" }],
 				include: {
 					movie: true,
 					show: true,
@@ -529,6 +560,436 @@ describe("ListsService", () => {
 				skip: 4,
 				take: 2,
 			});
+		});
+
+		it("uses createdAt desc for the `added` sort", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "favorites",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites",
+				userDid: "did:plc:abc123",
+				name: "Favorites",
+				description: null,
+				slug: "favorites",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 1 },
+			});
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{
+					id: "item-1",
+					rkey: "item-1",
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 0,
+					createdAt: new Date("2024-01-03"),
+					movie: {
+						movieId: "123",
+						title: "Movie",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: 2024,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+			]);
+
+			await service.getList(
+				"did:plc:abc123",
+				"favorites",
+				null,
+				1,
+				20,
+				"added",
+			);
+
+			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
+				where: { listId: "list-1" },
+				orderBy: [{ createdAt: "desc" }],
+				include: { movie: true, show: true },
+				skip: 0,
+				take: 20,
+			});
+		});
+
+		it("sorts by title in memory across mixed movie/show items", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "mixed",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/mixed",
+				userDid: "did:plc:abc123",
+				name: "Mixed",
+				description: null,
+				slug: "mixed",
+				isDefault: false,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 3 },
+			});
+			// Returned in arbitrary DB order; the service must sort A-Z by title.
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{
+					id: "item-b",
+					rkey: "item-b",
+					mediaType: "show",
+					mediaId: "20",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 2,
+					createdAt: new Date("2024-01-03"),
+					movie: null,
+					show: {
+						showId: "20",
+						title: "Better Call Saul",
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: 2015,
+						firstAirDate: null,
+						overview: null,
+						colors: null,
+					},
+				},
+				{
+					id: "item-a",
+					rkey: "item-a",
+					mediaType: "movie",
+					mediaId: "10",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 0,
+					createdAt: new Date("2024-01-01"),
+					movie: {
+						movieId: "10",
+						title: "Amelie",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: 2001,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+				{
+					id: "item-c",
+					rkey: "item-c",
+					mediaType: "movie",
+					mediaId: "30",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 1,
+					createdAt: new Date("2024-01-02"),
+					movie: {
+						movieId: "30",
+						title: "Casablanca",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: 1942,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+			]);
+
+			const result = await service.getList(
+				"did:plc:abc123",
+				"mixed",
+				null,
+				undefined,
+				undefined,
+				"title",
+			);
+
+			expect(result?.items.map((i) => i.media.title)).toEqual([
+				"Amelie",
+				"Better Call Saul",
+				"Casablanca",
+			]);
+			// title/year sort fetches the whole list (no orderBy/skip/take).
+			expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith({
+				where: { listId: "list-1" },
+				include: { movie: true, show: true },
+			});
+		});
+
+		it("sorts by year ascending with nulls last", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "mixed",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/mixed",
+				userDid: "did:plc:abc123",
+				name: "Mixed",
+				description: null,
+				slug: "mixed",
+				isDefault: false,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 3 },
+			});
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{
+					id: "item-noyear",
+					rkey: "item-noyear",
+					mediaType: "movie",
+					mediaId: "10",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 0,
+					createdAt: new Date("2024-01-01"),
+					movie: {
+						movieId: "10",
+						title: "Undated",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: null,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+				{
+					id: "item-2015",
+					rkey: "item-2015",
+					mediaType: "show",
+					mediaId: "20",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 1,
+					createdAt: new Date("2024-01-02"),
+					movie: null,
+					show: {
+						showId: "20",
+						title: "Newer Show",
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: 2015,
+						firstAirDate: null,
+						overview: null,
+						colors: null,
+					},
+				},
+				{
+					id: "item-1990",
+					rkey: "item-1990",
+					mediaType: "movie",
+					mediaId: "30",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 2,
+					createdAt: new Date("2024-01-03"),
+					movie: {
+						movieId: "30",
+						title: "Older Movie",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: 1990,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+			]);
+
+			const result = await service.getList(
+				"did:plc:abc123",
+				"mixed",
+				null,
+				undefined,
+				undefined,
+				"year",
+			);
+
+			expect(result?.items.map((i) => i.media.releaseYear)).toEqual([
+				1990,
+				2015,
+				undefined,
+			]);
+		});
+
+		it("marks items watched relative to the viewer and counts them list-wide", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({
+				id: "list-1",
+				rkey: "watchlist",
+				uri: "at://did:plc:abc123/xyz.opnshelf.list/watchlist",
+				userDid: "did:plc:abc123",
+				name: "Watchlist",
+				description: null,
+				slug: "watchlist",
+				isDefault: true,
+				createdAt: new Date("2024-01-01"),
+				updatedAt: new Date("2024-01-02"),
+				_count: { items: 2 },
+			});
+			// buildWatchState scope fetch (select) + page fetch (include) both hit
+			// listItem.findMany; return the same rows for either shape.
+			const rows = [
+				{
+					id: "item-movie",
+					rkey: "item-movie",
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 0,
+					createdAt: new Date("2024-01-01"),
+					movie: {
+						movieId: "123",
+						title: "Watched Movie",
+						posterPath: null,
+						backdropPath: null,
+						releaseYear: 2024,
+						releaseDate: null,
+						overview: null,
+						colors: null,
+					},
+					show: null,
+				},
+				{
+					id: "item-show",
+					rkey: "item-show",
+					mediaType: "show",
+					mediaId: "456",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					notes: null,
+					position: 1,
+					createdAt: new Date("2024-01-02"),
+					movie: null,
+					show: {
+						showId: "456",
+						title: "Unwatched Show",
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: 2020,
+						firstAirDate: null,
+						overview: null,
+						colors: null,
+					},
+				},
+			];
+			mockPrismaService.listItem.findMany.mockResolvedValue(rows);
+			mockPrismaService.trackedMovie.findMany.mockResolvedValue([
+				{ movieId: "123" },
+			]);
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+
+			const result = await service.getList(
+				"did:plc:abc123",
+				"watchlist",
+				"did:plc:abc123",
+			);
+
+			expect(result?.watchedCount).toBe(1);
+			const byId = new Map(result?.items.map((i) => [i.id, i.watched]));
+			expect(byId.get("item-movie")).toBe(true);
+			expect(byId.get("item-show")).toBe(false);
+			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:abc123",
+					status: "watched",
+					movieId: { in: ["123"] },
+				},
+				select: { movieId: true },
+			});
+		});
+	});
+
+	describe("reorderListItems", () => {
+		it("reassigns positions 0..n-1 in a transaction", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{ id: "a" },
+				{ id: "b" },
+				{ id: "c" },
+			]);
+			mockPrismaService.listItem.update.mockImplementation(
+				(args: unknown) => args,
+			);
+
+			await service.reorderListItems("did:plc:abc123", "watchlist", [
+				"c",
+				"a",
+				"b",
+			]);
+
+			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.listItem.update).toHaveBeenNthCalledWith(1, {
+				where: { id: "c" },
+				data: { position: 0 },
+			});
+			expect(mockPrismaService.listItem.update).toHaveBeenNthCalledWith(2, {
+				where: { id: "a" },
+				data: { position: 1 },
+			});
+			expect(mockPrismaService.listItem.update).toHaveBeenNthCalledWith(3, {
+				where: { id: "b" },
+				data: { position: 2 },
+			});
+		});
+
+		it("throws NotFound when the list does not exist", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.reorderListItems("did:plc:abc123", "missing", ["a"]),
+			).rejects.toThrow("List not found");
+		});
+
+		it("rejects when ids do not cover every list item", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{ id: "a" },
+				{ id: "b" },
+			]);
+
+			await expect(
+				service.reorderListItems("did:plc:abc123", "watchlist", ["a"]),
+			).rejects.toThrow("every item");
+			expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+		});
+
+		it("rejects ids that do not belong to the list", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{ id: "a" },
+				{ id: "b" },
+			]);
+
+			await expect(
+				service.reorderListItems("did:plc:abc123", "watchlist", ["a", "z"]),
+			).rejects.toThrow("does not belong");
+			expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+		});
+
+		it("rejects duplicate ids", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.listItem.findMany.mockResolvedValue([
+				{ id: "a" },
+				{ id: "b" },
+			]);
+
+			await expect(
+				service.reorderListItems("did:plc:abc123", "watchlist", ["a", "a"]),
+			).rejects.toThrow("Duplicate");
+			expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
 		});
 	});
 

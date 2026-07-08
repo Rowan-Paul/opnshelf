@@ -591,7 +591,7 @@ export type MostWatchedShowDto = {
      */
     posterPath: string | null;
     /**
-     * Number of logged episode watches for this show (rewatches included)
+     * Number of logged episode watches for this show in the past 30 days (rewatches included)
      */
     episodeWatchCount: number;
 };
@@ -642,7 +642,7 @@ export type PublicUserProfileDto = {
      */
     activityLast30Days: Array<ProfileActivityDayDto>;
     /**
-     * The show with the most logged episode watches, or null if none tracked
+     * The show with the most logged episode watches in the past 30 days, or null if none tracked
      */
     mostWatchedShow: MostWatchedShowDto | null;
     /**
@@ -1007,6 +1007,10 @@ export type MediaInListDto = {
     episodeName?: string;
     notes?: string;
     position: number;
+    /**
+     * Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)
+     */
+    watched: boolean;
     createdAt: string;
     media: {
         [key: string]: unknown;
@@ -1043,6 +1047,10 @@ export type ListWithItemsDto = {
      * Total count of items
      */
     total: number;
+    /**
+     * Number of items in the whole list the requesting viewer has watched (0 when unauthenticated)
+     */
+    watchedCount: number;
     /**
      * Current page number after server-side clamping
      */
@@ -1097,6 +1105,13 @@ export type AddToListDto = {
      * Optional notes about the media
      */
     notes?: string;
+};
+
+export type ReorderListItemsDto = {
+    /**
+     * Full ordered list of list-item ids. Must contain every item in the list exactly once; items are reassigned position 0..n-1 in this order.
+     */
+    ids: Array<string>;
 };
 
 export type ListsForItemDto = {
@@ -3295,6 +3310,10 @@ export type ListsControllerGetPublicUserListData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Sort order for items. `position` (default) is insertion/manual order, `added` is newest-first by creation, `title` is A-Z, `year` is oldest-first by release year.
+         */
+        sort?: 'position' | 'added' | 'title' | 'year';
     };
     url: '/lists/user/{userDid}/{slug}';
 };
@@ -3362,6 +3381,10 @@ export type ListsControllerGetListData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Sort order for items. `position` (default) is insertion/manual order, `added` is newest-first by creation, `title` is A-Z, `year` is oldest-first by release year.
+         */
+        sort?: 'position' | 'added' | 'title' | 'year';
     };
     url: '/lists/{slug}';
 };
@@ -3444,6 +3467,36 @@ export type ListsControllerAddItemToListErrors = {
 export type ListsControllerAddItemToListResponses = {
     /**
      * Item added to list
+     */
+    200: unknown;
+};
+
+export type ListsControllerReorderListItemsData = {
+    body: ReorderListItemsDto;
+    path: {
+        /**
+         * List slug identifier
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/lists/{slug}/items/order';
+};
+
+export type ListsControllerReorderListItemsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerReorderListItemsResponses = {
+    /**
+     * Items reordered
      */
     200: unknown;
 };
@@ -4309,7 +4362,7 @@ export type LibraryControllerRemoveFromLibraryData = {
         /**
          * digital, bluray, bluray4k, or dvd
          */
-        format: string;
+        format: unknown;
     };
     query?: {
         seasonNumber?: number;
