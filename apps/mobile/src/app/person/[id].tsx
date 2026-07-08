@@ -7,6 +7,7 @@ import { FilmographyCard } from "@/components/person/FilmographyCard";
 import { PersonHero } from "@/components/person/PersonHero";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useMovieWatchToggle } from "@/lib/use-movie-watch-toggle";
 import { usePersonDetails, usePersonFilmography } from "@/lib/use-person";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -22,6 +23,7 @@ function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 export default function PersonDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const gridStyle = useTwStyle("px-3 pb-12");
+	const numColumns = useMediaCardColumns();
 
 	const { data: person, isLoading, isError } = usePersonDetails(id);
 	const {
@@ -58,8 +60,9 @@ export default function PersonDetailScreen() {
 				<ErrorState message="Couldn't load this person." />
 			) : (
 				<FlashList
+					key={`grid-${numColumns}`}
 					data={filmography}
-					numColumns={3}
+					numColumns={numColumns}
 					keyExtractor={(item, index) =>
 						`${item.media_type}-${item.id}-${index}`
 					}

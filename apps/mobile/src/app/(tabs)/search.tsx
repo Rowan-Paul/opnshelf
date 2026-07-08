@@ -33,6 +33,7 @@ import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { profileUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 type Tab = "all" | "movies" | "shows" | "cast" | "people";
@@ -190,6 +191,7 @@ export default function SearchScreen() {
 
 	const peopleListStyle = useTwStyle("px-4 pb-8");
 	const gridListStyle = useTwStyle("px-3 pb-8");
+	const numColumns = useMediaCardColumns();
 
 	const mediaQuery = useQuery({
 		...searchControllerSearchAllOptions({ query: { query: debouncedQuery } }),
@@ -316,8 +318,9 @@ export default function SearchScreen() {
 
 		return (
 			<FlashList
+				key={`grid-${numColumns}`}
 				data={gridData}
-				numColumns={3}
+				numColumns={numColumns}
 				keyExtractor={(item) => `${item.type}-${item.id}`}
 				renderItem={({ item }) => (
 					<View className="flex-1 px-1 pb-3">

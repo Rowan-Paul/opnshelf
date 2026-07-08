@@ -38,6 +38,7 @@ import {
 	useReorderListItems,
 	useUpdateList,
 } from "@/lib/use-lists";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
 
@@ -148,6 +149,7 @@ export default function ListDetailScreen() {
 	const router = useRouter();
 	const gridStyle = useTwStyle("px-3 pt-3 pb-12");
 	const reorderStyle = useTwStyle("px-4 pt-3 pb-12");
+	const numColumns = useMediaCardColumns();
 	const { user, isAuthenticated } = useAuth();
 	const toast = useToast();
 
@@ -399,9 +401,9 @@ export default function ListDetailScreen() {
 				/>
 			) : (
 				<FlashList
-					key="grid"
+					key={`grid-${numColumns}`}
 					data={filteredItems}
-					numColumns={3}
+					numColumns={numColumns}
 					keyExtractor={(item) => item.id}
 					renderItem={({ item }) => (
 						<View className="flex-1 px-1 pb-3">

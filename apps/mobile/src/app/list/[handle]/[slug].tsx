@@ -5,6 +5,7 @@ import { MediaCard } from "@/components/media/MediaCard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { listItemToMediaCardItem } from "@/lib/list-media";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
 import { useTwStyle } from "@/lib/use-tw-style";
 
@@ -28,6 +29,7 @@ export default function PublicListScreen() {
 
 	const segment = handleParam ? decodeURIComponent(handleParam) : "";
 	const isDid = segment.startsWith("did:");
+	const numColumns = useMediaCardColumns();
 
 	// Only hit the profile endpoint when the segment is a handle, not a DID.
 	const profileQuery = usePublicProfile(isDid ? "" : segment);
@@ -55,8 +57,9 @@ export default function PublicListScreen() {
 				<ErrorState message="Couldn't load this list." />
 			) : (
 				<FlashList
+					key={`grid-${numColumns}`}
 					data={items}
-					numColumns={3}
+					numColumns={numColumns}
 					keyExtractor={(item) => item.id}
 					renderItem={({ item }) => (
 						<View className="flex-1 px-1 pb-3">
