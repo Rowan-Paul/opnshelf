@@ -109,7 +109,10 @@ export function ReviewEditorSheet({
 			<KeyboardProvider>
 				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
 					<Pressable className="flex-1" onPress={onDismiss} />
-					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+					<View
+						style={{ height: "85%" }}
+						className="gap-4 rounded-t-2xl border border-border bg-card p-5"
+					>
 						<View className="flex-row items-center justify-between">
 							<Text className="font-bold font-display text-foreground text-lg">
 								{isEditing ? "Edit review" : "Write a review"}
@@ -170,7 +173,8 @@ export function ReviewEditorSheet({
 								<Switch
 									value={mirrorToBlog}
 									onValueChange={setMirrorToBlog}
-									trackColor={{ true: "#f3bc00" }}
+									trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+									thumbColor="#ffffff"
 								/>
 							</View>
 						) : null}

@@ -49,7 +49,7 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 	};
 
 	return (
-		<View className="h-64 overflow-hidden rounded-lg border border-border">
+		<View className="min-h-48 flex-1 overflow-hidden rounded-lg border border-border">
 			<WebView
 				ref={webRef}
 				originWhitelist={["*"]}
