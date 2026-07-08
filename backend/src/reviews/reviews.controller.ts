@@ -30,8 +30,6 @@ import {
 	MyPublicationsResponseDto,
 	PaginatedReviewsQueryDto,
 	PaginatedReviewsResponseDto,
-	RepointReviewsDto,
-	RepointReviewsResponseDto,
 	ReviewLikesResponseDto,
 	ReviewResponseDto,
 	UpdateReviewDto,
@@ -113,10 +111,9 @@ export class ReviewsController {
 				title: review.title,
 				markdown: review.markdown,
 				description: review.description ?? undefined,
-				// Canonical public review page (#115). Relative path against the
-				// public site (opnshelf.xyz) — NEVER the PDS host. Falls back to the
-				// record key when the document carries no human-friendly path.
-				reviewUrl: `/@${review.user.handle}/${review.path ?? review.rkey}`,
+				// Canonical public review page (ADR-0013). Relative path against the
+				// public site (opnshelf.xyz) — NEVER the PDS host.
+				reviewUrl: `/reviews/${review.user.handle}/${review.rkey}`,
 				posterPath: review.posterPath ?? undefined,
 				userDid: review.user.did,
 				userHandle: review.user.handle,
@@ -133,9 +130,9 @@ export class ReviewsController {
 		};
 	}
 
-	@Get("canonical/:handle/:segment")
+	@Get("canonical/:handle/:rkey")
 	@ApiOperation({
-		summary: "Resolve the canonical public review page for @handle/segment",
+		summary: "Resolve the canonical public review page for {handle}/{rkey}",
 	})
 	@ApiOkResponse({
 		description: "Canonical review resolved",
@@ -143,19 +140,15 @@ export class ReviewsController {
 	})
 	async getCanonicalReview(
 		@Param("handle") handle: string,
-		@Param("segment") segment: string,
+		@Param("rkey") rkey: string,
 	): Promise<CanonicalReviewResponseDto> {
-		const review = await this.reviewsService.getCanonicalReview(
-			handle,
-			segment,
-		);
+		const review = await this.reviewsService.getCanonicalReview(handle, rkey);
 		return {
 			id: review.id,
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
 			description: review.description ?? undefined,
-			path: review.path ?? undefined,
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
 			seasonNumber: review.seasonNumber || undefined,
@@ -194,28 +187,6 @@ export class ReviewsController {
 			req.user.session as ATSession,
 		);
 		return { items };
-	}
-
-	@Post("repoint")
-	@UseGuards(AuthGuard)
-	@ApiBearerAuth()
-	@ApiOperation({
-		summary: "Re-point the user's existing reviews at a new publication",
-	})
-	@ApiOkResponse({
-		description: "Re-point summary",
-		type: RepointReviewsResponseDto,
-	})
-	@ApiUnauthorizedResponse({ description: "Not authenticated" })
-	async repointReviews(
-		@Req() req: AuthenticatedRequest,
-		@Body() dto: RepointReviewsDto,
-	): Promise<RepointReviewsResponseDto> {
-		return this.reviewsService.repointReviews(
-			req.user.did,
-			req.user.session as ATSession,
-			dto.targetPublicationUri,
-		);
 	}
 
 	@Get(":reviewId")
@@ -363,9 +334,7 @@ export class ReviewsController {
 		rkey: string;
 		title: string;
 		markdown: string;
-		description: string | null;
-		textContent: string | null;
-		publicationUri: string;
+		blogDocumentUri: string | null;
 		mediaType: string;
 		mediaId: string;
 		seasonNumber: number;
@@ -378,9 +347,7 @@ export class ReviewsController {
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
-			description: review.description ?? undefined,
-			textContent: review.textContent ?? undefined,
-			publicationUri: review.publicationUri,
+			blogDocumentUri: review.blogDocumentUri,
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
 			seasonNumber: review.seasonNumber || undefined,

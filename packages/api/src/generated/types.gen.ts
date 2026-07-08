@@ -1317,7 +1317,7 @@ export type CanonicalReviewAuthorDto = {
 export type CanonicalReviewResponseDto = {
     id: string;
     /**
-     * AT record key of the review document
+     * AT record key of the review
      */
     rkey: string;
     title: string;
@@ -1329,10 +1329,6 @@ export type CanonicalReviewResponseDto = {
      * Short plaintext excerpt
      */
     description?: string;
-    /**
-     * Human-friendly document path (the canonical URL segment)
-     */
-    path?: string;
     mediaType: 'movie' | 'show' | 'season' | 'episode';
     mediaId: string;
     seasonNumber?: number;
@@ -1367,36 +1363,10 @@ export type MyPublicationDto = {
      * Canonical web URL of the publication
      */
     url: string;
-    /**
-     * True for the opnshelf-minted default publication (url === opnshelf.xyz/@<handle>)
-     */
-    isOpnshelfDefault: boolean;
 };
 
 export type MyPublicationsResponseDto = {
     items: Array<MyPublicationDto>;
-};
-
-export type RepointReviewsDto = {
-    /**
-     * AT-URI of the target publication to re-point reviews at
-     */
-    targetPublicationUri: string;
-};
-
-export type RepointReviewsResponseDto = {
-    /**
-     * Number of reviews successfully re-pointed
-     */
-    moved: number;
-    /**
-     * Number of reviews that failed to re-point
-     */
-    failed: number;
-    /**
-     * Total number of reviews considered
-     */
-    total: number;
 };
 
 export type ReviewResponseDto = {
@@ -1408,17 +1378,9 @@ export type ReviewResponseDto = {
      */
     markdown: string;
     /**
-     * Short plaintext excerpt
+     * AT-URI of the standard.site blog-mirror document, or null when not mirrored
      */
-    description?: string;
-    /**
-     * Plaintext rendering for preview
-     */
-    textContent?: string;
-    /**
-     * AT-URI of the document's publication (`site`)
-     */
-    publicationUri: string;
+    blogDocumentUri?: string | null;
     mediaType: 'movie' | 'show' | 'season' | 'episode';
     mediaId: string;
     seasonNumber?: number;
@@ -3970,10 +3932,10 @@ export type ReviewsControllerGetCanonicalReviewData = {
     body?: never;
     path: {
         handle: string;
-        segment: string;
+        rkey: string;
     };
     query?: never;
-    url: '/reviews/canonical/{handle}/{segment}';
+    url: '/reviews/canonical/{handle}/{rkey}';
 };
 
 export type ReviewsControllerGetCanonicalReviewResponses = {
@@ -4007,29 +3969,6 @@ export type ReviewsControllerListMyPublicationsResponses = {
 };
 
 export type ReviewsControllerListMyPublicationsResponse = ReviewsControllerListMyPublicationsResponses[keyof ReviewsControllerListMyPublicationsResponses];
-
-export type ReviewsControllerRepointReviewsData = {
-    body: RepointReviewsDto;
-    path?: never;
-    query?: never;
-    url: '/reviews/repoint';
-};
-
-export type ReviewsControllerRepointReviewsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ReviewsControllerRepointReviewsResponses = {
-    /**
-     * Re-point summary
-     */
-    200: RepointReviewsResponseDto;
-};
-
-export type ReviewsControllerRepointReviewsResponse = ReviewsControllerRepointReviewsResponses[keyof ReviewsControllerRepointReviewsResponses];
 
 export type ReviewsControllerDeleteReviewData = {
     body?: never;

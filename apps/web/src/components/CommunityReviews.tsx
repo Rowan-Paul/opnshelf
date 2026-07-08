@@ -116,8 +116,9 @@ function ReviewCard({
 
 	// The canonical public review page (#115) may not exist as a registered
 	// route yet, so we use a plain anchor rather than the router's typed Link.
-	// The link shape is stable: /@handle/path on the public site (never the PDS
-	// host). Falls back to plain text when the backend could not build a URL.
+	// The link shape is stable: /reviews/{handle}/{rkey} on the public site
+	// (never the PDS host). Falls back to plain text when the backend could not
+	// build a URL.
 	const title = review.reviewUrl ? (
 		<a
 			href={review.reviewUrl}

@@ -47,11 +47,9 @@ export type ReviewMinAggregateOutputType = {
   seasonNumber: number | null
   episodeNumber: number | null
   title: string | null
-  path: string | null
-  description: string | null
-  textContent: string | null
   markdown: string | null
-  publicationUri: string | null
+  blogDocumentUri: string | null
+  blogDocumentCid: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -67,11 +65,9 @@ export type ReviewMaxAggregateOutputType = {
   seasonNumber: number | null
   episodeNumber: number | null
   title: string | null
-  path: string | null
-  description: string | null
-  textContent: string | null
   markdown: string | null
-  publicationUri: string | null
+  blogDocumentUri: string | null
+  blogDocumentCid: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -87,11 +83,9 @@ export type ReviewCountAggregateOutputType = {
   seasonNumber: number
   episodeNumber: number
   title: number
-  path: number
-  description: number
-  textContent: number
   markdown: number
-  publicationUri: number
+  blogDocumentUri: number
+  blogDocumentCid: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -119,11 +113,9 @@ export type ReviewMinAggregateInputType = {
   seasonNumber?: true
   episodeNumber?: true
   title?: true
-  path?: true
-  description?: true
-  textContent?: true
   markdown?: true
-  publicationUri?: true
+  blogDocumentUri?: true
+  blogDocumentCid?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -139,11 +131,9 @@ export type ReviewMaxAggregateInputType = {
   seasonNumber?: true
   episodeNumber?: true
   title?: true
-  path?: true
-  description?: true
-  textContent?: true
   markdown?: true
-  publicationUri?: true
+  blogDocumentUri?: true
+  blogDocumentCid?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -159,11 +149,9 @@ export type ReviewCountAggregateInputType = {
   seasonNumber?: true
   episodeNumber?: true
   title?: true
-  path?: true
-  description?: true
-  textContent?: true
   markdown?: true
-  publicationUri?: true
+  blogDocumentUri?: true
+  blogDocumentCid?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -266,11 +254,9 @@ export type ReviewGroupByOutputType = {
   seasonNumber: number
   episodeNumber: number
   title: string
-  path: string | null
-  description: string | null
-  textContent: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri: string | null
+  blogDocumentCid: string | null
   createdAt: Date
   updatedAt: Date
   _count: ReviewCountAggregateOutputType | null
@@ -309,11 +295,9 @@ export type ReviewWhereInput = {
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
-  path?: Prisma.StringNullableFilter<"Review"> | string | null
-  description?: Prisma.StringNullableFilter<"Review"> | string | null
-  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
-  publicationUri?: Prisma.StringFilter<"Review"> | string
+  blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
+  blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -331,11 +315,9 @@ export type ReviewOrderByWithRelationInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
-  path?: Prisma.SortOrderInput | Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
-  textContent?: Prisma.SortOrderInput | Prisma.SortOrder
   markdown?: Prisma.SortOrder
-  publicationUri?: Prisma.SortOrder
+  blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -356,11 +338,9 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
-  path?: Prisma.StringNullableFilter<"Review"> | string | null
-  description?: Prisma.StringNullableFilter<"Review"> | string | null
-  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
-  publicationUri?: Prisma.StringFilter<"Review"> | string
+  blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
+  blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -378,11 +358,9 @@ export type ReviewOrderByWithAggregationInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
-  path?: Prisma.SortOrderInput | Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
-  textContent?: Prisma.SortOrderInput | Prisma.SortOrder
   markdown?: Prisma.SortOrder
-  publicationUri?: Prisma.SortOrder
+  blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
+  blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReviewCountOrderByAggregateInput
@@ -406,11 +384,9 @@ export type ReviewScalarWhereWithAggregatesInput = {
   seasonNumber?: Prisma.IntWithAggregatesFilter<"Review"> | number
   episodeNumber?: Prisma.IntWithAggregatesFilter<"Review"> | number
   title?: Prisma.StringWithAggregatesFilter<"Review"> | string
-  path?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
-  description?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
-  textContent?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   markdown?: Prisma.StringWithAggregatesFilter<"Review"> | string
-  publicationUri?: Prisma.StringWithAggregatesFilter<"Review"> | string
+  blogDocumentUri?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
+  blogDocumentCid?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Review"> | Date | string
 }
@@ -425,11 +401,9 @@ export type ReviewCreateInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -447,11 +421,9 @@ export type ReviewUncheckedCreateInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -467,11 +439,9 @@ export type ReviewUpdateInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -489,11 +459,9 @@ export type ReviewUncheckedUpdateInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -510,11 +478,9 @@ export type ReviewCreateManyInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -529,11 +495,9 @@ export type ReviewUpdateManyMutationInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -549,11 +513,9 @@ export type ReviewUncheckedUpdateManyInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -579,11 +541,9 @@ export type ReviewCountOrderByAggregateInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
-  path?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  textContent?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
-  publicationUri?: Prisma.SortOrder
+  blogDocumentUri?: Prisma.SortOrder
+  blogDocumentCid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -604,11 +564,9 @@ export type ReviewMaxOrderByAggregateInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
-  path?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  textContent?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
-  publicationUri?: Prisma.SortOrder
+  blogDocumentUri?: Prisma.SortOrder
+  blogDocumentCid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -624,11 +582,9 @@ export type ReviewMinOrderByAggregateInput = {
   seasonNumber?: Prisma.SortOrder
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
-  path?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  textContent?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
-  publicationUri?: Prisma.SortOrder
+  blogDocumentUri?: Prisma.SortOrder
+  blogDocumentCid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -709,11 +665,9 @@ export type ReviewCreateWithoutUserInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeCreateNestedManyWithoutReviewInput
@@ -729,11 +683,9 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutReviewInput
@@ -779,11 +731,9 @@ export type ReviewScalarWhereInput = {
   seasonNumber?: Prisma.IntFilter<"Review"> | number
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
-  path?: Prisma.StringNullableFilter<"Review"> | string | null
-  description?: Prisma.StringNullableFilter<"Review"> | string | null
-  textContent?: Prisma.StringNullableFilter<"Review"> | string | null
   markdown?: Prisma.StringFilter<"Review"> | string
-  publicationUri?: Prisma.StringFilter<"Review"> | string
+  blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
+  blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
 }
@@ -798,11 +748,9 @@ export type ReviewCreateWithoutLikesInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReviewsInput
@@ -819,11 +767,9 @@ export type ReviewUncheckedCreateWithoutLikesInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -854,11 +800,9 @@ export type ReviewUpdateWithoutLikesInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReviewsNestedInput
@@ -875,11 +819,9 @@ export type ReviewUncheckedUpdateWithoutLikesInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -894,11 +836,9 @@ export type ReviewCreateManyUserInput = {
   seasonNumber?: number
   episodeNumber?: number
   title: string
-  path?: string | null
-  description?: string | null
-  textContent?: string | null
   markdown: string
-  publicationUri: string
+  blogDocumentUri?: string | null
+  blogDocumentCid?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -913,11 +853,9 @@ export type ReviewUpdateWithoutUserInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUpdateManyWithoutReviewNestedInput
@@ -933,11 +871,9 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutReviewNestedInput
@@ -953,11 +889,9 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
-  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  textContent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
-  publicationUri?: Prisma.StringFieldUpdateOperationsInput | string
+  blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1004,11 +938,9 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   seasonNumber?: boolean
   episodeNumber?: boolean
   title?: boolean
-  path?: boolean
-  description?: boolean
-  textContent?: boolean
   markdown?: boolean
-  publicationUri?: boolean
+  blogDocumentUri?: boolean
+  blogDocumentCid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1027,11 +959,9 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   seasonNumber?: boolean
   episodeNumber?: boolean
   title?: boolean
-  path?: boolean
-  description?: boolean
-  textContent?: boolean
   markdown?: boolean
-  publicationUri?: boolean
+  blogDocumentUri?: boolean
+  blogDocumentCid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1048,11 +978,9 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   seasonNumber?: boolean
   episodeNumber?: boolean
   title?: boolean
-  path?: boolean
-  description?: boolean
-  textContent?: boolean
   markdown?: boolean
-  publicationUri?: boolean
+  blogDocumentUri?: boolean
+  blogDocumentCid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1069,16 +997,14 @@ export type ReviewSelectScalar = {
   seasonNumber?: boolean
   episodeNumber?: boolean
   title?: boolean
-  path?: boolean
-  description?: boolean
-  textContent?: boolean
   markdown?: boolean
-  publicationUri?: boolean
+  blogDocumentUri?: boolean
+  blogDocumentCid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "path" | "description" | "textContent" | "markdown" | "publicationUri" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "markdown" | "blogDocumentUri" | "blogDocumentCid" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.Review$likesArgs<ExtArgs>
@@ -1108,11 +1034,9 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     seasonNumber: number
     episodeNumber: number
     title: string
-    path: string | null
-    description: string | null
-    textContent: string | null
     markdown: string
-    publicationUri: string
+    blogDocumentUri: string | null
+    blogDocumentCid: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["review"]>
@@ -1550,11 +1474,9 @@ export interface ReviewFieldRefs {
   readonly seasonNumber: Prisma.FieldRef<"Review", 'Int'>
   readonly episodeNumber: Prisma.FieldRef<"Review", 'Int'>
   readonly title: Prisma.FieldRef<"Review", 'String'>
-  readonly path: Prisma.FieldRef<"Review", 'String'>
-  readonly description: Prisma.FieldRef<"Review", 'String'>
-  readonly textContent: Prisma.FieldRef<"Review", 'String'>
   readonly markdown: Prisma.FieldRef<"Review", 'String'>
-  readonly publicationUri: Prisma.FieldRef<"Review", 'String'>
+  readonly blogDocumentUri: Prisma.FieldRef<"Review", 'String'>
+  readonly blogDocumentCid: Prisma.FieldRef<"Review", 'String'>
   readonly createdAt: Prisma.FieldRef<"Review", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Review", 'DateTime'>
 }

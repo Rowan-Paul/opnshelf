@@ -65,10 +65,10 @@ import {
 import type { Main as RatingRecord } from "../lexicons/xyz/opnshelf/rating.defs";
 import { RatingsService } from "../ratings/ratings.service";
 import {
-	$nsid as DOCUMENT_COLLECTION,
-	main as documentSchema,
-} from "../lexicons/site/standard/document";
-import type { Main as DocumentRecord } from "../lexicons/site/standard/document.defs";
+	$nsid as REVIEW_COLLECTION,
+	main as reviewSchema,
+} from "../lexicons/xyz/opnshelf/review";
+import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
 import {
 	$nsid as PUBLICATION_COLLECTION,
 	main as publicationSchema,
@@ -492,8 +492,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.handleLibraryItemEvent(evt, uri);
 		} else if (evt.collection === NOTE_COLLECTION) {
 			await this.handleNoteEvent(evt, uri);
-		} else if (evt.collection === DOCUMENT_COLLECTION) {
-			await this.handleDocumentEvent(evt, uri);
+		} else if (evt.collection === REVIEW_COLLECTION) {
+			await this.handleReviewEvent(evt, uri);
 		} else if (evt.collection === PUBLICATION_COLLECTION) {
 			await this.handlePublicationEvent(evt, uri);
 		} else if (evt.collection === RATING_COLLECTION) {
@@ -876,43 +876,39 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
-	private async handleDocumentEvent(evt: RecordEvent, uri: string) {
+	private async handleReviewEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
 				this.logger.debug(`Record event missing record data: ${uri}`);
 				return;
 			}
 
-			let documentRecord: DocumentRecord;
+			let reviewRecord: ReviewRecord;
 			try {
-				documentRecord = documentSchema.parse(evt.record);
+				reviewRecord = reviewSchema.parse(evt.record);
 			} catch (err) {
 				this.logger.debug(
-					`Skipping malformed ${DOCUMENT_COLLECTION} record ${uri}: ${err instanceof Error ? err.message : String(err)}`,
+					`Skipping malformed ${REVIEW_COLLECTION} record ${uri}: ${err instanceof Error ? err.message : String(err)}`,
 				);
 				return;
 			}
 
-			// Only treat documents authored by a tracked user as candidate
-			// reviews. The service further requires an xyz.opnshelf.mediaLink
-			// member before indexing — arbitrary standard.site blog posts are
-			// ignored.
 			if (!(await this.isUserTracked(evt.did))) {
 				this.logger.debug(`Skipping record for untracked user: ${uri}`);
 				return;
 			}
 
-			await this.reviewsService.indexDocumentRecord(
+			await this.reviewsService.indexReviewRecord(
 				uri,
 				evt.cid ?? "",
 				evt.rkey,
 				evt.did,
-				documentRecord,
+				reviewRecord,
 			);
 		}
 
 		if (evt.action === "delete") {
-			await this.reviewsService.deleteDocumentRecord(evt.rkey);
+			await this.reviewsService.deleteReviewRecord(evt.rkey);
 		}
 	}
 

@@ -15,7 +15,7 @@ import { $nsid as NOTE_COLLECTION } from "../lexicons/xyz/opnshelf/note";
 import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.defs";
 import { $nsid as RATING_COLLECTION } from "../lexicons/xyz/opnshelf/rating";
 import { $nsid as DOCUMENT_COLLECTION } from "../lexicons/site/standard/document";
-import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
+import { $nsid as REVIEW_COLLECTION } from "../lexicons/xyz/opnshelf/review";
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -53,7 +53,7 @@ const PDS_DELETION_STEPS = [
 	"follows",
 	"notes",
 	"reviews",
-	"publications",
+	"blog_mirrors",
 	"list_items",
 	"lists",
 	"profile",
@@ -491,17 +491,20 @@ export class UserDeletionService {
 					select: { rkey: true },
 				});
 				return {
-					collection: DOCUMENT_COLLECTION,
+					collection: REVIEW_COLLECTION,
 					rkeys: rows.map((r) => r.rkey),
 				};
 			}
-			case "publications": {
-				const rows = await this.prisma.publication.findMany({
-					where: { userDid },
+			case "blog_mirrors": {
+				// Delete opnshelf-authored blog-mirror documents (ADR-0013). The
+				// mirror reuses the review rkey. We do NOT touch the user-owned
+				// site.standard.publication these point at — opnshelf never minted it.
+				const rows = await this.prisma.review.findMany({
+					where: { userDid, blogDocumentUri: { not: null } },
 					select: { rkey: true },
 				});
 				return {
-					collection: PUBLICATION_COLLECTION,
+					collection: DOCUMENT_COLLECTION,
 					rkeys: rows.map((r) => r.rkey),
 				};
 			}

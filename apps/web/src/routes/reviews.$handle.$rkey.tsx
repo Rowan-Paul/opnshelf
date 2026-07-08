@@ -6,12 +6,12 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
 import { toSlug } from "#/lib/slug";
 
-export const Route = createFileRoute("/@{$handle}/$segment")({
+export const Route = createFileRoute("/reviews/$handle/$rkey")({
 	loader: async ({ context, params }) => {
 		try {
 			const review = await context.queryClient.ensureQueryData(
 				reviewsControllerGetCanonicalReviewOptions({
-					path: { handle: params.handle, segment: params.segment },
+					path: { handle: params.handle, rkey: params.rkey },
 				}),
 			);
 			return { review };
@@ -75,14 +75,14 @@ function mediaHref(review: {
 }
 
 function CanonicalReviewPage() {
-	const { handle, segment } = Route.useParams();
+	const { handle, rkey } = Route.useParams();
 	const { review: loaderReview } = Route.useLoaderData();
 
 	// Re-fetch on the client so the page stays fresh, but always fall back to the
 	// SSR loader data so it renders fully when logged out / before hydration.
 	const { data: liveReview } = useQuery({
 		...reviewsControllerGetCanonicalReviewOptions({
-			path: { handle, segment },
+			path: { handle, rkey },
 		}),
 	});
 	const review = liveReview ?? loaderReview;

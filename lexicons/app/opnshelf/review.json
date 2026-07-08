@@ -1,0 +1,56 @@
+{
+	"lexicon": 1,
+	"id": "xyz.opnshelf.review",
+	"defs": {
+		"main": {
+			"type": "record",
+			"description": "A user's long-form textual review of a media item. Carries no numeric score (that is a separate xyz.opnshelf.rating). Zero-or-many per media item per user.",
+			"key": "tid",
+			"record": {
+				"type": "object",
+				"required": ["mediaType", "mediaId", "title", "content", "createdAt"],
+				"properties": {
+					"mediaType": {
+						"type": "string",
+						"description": "Media type",
+						"enum": ["movie", "show", "season", "episode"]
+					},
+					"mediaId": {
+						"type": "string",
+						"description": "TMDB movie ID or show ID"
+					},
+					"seasonNumber": {
+						"type": "integer",
+						"description": "Season number for season/episode items"
+					},
+					"episodeNumber": {
+						"type": "integer",
+						"description": "Episode number for episode items"
+					},
+					"title": {
+						"type": "string",
+						"description": "Review title",
+						"maxLength": 3000,
+						"maxGraphemes": 300
+					},
+					"content": {
+						"type": "string",
+						"description": "Review body as markdown source",
+						"maxLength": 100000,
+						"maxGraphemes": 20000
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Record creation timestamp"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "datetime",
+						"description": "Last edit timestamp"
+					}
+				}
+			}
+		}
+	}
+}

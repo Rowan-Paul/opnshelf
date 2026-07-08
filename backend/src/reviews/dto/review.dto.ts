@@ -81,14 +81,13 @@ export class ReviewResponseDto {
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
 
-	@ApiPropertyOptional({ description: "Short plaintext excerpt" })
-	description?: string;
-
-	@ApiPropertyOptional({ description: "Plaintext rendering for preview" })
-	textContent?: string;
-
-	@ApiProperty({ description: "AT-URI of the document's publication (`site`)" })
-	publicationUri: string;
+	@ApiPropertyOptional({
+		type: String,
+		nullable: true,
+		description:
+			"AT-URI of the standard.site blog-mirror document, or null when not mirrored",
+	})
+	blogDocumentUri?: string | null;
 
 	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
 	mediaType: string;
@@ -127,7 +126,7 @@ export class CanonicalReviewResponseDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty({ description: "AT record key of the review document" })
+	@ApiProperty({ description: "AT record key of the review" })
 	rkey: string;
 
 	@ApiProperty()
@@ -141,12 +140,6 @@ export class CanonicalReviewResponseDto {
 		description: "Short plaintext excerpt",
 	})
 	description?: string;
-
-	@ApiPropertyOptional({
-		type: String,
-		description: "Human-friendly document path (the canonical URL segment)",
-	})
-	path?: string;
 
 	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
 	mediaType: string;
@@ -314,7 +307,7 @@ export class MediaReviewItemDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty({ description: "AT record key of the review document" })
+	@ApiProperty({ description: "AT record key of the review" })
 	rkey: string;
 
 	@ApiProperty()
@@ -328,7 +321,7 @@ export class MediaReviewItemDto {
 
 	@ApiPropertyOptional({
 		description:
-			"Relative URL of the canonical public review page (#115), e.g. /@handle/path",
+			"Relative URL of the canonical public review page, e.g. /reviews/{handle}/{rkey}",
 	})
 	reviewUrl?: string;
 
@@ -426,35 +419,9 @@ export class MyPublicationDto {
 
 	@ApiProperty({ description: "Canonical web URL of the publication" })
 	url: string;
-
-	@ApiProperty({
-		description:
-			"True for the opnshelf-minted default publication (url === opnshelf.xyz/@<handle>)",
-	})
-	isOpnshelfDefault: boolean;
 }
 
 export class MyPublicationsResponseDto {
 	@ApiProperty({ type: [MyPublicationDto] })
 	items: MyPublicationDto[];
-}
-
-export class RepointReviewsDto {
-	@ApiProperty({
-		description: "AT-URI of the target publication to re-point reviews at",
-	})
-	@IsString()
-	@IsNotEmpty()
-	targetPublicationUri: string;
-}
-
-export class RepointReviewsResponseDto {
-	@ApiProperty({ description: "Number of reviews successfully re-pointed" })
-	moved: number;
-
-	@ApiProperty({ description: "Number of reviews that failed to re-point" })
-	failed: number;
-
-	@ApiProperty({ description: "Total number of reviews considered" })
-	total: number;
 }

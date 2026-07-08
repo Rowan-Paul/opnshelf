@@ -22,13 +22,12 @@ import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AtChar123handleChar125IndexRouteImport } from './routes/@{$handle}.index'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
-import { Route as AtChar123handleChar125SegmentRouteImport } from './routes/@{$handle}.$segment'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
+import { Route as ReviewsHandleRkeyRouteImport } from './routes/reviews.$handle.$rkey'
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
 import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle/shelf'
 import { Route as ProfileHandleReviewsRouteImport } from './routes/profile.$handle/reviews'
@@ -110,12 +109,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtChar123handleChar125IndexRoute =
-  AtChar123handleChar125IndexRouteImport.update({
-    id: '/@{$handle}/',
-    path: '/@{$handle}/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
   path: '/profile/$handle',
@@ -131,12 +124,6 @@ const AuthCompleteRoute = AuthCompleteRouteImport.update({
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtChar123handleChar125SegmentRoute =
-  AtChar123handleChar125SegmentRouteImport.update({
-    id: '/@{$handle}/$segment',
-    path: '/@{$handle}/$segment',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -145,6 +132,11 @@ const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
 const ShowsShowIdShowNameRoute = ShowsShowIdShowNameRouteImport.update({
   id: '/shows/$showId/$showName',
   path: '/shows/$showId/$showName',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewsHandleRkeyRoute = ReviewsHandleRkeyRouteImport.update({
+  id: '/reviews/$handle/$rkey',
+  path: '/reviews/$handle/$rkey',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileHandleUpNextRoute = ProfileHandleUpNextRouteImport.update({
@@ -246,11 +238,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
-  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
-  '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -260,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
+  '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/profile/$handle/': typeof ProfileHandleIndexRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
@@ -283,10 +274,8 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
-  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
-  '/@{$handle}': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -295,6 +284,7 @@ export interface FileRoutesByTo {
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
+  '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/profile/$handle': typeof ProfileHandleIndexRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
   '/profile/$handle/lists': typeof ProfileHandleListsIndexRoute
@@ -317,11 +307,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
-  '/@{$handle}/$segment': typeof AtChar123handleChar125SegmentRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
-  '/@{$handle}/': typeof AtChar123handleChar125IndexRoute
   '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -331,6 +319,7 @@ export interface FileRoutesById {
   '/profile/$handle/reviews': typeof ProfileHandleReviewsRoute
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
+  '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/profile/$handle/': typeof ProfileHandleIndexRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
@@ -356,11 +345,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
-    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/profile/$handle'
-    | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -370,6 +357,7 @@ export interface FileRouteTypes {
     | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
+    | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
     | '/profile/$handle/'
     | '/profile/$handle/lists/$listSlug'
@@ -393,10 +381,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
-    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/circles/$circleId'
-    | '/@{$handle}'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -405,6 +391,7 @@ export interface FileRouteTypes {
     | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
+    | '/reviews/$handle/$rkey'
     | '/profile/$handle'
     | '/profile/$handle/lists/$listSlug'
     | '/profile/$handle/lists'
@@ -426,11 +413,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
-    | '/@{$handle}/$segment'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/profile/$handle'
-    | '/@{$handle}/'
     | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -440,6 +425,7 @@ export interface FileRouteTypes {
     | '/profile/$handle/reviews'
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
+    | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
     | '/profile/$handle/'
     | '/profile/$handle/lists/$listSlug'
@@ -464,13 +450,12 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   TosRoute: typeof TosRoute
-  AtChar123handleChar125SegmentRoute: typeof AtChar123handleChar125SegmentRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
-  AtChar123handleChar125IndexRoute: typeof AtChar123handleChar125IndexRoute
   MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
+  ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
 }
 
@@ -567,13 +552,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/@{$handle}/': {
-      id: '/@{$handle}/'
-      path: '/@{$handle}'
-      fullPath: '/@{$handle}/'
-      preLoaderRoute: typeof AtChar123handleChar125IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile/$handle': {
       id: '/profile/$handle'
       path: '/profile/$handle'
@@ -595,13 +573,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/@{$handle}/$segment': {
-      id: '/@{$handle}/$segment'
-      path: '/@{$handle}/$segment'
-      fullPath: '/@{$handle}/$segment'
-      preLoaderRoute: typeof AtChar123handleChar125SegmentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile/$handle/': {
       id: '/profile/$handle/'
       path: '/'
@@ -614,6 +585,13 @@ declare module '@tanstack/react-router' {
       path: '/shows/$showId/$showName'
       fullPath: '/shows/$showId/$showName'
       preLoaderRoute: typeof ShowsShowIdShowNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reviews/$handle/$rkey': {
+      id: '/reviews/$handle/$rkey'
+      path: '/reviews/$handle/$rkey'
+      fullPath: '/reviews/$handle/$rkey'
+      preLoaderRoute: typeof ReviewsHandleRkeyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$handle/up-next': {
@@ -809,13 +787,12 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   TosRoute: TosRoute,
-  AtChar123handleChar125SegmentRoute: AtChar123handleChar125SegmentRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   CirclesCircleIdRoute: CirclesCircleIdRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
-  AtChar123handleChar125IndexRoute: AtChar123handleChar125IndexRoute,
   MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
+  ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,
 }
 export const routeTree = rootRouteImport

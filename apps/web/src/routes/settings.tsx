@@ -5,7 +5,6 @@ import {
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
 	reviewsControllerListMyPublicationsOptions,
-	reviewsControllerRepointReviewsMutation,
 	type UserProfileDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
@@ -246,59 +245,15 @@ function SettingsPage() {
 		enabled: isAuthenticated,
 	});
 
-	// The currently-stored target URI (null = opnshelf default).
+	// The currently-stored target URI (null = no blog mirror).
 	const storedPublicationUri = userSettings?.reviewsPublicationUri ?? null;
-
-	// Pending re-point prompt after a successful target change.
-	const [repointTargetUri, setRepointTargetUri] = useState<string | null>(null);
-
-	const repointReviewsMutation = useMutation({
-		mutationKey: ["reviews", "repoint"],
-		...reviewsControllerRepointReviewsMutation(),
-		onSuccess: (result) => {
-			if (result.failed > 0) {
-				toast.warning(
-					`Moved ${result.moved} of ${result.total} reviews. ${result.failed} failed — try again.`,
-				);
-			} else {
-				toast.success(
-					result.total === 0
-						? "No reviews to move"
-						: `Moved ${result.moved} review${result.moved === 1 ? "" : "s"}`,
-				);
-			}
-			setRepointTargetUri(null);
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to move reviews",
-			);
-		},
-	});
 
 	const handleSelectPublication = (uri: string | null) => {
 		if (uri === storedPublicationUri) {
 			return;
 		}
-		updateSettingsMutation.mutate(
-			{ body: { reviewsPublicationUri: uri } },
-			{
-				onSuccess: () => {
-					// Offer (opt-in) to re-point already-published reviews. Only when
-					// targeting a concrete publication — reverting to the default also
-					// offers re-pointing back, but only if there is a target URI; for
-					// the default we still offer moving reviews onto the opnshelf pub.
-					setRepointTargetUri(uri ?? findDefaultPublicationUri());
-				},
-			},
-		);
+		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
 	};
-
-	function findDefaultPublicationUri(): string | null {
-		return (
-			myPublications?.items.find((pub) => pub.isOpnshelfDefault)?.uri ?? null
-		);
-	}
 
 	// D7 soft warning: the stored target is no longer present in the live list.
 	const storedTargetMissing =
@@ -478,12 +433,11 @@ function SettingsPage() {
 				<section className="card p-6">
 					<div className="mb-1 flex items-center gap-2">
 						<BookOpen className="size-5 text-(--accent)" />
-						<h2 className="font-semibold text-lg">Reviews publication</h2>
+						<h2 className="font-semibold text-lg">Blog mirror</h2>
 					</div>
 					<p className="mb-6 text-(--foreground-muted) text-sm">
-						Choose which of your own AT Protocol publications new reviews are
-						published to. OpnShelf still renders them at{" "}
-						<span className="font-medium">opnshelf.xyz/@{user.handle}</span>.
+						Your reviews always live on OpnShelf. Optionally, mirror new reviews
+						to one of your own AT Protocol publications as well.
 					</p>
 
 					{storedTargetMissing && (
@@ -510,79 +464,46 @@ function SettingsPage() {
 							className="space-y-2"
 							disabled={updateSettingsMutation.isPending}
 						>
-							{(myPublications?.items ?? []).map((pub) => {
-								const checked = pub.isOpnshelfDefault
-									? storedPublicationUri === null ||
-										storedPublicationUri === pub.uri
-									: storedPublicationUri === pub.uri;
-								return (
-									<label
-										key={pub.uri}
-										className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)"
-									>
-										<div className="flex items-center gap-3">
-											<input
-												type="radio"
-												name="reviews-publication"
-												className="size-4 accent-(--accent)"
-												checked={checked}
-												onChange={() =>
-													handleSelectPublication(
-														pub.isOpnshelfDefault ? null : pub.uri,
-													)
-												}
-											/>
-											<div>
-												<p className="font-medium text-sm">
-													{pub.name}
-													{pub.isOpnshelfDefault && (
-														<span className="ml-2 rounded-full bg-(--accent-subtle) px-2 py-0.5 font-medium text-(--accent) text-xs">
-															Default
-														</span>
-													)}
-												</p>
-												<p className="text-(--foreground-muted) text-xs">
-													{pub.url}
-												</p>
-											</div>
-										</div>
-									</label>
-								);
-							})}
-						</fieldset>
-					)}
-
-					{repointTargetUri !== null && (
-						<div className="mt-4 flex flex-col gap-3 rounded-lg border border-(--border) bg-(--background-subtle) p-4 sm:flex-row sm:items-center sm:justify-between">
-							<p className="text-sm">
-								Also move your existing reviews to this publication?
-							</p>
-							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									onClick={() => setRepointTargetUri(null)}
-									disabled={repointReviewsMutation.isPending}
+							<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
+								<div className="flex items-center gap-3">
+									<input
+										type="radio"
+										name="reviews-publication"
+										className="size-4 accent-(--accent)"
+										checked={storedPublicationUri === null}
+										onChange={() => handleSelectPublication(null)}
+									/>
+									<div>
+										<p className="font-medium text-sm">None</p>
+										<p className="text-(--foreground-muted) text-xs">
+											Don't mirror reviews to a blog
+										</p>
+									</div>
+								</div>
+							</label>
+							{(myPublications?.items ?? []).map((pub) => (
+								<label
+									key={pub.uri}
+									className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)"
 								>
-									Not now
-								</Button>
-								<Button
-									onClick={() =>
-										repointReviewsMutation.mutate({
-											body: { targetPublicationUri: repointTargetUri },
-										})
-									}
-									disabled={repointReviewsMutation.isPending}
-								>
-									{repointReviewsMutation.isPending ? (
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
+									<div className="flex items-center gap-3">
+										<input
+											type="radio"
+											name="reviews-publication"
+											className="size-4 accent-(--accent)"
+											checked={storedPublicationUri === pub.uri}
+											onChange={() => handleSelectPublication(pub.uri)}
 										/>
-									) : null}
-									Move reviews
-								</Button>
-							</div>
-						</div>
+										<div>
+											<p className="font-medium text-sm">{pub.name}</p>
+											<p className="text-(--foreground-muted) text-xs">
+												{pub.url}
+											</p>
+										</div>
+									</div>
+								</label>
+							))}
+						</fieldset>
 					)}
 				</section>
 

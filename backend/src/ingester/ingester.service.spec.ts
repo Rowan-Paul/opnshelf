@@ -101,8 +101,8 @@ describe("IngesterService", () => {
 		deleteProfileRecordIndex: Mock;
 	};
 	let mockReviewsService: {
-		indexDocumentRecord: Mock;
-		deleteDocumentRecord: Mock;
+		indexReviewRecord: Mock;
+		deleteReviewRecord: Mock;
 		indexPublicationRecord: Mock;
 		deletePublicationRecord: Mock;
 		indexReviewLikeRecord: Mock;
@@ -179,8 +179,8 @@ describe("IngesterService", () => {
 		};
 
 		mockReviewsService = {
-			indexDocumentRecord: vi.fn(),
-			deleteDocumentRecord: vi.fn(),
+			indexReviewRecord: vi.fn(),
+			deleteReviewRecord: vi.fn(),
 			indexPublicationRecord: vi.fn(),
 			deletePublicationRecord: vi.fn(),
 			indexReviewLikeRecord: vi.fn(),

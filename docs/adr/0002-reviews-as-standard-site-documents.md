@@ -1,5 +1,7 @@
 # ADR 0002: Reviews as standard.site documents, rating as its own entity
 
+Status: superseded by [ADR-0013](0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md).
+
 We are replacing the bespoke `xyz.opnshelf.review` lexicon (which fused a 1–10 rating with optional ≤5000-char text in a single one-per-media record) with two independent entities: a **Rating** (`xyz.opnshelf.rating` — the numeric score, one per user per media item) and a **Review** (a `site.standard.document` — long-form text, zero-or-many per media). The two are correlated on read by matching `userDid` + media coordinates; neither references the other.
 
 ## Why

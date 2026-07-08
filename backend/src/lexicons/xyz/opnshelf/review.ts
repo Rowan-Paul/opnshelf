@@ -3,3 +3,5 @@
  */
 
 export * as like from './review/like.js'
+export * from './review.defs.js'
+export * as $defs from './review.defs.js'

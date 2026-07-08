@@ -385,11 +385,9 @@ export const ReviewScalarFieldEnum = {
   seasonNumber: 'seasonNumber',
   episodeNumber: 'episodeNumber',
   title: 'title',
-  path: 'path',
-  description: 'description',
-  textContent: 'textContent',
   markdown: 'markdown',
-  publicationUri: 'publicationUri',
+  blogDocumentUri: 'blogDocumentUri',
+  blogDocumentCid: 'blogDocumentCid',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

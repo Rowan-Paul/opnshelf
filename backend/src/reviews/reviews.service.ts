@@ -9,6 +9,11 @@ import {
 } from "@nestjs/common";
 import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
 import { main as mediaLinkDef } from "../lexicons/xyz/opnshelf/mediaLink.defs";
+import {
+	$nsid as REVIEW_COLLECTION,
+	main as reviewSchema,
+} from "../lexicons/xyz/opnshelf/review";
+import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
 import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import {
@@ -16,10 +21,7 @@ import {
 	main as documentSchema,
 } from "../lexicons/site/standard/document";
 import type { Main as DocumentRecord } from "../lexicons/site/standard/document.defs";
-import {
-	$nsid as PUBLICATION_COLLECTION,
-	main as publicationSchema,
-} from "../lexicons/site/standard/publication";
+import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
@@ -32,8 +34,7 @@ export interface ATSession {
 	did: string;
 }
 
-// Canonical public site (ADR-0003). NEVER opnshelf.social (that is only the
-// PDS host). Centralised here so #118 can swap the publication source.
+// Canonical public site. NEVER opnshelf.social (that is only the PDS host).
 const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
 
 const PUBLICATION_LIST_LIMIT = 100;
@@ -42,9 +43,8 @@ type MediaType = "movie" | "show" | "season" | "episode";
 
 const MAX_SLUG_LENGTH = 80;
 
-// Mirrors the web `toSlug` util, capped so a canonical document `path` stays a
-// sane URL segment. Falls back to "review" when a title slugifies to nothing
-// (e.g. an all-emoji title).
+// Slug for the blog-mirror document `path`. Falls back to "review" when a title
+// slugifies to nothing (e.g. an all-emoji title).
 function slugify(title: string): string {
 	const base = title
 		.toLowerCase()
@@ -55,15 +55,7 @@ function slugify(title: string): string {
 	return base || "review";
 }
 
-function publicationUrlForHandle(handle: string): string {
-	return `${PUBLIC_SITE_ORIGIN}/@${handle}`;
-}
-
-function publicationNameForHandle(handle: string): string {
-	return `${handle}'s OpnShelf`;
-}
-
-/** Strip a small plaintext excerpt out of markdown for cross-tool preview. */
+/** Strip a small plaintext excerpt out of markdown for previews/mirror. */
 function toPlainText(markdown: string): string {
 	return markdown
 		.replace(/```[\s\S]*?```/g, " ")
@@ -81,6 +73,11 @@ function excerpt(plain: string, max = 280): string {
 	return `${plain.slice(0, max - 1).trimEnd()}…`;
 }
 
+/** Short plaintext excerpt of a review body, computed on read (not stored). */
+function excerptOf(markdown: string): string {
+	return excerpt(toPlainText(markdown));
+}
+
 @Injectable()
 export class ReviewsService {
 	private readonly logger = new Logger(ReviewsService.name);
@@ -92,19 +89,12 @@ export class ReviewsService {
 	}
 
 	/**
-	 * Resolve the canonical public review page (#115) for `/@<handle>/<segment>`.
-	 *
-	 * `segment` is the last URL path segment that #114 emits in community-card
-	 * links: the document `path` when present, otherwise the record key `rkey`
-	 * (see reviews.controller.ts getMediaReviews). We MUST match on
-	 * (path === segment) OR (rkey === segment), scoped to the handle's user, so
-	 * the links already in the wild resolve. Handle is normalised the same way
-	 * as public profile lookups (strip leading `@`, lowercase).
-	 *
-	 * Throws NotFoundException for an unknown handle or no matching document, so
-	 * the controller surfaces a clean 404 (page renders a not-found state).
+	 * Resolve the canonical public review page (ADR-0013): `/reviews/{handle}/{rkey}`.
+	 * Reviews are opnshelf-owned records, so the rkey is the stable identifier —
+	 * there is no document `path` any more. Throws NotFoundException for an
+	 * unknown handle or rkey so the controller surfaces a clean 404.
 	 */
-	async getCanonicalReview(handle: string, segment: string) {
+	async getCanonicalReview(handle: string, rkey: string) {
 		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
 		const user = await this.prisma.user.findUnique({
 			where: { handle: normalizedHandle },
@@ -115,10 +105,7 @@ export class ReviewsService {
 		}
 
 		const review = await this.prisma.review.findFirst({
-			where: {
-				userDid: user.did,
-				OR: [{ path: segment }, { rkey: segment }],
-			},
+			where: { userDid: user.did, rkey },
 		});
 		if (!review) {
 			throw new NotFoundException("Review not found");
@@ -127,20 +114,12 @@ export class ReviewsService {
 		const mediaByReviewId = await this.enrichMediaForReviews([review]);
 		const media = mediaByReviewId.get(review.id);
 
-		// Canonical URL on the public site (ADR-0003) — NEVER the PDS host. The
-		// last segment mirrors the link emitted by #114 (path, falling back to
-		// rkey).
-		const canonicalUrl = `${PUBLIC_SITE_ORIGIN}/@${user.handle}/${
-			review.path ?? review.rkey
-		}`;
-
 		return {
 			id: review.id,
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
-			description: review.description,
-			path: review.path,
+			description: excerptOf(review.markdown),
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
 			seasonNumber: review.seasonNumber,
@@ -153,7 +132,7 @@ export class ReviewsService {
 				displayName: user.displayName,
 				avatar: user.avatar,
 			},
-			canonicalUrl,
+			canonicalUrl: `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`,
 			createdAt: review.createdAt,
 			updatedAt: review.updatedAt,
 		};
@@ -161,12 +140,10 @@ export class ReviewsService {
 
 	/**
 	 * Resolve `{ title, posterPath }` for each review's media item by joining the
-	 * locally-indexed Movie/Show/Season/Episode tables. This is the canonical way
-	 * to obtain a review "cover" — Review documents carry NO per-document cover
-	 * image (ADR-0002), so the cover is always the underlying media poster.
+	 * locally-indexed Movie/Show/Season/Episode tables. The cover is always the
+	 * underlying media poster — a Review carries no cover of its own.
 	 *
-	 * Returned as a Map keyed by review id so callers can attach posters without
-	 * re-deriving the media coordinate lookup.
+	 * Returned as a Map keyed by review id.
 	 */
 	private async enrichMediaForReviews(
 		reviews: Array<{
@@ -252,8 +229,8 @@ export class ReviewsService {
 			const key = `${e.showId}:${e.seasonNumber}:${e.episodeNumber}`;
 			episodeMap.set(key, {
 				title: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
-				// Cover is always the portrait media poster (ADR-0002), never the
-				// landscape episode still — fall back season → show.
+				// Cover is always the portrait media poster, never the landscape
+				// episode still — fall back season → show.
 				posterPath: e.season.posterPath ?? e.season.show.posterPath,
 			});
 		}
@@ -310,6 +287,7 @@ export class ReviewsService {
 			const media = mediaByReviewId.get(review.id);
 			return {
 				...review,
+				description: excerptOf(review.markdown),
 				mediaTitle: media?.title,
 				posterPath: media?.posterPath,
 			};
@@ -343,13 +321,34 @@ export class ReviewsService {
 			episodeNumber: episodeNumber ?? 0,
 		};
 
-		// Community-appreciation ordering (ADR-0002): most-liked first, then most
-		// recent. The author's own Rating is fetched per item below as a tiebreak
-		// among reviews with identical like counts — the rating MUST come from the
-		// separate Rating entity joined by (userDid + media coordinates), never
-		// from the review document (documents carry no score). The DB-level order
-		// stays (likeCount desc, createdAt desc) so cursor pagination remains
-		// stable; the rating only reorders ties within a returned page.
+		// Community-appreciation ordering: most-liked first, then most recent. The
+		// author's own Rating is fetched per item below as a tiebreak among reviews
+		// with identical like counts — the rating comes from the separate Rating
+		// entity joined by (userDid + media coordinates), never from the review
+		// (reviews carry no score). DB-level order stays (likeCount desc, createdAt
+		// desc) so cursor pagination remains stable; the rating only reorders ties
+		// within a returned page.
+		const include = {
+			user: {
+				select: {
+					did: true,
+					handle: true,
+					displayName: true,
+					avatar: true,
+				},
+			},
+			_count: {
+				select: { likes: true },
+			},
+			likes: requestingUserDid
+				? {
+						where: { userDid: requestingUserDid },
+						select: { id: true },
+						take: 1,
+					}
+				: (false as const),
+		};
+
 		const reviews = await this.prisma.review.findMany({
 			where,
 			orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
@@ -358,26 +357,7 @@ export class ReviewsService {
 				skip: 1,
 				cursor: { id: query.cursor },
 			}),
-			include: {
-				user: {
-					select: {
-						did: true,
-						handle: true,
-						displayName: true,
-						avatar: true,
-					},
-				},
-				_count: {
-					select: { likes: true },
-				},
-				likes: requestingUserDid
-					? {
-							where: { userDid: requestingUserDid },
-							select: { id: true },
-							take: 1,
-						}
-					: false,
-			},
+			include,
 		});
 
 		const hasMore = reviews.length > limit;
@@ -385,29 +365,11 @@ export class ReviewsService {
 		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
 
 		// Deep-link support: guarantee a specifically requested review is present
-		// even when community-appreciation ordering would push it past this page.
-		// It must match the same media coordinates, so it always belongs here.
+		// even when community ordering would push it past this page.
 		if (pinnedReviewId && !items.some((r) => r.id === pinnedReviewId)) {
 			const pinned = await this.prisma.review.findFirst({
 				where: { ...where, id: pinnedReviewId },
-				include: {
-					user: {
-						select: {
-							did: true,
-							handle: true,
-							displayName: true,
-							avatar: true,
-						},
-					},
-					_count: { select: { likes: true } },
-					likes: requestingUserDid
-						? {
-								where: { userDid: requestingUserDid },
-								select: { id: true },
-								take: 1,
-							}
-						: false,
-				},
+				include,
 			});
 			if (pinned) {
 				items.unshift(pinned);
@@ -416,8 +378,8 @@ export class ReviewsService {
 
 		const total = await this.prisma.review.count({ where });
 
-		// Join each author's separate Rating for this exact media item. There is
-		// no stored pointer from a review to a rating — they correlate only by
+		// Join each author's separate Rating for this exact media item. There is no
+		// stored pointer from a review to a rating — they correlate only by
 		// (userDid + media coordinates).
 		const authorDids = Array.from(new Set(items.map((r) => r.userDid)));
 		const authorRatings =
@@ -432,22 +394,18 @@ export class ReviewsService {
 			ratingByAuthor.set(r.userDid, r.rating);
 		}
 
-		const [mediaByReviewId, enrichedItems] = await Promise.all([
-			this.enrichMediaForReviews(items),
-			Promise.resolve(
-				items.map((review) => ({
-					...review,
-					likeCount: review._count.likes,
-					hasLiked: requestingUserDid ? review.likes.length > 0 : false,
-					authorRating: ratingByAuthor.get(review.userDid) ?? null,
-				})),
-			),
-		]);
+		const mediaByReviewId = await this.enrichMediaForReviews(items);
+		const enrichedItems = items.map((review) => ({
+			...review,
+			description: excerptOf(review.markdown),
+			likeCount: review._count.likes,
+			hasLiked: requestingUserDid ? review.likes.length > 0 : false,
+			authorRating: ratingByAuthor.get(review.userDid) ?? null,
+		}));
 
 		// Apply the rating tiebreak among equal-likeCount neighbours, preserving
-		// the DB createdAt order for items with no rating or identical ratings.
-		// Stable sort keeps the cursor-defining (likeCount desc, createdAt desc)
-		// order intact across pages.
+		// the DB createdAt order for items with no/identical ratings. Stable sort
+		// keeps the cursor-defining order intact across pages.
 		enrichedItems.sort((a, b) => {
 			if (b.likeCount !== a.likeCount) return 0;
 			const ra = a.authorRating ?? -1;
@@ -470,90 +428,16 @@ export class ReviewsService {
 	}
 
 	/**
-	 * Lazily mint (or return) the opnshelf-owned site.standard.publication for a
-	 * user. A repo may hold MANY publications (the canonical key is `tid`, not a
-	 * fixed rkey — see ADR-0003), so idempotency CANNOT rely on the rkey. Instead
-	 * opnshelf recognises its own minted publication by the deterministic url
-	 * `opnshelf.xyz/@<handle>`: if such a row already exists we reuse it, else we
-	 * mint a fresh one at a tid rkey.
-	 */
-	private async ensurePublication(
-		userDid: string,
-		session: ATSession,
-		agent: Agent,
-	): Promise<{ uri: string }> {
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: { handle: true },
-		});
-		if (!user) {
-			throw new NotFoundException("User not found");
-		}
-
-		const name = publicationNameForHandle(user.handle);
-		const url = publicationUrlForHandle(user.handle);
-
-		const existing = await this.prisma.publication.findFirst({
-			where: { userDid, url },
-		});
-		if (existing) {
-			return { uri: existing.uri };
-		}
-
-		const record: PublicationRecord = publicationSchema.build({
-			url: url as PublicationRecord["url"],
-			name,
-		});
-
-		const rkey = TID.nextStr();
-		const response = await agent.com.atproto.repo.putRecord({
-			repo: session.did,
-			collection: PUBLICATION_COLLECTION,
-			rkey,
-			record,
-			validate: false,
-		});
-
-		await this.prisma.publication.upsert({
-			where: { rkey },
-			create: {
-				rkey,
-				uri: response.data.uri,
-				cid: response.data.cid,
-				userDid,
-				name,
-				url,
-			},
-			update: {
-				uri: response.data.uri,
-				cid: response.data.cid,
-				name,
-				url,
-			},
-		});
-
-		return { uri: response.data.uri };
-	}
-
-	/**
 	 * Enumerate the user's own site.standard.publication records straight from
-	 * their PDS (D2). This live list — not the local cache — is the picker's
-	 * source of truth and its ownership validation: only publications that exist
-	 * in the requesting user's own repo can ever be returned. The opnshelf-minted
-	 * publication is flagged via `isOpnshelfDefault` by matching the deterministic
-	 * `opnshelf.xyz/@<handle>` url.
+	 * their PDS. This live list — not the local cache — is the picker's source of
+	 * truth and its ownership validation: only publications that exist in the
+	 * requesting user's own repo can be returned. opnshelf no longer mints
+	 * publications (ADR-0013), so there is no "opnshelf default" among them.
 	 */
 	async listMyPublications(
 		userDid: string,
 		session: ATSession,
-	): Promise<
-		Array<{
-			uri: string;
-			name: string;
-			url: string;
-			isOpnshelfDefault: boolean;
-		}>
-	> {
+	): Promise<Array<{ uri: string; name: string; url: string }>> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
 			select: { handle: true },
@@ -561,7 +445,6 @@ export class ReviewsService {
 		if (!user) {
 			throw new NotFoundException("User not found");
 		}
-		const defaultUrl = publicationUrlForHandle(user.handle);
 
 		const agent = new Agent(
 			session as unknown as ConstructorParameters<typeof Agent>[0],
@@ -580,101 +463,8 @@ export class ReviewsService {
 				uri: rec.uri,
 				name: value.name ?? url,
 				url,
-				isOpnshelfDefault: url === defaultUrl,
 			};
 		});
-	}
-
-	/**
-	 * Re-point the user's already-published reviews at a new publication (D3/D4).
-	 * Best-effort SEQUENTIAL: each document is rewritten changing ONLY `site`
-	 * (and bumping `updatedAt`) while preserving title, content, mediaLink and
-	 * `path` — so the canonical `opnshelf.xyz/@<handle>/<path>` URL stays stable —
-	 * then `Review.publicationUri` is updated. There is no cross-PDS atomicity and
-	 * no background queue; partial failures are surfaced in the summary.
-	 */
-	async repointReviews(
-		userDid: string,
-		session: ATSession,
-		targetPublicationUri: string,
-	): Promise<{ moved: number; failed: number; total: number }> {
-		const reviews = await this.prisma.review.findMany({
-			where: { userDid },
-		});
-
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
-
-		let moved = 0;
-		let failed = 0;
-
-		for (const review of reviews) {
-			if (review.publicationUri === targetPublicationUri) {
-				moved++;
-				continue;
-			}
-			try {
-				const record = this.buildDocumentRecord({
-					publicationUri: targetPublicationUri,
-					title: review.title,
-					markdown: review.markdown,
-					mediaType: review.mediaType as MediaType,
-					mediaId: review.mediaId,
-					seasonNumber: review.seasonNumber || undefined,
-					episodeNumber: review.episodeNumber || undefined,
-					path: review.path ?? undefined,
-					publishedAt: review.createdAt.toISOString(),
-					updatedAt: new Date().toISOString(),
-				});
-
-				const response = await agent.com.atproto.repo.putRecord({
-					repo: session.did,
-					collection: DOCUMENT_COLLECTION,
-					rkey: review.rkey,
-					record,
-					validate: false,
-				});
-
-				await this.prisma.review.update({
-					where: { id: review.id },
-					data: {
-						cid: response.data.cid,
-						publicationUri: targetPublicationUri,
-					},
-				});
-				moved++;
-			} catch (err) {
-				this.logger.warn(
-					`Failed to re-point review ${review.id} to ${targetPublicationUri}`,
-					err instanceof Error ? err.stack : undefined,
-				);
-				failed++;
-			}
-		}
-
-		return { moved, failed, total: reviews.length };
-	}
-
-	// Generate a human, shareable document `path` from the title, unique within
-	// the user's own reviews (the canonical page resolves by handle + path).
-	// External standard.site tools build the canonical URL from publication.url +
-	// document.path, so a real path — not the raw rkey — is what makes reviews
-	// linkable off-platform.
-	private async generateUniqueReviewPath(
-		userDid: string,
-		title: string,
-	): Promise<string> {
-		const base = slugify(title);
-		const existing = await this.prisma.review.findMany({
-			where: { userDid, path: { startsWith: base } },
-			select: { path: true },
-		});
-		const taken = new Set(existing.map((r) => r.path));
-		if (!taken.has(base)) return base;
-		let n = 2;
-		while (taken.has(`${base}-${n}`)) n++;
-		return `${base}-${n}`;
 	}
 
 	private buildDocumentRecord(params: {
@@ -685,7 +475,7 @@ export class ReviewsService {
 		mediaId: string;
 		seasonNumber?: number;
 		episodeNumber?: number;
-		path?: string;
+		path: string;
 		publishedAt: string;
 		updatedAt?: string;
 	}): DocumentRecord {
@@ -716,6 +506,94 @@ export class ReviewsService {
 		});
 	}
 
+	/**
+	 * Reconcile the optional standard.site blog mirror (ADR-0013) to the author's
+	 * current desired state, best-effort:
+	 *   - publication selected + no mirror  → create the document
+	 *   - publication selected + mirror     → rewrite the document
+	 *   - no publication + mirror           → delete the document
+	 * The mirror document reuses the review's rkey (rkey uniqueness is per
+	 * collection) so we never track a second key. On failure we log and leave the
+	 * stored pointer unchanged — the mirror is secondary to the opnshelf record.
+	 *
+	 * Returns the pointer to persist on the Review row.
+	 */
+	private async syncBlogMirror(
+		userDid: string,
+		agent: Agent,
+		review: {
+			rkey: string;
+			title: string;
+			markdown: string;
+			mediaType: string;
+			mediaId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+			createdAt: Date;
+			blogDocumentUri: string | null;
+			blogDocumentCid: string | null;
+		},
+	): Promise<{
+		blogDocumentUri: string | null;
+		blogDocumentCid: string | null;
+	}> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { reviewsPublicationUri: true },
+		});
+		const publicationUri = user?.reviewsPublicationUri ?? null;
+
+		try {
+			if (!publicationUri) {
+				if (review.blogDocumentUri) {
+					await agent.com.atproto.repo.deleteRecord({
+						repo: userDid,
+						collection: DOCUMENT_COLLECTION,
+						rkey: review.rkey,
+					});
+				}
+				return { blogDocumentUri: null, blogDocumentCid: null };
+			}
+
+			const record = this.buildDocumentRecord({
+				publicationUri,
+				title: review.title,
+				markdown: review.markdown,
+				mediaType: review.mediaType as MediaType,
+				mediaId: review.mediaId,
+				seasonNumber: review.seasonNumber || undefined,
+				episodeNumber: review.episodeNumber || undefined,
+				// ponytail: re-slugs on title edit; blog URL is not guaranteed stable
+				// across renames. Store the path on Review if that matters later.
+				path: slugify(review.title),
+				publishedAt: review.createdAt.toISOString(),
+				updatedAt: new Date().toISOString(),
+			});
+
+			const response = await agent.com.atproto.repo.putRecord({
+				repo: userDid,
+				collection: DOCUMENT_COLLECTION,
+				rkey: review.rkey,
+				record,
+				validate: false,
+			});
+
+			return {
+				blogDocumentUri: response.data.uri,
+				blogDocumentCid: response.data.cid,
+			};
+		} catch (err) {
+			this.logger.warn(
+				`Blog mirror sync failed for review ${review.rkey}`,
+				err instanceof Error ? err.stack : undefined,
+			);
+			return {
+				blogDocumentUri: review.blogDocumentUri,
+				blogDocumentCid: review.blogDocumentCid,
+			};
+		}
+	}
+
 	async createReview(
 		userDid: string,
 		session: ATSession,
@@ -725,42 +603,29 @@ export class ReviewsService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 
-		// D6: when the user has chosen an override publication, point the document
-		// `site` at the stored URI and SKIP minting entirely. A null override means
-		// the default opnshelf publication (lazily minted here).
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: { reviewsPublicationUri: true },
-		});
-		const publicationUri = user?.reviewsPublicationUri
-			? user.reviewsPublicationUri
-			: (await this.ensurePublication(userDid, session, agent)).uri;
-
 		const rkey = TID.nextStr();
 		const now = new Date().toISOString();
-		const path = await this.generateUniqueReviewPath(userDid, dto.title);
 
-		const record = this.buildDocumentRecord({
-			publicationUri,
-			title: dto.title,
-			markdown: dto.markdown,
+		const record = reviewSchema.build({
 			mediaType: dto.mediaType,
 			mediaId: dto.mediaId,
 			seasonNumber: dto.seasonNumber,
 			episodeNumber: dto.episodeNumber,
-			path,
-			publishedAt: now,
+			title: dto.title,
+			content: dto.markdown,
+			createdAt: now as ReviewRecord["createdAt"],
+			updatedAt: now as ReviewRecord["updatedAt"],
 		});
 
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
-			collection: DOCUMENT_COLLECTION,
+			collection: REVIEW_COLLECTION,
 			rkey,
 			record,
 			validate: false,
 		});
 
-		return this.prisma.review.create({
+		const created = await this.prisma.review.create({
 			data: {
 				rkey,
 				uri: response.data.uri,
@@ -771,13 +636,18 @@ export class ReviewsService {
 				seasonNumber: dto.seasonNumber ?? 0,
 				episodeNumber: dto.episodeNumber ?? 0,
 				title: dto.title,
-				path,
-				description: record.description ?? null,
-				textContent: record.textContent ?? null,
 				markdown: dto.markdown,
-				publicationUri,
 			},
 		});
+
+		const mirror = await this.syncBlogMirror(userDid, agent, created);
+		if (mirror.blogDocumentUri !== created.blogDocumentUri) {
+			return this.prisma.review.update({
+				where: { id: created.id },
+				data: mirror,
+			});
+		}
+		return created;
 	}
 
 	async updateReview(
@@ -800,27 +670,29 @@ export class ReviewsService {
 		const title = dto.title ?? existing.title;
 		const markdown = dto.markdown ?? existing.markdown;
 
-		const record = this.buildDocumentRecord({
-			publicationUri: existing.publicationUri,
-			title,
-			markdown,
+		const record = reviewSchema.build({
 			mediaType: existing.mediaType,
 			mediaId: existing.mediaId,
-			seasonNumber: existing.seasonNumber,
-			episodeNumber: existing.episodeNumber,
-			// Keep the canonical path stable across edits (don't re-slug on title
-			// change) so existing links never break.
-			path: existing.path ?? undefined,
-			publishedAt: existing.createdAt.toISOString(),
-			updatedAt: new Date().toISOString(),
+			seasonNumber: existing.seasonNumber || undefined,
+			episodeNumber: existing.episodeNumber || undefined,
+			title,
+			content: markdown,
+			createdAt: existing.createdAt.toISOString() as ReviewRecord["createdAt"],
+			updatedAt: new Date().toISOString() as ReviewRecord["updatedAt"],
 		});
 
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
-			collection: DOCUMENT_COLLECTION,
+			collection: REVIEW_COLLECTION,
 			rkey: existing.rkey,
 			record,
 			validate: false,
+		});
+
+		const mirror = await this.syncBlogMirror(userDid, agent, {
+			...existing,
+			title,
+			markdown,
 		});
 
 		return this.prisma.review.update({
@@ -829,8 +701,7 @@ export class ReviewsService {
 				cid: response.data.cid,
 				title,
 				markdown,
-				description: record.description ?? null,
-				textContent: record.textContent ?? null,
+				...mirror,
 			},
 		});
 	}
@@ -854,9 +725,24 @@ export class ReviewsService {
 
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
-			collection: DOCUMENT_COLLECTION,
+			collection: REVIEW_COLLECTION,
 			rkey: review.rkey,
 		});
+
+		if (review.blogDocumentUri) {
+			try {
+				await agent.com.atproto.repo.deleteRecord({
+					repo: session.did,
+					collection: DOCUMENT_COLLECTION,
+					rkey: review.rkey,
+				});
+			} catch (err) {
+				this.logger.warn(
+					`Failed to delete blog mirror for review ${review.rkey}`,
+					err instanceof Error ? err.stack : undefined,
+				);
+			}
+		}
 
 		await this.prisma.review.delete({
 			where: { id: reviewId },
@@ -995,35 +881,18 @@ export class ReviewsService {
 	}
 
 	/**
-	 * Index a site.standard.document as a Review. Only documents carrying an
-	 * xyz.opnshelf.mediaLink member are treated as opnshelf reviews; the caller
-	 * (ingester) is responsible for the tracked-user check.
+	 * Index an xyz.opnshelf.review record from the firehose (ADR-0013). The
+	 * caller (ingester) is responsible for the tracked-user check. The optional
+	 * blog mirror is a separate site.standard.document and is NOT indexed as a
+	 * review — only the opnshelf record is the source of truth.
 	 */
-	async indexDocumentRecord(
+	async indexReviewRecord(
 		uri: string,
 		cid: string,
 		rkey: string,
 		userDid: string,
-		record: DocumentRecord,
+		record: ReviewRecord,
 	): Promise<void> {
-		const link = record.links;
-		// Not a review document — ignore arbitrary blog posts.
-		if (!link || link.$type !== mediaLinkDef.$type) {
-			return;
-		}
-		const mediaLink = link as {
-			mediaType: MediaType;
-			mediaId: string;
-			seasonNumber?: number;
-			episodeNumber?: number;
-		};
-
-		const markdown =
-			record.content && record.content.$type === markdownDef.$type
-				? ((record.content as { text?: { markdown?: string } }).text
-						?.markdown ?? "")
-				: "";
-
 		await this.prisma.review.upsert({
 			where: { rkey },
 			create: {
@@ -1031,34 +900,26 @@ export class ReviewsService {
 				uri,
 				cid,
 				userDid,
-				mediaType: mediaLink.mediaType,
-				mediaId: mediaLink.mediaId,
-				seasonNumber: mediaLink.seasonNumber ?? 0,
-				episodeNumber: mediaLink.episodeNumber ?? 0,
+				mediaType: record.mediaType,
+				mediaId: record.mediaId,
+				seasonNumber: record.seasonNumber ?? 0,
+				episodeNumber: record.episodeNumber ?? 0,
 				title: record.title,
-				path: record.path ?? null,
-				description: record.description ?? null,
-				textContent: record.textContent ?? null,
-				markdown,
-				publicationUri: record.site,
+				markdown: record.content,
 			},
 			update: {
 				cid,
-				mediaType: mediaLink.mediaType,
-				mediaId: mediaLink.mediaId,
-				seasonNumber: mediaLink.seasonNumber ?? 0,
-				episodeNumber: mediaLink.episodeNumber ?? 0,
+				mediaType: record.mediaType,
+				mediaId: record.mediaId,
+				seasonNumber: record.seasonNumber ?? 0,
+				episodeNumber: record.episodeNumber ?? 0,
 				title: record.title,
-				path: record.path ?? null,
-				description: record.description ?? null,
-				textContent: record.textContent ?? null,
-				markdown,
-				publicationUri: record.site,
+				markdown: record.content,
 			},
 		});
 	}
 
-	async deleteDocumentRecord(rkey: string): Promise<void> {
+	async deleteReviewRecord(rkey: string): Promise<void> {
 		await this.prisma.review.deleteMany({
 			where: { rkey },
 		});
@@ -1072,7 +933,7 @@ export class ReviewsService {
 		record: PublicationRecord,
 	): Promise<void> {
 		// A repo may hold MANY publications (key is `tid`), so index by the unique
-		// rkey — never by userDid, which is no longer unique on Publication.
+		// rkey — never by userDid, which is not unique on Publication.
 		await this.prisma.publication.upsert({
 			where: { rkey },
 			create: {

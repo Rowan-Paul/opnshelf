@@ -108,7 +108,7 @@ describe("CommunityReviews", () => {
 					review({
 						title: "Great movie!",
 						posterPath: "/abc.jpg",
-						reviewUrl: "/@user1/my-rkey",
+						reviewUrl: "/reviews/user1/my-rkey",
 					}),
 				],
 			},
@@ -119,7 +119,7 @@ describe("CommunityReviews", () => {
 
 		const titleLink = screen.getByText("Great movie!").closest("a");
 		expect(titleLink).toBeTruthy();
-		expect(titleLink?.getAttribute("href")).toBe("/@user1/my-rkey");
+		expect(titleLink?.getAttribute("href")).toBe("/reviews/user1/my-rkey");
 
 		const cover = document.querySelector(
 			'img[src="https://image.tmdb.org/t/p/w185/abc.jpg"]',

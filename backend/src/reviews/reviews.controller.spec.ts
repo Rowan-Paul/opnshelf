@@ -34,7 +34,7 @@ describe("ReviewsController", () => {
 		controller = module.get<ReviewsController>(ReviewsController);
 	});
 
-	it("builds the canonical reviewUrl from the human path, falling back to rkey", async () => {
+	it("builds the canonical reviewUrl as /reviews/{handle}/{rkey}", async () => {
 		const base = {
 			title: "t",
 			markdown: "m",
@@ -72,9 +72,7 @@ describe("ReviewsController", () => {
 			{ user: { did: "did:viewer" } } as never,
 		);
 
-		expect(result.items[0].reviewUrl).toBe(
-			"/@alice.opnshelf.xyz/my-great-film",
-		);
-		expect(result.items[1].reviewUrl).toBe("/@bob.opnshelf.xyz/rkey2");
+		expect(result.items[0].reviewUrl).toBe("/reviews/alice.opnshelf.xyz/rkey1");
+		expect(result.items[1].reviewUrl).toBe("/reviews/bob.opnshelf.xyz/rkey2");
 	});
 });

@@ -4,7 +4,6 @@ import {
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
 	reviewsControllerListMyPublicationsOptions,
-	reviewsControllerRepointReviewsMutation,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMySettingsOptions,
@@ -181,9 +180,10 @@ export default function SettingsScreen() {
 			),
 	});
 
-	// Reviews publication (#118). The live picker — not the cached setting — is the
-	// source of truth at selection time; the user can only pick a publication that
-	// exists in their own PDS.
+	// Blog-mirror publication (#118). Reviews are opnshelf-owned records; a
+	// publication here is an *optional* blog to also mirror new reviews to. The
+	// live picker — not the cached setting — is the source of truth at selection
+	// time; the user can only pick a publication that exists in their own PDS.
 	const {
 		data: myPublications,
 		isLoading: publicationsLoading,
@@ -195,69 +195,11 @@ export default function SettingsScreen() {
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
 
-	function findDefaultPublicationUri(): string | null {
-		return (
-			myPublications?.items.find((pub) => pub.isOpnshelfDefault)?.uri ?? null
-		);
-	}
-
-	const repointReviewsMutation = useMutation({
-		mutationKey: ["reviews", "repoint"],
-		...reviewsControllerRepointReviewsMutation(),
-		onSuccess: (result) => {
-			if (result.failed > 0) {
-				toast.error(
-					`Moved ${result.moved} of ${result.total} reviews. ${result.failed} failed — try again.`,
-				);
-			} else {
-				toast.success(
-					result.total === 0
-						? "No reviews to move"
-						: `Moved ${result.moved} review${result.moved === 1 ? "" : "s"}`,
-				);
-			}
-		},
-		onError: (error) =>
-			toast.error(
-				error instanceof Error ? error.message : "Failed to move reviews",
-			),
-	});
-
-	// After a target change, offer (opt-in) to re-point already-published reviews.
-	// Re-pointing needs a concrete target URI; when none is known (no opnshelf
-	// default in the live list) there is nothing to move to, so skip the prompt.
-	const promptRepoint = (targetUri: string | null) => {
-		if (targetUri === null) {
-			return;
-		}
-		Alert.alert(
-			"Move existing reviews?",
-			"Also move your existing reviews to this publication?",
-			[
-				{ text: "Not now", style: "cancel" },
-				{
-					text: "Move reviews",
-					onPress: () =>
-						repointReviewsMutation.mutate({
-							body: { targetPublicationUri: targetUri },
-						}),
-				},
-			],
-		);
-	};
-
 	const handleSelectPublication = (uri: string | null) => {
 		if (uri === storedPublicationUri) {
 			return;
 		}
-		updateSettingsMutation.mutate(
-			{ body: { reviewsPublicationUri: uri } },
-			{
-				onSuccess: () => {
-					promptRepoint(uri ?? findDefaultPublicationUri());
-				},
-			},
-		);
+		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -487,18 +429,17 @@ export default function SettingsScreen() {
 						)}
 					</SettingsSection>
 
-					{/* Reviews publication */}
+					{/* Blog mirror */}
 					<SettingsSection
-						title="Reviews publication"
-						description={`Choose which of your own AT Protocol publications new reviews are published to. OpnShelf still renders them at opnshelf.xyz/@${user?.handle ?? ""}.`}
+						title="Blog mirror"
+						description="Your reviews always live on OpnShelf. Optionally also mirror new reviews to one of your own AT Protocol blog publications."
 					>
 						{storedTargetMissing && (
 							<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
 								<AlertTriangle color={PRIMARY} size={16} />
 								<Text className="flex-1 text-foreground text-sm leading-5">
-									Your selected publication is no longer in your PDS. New
-									reviews still point at it, but you may want to choose another
-									below.
+									The blog you selected is no longer in your PDS. New reviews
+									still mirror to it, but you may want to choose another below.
 								</Text>
 							</View>
 						)}
@@ -511,20 +452,45 @@ export default function SettingsScreen() {
 							</Text>
 						) : (
 							<View className="gap-2">
+								{/* "None" — don't mirror to a blog. */}
+								{(() => {
+									const checked = storedPublicationUri === null;
+									return (
+										<Pressable
+											disabled={settingsBusy}
+											onPress={() => handleSelectPublication(null)}
+											className={
+												checked
+													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
+													: "flex-row items-center gap-3 rounded-lg border border-border p-3"
+											}
+											style={{ opacity: settingsBusy ? 0.6 : 1 }}
+										>
+											<View
+												className={
+													checked
+														? "size-5 items-center justify-center rounded-full border-2 border-primary"
+														: "size-5 items-center justify-center rounded-full border-2 border-border"
+												}
+											>
+												{checked ? (
+													<View className="size-2.5 rounded-full bg-primary" />
+												) : null}
+											</View>
+											<Text className="flex-1 font-medium text-foreground text-sm">
+												None — don't mirror to a blog
+											</Text>
+										</Pressable>
+									);
+								})()}
+
 								{(myPublications?.items ?? []).map((pub) => {
-									const checked = pub.isOpnshelfDefault
-										? storedPublicationUri === null ||
-											storedPublicationUri === pub.uri
-										: storedPublicationUri === pub.uri;
+									const checked = storedPublicationUri === pub.uri;
 									return (
 										<Pressable
 											key={pub.uri}
 											disabled={settingsBusy}
-											onPress={() =>
-												handleSelectPublication(
-													pub.isOpnshelfDefault ? null : pub.uri,
-												)
-											}
+											onPress={() => handleSelectPublication(pub.uri)}
 											className={
 												checked
 													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
@@ -544,21 +510,12 @@ export default function SettingsScreen() {
 												) : null}
 											</View>
 											<View className="flex-1">
-												<View className="flex-row items-center gap-2">
-													<Text
-														className="shrink font-medium text-foreground text-sm"
-														numberOfLines={1}
-													>
-														{pub.name}
-													</Text>
-													{pub.isOpnshelfDefault ? (
-														<View className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5">
-															<Text className="font-medium text-primary text-xs">
-																Default
-															</Text>
-														</View>
-													) : null}
-												</View>
+												<Text
+													className="font-medium text-foreground text-sm"
+													numberOfLines={1}
+												>
+													{pub.name}
+												</Text>
 												<Text
 													className="text-muted-foreground text-xs"
 													numberOfLines={1}

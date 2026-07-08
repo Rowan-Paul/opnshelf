@@ -9,7 +9,7 @@ A user's numeric 1–10 score for a specific media item, with no text. Its own f
 _Avoid_: Review (a Review is the long-form text, not the score)
 
 **Review**:
-A user's long-form textual piece about a media item, authored as a `site.standard.document` so it is portable and indexable by the wider standard.site ecosystem (Leaflet, GreenGale, Bluesky clients, etc.). A Review carries no numeric score — the score is a separate Rating. A bare "8/10" with no prose is a Rating, not a Review. A user may write zero or many Reviews about the same media item (e.g. a first-watch piece and a later rewatch essay).
+A user's long-form textual piece about a media item, stored as an opnshelf-controlled `xyz.opnshelf.review` record. A Review carries no numeric score — the score is a separate Rating. A bare "8/10" with no prose is a Rating, not a Review. A user may write zero or many Reviews about the same media item (e.g. a first-watch piece and a later rewatch essay). A Review may optionally be mirrored to the author's own standard.site blog as a `site.standard.document`.
 _Avoid_: Rating (the numeric score is a separate entity)
 
 **Your Reviews**:
@@ -24,7 +24,7 @@ A user's expression of appreciation for another user's review. Only possible on 
 _Avoid_: Heart, upvote, helpful vote
 
 **Publication**:
-A `site.standard.publication` record in a user's PDS that a user's Reviews belong to (a document's `site` field points at it). By default opnshelf mints one per user (e.g. "Jane's OpnShelf" at `opnshelf.xyz/@jane`) so anyone can review without owning a blog; a user may instead point their Reviews at another `site.standard.publication` they already own in their own PDS (e.g. a Leaflet publication). The publication, not opnshelf, is what makes Reviews surface and stay discoverable across the standard.site ecosystem.
+A `site.standard.publication` record in a user's PDS that the user already owns (e.g. a Leaflet publication). A user may optionally select one in their opnshelf settings as the target for blog-mirrored Reviews. opnshelf does **not** mint publications; reviewing does not require owning a blog. When a Review is mirrored to a blog, the resulting `site.standard.document`'s `site` field points at the chosen publication.
 
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
@@ -96,5 +96,5 @@ A named grouping of Library Items within a user's Library (e.g. "The Lord of the
 
 - **"Activity" (feed) vs "activity graph"**: An **Activity** is a feed item (a followed user's Watch or Review). The "profile activity graph" (`ProfileActivityDayDto`) is unrelated — it is a per-day count of the profile owner's own **Watches**, a contribution-style heatmap. The feed is about people you follow; the graph is about one user's watching cadence.
 
-- **"Review" vs "Rating"**: These are now two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (a `site.standard.document`) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
-- **"Top reviews"**: Reviews no longer carry a rating, so the old `likeCount DESC, rating DESC, createdAt DESC` tiebreak no longer applies as-is. A Review's tiebreak rating, if used, comes from the author's separate Rating for the same media (a join), not from the Review itself.
+- **"Review" vs "Rating"**: These are two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (an `xyz.opnshelf.review` record) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
+- **"Top reviews"**: Reviews do not carry a rating, so the old `likeCount DESC, rating DESC, createdAt DESC` tiebreak does not apply as-is. A Review's tiebreak rating, if used, comes from the author's separate Rating for the same media (a join), not from the Review itself.
