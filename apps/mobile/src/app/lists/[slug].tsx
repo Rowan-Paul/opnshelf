@@ -405,23 +405,11 @@ export default function ListDetailScreen() {
 								</Text>
 							) : null}
 
-							{showProgress ? (
-								<View className="gap-1.5">
-									<Text className="text-muted-foreground text-xs">
-										{watchedCount} of {total} watched
-									</Text>
-									<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
-										<View
-											className="h-full rounded-full bg-primary"
-											style={{ width: `${progressPct}%` }}
-										/>
-									</View>
-								</View>
-							) : (
+							{!showProgress ? (
 								<Text className="text-muted-foreground text-xs">
 									{total} item{total === 1 ? "" : "s"}
 								</Text>
-							)}
+							) : null}
 
 							<TextField
 								leading={<Search color="#94a3b8" size={18} />}
@@ -504,6 +492,22 @@ export default function ListDetailScreen() {
 									);
 								})}
 							</View>
+
+							{/* Watched progress last, directly above the grid: it describes
+							    the items below, and this matches the web list page. */}
+							{showProgress ? (
+								<View className="gap-1.5">
+									<Text className="text-muted-foreground text-xs">
+										{watchedCount} of {total} watched
+									</Text>
+									<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
+										<View
+											className="h-full rounded-full bg-primary"
+											style={{ width: `${progressPct}%` }}
+										/>
+									</View>
+								</View>
+							) : null}
 						</View>
 					}
 					ListEmptyComponent={
