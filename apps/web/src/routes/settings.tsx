@@ -72,6 +72,9 @@ export const Route = createFileRoute("/settings")({
 			throw error;
 		}
 	},
+	head: () => ({
+		meta: [{ title: "Settings | OpnShelf" }],
+	}),
 	component: SettingsPage,
 });
 

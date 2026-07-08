@@ -19,6 +19,9 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/signup")({
+	head: () => ({
+		meta: [{ title: "Sign up | OpnShelf" }],
+	}),
 	component: SignupPage,
 });
 

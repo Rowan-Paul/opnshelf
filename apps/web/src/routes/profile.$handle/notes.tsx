@@ -15,6 +15,25 @@ import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
 import { toSlug } from "#/lib/slug";
 export const Route = createFileRoute("/profile/$handle/notes")({
+	loader: async ({ context, params }) => {
+		try {
+			const profile = await context.queryClient.ensureQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: params.handle },
+				}),
+			);
+			return { profile };
+		} catch {
+			return { profile: null };
+		}
+	},
+	head: ({ loaderData }) => {
+		const name =
+			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
+		return {
+			meta: [{ title: `${name}'s Notes | OpnShelf` }],
+		};
+	},
 	component: ProfileNotesPage,
 });
 

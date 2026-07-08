@@ -18,6 +18,9 @@ import {
 } from "#/lib/hooks/useCircles";
 
 export const Route = createFileRoute("/circles/$circleId")({
+	head: () => ({
+		meta: [{ title: "Circle | OpnShelf" }],
+	}),
 	component: CircleDetailPage,
 });
 

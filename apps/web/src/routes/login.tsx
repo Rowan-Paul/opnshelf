@@ -12,6 +12,9 @@ import Logo from "#/components/Logo";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
+	head: () => ({
+		meta: [{ title: "Log in | OpnShelf" }],
+	}),
 	component: LoginPage,
 });
 

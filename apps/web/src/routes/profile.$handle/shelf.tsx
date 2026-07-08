@@ -21,6 +21,25 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/profile/$handle/shelf")({
+	loader: async ({ context, params }) => {
+		try {
+			const profile = await context.queryClient.ensureQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: params.handle },
+				}),
+			);
+			return { profile };
+		} catch {
+			return { profile: null };
+		}
+	},
+	head: ({ loaderData }) => {
+		const name =
+			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
+		return {
+			meta: [{ title: `${name}'s Shelf | OpnShelf` }],
+		};
+	},
 	component: ProfileShelfPage,
 	validateSearch: searchSchema,
 });

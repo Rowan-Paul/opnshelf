@@ -35,6 +35,9 @@ import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/onboarding")({
+	head: () => ({
+		meta: [{ title: "Welcome | OpnShelf" }],
+	}),
 	component: OnboardingPage,
 });
 

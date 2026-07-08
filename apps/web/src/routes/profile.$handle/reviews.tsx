@@ -18,6 +18,25 @@ import { useUserReviews } from "#/lib/hooks/useReviews";
 import { toSlug } from "#/lib/slug";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
+	loader: async ({ context, params }) => {
+		try {
+			const profile = await context.queryClient.ensureQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: params.handle },
+				}),
+			);
+			return { profile };
+		} catch {
+			return { profile: null };
+		}
+	},
+	head: ({ loaderData }) => {
+		const name =
+			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
+		return {
+			meta: [{ title: `${name}'s Reviews | OpnShelf` }],
+		};
+	},
 	component: ProfileReviewsPage,
 });
 

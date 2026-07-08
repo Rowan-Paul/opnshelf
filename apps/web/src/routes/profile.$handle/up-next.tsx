@@ -22,6 +22,25 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/profile/$handle/up-next")({
+	loader: async ({ context, params }) => {
+		try {
+			const profile = await context.queryClient.ensureQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: params.handle },
+				}),
+			);
+			return { profile };
+		} catch {
+			return { profile: null };
+		}
+	},
+	head: ({ loaderData }) => {
+		const name =
+			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
+		return {
+			meta: [{ title: `${name}'s Up Next | OpnShelf` }],
+		};
+	},
 	component: ProfileUpNextPage,
 	validateSearch: searchSchema,
 });

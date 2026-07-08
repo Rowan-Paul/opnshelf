@@ -12,6 +12,9 @@ import LoadingState from "#/components/LoadingState";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/")({
+	head: () => ({
+		meta: [{ title: "OpnShelf - Track What You Watch" }],
+	}),
 	component: LandingPage,
 });
 

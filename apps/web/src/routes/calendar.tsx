@@ -17,6 +17,9 @@ import { withUserLocale } from "#/lib/date-utils";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/calendar")({
+	head: () => ({
+		meta: [{ title: "Release Calendar | OpnShelf" }],
+	}),
 	component: CalendarPage,
 });
 

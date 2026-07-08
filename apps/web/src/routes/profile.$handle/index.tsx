@@ -23,6 +23,25 @@ const SCROLL_SKELETON =
 	"aspect-[2/3] w-[160px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[180px]";
 
 export const Route = createFileRoute("/profile/$handle/")({
+	loader: async ({ context, params }) => {
+		try {
+			const profile = await context.queryClient.ensureQueryData(
+				usersControllerGetPublicProfileOptions({
+					path: { handle: params.handle },
+				}),
+			);
+			return { profile };
+		} catch {
+			return { profile: null };
+		}
+	},
+	head: ({ loaderData }) => {
+		const name =
+			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
+		return {
+			meta: [{ title: `${name}'s Profile | OpnShelf` }],
+		};
+	},
 	component: ProfileOverviewPage,
 });
 

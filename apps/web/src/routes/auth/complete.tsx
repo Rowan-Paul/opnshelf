@@ -5,6 +5,9 @@ import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/auth/complete")({
+	head: () => ({
+		meta: [{ title: "Completing sign in | OpnShelf" }],
+	}),
 	component: AuthCompletePage,
 });
 
