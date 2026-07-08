@@ -16,6 +16,7 @@ import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
+import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { initializeApiClient } from "@/lib/api";
 import { posthog } from "@/lib/posthog";
@@ -72,7 +73,14 @@ export default function RootLayout() {
 	return (
 		<Providers>
 			<ScreenTracker />
-			<Stack screenOptions={{ headerShown: false }}>
+			{/* Custom `header` replaces the platform-native header on every screen
+			    with headerShown: true, so iOS and Android render the same bar. */}
+			<Stack
+				screenOptions={{
+					headerShown: false,
+					header: (props) => <AppHeader {...props} />,
+				}}
+			>
 				<Stack.Screen name="(tabs)" />
 				<Stack.Screen name="login" />
 				<Stack.Screen name="auth/complete" />
