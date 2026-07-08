@@ -33,6 +33,10 @@ const config: ExpoConfig = {
 			backgroundColor: "#0f172a",
 		},
 		package: "com.rowanpaul.opnshelf",
+		// expo-sensors merges ACTIVITY_RECOGNITION (pedometer) into the manifest;
+		// Google Play classifies it as a health feature and rejects API submits.
+		// We only use the accelerometer (shake-to-feedback), so block it.
+		blockedPermissions: ["android.permission.ACTIVITY_RECOGNITION"],
 	},
 	web: {
 		bundler: "metro",
