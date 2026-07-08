@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
-import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/cn";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -21,7 +21,7 @@ export function DetailHero({
 	posterUrl,
 	posterHref,
 	rating,
-	topFade = false,
+	inset = false,
 	children,
 }: {
 	title: string;
@@ -31,15 +31,14 @@ export function DetailHero({
 	/** When set, the poster becomes a link (e.g. season/episode → show page). */
 	posterHref?: Href;
 	rating?: number;
-	/** Fade the backdrop's top edge into the app background. Pass on screens
-	 * rendered under the stack header, where the hard header→image cut is
-	 * jarring; leave off for full-bleed heroes (movie has no header). */
-	topFade?: boolean;
+	/** Render the backdrop as an inset rounded card instead of full-bleed.
+	 * Pass on screens rendered under the stack header, where an edge-to-edge
+	 * image cuts hard against the header (a background-colored fade doesn't
+	 * work — it vanishes on bright images). Movie keeps full-bleed: no header. */
+	inset?: boolean;
 	children?: ReactNode;
 }) {
-	const { scheme } = useTheme();
 	const scrimStyle = useTwStyle("absolute inset-x-0 bottom-0 h-32");
-	const topFadeStyle = useTwStyle("absolute inset-x-0 top-0 h-14");
 	const poster = (
 		<View className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
 			<PosterImage url={posterUrl} className="aspect-2/3 w-24" />
@@ -47,22 +46,19 @@ export function DetailHero({
 	);
 	return (
 		<View>
-			<View className="relative h-52 w-full bg-background-subtle">
-				<PosterImage url={backdropUrl} className="h-52 w-full" />
-				<LinearGradient
-					colors={["transparent", "rgba(2,6,23,0.85)"]}
-					style={scrimStyle}
-				/>
-				{topFade ? (
+			<View className={cn(inset && "px-4 pt-2")}>
+				<View
+					className={cn(
+						"relative h-52 w-full bg-background-subtle",
+						inset && "overflow-hidden rounded-xl border border-border",
+					)}
+				>
+					<PosterImage url={backdropUrl} className="h-52 w-full" />
 					<LinearGradient
-						colors={
-							scheme === "dark"
-								? ["#020617", "rgba(2,6,23,0)"]
-								: ["#f8fafc", "rgba(248,250,252,0)"]
-						}
-						style={topFadeStyle}
+						colors={["transparent", "rgba(2,6,23,0.85)"]}
+						style={scrimStyle}
 					/>
-				) : null}
+				</View>
 			</View>
 
 			<View className="-mt-16 flex-row gap-4 px-4">
