@@ -99,10 +99,12 @@ export default function PersonDetailScreen() {
 									<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
 										Known for
 									</Text>
+									{/* items-start: horizontal ScrollView content defaults to
+									    cross-axis stretch, collapsing aspect-ratio cards */}
 									<ScrollView
 										horizontal
 										showsHorizontalScrollIndicator={false}
-										contentContainerClassName="gap-3 px-4"
+										contentContainerClassName="items-start gap-3 px-4"
 									>
 										{knownFor.map((item) => (
 											<View

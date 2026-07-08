@@ -114,11 +114,13 @@ function DiscoverRail({
 			{/* Horizontal ScrollView, not FlatList: these rails live inside a
 			    vertical ScrollView, and nested VirtualizedLists mis-measure their
 			    height (later rails get clipped). Rails are short, so no
-			    virtualization needed. */}
+			    virtualization needed. items-start: horizontal ScrollView content
+			    defaults to cross-axis stretch, which collapses aspect-ratio cards
+			    (see CircleFilterBar). */}
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}
-				contentContainerClassName="gap-3 px-4"
+				contentContainerClassName="items-start gap-3 px-4"
 			>
 				{items.map((item) => (
 					<View key={`${item.type}-${item.id}`} className="w-28">
