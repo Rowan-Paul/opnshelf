@@ -1,4 +1,5 @@
 import * as Updates from "expo-updates";
+import { RefreshCw } from "lucide-react-native";
 import { useCallback, useEffect, useRef } from "react";
 import { AppState, type AppStateStatus, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -71,16 +72,17 @@ export function UpdateBanner() {
 
 	return (
 		<View
-			className="border-border border-b bg-background-subtle px-4 pb-2"
-			style={{ paddingTop: insets.top }}
+			className="border-border border-b bg-background-subtle px-4 pb-2.5"
+			style={{ paddingTop: insets.top + 6 }}
 		>
-			<View className="flex-row items-center gap-2">
-				<Text className="flex-1 text-muted-foreground text-sm leading-5">
-					Update ready. Restart to get the latest version.
+			<View className="flex-row items-center gap-2.5">
+				<RefreshCw color="#f3bc00" size={16} strokeWidth={2.5} />
+				<Text className="flex-1 font-medium text-foreground text-sm">
+					Update ready
 				</Text>
 				<Pressable
 					onPress={() => void Updates.reloadAsync()}
-					className="rounded-md bg-primary px-3 py-1.5"
+					className="rounded-full bg-primary px-3.5 py-1.5"
 				>
 					<Text className="font-semibold text-[#3f2e00] text-sm">Restart</Text>
 				</Pressable>
