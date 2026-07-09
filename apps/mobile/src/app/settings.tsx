@@ -207,12 +207,22 @@ export default function SettingsScreen() {
 		const isLeaflet = publication.url.includes("leaflet.pub");
 		const continueWithCompatibilityMode = () => {
 			Alert.alert(
-				"Service not recognised",
-				"We'll still mirror your reviews, but they may not display as expected.",
+				"Choose the publication service",
+				"If it isn't listed, we'll still mirror your reviews, but they may not display as expected.",
 				[
 					{ text: "Cancel", style: "cancel" },
 					{
-						text: "Continue",
+						text: "Leaflet",
+						onPress: () =>
+							updateSettingsMutation.mutate({
+								body: {
+									reviewsPublicationUri: publication.uri,
+									reviewsMirrorFormat: "leaflet",
+								},
+							}),
+					},
+					{
+						text: "Other or unknown",
 						onPress: () =>
 							updateSettingsMutation.mutate({
 								body: {

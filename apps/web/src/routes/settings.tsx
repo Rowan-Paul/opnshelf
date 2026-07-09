@@ -253,10 +253,18 @@ function SettingsPage() {
 		url: string;
 	} | null>(null);
 	const [leafletRejected, setLeafletRejected] = useState(false);
+	const [fallbackService, setFallbackService] = useState<"leaflet" | "unknown">(
+		"unknown",
+	);
 	const pendingService =
-		pendingPublication?.url.includes("leaflet.pub") && !leafletRejected
+		(pendingPublication?.url.includes("leaflet.pub") && !leafletRejected) ||
+		fallbackService === "leaflet"
 			? "leaflet"
 			: "unknown";
+	const requiresServiceChoice =
+		leafletRejected ||
+		(pendingPublication !== null &&
+			!pendingPublication.url.includes("leaflet.pub"));
 
 	const handleSelectPublication = (uri: string | null) => {
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
@@ -273,6 +281,7 @@ function SettingsPage() {
 		});
 		setPendingPublication(null);
 		setLeafletRejected(false);
+		setFallbackService("unknown");
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -519,6 +528,7 @@ function SettingsPage() {
 													url: pub.url,
 												});
 												setLeafletRejected(false);
+												setFallbackService("unknown");
 											}}
 										/>
 										<div>
@@ -540,33 +550,56 @@ function SettingsPage() {
 						if (!open) {
 							setPendingPublication(null);
 							setLeafletRejected(false);
+							setFallbackService("unknown");
 						}
 					}}
 				>
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>
-								{pendingService === "leaflet"
-									? "Is this a Leaflet publication?"
-									: "Which service runs this publication?"}
+								{requiresServiceChoice
+									? "Choose the publication service"
+									: pendingService === "leaflet"
+										? "Is this a Leaflet publication?"
+										: "Which service runs this publication?"}
 							</DialogTitle>
 							<DialogDescription>
-								{pendingService === "leaflet"
-									? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
-									: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
+								{requiresServiceChoice
+									? "Select the service you use. If it isn't listed, we'll still mirror your reviews, but they may not display as expected."
+									: pendingService === "leaflet"
+										? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
+										: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
 							</DialogDescription>
 						</DialogHeader>
+						{requiresServiceChoice && (
+							<label className="grid gap-2 text-sm">
+								<span className="font-medium">Service</span>
+								<select
+									value={fallbackService}
+									onChange={(event) =>
+										setFallbackService(
+											event.target.value as "leaflet" | "unknown",
+										)
+									}
+									className="h-10 rounded-md border border-(--border) bg-(--background) px-3"
+								>
+									<option value="leaflet">Leaflet</option>
+									<option value="unknown">Other or unknown</option>
+								</select>
+							</label>
+						)}
 						<div className="flex justify-end gap-3">
 							<Button
 								variant="outline"
 								onClick={() => {
 									setPendingPublication(null);
 									setLeafletRejected(false);
+									setFallbackService("unknown");
 								}}
 							>
 								Cancel
 							</Button>
-							{pendingService === "leaflet" && (
+							{pendingService === "leaflet" && !requiresServiceChoice && (
 								<Button
 									variant="outline"
 									onClick={() => setLeafletRejected(true)}
