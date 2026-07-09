@@ -42,6 +42,14 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { Switch } from "#/components/ui/switch";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
 import { apiConfig, ssrAuthOptions } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -572,21 +580,25 @@ function SettingsPage() {
 							</DialogDescription>
 						</DialogHeader>
 						{requiresServiceChoice && (
-							<label className="grid gap-2 text-sm">
+							<div className="grid gap-2 text-sm">
 								<span className="font-medium">Service</span>
-								<select
+								<Select
 									value={fallbackService}
-									onChange={(event) =>
-										setFallbackService(
-											event.target.value as "leaflet" | "unknown",
-										)
+									onValueChange={(value) =>
+										setFallbackService(value as "leaflet" | "unknown")
 									}
-									className="h-10 rounded-md border border-(--border) bg-(--background) px-3"
 								>
-									<option value="leaflet">Leaflet</option>
-									<option value="unknown">Other or unknown</option>
-								</select>
-							</label>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Choose a service" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectGroup>
+											<SelectItem value="leaflet">Leaflet</SelectItem>
+											<SelectItem value="unknown">Other or unknown</SelectItem>
+										</SelectGroup>
+									</SelectContent>
+								</Select>
+							</div>
 						)}
 						<div className="flex justify-end gap-3">
 							<Button
