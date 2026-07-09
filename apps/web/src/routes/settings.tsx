@@ -562,7 +562,7 @@ function SettingsPage() {
 						}
 					}}
 				>
-					<DialogContent>
+					<DialogContent className="min-h-72">
 						<DialogHeader>
 							<DialogTitle>
 								{requiresServiceChoice
