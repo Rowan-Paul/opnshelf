@@ -47,6 +47,29 @@ const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
 const PUBLICATION_LIST_LIMIT = 100;
 const OFFPRINT_ARTICLE_COLLECTION = "app.offprint.document.article";
 
+type PublicationService = "leaflet" | "offprint" | "unknown";
+
+function detectPublicationService(publication: {
+	url?: string;
+	theme?: { $type?: string };
+}): PublicationService {
+	if (publication.theme?.$type?.startsWith("app.offprint.")) {
+		return "offprint";
+	}
+	try {
+		const host = new URL(publication.url ?? "").hostname;
+		if (host === "leaflet.pub" || host.endsWith(".leaflet.pub")) {
+			return "leaflet";
+		}
+		if (host === "offprint.app" || host.endsWith(".offprint.app")) {
+			return "offprint";
+		}
+	} catch {
+		// Unknown/invalid publication URLs fall back to the portable format.
+	}
+	return "unknown";
+}
+
 type MediaType = "movie" | "show" | "season" | "episode";
 
 const MAX_SLUG_LENGTH = 80;
@@ -581,7 +604,14 @@ export class ReviewsService {
 	async listMyPublications(
 		userDid: string,
 		session: ATSession,
-	): Promise<Array<{ uri: string; name: string; url: string }>> {
+	): Promise<
+		Array<{
+			uri: string;
+			name: string;
+			url: string;
+			service: PublicationService;
+		}>
+	> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
 			select: { handle: true },
@@ -601,12 +631,17 @@ export class ReviewsService {
 		});
 
 		return response.data.records.map((rec) => {
-			const value = rec.value as { name?: string; url?: string };
+			const value = rec.value as {
+				name?: string;
+				url?: string;
+				theme?: { $type?: string };
+			};
 			const url = value.url ?? "";
 			return {
 				uri: rec.uri,
 				name: value.name ?? url,
 				url,
+				service: detectPublicationService(value),
 			};
 		});
 	}

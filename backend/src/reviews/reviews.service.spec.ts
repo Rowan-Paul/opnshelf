@@ -722,6 +722,35 @@ describe("ReviewsService", () => {
 					uri: "at://did:plc:abc123/site.standard.publication/leaflet",
 					name: "My Blog",
 					url: "https://leaflet.pub/alice",
+					service: "leaflet",
+				},
+			]);
+		});
+
+		it("recognises Offprint from its theme before considering its URL", async () => {
+			mockListRecords.mockResolvedValue({
+				data: {
+					records: [
+						{
+							uri: "at://did:plc:abc123/site.standard.publication/offprint",
+							value: {
+								name: "My Offprint",
+								url: "https://custom.example",
+								theme: { $type: "app.offprint.theme" },
+							},
+						},
+					],
+				},
+			});
+
+			await expect(
+				service.listMyPublications(session.did, session),
+			).resolves.toEqual([
+				{
+					uri: "at://did:plc:abc123/site.standard.publication/offprint",
+					name: "My Offprint",
+					url: "https://custom.example",
+					service: "offprint",
 				},
 			]);
 		});

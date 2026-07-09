@@ -1379,6 +1379,10 @@ export type MyPublicationDto = {
      * Canonical web URL of the publication
      */
     url: string;
+    /**
+     * Detected publication service; users can override this suggestion
+     */
+    service: 'leaflet' | 'offprint' | 'unknown';
 };
 
 export type MyPublicationsResponseDto = {

@@ -41,7 +41,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { Switch } from "#/components/ui/switch";
 import {
 	Select,
 	SelectContent,
@@ -50,6 +49,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "#/components/ui/select";
+import { Switch } from "#/components/ui/switch";
 import { apiConfig, ssrAuthOptions } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -259,20 +259,17 @@ function SettingsPage() {
 		uri: string;
 		name: string;
 		url: string;
+		service: "leaflet" | "offprint" | "unknown";
 	} | null>(null);
 	const [leafletRejected, setLeafletRejected] = useState(false);
 	const [fallbackService, setFallbackService] = useState<
 		"leaflet" | "offprint" | "unknown"
 	>("unknown");
-	const pendingService =
-		(pendingPublication?.url.includes("leaflet.pub") && !leafletRejected) ||
-		fallbackService === "leaflet"
-			? "leaflet"
-			: fallbackService;
+	const pendingService = leafletRejected
+		? fallbackService
+		: (pendingPublication?.service ?? "unknown");
 	const requiresServiceChoice =
-		leafletRejected ||
-		(pendingPublication !== null &&
-			!pendingPublication.url.includes("leaflet.pub"));
+		leafletRejected || pendingPublication?.service === "unknown";
 
 	const handleSelectPublication = (uri: string | null) => {
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
@@ -538,6 +535,7 @@ function SettingsPage() {
 													uri: pub.uri,
 													name: pub.name,
 													url: pub.url,
+													service: pub.service,
 												});
 												setLeafletRejected(false);
 												setFallbackService("unknown");
@@ -573,14 +571,18 @@ function SettingsPage() {
 									? "Choose the publication service"
 									: pendingService === "leaflet"
 										? "Is this a Leaflet publication?"
-										: "Which service runs this publication?"}
+										: pendingService === "offprint"
+											? "Is this an Offprint publication?"
+											: "Which service runs this publication?"}
 							</DialogTitle>
 							<DialogDescription>
 								{requiresServiceChoice
 									? "Select the service you use. If it isn't listed, we'll still mirror your reviews, but they may not display as expected."
 									: pendingService === "leaflet"
 										? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
-										: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
+										: pendingService === "offprint"
+											? `We recognised ${pendingPublication?.name} as Offprint. Confirm to mirror your reviews there.`
+											: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
 							</DialogDescription>
 						</DialogHeader>
 						{requiresServiceChoice && (
@@ -626,10 +628,20 @@ function SettingsPage() {
 									No, it isn't Leaflet
 								</Button>
 							)}
+							{pendingService === "offprint" && !requiresServiceChoice && (
+								<Button
+									variant="outline"
+									onClick={() => setLeafletRejected(true)}
+								>
+									No, it isn't Offprint
+								</Button>
+							)}
 							<Button onClick={confirmPublicationService}>
 								{pendingService === "leaflet"
 									? "Yes, this is Leaflet"
-									: "Continue"}
+									: pendingService === "offprint"
+										? "Yes, this is Offprint"
+										: "Continue"}
 							</Button>
 						</div>
 					</DialogContent>

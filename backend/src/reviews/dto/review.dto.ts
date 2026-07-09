@@ -450,6 +450,13 @@ export class MyPublicationDto {
 
 	@ApiProperty({ description: "Canonical web URL of the publication" })
 	url: string;
+
+	@ApiProperty({
+		description:
+			"Detected publication service; users can override this suggestion",
+		enum: ["leaflet", "offprint", "unknown"],
+	})
+	service: "leaflet" | "offprint" | "unknown";
 }
 
 export class MyPublicationsResponseDto {
