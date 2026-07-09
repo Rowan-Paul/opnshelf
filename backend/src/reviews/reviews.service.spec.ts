@@ -650,6 +650,49 @@ describe("ReviewsService", () => {
 			// Not a "read this review" backlink to the canonical review page.
 			expect(rendered).not.toContain("/reviews/");
 		});
+
+		it("emits Leaflet content only when the user explicitly selected Leaflet", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+				reviewsMirrorFormat: "leaflet",
+			});
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-doc",
+					},
+				});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+			mockPrismaService.review.update.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "# Heading\n\n**Loved** it.",
+			});
+
+			const content = mockPutRecord.mock.calls[1][0].record.content;
+			expect(content.$type).toBe("pub.leaflet.content");
+			expect(content.pages[0].blocks[0].block.$type).toBe(
+				"pub.leaflet.blocks.text",
+			);
+		});
 	});
 
 	describe("listMyPublications", () => {

@@ -178,6 +178,7 @@ describe("UsersService", () => {
 				reviewsPublicationUri:
 					"at://did:plc:123/site.standard.publication/leaflet",
 				reviewsPublicationName: "My Blog",
+				reviewsMirrorFormat: "markdown",
 			});
 
 			const result = await service.updateUserSettings(
@@ -226,6 +227,7 @@ describe("UsersService", () => {
 				watchCountry: "US",
 				reviewsPublicationUri: null,
 				reviewsPublicationName: null,
+				reviewsMirrorFormat: "markdown",
 			});
 
 			const result = await service.updateUserSettings(
@@ -244,6 +246,32 @@ describe("UsersService", () => {
 				}),
 			);
 			expect(result.reviewsPublicationUri).toBeNull();
+		});
+
+		it("stores an explicitly selected reader format", async () => {
+			(prisma.user.findUnique as Mock).mockResolvedValue({
+				did: "did:plc:123",
+			});
+			(prisma.user.update as Mock).mockResolvedValue({
+				timezone: "UTC",
+				timeFormat: "24h",
+				watchCountry: "US",
+				reviewsPublicationUri:
+					"at://did:plc:123/site.standard.publication/leaflet",
+				reviewsPublicationName: "My Blog",
+				reviewsMirrorFormat: "leaflet",
+			});
+
+			const result = await service.updateUserSettings("did:plc:123", {
+				reviewsMirrorFormat: "leaflet",
+			});
+
+			expect(prisma.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ reviewsMirrorFormat: "leaflet" }),
+				}),
+			);
+			expect(result.reviewsMirrorFormat).toBe("leaflet");
 		});
 	});
 

@@ -705,6 +705,10 @@ export type UserSettingsDto = {
      * Cached display name of the chosen reviews publication
      */
     reviewsPublicationName: string | null;
+    /**
+     * Explicit reader format used for blog mirrors; Markdown is the portable default
+     */
+    reviewsMirrorFormat: 'markdown' | 'leaflet';
 };
 
 export type UpdateUserSettingsDto = {
@@ -724,6 +728,10 @@ export type UpdateUserSettingsDto = {
      * AT URI of the site.standard.publication that new reviews should point at. Must be one of the user's own publications. Pass null to revert to the opnshelf default.
      */
     reviewsPublicationUri?: string | null;
+    /**
+     * Explicit reader format for blog mirrors. Markdown is the portable default.
+     */
+    reviewsMirrorFormat?: 'markdown' | 'leaflet';
 };
 
 export type UpdateUserProfileDto = {
@@ -1262,7 +1270,7 @@ export type PaginatedReviewsResponseDto = {
 export type MediaReviewItemDto = {
     id: string;
     /**
-     * AT record key of the review document
+     * AT record key of the review
      */
     rkey: string;
     title: string;
@@ -1272,7 +1280,7 @@ export type MediaReviewItemDto = {
     markdown: string;
     description?: string;
     /**
-     * Relative URL of the canonical public review page (#115), e.g. /@handle/path
+     * Relative URL of the canonical public review page, e.g. /reviews/{handle}/{rkey}
      */
     reviewUrl?: string;
     /**
@@ -4321,7 +4329,7 @@ export type LibraryControllerRemoveFromLibraryData = {
         /**
          * digital, bluray, bluray4k, or dvd
          */
-        format: unknown;
+        format: string;
     };
     query?: {
         seasonNumber?: number;

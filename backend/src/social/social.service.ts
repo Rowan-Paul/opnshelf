@@ -600,7 +600,7 @@ export class SocialService {
 					s."firstAirYear",
 					COALESCE(m.overview, s.overview) AS overview,
 					rt.rating,
-					r."textContent" AS "reviewContent"
+					r.markdown AS "reviewContent"
 				FROM "Review" r
 				LEFT JOIN "Movie" m ON m."movieId" = r."mediaId" AND r."mediaType" = 'movie'
 				LEFT JOIN "Show" s ON s."showId" = r."mediaId" AND r."mediaType" != 'movie'

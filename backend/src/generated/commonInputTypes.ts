@@ -60,6 +60,13 @@ export type BoolFilter<$PrismaModel = never> = {
   not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
 }
 
+export type EnumBlogMirrorFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.BlogMirrorFormat | Prisma.EnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel> | $Enums.BlogMirrorFormat
+}
+
 export type DateTimeFilter<$PrismaModel = never> = {
   equals?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel>
   in?: Date[] | string[] | Prisma.ListDateTimeFieldRefInput<$PrismaModel>
@@ -132,6 +139,16 @@ export type BoolWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedBoolFilter<$PrismaModel>
   _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
+export type EnumBlogMirrorFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BlogMirrorFormat | Prisma.EnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBlogMirrorFormatWithAggregatesFilter<$PrismaModel> | $Enums.BlogMirrorFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel>
 }
 
 export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -382,6 +399,13 @@ export type NestedBoolFilter<$PrismaModel = never> = {
   not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
 }
 
+export type NestedEnumBlogMirrorFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.BlogMirrorFormat | Prisma.EnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel> | $Enums.BlogMirrorFormat
+}
+
 export type NestedDateTimeFilter<$PrismaModel = never> = {
   equals?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel>
   in?: Date[] | string[] | Prisma.ListDateTimeFieldRefInput<$PrismaModel>
@@ -469,6 +493,16 @@ export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedBoolFilter<$PrismaModel>
   _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
+export type NestedEnumBlogMirrorFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BlogMirrorFormat | Prisma.EnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BlogMirrorFormat[] | Prisma.ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBlogMirrorFormatWithAggregatesFilter<$PrismaModel> | $Enums.BlogMirrorFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBlogMirrorFormatFilter<$PrismaModel>
 }
 
 export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {

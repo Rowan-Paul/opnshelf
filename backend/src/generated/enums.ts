@@ -9,6 +9,14 @@
 * 🟢 You can import this file directly.
 */
 
+export const BlogMirrorFormat = {
+  markdown: 'markdown',
+  leaflet: 'leaflet'
+} as const
+
+export type BlogMirrorFormat = (typeof BlogMirrorFormat)[keyof typeof BlogMirrorFormat]
+
+
 export const MediaType = {
   movie: 'movie',
   show: 'show',

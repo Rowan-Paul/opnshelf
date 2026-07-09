@@ -247,12 +247,29 @@ function SettingsPage() {
 
 	// The currently-stored target URI (null = no blog mirror).
 	const storedPublicationUri = userSettings?.reviewsPublicationUri ?? null;
+	const storedMirrorFormat = userSettings?.reviewsMirrorFormat ?? "markdown";
+	const selectedPublication = myPublications?.items.find(
+		(pub) => pub.uri === storedPublicationUri,
+	);
+	const suggestedMirrorFormat = selectedPublication?.url?.includes(
+		"leaflet.pub",
+	)
+		? "leaflet"
+		: "markdown";
 
 	const handleSelectPublication = (uri: string | null) => {
 		if (uri === storedPublicationUri) {
 			return;
 		}
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
+	};
+
+	const handleSelectMirrorFormat = (
+		reviewsMirrorFormat: "markdown" | "leaflet",
+	) => {
+		if (reviewsMirrorFormat !== storedMirrorFormat) {
+			updateSettingsMutation.mutate({ body: { reviewsMirrorFormat } });
+		}
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -504,6 +521,62 @@ function SettingsPage() {
 								</label>
 							))}
 						</fieldset>
+					)}
+
+					{storedPublicationUri !== null && (
+						<div className="mt-6 border-(--border) border-t pt-5">
+							<h3 className="font-medium text-sm">Reader format</h3>
+							<p className="mt-1 text-(--foreground-muted) text-sm">
+								Choose which reader should receive the rich mirror body. This
+								setting is explicit; publication detection is only a suggestion.
+							</p>
+							<fieldset
+								className="mt-3 space-y-2"
+								disabled={updateSettingsMutation.isPending}
+							>
+								<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
+									<div className="flex items-center gap-3">
+										<input
+											type="radio"
+											name="reviews-reader-format"
+											className="size-4 accent-(--accent)"
+											checked={storedMirrorFormat === "markdown"}
+											onChange={() => handleSelectMirrorFormat("markdown")}
+										/>
+										<div>
+											<p className="font-medium text-sm">Standard Markdown</p>
+											<p className="text-(--foreground-muted) text-xs">
+												Portable format for standard.site readers
+											</p>
+										</div>
+									</div>
+								</label>
+								<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
+									<div className="flex items-center gap-3">
+										<input
+											type="radio"
+											name="reviews-reader-format"
+											className="size-4 accent-(--accent)"
+											checked={storedMirrorFormat === "leaflet"}
+											onChange={() => handleSelectMirrorFormat("leaflet")}
+										/>
+										<div>
+											<p className="font-medium text-sm">
+												Leaflet
+												{suggestedMirrorFormat === "leaflet" && " · Suggested"}
+											</p>
+											<p className="text-(--foreground-muted) text-xs">
+												Leaflet-native blocks and rich text
+											</p>
+										</div>
+									</div>
+								</label>
+							</fieldset>
+							<p className="mt-3 text-(--foreground-muted) text-xs">
+								Offprint will be offered after its publication-listing behaviour
+								is verified.
+							</p>
+						</div>
 					)}
 				</section>
 

@@ -194,12 +194,29 @@ export default function SettingsScreen() {
 	});
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
+	const storedMirrorFormat = settings?.reviewsMirrorFormat ?? "markdown";
+	const selectedPublication = myPublications?.items.find(
+		(pub) => pub.uri === storedPublicationUri,
+	);
+	const suggestedMirrorFormat = selectedPublication?.url?.includes(
+		"leaflet.pub",
+	)
+		? "leaflet"
+		: "markdown";
 
 	const handleSelectPublication = (uri: string | null) => {
 		if (uri === storedPublicationUri) {
 			return;
 		}
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
+	};
+
+	const handleSelectMirrorFormat = (
+		reviewsMirrorFormat: "markdown" | "leaflet",
+	) => {
+		if (reviewsMirrorFormat !== storedMirrorFormat) {
+			updateSettingsMutation.mutate({ body: { reviewsMirrorFormat } });
+		}
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -528,6 +545,73 @@ export default function SettingsScreen() {
 								})}
 							</View>
 						)}
+
+						{storedPublicationUri !== null ? (
+							<View className="mt-5 gap-3 border-border border-t pt-5">
+								<View className="gap-1">
+									<Text className="font-medium text-foreground text-sm">
+										Reader format
+									</Text>
+									<Text className="text-muted-foreground text-sm">
+										Choose the reader that should receive the rich mirror body.
+									</Text>
+								</View>
+								{[
+									{
+										id: "markdown" as const,
+										title: "Standard Markdown",
+										detail: "Portable format for standard.site readers",
+									},
+									{
+										id: "leaflet" as const,
+										title:
+											suggestedMirrorFormat === "leaflet"
+												? "Leaflet · Suggested"
+												: "Leaflet",
+										detail: "Leaflet-native blocks and rich text",
+									},
+								].map((format) => {
+									const checked = storedMirrorFormat === format.id;
+									return (
+										<Pressable
+											key={format.id}
+											disabled={settingsBusy}
+											onPress={() => handleSelectMirrorFormat(format.id)}
+											className={
+												checked
+													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
+													: "flex-row items-center gap-3 rounded-lg border border-border p-3"
+											}
+											style={{ opacity: settingsBusy ? 0.6 : 1 }}
+										>
+											<View
+												className={
+													checked
+														? "size-5 items-center justify-center rounded-full border-2 border-primary"
+														: "size-5 items-center justify-center rounded-full border-2 border-border"
+												}
+											>
+												{checked ? (
+													<View className="size-2.5 rounded-full bg-primary" />
+												) : null}
+											</View>
+											<View className="flex-1 gap-0.5">
+												<Text className="font-medium text-foreground text-sm">
+													{format.title}
+												</Text>
+												<Text className="text-muted-foreground text-xs">
+													{format.detail}
+												</Text>
+											</View>
+										</Pressable>
+									);
+								})}
+								<Text className="text-muted-foreground text-xs">
+									Offprint will be offered after its publication-listing
+									behaviour is verified.
+								</Text>
+							</View>
+						) : null}
 					</SettingsSection>
 
 					{/* Import history */}

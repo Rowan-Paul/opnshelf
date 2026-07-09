@@ -24,6 +24,12 @@ import type { Main as DocumentRecord } from "../lexicons/site/standard/document.
 import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
 import { PrismaService } from "../prisma/prisma.service";
+import { documentToLeafletContent } from "./mirror/leaflet";
+import {
+	markdownToDocument,
+	type DocumentBlock,
+	type InlineRun,
+} from "./mirror/markdown-to-doc";
 import type {
 	CreateReviewDto,
 	MediaReviewsQueryDto,
@@ -147,6 +153,41 @@ function buildMirrorContentMarkdown(params: {
 		`*[Posted with opnshelf — track what you're watching and share your reviews on the open social web.](${params.mediaUrl})*`,
 	);
 	return blocks.join("\n\n");
+}
+
+function buildLeafletMirrorContent(params: {
+	body: string;
+	mediaTitle: string | null;
+	mediaUrl: string;
+	typeLabel: string;
+}): Record<string, unknown> {
+	const blocks: DocumentBlock[] = [];
+	if (params.mediaTitle) {
+		const header: InlineRun[] = [
+			{ type: "bold", text: params.mediaTitle },
+			{ type: "text", text: ` · ${params.typeLabel}` },
+		];
+		// The title is a single, generous link target; the poster is intentionally
+		// omitted until we have a blob-upload path for remote TMDB artwork.
+		header.splice(0, 1, {
+			type: "link",
+			text: params.mediaTitle,
+			href: params.mediaUrl,
+		});
+		blocks.push({ type: "paragraph", runs: header });
+	}
+	blocks.push(...markdownToDocument(params.body));
+	blocks.push({
+		type: "paragraph",
+		runs: [
+			{
+				type: "link",
+				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
+				href: params.mediaUrl,
+			},
+		],
+	});
+	return documentToLeafletContent(blocks);
 }
 
 @Injectable()
@@ -545,6 +586,8 @@ export class ReviewsService {
 		body: string;
 		/** Framed markdown (media header + body + backlink) — the rendered content. */
 		contentMarkdown: string;
+		/** Reader-specific rich body, or Markdown content for portable mirrors. */
+		content?: DocumentRecord["content"];
 		mediaType: MediaType;
 		mediaId: string;
 		seasonNumber?: number;
@@ -556,10 +599,12 @@ export class ReviewsService {
 		// Preview text stays about the review itself, not the media header/backlink.
 		const plain = toPlainText(params.body);
 
-		const content: DocumentRecord["content"] = markdownDef.build({
-			text: { markdown: params.contentMarkdown },
-			flavor: "gfm",
-		});
+		const content: DocumentRecord["content"] =
+			params.content ??
+			markdownDef.build({
+				text: { markdown: params.contentMarkdown },
+				flavor: "gfm",
+			});
 
 		const links: DocumentRecord["links"] = mediaLinkDef.build({
 			mediaType: params.mediaType,
@@ -616,7 +661,7 @@ export class ReviewsService {
 	}> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
-			select: { reviewsPublicationUri: true },
+			select: { reviewsPublicationUri: true, reviewsMirrorFormat: true },
 		});
 		// Opted out per-review, or no blog configured: ensure no mirror exists.
 		const publicationUri = review.mirrorToBlog
@@ -659,12 +704,22 @@ export class ReviewsService {
 				mediaUrl,
 				typeLabel: MEDIA_TYPE_LABEL[mediaType],
 			});
+			const content =
+				user?.reviewsMirrorFormat === "leaflet"
+					? (buildLeafletMirrorContent({
+							body: review.markdown,
+							mediaTitle,
+							mediaUrl,
+							typeLabel: MEDIA_TYPE_LABEL[mediaType],
+						}) as DocumentRecord["content"])
+					: undefined;
 
 			const record = this.buildDocumentRecord({
 				publicationUri,
 				title: review.title,
 				body: review.markdown,
 				contentMarkdown,
+				content,
 				mediaType,
 				mediaId: review.mediaId,
 				seasonNumber,

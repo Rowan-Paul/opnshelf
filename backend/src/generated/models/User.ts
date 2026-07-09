@@ -50,6 +50,7 @@ export type UserMinAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,6 +81,7 @@ export type UserMaxAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -110,6 +112,7 @@ export type UserCountAggregateOutputType = {
   showTangledOnProfile: number
   reviewsPublicationUri: number
   reviewsPublicationName: number
+  reviewsMirrorFormat: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -142,6 +145,7 @@ export type UserMinAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -172,6 +176,7 @@ export type UserMaxAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -202,6 +207,7 @@ export type UserCountAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -305,6 +311,7 @@ export type UserGroupByOutputType = {
   showTangledOnProfile: boolean
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  reviewsMirrorFormat: $Enums.BlogMirrorFormat
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -356,6 +363,7 @@ export type UserWhereInput = {
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -399,6 +407,7 @@ export type UserOrderByWithRelationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
@@ -445,6 +454,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
@@ -488,6 +498,7 @@ export type UserOrderByWithAggregationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -524,6 +535,7 @@ export type UserScalarWhereWithAggregatesInput = {
   showTangledOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatWithAggregatesFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -554,6 +566,7 @@ export type UserCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -597,6 +610,7 @@ export type UserUncheckedCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -640,6 +654,7 @@ export type UserUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -683,6 +698,7 @@ export type UserUncheckedUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -726,6 +742,7 @@ export type UserCreateManyInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -756,6 +773,7 @@ export type UserUpdateManyMutationInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -786,6 +804,7 @@ export type UserUncheckedUpdateManyInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -816,6 +835,7 @@ export type UserCountOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -846,6 +866,7 @@ export type UserMaxOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -876,6 +897,7 @@ export type UserMinOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -899,6 +921,10 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type EnumBlogMirrorFormatFieldUpdateOperationsInput = {
+  set?: $Enums.BlogMirrorFormat
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -1113,6 +1139,7 @@ export type UserCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1155,6 +1182,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1202,6 +1230,7 @@ export type UserCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1244,6 +1273,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1302,6 +1332,7 @@ export type UserUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1344,6 +1375,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1397,6 +1429,7 @@ export type UserUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1439,6 +1472,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1481,6 +1515,7 @@ export type UserCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1523,6 +1558,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1581,6 +1617,7 @@ export type UserUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1623,6 +1660,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -1665,6 +1703,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -1707,6 +1746,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -1765,6 +1805,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -1807,6 +1848,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -1849,6 +1891,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -1891,6 +1934,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -1949,6 +1993,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -1991,6 +2036,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2033,6 +2079,7 @@ export type UserCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2075,6 +2122,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2133,6 +2181,7 @@ export type UserUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2175,6 +2224,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2217,6 +2267,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2259,6 +2310,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2317,6 +2369,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2359,6 +2412,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2401,6 +2455,7 @@ export type UserCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2443,6 +2498,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2501,6 +2557,7 @@ export type UserUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2543,6 +2600,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2585,6 +2643,7 @@ export type UserCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2627,6 +2686,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2685,6 +2745,7 @@ export type UserUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2727,6 +2788,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2769,6 +2831,7 @@ export type UserCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2811,6 +2874,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -2869,6 +2933,7 @@ export type UserUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -2911,6 +2976,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -2953,6 +3019,7 @@ export type UserCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -2995,6 +3062,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -3053,6 +3121,7 @@ export type UserUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -3095,6 +3164,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -3137,6 +3207,7 @@ export type UserCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -3179,6 +3250,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -3237,6 +3309,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -3279,6 +3352,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -3321,6 +3395,7 @@ export type UserCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
@@ -3363,6 +3438,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
@@ -3421,6 +3497,7 @@ export type UserUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
@@ -3463,6 +3540,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
@@ -3644,6 +3722,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
@@ -3688,6 +3767,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -3718,6 +3798,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -3748,11 +3829,12 @@ export type UserSelectScalar = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -3815,6 +3897,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     showTangledOnProfile: boolean
     reviewsPublicationUri: string | null
     reviewsPublicationName: string | null
+    reviewsMirrorFormat: $Enums.BlogMirrorFormat
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -4278,6 +4361,7 @@ export interface UserFieldRefs {
   readonly showTangledOnProfile: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsPublicationUri: Prisma.FieldRef<"User", 'String'>
   readonly reviewsPublicationName: Prisma.FieldRef<"User", 'String'>
+  readonly reviewsMirrorFormat: Prisma.FieldRef<"User", 'BlogMirrorFormat'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

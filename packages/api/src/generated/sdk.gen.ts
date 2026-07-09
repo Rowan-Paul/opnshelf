@@ -603,7 +603,7 @@ export const reviewsControllerGetUserReviews = <ThrowOnError extends boolean = f
 export const reviewsControllerGetMediaReviews = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetMediaReviewsData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetMediaReviewsResponses, unknown, ThrowOnError>({ url: '/reviews/media', ...options });
 
 /**
- * Resolve the canonical public review page for @handle/segment
+ * Resolve the canonical public review page for {handle}/{rkey}
  */
 export const reviewsControllerGetCanonicalReview = <ThrowOnError extends boolean = false>(options: Options<ReviewsControllerGetCanonicalReviewData, ThrowOnError>) => (options.client ?? client).get<ReviewsControllerGetCanonicalReviewResponses, unknown, ThrowOnError>({ url: '/reviews/canonical/{handle}/{rkey}', ...options });
 

@@ -45,6 +45,16 @@ export class UpdateUserSettingsDto {
 	@IsOptional()
 	@ValidateIf((_, value) => value !== null)
 	reviewsPublicationUri?: string | null;
+
+	@ApiPropertyOptional({
+		description:
+			"Explicit reader format for blog mirrors. Markdown is the portable default.",
+		enum: ["markdown", "leaflet"],
+	})
+	@IsString()
+	@IsOptional()
+	@IsIn(["markdown", "leaflet"])
+	reviewsMirrorFormat?: string;
 }
 
 export class DeleteUserAccountDto {
@@ -115,6 +125,13 @@ export class UserSettingsDto {
 		type: String,
 	})
 	reviewsPublicationName!: string | null;
+
+	@ApiProperty({
+		description:
+			"Explicit reader format used for blog mirrors; Markdown is the portable default",
+		enum: ["markdown", "leaflet"],
+	})
+	reviewsMirrorFormat!: string;
 }
 
 export class UpdateUserProfileDto {

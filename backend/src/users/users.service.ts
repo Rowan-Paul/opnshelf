@@ -5,7 +5,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
-import { Prisma } from "../generated/client";
+import { Prisma, type BlogMirrorFormat } from "../generated/client";
 import { ListsService } from "../lists/lists.service";
 import { ReviewsService } from "../reviews/reviews.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -63,6 +63,7 @@ export class UsersService {
 				watchCountry: true,
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
+				reviewsMirrorFormat: true,
 			},
 		});
 
@@ -76,6 +77,7 @@ export class UsersService {
 			watchCountry: user.watchCountry,
 			reviewsPublicationUri: user.reviewsPublicationUri,
 			reviewsPublicationName: user.reviewsPublicationName,
+			reviewsMirrorFormat: user.reviewsMirrorFormat,
 		};
 	}
 
@@ -138,6 +140,9 @@ export class UsersService {
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
 				}),
+				...(dto.reviewsMirrorFormat !== undefined && {
+					reviewsMirrorFormat: dto.reviewsMirrorFormat as BlogMirrorFormat,
+				}),
 				...reviewsPublicationPatch,
 			},
 			select: {
@@ -146,13 +151,19 @@ export class UsersService {
 				watchCountry: true,
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
+				reviewsMirrorFormat: true,
 			},
 		});
 
-		// Selecting a blog backfills the mirror so reviews written before enabling
-		// it also appear there (ADR-0013). Best-effort — a mirror hiccup must not
-		// fail the settings save. `session` is guaranteed here (checked above).
-		if (reviewsPublicationPatch.reviewsPublicationUri && session) {
+		// Selecting a blog or changing its reader format backfills existing mirrors
+		// so they converge on the saved explicit choice (ADR-0013/0014).
+		// Best-effort — a mirror hiccup must not fail the settings save.
+		if (
+			updatedUser.reviewsPublicationUri &&
+			(reviewsPublicationPatch.reviewsPublicationUri ||
+				dto.reviewsMirrorFormat !== undefined) &&
+			session
+		) {
 			try {
 				await this.reviewsService.backfillBlogMirror(did, session);
 			} catch (error) {
@@ -169,6 +180,7 @@ export class UsersService {
 			watchCountry: updatedUser.watchCountry,
 			reviewsPublicationUri: updatedUser.reviewsPublicationUri,
 			reviewsPublicationName: updatedUser.reviewsPublicationName,
+			reviewsMirrorFormat: updatedUser.reviewsMirrorFormat,
 		};
 	}
 

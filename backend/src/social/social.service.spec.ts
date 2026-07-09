@@ -494,6 +494,9 @@ describe("SocialService", () => {
 			movieId: "movie-1",
 			title: "Past Lives",
 		});
+		const sql = getSqlText(getQueryRawMock(prisma).mock.calls[0][0]);
+		expect(sql).toContain('r.markdown AS "reviewContent"');
+		expect(sql).not.toContain('r."textContent"');
 	});
 
 	it("returns an empty watcher summary when the viewer follows nobody", async () => {

@@ -2118,6 +2118,7 @@ export const UserScalarFieldEnum = {
   showTangledOnProfile: 'showTangledOnProfile',
   reviewsPublicationUri: 'reviewsPublicationUri',
   reviewsPublicationName: 'reviewsPublicationName',
+  reviewsMirrorFormat: 'reviewsMirrorFormat',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2546,6 +2547,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'BlogMirrorFormat'
+ */
+export type EnumBlogMirrorFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlogMirrorFormat'>
+
+
+
+/**
+ * Reference to a field of type 'BlogMirrorFormat[]'
+ */
+export type ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlogMirrorFormat[]'>
+
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -2808,4 +2823,3 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
-

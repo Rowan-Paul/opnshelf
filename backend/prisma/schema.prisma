@@ -42,6 +42,9 @@ model User {
   showTangledOnProfile Boolean @default(true)
   reviewsPublicationUri String?
   reviewsPublicationName String?
+  // The explicitly confirmed reader format for blog mirrors. This remains
+  // markdown until a user selects a supported reader-specific format.
+  reviewsMirrorFormat BlogMirrorFormat @default(markdown)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -61,6 +64,14 @@ model User {
 
   @@index([handle])
   @@index([profileAvatarCid])
+}
+
+// Format emitted for a user's site.standard.document blog mirrors.
+// The selected value is authoritative; publication inspection can only suggest
+// a value in the settings UI (ADR-0014).
+enum BlogMirrorFormat {
+  markdown
+  leaflet
 }
 
 model Follow {

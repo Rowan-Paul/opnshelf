@@ -2033,7 +2033,7 @@ export const reviewsControllerGetMediaReviewsInfiniteOptions = (options: Options
 export const reviewsControllerGetCanonicalReviewQueryKey = (options: Options<ReviewsControllerGetCanonicalReviewData>) => createQueryKey('reviewsControllerGetCanonicalReview', options);
 
 /**
- * Resolve the canonical public review page for @handle/segment
+ * Resolve the canonical public review page for {handle}/{rkey}
  */
 export const reviewsControllerGetCanonicalReviewOptions = (options: Options<ReviewsControllerGetCanonicalReviewData>) => queryOptions<ReviewsControllerGetCanonicalReviewResponse, DefaultError, ReviewsControllerGetCanonicalReviewResponse, ReturnType<typeof reviewsControllerGetCanonicalReviewQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
