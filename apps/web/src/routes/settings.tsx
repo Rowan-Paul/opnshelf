@@ -247,32 +247,29 @@ function SettingsPage() {
 
 	// The currently-stored target URI (null = no blog mirror).
 	const storedPublicationUri = userSettings?.reviewsPublicationUri ?? null;
-	const storedMirrorFormat = userSettings?.reviewsMirrorFormat ?? "markdown";
-	const [isChoosingPublication, setIsChoosingPublication] = useState(false);
-	const selectedPublication = myPublications?.items.find(
-		(pub) => pub.uri === storedPublicationUri,
-	);
-	const suggestedMirrorFormat = selectedPublication?.url?.includes(
-		"leaflet.pub",
-	)
+	const [pendingPublication, setPendingPublication] = useState<{
+		uri: string;
+		name: string;
+		url: string;
+	} | null>(null);
+	const pendingService = pendingPublication?.url.includes("leaflet.pub")
 		? "leaflet"
-		: "markdown";
+		: "unknown";
 
 	const handleSelectPublication = (uri: string | null) => {
-		if (uri === storedPublicationUri) {
-			setIsChoosingPublication(false);
-			return;
-		}
-		setIsChoosingPublication(false);
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
 	};
 
-	const handleSelectMirrorFormat = (
-		reviewsMirrorFormat: "markdown" | "leaflet",
-	) => {
-		if (reviewsMirrorFormat !== storedMirrorFormat) {
-			updateSettingsMutation.mutate({ body: { reviewsMirrorFormat } });
-		}
+	const confirmPublicationService = () => {
+		if (!pendingPublication) return;
+		updateSettingsMutation.mutate({
+			body: {
+				reviewsPublicationUri: pendingPublication.uri,
+				reviewsMirrorFormat:
+					pendingService === "leaflet" ? "leaflet" : "markdown",
+			},
+		});
+		setPendingPublication(null);
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -479,7 +476,7 @@ function SettingsPage() {
 						<p className="text-(--foreground-muted) text-sm">
 							Could not load your publications right now.
 						</p>
-					) : isChoosingPublication || storedPublicationUri === null ? (
+					) : (
 						<fieldset
 							className="space-y-2"
 							disabled={updateSettingsMutation.isPending}
@@ -512,7 +509,13 @@ function SettingsPage() {
 											name="reviews-publication"
 											className="size-4 accent-(--accent)"
 											checked={storedPublicationUri === pub.uri}
-											onChange={() => handleSelectPublication(pub.uri)}
+											onChange={() =>
+												setPendingPublication({
+													uri: pub.uri,
+													name: pub.name,
+													url: pub.url,
+												})
+											}
 										/>
 										<div>
 											<p className="font-medium text-sm">{pub.name}</p>
@@ -524,62 +527,41 @@ function SettingsPage() {
 								</label>
 							))}
 						</fieldset>
-					) : selectedPublication ? (
-						<div className="rounded-xl border border-(--accent) bg-(--accent-subtle) p-4">
-							<div className="flex items-start justify-between gap-4">
-								<div>
-									<p className="font-medium text-sm">
-										{selectedPublication.name}
-									</p>
-									<p className="mt-0.5 text-(--foreground-muted) text-xs">
-										{selectedPublication.url}
-									</p>
-								</div>
-								<button
-									type="button"
-									onClick={() => setIsChoosingPublication(true)}
-									className="shrink-0 font-medium text-(--accent) text-sm hover:underline"
-								>
-									Change
-								</button>
-							</div>
-						</div>
-					) : null}
-
-					{storedPublicationUri !== null && (
-						<div className="mt-5 border-(--border) border-t pt-5">
-							<div className="rounded-xl border border-(--border) bg-(--background-subtle) p-4">
-								<p className="font-medium text-sm">
-									{storedMirrorFormat === "leaflet"
-										? "Leaflet-native formatting"
-										: "Standard Markdown"}
-								</p>
-								<p className="mt-1 text-(--foreground-muted) text-sm">
-									{storedMirrorFormat === "leaflet"
-										? "New and existing mirrors use rich Leaflet blocks."
-										: "Portable formatting for standard.site readers."}
-								</p>
-								{storedMirrorFormat === "leaflet" ? (
-									<button
-										type="button"
-										onClick={() => handleSelectMirrorFormat("markdown")}
-										className="mt-3 font-medium text-(--accent) text-sm hover:underline"
-									>
-										Use standard Markdown instead
-									</button>
-								) : suggestedMirrorFormat === "leaflet" ? (
-									<button
-										type="button"
-										onClick={() => handleSelectMirrorFormat("leaflet")}
-										className="mt-3 font-medium text-(--accent) text-sm hover:underline"
-									>
-										Use suggested Leaflet formatting
-									</button>
-								) : null}
-							</div>
-						</div>
 					)}
 				</section>
+
+				<Dialog
+					open={pendingPublication !== null}
+					onOpenChange={(open) => !open && setPendingPublication(null)}
+				>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>
+								{pendingService === "leaflet"
+									? "Is this a Leaflet publication?"
+									: "Which service runs this publication?"}
+							</DialogTitle>
+							<DialogDescription>
+								{pendingService === "leaflet"
+									? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
+									: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
+							</DialogDescription>
+						</DialogHeader>
+						<div className="flex justify-end gap-3">
+							<Button
+								variant="outline"
+								onClick={() => setPendingPublication(null)}
+							>
+								Cancel
+							</Button>
+							<Button onClick={confirmPublicationService}>
+								{pendingService === "leaflet"
+									? "Yes, this is Leaflet"
+									: "Continue"}
+							</Button>
+						</div>
+					</DialogContent>
+				</Dialog>
 
 				{/* Account */}
 				<section className="card p-6">

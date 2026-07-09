@@ -194,32 +194,38 @@ export default function SettingsScreen() {
 	});
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
-	const storedMirrorFormat = settings?.reviewsMirrorFormat ?? "markdown";
-	const [isChoosingPublication, setIsChoosingPublication] = useState(false);
-	const selectedPublication = myPublications?.items.find(
-		(pub) => pub.uri === storedPublicationUri,
-	);
-	const suggestedMirrorFormat = selectedPublication?.url?.includes(
-		"leaflet.pub",
-	)
-		? "leaflet"
-		: "markdown";
 
 	const handleSelectPublication = (uri: string | null) => {
-		if (uri === storedPublicationUri) {
-			setIsChoosingPublication(false);
-			return;
-		}
-		setIsChoosingPublication(false);
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
 	};
 
-	const handleSelectMirrorFormat = (
-		reviewsMirrorFormat: "markdown" | "leaflet",
-	) => {
-		if (reviewsMirrorFormat !== storedMirrorFormat) {
-			updateSettingsMutation.mutate({ body: { reviewsMirrorFormat } });
-		}
+	const confirmPublicationService = (publication: {
+		uri: string;
+		name: string;
+		url: string;
+	}) => {
+		const isLeaflet = publication.url.includes("leaflet.pub");
+		Alert.alert(
+			isLeaflet
+				? "Is this a Leaflet publication?"
+				: "Which service runs this publication?",
+			isLeaflet
+				? `We recognised ${publication.name} as Leaflet. Confirm to mirror your reviews there.`
+				: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected.",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: isLeaflet ? "Yes, this is Leaflet" : "Continue",
+					onPress: () =>
+						updateSettingsMutation.mutate({
+							body: {
+								reviewsPublicationUri: publication.uri,
+								reviewsMirrorFormat: isLeaflet ? "leaflet" : "markdown",
+							},
+						}),
+				},
+			],
+		);
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -470,7 +476,7 @@ export default function SettingsScreen() {
 							<Text className="text-muted-foreground text-sm">
 								Could not load your publications right now.
 							</Text>
-						) : isChoosingPublication || storedPublicationUri === null ? (
+						) : (
 							<View className="gap-2">
 								{/* "None" — don't mirror to a blog. */}
 								{(() => {
@@ -510,7 +516,7 @@ export default function SettingsScreen() {
 										<Pressable
 											key={pub.uri}
 											disabled={settingsBusy}
-											onPress={() => handleSelectPublication(pub.uri)}
+											onPress={() => confirmPublicationService(pub)}
 											className={
 												checked
 													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
@@ -547,62 +553,7 @@ export default function SettingsScreen() {
 									);
 								})}
 							</View>
-						) : selectedPublication ? (
-							<View className="flex-row items-start justify-between rounded-xl border border-primary bg-primary/10 p-4">
-								<View className="flex-1 gap-0.5 pr-4">
-									<Text className="font-medium text-foreground text-sm">
-										{selectedPublication.name}
-									</Text>
-									<Text
-										className="text-muted-foreground text-xs"
-										numberOfLines={1}
-									>
-										{selectedPublication.url}
-									</Text>
-								</View>
-								<Pressable onPress={() => setIsChoosingPublication(true)}>
-									<Text className="font-medium text-primary text-sm">
-										Change
-									</Text>
-								</Pressable>
-							</View>
-						) : null}
-
-						{storedPublicationUri !== null ? (
-							<View className="mt-5 gap-3 border-border border-t pt-5">
-								<View className="gap-1 rounded-xl border border-border bg-muted/30 p-4">
-									<Text className="font-medium text-foreground text-sm">
-										{storedMirrorFormat === "leaflet"
-											? "Leaflet-native formatting"
-											: "Standard Markdown"}
-									</Text>
-									<Text className="text-muted-foreground text-sm">
-										{storedMirrorFormat === "leaflet"
-											? "New and existing mirrors use rich Leaflet blocks."
-											: "Portable formatting for standard.site readers."}
-									</Text>
-									{storedMirrorFormat === "leaflet" ? (
-										<Pressable
-											disabled={settingsBusy}
-											onPress={() => handleSelectMirrorFormat("markdown")}
-										>
-											<Text className="mt-2 font-medium text-primary text-sm">
-												Use standard Markdown instead
-											</Text>
-										</Pressable>
-									) : suggestedMirrorFormat === "leaflet" ? (
-										<Pressable
-											disabled={settingsBusy}
-											onPress={() => handleSelectMirrorFormat("leaflet")}
-										>
-											<Text className="mt-2 font-medium text-primary text-sm">
-												Use suggested Leaflet formatting
-											</Text>
-										</Pressable>
-									) : null}
-								</View>
-							</View>
-						) : null}
+						)}
 					</SettingsSection>
 
 					{/* Import history */}
