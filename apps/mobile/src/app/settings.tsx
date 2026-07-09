@@ -222,6 +222,16 @@ export default function SettingsScreen() {
 							}),
 					},
 					{
+						text: "Offprint",
+						onPress: () =>
+							updateSettingsMutation.mutate({
+								body: {
+									reviewsPublicationUri: publication.uri,
+									reviewsMirrorFormat: "offprint",
+								},
+							}),
+					},
+					{
 						text: "Other or unknown",
 						onPress: () =>
 							updateSettingsMutation.mutate({

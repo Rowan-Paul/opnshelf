@@ -261,14 +261,14 @@ function SettingsPage() {
 		url: string;
 	} | null>(null);
 	const [leafletRejected, setLeafletRejected] = useState(false);
-	const [fallbackService, setFallbackService] = useState<"leaflet" | "unknown">(
-		"unknown",
-	);
+	const [fallbackService, setFallbackService] = useState<
+		"leaflet" | "offprint" | "unknown"
+	>("unknown");
 	const pendingService =
 		(pendingPublication?.url.includes("leaflet.pub") && !leafletRejected) ||
 		fallbackService === "leaflet"
 			? "leaflet"
-			: "unknown";
+			: fallbackService;
 	const requiresServiceChoice =
 		leafletRejected ||
 		(pendingPublication !== null &&
@@ -284,7 +284,11 @@ function SettingsPage() {
 			body: {
 				reviewsPublicationUri: pendingPublication.uri,
 				reviewsMirrorFormat:
-					pendingService === "leaflet" ? "leaflet" : "markdown",
+					pendingService === "leaflet"
+						? "leaflet"
+						: pendingService === "offprint"
+							? "offprint"
+							: "markdown",
 			},
 		});
 		setPendingPublication(null);
@@ -585,7 +589,9 @@ function SettingsPage() {
 								<Select
 									value={fallbackService}
 									onValueChange={(value) =>
-										setFallbackService(value as "leaflet" | "unknown")
+										setFallbackService(
+											value as "leaflet" | "offprint" | "unknown",
+										)
 									}
 								>
 									<SelectTrigger className="w-full">
@@ -594,6 +600,7 @@ function SettingsPage() {
 									<SelectContent>
 										<SelectGroup>
 											<SelectItem value="leaflet">Leaflet</SelectItem>
+											<SelectItem value="offprint">Offprint</SelectItem>
 											<SelectItem value="unknown">Other or unknown</SelectItem>
 										</SelectGroup>
 									</SelectContent>

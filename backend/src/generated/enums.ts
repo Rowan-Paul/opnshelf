@@ -11,7 +11,8 @@
 
 export const BlogMirrorFormat = {
   markdown: 'markdown',
-  leaflet: 'leaflet'
+  leaflet: 'leaflet',
+  offprint: 'offprint'
 } as const
 
 export type BlogMirrorFormat = (typeof BlogMirrorFormat)[keyof typeof BlogMirrorFormat]

@@ -708,7 +708,7 @@ export type UserSettingsDto = {
     /**
      * Explicit reader format used for blog mirrors; Markdown is the portable default
      */
-    reviewsMirrorFormat: 'markdown' | 'leaflet';
+    reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint';
 };
 
 export type UpdateUserSettingsDto = {
@@ -731,7 +731,7 @@ export type UpdateUserSettingsDto = {
     /**
      * Explicit reader format for blog mirrors. Markdown is the portable default.
      */
-    reviewsMirrorFormat?: 'markdown' | 'leaflet';
+    reviewsMirrorFormat?: 'markdown' | 'leaflet' | 'offprint';
 };
 
 export type UpdateUserProfileDto = {

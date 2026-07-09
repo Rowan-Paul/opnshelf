@@ -25,6 +25,7 @@ import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publi
 import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
 import { PrismaService } from "../prisma/prisma.service";
 import { documentToLeafletContent } from "./mirror/leaflet";
+import { documentToOffprintContent } from "./mirror/offprint";
 import {
 	markdownToDocument,
 	type DocumentBlock,
@@ -44,6 +45,7 @@ export interface ATSession {
 const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
 
 const PUBLICATION_LIST_LIMIT = 100;
+const OFFPRINT_ARTICLE_COLLECTION = "app.offprint.document.article";
 
 type MediaType = "movie" | "show" | "season" | "episode";
 
@@ -188,6 +190,36 @@ function buildLeafletMirrorContent(params: {
 		],
 	});
 	return documentToLeafletContent(blocks);
+}
+
+function buildOffprintMirrorContent(params: {
+	body: string;
+	mediaTitle: string | null;
+	mediaUrl: string;
+	typeLabel: string;
+}): Record<string, unknown> {
+	const blocks: DocumentBlock[] = [];
+	if (params.mediaTitle) {
+		blocks.push({
+			type: "paragraph",
+			runs: [
+				{ type: "link", text: params.mediaTitle, href: params.mediaUrl },
+				{ type: "text", text: ` · ${params.typeLabel}` },
+			],
+		});
+	}
+	blocks.push(...markdownToDocument(params.body));
+	blocks.push({
+		type: "paragraph",
+		runs: [
+			{
+				type: "link",
+				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
+				href: params.mediaUrl,
+			},
+		],
+	});
+	return documentToOffprintContent(blocks);
 }
 
 @Injectable()
@@ -676,6 +708,15 @@ export class ReviewsService {
 						collection: DOCUMENT_COLLECTION,
 						rkey: review.rkey,
 					});
+					// A missing native article is harmless; the standard document is the
+					// durable pointer we track locally.
+					await agent.com.atproto.repo
+						.deleteRecord({
+							repo: userDid,
+							collection: OFFPRINT_ARTICLE_COLLECTION,
+							rkey: review.rkey,
+						})
+						.catch(() => undefined);
 				}
 				return { blogDocumentUri: null, blogDocumentCid: null };
 			}
@@ -712,7 +753,14 @@ export class ReviewsService {
 							mediaUrl,
 							typeLabel: MEDIA_TYPE_LABEL[mediaType],
 						}) as DocumentRecord["content"])
-					: undefined;
+					: user?.reviewsMirrorFormat === "offprint"
+						? (buildOffprintMirrorContent({
+								body: review.markdown,
+								mediaTitle,
+								mediaUrl,
+								typeLabel: MEDIA_TYPE_LABEL[mediaType],
+							}) as DocumentRecord["content"])
+						: undefined;
 
 			const record = this.buildDocumentRecord({
 				publicationUri,
@@ -738,6 +786,22 @@ export class ReviewsService {
 				record,
 				validate: false,
 			});
+			if (user?.reviewsMirrorFormat === "offprint") {
+				await agent.com.atproto.repo.putRecord({
+					repo: userDid,
+					collection: OFFPRINT_ARTICLE_COLLECTION,
+					rkey: review.rkey,
+					record: {
+						$type: OFFPRINT_ARTICLE_COLLECTION,
+						document: {
+							$type: "com.atproto.repo.strongRef",
+							uri: response.data.uri,
+							cid: response.data.cid,
+						},
+					},
+					validate: false,
+				});
+			}
 
 			return {
 				blogDocumentUri: response.data.uri,
