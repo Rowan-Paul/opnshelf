@@ -252,9 +252,11 @@ function SettingsPage() {
 		name: string;
 		url: string;
 	} | null>(null);
-	const pendingService = pendingPublication?.url.includes("leaflet.pub")
-		? "leaflet"
-		: "unknown";
+	const [leafletRejected, setLeafletRejected] = useState(false);
+	const pendingService =
+		pendingPublication?.url.includes("leaflet.pub") && !leafletRejected
+			? "leaflet"
+			: "unknown";
 
 	const handleSelectPublication = (uri: string | null) => {
 		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
@@ -270,6 +272,7 @@ function SettingsPage() {
 			},
 		});
 		setPendingPublication(null);
+		setLeafletRejected(false);
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -509,13 +512,14 @@ function SettingsPage() {
 											name="reviews-publication"
 											className="size-4 accent-(--accent)"
 											checked={storedPublicationUri === pub.uri}
-											onChange={() =>
+											onChange={() => {
 												setPendingPublication({
 													uri: pub.uri,
 													name: pub.name,
 													url: pub.url,
-												})
-											}
+												});
+												setLeafletRejected(false);
+											}}
 										/>
 										<div>
 											<p className="font-medium text-sm">{pub.name}</p>
@@ -532,7 +536,12 @@ function SettingsPage() {
 
 				<Dialog
 					open={pendingPublication !== null}
-					onOpenChange={(open) => !open && setPendingPublication(null)}
+					onOpenChange={(open) => {
+						if (!open) {
+							setPendingPublication(null);
+							setLeafletRejected(false);
+						}
+					}}
 				>
 					<DialogContent>
 						<DialogHeader>
@@ -550,10 +559,21 @@ function SettingsPage() {
 						<div className="flex justify-end gap-3">
 							<Button
 								variant="outline"
-								onClick={() => setPendingPublication(null)}
+								onClick={() => {
+									setPendingPublication(null);
+									setLeafletRejected(false);
+								}}
 							>
 								Cancel
 							</Button>
+							{pendingService === "leaflet" && (
+								<Button
+									variant="outline"
+									onClick={() => setLeafletRejected(true)}
+								>
+									No, it isn't Leaflet
+								</Button>
+							)}
 							<Button onClick={confirmPublicationService}>
 								{pendingService === "leaflet"
 									? "Yes, this is Leaflet"

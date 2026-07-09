@@ -205,22 +205,47 @@ export default function SettingsScreen() {
 		url: string;
 	}) => {
 		const isLeaflet = publication.url.includes("leaflet.pub");
+		const continueWithCompatibilityMode = () => {
+			Alert.alert(
+				"Service not recognised",
+				"We'll still mirror your reviews, but they may not display as expected.",
+				[
+					{ text: "Cancel", style: "cancel" },
+					{
+						text: "Continue",
+						onPress: () =>
+							updateSettingsMutation.mutate({
+								body: {
+									reviewsPublicationUri: publication.uri,
+									reviewsMirrorFormat: "markdown",
+								},
+							}),
+					},
+				],
+			);
+		};
+
+		if (!isLeaflet) {
+			continueWithCompatibilityMode();
+			return;
+		}
+
 		Alert.alert(
-			isLeaflet
-				? "Is this a Leaflet publication?"
-				: "Which service runs this publication?",
-			isLeaflet
-				? `We recognised ${publication.name} as Leaflet. Confirm to mirror your reviews there.`
-				: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected.",
+			"Is this a Leaflet publication?",
+			`We recognised ${publication.name} as Leaflet. Confirm to mirror your reviews there.`,
 			[
 				{ text: "Cancel", style: "cancel" },
 				{
-					text: isLeaflet ? "Yes, this is Leaflet" : "Continue",
+					text: "No, it isn't Leaflet",
+					onPress: continueWithCompatibilityMode,
+				},
+				{
+					text: "Yes, this is Leaflet",
 					onPress: () =>
 						updateSettingsMutation.mutate({
 							body: {
 								reviewsPublicationUri: publication.uri,
-								reviewsMirrorFormat: isLeaflet ? "leaflet" : "markdown",
+								reviewsMirrorFormat: "leaflet",
 							},
 						}),
 				},
