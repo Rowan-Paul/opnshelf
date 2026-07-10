@@ -14,6 +14,13 @@ import { Text } from "@/components/ui/text";
  */
 
 const MONO = "Courier";
+// RN can't synthesize weight from the single-face `Inter` family, so `font-bold`
+// / `font-semibold` do nothing. Point bold at the registered bold face instead
+// (see the weighted aliases in _layout.tsx). Same story for italic — the base
+// family has no italic face, so `italic` (fontStyle) is a no-op; use the loaded
+// italic face directly.
+const BOLD = "Inter-Bold";
+const ITALIC = "Inter-Italic";
 
 // Inline tokens, ordered so `**bold**` wins over `*italic*` at the same index.
 const INLINE = new RegExp(
@@ -47,7 +54,11 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 
 		if (bold !== undefined) {
 			nodes.push(
-				<Text key={key} className="font-sans font-semibold text-foreground">
+				<Text
+					key={key}
+					className="text-foreground"
+					style={{ fontFamily: BOLD }}
+				>
 					{bold}
 				</Text>,
 			);
@@ -76,7 +87,11 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 		} else {
 			const italic = italicStar ?? italicUnderscore;
 			nodes.push(
-				<Text key={key} className="font-sans text-foreground italic">
+				<Text
+					key={key}
+					className="text-foreground"
+					style={{ fontFamily: ITALIC }}
+				>
 					{italic}
 				</Text>,
 			);
@@ -90,10 +105,17 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 	return nodes;
 }
 
+// Size + color per level; weight comes from the explicit display face below
+// (the base display family has no bold/semibold face, so `font-bold` is a no-op).
 const HEADING_CLASS: Record<number, string> = {
-	1: "font-display font-bold text-foreground text-xl",
-	2: "font-display font-bold text-foreground text-lg",
-	3: "font-display font-semibold text-foreground text-base",
+	1: "text-foreground text-xl",
+	2: "text-foreground text-lg",
+	3: "text-foreground text-base",
+};
+const HEADING_FAMILY: Record<number, string> = {
+	1: "PlusJakartaSans-Bold",
+	2: "PlusJakartaSans-Bold",
+	3: "PlusJakartaSans-SemiBold",
 };
 
 interface ListItem {
@@ -254,7 +276,11 @@ export function Markdown({ value }: { value: string }) {
 				switch (block.kind) {
 					case "heading":
 						return (
-							<Text key={block.id} className={HEADING_CLASS[block.level]}>
+							<Text
+								key={block.id}
+								className={HEADING_CLASS[block.level]}
+								style={{ fontFamily: HEADING_FAMILY[block.level] }}
+							>
 								{renderInline(block.text, block.id)}
 							</Text>
 						);
@@ -278,7 +304,10 @@ export function Markdown({ value }: { value: string }) {
 								key={block.id}
 								className="border-border-strong border-l-2 pl-3"
 							>
-								<Text className="text-muted-foreground italic leading-6">
+								<Text
+									className="text-muted-foreground leading-6"
+									style={{ fontFamily: ITALIC }}
+								>
 									{renderInline(block.text, block.id)}
 								</Text>
 							</View>

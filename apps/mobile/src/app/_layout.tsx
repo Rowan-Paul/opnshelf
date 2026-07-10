@@ -2,6 +2,7 @@ import "../global.css";
 
 import {
 	Inter_400Regular,
+	Inter_400Regular_Italic,
 	Inter_500Medium,
 	Inter_600SemiBold,
 	Inter_700Bold,
@@ -48,6 +49,7 @@ export default function RootLayout() {
 	// weights, so each weight is its own family.
 	const [fontsLoaded] = useFonts({
 		Inter: Inter_400Regular,
+		"Inter-Italic": Inter_400Regular_Italic,
 		"Inter-Medium": Inter_500Medium,
 		"Inter-SemiBold": Inter_600SemiBold,
 		"Inter-Bold": Inter_700Bold,
