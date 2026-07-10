@@ -375,9 +375,9 @@ function SettingsPage() {
 	}
 
 	return (
-		<div className="container-app max-w-2xl py-8">
+		<div className="container-app max-w-5xl py-8 sm:py-10">
 			{/* Page Header */}
-			<div className="mb-8 flex items-center gap-3">
+			<div className="mb-8 flex items-center gap-3 lg:ml-56">
 				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
 					<Settings className="size-5" />
 				</div>
@@ -389,540 +389,592 @@ function SettingsPage() {
 				</div>
 			</div>
 
-			<div className="space-y-6">
-				{/* Time & Region */}
-				<section className="card p-6">
-					<h2 className="mb-1 font-semibold text-lg">Time & Region</h2>
-					<p className="mb-6 text-(--foreground-muted) text-sm">
-						Choose how dates and times are displayed
-					</p>
+			<div className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-start lg:gap-10">
+				<aside className="sticky top-24 hidden lg:block">
+					<nav aria-label="Settings sections" className="space-y-1">
+						{[
+							["time-region", "Time & Region"],
+							["streaming", "Streaming"],
+							["import-history", "Import history"],
+							["blog-mirror", "Blog mirror"],
+							["account", "Account"],
+							["danger-zone", "Danger Zone"],
+						].map(([id, label]) => (
+							<a
+								key={id}
+								href={`#${id}`}
+								className="block rounded-lg px-3 py-2 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+							>
+								{label}
+							</a>
+						))}
+					</nav>
+				</aside>
 
-					<div className="space-y-5">
-						<div className="space-y-2">
-							<label htmlFor="timezone" className="font-medium text-sm">
-								Timezone
-							</label>
-							<TimezoneSelector
-								value={userSettings?.timezone}
-								onChange={(timezone) =>
-									updateSettingsMutation.mutate({
-										body: { timezone },
-									})
-								}
-								disabled={updateSettingsMutation.isPending}
-							/>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<div>
-								<label htmlFor="time-format" className="font-medium text-sm">
-									24-hour time
-								</label>
-								<p className="text-(--foreground-muted) text-sm">
-									Display times in 24-hour format
-								</p>
-							</div>
-							<Switch
-								id="time-format"
-								checked={userSettings?.timeFormat === "24h"}
-								onCheckedChange={(checked) =>
-									updateSettingsMutation.mutate({
-										body: { timeFormat: checked ? "24h" : "12h" },
-									})
-								}
-								disabled={updateSettingsMutation.isPending}
-							/>
-						</div>
-					</div>
-				</section>
-
-				{/* Streaming */}
-				<section className="card p-6">
-					<h2 className="mb-1 font-semibold text-lg">Streaming</h2>
-					<p className="mb-6 text-(--foreground-muted) text-sm">
-						Choose your country to see where movies and shows are available to
-						watch
-					</p>
-					<div className="space-y-2">
-						<label htmlFor="watch-country" className="font-medium text-sm">
-							Country
-						</label>
-						<CountrySelector
-							value={userSettings?.watchCountry}
-							onChange={(watchCountry) =>
-								updateSettingsMutation.mutate({
-									body: { watchCountry },
-								})
-							}
-							disabled={updateSettingsMutation.isPending}
-						/>
-					</div>
-				</section>
-
-				{/* Import history */}
-				<section className="card p-6">
-					<TraktImport
-						idleShowsInput
-						title="Import history"
-						description="Import your public watch history from Trakt.tv. We add anything you haven't logged yet."
-						titleClassName="font-semibold text-lg"
-					/>
-				</section>
-
-				{/* Reviews publication */}
-				<section className="card p-6">
-					<div className="mb-1 flex items-center gap-2">
-						<BookOpen className="size-5 text-(--accent)" />
-						<h2 className="font-semibold text-lg">Blog mirror</h2>
-					</div>
-					<p className="mb-6 text-(--foreground-muted) text-sm">
-						Your reviews always live on OpnShelf. Optionally, mirror new reviews
-						to one of your own AT Protocol publications as well.
-					</p>
-
-					{storedTargetMissing && (
-						<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-							<AlertTriangle className="mt-0.5 size-4 shrink-0" />
-							<span>
-								Your selected publication is no longer in your PDS. New reviews
-								still point at it, but you may want to choose another below.
-							</span>
-						</div>
-					)}
-
-					{publicationsLoading ? (
-						<div className="flex items-center gap-2 text-(--foreground-muted) text-sm">
-							<Loader2 className="size-4 animate-spin" />
-							Loading your publications…
-						</div>
-					) : publicationsError ? (
-						<p className="text-(--foreground-muted) text-sm">
-							Could not load your publications right now.
-						</p>
-					) : (
-						<fieldset
-							className="space-y-2"
-							disabled={updateSettingsMutation.isPending}
+				<div className="min-w-0 space-y-4">
+					<div className="card overflow-hidden">
+						{/* Time & Region */}
+						<section
+							id="time-region"
+							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
 						>
-							<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
-								<div className="flex items-center gap-3">
-									<input
-										type="radio"
-										name="reviews-publication"
-										className="size-4 accent-(--accent)"
-										checked={storedPublicationUri === null}
-										onChange={() => handleSelectPublication(null)}
+							<h2 className="mb-1 font-semibold text-lg">Time & Region</h2>
+							<p className="mb-6 text-(--foreground-muted) text-sm">
+								Choose how dates and times are displayed
+							</p>
+
+							<div className="max-w-lg space-y-5">
+								<div className="space-y-2">
+									<label htmlFor="timezone" className="font-medium text-sm">
+										Timezone
+									</label>
+									<TimezoneSelector
+										value={userSettings?.timezone}
+										onChange={(timezone) =>
+											updateSettingsMutation.mutate({
+												body: { timezone },
+											})
+										}
+										disabled={updateSettingsMutation.isPending}
 									/>
+								</div>
+
+								<div className="flex items-center justify-between">
 									<div>
-										<p className="font-medium text-sm">None</p>
-										<p className="text-(--foreground-muted) text-xs">
-											Don't mirror reviews to a blog
+										<label
+											htmlFor="time-format"
+											className="font-medium text-sm"
+										>
+											24-hour time
+										</label>
+										<p className="text-(--foreground-muted) text-sm">
+											Display times in 24-hour format
 										</p>
 									</div>
+									<Switch
+										id="time-format"
+										checked={userSettings?.timeFormat === "24h"}
+										onCheckedChange={(checked) =>
+											updateSettingsMutation.mutate({
+												body: { timeFormat: checked ? "24h" : "12h" },
+											})
+										}
+										disabled={updateSettingsMutation.isPending}
+									/>
 								</div>
-							</label>
-							{(myPublications?.items ?? []).map((pub) => (
-								<label
-									key={pub.uri}
-									className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)"
-								>
-									<div className="flex items-center gap-3">
-										<input
-											type="radio"
-											name="reviews-publication"
-											className="size-4 accent-(--accent)"
-											checked={storedPublicationUri === pub.uri}
-											onChange={() => {
-												setPendingPublication({
-													uri: pub.uri,
-													name: pub.name,
-													url: pub.url,
-													service: pub.service,
-												});
-												setLeafletRejected(false);
-												setFallbackService("unknown");
-											}}
-										/>
-										<div>
-											<p className="font-medium text-sm">{pub.name}</p>
-											<p className="text-(--foreground-muted) text-xs">
-												{pub.url}
-											</p>
-										</div>
-									</div>
-								</label>
-							))}
-						</fieldset>
-					)}
-				</section>
-
-				<Dialog
-					open={pendingPublication !== null}
-					onOpenChange={(open) => {
-						if (!open) {
-							setPendingPublication(null);
-							setLeafletRejected(false);
-							setFallbackService("unknown");
-						}
-					}}
-				>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>
-								{requiresServiceChoice
-									? "Choose the publication service"
-									: pendingService === "leaflet"
-										? "Is this a Leaflet publication?"
-										: pendingService === "offprint"
-											? "Is this an Offprint publication?"
-											: pendingService === "pckt"
-												? "Is this a Pckt publication?"
-												: "Which service runs this publication?"}
-							</DialogTitle>
-							<DialogDescription>
-								{requiresServiceChoice
-									? "Select the service you use. If it isn't listed, we'll still mirror your reviews, but they may not display as expected."
-									: pendingService === "leaflet"
-										? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
-										: pendingService === "offprint"
-											? `We recognised ${pendingPublication?.name} as Offprint. Confirm to mirror your reviews there.`
-											: pendingService === "pckt"
-												? `We recognised ${pendingPublication?.name} as Pckt. Confirm to mirror your reviews there.`
-												: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
-							</DialogDescription>
-						</DialogHeader>
-						{requiresServiceChoice && (
-							<div className="grid gap-2 text-sm">
-								<span className="font-medium">Service</span>
-								<Select
-									value={fallbackService}
-									onValueChange={(value) =>
-										setFallbackService(
-											value as "leaflet" | "offprint" | "pckt" | "unknown",
-										)
-									}
-								>
-									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Choose a service" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectGroup>
-											<SelectItem value="leaflet">Leaflet</SelectItem>
-											<SelectItem value="offprint">Offprint</SelectItem>
-											<SelectItem value="pckt">Pckt</SelectItem>
-											<SelectItem value="unknown">Other or unknown</SelectItem>
-										</SelectGroup>
-									</SelectContent>
-								</Select>
 							</div>
-						)}
-						<div className="flex justify-end gap-3">
-							<Button
-								variant="outline"
-								onClick={() => {
+						</section>
+
+						{/* Streaming */}
+						<section
+							id="streaming"
+							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
+						>
+							<h2 className="mb-1 font-semibold text-lg">Streaming</h2>
+							<p className="mb-6 text-(--foreground-muted) text-sm">
+								Choose your country to see where movies and shows are available
+								to watch
+							</p>
+							<div className="max-w-lg space-y-2">
+								<label htmlFor="watch-country" className="font-medium text-sm">
+									Country
+								</label>
+								<CountrySelector
+									value={userSettings?.watchCountry}
+									onChange={(watchCountry) =>
+										updateSettingsMutation.mutate({
+											body: { watchCountry },
+										})
+									}
+									disabled={updateSettingsMutation.isPending}
+								/>
+							</div>
+						</section>
+
+						{/* Import history */}
+						<section
+							id="import-history"
+							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
+						>
+							<TraktImport
+								idleShowsInput
+								title="Import history"
+								description="Import your public watch history from Trakt.tv. We add anything you haven't logged yet."
+								titleClassName="font-semibold text-lg"
+							/>
+						</section>
+
+						{/* Reviews publication */}
+						<section
+							id="blog-mirror"
+							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
+						>
+							<div className="mb-1 flex items-center gap-2">
+								<BookOpen className="size-5 text-(--accent)" />
+								<h2 className="font-semibold text-lg">Blog mirror</h2>
+							</div>
+							<p className="mb-6 text-(--foreground-muted) text-sm">
+								Your reviews always live on OpnShelf. Optionally, mirror new
+								reviews to one of your own AT Protocol publications as well.
+							</p>
+
+							{storedTargetMissing && (
+								<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+									<AlertTriangle className="mt-0.5 size-4 shrink-0" />
+									<span>
+										Your selected publication is no longer in your PDS. New
+										reviews still point at it, but you may want to choose
+										another below.
+									</span>
+								</div>
+							)}
+
+							{publicationsLoading ? (
+								<div className="flex items-center gap-2 text-(--foreground-muted) text-sm">
+									<Loader2 className="size-4 animate-spin" />
+									Loading your publications…
+								</div>
+							) : publicationsError ? (
+								<p className="text-(--foreground-muted) text-sm">
+									Could not load your publications right now.
+								</p>
+							) : (
+								<fieldset
+									className="space-y-2"
+									disabled={updateSettingsMutation.isPending}
+								>
+									<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
+										<div className="flex items-center gap-3">
+											<input
+												type="radio"
+												name="reviews-publication"
+												className="size-4 accent-(--accent)"
+												checked={storedPublicationUri === null}
+												onChange={() => handleSelectPublication(null)}
+											/>
+											<div>
+												<p className="font-medium text-sm">None</p>
+												<p className="text-(--foreground-muted) text-xs">
+													Don't mirror reviews to a blog
+												</p>
+											</div>
+										</div>
+									</label>
+									{(myPublications?.items ?? []).map((pub) => (
+										<label
+											key={pub.uri}
+											className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)"
+										>
+											<div className="flex items-center gap-3">
+												<input
+													type="radio"
+													name="reviews-publication"
+													className="size-4 accent-(--accent)"
+													checked={storedPublicationUri === pub.uri}
+													onChange={() => {
+														setPendingPublication({
+															uri: pub.uri,
+															name: pub.name,
+															url: pub.url,
+															service: pub.service,
+														});
+														setLeafletRejected(false);
+														setFallbackService("unknown");
+													}}
+												/>
+												<div>
+													<p className="font-medium text-sm">{pub.name}</p>
+													<p className="text-(--foreground-muted) text-xs">
+														{pub.url}
+													</p>
+												</div>
+											</div>
+										</label>
+									))}
+								</fieldset>
+							)}
+						</section>
+
+						<Dialog
+							open={pendingPublication !== null}
+							onOpenChange={(open) => {
+								if (!open) {
 									setPendingPublication(null);
 									setLeafletRejected(false);
 									setFallbackService("unknown");
-								}}
-							>
-								Cancel
-							</Button>
-							{pendingService === "leaflet" && !requiresServiceChoice && (
-								<Button
-									variant="outline"
-									onClick={() => setLeafletRejected(true)}
-								>
-									No, it isn't Leaflet
-								</Button>
-							)}
-							{pendingService === "offprint" && !requiresServiceChoice && (
-								<Button
-									variant="outline"
-									onClick={() => setLeafletRejected(true)}
-								>
-									No, it isn't Offprint
-								</Button>
-							)}
-							{pendingService === "pckt" && !requiresServiceChoice && (
-								<Button
-									variant="outline"
-									onClick={() => setLeafletRejected(true)}
-								>
-									No, it isn't Pckt
-								</Button>
-							)}
-							<Button onClick={confirmPublicationService}>
-								{pendingService === "leaflet"
-									? "Yes, this is Leaflet"
-									: pendingService === "offprint"
-										? "Yes, this is Offprint"
-										: pendingService === "pckt"
-											? "Yes, this is Pckt"
-											: "Continue"}
-							</Button>
-						</div>
-					</DialogContent>
-				</Dialog>
-
-				{/* Account */}
-				<section className="card p-6">
-					<h2 className="mb-1 font-semibold text-lg">Account</h2>
-					<p className="mb-6 text-(--foreground-muted) text-sm">
-						Update your profile information
-					</p>
-
-					<div className="space-y-5">
-						{/* Avatar */}
-						<div className="flex items-center gap-4">
-							<button
-								type="button"
-								onClick={() => fileInputRef.current?.click()}
-								aria-label="Upload profile photo"
-								className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
-							>
-								<UserAvatar
-									src={user.avatar}
-									alt=""
-									className="h-full w-full rounded-full"
-								/>
-								<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-									<Camera className="size-5 text-white" />
-								</div>
-								{uploadAvatarMutation.isPending && (
-									<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-										<Loader2 className="size-5 animate-spin text-white" />
+								}
+							}}
+						>
+							<DialogContent>
+								<DialogHeader>
+									<DialogTitle>
+										{requiresServiceChoice
+											? "Choose the publication service"
+											: pendingService === "leaflet"
+												? "Is this a Leaflet publication?"
+												: pendingService === "offprint"
+													? "Is this an Offprint publication?"
+													: pendingService === "pckt"
+														? "Is this a Pckt publication?"
+														: "Which service runs this publication?"}
+									</DialogTitle>
+									<DialogDescription>
+										{requiresServiceChoice
+											? "Select the service you use. If it isn't listed, we'll still mirror your reviews, but they may not display as expected."
+											: pendingService === "leaflet"
+												? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
+												: pendingService === "offprint"
+													? `We recognised ${pendingPublication?.name} as Offprint. Confirm to mirror your reviews there.`
+													: pendingService === "pckt"
+														? `We recognised ${pendingPublication?.name} as Pckt. Confirm to mirror your reviews there.`
+														: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
+									</DialogDescription>
+								</DialogHeader>
+								{requiresServiceChoice && (
+									<div className="grid gap-2 text-sm">
+										<span className="font-medium">Service</span>
+										<Select
+											value={fallbackService}
+											onValueChange={(value) =>
+												setFallbackService(
+													value as "leaflet" | "offprint" | "pckt" | "unknown",
+												)
+											}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue placeholder="Choose a service" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectGroup>
+													<SelectItem value="leaflet">Leaflet</SelectItem>
+													<SelectItem value="offprint">Offprint</SelectItem>
+													<SelectItem value="pckt">Pckt</SelectItem>
+													<SelectItem value="unknown">
+														Other or unknown
+													</SelectItem>
+												</SelectGroup>
+											</SelectContent>
+										</Select>
 									</div>
 								)}
-							</button>
-							<input
-								ref={fileInputRef}
-								type="file"
-								accept="image/*"
-								className="sr-only"
-								onChange={(e) => {
-									const file = e.target.files?.[0];
-									if (file) handleAvatarUpload(file);
-									e.target.value = "";
-								}}
-							/>
-							<div>
-								<p className="font-medium text-sm">Profile photo</p>
-								<p className="text-(--foreground-muted) text-sm">
-									Click the avatar to upload a new photo
-								</p>
-								{user.avatar && (
+								<div className="flex justify-end gap-3">
+									<Button
+										variant="outline"
+										onClick={() => {
+											setPendingPublication(null);
+											setLeafletRejected(false);
+											setFallbackService("unknown");
+										}}
+									>
+										Cancel
+									</Button>
+									{pendingService === "leaflet" && !requiresServiceChoice && (
+										<Button
+											variant="outline"
+											onClick={() => setLeafletRejected(true)}
+										>
+											No, it isn't Leaflet
+										</Button>
+									)}
+									{pendingService === "offprint" && !requiresServiceChoice && (
+										<Button
+											variant="outline"
+											onClick={() => setLeafletRejected(true)}
+										>
+											No, it isn't Offprint
+										</Button>
+									)}
+									{pendingService === "pckt" && !requiresServiceChoice && (
+										<Button
+											variant="outline"
+											onClick={() => setLeafletRejected(true)}
+										>
+											No, it isn't Pckt
+										</Button>
+									)}
+									<Button onClick={confirmPublicationService}>
+										{pendingService === "leaflet"
+											? "Yes, this is Leaflet"
+											: pendingService === "offprint"
+												? "Yes, this is Offprint"
+												: pendingService === "pckt"
+													? "Yes, this is Pckt"
+													: "Continue"}
+									</Button>
+								</div>
+							</DialogContent>
+						</Dialog>
+
+						{/* Account */}
+						<section id="account" className="scroll-mt-24 p-5 sm:p-7">
+							<h2 className="mb-1 font-semibold text-lg">Account</h2>
+							<p className="mb-6 text-(--foreground-muted) text-sm">
+								Update your profile information
+							</p>
+
+							<div className="space-y-6">
+								{/* Avatar */}
+								<div className="flex items-center gap-4">
 									<button
 										type="button"
-										onClick={() => deleteAvatarMutation.mutate({})}
-										disabled={deleteAvatarMutation.isPending}
-										className="mt-1 font-medium text-red-600 text-sm hover:text-red-700 disabled:opacity-50"
+										onClick={() => fileInputRef.current?.click()}
+										aria-label="Upload profile photo"
+										className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
 									>
-										{deleteAvatarMutation.isPending
-											? "Removing…"
-											: "Remove photo"}
+										<UserAvatar
+											src={user.avatar}
+											alt=""
+											className="h-full w-full rounded-full"
+										/>
+										<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+											<Camera className="size-5 text-white" />
+										</div>
+										{uploadAvatarMutation.isPending && (
+											<div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+												<Loader2 className="size-5 animate-spin text-white" />
+											</div>
+										)}
 									</button>
-								)}
-							</div>
-						</div>
-
-						{/* Display Name */}
-						<div className="space-y-2">
-							<label htmlFor="display-name" className="font-medium text-sm">
-								Display name
-							</label>
-							<div className="flex gap-2">
-								<input
-									id="display-name"
-									type="text"
-									value={displayName}
-									onChange={(e) => setDisplayName(e.target.value)}
-									placeholder="Your display name"
-									className="input flex-1"
-								/>
-								<Button
-									onClick={() =>
-										updateProfileMutation.mutate({
-											body: { displayName: displayName || undefined },
-										})
-									}
-									disabled={
-										updateProfileMutation.isPending ||
-										displayName === (user.displayName ?? "")
-									}
-								>
-									{updateProfileMutation.isPending ? (
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
-										/>
-									) : (
-										<Save data-icon="inline-start" />
-									)}
-									Save
-								</Button>
-							</div>
-						</div>
-
-						{/* Handle */}
-						<div className="space-y-2">
-							<label htmlFor="handle" className="font-medium text-sm">
-								Handle
-							</label>
-							<input
-								id="handle"
-								type="text"
-								value={`@${user.handle}`}
-								disabled
-								className="input cursor-not-allowed bg-(--background-subtle)"
-								readOnly
-							/>
-							<p className="text-(--foreground-muted) text-xs">
-								Your handle is managed by your Bluesky account
-							</p>
-						</div>
-
-						{/* Social Links */}
-						<div className="space-y-4">
-							<div className="flex items-center justify-between">
-								<h3 className="font-medium text-sm">Social links</h3>
-								<button
-									type="button"
-									onClick={() => refreshSocialLinksMutation.mutate({})}
-									disabled={refreshSocialLinksMutation.isPending}
-									className="inline-flex items-center gap-1.5 text-(--accent) text-sm hover:underline disabled:opacity-50"
-								>
-									{refreshSocialLinksMutation.isPending ? (
-										<Loader2 className="size-3.5 animate-spin" />
-									) : (
-										<RefreshCw className="size-3.5" />
-									)}
-									Refresh
-								</button>
-							</div>
-							<p className="text-(--foreground-muted) text-xs">
-								We automatically detect your Bluesky and Tangled profiles from
-								your PDS. Toggle to control visibility.
-							</p>
-
-							{/* Bluesky */}
-							<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
-								<div className="flex items-center gap-3">
-									<img src="/bluesky.svg" alt="Bluesky" className="size-5" />
+									<input
+										ref={fileInputRef}
+										type="file"
+										accept="image/*"
+										className="sr-only"
+										onChange={(e) => {
+											const file = e.target.files?.[0];
+											if (file) handleAvatarUpload(file);
+											e.target.value = "";
+										}}
+									/>
 									<div>
-										<p className="font-medium text-sm">Bluesky</p>
-										{user.blueskyProfileUrl ? (
-											<a
-												href={user.blueskyProfileUrl}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+										<p className="font-medium text-sm">Profile photo</p>
+										<p className="text-(--foreground-muted) text-sm">
+											Click the avatar to upload a new photo
+										</p>
+										{user.avatar && (
+											<button
+												type="button"
+												onClick={() => deleteAvatarMutation.mutate({})}
+												disabled={deleteAvatarMutation.isPending}
+												className="mt-1 font-medium text-red-600 text-sm hover:text-red-700 disabled:opacity-50"
 											>
-												View profile
-												<ExternalLink className="size-3" />
-											</a>
-										) : (
-											<p className="text-(--foreground-muted) text-xs">
-												Not found
-											</p>
+												{deleteAvatarMutation.isPending
+													? "Removing…"
+													: "Remove photo"}
+											</button>
 										)}
 									</div>
 								</div>
-								<Switch
-									checked={showBluesky}
-									onCheckedChange={(checked) => {
-										setShowBluesky(checked);
-										updateProfileMutation.mutate({
-											body: { showBlueskyOnProfile: checked },
-										});
-									}}
-									disabled={
-										updateProfileMutation.isPending || !user.blueskyProfileUrl
-									}
-								/>
-							</div>
 
-							{/* Tangled */}
-							<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
-								<div className="flex items-center gap-3">
-									<div className="relative size-5">
-										<img
-											src="/tangled-black.svg"
-											alt="Tangled"
-											className="absolute inset-0 block h-full w-full object-contain dark:hidden"
+								{/* Display Name */}
+								<div className="max-w-xl space-y-2">
+									<label htmlFor="display-name" className="font-medium text-sm">
+										Display name
+									</label>
+									<div className="flex gap-2">
+										<input
+											id="display-name"
+											type="text"
+											value={displayName}
+											onChange={(e) => setDisplayName(e.target.value)}
+											placeholder="Your display name"
+											className="input flex-1"
 										/>
-										<img
-											src="/tangled-white.svg"
-											alt="Tangled"
-											className="absolute inset-0 hidden h-full w-full object-contain dark:block"
-										/>
-									</div>
-									<div>
-										<p className="font-medium text-sm">Tangled</p>
-										{user.tangledProfileUrl ? (
-											<a
-												href={user.tangledProfileUrl}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
-											>
-												View profile
-												<ExternalLink className="size-3" />
-											</a>
-										) : (
-											<p className="text-(--foreground-muted) text-xs">
-												Not found
-											</p>
-										)}
+										<Button
+											onClick={() =>
+												updateProfileMutation.mutate({
+													body: { displayName: displayName || undefined },
+												})
+											}
+											disabled={
+												updateProfileMutation.isPending ||
+												displayName === (user.displayName ?? "")
+											}
+										>
+											{updateProfileMutation.isPending ? (
+												<Loader2
+													data-icon="inline-start"
+													className="animate-spin"
+												/>
+											) : (
+												<Save data-icon="inline-start" />
+											)}
+											Save
+										</Button>
 									</div>
 								</div>
-								<Switch
-									checked={showTangled}
-									onCheckedChange={(checked) => {
-										setShowTangled(checked);
-										updateProfileMutation.mutate({
-											body: { showTangledOnProfile: checked },
-										});
-									}}
-									disabled={
-										updateProfileMutation.isPending || !user.tangledProfileUrl
-									}
-								/>
+
+								{/* Handle */}
+								<div className="max-w-xl space-y-2">
+									<label htmlFor="handle" className="font-medium text-sm">
+										Handle
+									</label>
+									<input
+										id="handle"
+										type="text"
+										value={`@${user.handle}`}
+										disabled
+										className="input cursor-not-allowed bg-(--background-subtle)"
+										readOnly
+									/>
+									<p className="text-(--foreground-muted) text-xs">
+										Your handle is managed by your Bluesky account
+									</p>
+								</div>
+
+								{/* Social Links */}
+								<div className="space-y-4">
+									<div className="flex items-center justify-between">
+										<h3 className="font-medium text-sm">Social links</h3>
+										<button
+											type="button"
+											onClick={() => refreshSocialLinksMutation.mutate({})}
+											disabled={refreshSocialLinksMutation.isPending}
+											className="inline-flex items-center gap-1.5 text-(--accent) text-sm hover:underline disabled:opacity-50"
+										>
+											{refreshSocialLinksMutation.isPending ? (
+												<Loader2 className="size-3.5 animate-spin" />
+											) : (
+												<RefreshCw className="size-3.5" />
+											)}
+											Refresh
+										</button>
+									</div>
+									<p className="text-(--foreground-muted) text-xs">
+										We automatically detect your Bluesky and Tangled profiles
+										from your PDS. Toggle to control visibility.
+									</p>
+
+									{/* Bluesky */}
+									<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
+										<div className="flex items-center gap-3">
+											<img
+												src="/bluesky.svg"
+												alt="Bluesky"
+												className="size-5"
+											/>
+											<div>
+												<p className="font-medium text-sm">Bluesky</p>
+												{user.blueskyProfileUrl ? (
+													<a
+														href={user.blueskyProfileUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+													>
+														View profile
+														<ExternalLink className="size-3" />
+													</a>
+												) : (
+													<p className="text-(--foreground-muted) text-xs">
+														Not found
+													</p>
+												)}
+											</div>
+										</div>
+										<Switch
+											checked={showBluesky}
+											onCheckedChange={(checked) => {
+												setShowBluesky(checked);
+												updateProfileMutation.mutate({
+													body: { showBlueskyOnProfile: checked },
+												});
+											}}
+											disabled={
+												updateProfileMutation.isPending ||
+												!user.blueskyProfileUrl
+											}
+										/>
+									</div>
+
+									{/* Tangled */}
+									<div className="flex items-center justify-between rounded-lg border border-(--border) p-3">
+										<div className="flex items-center gap-3">
+											<div className="relative size-5">
+												<img
+													src="/tangled-black.svg"
+													alt="Tangled"
+													className="absolute inset-0 block h-full w-full object-contain dark:hidden"
+												/>
+												<img
+													src="/tangled-white.svg"
+													alt="Tangled"
+													className="absolute inset-0 hidden h-full w-full object-contain dark:block"
+												/>
+											</div>
+											<div>
+												<p className="font-medium text-sm">Tangled</p>
+												{user.tangledProfileUrl ? (
+													<a
+														href={user.tangledProfileUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+													>
+														View profile
+														<ExternalLink className="size-3" />
+													</a>
+												) : (
+													<p className="text-(--foreground-muted) text-xs">
+														Not found
+													</p>
+												)}
+											</div>
+										</div>
+										<Switch
+											checked={showTangled}
+											onCheckedChange={(checked) => {
+												setShowTangled(checked);
+												updateProfileMutation.mutate({
+													body: { showTangledOnProfile: checked },
+												});
+											}}
+											disabled={
+												updateProfileMutation.isPending ||
+												!user.tangledProfileUrl
+											}
+										/>
+									</div>
+								</div>
 							</div>
-						</div>
+						</section>
 					</div>
-				</section>
 
-				{/* Account Deletion */}
-				<section className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
-					<h2 className="mb-1 font-semibold text-lg text-red-900 dark:text-red-100">
-						Danger Zone
-					</h2>
-					<p className="mb-6 text-red-700 text-sm dark:text-red-300">
-						Permanently delete your account and all associated data
-					</p>
+					{/* Account Deletion */}
+					<section
+						id="danger-zone"
+						className="scroll-mt-24 rounded-xl border border-red-200 bg-red-50 p-5 sm:p-6 dark:border-red-900 dark:bg-red-950/30"
+					>
+						<h2 className="mb-1 font-semibold text-lg text-red-900 dark:text-red-100">
+							Danger Zone
+						</h2>
+						<p className="mb-6 text-red-700 text-sm dark:text-red-300">
+							Permanently delete your account and all associated data
+						</p>
 
-					{isDeleting && deletionJob ? (
-						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
-							<Loader2 className="size-4 animate-spin" />
-							<span className="font-medium text-sm">
-								Account deletion in progress…
-							</span>
-						</div>
-					) : (
-						<button
-							type="button"
-							onClick={() => {
-								setConfirmChecked(false);
-								setDeletePDSData(false);
-								setShowDeleteDialog(true);
-							}}
-							className="btn inline-flex items-center gap-2 border-red-300 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
-						>
-							<Trash2 className="size-4" />
-							Delete Account
-						</button>
-					)}
-				</section>
+						{isDeleting && deletionJob ? (
+							<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+								<Loader2 className="size-4 animate-spin" />
+								<span className="font-medium text-sm">
+									Account deletion in progress…
+								</span>
+							</div>
+						) : (
+							<button
+								type="button"
+								onClick={() => {
+									setConfirmChecked(false);
+									setDeletePDSData(false);
+									setShowDeleteDialog(true);
+								}}
+								className="btn inline-flex items-center gap-2 border-red-300 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
+							>
+								<Trash2 className="size-4" />
+								Delete Account
+							</button>
+						)}
+					</section>
+				</div>
 			</div>
 
 			{/* Delete Account Confirmation Dialog */}
