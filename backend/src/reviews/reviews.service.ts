@@ -809,7 +809,7 @@ export class ReviewsService {
 				episodeNumber,
 				// ponytail: re-slugs on title edit; blog URL is not guaranteed stable
 				// across renames. Store the path on Review if that matters later.
-				path: slugify(review.title),
+				path: `/${slugify(review.title)}`,
 				publishedAt: review.createdAt.toISOString(),
 				updatedAt: new Date().toISOString(),
 			});

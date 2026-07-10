@@ -693,6 +693,67 @@ describe("ReviewsService", () => {
 				"pub.leaflet.blocks.text",
 			);
 		});
+
+		it("writes a canonical Offprint document and its native article pointer", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/offprint",
+				reviewsMirrorFormat: "offprint",
+			});
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-document",
+					},
+				})
+				.mockResolvedValueOnce({ data: { cid: "cid-article" } });
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "**Loved** it.",
+			});
+
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					collection: "site.standard.document",
+					rkey: "testtid123",
+					record: expect.objectContaining({
+						path: "/my-take",
+						content: expect.objectContaining({
+							$type: "app.offprint.content",
+						}),
+					}),
+				}),
+			);
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				3,
+				expect.objectContaining({
+					collection: "app.offprint.document.article",
+					rkey: "testtid123",
+					record: {
+						$type: "app.offprint.document.article",
+						document: {
+							$type: "com.atproto.repo.strongRef",
+							uri: "at://did:plc:abc123/site.standard.document/testtid123",
+							cid: "cid-document",
+						},
+					},
+				}),
+			);
+		});
 	});
 
 	describe("listMyPublications", () => {
