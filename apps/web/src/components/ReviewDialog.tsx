@@ -74,6 +74,7 @@ export function ReviewDialog({
 	const [title, setTitle] = useState("");
 	const [markdown, setMarkdown] = useState("");
 	const [mirrorToBlog, setMirrorToBlog] = useState(true);
+	const [postToBluesky, setPostToBluesky] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	// Client-only gate: the editor cannot render during SSR.
 	const [mounted, setMounted] = useState(false);
@@ -100,6 +101,7 @@ export function ReviewDialog({
 			setTitle(review?.title ?? "");
 			setMarkdown(review?.markdown ?? "");
 			setMirrorToBlog(review?.mirrorToBlog ?? true);
+			setPostToBluesky(false);
 			setError(null);
 		}
 	}, [open, review?.title, review?.markdown, review?.mirrorToBlog]);
@@ -176,6 +178,7 @@ export function ReviewDialog({
 				title: trimmedTitle,
 				markdown: trimmedBody,
 				mirrorToBlog,
+				postToBluesky,
 			},
 		});
 	};
@@ -256,6 +259,18 @@ export function ReviewDialog({
 								<span className="text-(--foreground-muted)"> ({blogName})</span>
 							) : null}
 						</span>
+					</label>
+				)}
+
+				{!isEditing && (
+					<label className="flex cursor-pointer items-start gap-2 text-sm">
+						<input
+							type="checkbox"
+							checked={postToBluesky}
+							onChange={(event) => setPostToBluesky(event.target.checked)}
+							className="mt-0.5 size-4 accent-(--accent)"
+						/>
+						<span>Also post on Bluesky</span>
 					</label>
 				)}
 

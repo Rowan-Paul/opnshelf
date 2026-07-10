@@ -375,6 +375,7 @@ export function CommunityReviews({
 		title: string;
 		markdown: string;
 		mirrorToBlog: boolean;
+		postToBluesky: boolean;
 	}) => {
 		if (editing) updateReview(editing.id, input);
 		else createReview(input);

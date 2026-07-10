@@ -1,4 +1,5 @@
 import {
+	type BlueskyCrossPostResultDto,
 	type MediaReviewItemDto,
 	ratingsControllerClearRatingMutation,
 	ratingsControllerGetRatingOptions,
@@ -8,10 +9,12 @@ import {
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetMediaReviewsOptions,
 	reviewsControllerGetMediaReviewsQueryKey,
+	reviewsControllerRetryBlueskyCrossPostMutation,
 	reviewsControllerUpdateReviewMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import { Linking } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 
@@ -39,6 +42,8 @@ export interface ReviewDraft {
 	markdown: string;
 	/** Whether to mirror this review to the author's blog (when configured). */
 	mirrorToBlog?: boolean;
+	/** Whether to create a one-time Bluesky post for this new Review. */
+	postToBluesky?: boolean;
 }
 
 /**
@@ -139,6 +144,45 @@ export function useReview(target: ReviewTarget) {
 		mutationKey: ["reviews", "delete", resolvedMediaType, target.mediaId],
 		...reviewsControllerDeleteReviewMutation(),
 	});
+	const retryBlueskyMutation = useMutation({
+		mutationKey: ["reviews", "blueskyCrossPost", "retry"],
+		...reviewsControllerRetryBlueskyCrossPostMutation(),
+	});
+
+	const showBlueskyResult = (
+		result: BlueskyCrossPostResultDto,
+		reviewId: string,
+	): void => {
+		if (result.status === "posted" && result.url) {
+			toast.success("Posted to Bluesky", {
+				action: {
+					label: "View post",
+					onPress: () => {
+						void Linking.openURL(result.url as string);
+					},
+				},
+			});
+			return;
+		}
+		if (result.status === "failed") {
+			toast.error("Couldn't post to Bluesky", {
+				action: {
+					label: "Retry",
+					onPress: () => {
+						retryBlueskyMutation.mutate(
+							{ path: { reviewId } },
+							{
+								onSuccess: (retryResult) =>
+									showBlueskyResult(retryResult, reviewId),
+								onError: () =>
+									showBlueskyResult({ status: "failed" }, reviewId),
+							},
+						);
+					},
+				},
+			});
+		}
+	};
 
 	/** Set (or update) the single star rating for this media item. */
 	const setRating = async (rating: number) => {
@@ -189,13 +233,14 @@ export function useReview(target: ReviewTarget) {
 		title,
 		markdown,
 		mirrorToBlog,
+		postToBluesky,
 	}: ReviewDraft) => {
 		if (!isAuthenticated) return;
 		const trimmedTitle = title.trim();
 		const trimmedBody = markdown.trim();
 		if (!trimmedTitle || !trimmedBody) return;
 		try {
-			await createReviewMutation.mutateAsync({
+			const created = await createReviewMutation.mutateAsync({
 				body: {
 					mediaType: resolvedMediaType,
 					mediaId: target.mediaId,
@@ -204,12 +249,14 @@ export function useReview(target: ReviewTarget) {
 					title: trimmedTitle,
 					markdown: trimmedBody,
 					mirrorToBlog,
+					postToBluesky,
 				},
 			});
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});
-			toast.success("Review saved");
+			toast.success("Review published");
+			showBlueskyResult(created.blueskyCrossPost, created.id);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to save");
 		} finally {

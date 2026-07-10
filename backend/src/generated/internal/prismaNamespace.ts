@@ -2391,6 +2391,8 @@ export const ReviewScalarFieldEnum = {
   blogDocumentUri: 'blogDocumentUri',
   blogDocumentCid: 'blogDocumentCid',
   mirrorToBlog: 'mirrorToBlog',
+  blueskyPostUri: 'blueskyPostUri',
+  blueskyPostCid: 'blueskyPostCid',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

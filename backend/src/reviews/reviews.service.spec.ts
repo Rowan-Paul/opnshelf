@@ -7,8 +7,10 @@ vi.mock("../prisma/prisma.service", () => ({
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
+const mockUploadBlob = vi.fn();
 vi.mock("@atproto/api", () => ({
 	Agent: vi.fn().mockImplementation(() => ({
+		uploadBlob: mockUploadBlob,
 		com: {
 			atproto: {
 				repo: {
@@ -97,7 +99,12 @@ import {
 	NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { ReviewsService, type ATSession } from "./reviews.service";
+import {
+	blueskyLinkFacet,
+	composeBlueskyPostText,
+	ReviewsService,
+	type ATSession,
+} from "./reviews.service";
 
 describe("ReviewsService", () => {
 	let service: ReviewsService;
@@ -159,6 +166,7 @@ describe("ReviewsService", () => {
 		mockPutRecord.mockReset();
 		mockDeleteRecord.mockReset();
 		mockListRecords.mockReset();
+		mockUploadBlob.mockReset();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -168,6 +176,33 @@ describe("ReviewsService", () => {
 		}).compile();
 
 		service = module.get<ReviewsService>(ReviewsService);
+	});
+
+	describe("Bluesky post composition", () => {
+		it("counts graphemes and truncates the Review title before media", () => {
+			const mediaTitle = "A".repeat(150);
+			const reviewTitle = `${"👨‍👩‍👧‍👦".repeat(200)} ending`;
+			const text = composeBlueskyPostText(mediaTitle, reviewTitle);
+			const count = Array.from(
+				new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+					text,
+				),
+			).length;
+			expect(count).toBeLessThanOrEqual(300);
+			expect(text).toContain(mediaTitle);
+			expect(text).toContain("…");
+		});
+
+		it("uses UTF-8 byte offsets for the linked call to action", () => {
+			const text = composeBlueskyPostText("Amélie 🎬", "Très bien");
+			const uri = "https://opnshelf.xyz/reviews/alice/key";
+			const facet = blueskyLinkFacet(text, uri);
+			const bytes = Buffer.from(text, "utf8");
+			expect(
+				bytes.subarray(facet.index.byteStart, facet.index.byteEnd).toString(),
+			).toBe("Read my review");
+			expect(facet.features[0].uri).toBe(uri);
+		});
 	});
 
 	describe("likeReview", () => {
@@ -455,6 +490,8 @@ describe("ReviewsService", () => {
 			id: "review-1",
 			blogDocumentUri: null,
 			blogDocumentCid: null,
+			blueskyPostUri: null,
+			blueskyPostCid: null,
 			createdAt: new Date("2024-01-01"),
 			updatedAt: new Date("2024-01-01"),
 			...data,
@@ -497,6 +534,100 @@ describe("ReviewsService", () => {
 			);
 			expect(mockPrismaService.review.update).not.toHaveBeenCalled();
 			expect(result.title).toBe("My take");
+			expect(result.blueskyCrossPost).toEqual({ status: "not_requested" });
+		});
+
+		it("creates a spoiler-safe Bluesky Cross-post after the Review", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				handle: "alice.example",
+				reviewsPublicationUri: null,
+			});
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Dune", posterPath: null },
+			]);
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/app.bsky.feed.post/testtid123",
+						cid: "cid-post",
+					},
+				});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+			mockPrismaService.review.update.mockResolvedValue({});
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "Fear is the mind-killer",
+				markdown: "The body contains a spoiler that must stay out of Bluesky.",
+				postToBluesky: true,
+			});
+
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					collection: "app.bsky.feed.post",
+					rkey: "testtid123",
+					record: expect.objectContaining({
+						text: "I reviewed Dune on OpnShelf: “Fear is the mind-killer”\n\nRead my review",
+						embed: {
+							$type: "app.bsky.embed.external",
+							external: {
+								uri: "https://opnshelf.xyz/reviews/alice.example/testtid123",
+								title: "Fear is the mind-killer — Dune",
+								description: "A review by @alice.example on OpnShelf.",
+							},
+						},
+					}),
+				}),
+			);
+			const postRecord = mockPutRecord.mock.calls[1][0].record;
+			expect(JSON.stringify(postRecord)).not.toContain("body contains");
+			expect(result.blueskyCrossPost).toEqual({
+				status: "posted",
+				uri: "at://did:plc:abc123/app.bsky.feed.post/testtid123",
+				url: "https://bsky.app/profile/did:plc:abc123/post/testtid123",
+			});
+		});
+
+		it("keeps the Review successful when its Bluesky Cross-post fails", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				handle: "alice.example",
+				reviewsPublicationUri: null,
+			});
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Dune", posterPath: null },
+			]);
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockRejectedValueOnce(new Error("PDS post write failed"));
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+				postToBluesky: true,
+			});
+
+			expect(result.id).toBe("review-1");
+			expect(result.blueskyCrossPost).toEqual({ status: "failed" });
 		});
 
 		it("mirrors to the selected blog publication and stores the document pointer", async () => {
@@ -797,6 +928,45 @@ describe("ReviewsService", () => {
 					}),
 				}),
 			);
+		});
+	});
+
+	describe("retryBlueskyCrossPost", () => {
+		it("returns a confirmed existing post without rewriting it", async () => {
+			mockPrismaService.review.findFirst.mockResolvedValue({
+				id: "review-1",
+				rkey: "review-key",
+				title: "My take",
+				mediaType: "movie",
+				mediaId: "123",
+				seasonNumber: 0,
+				episodeNumber: 0,
+				createdAt: new Date("2024-01-01"),
+				blueskyPostUri: "at://did:plc:abc123/app.bsky.feed.post/review-key",
+				blueskyPostCid: "cid-post",
+			});
+
+			const result = await service.retryBlueskyCrossPost(
+				session.did,
+				session,
+				"review-1",
+			);
+
+			expect(result).toEqual({
+				status: "posted",
+				uri: "at://did:plc:abc123/app.bsky.feed.post/review-key",
+				url: "https://bsky.app/profile/did:plc:abc123/post/review-key",
+			});
+			expect(mockPutRecord).not.toHaveBeenCalled();
+		});
+
+		it("rejects retrying another author's Review", async () => {
+			mockPrismaService.review.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.retryBlueskyCrossPost(session.did, session, "other-review"),
+			).rejects.toBeInstanceOf(NotFoundException);
+			expect(mockPutRecord).not.toHaveBeenCalled();
 		});
 	});
 

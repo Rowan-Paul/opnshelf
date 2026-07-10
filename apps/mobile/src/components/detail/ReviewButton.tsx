@@ -39,6 +39,7 @@ export function ReviewButton({
 		title: string;
 		markdown: string;
 		mirrorToBlog: boolean;
+		postToBluesky: boolean;
 	}) => {
 		createReview(input);
 		setSheetVisible(false);

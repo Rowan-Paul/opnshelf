@@ -1,4 +1,5 @@
 import {
+	type BlueskyCrossPostResultDto,
 	reviewsControllerCreateReviewMutation,
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetMediaReviewsOptions,
@@ -8,6 +9,7 @@ import {
 	reviewsControllerGetUserReviewsOptions,
 	reviewsControllerGetUserReviewsQueryKey,
 	reviewsControllerLikeReviewMutation,
+	reviewsControllerRetryBlueskyCrossPostMutation,
 	reviewsControllerUnlikeReviewMutation,
 	reviewsControllerUpdateReviewMutation,
 } from "@opnshelf/api";
@@ -133,6 +135,45 @@ export function useCreateReview(options: UseReviewMutationOptions) {
 		options.episodeNumber,
 	);
 
+	const retryMutation = useMutation({
+		mutationKey: ["reviews", "blueskyCrossPost", "retry"],
+		...reviewsControllerRetryBlueskyCrossPostMutation(),
+	});
+
+	const showBlueskyResult = (
+		result: BlueskyCrossPostResultDto,
+		reviewId: string,
+	): void => {
+		if (result.status === "posted" && result.url) {
+			toast.success("Posted to Bluesky", {
+				action: {
+					label: "View post",
+					onClick: () => {
+						window.open(result.url, "_blank", "noopener,noreferrer");
+					},
+				},
+			});
+			return;
+		}
+		if (result.status === "failed") {
+			toast.error("Couldn't post to Bluesky", {
+				action: {
+					label: "Retry",
+					onClick: () =>
+						retryMutation.mutate(
+							{ path: { reviewId } },
+							{
+								onSuccess: (retryResult) =>
+									showBlueskyResult(retryResult, reviewId),
+								onError: () =>
+									showBlueskyResult({ status: "failed" }, reviewId),
+							},
+						),
+				},
+			});
+		}
+	};
+
 	return useMutation({
 		mutationKey: [
 			"reviews",
@@ -143,8 +184,9 @@ export function useCreateReview(options: UseReviewMutationOptions) {
 			"create",
 		],
 		...reviewsControllerCreateReviewMutation(),
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success("Review published");
+			showBlueskyResult(data.blueskyCrossPost, data.id);
 			invalidate();
 		},
 		onError: (error) => {

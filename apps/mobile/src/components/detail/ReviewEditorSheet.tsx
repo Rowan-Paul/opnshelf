@@ -28,6 +28,7 @@ interface ReviewEditorSheetProps {
 		title: string;
 		markdown: string;
 		mirrorToBlog: boolean;
+		postToBluesky: boolean;
 	}) => void;
 	/** Provided only when editing — deletes the review being edited. */
 	onDelete?: () => void;
@@ -59,6 +60,7 @@ export function ReviewEditorSheet({
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
 	const [mirrorToBlog, setMirrorToBlog] = useState(initialMirrorToBlog);
+	const [postToBluesky, setPostToBluesky] = useState(false);
 	// Bumped on each open so the WebView editor remounts and re-seeds with the
 	// current target's body (the sheet instance is reused across reviews).
 	const [openCount, setOpenCount] = useState(0);
@@ -79,6 +81,7 @@ export function ReviewEditorSheet({
 			setTitle(initialTitle);
 			setMarkdown(initialMarkdown);
 			setMirrorToBlog(initialMirrorToBlog);
+			setPostToBluesky(false);
 			setOpenCount((n) => n + 1);
 		}
 	}, [visible, initialTitle, initialMarkdown, initialMirrorToBlog]);
@@ -179,6 +182,20 @@ export function ReviewEditorSheet({
 							</View>
 						) : null}
 
+						{!isEditing ? (
+							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
+								<Text className="flex-1 font-medium text-foreground text-sm">
+									Also post on Bluesky
+								</Text>
+								<Switch
+									value={postToBluesky}
+									onValueChange={setPostToBluesky}
+									trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+									thumbColor="#ffffff"
+								/>
+							</View>
+						) : null}
+
 						{isEditing && onDelete ? (
 							<Pressable
 								onPress={onDelete}
@@ -194,7 +211,9 @@ export function ReviewEditorSheet({
 						) : null}
 
 						<Pressable
-							onPress={() => onSave({ title, markdown, mirrorToBlog })}
+							onPress={() =>
+								onSave({ title, markdown, mirrorToBlog, postToBluesky })
+							}
 							disabled={!canSave}
 							className="items-center rounded-lg bg-primary py-3"
 							style={{ opacity: canSave ? 1 : 0.5 }}

@@ -21,10 +21,16 @@ vi.mock("../auth/optional-auth.guard", () => ({
 // canonical reviewUrl assembly in getMediaReviews (#115).
 describe("ReviewsController", () => {
 	let controller: ReviewsController;
-	let mockReviewsService: { getMediaReviews: Mock };
+	let mockReviewsService: {
+		getMediaReviews: Mock;
+		retryBlueskyCrossPost: Mock;
+	};
 
 	beforeEach(async () => {
-		mockReviewsService = { getMediaReviews: vi.fn() };
+		mockReviewsService = {
+			getMediaReviews: vi.fn(),
+			retryBlueskyCrossPost: vi.fn(),
+		};
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ReviewsController],
@@ -74,5 +80,25 @@ describe("ReviewsController", () => {
 
 		expect(result.items[0].reviewUrl).toBe("/reviews/alice.opnshelf.xyz/rkey1");
 		expect(result.items[1].reviewUrl).toBe("/reviews/bob.opnshelf.xyz/rkey2");
+	});
+
+	it("passes the authenticated owner through to Bluesky retry", async () => {
+		mockReviewsService.retryBlueskyCrossPost.mockResolvedValue({
+			status: "posted",
+			uri: "at://did:plc:alice/app.bsky.feed.post/key",
+			url: "https://bsky.app/profile/did:plc:alice/post/key",
+		});
+		const request = {
+			user: { did: "did:plc:alice", session: { did: "did:plc:alice" } },
+		};
+
+		await expect(
+			controller.retryBlueskyCrossPost("review-1", request as never),
+		).resolves.toMatchObject({ status: "posted" });
+		expect(mockReviewsService.retryBlueskyCrossPost).toHaveBeenCalledWith(
+			"did:plc:alice",
+			request.user.session,
+			"review-1",
+		);
 	});
 });

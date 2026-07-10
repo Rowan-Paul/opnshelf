@@ -479,6 +479,11 @@ model Review {
   // optional `mirrorToBlog`). Defaults to mirror.
   mirrorToBlog    Boolean  @default(true)
 
+  // Optional one-time Bluesky Cross-post (ADR-0015). This is only a pointer to
+  // the independent post; review edits/deletion never synchronize it.
+  blueskyPostUri  String?
+  blueskyPostCid  String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

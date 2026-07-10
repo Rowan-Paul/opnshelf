@@ -14,7 +14,15 @@ import { Text } from "@/components/ui/text";
 
 type ToastVariant = "success" | "error";
 
-interface ToastState {
+export interface ToastOptions {
+	action?: {
+		label: string;
+		onPress: () => void;
+	};
+	duration?: number;
+}
+
+interface ToastState extends ToastOptions {
 	id: number;
 	message: string;
 	variant: ToastVariant;
@@ -22,98 +30,135 @@ interface ToastState {
 
 interface ToastContextValue {
 	/** Show a toast. Defaults to the success variant. */
-	show: (message: string, variant?: ToastVariant) => void;
-	success: (message: string) => void;
-	error: (message: string) => void;
+	show: (
+		message: string,
+		variant?: ToastVariant,
+		options?: ToastOptions,
+	) => void;
+	success: (message: string, options?: ToastOptions) => void;
+	error: (message: string, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
+const TOAST_DURATION = 3600;
 
-/** Auto-dismiss delay for a toast, in milliseconds. */
-const TOAST_DURATION = 2600;
-
-/**
- * Minimal themed toast. There is no toast library in the mobile app, so this is
- * a lightweight inline implementation: a single animated banner pinned to the
- * bottom safe area. Mutations call `useToast().success/error(...)` for feedback.
- */
-export function ToastProvider({ children }: { children: ReactNode }) {
-	const [toast, setToast] = useState<ToastState | null>(null);
+function ToastItem({
+	toast,
+	index,
+	bottom,
+	onDismiss,
+}: {
+	toast: ToastState;
+	index: number;
+	bottom: number;
+	onDismiss: (id: number) => void;
+}) {
 	const opacity = useRef(new Animated.Value(0)).current;
-	const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const insets = useSafeAreaInsets();
-
-	const dismiss = useCallback(() => {
-		Animated.timing(opacity, {
-			toValue: 0,
-			duration: 180,
-			useNativeDriver: true,
-		}).start(() => setToast(null));
-	}, [opacity]);
-
-	const show = useCallback(
-		(message: string, variant: ToastVariant = "success") => {
-			if (timer.current) clearTimeout(timer.current);
-			setToast({ id: Date.now(), message, variant });
-			Animated.timing(opacity, {
-				toValue: 1,
-				duration: 180,
-				useNativeDriver: true,
-			}).start();
-			timer.current = setTimeout(dismiss, TOAST_DURATION);
-		},
-		[dismiss, opacity],
-	);
 
 	useEffect(() => {
-		return () => {
-			if (timer.current) clearTimeout(timer.current);
-		};
+		Animated.timing(opacity, {
+			toValue: 1,
+			duration: 180,
+			useNativeDriver: true,
+		}).start();
+		const timer = setTimeout(
+			() => onDismiss(toast.id),
+			toast.duration ?? TOAST_DURATION,
+		);
+		return () => clearTimeout(timer);
+	}, [onDismiss, opacity, toast.duration, toast.id]);
+
+	return (
+		<Animated.View
+			style={{
+				bottom: bottom + index * 66,
+				left: 16,
+				opacity,
+				position: "absolute",
+				right: 16,
+			}}
+		>
+			<Pressable
+				onPress={() => onDismiss(toast.id)}
+				className="flex-row items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 shadow-lg"
+			>
+				<View
+					className={
+						toast.variant === "success"
+							? "rounded-full bg-primary/20 p-1"
+							: "rounded-full bg-destructive/20 p-1"
+					}
+				>
+					{toast.variant === "success" ? (
+						<Check color="#22c55e" size={14} />
+					) : (
+						<X color="#ef4444" size={14} />
+					)}
+				</View>
+				<Text className="flex-1 font-medium text-foreground text-sm">
+					{toast.message}
+				</Text>
+				{toast.action ? (
+					<Pressable
+						onPress={() => {
+							toast.action?.onPress();
+							onDismiss(toast.id);
+						}}
+						className="rounded-lg bg-background-subtle px-2.5 py-1.5"
+					>
+						<Text className="font-semibold text-primary text-xs">
+							{toast.action.label}
+						</Text>
+					</Pressable>
+				) : null}
+			</Pressable>
+		</Animated.View>
+	);
+}
+
+/** Minimal themed toast stack with optional actions. */
+export function ToastProvider({ children }: { children: ReactNode }) {
+	const [toasts, setToasts] = useState<ToastState[]>([]);
+	const nextId = useRef(1);
+	const insets = useSafeAreaInsets();
+
+	const dismiss = useCallback((id: number) => {
+		setToasts((current) => current.filter((toast) => toast.id !== id));
 	}, []);
+
+	const show = useCallback(
+		(
+			message: string,
+			variant: ToastVariant = "success",
+			options: ToastOptions = {},
+		) => {
+			const id = nextId.current++;
+			setToasts((current) => [
+				...current.slice(-2),
+				{ id, message, variant, ...options },
+			]);
+		},
+		[],
+	);
 
 	const value: ToastContextValue = {
 		show,
-		success: (message) => show(message, "success"),
-		error: (message) => show(message, "error"),
+		success: (message, options) => show(message, "success", options),
+		error: (message, options) => show(message, "error", options),
 	};
 
 	return (
 		<ToastContext.Provider value={value}>
 			{children}
-			{toast ? (
-				<Animated.View
-					pointerEvents="box-none"
-					style={{
-						bottom: insets.bottom + 72,
-						left: 16,
-						opacity,
-						position: "absolute",
-						right: 16,
-					}}
-				>
-					<Pressable
-						onPress={dismiss}
-						className="flex-row items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 shadow-lg"
-					>
-						<View
-							className={
-								toast.variant === "success"
-									? "rounded-full bg-primary/20 p-1"
-									: "rounded-full bg-destructive/20 p-1"
-							}
-						>
-							{toast.variant === "success" ? (
-								<Check color="#22c55e" size={14} />
-							) : (
-								<X color="#ef4444" size={14} />
-							)}
-						</View>
-						<Text className="flex-1 font-medium text-foreground text-sm">
-							{toast.message}
-						</Text>
-					</Pressable>
-				</Animated.View>
-			) : null}
+			{toasts.map((toast, index) => (
+				<ToastItem
+					key={toast.id}
+					toast={toast}
+					index={index}
+					bottom={insets.bottom + 72}
+					onDismiss={dismiss}
+				/>
+			))}
 		</ToastContext.Provider>
 	);
 }

@@ -1442,6 +1442,47 @@ export type CreateReviewDto = {
      * Whether to mirror this review to the author's blog (when one is configured). Defaults to true.
      */
     mirrorToBlog?: boolean;
+    /**
+     * Whether to create a one-time Bluesky post announcing this new review. Defaults to false.
+     */
+    postToBluesky?: boolean;
+};
+
+export type BlueskyCrossPostResultDto = {
+    status: 'not_requested' | 'posted' | 'failed';
+    /**
+     * AT-URI of the Bluesky post when it was created
+     */
+    uri?: string;
+    /**
+     * Public bsky.app URL for the post
+     */
+    url?: string;
+};
+
+export type CreateReviewResponseDto = {
+    id: string;
+    rkey: string;
+    title: string;
+    /**
+     * Review body as markdown source
+     */
+    markdown: string;
+    /**
+     * AT-URI of the standard.site blog-mirror document, or null when not mirrored
+     */
+    blogDocumentUri?: string | null;
+    /**
+     * Whether this review is mirrored to the author's blog
+     */
+    mirrorToBlog: boolean;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+    blueskyCrossPost: BlueskyCrossPostResultDto;
 };
 
 export type UpdateReviewDto = {
@@ -4086,10 +4127,35 @@ export type ReviewsControllerCreateReviewResponses = {
     /**
      * Review created
      */
-    200: ReviewResponseDto;
+    200: CreateReviewResponseDto;
 };
 
 export type ReviewsControllerCreateReviewResponse = ReviewsControllerCreateReviewResponses[keyof ReviewsControllerCreateReviewResponses];
+
+export type ReviewsControllerRetryBlueskyCrossPostData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/reviews/{reviewId}/bluesky-post';
+};
+
+export type ReviewsControllerRetryBlueskyCrossPostErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ReviewsControllerRetryBlueskyCrossPostResponses = {
+    /**
+     * Bluesky Cross-post result
+     */
+    200: BlueskyCrossPostResultDto;
+};
+
+export type ReviewsControllerRetryBlueskyCrossPostResponse = ReviewsControllerRetryBlueskyCrossPostResponses[keyof ReviewsControllerRetryBlueskyCrossPostResponses];
 
 export type ReviewsControllerUnlikeReviewData = {
     body?: never;

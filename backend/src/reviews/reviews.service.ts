@@ -44,6 +44,11 @@ export interface ATSession {
 
 // Canonical public site. NEVER opnshelf.social (that is only the PDS host).
 const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
+const BLUESKY_APP_ORIGIN = "https://bsky.app";
+const BLUESKY_POST_COLLECTION = "app.bsky.feed.post";
+const BLUESKY_POST_MAX_GRAPHEMES = 300;
+const BLUESKY_CTA = "Read my review";
+const BLUESKY_THUMB_MAX_BYTES = 1_000_000;
 
 const PUBLICATION_LIST_LIMIT = 100;
 const OFFPRINT_ARTICLE_COLLECTION = "app.offprint.document.article";
@@ -119,6 +124,83 @@ function excerptOf(markdown: string): string {
 // Poster size for the metadata header of the blog mirror (a review-sized image,
 // not a full-bleed backdrop).
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
+
+export type BlueskyCrossPostResult =
+	| { status: "not_requested" }
+	| { status: "posted"; uri: string; url: string }
+	| { status: "failed" };
+
+function graphemes(value: string): string[] {
+	const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+	return Array.from(segmenter.segment(value), (part) => part.segment);
+}
+
+function truncateGraphemes(value: string, max: number): string {
+	const parts = graphemes(value);
+	if (parts.length <= max) return value;
+	if (max <= 0) return "";
+	if (max === 1) return "…";
+	return `${parts.slice(0, max - 1).join("")}…`;
+}
+
+function crossPostText(mediaTitle: string, reviewTitle: string): string {
+	return `I reviewed ${mediaTitle} on OpnShelf: “${reviewTitle}”\n\n${BLUESKY_CTA}`;
+}
+
+/** Compose within Bluesky's 300-grapheme limit, trimming review title first. */
+export function composeBlueskyPostText(
+	mediaTitle: string,
+	reviewTitle: string,
+): string {
+	let resolvedReviewTitle = reviewTitle;
+	let resolvedMediaTitle = mediaTitle;
+	let text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
+
+	if (graphemes(text).length > BLUESKY_POST_MAX_GRAPHEMES) {
+		const withoutReview = crossPostText(resolvedMediaTitle, "");
+		const reviewBudget = Math.max(
+			0,
+			BLUESKY_POST_MAX_GRAPHEMES - graphemes(withoutReview).length,
+		);
+		resolvedReviewTitle = truncateGraphemes(reviewTitle, reviewBudget);
+		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
+	}
+
+	if (graphemes(text).length > BLUESKY_POST_MAX_GRAPHEMES) {
+		const withoutMedia = crossPostText("", resolvedReviewTitle);
+		const mediaBudget = Math.max(
+			0,
+			BLUESKY_POST_MAX_GRAPHEMES - graphemes(withoutMedia).length,
+		);
+		resolvedMediaTitle = truncateGraphemes(mediaTitle, mediaBudget);
+		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
+	}
+
+	return text;
+}
+
+/** Rich-text facet offsets are UTF-8 bytes, not JS UTF-16 indices. */
+export function blueskyLinkFacet(text: string, uri: string) {
+	const start = text.lastIndexOf(BLUESKY_CTA);
+	if (start < 0) {
+		throw new Error("Bluesky call to action missing from post text");
+	}
+	return {
+		index: {
+			byteStart: Buffer.byteLength(text.slice(0, start), "utf8"),
+			byteEnd: Buffer.byteLength(
+				text.slice(0, start + BLUESKY_CTA.length),
+				"utf8",
+			),
+		},
+		features: [
+			{
+				$type: "app.bsky.richtext.facet#link",
+				uri,
+			},
+		],
+	};
+}
 
 const MEDIA_TYPE_LABEL: Record<MediaType, string> = {
 	movie: "Movie",
@@ -462,6 +544,129 @@ export class ReviewsService {
 		}
 
 		return byReviewId;
+	}
+
+	private async uploadBlueskyThumbnail(
+		agent: Agent,
+		posterPath: string | null,
+	): Promise<unknown | undefined> {
+		if (!posterPath) return undefined;
+		try {
+			const response = await fetch(`${TMDB_IMAGE_BASE}${posterPath}`);
+			if (!response.ok) return undefined;
+			const contentType = response.headers.get("content-type") ?? "";
+			if (!contentType.startsWith("image/")) return undefined;
+			const bytes = new Uint8Array(await response.arrayBuffer());
+			if (bytes.byteLength > BLUESKY_THUMB_MAX_BYTES) return undefined;
+			const uploaded = await agent.uploadBlob(bytes, { encoding: contentType });
+			return uploaded.data.blob;
+		} catch (error) {
+			this.logger.warn(
+				"Bluesky card thumbnail upload failed; posting without it",
+				error instanceof Error ? error.stack : undefined,
+			);
+			return undefined;
+		}
+	}
+
+	private async writeBlueskyCrossPost(
+		userDid: string,
+		agent: Agent,
+		review: {
+			id: string;
+			rkey: string;
+			title: string;
+			mediaType: string;
+			mediaId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+			createdAt: Date;
+			blueskyPostUri: string | null;
+			blueskyPostCid: string | null;
+		},
+	): Promise<Extract<BlueskyCrossPostResult, { status: "posted" }>> {
+		if (review.blueskyPostUri) {
+			return {
+				status: "posted",
+				uri: review.blueskyPostUri,
+				url: `${BLUESKY_APP_ORIGIN}/profile/${userDid}/post/${review.rkey}`,
+			};
+		}
+
+		const [user, mediaByReviewId] = await Promise.all([
+			this.prisma.user.findUnique({
+				where: { did: userDid },
+				select: { handle: true },
+			}),
+			this.enrichMediaForReviews([review]),
+		]);
+		const media = mediaByReviewId.get(review.id);
+		if (!user || !media) {
+			throw new NotFoundException("Review media or author not found");
+		}
+
+		const canonicalUrl = `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`;
+		const text = composeBlueskyPostText(media.title, review.title);
+		const thumb = await this.uploadBlueskyThumbnail(agent, media.posterPath);
+		const external: Record<string, unknown> = {
+			uri: canonicalUrl,
+			title: `${review.title} — ${media.title}`,
+			description: `A review by @${user.handle} on OpnShelf.`,
+		};
+		if (thumb) external.thumb = thumb;
+
+		const response = await agent.com.atproto.repo.putRecord({
+			repo: userDid,
+			collection: BLUESKY_POST_COLLECTION,
+			rkey: review.rkey,
+			record: {
+				$type: BLUESKY_POST_COLLECTION,
+				text,
+				facets: [blueskyLinkFacet(text, canonicalUrl)],
+				embed: {
+					$type: "app.bsky.embed.external",
+					external,
+				},
+				createdAt: review.createdAt.toISOString(),
+			},
+		});
+
+		await this.prisma.review.update({
+			where: { id: review.id },
+			data: {
+				blueskyPostUri: response.data.uri,
+				blueskyPostCid: response.data.cid,
+			},
+		});
+
+		return {
+			status: "posted",
+			uri: response.data.uri,
+			url: `${BLUESKY_APP_ORIGIN}/profile/${userDid}/post/${review.rkey}`,
+		};
+	}
+
+	async retryBlueskyCrossPost(
+		userDid: string,
+		session: ATSession,
+		reviewId: string,
+	): Promise<BlueskyCrossPostResult> {
+		const review = await this.prisma.review.findFirst({
+			where: { id: reviewId, userDid },
+		});
+		if (!review) throw new NotFoundException("Review not found");
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+		try {
+			return await this.writeBlueskyCrossPost(userDid, agent, review);
+		} catch (error) {
+			this.logger.warn(
+				`Bluesky Cross-post failed for review ${review.rkey}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+			return { status: "failed" };
+		}
 	}
 
 	async getUserReviews(userDid: string, limit = 20, cursor?: string) {
@@ -950,13 +1155,34 @@ export class ReviewsService {
 		});
 
 		const mirror = await this.syncBlogMirror(userDid, agent, created);
+		let finalReview = created;
 		if (mirror.blogDocumentUri !== created.blogDocumentUri) {
-			return this.prisma.review.update({
+			finalReview = await this.prisma.review.update({
 				where: { id: created.id },
 				data: mirror,
 			});
 		}
-		return created;
+
+		let blueskyCrossPost: BlueskyCrossPostResult = {
+			status: "not_requested",
+		};
+		if (dto.postToBluesky) {
+			try {
+				blueskyCrossPost = await this.writeBlueskyCrossPost(
+					userDid,
+					agent,
+					finalReview,
+				);
+			} catch (error) {
+				this.logger.warn(
+					`Bluesky Cross-post failed for review ${finalReview.rkey}`,
+					error instanceof Error ? error.stack : undefined,
+				);
+				blueskyCrossPost = { status: "failed" };
+			}
+		}
+
+		return { ...finalReview, blueskyCrossPost };
 	}
 
 	async updateReview(

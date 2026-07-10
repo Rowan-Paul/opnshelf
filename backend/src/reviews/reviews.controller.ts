@@ -25,6 +25,8 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	CanonicalReviewResponseDto,
 	CreateReviewDto,
+	CreateReviewResponseDto,
+	BlueskyCrossPostResultDto,
 	MediaReviewsQueryDto,
 	MediaReviewsResponseDto,
 	MyPublicationsResponseDto,
@@ -210,19 +212,42 @@ export class ReviewsController {
 	@ApiOperation({ summary: "Create a review" })
 	@ApiOkResponse({
 		description: "Review created",
-		type: ReviewResponseDto,
+		type: CreateReviewResponseDto,
 	})
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
 	async createReview(
 		@Req() req: AuthenticatedRequest,
 		@Body() dto: CreateReviewDto,
-	): Promise<ReviewResponseDto> {
+	): Promise<CreateReviewResponseDto> {
 		const review = await this.reviewsService.createReview(
 			req.user.did,
 			req.user.session as ATSession,
 			dto,
 		);
-		return this.toReviewResponse(review);
+		return {
+			...this.toReviewResponse(review),
+			blueskyCrossPost: review.blueskyCrossPost,
+		};
+	}
+
+	@Post(":reviewId/bluesky-post")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Retry a Review's one-time Bluesky Cross-post" })
+	@ApiOkResponse({
+		description: "Bluesky Cross-post result",
+		type: BlueskyCrossPostResultDto,
+	})
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async retryBlueskyCrossPost(
+		@Param("reviewId") reviewId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<BlueskyCrossPostResultDto> {
+		return this.reviewsService.retryBlueskyCrossPost(
+			req.user.did,
+			req.user.session as ATSession,
+			reviewId,
+		);
 	}
 
 	@Patch(":reviewId")

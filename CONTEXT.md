@@ -12,6 +12,10 @@ _Avoid_: Review (a Review is the long-form text, not the score)
 A user's long-form textual piece about a media item, stored as an opnshelf-controlled `xyz.opnshelf.review` record. A Review carries no numeric score — the score is a separate Rating. A bare "8/10" with no prose is a Rating, not a Review. A user may write zero or many Reviews about the same media item (e.g. a first-watch piece and a later rewatch essay). A Review may optionally be mirrored to the author's own standard.site blog as a `site.standard.document`.
 _Avoid_: Rating (the numeric score is a separate entity)
 
+**Bluesky Cross-post**:
+An optional, one-time Bluesky post announcing a newly created Review and linking to its canonical Review page. It is an independent post, not a synchronized mirror: later Review edits or deletion do not change or delete it.
+_Avoid_: Share (too broad), Bluesky mirror (implies ongoing synchronization)
+
 **Your Reviews**:
 The authenticated user's own Reviews for a specific media item, listed in the sidebar for quick access and editing. Plural — a user can have more than one Review per media item.
 

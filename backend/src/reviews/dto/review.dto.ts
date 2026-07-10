@@ -57,6 +57,15 @@ export class CreateReviewDto {
 	@IsOptional()
 	@IsBoolean()
 	mirrorToBlog?: boolean;
+
+	@ApiPropertyOptional({
+		description:
+			"Whether to create a one-time Bluesky post announcing this new review. Defaults to false.",
+		default: false,
+	})
+	@IsOptional()
+	@IsBoolean()
+	postToBluesky?: boolean;
 }
 
 export class UpdateReviewDto {
@@ -83,6 +92,21 @@ export class UpdateReviewDto {
 	@IsOptional()
 	@IsBoolean()
 	mirrorToBlog?: boolean;
+}
+
+export class BlueskyCrossPostResultDto {
+	@ApiProperty({ enum: ["not_requested", "posted", "failed"] })
+	status: "not_requested" | "posted" | "failed";
+
+	@ApiPropertyOptional({
+		description: "AT-URI of the Bluesky post when it was created",
+	})
+	uri?: string;
+
+	@ApiPropertyOptional({
+		description: "Public bsky.app URL for the post",
+	})
+	url?: string;
 }
 
 export class ReviewResponseDto {
@@ -128,6 +152,11 @@ export class ReviewResponseDto {
 
 	@ApiProperty()
 	updatedAt: string;
+}
+
+export class CreateReviewResponseDto extends ReviewResponseDto {
+	@ApiProperty({ type: BlueskyCrossPostResultDto })
+	blueskyCrossPost: BlueskyCrossPostResultDto;
 }
 
 export class CanonicalReviewAuthorDto {
