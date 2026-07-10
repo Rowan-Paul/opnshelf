@@ -283,11 +283,11 @@ function SettingsPage() {
 				reviewsMirrorFormat:
 					pendingService === "leaflet"
 						? "leaflet"
-					: pendingService === "offprint"
+						: pendingService === "offprint"
 							? "offprint"
 							: pendingService === "pckt"
 								? "pckt"
-							: "markdown",
+								: "markdown",
 			},
 		});
 		setPendingPublication(null);
@@ -577,7 +577,7 @@ function SettingsPage() {
 											? "Is this an Offprint publication?"
 											: pendingService === "pckt"
 												? "Is this a Pckt publication?"
-											: "Which service runs this publication?"}
+												: "Which service runs this publication?"}
 							</DialogTitle>
 							<DialogDescription>
 								{requiresServiceChoice
@@ -588,7 +588,7 @@ function SettingsPage() {
 											? `We recognised ${pendingPublication?.name} as Offprint. Confirm to mirror your reviews there.`
 											: pendingService === "pckt"
 												? `We recognised ${pendingPublication?.name} as Pckt. Confirm to mirror your reviews there.`
-											: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
+												: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
 							</DialogDescription>
 						</DialogHeader>
 						{requiresServiceChoice && (
@@ -658,7 +658,7 @@ function SettingsPage() {
 										? "Yes, this is Offprint"
 										: pendingService === "pckt"
 											? "Yes, this is Pckt"
-										: "Continue"}
+											: "Continue"}
 							</Button>
 						</div>
 					</DialogContent>
