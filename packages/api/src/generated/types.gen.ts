@@ -708,7 +708,7 @@ export type UserSettingsDto = {
     /**
      * Explicit reader format used for blog mirrors; Markdown is the portable default
      */
-    reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint';
+    reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
 };
 
 export type UpdateUserSettingsDto = {
@@ -731,7 +731,7 @@ export type UpdateUserSettingsDto = {
     /**
      * Explicit reader format for blog mirrors. Markdown is the portable default.
      */
-    reviewsMirrorFormat?: 'markdown' | 'leaflet' | 'offprint';
+    reviewsMirrorFormat?: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
 };
 
 export type UpdateUserProfileDto = {
@@ -1382,7 +1382,7 @@ export type MyPublicationDto = {
     /**
      * Detected publication service; users can override this suggestion
      */
-    service: 'leaflet' | 'offprint' | 'unknown';
+    service: 'leaflet' | 'offprint' | 'pckt' | 'unknown';
 };
 
 export type MyPublicationsResponseDto = {

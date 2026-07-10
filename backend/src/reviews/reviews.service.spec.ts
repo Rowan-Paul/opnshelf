@@ -754,6 +754,50 @@ describe("ReviewsService", () => {
 				}),
 			);
 		});
+
+		it("emits Pckt content without an additional article record", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/pckt",
+				reviewsMirrorFormat: "pckt",
+			});
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-document",
+					},
+				});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "**Loved** it.",
+			});
+
+			expect(mockPutRecord).toHaveBeenCalledTimes(2);
+			expect(mockPutRecord).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					collection: "site.standard.document",
+					record: expect.objectContaining({
+						content: expect.objectContaining({
+							$type: "blog.pckt.content",
+						}),
+					}),
+				}),
+			);
+		});
 	});
 
 	describe("listMyPublications", () => {
@@ -812,6 +856,34 @@ describe("ReviewsService", () => {
 					name: "My Offprint",
 					url: "https://custom.example",
 					service: "offprint",
+				},
+			]);
+		});
+
+		it("recognises Pckt from its theme before considering its URL", async () => {
+			mockListRecords.mockResolvedValue({
+				data: {
+					records: [
+						{
+							uri: "at://did:plc:abc123/site.standard.publication/pckt",
+							value: {
+								name: "My Pckt",
+								url: "https://custom.example",
+								theme: { $type: "blog.pckt.theme" },
+							},
+						},
+					],
+				},
+			});
+
+			await expect(
+				service.listMyPublications(session.did, session),
+			).resolves.toEqual([
+				{
+					uri: "at://did:plc:abc123/site.standard.publication/pckt",
+					name: "My Pckt",
+					url: "https://custom.example",
+					service: "pckt",
 				},
 			]);
 		});

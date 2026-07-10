@@ -1,6 +1,6 @@
-# ADR-0014: Per-reader blog-mirror content (Leaflet, Offprint)
+# ADR-0014: Per-reader blog-mirror content (Leaflet, Offprint, Pckt)
 
-**Status:** Partially implemented — Standard Markdown and Leaflet; Offprint pending listing probe
+**Status:** Implemented — Standard Markdown, Leaflet, Offprint, and Pckt
 **Extends:** [ADR-0013](0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md)
 
 ## Context
@@ -22,6 +22,7 @@ Evidence (all on `did:plc:p3qed3bkmcjrmf5msnuwjdtp`, same author):
 | opnshelf | `at.markpub.markdown` | `{ text: { markdown }, flavor }` | — |
 | Leaflet | `pub.leaflet.content` | `pages[] → …#block → blocks.text` | **no** (blank) |
 | Offprint | `app.offprint.content` | `items[] → block.text` | **no** (blank) |
+| Pckt | `blog.pckt.content` | `items[] → block.text` | **no** (blank) |
 
 Leaflet and Offprint are structurally near-identical (a list of text blocks,
 each `plaintext` + byte-offset `facets` for bold/italic/link) but namespaced
@@ -37,7 +38,7 @@ only emit one format per mirror — but we need a converter per supported app.
 ## Decision
 
 When configuring a blog mirror, the user explicitly selects the reader format
-for that publication: **Leaflet**, **Offprint**, or **Standard Markdown**. When
+for that publication: **Leaflet**, **Offprint**, **Pckt**, or **Standard Markdown**. When
 writing the mirror, emit the matching `content`; Standard Markdown emits
 `at.markpub.markdown`.
 
@@ -62,14 +63,19 @@ Observed markers:
 - **Leaflet**: no `pub.leaflet.*` field on the record at all — only
   `site.standard.theme.basic` + plain `preferences`. Sole signal is the URL host
   `*.leaflet.pub`.
+- **Pckt**: `theme.$type` is `blog.pckt.theme`; its sibling
+  `blog.pckt.publication` record is a pointer to the same
+  `site.standard.publication`. URL host `*.pckt.blog`.
 
 Suggestion order:
 
 ```
 suggestPublicationApp(pub):
   if pub.theme?.$type starts with "app.offprint."      -> "offprint"
+  else if pub.theme?.$type starts with "blog.pckt."    -> "pckt"
   else if host(pub.url) ends with ".leaflet.pub"       -> "leaflet"
   else if host(pub.url) ends with ".offprint.app"      -> "offprint"   // custom-domain safety net after theme
+  else if host(pub.url) ends with ".pckt.blog"         -> "pckt"
   else                                                 -> "unknown"
 ```
 
@@ -111,6 +117,14 @@ Leaflet:
 ```
 
 Offprint:
+```
+
+Pckt:
+```
+{ $type: "blog.pckt.content",
+  items: [ { $type: "blog.pckt.block.text", plaintext, facets: [
+    { index: { byteStart, byteEnd },
+      features: [ { $type: "blog.pckt.richtext.facet#italic" } ] } ] } ] }
 ```
 { $type: "app.offprint.content",
   items: [ { $type: "app.offprint.block.text", plaintext, facets: [
@@ -156,9 +170,12 @@ link facet shape, heading/list/quote/code/image block types, and the
 1. **Leaflet** — implemented as a single `site.standard.document` with
    `pub.leaflet.content`. Users explicitly choose Leaflet; a `.leaflet.pub` URL
    is only presented as a suggestion.
-2. **Offprint** — pending a probe of its listing behaviour (open question 1); may need the
-   native article record.
-3. **Standard Markdown** remains the default until the user selects another format.
+2. **Offprint** — writes its native `app.offprint.document.article` pointer as
+   well as the document. Its publication UI may only list articles it has
+   indexed itself; retain this as a compatibility caveat.
+3. **Pckt** — writes a `site.standard.document` with `blog.pckt.content` only;
+   Pckt has no native document/article record in the author's repo.
+4. **Standard Markdown** remains the default until the user selects another format.
 
 Text + bold/italic/link/heading/list first; images later.
 

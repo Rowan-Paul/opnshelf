@@ -259,11 +259,11 @@ function SettingsPage() {
 		uri: string;
 		name: string;
 		url: string;
-		service: "leaflet" | "offprint" | "unknown";
+		service: "leaflet" | "offprint" | "pckt" | "unknown";
 	} | null>(null);
 	const [leafletRejected, setLeafletRejected] = useState(false);
 	const [fallbackService, setFallbackService] = useState<
-		"leaflet" | "offprint" | "unknown"
+		"leaflet" | "offprint" | "pckt" | "unknown"
 	>("unknown");
 	const pendingService = leafletRejected
 		? fallbackService
@@ -283,8 +283,10 @@ function SettingsPage() {
 				reviewsMirrorFormat:
 					pendingService === "leaflet"
 						? "leaflet"
-						: pendingService === "offprint"
+					: pendingService === "offprint"
 							? "offprint"
+							: pendingService === "pckt"
+								? "pckt"
 							: "markdown",
 			},
 		});
@@ -573,6 +575,8 @@ function SettingsPage() {
 										? "Is this a Leaflet publication?"
 										: pendingService === "offprint"
 											? "Is this an Offprint publication?"
+											: pendingService === "pckt"
+												? "Is this a Pckt publication?"
 											: "Which service runs this publication?"}
 							</DialogTitle>
 							<DialogDescription>
@@ -582,6 +586,8 @@ function SettingsPage() {
 										? `We recognised ${pendingPublication?.name} as Leaflet. Confirm to mirror your reviews there.`
 										: pendingService === "offprint"
 											? `We recognised ${pendingPublication?.name} as Offprint. Confirm to mirror your reviews there.`
+											: pendingService === "pckt"
+												? `We recognised ${pendingPublication?.name} as Pckt. Confirm to mirror your reviews there.`
 											: "We couldn't recognise the service behind this publication. We'll still mirror your reviews, but they may not display as expected."}
 							</DialogDescription>
 						</DialogHeader>
@@ -592,7 +598,7 @@ function SettingsPage() {
 									value={fallbackService}
 									onValueChange={(value) =>
 										setFallbackService(
-											value as "leaflet" | "offprint" | "unknown",
+											value as "leaflet" | "offprint" | "pckt" | "unknown",
 										)
 									}
 								>
@@ -603,6 +609,7 @@ function SettingsPage() {
 										<SelectGroup>
 											<SelectItem value="leaflet">Leaflet</SelectItem>
 											<SelectItem value="offprint">Offprint</SelectItem>
+											<SelectItem value="pckt">Pckt</SelectItem>
 											<SelectItem value="unknown">Other or unknown</SelectItem>
 										</SelectGroup>
 									</SelectContent>
@@ -636,11 +643,21 @@ function SettingsPage() {
 									No, it isn't Offprint
 								</Button>
 							)}
+							{pendingService === "pckt" && !requiresServiceChoice && (
+								<Button
+									variant="outline"
+									onClick={() => setLeafletRejected(true)}
+								>
+									No, it isn't Pckt
+								</Button>
+							)}
 							<Button onClick={confirmPublicationService}>
 								{pendingService === "leaflet"
 									? "Yes, this is Leaflet"
 									: pendingService === "offprint"
 										? "Yes, this is Offprint"
+										: pendingService === "pckt"
+											? "Yes, this is Pckt"
 										: "Continue"}
 							</Button>
 						</div>

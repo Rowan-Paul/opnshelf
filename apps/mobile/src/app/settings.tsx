@@ -203,8 +203,8 @@ export default function SettingsScreen() {
 		uri: string;
 		name: string;
 		url: string;
+		service: "leaflet" | "offprint" | "pckt" | "unknown";
 	}) => {
-		const isLeaflet = publication.url.includes("leaflet.pub");
 		const continueWithCompatibilityMode = () => {
 			Alert.alert(
 				"Choose the publication service",
@@ -232,6 +232,16 @@ export default function SettingsScreen() {
 							}),
 					},
 					{
+						text: "Pckt",
+						onPress: () =>
+							updateSettingsMutation.mutate({
+								body: {
+									reviewsPublicationUri: publication.uri,
+									reviewsMirrorFormat: "pckt",
+								},
+							}),
+					},
+					{
 						text: "Other or unknown",
 						onPress: () =>
 							updateSettingsMutation.mutate({
@@ -245,27 +255,35 @@ export default function SettingsScreen() {
 			);
 		};
 
-		if (!isLeaflet) {
+		if (publication.service === "unknown") {
 			continueWithCompatibilityMode();
 			return;
 		}
+		const mirrorFormat = publication.service;
+
+		const serviceName =
+			mirrorFormat === "leaflet"
+				? "Leaflet"
+				: mirrorFormat === "offprint"
+					? "Offprint"
+					: "Pckt";
 
 		Alert.alert(
-			"Is this a Leaflet publication?",
-			`We recognised ${publication.name} as Leaflet. Confirm to mirror your reviews there.`,
+			`Is this a ${serviceName} publication?`,
+			`We recognised ${publication.name} as ${serviceName}. Confirm to mirror your reviews there.`,
 			[
 				{ text: "Cancel", style: "cancel" },
 				{
-					text: "No, it isn't Leaflet",
+					text: `No, it isn't ${serviceName}`,
 					onPress: continueWithCompatibilityMode,
 				},
 				{
-					text: "Yes, this is Leaflet",
+					text: `Yes, this is ${serviceName}`,
 					onPress: () =>
 						updateSettingsMutation.mutate({
 							body: {
 								reviewsPublicationUri: publication.uri,
-								reviewsMirrorFormat: "leaflet",
+								reviewsMirrorFormat: mirrorFormat,
 							},
 						}),
 				},

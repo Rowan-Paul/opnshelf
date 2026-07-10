@@ -26,6 +26,7 @@ import type { Main as PublicationRecord } from "../lexicons/site/standard/public
 import { PrismaService } from "../prisma/prisma.service";
 import { documentToLeafletContent } from "./mirror/leaflet";
 import { documentToOffprintContent } from "./mirror/offprint";
+import { documentToPcktContent } from "./mirror/pckt";
 import {
 	markdownToDocument,
 	type DocumentBlock,
@@ -47,7 +48,7 @@ const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
 const PUBLICATION_LIST_LIMIT = 100;
 const OFFPRINT_ARTICLE_COLLECTION = "app.offprint.document.article";
 
-type PublicationService = "leaflet" | "offprint" | "unknown";
+type PublicationService = "leaflet" | "offprint" | "pckt" | "unknown";
 
 function detectPublicationService(publication: {
 	url?: string;
@@ -56,6 +57,9 @@ function detectPublicationService(publication: {
 	if (publication.theme?.$type?.startsWith("app.offprint.")) {
 		return "offprint";
 	}
+	if (publication.theme?.$type?.startsWith("blog.pckt.")) {
+		return "pckt";
+	}
 	try {
 		const host = new URL(publication.url ?? "").hostname;
 		if (host === "leaflet.pub" || host.endsWith(".leaflet.pub")) {
@@ -63,6 +67,9 @@ function detectPublicationService(publication: {
 		}
 		if (host === "offprint.app" || host.endsWith(".offprint.app")) {
 			return "offprint";
+		}
+		if (host === "pckt.blog" || host.endsWith(".pckt.blog")) {
+			return "pckt";
 		}
 	} catch {
 		// Unknown/invalid publication URLs fall back to the portable format.
@@ -243,6 +250,36 @@ function buildOffprintMirrorContent(params: {
 		],
 	});
 	return documentToOffprintContent(blocks);
+}
+
+function buildPcktMirrorContent(params: {
+	body: string;
+	mediaTitle: string | null;
+	mediaUrl: string;
+	typeLabel: string;
+}): Record<string, unknown> {
+	const blocks: DocumentBlock[] = [];
+	if (params.mediaTitle) {
+		blocks.push({
+			type: "paragraph",
+			runs: [
+				{ type: "link", text: params.mediaTitle, href: params.mediaUrl },
+				{ type: "text", text: ` · ${params.typeLabel}` },
+			],
+		});
+	}
+	blocks.push(...markdownToDocument(params.body));
+	blocks.push({
+		type: "paragraph",
+		runs: [
+			{
+				type: "link",
+				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
+				href: params.mediaUrl,
+			},
+		],
+	});
+	return documentToPcktContent(blocks);
 }
 
 @Injectable()
@@ -795,7 +832,14 @@ export class ReviewsService {
 								mediaUrl,
 								typeLabel: MEDIA_TYPE_LABEL[mediaType],
 							}) as DocumentRecord["content"])
-						: undefined;
+						: user?.reviewsMirrorFormat === "pckt"
+							? (buildPcktMirrorContent({
+									body: review.markdown,
+									mediaTitle,
+									mediaUrl,
+									typeLabel: MEDIA_TYPE_LABEL[mediaType],
+								}) as DocumentRecord["content"])
+							: undefined;
 
 			const record = this.buildDocumentRecord({
 				publicationUri,

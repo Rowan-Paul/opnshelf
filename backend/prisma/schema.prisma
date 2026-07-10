@@ -73,6 +73,7 @@ enum BlogMirrorFormat {
   markdown
   leaflet
   offprint
+  pckt
 }
 
 model Follow {

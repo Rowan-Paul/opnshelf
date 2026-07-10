@@ -49,11 +49,11 @@ export class UpdateUserSettingsDto {
 	@ApiPropertyOptional({
 		description:
 			"Explicit reader format for blog mirrors. Markdown is the portable default.",
-		enum: ["markdown", "leaflet", "offprint"],
+		enum: ["markdown", "leaflet", "offprint", "pckt"],
 	})
 	@IsString()
 	@IsOptional()
-	@IsIn(["markdown", "leaflet", "offprint"])
+	@IsIn(["markdown", "leaflet", "offprint", "pckt"])
 	reviewsMirrorFormat?: string;
 }
 
@@ -129,7 +129,7 @@ export class UserSettingsDto {
 	@ApiProperty({
 		description:
 			"Explicit reader format used for blog mirrors; Markdown is the portable default",
-		enum: ["markdown", "leaflet", "offprint"],
+		enum: ["markdown", "leaflet", "offprint", "pckt"],
 	})
 	reviewsMirrorFormat!: string;
 }

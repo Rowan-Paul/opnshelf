@@ -454,9 +454,9 @@ export class MyPublicationDto {
 	@ApiProperty({
 		description:
 			"Detected publication service; users can override this suggestion",
-		enum: ["leaflet", "offprint", "unknown"],
+		enum: ["leaflet", "offprint", "pckt", "unknown"],
 	})
-	service: "leaflet" | "offprint" | "unknown";
+	service: "leaflet" | "offprint" | "pckt" | "unknown";
 }
 
 export class MyPublicationsResponseDto {
