@@ -31,7 +31,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -132,7 +131,7 @@ export default function MediaActionsBar({
 				Compact desktop hierarchy: immediate tracking actions stay in the hero;
 				less frequent editorial and organisation actions live under More.
 			*/}
-			<div className="hidden lg:flex lg:items-center lg:gap-2">
+			<div className="flex flex-wrap items-center gap-2">
 				<button
 					type="button"
 					onClick={() => toggleWatchlist(isInWatchlist)}
@@ -173,15 +172,38 @@ export default function MediaActionsBar({
 						/>
 					)}
 				</button>
+				<div className="inline-flex h-10 overflow-hidden rounded-md border border-(--border)">
+					<button
+						type="button"
+						onClick={() => setRatingDialogOpen(true)}
+						className={`inline-flex items-center justify-center gap-2 px-3 transition-all duration-150 ${rating > 0 ? "bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "bg-(--background-elevated) text-(--foreground) hover:bg-(--background-subtle)"}`}
+						aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
+					>
+						<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
+						<span className="text-sm">
+							{rating > 0 ? ratingToStars(rating).toFixed(1) : "Rate"}
+						</span>
+					</button>
+					<button
+						type="button"
+						onClick={() => setReviewDialogOpen(true)}
+						className={`inline-flex w-10 items-center justify-center border-(--border) border-l transition-all duration-150 ${hasReviewed ? "bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "bg-(--background-elevated) text-(--foreground) hover:bg-(--background-subtle)"}`}
+						aria-label={hasReviewed ? "Write another review" : "Write a review"}
+					>
+						<MessageSquarePlus className="size-5" />
+					</button>
+				</div>
 				<button
 					type="button"
-					onClick={() => setRatingDialogOpen(true)}
-					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${rating > 0 ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
+					onClick={handleShare}
+					className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 				>
-					<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
-					<span className="text-sm">
-						{rating > 0 ? ratingToStars(rating).toFixed(1) : "Rate"}
-					</span>
+					{shareSuccess ? (
+						<Check className="size-5 text-green-500" />
+					) : (
+						<Share2 className="size-5" />
+					)}
 				</button>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -199,11 +221,6 @@ export default function MediaActionsBar({
 							<StickyNote />
 							{note?.content ? "Edit note" : "Add note"}
 						</DropdownMenuItem>
-						<DropdownMenuItem onSelect={() => setReviewDialogOpen(true)}>
-							<MessageSquarePlus />
-							{hasReviewed ? "Write another review" : "Write a review"}
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
 						<DropdownMenuItem onSelect={() => setLibraryDialogOpen(true)}>
 							<Disc />
 							{ownedCount > 0 ? `Owned · ${ownedCount}` : "Add to library"}
@@ -214,17 +231,12 @@ export default function MediaActionsBar({
 								? `Lists · ${customListCount}`
 								: "Add to a list"}
 						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onSelect={handleShare}>
-							<Share2 />
-							{shareSuccess ? "Copied to clipboard" : "Share"}
-						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 
 			{/* Small screens retain direct, touch-friendly access to every action. */}
-			<div className="contents lg:hidden">
+			<div className="hidden">
 				<button
 					type="button"
 					onClick={() => toggleWatchlist(isInWatchlist)}
