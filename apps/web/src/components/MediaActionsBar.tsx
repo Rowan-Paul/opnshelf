@@ -24,7 +24,6 @@ import { useMediaReviews } from "#/lib/hooks/useReviews";
 import AddToLibraryDialog from "./AddToLibraryDialog";
 import ManageListsDialog from "./ManageListsDialog";
 import { NoteDialog } from "./NoteDialog";
-import { RatingDialog } from "./RatingDialog";
 import { ReviewDialog } from "./ReviewDialog";
 import { ratingToStars } from "./StarRating";
 import {
@@ -52,8 +51,7 @@ export default function MediaActionsBar({
 
 	const [shareSuccess, setShareSuccess] = useState(false);
 	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
-	const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
-	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+	const [rateReviewDialogOpen, setRateReviewDialogOpen] = useState(false);
 	const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
 	const [listsDialogOpen, setListsDialogOpen] = useState(false);
 
@@ -172,27 +170,14 @@ export default function MediaActionsBar({
 						/>
 					)}
 				</button>
-				<div className="inline-flex h-10 overflow-hidden rounded-md border border-(--border)">
-					<button
-						type="button"
-						onClick={() => setRatingDialogOpen(true)}
-						className={`inline-flex items-center justify-center gap-2 px-3 transition-all duration-150 ${rating > 0 ? "bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "bg-(--background-elevated) text-(--foreground) hover:bg-(--background-subtle)"}`}
-						aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
-					>
-						<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
-						<span className="text-sm">
-							{rating > 0 ? ratingToStars(rating).toFixed(1) : "Rate"}
-						</span>
-					</button>
-					<button
-						type="button"
-						onClick={() => setReviewDialogOpen(true)}
-						className={`inline-flex w-10 items-center justify-center border-(--border) border-l transition-all duration-150 ${hasReviewed ? "bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "bg-(--background-elevated) text-(--foreground) hover:bg-(--background-subtle)"}`}
-						aria-label={hasReviewed ? "Write another review" : "Write a review"}
-					>
-						<MessageSquarePlus className="size-5" />
-					</button>
-				</div>
+				<button
+					type="button"
+					onClick={() => setRateReviewDialogOpen(true)}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${hasReviewed ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
+					aria-label="Rate and review"
+				>
+					<MessageSquarePlus className="size-5" />
+				</button>
 				<button
 					type="button"
 					onClick={handleShare}
@@ -305,7 +290,7 @@ export default function MediaActionsBar({
 					{/* Rate Button */}
 					<button
 						type="button"
-						onClick={() => setRatingDialogOpen(true)}
+						onClick={() => setRateReviewDialogOpen(true)}
 						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
 							rating > 0
 								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
@@ -343,7 +328,7 @@ export default function MediaActionsBar({
 					{/* Review Button */}
 					<button
 						type="button"
-						onClick={() => setReviewDialogOpen(true)}
+						onClick={() => setRateReviewDialogOpen(true)}
 						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 							hasReviewed
 								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
@@ -395,22 +380,14 @@ export default function MediaActionsBar({
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
 			/>
-			<RatingDialog
-				open={ratingDialogOpen}
-				onOpenChange={setRatingDialogOpen}
-				userDid={userDid}
-				mediaType={mediaType}
-				mediaId={mediaId}
-				seasonNumber={seasonNumber}
-				episodeNumber={episodeNumber}
-			/>
 			<ReviewDialog
-				open={reviewDialogOpen}
-				onOpenChange={setReviewDialogOpen}
+				open={rateReviewDialogOpen}
+				onOpenChange={setRateReviewDialogOpen}
 				mediaType={mediaType}
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
+				includeRating
 			/>
 			<AddToLibraryDialog
 				open={libraryDialogOpen}

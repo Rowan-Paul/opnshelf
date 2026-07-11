@@ -1,6 +1,6 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Pencil, Save, X } from "lucide-react";
+import { Loader2, Pencil, Save, StarOff, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
 	Dialog,
@@ -10,7 +10,13 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
+import {
+	useClearRating,
+	useRating,
+	useSetRating,
+} from "#/lib/hooks/useRatings";
 import { useCreateReview, useUpdateReview } from "#/lib/hooks/useReviews";
+import StarRating, { ratingToStars } from "./StarRating";
 
 // The WYSIWYG editor (Milkdown/ProseMirror) is DOM-only and heavy, so it is
 // lazy-loaded and rendered client-side only (see the `mounted` gate below).
@@ -40,6 +46,8 @@ interface ReviewDialogProps {
 	 * section present on every media page; no-ops if no such element exists.
 	 */
 	scrollTargetId?: string;
+	/** Include the current user's rating controls above the review composer. */
+	includeRating?: boolean;
 }
 
 export function ReviewDialog({
@@ -52,6 +60,7 @@ export function ReviewDialog({
 	review,
 	onSuccess,
 	scrollTargetId = "community-reviews",
+	includeRating = false,
 }: ReviewDialogProps) {
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
@@ -64,6 +73,27 @@ export function ReviewDialog({
 		episodeNumber,
 	});
 	const updateMutation = useUpdateReview({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const { data: ratingRecord } = useRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const setRatingMutation = useSetRating({
+		userDid,
+		mediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	});
+	const clearRatingMutation = useClearRating({
 		userDid,
 		mediaType,
 		mediaId,
@@ -139,6 +169,25 @@ export function ReviewDialog({
 			: seasonNumber != null
 				? "season"
 				: mediaType;
+	const rating = ratingRecord?.rating ?? 0;
+	const rated = rating > 0;
+
+	const handleRatingChange = (value: number) => {
+		setRatingMutation.mutate({
+			body: {
+				mediaType: resolvedMediaType,
+				mediaId,
+				seasonNumber,
+				episodeNumber,
+				rating: value,
+			},
+		});
+	};
+
+	const handleClearRating = () => {
+		if (!ratingRecord?.id) return;
+		clearRatingMutation.mutate({ path: { ratingId: ratingRecord.id } });
+	};
 
 	const trimmedTitle = title.trim();
 	const trimmedBody = markdown.trim();
@@ -189,12 +238,52 @@ export function ReviewDialog({
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Pencil className="size-4 text-(--accent)" />
-						{isEditing ? "Edit Review" : "Write a Review"}
+						{isEditing
+							? "Edit Review"
+							: includeRating
+								? "Rate & Review"
+								: "Write a Review"}
 					</DialogTitle>
 					<DialogDescription className="sr-only">
 						Write a long-form review for this title. A title is required.
 					</DialogDescription>
 				</DialogHeader>
+
+				{includeRating && !isEditing && (
+					<section className="rounded-lg border border-(--border) bg-(--background-subtle) p-4">
+						<div className="mb-3 flex items-center justify-between">
+							<div>
+								<p className="font-medium text-sm">Your rating</p>
+								<p className="text-(--foreground-muted) text-xs">
+									Optional — save it without writing a review.
+								</p>
+							</div>
+							{rated && (
+								<button
+									type="button"
+									onClick={handleClearRating}
+									disabled={clearRatingMutation.isPending}
+									className="btn btn-ghost btn-sm gap-1 text-(--foreground-muted)"
+								>
+									{clearRatingMutation.isPending ? (
+										<Loader2 className="size-3.5 animate-spin" />
+									) : (
+										<StarOff className="size-3.5" />
+									)}
+									Clear
+								</button>
+							)}
+						</div>
+						<div className="flex items-center justify-between gap-4">
+							<StarRating value={rating} onChange={handleRatingChange} />
+							<span className="shrink-0 font-medium text-(--foreground-muted) text-sm">
+								{rated
+									? `${ratingToStars(rating).toFixed(1)} / 5`
+									: "Not rated"}
+							</span>
+						</div>
+					</section>
+				)}
 
 				<div className="space-y-1">
 					<label
