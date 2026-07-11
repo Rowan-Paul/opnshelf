@@ -34,22 +34,28 @@ export default function StarRating({
 
 	const displayValue = hoverValue || value;
 	const fillPercentage = (displayValue / 10) * 100;
+	const getPointerRating = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		starIndex: number,
+	) => {
+		const rect = e.currentTarget.getBoundingClientRect();
+		const isLeftHalf = e.clientX - rect.left < rect.width / 2;
+		return Math.min(starIndex * 2 + (isLeftHalf ? 1 : 2), 10);
+	};
 
 	const handleMouseMove = (
 		e: React.MouseEvent<HTMLButtonElement>,
 		starIndex: number,
 	) => {
-		const rect = e.currentTarget.getBoundingClientRect();
-		const x = e.clientX - rect.left;
-		const halfWidth = rect.width / 2;
-		const isLeftHalf = x < halfWidth;
-		const rawRating = starIndex * 2 + (isLeftHalf ? 1 : 2);
-		setHoverValue(Math.min(rawRating, 10));
+		setHoverValue(getPointerRating(e, starIndex));
 	};
 
-	const handleClick = () => {
+	const handleClick = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		starIndex: number,
+	) => {
 		if (!onChange) return;
-		onChange(hoverValue);
+		onChange(getPointerRating(e, starIndex));
 	};
 
 	const handleMouseLeave = () => {
@@ -143,7 +149,7 @@ export default function StarRating({
 								type="button"
 								className="flex-1 cursor-pointer appearance-none bg-transparent"
 								onMouseMove={(e) => handleMouseMove(e, i)}
-								onClick={handleClick}
+								onClick={(e) => handleClick(e, i)}
 								tabIndex={-1}
 								aria-hidden="true"
 							/>

@@ -194,11 +194,11 @@ export default function MediaActionsBar({
 					<DropdownMenuTrigger asChild>
 						<button
 							type="button"
-							className="btn btn-secondary gap-1.5"
+							className="btn btn-secondary h-10 w-10 justify-center p-0 lg:w-auto lg:px-3"
 							aria-label="More media actions"
 						>
 							<Ellipsis className="size-4" />
-							<span>More</span>
+							<span className="hidden lg:inline">More</span>
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-52">
