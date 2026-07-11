@@ -1,8 +1,9 @@
 import { Tv } from "lucide-react-native";
 import { View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
+import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useMarkUpNextEpisode, useUpNext } from "@/lib/use-up-next";
 
 /**
@@ -37,7 +38,7 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 				href={handle ? (`/profile/${handle}/up-next` as const) : undefined}
 			/>
 			{isLoading ? (
-				<LoadingState label="Loading your queue…" />
+				<UpNextSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load Up Next. Try again." />
 			) : preview.length === 0 ? (

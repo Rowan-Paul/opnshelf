@@ -4,11 +4,12 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tv } from "lucide-react-native";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
+import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useProfileUpNext } from "@/lib/use-public-profile";
 
 /**
@@ -62,9 +63,7 @@ export function UpNextTab({
 			) : null}
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<UpNextSkeleton rows={4} />
 			) : isError ? (
 				<ErrorState message="Couldn't load Up Next." />
 			) : items.length === 0 ? (

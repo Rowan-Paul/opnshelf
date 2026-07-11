@@ -28,6 +28,10 @@ import { Markdown } from "@/components/ui/Markdown";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
+import {
+	UpNextRowSkeleton,
+	UpNextSkeleton,
+} from "@/components/up-next/UpNextSkeleton";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { useUserLibrary } from "@/lib/use-library";
@@ -325,31 +329,6 @@ function PosterRowSkeleton() {
 					<View className="mt-1.5 h-2.5 w-1/2 rounded bg-background-subtle" />
 				</View>
 			))}
-		</View>
-	);
-}
-
-function UpNextRowSkeleton({ extraLine = false }: { extraLine?: boolean }) {
-	return (
-		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-			<View className="h-24 w-16 rounded-md bg-background-subtle" />
-			<View className="flex-1 justify-center gap-2">
-				<View className="h-3 w-3/4 rounded bg-background-subtle" />
-				<View className="h-2.5 w-1/2 rounded bg-background-subtle" />
-				<View className="h-2.5 w-2/3 rounded bg-background-subtle" />
-				{extraLine ? (
-					<View className="h-2.5 w-1/3 rounded bg-background-subtle" />
-				) : null}
-			</View>
-		</View>
-	);
-}
-
-function UpNextSkeleton() {
-	return (
-		<View className="gap-3">
-			<UpNextRowSkeleton />
-			<UpNextRowSkeleton />
 		</View>
 	);
 }
