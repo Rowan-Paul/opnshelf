@@ -165,6 +165,7 @@ describe("ProfileService", () => {
 	});
 
 	it("seeds a fallback display name from the handle when none exists", async () => {
+		mockGetRecord.mockRejectedValue({ status: 400, error: "RecordNotFound" });
 		prisma.user.findUnique.mockResolvedValue({
 			did: session.did,
 			profileRkey: null,
@@ -200,6 +201,7 @@ describe("ProfileService", () => {
 	});
 
 	it("preserves an explicit seeded display name", async () => {
+		mockGetRecord.mockRejectedValue({ status: 400, error: "RecordNotFound" });
 		prisma.user.findUnique.mockResolvedValue({
 			did: session.did,
 			profileRkey: null,
@@ -229,6 +231,46 @@ describe("ProfileService", () => {
 				data: expect.objectContaining({
 					displayName: "Rowan Paul",
 					profileDisplayName: "Rowan Paul",
+				}),
+			}),
+		);
+	});
+
+	it("does not overwrite an existing PDS profile record when seeding", async () => {
+		prisma.user.findUnique.mockResolvedValue({
+			did: session.did,
+			profileRkey: null,
+		});
+		prisma.user.update.mockResolvedValue({
+			displayName: "Existing Name",
+			avatar: null,
+		});
+		mockGetRecord.mockResolvedValue({
+			data: {
+				value: {
+					$type: "xyz.opnshelf.profile",
+					displayName: "Existing Name",
+					createdAt: "2026-03-20T20:00:00.000Z",
+					updatedAt: "2026-03-20T20:00:00.000Z",
+				},
+				uri: "at://did:plc:alice/xyz.opnshelf.profile/self",
+				cid: "bafyrecordcid",
+			},
+		});
+
+		await expect(
+			service.seedProfileForNewUser(session.did, session, {
+				handle: "rowanpaul.opnshelf.social",
+				displayName: null,
+				avatarUrl: null,
+			}),
+		).resolves.toBeUndefined();
+
+		expect(mockPutRecord).not.toHaveBeenCalled();
+		expect(prisma.user.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					profileDisplayName: "Existing Name",
 				}),
 			}),
 		);

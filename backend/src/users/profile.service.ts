@@ -81,6 +81,22 @@ export class ProfileService {
 			return;
 		}
 
+		// The local DB row lacking profileRkey does NOT mean the account is new:
+		// a fresh dev database against the shared PDS hits this path too, and
+		// blindly putting a seed record here wiped a real profile's avatar once.
+		// If the PDS already has a profile record, index it instead of writing.
+		const existing = await this.getProfileRecord(session);
+		if (existing) {
+			await this.indexProfileRecord(
+				userDid,
+				PROFILE_RKEY,
+				existing.cid,
+				existing.uri,
+				existing.record,
+			);
+			return;
+		}
+
 		let avatarBlob: ProfileRecord["avatar"] | undefined;
 		if (seed.avatarUrl) {
 			try {
