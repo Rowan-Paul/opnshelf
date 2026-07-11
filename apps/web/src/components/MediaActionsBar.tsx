@@ -143,12 +143,12 @@ export default function MediaActionsBar({
 						</>
 					) : isInWatchlist ? (
 						<>
-							<Bookmark className="size-8 fill-current" />
+							<Bookmark className="size-9 fill-current" strokeWidth={2.5} />
 							<span className="hidden lg:inline">In Watchlist</span>
 						</>
 					) : (
 						<>
-							<Bookmark className="size-8" />
+							<Bookmark className="size-9" strokeWidth={2.5} />
 							<span className="hidden lg:inline">Watchlist</span>
 						</>
 					)}
@@ -197,7 +197,7 @@ export default function MediaActionsBar({
 							className="btn btn-secondary h-10 w-10 justify-center p-0 lg:w-auto lg:px-3"
 							aria-label="More media actions"
 						>
-							<Ellipsis className="size-8" strokeWidth={2.5} />
+							<Ellipsis className="size-9" strokeWidth={3.5} />
 							<span className="hidden lg:inline">More</span>
 						</button>
 					</DropdownMenuTrigger>
