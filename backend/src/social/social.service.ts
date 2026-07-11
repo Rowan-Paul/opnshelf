@@ -1,3 +1,4 @@
+import { rebaseAvatarUrl } from "../users/avatar-url";
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import {
@@ -1076,7 +1077,7 @@ export class SocialService {
 							did: user.did,
 							handle: user.handle,
 							displayName: user.displayName,
-							avatar: user.avatar,
+							avatar: rebaseAvatarUrl(user.avatar),
 							followersCount: user._count.followers,
 							followingCount: user._count.following,
 							isFollowing: followingSet.has(did),
@@ -1110,7 +1111,7 @@ export class SocialService {
 					did: user.did,
 					handle: user.handle,
 					displayName: user.displayName,
-					avatar: user.avatar,
+					avatar: rebaseAvatarUrl(user.avatar),
 					followersCount: user._count.followers,
 					followingCount: user._count.following,
 				} satisfies SocialActorDto,
@@ -1138,7 +1139,7 @@ export class SocialService {
 					did: user.did,
 					handle: user.handle,
 					displayName: user.displayName,
-					avatar: user.avatar,
+					avatar: rebaseAvatarUrl(user.avatar),
 				} satisfies FollowedWatcherActorDto,
 			]),
 		);

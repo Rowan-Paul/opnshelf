@@ -1,3 +1,4 @@
+import { rebaseAvatarUrl } from "../users/avatar-url";
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import {
@@ -416,7 +417,7 @@ export class ReviewsService {
 				did: user.did,
 				handle: user.handle,
 				displayName: user.displayName,
-				avatar: user.avatar,
+				avatar: rebaseAvatarUrl(user.avatar),
 			},
 			canonicalUrl: `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`,
 			createdAt: review.createdAt,

@@ -1,3 +1,4 @@
+import { rebaseAvatarUrl } from "./avatar-url";
 import {
 	BadGatewayException,
 	BadRequestException,
@@ -358,7 +359,7 @@ export class UsersService {
 
 		return {
 			displayName: updated?.displayName ?? user.displayName,
-			avatar: updated?.avatar ?? user.avatar,
+			avatar: rebaseAvatarUrl(updated?.avatar ?? user.avatar),
 			blueskyProfileUrl: updated?.blueskyProfileUrl ?? null,
 			tangledProfileUrl: updated?.tangledProfileUrl ?? null,
 			showBlueskyOnProfile: updated?.showBlueskyOnProfile ?? true,
@@ -402,7 +403,7 @@ export class UsersService {
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,
-			avatar: user.avatar,
+			avatar: rebaseAvatarUrl(user.avatar),
 			blueskyProfileUrl: user.blueskyProfileUrl,
 			tangledProfileUrl: user.tangledProfileUrl,
 			showBlueskyOnProfile: user.showBlueskyOnProfile,

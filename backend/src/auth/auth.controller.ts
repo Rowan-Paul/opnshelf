@@ -1,3 +1,4 @@
+import { rebaseAvatarUrl } from "../users/avatar-url";
 import {
 	BadRequestException,
 	Body,
@@ -607,7 +608,7 @@ export class AuthController {
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,
-			avatar: user.avatar,
+			avatar: rebaseAvatarUrl(user.avatar),
 			onboardingCompletedAt: user.onboardingCompletedAt
 				? user.onboardingCompletedAt.toISOString()
 				: null,

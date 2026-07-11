@@ -1,3 +1,4 @@
+import { buildAvatarUrl, rebaseAvatarUrl } from "./avatar-url";
 import { Agent } from "@atproto/api";
 import { IdResolver } from "@atproto/identity";
 import {
@@ -55,7 +56,7 @@ export class ProfileService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		readonly _configService: ConfigService,
 	) {}
 
 	async seedProfileForNewUser(
@@ -158,7 +159,12 @@ export class ProfileService {
 			record,
 		);
 
-		return indexed ?? { displayName: user.displayName, avatar: user.avatar };
+		return (
+			indexed ?? {
+				displayName: user.displayName,
+				avatar: rebaseAvatarUrl(user.avatar),
+			}
+		);
 	}
 
 	async deleteAvatar(
@@ -205,6 +211,9 @@ export class ProfileService {
 		}
 
 		const buffer = Buffer.from(await avatarResponse.arrayBuffer());
+		// Public image embedded by the web app on another origin — helmet's
+		// default same-origin CORP makes browsers block it otherwise.
+		response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 		response.setHeader(
 			"Content-Type",
 			user.profileAvatarMimeType ??
@@ -239,7 +248,7 @@ export class ProfileService {
 					profileAvatarMimeType: avatarMimeType,
 					profileUpdatedAt: new Date(record.updatedAt),
 					displayName: normalizedDisplayName,
-					avatar: avatarCid ? this.buildAvatarUrl(userDid, avatarCid) : null,
+					avatar: avatarCid ? buildAvatarUrl(userDid, avatarCid) : null,
 				},
 				select: {
 					displayName: true,
@@ -275,17 +284,6 @@ export class ProfileService {
 				avatar: null,
 			},
 		});
-	}
-
-	buildAvatarUrl(did: string, cid: string): string {
-		const baseUrl =
-			this.configService.get<string>("BACKEND_PUBLIC_URL") ??
-			this.configService.get<string>("BACKEND_URL") ??
-			"http://127.0.0.1:3001";
-		const url = new URL("/users/avatar", baseUrl);
-		url.searchParams.set("did", did);
-		url.searchParams.set("cid", cid);
-		return url.toString();
 	}
 
 	private async getProfileRecord(
