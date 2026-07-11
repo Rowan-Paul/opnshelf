@@ -146,7 +146,9 @@ export default function MediaHero({
 
 						{/* Action Buttons */}
 						{actions && (
-							<div className="mt-6 flex flex-wrap gap-3">{actions}</div>
+							<div className="mt-6 flex flex-wrap gap-2 lg:gap-3">
+								{actions}
+							</div>
 						)}
 					</div>
 				</div>

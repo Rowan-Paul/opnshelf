@@ -178,10 +178,11 @@ export default function MediaActionsBar({
 				>
 					<MessageSquarePlus className="size-5" />
 				</button>
+				{/* Below lg, Share lives in the More menu so the action row fits one line */}
 				<button
 					type="button"
 					onClick={handleShare}
-					className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
+					className="hidden h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle) lg:inline-flex"
 					aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 				>
 					{shareSuccess ? (
@@ -215,6 +216,10 @@ export default function MediaActionsBar({
 							{customListCount > 0
 								? `Lists · ${customListCount}`
 								: "Add to a list"}
+						</DropdownMenuItem>
+						<DropdownMenuItem className="lg:hidden" onSelect={handleShare}>
+							<Share2 />
+							Share
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
