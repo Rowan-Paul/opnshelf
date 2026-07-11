@@ -27,6 +27,7 @@ import {
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { StarRating } from "@/components/detail/StarRating";
 import { ReviewBody } from "@/components/ReviewBody";
+import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -217,10 +218,12 @@ function ReviewCard({
 			) : null}
 
 			{body ? (
-				<ReviewBody
-					markdown={body}
-					href={`/reviews/${review.userHandle}/${review.rkey}` as Href}
-				/>
+				<SpoilerShield spoiler={review.spoiler} authorDid={review.userDid}>
+					<ReviewBody
+						markdown={body}
+						href={`/reviews/${review.userHandle}/${review.rkey}` as Href}
+					/>
+				</SpoilerShield>
 			) : null}
 
 			{isOwn ? (
@@ -375,6 +378,7 @@ export function CommunityReviews({
 	const handleSave = (input: {
 		title: string;
 		markdown: string;
+		spoiler: boolean;
 		mirrorToBlog: boolean;
 		postToBluesky: boolean;
 	}) => {
@@ -448,6 +452,7 @@ export function CommunityReviews({
 				isEditing={!!editing}
 				initialTitle={editing?.title ?? ""}
 				initialMarkdown={editing?.markdown ?? ""}
+				initialSpoiler={editing?.spoiler ?? false}
 				initialMirrorToBlog={editing?.mirrorToBlog ?? true}
 				onSave={handleSave}
 				onDelete={editing ? handleDeleteFromEditor : undefined}

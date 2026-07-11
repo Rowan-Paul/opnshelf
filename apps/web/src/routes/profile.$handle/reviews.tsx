@@ -13,6 +13,7 @@ import ConfirmDialog from "#/components/ConfirmDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewBody } from "#/components/ReviewBody";
 import { ReviewDialog } from "#/components/ReviewDialog";
+import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
 import { toSlug } from "#/lib/slug";
@@ -213,7 +214,9 @@ function ReviewCard({
 					<div className="text-(--foreground-muted) text-sm leading-relaxed">
 						{/* No explicit href: the whole card links to the review, so the
 						    "Read more" shows as a cue. */}
-						<ReviewBody markdown={review.markdown} />
+						<SpoilerShield spoiler={review.spoiler} authorDid={userDid}>
+							<ReviewBody markdown={review.markdown} />
+						</SpoilerShield>
 					</div>
 				)}
 			</ProfileContentCard>
@@ -228,6 +231,7 @@ function ReviewCard({
 					id: review.id,
 					title: review.reviewTitle,
 					markdown: review.markdown,
+					spoiler: review.spoiler,
 				}}
 				onSuccess={invalidateList}
 			/>

@@ -28,6 +28,8 @@ export interface EditableReview {
 	markdown: string;
 	/** Current mirror state; defaults to on when unset (e.g. a fresh review). */
 	mirrorToBlog?: boolean;
+	/** Author-declared Spoiler Flag (ADR-0016): the body contains spoilers. */
+	spoiler?: boolean;
 }
 
 interface ReviewDialogProps {
@@ -104,6 +106,7 @@ export function ReviewDialog({
 	const [title, setTitle] = useState("");
 	const [markdown, setMarkdown] = useState("");
 	const [mirrorToBlog, setMirrorToBlog] = useState(true);
+	const [spoiler, setSpoiler] = useState(false);
 	const [postToBluesky, setPostToBluesky] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	// Client-only gate: the editor cannot render during SSR.
@@ -131,10 +134,17 @@ export function ReviewDialog({
 			setTitle(review?.title ?? "");
 			setMarkdown(review?.markdown ?? "");
 			setMirrorToBlog(review?.mirrorToBlog ?? true);
+			setSpoiler(review?.spoiler ?? false);
 			setPostToBluesky(false);
 			setError(null);
 		}
-	}, [open, review?.title, review?.markdown, review?.mirrorToBlog]);
+	}, [
+		open,
+		review?.title,
+		review?.markdown,
+		review?.mirrorToBlog,
+		review?.spoiler,
+	]);
 
 	useEffect(() => {
 		const succeeded = createMutation.isSuccess || updateMutation.isSuccess;
@@ -213,7 +223,12 @@ export function ReviewDialog({
 		if (isEditing && review) {
 			updateMutation.mutate({
 				path: { reviewId: review.id },
-				body: { title: trimmedTitle, markdown: trimmedBody, mirrorToBlog },
+				body: {
+					title: trimmedTitle,
+					markdown: trimmedBody,
+					mirrorToBlog,
+					spoiler,
+				},
 			});
 			return;
 		}
@@ -227,6 +242,7 @@ export function ReviewDialog({
 				title: trimmedTitle,
 				markdown: trimmedBody,
 				mirrorToBlog,
+				spoiler,
 				postToBluesky,
 			},
 		});
@@ -333,6 +349,23 @@ export function ReviewDialog({
 						{error}
 					</p>
 				)}
+
+				<div>
+					<label className="flex cursor-pointer items-start gap-2 text-sm">
+						<input
+							type="checkbox"
+							checked={spoiler}
+							onChange={(e) => setSpoiler(e.target.checked)}
+							className="mt-0.5 size-4 accent-(--accent)"
+						/>
+						<span>Contains spoilers</span>
+					</label>
+					{spoiler && (
+						<p className="mt-1 text-(--foreground-muted) text-xs">
+							The title stays visible everywhere — keep spoilers in the body.
+						</p>
+					)}
+				</div>
 
 				{hasBlog && (
 					<label className="flex cursor-pointer items-start gap-2 text-sm">

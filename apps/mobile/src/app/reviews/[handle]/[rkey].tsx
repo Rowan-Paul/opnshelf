@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { type Href, Link, Stack, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
+import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { Markdown } from "@/components/ui/Markdown";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
@@ -108,7 +109,9 @@ export default function ReviewDetailScreen() {
 						</View>
 					</View>
 
-					<Markdown value={review.markdown} />
+					<SpoilerShield spoiler={review.spoiler} authorDid={review.author.did}>
+						<Markdown value={review.markdown} />
+					</SpoilerShield>
 				</ScrollView>
 			)}
 		</View>

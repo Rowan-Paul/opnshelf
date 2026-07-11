@@ -396,6 +396,7 @@ function SettingsPage() {
 						{[
 							["time-region", "Time & Region"],
 							["streaming", "Streaming"],
+							["reading", "Reading"],
 							["import-history", "Import history"],
 							["blog-mirror", "Blog mirror"],
 							["account", "Account"],
@@ -485,6 +486,41 @@ function SettingsPage() {
 									onChange={(watchCountry) =>
 										updateSettingsMutation.mutate({
 											body: { watchCountry },
+										})
+									}
+									disabled={updateSettingsMutation.isPending}
+								/>
+							</div>
+						</section>
+
+						{/* Reading */}
+						<section
+							id="reading"
+							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
+						>
+							<h2 className="mb-1 font-semibold text-lg">Reading</h2>
+							<p className="mb-6 text-(--foreground-muted) text-sm">
+								Control how spoiler-flagged reviews appear to you
+							</p>
+
+							<div className="flex max-w-lg items-center justify-between">
+								<div>
+									<label
+										htmlFor="always-show-spoilers"
+										className="font-medium text-sm"
+									>
+										Always show spoiler content
+									</label>
+									<p className="text-(--foreground-muted) text-sm">
+										Skip the spoiler covers on reviews
+									</p>
+								</div>
+								<Switch
+									id="always-show-spoilers"
+									checked={userSettings?.alwaysShowSpoilers ?? false}
+									onCheckedChange={(checked) =>
+										updateSettingsMutation.mutate({
+											body: { alwaysShowSpoilers: checked },
 										})
 									}
 									disabled={updateSettingsMutation.isPending}

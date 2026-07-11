@@ -2,6 +2,7 @@ import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import FeedItemActions from "#/components/FeedItemActions";
+import { SpoilerShield } from "#/components/SpoilerShield";
 import StarRating from "#/components/StarRating";
 import { toSlug } from "#/lib/slug";
 import { UserAvatar } from "./UserAvatar";
@@ -167,9 +168,14 @@ export function ActivityCard({
 								showValue
 							/>
 							{activity.reviewContent && (
-								<p className="line-clamp-3 text-(--foreground-muted) text-sm">
-									{activity.reviewContent}
-								</p>
+								<SpoilerShield
+									spoiler={!!activity.reviewSpoiler}
+									authorDid={activity.actor.did}
+								>
+									<p className="line-clamp-3 text-(--foreground-muted) text-sm">
+										{activity.reviewContent}
+									</p>
+								</SpoilerShield>
 							)}
 						</div>
 					)}

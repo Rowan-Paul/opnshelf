@@ -5,6 +5,7 @@ import { Clock, User } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
 import { PosterImage } from "@/components/media/PosterImage";
+import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import {
 	activityMediaHref,
 	formatActivityDate,
@@ -141,11 +142,21 @@ export function ActivityCard({
 							<StarRating rating={activity.rating} size={14} />
 						) : null}
 
-						{/* Excerpt: review content or synopsis */}
+						{/* Excerpt: review content or synopsis. Review excerpts carry the
+						author's Spoiler Flag, so they're wrapped in a Shield; synopses
+						never have `reviewSpoiler` set and pass straight through. */}
 						{excerpt ? (
-							<Text className="text-muted-foreground text-sm" numberOfLines={3}>
-								{excerpt}
-							</Text>
+							<SpoilerShield
+								spoiler={!!activity.reviewSpoiler}
+								authorDid={activity.actor.did}
+							>
+								<Text
+									className="text-muted-foreground text-sm"
+									numberOfLines={3}
+								>
+									{excerpt}
+								</Text>
+							</SpoilerShield>
 						) : null}
 
 						{/* Inline actions for watch items (reviews stay read-only, as on web) */}

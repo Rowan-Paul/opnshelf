@@ -12,6 +12,7 @@ import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ReviewBody } from "@/components/ReviewBody";
+import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -124,12 +125,14 @@ function ReviewCard({
 	const handleSave = ({
 		title,
 		markdown,
+		spoiler,
 	}: {
 		title: string;
 		markdown: string;
+		spoiler: boolean;
 	}) => {
 		updateMutation.mutate(
-			{ path: { reviewId: review.id }, body: { title, markdown } },
+			{ path: { reviewId: review.id }, body: { title, markdown, spoiler } },
 			{
 				onSuccess: () => {
 					setEditorVisible(false);
@@ -213,10 +216,12 @@ function ReviewCard({
 					</Text>
 				) : null}
 				{review.markdown ? (
-					<ReviewBody
-						markdown={review.markdown}
-						href={`/reviews/${handle}/${review.rkey}` as Href}
-					/>
+					<SpoilerShield spoiler={review.spoiler} authorDid={userDid}>
+						<ReviewBody
+							markdown={review.markdown}
+							href={`/reviews/${handle}/${review.rkey}` as Href}
+						/>
+					</SpoilerShield>
 				) : null}
 			</ProfileContentCard>
 
@@ -227,6 +232,7 @@ function ReviewCard({
 					isEditing
 					initialTitle={review.reviewTitle ?? ""}
 					initialMarkdown={review.markdown ?? ""}
+					initialSpoiler={review.spoiler}
 					onSave={handleSave}
 					onDelete={() => {
 						setEditorVisible(false);

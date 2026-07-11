@@ -12,6 +12,7 @@ import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewBody } from "#/components/ReviewBody";
+import { SpoilerShield } from "#/components/SpoilerShield";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
@@ -259,7 +260,11 @@ function ProfileOverviewPage() {
 				) : reviewsData?.items && reviewsData.items.length > 0 ? (
 					<div className="grid gap-4 sm:grid-cols-2">
 						{reviewsData.items.map((review) => (
-							<ProfileReviewCard key={review.id} review={review} />
+							<ProfileReviewCard
+								key={review.id}
+								review={review}
+								authorDid={userDid}
+							/>
 						))}
 					</div>
 				) : (
@@ -272,7 +277,13 @@ function ProfileOverviewPage() {
 	);
 }
 
-function ProfileReviewCard({ review }: { review: UserReviewDto }) {
+function ProfileReviewCard({
+	review,
+	authorDid,
+}: {
+	review: UserReviewDto;
+	authorDid: string;
+}) {
 	const showName = review.title?.split(" — ")[0] ?? "";
 	const slug = toSlug(showName);
 
@@ -308,7 +319,9 @@ function ProfileReviewCard({ review }: { review: UserReviewDto }) {
 			{review.markdown && (
 				<div className="text-(--foreground-muted) text-sm leading-relaxed">
 					{/* The whole card links to the review, so "Read more" is a cue. */}
-					<ReviewBody markdown={review.markdown} />
+					<SpoilerShield spoiler={review.spoiler} authorDid={authorDid}>
+						<ReviewBody markdown={review.markdown} />
+					</SpoilerShield>
 				</div>
 			)}
 		</ProfileContentCard>

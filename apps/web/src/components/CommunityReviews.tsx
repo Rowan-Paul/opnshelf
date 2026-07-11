@@ -12,6 +12,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import { UserAvatar } from "./following/UserAvatar";
 import { ReviewBody } from "./ReviewBody";
 import { ReviewDialog } from "./ReviewDialog";
+import { SpoilerShield } from "./SpoilerShield";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -41,6 +42,7 @@ function ReviewCard({
 		id: string;
 		title: string;
 		markdown: string;
+		spoiler: boolean;
 		reviewUrl?: string;
 		posterPath?: string;
 		userDid: string;
@@ -236,7 +238,9 @@ function ReviewCard({
 				<div className="min-w-0 flex-1">
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
-						<ReviewBody markdown={review.markdown} href={review.reviewUrl} />
+						<SpoilerShield spoiler={review.spoiler} authorDid={review.userDid}>
+							<ReviewBody markdown={review.markdown} href={review.reviewUrl} />
+						</SpoilerShield>
 					</div>
 				</div>
 			</div>
@@ -284,6 +288,7 @@ function ReviewCard({
 							title: review.title,
 							markdown: review.markdown,
 							mirrorToBlog: review.mirrorToBlog,
+							spoiler: review.spoiler,
 						}}
 						scrollTargetId={`review-${review.id}`}
 					/>

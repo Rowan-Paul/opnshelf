@@ -4,6 +4,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
+import { SpoilerShield } from "#/components/SpoilerShield";
 import { toSlug } from "#/lib/slug";
 
 export const Route = createFileRoute("/reviews/$handle/$rkey")({
@@ -148,7 +149,12 @@ function CanonicalReviewPage() {
 					</div>
 
 					<div className="mt-6 text-(--foreground)">
-						<MarkdownContent markdown={review.markdown} />
+						<SpoilerShield
+							spoiler={review.spoiler}
+							authorDid={review.author.did}
+						>
+							<MarkdownContent markdown={review.markdown} />
+						</SpoilerShield>
 					</div>
 				</div>
 			</div>

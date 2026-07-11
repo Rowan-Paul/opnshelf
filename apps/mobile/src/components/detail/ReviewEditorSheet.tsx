@@ -21,6 +21,8 @@ interface ReviewEditorSheetProps {
 	/** Existing review title and body when editing; empty when writing a new one. */
 	initialTitle?: string;
 	initialMarkdown?: string;
+	/** Current Spoiler Flag when editing; defaults to off for a new review. */
+	initialSpoiler?: boolean;
 	/** Current mirror state when editing; defaults to on for a new review. */
 	initialMirrorToBlog?: boolean;
 	/** Whether the sheet is editing an existing review (vs. writing a new one). */
@@ -28,6 +30,7 @@ interface ReviewEditorSheetProps {
 	onSave: (input: {
 		title: string;
 		markdown: string;
+		spoiler: boolean;
 		mirrorToBlog: boolean;
 		postToBluesky: boolean;
 	}) => void;
@@ -56,6 +59,7 @@ export function ReviewEditorSheet({
 	onDismiss,
 	initialTitle = "",
 	initialMarkdown = "",
+	initialSpoiler = false,
 	initialMirrorToBlog = true,
 	isEditing = false,
 	onSave,
@@ -69,6 +73,7 @@ export function ReviewEditorSheet({
 }: ReviewEditorSheetProps) {
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
+	const [spoiler, setSpoiler] = useState(initialSpoiler);
 	const [mirrorToBlog, setMirrorToBlog] = useState(initialMirrorToBlog);
 	const [postToBluesky, setPostToBluesky] = useState(false);
 	// Bumped on each open so the WebView editor remounts and re-seeds with the
@@ -90,11 +95,18 @@ export function ReviewEditorSheet({
 		if (visible) {
 			setTitle(initialTitle);
 			setMarkdown(initialMarkdown);
+			setSpoiler(initialSpoiler);
 			setMirrorToBlog(initialMirrorToBlog);
 			setPostToBluesky(false);
 			setOpenCount((n) => n + 1);
 		}
-	}, [visible, initialTitle, initialMarkdown, initialMirrorToBlog]);
+	}, [
+		visible,
+		initialTitle,
+		initialMarkdown,
+		initialSpoiler,
+		initialMirrorToBlog,
+	]);
 
 	const hasBody = markdown.trim().length > 0;
 	const hasTitle = title.trim().length > 0;
@@ -214,6 +226,26 @@ export function ReviewEditorSheet({
 							</Text>
 						</View>
 
+						<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
+							<View className="flex-1">
+								<Text className="font-medium text-foreground text-sm">
+									Contains spoilers
+								</Text>
+								{spoiler ? (
+									<Text className="text-muted-foreground text-xs leading-5">
+										The title stays visible everywhere — keep spoilers in the
+										body.
+									</Text>
+								) : null}
+							</View>
+							<Switch
+								value={spoiler}
+								onValueChange={setSpoiler}
+								trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+								thumbColor="#ffffff"
+							/>
+						</View>
+
 						{hasBlog ? (
 							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
 								<View className="flex-1">
@@ -268,7 +300,13 @@ export function ReviewEditorSheet({
 
 						<Pressable
 							onPress={() =>
-								onSave({ title, markdown, mirrorToBlog, postToBluesky })
+								onSave({
+									title,
+									markdown,
+									spoiler,
+									mirrorToBlog,
+									postToBluesky,
+								})
 							}
 							disabled={!canSave}
 							className="items-center rounded-lg bg-primary py-3"

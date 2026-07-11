@@ -534,6 +534,46 @@ export default function SettingsScreen() {
 						)}
 					</SettingsSection>
 
+					{/* Reviews */}
+					<SettingsSection
+						title="Reviews"
+						description="Control how Spoiler Shields behave on reviews."
+					>
+						{settingsLoading ? (
+							<View className="flex-row items-center justify-between">
+								<View className="gap-2">
+									<View className="h-3.5 w-40 rounded bg-background-subtle" />
+									<View className="h-2.5 w-52 rounded bg-background-subtle" />
+								</View>
+								<View className="h-6 w-11 rounded-full bg-background-subtle" />
+							</View>
+						) : settingsError ? (
+							<ErrorState message="Could not load your settings." />
+						) : (
+							<View className="flex-row items-center justify-between">
+								<View className="flex-1 pr-4">
+									<Text className="font-medium text-foreground text-sm">
+										Always show spoiler content
+									</Text>
+									<Text className="text-muted-foreground text-sm">
+										Skip the spoiler covers on reviews
+									</Text>
+								</View>
+								<Switch
+									value={settings?.alwaysShowSpoilers ?? false}
+									onValueChange={(checked) =>
+										updateSettingsMutation.mutate({
+											body: { alwaysShowSpoilers: checked },
+										})
+									}
+									disabled={settingsBusy}
+									trackColor={{ false: "#3f3f46", true: PRIMARY }}
+									thumbColor="#ffffff"
+								/>
+							</View>
+						)}
+					</SettingsSection>
+
 					{/* Blog mirror */}
 					<SettingsSection
 						title="Blog mirror"

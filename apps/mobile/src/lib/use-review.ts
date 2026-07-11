@@ -40,6 +40,8 @@ export interface ReviewDraft {
 	title: string;
 	/** Long-form review body as markdown source. */
 	markdown: string;
+	/** Author-declared Spoiler Flag: the body contains spoilers (ADR-0016). */
+	spoiler?: boolean;
 	/** Whether to mirror this review to the author's blog (when configured). */
 	mirrorToBlog?: boolean;
 	/** Whether to create a one-time Bluesky post for this new Review. */
@@ -232,6 +234,7 @@ export function useReview(target: ReviewTarget) {
 	const createReview = async ({
 		title,
 		markdown,
+		spoiler,
 		mirrorToBlog,
 		postToBluesky,
 	}: ReviewDraft) => {
@@ -248,6 +251,7 @@ export function useReview(target: ReviewTarget) {
 					episodeNumber: target.episodeNumber,
 					title: trimmedTitle,
 					markdown: trimmedBody,
+					spoiler,
 					mirrorToBlog,
 					postToBluesky,
 				},
@@ -267,7 +271,7 @@ export function useReview(target: ReviewTarget) {
 	/** Update an existing review's title/body. */
 	const updateReview = async (
 		reviewId: string,
-		{ title, markdown, mirrorToBlog }: ReviewDraft,
+		{ title, markdown, spoiler, mirrorToBlog }: ReviewDraft,
 	) => {
 		if (!isAuthenticated) return;
 		const trimmedTitle = title.trim();
@@ -276,7 +280,12 @@ export function useReview(target: ReviewTarget) {
 		try {
 			await updateReviewMutation.mutateAsync({
 				path: { reviewId },
-				body: { title: trimmedTitle, markdown: trimmedBody, mirrorToBlog },
+				body: {
+					title: trimmedTitle,
+					markdown: trimmedBody,
+					spoiler,
+					mirrorToBlog,
+				},
 			});
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
