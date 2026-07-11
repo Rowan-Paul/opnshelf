@@ -61,6 +61,7 @@ type FollowedActivityRow = {
 	overview: string | null;
 	rating: number | null;
 	reviewContent: string | null;
+	reviewSpoiler: boolean | null;
 };
 
 type FollowedWatcherRow = {
@@ -516,7 +517,8 @@ export class SocialService {
 				activity."firstAirYear",
 				activity.overview,
 				activity.rating,
-				activity."reviewContent"
+				activity."reviewContent",
+				activity."reviewSpoiler"
 			FROM (
 				SELECT
 					tm."userDid" AS "actorDid",
@@ -540,7 +542,8 @@ export class SocialService {
 					NULL::integer AS "firstAirYear",
 					m.overview,
 					NULL::integer AS rating,
-					NULL::text AS "reviewContent"
+					NULL::text AS "reviewContent",
+					NULL::boolean AS "reviewSpoiler"
 				FROM "TrackedMovie" tm
 				INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
 				WHERE tm."userDid" IN (${followedDidValues})
@@ -569,7 +572,8 @@ export class SocialService {
 					s."firstAirYear",
 					s.overview,
 					NULL::integer AS rating,
-					NULL::text AS "reviewContent"
+					NULL::text AS "reviewContent",
+					NULL::boolean AS "reviewSpoiler"
 				FROM "TrackedEpisode" te
 				INNER JOIN "Show" s ON s."showId" = te."showId"
 				LEFT JOIN "Episode" e ON e."showId" = te."showId"
@@ -601,7 +605,8 @@ export class SocialService {
 					s."firstAirYear",
 					COALESCE(m.overview, s.overview) AS overview,
 					rt.rating,
-					r.markdown AS "reviewContent"
+					r.markdown AS "reviewContent",
+					r.spoiler AS "reviewSpoiler"
 				FROM "Review" r
 				LEFT JOIN "Movie" m ON m."movieId" = r."mediaId" AND r."mediaType" = 'movie'
 				LEFT JOIN "Show" s ON s."showId" = r."mediaId" AND r."mediaType" != 'movie'
@@ -1324,6 +1329,7 @@ export class SocialService {
 			watchedDate: row.watchedDate?.toISOString(),
 			rating: row.rating ?? undefined,
 			reviewContent: row.reviewContent ?? undefined,
+			reviewSpoiler: row.reviewSpoiler ?? undefined,
 			createdAt: row.createdAt.toISOString(),
 		};
 	}

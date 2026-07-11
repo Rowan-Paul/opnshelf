@@ -52,6 +52,14 @@ export class CreateReviewDto {
 
 	@ApiPropertyOptional({
 		description:
+			"Author-declared Spoiler Flag: the body contains spoilers. The title stays visible everywhere and must remain spoiler-free.",
+	})
+	@IsOptional()
+	@IsBoolean()
+	spoiler?: boolean;
+
+	@ApiPropertyOptional({
+		description:
 			"Whether to mirror this review to the author's blog (when one is configured). Defaults to true.",
 	})
 	@IsOptional()
@@ -84,6 +92,14 @@ export class UpdateReviewDto {
 	@IsString()
 	@MaxLength(20000)
 	markdown?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Author-declared Spoiler Flag: the body contains spoilers. The title stays visible everywhere and must remain spoiler-free.",
+	})
+	@IsOptional()
+	@IsBoolean()
+	spoiler?: boolean;
 
 	@ApiPropertyOptional({
 		description:
@@ -121,6 +137,11 @@ export class ReviewResponseDto {
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
+
+	@ApiProperty({
+		description: "Author-declared Spoiler Flag: the body contains spoilers",
+	})
+	spoiler: boolean;
 
 	@ApiPropertyOptional({
 		type: String,
@@ -185,6 +206,11 @@ export class CanonicalReviewResponseDto {
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
+
+	@ApiProperty({
+		description: "Author-declared Spoiler Flag: the body contains spoilers",
+	})
+	spoiler: boolean;
 
 	@ApiPropertyOptional({
 		type: String,
@@ -262,6 +288,11 @@ export class UserReviewDto {
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
+
+	@ApiProperty({
+		description: "Author-declared Spoiler Flag: the body contains spoilers",
+	})
+	spoiler: boolean;
 
 	@ApiPropertyOptional()
 	description?: string;
@@ -369,6 +400,11 @@ export class MediaReviewItemDto {
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
+
+	@ApiProperty({
+		description: "Author-declared Spoiler Flag: the body contains spoilers",
+	})
+	spoiler: boolean;
 
 	@ApiPropertyOptional()
 	description?: string;

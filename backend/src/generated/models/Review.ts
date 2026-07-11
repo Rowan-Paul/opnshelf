@@ -48,6 +48,7 @@ export type ReviewMinAggregateOutputType = {
   episodeNumber: number | null
   title: string | null
   markdown: string | null
+  spoiler: boolean | null
   blogDocumentUri: string | null
   blogDocumentCid: string | null
   mirrorToBlog: boolean | null
@@ -69,6 +70,7 @@ export type ReviewMaxAggregateOutputType = {
   episodeNumber: number | null
   title: string | null
   markdown: string | null
+  spoiler: boolean | null
   blogDocumentUri: string | null
   blogDocumentCid: string | null
   mirrorToBlog: boolean | null
@@ -90,6 +92,7 @@ export type ReviewCountAggregateOutputType = {
   episodeNumber: number
   title: number
   markdown: number
+  spoiler: number
   blogDocumentUri: number
   blogDocumentCid: number
   mirrorToBlog: number
@@ -123,6 +126,7 @@ export type ReviewMinAggregateInputType = {
   episodeNumber?: true
   title?: true
   markdown?: true
+  spoiler?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
   mirrorToBlog?: true
@@ -144,6 +148,7 @@ export type ReviewMaxAggregateInputType = {
   episodeNumber?: true
   title?: true
   markdown?: true
+  spoiler?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
   mirrorToBlog?: true
@@ -165,6 +170,7 @@ export type ReviewCountAggregateInputType = {
   episodeNumber?: true
   title?: true
   markdown?: true
+  spoiler?: true
   blogDocumentUri?: true
   blogDocumentCid?: true
   mirrorToBlog?: true
@@ -273,6 +279,7 @@ export type ReviewGroupByOutputType = {
   episodeNumber: number
   title: string
   markdown: string
+  spoiler: boolean
   blogDocumentUri: string | null
   blogDocumentCid: string | null
   mirrorToBlog: boolean
@@ -317,6 +324,7 @@ export type ReviewWhereInput = {
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
   markdown?: Prisma.StringFilter<"Review"> | string
+  spoiler?: Prisma.BoolFilter<"Review"> | boolean
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
@@ -340,6 +348,7 @@ export type ReviewOrderByWithRelationInput = {
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  spoiler?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
   mirrorToBlog?: Prisma.SortOrder
@@ -366,6 +375,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
   markdown?: Prisma.StringFilter<"Review"> | string
+  spoiler?: Prisma.BoolFilter<"Review"> | boolean
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
@@ -389,6 +399,7 @@ export type ReviewOrderByWithAggregationInput = {
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  spoiler?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrderInput | Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrderInput | Prisma.SortOrder
   mirrorToBlog?: Prisma.SortOrder
@@ -418,6 +429,7 @@ export type ReviewScalarWhereWithAggregatesInput = {
   episodeNumber?: Prisma.IntWithAggregatesFilter<"Review"> | number
   title?: Prisma.StringWithAggregatesFilter<"Review"> | string
   markdown?: Prisma.StringWithAggregatesFilter<"Review"> | string
+  spoiler?: Prisma.BoolWithAggregatesFilter<"Review"> | boolean
   blogDocumentUri?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableWithAggregatesFilter<"Review"> | string | null
   mirrorToBlog?: Prisma.BoolWithAggregatesFilter<"Review"> | boolean
@@ -438,6 +450,7 @@ export type ReviewCreateInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -461,6 +474,7 @@ export type ReviewUncheckedCreateInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -482,6 +496,7 @@ export type ReviewUpdateInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -505,6 +520,7 @@ export type ReviewUncheckedUpdateInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -527,6 +543,7 @@ export type ReviewCreateManyInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -547,6 +564,7 @@ export type ReviewUpdateManyMutationInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -568,6 +586,7 @@ export type ReviewUncheckedUpdateManyInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -599,6 +618,7 @@ export type ReviewCountOrderByAggregateInput = {
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  spoiler?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
   mirrorToBlog?: Prisma.SortOrder
@@ -625,6 +645,7 @@ export type ReviewMaxOrderByAggregateInput = {
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  spoiler?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
   mirrorToBlog?: Prisma.SortOrder
@@ -646,6 +667,7 @@ export type ReviewMinOrderByAggregateInput = {
   episodeNumber?: Prisma.SortOrder
   title?: Prisma.SortOrder
   markdown?: Prisma.SortOrder
+  spoiler?: Prisma.SortOrder
   blogDocumentUri?: Prisma.SortOrder
   blogDocumentCid?: Prisma.SortOrder
   mirrorToBlog?: Prisma.SortOrder
@@ -732,6 +754,7 @@ export type ReviewCreateWithoutUserInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -753,6 +776,7 @@ export type ReviewUncheckedCreateWithoutUserInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -804,6 +828,7 @@ export type ReviewScalarWhereInput = {
   episodeNumber?: Prisma.IntFilter<"Review"> | number
   title?: Prisma.StringFilter<"Review"> | string
   markdown?: Prisma.StringFilter<"Review"> | string
+  spoiler?: Prisma.BoolFilter<"Review"> | boolean
   blogDocumentUri?: Prisma.StringNullableFilter<"Review"> | string | null
   blogDocumentCid?: Prisma.StringNullableFilter<"Review"> | string | null
   mirrorToBlog?: Prisma.BoolFilter<"Review"> | boolean
@@ -824,6 +849,7 @@ export type ReviewCreateWithoutLikesInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -846,6 +872,7 @@ export type ReviewUncheckedCreateWithoutLikesInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -882,6 +909,7 @@ export type ReviewUpdateWithoutLikesInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -904,6 +932,7 @@ export type ReviewUncheckedUpdateWithoutLikesInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -924,6 +953,7 @@ export type ReviewCreateManyUserInput = {
   episodeNumber?: number
   title: string
   markdown: string
+  spoiler?: boolean
   blogDocumentUri?: string | null
   blogDocumentCid?: string | null
   mirrorToBlog?: boolean
@@ -944,6 +974,7 @@ export type ReviewUpdateWithoutUserInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -965,6 +996,7 @@ export type ReviewUncheckedUpdateWithoutUserInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -986,6 +1018,7 @@ export type ReviewUncheckedUpdateManyWithoutUserInput = {
   episodeNumber?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
+  spoiler?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogDocumentUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   blogDocumentCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mirrorToBlog?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1038,6 +1071,7 @@ export type ReviewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   episodeNumber?: boolean
   title?: boolean
   markdown?: boolean
+  spoiler?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
   mirrorToBlog?: boolean
@@ -1062,6 +1096,7 @@ export type ReviewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   episodeNumber?: boolean
   title?: boolean
   markdown?: boolean
+  spoiler?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
   mirrorToBlog?: boolean
@@ -1084,6 +1119,7 @@ export type ReviewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   episodeNumber?: boolean
   title?: boolean
   markdown?: boolean
+  spoiler?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
   mirrorToBlog?: boolean
@@ -1106,6 +1142,7 @@ export type ReviewSelectScalar = {
   episodeNumber?: boolean
   title?: boolean
   markdown?: boolean
+  spoiler?: boolean
   blogDocumentUri?: boolean
   blogDocumentCid?: boolean
   mirrorToBlog?: boolean
@@ -1115,7 +1152,7 @@ export type ReviewSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "markdown" | "blogDocumentUri" | "blogDocumentCid" | "mirrorToBlog" | "blueskyPostUri" | "blueskyPostCid" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+export type ReviewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "title" | "markdown" | "spoiler" | "blogDocumentUri" | "blogDocumentCid" | "mirrorToBlog" | "blueskyPostUri" | "blueskyPostCid" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
 export type ReviewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.Review$likesArgs<ExtArgs>
@@ -1146,6 +1183,7 @@ export type $ReviewPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     episodeNumber: number
     title: string
     markdown: string
+    spoiler: boolean
     blogDocumentUri: string | null
     blogDocumentCid: string | null
     mirrorToBlog: boolean
@@ -1589,6 +1627,7 @@ export interface ReviewFieldRefs {
   readonly episodeNumber: Prisma.FieldRef<"Review", 'Int'>
   readonly title: Prisma.FieldRef<"Review", 'String'>
   readonly markdown: Prisma.FieldRef<"Review", 'String'>
+  readonly spoiler: Prisma.FieldRef<"Review", 'Boolean'>
   readonly blogDocumentUri: Prisma.FieldRef<"Review", 'String'>
   readonly blogDocumentCid: Prisma.FieldRef<"Review", 'String'>
   readonly mirrorToBlog: Prisma.FieldRef<"Review", 'Boolean'>

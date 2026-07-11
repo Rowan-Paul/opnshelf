@@ -39,6 +39,7 @@ export type UserMinAggregateOutputType = {
   timezone: string | null
   timeFormat: string | null
   watchCountry: string | null
+  alwaysShowSpoilers: boolean | null
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
@@ -70,6 +71,7 @@ export type UserMaxAggregateOutputType = {
   timezone: string | null
   timeFormat: string | null
   watchCountry: string | null
+  alwaysShowSpoilers: boolean | null
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
@@ -101,6 +103,7 @@ export type UserCountAggregateOutputType = {
   timezone: number
   timeFormat: number
   watchCountry: number
+  alwaysShowSpoilers: number
   onboardingCompletedAt: number
   emailVerifiedAt: number
   backfillStartedAt: number
@@ -134,6 +137,7 @@ export type UserMinAggregateInputType = {
   timezone?: true
   timeFormat?: true
   watchCountry?: true
+  alwaysShowSpoilers?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
@@ -165,6 +169,7 @@ export type UserMaxAggregateInputType = {
   timezone?: true
   timeFormat?: true
   watchCountry?: true
+  alwaysShowSpoilers?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
@@ -196,6 +201,7 @@ export type UserCountAggregateInputType = {
   timezone?: true
   timeFormat?: true
   watchCountry?: true
+  alwaysShowSpoilers?: true
   onboardingCompletedAt?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
@@ -300,6 +306,7 @@ export type UserGroupByOutputType = {
   timezone: string
   timeFormat: string
   watchCountry: string
+  alwaysShowSpoilers: boolean
   onboardingCompletedAt: Date | null
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
@@ -352,6 +359,7 @@ export type UserWhereInput = {
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
+  alwaysShowSpoilers?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -396,6 +404,7 @@ export type UserOrderByWithRelationInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -443,6 +452,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
+  alwaysShowSpoilers?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -487,6 +497,7 @@ export type UserOrderByWithAggregationInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -524,6 +535,7 @@ export type UserScalarWhereWithAggregatesInput = {
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
   watchCountry?: Prisma.StringWithAggregatesFilter<"User"> | string
+  alwaysShowSpoilers?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -555,6 +567,7 @@ export type UserCreateInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -599,6 +612,7 @@ export type UserUncheckedCreateInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -643,6 +657,7 @@ export type UserUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -687,6 +702,7 @@ export type UserUncheckedUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -731,6 +747,7 @@ export type UserCreateManyInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -762,6 +779,7 @@ export type UserUpdateManyMutationInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -793,6 +811,7 @@ export type UserUncheckedUpdateManyInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -824,6 +843,7 @@ export type UserCountOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
@@ -855,6 +875,7 @@ export type UserMaxOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
@@ -886,6 +907,7 @@ export type UserMinOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
@@ -1128,6 +1150,7 @@ export type UserCreateWithoutFollowingInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1171,6 +1194,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1219,6 +1243,7 @@ export type UserCreateWithoutFollowersInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1262,6 +1287,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1321,6 +1347,7 @@ export type UserUpdateWithoutFollowingInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1364,6 +1391,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1418,6 +1446,7 @@ export type UserUpdateWithoutFollowersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1461,6 +1490,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1504,6 +1534,7 @@ export type UserCreateWithoutCirclesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1547,6 +1578,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1606,6 +1638,7 @@ export type UserUpdateWithoutCirclesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1649,6 +1682,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1692,6 +1726,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1735,6 +1770,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1794,6 +1830,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1837,6 +1874,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1880,6 +1918,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1923,6 +1962,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -1982,6 +2022,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2025,6 +2066,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2068,6 +2110,7 @@ export type UserCreateWithoutListsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2111,6 +2154,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2170,6 +2214,7 @@ export type UserUpdateWithoutListsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2213,6 +2258,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2256,6 +2302,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2299,6 +2346,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2358,6 +2406,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2401,6 +2450,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2444,6 +2494,7 @@ export type UserCreateWithoutNotesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2487,6 +2538,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2546,6 +2598,7 @@ export type UserUpdateWithoutNotesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2589,6 +2642,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2632,6 +2686,7 @@ export type UserCreateWithoutReviewsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2675,6 +2730,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2734,6 +2790,7 @@ export type UserUpdateWithoutReviewsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2777,6 +2834,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2820,6 +2878,7 @@ export type UserCreateWithoutPublicationsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2863,6 +2922,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -2922,6 +2982,7 @@ export type UserUpdateWithoutPublicationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2965,6 +3026,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3008,6 +3070,7 @@ export type UserCreateWithoutRatingsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3051,6 +3114,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3110,6 +3174,7 @@ export type UserUpdateWithoutRatingsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3153,6 +3218,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3196,6 +3262,7 @@ export type UserCreateWithoutReviewLikesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3239,6 +3306,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3298,6 +3366,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3341,6 +3410,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3384,6 +3454,7 @@ export type UserCreateWithoutFeedbackInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3427,6 +3498,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
@@ -3486,6 +3558,7 @@ export type UserUpdateWithoutFeedbackInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3529,6 +3602,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3711,6 +3785,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
@@ -3756,6 +3831,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
@@ -3787,6 +3863,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
@@ -3818,6 +3895,7 @@ export type UserSelectScalar = {
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
@@ -3834,7 +3912,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "onboardingCompletedAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -3886,6 +3964,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     timezone: string
     timeFormat: string
     watchCountry: string
+    alwaysShowSpoilers: boolean
     onboardingCompletedAt: Date | null
     emailVerifiedAt: Date | null
     backfillStartedAt: Date | null
@@ -4350,6 +4429,7 @@ export interface UserFieldRefs {
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
   readonly watchCountry: Prisma.FieldRef<"User", 'String'>
+  readonly alwaysShowSpoilers: Prisma.FieldRef<"User", 'Boolean'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly backfillStartedAt: Prisma.FieldRef<"User", 'DateTime'>

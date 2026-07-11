@@ -698,6 +698,10 @@ export type UserSettingsDto = {
      */
     watchCountry: string;
     /**
+     * Reader preference: always show spoiler content, suppressing Spoiler Shields
+     */
+    alwaysShowSpoilers: boolean;
+    /**
      * AT URI of the publication new reviews point at, or null for the opnshelf default
      */
     reviewsPublicationUri: string | null;
@@ -724,6 +728,10 @@ export type UpdateUserSettingsDto = {
      * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
      */
     watchCountry?: string;
+    /**
+     * Reader preference: always show spoiler content, suppressing Spoiler Shields
+     */
+    alwaysShowSpoilers?: boolean;
     /**
      * AT URI of the site.standard.publication that new reviews should point at. Must be one of the user's own publications. Pass null to revert to the opnshelf default.
      */
@@ -1179,6 +1187,10 @@ export type FollowedActivityItemDto = {
      * Review text content for review activities
      */
     reviewContent?: string;
+    /**
+     * Author-declared Spoiler Flag for review activities: the review body contains spoilers
+     */
+    reviewSpoiler?: boolean;
     createdAt: string;
 };
 
@@ -1238,6 +1250,10 @@ export type UserReviewDto = {
      * Review body as markdown source
      */
     markdown: string;
+    /**
+     * Author-declared Spoiler Flag: the body contains spoilers
+     */
+    spoiler: boolean;
     description?: string;
     mediaType: 'movie' | 'show' | 'season' | 'episode';
     mediaId: string;
@@ -1278,6 +1294,10 @@ export type MediaReviewItemDto = {
      * Review body as markdown source
      */
     markdown: string;
+    /**
+     * Author-declared Spoiler Flag: the body contains spoilers
+     */
+    spoiler: boolean;
     description?: string;
     /**
      * Relative URL of the canonical public review page, e.g. /reviews/{handle}/{rkey}
@@ -1342,6 +1362,10 @@ export type CanonicalReviewResponseDto = {
      */
     markdown: string;
     /**
+     * Author-declared Spoiler Flag: the body contains spoilers
+     */
+    spoiler: boolean;
+    /**
      * Short plaintext excerpt
      */
     description?: string;
@@ -1398,6 +1422,10 @@ export type ReviewResponseDto = {
      */
     markdown: string;
     /**
+     * Author-declared Spoiler Flag: the body contains spoilers
+     */
+    spoiler: boolean;
+    /**
      * AT-URI of the standard.site blog-mirror document, or null when not mirrored
      */
     blogDocumentUri?: string | null;
@@ -1439,6 +1467,10 @@ export type CreateReviewDto = {
      */
     markdown: string;
     /**
+     * Author-declared Spoiler Flag: the body contains spoilers. The title stays visible everywhere and must remain spoiler-free.
+     */
+    spoiler?: boolean;
+    /**
      * Whether to mirror this review to the author's blog (when one is configured). Defaults to true.
      */
     mirrorToBlog?: boolean;
@@ -1469,6 +1501,10 @@ export type CreateReviewResponseDto = {
      */
     markdown: string;
     /**
+     * Author-declared Spoiler Flag: the body contains spoilers
+     */
+    spoiler: boolean;
+    /**
      * AT-URI of the standard.site blog-mirror document, or null when not mirrored
      */
     blogDocumentUri?: string | null;
@@ -1494,6 +1530,10 @@ export type UpdateReviewDto = {
      * Review body as markdown source
      */
     markdown?: string;
+    /**
+     * Author-declared Spoiler Flag: the body contains spoilers. The title stays visible everywhere and must remain spoiler-free.
+     */
+    spoiler?: boolean;
     /**
      * Whether to mirror this review to the author's blog (when one is configured).
      */

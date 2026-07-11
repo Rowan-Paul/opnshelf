@@ -283,6 +283,12 @@ export class FollowedActivityItemDto {
 	})
 	reviewContent?: string;
 
+	@ApiPropertyOptional({
+		description:
+			"Author-declared Spoiler Flag for review activities: the review body contains spoilers",
+	})
+	reviewSpoiler?: boolean;
+
 	@ApiProperty()
 	createdAt: string;
 }

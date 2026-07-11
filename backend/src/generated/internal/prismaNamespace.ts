@@ -2107,6 +2107,7 @@ export const UserScalarFieldEnum = {
   timezone: 'timezone',
   timeFormat: 'timeFormat',
   watchCountry: 'watchCountry',
+  alwaysShowSpoilers: 'alwaysShowSpoilers',
   onboardingCompletedAt: 'onboardingCompletedAt',
   emailVerifiedAt: 'emailVerifiedAt',
   backfillStartedAt: 'backfillStartedAt',
@@ -2388,6 +2389,7 @@ export const ReviewScalarFieldEnum = {
   episodeNumber: 'episodeNumber',
   title: 'title',
   markdown: 'markdown',
+  spoiler: 'spoiler',
   blogDocumentUri: 'blogDocumentUri',
   blogDocumentCid: 'blogDocumentCid',
   mirrorToBlog: 'mirrorToBlog',
@@ -2552,14 +2554,14 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'BlogMirrorFormat'
  */
 export type EnumBlogMirrorFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlogMirrorFormat'>
-
+    
 
 
 /**
  * Reference to a field of type 'BlogMirrorFormat[]'
  */
 export type ListEnumBlogMirrorFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlogMirrorFormat[]'>
-
+    
 
 
 /**
@@ -2825,3 +2827,4 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
+

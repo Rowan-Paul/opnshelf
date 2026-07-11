@@ -37,6 +37,14 @@ export class UpdateUserSettingsDto {
 
 	@ApiPropertyOptional({
 		description:
+			"Reader preference: always show spoiler content, suppressing Spoiler Shields",
+	})
+	@IsOptional()
+	@IsBoolean()
+	alwaysShowSpoilers?: boolean;
+
+	@ApiPropertyOptional({
+		description:
 			"AT URI of the site.standard.publication that new reviews should point at. Must be one of the user's own publications. Pass null to revert to the opnshelf default.",
 		nullable: true,
 		type: String,
@@ -110,6 +118,12 @@ export class UserSettingsDto {
 			"ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)",
 	})
 	watchCountry!: string;
+
+	@ApiProperty({
+		description:
+			"Reader preference: always show spoiler content, suppressing Spoiler Shields",
+	})
+	alwaysShowSpoilers!: boolean;
 
 	@ApiProperty({
 		description:

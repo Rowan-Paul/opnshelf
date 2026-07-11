@@ -62,6 +62,7 @@ export class UsersService {
 				timezone: true,
 				timeFormat: true,
 				watchCountry: true,
+				alwaysShowSpoilers: true,
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
 				reviewsMirrorFormat: true,
@@ -76,6 +77,7 @@ export class UsersService {
 			timezone: user.timezone,
 			timeFormat: user.timeFormat,
 			watchCountry: user.watchCountry,
+			alwaysShowSpoilers: user.alwaysShowSpoilers,
 			reviewsPublicationUri: user.reviewsPublicationUri,
 			reviewsPublicationName: user.reviewsPublicationName,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
@@ -141,6 +143,9 @@ export class UsersService {
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
 				}),
+				...(dto.alwaysShowSpoilers !== undefined && {
+					alwaysShowSpoilers: dto.alwaysShowSpoilers,
+				}),
 				...(dto.reviewsMirrorFormat !== undefined && {
 					reviewsMirrorFormat: dto.reviewsMirrorFormat as BlogMirrorFormat,
 				}),
@@ -150,6 +155,7 @@ export class UsersService {
 				timezone: true,
 				timeFormat: true,
 				watchCountry: true,
+				alwaysShowSpoilers: true,
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
 				reviewsMirrorFormat: true,
@@ -178,6 +184,7 @@ export class UsersService {
 		return {
 			timezone: updatedUser.timezone,
 			timeFormat: updatedUser.timeFormat,
+			alwaysShowSpoilers: updatedUser.alwaysShowSpoilers,
 			watchCountry: updatedUser.watchCountry,
 			reviewsPublicationUri: updatedUser.reviewsPublicationUri,
 			reviewsPublicationName: updatedUser.reviewsPublicationName,

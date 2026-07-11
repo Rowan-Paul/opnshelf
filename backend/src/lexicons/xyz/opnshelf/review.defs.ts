@@ -43,6 +43,11 @@ type Main = {
   content: string
 
   /**
+   * True when the body contains spoilers for the reviewed media item. The title is outside the spoiler boundary and must remain spoiler-free.
+   */
+  spoiler?: boolean
+
+  /**
    * Record creation timestamp
    */
   createdAt: l.DatetimeString
@@ -66,6 +71,7 @@ const main = l.record<'tid', Main>(
     episodeNumber: l.optional(l.integer()),
     title: l.string({ maxLength: 3000, maxGraphemes: 300 }),
     content: l.string({ maxLength: 100000, maxGraphemes: 20000 }),
+    spoiler: l.optional(l.boolean()),
     createdAt: l.string({ format: 'datetime' }),
     updatedAt: l.optional(l.string({ format: 'datetime' })),
   }),

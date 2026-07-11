@@ -406,6 +406,7 @@ export class ReviewsService {
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
+			spoiler: review.spoiler,
 			description: excerptOf(review.markdown),
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
@@ -894,6 +895,8 @@ export class ReviewsService {
 		title: string;
 		/** Raw review body — used for the description/textContent excerpt. */
 		body: string;
+		/** When set (Spoiler Flag), replaces the description/textContent excerpt. */
+		spoilerWarning?: string;
 		/** Framed markdown (media header + body + backlink) — the rendered content. */
 		contentMarkdown: string;
 		/** Reader-specific rich body, or Markdown content for portable mirrors. */
@@ -907,7 +910,8 @@ export class ReviewsService {
 		updatedAt?: string;
 	}): DocumentRecord {
 		// Preview text stays about the review itself, not the media header/backlink.
-		const plain = toPlainText(params.body);
+		// A Spoiler Flag replaces it with the warning so previews can't leak.
+		const plain = params.spoilerWarning ?? toPlainText(params.body);
 
 		const content: DocumentRecord["content"] =
 			params.content ??
@@ -956,6 +960,7 @@ export class ReviewsService {
 			rkey: string;
 			title: string;
 			markdown: string;
+			spoiler: boolean;
 			mediaType: string;
 			mediaId: string;
 			seasonNumber: number;
@@ -1016,8 +1021,18 @@ export class ReviewsService {
 					)
 				: PUBLIC_SITE_ORIGIN;
 
+			// Blog readers can't render a Spoiler Shield (ADR-0016): flagged reviews
+			// mirror in full, prefixed with a warning, and the warning also replaces
+			// the body excerpt in the document's description/textContent.
+			const spoilerWarning = review.spoiler
+				? `⚠️ Contains spoilers${mediaTitle ? ` for ${mediaTitle}` : ""}.`
+				: undefined;
+			const mirrorBody = spoilerWarning
+				? `${spoilerWarning}\n\n${review.markdown}`
+				: review.markdown;
+
 			const contentMarkdown = buildMirrorContentMarkdown({
-				body: review.markdown,
+				body: mirrorBody,
 				mediaTitle,
 				posterPath: media?.posterPath ?? null,
 				mediaUrl,
@@ -1026,21 +1041,21 @@ export class ReviewsService {
 			const content =
 				user?.reviewsMirrorFormat === "leaflet"
 					? (buildLeafletMirrorContent({
-							body: review.markdown,
+							body: mirrorBody,
 							mediaTitle,
 							mediaUrl,
 							typeLabel: MEDIA_TYPE_LABEL[mediaType],
 						}) as DocumentRecord["content"])
 					: user?.reviewsMirrorFormat === "offprint"
 						? (buildOffprintMirrorContent({
-								body: review.markdown,
+								body: mirrorBody,
 								mediaTitle,
 								mediaUrl,
 								typeLabel: MEDIA_TYPE_LABEL[mediaType],
 							}) as DocumentRecord["content"])
 						: user?.reviewsMirrorFormat === "pckt"
 							? (buildPcktMirrorContent({
-									body: review.markdown,
+									body: mirrorBody,
 									mediaTitle,
 									mediaUrl,
 									typeLabel: MEDIA_TYPE_LABEL[mediaType],
@@ -1051,6 +1066,7 @@ export class ReviewsService {
 				publicationUri,
 				title: review.title,
 				body: review.markdown,
+				spoilerWarning,
 				contentMarkdown,
 				content,
 				mediaType,
@@ -1127,6 +1143,7 @@ export class ReviewsService {
 			episodeNumber: dto.episodeNumber,
 			title: dto.title,
 			content: dto.markdown,
+			spoiler: dto.spoiler || undefined,
 			createdAt: now as ReviewRecord["createdAt"],
 			updatedAt: now as ReviewRecord["updatedAt"],
 		});
@@ -1151,6 +1168,7 @@ export class ReviewsService {
 				episodeNumber: dto.episodeNumber ?? 0,
 				title: dto.title,
 				markdown: dto.markdown,
+				spoiler: dto.spoiler ?? false,
 				mirrorToBlog,
 			},
 		});
@@ -1206,6 +1224,7 @@ export class ReviewsService {
 		const title = dto.title ?? existing.title;
 		const markdown = dto.markdown ?? existing.markdown;
 		const mirrorToBlog = dto.mirrorToBlog ?? existing.mirrorToBlog;
+		const spoiler = dto.spoiler ?? existing.spoiler;
 
 		const record = reviewSchema.build({
 			mediaType: existing.mediaType,
@@ -1214,6 +1233,7 @@ export class ReviewsService {
 			episodeNumber: existing.episodeNumber || undefined,
 			title,
 			content: markdown,
+			spoiler: spoiler || undefined,
 			createdAt: existing.createdAt.toISOString() as ReviewRecord["createdAt"],
 			updatedAt: new Date().toISOString() as ReviewRecord["updatedAt"],
 		});
@@ -1230,6 +1250,7 @@ export class ReviewsService {
 			...existing,
 			title,
 			markdown,
+			spoiler,
 			mirrorToBlog,
 		});
 
@@ -1239,6 +1260,7 @@ export class ReviewsService {
 				cid: response.data.cid,
 				title,
 				markdown,
+				spoiler,
 				mirrorToBlog,
 				...mirror,
 			},
@@ -1479,6 +1501,7 @@ export class ReviewsService {
 				episodeNumber: record.episodeNumber ?? 0,
 				title: record.title,
 				markdown: record.content,
+				spoiler: record.spoiler ?? false,
 			},
 			update: {
 				cid,
@@ -1488,6 +1511,7 @@ export class ReviewsService {
 				episodeNumber: record.episodeNumber ?? 0,
 				title: record.title,
 				markdown: record.content,
+				spoiler: record.spoiler ?? false,
 			},
 		});
 	}

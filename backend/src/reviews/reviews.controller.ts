@@ -76,6 +76,7 @@ export class ReviewsController {
 				rkey: review.rkey,
 				reviewTitle: review.title,
 				markdown: review.markdown,
+				spoiler: review.spoiler,
 				description: review.description ?? undefined,
 				mediaType: review.mediaType,
 				mediaId: review.mediaId,
@@ -113,6 +114,7 @@ export class ReviewsController {
 				rkey: review.rkey,
 				title: review.title,
 				markdown: review.markdown,
+				spoiler: review.spoiler,
 				description: review.description ?? undefined,
 				// Canonical public review page (ADR-0013). Relative path against the
 				// public site (opnshelf.xyz) — NEVER the PDS host.
@@ -152,6 +154,7 @@ export class ReviewsController {
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
+			spoiler: review.spoiler,
 			description: review.description ?? undefined,
 			mediaType: review.mediaType,
 			mediaId: review.mediaId,
@@ -361,6 +364,7 @@ export class ReviewsController {
 		rkey: string;
 		title: string;
 		markdown: string;
+		spoiler: boolean;
 		blogDocumentUri: string | null;
 		mirrorToBlog: boolean;
 		mediaType: string;
@@ -375,6 +379,7 @@ export class ReviewsController {
 			rkey: review.rkey,
 			title: review.title,
 			markdown: review.markdown,
+			spoiler: review.spoiler,
 			blogDocumentUri: review.blogDocumentUri,
 			mirrorToBlog: review.mirrorToBlog,
 			mediaType: review.mediaType,

@@ -23,6 +23,8 @@ model User {
   timezone     String   @default("UTC")
   timeFormat   String   @default("24h")
   watchCountry String   @default("US")
+  // Reader preference: suppress Spoiler Shields entirely (ADR-0016).
+  alwaysShowSpoilers Boolean @default(false)
   onboardingCompletedAt DateTime?
   emailVerifiedAt DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
@@ -469,6 +471,9 @@ model Review {
   title          String
   // Raw markdown source (the review record's `content`).
   markdown       String
+  // Author-declared Spoiler Flag (ADR-0016). Whole-review; absent on the
+  // record means false. The title is outside the spoiler boundary.
+  spoiler        Boolean  @default(false)
 
   // Optional standard.site blog mirror (ADR-0013). Set only when the author has
   // selected a publication and the mirror write succeeded.

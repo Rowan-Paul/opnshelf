@@ -782,6 +782,62 @@ describe("ReviewsService", () => {
 			expect(rendered).not.toContain("/reviews/");
 		});
 
+		it("prefixes a spoiler warning on the mirror and replaces its excerpt (ADR-0016)", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+			});
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "123", title: "Dune", posterPath: "/dune.jpg" },
+			]);
+			mockPutRecord
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+						cid: "cid-review",
+					},
+				})
+				.mockResolvedValueOnce({
+					data: {
+						uri: "at://did:plc:abc123/site.standard.document/testtid123",
+						cid: "cid-doc",
+					},
+				});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+			mockPrismaService.review.update.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => ({
+					id: "review-1",
+					...data,
+				}),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Paul is the traitor.",
+				spoiler: true,
+			});
+
+			// Review record carries the flag.
+			const reviewCall = mockPutRecord.mock.calls[0][0];
+			expect(reviewCall.record.spoiler).toBe(true);
+
+			// Mirror body leads with the warning; the full text still follows.
+			const docCall = mockPutRecord.mock.calls[1][0];
+			const rendered = docCall.record.content.text.markdown as string;
+			expect(rendered).toContain("⚠️ Contains spoilers for Dune.");
+			expect(rendered).toContain("Paul is the traitor.");
+			expect(rendered.indexOf("⚠️")).toBeLessThan(
+				rendered.indexOf("Paul is the traitor."),
+			);
+			// Envelope previews carry only the warning — never body text.
+			expect(docCall.record.description).toBe("⚠️ Contains spoilers for Dune.");
+			expect(docCall.record.textContent).toBe("⚠️ Contains spoilers for Dune.");
+		});
+
 		it("emits Leaflet content only when the user explicitly selected Leaflet", async () => {
 			mockPrismaService.user.findUnique.mockResolvedValue({
 				reviewsPublicationUri:
