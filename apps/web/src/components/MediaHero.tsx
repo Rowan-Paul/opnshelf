@@ -146,7 +146,9 @@ export default function MediaHero({
 
 						{/* Action Buttons */}
 						{actions && (
-							<div className="mt-6 flex flex-wrap gap-3">{actions}</div>
+							<div className="mt-6 flex flex-nowrap gap-3 overflow-x-auto pb-1 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+								{actions}
+							</div>
 						)}
 					</div>
 				</div>

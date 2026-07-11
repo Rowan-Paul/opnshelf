@@ -2,10 +2,10 @@ import {
 	Bookmark,
 	Check,
 	Disc,
-	Ellipsis,
 	Heart,
 	ListPlus,
 	Loader2,
+	Menu,
 	MessageSquarePlus,
 	Share2,
 	Star,
@@ -129,7 +129,7 @@ export default function MediaActionsBar({
 				Compact desktop hierarchy: immediate tracking actions stay in the hero;
 				less frequent editorial and organisation actions live under More.
 			*/}
-			<div className="flex flex-wrap items-center gap-2">
+			<div className="flex shrink-0 flex-nowrap items-center gap-2">
 				<button
 					type="button"
 					onClick={() => toggleWatchlist(isInWatchlist)}
@@ -197,7 +197,7 @@ export default function MediaActionsBar({
 							className="btn btn-secondary h-10 w-10 justify-center p-0 lg:w-auto lg:px-3"
 							aria-label="More media actions"
 						>
-							<Ellipsis className="size-4" />
+							<Menu className="size-5" />
 							<span className="hidden lg:inline">More</span>
 						</button>
 					</DropdownMenuTrigger>
