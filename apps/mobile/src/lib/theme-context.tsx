@@ -64,10 +64,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 		return preference;
 	}, [preference, osColorScheme]);
 
-	// Apply the effective scheme to Uniwind whenever it changes.
+	// Pass the raw preference to Uniwind: for "system" it clears the
+	// Appearance override and follows the OS live. Setting a concrete theme
+	// here instead would pin Appearance.setColorScheme, freezing
+	// useColorScheme until the next app restart.
 	useEffect(() => {
-		Uniwind.setTheme(scheme);
-	}, [scheme]);
+		Uniwind.setTheme(preference);
+	}, [preference]);
 
 	const setPreference = useMemo(
 		() => (next: ThemePreference) => {
