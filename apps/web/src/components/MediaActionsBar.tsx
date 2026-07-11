@@ -2,6 +2,7 @@ import {
 	Bookmark,
 	Check,
 	Disc,
+	Ellipsis,
 	Heart,
 	ListPlus,
 	Loader2,
@@ -26,6 +27,13 @@ import { NoteDialog } from "./NoteDialog";
 import { RatingDialog } from "./RatingDialog";
 import { ReviewDialog } from "./ReviewDialog";
 import { ratingToStars } from "./StarRating";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface MediaActionsBarProps {
 	mediaType: "movie" | "show";
@@ -120,43 +128,39 @@ export default function MediaActionsBar({
 
 	return (
 		<>
-			{/* Watchlist Button */}
-			<button
-				type="button"
-				onClick={() => toggleWatchlist(isInWatchlist)}
-				disabled={isPending}
-				className="btn btn-secondary gap-2"
-			>
-				{activeListAction === "watchlist" ? (
-					<>
-						<Loader2 className="size-4 animate-spin" />
-						Loading
-					</>
-				) : isInWatchlist ? (
-					<>
-						<Bookmark className="size-4 fill-current" />
-						In Watchlist
-					</>
-				) : (
-					<>
-						<Bookmark className="size-4" />
-						Add to Watchlist
-					</>
-				)}
-			</button>
-
-			{/* Icon-only buttons — wrap to next line on mobile */}
-			<div className="flex w-full flex-wrap gap-3 sm:w-auto">
-				{/* Favorites Button */}
+			{/*
+				Compact desktop hierarchy: immediate tracking actions stay in the hero;
+				less frequent editorial and organisation actions live under More.
+			*/}
+			<div className="hidden lg:flex lg:items-center lg:gap-2">
+				<button
+					type="button"
+					onClick={() => toggleWatchlist(isInWatchlist)}
+					disabled={isPending}
+					className="btn btn-secondary gap-2"
+				>
+					{activeListAction === "watchlist" ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Loading
+						</>
+					) : isInWatchlist ? (
+						<>
+							<Bookmark className="size-4 fill-current" />
+							In Watchlist
+						</>
+					) : (
+						<>
+							<Bookmark className="size-4" />
+							Watchlist
+						</>
+					)}
+				</button>
 				<button
 					type="button"
 					onClick={() => toggleFavorites(isInFavorites)}
 					disabled={isPending}
-					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-						isInFavorites
-							? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${isInFavorites ? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
 					aria-label={
 						isInFavorites ? "Remove from Favorites" : "Add to Favorites"
 					}
@@ -169,101 +173,206 @@ export default function MediaActionsBar({
 						/>
 					)}
 				</button>
-
-				{/* Note Button */}
-				<button
-					type="button"
-					onClick={() => setNoteDialogOpen(true)}
-					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-						note?.content
-							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
-					aria-label={note?.content ? "Edit note" : "Add note"}
-				>
-					<StickyNote
-						className={`size-5 ${note?.content ? "fill-current" : ""}`}
-					/>
-				</button>
-
-				{/* Rate Button */}
 				<button
 					type="button"
 					onClick={() => setRatingDialogOpen(true)}
-					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
-						rating > 0
-							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
-					aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
+					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${rating > 0 ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
 				>
 					<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
-					{rating > 0 ? (
-						<span className="text-sm">{ratingToStars(rating).toFixed(1)}</span>
-					) : null}
+					<span className="text-sm">
+						{rating > 0 ? ratingToStars(rating).toFixed(1) : "Rate"}
+					</span>
 				</button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="btn btn-secondary gap-1.5"
+							aria-label="More media actions"
+						>
+							<Ellipsis className="size-4" />
+							<span>More</span>
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-52">
+						<DropdownMenuItem onSelect={() => setNoteDialogOpen(true)}>
+							<StickyNote />
+							{note?.content ? "Edit note" : "Add note"}
+						</DropdownMenuItem>
+						<DropdownMenuItem onSelect={() => setReviewDialogOpen(true)}>
+							<MessageSquarePlus />
+							{hasReviewed ? "Write another review" : "Write a review"}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onSelect={() => setLibraryDialogOpen(true)}>
+							<Disc />
+							{ownedCount > 0 ? `Owned · ${ownedCount}` : "Add to library"}
+						</DropdownMenuItem>
+						<DropdownMenuItem onSelect={() => setListsDialogOpen(true)}>
+							<ListPlus />
+							{customListCount > 0
+								? `Lists · ${customListCount}`
+								: "Add to a list"}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onSelect={handleShare}>
+							<Share2 />
+							{shareSuccess ? "Copied to clipboard" : "Share"}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
 
-				{/* Library ("I own this") Button */}
+			{/* Small screens retain direct, touch-friendly access to every action. */}
+			<div className="contents lg:hidden">
 				<button
 					type="button"
-					onClick={() => setLibraryDialogOpen(true)}
-					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
-						ownedCount > 0
-							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
-					aria-label={ownedCount > 0 ? "Edit owned formats" : "Add to library"}
+					onClick={() => toggleWatchlist(isInWatchlist)}
+					disabled={isPending}
+					className="btn btn-secondary gap-2"
 				>
-					<Disc className="size-5" />
-					{ownedCount > 0 ? (
-						<span className="text-sm">Owned · {ownedCount}</span>
-					) : null}
-				</button>
-
-				{/* Review Button */}
-				<button
-					type="button"
-					onClick={() => setReviewDialogOpen(true)}
-					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
-						hasReviewed
-							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
-					aria-label={hasReviewed ? "Write another review" : "Write a review"}
-				>
-					<MessageSquarePlus className="size-5" />
-				</button>
-
-				{/* Lists Button */}
-				<button
-					type="button"
-					onClick={() => setListsDialogOpen(true)}
-					className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
-						customListCount > 0
-							? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
-							: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					}`}
-					aria-label={customListCount > 0 ? "Edit lists" : "Add to a list"}
-				>
-					<ListPlus className="size-5" />
-					{customListCount > 0 ? (
-						<span className="text-sm">Lists · {customListCount}</span>
-					) : null}
-				</button>
-
-				{/* Share Button */}
-				<button
-					type="button"
-					onClick={handleShare}
-					className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
-					aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
-				>
-					{shareSuccess ? (
-						<Check className="size-5 text-green-500" />
+					{activeListAction === "watchlist" ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Loading
+						</>
+					) : isInWatchlist ? (
+						<>
+							<Bookmark className="size-4 fill-current" />
+							In Watchlist
+						</>
 					) : (
-						<Share2 className="size-5" />
+						<>
+							<Bookmark className="size-4" />
+							Add to Watchlist
+						</>
 					)}
 				</button>
+
+				{/* Icon-only buttons wrap cleanly on small screens. */}
+				<div className="flex w-full flex-wrap gap-3 sm:w-auto">
+					{/* Favorites Button */}
+					<button
+						type="button"
+						onClick={() => toggleFavorites(isInFavorites)}
+						disabled={isPending}
+						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+							isInFavorites
+								? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={
+							isInFavorites ? "Remove from Favorites" : "Add to Favorites"
+						}
+					>
+						{activeListAction === "favorites" ? (
+							<Loader2 className="size-5 animate-spin" />
+						) : (
+							<Heart
+								className={`size-5 ${isInFavorites ? "fill-current" : ""}`}
+							/>
+						)}
+					</button>
+
+					{/* Note Button */}
+					<button
+						type="button"
+						onClick={() => setNoteDialogOpen(true)}
+						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+							note?.content
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={note?.content ? "Edit note" : "Add note"}
+					>
+						<StickyNote
+							className={`size-5 ${note?.content ? "fill-current" : ""}`}
+						/>
+					</button>
+
+					{/* Rate Button */}
+					<button
+						type="button"
+						onClick={() => setRatingDialogOpen(true)}
+						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+							rating > 0
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
+					>
+						<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
+						{rating > 0 ? (
+							<span className="text-sm">
+								{ratingToStars(rating).toFixed(1)}
+							</span>
+						) : null}
+					</button>
+
+					{/* Library ("I own this") Button */}
+					<button
+						type="button"
+						onClick={() => setLibraryDialogOpen(true)}
+						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+							ownedCount > 0
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={
+							ownedCount > 0 ? "Edit owned formats" : "Add to library"
+						}
+					>
+						<Disc className="size-5" />
+						{ownedCount > 0 ? (
+							<span className="text-sm">Owned · {ownedCount}</span>
+						) : null}
+					</button>
+
+					{/* Review Button */}
+					<button
+						type="button"
+						onClick={() => setReviewDialogOpen(true)}
+						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
+							hasReviewed
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={hasReviewed ? "Write another review" : "Write a review"}
+					>
+						<MessageSquarePlus className="size-5" />
+					</button>
+
+					{/* Lists Button */}
+					<button
+						type="button"
+						onClick={() => setListsDialogOpen(true)}
+						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
+							customListCount > 0
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						}`}
+						aria-label={customListCount > 0 ? "Edit lists" : "Add to a list"}
+					>
+						<ListPlus className="size-5" />
+						{customListCount > 0 ? (
+							<span className="text-sm">Lists · {customListCount}</span>
+						) : null}
+					</button>
+
+					{/* Share Button */}
+					<button
+						type="button"
+						onClick={handleShare}
+						className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground) transition-all duration-150 hover:border-(--border-strong) hover:bg-(--background-subtle)"
+						aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
+					>
+						{shareSuccess ? (
+							<Check className="size-5 text-green-500" />
+						) : (
+							<Share2 className="size-5" />
+						)}
+					</button>
+				</div>
 			</div>
 
 			<NoteDialog
