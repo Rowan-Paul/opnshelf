@@ -2,10 +2,10 @@ import {
 	Bookmark,
 	Check,
 	Disc,
+	Ellipsis,
 	Heart,
 	ListPlus,
 	Loader2,
-	Menu,
 	MessageSquarePlus,
 	Share2,
 	Star,
@@ -129,27 +129,27 @@ export default function MediaActionsBar({
 				Compact desktop hierarchy: immediate tracking actions stay in the hero;
 				less frequent editorial and organisation actions live under More.
 			*/}
-			<div className="flex shrink-0 flex-nowrap items-center gap-2">
+			<div className="contents lg:flex lg:shrink-0 lg:flex-nowrap lg:items-center lg:gap-2">
 				<button
 					type="button"
 					onClick={() => toggleWatchlist(isInWatchlist)}
 					disabled={isPending}
-					className="btn btn-secondary gap-2"
+					className="btn btn-secondary h-10 w-10 justify-center p-0 lg:w-auto lg:gap-2 lg:px-3"
 				>
 					{activeListAction === "watchlist" ? (
 						<>
-							<Loader2 className="size-4 animate-spin" />
-							Loading
+							<Loader2 className="size-5 animate-spin lg:size-4" />
+							<span className="hidden lg:inline">Loading</span>
 						</>
 					) : isInWatchlist ? (
 						<>
-							<Bookmark className="size-4 fill-current" />
-							In Watchlist
+							<Bookmark className="size-5 fill-current lg:size-4" />
+							<span className="hidden lg:inline">In Watchlist</span>
 						</>
 					) : (
 						<>
-							<Bookmark className="size-4" />
-							Watchlist
+							<Bookmark className="size-5 lg:size-4" />
+							<span className="hidden lg:inline">Watchlist</span>
 						</>
 					)}
 				</button>
@@ -197,7 +197,7 @@ export default function MediaActionsBar({
 							className="btn btn-secondary h-10 w-10 justify-center p-0 lg:w-auto lg:px-3"
 							aria-label="More media actions"
 						>
-							<Menu className="size-5" />
+							<Ellipsis className="size-5" />
 							<span className="hidden lg:inline">More</span>
 						</button>
 					</DropdownMenuTrigger>
