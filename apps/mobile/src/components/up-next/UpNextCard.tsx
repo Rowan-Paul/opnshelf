@@ -54,8 +54,14 @@ export function UpNextCard({
 			asChild
 		>
 			<Pressable className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-				<View className="overflow-hidden rounded-lg border border-border bg-background-subtle">
-					<PosterImage url={posterUrl(show.posterPath)} className="h-32 w-22" />
+				{/* self-stretch + aspect ratio: the poster fills the card's full
+				    height and derives its width, instead of leaving a gap when the
+				    text column is taller than a fixed poster box. */}
+				<View className="min-h-32 self-stretch overflow-hidden rounded-lg border border-border bg-background-subtle">
+					<PosterImage
+						url={posterUrl(show.posterPath)}
+						className="aspect-2/3 h-full"
+					/>
 				</View>
 
 				<View className="min-w-0 flex-1 justify-between">
