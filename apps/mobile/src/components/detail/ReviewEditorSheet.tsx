@@ -1,6 +1,6 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Trash2, X } from "lucide-react-native";
+import { StarOff, Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, Switch, View } from "react-native";
 import {
@@ -8,6 +8,7 @@ import {
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
 import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
+import { StarRating } from "@/components/detail/StarRating";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -34,6 +35,11 @@ interface ReviewEditorSheetProps {
 	onDelete?: () => void;
 	isSaving?: boolean;
 	isDeleting?: boolean;
+	/** When supplied, the sheet combines rating with the review flow. */
+	rating?: number;
+	onRatingChange?: (rating: number) => void;
+	onClearRating?: () => void;
+	isClearingRating?: boolean;
 }
 
 /**
@@ -56,6 +62,10 @@ export function ReviewEditorSheet({
 	onDelete,
 	isSaving = false,
 	isDeleting = false,
+	rating,
+	onRatingChange,
+	onClearRating,
+	isClearingRating = false,
 }: ReviewEditorSheetProps) {
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
@@ -94,6 +104,8 @@ export function ReviewEditorSheet({
 	const overLimit = markdown.length > MAX_LENGTH;
 	// A review requires both a title and a body.
 	const canSave = hasTitle && hasBody && !overLimit && !isSaving;
+	const includesRating = rating != null && !!onRatingChange;
+	const isRated = (rating ?? 0) > 0;
 
 	return (
 		<Modal
@@ -118,12 +130,56 @@ export function ReviewEditorSheet({
 					>
 						<View className="flex-row items-center justify-between">
 							<Text className="font-bold font-display text-foreground text-lg">
-								{isEditing ? "Edit review" : "Write a review"}
+								{isEditing
+									? "Edit review"
+									: includesRating
+										? "Rate & review"
+										: "Write a review"}
 							</Text>
 							<Pressable hitSlop={8} onPress={onDismiss}>
 								<X color="#94a3b8" size={22} />
 							</Pressable>
 						</View>
+
+						{includesRating ? (
+							<View className="gap-3 rounded-lg bg-background-subtle px-3 py-3">
+								<View className="flex-row items-center justify-between gap-3">
+									<View className="flex-1">
+										<Text className="font-medium text-foreground text-sm">
+											Your rating
+										</Text>
+										<Text className="text-muted-foreground text-xs">
+											Optional — save it without writing a review.
+										</Text>
+									</View>
+									{isRated && onClearRating ? (
+										<Pressable
+											onPress={onClearRating}
+											disabled={isClearingRating}
+											className="flex-row items-center gap-1"
+											style={{ opacity: isClearingRating ? 0.6 : 1 }}
+										>
+											<StarOff color="#94a3b8" size={15} />
+											<Text className="font-medium text-muted-foreground text-xs">
+												Clear
+											</Text>
+										</Pressable>
+									) : null}
+								</View>
+								<View className="flex-row items-center justify-between gap-3">
+									<StarRating
+										rating={rating ?? 0}
+										onChange={onRatingChange}
+										size={28}
+									/>
+									<Text className="font-medium text-muted-foreground text-sm">
+										{isRated
+											? `${((rating ?? 0) / 2).toFixed(1)} / 5`
+											: "Not rated"}
+									</Text>
+								</View>
+							</View>
+						) : null}
 
 						<TextField
 							variant="subtle"

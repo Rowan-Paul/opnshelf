@@ -21,8 +21,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
-import { RatingButton } from "@/components/detail/RatingButton";
-import { ReviewButton } from "@/components/detail/ReviewButton";
+import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
@@ -188,7 +187,7 @@ export default function EpisodeDetailScreen() {
 						/>
 						{/* Secondary actions as one row of compact tiles. */}
 						<View className="flex-row gap-2 px-4">
-							<RatingButton
+							<RateReviewButton
 								mediaType="show"
 								mediaId={id}
 								seasonNumber={seasonNum}
@@ -201,12 +200,6 @@ export default function EpisodeDetailScreen() {
 								episodeNumber={episodeNum}
 							/>
 							<NoteButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-								episodeNumber={episodeNum}
-							/>
-							<ReviewButton
 								mediaType="show"
 								mediaId={id}
 								seasonNumber={seasonNum}

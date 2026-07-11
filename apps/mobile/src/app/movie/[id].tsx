@@ -14,8 +14,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
-import { RatingButton } from "@/components/detail/RatingButton";
-import { ReviewButton } from "@/components/detail/ReviewButton";
+import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
@@ -90,11 +89,10 @@ export default function MovieDetailScreen() {
 						<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
 						{/* Secondary actions as one row of compact tiles. */}
 						<View className="flex-row gap-2 px-4">
-							<RatingButton mediaType="movie" mediaId={id} />
+							<RateReviewButton mediaType="movie" mediaId={id} />
 							<AddToListButton mediaType="movie" mediaId={id} />
 							<AddToLibraryButton mediaType="movie" mediaId={id} />
 							<NoteButton mediaType="movie" mediaId={id} />
-							<ReviewButton mediaType="movie" mediaId={id} />
 							<ShareButton
 								url={webMediaUrl({ type: "movie", id, name: data.title })}
 								title={data.title}
