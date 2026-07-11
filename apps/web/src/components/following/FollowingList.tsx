@@ -1,6 +1,7 @@
 import type { CircleDto, SocialUserCardDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Loader2, UserCheck, UserX } from "lucide-react";
+import { UserRowsSkeleton } from "#/components/skeletons";
 import { AddToCircleMenu } from "./AddToCircleMenu";
 import { UserAvatar } from "./UserAvatar";
 
@@ -27,9 +28,7 @@ export function FollowingList({
 				Following ({following.length})
 			</h3>
 			{isLoading ? (
-				<div className="flex items-center justify-center py-4">
-					<Loader2 className="size-6 animate-spin text-(--accent)" />
-				</div>
+				<UserRowsSkeleton rows={3} />
 			) : error ? (
 				<div className="py-4 text-center text-(--foreground-muted)">
 					<p>Failed to load following list</p>

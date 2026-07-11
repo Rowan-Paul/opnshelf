@@ -25,13 +25,16 @@ import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { libraryItemToCardItem } from "@/components/profile/tabs/LibraryTab";
 import { Markdown } from "@/components/ui/Markdown";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import {
+	ListRowsSkeleton,
+	PosterRowSkeleton,
+	ProfileHeaderSkeleton,
+	ReviewsSkeleton,
+} from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
-import {
-	UpNextRowSkeleton,
-	UpNextSkeleton,
-} from "@/components/up-next/UpNextSkeleton";
+import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { useUserLibrary } from "@/lib/use-library";
@@ -126,7 +129,14 @@ export default function ProfileTab() {
 				</View>
 
 				{isLoading ? (
-					<LoadingState />
+					<>
+						<ProfileHeaderSkeleton />
+						<View className="gap-8 px-4 pt-6">
+							<PosterRowSkeleton />
+							<UpNextSkeleton />
+							<ListRowsSkeleton />
+						</View>
+					</>
 				) : isError || !profile ? (
 					<ErrorState
 						title="Couldn't load your profile"
@@ -262,7 +272,7 @@ export default function ProfileTab() {
 							<View>
 								<SectionHeader icon={Star} title="Reviews" href={reviewsHref} />
 								{reviews.isPending ? (
-									<ReviewSkeleton />
+									<ReviewsSkeleton rows={1} />
 								) : reviewItems.length === 0 ? (
 									<EmptyPreview text="No reviews yet." />
 								) : (
@@ -313,39 +323,6 @@ function EmptyPreview({ text }: { text: string }) {
 	return (
 		<View className="items-center rounded-xl border border-border bg-card p-6">
 			<Text className="text-muted-foreground text-sm">{text}</Text>
-		</View>
-	);
-}
-
-/** Shape-matched placeholders, so sections don't claim to be empty (or jump
- * around when real content arrives) while their query is still pending. */
-function PosterRowSkeleton() {
-	return (
-		<View className="flex-row gap-3 overflow-hidden">
-			{[0, 1, 2].map((i) => (
-				<View key={i} style={{ width: POSTER_W }}>
-					<View className="aspect-2/3 w-full rounded-lg bg-background-subtle" />
-					<View className="mt-2 h-3 w-4/5 rounded bg-background-subtle" />
-					<View className="mt-1.5 h-2.5 w-1/2 rounded bg-background-subtle" />
-				</View>
-			))}
-		</View>
-	);
-}
-
-function ReviewSkeleton() {
-	return <UpNextRowSkeleton extraLine />;
-}
-
-function ListRowsSkeleton() {
-	return (
-		<View className="gap-2">
-			{[0, 1].map((i) => (
-				<View key={i} className="rounded-xl border border-border bg-card p-4">
-					<View className="h-3.5 w-2/5 rounded bg-background-subtle" />
-					<View className="mt-2 h-2.5 w-1/4 rounded bg-background-subtle" />
-				</View>
-			))}
 		</View>
 	);
 }

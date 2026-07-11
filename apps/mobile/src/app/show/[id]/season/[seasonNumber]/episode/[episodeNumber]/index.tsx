@@ -26,7 +26,8 @@ import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { DetailSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import {
 	formatLongDate,
@@ -110,7 +111,7 @@ export default function EpisodeDetailScreen() {
 				options={{ headerShown: true, title: data?.name ?? "Episode" }}
 			/>
 			{isLoading ? (
-				<LoadingState />
+				<DetailSkeleton />
 			) : isError || !data ? (
 				<ErrorState message="Couldn't load this episode." />
 			) : (

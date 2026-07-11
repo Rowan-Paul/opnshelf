@@ -8,6 +8,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, UserMinus, Users } from "lucide-react";
 import { z } from "zod";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { UserRowsSkeleton } from "#/components/skeletons";
 import { useAuth } from "#/lib/auth-context";
 import {
 	usePublicFollowers,
@@ -126,9 +127,7 @@ function ProfileConnectionsPage() {
 
 			{/* Content */}
 			{activeQuery.isLoading ? (
-				<div className="flex h-64 items-center justify-center">
-					<Loader2 className="size-8 animate-spin text-(--accent)" />
-				</div>
+				<UserRowsSkeleton />
 			) : !activeQuery.data || activeQuery.data.items.length === 0 ? (
 				<div className="card p-8 text-center">
 					<Users className="mx-auto mb-3 size-12 text-(--foreground-muted)" />

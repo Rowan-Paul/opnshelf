@@ -18,7 +18,8 @@ import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserRow } from "@/components/social/UserRow";
-import { EmptyState, LoadingState } from "@/components/ui/states";
+import { UserRowsSkeleton } from "@/components/ui/skeletons";
+import { EmptyState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -100,7 +101,9 @@ export default function ConnectionsScreen() {
 
 			{hasQuery ? (
 				peopleQuery.isLoading ? (
-					<LoadingState label="Searching…" />
+					<View className="px-4">
+						<UserRowsSkeleton />
+					</View>
 				) : results.length === 0 ? (
 					<EmptyState
 						icon={Users}

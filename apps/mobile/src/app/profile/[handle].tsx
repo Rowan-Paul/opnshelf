@@ -14,7 +14,8 @@ import { OverviewTab } from "@/components/profile/tabs/OverviewTab";
 import { ReviewsTab } from "@/components/profile/tabs/ReviewsTab";
 import { ShelfTab } from "@/components/profile/tabs/ShelfTab";
 import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
 
@@ -91,7 +92,7 @@ export default function ProfileScreen() {
 			<Stack.Screen options={{ headerShown: true, title }} />
 
 			{isLoading ? (
-				<LoadingState />
+				<ProfileHeaderSkeleton />
 			) : isError || !profile ? (
 				<ErrorState
 					title="Profile not found"

@@ -28,7 +28,8 @@ import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterImage } from "@/components/media/PosterImage";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { PosterGridSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -380,7 +381,9 @@ export default function ListDetailScreen() {
 			/>
 
 			{isLoading ? (
-				<LoadingState />
+				<View className="px-3 pt-3">
+					<PosterGridSkeleton />
+				</View>
 			) : isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : reorderMode ? (

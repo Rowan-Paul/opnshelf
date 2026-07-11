@@ -1,7 +1,8 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Activity, Loader2, UserPlus } from "lucide-react";
+import { Activity, UserPlus } from "lucide-react";
+import { CardRowsSkeleton } from "#/components/skeletons";
 import { ActivityCard } from "./ActivityCard";
 
 interface ActivityFeedProps {
@@ -24,12 +25,7 @@ export function ActivityFeed({
 	const queryClient = useQueryClient();
 
 	if (isLoading) {
-		return (
-			<div className="flex flex-col items-center justify-center py-12">
-				<Loader2 className="mb-4 size-8 animate-spin text-(--accent)" />
-				<p className="text-(--foreground-muted)">Loading activity...</p>
-			</div>
-		);
+		return <CardRowsSkeleton />;
 	}
 
 	if (error) {

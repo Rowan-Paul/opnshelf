@@ -28,7 +28,6 @@ import CommunityReviews from "../../../../components/CommunityReviews";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
-import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
@@ -37,6 +36,7 @@ import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
 import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
+import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
 export const Route = createFileRoute("/shows/$showId/$showName/")({
 	loader: async ({ context, params }) => {
@@ -216,7 +216,7 @@ function ShowDetailPage() {
 		unmarkShowWatched();
 	};
 
-	if (showLoading) return <LoadingState />;
+	if (showLoading) return <DetailPageSkeleton />;
 	if (showError || !show) {
 		return (
 			<ErrorState

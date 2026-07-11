@@ -41,12 +41,12 @@ import CommunityReviews from "../../../../components/CommunityReviews";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
-import LoadingState from "../../../../components/LoadingState";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
+import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
 export const Route = createFileRoute(
@@ -162,7 +162,7 @@ function EpisodeDetailPage() {
 
 	const isWatched = episodeWatchHistory.length > 0;
 
-	if (showLoading || episodeLoading) return <LoadingState />;
+	if (showLoading || episodeLoading) return <DetailPageSkeleton />;
 	if (showError || episodeError || !show || !episode) {
 		return (
 			<ErrorState

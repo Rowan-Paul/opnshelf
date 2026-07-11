@@ -1,8 +1,9 @@
 import { Film, Search, Tv, X } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard } from "@/components/media/MediaCard";
+import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -102,9 +103,7 @@ export function ShelfTab({
 			</View>
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<PosterGridSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load this shelf." />
 			) : items.length === 0 ? (

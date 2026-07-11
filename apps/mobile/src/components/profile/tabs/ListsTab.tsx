@@ -1,7 +1,8 @@
 import type { ListSummaryDto } from "@opnshelf/api";
 import { type Href, Link } from "expo-router";
 import { ChevronRight, ListChecks } from "lucide-react-native";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
@@ -28,9 +29,7 @@ export function ListsTab({ userDid }: { userDid: string }) {
 			</Text>
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<ListRowsSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load lists." />
 			) : !data || data.length === 0 ? (

@@ -1,8 +1,9 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
 import { Users } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
+import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
@@ -77,9 +78,7 @@ export function ConnectionsTab({
 			</View>
 
 			{active.isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<UserRowsSkeleton />
 			) : active.isError ? (
 				<ErrorState message="Couldn't load this list." />
 			) : active.items.length === 0 ? (

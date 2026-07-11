@@ -1,8 +1,9 @@
 import type { LibraryItemDto } from "@opnshelf/api";
 import { Disc } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
@@ -79,9 +80,7 @@ export function LibraryTab({ userDid }: { userDid: string }) {
 			</View>
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<PosterGridSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load this library." />
 			) : items.length === 0 ? (

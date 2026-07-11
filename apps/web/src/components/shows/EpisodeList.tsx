@@ -1,5 +1,23 @@
-import { Loader2 } from "lucide-react";
 import EpisodeRow, { type Episode } from "./EpisodeRow";
+
+const SKELETON_ROWS = Array.from({ length: 4 }, (_, i) => i);
+
+function EpisodeRowSkeleton({ isLast }: { isLast: boolean }) {
+	return (
+		<div
+			className={`flex items-center gap-4 p-4 ${
+				!isLast ? "border-(--border) border-b" : ""
+			}`}
+		>
+			<div className="size-10 shrink-0 animate-pulse rounded-lg bg-(--background-subtle)" />
+			<div className="min-w-0 flex-1 space-y-2">
+				<div className="h-4 w-2/5 animate-pulse rounded bg-(--background-subtle)" />
+				<div className="h-3 w-1/4 animate-pulse rounded bg-(--background-subtle)" />
+			</div>
+			<div className="h-8 w-24 shrink-0 animate-pulse rounded-md bg-(--background-subtle)" />
+		</div>
+	);
+}
 
 interface EpisodeListProps {
 	episodes: Episode[];
@@ -32,8 +50,10 @@ export default function EpisodeList({
 }: EpisodeListProps) {
 	if (isLoading) {
 		return (
-			<div className="p-4 text-center">
-				<Loader2 className="mx-auto size-6 animate-spin text-(--accent)" />
+			<div>
+				{SKELETON_ROWS.map((i) => (
+					<EpisodeRowSkeleton key={i} isLast={i === SKELETON_ROWS.length - 1} />
+				))}
 			</div>
 		);
 	}

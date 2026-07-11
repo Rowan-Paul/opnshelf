@@ -1,6 +1,7 @@
 import type { ListsForItemDto } from "@opnshelf/api";
 import { Check, X } from "lucide-react-native";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 
@@ -42,7 +43,7 @@ export function AddToListSheet({
 					</View>
 
 					{isLoading ? (
-						<Text className="py-4 text-muted-foreground text-sm">Loading…</Text>
+						<ListRowsSkeleton rows={2} />
 					) : memberships.length === 0 ? (
 						<Text className="py-4 text-muted-foreground text-sm">
 							You have no lists yet. Create one from the Lists screen.

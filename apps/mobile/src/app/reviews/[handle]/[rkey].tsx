@@ -5,7 +5,8 @@ import { type Href, Link, Stack, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { Markdown } from "@/components/ui/Markdown";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { ReviewsSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
@@ -38,7 +39,16 @@ export default function ReviewDetailScreen() {
 				options={{ headerShown: true, title: review?.title ?? "Review" }}
 			/>
 			{isLoading ? (
-				<LoadingState />
+				<View className="gap-4 p-4 pb-12">
+					<ReviewsSkeleton rows={1} />
+					{/* Review body lines. */}
+					<View className="gap-2">
+						<View className="h-3 w-full rounded bg-background-subtle" />
+						<View className="h-3 w-full rounded bg-background-subtle" />
+						<View className="h-3 w-full rounded bg-background-subtle" />
+						<View className="h-3 w-2/3 rounded bg-background-subtle" />
+					</View>
+				</View>
 			) : isError || !review ? (
 				<ErrorState message="Couldn't load this review." />
 			) : (

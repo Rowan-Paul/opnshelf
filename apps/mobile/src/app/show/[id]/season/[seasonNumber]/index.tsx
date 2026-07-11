@@ -24,7 +24,8 @@ import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import {
 	backdropUrl,
@@ -103,7 +104,14 @@ export default function SeasonDetailScreen() {
 				options={{ headerShown: true, title: data?.name ?? "Season" }}
 			/>
 			{isLoading ? (
-				<LoadingState />
+				<View className="gap-6">
+					<DetailSkeleton />
+					{/* Season pages are episode-list-heavy: a few extra rows below
+					    the hero convey the list rather than just the header. */}
+					<View className="px-4">
+						<ListRowsSkeleton rows={4} />
+					</View>
+				</View>
 			) : isError || !data ? (
 				<ErrorState message="Couldn't load this season." />
 			) : (

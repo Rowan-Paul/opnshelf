@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
+import { UserRowsSkeleton } from "#/components/skeletons";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -668,11 +669,7 @@ function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
 				</p>
 			</div>
 
-			{isLoading && (
-				<div className="flex justify-center py-8">
-					<Loader2 className="size-5 animate-spin text-(--foreground-muted)" />
-				</div>
-			)}
+			{isLoading && <UserRowsSkeleton rows={4} />}
 
 			{!isLoading && suggestions.length === 0 && (
 				<p className="py-8 text-center text-(--foreground-muted) text-sm">

@@ -1,7 +1,8 @@
 import { Stack } from "expo-router";
 import type { ReactNode } from "react";
 import { ScrollView, View } from "react-native";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
 
@@ -41,7 +42,7 @@ export function ProfileSubScreen({
 		<View className="flex-1 bg-background">
 			<Stack.Screen options={{ headerShown: true, title }} />
 			{isLoading ? (
-				<LoadingState />
+				<ProfileHeaderSkeleton />
 			) : isError || !profile ? (
 				<ErrorState
 					title="Profile not found"

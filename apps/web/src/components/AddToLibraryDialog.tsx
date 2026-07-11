@@ -1,5 +1,6 @@
 import { Check, Disc, Plus, X } from "lucide-react";
 import { useState } from "react";
+import { RowListSkeleton } from "#/components/skeletons";
 import {
 	Dialog,
 	DialogContent,
@@ -81,9 +82,7 @@ export default function AddToLibraryDialog({
 
 					<div className="space-y-1">
 						{isLoading ? (
-							<div className="py-6 text-center text-(--foreground-muted) text-sm">
-								Loading…
-							</div>
+							<RowListSkeleton rows={2} />
 						) : (
 							LIBRARY_FORMATS.map(({ value, label }) => {
 								const isOwned = ownedByFormat.has(value);

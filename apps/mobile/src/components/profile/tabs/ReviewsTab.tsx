@@ -12,6 +12,7 @@ import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ReviewBody } from "@/components/ReviewBody";
+import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -54,9 +55,7 @@ export function ReviewsTab({
 			) : null}
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<ReviewsSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load reviews." />
 			) : reviews.length === 0 ? (

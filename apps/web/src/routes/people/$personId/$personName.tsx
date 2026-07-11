@@ -20,7 +20,10 @@ import {
 import ActionableMediaCard from "../../../components/ActionableMediaCard";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
-import LoadingState from "../../../components/LoadingState";
+import {
+	PosterGridSkeleton,
+	RowListSkeleton,
+} from "../../../components/skeletons";
 
 function getRoleText(item: PersonFilmographyItemDto): string | undefined {
 	if (item.character) return item.character;
@@ -101,7 +104,64 @@ function PersonDetailPage() {
 			.slice(0, 6);
 	}, [allFilmography]);
 
-	if (isLoading) return <LoadingState />;
+	if (isLoading) {
+		return (
+			<div className="min-h-screen pb-8">
+				{/* Hero Section */}
+				<div className="relative z-10 min-h-[40vh] overflow-hidden">
+					<div className="container-app relative pt-8">
+						<div className="mb-6 h-9 w-40 animate-pulse rounded bg-(--background-subtle)" />
+
+						<div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:gap-12">
+							{/* Profile Photo — Desktop */}
+							<div className="hidden lg:block">
+								<div className="aspect-2/3 animate-pulse rounded-xl bg-(--background-subtle)" />
+							</div>
+
+							{/* Info */}
+							<div className="flex flex-col justify-end pb-8 lg:pb-16">
+								{/* Mobile Photo + Name */}
+								<div className="mb-6 flex gap-4 lg:hidden">
+									<div className="h-40 w-28 shrink-0 animate-pulse rounded-lg bg-(--background-subtle)" />
+									<div className="flex flex-col justify-center gap-2">
+										<div className="h-7 w-48 animate-pulse rounded bg-(--background-subtle)" />
+									</div>
+								</div>
+
+								{/* Desktop Name */}
+								<div className="hidden h-9 w-64 animate-pulse rounded bg-(--background-subtle) lg:block" />
+
+								{/* Meta */}
+								<div className="mt-4 flex flex-wrap items-center gap-3">
+									<div className="h-4 w-24 animate-pulse rounded bg-(--background-subtle)" />
+									<div className="h-4 w-36 animate-pulse rounded bg-(--background-subtle)" />
+									<div className="h-4 w-28 animate-pulse rounded bg-(--background-subtle)" />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Main Content */}
+				<div className="container-app relative z-20 mt-8">
+					<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+						{/* Left Column */}
+						<div className="space-y-8">
+							<section>
+								<h2 className="mb-4 text-display-3">Filmography</h2>
+								<PosterGridSkeleton count={12} />
+							</section>
+						</div>
+
+						{/* Right Column - Sidebar */}
+						<div className="space-y-6">
+							<RowListSkeleton rows={1} />
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 	if (error || !person) {
 		return (
 			<ErrorState

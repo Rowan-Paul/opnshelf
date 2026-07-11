@@ -31,6 +31,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { RowListSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { Button } from "#/components/ui/button";
@@ -530,10 +531,7 @@ function SettingsPage() {
 							)}
 
 							{publicationsLoading ? (
-								<div className="flex items-center gap-2 text-(--foreground-muted) text-sm">
-									<Loader2 className="size-4 animate-spin" />
-									Loading your publications…
-								</div>
+								<RowListSkeleton rows={3} />
 							) : publicationsError ? (
 								<p className="text-(--foreground-muted) text-sm">
 									Could not load your publications right now.

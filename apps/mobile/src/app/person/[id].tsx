@@ -5,7 +5,8 @@ import { useMemo } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 import { FilmographyCard } from "@/components/person/FilmographyCard";
 import { PersonHero } from "@/components/person/PersonHero";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { PosterRowSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useMovieWatchToggle } from "@/lib/use-movie-watch-toggle";
@@ -55,7 +56,28 @@ export default function PersonDetailScreen() {
 				options={{ headerShown: true, title: person?.name ?? "Person" }}
 			/>
 			{isLoading ? (
-				<LoadingState />
+				<ScrollView
+					className="flex-1"
+					contentContainerClassName="gap-6 px-4 pt-2 pb-12"
+					showsVerticalScrollIndicator={false}
+				>
+					{/* Mirrors PersonHero: portrait + name/department lines. */}
+					<View className="flex-row gap-4">
+						<View className="h-40 w-28 rounded-lg bg-background-subtle" />
+						<View className="flex-1 justify-end gap-2 pb-1">
+							<View className="h-6 w-3/4 rounded bg-background-subtle" />
+							<View className="h-5 w-1/3 rounded-full bg-background-subtle" />
+						</View>
+					</View>
+					{/* Biography lines. */}
+					<View className="gap-2">
+						<View className="h-3 w-full rounded bg-background-subtle" />
+						<View className="h-3 w-full rounded bg-background-subtle" />
+						<View className="h-3 w-2/3 rounded bg-background-subtle" />
+					</View>
+					{/* Known for / filmography preview. */}
+					<PosterRowSkeleton />
+				</ScrollView>
 			) : isError || !person ? (
 				<ErrorState message="Couldn't load this person." />
 			) : (

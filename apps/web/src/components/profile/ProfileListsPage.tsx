@@ -31,6 +31,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
+import { PosterGridSkeleton, RowListSkeleton } from "#/components/skeletons";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -406,12 +407,7 @@ export function ProfileListsPage({
 	if (listsLoading) {
 		return (
 			<div className="py-8">
-				<div className="flex h-64 items-center justify-center">
-					<Loader2 className="size-8 animate-spin text-(--accent)" />
-					<span className="ml-2 text-(--foreground-muted)">
-						Loading lists...
-					</span>
-				</div>
+				<RowListSkeleton rows={4} />
 			</div>
 		);
 	}
@@ -714,14 +710,7 @@ export function ProfileListsPage({
 							)}
 
 							{/* Loading State for List Items */}
-							{listLoading && (
-								<div className="flex h-64 items-center justify-center">
-									<Loader2 className="size-8 animate-spin text-(--accent)" />
-									<span className="ml-2 text-(--foreground-muted)">
-										Loading items...
-									</span>
-								</div>
-							)}
+							{listLoading && <PosterGridSkeleton />}
 
 							{/* Error State for List Items */}
 							{listError && !listLoading && (

@@ -5,7 +5,8 @@ import { ChevronRight, ListPlus, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, RefreshControl, View } from "react-native";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { ListRowsSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useCreateList, useUserLists } from "@/lib/use-lists";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -54,7 +55,7 @@ export default function ListsScreen() {
 	};
 
 	function renderBody() {
-		if (isLoading) return <LoadingState label="Loading your lists…" />;
+		if (isLoading) return <ListRowsSkeleton rows={3} />;
 		if (isError) return <ErrorState message="Couldn't load your lists." />;
 		if (!lists || lists.length === 0) {
 			return (

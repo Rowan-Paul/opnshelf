@@ -27,6 +27,7 @@ import {
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { StarRating } from "@/components/detail/StarRating";
 import { ReviewBody } from "@/components/ReviewBody";
+import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -407,12 +408,7 @@ export function CommunityReviews({
 			</View>
 
 			{isLoading ? (
-				<View className="flex-row items-center gap-2 py-2">
-					<ActivityIndicator size="small" />
-					<Text className="text-muted-foreground text-sm">
-						Loading reviews…
-					</Text>
-				</View>
+				<ReviewsSkeleton />
 			) : ordered.length === 0 ? (
 				<Text className="text-muted-foreground text-sm">
 					{isAuthenticated

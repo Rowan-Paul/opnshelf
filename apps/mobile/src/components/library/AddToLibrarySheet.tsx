@@ -53,7 +53,18 @@ export function AddToLibrarySheet({
 					/>
 
 					{isLoading ? (
-						<Text className="py-4 text-muted-foreground text-sm">Loading…</Text>
+						<View className="gap-2">
+							{Array.from({ length: 3 }, (_, i) => i).map((i) => (
+								<View
+									key={i}
+									className="flex-row items-center gap-3 rounded-lg border border-border p-3"
+								>
+									<View className="size-6 rounded-md bg-background-subtle" />
+									<View className="size-[18px] rounded bg-background-subtle" />
+									<View className="h-3 w-2/5 rounded bg-background-subtle" />
+								</View>
+							))}
+						</View>
 					) : (
 						<ScrollView showsVerticalScrollIndicator={false}>
 							<View className="gap-2">

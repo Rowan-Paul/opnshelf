@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { CalendarMonth } from "@/components/calendar/CalendarMonth";
 import { ReleaseRow } from "@/components/calendar/ReleaseRow";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useReleaseCalendar } from "@/lib/use-release-calendar";
 
@@ -229,7 +229,14 @@ export default function CalendarScreen() {
 			</View>
 
 			{isLoading ? (
-				<LoadingState label="Loading calendar…" />
+				<View className="gap-3 px-4 py-4">
+					{Array.from({ length: 4 }, (_, i) => i).map((i) => (
+						<View
+							key={i}
+							className="h-24 rounded-xl border border-border bg-card"
+						/>
+					))}
+				</View>
 			) : isError ? (
 				<ErrorState message="Couldn't load the release calendar. Try again." />
 			) : view === "month" ? (

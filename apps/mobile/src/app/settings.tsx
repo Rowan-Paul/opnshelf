@@ -34,7 +34,8 @@ import {
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { ListRowsSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -450,7 +451,19 @@ export default function SettingsScreen() {
 						description="Choose how dates and times are displayed."
 					>
 						{settingsLoading ? (
-							<LoadingState />
+							<View className="gap-5">
+								<View className="gap-2">
+									<View className="h-3.5 w-20 rounded bg-background-subtle" />
+									<View className="h-11 w-full rounded-lg bg-background-subtle" />
+								</View>
+								<View className="flex-row items-center justify-between">
+									<View className="gap-2">
+										<View className="h-3.5 w-28 rounded bg-background-subtle" />
+										<View className="h-2.5 w-40 rounded bg-background-subtle" />
+									</View>
+									<View className="h-6 w-11 rounded-full bg-background-subtle" />
+								</View>
+							</View>
 						) : settingsError ? (
 							<ErrorState message="Could not load your settings." />
 						) : (
@@ -499,7 +512,10 @@ export default function SettingsScreen() {
 						description="Choose your country to see where movies and shows are available to watch."
 					>
 						{settingsLoading ? (
-							<LoadingState />
+							<View className="gap-2">
+								<View className="h-3.5 w-16 rounded bg-background-subtle" />
+								<View className="h-11 w-full rounded-lg bg-background-subtle" />
+							</View>
 						) : settingsError ? (
 							<ErrorState message="Could not load your settings." />
 						) : (
@@ -534,7 +550,7 @@ export default function SettingsScreen() {
 						)}
 
 						{publicationsLoading ? (
-							<LoadingState />
+							<ListRowsSkeleton rows={2} />
 						) : publicationsError ? (
 							<Text className="text-muted-foreground text-sm">
 								Could not load your publications right now.

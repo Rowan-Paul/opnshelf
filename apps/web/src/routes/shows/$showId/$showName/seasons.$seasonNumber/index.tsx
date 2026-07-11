@@ -28,7 +28,6 @@ import CommunityReviews from "../../../../../components/CommunityReviews";
 import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../../components/FriendWatchers";
-import LoadingState from "../../../../../components/LoadingState";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
 import PersonGrid from "../../../../../components/PersonGrid";
@@ -36,6 +35,7 @@ import ProgressCard from "../../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
+import { DetailPageSkeleton } from "../../../../../components/skeletons";
 import WatchProviders from "../../../../../components/WatchProviders";
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/",
@@ -233,7 +233,7 @@ function SeasonDetailPage() {
 		};
 	};
 
-	if (showLoading || seasonLoading) return <LoadingState />;
+	if (showLoading || seasonLoading) return <DetailPageSkeleton />;
 	if (showError || seasonError || !show || !season) {
 		return (
 			<ErrorState

@@ -2,7 +2,8 @@ import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { RefreshControl, View } from "react-native";
 import { MediaCard } from "@/components/media/MediaCard";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { PosterGridSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { listItemToMediaCardItem } from "@/lib/list-media";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
@@ -54,7 +55,9 @@ export default function PublicListScreen() {
 			/>
 
 			{resolvingHandle || isLoading ? (
-				<LoadingState />
+				<View className="px-3 pt-3">
+					<PosterGridSkeleton />
+				</View>
 			) : handleError || isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : (

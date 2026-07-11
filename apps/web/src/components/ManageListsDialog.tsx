@@ -1,4 +1,5 @@
-import { Check, Loader2, Plus, X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
+import { RowListSkeleton } from "#/components/skeletons";
 import {
 	Dialog,
 	DialogContent,
@@ -63,9 +64,7 @@ export default function ManageListsDialog({
 				</DialogHeader>
 
 				{isLoading ? (
-					<div className="flex items-center justify-center py-8">
-						<Loader2 className="size-6 animate-spin text-(--accent)" />
-					</div>
+					<RowListSkeleton rows={3} />
 				) : (
 					<div className="space-y-1 py-2">
 						{/* Watchlist */}

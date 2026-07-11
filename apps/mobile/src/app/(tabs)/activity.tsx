@@ -10,7 +10,8 @@ import { ActivityIndicator, RefreshControl, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { ReviewsSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useCircles } from "@/lib/use-circles";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -97,7 +98,9 @@ export default function ActivityScreen() {
 			) : null}
 
 			{isLoading ? (
-				<LoadingState label="Loading activity…" />
+				<View className="px-4 pt-3">
+					<ReviewsSkeleton rows={3} />
+				</View>
 			) : isError ? (
 				<ErrorState message="Couldn't load activity. Pull to retry." />
 			) : items.length === 0 ? (

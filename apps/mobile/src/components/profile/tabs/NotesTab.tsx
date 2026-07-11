@@ -1,8 +1,9 @@
 import type { UserNoteDto } from "@opnshelf/api";
 import { StickyNote } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
+import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
@@ -33,9 +34,7 @@ export function NotesTab({
 			</Text>
 
 			{isLoading ? (
-				<View className="py-16">
-					<ActivityIndicator color="#f3bc00" />
-				</View>
+				<ReviewsSkeleton />
 			) : isError ? (
 				<ErrorState message="Couldn't load notes." />
 			) : notes.length === 0 ? (

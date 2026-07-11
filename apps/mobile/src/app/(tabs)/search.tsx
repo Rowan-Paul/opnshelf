@@ -26,7 +26,8 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { Screen } from "@/components/ui/screen";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { PosterGridSkeleton } from "@/components/ui/skeletons";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -248,7 +249,11 @@ export default function SearchScreen() {
 			return <DiscoverSections isAuthenticated={isAuthenticated} />;
 		}
 		if (activeQuery.isLoading) {
-			return <LoadingState label="Searching…" />;
+			return (
+				<View className="px-3 pt-3">
+					<PosterGridSkeleton />
+				</View>
+			);
 		}
 		if (activeQuery.isError) {
 			return <ErrorState message="Couldn't load search results. Try again." />;

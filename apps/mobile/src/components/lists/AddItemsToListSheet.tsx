@@ -6,7 +6,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Search, SearchX, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, View } from "react-native";
+import { Modal, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -146,8 +146,17 @@ export function AddItemsToListSheet({
 								Search for a movie or show to add it to this list.
 							</Text>
 						) : searchQuery.isLoading ? (
-							<View className="py-6">
-								<ActivityIndicator color="#94a3b8" />
+							<View className="gap-1">
+								{Array.from({ length: 4 }, (_, i) => i).map((i) => (
+									<View key={i} className="flex-row items-center gap-3 py-2">
+										<View className="h-16 w-11 rounded-md bg-background-subtle" />
+										<View className="min-w-0 flex-1 gap-2">
+											<View className="h-3.5 w-3/5 rounded bg-background-subtle" />
+											<View className="h-2.5 w-1/4 rounded bg-background-subtle" />
+										</View>
+										<View className="size-8 rounded-full bg-background-subtle" />
+									</View>
+								))}
 							</View>
 						) : results.length === 0 ? (
 							<View className="items-center py-8">

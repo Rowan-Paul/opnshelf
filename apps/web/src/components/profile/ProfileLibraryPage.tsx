@@ -4,6 +4,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { PosterGridSkeleton } from "#/components/skeletons";
 import {
 	FORMAT_LABELS,
 	LIBRARY_FORMATS,
@@ -83,11 +84,7 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 	}, [filtered, groupByFormat]);
 
 	if (isLoading) {
-		return (
-			<div className="py-10 text-center text-(--foreground-muted) text-sm">
-				Loading library…
-			</div>
-		);
+		return <PosterGridSkeleton />;
 	}
 
 	if (!items || items.length === 0) {

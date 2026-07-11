@@ -34,6 +34,7 @@ import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
+import { PosterGridSkeleton, UserRowsSkeleton } from "#/components/skeletons";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
@@ -379,10 +380,11 @@ function SearchPage() {
 
 			{hasQuery ? (
 				isLoading ? (
-					<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
-						<Loader2 className="mb-4 size-10 animate-spin" />
-						<p>Searching...</p>
-					</div>
+					activeTab === "people" || activeTab === "cast" ? (
+						<UserRowsSkeleton rows={6} />
+					) : (
+						<PosterGridSkeleton count={12} />
+					)
 				) : !hasResults ? (
 					<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
 						<Search className="mb-4 size-12 opacity-40" />

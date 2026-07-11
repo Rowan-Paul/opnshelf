@@ -8,7 +8,6 @@ import {
 	ChevronRight,
 	Clock,
 	Film,
-	Loader2,
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +37,82 @@ function transformReleasesToDateMap(
 	}
 
 	return releasesByDate;
+}
+
+// Shape-matched loading placeholder for the calendar page — mirrors both the
+// mobile week list and the desktop grid + sidebar so nothing jumps once the
+// real data lands.
+const CAL_IDX = (n: number) => Array.from({ length: n }, (_, i) => i);
+const CAL_PULSE = "animate-pulse rounded bg-(--background-subtle)";
+
+function CalendarSkeleton() {
+	return (
+		<>
+			{/* Mobile: Week Navigation */}
+			<div className="mb-6 flex items-center justify-between lg:hidden">
+				<div className={`size-12 rounded-lg ${CAL_PULSE}`} />
+				<div className={`h-6 w-32 ${CAL_PULSE}`} />
+				<div className={`size-12 rounded-lg ${CAL_PULSE}`} />
+			</div>
+
+			{/* Mobile: Week List View */}
+			<div className="space-y-6 lg:hidden">
+				{CAL_IDX(3).map((i) => (
+					<section key={i}>
+						<div className={`mb-3 h-5 w-24 ${CAL_PULSE}`} />
+						<div className="space-y-3">
+							{CAL_IDX(2).map((j) => (
+								<div
+									key={j}
+									className="flex items-center gap-3 rounded-xl border border-(--border) p-3"
+								>
+									<div
+										className={`h-24 w-16 shrink-0 rounded-md ${CAL_PULSE}`}
+									/>
+									<div className="min-w-0 flex-1 space-y-2">
+										<div className={`h-3.5 w-3/4 ${CAL_PULSE}`} />
+										<div className={`h-3 w-1/3 ${CAL_PULSE}`} />
+									</div>
+								</div>
+							))}
+						</div>
+					</section>
+				))}
+			</div>
+
+			{/* Desktop: Calendar Grid + Sidebar */}
+			<div className="hidden gap-8 lg:grid lg:grid-cols-3">
+				<div className="lg:col-span-2">
+					<div className="mb-2 grid grid-cols-7 gap-1">
+						{CAL_IDX(7).map((i) => (
+							<div key={i} className={`h-5 ${CAL_PULSE}`} />
+						))}
+					</div>
+					<div className="grid grid-cols-7 gap-1">
+						{CAL_IDX(35).map((i) => (
+							<div key={i} className={`h-24 rounded-lg ${CAL_PULSE}`} />
+						))}
+					</div>
+				</div>
+
+				<div className="space-y-3">
+					<div className={`mb-4 h-6 w-40 ${CAL_PULSE}`} />
+					{CAL_IDX(4).map((i) => (
+						<div
+							key={i}
+							className="flex items-center gap-3 rounded-xl border border-(--border) p-3"
+						>
+							<div className={`h-16 w-12 shrink-0 rounded-md ${CAL_PULSE}`} />
+							<div className="min-w-0 flex-1 space-y-2">
+								<div className={`h-3 w-2/3 ${CAL_PULSE}`} />
+								<div className={`h-2.5 w-1/3 ${CAL_PULSE}`} />
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</>
+	);
 }
 
 // Get the start of the week (Monday) for a given date
@@ -348,12 +423,7 @@ function CalendarPage() {
 						Track upcoming movies and TV shows you're following.
 					</p>
 				</div>
-				<div className="flex items-center justify-center py-20">
-					<Loader2 className="size-8 animate-spin text-(--accent)" />
-					<span className="ml-3 text-(--foreground-muted)">
-						Loading calendar...
-					</span>
-				</div>
+				<CalendarSkeleton />
 			</div>
 		);
 	}

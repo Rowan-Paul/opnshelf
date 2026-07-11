@@ -22,6 +22,7 @@ import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
+import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -411,9 +412,7 @@ function SuggestionsStep({ onNext }: { onNext: () => void }) {
 			</View>
 
 			{isLoading ? (
-				<View className="py-8">
-					<ActivityIndicator color="#94a3b8" />
-				</View>
+				<UserRowsSkeleton />
 			) : suggestions.length === 0 ? (
 				<Text className="py-8 text-center text-muted-foreground text-sm">
 					No suggestions right now.
