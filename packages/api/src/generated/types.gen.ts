@@ -1191,6 +1191,10 @@ export type FollowedActivityItemDto = {
      * Author-declared Spoiler Flag for review activities: the review body contains spoilers
      */
     reviewSpoiler?: boolean;
+    /**
+     * Review id for review activities — used to deep-link/scroll to the review on the media page
+     */
+    reviewId?: string;
     createdAt: string;
 };
 

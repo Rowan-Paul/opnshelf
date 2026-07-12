@@ -42,6 +42,9 @@ export function MiniActivityCard({
 					{activity.movieId ? (
 						<Link
 							to="/movies/$movieId/$movieName"
+							hash={
+								activity.reviewId ? `review-${activity.reviewId}` : undefined
+							}
 							params={{
 								movieId: String(activity.movieId),
 								movieName: toSlug(activity.title || ""),
@@ -53,6 +56,9 @@ export function MiniActivityCard({
 					) : (
 						<Link
 							to="/shows/$showId/$showName"
+							hash={
+								activity.reviewId ? `review-${activity.reviewId}` : undefined
+							}
 							params={{
 								showId: String(activity.showId),
 								showName: toSlug(activity.showTitle || ""),

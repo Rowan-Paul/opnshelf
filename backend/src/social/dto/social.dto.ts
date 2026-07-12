@@ -289,6 +289,12 @@ export class FollowedActivityItemDto {
 	})
 	reviewSpoiler?: boolean;
 
+	@ApiPropertyOptional({
+		description:
+			"Review id for review activities — used to deep-link/scroll to the review on the media page",
+	})
+	reviewId?: string;
+
 	@ApiProperty()
 	createdAt: string;
 }

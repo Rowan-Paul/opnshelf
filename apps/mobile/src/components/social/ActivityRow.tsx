@@ -24,15 +24,21 @@ export function activityMediaHref(activity: FollowedActivityItemDto): Href {
 	// Branch on which id is present, not on the activity type: a review can
 	// target a movie OR a show/season/episode (routing all reviews to the
 	// movie page 404'd for show reviews).
+	// Review activities carry reviewId so the detail screen scrolls to and
+	// highlights that review (same deep-link the profile reviews list uses).
+	const q =
+		activity.type === "review" && activity.reviewId
+			? `?reviewId=${encodeURIComponent(activity.reviewId)}`
+			: "";
 	if (activity.movieId) {
-		return `/movie/${activity.movieId}` as Href;
+		return `/movie/${activity.movieId}${q}` as Href;
 	}
 	if (activity.showId && activity.seasonNumber !== undefined) {
 		return activity.episodeNumber !== undefined
-			? (`/show/${activity.showId}/season/${activity.seasonNumber}/episode/${activity.episodeNumber}` as Href)
-			: (`/show/${activity.showId}/season/${activity.seasonNumber}` as Href);
+			? (`/show/${activity.showId}/season/${activity.seasonNumber}/episode/${activity.episodeNumber}${q}` as Href)
+			: (`/show/${activity.showId}/season/${activity.seasonNumber}${q}` as Href);
 	}
-	return `/show/${activity.showId}` as Href;
+	return `/show/${activity.showId}${q}` as Href;
 }
 
 /**
