@@ -44,6 +44,7 @@ export class ReviewsController {
 	constructor(private readonly reviewsService: ReviewsService) {}
 
 	@Get("user/:userDid/reviews")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get paginated reviews for a user" })
 	@ApiQuery({
 		name: "limit",
@@ -62,12 +63,14 @@ export class ReviewsController {
 	async getUserReviews(
 		@Param("userDid") userDid: string,
 		@Query() query: PaginatedReviewsQueryDto,
+		@Req() req: AuthenticatedRequest,
 	): Promise<PaginatedReviewsResponseDto> {
 		const limit = query.limit ?? 20;
 		const result = await this.reviewsService.getUserReviews(
 			userDid,
 			limit,
 			query.cursor,
+			req.user?.did,
 		);
 
 		return {
@@ -84,6 +87,8 @@ export class ReviewsController {
 				episodeNumber: review.episodeNumber || undefined,
 				title: review.mediaTitle,
 				posterPath: review.posterPath ?? undefined,
+				likeCount: review.likeCount,
+				hasLiked: review.hasLiked,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),

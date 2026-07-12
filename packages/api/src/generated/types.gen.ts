@@ -1271,6 +1271,14 @@ export type UserReviewDto = {
      * Poster path for the movie or show
      */
     posterPath?: string;
+    /**
+     * Number of likes on this review
+     */
+    likeCount: number;
+    /**
+     * Whether the requesting user has liked this review
+     */
+    hasLiked: boolean;
     createdAt: string;
     updatedAt: string;
 };

@@ -1,12 +1,14 @@
 import {
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetUserReviewsQueryKey,
+	reviewsControllerLikeReviewMutation,
+	reviewsControllerUnlikeReviewMutation,
 	reviewsControllerUpdateReviewMutation,
 	type UserReviewDto,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
-import { Pencil, Star, Trash2 } from "lucide-react-native";
+import { Heart, Pencil, Star, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
@@ -18,6 +20,7 @@ import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { useProfileReviews } from "@/lib/use-public-profile";
 
@@ -102,6 +105,7 @@ function ReviewCard({
 	userDid: string;
 	handle: string;
 }) {
+	const { isAuthenticated } = useAuth();
 	const { showDialog } = useDialog();
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -114,6 +118,14 @@ function ReviewCard({
 	const deleteMutation = useMutation({
 		mutationKey: ["reviews", review.id, "delete"],
 		...reviewsControllerDeleteReviewMutation(),
+	});
+	const likeMutation = useMutation({
+		mutationKey: ["reviews", review.id, "like"],
+		...reviewsControllerLikeReviewMutation(),
+	});
+	const unlikeMutation = useMutation({
+		mutationKey: ["reviews", review.id, "unlike"],
+		...reviewsControllerUnlikeReviewMutation(),
 	});
 
 	const invalidateList = () =>
@@ -168,6 +180,22 @@ function ReviewCard({
 				{ label: "Delete", variant: "destructive", onPress: performDelete },
 			],
 		});
+
+	const toggleLike = () => {
+		const mutation = review.hasLiked ? unlikeMutation : likeMutation;
+		mutation.mutate(
+			{ path: { reviewId: review.id } },
+			{
+				onSuccess: invalidateList,
+				onError: () =>
+					toast.error(
+						review.hasLiked
+							? "Failed to unlike review"
+							: "Failed to like review",
+					),
+			},
+		);
+	};
 
 	return (
 		<>
@@ -224,6 +252,42 @@ function ReviewCard({
 							href={`/reviews/${handle}/${review.rkey}` as Href}
 						/>
 					</SpoilerShield>
+				) : null}
+				{!isOwner ? (
+					<Pressable
+						hitSlop={8}
+						onPress={toggleLike}
+						disabled={
+							!isAuthenticated ||
+							likeMutation.isPending ||
+							unlikeMutation.isPending
+						}
+						className="flex-row self-start items-center gap-1.5 rounded-md py-1 pr-2"
+						style={{
+							opacity:
+								!isAuthenticated ||
+								likeMutation.isPending ||
+								unlikeMutation.isPending
+									? 0.5
+									: 1,
+						}}
+					>
+						{likeMutation.isPending || unlikeMutation.isPending ? (
+							<ActivityIndicator size="small" color="#ef4444" />
+						) : (
+							<Heart
+								color={review.hasLiked ? "#ef4444" : "#6b7280"}
+								fill={review.hasLiked ? "#ef4444" : "transparent"}
+								size={16}
+							/>
+						)}
+						<Text
+							className="text-sm"
+							style={{ color: review.hasLiked ? "#ef4444" : "#6b7280" }}
+						>
+							{review.likeCount}
+						</Text>
+					</Pressable>
 				) : null}
 			</ProfileContentCard>
 

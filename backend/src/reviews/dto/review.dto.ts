@@ -315,6 +315,14 @@ export class UserReviewDto {
 	@ApiPropertyOptional({ description: "Poster path for the movie or show" })
 	posterPath?: string;
 
+	@ApiProperty({ description: "Number of likes on this review" })
+	likeCount: number;
+
+	@ApiProperty({
+		description: "Whether the requesting user has liked this review",
+	})
+	hasLiked: boolean;
+
 	@ApiProperty()
 	createdAt: string;
 

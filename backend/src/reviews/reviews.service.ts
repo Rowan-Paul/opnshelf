@@ -671,7 +671,12 @@ export class ReviewsService {
 		}
 	}
 
-	async getUserReviews(userDid: string, limit = 20, cursor?: string) {
+	async getUserReviews(
+		userDid: string,
+		limit = 20,
+		cursor?: string,
+		requestingUserDid?: string,
+	) {
 		const take = limit + 1;
 
 		const reviews = await this.prisma.review.findMany({
@@ -682,6 +687,16 @@ export class ReviewsService {
 				skip: 1,
 				cursor: { id: cursor },
 			}),
+			include: {
+				_count: { select: { likes: true } },
+				likes: requestingUserDid
+					? {
+							where: { userDid: requestingUserDid },
+							select: { id: true },
+							take: 1,
+						}
+					: (false as const),
+			},
 		});
 
 		const hasMore = reviews.length > limit;
@@ -701,6 +716,8 @@ export class ReviewsService {
 				description: excerptOf(review.markdown),
 				mediaTitle: media?.title,
 				posterPath: media?.posterPath,
+				likeCount: review._count.likes,
+				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
 			};
 		});
 
