@@ -14,6 +14,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -50,6 +51,7 @@ export default function VerifyEmailScreen() {
 			return data;
 		},
 		onSuccess: async () => {
+			posthog?.capture("email_verified", { platform: "mobile" });
 			const meKey = authControllerMeQueryKey();
 			// Optimistically clear the gate so the redirect below fires immediately;
 			// the invalidate then refetches the authoritative record.

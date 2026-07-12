@@ -101,7 +101,7 @@ export function useWatchers(
  * followers, search, watchers, relationship) so counts and follow state across
  * screens reconcile.
  */
-export function useFollowToggle() {
+export function useFollowToggle(onFollowed?: () => void) {
 	const { isAuthenticated } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -118,6 +118,7 @@ export function useFollowToggle() {
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
+		onSuccess: onFollowed,
 		onError: (error) =>
 			toast.error(error instanceof Error ? error.message : "Failed to follow"),
 		onSettled: invalidateSocial,

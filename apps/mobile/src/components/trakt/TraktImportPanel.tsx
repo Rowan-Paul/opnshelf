@@ -24,12 +24,15 @@ import { useTraktImport } from "@/lib/use-trakt-import";
 export function TraktImportPanel({
 	onSkip,
 	onDone,
+	onImportStarted,
 	showExistingJob = true,
 }: {
 	/** Renders a "Skip for now" control until an import has finished. */
 	onSkip?: () => void;
 	/** Renders a "Continue" control once an import has finished. */
 	onDone?: () => void;
+	/** Called after a new import job is successfully started. */
+	onImportStarted?: () => void;
 	/**
 	 * Whether to surface a pre-existing import on mount. The standalone screen
 	 * wants this (resume view); onboarding passes false so a stale/old job
@@ -57,7 +60,10 @@ export function TraktImportPanel({
 	const handleStart = () => {
 		if (!trimmed) return;
 		setStartedThisSession(true);
-		startImport.mutate({ body: { username: trimmed } });
+		startImport.mutate(
+			{ body: { username: trimmed } },
+			{ onSuccess: onImportStarted },
+		);
 	};
 
 	const content = (

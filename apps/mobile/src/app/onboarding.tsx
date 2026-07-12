@@ -27,6 +27,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
 import { useFollowToggle, useSuggestions } from "@/lib/use-social";
 
@@ -124,6 +125,8 @@ function StepScaffold({
 export default function OnboardingScreen() {
 	const { user, isLoading, isAuthenticated } = useAuth();
 	const [step, setStep] = useState<OnboardingStep>("welcome");
+	const [importStarted, setImportStarted] = useState(false);
+	const [followedAnyone, setFollowedAnyone] = useState(false);
 
 	const goBack = useCallback(() => {
 		setStep((current) => {
@@ -194,12 +197,23 @@ export default function OnboardingScreen() {
 					<PreferencesStep onNext={() => setStep("trakt")} />
 				)}
 				{step === "trakt" && (
-					<TraktStep onNext={() => setStep("suggestions")} />
+					<TraktStep
+						onImportStarted={() => setImportStarted(true)}
+						onNext={() => setStep("suggestions")}
+					/>
 				)}
 				{step === "suggestions" && (
-					<SuggestionsStep onNext={() => setStep("done")} />
+					<SuggestionsStep
+						onFollowed={() => setFollowedAnyone(true)}
+						onNext={() => setStep("done")}
+					/>
 				)}
-				{step === "done" && <DoneStep />}
+				{step === "done" && (
+					<DoneStep
+						followedAnyone={followedAnyone}
+						importStarted={importStarted}
+					/>
+				)}
 			</View>
 		</Screen>
 	);
@@ -371,7 +385,13 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 }
 
 /* -------------------------------------------------------------------- Trakt */
-function TraktStep({ onNext }: { onNext: () => void }) {
+function TraktStep({
+	onNext,
+	onImportStarted,
+}: {
+	onNext: () => void;
+	onImportStarted: () => void;
+}) {
 	// The panel fills the remaining height and pins its own footer (skip /
 	// continue), so the heading stays fixed above it.
 	return (
@@ -386,6 +406,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 			</View>
 			<TraktImportPanel
 				showExistingJob={false}
+				onImportStarted={onImportStarted}
 				onSkip={onNext}
 				onDone={onNext}
 			/>
@@ -394,10 +415,16 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 }
 
 /* -------------------------------------------------------------- Suggestions */
-function SuggestionsStep({ onNext }: { onNext: () => void }) {
+function SuggestionsStep({
+	onNext,
+	onFollowed,
+}: {
+	onNext: () => void;
+	onFollowed: () => void;
+}) {
 	const { user } = useAuth();
 	const { data, isLoading } = useSuggestions();
-	const { toggle } = useFollowToggle();
+	const { toggle } = useFollowToggle(onFollowed);
 	const suggestions = data?.items ?? [];
 
 	return (
@@ -434,7 +461,13 @@ function SuggestionsStep({ onNext }: { onNext: () => void }) {
 }
 
 /* --------------------------------------------------------------------- Done */
-function DoneStep() {
+function DoneStep({
+	importStarted,
+	followedAnyone,
+}: {
+	importStarted: boolean;
+	followedAnyone: boolean;
+}) {
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
 	const toast = useToast();
@@ -448,6 +481,11 @@ function DoneStep() {
 			return data;
 		},
 		onSuccess: (data) => {
+			posthog?.capture("onboarding_completed", {
+				import_started: importStarted,
+				followed_anyone: followedAnyone,
+				platform: "mobile",
+			});
 			const meKey = authControllerMeQueryKey();
 			// Optimistically flip needsOnboarding so the gate lets the user through.
 			queryClient.setQueryData(meKey, (old: UserDto | undefined) =>

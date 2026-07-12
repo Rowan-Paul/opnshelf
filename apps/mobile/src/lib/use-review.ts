@@ -17,6 +17,7 @@ import * as Haptics from "expo-haptics";
 import { Linking } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 interface ReviewTarget {
 	mediaType: "movie" | "show";
@@ -199,6 +200,11 @@ export function useReview(target: ReviewTarget) {
 					rating,
 				},
 			});
+			posthog?.capture("rating_saved", {
+				media_type: resolvedMediaType,
+				rating,
+				source: "mobile",
+			});
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});
@@ -255,6 +261,12 @@ export function useReview(target: ReviewTarget) {
 					mirrorToBlog,
 					postToBluesky,
 				},
+			});
+			posthog?.capture("review_published", {
+				media_type: resolvedMediaType,
+				spoiler: !!spoiler,
+				mirrored_to_blog: !!mirrorToBlog,
+				shared_to_bluesky: created.blueskyCrossPost.status === "posted",
 			});
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,

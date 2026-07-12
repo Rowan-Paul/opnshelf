@@ -21,6 +21,7 @@ import * as Haptics from "expo-haptics";
 import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
 // user's hourly PDS write budget and fail partway (see ADR-0009).
@@ -60,6 +61,22 @@ type UseWatchActionsOptions =
 
 function errorMessage(error: unknown, fallback: string) {
 	return error instanceof Error ? error.message : fallback;
+}
+
+function captureWatchLogged(
+	mediaType: "movie" | "show",
+	watchScope: "movie" | "episode" | "season" | "show",
+	watchedAt?: string,
+	itemsLogged?: number,
+) {
+	if (itemsLogged === 0) return;
+	posthog?.capture("watch_logged", {
+		media_type: mediaType,
+		watch_scope: watchScope,
+		source: "mobile",
+		date_kind: watchedAt ? "specified" : "current",
+		...(itemsLogged === undefined ? {} : { items_logged: itemsLogged }),
+	});
 }
 
 /**
@@ -144,7 +161,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			}
 			toast.error(errorMessage(error, "Failed to add to shelf"));
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureWatchLogged("movie", "movie", variables.body.watchedAt);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toast.success("Added to shelf");
 		},
@@ -275,7 +293,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			}
 			toast.error(errorMessage(error, "Failed to add episode to shelf"));
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureWatchLogged("show", "episode", variables.body.watchedAt);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toast.success("Episode added to shelf");
 		},
@@ -363,7 +382,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add show to shelf"));
 		},
-		onSuccess: (data) => {
+		onSuccess: (data, variables) => {
+			captureWatchLogged("show", "show", variables.body.watchedAt, data.count);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toastBulkResult(toast, data, "Added to shelf");
 		},
@@ -379,7 +399,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add season to shelf"));
 		},
-		onSuccess: (data) => {
+		onSuccess: (data, variables) => {
+			captureWatchLogged(
+				"show",
+				"season",
+				variables.body.watchedAt,
+				data.count,
+			);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toastBulkResult(toast, data, "Season added to shelf");
 		},
