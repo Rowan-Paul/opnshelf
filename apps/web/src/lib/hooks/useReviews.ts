@@ -15,6 +15,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 
 function resolveMediaType(
 	mediaType: "movie" | "show",
@@ -184,7 +185,13 @@ export function useCreateReview(options: UseReviewMutationOptions) {
 			"create",
 		],
 		...reviewsControllerCreateReviewMutation(),
-		onSuccess: (data) => {
+		onSuccess: (data, variables) => {
+			posthog.capture("review_published", {
+				media_type: resolvedMediaType,
+				spoiler: !!variables.body.spoiler,
+				mirrored_to_blog: !!variables.body.mirrorToBlog,
+				shared_to_bluesky: data.blueskyCrossPost.status === "posted",
+			});
 			toast.success("Review published");
 			showBlueskyResult(data.blueskyCrossPost, data.id);
 			invalidate();

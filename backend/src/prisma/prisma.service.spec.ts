@@ -17,11 +17,14 @@ describe("PrismaService", () => {
 		process.env.DATABASE_URL = originalEnv;
 	});
 
-	it("threads DATABASE_URL into the Postgres adapter", () => {
+	it("uses a deliberately small pool for the shared production database", () => {
 		new PrismaService();
 
 		expect(PrismaPg).toHaveBeenCalledWith({
 			connectionString: "postgres://test:test@localhost:5432/test",
+			max: 3,
+			idleTimeoutMillis: 10_000,
+			connectionTimeoutMillis: 5_000,
 		});
 	});
 });

@@ -32,6 +32,7 @@ import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
+import { useTheme } from "@/lib/theme-context";
 import { useUserLibrary } from "@/lib/use-library";
 import {
 	useProfileLists,
@@ -56,6 +57,7 @@ const POSTER_W = 110;
 export default function ProfileTab() {
 	const insets = useSafeAreaInsets();
 	const { user, isAuthenticated, signOut } = useAuth();
+	const { scheme } = useTheme();
 	const { showDialog } = useDialog();
 	const handle = user?.handle ?? "";
 
@@ -306,7 +308,10 @@ export default function ProfileTab() {
 								onPress={confirmSignOut}
 								className="mt-2 flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
 							>
-								<LogOut color="#94a3b8" size={18} />
+								<LogOut
+									color={scheme === "dark" ? "#f8fafc" : "#0f172a"}
+									size={18}
+								/>
 								<Text className="font-semibold text-foreground text-sm">
 									Sign out
 								</Text>

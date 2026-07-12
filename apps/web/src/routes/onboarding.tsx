@@ -32,6 +32,7 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import { TraktImport } from "#/components/trakt/TraktImport";
+import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 
@@ -54,6 +55,8 @@ function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const [step, setStep] = useState<OnboardingStep>("welcome");
+	const [importStarted, setImportStarted] = useState(false);
+	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const initialCheckDone = useRef(false);
 
 	// Check for an ongoing Trakt import so we can resume at the trakt step
@@ -129,14 +132,23 @@ function OnboardingPage() {
 						)}
 						{step === "trakt" && (
 							<TraktStep
+								onImportStarted={() => setImportStarted(true)}
 								onNext={() => setStep("suggestions")}
 								onSkip={() => setStep("suggestions")}
 							/>
 						)}
 						{step === "suggestions" && (
-							<FollowSuggestionsStep onNext={() => setStep("done")} />
+							<FollowSuggestionsStep
+								onFollowed={() => setFollowedAnyone(true)}
+								onNext={() => setStep("done")}
+							/>
 						)}
-						{step === "done" && <DoneStep />}
+						{step === "done" && (
+							<DoneStep
+								followedAnyone={followedAnyone}
+								importStarted={importStarted}
+							/>
+						)}
 					</>
 				)}
 			</div>
@@ -179,6 +191,7 @@ function VerifyEmailStep() {
 		mutationKey: ["auth", "verify-email"],
 		...authControllerVerifyEmailMutation(),
 		onSuccess: async () => {
+			posthog.capture("email_verified", { platform: "web" });
 			// Flips needsEmailVerification to false; the parent re-renders into the
 			// welcome step, which is where we greet them — no toast needed here.
 			await queryClient.invalidateQueries({
@@ -619,9 +632,11 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 function TraktStep({
 	onNext,
 	onSkip,
+	onImportStarted,
 }: {
 	onNext: () => void;
 	onSkip: () => void;
+	onImportStarted: () => void;
 }) {
 	return (
 		<div className="card p-6">
@@ -630,6 +645,7 @@ function TraktStep({
 				description="Import your public watch history from Trakt.tv"
 				onSkip={onSkip}
 				onComplete={onNext}
+				onImportStarted={onImportStarted}
 			/>
 		</div>
 	);
@@ -638,7 +654,13 @@ function TraktStep({
 /* ------------------------------------------------------------------
    Step 4: Follow Suggestions
    ------------------------------------------------------------------ */
-function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
+function FollowSuggestionsStep({
+	onNext,
+	onFollowed,
+}: {
+	onNext: () => void;
+	onFollowed: () => void;
+}) {
 	const queryClient = useQueryClient();
 	const { data, isLoading } = useQuery(socialControllerGetSuggestionsOptions());
 
@@ -646,6 +668,7 @@ function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
+			onFollowed();
 			queryClient.invalidateQueries({
 				queryKey: socialControllerGetSuggestionsOptions().queryKey,
 			});
@@ -743,7 +766,13 @@ function FollowSuggestionsStep({ onNext }: { onNext: () => void }) {
 /* ------------------------------------------------------------------
    Step 5: Done
    ------------------------------------------------------------------ */
-function DoneStep() {
+function DoneStep({
+	importStarted,
+	followedAnyone,
+}: {
+	importStarted: boolean;
+	followedAnyone: boolean;
+}) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
@@ -757,6 +786,11 @@ function DoneStep() {
 			return data;
 		},
 		onSuccess: (data) => {
+			posthog.capture("onboarding_completed", {
+				import_started: importStarted,
+				followed_anyone: followedAnyone,
+				platform: "web",
+			});
 			const meKey = authControllerMeOptions().queryKey;
 			// Optimistically update auth cache so needsOnboarding becomes false
 			queryClient.setQueryData(meKey, (old: UserDto | undefined) => {

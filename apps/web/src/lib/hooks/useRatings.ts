@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 
 interface UseRatingOptions {
 	userDid: string;
@@ -109,7 +110,12 @@ export function useSetRating({
 			"set",
 		],
 		...ratingsControllerSetRatingMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			posthog.capture("rating_saved", {
+				media_type: resolvedMediaType,
+				rating: variables.body.rating,
+				source: "web",
+			});
 			queryClient.invalidateQueries({ queryKey: ratingKey });
 			queryClient.invalidateQueries({ queryKey: mediaRatingKey });
 		},

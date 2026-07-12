@@ -85,6 +85,8 @@ type TraktImportProps = {
 	/** Wizard-only: advance to the next step after a finished import. When omitted
 	 *  (e.g. Settings) the completion panel offers a "Done" reset instead. */
 	onComplete?: () => void;
+	/** Called after a new import job is successfully started. */
+	onImportStarted?: () => void;
 	/**
 	 * Idle behaviour. When true (Settings), the username input is the default and
 	 * only an *active* import auto-opens the progress panel — a recent terminal
@@ -106,6 +108,7 @@ export function TraktImport({
 	titleClassName = "text-display-3",
 	onSkip,
 	onComplete,
+	onImportStarted,
 	idleShowsInput = false,
 }: TraktImportProps) {
 	const [username, setUsername] = useState("");
@@ -156,6 +159,7 @@ export function TraktImport({
 			return data;
 		},
 		onSuccess: (data) => {
+			onImportStarted?.();
 			toast.success("Import started");
 			if (data.job) {
 				setJobData({

@@ -19,6 +19,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
@@ -42,6 +43,22 @@ function toastBulkResult(
 	} else {
 		toast.success(fullSuccess);
 	}
+}
+
+function captureWatchLogged(
+	mediaType: "movie" | "show",
+	watchScope: "movie" | "episode" | "season" | "show",
+	watchedAt?: string,
+	itemsLogged?: number,
+) {
+	if (itemsLogged === 0) return;
+	posthog.capture("watch_logged", {
+		media_type: mediaType,
+		watch_scope: watchScope,
+		source: "web",
+		date_kind: watchedAt ? "specified" : "current",
+		...(itemsLogged === undefined ? {} : { items_logged: itemsLogged }),
+	});
 }
 
 interface WatchActionsMovieOptions {
@@ -90,7 +107,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 			return { previousUserMovies, userMoviesKey };
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureWatchLogged("movie", "movie", variables.body.watchedAt);
 			toast.success("Added to shelf");
 		},
 		onError: (error, _variables, context) => {
@@ -247,6 +265,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
+			captureWatchLogged("show", "episode", variables.body.watchedAt);
 			toast.success("Episode added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
@@ -301,7 +320,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShowWatched = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
-		onSuccess: (data) => {
+		onSuccess: (data, variables) => {
+			captureWatchLogged("show", "show", variables.body.watchedAt, data.count);
 			toastBulkResult(data, "Show added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
@@ -334,6 +354,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
 		onSuccess: (data, variables) => {
+			captureWatchLogged(
+				"show",
+				"season",
+				variables.body.watchedAt,
+				data.count,
+			);
 			toastBulkResult(data, "Season added to shelf");
 			invalidateShowQueries();
 			invalidateShelfQueries();
