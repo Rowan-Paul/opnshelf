@@ -9,7 +9,7 @@ import {
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	Calendar,
@@ -195,6 +195,7 @@ export function SearchCommand({
 			query: { query: debouncedQuery },
 		}),
 		enabled: debouncedQuery.length > 0,
+		placeholderData: keepPreviousData,
 	});
 
 	const { data: userLists } = useQuery({
@@ -211,6 +212,7 @@ export function SearchCommand({
 			query: { q: debouncedQuery },
 		}),
 		enabled: debouncedQuery.length > 0 && isAuthenticated,
+		placeholderData: keepPreviousData,
 	});
 
 	// Cast & Crew (TMDB people) — public, unlike the social user search above.
@@ -223,6 +225,7 @@ export function SearchCommand({
 			query: { query: debouncedQuery },
 		}),
 		enabled: debouncedQuery.length > 0,
+		placeholderData: keepPreviousData,
 	});
 
 	const movies =
@@ -416,7 +419,7 @@ export function SearchCommand({
 					value={searchQuery}
 					onValueChange={setSearchQuery}
 				/>
-				<CommandList>
+				<CommandList className="h-[300px]">
 					{/* Local matches — pages, lists, actions — surfaced on top while searching */}
 					{hasSearchQuery && matchedPages.length > 0 && (
 						<CommandGroup heading="Pages">
