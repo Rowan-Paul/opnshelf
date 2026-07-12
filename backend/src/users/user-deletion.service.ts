@@ -251,22 +251,25 @@ export class UserDeletionService {
 				}
 			}
 
-			await this.updateJobData(job.id, jobData, { currentStep: "db_cleanup" });
+			await this.updateJobData(job.id, jobData, { currentStep: "completed" });
+
+			// Mark the job completed before deleting the user/revoking the session.
+			// The frontend polls this endpoint while authenticated; if we revoke the
+			// session first, the client can never observe the final completed state.
+			await this.prisma.backgroundJob.update({
+				where: { id: job.id },
+				data: {
+					status: "completed",
+					completedAt: new Date(),
+					data: { ...jobData },
+				},
+			});
 
 			await this.prisma.user.delete({ where: { did: job.userDid } });
 
 			// Revoke the OAuth session (standalone table, no FK cascade) so a
 			// deleted account doesn't leave a live session behind.
 			await this.authService.revoke(job.userDid);
-
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: {
-					status: "completed",
-					completedAt: new Date(),
-					data: { ...jobData, currentStep: "completed" },
-				},
-			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error(

@@ -319,10 +319,11 @@ function SettingsPage() {
 	);
 
 	// Poll deletion status when there's an active job
-	const { data: deletionStatus } = useQuery({
+	const { data: deletionStatus, error: deletionError } = useQuery({
 		...usersControllerGetMyAccountDeletionOptions(),
 		enabled: !!deletionJob && isActiveAccountDeletionStatus(deletionJob.status),
 		refetchInterval: 2000,
+		retry: false,
 	});
 
 	useEffect(() => {
@@ -333,6 +334,15 @@ function SettingsPage() {
 			}
 		}
 	}, [deletionStatus, logout]);
+
+	useEffect(() => {
+		if (deletionError && deletionJob && isUnauthorizedError(deletionError)) {
+			// The backend deletes the user and revokes the session atomically with
+			// (or right after) marking the job completed. If our next poll arrives
+			// after revocation, we get a 401 — treat that as "done" and sign out.
+			void logout();
+		}
+	}, [deletionError, deletionJob, logout]);
 
 	const handleDeleteAccount = async () => {
 		try {

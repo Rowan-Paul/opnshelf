@@ -43,6 +43,16 @@ import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
 
+function isUnauthorizedError(error: unknown): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		("status" in error || "statusCode" in error) &&
+		((error as Record<string, unknown>).status === 401 ||
+			(error as Record<string, unknown>).statusCode === 401)
+	);
+}
+
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
 
@@ -316,10 +326,11 @@ export default function SettingsScreen() {
 	});
 
 	// Poll deletion status while a PDS-removal job is active.
-	const { data: deletionStatus } = useQuery({
+	const { data: deletionStatus, error: deletionError } = useQuery({
 		...usersControllerGetMyAccountDeletionOptions(),
 		enabled: !!deletionJob && isActiveAccountDeletionStatus(deletionJob.status),
 		refetchInterval: 2000,
+		retry: false,
 	});
 
 	useEffect(() => {
@@ -330,6 +341,15 @@ export default function SettingsScreen() {
 			}
 		}
 	}, [deletionStatus, signOut]);
+
+	useEffect(() => {
+		if (deletionError && deletionJob && isUnauthorizedError(deletionError)) {
+			// The backend deletes the user and revokes the session atomically with
+			// (or right after) marking the job completed. If our next poll arrives
+			// after revocation, we get a 401 — treat that as "done" and sign out.
+			void signOut();
+		}
+	}, [deletionError, deletionJob, signOut]);
 
 	const runDeletion = async (deletePDSData: boolean) => {
 		try {

@@ -1,4 +1,8 @@
-const ACTIVE_ACCOUNT_DELETION_STATUSES = ["queued", "running"] as const;
+const ACTIVE_ACCOUNT_DELETION_STATUSES = [
+	"queued",
+	"running",
+	"waiting_retry",
+] as const;
 const TERMINAL_ACCOUNT_DELETION_STATUSES = ["completed", "failed"] as const;
 
 export type AccountDeletionStatusJob = {
