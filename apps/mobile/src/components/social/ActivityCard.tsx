@@ -39,7 +39,7 @@ export function ActivityCard({
 			: undefined;
 	const name = displayName || activity.actor.handle;
 
-	const isMovieish = activity.type === "movie" || activity.type === "review";
+	const isMovieish = !!activity.movieId;
 	const isReview = activity.type === "review";
 	const mediaHref = activityMediaHref(activity);
 

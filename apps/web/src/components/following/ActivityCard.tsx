@@ -24,7 +24,7 @@ export function ActivityCard({
 				{/* Poster on the left */}
 				{(activity.posterPath || activity.backdropPath) && (
 					<div className="shrink-0">
-						{activity.type === "movie" || activity.type === "review" ? (
+						{activity.movieId ? (
 							<Link
 								to="/movies/$movieId/$movieName"
 								params={{
@@ -96,7 +96,7 @@ export function ActivityCard({
 											? "reviewed"
 											: "watched episode"}
 								</span>
-								{activity.type === "movie" || activity.type === "review" ? (
+								{activity.movieId ? (
 									<Link
 										to="/movies/$movieId/$movieName"
 										params={{

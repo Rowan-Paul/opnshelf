@@ -39,7 +39,7 @@ export function MiniActivityCard({
 								? "reviewed"
 								: "watched episode"}{" "}
 					</span>
-					{activity.type === "movie" || activity.type === "review" ? (
+					{activity.movieId ? (
 						<Link
 							to="/movies/$movieId/$movieName"
 							params={{
@@ -111,11 +111,9 @@ export function MiniActivityCard({
 
 			{/* Content Type Badge */}
 			<span
-				className={`badge shrink-0 ${activity.type === "movie" || activity.type === "review" ? "badge-subtle" : "badge-accent"}`}
+				className={`badge shrink-0 ${activity.movieId ? "badge-subtle" : "badge-accent"}`}
 			>
-				{activity.type === "movie" || activity.type === "review"
-					? "Movie"
-					: "TV"}
+				{activity.movieId ? "Movie" : "TV"}
 			</span>
 		</div>
 	);

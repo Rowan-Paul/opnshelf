@@ -21,15 +21,16 @@ export function formatActivityDate(iso: string): string {
 
 /** Route to the media detail for an activity item. */
 export function activityMediaHref(activity: FollowedActivityItemDto): Href {
-	if (activity.type === "movie" || activity.type === "review") {
+	// Branch on which id is present, not on the activity type: a review can
+	// target a movie OR a show/season/episode (routing all reviews to the
+	// movie page 404'd for show reviews).
+	if (activity.movieId) {
 		return `/movie/${activity.movieId}` as Href;
 	}
-	if (
-		activity.showId &&
-		activity.seasonNumber !== undefined &&
-		activity.episodeNumber !== undefined
-	) {
-		return `/show/${activity.showId}/season/${activity.seasonNumber}/episode/${activity.episodeNumber}` as Href;
+	if (activity.showId && activity.seasonNumber !== undefined) {
+		return activity.episodeNumber !== undefined
+			? (`/show/${activity.showId}/season/${activity.seasonNumber}/episode/${activity.episodeNumber}` as Href)
+			: (`/show/${activity.showId}/season/${activity.seasonNumber}` as Href);
 	}
 	return `/show/${activity.showId}` as Href;
 }
@@ -68,7 +69,7 @@ export function ActivityRow({
 				: "watched episode";
 	const mediaTitle =
 		activity.type === "episode" ? activity.showTitle : activity.title;
-	const isMovieish = activity.type === "movie" || activity.type === "review";
+	const isMovieish = !!activity.movieId;
 
 	const episodeLabel =
 		activity.type === "episode"
