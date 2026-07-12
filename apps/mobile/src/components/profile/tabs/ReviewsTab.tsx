@@ -8,11 +8,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import { Pencil, Star, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ReviewBody } from "@/components/ReviewBody";
 import { SpoilerShield } from "@/components/reviews/SpoilerShield";
+import { useDialog } from "@/components/ui/dialog";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -101,6 +102,7 @@ function ReviewCard({
 	userDid: string;
 	handle: string;
 }) {
+	const { showDialog } = useDialog();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [editorVisible, setEditorVisible] = useState(false);
@@ -158,14 +160,14 @@ function ReviewCard({
 	};
 
 	const confirmDelete = () =>
-		Alert.alert(
-			"Delete review?",
-			`This permanently deletes your review for "${review.title || "this title"}". This can't be undone.`,
-			[
-				{ text: "Cancel", style: "cancel" },
-				{ text: "Delete", style: "destructive", onPress: performDelete },
+		showDialog({
+			title: "Delete review?",
+			description: `This permanently deletes your review for "${review.title || "this title"}". This can't be undone.`,
+			actions: [
+				{ label: "Cancel" },
+				{ label: "Delete", variant: "destructive", onPress: performDelete },
 			],
-		);
+		});
 
 	return (
 		<>

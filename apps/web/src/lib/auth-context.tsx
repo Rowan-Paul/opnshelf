@@ -18,6 +18,7 @@ import {
 	useState,
 } from "react";
 import { env } from "#/env";
+import { posthog } from "#/integrations/posthog/provider";
 
 interface AuthContextType {
 	user: UserDto | null;
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		} catch (error) {
 			console.error("Logout failed:", error);
 		} finally {
+			posthog.reset();
 			// Clear all queries and user data
 			queryClient.clear();
 			setIsLoggingOut(false);

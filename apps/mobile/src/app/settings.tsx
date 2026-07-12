@@ -24,7 +24,6 @@ import {
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -33,6 +32,7 @@ import {
 } from "react-native";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { CountryPicker } from "@/components/ui/country-picker";
+import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
@@ -137,6 +137,7 @@ function AppearanceSetting() {
 }
 
 export default function SettingsScreen() {
+	const { showDialog } = useDialog();
 	const { user, signOut } = useAuth();
 	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
@@ -207,13 +208,14 @@ export default function SettingsScreen() {
 		service: "leaflet" | "offprint" | "pckt" | "unknown";
 	}) => {
 		const continueWithCompatibilityMode = () => {
-			Alert.alert(
-				"Choose the publication service",
-				"If it isn't listed, we'll still mirror your reviews, but they may not display as expected.",
-				[
-					{ text: "Cancel", style: "cancel" },
+			showDialog({
+				title: "Choose the publication service",
+				description:
+					"If it isn't listed, we'll still mirror your reviews, but they may not display as expected.",
+				actions: [
+					{ label: "Cancel" },
 					{
-						text: "Leaflet",
+						label: "Leaflet",
 						onPress: () =>
 							updateSettingsMutation.mutate({
 								body: {
@@ -223,7 +225,7 @@ export default function SettingsScreen() {
 							}),
 					},
 					{
-						text: "Offprint",
+						label: "Offprint",
 						onPress: () =>
 							updateSettingsMutation.mutate({
 								body: {
@@ -233,7 +235,7 @@ export default function SettingsScreen() {
 							}),
 					},
 					{
-						text: "Pckt",
+						label: "Pckt",
 						onPress: () =>
 							updateSettingsMutation.mutate({
 								body: {
@@ -243,7 +245,7 @@ export default function SettingsScreen() {
 							}),
 					},
 					{
-						text: "Other or unknown",
+						label: "Other or unknown",
 						onPress: () =>
 							updateSettingsMutation.mutate({
 								body: {
@@ -253,7 +255,7 @@ export default function SettingsScreen() {
 							}),
 					},
 				],
-			);
+			});
 		};
 
 		if (publication.service === "unknown") {
@@ -269,17 +271,17 @@ export default function SettingsScreen() {
 					? "Offprint"
 					: "Pckt";
 
-		Alert.alert(
-			`Is this a ${serviceName} publication?`,
-			`We recognised ${publication.name} as ${serviceName}. Confirm to mirror your reviews there.`,
-			[
-				{ text: "Cancel", style: "cancel" },
+		showDialog({
+			title: `Is this a ${serviceName} publication?`,
+			description: `We recognised ${publication.name} as ${serviceName}. Confirm to mirror your reviews there.`,
+			actions: [
+				{ label: "Cancel" },
 				{
-					text: `No, it isn't ${serviceName}`,
+					label: `No, it isn't ${serviceName}`,
 					onPress: continueWithCompatibilityMode,
 				},
 				{
-					text: `Yes, this is ${serviceName}`,
+					label: `Yes, this is ${serviceName}`,
 					onPress: () =>
 						updateSettingsMutation.mutate({
 							body: {
@@ -289,7 +291,7 @@ export default function SettingsScreen() {
 						}),
 				},
 			],
-		);
+		});
 	};
 
 	// D7 soft warning: the stored target is no longer present in the live list.
@@ -351,35 +353,37 @@ export default function SettingsScreen() {
 	// Two-step destructive confirmation mirroring the web dialog: first confirm
 	// the irreversible delete, then ask whether to also wipe PDS data.
 	const confirmDeleteAccount = () => {
-		Alert.alert(
-			"Delete your account?",
-			"This action cannot be undone. All your data will be permanently removed.",
-			[
-				{ text: "Cancel", style: "cancel" },
+		showDialog({
+			title: "Delete your account?",
+			description:
+				"This action cannot be undone. All your data will be permanently removed.",
+			actions: [
+				{ label: "Cancel" },
 				{
-					text: "Continue",
-					style: "destructive",
+					label: "Continue",
+					variant: "destructive",
 					onPress: () => {
-						Alert.alert(
-							"Also delete PDS data?",
-							"Delete your OpnShelf data from your PDS too, including watch history, follows, lists, and list items?",
-							[
-								{ text: "Cancel", style: "cancel" },
+						showDialog({
+							title: "Also delete PDS data?",
+							description:
+								"Delete your OpnShelf data from your PDS too, including watch history, follows, lists, and list items?",
+							actions: [
+								{ label: "Cancel" },
 								{
-									text: "Keep PDS data",
+									label: "Keep PDS data",
 									onPress: () => void runDeletion(false),
 								},
 								{
-									text: "Delete everything",
-									style: "destructive",
+									label: "Delete everything",
+									variant: "destructive",
 									onPress: () => void runDeletion(true),
 								},
 							],
-						);
+						});
 					},
 				},
 			],
-		);
+		});
 	};
 
 	const isDeleting =

@@ -10,13 +10,7 @@ import {
 	Settings,
 	Star,
 } from "lucide-react-native";
-import {
-	Alert,
-	Pressable,
-	RefreshControl,
-	ScrollView,
-	View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
@@ -24,6 +18,7 @@ import { MediaCard } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { libraryItemToCardItem } from "@/components/profile/tabs/LibraryTab";
+import { useDialog } from "@/components/ui/dialog";
 import { Markdown } from "@/components/ui/Markdown";
 import {
 	ListRowsSkeleton,
@@ -61,6 +56,7 @@ const POSTER_W = 110;
 export default function ProfileTab() {
 	const insets = useSafeAreaInsets();
 	const { user, isAuthenticated, signOut } = useAuth();
+	const { showDialog } = useDialog();
 	const handle = user?.handle ?? "";
 
 	const { data: profile, isLoading, isError } = usePublicProfile(handle);
@@ -90,16 +86,20 @@ export default function ProfileTab() {
 	};
 
 	const confirmSignOut = () => {
-		Alert.alert("Sign out", "Are you sure you want to sign out?", [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Sign out",
-				style: "destructive",
-				onPress: () => {
-					void signOut();
+		showDialog({
+			title: "Sign out",
+			description: "Are you sure you want to sign out?",
+			actions: [
+				{ label: "Cancel" },
+				{
+					label: "Sign out",
+					variant: "destructive",
+					onPress: () => {
+						void signOut();
+					},
 				},
-			},
-		]);
+			],
+		});
 	};
 
 	return (

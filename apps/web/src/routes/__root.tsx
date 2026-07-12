@@ -9,6 +9,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect, useRef } from "react";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
@@ -20,7 +21,7 @@ import {
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { TraktSyncBanner } from "../components/trakt/TraktSyncBanner";
-import PostHogProvider from "../integrations/posthog/provider";
+import PostHogProvider, { posthog } from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -107,6 +108,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body className="min-h-screen antialiased">
 				<PostHogProvider>
+					<PostHogPageviewTracker />
 					<AuthProvider>
 						<SearchDialogProvider>
 							{isEmbed ? (
@@ -137,4 +139,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</body>
 		</html>
 	);
+}
+
+/** Tracks client-side route changes; PostHog's automatic page views are disabled. */
+function PostHogPageviewTracker() {
+	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const routeSection = pathname.split("/")[1] || "home";
+	const previousRouteSection = useRef<string | null>(null);
+
+	useEffect(() => {
+		posthog.capture("$pageview", {
+			// Do not send query strings or dynamic path segments, which can contain
+			// credentials or user-generated identifiers.
+			$current_url: window.location.origin,
+			$pathname: `/${routeSection}`,
+			previous_route_section: previousRouteSection.current,
+		});
+		previousRouteSection.current = routeSection;
+	}, [routeSection]);
+
+	return null;
 }

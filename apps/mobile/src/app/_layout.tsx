@@ -13,7 +13,7 @@ import {
 	PlusJakartaSans_700Bold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { useFonts } from "expo-font";
-import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
@@ -28,18 +28,17 @@ SplashScreen.preventAutoHideAsync();
 /** Manual screen tracking for Expo Router + PostHog. */
 function useScreenTracking() {
 	const pathname = usePathname();
-	const params = useGlobalSearchParams();
+	const screenSection = pathname.split("/")[1] || "home";
 	const previous = useRef<string | undefined>(undefined);
 
 	useEffect(() => {
-		if (previous.current !== pathname) {
-			posthog?.screen(pathname, {
+		if (previous.current !== screenSection) {
+			posthog?.screen(screenSection, {
 				previous_screen: previous.current ?? null,
-				...params,
 			});
-			previous.current = pathname;
+			previous.current = screenSection;
 		}
-	}, [pathname, params]);
+	}, [screenSection]);
 }
 
 export default function RootLayout() {

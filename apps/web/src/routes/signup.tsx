@@ -16,6 +16,7 @@ import {
 	TooltipTrigger,
 } from "#/components/ui/tooltip";
 import { env } from "#/env";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/signup")({
@@ -59,6 +60,7 @@ function SignupPage() {
 		mutationKey: ["auth", "register"],
 		...authControllerRegisterMutation(),
 		onSuccess: async () => {
+			posthog.capture("user_signed_up", { method: "password" });
 			// Cookie is set; refresh the cached user so the app sees us as logged in.
 			await queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,

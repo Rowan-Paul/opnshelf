@@ -11,7 +11,8 @@ import {
 	Quote,
 	SquareCode,
 } from "lucide-react-native";
-import { Alert, Platform, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { useDialog } from "@/components/ui/dialog";
 import {
 	insertLink,
 	type MarkdownEdit,
@@ -69,22 +70,20 @@ export function MarkdownToolbar({
 	selection,
 	onChange,
 }: MarkdownToolbarProps) {
+	const { showDialog } = useDialog();
 	const handleLink = () => {
-		// iOS has a native text prompt; elsewhere drop in an editable placeholder
-		// URL the user can adjust inline rather than block on a missing dialog.
-		if (Platform.OS === "ios") {
-			Alert.prompt(
-				"Add link",
-				"Enter the URL",
-				(url) => {
-					if (url?.trim()) onChange(insertLink(value, selection, url.trim()));
+		showDialog({
+			title: "Add link",
+			description: "Enter the URL",
+			actions: [{ label: "Cancel" }],
+			input: {
+				initialValue: "https://",
+				placeholder: "https://example.com",
+				onSubmit: (url) => {
+					if (url.trim()) onChange(insertLink(value, selection, url.trim()));
 				},
-				"plain-text",
-				"https://",
-			);
-			return;
-		}
-		onChange(insertLink(value, selection, "https://"));
+			},
+		});
 	};
 
 	return (

@@ -95,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const clearSession = useCallback(async () => {
+		posthog?.reset();
 		await saveSessionToken(null);
 		setHasSessionToken(false);
 		const meKey = authControllerMeQueryKey();
@@ -133,10 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			});
 			if (fetchedUser) {
 				posthog?.identify(fetchedUser.did, {
-					$set: { handle: fetchedUser.handle, did: fetchedUser.did },
 					$set_once: { first_login_date: new Date().toISOString() },
 				});
-				posthog?.capture("user_logged_in", { handle: fetchedUser.handle });
+				posthog?.capture("user_logged_in");
 			}
 			return fetchedUser;
 		},
@@ -205,7 +205,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			});
 			if (fetchedUser) {
 				posthog?.identify(fetchedUser.did, {
-					$set: { handle: fetchedUser.handle, did: fetchedUser.did },
 					$set_once: { first_login_date: new Date().toISOString() },
 				});
 				posthog?.capture("user_signed_up", { method: "pds_register" });
@@ -215,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const signOut = useCallback(async () => {
+		posthog?.reset();
 		await saveSessionToken(null);
 		setHasSessionToken(false);
 		queryClient.setQueryData(authControllerMeQueryKey(), null);

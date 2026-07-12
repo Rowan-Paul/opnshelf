@@ -16,7 +16,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	Pressable,
 	RefreshControl,
 	Share,
@@ -28,6 +27,7 @@ import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterImage } from "@/components/media/PosterImage";
+import { useDialog } from "@/components/ui/dialog";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -154,6 +154,7 @@ function ReorderRow({
 }
 
 export default function ListDetailScreen() {
+	const { showDialog } = useDialog();
 	const { slug } = useLocalSearchParams<{ slug: string }>();
 	const router = useRouter();
 	const gridStyle = useTwStyle("px-3 pt-3 pb-12");
@@ -243,18 +244,22 @@ export default function ListDetailScreen() {
 	};
 
 	const confirmDelete = () => {
-		Alert.alert("Delete list", `Delete “${list?.name ?? "this list"}”?`, [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Delete",
-				style: "destructive",
-				onPress: () =>
-					deleteList.mutate(
-						{ path: { slug } },
-						{ onSuccess: () => router.back() },
-					),
-			},
-		]);
+		showDialog({
+			title: "Delete list",
+			description: `Delete “${list?.name ?? "this list"}”?`,
+			actions: [
+				{ label: "Cancel" },
+				{
+					label: "Delete",
+					variant: "destructive",
+					onPress: () =>
+						deleteList.mutate(
+							{ path: { slug } },
+							{ onSuccess: () => router.back() },
+						),
+				},
+			],
+		});
 	};
 
 	const handleSaveEdit = (input: { name: string; description?: string }) => {
@@ -310,14 +315,18 @@ export default function ListDetailScreen() {
 			setReorderMode(false);
 			return;
 		}
-		Alert.alert("Discard changes?", "Your new order won't be saved.", [
-			{ text: "Keep editing", style: "cancel" },
-			{
-				text: "Discard",
-				style: "destructive",
-				onPress: () => setReorderMode(false),
-			},
-		]);
+		showDialog({
+			title: "Discard changes?",
+			description: "Your new order won't be saved.",
+			actions: [
+				{ label: "Keep editing" },
+				{
+					label: "Discard",
+					variant: "destructive",
+					onPress: () => setReorderMode(false),
+				},
+			],
+		});
 	};
 
 	const canManage = list && !list.isDefault;

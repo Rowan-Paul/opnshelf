@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { posthog } from "#/integrations/posthog/provider";
 
 export const Route = createFileRoute("/auth/complete")({
 	head: () => ({
@@ -46,6 +47,12 @@ function AuthCompletePage() {
 		queryClient
 			.fetchQuery(authControllerMeOptions())
 			.then((data) => {
+				if (data) {
+					posthog.identify(data.did, {
+						$set_once: { first_login_date: new Date().toISOString() },
+					});
+					posthog.capture("user_logged_in");
+				}
 				setStatus("success");
 				// Redirect to onboarding for new users, otherwise home
 				const redirectTo = data?.needsOnboarding ? "/onboarding" : "/dashboard";

@@ -1,8 +1,9 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Plus, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
+import { useDialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -26,6 +27,7 @@ export default function CircleDetailScreen() {
 	const { circleId } = useLocalSearchParams<{ circleId: string }>();
 	const router = useRouter();
 	const { user } = useAuth();
+	const { showDialog } = useDialog();
 
 	const { data: circles = [] } = useCircles();
 	const circle = circles.find((c) => c.id === circleId);
@@ -56,14 +58,14 @@ export default function CircleDetailScreen() {
 	};
 
 	const confirmDelete = () => {
-		Alert.alert(
-			`Delete "${circle?.name ?? "circle"}"?`,
-			"This won't unfollow anyone — it just removes the circle.",
-			[
-				{ text: "Cancel", style: "cancel" },
+		showDialog({
+			title: `Delete "${circle?.name ?? "circle"}"?`,
+			description: "This won't unfollow anyone — it just removes the circle.",
+			actions: [
+				{ label: "Cancel" },
 				{
-					text: "Delete",
-					style: "destructive",
+					label: "Delete",
+					variant: "destructive",
 					onPress: () =>
 						deleteCircle.mutate(
 							{ path: { circleId } },
@@ -71,7 +73,7 @@ export default function CircleDetailScreen() {
 						),
 				},
 			],
-		);
+		});
 	};
 
 	return (

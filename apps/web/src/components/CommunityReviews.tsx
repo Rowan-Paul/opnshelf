@@ -12,6 +12,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import { UserAvatar } from "./following/UserAvatar";
 import { ReviewBody } from "./ReviewBody";
 import { ReviewDialog } from "./ReviewDialog";
+import { ReviewReaderDialog } from "./ReviewReaderDialog";
 import { SpoilerShield } from "./SpoilerShield";
 
 interface CommunityReviewsProps {
@@ -37,6 +38,7 @@ function ReviewCard({
 	episodeNumber,
 	isOwnReview,
 	isAuthenticated,
+	onOpenReview,
 }: {
 	review: {
 		id: string;
@@ -60,6 +62,7 @@ function ReviewCard({
 	episodeNumber?: number;
 	isOwnReview: boolean;
 	isAuthenticated: boolean;
+	onOpenReview: (reviewUrl: string) => void;
 }) {
 	const { likeReview, unlikeReview, isLikePending, isUnlikePending } =
 		useToggleReviewLike({
@@ -130,6 +133,11 @@ function ReviewCard({
 
 	const displayName = review.userDisplayName || review.userHandle;
 	const cover = posterUrl(review.posterPath);
+	const openReview = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		if (!review.reviewUrl) return;
+		event.preventDefault();
+		onOpenReview(review.reviewUrl);
+	};
 
 	// The canonical public review page (#115) may not exist as a registered
 	// route yet, so we use a plain anchor rather than the router's typed Link.
@@ -139,6 +147,7 @@ function ReviewCard({
 	const title = review.reviewUrl ? (
 		<a
 			href={review.reviewUrl}
+			onClick={openReview}
 			className="transition-colors hover:text-(--accent)"
 		>
 			{review.title}
@@ -217,6 +226,7 @@ function ReviewCard({
 					(review.reviewUrl ? (
 						<a
 							href={review.reviewUrl}
+							onClick={openReview}
 							className="shrink-0"
 							aria-label={`Open review: ${review.title}`}
 						>
@@ -239,7 +249,11 @@ function ReviewCard({
 					<h3 className="mb-1 font-display font-semibold">{title}</h3>
 					<div className="text-(--foreground-muted)">
 						<SpoilerShield spoiler={review.spoiler} authorDid={review.userDid}>
-							<ReviewBody markdown={review.markdown} href={review.reviewUrl} />
+							<ReviewBody
+								markdown={review.markdown}
+								href={review.reviewUrl}
+								onReadMoreClick={openReview}
+							/>
 						</SpoilerShield>
 					</div>
 				</div>
@@ -322,6 +336,42 @@ export default function CommunityReviews({
 	onAddReview,
 }: CommunityReviewsProps) {
 	const { user, isAuthenticated } = useAuth();
+	const [openReviewUrl, setOpenReviewUrl] = useState<string | null>(() => {
+		if (typeof window === "undefined") return null;
+		return new URLSearchParams(window.location.search).get("review");
+	});
+
+	useEffect(() => {
+		const syncFromHistory = () =>
+			setOpenReviewUrl(
+				new URLSearchParams(window.location.search).get("review"),
+			);
+		window.addEventListener("popstate", syncFromHistory);
+		return () => window.removeEventListener("popstate", syncFromHistory);
+	}, []);
+
+	const openReview = (reviewUrl: string) => {
+		const url = new URL(window.location.href);
+		url.searchParams.set("review", reviewUrl);
+		window.history.pushState(
+			{ ...window.history.state, reviewOverlay: true },
+			"",
+			url,
+		);
+		setOpenReviewUrl(reviewUrl);
+	};
+
+	const setReviewOpen = (open: boolean) => {
+		if (open || !openReviewUrl) return;
+		if (window.history.state?.reviewOverlay) {
+			window.history.back();
+			return;
+		}
+		const url = new URL(window.location.href);
+		url.searchParams.delete("review");
+		window.history.replaceState(window.history.state, "", url);
+		setOpenReviewUrl(null);
+	};
 
 	// If we were deep-linked to a specific review (#review-<id>), pin it so the
 	// server includes it even when it ranks past the first page of results.
@@ -406,6 +456,7 @@ export default function CommunityReviews({
 							episodeNumber={episodeNumber}
 							isOwnReview={true}
 							isAuthenticated={isAuthenticated}
+							onOpenReview={openReview}
 						/>
 					))}
 					{communityReviews.map((review) => (
@@ -417,10 +468,17 @@ export default function CommunityReviews({
 							seasonNumber={seasonNumber}
 							episodeNumber={episodeNumber}
 							isAuthenticated={isAuthenticated}
+							onOpenReview={openReview}
 							isOwnReview={false}
 						/>
 					))}
 				</div>
+			)}
+			{openReviewUrl && (
+				<ReviewReaderDialog
+					reviewUrl={openReviewUrl}
+					onOpenChange={setReviewOpen}
+				/>
 			)}
 		</section>
 	);

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { DialogProvider } from "@/components/ui/dialog";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/lib/auth-context";
 import { FeedbackProvider } from "@/lib/feedback";
@@ -36,7 +37,9 @@ export function Providers({ children }: { children: ReactNode }) {
 				<ThemeProvider>
 					<ThemedNavigationProvider>
 						<ToastProvider>
-							<FeedbackProvider>{children}</FeedbackProvider>
+							<DialogProvider>
+								<FeedbackProvider>{children}</FeedbackProvider>
+							</DialogProvider>
 						</ToastProvider>
 					</ThemedNavigationProvider>
 				</ThemeProvider>

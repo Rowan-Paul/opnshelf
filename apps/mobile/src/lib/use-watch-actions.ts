@@ -18,7 +18,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
-import { Alert } from "react-native";
+import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 
@@ -77,6 +77,7 @@ function errorMessage(error: unknown, fallback: string) {
  * Every mutation carries an explicit array-based `mutationKey`.
  */
 export function useWatchActions(options: UseWatchActionsOptions) {
+	const { showDialog } = useDialog();
 	const { isAuthenticated, user } = useAuth();
 	const userDid = user?.did ?? "";
 	const queryClient = useQueryClient();
@@ -465,14 +466,11 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			episodeCount !== undefined &&
 			episodeCount > BULK_WATCH_WARN_THRESHOLD
 		) {
-			Alert.alert(
-				"Log all episodes?",
-				`This show has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
-				[
-					{ text: "Cancel", style: "cancel" },
-					{ text: "Continue", onPress: run },
-				],
-			);
+			showDialog({
+				title: "Log all episodes?",
+				description: `This show has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
+				actions: [{ label: "Cancel" }, { label: "Continue", onPress: run }],
+			});
 			return;
 		}
 		run();
@@ -499,14 +497,11 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			episodeCount !== undefined &&
 			episodeCount > BULK_WATCH_WARN_THRESHOLD
 		) {
-			Alert.alert(
-				"Log all episodes?",
-				`This season has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
-				[
-					{ text: "Cancel", style: "cancel" },
-					{ text: "Continue", onPress: run },
-				],
-			);
+			showDialog({
+				title: "Log all episodes?",
+				description: `This season has ${episodeCount} episodes. Logging them all may hit your server's rate limit and fail partway.`,
+				actions: [{ label: "Cancel" }, { label: "Continue", onPress: run }],
+			});
 			return;
 		}
 		run();

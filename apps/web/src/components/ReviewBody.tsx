@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { reviewExcerpt } from "#/lib/review-excerpt";
 import { MarkdownContent } from "./MarkdownContent";
 
@@ -13,9 +14,11 @@ import { MarkdownContent } from "./MarkdownContent";
 export function ReviewBody({
 	markdown,
 	href,
+	onReadMoreClick,
 }: {
 	markdown: string;
 	href?: string;
+	onReadMoreClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
 	const { truncated } = reviewExcerpt(markdown);
 
@@ -31,6 +34,7 @@ export function ReviewBody({
 			{href ? (
 				<a
 					href={href}
+					onClick={onReadMoreClick}
 					className="relative z-[1] mt-1 inline-block font-medium text-(--accent) text-sm hover:underline"
 				>
 					Read more
