@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 
 function TraktAvatar({ url, name }: { url?: string; name: string }) {
 	const [error, setError] = useState(false);
@@ -124,6 +125,7 @@ export function TraktImport({
 	} | null>(null);
 	const [jobData, setJobData] = useState<TraktImportStatusJob | null>(null);
 	const [fetchError, setFetchError] = useState("");
+	const [reportedTerminalJobId, setReportedTerminalJobId] = useState<string>();
 	const queryClient = useQueryClient();
 
 	const fetchPreview = useMutation({
@@ -138,6 +140,9 @@ export function TraktImport({
 		onSuccess: (data) => {
 			setPreviewData(data);
 			setFetchError("");
+			posthog.capture("trakt_import_previewed", {
+				import_count: data.importableCount,
+			});
 		},
 		onError: (error: unknown) => {
 			const message =
@@ -160,6 +165,7 @@ export function TraktImport({
 		},
 		onSuccess: (data) => {
 			onImportStarted?.();
+			posthog.capture("trakt_import_started", { source: "web" });
 			toast.success("Import started");
 			if (data.job) {
 				setJobData({
@@ -214,6 +220,21 @@ export function TraktImport({
 			};
 		});
 	}, [currentImport, idleShowsInput]);
+
+	useEffect(() => {
+		if (
+			!jobData ||
+			!isTerminalTraktImportStatus(jobData.status) ||
+			reportedTerminalJobId === currentImport?.id
+		) {
+			return;
+		}
+		setReportedTerminalJobId(currentImport?.id);
+		posthog.capture("trakt_import_finished", {
+			status: jobData.status,
+			import_count: jobData.importedCount,
+		});
+	}, [currentImport?.id, jobData, reportedTerminalJobId]);
 
 	const handleFetch = () => {
 		if (!username.trim()) return;

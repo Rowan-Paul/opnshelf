@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { useDebounce } from "#/hooks/useDebounce";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useCircles, useCreateCircle } from "#/lib/hooks/useCircles";
 
@@ -87,6 +88,7 @@ function ConnectionsPage() {
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: async () => {
+			posthog.capture("user_followed", { source: "connections" });
 			toast.success("Followed");
 			await invalidateSocial();
 		},
@@ -98,6 +100,7 @@ function ConnectionsPage() {
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: async () => {
+			posthog.capture("user_unfollowed", { source: "connections" });
 			toast.success("Unfollowed");
 			await invalidateSocial();
 		},

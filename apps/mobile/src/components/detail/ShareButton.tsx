@@ -1,6 +1,7 @@
 import { Share2 } from "lucide-react-native";
 import { Pressable, Share, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { posthog } from "@/lib/posthog";
 
 /**
  * Share action for media detail screens. Mirrors web's `MediaActionsBar` share:
@@ -12,7 +13,13 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
 	const onShare = () => {
 		// message carries the URL (Android ignores the `url` field); title names
 		// the Android chooser. iOS shows the link from the message text.
-		Share.share({ message: url, title }).catch(() => {});
+		Share.share({ message: url, title })
+			.then((result) => {
+				if (result.action === Share.sharedAction) {
+					posthog?.capture("share_completed", { surface: "media_detail" });
+				}
+			})
+			.catch(() => {});
 	};
 
 	return (

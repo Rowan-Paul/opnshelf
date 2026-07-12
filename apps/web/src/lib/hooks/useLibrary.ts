@@ -9,6 +9,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 export type LibraryFormat = LibraryOwnershipDto["format"];
@@ -93,7 +94,14 @@ export function useLibraryActions(opts: UseLibraryOptions) {
 	const addMutation = useMutation({
 		mutationKey: ["library", "add", resolvedMediaType, opts.mediaId],
 		...libraryControllerAddToLibraryMutation(),
-		onSuccess: () => toast.success("Added to library"),
+		onSuccess: (_data, variables) => {
+			posthog.capture("library_changed", {
+				action: "added",
+				media_type: resolvedMediaType,
+				format: variables.body.format,
+			});
+			toast.success("Added to library");
+		},
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to add to library",
@@ -104,7 +112,14 @@ export function useLibraryActions(opts: UseLibraryOptions) {
 	const removeMutation = useMutation({
 		mutationKey: ["library", "remove", resolvedMediaType, opts.mediaId],
 		...libraryControllerRemoveFromLibraryMutation(),
-		onSuccess: () => toast.success("Removed from library"),
+		onSuccess: (_data, variables) => {
+			posthog.capture("library_changed", {
+				action: "removed",
+				media_type: resolvedMediaType,
+				format: variables.path.format,
+			});
+			toast.success("Removed from library");
+		},
 		onError: (error) =>
 			toast.error(
 				error instanceof Error

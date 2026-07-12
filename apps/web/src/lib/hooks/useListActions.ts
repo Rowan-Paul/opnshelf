@@ -9,6 +9,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 interface UseListActionsOptions {
@@ -16,6 +17,26 @@ interface UseListActionsOptions {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+}
+
+function captureListChange(
+	slug: string,
+	action: "added" | "removed",
+	mediaType: string,
+) {
+	if (slug === "watchlist") {
+		posthog.capture("watchlist_changed", { action, media_type: mediaType });
+		return;
+	}
+	if (slug === "favorites") {
+		posthog.capture("favorite_changed", { action, media_type: mediaType });
+		return;
+	}
+	posthog.capture("list_item_changed", {
+		action,
+		media_type: mediaType,
+		list_kind: "custom",
+	});
 }
 
 export function useListActions({
@@ -79,7 +100,8 @@ export function useListActions({
 
 			return { previousListsForItem, listsForItemKey };
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(variables.path.slug, "added", resolvedMediaType);
 			toast.success("Added to list");
 		},
 		onError: (error, _variables, context) => {
@@ -120,7 +142,8 @@ export function useListActions({
 
 			return { previousListsForItem, listsForItemKey };
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(variables.path.slug, "removed", resolvedMediaType);
 			toast.success("Removed from list");
 		},
 		onError: (error, _variables, context) => {

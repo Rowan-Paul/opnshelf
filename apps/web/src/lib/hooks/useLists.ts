@@ -10,6 +10,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 // Get all lists for the current user
@@ -38,7 +39,10 @@ export function useCreateList() {
 	return useMutation({
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
-		onSuccess: async (newList) => {
+		onSuccess: async (newList, variables) => {
+			posthog.capture("list_created", {
+				has_description: Boolean(variables.body.description?.trim()),
+			});
 			toast.success("List created");
 			queryClient.setQueryData(
 				userListsKey,

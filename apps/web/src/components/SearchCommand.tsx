@@ -42,6 +42,7 @@ import {
 	CommandSeparator,
 	CommandShortcut,
 } from "#/components/ui/command";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { buildMovieUrl, buildPersonUrl, buildShowUrl } from "#/lib/url-utils";
 
@@ -183,6 +184,9 @@ export function SearchCommand({
 			}
 
 			return responseData;
+		},
+		onSuccess: (_data, variables) => {
+			posthog.capture("feedback_submitted", { category: variables.category });
 		},
 	});
 

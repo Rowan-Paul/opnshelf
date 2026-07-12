@@ -21,7 +21,7 @@ import {
 	Users,
 	X,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
@@ -32,6 +32,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
+import { posthog } from "@/lib/posthog";
 import { profileUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
@@ -226,6 +227,21 @@ export default function SearchScreen() {
 	const allMedia = useMemo(() => results.map(toMediaCardItem), [results]);
 	const people = peopleQuery.data?.items ?? [];
 	const cast = castQuery.data?.results ?? [];
+	useEffect(() => {
+		if (!hasQuery || !mediaQuery.data) return;
+		posthog?.capture("search_performed", {
+			surface: "search",
+			tab: activeTab,
+			query_length: debouncedQuery.length,
+			result_count: results.length,
+		});
+	}, [
+		activeTab,
+		debouncedQuery.length,
+		hasQuery,
+		mediaQuery.data,
+		results.length,
+	]);
 
 	const isPeople = activeTab === "people";
 	const isCast = activeTab === "cast";

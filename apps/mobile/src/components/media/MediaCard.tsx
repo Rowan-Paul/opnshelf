@@ -9,6 +9,7 @@ import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsShee
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
@@ -90,6 +91,12 @@ function MediaCardBase({
 		<Link href={href(item)} asChild>
 			<Pressable
 				className="flex-1"
+				onPress={() =>
+					posthog?.capture("discover_item_opened", {
+						surface: "media_card",
+						result_type: item.type,
+					})
+				}
 				onLongPress={onLongPress}
 				delayLongPress={300}
 			>

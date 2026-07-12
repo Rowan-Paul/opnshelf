@@ -12,6 +12,7 @@ import {
 	StickyNote,
 } from "lucide-react";
 import { useState } from "react";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import {
 	useLibraryForItem,
@@ -109,12 +110,14 @@ export default function MediaActionsBar({
 		if (navigator.share) {
 			try {
 				await navigator.share({ title: document.title, url });
+				posthog.capture("share_completed", { surface: "media_detail" });
 			} catch {
 				// User cancelled or share failed
 			}
 		} else if (navigator.clipboard) {
 			try {
 				await navigator.clipboard.writeText(url);
+				posthog.capture("share_completed", { surface: "media_detail" });
 				setShareSuccess(true);
 				setTimeout(() => setShareSuccess(false), 2000);
 			} catch {

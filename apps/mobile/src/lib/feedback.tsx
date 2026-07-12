@@ -19,6 +19,7 @@ import {
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
+import { posthog } from "@/lib/posthog";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 type Category = "bug" | "feature_request";
@@ -69,6 +70,7 @@ function FeedbackSheet({
 		mutationKey: ["feedback", "create"],
 		...feedbackControllerCreateFeedbackMutation(),
 		onSuccess: () => {
+			posthog?.capture("feedback_submitted", { category });
 			void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 			toast.success("Thanks for the feedback!");
 			reset();

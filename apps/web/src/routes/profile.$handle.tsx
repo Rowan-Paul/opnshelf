@@ -26,6 +26,7 @@ import {
 	UserPlus,
 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/profile/$handle")({
@@ -110,6 +111,7 @@ function ProfileLayout() {
 		mutationKey: ["social", profile.did, "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_followed", { source: "profile" });
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
 		},
@@ -119,6 +121,7 @@ function ProfileLayout() {
 		mutationKey: ["social", profile.did, "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_unfollowed", { source: "profile" });
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
 		},

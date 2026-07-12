@@ -13,6 +13,7 @@ import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { posthog } from "@/lib/posthog";
 import { useCircles } from "@/lib/use-circles";
 import { useTwStyle } from "@/lib/use-tw-style";
 
@@ -59,6 +60,9 @@ export default function ActivityScreen() {
 
 	const items: FollowedActivityItemDto[] =
 		data?.pages.flatMap((page) => page.items) ?? [];
+	useEffect(() => {
+		if (data) posthog?.capture("activity_viewed", { surface: "activity" });
+	}, [data]);
 
 	const onRefresh = async () => {
 		setRefreshing(true);

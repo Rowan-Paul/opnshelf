@@ -10,6 +10,7 @@ import {
 	X,
 } from "lucide-react";
 import { useState } from "react";
+import { posthog } from "#/integrations/posthog/provider";
 import {
 	buildEpisodeUrl,
 	buildMovieUrl,
@@ -134,7 +135,16 @@ export default function MediaCard({
 			className={`group relative ${fill ? "w-full" : `${sizeClasses[size][layout]} shrink-0`}`}
 			aria-label={`${title} ${type === "movie" ? "movie" : "TV show"}`}
 		>
-			<Link to={linkHref} className="block">
+			<Link
+				to={linkHref}
+				className="block"
+				onClick={() =>
+					posthog.capture("discover_item_opened", {
+						surface: "media_card",
+						result_type: type,
+					})
+				}
+			>
 				{/* Image Container */}
 				<div
 					className={`relative ${aspectClasses[layout]} overflow-hidden rounded-lg bg-(--background-subtle)`}

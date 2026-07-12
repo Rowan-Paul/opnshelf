@@ -15,6 +15,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 const SOCIAL_QUERY_IDS = [
 	"socialControllerGetFollowing",
@@ -118,7 +119,10 @@ export function useFollowToggle(onFollowed?: () => void) {
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
-		onSuccess: onFollowed,
+		onSuccess: () => {
+			posthog?.capture("user_followed", { source: "mobile" });
+			onFollowed?.();
+		},
 		onError: (error) =>
 			toast.error(error instanceof Error ? error.message : "Failed to follow"),
 		onSettled: invalidateSocial,
@@ -127,6 +131,9 @@ export function useFollowToggle(onFollowed?: () => void) {
 	const unfollowMutation = useMutation({
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
+		onSuccess: () => {
+			posthog?.capture("user_unfollowed", { source: "mobile" });
+		},
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to unfollow",

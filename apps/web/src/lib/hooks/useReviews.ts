@@ -306,6 +306,7 @@ export function useReviewLikes({
 		mutationKey: ["reviews", reviewId, "like"],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
+			posthog.capture("review_liked", { source: "web" });
 			queryClient.invalidateQueries({
 				queryKey: reviewsControllerGetReviewLikesQueryKey({
 					path: { reviewId },
@@ -387,6 +388,7 @@ export function useToggleReviewLike({
 		],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
+			posthog.capture("review_liked", { source: "web" });
 			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
 		},
 		onError: (error) => {

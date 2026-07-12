@@ -9,6 +9,7 @@ import { Loader2, UserMinus, Users } from "lucide-react";
 import { z } from "zod";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { UserRowsSkeleton } from "#/components/skeletons";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import {
 	usePublicFollowers,
@@ -73,6 +74,7 @@ function ProfileConnectionsPage() {
 		mutationKey: ["social", "unfollow", handle],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_unfollowed", { source: "profile_connections" });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
 			queryClient.invalidateQueries({
 				queryKey: ["public-profile", "following", handle],

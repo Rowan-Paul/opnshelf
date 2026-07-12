@@ -1,5 +1,6 @@
 import type { WatchProviderDto } from "@opnshelf/api";
 import { useState } from "react";
+import { posthog } from "#/integrations/posthog/provider";
 import { COUNTRY_NAMES, SORTED_COUNTRIES } from "#/lib/countries";
 
 interface WatchProviderDtosProps {
@@ -52,6 +53,9 @@ function ProviderChip({
 				rel="noopener noreferrer"
 				className="group transition-transform hover:-translate-y-0.5"
 				title={provider.provider_name}
+				onClick={() =>
+					posthog.capture("watch_provider_opened", { surface: "media_detail" })
+				}
 			>
 				{img}
 			</a>

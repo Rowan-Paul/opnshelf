@@ -36,6 +36,7 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
 import { PosterGridSkeleton, UserRowsSkeleton } from "#/components/skeletons";
 import { useDebounce } from "#/hooks/useDebounce";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
 import { buildPersonUrl } from "#/lib/url-utils";
@@ -204,6 +205,16 @@ function SearchPage() {
 		enabled: debouncedQuery.length > 0,
 	});
 
+	useEffect(() => {
+		if (!debouncedQuery || !searchData) return;
+		posthog.capture("search_performed", {
+			surface: "search",
+			tab: activeTab,
+			query_length: debouncedQuery.length,
+			result_count: searchData.results?.length ?? 0,
+		});
+	}, [activeTab, debouncedQuery, searchData]);
+
 	const { data: peopleData, isLoading: isSearchingPeople } = useQuery({
 		...socialControllerSearchPeopleOptions({
 			query: { q: debouncedQuery, pageSize: 20 },
@@ -223,6 +234,7 @@ function SearchPage() {
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_followed", { source: "search" });
 			toast.success("Followed");
 			queryClient.invalidateQueries({
 				predicate: (q) => {
@@ -240,6 +252,7 @@ function SearchPage() {
 		mutationKey: ["social", "unfollow"],
 		...socialControllerUnfollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_unfollowed", { source: "search" });
 			toast.success("Unfollowed");
 			queryClient.invalidateQueries({
 				predicate: (q) => {

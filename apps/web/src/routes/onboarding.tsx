@@ -668,6 +668,7 @@ function FollowSuggestionsStep({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
 		onSuccess: () => {
+			posthog.capture("user_followed", { source: "onboarding" });
 			onFollowed();
 			queryClient.invalidateQueries({
 				queryKey: socialControllerGetSuggestionsOptions().queryKey,

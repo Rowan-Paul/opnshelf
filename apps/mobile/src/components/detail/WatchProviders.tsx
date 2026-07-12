@@ -13,6 +13,7 @@ import { CountryPicker } from "@/components/ui/country-picker";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { COUNTRY_NAMES } from "@/lib/countries";
+import { posthog } from "@/lib/posthog";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/original";
@@ -59,7 +60,19 @@ function ProviderChip({
 	);
 
 	if (link) {
-		return <Pressable onPress={() => Linking.openURL(link)}>{chip}</Pressable>;
+		return (
+			<Pressable
+				onPress={() => {
+					void Linking.openURL(link).then(() =>
+						posthog?.capture("watch_provider_opened", {
+							surface: "media_detail",
+						}),
+					);
+				}}
+			>
+				{chip}
+			</Pressable>
+		);
 	}
 	return chip;
 }

@@ -6,8 +6,10 @@ import {
 	usersControllerStartMyTraktImportMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 function errorMessage(error: unknown, fallback: string) {
 	return error instanceof Error ? error.message : fallback;
@@ -33,10 +35,33 @@ export function useTraktImport() {
 			return status && isActiveTraktImportStatus(status) ? 3000 : false;
 		},
 	});
+	const reportedTerminalJob = useRef<string | null>(null);
+	useEffect(() => {
+		const job = currentQuery.data;
+		if (
+			!job ||
+			(!isActiveTraktImportStatus(job.status) &&
+				reportedTerminalJob.current === job.id)
+		) {
+			return;
+		}
+		if (!isActiveTraktImportStatus(job.status)) {
+			reportedTerminalJob.current = job.id;
+			posthog?.capture("trakt_import_finished", {
+				status: job.status,
+				import_count: job.importedCount,
+			});
+		}
+	}, [currentQuery.data]);
 
 	const fetchPreview = useMutation({
 		mutationKey: ["trakt", "fetchPreview"],
 		...usersControllerFetchMyTraktPublicHistoryMutation(),
+		onSuccess: (data) => {
+			posthog?.capture("trakt_import_previewed", {
+				import_count: data.importableCount,
+			});
+		},
 		onError: (error) =>
 			toast.error(
 				errorMessage(
@@ -50,6 +75,7 @@ export function useTraktImport() {
 		mutationKey: ["trakt", "startImport"],
 		...usersControllerStartMyTraktImportMutation(),
 		onSuccess: () => {
+			posthog?.capture("trakt_import_started", { source: "mobile" });
 			toast.success("Import started");
 			queryClient.invalidateQueries({
 				queryKey: usersControllerGetMyCurrentTraktImportQueryKey(),

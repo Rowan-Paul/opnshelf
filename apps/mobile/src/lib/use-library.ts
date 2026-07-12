@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 export type LibraryFormat = LibraryOwnershipDto["format"];
 
@@ -100,6 +101,13 @@ export function useLibraryOwnership(target: LibraryTarget) {
 	const addMutation = useMutation({
 		mutationKey: ["library", "add", resolvedMediaType, target.mediaId],
 		...libraryControllerAddToLibraryMutation(),
+		onSuccess: (_data, variables) => {
+			posthog?.capture("library_changed", {
+				action: "added",
+				media_type: resolvedMediaType,
+				format: variables.body.format,
+			});
+		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to add to library")),
 		onSettled: settle,
@@ -108,6 +116,13 @@ export function useLibraryOwnership(target: LibraryTarget) {
 	const removeMutation = useMutation({
 		mutationKey: ["library", "remove", resolvedMediaType, target.mediaId],
 		...libraryControllerRemoveFromLibraryMutation(),
+		onSuccess: (_data, variables) => {
+			posthog?.capture("library_changed", {
+				action: "removed",
+				media_type: resolvedMediaType,
+				format: variables.path.format,
+			});
+		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to remove from library")),
 		onSettled: settle,

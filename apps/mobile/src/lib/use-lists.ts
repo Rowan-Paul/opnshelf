@@ -22,9 +22,30 @@ import {
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 
 function errorMessage(error: unknown, fallback: string) {
 	return error instanceof Error ? error.message : fallback;
+}
+
+function captureListChange(
+	slug: string,
+	action: "added" | "removed",
+	mediaType: string,
+) {
+	if (slug === "watchlist") {
+		posthog?.capture("watchlist_changed", { action, media_type: mediaType });
+		return;
+	}
+	if (slug === "favorites") {
+		posthog?.capture("favorite_changed", { action, media_type: mediaType });
+		return;
+	}
+	posthog?.capture("list_item_changed", {
+		action,
+		media_type: mediaType,
+		list_kind: "custom",
+	});
 }
 
 /** All of the current user's lists. */
@@ -77,7 +98,10 @@ export function useCreateList() {
 	return useMutation({
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			posthog?.capture("list_created", {
+				has_description: Boolean(variables.body.description?.trim()),
+			});
 			toast.success("List created");
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
@@ -136,7 +160,8 @@ export function useRemoveListItem(slug: string) {
 	return useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(slug, "removed", variables.path.mediaType);
 			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
 				() => {},
 			);
@@ -160,7 +185,8 @@ export function useAddListItem(slug: string) {
 	return useMutation({
 		mutationKey: ["lists", slug, "addItem"],
 		...listsControllerAddItemToListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(slug, "added", variables.body.mediaType);
 			void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
 				() => {},
 			);
@@ -265,6 +291,9 @@ export function useListMembership(target: ListMembershipTarget) {
 			patchMembership(variables.path.slug, true);
 			return { prev };
 		},
+		onSuccess: (_data, variables) => {
+			captureListChange(variables.path.slug, "added", resolvedMediaType);
+		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
 				queryClient.setQueryData(listsForItemKey, context.prev);
@@ -282,6 +311,9 @@ export function useListMembership(target: ListMembershipTarget) {
 			const prev = queryClient.getQueryData<ListsForItemDto[]>(listsForItemKey);
 			patchMembership(variables.path.slug, false);
 			return { prev };
+		},
+		onSuccess: (_data, variables) => {
+			captureListChange(variables.path.slug, "removed", resolvedMediaType);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {

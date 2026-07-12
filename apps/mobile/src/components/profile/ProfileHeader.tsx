@@ -14,6 +14,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
+import { posthog } from "@/lib/posthog";
 import { useRelationship } from "@/lib/use-public-profile";
 import { useTwStyle } from "@/lib/use-tw-style";
 
@@ -62,14 +63,20 @@ export function ProfileHeader({
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow", targetDid],
 		...socialControllerFollowMutation(),
-		onSuccess: invalidate,
+		onSuccess: () => {
+			posthog?.capture("user_followed", { source: "mobile" });
+			invalidate();
+		},
 		onError: (error) =>
 			toast.error(error instanceof Error ? error.message : "Failed to follow"),
 	});
 	const unfollowMutation = useMutation({
 		mutationKey: ["social", "unfollow", targetDid],
 		...socialControllerUnfollowMutation(),
-		onSuccess: invalidate,
+		onSuccess: () => {
+			posthog?.capture("user_unfollowed", { source: "mobile" });
+			invalidate();
+		},
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to unfollow",

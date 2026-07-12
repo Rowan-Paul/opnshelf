@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ActivityFeed } from "#/components/following/ActivityFeed";
 import { CircleFilterBar } from "#/components/following/CircleFilterBar";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useCircles } from "#/lib/hooks/useCircles";
 
@@ -62,6 +63,9 @@ function ActivityPage() {
 	});
 
 	const activities = feedData?.items || [];
+	useEffect(() => {
+		if (feedData) posthog.capture("activity_viewed", { surface: "activity" });
+	}, [feedData]);
 
 	return (
 		<div className="container-app py-8">
