@@ -6,9 +6,13 @@ export const isPostHogEnabled = Boolean(import.meta.env.VITE_POSTHOG_KEY);
 
 if (typeof window !== "undefined" && isPostHogEnabled) {
 	posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-		api_host: import.meta.env.VITE_POSTHOG_HOST || "https://eu.i.posthog.com",
+		// Requests go through our origin so ad blockers are less likely to prevent
+		// analytics from reaching PostHog. Nitro forwards this path to PostHog EU.
+		api_host: "/ingest",
 		person_profiles: "identified_only",
 		capture_pageview: false,
+		capture_pageleave: true,
+		capture_performance: true,
 		defaults: "2025-11-30",
 		before_send: (event) => {
 			if (!event) return event;

@@ -7,6 +7,15 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const config = defineConfig({
+	nitro: {
+		routeRules: {
+			// Production counterpart to the local Vite proxy below. The wildcard
+			// preserves PostHog's event, decide, and config request paths.
+			"/ingest/**": {
+				proxy: "https://eu.i.posthog.com/**",
+			},
+		},
+	},
 	server: {
 		port: 3000,
 		host: true,

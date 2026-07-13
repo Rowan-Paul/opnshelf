@@ -149,7 +149,6 @@ Notes:
 |----------|-------------|
 | `VITE_API_URL` | Backend API URL |
 | `VITE_POSTHOG_KEY` | PostHog analytics key |
-| `VITE_POSTHOG_HOST` | PostHog host URL |
 
 ### Mobile (`apps/mobile/.env`)
 

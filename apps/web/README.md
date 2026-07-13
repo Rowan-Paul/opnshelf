@@ -85,7 +85,7 @@ console.log(env.VITE_APP_TITLE);
 
 ### Optional Configuration
 
-- `VITE_POSTHOG_HOST` - Set this if you're using PostHog Cloud EU (`https://eu.i.posthog.com`) or self-hosting
+- Analytics requests are proxied through `/ingest` to PostHog Cloud EU in every environment. No public PostHog host variable is needed.
 
 
 
