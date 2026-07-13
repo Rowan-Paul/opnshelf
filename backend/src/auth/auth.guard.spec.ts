@@ -201,7 +201,7 @@ describe("AuthGuard", () => {
 			);
 		});
 
-		it("should throw generic UnauthorizedException on non-Unauthorized errors", async () => {
+		it("propagates infrastructure failures instead of invalidating a valid session", async () => {
 			const mockSessionRecord = {
 				id: "session-123",
 				userDid: "did:plc:abc123",
@@ -219,7 +219,7 @@ describe("AuthGuard", () => {
 			const context = createMockExecutionContext({ session: "session-123" });
 
 			await expect(guard.canActivate(context)).rejects.toThrow(
-				new UnauthorizedException("Invalid or expired session"),
+				new Error("Database error"),
 			);
 		});
 
