@@ -202,6 +202,16 @@ export function SearchCommand({
 		placeholderData: keepPreviousData,
 	});
 
+	useEffect(() => {
+		if (!debouncedQuery || !searchData) return;
+		posthog.capture("search_performed", {
+			surface: "command",
+			tab: "all",
+			query_length: debouncedQuery.length,
+			result_count: searchData.results?.length ?? 0,
+		});
+	}, [debouncedQuery, searchData]);
+
 	const { data: userLists } = useQuery({
 		...listsControllerGetUserListsOptions(),
 		enabled: isAuthenticated,
@@ -521,7 +531,13 @@ export function SearchCommand({
 												<CommandItem
 													key={`movie-${movie.id}`}
 													value={`movie ${title} ${getYear(movie)}`}
-													onSelect={() => goTo(buildMovieUrl(movie.id, title))}
+													onSelect={() => {
+														posthog.capture("discover_item_opened", {
+															surface: "command",
+															result_type: "movie",
+														});
+														goTo(buildMovieUrl(movie.id, title));
+													}}
 												>
 													<Film className="shrink-0" />
 													<span className="truncate">{title}</span>
@@ -562,7 +578,13 @@ export function SearchCommand({
 												<CommandItem
 													key={`show-${show.id}`}
 													value={`show ${title} ${getYear(show)}`}
-													onSelect={() => goTo(buildShowUrl(show.id, title))}
+													onSelect={() => {
+														posthog.capture("discover_item_opened", {
+															surface: "command",
+															result_type: "show",
+														});
+														goTo(buildShowUrl(show.id, title));
+													}}
 												>
 													<Tv className="shrink-0" />
 													<span className="truncate">{title}</span>

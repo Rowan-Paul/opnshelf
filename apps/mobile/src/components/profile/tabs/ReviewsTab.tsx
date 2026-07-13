@@ -22,6 +22,7 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
+import { posthog } from "@/lib/posthog";
 import { useProfileReviews } from "@/lib/use-public-profile";
 
 /**
@@ -186,7 +187,12 @@ function ReviewCard({
 		mutation.mutate(
 			{ path: { reviewId: review.id } },
 			{
-				onSuccess: invalidateList,
+				onSuccess: () => {
+					if (!review.hasLiked) {
+						posthog?.capture("review_liked", { source: "mobile" });
+					}
+					invalidateList();
+				},
 				onError: () =>
 					toast.error(
 						review.hasLiked
@@ -262,7 +268,7 @@ function ReviewCard({
 							likeMutation.isPending ||
 							unlikeMutation.isPending
 						}
-						className="flex-row self-start items-center gap-1.5 rounded-md py-1 pr-2"
+						className="flex-row items-center gap-1.5 self-start rounded-md py-1 pr-2"
 						style={{
 							opacity:
 								!isAuthenticated ||

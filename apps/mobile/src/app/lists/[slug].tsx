@@ -36,6 +36,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { getMediaTitle, listItemToMediaCardItem } from "@/lib/list-media";
+import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import {
@@ -272,7 +273,13 @@ export default function ListDetailScreen() {
 		Share.share({
 			message: webListUrl(user.handle, list.slug),
 			title: list.name,
-		}).catch(() => {});
+		})
+			.then((result) => {
+				if (result.action === Share.sharedAction) {
+					posthog?.capture("share_completed", { surface: "list_detail" });
+				}
+			})
+			.catch(() => {});
 	};
 
 	const startReorder = () => {

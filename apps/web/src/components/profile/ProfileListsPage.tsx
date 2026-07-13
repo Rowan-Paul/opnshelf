@@ -52,6 +52,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "#/components/ui/tooltip";
+import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useCreateList } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
@@ -228,7 +229,12 @@ export function ProfileListsPage({
 	const removeItemMutation = useMutation({
 		mutationKey: ["lists", selectedListSlug ?? "", "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			posthog.capture("list_item_changed", {
+				action: "removed",
+				media_type: variables.path.mediaType,
+				list_kind: "custom",
+			});
 			toast.success("Removed from list");
 			if (selectedListSlug) {
 				queryClient.invalidateQueries({

@@ -32,6 +32,7 @@ import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { posthog } from "@/lib/posthog";
 import { useReview } from "@/lib/use-review";
 import { useTwStyle } from "@/lib/use-tw-style";
 
@@ -95,6 +96,7 @@ function useToggleReviewLike({
 		],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
+			posthog?.capture("review_liked", { source: "mobile" });
 			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
 		},
 		onError: (error) => {

@@ -5,12 +5,13 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Search, SearchX, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
+import { posthog } from "@/lib/posthog";
 import { posterUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useAddListItem, useRemoveListItem } from "@/lib/use-lists";
@@ -65,6 +66,16 @@ export function AddItemsToListSheet({
 		...searchControllerSearchAllOptions({ query: { query: debouncedQuery } }),
 		enabled: visible && hasQuery,
 	});
+
+	useEffect(() => {
+		if (!visible || !hasQuery || !searchQuery.data) return;
+		posthog?.capture("search_performed", {
+			surface: "list_item_picker",
+			tab: "all",
+			query_length: debouncedQuery.length,
+			result_count: searchQuery.data.results?.length ?? 0,
+		});
+	}, [debouncedQuery.length, hasQuery, searchQuery.data, visible]);
 
 	const results = useMemo(
 		() => searchQuery.data?.results ?? [],

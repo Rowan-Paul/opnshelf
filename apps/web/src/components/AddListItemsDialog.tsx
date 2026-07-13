@@ -9,7 +9,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Film, Loader2, Plus, Search, Tv, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
 	Dialog,
@@ -19,6 +19,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useDebounce } from "#/hooks/useDebounce";
+import { posthog } from "#/integrations/posthog/provider";
 
 interface AddListItemsDialogProps {
 	open: boolean;
@@ -39,6 +40,26 @@ function getYear(result: UnifiedSearchResultDto): string | undefined {
 	return date ? date.slice(0, 4) : undefined;
 }
 
+function captureListChange(
+	slug: string,
+	action: "added" | "removed",
+	mediaType: string,
+) {
+	if (slug === "watchlist") {
+		posthog.capture("watchlist_changed", { action, media_type: mediaType });
+		return;
+	}
+	if (slug === "favorites") {
+		posthog.capture("favorite_changed", { action, media_type: mediaType });
+		return;
+	}
+	posthog.capture("list_item_changed", {
+		action,
+		media_type: mediaType,
+		list_kind: "custom",
+	});
+}
+
 export default function AddListItemsDialog({
 	open,
 	onOpenChange,
@@ -56,6 +77,16 @@ export default function AddListItemsDialog({
 		}),
 		enabled: open && debouncedQuery.trim().length > 0,
 	});
+
+	useEffect(() => {
+		if (!open || !debouncedQuery.trim() || !searchData) return;
+		posthog.capture("search_performed", {
+			surface: "list_item_picker",
+			tab: "all",
+			query_length: debouncedQuery.trim().length,
+			result_count: searchData.results?.length ?? 0,
+		});
+	}, [debouncedQuery, open, searchData]);
 
 	// Movies + shows only in v1.
 	const results = useMemo(() => {
@@ -101,7 +132,8 @@ export default function AddListItemsDialog({
 	const addMutation = useMutation({
 		mutationKey: ["lists", slug, "addItem"],
 		...listsControllerAddItemToListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(slug, "added", variables.body.mediaType);
 			toast.success("Added to list");
 			invalidate();
 		},
@@ -115,7 +147,8 @@ export default function AddListItemsDialog({
 	const removeMutation = useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			captureListChange(slug, "removed", variables.path.mediaType);
 			toast.success("Removed from list");
 			invalidate();
 		},
