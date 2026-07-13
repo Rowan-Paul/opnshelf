@@ -1,16 +1,29 @@
-import { reviewsControllerGetCanonicalReviewOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import {
+	reviewsControllerGetCanonicalReviewOptions,
+	reviewsControllerGetMediaReviewsQueryKey,
+	reviewsControllerGetReviewLikesOptions,
+	reviewsControllerGetReviewLikesQueryKey,
+	reviewsControllerLikeReviewMutation,
+	reviewsControllerUnlikeReviewMutation,
+} from "@opnshelf/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { type Href, Link, Stack, useLocalSearchParams } from "expo-router";
-import { ArrowRight, CalendarDays, User } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
+import { ArrowRight, CalendarDays, Heart, User } from "lucide-react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { Markdown } from "@/components/ui/Markdown";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
+import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
+
+const LIKE_RED = "#ef4444";
+const MUTED = "#94a3b8";
 
 /**
  * The full review, on its own page — where "Read more" in any review list lands.
@@ -33,6 +46,61 @@ export default function ReviewDetailScreen() {
 	});
 
 	const poster = review ? posterUrl(review.posterPath) : undefined;
+	const { user, isAuthenticated } = useAuth();
+	const toast = useToast();
+	const queryClient = useQueryClient();
+	const likesQueryKey = reviewsControllerGetReviewLikesQueryKey({
+		path: { reviewId: review?.id ?? "" },
+	});
+	const mediaReviewsKey = reviewsControllerGetMediaReviewsQueryKey({
+		query: {
+			mediaType: review?.mediaType ?? "movie",
+			mediaId: review?.mediaId ?? "",
+			seasonNumber: review?.seasonNumber,
+			episodeNumber: review?.episodeNumber,
+		},
+	});
+	const { data: likes } = useQuery({
+		...reviewsControllerGetReviewLikesOptions({
+			path: { reviewId: review?.id ?? "" },
+		}),
+		enabled: Boolean(review?.id),
+	});
+	const invalidateLikes = () => {
+		queryClient.invalidateQueries({ queryKey: likesQueryKey });
+		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+	};
+	const likeMutation = useMutation({
+		mutationKey: ["reviews", review?.id, "like"],
+		...reviewsControllerLikeReviewMutation(),
+		onSuccess: () => {
+			posthog?.capture("review_liked", { source: "mobile" });
+			invalidateLikes();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to like review",
+			);
+		},
+	});
+	const unlikeMutation = useMutation({
+		mutationKey: ["reviews", review?.id, "unlike"],
+		...reviewsControllerUnlikeReviewMutation(),
+		onSuccess: invalidateLikes,
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to unlike review",
+			);
+		},
+	});
+	const isLikePending = likeMutation.isPending || unlikeMutation.isPending;
+	const canLike = isAuthenticated && user?.did !== review?.author.did;
+	const handleToggleLike = () => {
+		if (!review || !canLike || isLikePending) return;
+		if (likes?.hasLiked)
+			unlikeMutation.mutate({ path: { reviewId: review.id } });
+		else likeMutation.mutate({ path: { reviewId: review.id } });
+	};
 	const reviewedMediaHref = review
 		? (mediaHref({
 				mediaType: review.mediaType,
@@ -151,6 +219,33 @@ export default function ReviewDetailScreen() {
 									{new Date(review.createdAt).toLocaleDateString()}
 								</Text>
 							</View>
+							<Pressable
+								onPress={handleToggleLike}
+								disabled={!canLike || isLikePending}
+								hitSlop={8}
+								accessibilityRole="button"
+								accessibilityLabel={
+									likes?.hasLiked ? "Unlike review" : "Like review"
+								}
+								className="flex-row items-center gap-1 rounded-md py-1"
+								style={{ opacity: canLike && !isLikePending ? 1 : 0.5 }}
+							>
+								{isLikePending ? (
+									<ActivityIndicator size="small" color={LIKE_RED} />
+								) : (
+									<Heart
+										color={likes?.hasLiked ? LIKE_RED : MUTED}
+										fill={likes?.hasLiked ? LIKE_RED : "transparent"}
+										size={16}
+									/>
+								)}
+								<Text
+									className="text-sm"
+									style={{ color: likes?.hasLiked ? LIKE_RED : MUTED }}
+								>
+									{likes?.total ?? 0}
+								</Text>
+							</Pressable>
 						</View>
 					</View>
 
