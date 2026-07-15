@@ -40,7 +40,7 @@ export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
  * owner's next request.
  * ponytail: plain insertion-order Map eviction; a real LRU only earns its keep if churn shows up in profiling.
  */
-const MAX_CACHED_OAUTH_CLIENTS = 1000;
+const MAX_CACHED_DEVICE_SESSIONS = 1000;
 
 export const OAUTH_SCOPE =
 	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication repo:app.offprint.document.article repo:app.bsky.feed.post blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
@@ -90,12 +90,20 @@ export class AuthService implements OnModuleInit {
 	private readonly oauthClients = new Map<string, NodeOAuthClient>();
 
 	/**
-	 * In-flight credential-session restores, keyed by session slot. Refresh
-	 * tokens rotate (one-time use), so two concurrent requests on the same device
-	 * each building their own CredentialSession would both try to refresh the
-	 * same token — one wins, the other's refresh is rejected. De-duping
-	 * concurrent restores makes them share a single refresh. Cleared as soon as
-	 * the restore settles.
+	 * Live credential session managers, keyed by device session slot.
+	 *
+	 * CredentialSession.resumeSession() always rotates the refresh token. Rebuilding
+	 * one from the request's database snapshot on every request can therefore reuse
+	 * a just-rotated token before its asynchronous persistence finishes. Keeping the
+	 * live manager per device lets the SDK serialize refreshes and retain the newest
+	 * token pair in memory, matching the isolation used for OAuth sessions above.
+	 */
+	private readonly credentialSessions = new Map<string, CredentialSession>();
+
+	/**
+	 * In-flight credential-session restores, keyed by session slot. This closes
+	 * the window before a newly restored manager enters credentialSessions, so
+	 * concurrent first requests share the same refresh.
 	 */
 	private readonly credentialRestoreInFlight = new Map<
 		string,
@@ -233,7 +241,7 @@ export class AuthService implements OnModuleInit {
 			return existing;
 		}
 		const client = this.buildClient(this.buildSessionStore(slot));
-		if (this.oauthClients.size >= MAX_CACHED_OAUTH_CLIENTS) {
+		if (this.oauthClients.size >= MAX_CACHED_DEVICE_SESSIONS) {
 			const oldest = this.oauthClients.keys().next().value;
 			if (oldest) this.oauthClients.delete(oldest);
 		}
@@ -360,6 +368,13 @@ export class AuthService implements OnModuleInit {
 		sessionData: string;
 	}) {
 		if (record.kind === "credential") {
+			const existing = this.credentialSessions.get(record.id);
+			if (existing?.did === record.userDid) {
+				// Bump recency for insertion-order eviction.
+				this.credentialSessions.delete(record.id);
+				this.credentialSessions.set(record.id, existing);
+				return existing;
+			}
 			const inFlight = this.credentialRestoreInFlight.get(record.id);
 			if (inFlight) {
 				return inFlight;
@@ -368,9 +383,18 @@ export class AuthService implements OnModuleInit {
 				record.id,
 				record.userDid,
 				record.sessionData,
-			).finally(() => {
-				this.credentialRestoreInFlight.delete(record.id);
-			});
+			)
+				.then((session) => {
+					if (this.credentialSessions.size >= MAX_CACHED_DEVICE_SESSIONS) {
+						const oldest = this.credentialSessions.keys().next().value;
+						if (oldest) this.credentialSessions.delete(oldest);
+					}
+					this.credentialSessions.set(record.id, session);
+					return session;
+				})
+				.finally(() => {
+					this.credentialRestoreInFlight.delete(record.id);
+				});
 			this.credentialRestoreInFlight.set(record.id, promise);
 			return promise;
 		}
@@ -543,6 +567,7 @@ export class AuthService implements OnModuleInit {
 		};
 		const pdsUrl =
 			stored.pdsUrl || this.configService.get<string>("PDS_URL") || "";
+		let persistence = Promise.resolve();
 
 		const session = new CredentialSession(
 			new URL(pdsUrl),
@@ -551,7 +576,9 @@ export class AuthService implements OnModuleInit {
 				// Persist rotated tokens whenever the agent refreshes them.
 				if (refreshed && (evt === "create" || evt === "update")) {
 					this.logger.debug(`Credential session ${evt} persisted for ${did}`);
-					void this.persistCredentialSession(slot, did, pdsUrl, refreshed);
+					persistence = persistence.then(() =>
+						this.persistCredentialSession(slot, did, pdsUrl, refreshed),
+					);
 				} else if (evt === "expired") {
 					// The refresh token itself is dead (14-day TTL or revoked
 					// upstream) — there's nothing left to restore, so drop just this
@@ -559,6 +586,7 @@ export class AuthService implements OnModuleInit {
 					this.logger.warn(
 						`Credential session expired for ${did}; revoking device ${slot}`,
 					);
+					this.credentialSessions.delete(slot);
 					void this.revokeBySessionId(slot);
 				} else if (evt === "create-failed") {
 					// A transient refresh failure (e.g. a token-rotation race between
@@ -579,6 +607,9 @@ export class AuthService implements OnModuleInit {
 			refreshJwt: stored.refreshJwt,
 			active: stored.active ?? true,
 		});
+		// The SDK's persistence hook is synchronous, so explicitly wait for the
+		// queued database write before exposing the refreshed session to callers.
+		await persistence;
 
 		return session;
 	}
@@ -704,6 +735,8 @@ export class AuthService implements OnModuleInit {
 	async revokeBySessionId(sessionId: string) {
 		try {
 			await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
+			this.oauthClients.delete(sessionId);
+			this.credentialSessions.delete(sessionId);
 		} catch (error) {
 			this.logger.error("Failed to revoke session by id", error);
 		}

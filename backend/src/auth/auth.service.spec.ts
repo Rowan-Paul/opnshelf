@@ -1,4 +1,5 @@
 import type { Mock, Mocked } from "vitest";
+import { CredentialSession } from "@atproto/api";
 import { NodeOAuthClient } from "@atproto/oauth-client-node";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -42,6 +43,13 @@ vi.mock("@atproto/oauth-client-node", () => ({
 	requestLocalLock: vi.fn(),
 }));
 
+const credentialSessionHarness = vi.hoisted(() => ({
+	instances: [] as Array<{
+		did?: string;
+		resumeSession: Mock;
+	}>,
+}));
+
 // Mock the @atproto/api module
 vi.mock("@atproto/api", () => ({
 	Agent: vi.fn().mockImplementation(() => {
@@ -59,6 +67,34 @@ vi.mock("@atproto/api", () => ({
 			withProxy: vi.fn().mockReturnValue({ getProfile }),
 		};
 	}),
+	CredentialSession: vi
+		.fn()
+		.mockImplementation(
+			(
+				_serviceUrl: URL,
+				_fetch: unknown,
+				persistSession: (
+					event: string,
+					session?: Record<string, unknown>,
+				) => void,
+			) => {
+				const instance: {
+					did?: string;
+					resumeSession: Mock;
+				} = {
+					resumeSession: vi.fn(async (session: Record<string, unknown>) => {
+						instance.did = session.did as string;
+						persistSession("update", {
+							...session,
+							accessJwt: "rotated-access",
+							refreshJwt: "rotated-refresh",
+						});
+					}),
+				};
+				credentialSessionHarness.instances.push(instance);
+				return instance;
+			},
+		),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -104,6 +140,7 @@ describe("AuthService", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		credentialSessionHarness.instances.length = 0;
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -716,6 +753,34 @@ describe("AuthService", () => {
 			const result = await service.restore("did:plc:abc123");
 
 			expect(result).toBeUndefined();
+		});
+	});
+
+	describe("restoreBySession", () => {
+		it("reuses one credential session manager for repeated requests from a device", async () => {
+			mockPrismaService.authSession.upsert.mockResolvedValue({});
+			const record = {
+				id: "credential-slot-1",
+				userDid: "did:plc:abc123",
+				kind: "credential",
+				sessionData: JSON.stringify({
+					did: "did:plc:abc123",
+					handle: "alice.opnshelf.social",
+					accessJwt: "stale-access",
+					refreshJwt: "stale-refresh",
+					active: true,
+					pdsUrl: "https://opnshelf.social",
+				}),
+			};
+
+			const first = await service.restoreBySession(record);
+			const second = await service.restoreBySession(record);
+
+			expect(CredentialSession).toHaveBeenCalledTimes(1);
+			expect(
+				credentialSessionHarness.instances[0]?.resumeSession,
+			).toHaveBeenCalledTimes(1);
+			expect(second).toBe(first);
 		});
 	});
 
