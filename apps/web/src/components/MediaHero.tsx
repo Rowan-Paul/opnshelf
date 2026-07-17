@@ -44,31 +44,35 @@ export default function MediaHero({
 				{/* Gradient Overlays */}
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
 				<div className="absolute inset-0 bg-linear-to-r from-(--background) via-(--background)/40 to-transparent" />
+				{/* Top scrim (last, so it wins) keeps the white breadcrumbs readable over bright backdrops */}
+				<div className="absolute inset-x-0 top-0 h-44 bg-linear-to-b from-black/70 via-black/40 to-transparent" />
 			</div>
 
 			{/* Content */}
 			<div className="container-app relative pt-8">
-				{/* Breadcrumbs / Back Button */}
+				{/* Breadcrumbs / Back Button. White + text shadow: these sit on the raw
+				    backdrop image where the gradient overlays are transparent, so theme
+				    text colors vanish. */}
 				{breadcrumbs && breadcrumbs.length > 0 ? (
-					<nav className="mb-6 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+					<nav className="mb-6 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] [&::-webkit-scrollbar]:hidden">
 						{breadcrumbs.map((crumb, index) => (
 							<span
 								key={crumb.to}
 								className="flex min-w-0 shrink-0 items-center gap-2 last:min-w-0 last:shrink"
 							>
-								{index > 0 && (
-									<span className="text-(--foreground-muted)">/</span>
-								)}
+								{index > 0 && <span className="text-white/60">/</span>}
 								{index === breadcrumbs.length - 1 ? (
-									<span className="truncate whitespace-nowrap text-(--foreground-muted)">
+									<span className="truncate whitespace-nowrap text-white">
 										{crumb.label}
 									</span>
 								) : (
 									<Link
 										to={crumb.to}
-										className="inline-flex min-w-0 items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
+										className="inline-flex min-w-0 items-center gap-1 text-white/80 transition-colors hover:text-white"
 									>
-										{index === 0 && <ChevronLeft className="size-4 shrink-0" />}
+										{index === 0 && (
+											<ChevronLeft className="size-4 shrink-0 drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]" />
+										)}
 										<span
 											className={
 												index === 0
