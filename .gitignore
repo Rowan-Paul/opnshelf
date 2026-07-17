@@ -46,3 +46,6 @@ telemetry-id
 
 # Local editor / agent config
 .claude/
+
+# Store screenshots stay local (uploaded to ASC/Play directly)
+apps/mobile/store/screenshots/
