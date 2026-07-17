@@ -11,6 +11,7 @@ import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
 import { StarRating } from "@/components/detail/StarRating";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { useAuth } from "@/lib/auth-context";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const MAX_LENGTH = 20000;
@@ -81,7 +82,13 @@ export function ReviewEditorSheet({
 	const [openCount, setOpenCount] = useState(0);
 
 	// The mirror toggle only appears when the author has a blog configured.
-	const { data: settings } = useQuery(usersControllerGetMySettingsOptions());
+	// Gated on auth: the sheet is mounted (closed) on detail screens guests can
+	// reach, and /users/me/settings 401s without a session.
+	const { isAuthenticated } = useAuth();
+	const { data: settings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: isAuthenticated,
+	});
 	const hasBlog = !!settings?.reviewsPublicationUri;
 	const blogName =
 		settings?.reviewsPublicationName ?? settings?.reviewsPublicationUri ?? null;

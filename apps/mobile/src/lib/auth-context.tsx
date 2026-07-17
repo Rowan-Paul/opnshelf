@@ -3,6 +3,7 @@ import {
 	authControllerMeQueryKey,
 	authControllerRegister,
 	getLoginUrl,
+	getSessionToken,
 	type RegisterDto,
 	setOnUnauthorized,
 	type UserDto,
@@ -105,8 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	// Centralized 401 handling: the API client invokes this on any 401. We clear
 	// the session and route to login with a reason so the screen can explain it.
+	// Guests have no session to expire — a stray 401 from an auth-only endpoint
+	// must not bounce them to login, so bail when there's no token.
 	useEffect(() => {
 		setOnUnauthorized(() => {
+			if (!getSessionToken()) return;
 			void clearSession().then(() => {
 				router.replace({
 					pathname: "/login",
