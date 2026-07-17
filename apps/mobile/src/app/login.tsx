@@ -108,6 +108,18 @@ export default function LoginScreen() {
 							Create New Account
 						</Text>
 					</Pressable>
+
+					<Pressable
+						disabled={isSubmitting}
+						onPress={() =>
+							router.canGoBack() ? router.back() : router.replace("/search")
+						}
+						className="items-center py-2"
+					>
+						<Text className="text-muted-foreground text-sm">
+							Continue without an account
+						</Text>
+					</Pressable>
 				</View>
 			</View>
 		</Screen>
