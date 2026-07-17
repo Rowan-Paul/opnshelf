@@ -435,7 +435,7 @@ export class UsersController {
 	@Post("me/import/bluesky-follows")
 	@UseGuards(AuthGuard)
 	@ApiOperation({
-		summary: "Import Bluesky follows that already have OpnShelf accounts",
+		summary: "Import Bluesky follows that already have Opnshelf accounts",
 	})
 	@ApiResponse({ status: 200, type: ImportBlueskyFollowsResponseDto })
 	@ApiResponse({ status: 401, description: "Not authenticated" })

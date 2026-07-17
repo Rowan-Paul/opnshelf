@@ -7,7 +7,7 @@ import { posthog } from "#/integrations/posthog/provider";
 
 export const Route = createFileRoute("/auth/complete")({
 	head: () => ({
-		meta: [{ title: "Completing sign in | OpnShelf" }],
+		meta: [{ title: "Completing sign in | Opnshelf" }],
 	}),
 	component: AuthCompletePage,
 });

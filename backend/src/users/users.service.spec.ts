@@ -562,7 +562,7 @@ describe("UsersService", () => {
 		});
 	});
 
-	it("returns zero counts when no Bluesky follows match OpnShelf users", async () => {
+	it("returns zero counts when no Bluesky follows match Opnshelf users", async () => {
 		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValueOnce({ did: "did:plc:self" });

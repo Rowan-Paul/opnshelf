@@ -1,6 +1,6 @@
 # Releasing the mobile app
 
-This covers shipping OpnShelf to TestFlight (iOS) and Play internal testing
+This covers shipping Opnshelf to TestFlight (iOS) and Play internal testing
 (Android) via EAS. The repo-side config (`eas.json`, the `EAS Build` workflow,
 `store/`, icons in `assets/images/`) is committed; the steps below are the
 external, credentialed parts that can't live in git.
@@ -10,7 +10,7 @@ external, credentialed parts that can't live in git.
 ### 1. Expo / EAS project
 ```bash
 cd apps/mobile
-eas login                # an Expo account with the OpnShelf project
+eas login                # an Expo account with the Opnshelf project
 eas init                 # links the project, writes extra.eas.projectId to app.config.ts
 ```
 Commit the `extra.eas.projectId` that `eas init` adds.

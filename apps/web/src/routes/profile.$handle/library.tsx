@@ -20,7 +20,7 @@ export const Route = createFileRoute("/profile/$handle/library")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Library | OpnShelf` }],
+			meta: [{ title: `${name}'s Library | Opnshelf` }],
 		};
 	},
 	component: LibraryPage,

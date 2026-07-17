@@ -145,7 +145,7 @@ function truncateGraphemes(value: string, max: number): string {
 }
 
 function crossPostText(mediaTitle: string, reviewTitle: string): string {
-	return `I reviewed ${mediaTitle} on OpnShelf: “${reviewTitle}”\n\n${BLUESKY_CTA}`;
+	return `I reviewed ${mediaTitle} on Opnshelf: “${reviewTitle}”\n\n${BLUESKY_CTA}`;
 }
 
 /** Compose within Bluesky's 300-grapheme limit, trimming review title first. */
@@ -613,7 +613,7 @@ export class ReviewsService {
 		const external: Record<string, unknown> = {
 			uri: canonicalUrl,
 			title: `${review.title} — ${media.title}`,
-			description: `A review by @${user.handle} on OpnShelf.`,
+			description: `A review by @${user.handle} on Opnshelf.`,
 		};
 		if (thumb) external.thumb = thumb;
 

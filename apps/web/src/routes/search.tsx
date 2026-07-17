@@ -55,11 +55,11 @@ export const Route = createFileRoute("/search")({
 		return {
 			meta: [
 				{
-					title: q ? `${q} — Search | OpnShelf` : "Search | OpnShelf",
+					title: q ? `${q} — Search | Opnshelf` : "Search | Opnshelf",
 				},
 				{
 					name: "description",
-					content: "Search for movies, TV shows, and people on OpnShelf.",
+					content: "Search for movies, TV shows, and people on Opnshelf.",
 				},
 			],
 		};

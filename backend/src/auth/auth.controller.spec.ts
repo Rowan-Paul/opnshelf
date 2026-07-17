@@ -136,7 +136,7 @@ describe("AuthController", () => {
 			const mockMetadata = {
 				client_id:
 					"http://127.0.0.1:3001/.well-known/oauth-client-metadata.json",
-				client_name: "OpnShelf",
+				client_name: "Opnshelf",
 			};
 			mockAuthService.getClientMetadata.mockReturnValue(mockMetadata);
 

@@ -64,7 +64,7 @@ function resolvePlaywright() {
 
 	console.log("\n========================================");
 	console.log("  A browser window has opened.");
-	console.log("  Please log in to OpnShelf.");
+	console.log("  Please log in to Opnshelf.");
 	console.log("  The script will auto-detect login.");
 	console.log("========================================\n");
 

@@ -1112,7 +1112,7 @@ export class AuthService implements OnModuleInit {
 	): OAuthClientMetadataInput {
 		return {
 			client_id: clientId,
-			client_name: "OpnShelf",
+			client_name: "Opnshelf",
 			client_uri: oauthClientConfig.clientUri,
 			redirect_uris: [oauthClientConfig.redirectUri],
 			scope: OAUTH_SCOPE,

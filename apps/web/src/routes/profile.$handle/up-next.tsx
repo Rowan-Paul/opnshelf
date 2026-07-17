@@ -38,7 +38,7 @@ export const Route = createFileRoute("/profile/$handle/up-next")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Up Next | OpnShelf` }],
+			meta: [{ title: `${name}'s Up Next | Opnshelf` }],
 		};
 	},
 	component: ProfileUpNextPage,

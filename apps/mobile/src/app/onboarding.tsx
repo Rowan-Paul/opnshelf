@@ -234,7 +234,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 				/>
 				<View className="gap-3">
 					<Text className="text-center font-bold font-display text-4xl text-foreground">
-						Welcome to OpnShelf
+						Welcome to Opnshelf
 					</Text>
 					<Text className="text-center text-base text-muted-foreground leading-6">
 						Let’s get you set up in just a few steps. You can import your watch
@@ -287,7 +287,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 					Set up your profile
 				</Text>
 				<Text className="text-muted-foreground text-sm">
-					Customize how you appear on OpnShelf.
+					Customize how you appear on Opnshelf.
 				</Text>
 			</View>
 
@@ -434,7 +434,7 @@ function SuggestionsStep({
 					People to follow
 				</Text>
 				<Text className="text-muted-foreground text-sm">
-					Find people you know on OpnShelf.
+					Find people you know on Opnshelf.
 				</Text>
 			</View>
 
@@ -521,7 +521,7 @@ function DoneStep({
 					You’re all set!
 				</Text>
 				<Text className="text-center text-base text-muted-foreground leading-6">
-					Welcome to OpnShelf{user?.displayName ? `, ${user.displayName}` : ""}.
+					Welcome to Opnshelf{user?.displayName ? `, ${user.displayName}` : ""}.
 					Start tracking what you watch.
 				</Text>
 			</View>

@@ -12,7 +12,7 @@ export class EmailService {
 	private readonly accountId?: string;
 	private readonly from = {
 		address: "feedback@opnshelf.xyz",
-		name: "OpnShelf",
+		name: "Opnshelf",
 	};
 
 	constructor(private readonly config: ConfigService) {
@@ -38,7 +38,7 @@ export class EmailService {
 			return;
 		}
 
-		const subject = `New OpnShelf feedback: ${category}`;
+		const subject = `New Opnshelf feedback: ${category}`;
 		const name = userDisplayName || userHandle;
 		const pageLine = pageUrl ? `\nPage: ${pageUrl}` : "";
 
@@ -53,7 +53,7 @@ export class EmailService {
 					from: this.from,
 					to,
 					subject,
-					text: `You received new feedback on OpnShelf.\n\nCategory: ${category}\nFrom: ${name} (@${userHandle})${pageLine}\n\nMessage:\n${message}`,
+					text: `You received new feedback on Opnshelf.\n\nCategory: ${category}\nFrom: ${name} (@${userHandle})${pageLine}\n\nMessage:\n${message}`,
 				}),
 			});
 

@@ -13,7 +13,7 @@ import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
 	head: () => ({
-		meta: [{ title: "Log in | OpnShelf" }],
+		meta: [{ title: "Log in | Opnshelf" }],
 	}),
 	component: LoginPage,
 });
@@ -88,7 +88,7 @@ function LoginPage() {
 					<div className="mb-4 flex justify-center">
 						<Logo className="size-16 rounded-2xl" />
 					</div>
-					<h1 className="text-display-2">Welcome to OpnShelf</h1>
+					<h1 className="text-display-2">Welcome to Opnshelf</h1>
 					<p className="mt-2 text-(--foreground-muted)">
 						Track what you watch with your AT Protocol account
 					</p>

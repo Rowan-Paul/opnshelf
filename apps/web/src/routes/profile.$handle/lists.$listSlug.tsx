@@ -37,7 +37,7 @@ export const Route = createFileRoute("/profile/$handle/lists/$listSlug")({
 	head: ({ loaderData }) => {
 		const listName = loaderData?.list?.name || "List";
 		return {
-			meta: [{ title: `${listName} | OpnShelf` }],
+			meta: [{ title: `${listName} | Opnshelf` }],
 		};
 	},
 	component: ListDetailPage,

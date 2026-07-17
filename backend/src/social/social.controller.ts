@@ -49,7 +49,7 @@ export class SocialController {
 	}
 
 	@Get("search")
-	@ApiOperation({ summary: "Search OpnShelf people by handle or display name" })
+	@ApiOperation({ summary: "Search Opnshelf people by handle or display name" })
 	@ApiResponse({ status: 200, type: PaginatedSocialUsersDto })
 	async searchPeople(
 		@Req() req: AuthenticatedRequest,
@@ -64,7 +64,7 @@ export class SocialController {
 	}
 
 	@Post("follows/:targetDid")
-	@ApiOperation({ summary: "Follow an OpnShelf user" })
+	@ApiOperation({ summary: "Follow an Opnshelf user" })
 	@ApiResponse({ status: 200, type: UserRelationshipDto })
 	async follow(
 		@Req() req: AuthenticatedRequest,
@@ -79,7 +79,7 @@ export class SocialController {
 
 	@Delete("follows/:targetDid")
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiOperation({ summary: "Unfollow an OpnShelf user" })
+	@ApiOperation({ summary: "Unfollow an Opnshelf user" })
 	@ApiResponse({ status: 204, description: "Relationship removed" })
 	async unfollow(
 		@Req() req: AuthenticatedRequest,

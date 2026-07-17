@@ -118,7 +118,7 @@ export default function SignupScreen() {
 						Create your account
 					</Text>
 					<Text className="text-base text-muted-foreground">
-						Your account lives on OpnShelf's AT Protocol server.
+						Your account lives on Opnshelf's AT Protocol server.
 					</Text>
 				</View>
 
@@ -152,7 +152,7 @@ export default function SignupScreen() {
 						keyboardType="email-address"
 						autoComplete="email"
 						editable={!isSubmitting}
-						helperText="The PDS requires an email for account recovery and verification. OpnShelf itself never stores it."
+						helperText="The PDS requires an email for account recovery and verification. Opnshelf itself never stores it."
 					/>
 
 					<TextField

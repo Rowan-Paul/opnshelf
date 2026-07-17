@@ -53,11 +53,11 @@ export default function Footer() {
 					<div className="text-center">
 						<Link to="/" className="inline-flex items-center gap-2">
 							<Logo className="size-8 rounded-lg" />
-							<span className="font-bold font-display text-lg">OpnShelf</span>
+							<span className="font-bold font-display text-lg">Opnshelf</span>
 						</Link>
 						<p className="mx-auto mt-4 max-w-sm text-(--foreground-muted) text-sm">
-							Track what you watch and discover what others are watching. A
-							personal media tracker built on the AT Protocol.
+							Track what you watch, share your taste, and discover what others
+							are watching.
 						</p>
 						<div className="mt-6 flex items-center justify-center gap-4">
 							{footerLinks.social.map((item) => {
@@ -86,7 +86,7 @@ export default function Footer() {
 				{/* Bottom */}
 				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-border border-t pt-8 sm:flex-row">
 					<p className="text-(--foreground-subtle) text-sm">
-						&copy; {year} OpnShelf. All rights reserved.
+						&copy; {year} Opnshelf. All rights reserved.
 					</p>
 					<div className="flex items-center gap-4">
 						<Link

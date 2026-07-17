@@ -62,7 +62,7 @@ export function FeedbackDialog({
 				<DialogHeader>
 					<DialogTitle>Send Feedback</DialogTitle>
 					<DialogDescription>
-						Help us improve OpnShelf by sharing your thoughts.
+						Help us improve Opnshelf by sharing your thoughts.
 					</DialogDescription>
 				</DialogHeader>
 

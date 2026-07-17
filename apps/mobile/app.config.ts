@@ -6,7 +6,7 @@ import type { ExpoConfig } from "expo/config";
  * read them through `expo-constants`. Never hardcode keys here.
  */
 const config: ExpoConfig = {
-	name: "OpnShelf",
+	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
 	version: "1.0.0",
@@ -59,7 +59,7 @@ const config: ExpoConfig = {
 			"expo-image-picker",
 			{
 				photosPermission:
-					"OpnShelf needs access to your photos so you can set a profile picture.",
+					"Opnshelf needs access to your photos so you can set a profile picture.",
 			},
 		],
 	],

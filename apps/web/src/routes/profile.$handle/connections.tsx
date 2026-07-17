@@ -37,7 +37,7 @@ export const Route = createFileRoute("/profile/$handle/connections")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Connections | OpnShelf` }],
+			meta: [{ title: `${name}'s Connections | Opnshelf` }],
 		};
 	},
 	component: ProfileConnectionsPage,

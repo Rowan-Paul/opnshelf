@@ -78,7 +78,7 @@ export default function Header() {
 						<Link to="/" className="flex items-center gap-2">
 							<Logo className="size-8 rounded-lg" />
 							<span className="font-bold font-display text-lg tracking-tight">
-								OpnShelf
+								Opnshelf
 							</span>
 						</Link>
 					</nav>
@@ -102,7 +102,7 @@ export default function Header() {
 						<Link to="/" className="flex items-center gap-2">
 							<Logo className="size-8 rounded-lg" />
 							<span className="font-bold font-display text-lg tracking-tight">
-								OpnShelf
+								Opnshelf
 							</span>
 						</Link>
 					</div>

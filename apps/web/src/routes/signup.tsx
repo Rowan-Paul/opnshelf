@@ -21,7 +21,7 @@ import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/signup")({
 	head: () => ({
-		meta: [{ title: "Sign up | OpnShelf" }],
+		meta: [{ title: "Sign up | Opnshelf" }],
 	}),
 	component: SignupPage,
 });
@@ -119,9 +119,9 @@ function SignupPage() {
 					<div className="mb-4 flex justify-center">
 						<Logo className="size-16 rounded-2xl" />
 					</div>
-					<h1 className="text-display-2">Create your OpnShelf account</h1>
+					<h1 className="text-display-2">Create your Opnshelf account</h1>
 					<p className="mt-2 text-(--foreground-muted)">
-						Your account lives on OpnShelf's AT Protocol server
+						Your account lives on Opnshelf's AT Protocol server
 					</p>
 				</div>
 
@@ -174,9 +174,9 @@ function SignupPage() {
 										</button>
 									</TooltipTrigger>
 									<TooltipContent className="max-w-64">
-										Your account is created on OpnShelf's AT Protocol server,
+										Your account is created on Opnshelf's AT Protocol server,
 										which requires an email for account recovery and
-										verification. OpnShelf itself never stores it.
+										verification. Opnshelf itself never stores it.
 									</TooltipContent>
 								</Tooltip>
 							</label>

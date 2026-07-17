@@ -20,7 +20,7 @@ import { useCircles, useCreateCircle } from "#/lib/hooks/useCircles";
 
 export const Route = createFileRoute("/connections")({
 	head: () => ({
-		meta: [{ title: "Connections | OpnShelf" }],
+		meta: [{ title: "Connections | Opnshelf" }],
 	}),
 	component: ConnectionsPage,
 });

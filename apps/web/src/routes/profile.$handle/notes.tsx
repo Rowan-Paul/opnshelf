@@ -31,7 +31,7 @@ export const Route = createFileRoute("/profile/$handle/notes")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Notes | OpnShelf` }],
+			meta: [{ title: `${name}'s Notes | Opnshelf` }],
 		};
 	},
 	component: ProfileNotesPage,

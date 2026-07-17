@@ -37,7 +37,7 @@ export const Route = createFileRoute("/profile/$handle/shelf")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Shelf | OpnShelf` }],
+			meta: [{ title: `${name}'s Shelf | Opnshelf` }],
 		};
 	},
 	component: ProfileShelfPage,

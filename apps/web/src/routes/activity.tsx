@@ -11,11 +11,11 @@ import { useCircles } from "#/lib/hooks/useCircles";
 export const Route = createFileRoute("/activity")({
 	head: () => ({
 		meta: [
-			{ title: "Activity | OpnShelf" },
+			{ title: "Activity | Opnshelf" },
 			{
 				name: "description",
 				content:
-					"Recent watches and reviews from the people you follow on OpnShelf.",
+					"Recent watches and reviews from the people you follow on Opnshelf.",
 			},
 		],
 	}),

@@ -64,7 +64,7 @@ async function bootstrap() {
 	// Swagger only outside production.
 	if (!isProduction) {
 		const config = new DocumentBuilder()
-			.setTitle("OpnShelf API")
+			.setTitle("Opnshelf API")
 			.setDescription("Personal media tracker powered by AT Protocol")
 			.setVersion("1.0")
 			.addCookieAuth("session")

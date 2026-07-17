@@ -48,7 +48,7 @@ export default function LoginScreen() {
 					/>
 					<View className="items-center gap-1.5">
 						<Text className="text-center font-bold font-display text-3xl text-foreground">
-							Welcome to OpnShelf
+							Welcome to Opnshelf
 						</Text>
 						<Text className="text-center text-base text-muted-foreground">
 							Track what you watch with your AT Protocol account

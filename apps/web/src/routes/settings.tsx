@@ -81,7 +81,7 @@ export const Route = createFileRoute("/settings")({
 		}
 	},
 	head: () => ({
-		meta: [{ title: "Settings | OpnShelf" }],
+		meta: [{ title: "Settings | Opnshelf" }],
 	}),
 	component: SettingsPage,
 });
@@ -561,7 +561,7 @@ function SettingsPage() {
 								<h2 className="font-semibold text-lg">Blog mirror</h2>
 							</div>
 							<p className="mb-6 text-(--foreground-muted) text-sm">
-								Your reviews always live on OpnShelf. Optionally, mirror new
+								Your reviews always live on Opnshelf. Optionally, mirror new
 								reviews to one of your own AT Protocol publications as well.
 							</p>
 
@@ -1062,7 +1062,7 @@ function SettingsPage() {
 								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
 							/>
 							<label htmlFor="delete-pds" className="text-sm leading-relaxed">
-								Also delete my OpnShelf data from my PDS, including watch
+								Also delete my Opnshelf data from my PDS, including watch
 								history, follows, lists, and list items.
 							</label>
 						</div>

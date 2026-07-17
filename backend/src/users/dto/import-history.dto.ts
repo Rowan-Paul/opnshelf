@@ -294,12 +294,12 @@ export class ImportBlueskyFollowsResponseDto {
 	scannedCount: number;
 
 	@ApiProperty({
-		description: "How many Bluesky follows already have OpnShelf accounts",
+		description: "How many Bluesky follows already have Opnshelf accounts",
 	})
 	matchedCount: number;
 
 	@ApiProperty({
-		description: "How many new OpnShelf follows were created",
+		description: "How many new Opnshelf follows were created",
 	})
 	createdCount: number;
 

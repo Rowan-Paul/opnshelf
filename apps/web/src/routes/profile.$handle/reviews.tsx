@@ -35,7 +35,7 @@ export const Route = createFileRoute("/profile/$handle/reviews")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Reviews | OpnShelf` }],
+			meta: [{ title: `${name}'s Reviews | Opnshelf` }],
 		};
 	},
 	component: ProfileReviewsPage,

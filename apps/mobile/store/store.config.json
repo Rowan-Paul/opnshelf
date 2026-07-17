@@ -3,19 +3,20 @@
   "apple": {
     "info": {
       "en-US": {
-        "title": "OpnShelf",
-        "subtitle": "Track films, shows & books",
-        "description": "OpnShelf is a personal media tracker built on the AT Protocol. Log what you watch, rate and review it, and keep a shelf you actually own — your data lives in your own repository, not locked inside ours.\n\n- Search films and TV shows\n- Log watches with the date you watched\n- Rate with stars and write full reviews\n- Build a shelf of everything you track\n- Sign in with your AT Protocol / Bluesky account\n\nOpnShelf is open and portable: your reviews are standard.site documents in your own PDS, so they travel with you across the network.",
+        "title": "Opnshelf",
+        "subtitle": "Movies, shows & watchlists",
+        "description": "Opnshelf is your home for movies and TV. Keep track of what you have watched, what you want to see, and what is coming up next — without losing the moments and opinions that made each title memorable.\n\n- Build a watchlist for movies and shows\n- Track seasons, episodes, and release dates\n- Rate titles and write reviews\n- Create lists for every mood and occasion\n- See what friends are watching and recommending\n- Import your Trakt history to get started quickly\n\nYour shelf is personal, social, and portable. Opnshelf is built on an open network, so your identity and media history are not locked to one app.",
         "keywords": [
-          "movies",
-          "tv shows",
-          "tracker",
           "watchlist",
-          "reviews",
+          "diary",
+          "episodes",
           "ratings",
-          "shelf",
-          "atproto",
-          "bluesky"
+          "reviews",
+          "cinema",
+          "television",
+          "tracker",
+          "social",
+          "discover"
         ],
         "marketingUrl": "https://opnshelf.xyz",
         "privacyPolicyUrl": "https://opnshelf.xyz/privacy",

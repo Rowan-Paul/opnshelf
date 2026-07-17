@@ -37,12 +37,12 @@ export const Route = createFileRoute("/reviews/$handle/$rkey")({
 			"";
 		return {
 			meta: [
-				{ title: `${title} | OpnShelf` },
+				{ title: `${title} | Opnshelf` },
 				{
 					name: "description",
 					content:
 						loaderData?.review.description ??
-						`A review by ${author} on OpnShelf.`,
+						`A review by ${author} on Opnshelf.`,
 				},
 			],
 		};

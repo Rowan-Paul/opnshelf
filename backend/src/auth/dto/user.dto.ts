@@ -11,7 +11,7 @@ export class UserDto {
 	displayName: string | null;
 
 	@ApiProperty({
-		description: "OpnShelf profile avatar URL",
+		description: "Opnshelf profile avatar URL",
 		nullable: true,
 		type: String,
 	})

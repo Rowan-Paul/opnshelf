@@ -3,10 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
 	head: () => ({
 		meta: [
-			{ title: "Privacy Policy | OpnShelf" },
+			{ title: "Privacy Policy | Opnshelf" },
 			{
 				name: "description",
-				content: "Privacy Policy for OpnShelf.",
+				content: "Privacy Policy for Opnshelf.",
 			},
 		],
 	}),
@@ -26,7 +26,7 @@ function PrivacyPolicyPage() {
 					<section className="space-y-3">
 						<h2 className="text-(--foreground) text-display-3">Overview</h2>
 						<p>
-							OpnShelf is a personal media tracker built on the AT Protocol. We
+							Opnshelf is a personal media tracker built on the AT Protocol. We
 							take your privacy seriously. This policy explains what data we
 							collect, why we collect it, and how we use it.
 						</p>

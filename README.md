@@ -1,6 +1,8 @@
-# OpnShelf
+# Opnshelf
 
 Track what you watch and discover what others are watching. A personal media tracker built on the AT Protocol that keeps you in control of your data.
+
+Logo masters, palette guidance, and the pre-launch clearance note live in [design/branding](design/branding/BRAND.md).
 
 ## Features
 

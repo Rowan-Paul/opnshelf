@@ -68,7 +68,7 @@ export class UpdateUserSettingsDto {
 export class DeleteUserAccountDto {
 	@ApiProperty({
 		description:
-			"Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.",
+			"Whether to delete the user's Opnshelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.",
 		default: false,
 	})
 	@IsBoolean()
@@ -150,7 +150,7 @@ export class UserSettingsDto {
 
 export class UpdateUserProfileDto {
 	@ApiProperty({
-		description: "Display name shown in OpnShelf",
+		description: "Display name shown in Opnshelf",
 		required: false,
 	})
 	@IsString()
@@ -176,14 +176,14 @@ export class UpdateUserProfileDto {
 
 export class UserProfileDto {
 	@ApiProperty({
-		description: "Display name shown in OpnShelf",
+		description: "Display name shown in Opnshelf",
 		nullable: true,
 		type: String,
 	})
 	displayName!: string | null;
 
 	@ApiProperty({
-		description: "OpnShelf profile avatar URL",
+		description: "Opnshelf profile avatar URL",
 		nullable: true,
 		type: String,
 	})
@@ -263,14 +263,14 @@ export class PublicUserProfileDto {
 	handle!: string;
 
 	@ApiProperty({
-		description: "Display name shown in OpnShelf",
+		description: "Display name shown in Opnshelf",
 		nullable: true,
 		type: String,
 	})
 	displayName!: string | null;
 
 	@ApiProperty({
-		description: "OpnShelf profile avatar URL",
+		description: "Opnshelf profile avatar URL",
 		nullable: true,
 		type: String,
 	})

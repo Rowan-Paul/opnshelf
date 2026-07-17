@@ -17,7 +17,7 @@ import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/calendar")({
 	head: () => ({
-		meta: [{ title: "Release Calendar | OpnShelf" }],
+		meta: [{ title: "Release Calendar | Opnshelf" }],
 	}),
 	component: CalendarPage,
 });

@@ -38,7 +38,7 @@ import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/onboarding")({
 	head: () => ({
-		meta: [{ title: "Welcome | OpnShelf" }],
+		meta: [{ title: "Welcome | Opnshelf" }],
 	}),
 	component: OnboardingPage,
 });
@@ -312,7 +312,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 			<div className="mb-6 flex justify-center">
 				<Logo className="size-16 rounded-2xl" />
 			</div>
-			<h1 className="mb-3 text-display-2">Welcome to OpnShelf</h1>
+			<h1 className="mb-3 text-display-2">Welcome to Opnshelf</h1>
 			<p className="mx-auto mb-8 max-w-sm text-(--foreground-muted)">
 				Let&apos;s get you set up in just a few steps. You can import your watch
 				history and connect with friends already here.
@@ -428,7 +428,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 			<div className="mb-6">
 				<h2 className="text-display-3">Set Up Your Profile</h2>
 				<p className="mt-1 text-(--foreground-muted) text-sm">
-					Customize how you appear on OpnShelf
+					Customize how you appear on Opnshelf
 				</p>
 			</div>
 
@@ -689,7 +689,7 @@ function FollowSuggestionsStep({
 			<div className="mb-6">
 				<h2 className="text-display-3">People to Follow</h2>
 				<p className="mt-1 text-(--foreground-muted) text-sm">
-					Find people you know on OpnShelf
+					Find people you know on Opnshelf
 				</p>
 			</div>
 
@@ -828,7 +828,7 @@ function DoneStep({
 			</div>
 			<h2 className="mb-2 text-display-2">You&apos;re all set!</h2>
 			<p className="mx-auto mb-6 max-w-sm text-(--foreground-muted)">
-				Welcome to OpnShelf{user?.displayName ? `, ${user.displayName}` : ""}.
+				Welcome to Opnshelf{user?.displayName ? `, ${user.displayName}` : ""}.
 				Start tracking what you watch and discover what your friends are into.
 			</p>
 			{completeOnboarding.isPending ? (

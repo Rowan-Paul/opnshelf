@@ -58,8 +58,8 @@ export function buildMoviePageMeta(
 ): PageMeta {
 	if (!movie) {
 		return {
-			title: `${fallbackTitle} | Movies | OpnShelf`,
-			description: `View details, cast, and activity for ${fallbackTitle} on OpnShelf.`,
+			title: `${fallbackTitle} | Movies | Opnshelf`,
+			description: `View details, cast, and activity for ${fallbackTitle} on Opnshelf.`,
 		};
 	}
 
@@ -67,10 +67,10 @@ export function buildMoviePageMeta(
 	const movieTitle = year ? `${movie.title} (${year})` : movie.title;
 
 	return {
-		title: `${movieTitle} | Movies | OpnShelf`,
+		title: `${movieTitle} | Movies | Opnshelf`,
 		description: getDescription(
 			movie.overview,
-			`View details, cast, and watch activity for ${movie.title} on OpnShelf.`,
+			`View details, cast, and watch activity for ${movie.title} on Opnshelf.`,
 		),
 		imageUrl: getTmdbOriginalImageUrl(movie.poster_path),
 	};
@@ -82,8 +82,8 @@ export function buildShowPageMeta(
 ): PageMeta {
 	if (!show) {
 		return {
-			title: `${fallbackTitle} | Shows | OpnShelf`,
-			description: `Track episodes, seasons, and watch progress for ${fallbackTitle} on OpnShelf.`,
+			title: `${fallbackTitle} | Shows | Opnshelf`,
+			description: `Track episodes, seasons, and watch progress for ${fallbackTitle} on Opnshelf.`,
 		};
 	}
 
@@ -91,10 +91,10 @@ export function buildShowPageMeta(
 	const showTitle = year ? `${show.name} (${year})` : show.name;
 
 	return {
-		title: `${showTitle} | Shows | OpnShelf`,
+		title: `${showTitle} | Shows | Opnshelf`,
 		description: getDescription(
 			show.overview,
-			`Track episodes, seasons, and watch progress for ${show.name} on OpnShelf.`,
+			`Track episodes, seasons, and watch progress for ${show.name} on Opnshelf.`,
 		),
 		imageUrl: getTmdbOriginalImageUrl(show.poster_path),
 	};
@@ -120,10 +120,10 @@ export function buildSeasonPageMeta(
 	const imagePath = season?.poster_path || show?.poster_path;
 
 	return {
-		title: `${titleBase} | OpnShelf`,
+		title: `${titleBase} | Opnshelf`,
 		description: getDescription(
 			season?.overview,
-			`Browse episodes and details for ${showName} season ${safeSeasonNumber ?? ""} on OpnShelf.`.trim(),
+			`Browse episodes and details for ${showName} season ${safeSeasonNumber ?? ""} on Opnshelf.`.trim(),
 		),
 		imageUrl: getTmdbOriginalImageUrl(imagePath),
 	};
@@ -160,10 +160,10 @@ export function buildEpisodePageMeta(
 	const imagePath = episode?.still_path || show?.poster_path;
 
 	return {
-		title: `${titleBase || showName} | OpnShelf`,
+		title: `${titleBase || showName} | Opnshelf`,
 		description: getDescription(
 			episode?.overview,
-			`View details for ${showName} ${numbering} on OpnShelf.`.trim(),
+			`View details for ${showName} ${numbering} on Opnshelf.`.trim(),
 		),
 		imageUrl: getTmdbOriginalImageUrl(imagePath),
 	};
@@ -175,16 +175,16 @@ export function buildPersonPageMeta(
 ): PageMeta {
 	if (!person) {
 		return {
-			title: `${fallbackTitle} | People | OpnShelf`,
-			description: `View filmography, biography, and details for ${fallbackTitle} on OpnShelf.`,
+			title: `${fallbackTitle} | People | Opnshelf`,
+			description: `View filmography, biography, and details for ${fallbackTitle} on Opnshelf.`,
 		};
 	}
 
 	return {
-		title: `${person.name} | People | OpnShelf`,
+		title: `${person.name} | People | Opnshelf`,
 		description: getDescription(
 			person.biography,
-			`Explore the filmography and biography of ${person.name} on OpnShelf.`,
+			`Explore the filmography and biography of ${person.name} on Opnshelf.`,
 		),
 		imageUrl: getTmdbOriginalImageUrl(person.profile_path),
 	};

@@ -20,7 +20,7 @@ import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import DashboardMediaCard from "../components/DashboardMediaCard";
 export const Route = createFileRoute("/dashboard")({
 	head: () => ({
-		meta: [{ title: "Home | OpnShelf" }],
+		meta: [{ title: "Home | Opnshelf" }],
 	}),
 	component: Dashboard,
 });

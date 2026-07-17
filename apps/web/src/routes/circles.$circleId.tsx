@@ -19,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/circles/$circleId")({
 	head: () => ({
-		meta: [{ title: "Circle | OpnShelf" }],
+		meta: [{ title: "Circle | Opnshelf" }],
 	}),
 	component: CircleDetailPage,
 });

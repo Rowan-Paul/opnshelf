@@ -185,7 +185,7 @@ export class ImportHistoryService {
 	private readonly logger = new Logger(ImportHistoryService.name);
 	private readonly traktApiKey: string;
 	private readonly traktBaseUrl = "https://api.trakt.tv";
-	private readonly traktUserAgent = "OpnShelf/1.0 (+https://opnshelf.xyz)";
+	private readonly traktUserAgent = "Opnshelf/1.0 (+https://opnshelf.xyz)";
 	private readonly allowedActions = new Set(["watch", "scrobble", "checkin"]);
 
 	constructor(

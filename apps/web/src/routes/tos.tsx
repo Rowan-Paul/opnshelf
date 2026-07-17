@@ -3,10 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/tos")({
 	head: () => ({
 		meta: [
-			{ title: "Terms of Service | OpnShelf" },
+			{ title: "Terms of Service | Opnshelf" },
 			{
 				name: "description",
-				content: "Terms of Service for OpnShelf.",
+				content: "Terms of Service for Opnshelf.",
 			},
 		],
 	}),
@@ -28,12 +28,12 @@ function TermsOfServicePage() {
 							1. Acceptance of Terms
 						</h2>
 						<p>
-							By accessing or using OpnShelf ("the Service"), you agree to be
+							By accessing or using Opnshelf ("the Service"), you agree to be
 							bound by these Terms of Service. If you do not agree to these
 							terms, please do not use the Service.
 						</p>
 						<p>
-							OpnShelf is currently in development preview. Features may change
+							Opnshelf is currently in development preview. Features may change
 							and data may be reset without notice.
 						</p>
 					</section>
@@ -43,7 +43,7 @@ function TermsOfServicePage() {
 							2. Description of Service
 						</h2>
 						<p>
-							OpnShelf is a personal media tracking application built on the AT
+							Opnshelf is a personal media tracking application built on the AT
 							Protocol. It allows you to track movies and TV shows you have
 							watched, discover what others are watching, and manage a personal
 							media shelf.
@@ -62,7 +62,7 @@ function TermsOfServicePage() {
 						<p>
 							You sign in using your existing AT Protocol account (e.g., a
 							Bluesky account). You are responsible for maintaining the security
-							of your AT Protocol credentials. OpnShelf does not store your
+							of your AT Protocol credentials. Opnshelf does not store your
 							password.
 						</p>
 						<p>You must be at least 13 years of age to use the Service.</p>
@@ -94,12 +94,12 @@ function TermsOfServicePage() {
 						<p>
 							Media metadata (titles, posters, descriptions) is sourced from The
 							Movie Database (TMDB) and is subject to their terms and
-							conditions. The OpnShelf application code and branding are owned
+							conditions. The Opnshelf application code and branding are owned
 							by Rowan Paul Flynn.
 						</p>
 						<p>
 							Content you add to your shelf (watch history, ratings, notes, and
-							lists) remains yours. By using the Service, you grant OpnShelf a
+							lists) remains yours. By using the Service, you grant Opnshelf a
 							limited licence to store and display that content to you and,
 							where applicable, to users you follow or who follow you.
 						</p>
@@ -123,7 +123,7 @@ function TermsOfServicePage() {
 							7. Limitation of Liability
 						</h2>
 						<p>
-							To the maximum extent permitted by law, OpnShelf and its creator
+							To the maximum extent permitted by law, Opnshelf and its creator
 							shall not be liable for any indirect, incidental, or consequential
 							damages arising from your use of the Service.
 						</p>

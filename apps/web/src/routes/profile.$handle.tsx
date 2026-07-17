@@ -56,10 +56,10 @@ export const Route = createFileRoute("/profile/$handle")({
 			loaderData?.profile.displayName || loaderData?.profile.handle || "User";
 		return {
 			meta: [
-				{ title: `${name} | OpnShelf` },
+				{ title: `${name} | Opnshelf` },
 				{
 					name: "description",
-					content: `View ${name}'s shelf, lists, and activity on OpnShelf.`,
+					content: `View ${name}'s shelf, lists, and activity on Opnshelf.`,
 				},
 			],
 		};

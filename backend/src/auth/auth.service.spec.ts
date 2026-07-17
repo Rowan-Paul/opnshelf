@@ -163,7 +163,7 @@ describe("AuthService", () => {
 			expect(NodeOAuthClient).toHaveBeenCalledWith({
 				clientMetadata: {
 					client_id: `http://localhost?redirect_uri=${encodeURIComponent("http://127.0.0.1:3001/auth/callback")}&scope=${encodeURIComponent(OAUTH_SCOPE)}`,
-					client_name: "OpnShelf",
+					client_name: "Opnshelf",
 					client_uri: "http://127.0.0.1:3001",
 					redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
 					scope: OAUTH_SCOPE,
@@ -591,7 +591,7 @@ describe("AuthService", () => {
 			expect(metadata).toMatchObject({
 				client_id:
 					"http://127.0.0.1:3001/.well-known/oauth-client-metadata.json",
-				client_name: "OpnShelf",
+				client_name: "Opnshelf",
 				client_uri: "http://127.0.0.1:3001",
 				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
 				scope:
@@ -616,7 +616,7 @@ describe("AuthService", () => {
 			expect(metadata).toMatchObject({
 				client_id:
 					"https://api.opnshelf.xyz/.well-known/oauth-client-metadata.json",
-				client_name: "OpnShelf",
+				client_name: "Opnshelf",
 				client_uri: "https://api.opnshelf.xyz",
 				redirect_uris: ["https://api.opnshelf.xyz/auth/callback"],
 				application_type: "web",

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/profile/$handle/lists/")({
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Lists | OpnShelf` }],
+			meta: [{ title: `${name}'s Lists | Opnshelf` }],
 		};
 	},
 	component: ListsIndexPage,

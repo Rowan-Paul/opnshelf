@@ -386,7 +386,7 @@ export default function SettingsScreen() {
 						showDialog({
 							title: "Also delete PDS data?",
 							description:
-								"Delete your OpnShelf data from your PDS too, including watch history, follows, lists, and list items?",
+								"Delete your Opnshelf data from your PDS too, including watch history, follows, lists, and list items?",
 							actions: [
 								{ label: "Cancel" },
 								{
@@ -464,7 +464,7 @@ export default function SettingsScreen() {
 					{/* Appearance */}
 					<SettingsSection
 						title="Appearance"
-						description="Choose how OpnShelf looks. System follows your device."
+						description="Choose how Opnshelf looks. System follows your device."
 					>
 						<AppearanceSetting />
 					</SettingsSection>
@@ -601,7 +601,7 @@ export default function SettingsScreen() {
 					{/* Blog mirror */}
 					<SettingsSection
 						title="Blog mirror"
-						description="Your reviews always live on OpnShelf. Optionally also mirror new reviews to one of your own AT Protocol blog publications."
+						description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own AT Protocol blog publications."
 					>
 						{storedTargetMissing && (
 							<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">

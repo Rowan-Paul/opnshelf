@@ -13,7 +13,7 @@ import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
-		meta: [{ title: "OpnShelf - Track What You Watch" }],
+		meta: [{ title: "Opnshelf - Track What You Watch" }],
 	}),
 	component: LandingPage,
 });
@@ -30,12 +30,12 @@ const HERO_BACKDROPS = [
 
 const SCREENSHOT_SECTIONS = [
 	{
-		title: "Your Dashboard",
+		title: "Your Home",
 		description:
-			"Your personal command center. See what you've recently watched, what to watch next, and what your friends are up to — all in one place.",
+			"Your personal home for what you've recently watched, what to watch next, and what your friends are up to — all in one place.",
 		icon: LayoutDashboard,
 		image: "/screenshots/dashboard.png",
-		imageAlt: "Dashboard preview",
+		imageAlt: "Opnshelf home preview",
 	},
 	{
 		title: "Discover Anything",
@@ -107,7 +107,7 @@ function LandingPage() {
 						{/* Badge */}
 						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm text-white/90 backdrop-blur-sm">
 							<Sparkles className="h-4 w-4 text-(--accent-400)" />
-							<span>Powered by AT Protocol</span>
+							<span>A better way to track what you watch</span>
 						</div>
 
 						{/* Headline */}
@@ -119,7 +119,7 @@ function LandingPage() {
 
 						{/* Subheadline */}
 						<p className="mx-auto mb-10 max-w-xl text-lg text-white/75">
-							OpnShelf is your personal media tracker. Log movies and shows, see
+							Opnshelf is your personal media tracker. Log movies and shows, see
 							what friends are watching, and discover your next favorite.
 						</p>
 
@@ -214,8 +214,8 @@ function LandingPage() {
 					<div className="mx-auto max-w-2xl text-center">
 						<h2 className="mb-4 text-display-2">Ready to start tracking?</h2>
 						<p className="mb-8 text-(--foreground-muted)">
-							Join thousands of users tracking their media journey with
-							OpnShelf. Sign in with your AT Protocol account to get started.
+							Build your shelf, share your taste, and discover what to watch
+							next. Your media history stays portable and under your control.
 						</p>
 						<Link
 							to="/login"

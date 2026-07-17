@@ -6,28 +6,33 @@ Play has no EAS equivalent yet, so paste the relevant fields into the Play
 Console by hand.
 
 ## Name
-OpnShelf
+Opnshelf
 
 ## Subtitle (iOS, ≤30 chars) / Short description (Play, ≤80 chars)
-- iOS: `Track films, shows & books`
-- Play: `Track what you watch. Rate it, review it, own your shelf — built on atproto.`
+- iOS: `Movies, shows & watchlists`
+- Play: `Track movies and shows, build watchlists, and share your taste with friends.`
+
+## Promotional text (iOS, ≤170 chars)
+Keep every movie and show in one place. Build your watchlist, track episodes,
+rate what you watch, and discover what friends recommend.
 
 ## Full description
-OpnShelf is a personal media tracker built on the AT Protocol. Log what you
-watch, rate and review it, and keep a shelf you actually own — your data lives
-in your own repository, not locked inside ours.
+Opnshelf is your home for movies and TV. Keep track of what you have watched,
+what you want to see, and what is coming up next — without losing the moments
+and opinions that made each title memorable.
 
-- Search films and TV shows
-- Log watches with the date you watched
-- Rate with stars and write full reviews
-- Build a shelf of everything you track
-- Sign in with your AT Protocol / Bluesky account
+- Build a watchlist for movies and shows
+- Track seasons, episodes, and release dates
+- Rate titles and write reviews
+- Create lists for every mood and occasion
+- See what friends are watching and recommending
+- Import your Trakt history to get started quickly
 
-OpnShelf is open and portable: your reviews are standard.site documents in your
-own PDS, so they travel with you across the network.
+Your shelf is personal, social, and portable. Opnshelf is built on an open
+network, so your identity and media history are not locked to one app.
 
 ## Keywords (iOS, comma-separated, ≤100 chars)
-movies,tv shows,tracker,watchlist,reviews,ratings,shelf,atproto,bluesky
+watchlist,diary,episodes,ratings,reviews,cinema,television,tracker,social,discover
 
 ## Categories
 - Primary: Entertainment
@@ -39,6 +44,6 @@ movies,tv shows,tracker,watchlist,reviews,ratings,shelf,atproto,bluesky
 - Privacy policy: https://opnshelf.xyz/privacy
 
 ## App review notes
-A working AT Protocol account is required to sign in. Provide a demo account
-(handle + app password) in App Store Connect / Play Console review notes before
-each submission.
+A working account is required to sign in. Provide the dedicated demo account
+credentials in App Store Connect / Play Console review notes before each
+submission.
