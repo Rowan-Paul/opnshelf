@@ -158,7 +158,7 @@ function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
 							<View
 								className={
 									d.count > 0
-										? "rounded-sm bg-primary/50"
+										? "rounded-sm bg-accent"
 										: "rounded-sm bg-background-subtle"
 								}
 								style={{ height: `${heightPct}%` }}
