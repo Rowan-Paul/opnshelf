@@ -8,7 +8,7 @@ const $nsid = 'xyz.opnshelf.movie'
 
 export { $nsid }
 
-/** A tracked movie record for OpnShelf */
+/** A tracked movie record for Opnshelf */
 type Main = {
   $type: 'xyz.opnshelf.movie'
 
@@ -35,7 +35,7 @@ type Main = {
 
 export type { Main }
 
-/** A tracked movie record for OpnShelf */
+/** A tracked movie record for Opnshelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,

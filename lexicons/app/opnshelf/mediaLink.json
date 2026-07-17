@@ -4,7 +4,7 @@
 	"defs": {
 		"main": {
 			"type": "object",
-			"description": "An embedded, typed link binding a standard.site document to an OpnShelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own.",
+			"description": "An embedded, typed link binding a standard.site document to an Opnshelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own.",
 			"required": ["mediaType", "mediaId"],
 			"properties": {
 				"mediaType": {

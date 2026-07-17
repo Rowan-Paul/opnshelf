@@ -399,7 +399,7 @@ export const usersControllerStartMyTraktImport = <ThrowOnError extends boolean =
 export const usersControllerGetMyCurrentTraktImport = <ThrowOnError extends boolean = false>(options?: Options<UsersControllerGetMyCurrentTraktImportData, ThrowOnError>) => (options?.client ?? client).get<UsersControllerGetMyCurrentTraktImportResponses, UsersControllerGetMyCurrentTraktImportErrors, ThrowOnError>({ url: '/users/me/import/trakt/public/current', ...options });
 
 /**
- * Import Bluesky follows that already have OpnShelf accounts
+ * Import Bluesky follows that already have Opnshelf accounts
  */
 export const usersControllerImportMyBlueskyFollows = <ThrowOnError extends boolean = false>(options?: Options<UsersControllerImportMyBlueskyFollowsData, ThrowOnError>) => (options?.client ?? client).post<UsersControllerImportMyBlueskyFollowsResponses, UsersControllerImportMyBlueskyFollowsErrors, ThrowOnError>({ url: '/users/me/import/bluesky-follows', ...options });
 
@@ -504,17 +504,17 @@ export const listsControllerGetListsForItem = <ThrowOnError extends boolean = fa
 export const socialControllerGetSuggestions = <ThrowOnError extends boolean = false>(options?: Options<SocialControllerGetSuggestionsData, ThrowOnError>) => (options?.client ?? client).get<SocialControllerGetSuggestionsResponses, unknown, ThrowOnError>({ url: '/social/suggestions', ...options });
 
 /**
- * Search OpnShelf people by handle or display name
+ * Search Opnshelf people by handle or display name
  */
 export const socialControllerSearchPeople = <ThrowOnError extends boolean = false>(options: Options<SocialControllerSearchPeopleData, ThrowOnError>) => (options.client ?? client).get<SocialControllerSearchPeopleResponses, unknown, ThrowOnError>({ url: '/social/search', ...options });
 
 /**
- * Unfollow an OpnShelf user
+ * Unfollow an Opnshelf user
  */
 export const socialControllerUnfollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerUnfollowData, ThrowOnError>) => (options.client ?? client).delete<SocialControllerUnfollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
 
 /**
- * Follow an OpnShelf user
+ * Follow an Opnshelf user
  */
 export const socialControllerFollow = <ThrowOnError extends boolean = false>(options: Options<SocialControllerFollowData, ThrowOnError>) => (options.client ?? client).post<SocialControllerFollowResponses, unknown, ThrowOnError>({ url: '/social/follows/{targetDid}', ...options });
 

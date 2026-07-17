@@ -113,7 +113,7 @@ export class SocialService {
 			...alreadyFollowing.map((f) => f.followingDid),
 		]);
 
-		const blueskyMatchDids = await this.fetchBlueskyOpnShelfMatches(
+		const blueskyMatchDids = await this.fetchBlueskyOpnshelfMatches(
 			viewerDid,
 			excludeDids,
 			safeLimit,
@@ -1357,7 +1357,7 @@ export class SocialService {
 		};
 	}
 
-	private async fetchBlueskyOpnShelfMatches(
+	private async fetchBlueskyOpnshelfMatches(
 		did: string,
 		excludeDids: Set<string>,
 		limit: number,

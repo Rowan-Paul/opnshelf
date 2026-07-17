@@ -190,7 +190,7 @@ export type UserDto = {
      */
     displayName: string | null;
     /**
-     * OpnShelf profile avatar URL
+     * Opnshelf profile avatar URL
      */
     avatar: string | null;
     /**
@@ -606,11 +606,11 @@ export type PublicUserProfileDto = {
      */
     handle: string;
     /**
-     * Display name shown in OpnShelf
+     * Display name shown in Opnshelf
      */
     displayName: string | null;
     /**
-     * OpnShelf profile avatar URL
+     * Opnshelf profile avatar URL
      */
     avatar: string | null;
     /**
@@ -744,7 +744,7 @@ export type UpdateUserSettingsDto = {
 
 export type UpdateUserProfileDto = {
     /**
-     * Display name shown in OpnShelf
+     * Display name shown in Opnshelf
      */
     displayName?: string;
     /**
@@ -759,11 +759,11 @@ export type UpdateUserProfileDto = {
 
 export type UserProfileDto = {
     /**
-     * Display name shown in OpnShelf
+     * Display name shown in Opnshelf
      */
     displayName: string | null;
     /**
-     * OpnShelf profile avatar URL
+     * Opnshelf profile avatar URL
      */
     avatar: string | null;
     /**
@@ -786,7 +786,7 @@ export type UserProfileDto = {
 
 export type DeleteUserAccountDto = {
     /**
-     * Whether to delete the user's OpnShelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.
+     * Whether to delete the user's Opnshelf data from their PDS, including watch history, follows, lists, and list items. If false, the data remains on their PDS.
      */
     deletePDSData: boolean;
 };
@@ -944,11 +944,11 @@ export type ImportBlueskyFollowsResponseDto = {
      */
     scannedCount: number;
     /**
-     * How many Bluesky follows already have OpnShelf accounts
+     * How many Bluesky follows already have Opnshelf accounts
      */
     matchedCount: number;
     /**
-     * How many new OpnShelf follows were created
+     * How many new Opnshelf follows were created
      */
     createdCount: number;
     /**

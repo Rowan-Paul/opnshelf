@@ -4,7 +4,7 @@
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "An OpnShelf profile record",
+			"description": "An Opnshelf profile record",
 			"key": "literal:self",
 			"record": {
 				"type": "object",
@@ -13,7 +13,7 @@
 					"displayName": {
 						"type": "string",
 						"maxLength": 64,
-						"description": "Display name shown in OpnShelf"
+						"description": "Display name shown in Opnshelf"
 					},
 					"avatar": {
 						"type": "blob",

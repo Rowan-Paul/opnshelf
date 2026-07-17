@@ -8,7 +8,7 @@ const $nsid = 'xyz.opnshelf.list'
 
 export { $nsid }
 
-/** A movie list for OpnShelf */
+/** A movie list for Opnshelf */
 type Main = {
   $type: 'xyz.opnshelf.list'
 
@@ -40,7 +40,7 @@ type Main = {
 
 export type { Main }
 
-/** A movie list for OpnShelf */
+/** A movie list for Opnshelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,

@@ -8,12 +8,12 @@ const $nsid = 'xyz.opnshelf.follow'
 
 export { $nsid }
 
-/** An OpnShelf follow relationship stored on a user's PDS */
+/** An Opnshelf follow relationship stored on a user's PDS */
 type Main = {
   $type: 'xyz.opnshelf.follow'
 
   /**
-   * The DID of the OpnShelf user being followed
+   * The DID of the Opnshelf user being followed
    */
   subjectDid: string
 
@@ -25,7 +25,7 @@ type Main = {
 
 export type { Main }
 
-/** An OpnShelf follow relationship stored on a user's PDS */
+/** An Opnshelf follow relationship stored on a user's PDS */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,

@@ -8,12 +8,12 @@ const $nsid = 'xyz.opnshelf.profile'
 
 export { $nsid }
 
-/** An OpnShelf profile record */
+/** An Opnshelf profile record */
 type Main = {
   $type: 'xyz.opnshelf.profile'
 
   /**
-   * Display name shown in OpnShelf
+   * Display name shown in Opnshelf
    */
   displayName?: string
 
@@ -35,7 +35,7 @@ type Main = {
 
 export type { Main }
 
-/** An OpnShelf profile record */
+/** An Opnshelf profile record */
 const main = l.record<'literal:self', Main>(
   'literal:self',
   $nsid,

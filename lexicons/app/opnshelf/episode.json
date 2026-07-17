@@ -4,7 +4,7 @@
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "A tracked show episode record for OpnShelf",
+			"description": "A tracked show episode record for Opnshelf",
 			"key": "tid",
 			"record": {
 				"type": "object",

@@ -8,7 +8,7 @@ const $nsid = 'xyz.opnshelf.mediaLink'
 
 export { $nsid }
 
-/** An embedded, typed link binding a standard.site document to an OpnShelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
+/** An embedded, typed link binding a standard.site document to an Opnshelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
 type Main = {
   $type?: 'xyz.opnshelf.mediaLink'
 
@@ -35,7 +35,7 @@ type Main = {
 
 export type { Main }
 
-/** An embedded, typed link binding a standard.site document to an OpnShelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
+/** An embedded, typed link binding a standard.site document to an Opnshelf media item. Placed inside a document's open `links` union; gets no collection and no record of its own. */
 const main = l.typedObject<Main>(
   $nsid,
   'main',

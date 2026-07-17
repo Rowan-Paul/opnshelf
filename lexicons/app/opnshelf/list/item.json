@@ -4,7 +4,7 @@
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "A media item in a list for OpnShelf",
+			"description": "A media item in a list for Opnshelf",
 			"key": "tid",
 			"record": {
 				"type": "object",

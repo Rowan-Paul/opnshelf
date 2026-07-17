@@ -8,7 +8,7 @@ const $nsid = 'xyz.opnshelf.episode'
 
 export { $nsid }
 
-/** A tracked show episode record for OpnShelf */
+/** A tracked show episode record for Opnshelf */
 type Main = {
   $type: 'xyz.opnshelf.episode'
 
@@ -45,7 +45,7 @@ type Main = {
 
 export type { Main }
 
-/** A tracked show episode record for OpnShelf */
+/** A tracked show episode record for Opnshelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,

@@ -4,7 +4,7 @@
 	"defs": {
 		"main": {
 			"type": "record",
-			"description": "An OpnShelf follow relationship stored on a user's PDS",
+			"description": "An Opnshelf follow relationship stored on a user's PDS",
 			"key": "tid",
 			"record": {
 				"type": "object",
@@ -12,7 +12,7 @@
 				"properties": {
 					"subjectDid": {
 						"type": "string",
-						"description": "The DID of the OpnShelf user being followed"
+						"description": "The DID of the Opnshelf user being followed"
 					},
 					"createdAt": {
 						"type": "string",

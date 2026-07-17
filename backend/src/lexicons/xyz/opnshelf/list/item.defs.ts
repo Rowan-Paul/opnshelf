@@ -8,7 +8,7 @@ const $nsid = 'xyz.opnshelf.list.item'
 
 export { $nsid }
 
-/** A media item in a list for OpnShelf */
+/** A media item in a list for Opnshelf */
 type Main = {
   $type: 'xyz.opnshelf.list.item'
 
@@ -50,7 +50,7 @@ type Main = {
 
 export type { Main }
 
-/** A media item in a list for OpnShelf */
+/** A media item in a list for Opnshelf */
 const main = l.record<'tid', Main>(
   'tid',
   $nsid,

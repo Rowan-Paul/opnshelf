@@ -1245,7 +1245,7 @@ export const usersControllerGetMyCurrentTraktImportOptions = (options?: Options<
 });
 
 /**
- * Import Bluesky follows that already have OpnShelf accounts
+ * Import Bluesky follows that already have Opnshelf accounts
  */
 export const usersControllerImportMyBlueskyFollowsMutation = (options?: Partial<Options<UsersControllerImportMyBlueskyFollowsData>>): UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> => {
     const mutationOptions: UseMutationOptions<UsersControllerImportMyBlueskyFollowsResponse, DefaultError, Options<UsersControllerImportMyBlueskyFollowsData>> = {
@@ -1545,7 +1545,7 @@ export const socialControllerGetSuggestionsOptions = (options?: Options<SocialCo
 export const socialControllerSearchPeopleQueryKey = (options: Options<SocialControllerSearchPeopleData>) => createQueryKey('socialControllerSearchPeople', options);
 
 /**
- * Search OpnShelf people by handle or display name
+ * Search Opnshelf people by handle or display name
  */
 export const socialControllerSearchPeopleOptions = (options: Options<SocialControllerSearchPeopleData>) => queryOptions<SocialControllerSearchPeopleResponse, DefaultError, SocialControllerSearchPeopleResponse, ReturnType<typeof socialControllerSearchPeopleQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1563,7 +1563,7 @@ export const socialControllerSearchPeopleOptions = (options: Options<SocialContr
 export const socialControllerSearchPeopleInfiniteQueryKey = (options: Options<SocialControllerSearchPeopleData>): QueryKey<Options<SocialControllerSearchPeopleData>> => createQueryKey('socialControllerSearchPeople', options, true);
 
 /**
- * Search OpnShelf people by handle or display name
+ * Search Opnshelf people by handle or display name
  */
 export const socialControllerSearchPeopleInfiniteOptions = (options: Options<SocialControllerSearchPeopleData>) => infiniteQueryOptions<SocialControllerSearchPeopleResponse, DefaultError, InfiniteData<SocialControllerSearchPeopleResponse>, QueryKey<Options<SocialControllerSearchPeopleData>>, number | Pick<QueryKey<Options<SocialControllerSearchPeopleData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
 // @ts-ignore
@@ -1588,7 +1588,7 @@ export const socialControllerSearchPeopleInfiniteOptions = (options: Options<Soc
 });
 
 /**
- * Unfollow an OpnShelf user
+ * Unfollow an Opnshelf user
  */
 export const socialControllerUnfollowMutation = (options?: Partial<Options<SocialControllerUnfollowData>>): UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> => {
     const mutationOptions: UseMutationOptions<SocialControllerUnfollowResponse, DefaultError, Options<SocialControllerUnfollowData>> = {
@@ -1605,7 +1605,7 @@ export const socialControllerUnfollowMutation = (options?: Partial<Options<Socia
 };
 
 /**
- * Follow an OpnShelf user
+ * Follow an Opnshelf user
  */
 export const socialControllerFollowMutation = (options?: Partial<Options<SocialControllerFollowData>>): UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> => {
     const mutationOptions: UseMutationOptions<SocialControllerFollowResponse, DefaultError, Options<SocialControllerFollowData>> = {
