@@ -1,5 +1,12 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
-import { Film, Search, Tv, X } from "lucide-react-native";
+import {
+	CalendarDays,
+	ChevronDown,
+	Film,
+	Search,
+	Tv,
+	X,
+} from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
@@ -37,9 +44,13 @@ function sectionLabel(date: string): string {
 	const days = Math.round(
 		(startOfToday.getTime() - startOfWatched.getTime()) / 86_400_000,
 	);
-	if (days === 0) return "Today";
-	if (days === 1) return "Yesterday";
+	const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(
+		watched,
+	);
+	if (days === 0) return `Today · ${weekday}`;
+	if (days === 1) return `Yesterday · ${weekday}`;
 	return new Intl.DateTimeFormat(undefined, {
+		weekday: "long",
 		day: "numeric",
 		month: "long",
 		year: "numeric",
@@ -69,6 +80,10 @@ export function ShelfTab({
 	const [filter, setFilter] = useState<Filter>(initialFilter);
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState("");
+	const [showDividers, setShowDividers] = useState(true);
+	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+		new Set(),
+	);
 	const debounced = useDebounce(search.trim(), 350);
 
 	const { data, isLoading, isError } = useProfileShelf(userDid, {
@@ -95,6 +110,14 @@ export function ShelfTab({
 		setFilter(next);
 		setPage(1);
 	};
+	const toggleSection = (label: string) => {
+		setCollapsedSections((current) => {
+			const next = new Set(current);
+			if (next.has(label)) next.delete(label);
+			else next.add(label);
+			return next;
+		});
+	};
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -117,7 +140,7 @@ export function ShelfTab({
 				autoCorrect={false}
 			/>
 
-			<View className="flex-row gap-2">
+			<View className="flex-row flex-wrap gap-2">
 				{FILTERS.map((f) => {
 					const isActive = filter === f.key;
 					const Icon = f.icon;
@@ -146,6 +169,21 @@ export function ShelfTab({
 						</Pressable>
 					);
 				})}
+				<Pressable
+					onPress={() => setShowDividers((visible) => !visible)}
+					accessibilityRole="switch"
+					accessibilityState={{ checked: showDividers }}
+					accessibilityLabel="Show date dividers"
+					className={cn(
+						"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
+						showDividers ? "bg-background-subtle" : "bg-background-elevated",
+					)}
+				>
+					<CalendarDays color="#94a3b8" size={14} />
+					<Text className="font-medium text-muted-foreground text-sm">
+						Dates
+					</Text>
+				</Pressable>
 			</View>
 
 			{isLoading ? (
@@ -158,19 +196,43 @@ export function ShelfTab({
 					title={debounced ? "No results" : "Shelf is empty"}
 					message={debounced ? `Nothing matched “${debounced}”.` : undefined}
 				/>
-			) : (
+			) : showDividers ? (
 				<View className="gap-6">
-					{sections.map((section) => (
-						<View key={section.label} className="gap-3">
-							<Text className="font-display font-semibold text-foreground text-lg">
-								{section.label}
-							</Text>
-							<View className="flex-row flex-wrap">
-								{section.items.map((item) => (
-									<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
-								))}
+					{sections.map((section) => {
+						const collapsed = collapsedSections.has(section.label);
+						return (
+							<View key={section.label} className="gap-3">
+								<Pressable
+									onPress={() => toggleSection(section.label)}
+									accessibilityRole="button"
+									accessibilityState={{ expanded: !collapsed }}
+									accessibilityLabel={`${collapsed ? "Expand" : "Collapse"} ${section.label}`}
+									className="flex-row items-center justify-between border-border border-b pb-2"
+								>
+									<Text className="font-display font-semibold text-foreground text-lg">
+										{section.label}
+									</Text>
+									<ChevronDown
+										color="#94a3b8"
+										size={18}
+										style={{ transform: [{ rotate: collapsed ? "-90deg" : "0deg" }] }}
+									/>
+								</Pressable>
+								{collapsed ? null : (
+									<View className="flex-row flex-wrap">
+										{section.items.map((item) => (
+											<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+										))}
+									</View>
+								)}
 							</View>
-						</View>
+						);
+					})}
+				</View>
+			) : (
+				<View className="flex-row flex-wrap">
+					{items.map((item) => (
+						<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
 					))}
 				</View>
 			)}

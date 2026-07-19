@@ -9,7 +9,7 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { Film, Search, Tv } from "lucide-react";
+import { CalendarDays, ChevronDown, Film, Search, Tv } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
@@ -58,9 +58,13 @@ function sectionLabel(date: string): string {
 		watched.getDate(),
 	);
 	const days = Math.round((today.getTime() - watchedDay.getTime()) / 86_400_000);
-	if (days === 0) return "Today";
-	if (days === 1) return "Yesterday";
+	const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(
+		watched,
+	);
+	if (days === 0) return `Today · ${weekday}`;
+	if (days === 1) return `Yesterday · ${weekday}`;
 	return new Intl.DateTimeFormat(undefined, {
+		weekday: "long",
 		day: "numeric",
 		month: "long",
 		year: "numeric",
@@ -83,6 +87,10 @@ function ProfileShelfPage() {
 	const isOwner = user?.did === userDid;
 
 	const [searchQuery, setSearchQuery] = useState("");
+	const [showDividers, setShowDividers] = useState(true);
+	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+		new Set(),
+	);
 
 	// Server-side pagination with filtering
 	const { data, isLoading } = useQuery({
@@ -129,6 +137,14 @@ function ProfileShelfPage() {
 			navigateToPage(1);
 		}
 	};
+	const toggleSection = (label: string) => {
+		setCollapsedSections((current) => {
+			const next = new Set(current);
+			if (next.has(label)) next.delete(label);
+			else next.add(label);
+			return next;
+		});
+	};
 
 	const items = data?.items ?? [];
 	const sections = items.reduce<Array<{ label: string; items: typeof items }>>(
@@ -165,7 +181,7 @@ function ProfileShelfPage() {
 			</div>
 
 			{/* Filter Tabs */}
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				{(
 					[
 						{ key: "all", label: "All", icon: undefined },
@@ -190,6 +206,19 @@ function ProfileShelfPage() {
 						</button>
 					);
 				})}
+				<button
+					type="button"
+					onClick={() => setShowDividers((visible) => !visible)}
+					aria-pressed={showDividers}
+					className={`flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-colors ${
+						showDividers
+							? "bg-(--background-elevated) text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+							: "bg-(--background-subtle) text-(--foreground-muted)"
+					}`}
+				>
+					<CalendarDays className="size-4" />
+					Dates
+				</button>
 			</div>
 
 			{/* Content */}
@@ -208,19 +237,40 @@ function ProfileShelfPage() {
 						{searchQuery ? "No results found." : "Shelf is empty."}
 					</p>
 				</div>
-			) : (
+			) : showDividers ? (
 				<div className="space-y-8">
-					{sections.map((section) => (
-						<section key={section.label} className="space-y-3">
-							<h2 className="border-(--border) border-b pb-2 font-display font-semibold text-xl">
-								{section.label}
-							</h2>
-							<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
-								{section.items.map((item) => (
-									<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
-								))}
-							</div>
-						</section>
+					{sections.map((section) => {
+						const collapsed = collapsedSections.has(section.label);
+						return (
+							<section key={section.label} className="space-y-3">
+								<h2>
+									<button
+										type="button"
+										onClick={() => toggleSection(section.label)}
+										aria-expanded={!collapsed}
+										className="flex w-full items-center justify-between border-(--border) border-b pb-2 text-left font-display font-semibold text-xl"
+									>
+										{section.label}
+										<ChevronDown
+											className={`size-5 text-(--foreground-muted) transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`}
+										/>
+									</button>
+								</h2>
+								{collapsed ? null : (
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
+										{section.items.map((item) => (
+											<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+										))}
+									</div>
+								)}
+							</section>
+						);
+					})}
+				</div>
+			) : (
+				<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
+					{items.map((item) => (
+						<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
 					))}
 				</div>
 			)}
