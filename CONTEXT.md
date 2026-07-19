@@ -43,7 +43,11 @@ A `site.standard.publication` record in a user's PDS that the user already owns 
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
 
 **Shelf**:
-The collection of media items a user has marked as watched or tracked.
+The collection of media items a user has marked as watched or tracked. Its dated
+timeline view renders one card per **Watch**, so rewatches appear as separate
+cards under their respective watch dates. Date sections are labelled Today,
+Yesterday, or with a full calendar date in the viewer's timezone; every Watch
+card repeats its full date and time without a timezone abbreviation.
 
 **Watch**:
 A single logged instance of a user watching a media item — a tracked record with a watched status and a watch date. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. Counts of "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.

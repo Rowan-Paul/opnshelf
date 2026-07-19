@@ -333,6 +333,33 @@ describe("AuthService", () => {
 			});
 		});
 
+		it("updates an existing user's timezone from the sign-in client", async () => {
+			const profile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+				displayName: null,
+				avatar: null,
+			};
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: profile.did,
+				emailVerifiedAt: new Date(),
+				isNativePds: false,
+				avatar: null,
+			});
+			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
+
+			await service.upsertUser(profile, "Europe/Amsterdam");
+
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					update: expect.objectContaining({
+						handle: profile.handle,
+						timezone: "Europe/Amsterdam",
+					}),
+				}),
+			);
+		});
+
 		it("creates a native-PDS account unverified and gated", async () => {
 			const profile = {
 				did: "did:plc:jane",

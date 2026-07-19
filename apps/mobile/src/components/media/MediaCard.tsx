@@ -1,5 +1,5 @@
 import { type Href, Link } from "expo-router";
-import { Check, Plus, Star } from "lucide-react-native";
+import { Check, Plus, Star, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { NoteEditorSheet } from "@/components/detail/NoteEditorSheet";
@@ -47,6 +47,8 @@ export type MediaCardItem = {
 	 * season-scoped list entries). Ignored when `episode` is set.
 	 */
 	label?: string;
+	/** Full watch timestamp shown by the dated Shelf timeline. */
+	timestamp?: string;
 };
 
 /**
@@ -62,12 +64,14 @@ export type MediaCardItem = {
 export function MediaCard({
 	item,
 	actions = false,
+	onRemove,
 }: {
 	item: MediaCardItem;
 	actions?: boolean;
+	onRemove?: () => void;
 }) {
 	if (actions) return <MediaCardWithActions item={item} />;
-	return <MediaCardBase item={item} />;
+	return <MediaCardBase item={item} onRemove={onRemove} />;
 }
 
 const href = (item: MediaCardItem): Href =>
@@ -81,11 +85,13 @@ function MediaCardBase({
 	item,
 	overlay,
 	onLongPress,
+	onRemove,
 }: {
 	item: MediaCardItem;
 	/** Optional corner overlay rendered on top of the poster. */
 	overlay?: React.ReactNode;
 	onLongPress?: () => void;
+	onRemove?: () => void;
 }) {
 	return (
 		<Link href={href(item)} asChild>
@@ -106,6 +112,19 @@ function MediaCardBase({
 						className="aspect-2/3 w-full"
 					/>
 					{overlay}
+					{onRemove ? (
+						<Pressable
+							hitSlop={8}
+							onPress={(event) => {
+								event.stopPropagation();
+								onRemove();
+								}}
+							className="absolute left-1.5 top-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+							accessibilityLabel="Remove this watch"
+						>
+							<X color="#ffffff" size={15} />
+						</Pressable>
+					) : null}
 				</View>
 				<Text
 					className="mt-2 font-medium text-foreground text-sm"
@@ -147,6 +166,15 @@ function MediaCardBase({
 						) : null}
 					</View>
 				)}
+				{item.timestamp ? (
+					<Text
+						selectable
+						className="mt-1 text-muted-foreground text-xs"
+						numberOfLines={1}
+					>
+						{item.timestamp}
+					</Text>
+				) : null}
 			</Pressable>
 		</Link>
 	);

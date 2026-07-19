@@ -12,8 +12,12 @@ export default function ProfileShelfScreen() {
 
 	return (
 		<ProfileSubScreen handle={handle ?? ""} title="Shelf">
-			{({ userDid }) => (
-				<ShelfTab userDid={userDid} initialFilter={initialFilter} />
+			{({ userDid, isOwner }) => (
+				<ShelfTab
+					userDid={userDid}
+					isOwner={isOwner}
+					initialFilter={initialFilter}
+				/>
 			)}
 		</ProfileSubScreen>
 	);

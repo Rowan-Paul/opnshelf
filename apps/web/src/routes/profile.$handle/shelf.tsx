@@ -1,4 +1,5 @@
 import {
+	type ShelfResponseDto,
 	shelfControllerGetUserShelfOptions,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
@@ -14,6 +15,7 @@ import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
 import { useAuth } from "#/lib/auth-context";
+import { useWatchActions } from "#/lib/hooks/useWatchActions";
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
@@ -45,6 +47,25 @@ export const Route = createFileRoute("/profile/$handle/shelf")({
 });
 
 type FilterType = "all" | "movie" | "episode";
+
+function sectionLabel(date: string): string {
+	const watched = new Date(date);
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const watchedDay = new Date(
+		watched.getFullYear(),
+		watched.getMonth(),
+		watched.getDate(),
+	);
+	const days = Math.round((today.getTime() - watchedDay.getTime()) / 86_400_000);
+	if (days === 0) return "Today";
+	if (days === 1) return "Yesterday";
+	return new Intl.DateTimeFormat(undefined, {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	}).format(watched);
+}
 
 function ProfileShelfPage() {
 	const { handle } = Route.useParams();
@@ -110,6 +131,17 @@ function ProfileShelfPage() {
 	};
 
 	const items = data?.items ?? [];
+	const sections = items.reduce<Array<{ label: string; items: typeof items }>>(
+		(groups, item) => {
+			if (!item.watchedDate) return groups;
+			const label = sectionLabel(item.watchedDate);
+			const group = groups.at(-1);
+			if (group?.label === label) group.items.push(item);
+			else groups.push({ label, items: [item] });
+			return groups;
+		},
+		[],
+	);
 
 	return (
 		<div className="space-y-6">
@@ -177,38 +209,19 @@ function ProfileShelfPage() {
 					</p>
 				</div>
 			) : (
-				<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
-					{items.map((item) => {
-						const isMovie = item.type === "movie";
-						return (
-							<ActionableMediaCard
-								key={item.id}
-								fill
-								id={
-									isMovie ? (item.movieId as string) : (item.showId as string)
-								}
-								title={
-									isMovie ? (item.title as string) : (item.showTitle as string)
-								}
-								posterUrl={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
-								type={isMovie ? "movie" : "show"}
-								seasonNumber={
-									isMovie ? undefined : (item.seasonNumber as number)
-								}
-								episodeNumber={
-									isMovie ? undefined : (item.episodeNumber as number)
-								}
-								episodeInfo={
-									isMovie
-										? undefined
-										: `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
-								}
-								watchedDate={item.watchedDate}
-								interactive={isOwner}
-								isWatched={true}
-							/>
-						);
-					})}
+				<div className="space-y-8">
+					{sections.map((section) => (
+						<section key={section.label} className="space-y-3">
+							<h2 className="border-(--border) border-b pb-2 font-display font-semibold text-xl">
+								{section.label}
+							</h2>
+							<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
+								{section.items.map((item) => (
+									<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+								))}
+							</div>
+						</section>
+					))}
 				</div>
 			)}
 
@@ -223,5 +236,42 @@ function ProfileShelfPage() {
 				</div>
 			)}
 		</div>
+	);
+}
+
+function ShelfWatchCard({
+	item,
+	isOwner,
+}: {
+	item: ShelfResponseDto["items"][number];
+	isOwner: boolean;
+}) {
+	const isMovie = item.type === "movie";
+	const actions = useWatchActions(
+		isMovie
+			? { mediaType: "movie", movieId: item.movieId }
+			: { mediaType: "show", showId: item.showId },
+	);
+	const watchId = item.id.replace(/^(movie|episode):/, "");
+	const remove = () => {
+		if (isMovie) actions.deleteMovieWatchHistoryEntry(watchId);
+		else actions.deleteEpisodeWatchHistoryEntry(watchId);
+	};
+
+	return (
+		<ActionableMediaCard
+			fill
+			id={isMovie ? item.movieId : item.showId}
+			title={isMovie ? item.title : item.showTitle}
+			posterUrl={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
+			type={isMovie ? "movie" : "show"}
+			seasonNumber={isMovie ? undefined : item.seasonNumber}
+			episodeNumber={isMovie ? undefined : item.episodeNumber}
+			episodeInfo={isMovie ? undefined : `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`}
+			watchedDate={item.watchedDate}
+			interactive={false}
+			isWatched
+			onRemove={isOwner ? remove : undefined}
+		/>
 	);
 }

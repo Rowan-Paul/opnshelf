@@ -1,3 +1,4 @@
+import type { ShelfResponseDto } from "@opnshelf/api";
 import { Film, Search, Tv, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -10,8 +11,40 @@ import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { useDebounce } from "@/lib/use-debounce";
 import { useProfileShelf } from "@/lib/use-public-profile";
+import { useWatchActions } from "@/lib/use-watch-actions";
 
 type Filter = "all" | "movie" | "episode";
+
+function formatWatchDate(date: string): string {
+	return new Intl.DateTimeFormat(undefined, {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+	}).format(new Date(date));
+}
+
+function sectionLabel(date: string): string {
+	const watched = new Date(date);
+	const now = new Date();
+	const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const startOfWatched = new Date(
+		watched.getFullYear(),
+		watched.getMonth(),
+		watched.getDate(),
+	);
+	const days = Math.round(
+		(startOfToday.getTime() - startOfWatched.getTime()) / 86_400_000,
+	);
+	if (days === 0) return "Today";
+	if (days === 1) return "Yesterday";
+	return new Intl.DateTimeFormat(undefined, {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	}).format(watched);
+}
 
 const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
 	{ key: "all", label: "All" },
@@ -26,9 +59,11 @@ const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
  */
 export function ShelfTab({
 	userDid,
+	isOwner = false,
 	initialFilter = "all",
 }: {
 	userDid: string;
+	isOwner?: boolean;
 	initialFilter?: Filter;
 }) {
 	const [filter, setFilter] = useState<Filter>(initialFilter);
@@ -43,6 +78,17 @@ export function ShelfTab({
 	});
 
 	const items = data?.items ?? [];
+	const sections = items.reduce<Array<{ label: string; items: typeof items }>>(
+		(groups, item) => {
+			if (!item.watchedDate) return groups;
+			const label = sectionLabel(item.watchedDate);
+			const group = groups.at(-1);
+			if (group?.label === label) group.items.push(item);
+			else groups.push({ label, items: [item] });
+			return groups;
+		},
+		[],
+	);
 	const totalPages = data?.totalPages ?? 1;
 
 	const changeFilter = (next: Filter) => {
@@ -113,10 +159,17 @@ export function ShelfTab({
 					message={debounced ? `Nothing matched “${debounced}”.` : undefined}
 				/>
 			) : (
-				<View className="flex-row flex-wrap">
-					{items.map((item) => (
-						<View key={item.id} className="w-1/3 px-1 pb-3">
-							<MediaCard item={shelfItemToCardItem(item)} actions />
+				<View className="gap-6">
+					{sections.map((section) => (
+						<View key={section.label} className="gap-3">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								{section.label}
+							</Text>
+							<View className="flex-row flex-wrap">
+								{section.items.map((item) => (
+									<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+								))}
+							</View>
 						</View>
 					))}
 				</View>
@@ -149,6 +202,38 @@ export function ShelfTab({
 					</Pressable>
 				</View>
 			) : null}
+		</View>
+	);
+}
+
+function ShelfWatchCard({
+	item,
+	isOwner,
+}: {
+	item: ShelfResponseDto["items"][number];
+	isOwner: boolean;
+}) {
+	const isMovie = item.type === "movie";
+	const actions = useWatchActions(
+		isMovie
+			? { mediaType: "movie", movieId: item.movieId }
+			: { mediaType: "show", showId: item.showId },
+	);
+	const watchId = item.id.replace(/^(movie|episode):/, "");
+	const remove = () => {
+		if (isMovie) actions.deleteMovieWatchHistoryEntry(watchId);
+		else actions.deleteEpisodeWatchHistoryEntry(watchId);
+	};
+
+	return (
+		<View className="w-1/3 px-1 pb-3">
+			<MediaCard
+				item={{
+					...shelfItemToCardItem(item),
+					timestamp: formatWatchDate(item.watchedDate!),
+				}}
+				onRemove={isOwner ? remove : undefined}
+			/>
 		</View>
 	);
 }
