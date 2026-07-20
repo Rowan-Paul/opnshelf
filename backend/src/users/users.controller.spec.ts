@@ -2,8 +2,15 @@ import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { AuthenticatedRequest } from "../auth/types";
 
+const { fileInterceptorCalls } = vi.hoisted(() => ({
+	fileInterceptorCalls: [] as unknown[][],
+}));
+
 vi.mock("@nestjs/platform-express", () => ({
-	FileInterceptor: () => class MockFileInterceptor {},
+	FileInterceptor: (...args: unknown[]) => {
+		fileInterceptorCalls.push(args);
+		return class MockFileInterceptor {};
+	},
 }));
 
 vi.mock("./users.service", () => ({
@@ -67,6 +74,21 @@ describe("UsersController", () => {
 		}).compile();
 
 		controller = module.get<UsersController>(UsersController);
+	});
+
+	it("configures strict multipart limits for avatar uploads", () => {
+		expect(fileInterceptorCalls).toContainEqual([
+			"avatar",
+			{
+				limits: {
+					fileSize: 5 * 1024 * 1024,
+					files: 1,
+					fields: 0,
+					parts: 1,
+					fieldNestingDepth: 1,
+				},
+			},
+		]);
 	});
 
 	it("forwards the authenticated did to the service (representative wiring)", async () => {

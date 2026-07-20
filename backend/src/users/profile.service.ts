@@ -1,4 +1,5 @@
 import { buildAvatarUrl, rebaseAvatarUrl } from "./avatar-url";
+import { MAX_AVATAR_BYTES } from "./avatar.constants";
 import { Agent } from "@atproto/api";
 import { IdResolver } from "@atproto/identity";
 import {
@@ -42,7 +43,6 @@ type StoredProfileRecord = {
 type PlainProfileBlob = NonNullable<ProfileRecord["avatar"]>;
 
 const PROFILE_RKEY = "self";
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
 	"image/jpeg",
 	"image/png",

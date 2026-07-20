@@ -57,6 +57,15 @@ import {
 	SocialPaginationQueryDto,
 	PaginatedSocialUsersDto,
 } from "../social/dto/social.dto";
+import { MAX_AVATAR_BYTES } from "./avatar.constants";
+
+const AVATAR_MULTIPART_LIMITS = {
+	fileSize: MAX_AVATAR_BYTES,
+	files: 1,
+	fields: 0,
+	parts: 1,
+	fieldNestingDepth: 1,
+};
 
 @ApiTags("users")
 @Controller("users")
@@ -194,7 +203,11 @@ export class UsersController {
 
 	@Post("me/profile/avatar")
 	@UseGuards(AuthGuard)
-	@UseInterceptors(FileInterceptor("avatar"))
+	@UseInterceptors(
+		FileInterceptor("avatar", {
+			limits: AVATAR_MULTIPART_LIMITS,
+		}),
+	)
 	@ApiConsumes("multipart/form-data")
 	@ApiBody({
 		schema: {
