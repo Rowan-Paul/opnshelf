@@ -19,6 +19,7 @@ import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/list/item.
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
+import { TmdbServiceError } from "../tmdb/tmdb-http";
 import type {
 	AddToListDto,
 	CreateListDto,
@@ -1035,6 +1036,7 @@ export class ListsService {
 					const movieData = await this.moviesService.getMovieDetails(mediaId);
 					await this.moviesService.upsertMovie(movieData);
 				} catch (err) {
+					if (err instanceof TmdbServiceError) throw err;
 					this.logger.error(
 						`Failed to fetch movie ${mediaId} from TMDB, skipping item`,
 						err,
@@ -1049,6 +1051,7 @@ export class ListsService {
 					const showData = await this.showsService.getShowDetails(mediaId);
 					await this.showsService.upsertShow(showData);
 				} catch (err) {
+					if (err instanceof TmdbServiceError) throw err;
 					this.logger.error(
 						`Failed to fetch show ${mediaId} from TMDB, skipping item`,
 						err,

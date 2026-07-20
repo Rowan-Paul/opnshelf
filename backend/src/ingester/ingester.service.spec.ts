@@ -481,6 +481,59 @@ describe("IngesterService", () => {
 			expect(mockListsService.indexListItemRecord).toHaveBeenCalled();
 		});
 
+		it.each([
+			{
+				collection: "xyz.opnshelf.list.item",
+				record: {
+					$type: "xyz.opnshelf.list.item",
+					listRkey: "watchlist",
+					mediaType: "movie",
+					mediaId: "123",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				indexRecord: () => mockListsService.indexListItemRecord,
+			},
+			{
+				collection: "xyz.opnshelf.library.item",
+				record: {
+					$type: "xyz.opnshelf.library.item",
+					mediaType: "movie",
+					mediaId: "123",
+					format: "digital",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				indexRecord: () => mockLibraryService.indexLibraryItemRecord,
+			},
+		])(
+			"redelivers $collection records when enrichment reports a transient TMDB failure",
+			async ({ collection, record, indexRecord }) => {
+				const recordHandler = setupRecordHandler();
+				mockPrismaService.user.findUnique.mockResolvedValue({
+					did: "did:plc:abc123",
+				});
+				const outage = new TmdbServiceError("TMDB unavailable");
+				indexRecord().mockRejectedValue(outage);
+
+				await expect(
+					recordHandler({
+						id: 22,
+						type: "record",
+						action: "create",
+						did: "did:plc:abc123",
+						rev: "rev-tmdb-outage",
+						collection,
+						rkey: "item-tmdb-outage",
+						record,
+						cid: "cid-tmdb-outage",
+						live: true,
+					} as RecordEvent),
+				).rejects.toBe(outage);
+
+				expect(indexRecord()).toHaveBeenCalledTimes(3);
+			},
+			10000,
+		);
+
 		it("should index review like for xyz.opnshelf.review.like create", async () => {
 			const recordHandler = setupRecordHandler();
 			mockPrismaService.user.findUnique.mockResolvedValue({
