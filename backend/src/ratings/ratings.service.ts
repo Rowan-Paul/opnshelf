@@ -221,7 +221,7 @@ export class RatingsService {
 		record: RatingRecord,
 	): Promise<void> {
 		await this.prisma.rating.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -244,9 +244,9 @@ export class RatingsService {
 		});
 	}
 
-	async deleteRatingRecord(rkey: string): Promise<void> {
+	async deleteRatingRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.rating.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 }

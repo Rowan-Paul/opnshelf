@@ -299,10 +299,11 @@ export type TrackedEpisodeOrderByWithRelationInput = {
 
 export type TrackedEpisodeWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
+  userDid_rkey?: Prisma.TrackedEpisodeUserDidRkeyCompoundUniqueInput
   AND?: Prisma.TrackedEpisodeWhereInput | Prisma.TrackedEpisodeWhereInput[]
   OR?: Prisma.TrackedEpisodeWhereInput[]
   NOT?: Prisma.TrackedEpisodeWhereInput | Prisma.TrackedEpisodeWhereInput[]
+  rkey?: Prisma.StringFilter<"TrackedEpisode"> | string
   uri?: Prisma.StringFilter<"TrackedEpisode"> | string
   cid?: Prisma.StringFilter<"TrackedEpisode"> | string
   userDid?: Prisma.StringFilter<"TrackedEpisode"> | string
@@ -315,7 +316,7 @@ export type TrackedEpisodeWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"TrackedEpisode"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   show?: Prisma.XOR<Prisma.ShowScalarRelationFilter, Prisma.ShowWhereInput>
-}, "id" | "rkey">
+}, "id" | "userDid_rkey">
 
 export type TrackedEpisodeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -466,6 +467,11 @@ export type TrackedEpisodeListRelationFilter = {
 
 export type TrackedEpisodeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type TrackedEpisodeUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type TrackedEpisodeCountOrderByAggregateInput = {

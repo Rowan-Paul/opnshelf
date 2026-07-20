@@ -521,7 +521,9 @@ export class ListsService {
 				}
 
 				const indexedDefault = await this.prisma.list.upsert({
-					where: { rkey: repoDefault.rkey },
+					where: {
+						userDid_rkey: { userDid, rkey: repoDefault.rkey },
+					},
 					create: {
 						rkey: repoDefault.rkey,
 						uri: repoDefault.uri,
@@ -886,6 +888,7 @@ export class ListsService {
 				uri: response.data.uri,
 				cid: response.data.cid,
 				listId: list.id,
+				userDid,
 				mediaType: dto.mediaType,
 				mediaId: dto.mediaId,
 				seasonNumber: dto.seasonNumber ?? 0,
@@ -958,7 +961,7 @@ export class ListsService {
 		record: ListRecord,
 	): Promise<void> {
 		await this.prisma.list.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -979,9 +982,9 @@ export class ListsService {
 		});
 	}
 
-	async deleteListRecord(rkey: string): Promise<void> {
+	async deleteListRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.list.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 
@@ -1059,11 +1062,12 @@ export class ListsService {
 		}
 
 		await this.prisma.listItem.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
 				cid,
+				userDid,
 				listId: list.id,
 				mediaType,
 				mediaId,
@@ -1086,9 +1090,9 @@ export class ListsService {
 		});
 	}
 
-	async deleteListItemRecord(rkey: string): Promise<void> {
+	async deleteListItemRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.listItem.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 

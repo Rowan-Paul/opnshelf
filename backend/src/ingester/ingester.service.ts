@@ -585,7 +585,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			}
 
 			await this.prisma.trackedMovie.upsert({
-				where: { rkey: evt.rkey },
+				where: {
+					userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
+				},
 				create: {
 					uri,
 					rkey: evt.rkey,
@@ -607,7 +609,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.prisma.trackedMovie.deleteMany({
-				where: { rkey: evt.rkey },
+				where: { userDid: evt.did, rkey: evt.rkey },
 			});
 		}
 	}
@@ -680,7 +682,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.listsService.deleteListRecord(evt.rkey);
+			await this.listsService.deleteListRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -737,7 +739,9 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				);
 
 			await this.prisma.trackedEpisode.upsert({
-				where: { rkey: evt.rkey },
+				where: {
+					userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
+				},
 				create: {
 					uri,
 					rkey: evt.rkey,
@@ -763,7 +767,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		if (evt.action === "delete") {
 			await this.prisma.trackedEpisode.deleteMany({
-				where: { rkey: evt.rkey },
+				where: { userDid: evt.did, rkey: evt.rkey },
 			});
 		}
 	}
@@ -800,7 +804,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.listsService.deleteListItemRecord(evt.rkey);
+			await this.listsService.deleteListItemRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -836,7 +840,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.libraryService.deleteLibraryItemRecord(evt.rkey);
+			await this.libraryService.deleteLibraryItemRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -872,7 +876,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.notesService.deleteNoteRecord(evt.rkey);
+			await this.notesService.deleteNoteRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -908,7 +912,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.reviewsService.deleteReviewRecord(evt.rkey);
+			await this.reviewsService.deleteReviewRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -944,7 +948,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.reviewsService.deletePublicationRecord(evt.rkey);
+			await this.reviewsService.deletePublicationRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -980,7 +984,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.ratingsService.deleteRatingRecord(evt.rkey);
+			await this.ratingsService.deleteRatingRecord(evt.did, evt.rkey);
 		}
 	}
 
@@ -1016,7 +1020,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (evt.action === "delete") {
-			await this.reviewsService.deleteReviewLikeRecord(evt.rkey);
+			await this.reviewsService.deleteReviewLikeRecord(evt.did, evt.rkey);
 		}
 	}
 }

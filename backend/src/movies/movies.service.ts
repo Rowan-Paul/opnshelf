@@ -389,12 +389,12 @@ export class MoviesService {
 
 		await this.upsertMovie(movieData);
 
-		// Upsert keyed on the unique rkey so a re-run of an import (e.g. after a
+		// Upsert keyed on the repository-qualified rkey so a re-run of an import (e.g. after a
 		// crash between the PDS write and this DB write) overwrites rather than
 		// duplicates. Stays consistent with the firehose ingester, the other
-		// writer of this row, which also upserts on { rkey }.
+		// writer of this row, which uses the same owner-qualified identity.
 		return this.prisma.trackedMovie.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				uri,
 				rkey,

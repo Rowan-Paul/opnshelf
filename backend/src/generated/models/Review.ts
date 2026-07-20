@@ -362,10 +362,11 @@ export type ReviewOrderByWithRelationInput = {
 
 export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
+  userDid_rkey?: Prisma.ReviewUserDidRkeyCompoundUniqueInput
   AND?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
   OR?: Prisma.ReviewWhereInput[]
   NOT?: Prisma.ReviewWhereInput | Prisma.ReviewWhereInput[]
+  rkey?: Prisma.StringFilter<"Review"> | string
   uri?: Prisma.StringFilter<"Review"> | string
   cid?: Prisma.StringFilter<"Review"> | string
   userDid?: Prisma.StringFilter<"Review"> | string
@@ -385,7 +386,7 @@ export type ReviewWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Review"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   likes?: Prisma.ReviewLikeListRelationFilter
-}, "id" | "rkey">
+}, "id" | "userDid_rkey">
 
 export type ReviewOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -604,6 +605,11 @@ export type ReviewListRelationFilter = {
 
 export type ReviewOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ReviewUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type ReviewCountOrderByAggregateInput = {

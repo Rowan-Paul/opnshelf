@@ -234,7 +234,7 @@ export class NotesService {
 		record: NoteRecord,
 	): Promise<void> {
 		await this.prisma.note.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -257,9 +257,9 @@ export class NotesService {
 		});
 	}
 
-	async deleteNoteRecord(rkey: string): Promise<void> {
+	async deleteNoteRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.note.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 }

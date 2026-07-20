@@ -236,7 +236,7 @@ export class LibraryService {
 		}
 
 		await this.prisma.libraryItem.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -267,8 +267,8 @@ export class LibraryService {
 		});
 	}
 
-	async deleteLibraryItemRecord(rkey: string): Promise<void> {
-		await this.prisma.libraryItem.deleteMany({ where: { rkey } });
+	async deleteLibraryItemRecord(userDid: string, rkey: string): Promise<void> {
+		await this.prisma.libraryItem.deleteMany({ where: { userDid, rkey } });
 	}
 
 	private async episodeNameMap(

@@ -243,10 +243,11 @@ export type TrackedMovieOrderByWithRelationInput = {
 
 export type TrackedMovieWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
+  userDid_rkey?: Prisma.TrackedMovieUserDidRkeyCompoundUniqueInput
   AND?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[]
   OR?: Prisma.TrackedMovieWhereInput[]
   NOT?: Prisma.TrackedMovieWhereInput | Prisma.TrackedMovieWhereInput[]
+  rkey?: Prisma.StringFilter<"TrackedMovie"> | string
   uri?: Prisma.StringFilter<"TrackedMovie"> | string
   cid?: Prisma.StringFilter<"TrackedMovie"> | string
   userDid?: Prisma.StringFilter<"TrackedMovie"> | string
@@ -257,7 +258,7 @@ export type TrackedMovieWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"TrackedMovie"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   movie?: Prisma.XOR<Prisma.MovieScalarRelationFilter, Prisma.MovieWhereInput>
-}, "id" | "rkey">
+}, "id" | "userDid_rkey">
 
 export type TrackedMovieOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -388,6 +389,11 @@ export type TrackedMovieListRelationFilter = {
 
 export type TrackedMovieOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type TrackedMovieUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type TrackedMovieCountOrderByAggregateInput = {

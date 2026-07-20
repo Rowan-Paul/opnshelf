@@ -44,6 +44,7 @@ export type ListItemMinAggregateOutputType = {
   uri: string | null
   cid: string | null
   listId: string | null
+  userDid: string | null
   mediaType: $Enums.MediaType | null
   mediaId: string | null
   seasonNumber: number | null
@@ -61,6 +62,7 @@ export type ListItemMaxAggregateOutputType = {
   uri: string | null
   cid: string | null
   listId: string | null
+  userDid: string | null
   mediaType: $Enums.MediaType | null
   mediaId: string | null
   seasonNumber: number | null
@@ -78,6 +80,7 @@ export type ListItemCountAggregateOutputType = {
   uri: number
   cid: number
   listId: number
+  userDid: number
   mediaType: number
   mediaId: number
   seasonNumber: number
@@ -109,6 +112,7 @@ export type ListItemMinAggregateInputType = {
   uri?: true
   cid?: true
   listId?: true
+  userDid?: true
   mediaType?: true
   mediaId?: true
   seasonNumber?: true
@@ -126,6 +130,7 @@ export type ListItemMaxAggregateInputType = {
   uri?: true
   cid?: true
   listId?: true
+  userDid?: true
   mediaType?: true
   mediaId?: true
   seasonNumber?: true
@@ -143,6 +148,7 @@ export type ListItemCountAggregateInputType = {
   uri?: true
   cid?: true
   listId?: true
+  userDid?: true
   mediaType?: true
   mediaId?: true
   seasonNumber?: true
@@ -247,6 +253,7 @@ export type ListItemGroupByOutputType = {
   uri: string
   cid: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber: number
@@ -287,6 +294,7 @@ export type ListItemWhereInput = {
   uri?: Prisma.StringFilter<"ListItem"> | string
   cid?: Prisma.StringNullableFilter<"ListItem"> | string | null
   listId?: Prisma.StringFilter<"ListItem"> | string
+  userDid?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
   seasonNumber?: Prisma.IntFilter<"ListItem"> | number
@@ -307,6 +315,7 @@ export type ListItemOrderByWithRelationInput = {
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrderInput | Prisma.SortOrder
   listId?: Prisma.SortOrder
+  userDid?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
@@ -323,14 +332,16 @@ export type ListItemOrderByWithRelationInput = {
 
 export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   listId_mediaType_mediaId_seasonNumber_episodeNumber?: Prisma.ListItemListIdMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput
+  userDid_rkey?: Prisma.ListItemUserDidRkeyCompoundUniqueInput
   AND?: Prisma.ListItemWhereInput | Prisma.ListItemWhereInput[]
   OR?: Prisma.ListItemWhereInput[]
   NOT?: Prisma.ListItemWhereInput | Prisma.ListItemWhereInput[]
+  rkey?: Prisma.StringFilter<"ListItem"> | string
   uri?: Prisma.StringFilter<"ListItem"> | string
   cid?: Prisma.StringNullableFilter<"ListItem"> | string | null
   listId?: Prisma.StringFilter<"ListItem"> | string
+  userDid?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
   seasonNumber?: Prisma.IntFilter<"ListItem"> | number
@@ -343,7 +354,7 @@ export type ListItemWhereUniqueInput = Prisma.AtLeast<{
   list?: Prisma.XOR<Prisma.ListScalarRelationFilter, Prisma.ListWhereInput>
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
   show?: Prisma.XOR<Prisma.ShowNullableScalarRelationFilter, Prisma.ShowWhereInput> | null
-}, "id" | "rkey" | "listId_mediaType_mediaId_seasonNumber_episodeNumber">
+}, "id" | "listId_mediaType_mediaId_seasonNumber_episodeNumber" | "userDid_rkey">
 
 export type ListItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -351,6 +362,7 @@ export type ListItemOrderByWithAggregationInput = {
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrderInput | Prisma.SortOrder
   listId?: Prisma.SortOrder
+  userDid?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
@@ -376,6 +388,7 @@ export type ListItemScalarWhereWithAggregatesInput = {
   uri?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
   cid?: Prisma.StringNullableWithAggregatesFilter<"ListItem"> | string | null
   listId?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
+  userDid?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeWithAggregatesFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringWithAggregatesFilter<"ListItem"> | string
   seasonNumber?: Prisma.IntWithAggregatesFilter<"ListItem"> | number
@@ -392,6 +405,7 @@ export type ListItemCreateInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -410,6 +424,7 @@ export type ListItemUncheckedCreateInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -426,6 +441,7 @@ export type ListItemUpdateInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -444,6 +460,7 @@ export type ListItemUncheckedUpdateInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -461,6 +478,7 @@ export type ListItemCreateManyInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -477,6 +495,7 @@ export type ListItemUpdateManyMutationInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -492,6 +511,7 @@ export type ListItemUncheckedUpdateManyInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -521,12 +541,18 @@ export type ListItemListIdMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqu
   episodeNumber: number
 }
 
+export type ListItemUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
+}
+
 export type ListItemCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   rkey?: Prisma.SortOrder
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrder
   listId?: Prisma.SortOrder
+  userDid?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
@@ -550,6 +576,7 @@ export type ListItemMaxOrderByAggregateInput = {
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrder
   listId?: Prisma.SortOrder
+  userDid?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
@@ -567,6 +594,7 @@ export type ListItemMinOrderByAggregateInput = {
   uri?: Prisma.SortOrder
   cid?: Prisma.SortOrder
   listId?: Prisma.SortOrder
+  userDid?: Prisma.SortOrder
   mediaType?: Prisma.SortOrder
   mediaId?: Prisma.SortOrder
   seasonNumber?: Prisma.SortOrder
@@ -719,6 +747,7 @@ export type ListItemCreateWithoutMovieInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -736,6 +765,7 @@ export type ListItemUncheckedCreateWithoutMovieInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -781,6 +811,7 @@ export type ListItemScalarWhereInput = {
   uri?: Prisma.StringFilter<"ListItem"> | string
   cid?: Prisma.StringNullableFilter<"ListItem"> | string | null
   listId?: Prisma.StringFilter<"ListItem"> | string
+  userDid?: Prisma.StringFilter<"ListItem"> | string
   mediaType?: Prisma.EnumMediaTypeFilter<"ListItem"> | $Enums.MediaType
   mediaId?: Prisma.StringFilter<"ListItem"> | string
   seasonNumber?: Prisma.IntFilter<"ListItem"> | number
@@ -797,6 +828,7 @@ export type ListItemCreateWithoutShowInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -814,6 +846,7 @@ export type ListItemUncheckedCreateWithoutShowInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -855,6 +888,7 @@ export type ListItemCreateWithoutListInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -871,6 +905,7 @@ export type ListItemUncheckedCreateWithoutListInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -914,6 +949,7 @@ export type ListItemCreateManyMovieInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -929,6 +965,7 @@ export type ListItemUpdateWithoutMovieInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -946,6 +983,7 @@ export type ListItemUncheckedUpdateWithoutMovieInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -962,6 +1000,7 @@ export type ListItemUncheckedUpdateManyWithoutMovieInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -978,6 +1017,7 @@ export type ListItemCreateManyShowInput = {
   uri: string
   cid?: string | null
   listId: string
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -993,6 +1033,7 @@ export type ListItemUpdateWithoutShowInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1010,6 +1051,7 @@ export type ListItemUncheckedUpdateWithoutShowInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1026,6 +1068,7 @@ export type ListItemUncheckedUpdateManyWithoutShowInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   listId?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1041,6 +1084,7 @@ export type ListItemCreateManyListInput = {
   rkey: string
   uri: string
   cid?: string | null
+  userDid: string
   mediaType: $Enums.MediaType
   mediaId: string
   seasonNumber?: number
@@ -1057,6 +1101,7 @@ export type ListItemUpdateWithoutListInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1073,6 +1118,7 @@ export type ListItemUncheckedUpdateWithoutListInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1089,6 +1135,7 @@ export type ListItemUncheckedUpdateManyWithoutListInput = {
   rkey?: Prisma.StringFieldUpdateOperationsInput | string
   uri?: Prisma.StringFieldUpdateOperationsInput | string
   cid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   mediaType?: Prisma.EnumMediaTypeFieldUpdateOperationsInput | $Enums.MediaType
   mediaId?: Prisma.StringFieldUpdateOperationsInput | string
   seasonNumber?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1108,6 +1155,7 @@ export type ListItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   uri?: boolean
   cid?: boolean
   listId?: boolean
+  userDid?: boolean
   mediaType?: boolean
   mediaId?: boolean
   seasonNumber?: boolean
@@ -1128,6 +1176,7 @@ export type ListItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   uri?: boolean
   cid?: boolean
   listId?: boolean
+  userDid?: boolean
   mediaType?: boolean
   mediaId?: boolean
   seasonNumber?: boolean
@@ -1148,6 +1197,7 @@ export type ListItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   uri?: boolean
   cid?: boolean
   listId?: boolean
+  userDid?: boolean
   mediaType?: boolean
   mediaId?: boolean
   seasonNumber?: boolean
@@ -1168,6 +1218,7 @@ export type ListItemSelectScalar = {
   uri?: boolean
   cid?: boolean
   listId?: boolean
+  userDid?: boolean
   mediaType?: boolean
   mediaId?: boolean
   seasonNumber?: boolean
@@ -1179,7 +1230,7 @@ export type ListItemSelectScalar = {
   createdAt?: boolean
 }
 
-export type ListItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "listId" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "movieId" | "showId" | "notes" | "position" | "createdAt", ExtArgs["result"]["listItem"]>
+export type ListItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "rkey" | "uri" | "cid" | "listId" | "userDid" | "mediaType" | "mediaId" | "seasonNumber" | "episodeNumber" | "movieId" | "showId" | "notes" | "position" | "createdAt", ExtArgs["result"]["listItem"]>
 export type ListItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   list?: boolean | Prisma.ListDefaultArgs<ExtArgs>
   movie?: boolean | Prisma.ListItem$movieArgs<ExtArgs>
@@ -1209,6 +1260,7 @@ export type $ListItemPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     uri: string
     cid: string | null
     listId: string
+    userDid: string
     mediaType: $Enums.MediaType
     mediaId: string
     seasonNumber: number
@@ -1649,6 +1701,7 @@ export interface ListItemFieldRefs {
   readonly uri: Prisma.FieldRef<"ListItem", 'String'>
   readonly cid: Prisma.FieldRef<"ListItem", 'String'>
   readonly listId: Prisma.FieldRef<"ListItem", 'String'>
+  readonly userDid: Prisma.FieldRef<"ListItem", 'String'>
   readonly mediaType: Prisma.FieldRef<"ListItem", 'MediaType'>
   readonly mediaId: Prisma.FieldRef<"ListItem", 'String'>
   readonly seasonNumber: Prisma.FieldRef<"ListItem", 'Int'>

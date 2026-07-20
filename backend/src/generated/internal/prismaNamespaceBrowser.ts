@@ -323,6 +323,7 @@ export const ListItemScalarFieldEnum = {
   uri: 'uri',
   cid: 'cid',
   listId: 'listId',
+  userDid: 'userDid',
   mediaType: 'mediaType',
   mediaId: 'mediaId',
   seasonNumber: 'seasonNumber',

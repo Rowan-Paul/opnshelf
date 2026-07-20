@@ -297,11 +297,12 @@ export type NoteOrderByWithRelationInput = {
 
 export type NoteWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   userDid_mediaType_mediaId_seasonNumber_episodeNumber?: Prisma.NoteUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput
+  userDid_rkey?: Prisma.NoteUserDidRkeyCompoundUniqueInput
   AND?: Prisma.NoteWhereInput | Prisma.NoteWhereInput[]
   OR?: Prisma.NoteWhereInput[]
   NOT?: Prisma.NoteWhereInput | Prisma.NoteWhereInput[]
+  rkey?: Prisma.StringFilter<"Note"> | string
   uri?: Prisma.StringFilter<"Note"> | string
   cid?: Prisma.StringFilter<"Note"> | string
   userDid?: Prisma.StringFilter<"Note"> | string
@@ -313,7 +314,7 @@ export type NoteWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Note"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Note"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "rkey" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber">
+}, "id" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber" | "userDid_rkey">
 
 export type NoteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -473,6 +474,11 @@ export type NoteUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueIn
   mediaId: string
   seasonNumber: number
   episodeNumber: number
+}
+
+export type NoteUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type NoteCountOrderByAggregateInput = {

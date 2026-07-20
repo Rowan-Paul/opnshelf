@@ -232,10 +232,11 @@ export type PublicationOrderByWithRelationInput = {
 
 export type PublicationWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
+  userDid_rkey?: Prisma.PublicationUserDidRkeyCompoundUniqueInput
   AND?: Prisma.PublicationWhereInput | Prisma.PublicationWhereInput[]
   OR?: Prisma.PublicationWhereInput[]
   NOT?: Prisma.PublicationWhereInput | Prisma.PublicationWhereInput[]
+  rkey?: Prisma.StringFilter<"Publication"> | string
   uri?: Prisma.StringFilter<"Publication"> | string
   cid?: Prisma.StringFilter<"Publication"> | string
   userDid?: Prisma.StringFilter<"Publication"> | string
@@ -244,7 +245,7 @@ export type PublicationWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Publication"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Publication"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "rkey">
+}, "id" | "userDid_rkey">
 
 export type PublicationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -367,6 +368,11 @@ export type PublicationListRelationFilter = {
 
 export type PublicationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type PublicationUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type PublicationCountOrderByAggregateInput = {
