@@ -9,6 +9,7 @@ import type { Main as LibraryItemRecord } from "../lexicons/xyz/opnshelf/library
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
+import { TmdbServiceError } from "../tmdb/tmdb-http";
 import type {
 	AddToLibraryDto,
 	LibraryFormat,
@@ -212,6 +213,7 @@ export class LibraryService {
 					const movieData = await this.moviesService.getMovieDetails(mediaId);
 					await this.moviesService.upsertMovie(movieData);
 				} catch (err) {
+					if (err instanceof TmdbServiceError) throw err;
 					this.logger.error(
 						`Failed to fetch movie ${mediaId} from TMDB, skipping library item`,
 						err,
@@ -226,6 +228,7 @@ export class LibraryService {
 					const showData = await this.showsService.getShowDetails(mediaId);
 					await this.showsService.upsertShow(showData);
 				} catch (err) {
+					if (err instanceof TmdbServiceError) throw err;
 					this.logger.error(
 						`Failed to fetch show ${mediaId} from TMDB, skipping library item`,
 						err,

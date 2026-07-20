@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
+import { Logger } from "@nestjs/common";
 
 vi.mock("../prisma/prisma.service", () => ({
 	PrismaService: vi.fn(),
@@ -51,6 +52,7 @@ vi.mock("../lexicons/xyz/opnshelf/list/item", () => ({
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
+import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
 import { ListsService } from "./lists.service";
 
 describe("ListsService", () => {
@@ -1216,6 +1218,89 @@ describe("ListsService", () => {
 				}),
 			);
 		});
+
+		it.each(["movie", "show"] as const)(
+			"rethrows transient TMDB failures while indexing a %s",
+			async (mediaType) => {
+				const isMovie = mediaType === "movie";
+				const details = isMovie
+					? mockMoviesService.getMovieDetails
+					: mockShowsService.getShowDetails;
+				const upsert = isMovie
+					? mockMoviesService.upsertMovie
+					: mockShowsService.upsertShow;
+				const existing = isMovie
+					? mockMoviesService.getMovieByTMDBId
+					: mockShowsService.getShowByTMDBId;
+				const outage = new TmdbServiceError("TMDB unavailable");
+				mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+				existing.mockResolvedValue(null);
+				details.mockRejectedValue(outage);
+
+				await expect(
+					service.indexListItemRecord(
+						"at://did:plc:abc123/xyz.opnshelf.list.item/item-1",
+						"cid-1",
+						"item-1",
+						"did:plc:abc123",
+						{
+							$type: "xyz.opnshelf.list.item",
+							listRkey: "watchlist",
+							mediaType,
+							mediaId: "123",
+							createdAt: "2024-01-01T00:00:00.000Z",
+						},
+					),
+				).rejects.toBe(outage);
+
+				expect(upsert).not.toHaveBeenCalled();
+				expect(mockPrismaService.listItem.upsert).not.toHaveBeenCalled();
+			},
+		);
+
+		it.each(["movie", "show"] as const)(
+			"drops a permanently missing TMDB %s while indexing",
+			async (mediaType) => {
+				const isMovie = mediaType === "movie";
+				const details = isMovie
+					? mockMoviesService.getMovieDetails
+					: mockShowsService.getShowDetails;
+				const upsert = isMovie
+					? mockMoviesService.upsertMovie
+					: mockShowsService.upsertShow;
+				const existing = isMovie
+					? mockMoviesService.getMovieByTMDBId
+					: mockShowsService.getShowByTMDBId;
+				const errorSpy = vi.spyOn(Logger.prototype, "error");
+				mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+				existing.mockResolvedValue(null);
+				details.mockRejectedValue(new TmdbNotFoundError("Not found", 404));
+
+				await expect(
+					service.indexListItemRecord(
+						"at://did:plc:abc123/xyz.opnshelf.list.item/item-1",
+						"cid-1",
+						"item-1",
+						"did:plc:abc123",
+						{
+							$type: "xyz.opnshelf.list.item",
+							listRkey: "watchlist",
+							mediaType,
+							mediaId: "123",
+							createdAt: "2024-01-01T00:00:00.000Z",
+						},
+					),
+				).resolves.toBeUndefined();
+
+				expect(errorSpy).toHaveBeenCalledWith(
+					expect.stringContaining("skipping item"),
+					expect.any(TmdbNotFoundError),
+				);
+				expect(upsert).not.toHaveBeenCalled();
+				expect(mockPrismaService.listItem.upsert).not.toHaveBeenCalled();
+				errorSpy.mockRestore();
+			},
+		);
 	});
 
 	describe("deleteListItemRecord", () => {
