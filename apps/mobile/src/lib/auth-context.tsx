@@ -18,6 +18,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// guaranteed to 401, so we skip it entirely.
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [hasSessionToken, setHasSessionToken] = useState(false);
+	const isExpiringSession = useRef(false);
 
 	// Use queryKey + a manual queryFn (rather than spreading the generated
 	// `...authControllerMeOptions()`) to avoid a query-core type mismatch between
@@ -117,14 +119,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		};
 	}, []);
 
+	const resetIdentityCache = useCallback(async () => {
+		await queryClient.cancelQueries();
+		queryClient.clear();
+	}, [queryClient]);
+
 	const clearSession = useCallback(async () => {
 		await saveSessionToken(null);
 		posthog?.reset();
+		await resetIdentityCache();
 		setHasSessionToken(false);
-		const meKey = authControllerMeQueryKey();
-		queryClient.setQueryData(meKey, null);
-		queryClient.removeQueries({ queryKey: meKey });
-	}, [queryClient]);
+	}, [resetIdentityCache]);
 
 	// Centralized 401 handling: the API client invokes this on any 401. We clear
 	// the session and route to login with a reason so the screen can explain it.
@@ -132,7 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// must not bounce them to login, so bail when there's no token.
 	useEffect(() => {
 		setOnUnauthorized(() => {
-			if (!getSessionToken()) return;
+			if (!getSessionToken() || isExpiringSession.current) return;
+			isExpiringSession.current = true;
 			void clearSession().then(
 				() => {
 					router.replace({
@@ -141,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					});
 				},
 				() => {
+					isExpiringSession.current = false;
 					console.error("Failed to clear the expired session");
 				},
 			);
@@ -152,7 +159,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// result and the `auth/complete` deep-link route.
 	const completeSession = useCallback(
 		async (sessionId: string): Promise<UserDto | null> => {
+			await resetIdentityCache();
 			await saveSessionToken(sessionId);
+			isExpiringSession.current = false;
 			setHasSessionToken(true);
 			// Fetch the user immediately so callers can route on the result.
 			const fetchedUser = await queryClient.fetchQuery({
@@ -171,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			}
 			return fetchedUser;
 		},
-		[queryClient],
+		[queryClient, resetIdentityCache],
 	);
 
 	// Run the OAuth web flow and persist the returned session token. On Android
@@ -224,7 +233,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Native apps can't use the httpOnly cookie the backend also sets, so we
 			// persist the opaque session id from the body and drive the API client
 			// off it (same Bearer-token path as the OAuth flow).
+			await resetIdentityCache();
 			await saveSessionToken(data.sessionId);
+			isExpiringSession.current = false;
 			setHasSessionToken(true);
 			const fetchedUser = await queryClient.fetchQuery({
 				queryKey: authControllerMeQueryKey(),
@@ -241,24 +252,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				posthog?.capture("user_signed_up", { method: "pds_register" });
 			}
 		},
-		[queryClient],
+		[queryClient, resetIdentityCache],
 	);
 
 	const signOut = useCallback(async () => {
 		try {
 			await authControllerLogout({ throwOnError: true });
 		} catch (error) {
-			// An already-invalid session is effectively revoked. Retryable failures
-			// retain the local credential so the user can try logout again.
-			if (!isUnauthorizedApiError(error)) throw error;
+			// Best-effort revocation: an already-invalid session is effectively
+			// revoked, and a network/5xx failure must not trap an offline user in a
+			// signed-in state — the server session expires by TTL regardless.
+			if (!isUnauthorizedApiError(error)) {
+				console.error("Failed to revoke the server session", error);
+			}
 		}
 		await saveSessionToken(null);
 		posthog?.reset();
+		await resetIdentityCache();
 		setHasSessionToken(false);
-		queryClient.setQueryData(authControllerMeQueryKey(), null);
-		queryClient.clear();
 		router.replace("/login");
-	}, [queryClient]);
+	}, [resetIdentityCache]);
 
 	// Loading until the token is restored. If a token exists, also wait for the
 	// first `me` fetch to settle (the query is disabled — and thus not pending in
