@@ -7,7 +7,7 @@
     "dev:mobile": "pnpm --filter mobile start",
     "dev:backend": "pnpm --filter backend start:dev",
     "build": "turbo run build",
-    "generate:api": "pnpm --filter @opnshelf/api exec openapi-ts",
+    "generate:api": "pnpm --filter backend run openapi:generate && pnpm --filter @opnshelf/api exec openapi-ts",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
     "check": "turbo run check",

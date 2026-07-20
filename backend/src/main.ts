@@ -1,11 +1,12 @@
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/http-exception.filter";
+import { createOpenApiDocument } from "./openapi";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -63,14 +64,7 @@ async function bootstrap() {
 
 	// Swagger only outside production.
 	if (!isProduction) {
-		const config = new DocumentBuilder()
-			.setTitle("Opnshelf API")
-			.setDescription("Personal media tracker powered by AT Protocol")
-			.setVersion("1.0")
-			.addCookieAuth("session")
-			.build();
-
-		const document = SwaggerModule.createDocument(app, config);
+		const document = createOpenApiDocument(app);
 		SwaggerModule.setup("api", app, document);
 	}
 

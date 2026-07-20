@@ -11,6 +11,7 @@
     "railway:build": "prisma generate && nest build",
     "lex:build": "lex build --lexicons ../lexicons --out ./src/lexicons --clear && pnpm format",
     "lex:install": "lex install",
+    "openapi:generate": "node -e \"require('ts-node').register({ project: 'tsconfig.json', experimentalResolver: true }); require('./src/generate-openapi.ts')\"",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
