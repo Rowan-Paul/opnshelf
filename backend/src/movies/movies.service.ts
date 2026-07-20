@@ -83,11 +83,9 @@ export class MoviesService {
 		for (const tracked of trackedMovies) {
 			const existing = movieMap.get(tracked.movieId);
 			if (!existing) {
-				// Count total watches for this movie
-				const watchCount = trackedMovies.filter(
-					(tm) => tm.movieId === tracked.movieId,
-				).length;
-				movieMap.set(tracked.movieId, { ...tracked, watchCount });
+				movieMap.set(tracked.movieId, { ...tracked, watchCount: 1 });
+			} else {
+				existing.watchCount += 1;
 			}
 		}
 

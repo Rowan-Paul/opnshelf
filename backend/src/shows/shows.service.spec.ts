@@ -888,4 +888,57 @@ describe("ShowsService", () => {
 			expect(result).toEqual({ showId: "123", mode: "all", deletedCount: 2 });
 		});
 	});
+
+	describe("getUserShows", () => {
+		it("groups interleaved episodes while keeping the newest representative and colors", async () => {
+			const colors = { primary: "#112233", secondary: "#445566" };
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{
+					id: "tracked-1",
+					showId: "123",
+					watchedDate: new Date("2024-01-15"),
+					show: { name: "Show 1", colors },
+				},
+				{
+					id: "tracked-2",
+					showId: "456",
+					watchedDate: new Date("2024-01-12"),
+					show: { name: "Show 2", colors: null },
+				},
+				{
+					id: "tracked-3",
+					showId: "123",
+					watchedDate: new Date("2024-01-10"),
+					show: { name: "Show 1", colors: null },
+				},
+			]);
+
+			const result = await service.getUserShows("did:plc:abc123");
+
+			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:abc123" },
+				include: { show: true },
+				orderBy: { watchedDate: "desc" },
+			});
+			expect(result).toHaveLength(2);
+			expect(result[0]).toMatchObject({
+				id: "tracked-1",
+				showId: "123",
+				watchCount: 2,
+			});
+			expect(result[0].show.colors).toEqual(colors);
+			expect(result[1]).toMatchObject({ showId: "456", watchCount: 1 });
+			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledTimes(
+				1,
+			);
+		});
+
+		it("returns an empty array when the user has no tracked shows", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+
+			await expect(service.getUserShows("did:plc:unknown")).resolves.toEqual(
+				[],
+			);
+		});
+	});
 });

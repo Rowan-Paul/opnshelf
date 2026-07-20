@@ -156,6 +156,7 @@ describe("MoviesController", () => {
 
 	describe("getUserMovies", () => {
 		it("should return tracked movies for a user with colors", async () => {
+			const mockColors = { primary: "#ff0000", secondary: "#00ff00" };
 			const mockTrackedMovies = [
 				{
 					id: "1",
@@ -173,12 +174,11 @@ describe("MoviesController", () => {
 						title: "Test Movie",
 						posterPath: "/poster.jpg",
 						releaseYear: 2024,
+						colors: mockColors,
 					},
 				},
 			];
-			const mockColors = { primary: "#ff0000", secondary: "#00ff00" };
 			mockMoviesService.getUserMovies.mockResolvedValue(mockTrackedMovies);
-			mockMoviesService.ensureMovieHasColors.mockResolvedValue(mockColors);
 
 			const result = await controller.getUserMovies("did:plc:abc123");
 
@@ -188,9 +188,7 @@ describe("MoviesController", () => {
 			expect(mockMoviesService.getUserMovies).toHaveBeenCalledWith(
 				"did:plc:abc123",
 			);
-			expect(mockMoviesService.ensureMovieHasColors).toHaveBeenCalledWith(
-				"123",
-			);
+			expect(mockMoviesService.ensureMovieHasColors).not.toHaveBeenCalled();
 		});
 
 		it("should return empty array for user with no tracked movies", async () => {
@@ -199,6 +197,7 @@ describe("MoviesController", () => {
 			const result = await controller.getUserMovies("did:plc:newuser");
 
 			expect(result).toEqual([]);
+			expect(mockMoviesService.ensureMovieHasColors).not.toHaveBeenCalled();
 		});
 	});
 

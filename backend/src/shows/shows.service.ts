@@ -431,10 +431,9 @@ export class ShowsService {
 		for (const tracked of trackedEpisodes) {
 			const existing = showMap.get(tracked.showId);
 			if (!existing) {
-				const watchCount = trackedEpisodes.filter(
-					(te) => te.showId === tracked.showId,
-				).length;
-				showMap.set(tracked.showId, { ...tracked, watchCount });
+				showMap.set(tracked.showId, { ...tracked, watchCount: 1 });
+			} else {
+				existing.watchCount += 1;
 			}
 		}
 

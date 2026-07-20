@@ -117,26 +117,7 @@ export class MoviesController {
 	@ApiOperation({ summary: "Get tracked movies for a user" })
 	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
 	async getUserMovies(@Param("userDid") userDid: string) {
-		const trackedMovies = await this.moviesService.getUserMovies(userDid);
-
-		// Process each movie to ensure colors are included
-		const moviesWithColors = await Promise.all(
-			trackedMovies.map(async (tracked) => {
-				const colors = await this.moviesService.ensureMovieHasColors(
-					tracked.movieId,
-				);
-
-				return {
-					...tracked,
-					movie: {
-						...tracked.movie,
-						colors: colors ?? undefined,
-					},
-				};
-			}),
-		);
-
-		return moviesWithColors;
+		return this.moviesService.getUserMovies(userDid);
 	}
 
 	@Get("user/:userDid/paginated")
