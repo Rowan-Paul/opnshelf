@@ -320,8 +320,15 @@ describe("ShelfService", () => {
 
 		// Activity counts logged watches only: watchedDate-based, status =
 		// 'watched', no createdAt fallback (see the Watch term in CONTEXT.md).
-		expect(queryText).toContain('(tm."watchedDate" AT TIME ZONE');
-		expect(queryText).toContain('(te."watchedDate" AT TIME ZONE');
+		// Prisma persists DateTime as a timezone-less PostgreSQL TIMESTAMP whose
+		// wall-clock value is UTC. Attach UTC before projecting into the owner's
+		// timezone; otherwise a just-after-midnight watch is shifted backwards.
+		expect(queryText).toContain(
+			"(tm.\"watchedDate\" AT TIME ZONE 'UTC' AT TIME ZONE",
+		);
+		expect(queryText).toContain(
+			"(te.\"watchedDate\" AT TIME ZONE 'UTC' AT TIME ZONE",
+		);
 		expect(queryText).toContain("\"status\" = 'watched'");
 		expect(queryText).not.toContain("COALESCE");
 		expect(queryText).toContain("AT TIME ZONE");

@@ -453,14 +453,14 @@ export class UsersService {
 						WHERE tm."userDid" = ${did}
 							AND tm."status" = 'watched'
 							AND tm."watchedDate" IS NOT NULL
-							AND (tm."watchedDate" AT TIME ZONE ${timezone})::date
+							AND (tm."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date
 								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
 					+
 					(SELECT COUNT(*) FROM "TrackedEpisode" te
 						WHERE te."userDid" = ${did}
 							AND te."status" = 'watched'
 							AND te."watchedDate" IS NOT NULL
-							AND (te."watchedDate" AT TIME ZONE ${timezone})::date
+							AND (te."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date
 								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
 				)::integer AS "count"
 			`),

@@ -11,6 +11,7 @@ import {
 	usersControllerCompleteOnboarding,
 	usersControllerDeleteMyAvatarMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
+	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -31,6 +32,7 @@ import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
 import { UserRowsSkeleton } from "#/components/skeletons";
+import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
@@ -563,9 +565,20 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
    Step 3: Preferences
    ------------------------------------------------------------------ */
 function PreferencesStep({ onNext }: { onNext: () => void }) {
-	const { userSettings } = useAuth();
 	const queryClient = useQueryClient();
-	const [country, setCountry] = useState(userSettings?.watchCountry ?? "US");
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+	const [country, setCountry] = useState("US");
+	const [timezone, setTimezone] = useState(
+		Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
+	);
+
+	useEffect(() => {
+		if (!settings) return;
+		setCountry(settings.watchCountry);
+		setTimezone(settings.timezone);
+	}, [settings]);
 
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
@@ -573,11 +586,16 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
 		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save preferences",
+			);
+		},
 	});
 
 	function handleSave() {
 		updateSettingsMutation.mutate(
-			{ body: { watchCountry: country } },
+			{ body: { watchCountry: country, timezone } },
 			{ onSuccess: onNext },
 		);
 	}
@@ -589,19 +607,33 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 			</div>
 			<h1 className="mb-2 text-center text-display-2">Your Preferences</h1>
 			<p className="mb-8 text-center text-(--foreground-muted)">
-				Tell us where you are so we can show streaming availability in your
-				country.
+				Choose how watch dates are grouped and where streaming availability is
+				shown.
 			</p>
 
-			<div className="space-y-2">
-				<p className="font-medium text-sm">Streaming country</p>
-				<CountrySelector
-					value={country}
-					onChange={setCountry}
-					disabled={updateSettingsMutation.isPending}
-				/>
+			<div className="space-y-5">
+				<div className="space-y-2">
+					<p className="font-medium text-sm">Timezone</p>
+					<TimezoneSelector
+						value={timezone}
+						onChange={setTimezone}
+						disabled={settingsLoading || updateSettingsMutation.isPending}
+					/>
+					<p className="text-(--foreground-subtle) text-xs">
+						Used to group watches into the correct calendar day.
+					</p>
+				</div>
+
+				<div className="space-y-2">
+					<p className="font-medium text-sm">Streaming country</p>
+					<CountrySelector
+						value={country}
+						onChange={setCountry}
+						disabled={settingsLoading || updateSettingsMutation.isPending}
+					/>
+				</div>
 				<p className="text-(--foreground-subtle) text-xs">
-					You can change this at any time in Settings.
+					You can change these at any time in Settings.
 				</p>
 			</div>
 
@@ -609,7 +641,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 				<button
 					type="button"
 					onClick={handleSave}
-					disabled={updateSettingsMutation.isPending}
+					disabled={settingsLoading || updateSettingsMutation.isPending}
 					className="btn btn-primary w-full"
 				>
 					{updateSettingsMutation.isPending ? (

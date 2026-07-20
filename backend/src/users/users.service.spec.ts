@@ -423,7 +423,7 @@ describe("UsersService", () => {
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
-			timezone: "UTC",
+			timezone: "Europe/Amsterdam",
 			blueskyProfileUrl: null,
 			tangledProfileUrl: null,
 			showBlueskyOnProfile: true,
@@ -477,6 +477,17 @@ describe("UsersService", () => {
 				},
 			},
 		});
+
+		const yearSql = (prisma.$queryRaw as Mock).mock.calls.at(-1)?.[0];
+		const yearQueryText = Array.isArray(yearSql?.strings)
+			? yearSql.strings.join(" ")
+			: String(yearSql);
+		expect(yearQueryText).toContain(
+			"(tm.\"watchedDate\" AT TIME ZONE 'UTC' AT TIME ZONE",
+		);
+		expect(yearQueryText).toContain(
+			"(te.\"watchedDate\" AT TIME ZONE 'UTC' AT TIME ZONE",
+		);
 	});
 
 	it("returns public profile counts from follow aggregates", async () => {

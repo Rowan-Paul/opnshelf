@@ -2,9 +2,10 @@ import {
 	authControllerMeQueryKey,
 	type UserDto,
 	usersControllerCompleteOnboarding,
+	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Redirect, router } from "expo-router";
 import { ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react-native";
@@ -18,6 +19,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
+import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -327,6 +329,22 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [country, setCountry] = useState("US");
+	const [timezone, setTimezone] = useState(() => {
+		try {
+			return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+		} catch {
+			return "UTC";
+		}
+	});
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+
+	useEffect(() => {
+		if (!settings) return;
+		setCountry(settings.watchCountry);
+		setTimezone(settings.timezone);
+	}, [settings]);
 
 	const updateSettings = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
@@ -342,7 +360,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	const handleContinue = () => {
 		updateSettings.mutate(
-			{ body: { watchCountry: country } },
+			{ body: { watchCountry: country, timezone } },
 			{ onSuccess: onNext },
 		);
 	};
@@ -354,6 +372,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 					label="Continue"
 					onPress={handleContinue}
 					loading={updateSettings.isPending}
+					disabled={settingsLoading}
 				/>
 			}
 		>
@@ -362,8 +381,20 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 					Your preferences
 				</Text>
 				<Text className="text-muted-foreground text-sm leading-5">
-					Tell us where you are so we can show streaming availability in your
-					country.
+					Choose how watch dates are grouped and where streaming availability is
+					shown.
+				</Text>
+			</View>
+
+			<View className="gap-2">
+				<Text className="font-medium text-foreground text-sm">Timezone</Text>
+				<TimezonePicker
+					value={timezone}
+					onChange={setTimezone}
+					disabled={settingsLoading || updateSettings.isPending}
+				/>
+				<Text className="text-muted-foreground text-xs">
+					Used to group watches into the correct calendar day.
 				</Text>
 			</View>
 
@@ -374,10 +405,10 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 				<CountryPicker
 					value={country}
 					onChange={setCountry}
-					disabled={updateSettings.isPending}
+					disabled={settingsLoading || updateSettings.isPending}
 				/>
 				<Text className="text-muted-foreground text-xs">
-					You can change this any time in Settings.
+					You can change these any time in Settings.
 				</Text>
 			</View>
 		</StepScaffold>

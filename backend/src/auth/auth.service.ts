@@ -785,9 +785,8 @@ export class AuthService implements OnModuleInit {
 
 	/**
 	 * Upsert user in database with profile data
-	 * The client supplies its current IANA timezone at sign-in. Persist it for
-	 * existing users too so date-based views (such as activity graphs) group a
-	 * just-after-midnight watch by the user's local day, not the server's UTC day.
+	 * The client supplies an initial IANA timezone for new users. Existing users
+	 * keep the timezone they explicitly selected in settings.
 	 */
 	async upsertUser(
 		profile: {
@@ -841,7 +840,6 @@ export class AuthService implements OnModuleInit {
 				where: { did: profile.did },
 				update: {
 					handle: profile.handle,
-					...(timezone ? { timezone } : {}),
 					...(healEmailVerifiedAt
 						? { emailVerifiedAt: healEmailVerifiedAt }
 						: {}),
@@ -895,7 +893,6 @@ export class AuthService implements OnModuleInit {
 					where: { did: profile.did },
 					update: {
 						handle: profile.handle,
-						...(timezone ? { timezone } : {}),
 						...(healEmailVerifiedAt
 							? { emailVerifiedAt: healEmailVerifiedAt }
 							: {}),

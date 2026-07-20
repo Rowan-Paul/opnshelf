@@ -333,7 +333,7 @@ describe("AuthService", () => {
 			});
 		});
 
-		it("updates an existing user's timezone from the sign-in client", async () => {
+		it("preserves an existing user's saved timezone during sign-in", async () => {
 			const profile = {
 				did: "did:plc:abc123",
 				handle: "user.bsky.social",
@@ -352,10 +352,7 @@ describe("AuthService", () => {
 
 			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
-					update: expect.objectContaining({
-						handle: profile.handle,
-						timezone: "Europe/Amsterdam",
-					}),
+					update: { handle: profile.handle },
 				}),
 			);
 		});

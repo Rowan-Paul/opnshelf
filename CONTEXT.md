@@ -57,7 +57,7 @@ _Avoid_: View, log entry (a watchlist add is a separate, un-watched state)
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → watch-country preference → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile.
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup)
 
 **Activity**:

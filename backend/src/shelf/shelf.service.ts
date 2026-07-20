@@ -358,7 +358,7 @@ export class ShelfService {
 				COUNT(*)::integer AS "count"
 			FROM (
 				SELECT
-					(tm."watchedDate" AT TIME ZONE ${user.timezone})::date AS "localDay"
+					(tm."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${user.timezone})::date AS "localDay"
 				FROM "TrackedMovie" tm
 				WHERE tm."userDid" = ${userDid}
 					AND tm."status" = 'watched'
@@ -367,7 +367,7 @@ export class ShelfService {
 				UNION ALL
 
 				SELECT
-					(te."watchedDate" AT TIME ZONE ${user.timezone})::date AS "localDay"
+					(te."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${user.timezone})::date AS "localDay"
 				FROM "TrackedEpisode" te
 				WHERE te."userDid" = ${userDid}
 					AND te."status" = 'watched'
