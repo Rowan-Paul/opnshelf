@@ -403,8 +403,9 @@ export class AuthService implements OnModuleInit {
 		try {
 			return await client.restore(record.userDid);
 		} catch (error) {
+			// The session id is the bearer credential — never log it.
 			this.logger.warn(
-				`Failed to restore session ${record.id} for ${record.userDid}`,
+				`Failed to restore session for ${record.userDid}`,
 				error,
 			);
 			return undefined;

@@ -35,7 +35,11 @@ function formatWatchDate(date: string): string {
 function sectionLabel(date: string): string {
 	const watched = new Date(date);
 	const now = new Date();
-	const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const startOfToday = new Date(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate(),
+	);
 	const startOfWatched = new Date(
 		watched.getFullYear(),
 		watched.getMonth(),
@@ -44,9 +48,9 @@ function sectionLabel(date: string): string {
 	const days = Math.round(
 		(startOfToday.getTime() - startOfWatched.getTime()) / 86_400_000,
 	);
-	const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(
-		watched,
-	);
+	const weekday = new Intl.DateTimeFormat(undefined, {
+		weekday: "long",
+	}).format(watched);
 	if (days === 0) return `Today · ${weekday}`;
 	if (days === 1) return `Yesterday · ${weekday}`;
 	return new Intl.DateTimeFormat(undefined, {
@@ -215,13 +219,19 @@ export function ShelfTab({
 									<ChevronDown
 										color="#94a3b8"
 										size={18}
-										style={{ transform: [{ rotate: collapsed ? "-90deg" : "0deg" }] }}
+										style={{
+											transform: [{ rotate: collapsed ? "-90deg" : "0deg" }],
+										}}
 									/>
 								</Pressable>
 								{collapsed ? null : (
 									<View className="flex-row flex-wrap">
 										{section.items.map((item) => (
-											<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+											<ShelfWatchCard
+												key={item.id}
+												item={item}
+												isOwner={isOwner}
+											/>
 										))}
 									</View>
 								)}

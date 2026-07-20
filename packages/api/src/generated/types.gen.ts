@@ -1830,7 +1830,7 @@ export type BatchRatingRequestDto = {
      */
     mediaType: 'movie' | 'show';
     /**
-     * Array of media IDs to fetch ratings for
+     * Array of media IDs to fetch ratings for (maximum 50 characters per ID)
      */
     mediaIds: Array<string>;
 };

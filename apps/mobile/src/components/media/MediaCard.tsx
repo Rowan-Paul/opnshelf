@@ -118,8 +118,8 @@ function MediaCardBase({
 							onPress={(event) => {
 								event.stopPropagation();
 								onRemove();
-								}}
-							className="absolute left-1.5 top-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+							}}
+							className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 							accessibilityLabel="Remove this watch"
 						>
 							<X color="#ffffff" size={15} />

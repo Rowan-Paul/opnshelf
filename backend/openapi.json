@@ -9109,7 +9109,8 @@
             ]
           },
           "mediaIds": {
-            "description": "Array of media IDs to fetch ratings for",
+            "description": "Array of media IDs to fetch ratings for (maximum 50 characters per ID)",
+            "maxItems": 100,
             "type": "array",
             "items": {
               "type": "string"

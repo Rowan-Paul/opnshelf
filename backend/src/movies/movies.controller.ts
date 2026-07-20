@@ -117,7 +117,15 @@ export class MoviesController {
 	@ApiOperation({ summary: "Get tracked movies for a user" })
 	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
 	async getUserMovies(@Param("userDid") userDid: string) {
-		return this.moviesService.getUserMovies(userDid);
+		const trackedMovies = await this.moviesService.getUserMovies(userDid);
+		// Match the shows endpoint: stored null colors serialize as undefined.
+		return trackedMovies.map((tracked) => ({
+			...tracked,
+			movie: {
+				...tracked.movie,
+				colors: tracked.movie.colors ?? undefined,
+			},
+		}));
 	}
 
 	@Get("user/:userDid/paginated")

@@ -57,10 +57,12 @@ function sectionLabel(date: string): string {
 		watched.getMonth(),
 		watched.getDate(),
 	);
-	const days = Math.round((today.getTime() - watchedDay.getTime()) / 86_400_000);
-	const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(
-		watched,
+	const days = Math.round(
+		(today.getTime() - watchedDay.getTime()) / 86_400_000,
 	);
+	const weekday = new Intl.DateTimeFormat(undefined, {
+		weekday: "long",
+	}).format(watched);
 	if (days === 0) return `Today · ${weekday}`;
 	if (days === 1) return `Yesterday · ${weekday}`;
 	return new Intl.DateTimeFormat(undefined, {
@@ -259,7 +261,11 @@ function ProfileShelfPage() {
 								{collapsed ? null : (
 									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
 										{section.items.map((item) => (
-											<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+											<ShelfWatchCard
+												key={item.id}
+												item={item}
+												isOwner={isOwner}
+											/>
 										))}
 									</div>
 								)}
@@ -317,7 +323,11 @@ function ShelfWatchCard({
 			type={isMovie ? "movie" : "show"}
 			seasonNumber={isMovie ? undefined : item.seasonNumber}
 			episodeNumber={isMovie ? undefined : item.episodeNumber}
-			episodeInfo={isMovie ? undefined : `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`}
+			episodeInfo={
+				isMovie
+					? undefined
+					: `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
+			}
 			watchedDate={item.watchedDate}
 			interactive={false}
 			isWatched
