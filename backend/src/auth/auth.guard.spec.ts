@@ -268,5 +268,45 @@ describe("AuthGuard", () => {
 				"session-123",
 			);
 		});
+
+		it("should prefer a case-insensitive Bearer token over the cookie", async () => {
+			const mockSessionRecord = {
+				id: "bearer-session",
+				userDid: "did:plc:abc123",
+				sessionData: "{}",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			mockAuthService.getSessionById.mockResolvedValue(mockSessionRecord);
+			mockAuthService.restoreBySession.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			const context = createMockExecutionContext(
+				{ session: "cookie-session" },
+				{ authorization: "bEaReR bearer-session" },
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(true);
+			expect(mockAuthService.getSessionById).toHaveBeenCalledWith(
+				"bearer-session",
+			);
+		});
+
+		it("should fall back to the cookie for malformed Bearer authorization", async () => {
+			mockAuthService.getSessionById.mockResolvedValue(null);
+			const context = createMockExecutionContext(
+				{ session: "cookie-session" },
+				{ authorization: "Bearer one two" },
+			);
+
+			await expect(guard.canActivate(context)).rejects.toThrow(
+				new UnauthorizedException("Session not found or expired"),
+			);
+			expect(mockAuthService.getSessionById).toHaveBeenCalledWith(
+				"cookie-session",
+			);
+		});
 	});
 });

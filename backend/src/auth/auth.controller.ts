@@ -30,6 +30,7 @@ import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
 import { VerifyEmailDto, VerifyEmailResponseDto } from "./dto/verify-email.dto";
+import { extractSessionId } from "./session-id";
 import type { AuthenticatedRequest } from "./types";
 
 const SESSION_COOKIE_NAME = "session";
@@ -788,13 +789,7 @@ export class AuthController {
 	@ApiOperation({ summary: "Logout and clear session" })
 	@ApiResponse({ status: 200, description: "Logged out successfully" })
 	async logout(@Req() req: AuthenticatedRequest, @Res() res: Response) {
-		const cookies = req.cookies as Record<string, string | undefined>;
-		const sessionId = cookies?.[SESSION_COOKIE_NAME];
-
-		if (sessionId) {
-			await this.authService.revokeBySessionId(sessionId);
-		}
-
+		const sessionId = extractSessionId(req);
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
 		const cookieDomain = this.getCookieDomain();
@@ -807,6 +802,10 @@ export class AuthController {
 			path: "/",
 			...(cookieDomain && { domain: cookieDomain }),
 		});
+
+		if (sessionId) {
+			await this.authService.revokeBySessionId(sessionId);
+		}
 
 		return res
 			.status(HttpStatus.OK)

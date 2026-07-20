@@ -1,4 +1,5 @@
 import {
+	authControllerLogout,
 	authControllerMe,
 	authControllerMeQueryKey,
 	authControllerRegister,
@@ -60,6 +61,12 @@ function detectTimezone(): string | undefined {
 	} catch {
 		return undefined;
 	}
+}
+
+function isUnauthorizedApiError(error: unknown): boolean {
+	if (!error || typeof error !== "object") return false;
+	const apiError = error as Record<string, unknown>;
+	return apiError.status === 401 || apiError.statusCode === 401;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -238,6 +245,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const signOut = useCallback(async () => {
+		try {
+			await authControllerLogout({ throwOnError: true });
+		} catch (error) {
+			// An already-invalid session is effectively revoked. Retryable failures
+			// retain the local credential so the user can try logout again.
+			if (!isUnauthorizedApiError(error)) throw error;
+		}
 		await saveSessionToken(null);
 		posthog?.reset();
 		setHasSessionToken(false);

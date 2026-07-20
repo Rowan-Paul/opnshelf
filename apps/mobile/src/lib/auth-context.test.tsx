@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
 
 const mocks = vi.hoisted(() => ({
+	authControllerLogout: vi.fn(),
 	authControllerMe: vi.fn(),
 	loadSessionToken: vi.fn(),
 	posthogReset: vi.fn(),
@@ -21,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@opnshelf/api", () => ({
+	authControllerLogout: mocks.authControllerLogout,
 	authControllerMe: mocks.authControllerMe,
 	authControllerMeQueryKey: () => ["auth", "me"],
 	authControllerRegister: vi.fn(),
@@ -67,6 +69,9 @@ function AuthProbe({
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mocks.authControllerLogout.mockResolvedValue({ data: {} });
+	mocks.loadSessionToken.mockResolvedValue(null);
+	mocks.saveSessionToken.mockResolvedValue(undefined);
 	mocks.useQuery.mockReturnValue({ data: null, isPending: false });
 });
 
@@ -119,6 +124,98 @@ describe("AuthProvider", () => {
 
 		await expect(currentAuth?.signOut()).rejects.toThrow("test delete failure");
 		expect(currentAuth?.isAuthenticated).toBe(true);
+		expect(mocks.posthogReset).not.toHaveBeenCalled();
+		expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+		expect(mocks.queryClient.clear).not.toHaveBeenCalled();
+		expect(mocks.routerReplace).not.toHaveBeenCalled();
+
+		act(() => renderer.unmount());
+	});
+
+	it("revokes the server session before clearing local state", async () => {
+		mocks.loadSessionToken.mockResolvedValue("test-session");
+		mocks.useQuery.mockReturnValue({ data: testUser, isPending: false });
+		let currentAuth: ReturnType<typeof useAuth> | undefined;
+		let renderer: ReactTestRenderer;
+
+		await act(async () => {
+			renderer = create(
+				<AuthProvider>
+					<AuthProbe onRender={(auth) => (currentAuth = auth)} />
+				</AuthProvider>,
+			);
+		});
+
+		await act(async () => {
+			await currentAuth?.signOut();
+		});
+
+		expect(mocks.authControllerLogout).toHaveBeenCalledWith({
+			throwOnError: true,
+		});
+		expect(mocks.authControllerLogout.mock.invocationCallOrder[0]).toBeLessThan(
+			mocks.saveSessionToken.mock.invocationCallOrder[0],
+		);
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith(null);
+		expect(mocks.posthogReset).toHaveBeenCalledOnce();
+		expect(mocks.queryClient.setQueryData).toHaveBeenCalledWith(
+			["auth", "me"],
+			null,
+		);
+		expect(mocks.queryClient.clear).toHaveBeenCalledOnce();
+		expect(mocks.routerReplace).toHaveBeenCalledWith("/login");
+
+		act(() => renderer.unmount());
+	});
+
+	it("clears local state when the server reports an already-invalid session", async () => {
+		mocks.loadSessionToken.mockResolvedValue("test-session");
+		mocks.authControllerLogout.mockRejectedValue({
+			statusCode: 401,
+			message: "Unauthorized",
+		});
+		let currentAuth: ReturnType<typeof useAuth> | undefined;
+		let renderer: ReactTestRenderer;
+
+		await act(async () => {
+			renderer = create(
+				<AuthProvider>
+					<AuthProbe onRender={(auth) => (currentAuth = auth)} />
+				</AuthProvider>,
+			);
+		});
+		await act(async () => {
+			await currentAuth?.signOut();
+		});
+
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith(null);
+		expect(mocks.queryClient.clear).toHaveBeenCalledOnce();
+		expect(mocks.routerReplace).toHaveBeenCalledWith("/login");
+
+		act(() => renderer.unmount());
+	});
+
+	it.each([
+		new TypeError("network unavailable"),
+		{ statusCode: 503, message: "Unavailable" },
+	])("preserves local state when server logout is retryable", async (logoutError) => {
+		mocks.loadSessionToken.mockResolvedValue("test-session");
+		mocks.useQuery.mockReturnValue({ data: testUser, isPending: false });
+		mocks.authControllerLogout.mockRejectedValue(logoutError);
+		let currentAuth: ReturnType<typeof useAuth> | undefined;
+		let renderer: ReactTestRenderer;
+
+		await act(async () => {
+			renderer = create(
+				<AuthProvider>
+					<AuthProbe onRender={(auth) => (currentAuth = auth)} />
+				</AuthProvider>,
+			);
+		});
+
+		await expect(currentAuth?.signOut()).rejects.toBe(logoutError);
+		expect(currentAuth?.isAuthenticated).toBe(true);
+		expect(mocks.saveSessionToken).not.toHaveBeenCalled();
 		expect(mocks.posthogReset).not.toHaveBeenCalled();
 		expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
 		expect(mocks.queryClient.clear).not.toHaveBeenCalled();
