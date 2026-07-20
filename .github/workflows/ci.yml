@@ -130,6 +130,9 @@ jobs:
       - name: Typecheck
         run: pnpm --filter mobile exec tsc --noEmit
 
+      - name: Test
+        run: pnpm --filter mobile run test
+
   api:
     needs: changes
     if: ${{ needs.changes.outputs.api == 'true' }}
