@@ -584,7 +584,7 @@ export class AuthService implements OnModuleInit {
 					// upstream) — there's nothing left to restore, so drop just this
 					// device's session (not every device for the DID).
 					this.logger.warn(
-						`Credential session expired for ${did}; revoking device ${slot}`,
+						`Credential session expired for ${did}; revoking device session`,
 					);
 					this.credentialSessions.delete(slot);
 					void this.revokeBySessionId(slot);
@@ -711,8 +711,8 @@ export class AuthService implements OnModuleInit {
 					expiresAt: new Date(now + SESSION_TTL_MS),
 				},
 			});
-		} catch (error) {
-			this.logger.warn(`Failed to touch session ${sessionId}`, error);
+		} catch {
+			this.logger.warn("Failed to touch session");
 		}
 	}
 
