@@ -6,24 +6,12 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/http-exception.filter";
+import { installProcessErrorHandlers } from "./common/process-error-handlers";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Process-level crash handlers. Logged via the Nest Logger so output is
-// consistent. We do NOT exit on unhandledRejection (just log it); for an
-// uncaughtException we log first and then let Node take its default action.
 const processLogger = new Logger("Process");
-process.on("unhandledRejection", (reason) => {
-	processLogger.error(
-		"Unhandled promise rejection",
-		reason instanceof Error ? reason.stack : String(reason),
-	);
-});
-process.on("uncaughtException", (error) => {
-	processLogger.error("Uncaught exception", error.stack ?? String(error));
-	// Intentionally not calling process.exit — let Node crash as it normally
-	// would once we've recorded the error.
-});
+installProcessErrorHandlers(processLogger);
 
 async function bootstrap() {
 	const app = await NestFactory.create<NestExpressApplication>(AppModule, {
