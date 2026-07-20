@@ -47,6 +47,7 @@ const credentialSessionHarness = vi.hoisted(() => ({
 	instances: [] as Array<{
 		did?: string;
 		resumeSession: Mock;
+		persistSession: (event: string, session?: Record<string, unknown>) => void;
 	}>,
 }));
 
@@ -81,7 +82,12 @@ vi.mock("@atproto/api", () => ({
 				const instance: {
 					did?: string;
 					resumeSession: Mock;
+					persistSession: (
+						event: string,
+						session?: Record<string, unknown>,
+					) => void;
 				} = {
+					persistSession,
 					resumeSession: vi.fn(async (session: Record<string, unknown>) => {
 						instance.did = session.did as string;
 						persistSession("update", {
@@ -702,6 +708,27 @@ describe("AuthService", () => {
 
 			expect(mockPrismaService.authSession.update).not.toHaveBeenCalled();
 		});
+
+		it("does not log the session credential when the update fails", async () => {
+			const sessionId = "sentinel-session-credential";
+			const logger = (
+				service as unknown as {
+					logger: { warn: (...args: unknown[]) => void };
+				}
+			).logger;
+			const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+			mockPrismaService.authSession.update.mockRejectedValue(
+				new Error(`database update failed for ${sessionId}`),
+			);
+
+			await service.touchSession(
+				sessionId,
+				new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+			);
+
+			expect(warn).toHaveBeenCalledWith("Failed to touch session");
+			expect(JSON.stringify(warn.mock.calls)).not.toContain(sessionId);
+		});
 	});
 
 	describe("authorize", () => {
@@ -808,6 +835,40 @@ describe("AuthService", () => {
 				credentialSessionHarness.instances[0]?.resumeSession,
 			).toHaveBeenCalledTimes(1);
 			expect(second).toBe(first);
+		});
+
+		it("does not log the session credential when a credential session expires", async () => {
+			const sessionId = "sentinel-credential-slot";
+			const did = "did:plc:abc123";
+			const logger = (
+				service as unknown as {
+					logger: { warn: (...args: unknown[]) => void };
+				}
+			).logger;
+			const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+			mockPrismaService.authSession.upsert.mockResolvedValue({});
+			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+			const record = {
+				id: sessionId,
+				userDid: did,
+				kind: "credential",
+				sessionData: JSON.stringify({
+					did,
+					handle: "alice.opnshelf.social",
+					accessJwt: "stale-access",
+					refreshJwt: "stale-refresh",
+					active: true,
+					pdsUrl: "https://opnshelf.social",
+				}),
+			};
+
+			await service.restoreBySession(record);
+			credentialSessionHarness.instances[0]?.persistSession("expired");
+
+			expect(warn).toHaveBeenCalledWith(
+				`Credential session expired for ${did}; revoking device session`,
+			);
+			expect(JSON.stringify(warn.mock.calls)).not.toContain(sessionId);
 		});
 	});
 
