@@ -196,23 +196,15 @@ export class ShowsController {
 	@ApiResponse({ status: 200, type: [TrackedShowSummaryDto] })
 	async getUserShows(@Param("userDid") userDid: string) {
 		const trackedShows = await this.showsService.getUserShows(userDid);
-		const showsWithColors = await Promise.all(
-			trackedShows.map(async (tracked) => {
-				const colors = await this.showsService.ensureShowHasColors(
-					tracked.showId,
-				);
-				return {
-					showId: tracked.showId,
-					watchCount: tracked.watchCount,
-					latestWatchedDate: tracked.watchedDate?.toISOString(),
-					show: {
-						...tracked.show,
-						colors: colors ?? undefined,
-					},
-				};
-			}),
-		);
-		return showsWithColors;
+		return trackedShows.map((tracked) => ({
+			showId: tracked.showId,
+			watchCount: tracked.watchCount,
+			latestWatchedDate: tracked.watchedDate?.toISOString(),
+			show: {
+				...tracked.show,
+				colors: tracked.show.colors ?? undefined,
+			},
+		}));
 	}
 
 	@Get("user/:userDid/up-next")

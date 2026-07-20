@@ -113,6 +113,44 @@ describe("ShowsController", () => {
 		});
 	});
 
+	describe("getUserShows", () => {
+		it("returns tracked show summaries with persisted colors without enrichment", async () => {
+			const colors = { primary: "#111111", secondary: "#222222" };
+			mockShowsService.getUserShows.mockResolvedValue([
+				{
+					showId: "123",
+					watchCount: 2,
+					watchedDate: new Date("2024-01-15T12:00:00.000Z"),
+					show: { showId: "123", title: "Test Show", colors },
+				},
+			]);
+
+			const result = await controller.getUserShows("did:plc:abc123");
+
+			expect(result).toEqual([
+				{
+					showId: "123",
+					watchCount: 2,
+					latestWatchedDate: "2024-01-15T12:00:00.000Z",
+					show: { showId: "123", title: "Test Show", colors },
+				},
+			]);
+			expect(mockShowsService.getUserShows).toHaveBeenCalledWith(
+				"did:plc:abc123",
+			);
+			expect(mockShowsService.ensureShowHasColors).not.toHaveBeenCalled();
+		});
+
+		it("returns an empty array when the user has no tracked shows", async () => {
+			mockShowsService.getUserShows.mockResolvedValue([]);
+
+			await expect(controller.getUserShows("did:plc:unknown")).resolves.toEqual(
+				[],
+			);
+			expect(mockShowsService.ensureShowHasColors).not.toHaveBeenCalled();
+		});
+	});
+
 	it("should mark an episode as watched", async () => {
 		const mockUser = {
 			did: "did:plc:abc123",
