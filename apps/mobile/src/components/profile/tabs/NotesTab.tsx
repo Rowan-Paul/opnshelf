@@ -1,13 +1,13 @@
 import type { UserNoteDto } from "@opnshelf/api";
 import { StickyNote } from "lucide-react-native";
-import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { useRef } from "react";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
-import { useProfileNotes } from "@/lib/use-public-profile";
+import { useInfiniteProfileNotes } from "@/lib/use-public-profile";
 
 /**
  * Notes tab: the user's notes, cursor-paginated with a Load more button.
@@ -21,11 +21,26 @@ export function NotesTab({
 	userDid: string;
 	isOwner: boolean;
 }) {
-	const [cursor, setCursor] = useState<string | undefined>(undefined);
-	const { data, isLoading, isError } = useProfileNotes(userDid, cursor);
+	const loadMorePending = useRef(false);
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteProfileNotes(userDid);
 
-	const notes = data?.items ?? [];
-	const hasMore = data?.nextCursor != null;
+	const notes = data?.pages.flatMap((page) => page.items) ?? [];
+	const handleLoadMore = async () => {
+		if (loadMorePending.current || isFetchingNextPage) return;
+		loadMorePending.current = true;
+		try {
+			await fetchNextPage();
+		} finally {
+			loadMorePending.current = false;
+		}
+	};
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -35,7 +50,7 @@ export function NotesTab({
 
 			{isLoading ? (
 				<ReviewsSkeleton />
-			) : isError ? (
+			) : isError && notes.length === 0 ? (
 				<ErrorState message="Couldn't load notes." />
 			) : notes.length === 0 ? (
 				<EmptyState
@@ -50,12 +65,19 @@ export function NotesTab({
 				</View>
 			)}
 
-			{hasMore ? (
+			{hasNextPage ? (
 				<Pressable
-					onPress={() => setCursor(data?.nextCursor ?? undefined)}
+					disabled={isFetchingNextPage}
+					onPress={handleLoadMore}
 					className="items-center rounded-lg border border-border py-2.5"
 				>
-					<Text className="font-medium text-foreground text-sm">Load more</Text>
+					{isFetchingNextPage ? (
+						<ActivityIndicator size="small" />
+					) : (
+						<Text className="font-medium text-foreground text-sm">
+							Load more
+						</Text>
+					)}
 				</Pressable>
 			) : null}
 		</View>

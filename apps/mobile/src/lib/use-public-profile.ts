@@ -2,14 +2,18 @@ import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
 	moviesControllerGetUserMoviesPaginatedOptions,
+	notesControllerGetUserNotes,
+	notesControllerGetUserNotesInfiniteQueryKey,
 	notesControllerGetUserNotesOptions,
+	reviewsControllerGetUserReviews,
+	reviewsControllerGetUserReviewsInfiniteQueryKey,
 	reviewsControllerGetUserReviewsOptions,
 	shelfControllerGetUserShelfOptions,
 	showsControllerGetUserUpNextOptions,
 	socialControllerGetRelationshipOptions,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 /**
  * Data hooks for the public profile screen. These wrap the same generated
@@ -105,6 +109,30 @@ export function useProfileNotes(userDid: string, cursor?: string, limit = 20) {
 	});
 }
 
+/** The user's notes as accumulated cursor pages (Notes tab). */
+export function useInfiniteProfileNotes(userDid: string, limit = 20) {
+	const options = { path: { userDid }, query: { limit } };
+
+	return useInfiniteQuery({
+		queryKey: notesControllerGetUserNotesInfiniteQueryKey(options),
+		queryFn: async ({ pageParam, signal }) => {
+			const { data } = await notesControllerGetUserNotes({
+				...options,
+				query: {
+					...options.query,
+					...(pageParam !== undefined ? { cursor: pageParam } : {}),
+				},
+				signal,
+				throwOnError: true,
+			});
+			return data;
+		},
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+		enabled: !!userDid,
+	});
+}
+
 /** The user's reviews (Reviews tab + Overview preview), cursor-paginated. */
 export function useProfileReviews(
 	userDid: string,
@@ -116,6 +144,30 @@ export function useProfileReviews(
 			path: { userDid },
 			query: { limit, ...(cursor ? { cursor } : {}) },
 		}),
+		enabled: !!userDid,
+	});
+}
+
+/** The user's reviews as accumulated cursor pages (Reviews tab). */
+export function useInfiniteProfileReviews(userDid: string, limit = 20) {
+	const options = { path: { userDid }, query: { limit } };
+
+	return useInfiniteQuery({
+		queryKey: reviewsControllerGetUserReviewsInfiniteQueryKey(options),
+		queryFn: async ({ pageParam, signal }) => {
+			const { data } = await reviewsControllerGetUserReviews({
+				...options,
+				query: {
+					...options.query,
+					...(pageParam !== undefined ? { cursor: pageParam } : {}),
+				},
+				signal,
+				throwOnError: true,
+			});
+			return data;
+		},
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 		enabled: !!userDid,
 	});
 }
