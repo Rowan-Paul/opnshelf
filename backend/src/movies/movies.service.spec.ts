@@ -794,10 +794,15 @@ describe("MoviesService", () => {
 				expect.anything(),
 			);
 			expect(mockPrismaService.movie.upsert).toHaveBeenCalled();
-			// Indexing upserts on the unique rkey (idempotent re-import), staying
-			// consistent with the firehose ingester which also upserts on { rkey }.
+			// Indexing upserts on the repository-qualified rkey (idempotent re-import),
+			// matching the firehose ingester's owner-qualified identity.
 			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith({
-				where: { rkey: "movie-123-1234567890" },
+				where: {
+					userDid_rkey: {
+						userDid: "did:plc:abc123",
+						rkey: "movie-123-1234567890",
+					},
+				},
 				create: expect.objectContaining({
 					uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-123-1234567890",
 					rkey: "movie-123-1234567890",
@@ -814,6 +819,54 @@ describe("MoviesService", () => {
 				include: { movie: true },
 			});
 			expect(result).toEqual(mockTrackedMovie);
+		});
+
+		it("keeps a deterministic shared watch rkey distinct across repositories", async () => {
+			mockFetch.mockResolvedValue({
+				ok: true,
+				json: () =>
+					Promise.resolve({
+						id: 123,
+						title: "Test Movie",
+						release_date: "2024-01-01",
+					}),
+			});
+			mockPrismaService.movie.upsert.mockResolvedValue({ movieId: "123" });
+			mockPrismaService.trackedMovie.upsert.mockResolvedValue({});
+
+			for (const userDid of ["did:plc:owner-a", "did:plc:owner-b"]) {
+				await service.indexTrackedMovie(
+					`at://${userDid}/xyz.opnshelf.movie/movie-123-import-1`,
+					"cid",
+					"movie-123-import-1",
+					userDid,
+					"123",
+					"2024-01-15T10:00:00Z",
+				);
+			}
+
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenNthCalledWith(
+				1,
+				expect.objectContaining({
+					where: {
+						userDid_rkey: {
+							userDid: "did:plc:owner-a",
+							rkey: "movie-123-import-1",
+						},
+					},
+				}),
+			);
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					where: {
+						userDid_rkey: {
+							userDid: "did:plc:owner-b",
+							rkey: "movie-123-import-1",
+						},
+					},
+				}),
+			);
 		});
 
 		it("should throw error when TMDB API fails during indexing", async () => {

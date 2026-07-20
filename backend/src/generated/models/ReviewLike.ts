@@ -216,11 +216,12 @@ export type ReviewLikeOrderByWithRelationInput = {
 
 export type ReviewLikeWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   userDid_reviewId?: Prisma.ReviewLikeUserDidReviewIdCompoundUniqueInput
+  userDid_rkey?: Prisma.ReviewLikeUserDidRkeyCompoundUniqueInput
   AND?: Prisma.ReviewLikeWhereInput | Prisma.ReviewLikeWhereInput[]
   OR?: Prisma.ReviewLikeWhereInput[]
   NOT?: Prisma.ReviewLikeWhereInput | Prisma.ReviewLikeWhereInput[]
+  rkey?: Prisma.StringFilter<"ReviewLike"> | string
   uri?: Prisma.StringFilter<"ReviewLike"> | string
   cid?: Prisma.StringFilter<"ReviewLike"> | string
   userDid?: Prisma.StringFilter<"ReviewLike"> | string
@@ -228,7 +229,7 @@ export type ReviewLikeWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ReviewLike"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   review?: Prisma.XOR<Prisma.ReviewScalarRelationFilter, Prisma.ReviewWhereInput>
-}, "id" | "rkey" | "userDid_reviewId">
+}, "id" | "userDid_reviewId" | "userDid_rkey">
 
 export type ReviewLikeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -337,6 +338,11 @@ export type ReviewLikeOrderByRelationAggregateInput = {
 export type ReviewLikeUserDidReviewIdCompoundUniqueInput = {
   userDid: string
   reviewId: string
+}
+
+export type ReviewLikeUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type ReviewLikeCountOrderByAggregateInput = {

@@ -384,7 +384,12 @@ describe("IngesterService", () => {
 
 			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
-					where: { rkey: "movie-123" },
+					where: {
+						userDid_rkey: {
+							userDid: "did:plc:abc123",
+							rkey: "movie-123",
+						},
+					},
 					create: expect.objectContaining({
 						movieId: "123",
 						userDid: "did:plc:abc123",
@@ -423,7 +428,12 @@ describe("IngesterService", () => {
 
 			expect(mockPrismaService.trackedEpisode.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
-					where: { rkey: "episode-456-1-1" },
+					where: {
+						userDid_rkey: {
+							userDid: "did:plc:abc123",
+							rkey: "episode-456-1-1",
+						},
+					},
 					create: expect.objectContaining({
 						showId: "456",
 						seasonNumber: 1,
@@ -449,7 +459,10 @@ describe("IngesterService", () => {
 			});
 
 			expect(mockPrismaService.trackedEpisode.deleteMany).toHaveBeenCalledWith({
-				where: { rkey: "episode-456-1-1" },
+				where: {
+					userDid: "did:plc:abc123",
+					rkey: "episode-456-1-1",
+				},
 			});
 		});
 
@@ -679,8 +692,47 @@ describe("IngesterService", () => {
 			});
 
 			expect(mockReviewsService.deleteReviewLikeRecord).toHaveBeenCalledWith(
+				"did:plc:abc123",
 				"like-rkey-1",
 			);
+		});
+
+		it("forwards the repository DID on every owner-scoped collection delete", async () => {
+			const recordHandler = setupRecordHandler();
+			const deletes: Array<[string, Mock]> = [
+				["xyz.opnshelf.list", mockListsService.deleteListRecord],
+				["xyz.opnshelf.list.item", mockListsService.deleteListItemRecord],
+				[
+					"xyz.opnshelf.library.item",
+					mockLibraryService.deleteLibraryItemRecord,
+				],
+				["xyz.opnshelf.note", mockNotesService.deleteNoteRecord],
+				["xyz.opnshelf.review", mockReviewsService.deleteReviewRecord],
+				[
+					"site.standard.publication",
+					mockReviewsService.deletePublicationRecord,
+				],
+				["xyz.opnshelf.rating", mockRatingsService.deleteRatingRecord],
+				["xyz.opnshelf.review.like", mockReviewsService.deleteReviewLikeRecord],
+			];
+
+			for (const [index, [collection, deleteRecord]] of deletes.entries()) {
+				await recordHandler({
+					id: 100 + index,
+					type: "record",
+					action: "delete",
+					did: "did:plc:owner-b",
+					rev: `rev-${index}`,
+					collection,
+					rkey: "shared-rkey",
+					live: true,
+				} as RecordEvent);
+
+				expect(deleteRecord).toHaveBeenLastCalledWith(
+					"did:plc:owner-b",
+					"shared-rkey",
+				);
+			}
 		});
 	});
 });

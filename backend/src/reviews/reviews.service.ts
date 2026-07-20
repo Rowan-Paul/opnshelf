@@ -1506,7 +1506,7 @@ export class ReviewsService {
 		// path takes the column default (true) and updates leave it untouched, so
 		// a per-review opt-out set via the API survives firehose re-indexing.
 		await this.prisma.review.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -1533,9 +1533,9 @@ export class ReviewsService {
 		});
 	}
 
-	async deleteReviewRecord(rkey: string): Promise<void> {
+	async deleteReviewRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.review.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 
@@ -1546,10 +1546,10 @@ export class ReviewsService {
 		userDid: string,
 		record: PublicationRecord,
 	): Promise<void> {
-		// A repo may hold MANY publications (key is `tid`), so index by the unique
-		// rkey — never by userDid, which is not unique on Publication.
+		// A repo may hold MANY publications (key is `tid`), so index by the
+		// repository-qualified record key.
 		await this.prisma.publication.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -1567,9 +1567,9 @@ export class ReviewsService {
 		});
 	}
 
-	async deletePublicationRecord(rkey: string): Promise<void> {
+	async deletePublicationRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.publication.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 
@@ -1589,7 +1589,7 @@ export class ReviewsService {
 		}
 
 		await this.prisma.reviewLike.upsert({
-			where: { rkey },
+			where: { userDid_rkey: { userDid, rkey } },
 			create: {
 				rkey,
 				uri,
@@ -1605,9 +1605,9 @@ export class ReviewsService {
 		});
 	}
 
-	async deleteReviewLikeRecord(rkey: string): Promise<void> {
+	async deleteReviewLikeRecord(userDid: string, rkey: string): Promise<void> {
 		await this.prisma.reviewLike.deleteMany({
-			where: { rkey },
+			where: { userDid, rkey },
 		});
 	}
 }

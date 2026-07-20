@@ -328,11 +328,12 @@ export type LibraryItemOrderByWithRelationInput = {
 
 export type LibraryItemWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   userDid_mediaType_mediaId_seasonNumber_episodeNumber_format?: Prisma.LibraryItemUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberFormatCompoundUniqueInput
+  userDid_rkey?: Prisma.LibraryItemUserDidRkeyCompoundUniqueInput
   AND?: Prisma.LibraryItemWhereInput | Prisma.LibraryItemWhereInput[]
   OR?: Prisma.LibraryItemWhereInput[]
   NOT?: Prisma.LibraryItemWhereInput | Prisma.LibraryItemWhereInput[]
+  rkey?: Prisma.StringFilter<"LibraryItem"> | string
   uri?: Prisma.StringFilter<"LibraryItem"> | string
   cid?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   userDid?: Prisma.StringFilter<"LibraryItem"> | string
@@ -349,7 +350,7 @@ export type LibraryItemWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   movie?: Prisma.XOR<Prisma.MovieNullableScalarRelationFilter, Prisma.MovieWhereInput> | null
   show?: Prisma.XOR<Prisma.ShowNullableScalarRelationFilter, Prisma.ShowWhereInput> | null
-}, "id" | "rkey" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber_format">
+}, "id" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber_format" | "userDid_rkey">
 
 export type LibraryItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -535,6 +536,11 @@ export type LibraryItemUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberFormatCom
   seasonNumber: number
   episodeNumber: number
   format: $Enums.LibraryFormat
+}
+
+export type LibraryItemUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type LibraryItemCountOrderByAggregateInput = {

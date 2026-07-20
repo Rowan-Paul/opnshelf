@@ -301,11 +301,12 @@ export type RatingOrderByWithRelationInput = {
 
 export type RatingWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   userDid_mediaType_mediaId_seasonNumber_episodeNumber?: Prisma.RatingUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUniqueInput
+  userDid_rkey?: Prisma.RatingUserDidRkeyCompoundUniqueInput
   AND?: Prisma.RatingWhereInput | Prisma.RatingWhereInput[]
   OR?: Prisma.RatingWhereInput[]
   NOT?: Prisma.RatingWhereInput | Prisma.RatingWhereInput[]
+  rkey?: Prisma.StringFilter<"Rating"> | string
   uri?: Prisma.StringFilter<"Rating"> | string
   cid?: Prisma.StringFilter<"Rating"> | string
   userDid?: Prisma.StringFilter<"Rating"> | string
@@ -317,7 +318,7 @@ export type RatingWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rating"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "rkey" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber">
+}, "id" | "userDid_mediaType_mediaId_seasonNumber_episodeNumber" | "userDid_rkey">
 
 export type RatingOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -477,6 +478,11 @@ export type RatingUserDidMediaTypeMediaIdSeasonNumberEpisodeNumberCompoundUnique
   mediaId: string
   seasonNumber: number
   episodeNumber: number
+}
+
+export type RatingUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type RatingCountOrderByAggregateInput = {

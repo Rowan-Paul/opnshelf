@@ -1134,7 +1134,9 @@ describe("ReviewsService", () => {
 			);
 			expect(mockPrismaService.review.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
-					where: { rkey: "x" },
+					where: {
+						userDid_rkey: { userDid: "did:plc:u1", rkey: "x" },
+					},
 					create: expect.objectContaining({
 						mediaId: "123",
 						markdown: "body",

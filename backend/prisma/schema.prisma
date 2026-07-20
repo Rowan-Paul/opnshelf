@@ -282,7 +282,7 @@ model Episode {
 
 model TrackedMovie {
   id          String   @id @default(cuid())
-  rkey        String   @unique
+  rkey        String
   uri         String
   cid         String
   
@@ -305,11 +305,12 @@ model TrackedMovie {
   @@index([watchedDate])
   @@index([uri])
   @@index([cid])
+  @@unique([userDid, rkey], map: "TrackedMovie_userDid_rkey_key")
 }
 
 model TrackedEpisode {
   id            String   @id @default(cuid())
-  rkey          String   @unique
+  rkey          String
   uri           String
   cid           String
 
@@ -336,11 +337,12 @@ model TrackedEpisode {
   @@index([watchedDate])
   @@index([uri])
   @@index([cid])
+  @@unique([userDid, rkey], map: "TrackedEpisode_userDid_rkey_key")
 }
 
 model List {
   id          String   @id @default(cuid())
-  rkey        String   @unique
+  rkey        String
   uri         String
   cid         String?
   
@@ -358,18 +360,23 @@ model List {
   items       ListItem[]
   
   @@unique([userDid, slug])
+  @@unique([userDid, rkey], map: "List_userDid_rkey_key")
   @@index([userDid])
   @@index([isDefault])
 }
 
 model ListItem {
   id            String    @id @default(cuid())
-  rkey          String    @unique
+  rkey          String
   uri           String
   cid           String?
 
   listId        String
   list          List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  // Denormalized repository owner for AT Protocol record identity. Ownership
+  // is derived from the parent List when migrating existing rows.
+  userDid       String
 
   mediaType     MediaType
   mediaId       String
@@ -387,6 +394,8 @@ model ListItem {
   createdAt     DateTime  @default(now())
 
   @@unique([listId, mediaType, mediaId, seasonNumber, episodeNumber])
+  @@unique([userDid, rkey], map: "ListItem_userDid_rkey_key")
+  @@index([userDid])
   @@index([listId])
   @@index([mediaType, mediaId])
 }
@@ -395,7 +404,7 @@ model ListItem {
 // the Library is an umbrella, not an entity. See ADR 0009.
 model LibraryItem {
   id            String        @id @default(cuid())
-  rkey          String        @unique
+  rkey          String
   uri           String
   cid           String?
 
@@ -419,13 +428,14 @@ model LibraryItem {
   createdAt     DateTime      @default(now())
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber, format])
+  @@unique([userDid, rkey], map: "LibraryItem_userDid_rkey_key")
   @@index([userDid])
   @@index([mediaType, mediaId])
 }
 
 model Note {
   id            String   @id @default(cuid())
-  rkey          String   @unique
+  rkey          String
   uri           String
   cid           String
 
@@ -443,6 +453,7 @@ model Note {
   updatedAt     DateTime @updatedAt
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
+  @@unique([userDid, rkey], map: "Note_userDid_rkey_key")
   @@index([userDid])
   @@index([mediaType, mediaId])
 }
@@ -455,7 +466,7 @@ model Note {
 // AT-URI/CID are stored below.
 model Review {
   id            String   @id @default(cuid())
-  rkey          String   @unique
+  rkey          String
   uri           String
   cid           String
 
@@ -496,6 +507,7 @@ model Review {
 
   @@index([userDid])
   @@index([mediaType, mediaId])
+  @@unique([userDid, rkey], map: "Review_userDid_rkey_key")
 }
 
 // A site.standard.publication the user owns in their own PDS (e.g. Leaflet).
@@ -503,7 +515,7 @@ model Review {
 // mirror used to resolve the blog-mirror target the user selected in settings.
 model Publication {
   id        String   @id @default(cuid())
-  rkey      String   @unique
+  rkey      String
   uri       String
   cid       String
 
@@ -517,11 +529,12 @@ model Publication {
   updatedAt DateTime @updatedAt
 
   @@index([userDid])
+  @@unique([userDid, rkey], map: "Publication_userDid_rkey_key")
 }
 
 model Rating {
   id            String   @id @default(cuid())
-  rkey          String   @unique
+  rkey          String
   uri           String
   cid           String
 
@@ -539,6 +552,7 @@ model Rating {
   updatedAt     DateTime @updatedAt
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
+  @@unique([userDid, rkey], map: "Rating_userDid_rkey_key")
   @@index([userDid])
   @@index([mediaType, mediaId])
   @@index([rating])
@@ -546,7 +560,7 @@ model Rating {
 
 model ReviewLike {
   id        String   @id @default(cuid())
-  rkey      String   @unique
+  rkey      String
   uri       String
   cid       String
 
@@ -559,6 +573,7 @@ model ReviewLike {
   createdAt DateTime @default(now())
 
   @@unique([userDid, reviewId])
+  @@unique([userDid, rkey], map: "ReviewLike_userDid_rkey_key")
   @@index([reviewId])
   @@index([userDid])
 }

@@ -252,11 +252,12 @@ export type ListOrderByWithRelationInput = {
 
 export type ListWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  rkey?: string
   userDid_slug?: Prisma.ListUserDidSlugCompoundUniqueInput
+  userDid_rkey?: Prisma.ListUserDidRkeyCompoundUniqueInput
   AND?: Prisma.ListWhereInput | Prisma.ListWhereInput[]
   OR?: Prisma.ListWhereInput[]
   NOT?: Prisma.ListWhereInput | Prisma.ListWhereInput[]
+  rkey?: Prisma.StringFilter<"List"> | string
   uri?: Prisma.StringFilter<"List"> | string
   cid?: Prisma.StringNullableFilter<"List"> | string | null
   userDid?: Prisma.StringFilter<"List"> | string
@@ -268,7 +269,7 @@ export type ListWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"List"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   items?: Prisma.ListItemListRelationFilter
-}, "id" | "rkey" | "userDid_slug">
+}, "id" | "userDid_slug" | "userDid_rkey">
 
 export type ListOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -418,6 +419,11 @@ export type ListOrderByRelationAggregateInput = {
 export type ListUserDidSlugCompoundUniqueInput = {
   userDid: string
   slug: string
+}
+
+export type ListUserDidRkeyCompoundUniqueInput = {
+  userDid: string
+  rkey: string
 }
 
 export type ListCountOrderByAggregateInput = {

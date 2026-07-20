@@ -221,7 +221,12 @@ describe("ListsService", () => {
 				cursor: undefined,
 			});
 			expect(mockPrismaService.list.upsert).toHaveBeenCalledWith({
-				where: { rkey: "favorites-rkey" },
+				where: {
+					userDid_rkey: {
+						userDid: "did:plc:abc123",
+						rkey: "favorites-rkey",
+					},
+				},
 				create: {
 					rkey: "favorites-rkey",
 					uri: "at://did:plc:abc123/xyz.opnshelf.list/favorites-rkey",
@@ -1165,7 +1170,14 @@ describe("ListsService", () => {
 
 			expect(mockPrismaService.listItem.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
+					where: {
+						userDid_rkey: {
+							userDid: "did:plc:abc123",
+							rkey: "testtid123",
+						},
+					},
 					create: expect.objectContaining({
+						userDid: "did:plc:abc123",
 						mediaType: "movie",
 						mediaId: "123",
 						movieId: "123",
@@ -1212,10 +1224,10 @@ describe("ListsService", () => {
 				count: 1,
 			});
 
-			await service.deleteListItemRecord("testtid123");
+			await service.deleteListItemRecord("did:plc:test", "testtid123");
 
 			expect(mockPrismaService.listItem.deleteMany).toHaveBeenCalledWith({
-				where: { rkey: "testtid123" },
+				where: { userDid: "did:plc:test", rkey: "testtid123" },
 			});
 		});
 	});
