@@ -2,6 +2,11 @@ import { useRef } from "react";
 import { View } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { env } from "@/lib/env";
+import {
+	isTrustedEditorUrl,
+	trustedEditorOrigin,
+	trustedEditorUrl,
+} from "@/lib/safe-links";
 import { useTheme } from "@/lib/theme-context";
 
 interface MilkdownWebViewProps {
@@ -29,9 +34,11 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 	// Capture the initial body once; parent re-renders (on each change) must not
 	// re-seed the editor and clobber what the user is typing.
 	const initial = useRef(value);
-	const uri = `${env.siteUrl}/embed/review-editor?theme=${scheme}`;
+	const uri = trustedEditorUrl(env.siteUrl, scheme);
+	const editorOrigin = trustedEditorOrigin(env.siteUrl);
 
 	const handleMessage = (event: WebViewMessageEvent) => {
+		if (!isTrustedEditorUrl(event.nativeEvent.url, env.siteUrl)) return;
 		let msg: { type?: string; markdown?: string };
 		try {
 			msg = JSON.parse(event.nativeEvent.data);
@@ -48,13 +55,19 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 		}
 	};
 
+	if (!uri || !editorOrigin) return null;
+
 	return (
 		<View className="min-h-48 flex-1 overflow-hidden rounded-lg border border-border">
 			<WebView
 				ref={webRef}
-				originWhitelist={["*"]}
+				originWhitelist={[editorOrigin]}
 				source={{ uri }}
+				onShouldStartLoadWithRequest={(request) =>
+					isTrustedEditorUrl(request.url, env.siteUrl)
+				}
 				onMessage={handleMessage}
+				setSupportMultipleWindows={false}
 				// iOS: allow the editor to focus + raise the keyboard without a
 				// preceding user tap being required by WebKit.
 				keyboardDisplayRequiresUserAction={false}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Linking, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { openExternalWebUrl } from "@/lib/safe-links";
 
 /**
  * Minimal markdown renderer for the review editor's live preview.
@@ -78,7 +79,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 					key={key}
 					className="text-accent underline"
 					onPress={() => {
-						Linking.openURL(linkUrl).catch(() => {});
+						openExternalWebUrl(linkUrl, Linking.openURL);
 					}}
 				>
 					{linkLabel}
