@@ -908,25 +908,26 @@ describe("MoviesService", () => {
 	});
 
 	describe("getUserMovies", () => {
-		it("should return movies grouped by movieId with watch counts", async () => {
+		it("groups interleaved movies while keeping the newest representative and colors", async () => {
+			const colors = { primary: "#112233", secondary: "#445566" };
 			const mockTrackedMovies = [
 				{
 					id: "tracked-1",
 					movieId: "123",
 					watchedDate: new Date("2024-01-15"),
-					movie: { title: "Movie 1" },
-				},
-				{
-					id: "tracked-2",
-					movieId: "123",
-					watchedDate: new Date("2024-01-10"),
-					movie: { title: "Movie 1" },
+					movie: { title: "Movie 1", colors },
 				},
 				{
 					id: "tracked-3",
 					movieId: "456",
 					watchedDate: new Date("2024-01-12"),
 					movie: { title: "Movie 2" },
+				},
+				{
+					id: "tracked-2",
+					movieId: "123",
+					watchedDate: new Date("2024-01-10"),
+					movie: { title: "Movie 1", colors: null },
 				},
 			];
 
@@ -944,8 +945,11 @@ describe("MoviesService", () => {
 			expect(result).toHaveLength(2);
 			expect(result[0].movieId).toBe("123");
 			expect(result[0].watchCount).toBe(2);
+			expect(result[0].id).toBe("tracked-1");
+			expect(result[0].movie.colors).toEqual(colors);
 			expect(result[1].movieId).toBe("456");
 			expect(result[1].watchCount).toBe(1);
+			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledTimes(1);
 		});
 
 		it("should return empty array when user has no tracked movies", async () => {
