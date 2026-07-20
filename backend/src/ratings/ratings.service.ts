@@ -67,37 +67,37 @@ export class RatingsService {
 
 	async getBatchRatings(dto: BatchRatingRequestDto) {
 		const { mediaType, mediaIds } = dto;
+		const uniqueMediaIds = [...new Set(mediaIds)];
+		if (uniqueMediaIds.length === 0) {
+			return { items: [] };
+		}
 
-		const results = await Promise.all(
-			mediaIds.map(async (mediaId) => {
-				// Scope to the top-level rating (season/episode 0), matching
-				// getMediaRating. Without this, a show's batch average would pool in
-				// every per-episode rating and diverge from the single-item endpoint.
-				const where = {
-					mediaType,
-					mediaId,
-					seasonNumber: 0,
-					episodeNumber: 0,
-				};
-				const [aggregate, count] = await Promise.all([
-					this.prisma.rating.aggregate({
-						where,
-						_avg: { rating: true },
-					}),
-					this.prisma.rating.count({
-						where,
-					}),
-				]);
-
-				return {
-					mediaId,
-					averageRating: aggregate._avg.rating ?? undefined,
-					ratingCount: count,
-				};
-			}),
+		// Scope to top-level ratings (season/episode 0), matching getMediaRating.
+		const groupedRatings = await this.prisma.rating.groupBy({
+			by: ["mediaId"],
+			where: {
+				mediaType,
+				mediaId: { in: uniqueMediaIds },
+				seasonNumber: 0,
+				episodeNumber: 0,
+			},
+			_avg: { rating: true },
+			_count: { _all: true },
+		});
+		const ratingsByMediaId = new Map(
+			groupedRatings.map((rating) => [rating.mediaId, rating]),
 		);
 
-		return { items: results };
+		return {
+			items: uniqueMediaIds.map((mediaId) => {
+				const groupedRating = ratingsByMediaId.get(mediaId);
+				return {
+					mediaId,
+					averageRating: groupedRating?._avg.rating ?? undefined,
+					ratingCount: groupedRating?._count._all ?? 0,
+				};
+			}),
+		};
 	}
 
 	async setRating(userDid: string, session: ATSession, dto: SetRatingDto) {

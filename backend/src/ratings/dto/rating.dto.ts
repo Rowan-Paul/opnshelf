@@ -1,6 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import {
+	ArrayMaxSize,
+	ArrayNotEmpty,
+	ArrayUnique,
+	IsArray,
+	IsIn,
+	IsInt,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	Max,
+	MaxLength,
+	Min,
+} from "class-validator";
+
+export const MAX_BATCH_RATING_IDS = 100;
+
+// TMDB IDs are short decimal strings; 50 leaves ample headroom while bounding input.
+const MAX_MEDIA_ID_LENGTH = 50;
 
 export class SetRatingDto {
 	@ApiProperty({
@@ -135,14 +153,22 @@ export class BatchRatingRequestDto {
 		description: "Media type",
 		enum: ["movie", "show"],
 	})
-	@IsString()
+	@IsIn(["movie", "show"])
 	mediaType: "movie" | "show";
 
 	@ApiProperty({
-		description: "Array of media IDs to fetch ratings for",
+		description:
+			"Array of media IDs to fetch ratings for (maximum 50 characters per ID)",
 		type: [String],
+		maxItems: MAX_BATCH_RATING_IDS,
 	})
+	@IsArray()
+	@ArrayNotEmpty()
+	@ArrayMaxSize(MAX_BATCH_RATING_IDS)
+	@ArrayUnique()
 	@IsString({ each: true })
+	@IsNotEmpty({ each: true })
+	@MaxLength(MAX_MEDIA_ID_LENGTH, { each: true })
 	mediaIds: string[];
 }
 

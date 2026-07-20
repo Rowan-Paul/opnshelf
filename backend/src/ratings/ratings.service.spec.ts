@@ -49,6 +49,7 @@ describe("RatingsService", () => {
 			findFirst: vi.fn(),
 			aggregate: vi.fn(),
 			count: vi.fn(),
+			groupBy: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
 			delete: vi.fn(),
@@ -308,32 +309,44 @@ describe("RatingsService", () => {
 	});
 
 	describe("getBatchRatings", () => {
-		it("aggregates per mediaId and returns an items array", async () => {
-			mockPrismaService.rating.aggregate
-				.mockResolvedValueOnce({ _avg: { rating: 8 } })
-				.mockResolvedValueOnce({ _avg: { rating: null } });
-			mockPrismaService.rating.count
-				.mockResolvedValueOnce(3)
-				.mockResolvedValueOnce(0);
+		it("groups once and returns rated and unrated IDs in first-occurrence order", async () => {
+			mockPrismaService.rating.groupBy.mockResolvedValue([
+				{ mediaId: "2", _avg: { rating: 8 }, _count: { _all: 3 } },
+				{ mediaId: "1", _avg: { rating: 6 }, _count: { _all: 2 } },
+			]);
 
 			const result = await service.getBatchRatings({
 				mediaType: "movie",
-				mediaIds: ["1", "2"],
+				mediaIds: ["1", "3", "2", "1"],
 			});
 
 			expect(result).toEqual({
 				items: [
-					{ mediaId: "1", averageRating: 8, ratingCount: 3 },
-					{ mediaId: "2", averageRating: undefined, ratingCount: 0 },
+					{ mediaId: "1", averageRating: 6, ratingCount: 2 },
+					{ mediaId: "3", averageRating: undefined, ratingCount: 0 },
+					{ mediaId: "2", averageRating: 8, ratingCount: 3 },
 				],
 			});
+			expect(mockPrismaService.rating.groupBy).toHaveBeenCalledOnce();
+			expect(mockPrismaService.rating.groupBy).toHaveBeenCalledWith({
+				by: ["mediaId"],
+				where: {
+					mediaType: "movie",
+					mediaId: { in: ["1", "3", "2"] },
+					seasonNumber: 0,
+					episodeNumber: 0,
+				},
+				_avg: { rating: true },
+				_count: { _all: true },
+			});
+			expect(mockPrismaService.rating.aggregate).not.toHaveBeenCalled();
+			expect(mockPrismaService.rating.count).not.toHaveBeenCalled();
 		});
 
 		it("scopes batch aggregation to season/episode 0, matching getMediaRating", async () => {
-			mockPrismaService.rating.aggregate.mockResolvedValue({
-				_avg: { rating: 7 },
-			});
-			mockPrismaService.rating.count.mockResolvedValue(5);
+			mockPrismaService.rating.groupBy.mockResolvedValue([
+				{ mediaId: "123", _avg: { rating: 7 }, _count: { _all: 5 } },
+			]);
 
 			await service.getBatchRatings({
 				mediaType: "show",
@@ -343,19 +356,25 @@ describe("RatingsService", () => {
 			// Regression guard: batch must use the same top-level (0/0) scope as the
 			// single-item endpoint, so a show's batch average doesn't pool in every
 			// per-episode rating that shares the mediaId.
-			const expectedWhere = {
-				mediaType: "show",
-				mediaId: "123",
-				seasonNumber: 0,
-				episodeNumber: 0,
-			};
-			expect(mockPrismaService.rating.aggregate).toHaveBeenCalledWith({
-				where: expectedWhere,
+			expect(mockPrismaService.rating.groupBy).toHaveBeenCalledWith({
+				by: ["mediaId"],
+				where: {
+					mediaType: "show",
+					mediaId: { in: ["123"] },
+					seasonNumber: 0,
+					episodeNumber: 0,
+				},
 				_avg: { rating: true },
+				_count: { _all: true },
 			});
-			expect(mockPrismaService.rating.count).toHaveBeenCalledWith({
-				where: expectedWhere,
-			});
+		});
+
+		it("returns an empty batch without querying", async () => {
+			await expect(
+				service.getBatchRatings({ mediaType: "movie", mediaIds: [] }),
+			).resolves.toEqual({ items: [] });
+
+			expect(mockPrismaService.rating.groupBy).not.toHaveBeenCalled();
 		});
 	});
 
