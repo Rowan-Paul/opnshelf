@@ -1,4 +1,4 @@
-import { configureApiClient, setOnUnauthorized } from "@opnshelf/api";
+import { configureApiClient } from "@opnshelf/api";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { env } from "#/env";
@@ -33,12 +33,6 @@ export function setupApiClient() {
 
 	const apiUrl = env.VITE_API_URL;
 	configureApiClient(apiUrl);
-
-	setOnUnauthorized(() => {
-		// Redirect-on-401 handling lives in route `beforeLoad`s; this is a hook
-		// point if we ever want a global redirect.
-		console.warn("Unauthorized - redirecting to login");
-	});
 
 	return { apiUrl };
 }
