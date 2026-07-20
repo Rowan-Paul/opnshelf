@@ -29,19 +29,31 @@ jobs:
               - 'packages/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
             backend:
               - 'backend/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
             mobile:
               - 'apps/mobile/**'
               - 'packages/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
             api:
               - 'packages/api/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
 
   web:
     needs: changes
@@ -155,3 +167,32 @@ jobs:
 
       - name: Typecheck
         run: pnpm --filter @opnshelf/api exec tsc --noEmit
+
+  ci:
+    name: CI result
+    needs: [changes, web, backend, mobile, api]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate job results
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          WEB_RESULT: ${{ needs.web.result }}
+          BACKEND_RESULT: ${{ needs.backend.result }}
+          MOBILE_RESULT: ${{ needs.mobile.result }}
+          API_RESULT: ${{ needs.api.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "Changes job result: $CHANGES_RESULT"
+            exit 1
+          fi
+
+          for result in "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT"; do
+            case "$result" in
+              success|skipped) ;;
+              *)
+                echo "Unexpected application job result: $result"
+                exit 1
+                ;;
+            esac
+          done
