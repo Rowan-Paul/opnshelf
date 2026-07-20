@@ -1,5 +1,6 @@
 import {
 	reviewsControllerDeleteReviewMutation,
+	reviewsControllerGetUserReviewsInfiniteQueryKey,
 	reviewsControllerGetUserReviewsQueryKey,
 	reviewsControllerLikeReviewMutation,
 	reviewsControllerUnlikeReviewMutation,
@@ -9,7 +10,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import { Heart, Pencil, Star, Trash2 } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
@@ -23,7 +24,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
-import { useProfileReviews } from "@/lib/use-public-profile";
+import { useInfiniteProfileReviews } from "@/lib/use-public-profile";
 
 /**
  * Reviews tab: the user's reviews, cursor-paginated with a Load more button.
@@ -46,11 +47,26 @@ export function ReviewsTab({
 	isOwner: boolean;
 	showHeading?: boolean;
 }) {
-	const [cursor, setCursor] = useState<string | undefined>(undefined);
-	const { data, isLoading, isError } = useProfileReviews(userDid, cursor);
+	const loadMorePending = useRef(false);
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteProfileReviews(userDid);
 
-	const reviews = data?.items ?? [];
-	const hasMore = data?.nextCursor != null;
+	const reviews = data?.pages.flatMap((page) => page.items) ?? [];
+	const handleLoadMore = async () => {
+		if (loadMorePending.current || isFetchingNextPage) return;
+		loadMorePending.current = true;
+		try {
+			await fetchNextPage();
+		} finally {
+			loadMorePending.current = false;
+		}
+	};
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -62,7 +78,7 @@ export function ReviewsTab({
 
 			{isLoading ? (
 				<ReviewsSkeleton />
-			) : isError ? (
+			) : isError && reviews.length === 0 ? (
 				<ErrorState message="Couldn't load reviews." />
 			) : reviews.length === 0 ? (
 				<EmptyState
@@ -83,12 +99,19 @@ export function ReviewsTab({
 				</View>
 			)}
 
-			{hasMore ? (
+			{hasNextPage ? (
 				<Pressable
-					onPress={() => setCursor(data?.nextCursor ?? undefined)}
+					disabled={isFetchingNextPage}
+					onPress={handleLoadMore}
 					className="items-center rounded-lg border border-border py-2.5"
 				>
-					<Text className="font-medium text-foreground text-sm">Load more</Text>
+					{isFetchingNextPage ? (
+						<ActivityIndicator size="small" />
+					) : (
+						<Text className="font-medium text-foreground text-sm">
+							Load more
+						</Text>
+					)}
 				</Pressable>
 			) : null}
 		</View>
@@ -129,13 +152,18 @@ function ReviewCard({
 		...reviewsControllerUnlikeReviewMutation(),
 	});
 
-	const invalidateList = () =>
-		queryClient.invalidateQueries({
+	const invalidateList = () => {
+		void queryClient.invalidateQueries({
 			queryKey: reviewsControllerGetUserReviewsQueryKey({
 				path: { userDid },
-				query: { limit: 20 },
 			}),
 		});
+		void queryClient.invalidateQueries({
+			queryKey: reviewsControllerGetUserReviewsInfiniteQueryKey({
+				path: { userDid },
+			}),
+		});
+	};
 
 	const handleSave = ({
 		title,
