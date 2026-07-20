@@ -15,6 +15,7 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useEffect,
 	useState,
 } from "react";
 import { env } from "#/env";
@@ -73,11 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		staleTime: 5 * 60 * 1000,
 	});
 
-	// Handle unauthorized responses
-	setOnUnauthorized(() => {
-		// Clear user data on 401
-		queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
-	});
+	// The API callback is a browser singleton. Register it after mount so SSR
+	// requests never capture their request-scoped QueryClient in global state.
+	useEffect(() => {
+		setOnUnauthorized(() => {
+			queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
+		});
+
+		return () => setOnUnauthorized(null);
+	}, [queryClient]);
 
 	const login = useCallback((handle: string) => {
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
