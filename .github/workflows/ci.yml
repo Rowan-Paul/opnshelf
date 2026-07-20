@@ -48,6 +48,7 @@ jobs:
               - 'turbo.json'
               - '.github/workflows/ci.yml'
             api:
+              - 'backend/**'
               - 'packages/api/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
@@ -164,6 +165,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm --filter backend exec prisma generate
+
+      - name: Generate API artifacts
+        run: pnpm generate:api
+
+      - name: Check API artifact drift
+        run: git diff --exit-code -- backend/openapi.json packages/api/src/generated
 
       - name: Typecheck
         run: pnpm --filter @opnshelf/api exec tsc --noEmit
