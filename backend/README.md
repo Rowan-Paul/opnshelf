@@ -1,98 +1,66 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Opnshelf backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The backend workspace is the NestJS API for Opnshelf. Prisma persists indexed
+data in PostgreSQL, while the ingester subscribes through Tab to AT Protocol
+records defined by the repository's lexicons. The API serves the Shelf, Watch,
+Activity Feed, Discover, authentication, and supporting media features used by
+the web and mobile clients.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+See the [repository README](../README.md) for prerequisites, local services,
+initial setup, and the full environment-variable reference.
 
-## Description
+## Structure
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- `src/` contains NestJS modules, controllers, services, DTOs, and generated
+  Prisma and lexicon bindings.
+- `prisma/` contains the database schema and migrations.
+- [`../lexicons`](../lexicons) contains the source AT Protocol record
+  definitions.
+- `scripts/` contains maintenance and lexicon publication utilities.
 
-## Project setup
+Files under `src/generated/` and `src/lexicons/` are generated outputs. Update
+their source schema or lexicon and regenerate them instead of editing generated
+code by hand. The shared TypeScript API client is generated into
+[`packages/api`](../packages/api) from the backend OpenAPI document.
 
-```bash
-$ pnpm install
-```
+## Environment
 
-## Compile and run the project
+Configure `backend/.env` with values appropriate to the local environment:
 
-```bash
-# development
-$ pnpm run start
+- `DATABASE_URL` connects Prisma to PostgreSQL.
+- `TMDB_API_KEY` and `TRAKT_API_KEY` enable external media and import data.
+- `TAB_URL` locates the Tab ingestion service; `TAB_ADMIN_PASSWORD` supplies
+  its matching administrator password.
+- `PDS_URL` selects the Personal Data Server.
+- `BACKEND_PUBLIC_URL` supplies the externally reachable OAuth callback base.
+- `FRONTEND_URL` supplies the allowed frontend origin and redirect target.
 
-# watch mode
-$ pnpm run start:dev
+Additional feature-specific variables are documented in the
+[root environment tables](../README.md#environment-variables). Do not commit
+local `.env` files.
 
-# production mode
-$ pnpm run start:prod
-```
+## Commands
 
-## Run tests
+Run commands from the repository root:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm dev:backend
+pnpm --filter backend run build
+pnpm --filter backend run check
+pnpm --filter backend run typecheck
+pnpm --filter backend run test
+pnpm --filter backend run test:cov
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Database and generated-client commands are also exposed at the root:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm prisma:generate
+pnpm prisma:migrate
+pnpm generate:api
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+`pnpm dev:backend` starts the API on port 3001 by default. Outside production,
+Swagger UI is available at `/api` and its OpenAPI document at `/api-json`.
+`pnpm generate:api` generates and reads the checked `backend/openapi.json`
+specification offline; generated client code should not be edited by hand.

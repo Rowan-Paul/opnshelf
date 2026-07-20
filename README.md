@@ -16,11 +16,11 @@ Logo masters, palette guidance, and the pre-launch clearance note live in [desig
 
 ## Tech Stack
 
-- **Backend**: NestJS + Prisma + PostgreSQL + AT Protocol (TAP)
+- **Backend**: NestJS + Prisma + PostgreSQL + AT Protocol (Tab)
 - **Web**: React + TanStack Start (SSR) + TanStack Router + Vite + Tailwind CSS v4
-- **Mobile**: Expo + React Native + React Native Paper
+- **Mobile**: Expo + React Native + Expo Router + Uniwind + local UI components
 - **Protocol**: AT Protocol (decentralized storage via `xyz.opnshelf.*` lexicons)
-- **Design**: Material You (dynamic theming based on poster colors)
+- **Design**: Dynamic theming derived from poster colors
 - **Analytics**: PostHog
 - **Monorepo**: pnpm workspaces + Turbo
 
@@ -43,21 +43,22 @@ opnshelf/
 
 - Node.js 24+
 - pnpm 11.1.2+
-- Docker (for local TAP)
+- Docker (for local Tab)
 
 ### Setup
 
 ```bash
 # Install dependencies
-pnpm install
+pnpm i
 
-# Start PostgreSQL and TAP
+# Start PostgreSQL and Tab
 docker-compose up -d
 
 # Configure backend/.env
 DATABASE_URL="postgresql://opnshelf:opnshelf@127.0.0.1:5432/opnshelf"
 TMDB_API_KEY="your-tmdb-key"
-TAP_URL="http://localhost:2480"
+TAB_URL="http://localhost:2480"
+TAB_ADMIN_PASSWORD="your-local-tab-admin-password"
 
 # Run migrations
 pnpm prisma:migrate
@@ -81,7 +82,7 @@ User data is stored as AT Protocol records in their personal repository:
 - `xyz.opnshelf.follow` - Social follows
 - `xyz.opnshelf.profile` - User profiles
 
-The backend subscribes to the AT Protocol firehose via TAP to index public records for social discovery.
+The backend subscribes to the AT Protocol firehose via Tab to index public records for social discovery.
 
 ## Development Commands
 
@@ -94,6 +95,7 @@ pnpm dev:mobile     # Mobile app (Expo)
 # Code quality
 pnpm check          # Lint + format all packages
 pnpm check:write    # Auto-fix issues
+pnpm typecheck      # Type-check all packages
 
 # Database
 pnpm prisma:migrate
@@ -140,7 +142,8 @@ Notes:
 | `DATABASE_URL` | PostgreSQL connection string |
 | `TMDB_API_KEY` | TMDB API key for movie data |
 | `TRAKT_API_KEY` | Trakt.tv API key for imports |
-| `TAP_URL` | TAP ingestion service URL |
+| `TAB_URL` | Tab ingestion service URL |
+| `TAB_ADMIN_PASSWORD` | Tab administrator password; must match the container |
 | `PDS_URL` | Personal Data Server (e.g., `https://opnshelf.social`) |
 | `BACKEND_PUBLIC_URL` | Public URL for OAuth callbacks |
 | `FRONTEND_URL` | Frontend URL for redirects |
