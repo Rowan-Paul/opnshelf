@@ -3,6 +3,7 @@ import {
 	socialControllerFollowMutation,
 	socialControllerGetFollowersOptions,
 	socialControllerGetFollowingOptions,
+	socialControllerGetSuggestionsOptions,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
@@ -51,6 +52,10 @@ function ConnectionsPage() {
 		}),
 		enabled: debouncedSearch.length > 0 && isSearching,
 	});
+	const { data: suggestionsData, isLoading: suggestionsLoading } = useQuery({
+		...socialControllerGetSuggestionsOptions(),
+		enabled: isSearching && !debouncedSearch.trim(),
+	});
 
 	// Recent following/followers previews (most recent first). A glance + "see
 	// all" entry point — the full lists are canonical on the profile (ADR 0012).
@@ -78,7 +83,8 @@ function ConnectionsPage() {
 				const id = (query.queryKey[0] as { _id?: string } | undefined)?._id;
 				return (
 					id === "socialControllerSearchPeople" ||
-					id === "socialControllerGetFollowing"
+					id === "socialControllerGetFollowing" ||
+					id === "socialControllerGetSuggestions"
 				);
 			},
 		});
@@ -145,7 +151,14 @@ function ConnectionsPage() {
 					onFocus={() => setIsSearching(true)}
 					onBlur={() => setTimeout(() => setIsSearching(false), 200)}
 					results={searchData?.items || []}
-					isLoading={searchLoading}
+					isLoading={
+						searchLoading ||
+						(isSearching &&
+							searchQuery.trim().length > 0 &&
+							!debouncedSearch.trim())
+					}
+					suggestions={suggestionsData?.items || []}
+					isSuggestionsLoading={suggestionsLoading}
 					onFollow={handleFollow}
 					onUnfollow={handleUnfollow}
 					pendingFollowDid={followMutation.variables?.path?.targetDid}

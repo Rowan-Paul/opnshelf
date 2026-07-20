@@ -71,11 +71,11 @@ export function useFollowers(handle: string, pageSize = 20) {
 }
 
 /** People-to-follow suggestions (used by the onboarding suggestions step). */
-export function useSuggestions() {
+export function useSuggestions(enabled = true) {
 	const { isAuthenticated } = useAuth();
 	return useQuery({
 		...socialControllerGetSuggestionsOptions(),
-		enabled: isAuthenticated,
+		enabled: isAuthenticated && enabled,
 	});
 }
 

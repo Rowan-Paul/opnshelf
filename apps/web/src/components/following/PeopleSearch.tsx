@@ -1,6 +1,6 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Search, UserPlus } from "lucide-react";
+import { Loader2, Search, Sparkles, UserPlus } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
 
 interface PeopleSearchProps {
@@ -11,6 +11,16 @@ interface PeopleSearchProps {
 	onBlur: () => void;
 	results: SocialUserCardDto[];
 	isLoading: boolean;
+	suggestions: SocialUserCardDto[];
+	isSuggestionsLoading: boolean;
+	onFollow: (did: string) => void;
+	onUnfollow: (did: string) => void;
+	pendingFollowDid?: string;
+	pendingUnfollowDid?: string;
+}
+
+interface UserSearchRowProps {
+	person: SocialUserCardDto;
 	onFollow: (did: string) => void;
 	onUnfollow: (did: string) => void;
 	pendingFollowDid?: string;
@@ -25,6 +35,8 @@ export function PeopleSearch({
 	onBlur,
 	results,
 	isLoading,
+	suggestions,
+	isSuggestionsLoading,
 	onFollow,
 	onUnfollow,
 	pendingFollowDid,
@@ -50,72 +62,112 @@ export function PeopleSearch({
 				</div>
 			</div>
 
-			{isSearching && query.length > 0 && (
+			{isSearching && (
 				<div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-(--border) bg-(--background) shadow-lg">
-					{results.length === 0 ? (
+					{query.trim().length === 0 ? (
+						isSuggestionsLoading ? (
+							<div className="p-4 text-center text-(--foreground-muted)">
+								Loading recommendations...
+							</div>
+						) : suggestions.length === 0 ? (
+							<div className="p-4 text-center text-(--foreground-muted)">
+								No recommendations right now
+							</div>
+						) : (
+							<div className="space-y-1 p-2">
+								<p className="flex items-center gap-2 px-2 py-1 font-medium text-(--foreground-muted) text-xs">
+									<Sparkles className="size-3" /> Recommended for you
+								</p>
+								{suggestions.map((person) => (
+									<UserSearchRow
+										key={person.did}
+										person={person}
+										onFollow={onFollow}
+										onUnfollow={onUnfollow}
+										pendingFollowDid={pendingFollowDid}
+										pendingUnfollowDid={pendingUnfollowDid}
+									/>
+								))}
+							</div>
+						)
+					) : results.length === 0 ? (
 						<div className="p-4 text-center text-(--foreground-muted)">
 							{isLoading ? "Searching..." : "No users found"}
 						</div>
 					) : (
 						<div className="space-y-1 p-2">
 							{results.map((person: SocialUserCardDto) => (
-								<div
+								<UserSearchRow
 									key={person.did}
-									className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
-								>
-									<Link
-										to="/profile/$handle"
-										params={{ handle: person.handle }}
-										className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
-									>
-										<UserAvatar
-											src={person.avatar}
-											alt={String(person.displayName) || person.handle}
-										/>
-										<div className="min-w-0">
-											<p className="truncate font-medium text-sm">
-												{String(person.displayName) || person.handle}
-											</p>
-											<p className="text-(--foreground-muted) text-xs">
-												@{person.handle}
-											</p>
-										</div>
-									</Link>
-									{person.isFollowing ? (
-										<button
-											type="button"
-											className="btn btn-secondary btn-sm h-8 px-3 text-xs"
-											onClick={() => onUnfollow(person.did)}
-											disabled={pendingUnfollowDid === person.did}
-										>
-											{pendingUnfollowDid === person.did ? (
-												<Loader2 className="size-3 animate-spin" />
-											) : (
-												"Unfollow"
-											)}
-										</button>
-									) : (
-										<button
-											type="button"
-											className="btn btn-primary btn-sm h-8 px-3 text-xs"
-											onClick={() => onFollow(person.did)}
-											disabled={pendingFollowDid === person.did}
-										>
-											{pendingFollowDid === person.did ? (
-												<Loader2 className="size-3 animate-spin" />
-											) : (
-												<>
-													<UserPlus className="mr-1 size-3" />
-													Follow
-												</>
-											)}
-										</button>
-									)}
-								</div>
+									person={person}
+									onFollow={onFollow}
+									onUnfollow={onUnfollow}
+									pendingFollowDid={pendingFollowDid}
+									pendingUnfollowDid={pendingUnfollowDid}
+								/>
 							))}
 						</div>
 					)}
 				</div>
+			)}
+		</div>
+	);
+}
+
+function UserSearchRow({
+	person,
+	onFollow,
+	onUnfollow,
+	pendingFollowDid,
+	pendingUnfollowDid,
+}: UserSearchRowProps) {
+	return (
+		<div className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)">
+			<Link
+				to="/profile/$handle"
+				params={{ handle: person.handle }}
+				className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
+			>
+				<UserAvatar
+					src={person.avatar}
+					alt={String(person.displayName) || person.handle}
+				/>
+				<div className="min-w-0">
+					<p className="truncate font-medium text-sm">
+						{String(person.displayName) || person.handle}
+					</p>
+					<p className="text-(--foreground-muted) text-xs">@{person.handle}</p>
+				</div>
+			</Link>
+			{person.isFollowing ? (
+				<button
+					type="button"
+					className="btn btn-secondary btn-sm h-8 px-3 text-xs"
+					onClick={() => onUnfollow(person.did)}
+					disabled={pendingUnfollowDid === person.did}
+				>
+					{pendingUnfollowDid === person.did ? (
+						<Loader2 className="size-3 animate-spin" />
+					) : (
+						"Unfollow"
+					)}
+				</button>
+			) : (
+				<button
+					type="button"
+					className="btn btn-primary btn-sm h-8 px-3 text-xs"
+					onClick={() => onFollow(person.did)}
+					disabled={pendingFollowDid === person.did}
+				>
+					{pendingFollowDid === person.did ? (
+						<Loader2 className="size-3 animate-spin" />
+					) : (
+						<>
+							<UserPlus className="mr-1 size-3" />
+							Follow
+						</>
+					)}
+				</button>
 			)}
 		</div>
 	);

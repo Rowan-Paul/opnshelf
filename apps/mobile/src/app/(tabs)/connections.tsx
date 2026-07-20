@@ -10,6 +10,7 @@ import {
 	ChevronRight,
 	Plus,
 	Search,
+	Sparkles,
 	User,
 	Users,
 	X,
@@ -25,7 +26,12 @@ import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useCircles, useCreateCircle } from "@/lib/use-circles";
 import { useDebounce } from "@/lib/use-debounce";
-import { useFollowers, useFollowing, useFollowToggle } from "@/lib/use-social";
+import {
+	useFollowers,
+	useFollowing,
+	useFollowToggle,
+	useSuggestions,
+} from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -40,14 +46,18 @@ export default function ConnectionsScreen() {
 	const handle = user?.handle ?? "";
 
 	const [query, setQuery] = useState("");
+	const [isSearchFocused, setIsSearchFocused] = useState(false);
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
+	const hasInput = query.trim().length > 0;
 
 	const { toggle } = useFollowToggle();
 	const following = useFollowing(handle);
 	const recentFollowing = following.items.slice(0, 12);
 	const followers = useFollowers(handle);
 	const recentFollowers = followers.items.slice(0, 12);
+	const suggestionsQuery = useSuggestions(isSearchFocused && !hasQuery);
+	const suggestions = suggestionsQuery.data?.items ?? [];
 	const { data: circles = [] } = useCircles();
 	const createCircle = useCreateCircle();
 	const [newName, setNewName] = useState("");
@@ -96,11 +106,13 @@ export default function ConnectionsScreen() {
 					autoCapitalize="none"
 					autoCorrect={false}
 					returnKeyType="search"
+					onFocus={() => setIsSearchFocused(true)}
+					onBlur={() => setIsSearchFocused(false)}
 				/>
 			</View>
 
-			{hasQuery ? (
-				peopleQuery.isLoading ? (
+			{hasInput ? (
+				!hasQuery || peopleQuery.isLoading ? (
 					<View className="px-4">
 						<UserRowsSkeleton />
 					</View>
@@ -126,6 +138,33 @@ export default function ConnectionsScreen() {
 						keyboardShouldPersistTaps="handled"
 					/>
 				)
+			) : isSearchFocused ? (
+				<View className="px-4">
+					<View className="flex-row items-center gap-2 pb-3">
+						<Sparkles color="#94a3b8" size={18} />
+						<Text className="font-display font-semibold text-base text-foreground">
+							Recommended for you
+						</Text>
+					</View>
+					{suggestionsQuery.isLoading ? (
+						<UserRowsSkeleton />
+					) : suggestions.length === 0 ? (
+						<Text className="py-4 text-center text-muted-foreground text-sm">
+							No recommendations right now.
+						</Text>
+					) : (
+						<View className="gap-2">
+							{suggestions.map((person) => (
+								<UserRow
+									key={person.did}
+									user={person}
+									isSelf={person.did === myDid}
+									onToggleFollow={toggle}
+								/>
+							))}
+						</View>
+					)}
+				</View>
 			) : (
 				<ScrollView contentContainerClassName="px-4 pb-8 gap-2">
 					{handle ? (
