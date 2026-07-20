@@ -847,6 +847,42 @@ describe("AuthController", () => {
 			});
 		});
 
+		it("should revoke a bearer-only session", async () => {
+			const req = createMockRequest({
+				headers: { authorization: "Bearer bearer-session" },
+			});
+			const res = createMockResponse();
+
+			await controller.logout(
+				req as unknown as import("../auth/types").AuthenticatedRequest,
+				res,
+			);
+
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledOnce();
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledWith(
+				"bearer-session",
+			);
+			expect(res.clearCookie).toHaveBeenCalled();
+		});
+
+		it("should prefer the bearer session over the cookie", async () => {
+			const req = createMockRequest({
+				headers: { authorization: "Bearer bearer-session" },
+				cookies: { session: "cookie-session" },
+			});
+			const res = createMockResponse();
+
+			await controller.logout(
+				req as unknown as import("../auth/types").AuthenticatedRequest,
+				res,
+			);
+
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledOnce();
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledWith(
+				"bearer-session",
+			);
+		});
+
 		it("should still clear cookie when no session exists", async () => {
 			const req = createMockRequest({
 				cookies: {},
@@ -862,6 +898,25 @@ describe("AuthController", () => {
 			expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
 			expect(res.clearCookie).toHaveBeenCalled();
 			expect(res.status).toHaveBeenCalledWith(200);
+		});
+
+		it("should clear the cookie even when server revocation fails", async () => {
+			mockAuthService.revokeBySessionId.mockRejectedValueOnce(
+				new Error("database unavailable"),
+			);
+			const req = createMockRequest({
+				cookies: { session: "session-123" },
+			});
+			const res = createMockResponse();
+
+			await expect(
+				controller.logout(
+					req as unknown as import("../auth/types").AuthenticatedRequest,
+					res,
+				),
+			).rejects.toThrow("database unavailable");
+			expect(res.clearCookie).toHaveBeenCalled();
+			expect(res.status).not.toHaveBeenCalled();
 		});
 	});
 

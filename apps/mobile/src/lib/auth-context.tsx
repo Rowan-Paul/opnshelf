@@ -1,4 +1,5 @@
 import {
+	authControllerLogout,
 	authControllerMe,
 	authControllerMeQueryKey,
 	authControllerRegister,
@@ -62,6 +63,12 @@ function detectTimezone(): string | undefined {
 	}
 }
 
+function isUnauthorizedApiError(error: unknown): boolean {
+	if (!error || typeof error !== "object") return false;
+	const apiError = error as Record<string, unknown>;
+	return apiError.status === 401 || apiError.statusCode === 401;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
 
@@ -89,15 +96,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	// Restore the persisted token on mount and apply it to the API client.
 	useEffect(() => {
-		loadSessionToken().then((token) => {
-			setHasSessionToken(!!token);
-			setIsInitialized(true);
-		});
+		let isMounted = true;
+
+		void loadSessionToken().then(
+			(token) => {
+				if (!isMounted) return;
+				setHasSessionToken(!!token);
+				setIsInitialized(true);
+			},
+			() => {
+				console.error("Failed to restore the persisted session");
+				if (!isMounted) return;
+				setHasSessionToken(false);
+				setIsInitialized(true);
+			},
+		);
+
+		return () => {
+			isMounted = false;
+		};
 	}, []);
 
 	const clearSession = useCallback(async () => {
-		posthog?.reset();
 		await saveSessionToken(null);
+		posthog?.reset();
 		setHasSessionToken(false);
 		const meKey = authControllerMeQueryKey();
 		queryClient.setQueryData(meKey, null);
@@ -111,12 +133,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		setOnUnauthorized(() => {
 			if (!getSessionToken()) return;
-			void clearSession().then(() => {
-				router.replace({
-					pathname: "/login",
-					params: { reason: "session_expired" },
-				});
-			});
+			void clearSession().then(
+				() => {
+					router.replace({
+						pathname: "/login",
+						params: { reason: "session_expired" },
+					});
+				},
+				() => {
+					console.error("Failed to clear the expired session");
+				},
+			);
 		});
 		return () => setOnUnauthorized(null);
 	}, [clearSession]);
@@ -218,8 +245,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const signOut = useCallback(async () => {
-		posthog?.reset();
+		try {
+			await authControllerLogout({ throwOnError: true });
+		} catch (error) {
+			// An already-invalid session is effectively revoked. Retryable failures
+			// retain the local credential so the user can try logout again.
+			if (!isUnauthorizedApiError(error)) throw error;
+		}
 		await saveSessionToken(null);
+		posthog?.reset();
 		setHasSessionToken(false);
 		queryClient.setQueryData(authControllerMeQueryKey(), null);
 		queryClient.clear();

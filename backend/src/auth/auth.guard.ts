@@ -5,9 +5,8 @@ import {
 	UnauthorizedException,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
+import { extractSessionId } from "./session-id";
 import type { AuthenticatedRequest, AuthUser } from "./types";
-
-const SESSION_COOKIE_NAME = "session";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -16,17 +15,8 @@ export class AuthGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-		// Try Bearer token first (for mobile apps), then fall back to cookie (for web)
-		const authHeader = request.headers.authorization;
-		let sessionId: string | undefined;
-
-		if (authHeader?.startsWith("Bearer ")) {
-			sessionId = authHeader.slice(7);
-		} else {
-			// Cookie stores opaque session id (not DID)
-			const cookies = request.cookies as Record<string, string | undefined>;
-			sessionId = cookies?.[SESSION_COOKIE_NAME];
-		}
+		// Prefer native Bearer auth, then fall back to the web session cookie.
+		const sessionId = extractSessionId(request);
 
 		if (!sessionId) {
 			throw new UnauthorizedException("Not authenticated");

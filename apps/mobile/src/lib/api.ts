@@ -19,27 +19,21 @@ export function initializeApiClient(): void {
 export async function loadSessionToken(): Promise<string | null> {
 	try {
 		const token = await SecureStore.getItemAsync(SESSION_TOKEN_KEY);
-		if (token) {
-			setSessionToken(token);
-		}
+		setSessionToken(token);
 		return token;
 	} catch (error) {
-		console.error("Failed to load session token:", error);
-		return null;
+		setSessionToken(null);
+		throw error;
 	}
 }
 
 /** Persist (or clear) the session token and update the API client. */
 export async function saveSessionToken(token: string | null): Promise<void> {
-	try {
-		if (token) {
-			await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
-			setSessionToken(token);
-		} else {
-			await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
-			setSessionToken(null);
-		}
-	} catch (error) {
-		console.error("Failed to save session token:", error);
+	if (token) {
+		await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
+		setSessionToken(token);
+	} else {
+		await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
+		setSessionToken(null);
 	}
 }
