@@ -115,7 +115,7 @@ describe("IngesterService", () => {
 
 	const mockConfigService = {
 		get: vi.fn((key: string) => {
-			if (key === "TAP_URL") return "wss://tap.opnshelf.xyz";
+			if (key === "TAB_URL") return "wss://tab.opnshelf.xyz";
 			return undefined;
 		}),
 	};
@@ -213,10 +213,10 @@ describe("IngesterService", () => {
 	});
 
 	describe("onModuleInit", () => {
-		it("should start the TAP ingester", () => {
+		it("should start the Tab ingester", () => {
 			service.onModuleInit();
 
-			expect(Tap).toHaveBeenCalledWith("wss://tap.opnshelf.xyz", {
+			expect(Tap).toHaveBeenCalledWith("wss://tab.opnshelf.xyz", {
 				adminPassword: undefined,
 			});
 			expect(SimpleIndexer).toHaveBeenCalled();
@@ -226,7 +226,7 @@ describe("IngesterService", () => {
 	});
 
 	describe("addRepo", () => {
-		it("should add a repo to TAP", async () => {
+		it("should add a repo to Tab", async () => {
 			service.onModuleInit();
 			await service.addRepo("did:plc:abc123");
 
@@ -235,7 +235,7 @@ describe("IngesterService", () => {
 	});
 
 	describe("removeRepo", () => {
-		it("should remove a repo from TAP", async () => {
+		it("should remove a repo from Tab", async () => {
 			service.onModuleInit();
 			await service.removeRepo("did:plc:abc123");
 
@@ -581,7 +581,7 @@ describe("IngesterService", () => {
 			);
 		});
 
-		it("rethrows transient DB errors so TAP does not ack (redelivery)", async () => {
+		it("rethrows transient DB errors so Tab does not ack (redelivery)", async () => {
 			const recordHandler = setupRecordHandler();
 			// A transient Prisma connection error during the user lookup.
 			const transient = new Prisma.PrismaClientKnownRequestError(
@@ -674,7 +674,7 @@ describe("IngesterService", () => {
 				recordHandler(movieCreateEvent(20, "movie-tmdb-5xx")),
 			).rejects.toBe(outage);
 
-			// Retried the full budget, then rethrown so TAP does not ack.
+			// Retried the full budget, then rethrown so Tab does not ack.
 			expect(mockMoviesService.getMovieDetails).toHaveBeenCalledTimes(3);
 			expect(mockPrismaService.trackedMovie.upsert).not.toHaveBeenCalled();
 		}, 10000);

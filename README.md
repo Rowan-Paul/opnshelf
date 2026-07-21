@@ -58,7 +58,7 @@ docker-compose up -d
 DATABASE_URL="postgresql://opnshelf:opnshelf@127.0.0.1:5432/opnshelf"
 TMDB_API_KEY="your-tmdb-key"
 TAB_URL="http://localhost:2480"
-TAB_ADMIN_PASSWORD="your-local-tab-admin-password"
+TAB_ADMIN_PASSWORD="y29d6b572f17af0f150cd4b480bec85cf"
 
 # Run migrations
 pnpm prisma:migrate
@@ -143,7 +143,7 @@ Notes:
 | `TMDB_API_KEY` | TMDB API key for movie data |
 | `TRAKT_API_KEY` | Trakt.tv API key for imports |
 | `TAB_URL` | Tab ingestion service URL |
-| `TAB_ADMIN_PASSWORD` | Tab administrator password; must match the container |
+| `TAB_ADMIN_PASSWORD` | Tab admin password; must match the container |
 | `PDS_URL` | Personal Data Server (e.g., `https://opnshelf.social`) |
 | `BACKEND_PUBLIC_URL` | Public URL for OAuth callbacks |
 | `FRONTEND_URL` | Frontend URL for redirects |

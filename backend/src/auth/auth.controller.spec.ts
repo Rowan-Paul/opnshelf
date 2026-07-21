@@ -371,7 +371,7 @@ describe("AuthController", () => {
 			);
 		});
 
-		it("should register user DID with TAP on successful callback", async () => {
+		it("should register user DID with Tab on successful callback", async () => {
 			const mockSession = { did: "did:plc:abc123" };
 			const mockProfile = {
 				did: "did:plc:abc123",
@@ -404,7 +404,7 @@ describe("AuthController", () => {
 			);
 		});
 
-		it("should still redirect on success even if TAP registration fails", async () => {
+		it("should still redirect on success even if Tab registration fails", async () => {
 			const mockSession = { did: "did:plc:abc123" };
 			const mockProfile = {
 				did: "did:plc:abc123",
@@ -418,7 +418,7 @@ describe("AuthController", () => {
 			});
 			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
 			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
-			mockIngesterService.addRepo.mockRejectedValue(new Error("TAP error"));
+			mockIngesterService.addRepo.mockRejectedValue(new Error("Tab error"));
 
 			const req = createMockRequest({
 				url: "/auth/callback?code=abc&state=xyz",

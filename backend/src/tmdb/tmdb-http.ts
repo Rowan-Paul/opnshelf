@@ -60,7 +60,7 @@ export class TmdbNotFoundError extends Error {
  * TMDB is unreachable or failing in a way that is not the record's fault: a
  * 5xx after the retry budget is exhausted, a request timeout, or a network
  * error. TRANSIENT: the same request may succeed later, so callers on the
- * firehose path should NOT ack (so TAP redelivers) instead of dropping.
+ * firehose path should NOT ack (so Tab redelivers) instead of dropping.
  */
 export class TmdbServiceError extends Error {
 	constructor(

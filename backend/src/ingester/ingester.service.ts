@@ -87,7 +87,7 @@ import { ProfileService } from "../users/profile.service";
 /**
  * Prisma error codes that indicate a transient/infrastructure failure rather
  * than a problem with the record itself. These are worth retrying and, if the
- * retry budget is exhausted, worth NOT acking so TAP redelivers the event.
+ * retry budget is exhausted, worth NOT acking so Tab redelivers the event.
  *  - P1000: authentication failed against the database
  *  - P1001: can't reach the database server
  *  - P1002: database connection timed out
@@ -168,15 +168,15 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private static readonly MAX_INDEX_ATTEMPTS = 3;
 	/** Base backoff between retry attempts; doubled each attempt (200, 400...). */
 	private static readonly INDEX_BACKOFF_BASE_MS = 200;
-	private tap: Tap | null = null;
+	private tab: Tap | null = null;
 	private channel: ReturnType<Tap["channel"]> | null = null;
-	private readonly tapUrl: string;
-	private readonly tapAdminPassword: string | undefined;
+	private readonly tabUrl: string;
+	private readonly tabAdminPassword: string | undefined;
 	/**
 	 * In-memory set of DIDs we know are tracked, used as a fast-path before the
 	 * per-event `user.findUnique` (which otherwise runs on every firehose event).
 	 *
-	 * Safe because TAP only delivers events for repos we explicitly addRepo'd,
+	 * Safe because Tab only delivers events for repos we explicitly addRepo'd,
 	 * and every addRepo is preceded by persisting the user. We populate this set
 	 * at exactly those points (addRepo, registerExistingUsers). It is purely a
 	 * positive cache: a HIT skips the DB; a MISS falls back to the DB lookup and
@@ -198,8 +198,13 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly socialService: SocialService,
 		private readonly profileService: ProfileService,
 	) {
-		this.tapUrl = this.config.get<string>("TAP_URL") ?? "http://localhost:2480";
-		this.tapAdminPassword = this.config.get<string>("TAP_ADMIN_PASSWORD");
+		this.tabUrl =
+			this.config.get<string>("TAB_URL") ??
+			this.config.get<string>("TAP_URL") ??
+			"http://localhost:2480";
+		this.tabAdminPassword =
+			this.config.get<string>("TAB_ADMIN_PASSWORD") ??
+			this.config.get<string>("TAP_ADMIN_PASSWORD");
 	}
 
 	onModuleInit() {
@@ -211,7 +216,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				void this.registerExistingUsers();
 			}, 1000);
 		} catch (e) {
-			this.logger.error("TAP init failed; continuing without ingester", e);
+			this.logger.error("Tab init failed; continuing without ingester", e);
 		}
 	}
 
@@ -220,11 +225,11 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	private startIngester(): void {
-		this.logger.log(`Starting TAP ingester, connecting to ${this.tapUrl}`);
+		this.logger.log(`Starting Tab ingester, connecting to ${this.tabUrl}`);
 
-		// Initialize TAP client with optional admin password for authentication
-		this.tap = new Tap(this.tapUrl, {
-			adminPassword: this.tapAdminPassword,
+		// Tab implements TAP's API, so the upstream TAP client remains compatible.
+		this.tab = new Tap(this.tabUrl, {
+			adminPassword: this.tabAdminPassword,
 		});
 
 		// Create indexer to handle events
@@ -232,12 +237,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		// Handle record events (create, update, delete).
 		//
-		// Durability contract with TAP: SimpleIndexer acks an event only after
+		// Durability contract with Tab: SimpleIndexer acks an event only after
 		// this handler resolves. If the handler throws, TapChannel does NOT ack
-		// and TAP will redeliver the event later. We exploit that here:
+		// and Tab will redeliver the event later. We exploit that here:
 		//  - Transient/infra failures (DB down, timeouts) are retried a few times
 		//    in-handler; if still failing we RETHROW so the event is not acked and
-		//    TAP redelivers it — the backfill guarantee is preserved.
+		//    Tab redelivers it — the backfill guarantee is preserved.
 		//  - Permanent failures (malformed record, record for another app, unknown
 		//    user) are swallowed inside the per-collection handlers (logged at
 		//    debug) so we ack and move on instead of looping forever.
@@ -256,20 +261,20 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 		// Handle errors
 		indexer.error((err: Error) => {
-			this.logger.error("TAP indexer error", err);
+			this.logger.error("Tab indexer error", err);
 		});
 
 		// Create WebSocket channel
-		this.channel = this.tap.channel(indexer);
+		this.channel = this.tab.channel(indexer);
 
 		// Start the channel in the background (non-blocking)
 		void this.channel
 			.start()
 			.then(() => {
-				this.logger.log("TAP ingester connected and ready");
+				this.logger.log("Tab ingester connected and ready");
 			})
 			.catch((err) => {
-				this.logger.error("Failed to start TAP channel", err);
+				this.logger.error("Failed to start Tab channel", err);
 			});
 	}
 
@@ -278,13 +283,13 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 			await this.channel.destroy();
 			this.channel = null;
 		}
-		this.tap = null;
-		this.logger.log("TAP ingester stopped");
+		this.tab = null;
+		this.logger.log("Tab ingester stopped");
 	}
 
 	/**
-	 * Register a user's DID with TAP to start tracking their repo.
-	 * TAP will automatically backfill all historical records.
+	 * Register a user's DID with Tab to start tracking their repo.
+	 * Tab will automatically backfill all historical records.
 	 *
 	 * Pass `markBackfillStart: true` from the auth flow (sign-in / sign-up) to
 	 * stamp `User.backfillStartedAt`, which opens the "syncing your watch
@@ -296,18 +301,18 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		did: string,
 		opts: { markBackfillStart?: boolean } = {},
 	): Promise<void> {
-		if (!this.tap) {
-			throw new Error("TAP client not initialized");
+		if (!this.tab) {
+			throw new Error("Tab client not initialized");
 		}
 
 		try {
-			await this.tap.addRepos([did]);
-			// Mark tracked only after TAP accepts the repo, so a failed add doesn't
+			await this.tab.addRepos([did]);
+			// Mark tracked only after Tab accepts the repo, so a failed add doesn't
 			// leave a stale positive entry. (A missing entry is harmless — the
 			// handlers fall back to the DB.)
 			this.trackedDids.add(did);
 		} catch (err) {
-			this.logger.error(`Failed to register repo ${did} with TAP`, err);
+			this.logger.error(`Failed to register repo ${did} with Tab`, err);
 			throw err;
 		}
 
@@ -348,19 +353,19 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Unregister a user's DID from TAP to stop tracking their repo.
+	 * Unregister a user's DID from Tab to stop tracking their repo.
 	 */
 	async removeRepo(did: string): Promise<void> {
-		if (!this.tap) {
-			throw new Error("TAP client not initialized");
+		if (!this.tab) {
+			throw new Error("Tab client not initialized");
 		}
 
-		await this.tap.removeRepos([did]);
+		await this.tab.removeRepos([did]);
 		this.trackedDids.delete(did);
 	}
 
 	/**
-	 * Register all existing users with TAP on startup.
+	 * Register all existing users with Tab on startup.
 	 * This ensures we backfill any records created while the service was down.
 	 */
 	private async registerExistingUsers(): Promise<void> {
@@ -380,12 +385,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				try {
 					await this.addRepo(did);
 				} catch (err) {
-					this.logger.error(`Failed to register repo ${did} with TAP`, err);
+					this.logger.error(`Failed to register repo ${did} with Tab`, err);
 					// Continue with next user even if one fails
 				}
 			}
 		} catch (err) {
-			this.logger.error("Failed to register existing users with TAP", err);
+			this.logger.error("Failed to register existing users with Tab", err);
 		}
 	}
 
@@ -421,7 +426,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	 * Dispatch a record event with a bounded retry for transient failures.
 	 *
 	 * On a transient error we retry up to {@link MAX_INDEX_ATTEMPTS} times with a
-	 * small exponential backoff. If every attempt fails we RETHROW so TAP does
+	 * small exponential backoff. If every attempt fails we RETHROW so Tab does
 	 * not receive an ack and will redeliver the event (no silent data loss).
 	 *
 	 * On a permanent error we log at ERROR with full context and swallow it: the
@@ -461,11 +466,11 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					continue;
 				}
 
-				// Retry budget exhausted on a transient failure. Rethrow so TAP does
+				// Retry budget exhausted on a transient failure. Rethrow so Tab does
 				// NOT ack and will redeliver the event — this is what keeps the
 				// "index records created while down" guarantee alive across a DB blip.
 				this.logger.error(
-					`Transient indexing error persisted after ${IngesterService.MAX_INDEX_ATTEMPTS} attempts for ${uri}; not acking so TAP can redeliver`,
+					`Transient indexing error persisted after ${IngesterService.MAX_INDEX_ATTEMPTS} attempts for ${uri}; not acking so Tab can redeliver`,
 					err instanceof Error ? err.stack : String(err),
 				);
 				throw err;
@@ -571,7 +576,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				} catch (err) {
 					// A transient TMDB failure (5xx/timeout/network) is an upstream
 					// outage, not a bad record — rethrow so processRecordEventWithRetry
-					// retries and, if still failing, redelivers via TAP. A genuine
+					// retries and, if still failing, redelivers via Tab. A genuine
 					// not-found (invalid movie id) is permanent: log and drop.
 					if (isTransientError(err)) {
 						throw err;

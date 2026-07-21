@@ -337,14 +337,14 @@ export class AuthController {
 			{ isNativePds: true },
 		);
 
-		// Register the new repo with TAP for tracking/backfill (best-effort).
+		// Register the new repo with Tab for tracking/backfill (best-effort).
 		// markBackfillStart opens the shelf's "syncing your watch history…" window.
 		try {
 			await this.ingesterService.addRepo(account.did, {
 				markBackfillStart: true,
 			});
 		} catch (error) {
-			this.logger.error(`Failed to register ${account.did} with TAP`, error);
+			this.logger.error(`Failed to register ${account.did} with Tab`, error);
 		}
 
 		// NB: we do NOT seed the profile/default lists here. The PDS rejects all
@@ -504,7 +504,7 @@ export class AuthController {
 				res.clearCookie(TIMEZONE_COOKIE_NAME);
 			}
 
-			// Register user's DID with TAP for repo tracking and backfill.
+			// Register user's DID with Tab for repo tracking and backfill.
 			// markBackfillStart opens the shelf's "syncing your watch history…"
 			// window so a freshly-linked account isn't shown an empty shelf while
 			// its historical records are still streaming in over the firehose.
@@ -512,11 +512,11 @@ export class AuthController {
 				await this.ingesterService.addRepo(session.did, {
 					markBackfillStart: true,
 				});
-			} catch (tapError) {
-				// Log but don't fail login if TAP registration fails
+			} catch (tabError) {
+				// Log but don't fail login if Tab registration fails
 				this.logger.error(
-					`Failed to register ${session.did} with TAP`,
-					tapError,
+					`Failed to register ${session.did} with Tab`,
+					tabError,
 				);
 			}
 

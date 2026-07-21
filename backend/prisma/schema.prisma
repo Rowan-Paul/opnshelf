@@ -29,7 +29,7 @@ model User {
   emailVerifiedAt DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with
-  // TAP at sign-in/sign-up; lastIngestAt is bumped each time a watch record is
+  // Tab at sign-in/sign-up; lastIngestAt is bumped each time a watch record is
   // ingested. Together they let the shelf derive whether records are still
   // streaming in — see ShelfService.getSyncStatus.
   backfillStartedAt DateTime?

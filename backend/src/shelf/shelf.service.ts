@@ -491,7 +491,7 @@ export class ShelfService {
 	 * from their PDS, so the shelf can show a "syncing your watch history…"
 	 * indicator instead of a misleading empty state right after sign-up.
 	 *
-	 * There is no explicit "backfill complete" signal from TAP, so we infer it
+	 * There is no explicit "backfill complete" signal from Tab, so we infer it
 	 * from two timestamps the ingester maintains (see IngesterService):
 	 *   - backfillStartedAt: stamped when the repo is registered at sign-in/up.
 	 *   - lastIngestAt: bumped on every ingested movie/episode record.
@@ -510,7 +510,7 @@ export class ShelfService {
 		lastIngestAt: Date | null;
 	}> {
 		// No first record within this window of opening backfill ⇒ assume the repo
-		// has nothing to backfill (or TAP never delivered) and stop syncing.
+		// has nothing to backfill (or Tab never delivered) and stop syncing.
 		const INITIAL_GRACE_MS = 20_000;
 		// No new record within this gap ⇒ the stream has gone quiet, treat caught up.
 		const QUIET_GAP_MS = 8_000;
