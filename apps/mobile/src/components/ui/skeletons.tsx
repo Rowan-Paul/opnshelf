@@ -21,12 +21,18 @@ export function PosterRowSkeleton({ width = 110 }: { width?: number }) {
 	);
 }
 
-/** 3-column poster grid (shelf/library tabs, list details, search results). */
-export function PosterGridSkeleton({ rows = 2 }: { rows?: number }) {
+/** Poster grid (shelf/library tabs, list details, search results). */
+export function PosterGridSkeleton({
+	rows = 2,
+	columns = 3,
+}: {
+	rows?: number;
+	columns?: number;
+}) {
 	return (
 		<View className="flex-row flex-wrap gap-3">
-			{IDX(rows * 3).map((i) => (
-				<View key={i} className="w-[31%]">
+			{IDX(rows * columns).map((i) => (
+				<View key={i} style={{ width: `${100 / columns - 2}%` }}>
 					<View className="aspect-2/3 w-full rounded-lg bg-background-subtle" />
 					<View className="mt-2 h-3 w-4/5 rounded bg-background-subtle" />
 				</View>

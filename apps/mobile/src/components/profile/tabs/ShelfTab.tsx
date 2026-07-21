@@ -17,6 +17,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { useDebounce } from "@/lib/use-debounce";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileShelf } from "@/lib/use-public-profile";
 import { useWatchActions } from "@/lib/use-watch-actions";
 
@@ -89,6 +90,7 @@ export function ShelfTab({
 		new Set(),
 	);
 	const debounced = useDebounce(search.trim(), 350);
+	const columns = useMediaCardColumns();
 
 	const { data, isLoading, isError } = useProfileShelf(userDid, {
 		page,
@@ -191,7 +193,7 @@ export function ShelfTab({
 			</View>
 
 			{isLoading ? (
-				<PosterGridSkeleton />
+				<PosterGridSkeleton columns={columns} />
 			) : isError ? (
 				<ErrorState message="Couldn't load this shelf." />
 			) : items.length === 0 ? (
@@ -231,6 +233,7 @@ export function ShelfTab({
 												key={item.id}
 												item={item}
 												isOwner={isOwner}
+												columns={columns}
 											/>
 										))}
 									</View>
@@ -242,7 +245,12 @@ export function ShelfTab({
 			) : (
 				<View className="flex-row flex-wrap">
 					{items.map((item) => (
-						<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+						<ShelfWatchCard
+							key={item.id}
+							item={item}
+							isOwner={isOwner}
+							columns={columns}
+						/>
 					))}
 				</View>
 			)}
@@ -281,9 +289,11 @@ export function ShelfTab({
 function ShelfWatchCard({
 	item,
 	isOwner,
+	columns,
 }: {
 	item: ShelfResponseDto["items"][number];
 	isOwner: boolean;
+	columns: number;
 }) {
 	const isMovie = item.type === "movie";
 	const actions = useWatchActions(
@@ -298,7 +308,7 @@ function ShelfWatchCard({
 	};
 
 	return (
-		<View className="w-1/3 px-1 pb-3">
+		<View className="px-1 pb-3" style={{ width: `${100 / columns}%` }}>
 			<MediaCard
 				item={{
 					...shelfItemToCardItem(item),
