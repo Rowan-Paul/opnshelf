@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown only in the system widget picker preview; at runtime the provider
+     replaces it with the live graph bitmap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="60dp"
+    android:viewportWidth="160"
+    android:viewportHeight="60">
+    <path android:fillColor="#f3bc00" android:pathData="M0,54 h8 v6 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M10.67,45 h8 v15 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M21.33,36 h8 v24 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M32,48 h8 v12 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M42.67,27 h8 v33 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M53.33,39 h8 v21 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M64,18 h8 v42 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M74.67,33 h8 v27 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M85.33,42 h8 v18 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M96,24 h8 v36 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M106.67,9 h8 v51 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M117.33,30 h8 v30 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M128,36 h8 v24 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M138.67,21 h8 v39 h-8 z" />
+    <path android:fillColor="#f3bc00" android:pathData="M149.33,0 h8 v60 h-8 z" />
+</vector>

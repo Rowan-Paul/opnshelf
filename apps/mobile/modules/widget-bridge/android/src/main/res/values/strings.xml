@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Watch activity</string>
+    <string name="widget_description">Your opnshelf watch activity over the last 30 days</string>
+    <string name="widget_last_30_days">Last 30 days</string>
+    <string name="widget_total_watched">%1$d watched</string>
+    <string name="widget_sign_in_prompt">Sign in to opnshelf to see your watch activity</string>
+</resources>

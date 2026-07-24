@@ -22,6 +22,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
+import { requestWidgetUpdate } from "../../modules/widget-bridge";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
 // user's hourly PDS write budget and fail partway (see ADR-0009).
@@ -113,6 +114,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				path: { userDid },
 			}),
 		});
+		// Refresh the Home-Screen Widget immediately rather than leaving it on
+		// the 30-minute periodic tick. Fires on settle (success and error), so
+		// the widget always converges to server truth after any watch mutation.
+		requestWidgetUpdate();
 	};
 
 	// --- Movie keys ---

@@ -20,8 +20,10 @@ import { useEffect, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { initializeApiClient } from "@/lib/api";
+import { env } from "@/lib/env";
 import { posthog } from "@/lib/posthog";
 import { useTheme } from "@/lib/theme-context";
+import { setWidgetApiUrl } from "../../modules/widget-bridge";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -59,6 +61,9 @@ export default function RootLayout() {
 
 	useEffect(() => {
 		initializeApiClient();
+		// The Home-Screen Widget fetches the public profile endpoint itself, so
+		// it needs the build-time API origin handed over once at startup.
+		setWidgetApiUrl(env.apiUrl);
 	}, []);
 
 	useEffect(() => {

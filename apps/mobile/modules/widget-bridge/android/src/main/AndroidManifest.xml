@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+          The Home-Screen Widget provider. Declared in the library manifest so
+          prebuild's manifest merge picks it up — the android/ project is
+          generated and never checked in.
+        -->
+        <receiver
+            android:name="com.opnshelf.widgetbridge.ShelfWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/shelf_widget_info" />
+        </receiver>
+    </application>
+</manifest>

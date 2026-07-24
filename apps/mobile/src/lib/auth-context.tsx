@@ -23,6 +23,7 @@ import {
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
 import { posthog } from "@/lib/posthog";
+import { setWidgetHandle } from "../../modules/widget-bridge";
 
 /** Where the PDS OAuth flow redirects back into the app. */
 const AUTH_REDIRECT_URL = "opnshelf://auth/complete";
@@ -277,6 +278,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// first `me` fetch to settle (the query is disabled — and thus not pending in
 	// a meaningful way — when there's no token, so we only gate on it then).
 	const isLoading = !isInitialized || (hasSessionToken && isUserPending);
+
+	// Point the Home-Screen Widget at the signed-in user once auth settles.
+	// `user` flips to null on sign-out, session expiry, and account switch,
+	// which clears the widget back to its sign-in placeholder. Gated on
+	// isLoading so a cold start doesn't briefly wipe the stored handle before
+	// the restored session resolves.
+	useEffect(() => {
+		if (isLoading) return;
+		setWidgetHandle(user?.handle ?? null);
+	}, [isLoading, user?.handle]);
 
 	const value: AuthContextType = {
 		user: user ?? null,

@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 	routerReplace: vi.fn(),
 	saveSessionToken: vi.fn(),
 	setOnUnauthorized: vi.fn(),
+	setWidgetHandle: vi.fn(),
 }));
 
 vi.mock("@opnshelf/api", () => ({
@@ -48,6 +49,10 @@ vi.mock("@/lib/posthog", () => ({
 		identify: mocks.posthogIdentify,
 		reset: mocks.posthogReset,
 	},
+}));
+
+vi.mock("../../modules/widget-bridge", () => ({
+	setWidgetHandle: mocks.setWidgetHandle,
 }));
 
 const testUser = {

@@ -79,6 +79,10 @@ _Avoid_: Person (reserved for TMDB cast/crew), Member
 The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
+**Home-Screen Widget**:
+An Android home-screen widget, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
+_Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
+
 **Connections**:
 The destination for growing and organising your network: finding people (people search) and your **Circles**. The "manage people" counterpart to **Activity** (the "consume the feed" surface). The full **Following**/**Followers** lists are canonical on the **Profile**, not hosted here; Connections may show small recent-following and recent-followers *previews* (a glance + "see all" entry point that links to the canonical profile list), but never the managed lists themselves. One name on both web and mobile — supersedes the old split of "Following" (web page), "Connections" (mobile screen) and "Find" (mobile button).
 _Avoid_: Find, Friends, People (collides with the User/Person split), Network, the old "Following" page name

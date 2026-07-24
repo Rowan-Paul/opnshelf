@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useColorScheme } from "react-native";
 import { Uniwind } from "uniwind";
+import { setWidgetTheme } from "../../modules/widget-bridge";
 
 /** User-facing appearance preference. `system` follows the OS color scheme. */
 export type ThemePreference = "system" | "light" | "dark";
@@ -67,9 +68,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	// Pass the raw preference to Uniwind: for "system" it clears the
 	// Appearance override and follows the OS live. Setting a concrete theme
 	// here instead would pin Appearance.setColorScheme, freezing
-	// useColorScheme until the next app restart.
+	// useColorScheme until the next app restart. The Home-Screen Widget gets
+	// the same preference so it never clashes with the app's appearance.
 	useEffect(() => {
 		Uniwind.setTheme(preference);
+		setWidgetTheme(preference);
 	}, [preference]);
 
 	const setPreference = useMemo(
