@@ -56,6 +56,19 @@ describe("pickKeyCrew", () => {
 		}
 	});
 
+	it("ranks by keyJobs order, so shows can put Creator first", () => {
+		const showJobs = ["Creator", "Director", "Executive Producer"];
+		const crew = pickKeyCrew(
+			[
+				{ id: 1, name: "Michelle MacLaren", job: "Executive Producer" },
+				{ id: 2, name: "Vince Gilligan", job: "Creator" },
+			],
+			showJobs,
+		);
+
+		expect(crew[0].name).toBe("Vince Gilligan");
+	});
+
 	it("drops non-key jobs and survives missing crew", () => {
 		expect(pickKeyCrew(duneCrew, KEY_JOBS).map((m) => m.job)).not.toContain(
 			"Gaffer",

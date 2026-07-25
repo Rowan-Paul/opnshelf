@@ -123,10 +123,10 @@ export default function ShowDetailScreen() {
 							{
 								label: "Creator",
 								value:
-									data.credits?.crew?.find(
-										(p) =>
-											p.job === "Executive Producer" || p.job === "Creator",
-									)?.name || "Unknown",
+									data.credits?.crew
+										?.filter((p) => p.job === "Creator")
+										.map((p) => p.name)
+										.join(", ") || "Unknown",
 							},
 							{ label: "Seasons", value: data.number_of_seasons || 0 },
 							{ label: "Episodes", value: data.number_of_episodes || 0 },

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { pickKeyCrew } from "../tmdb/tmdb-credits.util";
+import { CAST_LIMIT, pickKeyCrew } from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -35,6 +35,7 @@ export interface TMDBShow {
 	vote_count: number;
 	next_episode_to_air?: TMDBEpisode | null;
 	trailer?: TMDBTrailer;
+	created_by?: Array<{ id: number; name: string; profile_path?: string }>;
 }
 
 export interface TMDBSearchResponse {
@@ -215,9 +216,18 @@ export class ShowsTmdbService {
 	}
 
 	async getShowCredits(showId: string): Promise<TMDBCredits | null> {
-		const response = await this.http.fetch(
-			`${this.tmdbBaseUrl}/tv/${showId}/credits?api_key=${this.tmdbApiKey}`,
-		);
+		const [response, detailResponse] = await Promise.all([
+			this.http.fetch(
+				`${this.tmdbBaseUrl}/tv/${showId}/credits?api_key=${this.tmdbApiKey}`,
+			),
+			// TMDB lists a show's creators under created_by on the detail endpoint —
+			// /credits has no "Creator" job at all, so without this the clients fall
+			// back to naming an executive producer as the creator.
+			this.http.fetchCached(
+				`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`,
+				`tv:detail:${showId}`,
+			),
+		]);
 
 		if (!response.ok) {
 			this.logger.warn(`Failed to fetch credits for show ${showId}`);
@@ -225,22 +235,35 @@ export class ShowsTmdbService {
 		}
 
 		const data = await response.json<TMDBCredits>();
+		const createdBy = detailResponse.ok
+			? ((await detailResponse.json<TMDBShow>()).created_by ?? [])
+			: [];
+
 		const sortedCast = (data.cast || [])
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
-			.slice(0, 15);
+			.slice(0, CAST_LIMIT);
 		const keyJobs = [
+			"Creator",
 			"Director",
 			"Producer",
 			"Executive Producer",
 			"Screenplay",
 			"Writer",
-			"Creator",
 			"Original Music Composer",
 			"Composer",
 		];
+		const crew = [
+			...createdBy.map((person) => ({
+				...person,
+				job: "Creator",
+				department: "Writing",
+			})),
+			...(data.crew || []),
+		];
+
 		return {
 			cast: sortedCast,
-			crew: pickKeyCrew(data.crew, keyJobs),
+			crew: pickKeyCrew(crew, keyJobs),
 		};
 	}
 

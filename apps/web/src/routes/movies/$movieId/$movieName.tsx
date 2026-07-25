@@ -149,7 +149,7 @@ function MovieDetailPage() {
 		"Unknown";
 
 	const cast =
-		movie.credits?.cast?.slice(0, 6).map((actor) => ({
+		movie.credits?.cast?.map((actor) => ({
 			id: actor.id,
 			name: actor.name,
 			role: actor.character || "",
@@ -159,7 +159,7 @@ function MovieDetailPage() {
 		})) || [];
 
 	const crew =
-		movie.credits?.crew?.slice(0, 6).map((person) => ({
+		movie.credits?.crew?.map((person) => ({
 			id: person.id,
 			name: person.name,
 			role: person.job || "",

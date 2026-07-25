@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { pickKeyCrew } from "../tmdb/tmdb-credits.util";
+import { CAST_LIMIT, pickKeyCrew } from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -189,7 +189,7 @@ export class MoviesTmdbService {
 
 		const sortedCast = (data.cast || [])
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
-			.slice(0, 15);
+			.slice(0, CAST_LIMIT);
 
 		const keyJobs = [
 			"Director",

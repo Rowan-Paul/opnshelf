@@ -9,6 +9,9 @@ export type TMDBCrewMember = {
 const CREW_LIMIT = 10;
 const PER_JOB_LIMIT = 2;
 
+/** Top-billed cast kept per title; matches the mobile credits rail's own cap. */
+export const CAST_LIMIT = 20;
+
 /**
  * TMDB returns crew in arbitrary order and credits the same person several
  * times, so filtering on key jobs and slicing can drop the Director in favour
