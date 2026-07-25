@@ -1,14 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-	Check,
-	Clock,
-	Library,
-	ListChecks,
-	Loader2,
-	Play,
-	Star,
-	X,
-} from "lucide-react";
+import { Check, Clock, ListPlus, Loader2, Play, Star, X } from "lucide-react";
 import { useState } from "react";
 import { posthog } from "#/integrations/posthog/provider";
 import {
@@ -250,15 +241,15 @@ export default function MediaCard({
 											e.preventDefault();
 											onManageLists();
 										}}
-										className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40 sm:h-7 sm:w-7"
+										className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors sm:h-7 sm:w-7 ${
+											isInAnyList
+												? "bg-(--accent) text-[#3f2e00] hover:brightness-95"
+												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
+										}`}
 										aria-label={isInAnyList ? "Manage lists" : "Add to list"}
 										title={isInAnyList ? "Manage list" : "Add to list"}
 									>
-										{isInAnyList ? (
-											<ListChecks className="size-4 sm:size-3.5" />
-										) : (
-											<Library className="size-4 sm:size-3.5" />
-										)}
+										<ListPlus className="size-4 sm:size-3.5" />
 									</button>
 								)}
 							</div>
