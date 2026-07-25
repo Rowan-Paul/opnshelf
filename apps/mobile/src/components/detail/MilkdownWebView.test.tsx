@@ -121,17 +121,45 @@ describe("MilkdownWebView trust boundary", () => {
 		act(() => renderer.unmount());
 	});
 
-	it("rejects foreign, sibling, lookalike, and malformed messages", () => {
+	// Regression (#177): Android's WebMessageListener delivers the bare source
+	// origin instead of the page URL, so a pathname-scoped message guard dropped
+	// "ready" and the editor never got seeded — an empty editor on every open.
+	it("seeds the editor when Android reports only the source origin", () => {
+		const { renderer } = renderEditor();
+		const onMessage =
+			webViewProp<
+				(event: { nativeEvent: { url: string; data: string } }) => void
+			>("onMessage");
+
+		onMessage({
+			nativeEvent: {
+				url: "https://opnshelf.xyz",
+				data: JSON.stringify({ type: "ready" }),
+			},
+		});
+
+		expect(webViewMock.injectJavaScript).toHaveBeenCalledWith(
+			'window.opnshelfSetMarkdown("Initial **review**"); true;',
+		);
+		act(() => renderer.unmount());
+	});
+
+	it("rejects foreign, lookalike, and malformed messages", () => {
 		const { renderer, onChange } = renderEditor();
 		const onMessage =
 			webViewProp<
 				(event: { nativeEvent: { url: string; data: string } }) => void
 			>("onMessage");
 
+		// Same-origin sibling routes are *not* in this list: messages can only be
+		// trusted at origin granularity (see the Android case above), and the
+		// WebView can never navigate off the editor route to reach one.
 		for (const url of [
 			"https://evil.example/embed/review-editor",
 			"https://opnshelf.xyz.evil.example/embed/review-editor",
-			"https://opnshelf.xyz/embed/other",
+			"http://opnshelf.xyz/embed/review-editor",
+			"https://user@opnshelf.xyz/embed/review-editor",
+			"not a url",
 		]) {
 			onMessage({
 				nativeEvent: {
