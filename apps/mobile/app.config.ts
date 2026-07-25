@@ -23,8 +23,16 @@ const config: ExpoConfig = {
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: "com.rowanpaul.opnshelf",
+		// Required by @bacons/apple-targets to sign the widget extension target.
+		appleTeamId: "FNW3B5Q58G",
 		infoPlist: {
 			ITSAppUsesNonExemptEncryption: false,
+		},
+		entitlements: {
+			// The only channel between the app and the WidgetKit extension
+			// (handle, theme, API origin — never a session token). Mirrored
+			// onto the widget target by targets/widget/expo-target.config.js.
+			"com.apple.security.application-groups": ["group.com.rowanpaul.opnshelf"],
 		},
 	},
 	android: {
@@ -62,6 +70,9 @@ const config: ExpoConfig = {
 					"Opnshelf needs access to your photos so you can set a profile picture.",
 			},
 		],
+		// Links targets/widget (the WidgetKit Home-Screen Widget) into the
+		// generated Xcode project — ios/ is prebuild output and never checked in.
+		"@bacons/apple-targets",
 	],
 	experiments: {
 		typedRoutes: true,

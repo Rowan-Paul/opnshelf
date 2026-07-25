@@ -80,7 +80,7 @@ The personal landing surface (dashboard): your shelf summary, up-next, and a sho
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
 **Home-Screen Widget**:
-An Android home-screen widget, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
+A home-screen widget on Android and iOS, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
 
 **Connections**:
