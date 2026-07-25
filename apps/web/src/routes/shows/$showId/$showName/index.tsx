@@ -25,7 +25,7 @@ import {
 } from "#/lib/media-meta";
 import { slugifyName } from "#/lib/url-utils";
 import CommunityReviews from "../../../../components/CommunityReviews";
-import CreditsSections from "../../../../components/CreditsSections";
+import { CreditsSummary } from "../../../../components/CreditsSections";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
@@ -76,7 +76,7 @@ function useSeasonDetails(showId: string, seasonNumber: number | null) {
 }
 
 function ShowDetailPage() {
-	const { showId } = Route.useParams();
+	const { showId, showName } = Route.useParams();
 	const { user, userSettings, isAuthenticated } = useAuth();
 	const userDid = user?.did || "";
 	const userTimezone = userSettings?.timezone;
@@ -442,10 +442,10 @@ function ShowDetailPage() {
 						)}
 
 						<div className="hidden space-y-8 lg:block">
-							<CreditsSections
-								mediaType="show"
-								mediaId={showId}
+							<CreditsSummary
 								credits={show.credits}
+								creditsTo="/shows/$showId/$showName/credits"
+								creditsParams={{ showId, showName }}
 							/>
 							<CommunityReviews mediaType="show" mediaId={showId} />
 							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
@@ -508,10 +508,10 @@ function ShowDetailPage() {
 				</div>
 
 				<div className="mt-8 space-y-8 lg:hidden">
-					<CreditsSections
-						mediaType="show"
-						mediaId={showId}
+					<CreditsSummary
 						credits={show.credits}
+						creditsTo="/shows/$showId/$showName/credits"
+						creditsParams={{ showId, showName }}
 					/>
 					<CommunityReviews
 						mediaType="show"

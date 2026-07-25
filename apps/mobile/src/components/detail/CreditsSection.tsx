@@ -6,10 +6,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { User } from "lucide-react-native";
-import { useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { PosterRowSkeleton } from "@/components/ui/skeletons";
+import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { profileUrl } from "@/lib/tmdb";
 
@@ -124,71 +124,91 @@ export function CrewSection({
 }
 
 /**
- * Cast and crew for a detail screen. Collapsed it shows the summary the detail
- * response already carries; expanded it fetches the full credits and gives each
- * crew department its own rail, because a movie can credit 700+ people.
+ * The cast and crew a detail screen shows without being asked, with a link to
+ * the full credits screen. The totals come from the API, so the link states
+ * what is behind it instead of quietly ending the list.
  */
-export function Credits({
-	mediaType,
-	mediaId,
+export function CreditsSummary({
 	credits,
+	creditsHref,
 }: {
-	mediaType: "movie" | "show";
-	mediaId: string;
 	credits?: TmdbCreditsDto;
+	creditsHref: string;
 }) {
-	const [expanded, setExpanded] = useState(false);
-
-	// Two gated queries rather than one with a ternary: the generated options
-	// carry different query-key types, which defeats useQuery's inference.
-	const movieQuery = useQuery({
-		...moviesControllerGetFullMovieCreditsOptions({
-			path: { movieId: mediaId },
-		}),
-		enabled: expanded && mediaType === "movie",
-	});
-	const showQuery = useQuery({
-		...showsControllerGetFullShowCreditsOptions({ path: { showId: mediaId } }),
-		enabled: expanded && mediaType === "show",
-	});
-	const { data, isPending } = mediaType === "movie" ? movieQuery : showQuery;
-
 	const castTotal = credits?.cast_total ?? credits?.cast?.length ?? 0;
 	const crewTotal = credits?.crew_total ?? credits?.crew?.length ?? 0;
 	const hasMore =
 		castTotal > (credits?.cast?.length ?? 0) ||
 		crewTotal > (credits?.crew?.length ?? 0);
 
-	const showingFull = expanded && !isPending && data;
-
 	return (
 		<View className="gap-6">
-			<CastSection cast={showingFull ? data.cast : credits?.cast} />
-			{showingFull ? (
-				data.crew.map((department) => (
-					<CrewSection
-						key={department.department}
-						crew={department.members}
-						title={department.department}
-					/>
-				))
-			) : (
-				<CrewSection crew={credits?.crew} />
-			)}
-			{expanded && isPending ? (
-				<View className="px-4">
-					<PosterRowSkeleton width={80} />
-				</View>
-			) : null}
+			<CastSection cast={credits?.cast} />
+			<CrewSection crew={credits?.crew} />
 			{hasMore ? (
-				<Pressable onPress={() => setExpanded(!expanded)} className="px-4">
-					<Text className="font-medium text-muted-foreground text-sm">
-						{expanded
-							? "Show less"
-							: `Show all credits · ${castTotal} cast, ${crewTotal} crew`}
-					</Text>
-				</Pressable>
+				<Link href={creditsHref as never} asChild>
+					<Pressable className="px-4">
+						<Text className="font-medium text-muted-foreground text-sm">
+							{`Full cast & crew · ${castTotal} cast, ${crewTotal} crew`}
+						</Text>
+					</Pressable>
+				</Link>
 			) : null}
+		</View>
+	);
+}
+
+/**
+ * Every credit, one rail per crew department — a movie can credit 700+ people
+ * and a single flat rail of those is a credits scroll nobody can navigate.
+ * Its own screen rather than an expanding section: the back gesture works and
+ * the detail screen stays short.
+ */
+export function FullCredits({
+	mediaType,
+	mediaId,
+}: {
+	mediaType: "movie" | "show";
+	mediaId: string;
+}) {
+	// Two queries rather than one with a ternary: the generated options carry
+	// different query-key types, which defeats useQuery's inference.
+	const movieQuery = useQuery({
+		...moviesControllerGetFullMovieCreditsOptions({
+			path: { movieId: mediaId },
+		}),
+		enabled: mediaType === "movie",
+	});
+	const showQuery = useQuery({
+		...showsControllerGetFullShowCreditsOptions({ path: { showId: mediaId } }),
+		enabled: mediaType === "show",
+	});
+	const { data, isPending, isError } =
+		mediaType === "movie" ? movieQuery : showQuery;
+
+	if (isError) {
+		return <ErrorState message="Couldn't load the credits." />;
+	}
+
+	if (isPending || !data) {
+		return (
+			<View className="gap-6 px-4 py-4">
+				<PosterRowSkeleton width={80} />
+				<PosterRowSkeleton width={80} />
+			</View>
+		);
+	}
+
+	return (
+		<View className="gap-6 py-4">
+			<CastSection cast={data.cast} />
+			{data.crew.map((department) => (
+				<CrewSection
+					key={department.department}
+					crew={department.members}
+					title={department.department}
+				/>
+			))}
 		</View>
 	);
 }

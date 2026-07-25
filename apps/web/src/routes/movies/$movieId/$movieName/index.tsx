@@ -24,19 +24,19 @@ import {
 	buildMoviePageMeta,
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
-import CommunityReviews from "../../../components/CommunityReviews";
-import CreditsSections from "../../../components/CreditsSections";
-import DetailsCard from "../../../components/DetailsCard";
-import ErrorState from "../../../components/ErrorState";
-import { FriendWatchers } from "../../../components/FriendWatchers";
-import MediaActionsBar from "../../../components/MediaActionsBar";
-import MediaHero from "../../../components/MediaHero";
-import { ReviewDialog } from "../../../components/ReviewDialog";
-import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
-import { DetailPageSkeleton } from "../../../components/skeletons";
-import WatchProviders from "../../../components/WatchProviders";
-import { YourActivity } from "../../../components/YourActivity";
-export const Route = createFileRoute("/movies/$movieId/$movieName")({
+import CommunityReviews from "../../../../components/CommunityReviews";
+import { CreditsSummary } from "../../../../components/CreditsSections";
+import DetailsCard from "../../../../components/DetailsCard";
+import ErrorState from "../../../../components/ErrorState";
+import { FriendWatchers } from "../../../../components/FriendWatchers";
+import MediaActionsBar from "../../../../components/MediaActionsBar";
+import MediaHero from "../../../../components/MediaHero";
+import { ReviewDialog } from "../../../../components/ReviewDialog";
+import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
+import { DetailPageSkeleton } from "../../../../components/skeletons";
+import WatchProviders from "../../../../components/WatchProviders";
+import { YourActivity } from "../../../../components/YourActivity";
+export const Route = createFileRoute("/movies/$movieId/$movieName/")({
 	loader: async ({ context, params }) => {
 		return context.queryClient.ensureQueryData(
 			moviesControllerGetMovieDetailsOptions({
@@ -71,7 +71,7 @@ function formatRuntime(minutes: number): string {
 }
 
 function MovieDetailPage() {
-	const { movieId } = Route.useParams();
+	const { movieId, movieName } = Route.useParams();
 	const {
 		user,
 		userSettings,
@@ -278,10 +278,10 @@ function MovieDetailPage() {
 						</section>
 
 						<div className="hidden lg:block">
-							<CreditsSections
-								mediaType="movie"
-								mediaId={movieId}
+							<CreditsSummary
 								credits={movie.credits}
+								creditsTo="/movies/$movieId/$movieName/credits"
+								creditsParams={{ movieId, movieName }}
 							/>
 						</div>
 					</div>
@@ -338,10 +338,10 @@ function MovieDetailPage() {
 					{/* Similar Movies — last on mobile, below left column on desktop */}
 					<div className="order-last space-y-8 lg:order-none lg:col-start-1 lg:row-start-2">
 						<div className="lg:hidden">
-							<CreditsSections
-								mediaType="movie"
-								mediaId={movieId}
+							<CreditsSummary
 								credits={movie.credits}
+								creditsTo="/movies/$movieId/$movieName/credits"
+								creditsParams={{ movieId, movieName }}
 							/>
 						</div>
 						<CommunityReviews

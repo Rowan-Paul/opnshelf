@@ -6,7 +6,7 @@ import { RefreshControl, ScrollView, View } from "react-native";
 import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
-import { Credits } from "@/components/detail/CreditsSection";
+import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -123,7 +123,10 @@ export default function MovieDetailScreen() {
 					/>
 					<FriendWatchers mediaType="movie" mediaId={id} />
 					<WatchProviders mediaType="movie" mediaId={id} />
-					<Credits mediaType="movie" mediaId={id} credits={data.credits} />
+					<CreditsSummary
+						credits={data.credits}
+						creditsHref={`/movie/${id}/credits`}
+					/>
 					<CommunityReviews
 						mediaType="movie"
 						mediaId={id}

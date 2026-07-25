@@ -37,10 +37,12 @@ import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle
 import { Route as ProfileHandleLibraryRouteImport } from './routes/profile.$handle/library'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
 import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
-import { Route as MoviesMovieIdMovieNameRouteImport } from './routes/movies/$movieId/$movieName'
 import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
 import { Route as ProfileHandleListsIndexRouteImport } from './routes/profile.$handle/lists.index'
+import { Route as MoviesMovieIdMovieNameIndexRouteImport } from './routes/movies/$movieId/$movieName/index'
+import { Route as ShowsShowIdShowNameCreditsRouteImport } from './routes/shows/$showId/$showName/credits'
 import { Route as ProfileHandleListsListSlugRouteImport } from './routes/profile.$handle/lists.$listSlug'
+import { Route as MoviesMovieIdMovieNameCreditsRouteImport } from './routes/movies/$movieId/$movieName/credits'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
@@ -187,11 +189,6 @@ const PeoplePersonIdPersonNameRoute =
     path: '/people/$personId/$personName',
     getParentRoute: () => rootRouteImport,
   } as any)
-const MoviesMovieIdMovieNameRoute = MoviesMovieIdMovieNameRouteImport.update({
-  id: '/movies/$movieId/$movieName',
-  path: '/movies/$movieId/$movieName',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ShowsShowIdShowNameIndexRoute =
   ShowsShowIdShowNameIndexRouteImport.update({
     id: '/',
@@ -203,11 +200,29 @@ const ProfileHandleListsIndexRoute = ProfileHandleListsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProfileHandleListsRoute,
 } as any)
+const MoviesMovieIdMovieNameIndexRoute =
+  MoviesMovieIdMovieNameIndexRouteImport.update({
+    id: '/movies/$movieId/$movieName/',
+    path: '/movies/$movieId/$movieName/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ShowsShowIdShowNameCreditsRoute =
+  ShowsShowIdShowNameCreditsRouteImport.update({
+    id: '/credits',
+    path: '/credits',
+    getParentRoute: () => ShowsShowIdShowNameRoute,
+  } as any)
 const ProfileHandleListsListSlugRoute =
   ProfileHandleListsListSlugRouteImport.update({
     id: '/$listSlug',
     path: '/$listSlug',
     getParentRoute: () => ProfileHandleListsRoute,
+  } as any)
+const MoviesMovieIdMovieNameCreditsRoute =
+  MoviesMovieIdMovieNameCreditsRouteImport.update({
+    id: '/movies/$movieId/$movieName/credits',
+    path: '/movies/$movieId/$movieName/credits',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ShowsShowIdShowNameSeasonsSeasonNumberRoute =
   ShowsShowIdShowNameSeasonsSeasonNumberRouteImport.update({
@@ -248,7 +263,6 @@ export interface FileRoutesByFullPath {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
-  '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -260,7 +274,10 @@ export interface FileRoutesByFullPath {
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
+  '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
+  '/movies/$movieId/$movieName/': typeof MoviesMovieIdMovieNameIndexRoute
   '/profile/$handle/lists/': typeof ProfileHandleListsIndexRoute
   '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
@@ -284,7 +301,6 @@ export interface FileRoutesByTo {
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
-  '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -294,7 +310,10 @@ export interface FileRoutesByTo {
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/profile/$handle': typeof ProfileHandleIndexRoute
+  '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
+  '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
+  '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameIndexRoute
   '/profile/$handle/lists': typeof ProfileHandleListsIndexRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberIndexRoute
@@ -319,7 +338,6 @@ export interface FileRoutesById {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
-  '/movies/$movieId/$movieName': typeof MoviesMovieIdMovieNameRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -331,7 +349,10 @@ export interface FileRoutesById {
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
   '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
+  '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
+  '/movies/$movieId/$movieName/': typeof MoviesMovieIdMovieNameIndexRoute
   '/profile/$handle/lists/': typeof ProfileHandleListsIndexRoute
   '/shows/$showId/$showName/': typeof ShowsShowIdShowNameIndexRoute
   '/shows/$showId/$showName/seasons/$seasonNumber': typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
@@ -358,7 +379,6 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
-    | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -370,7 +390,10 @@ export interface FileRouteTypes {
     | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
     | '/profile/$handle/'
+    | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
+    | '/shows/$showId/$showName/credits'
+    | '/movies/$movieId/$movieName/'
     | '/profile/$handle/lists/'
     | '/shows/$showId/$showName/'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
@@ -394,7 +417,6 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
-    | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -404,7 +426,10 @@ export interface FileRouteTypes {
     | '/profile/$handle/up-next'
     | '/reviews/$handle/$rkey'
     | '/profile/$handle'
+    | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
+    | '/shows/$showId/$showName/credits'
+    | '/movies/$movieId/$movieName'
     | '/profile/$handle/lists'
     | '/shows/$showId/$showName'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
@@ -428,7 +453,6 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
-    | '/movies/$movieId/$movieName'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -440,7 +464,10 @@ export interface FileRouteTypes {
     | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
     | '/profile/$handle/'
+    | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
+    | '/shows/$showId/$showName/credits'
+    | '/movies/$movieId/$movieName/'
     | '/profile/$handle/lists/'
     | '/shows/$showId/$showName/'
     | '/shows/$showId/$showName/seasons/$seasonNumber'
@@ -466,10 +493,11 @@ export interface RootRouteChildren {
   CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
-  MoviesMovieIdMovieNameRoute: typeof MoviesMovieIdMovieNameRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
+  MoviesMovieIdMovieNameCreditsRoute: typeof MoviesMovieIdMovieNameCreditsRoute
+  MoviesMovieIdMovieNameIndexRoute: typeof MoviesMovieIdMovieNameIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -670,13 +698,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdPersonNameRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/movies/$movieId/$movieName': {
-      id: '/movies/$movieId/$movieName'
-      path: '/movies/$movieId/$movieName'
-      fullPath: '/movies/$movieId/$movieName'
-      preLoaderRoute: typeof MoviesMovieIdMovieNameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/shows/$showId/$showName/': {
       id: '/shows/$showId/$showName/'
       path: '/'
@@ -691,12 +712,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleListsIndexRouteImport
       parentRoute: typeof ProfileHandleListsRoute
     }
+    '/movies/$movieId/$movieName/': {
+      id: '/movies/$movieId/$movieName/'
+      path: '/movies/$movieId/$movieName'
+      fullPath: '/movies/$movieId/$movieName/'
+      preLoaderRoute: typeof MoviesMovieIdMovieNameIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shows/$showId/$showName/credits': {
+      id: '/shows/$showId/$showName/credits'
+      path: '/credits'
+      fullPath: '/shows/$showId/$showName/credits'
+      preLoaderRoute: typeof ShowsShowIdShowNameCreditsRouteImport
+      parentRoute: typeof ShowsShowIdShowNameRoute
+    }
     '/profile/$handle/lists/$listSlug': {
       id: '/profile/$handle/lists/$listSlug'
       path: '/$listSlug'
       fullPath: '/profile/$handle/lists/$listSlug'
       preLoaderRoute: typeof ProfileHandleListsListSlugRouteImport
       parentRoute: typeof ProfileHandleListsRoute
+    }
+    '/movies/$movieId/$movieName/credits': {
+      id: '/movies/$movieId/$movieName/credits'
+      path: '/movies/$movieId/$movieName/credits'
+      fullPath: '/movies/$movieId/$movieName/credits'
+      preLoaderRoute: typeof MoviesMovieIdMovieNameCreditsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/shows/$showId/$showName/seasons/$seasonNumber': {
       id: '/shows/$showId/$showName/seasons/$seasonNumber'
@@ -780,11 +822,13 @@ const ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren =
   )
 
 interface ShowsShowIdShowNameRouteChildren {
+  ShowsShowIdShowNameCreditsRoute: typeof ShowsShowIdShowNameCreditsRoute
   ShowsShowIdShowNameIndexRoute: typeof ShowsShowIdShowNameIndexRoute
   ShowsShowIdShowNameSeasonsSeasonNumberRoute: typeof ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren
 }
 
 const ShowsShowIdShowNameRouteChildren: ShowsShowIdShowNameRouteChildren = {
+  ShowsShowIdShowNameCreditsRoute: ShowsShowIdShowNameCreditsRoute,
   ShowsShowIdShowNameIndexRoute: ShowsShowIdShowNameIndexRoute,
   ShowsShowIdShowNameSeasonsSeasonNumberRoute:
     ShowsShowIdShowNameSeasonsSeasonNumberRouteWithChildren,
@@ -811,10 +855,11 @@ const rootRouteChildren: RootRouteChildren = {
   CirclesCircleIdRoute: CirclesCircleIdRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
-  MoviesMovieIdMovieNameRoute: MoviesMovieIdMovieNameRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,
+  MoviesMovieIdMovieNameCreditsRoute: MoviesMovieIdMovieNameCreditsRoute,
+  MoviesMovieIdMovieNameIndexRoute: MoviesMovieIdMovieNameIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
