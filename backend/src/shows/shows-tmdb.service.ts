@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { CAST_LIMIT, pickKeyCrew } from "../tmdb/tmdb-credits.util";
+import { sortCrewByJob } from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -72,6 +72,7 @@ export interface TMDBEpisode {
 	still_path?: string;
 	vote_average?: number;
 	trailer?: TMDBTrailer;
+	crew?: TMDBCredits["crew"];
 }
 
 export interface TMDBSeason {
@@ -88,6 +89,18 @@ export interface TMDBSeason {
 type TMDBVideosResponse = {
 	results?: TMDBVideo[];
 };
+
+/** Crew jobs hoisted to the front of a show's or episode's crew list. */
+const KEY_CREW_JOBS = [
+	"Creator",
+	"Director",
+	"Producer",
+	"Executive Producer",
+	"Screenplay",
+	"Writer",
+	"Original Music Composer",
+	"Composer",
+];
 
 export interface WatchProvider {
 	logo_path: string;
@@ -239,19 +252,9 @@ export class ShowsTmdbService {
 			? ((await detailResponse.json<TMDBShow>()).created_by ?? [])
 			: [];
 
-		const sortedCast = (data.cast || [])
-			.sort((a, b) => (a.order || 0) - (b.order || 0))
-			.slice(0, CAST_LIMIT);
-		const keyJobs = [
-			"Creator",
-			"Director",
-			"Producer",
-			"Executive Producer",
-			"Screenplay",
-			"Writer",
-			"Original Music Composer",
-			"Composer",
-		];
+		const sortedCast = (data.cast || []).sort(
+			(a, b) => (a.order || 0) - (b.order || 0),
+		);
 		const crew = [
 			...createdBy.map((person) => ({
 				...person,
@@ -263,7 +266,7 @@ export class ShowsTmdbService {
 
 		return {
 			cast: sortedCast,
-			crew: pickKeyCrew(crew, keyJobs),
+			crew: sortCrewByJob(crew, KEY_CREW_JOBS),
 		};
 	}
 
@@ -318,6 +321,7 @@ export class ShowsTmdbService {
 			: undefined;
 		return {
 			...episode,
+			crew: sortCrewByJob(episode.crew, KEY_CREW_JOBS),
 			trailer: selectBestTMDBTrailer(videosData?.results, "episode"),
 		};
 	}

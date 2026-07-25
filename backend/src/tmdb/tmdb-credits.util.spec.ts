@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickKeyCrew } from "./tmdb-credits.util";
+import { sortCrewByJob } from "./tmdb-credits.util";
 
 const KEY_JOBS = [
 	"Director",
@@ -13,7 +13,7 @@ const KEY_JOBS = [
 ];
 
 // TMDB's real ordering for Dune: Part Two — Director sits at index 17 of the
-// key-job crew, well past a naive slice(0, 10).
+// key-job crew, which any truncation would have dropped.
 const duneCrew = [
 	{ id: 1, name: "Mary Parent", job: "Producer" },
 	{ id: 2, name: "Cale Boyter", job: "Producer" },
@@ -37,9 +37,9 @@ const duneCrew = [
 	{ id: 99, name: "Some Gaffer", job: "Gaffer" },
 ];
 
-describe("pickKeyCrew", () => {
-	it("keeps the Director first", () => {
-		const crew = pickKeyCrew(duneCrew, KEY_JOBS);
+describe("sortCrewByJob", () => {
+	it("puts the Director first", () => {
+		const crew = sortCrewByJob(duneCrew, KEY_JOBS);
 
 		expect(crew[0]).toMatchObject({
 			name: "Denis Villeneuve",
@@ -47,32 +47,44 @@ describe("pickKeyCrew", () => {
 		});
 	});
 
-	it("credits each person once and caps people per job", () => {
-		const crew = pickKeyCrew(duneCrew, KEY_JOBS);
+	it("keeps everyone, non-key jobs included", () => {
+		const crew = sortCrewByJob(duneCrew, KEY_JOBS);
 
-		expect(crew.filter((m) => m.id === 12)).toHaveLength(1);
-		for (const job of new Set(crew.map((m) => m.job))) {
-			expect(crew.filter((m) => m.job === job).length).toBeLessThanOrEqual(2);
-		}
+		expect(crew).toHaveLength(duneCrew.length);
+		expect(crew.at(-1)).toMatchObject({ name: "Some Gaffer" });
 	});
 
 	it("ranks by keyJobs order, so shows can put Creator first", () => {
-		const showJobs = ["Creator", "Director", "Executive Producer"];
-		const crew = pickKeyCrew(
+		const crew = sortCrewByJob(
 			[
 				{ id: 1, name: "Michelle MacLaren", job: "Executive Producer" },
 				{ id: 2, name: "Vince Gilligan", job: "Creator" },
 			],
-			showJobs,
+			["Creator", "Director", "Executive Producer"],
 		);
 
 		expect(crew[0].name).toBe("Vince Gilligan");
 	});
 
-	it("drops non-key jobs and survives missing crew", () => {
-		expect(pickKeyCrew(duneCrew, KEY_JOBS).map((m) => m.job)).not.toContain(
-			"Gaffer",
-		);
-		expect(pickKeyCrew(undefined, KEY_JOBS)).toEqual([]);
+	it("keeps TMDB's order within one job and survives missing crew", () => {
+		const producers = sortCrewByJob(duneCrew, KEY_JOBS)
+			.filter((m) => m.job === "Producer")
+			.map((m) => m.name);
+
+		expect(producers).toEqual([
+			"Mary Parent",
+			"Cale Boyter",
+			"Tanya Lapointe",
+			"Patrick McCormick",
+			"Denis Villeneuve",
+		]);
+		expect(sortCrewByJob(undefined, KEY_JOBS)).toEqual([]);
+	});
+
+	it("does not mutate the input", () => {
+		const input = [...duneCrew];
+		sortCrewByJob(input, KEY_JOBS);
+
+		expect(input[0]).toMatchObject({ name: "Mary Parent" });
 	});
 });

@@ -6,44 +6,24 @@ export type TMDBCrewMember = {
 	profile_path?: string;
 };
 
-const CREW_LIMIT = 10;
-const PER_JOB_LIMIT = 2;
-
-/** Top-billed cast kept per title; matches the mobile credits rail's own cap. */
-export const CAST_LIMIT = 20;
-
 /**
- * TMDB returns crew in arbitrary order and credits the same person several
- * times, so filtering on key jobs and slicing can drop the Director in favour
- * of ten producers (Dune: Part Two had the Director at index 17).
+ * TMDB returns crew in arbitrary order, so anything that truncates the list
+ * silently drops important people — Dune: Part Two listed its Director 17
+ * entries in, behind a wall of producers.
  *
- * Rank by keyJobs order, keep each person's highest-ranked job only, and cap
- * how many people share a job so the list stays varied.
+ * Nothing is dropped here: key jobs are hoisted to the front in keyJobs order
+ * and everyone else keeps TMDB's own order behind them. Clients decide how many
+ * to show, and the Director/Creator they look for is always near the top.
  */
-export function pickKeyCrew<T extends TMDBCrewMember>(
+export function sortCrewByJob<T extends TMDBCrewMember>(
 	crew: T[] | undefined,
 	keyJobs: string[],
 ): T[] {
-	const ranked = (crew ?? [])
-		.filter((member) => keyJobs.includes(member.job ?? ""))
-		.sort(
-			(a, b) => keyJobs.indexOf(a.job ?? "") - keyJobs.indexOf(b.job ?? ""),
-		);
+	const rank = (member: T) => {
+		const index = keyJobs.indexOf(member.job ?? "");
+		return index === -1 ? keyJobs.length : index;
+	};
 
-	const seenPeople = new Set<number>();
-	const jobCounts = new Map<string, number>();
-	const picked: T[] = [];
-
-	for (const member of ranked) {
-		const job = member.job ?? "";
-		const jobCount = jobCounts.get(job) ?? 0;
-		if (seenPeople.has(member.id) || jobCount >= PER_JOB_LIMIT) continue;
-
-		seenPeople.add(member.id);
-		jobCounts.set(job, jobCount + 1);
-		picked.push(member);
-		if (picked.length >= CREW_LIMIT) break;
-	}
-
-	return picked;
+	// Array#sort is stable, so equal ranks keep TMDB's ordering.
+	return [...(crew ?? [])].sort((a, b) => rank(a) - rank(b));
 }

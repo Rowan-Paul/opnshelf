@@ -189,7 +189,7 @@ function EpisodeDetailPage() {
 		"Unknown";
 
 	const cast =
-		show.credits?.cast?.slice(0, 6).map((actor) => ({
+		show.credits?.cast?.map((actor) => ({
 			id: actor.id,
 			name: actor.name,
 			role: actor.character || "",
@@ -199,7 +199,7 @@ function EpisodeDetailPage() {
 		})) || [];
 
 	const guestStars =
-		episode.guest_stars?.slice(0, 6).map((actor) => ({
+		episode.guest_stars?.map((actor) => ({
 			id: actor.id,
 			name: actor.name,
 			role: actor.character || "",
@@ -209,7 +209,7 @@ function EpisodeDetailPage() {
 		})) || [];
 
 	const episodeCrew =
-		episode.crew?.slice(0, 6).map((person) => ({
+		episode.crew?.map((person) => ({
 			id: person.id,
 			name: person.name,
 			role: person.job || "",

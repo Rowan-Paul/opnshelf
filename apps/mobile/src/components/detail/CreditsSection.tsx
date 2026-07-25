@@ -75,7 +75,6 @@ export function CastSection({ cast }: { cast?: TmdbCastDto[] }) {
 	const people = (cast ?? [])
 		.slice()
 		.sort((a, b) => a.order - b.order)
-		.slice(0, 20)
 		.map((c) => ({
 			id: c.id,
 			name: c.name,
@@ -101,10 +100,7 @@ export function CrewSection({ crew }: { crew?: TmdbCrewDto[] }) {
 			});
 		}
 	}
-	return (
-		<CreditsSection
-			title="Crew"
-			people={Array.from(seen.values()).slice(0, 20)}
-		/>
-	);
+	// The rail is a horizontal FlatList, so scrolling is the "show more" —
+	// no cap, and nobody gets dropped.
+	return <CreditsSection title="Crew" people={Array.from(seen.values())} />;
 }

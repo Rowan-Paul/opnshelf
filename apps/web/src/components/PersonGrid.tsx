@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { buildPersonUrl } from "#/lib/url-utils";
 
@@ -13,6 +14,8 @@ interface PersonGridProps {
 	people: Person[];
 	title?: string;
 	emptyMessage?: string;
+	/** How many to show before "Show all". */
+	initialCount?: number;
 }
 
 function deduplicatePeople(people: Person[]): Person[] {
@@ -37,8 +40,13 @@ export default function PersonGrid({
 	people,
 	title = "Cast",
 	emptyMessage = "No information available.",
+	initialCount = 6,
 }: PersonGridProps) {
+	const [expanded, setExpanded] = useState(false);
 	const uniquePeople = deduplicatePeople(people);
+	const visiblePeople = expanded
+		? uniquePeople
+		: uniquePeople.slice(0, initialCount);
 
 	return (
 		<section>
@@ -47,7 +55,7 @@ export default function PersonGrid({
 				<p className="text-(--foreground-muted) text-sm">{emptyMessage}</p>
 			) : (
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{uniquePeople.map((person) => (
+					{visiblePeople.map((person) => (
 						<Link
 							key={person.id}
 							to={buildPersonUrl(person.id, person.name)}
@@ -67,6 +75,15 @@ export default function PersonGrid({
 						</Link>
 					))}
 				</div>
+			)}
+			{uniquePeople.length > initialCount && (
+				<button
+					type="button"
+					onClick={() => setExpanded(!expanded)}
+					className="mt-4 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+				>
+					{expanded ? "Show less" : `Show all ${uniquePeople.length}`}
+				</button>
 			)}
 		</section>
 	);
