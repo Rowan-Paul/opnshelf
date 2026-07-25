@@ -1,6 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { sortCrewByJob } from "../tmdb/tmdb-credits.util";
+import {
+	groupCrewByDepartment,
+	sortCrewByJob,
+	SUMMARY_CAST_LIMIT,
+	summarizeCrew,
+	type TMDBCreditsSummary,
+	type TMDBFullCredits,
+	trimCast,
+	trimCrew,
+} from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -69,6 +78,18 @@ export interface TMDBCredits {
 type TMDBVideosResponse = {
 	results?: TMDBVideo[];
 };
+
+/** Crew jobs hoisted to the front of a movie's crew list. */
+const KEY_CREW_JOBS = [
+	"Director",
+	"Producer",
+	"Executive Producer",
+	"Screenplay",
+	"Writer",
+	"Director of Photography",
+	"Original Music Composer",
+	"Composer",
+];
 
 @Injectable()
 export class MoviesTmdbService {
@@ -175,9 +196,10 @@ export class MoviesTmdbService {
 		};
 	}
 
-	async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {
-		const response = await this.http.fetch(
+	private async fetchCredits(movieId: string): Promise<TMDBCredits | null> {
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/movie/${movieId}/credits?api_key=${this.tmdbApiKey}`,
+			`movie:credits:${movieId}`,
 		);
 
 		if (!response.ok) {
@@ -186,24 +208,33 @@ export class MoviesTmdbService {
 		}
 
 		const data = await response.json<TMDBCredits>();
-
-		const sortedCast = (data.cast || []).sort(
-			(a, b) => (a.order || 0) - (b.order || 0),
-		);
-
-		const keyJobs = [
-			"Director",
-			"Producer",
-			"Executive Producer",
-			"Screenplay",
-			"Writer",
-			"Director of Photography",
-			"Original Music Composer",
-			"Composer",
-		];
 		return {
-			cast: sortedCast,
-			crew: sortCrewByJob(data.crew, keyJobs),
+			cast: trimCast(data.cast).sort((a, b) => (a.order || 0) - (b.order || 0)),
+			crew: sortCrewByJob(trimCrew(data.crew), KEY_CREW_JOBS),
+		};
+	}
+
+	/** Summary for the detail page: top billing and key jobs, plus the totals. */
+	async getMovieCredits(movieId: string): Promise<TMDBCreditsSummary | null> {
+		const data = await this.fetchCredits(movieId);
+		if (!data) return null;
+
+		return {
+			cast: data.cast.slice(0, SUMMARY_CAST_LIMIT),
+			crew: summarizeCrew(data.crew, KEY_CREW_JOBS),
+			cast_total: data.cast.length,
+			crew_total: data.crew.length,
+		};
+	}
+
+	/** Everything, grouped by department, for the expanded credits view. */
+	async getFullMovieCredits(movieId: string): Promise<TMDBFullCredits | null> {
+		const data = await this.fetchCredits(movieId);
+		if (!data) return null;
+
+		return {
+			cast: data.cast,
+			crew: groupCrewByDepartment(data.crew),
 		};
 	}
 

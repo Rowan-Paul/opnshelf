@@ -7,10 +7,13 @@ import {
 } from "../lexicons/xyz/opnshelf/movie";
 import type { Main as MovieRecord } from "../lexicons/xyz/opnshelf/movie.defs";
 import { PrismaService } from "../prisma/prisma.service";
+import type {
+	TMDBCreditsSummary,
+	TMDBFullCredits,
+} from "../tmdb/tmdb-credits.util";
 import { ColorExtractionService } from "./color-extraction.service";
 import {
 	MoviesTmdbService,
-	type TMDBCredits,
 	type TMDBMovie,
 	type TMDBSearchResponse,
 	type WatchProvidersResponse,
@@ -56,8 +59,12 @@ export class MoviesService {
 		return this.moviesTmdb.getMovieDetails(movieId);
 	}
 
-	async getMovieCredits(movieId: string): Promise<TMDBCredits | null> {
+	async getMovieCredits(movieId: string): Promise<TMDBCreditsSummary | null> {
 		return this.moviesTmdb.getMovieCredits(movieId);
+	}
+
+	async getFullMovieCredits(movieId: string): Promise<TMDBFullCredits | null> {
+		return this.moviesTmdb.getFullMovieCredits(movieId);
 	}
 
 	async getWatchProviders(

@@ -25,12 +25,12 @@ import {
 } from "#/lib/media-meta";
 import { slugifyName } from "#/lib/url-utils";
 import CommunityReviews from "../../../../components/CommunityReviews";
+import CreditsSections from "../../../../components/CreditsSections";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
-import PersonGrid from "../../../../components/PersonGrid";
 import ProgressCard from "../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
@@ -237,30 +237,10 @@ function ShowDetailPage() {
 		: "";
 
 	const creator =
-		show.credits?.crew?.find(
-			(person) =>
-				person.job === "Executive Producer" || person.job === "Creator",
-		)?.name || "Unknown";
-
-	const cast =
-		show.credits?.cast?.slice(0, 6).map((actor) => ({
-			id: actor.id,
-			name: actor.name,
-			role: actor.character || "",
-			photo: actor.profile_path
-				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-				: undefined,
-		})) || [];
-
-	const crew =
-		show.credits?.crew?.slice(0, 6).map((person) => ({
-			id: person.id,
-			name: person.name,
-			role: person.job || "",
-			photo: person.profile_path
-				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-				: undefined,
-		})) || [];
+		show.credits?.crew
+			?.filter((person) => person.job === "Creator")
+			.map((person) => person.name)
+			.join(", ") || "Unknown";
 
 	const similarShows =
 		discoverShowsData?.results
@@ -462,11 +442,10 @@ function ShowDetailPage() {
 						)}
 
 						<div className="hidden space-y-8 lg:block">
-							<PersonGrid people={cast} />
-							<PersonGrid
-								people={crew}
-								title="Crew"
-								emptyMessage="No crew information available."
+							<CreditsSections
+								mediaType="show"
+								mediaId={showId}
+								credits={show.credits}
 							/>
 							<CommunityReviews mediaType="show" mediaId={showId} />
 							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
@@ -529,11 +508,10 @@ function ShowDetailPage() {
 				</div>
 
 				<div className="mt-8 space-y-8 lg:hidden">
-					<PersonGrid people={cast} />
-					<PersonGrid
-						people={crew}
-						title="Crew"
-						emptyMessage="No crew information available."
+					<CreditsSections
+						mediaType="show"
+						mediaId={showId}
+						credits={show.credits}
 					/>
 					<CommunityReviews
 						mediaType="show"

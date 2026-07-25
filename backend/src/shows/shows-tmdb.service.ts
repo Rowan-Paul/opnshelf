@@ -1,6 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { sortCrewByJob } from "../tmdb/tmdb-credits.util";
+import {
+	groupCrewByDepartment,
+	sortCrewByJob,
+	SUMMARY_CAST_LIMIT,
+	summarizeCrew,
+	type TMDBCreditsSummary,
+	type TMDBFullCredits,
+	trimCast,
+	trimCrew,
+} from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -228,10 +237,11 @@ export class ShowsTmdbService {
 		};
 	}
 
-	async getShowCredits(showId: string): Promise<TMDBCredits | null> {
+	private async fetchCredits(showId: string): Promise<TMDBCredits | null> {
 		const [response, detailResponse] = await Promise.all([
-			this.http.fetch(
+			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/credits?api_key=${this.tmdbApiKey}`,
+				`tv:credits:${showId}`,
 			),
 			// TMDB lists a show's creators under created_by on the detail endpoint —
 			// /credits has no "Creator" job at all, so without this the clients fall
@@ -252,21 +262,47 @@ export class ShowsTmdbService {
 			? ((await detailResponse.json<TMDBShow>()).created_by ?? [])
 			: [];
 
-		const sortedCast = (data.cast || []).sort(
+		const sortedCast = trimCast(data.cast).sort(
 			(a, b) => (a.order || 0) - (b.order || 0),
 		);
 		const crew = [
 			...createdBy.map((person) => ({
-				...person,
+				id: person.id,
+				name: person.name,
+				profile_path: person.profile_path,
 				job: "Creator",
 				department: "Writing",
 			})),
-			...(data.crew || []),
+			...trimCrew(data.crew),
 		];
 
 		return {
 			cast: sortedCast,
 			crew: sortCrewByJob(crew, KEY_CREW_JOBS),
+		};
+	}
+
+	/** Summary for the detail page: top billing and key jobs, plus the totals. */
+	async getShowCredits(showId: string): Promise<TMDBCreditsSummary | null> {
+		const data = await this.fetchCredits(showId);
+		if (!data) return null;
+
+		return {
+			cast: data.cast.slice(0, SUMMARY_CAST_LIMIT),
+			crew: summarizeCrew(data.crew, KEY_CREW_JOBS),
+			cast_total: data.cast.length,
+			crew_total: data.crew.length,
+		};
+	}
+
+	/** Everything, grouped by department, for the expanded credits view. */
+	async getFullShowCredits(showId: string): Promise<TMDBFullCredits | null> {
+		const data = await this.fetchCredits(showId);
+		if (!data) return null;
+
+		return {
+			cast: data.cast,
+			crew: groupCrewByDepartment(data.crew),
 		};
 	}
 

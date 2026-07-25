@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { sortCrewByJob } from "./tmdb-credits.util";
+import {
+	groupCrewByDepartment,
+	sortCrewByJob,
+	SUMMARY_CREW_LIMIT,
+	summarizeCrew,
+} from "./tmdb-credits.util";
 
 const KEY_JOBS = [
 	"Director",
@@ -86,5 +91,60 @@ describe("sortCrewByJob", () => {
 		sortCrewByJob(input, KEY_JOBS);
 
 		expect(input[0]).toMatchObject({ name: "Mary Parent" });
+	});
+});
+
+describe("summarizeCrew", () => {
+	it("leads with the Director, one entry per person, capped", () => {
+		const crew = summarizeCrew(duneCrew, KEY_JOBS);
+
+		expect(crew[0]).toMatchObject({ job: "Director" });
+		expect(crew.length).toBeLessThanOrEqual(SUMMARY_CREW_LIMIT);
+		expect(crew.filter((m) => m.id === 12)).toHaveLength(1);
+	});
+
+	it("keeps only key jobs — the summary is not the full list", () => {
+		expect(summarizeCrew(duneCrew, KEY_JOBS).map((m) => m.job)).not.toContain(
+			"Gaffer",
+		);
+	});
+});
+
+describe("groupCrewByDepartment", () => {
+	const crew = [
+		{ id: 1, name: "A Driver", job: "Driver", department: "Crew" },
+		{
+			id: 2,
+			name: "A Compositor",
+			job: "Compositor",
+			department: "Visual Effects",
+		},
+		{
+			id: 3,
+			name: "Denis Villeneuve",
+			job: "Director",
+			department: "Directing",
+		},
+		{ id: 4, name: "Jon Spaihts", job: "Screenplay", department: "Writing" },
+		{ id: 5, name: "No Dept", job: "Mystery" },
+	];
+
+	it("orders departments by what people came for, catch-all last", () => {
+		expect(groupCrewByDepartment(crew).map((g) => g.department)).toEqual([
+			"Directing",
+			"Writing",
+			"Visual Effects",
+			"Other crew",
+		]);
+	});
+
+	it("keeps every member and buckets department-less crew as other", () => {
+		const groups = groupCrewByDepartment(crew);
+
+		expect(groups.flatMap((g) => g.members)).toHaveLength(crew.length);
+		expect(groups.at(-1)?.members.map((m) => m.name)).toEqual([
+			"A Driver",
+			"No Dept",
+		]);
 	});
 });

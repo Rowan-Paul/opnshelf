@@ -8,10 +8,13 @@ import {
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
+import type {
+	TMDBCreditsSummary,
+	TMDBFullCredits,
+} from "../tmdb/tmdb-credits.util";
 import { Prisma } from "../generated/client";
 import {
 	ShowsTmdbService,
-	type TMDBCredits,
 	type TMDBEpisode,
 	type TMDBSearchResponse,
 	type TMDBSeason,
@@ -127,8 +130,12 @@ export class ShowsService {
 		return this.showsTmdb.getShowDetails(showId);
 	}
 
-	async getShowCredits(showId: string): Promise<TMDBCredits | null> {
+	async getShowCredits(showId: string): Promise<TMDBCreditsSummary | null> {
 		return this.showsTmdb.getShowCredits(showId);
+	}
+
+	async getFullShowCredits(showId: string): Promise<TMDBFullCredits | null> {
+		return this.showsTmdb.getFullShowCredits(showId);
 	}
 
 	async getWatchProviders(

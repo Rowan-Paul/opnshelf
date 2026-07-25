@@ -24,6 +24,7 @@ import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	type DiscoverMoviesDto,
+	FullCreditsDto,
 	MovieDto,
 	PaginatedMoviesQueryDto,
 	PaginatedMoviesResponseDto,
@@ -81,6 +82,16 @@ export class MoviesController {
 			colors: movie.colors ?? undefined,
 			credits,
 		};
+	}
+
+	@Get("tmdb/:movieId/credits")
+	@ApiOperation({
+		summary:
+			"Get the full cast and crew for a movie, crew grouped by department",
+	})
+	@ApiResponse({ status: 200, type: FullCreditsDto })
+	async getFullMovieCredits(@Param("movieId") movieId: string) {
+		return this.moviesService.getFullMovieCredits(movieId);
 	}
 
 	@Get("tmdb/:movieId/watch-providers")

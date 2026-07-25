@@ -86,6 +86,37 @@
         ]
       }
     },
+    "/movies/tmdb/{movieId}/credits": {
+      "get": {
+        "operationId": "MoviesController_getFullMovieCredits",
+        "parameters": [
+          {
+            "name": "movieId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullCreditsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the full cast and crew for a movie, crew grouped by department",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
     "/movies/tmdb/{movieId}/watch-providers": {
       "get": {
         "operationId": "MoviesController_getWatchProviders",
@@ -804,6 +835,37 @@
           }
         },
         "summary": "Get show details from TMDB",
+        "tags": [
+          "shows"
+        ]
+      }
+    },
+    "/shows/tmdb/{showId}/credits": {
+      "get": {
+        "operationId": "ShowsController_getFullShowCredits",
+        "parameters": [
+          {
+            "name": "showId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullCreditsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the full cast and crew for a show, crew grouped by department",
         "tags": [
           "shows"
         ]
@@ -5102,21 +5164,33 @@
         "type": "object",
         "properties": {
           "cast": {
+            "description": "Top-billed cast only; see cast_total and the credits endpoint",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TMDBCastDto"
             }
           },
           "crew": {
+            "description": "Key crew only; see crew_total and the credits endpoint",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TMDBCrewDto"
             }
+          },
+          "cast_total": {
+            "type": "number",
+            "description": "Cast members TMDB lists in total"
+          },
+          "crew_total": {
+            "type": "number",
+            "description": "Crew credits TMDB lists in total"
           }
         },
         "required": [
           "cast",
-          "crew"
+          "crew",
+          "cast_total",
+          "crew_total"
         ]
       },
       "TMDBTrailerDto": {
@@ -5211,6 +5285,48 @@
         "required": [
           "id",
           "title"
+        ]
+      },
+      "CrewDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "department": {
+            "type": "string",
+            "description": "Display label, e.g. \"Directing\", \"Other crew\""
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TMDBCrewDto"
+            }
+          }
+        },
+        "required": [
+          "department",
+          "members"
+        ]
+      },
+      "FullCreditsDto": {
+        "type": "object",
+        "properties": {
+          "cast": {
+            "description": "Every cast member, by billing",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TMDBCastDto"
+            }
+          },
+          "crew": {
+            "description": "Every crew credit, by department",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrewDepartmentDto"
+            }
+          }
+        },
+        "required": [
+          "cast",
+          "crew"
         ]
       },
       "WatchProviderDto": {

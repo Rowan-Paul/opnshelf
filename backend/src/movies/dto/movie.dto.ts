@@ -258,11 +258,46 @@ export class TMDBNetworkDto {
 }
 
 export class TMDBCreditsDto {
-	@ApiProperty({ type: [TMDBCastDto] })
+	@ApiProperty({
+		type: [TMDBCastDto],
+		description:
+			"Top-billed cast only; see cast_total and the credits endpoint",
+	})
 	cast: TMDBCastDto[];
 
-	@ApiProperty({ type: [TMDBCrewDto] })
+	@ApiProperty({
+		type: [TMDBCrewDto],
+		description: "Key crew only; see crew_total and the credits endpoint",
+	})
 	crew: TMDBCrewDto[];
+
+	@ApiProperty({ description: "Cast members TMDB lists in total" })
+	cast_total: number;
+
+	@ApiProperty({ description: "Crew credits TMDB lists in total" })
+	crew_total: number;
+}
+
+export class CrewDepartmentDto {
+	@ApiProperty({ description: 'Display label, e.g. "Directing", "Other crew"' })
+	department: string;
+
+	@ApiProperty({ type: [TMDBCrewDto] })
+	members: TMDBCrewDto[];
+}
+
+export class FullCreditsDto {
+	@ApiProperty({
+		type: [TMDBCastDto],
+		description: "Every cast member, by billing",
+	})
+	cast: TMDBCastDto[];
+
+	@ApiProperty({
+		type: [CrewDepartmentDto],
+		description: "Every crew credit, by department",
+	})
+	crew: CrewDepartmentDto[];
 }
 
 export class TMDBTrailerDto {

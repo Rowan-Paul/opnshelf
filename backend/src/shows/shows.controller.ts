@@ -44,7 +44,10 @@ import {
 	TrackedEpisodeDto,
 	TrackedShowSummaryDto,
 } from "./dto/show.dto";
-import { WatchProvidersResponseDto } from "../movies/dto/movie.dto";
+import {
+	FullCreditsDto,
+	WatchProvidersResponseDto,
+} from "../movies/dto/movie.dto";
 import type { ATSession } from "./shows.service";
 import { ShowsService } from "./shows.service";
 
@@ -94,6 +97,16 @@ export class ShowsController {
 			colors: show.colors ?? undefined,
 			credits,
 		};
+	}
+
+	@Get("tmdb/:showId/credits")
+	@ApiOperation({
+		summary:
+			"Get the full cast and crew for a show, crew grouped by department",
+	})
+	@ApiResponse({ status: 200, type: FullCreditsDto })
+	async getFullShowCredits(@Param("showId") showId: string) {
+		return this.showsService.getFullShowCredits(showId);
 	}
 
 	@Get("tmdb/:showId/watch-providers")

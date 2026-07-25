@@ -49,8 +49,22 @@ export type TmdbCrewDto = {
 };
 
 export type TmdbCreditsDto = {
+    /**
+     * Top-billed cast only; see cast_total and the credits endpoint
+     */
     cast: Array<TmdbCastDto>;
+    /**
+     * Key crew only; see crew_total and the credits endpoint
+     */
     crew: Array<TmdbCrewDto>;
+    /**
+     * Cast members TMDB lists in total
+     */
+    cast_total: number;
+    /**
+     * Crew credits TMDB lists in total
+     */
+    crew_total: number;
 };
 
 export type TmdbTrailerDto = {
@@ -78,6 +92,25 @@ export type TmdbMovieDetailDto = {
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
     trailer?: TmdbTrailerDto;
+};
+
+export type CrewDepartmentDto = {
+    /**
+     * Display label, e.g. "Directing", "Other crew"
+     */
+    department: string;
+    members: Array<TmdbCrewDto>;
+};
+
+export type FullCreditsDto = {
+    /**
+     * Every cast member, by billing
+     */
+    cast: Array<TmdbCastDto>;
+    /**
+     * Every crew credit, by department
+     */
+    crew: Array<CrewDepartmentDto>;
 };
 
 export type WatchProviderDto = {
@@ -2091,6 +2124,21 @@ export type MoviesControllerGetMovieDetailsResponses = {
 
 export type MoviesControllerGetMovieDetailsResponse = MoviesControllerGetMovieDetailsResponses[keyof MoviesControllerGetMovieDetailsResponses];
 
+export type MoviesControllerGetFullMovieCreditsData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: never;
+    url: '/movies/tmdb/{movieId}/credits';
+};
+
+export type MoviesControllerGetFullMovieCreditsResponses = {
+    200: FullCreditsDto;
+};
+
+export type MoviesControllerGetFullMovieCreditsResponse = MoviesControllerGetFullMovieCreditsResponses[keyof MoviesControllerGetFullMovieCreditsResponses];
+
 export type MoviesControllerGetWatchProvidersData = {
     body?: never;
     path: {
@@ -2552,6 +2600,21 @@ export type ShowsControllerGetShowDetailsResponses = {
 };
 
 export type ShowsControllerGetShowDetailsResponse = ShowsControllerGetShowDetailsResponses[keyof ShowsControllerGetShowDetailsResponses];
+
+export type ShowsControllerGetFullShowCreditsData = {
+    body?: never;
+    path: {
+        showId: string;
+    };
+    query?: never;
+    url: '/shows/tmdb/{showId}/credits';
+};
+
+export type ShowsControllerGetFullShowCreditsResponses = {
+    200: FullCreditsDto;
+};
+
+export type ShowsControllerGetFullShowCreditsResponse = ShowsControllerGetFullShowCreditsResponses[keyof ShowsControllerGetFullShowCreditsResponses];
 
 export type ShowsControllerGetWatchProvidersData = {
     body?: never;

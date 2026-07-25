@@ -1,8 +1,15 @@
-import type { TmdbCastDto, TmdbCrewDto } from "@opnshelf/api";
+import type { TmdbCastDto, TmdbCreditsDto, TmdbCrewDto } from "@opnshelf/api";
+import {
+	moviesControllerGetFullMovieCreditsOptions,
+	showsControllerGetFullShowCreditsOptions,
+} from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { User } from "lucide-react-native";
+import { useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import { PosterRowSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { profileUrl } from "@/lib/tmdb";
 
@@ -84,8 +91,8 @@ export function CastSection({ cast }: { cast?: TmdbCastDto[] }) {
 	return <CreditsSection title="Cast" people={people} />;
 }
 
-/** Maps TMDB crew into the credits rail (dedupes a person across jobs). */
-export function CrewSection({ crew }: { crew?: TmdbCrewDto[] }) {
+/** Dedupes a person across jobs: one card, roles joined. */
+function crewToPeople(crew?: TmdbCrewDto[]): CreditPerson[] {
 	const seen = new Map<number, CreditPerson>();
 	for (const c of crew ?? []) {
 		const existing = seen.get(c.id);
@@ -100,7 +107,88 @@ export function CrewSection({ crew }: { crew?: TmdbCrewDto[] }) {
 			});
 		}
 	}
+	return Array.from(seen.values());
+}
+
+/** Maps TMDB crew into the credits rail (dedupes a person across jobs). */
+export function CrewSection({
+	crew,
+	title = "Crew",
+}: {
+	crew?: TmdbCrewDto[];
+	title?: string;
+}) {
 	// The rail is a horizontal FlatList, so scrolling is the "show more" —
 	// no cap, and nobody gets dropped.
-	return <CreditsSection title="Crew" people={Array.from(seen.values())} />;
+	return <CreditsSection title={title} people={crewToPeople(crew)} />;
+}
+
+/**
+ * Cast and crew for a detail screen. Collapsed it shows the summary the detail
+ * response already carries; expanded it fetches the full credits and gives each
+ * crew department its own rail, because a movie can credit 700+ people.
+ */
+export function Credits({
+	mediaType,
+	mediaId,
+	credits,
+}: {
+	mediaType: "movie" | "show";
+	mediaId: string;
+	credits?: TmdbCreditsDto;
+}) {
+	const [expanded, setExpanded] = useState(false);
+
+	// Two gated queries rather than one with a ternary: the generated options
+	// carry different query-key types, which defeats useQuery's inference.
+	const movieQuery = useQuery({
+		...moviesControllerGetFullMovieCreditsOptions({
+			path: { movieId: mediaId },
+		}),
+		enabled: expanded && mediaType === "movie",
+	});
+	const showQuery = useQuery({
+		...showsControllerGetFullShowCreditsOptions({ path: { showId: mediaId } }),
+		enabled: expanded && mediaType === "show",
+	});
+	const { data, isPending } = mediaType === "movie" ? movieQuery : showQuery;
+
+	const castTotal = credits?.cast_total ?? credits?.cast?.length ?? 0;
+	const crewTotal = credits?.crew_total ?? credits?.crew?.length ?? 0;
+	const hasMore =
+		castTotal > (credits?.cast?.length ?? 0) ||
+		crewTotal > (credits?.crew?.length ?? 0);
+
+	const showingFull = expanded && !isPending && data;
+
+	return (
+		<View className="gap-6">
+			<CastSection cast={showingFull ? data.cast : credits?.cast} />
+			{showingFull ? (
+				data.crew.map((department) => (
+					<CrewSection
+						key={department.department}
+						crew={department.members}
+						title={department.department}
+					/>
+				))
+			) : (
+				<CrewSection crew={credits?.crew} />
+			)}
+			{expanded && isPending ? (
+				<View className="px-4">
+					<PosterRowSkeleton width={80} />
+				</View>
+			) : null}
+			{hasMore ? (
+				<Pressable onPress={() => setExpanded(!expanded)} className="px-4">
+					<Text className="font-medium text-muted-foreground text-sm">
+						{expanded
+							? "Show less"
+							: `Show all credits · ${castTotal} cast, ${crewTotal} crew`}
+					</Text>
+				</Pressable>
+			) : null}
+		</View>
+	);
 }

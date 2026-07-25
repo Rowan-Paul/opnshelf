@@ -25,12 +25,12 @@ import {
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
 import CommunityReviews from "../../../components/CommunityReviews";
+import CreditsSections from "../../../components/CreditsSections";
 import DetailsCard from "../../../components/DetailsCard";
 import ErrorState from "../../../components/ErrorState";
 import { FriendWatchers } from "../../../components/FriendWatchers";
 import MediaActionsBar from "../../../components/MediaActionsBar";
 import MediaHero from "../../../components/MediaHero";
-import PersonGrid from "../../../components/PersonGrid";
 import { ReviewDialog } from "../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../components/skeletons";
@@ -147,26 +147,6 @@ function MovieDetailPage() {
 	const director =
 		movie.credits?.crew?.find((person) => person.job === "Director")?.name ||
 		"Unknown";
-
-	const cast =
-		movie.credits?.cast?.map((actor) => ({
-			id: actor.id,
-			name: actor.name,
-			role: actor.character || "",
-			photo: actor.profile_path
-				? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-				: undefined,
-		})) || [];
-
-	const crew =
-		movie.credits?.crew?.map((person) => ({
-			id: person.id,
-			name: person.name,
-			role: person.job || "",
-			photo: person.profile_path
-				? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-				: undefined,
-		})) || [];
 
 	const similarMovies =
 		similarMoviesData?.results
@@ -297,12 +277,11 @@ function MovieDetailPage() {
 							</p>
 						</section>
 
-						<div className="hidden space-y-8 lg:block">
-							<PersonGrid people={cast} />
-							<PersonGrid
-								people={crew}
-								title="Crew"
-								emptyMessage="No crew information available."
+						<div className="hidden lg:block">
+							<CreditsSections
+								mediaType="movie"
+								mediaId={movieId}
+								credits={movie.credits}
 							/>
 						</div>
 					</div>
@@ -358,12 +337,11 @@ function MovieDetailPage() {
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
 					<div className="order-last space-y-8 lg:order-none lg:col-start-1 lg:row-start-2">
-						<div className="space-y-8 lg:hidden">
-							<PersonGrid people={cast} />
-							<PersonGrid
-								people={crew}
-								title="Crew"
-								emptyMessage="No crew information available."
+						<div className="lg:hidden">
+							<CreditsSections
+								mediaType="movie"
+								mediaId={movieId}
+								credits={movie.credits}
 							/>
 						</div>
 						<CommunityReviews
