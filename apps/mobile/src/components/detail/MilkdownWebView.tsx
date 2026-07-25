@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { env } from "@/lib/env";
 import {
+	isTrustedEditorMessageOrigin,
 	isTrustedEditorUrl,
 	trustedEditorOrigin,
 	trustedEditorUrl,
@@ -38,7 +39,9 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 	const editorOrigin = trustedEditorOrigin(env.siteUrl);
 
 	const handleMessage = (event: WebViewMessageEvent) => {
-		if (!isTrustedEditorUrl(event.nativeEvent.url, env.siteUrl)) return;
+		// Origin-only: Android reports the source origin without a pathname here.
+		if (!isTrustedEditorMessageOrigin(event.nativeEvent.url, env.siteUrl))
+			return;
 		let msg: { type?: string; markdown?: string };
 		try {
 			msg = JSON.parse(event.nativeEvent.data);

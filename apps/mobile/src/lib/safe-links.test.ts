@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	isExternalWebUrl,
+	isTrustedEditorMessageOrigin,
 	isTrustedEditorUrl,
 	openExternalWebUrl,
 	trustedEditorOrigin,
@@ -77,6 +78,26 @@ describe("editor URL policy", () => {
 		"not a url",
 	])("rejects an untrusted editor URL %s", (url) => {
 		expect(isTrustedEditorUrl(url, siteUrl)).toBe(false);
+	});
+
+	// Android's WebMessageListener hands `onMessage` the bare source origin, so
+	// bridge messages must pass an origin-only check (a pathname check drops the
+	// editor's "ready" and the body never gets seeded).
+	it.each([
+		"https://opnshelf.xyz",
+		"https://opnshelf.xyz/embed/review-editor?theme=dark",
+	])("accepts bridge messages from the trusted origin %s", (url) => {
+		expect(isTrustedEditorMessageOrigin(url, siteUrl)).toBe(true);
+	});
+
+	it.each([
+		"https://evil.example",
+		"https://opnshelf.xyz.evil.example",
+		"http://opnshelf.xyz",
+		"https://user@opnshelf.xyz",
+		"not a url",
+	])("rejects bridge messages from %s", (url) => {
+		expect(isTrustedEditorMessageOrigin(url, siteUrl)).toBe(false);
 	});
 
 	it.each([

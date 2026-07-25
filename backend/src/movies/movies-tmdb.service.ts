@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { pickKeyCrew } from "../tmdb/tmdb-credits.util";
 import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
@@ -200,13 +201,9 @@ export class MoviesTmdbService {
 			"Original Music Composer",
 			"Composer",
 		];
-		const filteredCrew = (data.crew || [])
-			.filter((member) => keyJobs.includes(member.job || ""))
-			.slice(0, 10);
-
 		return {
 			cast: sortedCast,
-			crew: filteredCrew,
+			crew: pickKeyCrew(data.crew, keyJobs),
 		};
 	}
 

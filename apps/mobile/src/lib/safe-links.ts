@@ -58,8 +58,16 @@ export function trustedEditorUrl(
 	return editorUrl.toString();
 }
 
-/** Whether a navigation or bridge message came from the trusted editor page. */
-export function isTrustedEditorUrl(value: string, siteUrl: string): boolean {
+/**
+ * Whether a bridge message came from the trusted editor origin. Android's
+ * WebMessageListener reports only the source *origin* — no pathname — so
+ * messages can only be checked at origin granularity. Safe because the WebView
+ * can never navigate off the editor route (see `isTrustedEditorUrl`).
+ */
+export function isTrustedEditorMessageOrigin(
+	value: string,
+	siteUrl: string,
+): boolean {
 	const site = parseSiteOrigin(siteUrl);
 	const candidate = parseHttpUrl(value);
 	return Boolean(
@@ -67,7 +75,14 @@ export function isTrustedEditorUrl(value: string, siteUrl: string): boolean {
 			candidate &&
 			candidate.username === "" &&
 			candidate.password === "" &&
-			candidate.origin === site.origin &&
-			candidate.pathname === EDITOR_PATHNAME,
+			candidate.origin === site.origin,
+	);
+}
+
+/** Whether a navigation targets the one trusted editor page. */
+export function isTrustedEditorUrl(value: string, siteUrl: string): boolean {
+	return (
+		isTrustedEditorMessageOrigin(value, siteUrl) &&
+		parseHttpUrl(value)?.pathname === EDITOR_PATHNAME
 	);
 }
