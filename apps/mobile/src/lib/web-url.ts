@@ -43,6 +43,49 @@ export function webMediaUrl(t: Target): string {
 	}
 }
 
+/**
+ * Public web URL for a review: the media page with the review reader already
+ * open, so a first-time visitor lands on the title it is about. Same target the
+ * backend puts in a Bluesky cross-post.
+ */
+export function webReviewUrl(
+	media: {
+		mediaType: string;
+		mediaId: string;
+		seasonNumber?: number;
+		episodeNumber?: number;
+		mediaTitle?: string | null;
+	},
+	handle: string,
+	rkey: string,
+): string {
+	// The media title carries the show name as the first " — "-separated part.
+	const name = media.mediaTitle?.split(" — ")[0] ?? "";
+	const showId = media.mediaId;
+	const base =
+		media.mediaType === "season"
+			? webMediaUrl({
+					type: "season",
+					showId,
+					showName: name,
+					seasonNumber: media.seasonNumber ?? 0,
+				})
+			: media.mediaType === "episode"
+				? webMediaUrl({
+						type: "episode",
+						showId,
+						showName: name,
+						seasonNumber: media.seasonNumber ?? 0,
+						episodeNumber: media.episodeNumber ?? 0,
+					})
+				: webMediaUrl({
+						type: media.mediaType === "movie" ? "movie" : "show",
+						id: showId,
+						name,
+					});
+	return `${base}?review=${encodeURIComponent(`/reviews/${handle}/${rkey}`)}`;
+}
+
 /** Public web URL for a user's list, mirroring apps/web's `/profile/$handle/lists/$listSlug` route. */
 export function webListUrl(handle: string, listSlug: string): string {
 	return `${env.siteUrl}/profile/${handle}/lists/${listSlug}`;

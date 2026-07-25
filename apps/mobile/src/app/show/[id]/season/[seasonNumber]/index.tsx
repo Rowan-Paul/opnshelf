@@ -309,6 +309,16 @@ export default function SeasonDetailScreen() {
 						seasonNumber={Number(seasonNumber)}
 						scrollRef={scrollRef}
 						focusReviewId={reviewId}
+						mediaWebUrl={
+							showData?.name
+								? webMediaUrl({
+										type: "season",
+										showId: id,
+										showName: showData.name,
+										seasonNumber: seasonNum,
+									})
+								: undefined
+						}
 					/>
 					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>

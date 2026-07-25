@@ -13,6 +13,7 @@ import {
 	MessageSquare,
 	Pencil,
 	Plus,
+	Share2,
 	Trash2,
 	User,
 } from "lucide-react-native";
@@ -22,6 +23,7 @@ import {
 	type LayoutChangeEvent,
 	Pressable,
 	type ScrollView,
+	Share,
 	View,
 } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
@@ -146,6 +148,7 @@ function ReviewCard({
 	onEdit,
 	onDelete,
 	isDeleting,
+	shareUrl,
 }: {
 	review: MediaReviewItemDto;
 	avatarStyle: ReturnType<typeof useTwStyle>;
@@ -157,10 +160,24 @@ function ReviewCard({
 	onEdit: () => void;
 	onDelete: () => void;
 	isDeleting: boolean;
+	/** Public web URL for this review; omitted when the media URL is unknown. */
+	shareUrl?: string;
 }) {
 	const displayName = review.userDisplayName || review.userHandle;
 	const body = review.markdown || review.description || "";
 	const isLiked = review.hasLiked;
+
+	const onShare = () => {
+		if (!shareUrl) return;
+		// message carries the URL (Android ignores the `url` field).
+		Share.share({ message: shareUrl, title: review.title })
+			.then((result) => {
+				if (result.action === Share.sharedAction) {
+					posthog?.capture("share_completed", { surface: "review_card" });
+				}
+			})
+			.catch(() => {});
+	};
 
 	return (
 		<View
@@ -228,31 +245,31 @@ function ReviewCard({
 				</SpoilerShield>
 			) : null}
 
-			{isOwn ? (
-				<View className="flex-row items-center gap-1">
-					<Pressable
-						hitSlop={6}
-						onPress={onEdit}
-						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
-					>
-						<Pencil color={MUTED} size={15} />
-						<Text className="text-muted-foreground text-sm">Edit</Text>
-					</Pressable>
-					<Pressable
-						hitSlop={6}
-						onPress={onDelete}
-						disabled={isDeleting}
-						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
-						style={{ opacity: isDeleting ? 0.5 : 1 }}
-					>
-						<Trash2 color={LIKE_RED} size={15} />
-						<Text className="text-sm" style={{ color: LIKE_RED }}>
-							Delete
-						</Text>
-					</Pressable>
-				</View>
-			) : (
-				<View className="flex-row items-center">
+			<View className="flex-row items-center gap-1">
+				{isOwn ? (
+					<>
+						<Pressable
+							hitSlop={6}
+							onPress={onEdit}
+							className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
+						>
+							<Pencil color={MUTED} size={15} />
+							<Text className="text-muted-foreground text-sm">Edit</Text>
+						</Pressable>
+						<Pressable
+							hitSlop={6}
+							onPress={onDelete}
+							disabled={isDeleting}
+							className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
+							style={{ opacity: isDeleting ? 0.5 : 1 }}
+						>
+							<Trash2 color={LIKE_RED} size={15} />
+							<Text className="text-sm" style={{ color: LIKE_RED }}>
+								Delete
+							</Text>
+						</Pressable>
+					</>
+				) : (
 					<Pressable
 						onPress={onToggleLike}
 						disabled={!canLike || likePending}
@@ -276,8 +293,19 @@ function ReviewCard({
 							{review.likeCount}
 						</Text>
 					</Pressable>
-				</View>
-			)}
+				)}
+				{shareUrl ? (
+					<Pressable
+						hitSlop={6}
+						onPress={onShare}
+						accessibilityRole="button"
+						accessibilityLabel="Share review"
+						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
+					>
+						<Share2 color={MUTED} size={15} />
+					</Pressable>
+				) : null}
+			</View>
 		</View>
 	);
 }
@@ -296,11 +324,18 @@ export function CommunityReviews({
 	episodeNumber,
 	scrollRef,
 	focusReviewId,
+	mediaWebUrl,
 }: CommunityReviewsProps & {
 	/** Parent ScrollView, so a deep-linked review can be scrolled into view. */
 	scrollRef?: RefObject<ScrollView | null>;
 	/** Review to scroll to + highlight (from a `?reviewId=` deep link). */
 	focusReviewId?: string;
+	/**
+	 * Public web URL of this media page (from `webMediaUrl`). Reviews share as
+	 * that page with the review reader open, so sharing needs it; without it the
+	 * share action is hidden.
+	 */
+	mediaWebUrl?: string;
 }) {
 	const { user, isAuthenticated } = useAuth();
 	const avatarStyle = useTwStyle("size-10");
@@ -442,6 +477,11 @@ export function CommunityReviews({
 								onEdit={() => openEdit(review)}
 								onDelete={() => deleteReview(review.id)}
 								isDeleting={isDeletingReview}
+								shareUrl={
+									mediaWebUrl && review.reviewUrl
+										? `${mediaWebUrl}?review=${encodeURIComponent(review.reviewUrl)}`
+										: undefined
+								}
 							/>
 						);
 					})}

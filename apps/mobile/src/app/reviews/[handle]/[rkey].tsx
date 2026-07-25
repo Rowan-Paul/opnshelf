@@ -9,8 +9,20 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { type Href, Link, Stack, useLocalSearchParams } from "expo-router";
-import { ArrowRight, CalendarDays, Heart, User } from "lucide-react-native";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import {
+	ArrowRight,
+	CalendarDays,
+	Heart,
+	Share2,
+	User,
+} from "lucide-react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	ScrollView,
+	Share,
+	View,
+} from "react-native";
 import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { Markdown } from "@/components/ui/Markdown";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
@@ -21,6 +33,7 @@ import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
+import { webReviewUrl } from "@/lib/web-url";
 
 const LIKE_RED = "#ef4444";
 const MUTED = "#94a3b8";
@@ -101,6 +114,21 @@ export default function ReviewDetailScreen() {
 			unlikeMutation.mutate({ path: { reviewId: review.id } });
 		else likeMutation.mutate({ path: { reviewId: review.id } });
 	};
+	const handleShare = () => {
+		if (!review) return;
+		// message carries the URL (Android ignores the `url` field).
+		Share.share({
+			message: webReviewUrl(review, review.author.handle, rkey),
+			title: review.title,
+		})
+			.then((result) => {
+				if (result.action === Share.sharedAction) {
+					posthog?.capture("share_completed", { surface: "review_detail" });
+				}
+			})
+			.catch(() => {});
+	};
+
 	const reviewedMediaHref = review
 		? (mediaHref({
 				mediaType: review.mediaType,
@@ -245,6 +273,15 @@ export default function ReviewDetailScreen() {
 								>
 									{likes?.total ?? 0}
 								</Text>
+							</Pressable>
+							<Pressable
+								onPress={handleShare}
+								hitSlop={8}
+								accessibilityRole="button"
+								accessibilityLabel="Share review"
+								className="flex-row items-center gap-1 rounded-md py-1"
+							>
+								<Share2 color={MUTED} size={16} />
 							</Pressable>
 						</View>
 					</View>

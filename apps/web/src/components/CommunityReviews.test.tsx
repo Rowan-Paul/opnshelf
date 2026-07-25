@@ -261,4 +261,26 @@ describe("CommunityReviews", () => {
 		fireEvent.click(likeButton);
 		expect(likeReview).toHaveBeenCalledWith("r1");
 	});
+
+	it("shares the current media page with this review open", () => {
+		mockUseAuth.mockReturnValue({ user: null });
+		mockUseMediaReviews.mockReturnValue({
+			data: { items: [review({ reviewUrl: "/reviews/user1/rkey1" })] },
+			isLoading: false,
+		});
+		const share = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(navigator, "share", {
+			configurable: true,
+			value: share,
+		});
+
+		render(<CommunityReviews mediaType="movie" mediaId="123" />);
+		fireEvent.click(screen.getByText("Share"));
+
+		expect(share).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: `${window.location.origin}/?review=%2Freviews%2Fuser1%2Frkey1`,
+			}),
+		);
+	});
 });

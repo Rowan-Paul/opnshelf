@@ -174,6 +174,7 @@ export default function ShowDetailScreen() {
 						mediaId={id}
 						scrollRef={scrollRef}
 						focusReviewId={reviewId}
+						mediaWebUrl={webMediaUrl({ type: "show", id, name: data.name })}
 					/>
 					<SimilarMedia mediaType="show" mediaId={id} />
 				</ScrollView>

@@ -130,6 +130,7 @@ export default function MovieDetailScreen() {
 						mediaId={id}
 						scrollRef={scrollRef}
 						focusReviewId={reviewId}
+						mediaWebUrl={webMediaUrl({ type: "movie", id, name: data.title })}
 					/>
 					<SimilarMedia mediaType="movie" mediaId={id} />
 				</ScrollView>

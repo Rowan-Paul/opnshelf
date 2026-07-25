@@ -13,6 +13,7 @@ import { UserAvatar } from "./following/UserAvatar";
 import { ReviewBody } from "./ReviewBody";
 import { ReviewDialog } from "./ReviewDialog";
 import { ReviewReaderDialog } from "./ReviewReaderDialog";
+import { ShareButton } from "./ShareButton";
 import { SpoilerShield } from "./SpoilerShield";
 
 interface CommunityReviewsProps {
@@ -286,6 +287,15 @@ function ReviewCard({
 					)}
 					<span>{review.likeCount}</span>
 				</button>
+				{review.reviewUrl && (
+					// Relative to the current media page: sharing keeps the reader here
+					// with this review open, same target as the Bluesky cross-post.
+					<ShareButton
+						url={`?review=${encodeURIComponent(review.reviewUrl)}`}
+						surface="review_card"
+						className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+					/>
+				)}
 			</div>
 
 			{isOwnReview && (

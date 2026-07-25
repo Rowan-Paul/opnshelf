@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarDays, ExternalLink, Loader2 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
+import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import {
 	Dialog,
@@ -142,9 +143,20 @@ export function ReviewReaderDialog({
 						</div>
 
 						<div className="flex flex-wrap items-center justify-between gap-3 border-(--border) border-t bg-(--background-subtle) px-6 py-4">
-							<Link to={mediaHref(review)} className="btn btn-secondary btn-sm">
-								Explore {review.mediaTitle ?? "title"}
-							</Link>
+							<div className="flex flex-wrap items-center gap-2">
+								<Link
+									to={mediaHref(review)}
+									className="btn btn-secondary btn-sm"
+								>
+									Explore {review.mediaTitle ?? "title"}
+								</Link>
+								{reviewUrl && (
+									<ShareButton
+										url={`${mediaHref(review)}?review=${encodeURIComponent(reviewUrl)}`}
+										surface="review_reader"
+									/>
+								)}
+							</div>
 							<a
 								href={reviewUrl ?? undefined}
 								className="btn btn-ghost btn-sm gap-1.5"

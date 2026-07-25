@@ -607,11 +607,19 @@ export class ReviewsService {
 			throw new NotFoundException("Review media or author not found");
 		}
 
-		const canonicalUrl = `${PUBLIC_SITE_ORIGIN}/reviews/${user.handle}/${review.rkey}`;
+		// Land readers on the media page with the review reader already open, so a
+		// first-time visitor sees the title it is about instead of a bare review.
+		const shareUrl = `${mediaPageUrl(
+			review.mediaType as MediaType,
+			review.mediaId,
+			review.seasonNumber || undefined,
+			review.episodeNumber || undefined,
+			media.title,
+		)}?review=${encodeURIComponent(`/reviews/${user.handle}/${review.rkey}`)}`;
 		const text = composeBlueskyPostText(media.title, review.title);
 		const thumb = await this.uploadBlueskyThumbnail(agent, media.posterPath);
 		const external: Record<string, unknown> = {
-			uri: canonicalUrl,
+			uri: shareUrl,
 			title: `${review.title} — ${media.title}`,
 			description: `A review by @${user.handle} on Opnshelf.`,
 		};
@@ -624,7 +632,7 @@ export class ReviewsService {
 			record: {
 				$type: BLUESKY_POST_COLLECTION,
 				text,
-				facets: [blueskyLinkFacet(text, canonicalUrl)],
+				facets: [blueskyLinkFacet(text, shareUrl)],
 				embed: {
 					$type: "app.bsky.embed.external",
 					external,

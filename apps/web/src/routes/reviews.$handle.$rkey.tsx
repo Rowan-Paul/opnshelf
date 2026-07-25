@@ -4,6 +4,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
+import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { toSlug } from "#/lib/slug";
 
@@ -120,7 +121,18 @@ function CanonicalReviewPage() {
 				)}
 
 				<div className="min-w-0 flex-1">
-					<h1 className="text-display-2">{review.title}</h1>
+					<div className="flex items-start justify-between gap-4">
+						<h1 className="text-display-2">{review.title}</h1>
+						{/* Share the media page with this review open rather than the bare
+						    review page — it keeps a first-time visitor oriented. */}
+						<ShareButton
+							url={`${mediaHref(review)}?review=${encodeURIComponent(
+								`/reviews/${handle}/${rkey}`,
+							)}`}
+							surface="review_page"
+							className="btn btn-secondary btn-sm shrink-0 gap-1.5"
+						/>
+					</div>
 
 					<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-(--foreground-muted) text-sm">
 						<Link

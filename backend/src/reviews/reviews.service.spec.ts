@@ -581,7 +581,7 @@ describe("ReviewsService", () => {
 						embed: {
 							$type: "app.bsky.embed.external",
 							external: {
-								uri: "https://opnshelf.xyz/reviews/alice.example/testtid123",
+								uri: "https://opnshelf.xyz/movies/123/dune?review=%2Freviews%2Falice.example%2Ftesttid123",
 								title: "Fear is the mind-killer — Dune",
 								description: "A review by @alice.example on Opnshelf.",
 							},
