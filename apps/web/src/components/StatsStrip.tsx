@@ -152,7 +152,7 @@ function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 			)}
 			<div className="min-w-0">
 				<p className="text-(--foreground-muted) text-xs">Most watched</p>
-				<p className="line-clamp-1 font-semibold text-sm">{show.title}</p>
+				<p className="line-clamp-2 font-semibold text-sm">{show.title}</p>
 				<p className="text-(--foreground-muted) text-xs">
 					{show.episodeWatchCount} episodes
 				</p>

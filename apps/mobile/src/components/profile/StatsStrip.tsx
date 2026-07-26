@@ -196,7 +196,7 @@ function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 					<Text className="text-muted-foreground text-xs">Most watched</Text>
 					<Text
 						className="font-semibold text-foreground text-sm"
-						numberOfLines={1}
+						numberOfLines={2}
 					>
 						{show.title}
 					</Text>
