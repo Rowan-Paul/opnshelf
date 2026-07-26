@@ -67,8 +67,10 @@ export default function PersonGrid({
 								className="h-12 w-12 rounded-full"
 							/>
 							<div className="min-w-0">
-								<p className="truncate font-medium text-sm">{person.name}</p>
-								<p className="truncate text-(--foreground-muted) text-xs">
+								<p className="line-clamp-2 font-medium text-sm">
+									{person.name}
+								</p>
+								<p className="line-clamp-2 text-(--foreground-muted) text-xs">
 									{person.role}
 								</p>
 							</div>

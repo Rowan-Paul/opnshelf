@@ -34,12 +34,12 @@ function CreditCard({ person }: { person: CreditPerson }) {
 				</View>
 				<Text
 					className="mt-1 font-medium text-foreground text-xs"
-					numberOfLines={1}
+					numberOfLines={2}
 				>
 					{person.name}
 				</Text>
 				{person.role ? (
-					<Text className="text-muted-foreground text-xs" numberOfLines={1}>
+					<Text className="text-muted-foreground text-xs" numberOfLines={2}>
 						{person.role}
 					</Text>
 				) : null}
