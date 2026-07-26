@@ -2,6 +2,7 @@ import {
 	defaultValueCtx,
 	Editor,
 	editorViewCtx,
+	prosePluginsCtx,
 	rootCtx,
 } from "@milkdown/kit/core";
 import { history } from "@milkdown/kit/plugin/history";
@@ -18,6 +19,8 @@ import {
 	wrapInHeadingCommand,
 	wrapInOrderedListCommand,
 } from "@milkdown/kit/preset/commonmark";
+import type { Node as ProseNode } from "@milkdown/kit/prose/model";
+import { type EditorState, Plugin } from "@milkdown/kit/prose/state";
 import { callCommand } from "@milkdown/kit/utils";
 import {
 	Milkdown,
@@ -66,34 +69,134 @@ const EDITOR_CLASS = [
 
 type BubblePos = { left: number; top: number };
 
+interface ActiveFormatting {
+	heading: boolean;
+	subheading: boolean;
+	bold: boolean;
+	italic: boolean;
+	inlineCode: boolean;
+	link: boolean;
+	bulletList: boolean;
+	orderedList: boolean;
+	quote: boolean;
+	codeBlock: boolean;
+}
+
 /** A toolbar/bubble button. Prevents default mousedown so the editor keeps its
  * selection and focus when the command runs. */
 function CommandButton({
 	onRun,
 	label,
+	active,
 	children,
 }: {
 	onRun: () => void;
 	label: string;
+	active?: boolean;
 	children: ReactNode;
 }) {
 	return (
 		<button
 			type="button"
 			aria-label={label}
+			aria-pressed={active}
 			title={label}
 			onMouseDown={(e) => e.preventDefault()}
 			onClick={onRun}
-			className="flex size-7 items-center justify-center rounded text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground)"
+			className={`flex size-7 items-center justify-center rounded transition-colors ${
+				active
+					? "bg-(--accent) text-(--accent-foreground)"
+					: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+			}`}
 		>
 			{children}
 		</button>
 	);
 }
 
+export function isMarkActive(state: EditorState, markName: string) {
+	const mark = state.schema.marks[markName];
+	if (!mark) return false;
+
+	const { empty, from, to, $from } = state.selection;
+	if (empty) {
+		return Boolean(mark.isInSet(state.storedMarks ?? $from.marks()));
+	}
+
+	return state.doc.rangeHasMark(from, to, mark);
+}
+
+export function isNodeActive(
+	state: EditorState,
+	nodeName: string,
+	attrs: Record<string, unknown> = {},
+) {
+	const nodeType = state.schema.nodes[nodeName];
+	if (!nodeType) return false;
+
+	const matches = (node: ProseNode) =>
+		node.type === nodeType &&
+		Object.entries(attrs).every(([key, value]) => node.attrs[key] === value);
+	const { $from, $to, from, to } = state.selection;
+
+	for (let depth = $from.depth; depth >= 0; depth -= 1) {
+		if (matches($from.node(depth))) return true;
+	}
+	for (let depth = $to.depth; depth >= 0; depth -= 1) {
+		if (matches($to.node(depth))) return true;
+	}
+
+	let active = false;
+	state.doc.nodesBetween(from, to, (node) => {
+		if (matches(node)) active = true;
+		return !active;
+	});
+	return active;
+}
+
+export function getActiveFormatting(state: EditorState): ActiveFormatting {
+	return {
+		heading: isNodeActive(state, "heading", { level: 2 }),
+		subheading: isNodeActive(state, "heading", { level: 3 }),
+		bold: isMarkActive(state, "strong"),
+		italic: isMarkActive(state, "emphasis"),
+		inlineCode: isMarkActive(state, "inlineCode"),
+		link: isMarkActive(state, "link"),
+		bulletList: isNodeActive(state, "bullet_list"),
+		orderedList: isNodeActive(state, "ordered_list"),
+		quote: isNodeActive(state, "blockquote"),
+		codeBlock: isNodeActive(state, "code_block"),
+	};
+}
+
+const EMPTY_FORMATTING: ActiveFormatting = {
+	heading: false,
+	subheading: false,
+	bold: false,
+	italic: false,
+	inlineCode: false,
+	link: false,
+	bulletList: false,
+	orderedList: false,
+	quote: false,
+	codeBlock: false,
+};
+
+function formattingIsEqual(
+	left: ActiveFormatting,
+	right: ActiveFormatting,
+): boolean {
+	return Object.keys(left).every(
+		(key) =>
+			left[key as keyof ActiveFormatting] ===
+			right[key as keyof ActiveFormatting],
+	);
+}
+
 function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 	const [, getEditor] = useInstance();
 	const [bubble, setBubble] = useState<BubblePos | null>(null);
+	const [activeFormatting, setActiveFormatting] = useState(EMPTY_FORMATTING);
 	const wrapperRef = useRef<HTMLDivElement>(null);
 
 	// Keep callbacks current without re-creating the editor (deps: []).
@@ -107,6 +210,26 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 				.config((ctx) => {
 					ctx.set(rootCtx, root);
 					ctx.set(defaultValueCtx, initialValueRef.current);
+					ctx.update(prosePluginsCtx, (plugins) =>
+						plugins.concat(
+							new Plugin({
+								view: (view) => {
+									const updateActiveFormatting = (state: EditorState) => {
+										const next = getActiveFormatting(state);
+										setActiveFormatting((current) =>
+											formattingIsEqual(current, next) ? current : next,
+										);
+									};
+									updateActiveFormatting(view.state);
+
+									return {
+										update: (nextView) =>
+											updateActiveFormatting(nextView.state),
+									};
+								},
+							}),
+						),
+					);
 
 					const l = ctx.get(listenerCtx);
 					l.markdownUpdated((_ctx, markdown) => {
@@ -151,23 +274,30 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 		<>
 			<CommandButton
 				label="Bold"
+				active={activeFormatting.bold}
 				onRun={() => run(callCommand(toggleStrongCommand.key))}
 			>
 				<Bold className="size-3.5" />
 			</CommandButton>
 			<CommandButton
 				label="Italic"
+				active={activeFormatting.italic}
 				onRun={() => run(callCommand(toggleEmphasisCommand.key))}
 			>
 				<Italic className="size-3.5" />
 			</CommandButton>
 			<CommandButton
 				label="Inline code"
+				active={activeFormatting.inlineCode}
 				onRun={() => run(callCommand(toggleInlineCodeCommand.key))}
 			>
 				<Code className="size-3.5" />
 			</CommandButton>
-			<CommandButton label="Link" onRun={addLink}>
+			<CommandButton
+				label="Link"
+				active={activeFormatting.link}
+				onRun={addLink}
+			>
 				<LinkIcon className="size-3.5" />
 			</CommandButton>
 		</>
@@ -178,12 +308,14 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 			<div className="mb-1 flex flex-wrap items-center gap-0.5 rounded-md border border-(--border) bg-(--background-elevated) p-1">
 				<CommandButton
 					label="Heading"
+					active={activeFormatting.heading}
 					onRun={() => run(callCommand(wrapInHeadingCommand.key, 2))}
 				>
 					<Heading2 className="size-3.5" />
 				</CommandButton>
 				<CommandButton
 					label="Subheading"
+					active={activeFormatting.subheading}
 					onRun={() => run(callCommand(wrapInHeadingCommand.key, 3))}
 				>
 					<Heading1 className="size-3.5" />
@@ -193,24 +325,28 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 				<span className="mx-1 h-4 w-px bg-(--border)" />
 				<CommandButton
 					label="Bullet list"
+					active={activeFormatting.bulletList}
 					onRun={() => run(callCommand(wrapInBulletListCommand.key))}
 				>
 					<List className="size-3.5" />
 				</CommandButton>
 				<CommandButton
 					label="Numbered list"
+					active={activeFormatting.orderedList}
 					onRun={() => run(callCommand(wrapInOrderedListCommand.key))}
 				>
 					<ListOrdered className="size-3.5" />
 				</CommandButton>
 				<CommandButton
 					label="Quote"
+					active={activeFormatting.quote}
 					onRun={() => run(callCommand(wrapInBlockquoteCommand.key))}
 				>
 					<Quote className="size-3.5" />
 				</CommandButton>
 				<CommandButton
 					label="Code block"
+					active={activeFormatting.codeBlock}
 					onRun={() => run(callCommand(createCodeBlockCommand.key))}
 				>
 					<SquareCode className="size-3.5" />
