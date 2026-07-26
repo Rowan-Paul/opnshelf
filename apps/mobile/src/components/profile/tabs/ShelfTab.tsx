@@ -312,7 +312,9 @@ function ShelfWatchCard({
 			<MediaCard
 				item={{
 					...shelfItemToCardItem(item),
-					timestamp: formatWatchDate(item.watchedDate!),
+					timestamp: item.watchedDate
+						? formatWatchDate(item.watchedDate)
+						: undefined,
 				}}
 				onRemove={isOwner ? remove : undefined}
 			/>
