@@ -66,6 +66,7 @@ describe("MilkdownWebView trust boundary", () => {
 			uri: "https://opnshelf.xyz/embed/review-editor?theme=dark",
 		});
 		expect(webViewProp("setSupportMultipleWindows")).toBe(false);
+		expect(webViewProp("scrollEnabled")).toBe(false);
 
 		const shouldLoad = webViewProp<(request: { url: string }) => boolean>(
 			"onShouldStartLoadWithRequest",

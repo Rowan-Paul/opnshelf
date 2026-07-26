@@ -71,6 +71,7 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 				}
 				onMessage={handleMessage}
 				setSupportMultipleWindows={false}
+				scrollEnabled={false}
 				// iOS: allow the editor to focus + raise the keyboard without a
 				// preceding user tap being required by WebKit.
 				keyboardDisplayRequiresUserAction={false}
