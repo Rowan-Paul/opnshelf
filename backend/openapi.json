@@ -2157,6 +2157,259 @@
         ]
       }
     },
+    "/users/me/import/trakt/public/pause": {
+      "post": {
+        "operationId": "UsersController_pauseMyTraktImport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Pause the current Trakt import",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/resume": {
+      "post": {
+        "operationId": "UsersController_resumeMyTraktImport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Resume the current paused or stopped Trakt import",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/acknowledge": {
+      "post": {
+        "operationId": "UsersController_acknowledgeMyTraktImport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Acknowledge the latest Trakt import result",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/reminder/snooze": {
+      "post": {
+        "operationId": "UsersController_snoozeMyTraktReminder",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Snooze the Trakt matching reminder for seven days",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/issues": {
+      "get": {
+        "operationId": "UsersController_getMyTraktImportIssues",
+        "parameters": [
+          {
+            "name": "outcome",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "unmatched",
+                "couldnt_import"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedTraktImportIssuesDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List every unresolved Trakt import item",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/matches/{matchKey}/candidates": {
+      "get": {
+        "operationId": "UsersController_getMyTraktMatchCandidates",
+        "parameters": [
+          {
+            "name": "matchKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Find TMDB candidates for an unmatched Trakt title",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/matches/{matchKey}/confirm": {
+      "post": {
+        "operationId": "UsersController_confirmMyTraktMatch",
+        "parameters": [
+          {
+            "name": "matchKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmTraktMatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Confirm a TMDB match for grouped Trakt Watches",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/matches/{matchKey}/no-match": {
+      "post": {
+        "operationId": "UsersController_rejectMyTraktMatch",
+        "parameters": [
+          {
+            "name": "matchKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Confirm that an unmatched Trakt title has no TMDB match",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/import/bluesky-follows": {
       "post": {
         "operationId": "UsersController_importMyBlueskyFollows",
@@ -7303,6 +7556,99 @@
           "username"
         ]
       },
+      "TraktImportIssueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceIndex": {
+            "type": "number"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "unmatched",
+              "couldnt_import"
+            ]
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "episode",
+              "unknown"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "episodeTitle": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "watchedAt": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sourceIndex",
+          "outcome",
+          "mediaType"
+        ]
+      },
+      "TraktUnmatchedGroupDto": {
+        "type": "object",
+        "properties": {
+          "matchKey": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "watchCount": {
+            "type": "number"
+          },
+          "watchedAt": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "matchKey",
+          "mediaType",
+          "title",
+          "watchCount",
+          "watchedAt"
+        ]
+      },
       "TraktImportJobDto": {
         "type": "object",
         "properties": {
@@ -7318,6 +7664,7 @@
               "queued",
               "running",
               "waiting_retry",
+              "paused",
               "completed",
               "failed"
             ]
@@ -7342,6 +7689,33 @@
           },
           "failedCount": {
             "type": "number"
+          },
+          "alreadyOnShelfCount": {
+            "type": "number"
+          },
+          "unmatchedCount": {
+            "type": "number"
+          },
+          "couldntImportCount": {
+            "type": "number"
+          },
+          "issuesPreview": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraktImportIssueDto"
+            }
+          },
+          "unmatchedGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraktUnmatchedGroupDto"
+            }
+          },
+          "acknowledgedAt": {
+            "type": "string"
+          },
+          "reminderSnoozedUntil": {
+            "type": "string"
           },
           "nextRunAt": {
             "type": "string"
@@ -7384,6 +7758,11 @@
           "importedCount",
           "skippedCount",
           "failedCount",
+          "alreadyOnShelfCount",
+          "unmatchedCount",
+          "couldntImportCount",
+          "issuesPreview",
+          "unmatchedGroups",
           "nextRunAt",
           "createdAt",
           "updatedAt"
@@ -7414,6 +7793,76 @@
           "previewItems",
           "sourcePreviewCount",
           "job"
+        ]
+      },
+      "PaginatedTraktImportIssuesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraktImportIssueDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "TraktMatchCandidateDto": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "posterPath": {
+            "type": "string"
+          },
+          "overview": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tmdbId",
+          "mediaType",
+          "title"
+        ]
+      },
+      "ConfirmTraktMatchDto": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "string",
+            "description": "TMDB movie or show id"
+          }
+        },
+        "required": [
+          "tmdbId"
         ]
       },
       "ImportBlueskyFollowsResponseDto": {

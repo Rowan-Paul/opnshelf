@@ -21,6 +21,7 @@ import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
+	TRAKT_IMPORT_JOB_TYPE,
 	buildAccountDeletionData,
 	parseAccountDeletionData,
 	type AccountDeletionJobData,
@@ -78,6 +79,10 @@ export class UserDeletionService {
 		if (!user) {
 			throw new NotFoundException("User not found");
 		}
+
+		await this.prisma.backgroundJob.deleteMany({
+			where: { userDid: did, type: TRAKT_IMPORT_JOB_TYPE },
+		});
 
 		await this.prisma.user.delete({
 			where: { did },
@@ -265,6 +270,12 @@ export class UserDeletionService {
 				},
 			});
 
+			// Durable Trakt outcomes live for the account lifetime. Remove the Trakt
+			// job explicitly here (its item/match rows cascade) while preserving this
+			// account-deletion job until the worker has finished cleanly.
+			await this.prisma.backgroundJob.deleteMany({
+				where: { userDid: job.userDid, type: TRAKT_IMPORT_JOB_TYPE },
+			});
 			await this.prisma.user.delete({ where: { did: job.userDid } });
 
 			// Revoke the OAuth session (standalone table, no FK cascade) so a

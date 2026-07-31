@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TraktImportRouteImport } from './routes/trakt-import'
 import { Route as TosRouteImport } from './routes/tos'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -47,6 +48,11 @@ import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './ro
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
 
+const TraktImportRoute = TraktImportRouteImport.update({
+  id: '/trakt-import',
+  path: '/trakt-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TosRoute = TosRouteImport.update({
   id: '/tos',
   path: '/tos',
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
+  '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
+  '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
+  '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
+    | '/trakt-import'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
@@ -414,6 +424,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
+    | '/trakt-import'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
@@ -449,6 +460,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tos'
+    | '/trakt-import'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   TosRoute: typeof TosRoute
+  TraktImportRoute: typeof TraktImportRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
@@ -502,6 +515,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trakt-import': {
+      id: '/trakt-import'
+      path: '/trakt-import'
+      fullPath: '/trakt-import'
+      preLoaderRoute: typeof TraktImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tos': {
       id: '/tos'
       path: '/tos'
@@ -851,6 +871,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   TosRoute: TosRoute,
+  TraktImportRoute: TraktImportRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   CirclesCircleIdRoute: CirclesCircleIdRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,

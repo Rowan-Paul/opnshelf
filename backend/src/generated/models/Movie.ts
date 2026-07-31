@@ -484,14 +484,6 @@ export type MovieNullableScalarRelationFilter = {
   isNot?: Prisma.MovieWhereInput | null
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type MovieCreateNestedOneWithoutTrackedByInput = {
   create?: Prisma.XOR<Prisma.MovieCreateWithoutTrackedByInput, Prisma.MovieUncheckedCreateWithoutTrackedByInput>
   connectOrCreate?: Prisma.MovieCreateOrConnectWithoutTrackedByInput

@@ -6,21 +6,30 @@ import {
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
 	reviewsControllerListMyPublicationsOptions,
+	type TraktImportJobDto,
 	type UserProfileDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerDeleteMyAvatarMutation,
 	usersControllerGetMyAccountDeletionOptions,
+	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerRefreshMySocialLinksMutation,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	BookOpen,
 	Camera,
+	ChevronRight,
+	Download,
 	ExternalLink,
 	Loader2,
 	RefreshCw,
@@ -35,7 +44,6 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { IntegrationPermissionRow } from "#/components/settings/IntegrationPermissionRow";
 import { RowListSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
-import { TraktImport } from "#/components/trakt/TraktImport";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -64,6 +72,20 @@ function isUnauthorizedError(error: unknown): boolean {
 		((error as Record<string, unknown>).status === 401 ||
 			(error as Record<string, unknown>).statusCode === 401)
 	);
+}
+
+function getTraktSettingsLabel(job?: TraktImportJobDto | null): string {
+	if (!job) return "Import from Trakt";
+	if (job.status === "paused" || job.status === "failed") {
+		return "Resume Trakt import";
+	}
+	if (["queued", "running", "waiting_retry"].includes(job.status)) {
+		return "Trakt import in progress";
+	}
+	if (job.unmatchedGroups.length > 0) {
+		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
+	}
+	return "View Trakt import";
 }
 
 export const Route = createFileRoute("/settings")({
@@ -98,6 +120,10 @@ function SettingsPage() {
 	} = useAuth();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const { data: traktImport } = useQuery({
+		...usersControllerGetMyCurrentTraktImportOptions(),
+		enabled: isAuthenticated,
+	});
 
 	// Redirect if not authenticated
 	useEffect(() => {
@@ -563,12 +589,28 @@ function SettingsPage() {
 							id="import-history"
 							className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
 						>
-							<TraktImport
-								idleShowsInput
-								title="Import history"
-								description="Import your public watch history from Trakt.tv. We add anything you haven't logged yet."
-								titleClassName="font-semibold text-lg"
-							/>
+							<h2 className="mb-1 font-semibold text-lg">Import history</h2>
+							<p className="mb-5 text-(--foreground-muted) text-sm">
+								Bring your public Trakt watch history into your Shelf
+							</p>
+							<Link
+								to="/trakt-import"
+								className="flex max-w-lg items-center gap-3 rounded-xl border border-(--border) bg-(--background-subtle) p-4 transition-colors hover:bg-(--background-elevated)"
+							>
+								<Download className="size-5 text-(--accent)" />
+								<div className="min-w-0 flex-1">
+									<p className="font-medium">
+										{getTraktSettingsLabel(traktImport)}
+									</p>
+									{traktImport ? (
+										<p className="mt-0.5 text-(--foreground-muted) text-xs">
+											@
+											{traktImport.profileUsername ?? traktImport.traktUsername}
+										</p>
+									) : null}
+								</div>
+								<ChevronRight className="size-4 text-(--foreground-muted)" />
+							</Link>
 						</section>
 
 						{/* Reviews publication */}

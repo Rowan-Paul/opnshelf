@@ -957,10 +957,34 @@ export type StartTraktImportDto = {
     username: string;
 };
 
+export type TraktImportIssueDto = {
+    id: string;
+    sourceIndex: number;
+    outcome: 'unmatched' | 'couldnt_import';
+    mediaType: 'movie' | 'episode' | 'unknown';
+    title?: string;
+    year?: number;
+    episodeTitle?: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    watchedAt?: string;
+    reason?: string;
+    message?: string;
+};
+
+export type TraktUnmatchedGroupDto = {
+    matchKey: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    year?: number;
+    watchCount: number;
+    watchedAt: Array<string>;
+};
+
 export type TraktImportJobDto = {
     id: string;
     traktUsername: string;
-    status: 'queued' | 'running' | 'waiting_retry' | 'completed' | 'failed';
+    status: 'queued' | 'running' | 'waiting_retry' | 'paused' | 'completed' | 'failed';
     currentPage: number;
     totalPages?: number;
     sourceCount: number;
@@ -968,6 +992,13 @@ export type TraktImportJobDto = {
     importedCount: number;
     skippedCount: number;
     failedCount: number;
+    alreadyOnShelfCount: number;
+    unmatchedCount: number;
+    couldntImportCount: number;
+    issuesPreview: Array<TraktImportIssueDto>;
+    unmatchedGroups: Array<TraktUnmatchedGroupDto>;
+    acknowledgedAt?: string;
+    reminderSnoozedUntil?: string;
     nextRunAt: string;
     lastError?: string;
     profileUsername?: string;
@@ -988,6 +1019,29 @@ export type StartTraktImportResponseDto = {
      */
     sourcePreviewCount: number;
     job: TraktImportJobDto;
+};
+
+export type PaginatedTraktImportIssuesDto = {
+    items: Array<TraktImportIssueDto>;
+    total: number;
+    page: number;
+    pageSize: number;
+};
+
+export type TraktMatchCandidateDto = {
+    tmdbId: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    year?: number;
+    posterPath?: string;
+    overview?: string;
+};
+
+export type ConfirmTraktMatchDto = {
+    /**
+     * TMDB movie or show id
+     */
+    tmdbId: string;
 };
 
 export type ImportBlueskyFollowsResponseDto = {
@@ -3392,6 +3446,122 @@ export type UsersControllerGetMyCurrentTraktImportResponses = {
 };
 
 export type UsersControllerGetMyCurrentTraktImportResponse = UsersControllerGetMyCurrentTraktImportResponses[keyof UsersControllerGetMyCurrentTraktImportResponses];
+
+export type UsersControllerPauseMyTraktImportData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/pause';
+};
+
+export type UsersControllerPauseMyTraktImportResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerPauseMyTraktImportResponse = UsersControllerPauseMyTraktImportResponses[keyof UsersControllerPauseMyTraktImportResponses];
+
+export type UsersControllerResumeMyTraktImportData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/resume';
+};
+
+export type UsersControllerResumeMyTraktImportResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerResumeMyTraktImportResponse = UsersControllerResumeMyTraktImportResponses[keyof UsersControllerResumeMyTraktImportResponses];
+
+export type UsersControllerAcknowledgeMyTraktImportData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/acknowledge';
+};
+
+export type UsersControllerAcknowledgeMyTraktImportResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerAcknowledgeMyTraktImportResponse = UsersControllerAcknowledgeMyTraktImportResponses[keyof UsersControllerAcknowledgeMyTraktImportResponses];
+
+export type UsersControllerSnoozeMyTraktReminderData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/import/trakt/public/reminder/snooze';
+};
+
+export type UsersControllerSnoozeMyTraktReminderResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerSnoozeMyTraktReminderResponse = UsersControllerSnoozeMyTraktReminderResponses[keyof UsersControllerSnoozeMyTraktReminderResponses];
+
+export type UsersControllerGetMyTraktImportIssuesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        outcome?: 'unmatched' | 'couldnt_import';
+        pageSize?: number;
+        page?: number;
+    };
+    url: '/users/me/import/trakt/public/issues';
+};
+
+export type UsersControllerGetMyTraktImportIssuesResponses = {
+    200: PaginatedTraktImportIssuesDto;
+};
+
+export type UsersControllerGetMyTraktImportIssuesResponse = UsersControllerGetMyTraktImportIssuesResponses[keyof UsersControllerGetMyTraktImportIssuesResponses];
+
+export type UsersControllerGetMyTraktMatchCandidatesData = {
+    body?: never;
+    path: {
+        matchKey: string;
+    };
+    query?: {
+        query?: string;
+    };
+    url: '/users/me/import/trakt/public/matches/{matchKey}/candidates';
+};
+
+export type UsersControllerGetMyTraktMatchCandidatesResponses = {
+    200: Array<TraktMatchCandidateDto>;
+};
+
+export type UsersControllerGetMyTraktMatchCandidatesResponse = UsersControllerGetMyTraktMatchCandidatesResponses[keyof UsersControllerGetMyTraktMatchCandidatesResponses];
+
+export type UsersControllerConfirmMyTraktMatchData = {
+    body: ConfirmTraktMatchDto;
+    path: {
+        matchKey: string;
+    };
+    query?: never;
+    url: '/users/me/import/trakt/public/matches/{matchKey}/confirm';
+};
+
+export type UsersControllerConfirmMyTraktMatchResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerConfirmMyTraktMatchResponse = UsersControllerConfirmMyTraktMatchResponses[keyof UsersControllerConfirmMyTraktMatchResponses];
+
+export type UsersControllerRejectMyTraktMatchData = {
+    body?: never;
+    path: {
+        matchKey: string;
+    };
+    query?: never;
+    url: '/users/me/import/trakt/public/matches/{matchKey}/no-match';
+};
+
+export type UsersControllerRejectMyTraktMatchResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerRejectMyTraktMatchResponse = UsersControllerRejectMyTraktMatchResponses[keyof UsersControllerRejectMyTraktMatchResponses];
 
 export type UsersControllerImportMyBlueskyFollowsData = {
     body?: never;

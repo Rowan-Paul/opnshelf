@@ -1,0 +1,9 @@
+# Retain one Trakt Import for the account lifetime
+
+Each User may start one **Trakt Import** over a fixed snapshot of their public Trakt history taken when the Import starts. Watches added to Trakt afterward are outside that snapshot. Automatic retries, recovery after a fatal error, and resuming a user-paused Import continue the same job from its saved position; they do not create another job or rescan completed pages. This bounds retained import data by one source history per User, prevents changing Trakt pages from creating resume gaps, and avoids presenting repeated full-history imports as an ongoing Trakt sync.
+
+The Import job and every item outcome are retained for the lifetime of the account. Complete outcome data is required for an honest result, for the User to reconcile **Unmatched** items later, and for confirmed user-specific Trakt-to-TMDB mappings to remain useful on resume. Confirmed fuzzy matches never become authoritative mappings for other Users. Account deletion removes the job, its item outcomes, and its confirmed mappings immediately.
+
+Time-limited retention and capped error lists were rejected. A cap can make an absent title look successfully imported, while expiry would arbitrarily remove a reconciliation workflow the User has not finished. Unlimited repeated imports were also rejected because they would make lifetime storage unbounded per User and repeatedly scan Watches that are already on the Shelf.
+
+The cost is that import outcome storage grows with each importing User's Trakt history and is not automatically reclaimed while the account exists. This is acceptable at the current scale because there is only one Import per User. If storage volume or query performance becomes material, revisit retention with measured production data; any future pruning policy must preserve truthful aggregate counts and make the loss of item-level reconciliation explicit before deleting data.

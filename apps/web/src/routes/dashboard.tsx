@@ -12,6 +12,7 @@ import { AtStoreReviewPrompt } from "#/components/atstore/AtStoreReviewPrompt";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
 import { StatsStrip } from "#/components/StatsStrip";
+import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
@@ -291,6 +292,10 @@ function Dashboard() {
 					reviewsCount={profile?.reviewsCount ?? 0}
 					isLoading={profileLoading || (!profile && !!user?.handle)}
 				/>
+			</div>
+
+			<div className="mb-8">
+				<TraktHomePrompt />
 			</div>
 
 			<div className="mb-8">

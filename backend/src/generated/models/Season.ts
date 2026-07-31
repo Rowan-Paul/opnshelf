@@ -543,14 +543,6 @@ export type SeasonUncheckedUpdateManyWithoutShowNestedInput = {
   deleteMany?: Prisma.SeasonScalarWhereInput | Prisma.SeasonScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type SeasonCreateNestedOneWithoutEpisodesInput = {
   create?: Prisma.XOR<Prisma.SeasonCreateWithoutEpisodesInput, Prisma.SeasonUncheckedCreateWithoutEpisodesInput>
   connectOrCreate?: Prisma.SeasonCreateOrConnectWithoutEpisodesInput

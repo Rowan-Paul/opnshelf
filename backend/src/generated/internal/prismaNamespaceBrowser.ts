@@ -58,6 +58,8 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   BackgroundJob: 'BackgroundJob',
+  TraktImportItem: 'TraktImportItem',
+  TraktImportMatch: 'TraktImportMatch',
   Movie: 'Movie',
   Show: 'Show',
   Season: 'Season',
@@ -202,6 +204,44 @@ export const BackgroundJobScalarFieldEnum = {
 } as const
 
 export type BackgroundJobScalarFieldEnum = (typeof BackgroundJobScalarFieldEnum)[keyof typeof BackgroundJobScalarFieldEnum]
+
+
+export const TraktImportItemScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  sourceIndex: 'sourceIndex',
+  outcome: 'outcome',
+  mediaType: 'mediaType',
+  watchedAt: 'watchedAt',
+  title: 'title',
+  year: 'year',
+  episodeTitle: 'episodeTitle',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  traktMediaKey: 'traktMediaKey',
+  traktId: 'traktId',
+  traktSlug: 'traktSlug',
+  tmdbId: 'tmdbId',
+  reason: 'reason',
+  message: 'message',
+  createdWatchRkey: 'createdWatchRkey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktImportItemScalarFieldEnum = (typeof TraktImportItemScalarFieldEnum)[keyof typeof TraktImportItemScalarFieldEnum]
+
+
+export const TraktImportMatchScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  matchKey: 'matchKey',
+  mediaType: 'mediaType',
+  tmdbId: 'tmdbId',
+  confirmedAt: 'confirmedAt'
+} as const
+
+export type TraktImportMatchScalarFieldEnum = (typeof TraktImportMatchScalarFieldEnum)[keyof typeof TraktImportMatchScalarFieldEnum]
 
 
 export const MovieScalarFieldEnum = {

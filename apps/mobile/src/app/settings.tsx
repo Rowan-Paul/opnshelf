@@ -4,9 +4,12 @@ import {
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
+	isActiveTraktImportStatus,
 	reviewsControllerListMyPublicationsOptions,
+	type TraktImportJobDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
+	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -176,6 +179,10 @@ export default function SettingsScreen() {
 		isError: settingsError,
 	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
+		enabled: !!user,
+	});
+	const { data: traktJob } = useQuery({
+		...usersControllerGetMyCurrentTraktImportOptions(),
 		enabled: !!user,
 	});
 
@@ -730,7 +737,7 @@ export default function SettingsScreen() {
 							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
 								<Download color="#94a3b8" size={20} />
 								<Text className="flex-1 font-medium text-foreground">
-									Import from Trakt
+									{getTraktSettingsLabel(traktJob)}
 								</Text>
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
@@ -883,4 +890,17 @@ export default function SettingsScreen() {
 			</Modal>
 		</>
 	);
+}
+
+function getTraktSettingsLabel(job: TraktImportJobDto | null | undefined) {
+	if (!job) return "Import from Trakt";
+	if (isActiveTraktImportStatus(job.status)) {
+		return "Trakt import in progress";
+	}
+	if (job.status === "paused" || job.status === "failed")
+		return "Resume Trakt import";
+	if (job.unmatchedGroups.length > 0) {
+		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
+	}
+	return "View Trakt import";
 }

@@ -582,6 +582,60 @@ export class UsersService {
 		return this.importHistoryService.getCurrentTraktImport(userDid);
 	}
 
+	async pauseTraktImport(userDid: string) {
+		return this.importHistoryService.pauseTraktImport(userDid);
+	}
+
+	async resumeTraktImport(userDid: string) {
+		return this.importHistoryService.resumeTraktImport(userDid);
+	}
+
+	async acknowledgeTraktImport(userDid: string) {
+		return this.importHistoryService.acknowledgeTraktImport(userDid);
+	}
+
+	async snoozeTraktReminder(userDid: string) {
+		return this.importHistoryService.snoozeTraktReminder(userDid);
+	}
+
+	async getTraktImportIssues(
+		userDid: string,
+		page: number,
+		pageSize: number,
+		outcome?: "unmatched" | "couldnt_import",
+	) {
+		return this.importHistoryService.getTraktImportIssues(
+			userDid,
+			page,
+			pageSize,
+			outcome,
+		);
+	}
+
+	async getTraktMatchCandidates(
+		userDid: string,
+		matchKey: string,
+		query?: string,
+	) {
+		return this.importHistoryService.getTraktMatchCandidates(
+			userDid,
+			matchKey,
+			query,
+		);
+	}
+
+	async confirmTraktMatch(userDid: string, matchKey: string, tmdbId: string) {
+		return this.importHistoryService.confirmTraktMatch(
+			userDid,
+			matchKey,
+			tmdbId,
+		);
+	}
+
+	async rejectTraktMatch(userDid: string, matchKey: string) {
+		return this.importHistoryService.rejectTraktMatch(userDid, matchKey);
+	}
+
 	async importBlueskyFollows(
 		userDid: string,
 	): Promise<ImportBlueskyFollowsResponseDto> {

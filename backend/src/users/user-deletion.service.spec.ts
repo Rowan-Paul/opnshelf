@@ -61,6 +61,7 @@ describe("UserDeletionService", () => {
 			create: vi.fn(),
 			update: vi.fn(),
 			updateMany: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 	} as unknown as PrismaService;
 
@@ -88,6 +89,7 @@ describe("UserDeletionService", () => {
 		prisma.rating.count = vi.fn().mockResolvedValue(0);
 		prisma.publication.findMany = vi.fn().mockResolvedValue([]);
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+		prisma.backgroundJob.deleteMany = vi.fn().mockResolvedValue({ count: 0 });
 		prisma.backgroundJob.create = vi.fn().mockResolvedValue({
 			id: "job-1",
 			type: "account_deletion",
@@ -109,6 +111,9 @@ describe("UserDeletionService", () => {
 
 			expect(prisma.user.delete).toHaveBeenCalledWith({
 				where: { did: "did:plc:test" },
+			});
+			expect(prisma.backgroundJob.deleteMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:test", type: "trakt_import" },
 			});
 			// The OAuth session must be revoked too — it's a standalone table with
 			// no FK cascade, so a deleted account would otherwise keep a live session.

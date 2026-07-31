@@ -24,9 +24,12 @@ import type {
 	ImportHistoryResponseDto,
 	ImportSkipDto,
 	NormalizedImportItemDto,
+	PaginatedTraktImportIssuesDto,
 	StartTraktImportResponseDto,
 	TraktHistoryPreviewItemDto,
+	TraktImportIssueDto,
 	TraktImportJobDto,
+	TraktMatchCandidateDto,
 	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
 import type { AuthService } from "../auth/auth.service";
@@ -67,6 +70,9 @@ type TraktHistoryPayloadItem = {
 		year?: unknown;
 		ids?: {
 			tmdb?: unknown;
+			trakt?: unknown;
+			slug?: unknown;
+			imdb?: unknown;
 		};
 	};
 	show?: {
@@ -74,6 +80,9 @@ type TraktHistoryPayloadItem = {
 		year?: unknown;
 		ids?: {
 			tmdb?: unknown;
+			trakt?: unknown;
+			slug?: unknown;
+			imdb?: unknown;
 		};
 	};
 	episode?: {
@@ -87,6 +96,7 @@ type TraktJobStatus =
 	| "queued"
 	| "running"
 	| "waiting_retry"
+	| "paused"
 	| "completed"
 	| "failed";
 
@@ -113,6 +123,19 @@ type BackgroundJobRecord = Awaited<
 	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
 >;
 
+type RecordedTraktPageItem = {
+	sourceIndex: number;
+	normalizedIndex?: number;
+	item?: NormalizedImportItemDto;
+	initialOutcome:
+		| "pending"
+		| "imported"
+		| "already_on_shelf"
+		| "unmatched"
+		| "couldnt_import";
+	duplicate: boolean;
+};
+
 const TRAKT_HISTORY_PAGE_SIZE = 100;
 const TRAKT_PREVIEW_ITEM_LIMIT = 5;
 const TRAKT_PREVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -121,7 +144,6 @@ const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"running",
 	"waiting_retry",
 ];
-const RECENT_TERMINAL_JOB_WINDOW_MS = 15 * 60 * 1000;
 // A job stuck in "running" longer than this was almost certainly orphaned by a
 // process crash (the worker is single-instance, so no other instance owns it).
 const STALE_RUNNING_MS = 5 * 60 * 1000;
@@ -271,29 +293,21 @@ export class ImportHistoryService {
 			this.ensureTraktConfigured();
 			const normalizedUsername = this.normalizeUsername(username);
 			const existingJob = await this.findLatestTraktImportJob(userDid, {
-				statuses: ACTIVE_TRAKT_JOB_STATUSES,
+				statuses: [
+					...ACTIVE_TRAKT_JOB_STATUSES,
+					"paused",
+					"completed",
+					"failed",
+				],
 			});
 
 			if (existingJob) {
 				const existingData = parseTraktImportData(existingJob.data);
 				const existingProfile = this.buildProfileFromJobData(existingData);
-				const preview = await this.fetchTraktPreview(
-					existingData.traktUsername,
-				).catch((error: unknown) => {
-					this.logger.warn(
-						`Unable to refresh Trakt preview for existing job ${existingJob.id}: ${this.getErrorMessage(error)}`,
-					);
-					return {
-						profile: existingProfile,
-						previewItems: [] as TraktHistoryPreviewItemDto[],
-						sourcePreviewCount: 0,
-					};
-				});
-
 				return {
-					profile: preview.profile,
-					previewItems: preview.previewItems,
-					sourcePreviewCount: preview.sourcePreviewCount,
+					profile: existingProfile,
+					previewItems: [],
+					sourcePreviewCount: 0,
 					job: this.mapTraktImportJob(existingJob),
 				};
 			}
@@ -329,30 +343,65 @@ export class ImportHistoryService {
 	async getCurrentTraktImport(
 		userDid: string,
 	): Promise<TraktImportJobDto | null> {
-		const activeJob = await this.findLatestTraktImportJob(userDid, {
-			statuses: ACTIVE_TRAKT_JOB_STATUSES,
-		});
-		if (activeJob) {
-			return this.mapTraktImportJob(activeJob);
-		}
-
-		const recentTerminalJob = await this.prisma.backgroundJob.findFirst({
+		const job = await this.prisma.backgroundJob.findFirst({
 			where: {
 				type: TRAKT_IMPORT_JOB_TYPE,
 				userDid,
-				status: { in: ["completed", "failed"] },
-				updatedAt: {
-					gte: new Date(Date.now() - RECENT_TERMINAL_JOB_WINDOW_MS),
-				},
 			},
-			orderBy: [
-				{ completedAt: "desc" },
-				{ updatedAt: "desc" },
-				{ createdAt: "desc" },
-			],
+			orderBy: [{ createdAt: "desc" }],
 		});
 
-		return recentTerminalJob ? this.mapTraktImportJob(recentTerminalJob) : null;
+		return job ? this.mapTraktImportJobWithIssues(job) : null;
+	}
+
+	async pauseTraktImport(userDid: string): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		if (ACTIVE_TRAKT_JOB_STATUSES.includes(job.status as TraktJobStatus)) {
+			await this.prisma.backgroundJob.update({
+				where: { id: job.id },
+				data: { status: "paused", nextRunAt: new Date() },
+			});
+		}
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	async resumeTraktImport(userDid: string): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		if (job.status === "paused" || job.status === "failed") {
+			await this.prisma.backgroundJob.update({
+				where: { id: job.id },
+				data: {
+					status: "queued",
+					nextRunAt: new Date(),
+					lastError: null,
+					completedAt: null,
+				},
+			});
+		}
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	async acknowledgeTraktImport(userDid: string): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		const data = parseTraktImportData(job.data);
+		await this.prisma.backgroundJob.update({
+			where: { id: job.id },
+			data: { data: { ...data, acknowledgedAt: new Date().toISOString() } },
+		});
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	async snoozeTraktReminder(userDid: string): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		const data = parseTraktImportData(job.data);
+		const reminderSnoozedUntil = new Date(
+			Date.now() + 7 * 24 * 60 * 60 * 1000,
+		).toISOString();
+		await this.prisma.backgroundJob.update({
+			where: { id: job.id },
+			data: { data: { ...data, reminderSnoozedUntil } },
+		});
+		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
 	/**
@@ -734,6 +783,153 @@ export class ImportHistoryService {
 		};
 	}
 
+	private async recordTraktPageOutcomes(
+		jobId: string,
+		userDid: string,
+		payload: unknown[],
+		startIndex: number,
+	): Promise<RecordedTraktPageItem[]> {
+		const recorded: RecordedTraktPageItem[] = [];
+		const seenImportKeys = new Set<string>();
+		let normalizedIndex = 0;
+
+		for (let offset = 0; offset < payload.length; offset++) {
+			const sourceIndex = startIndex + offset;
+			const raw = payload[offset] as TraktHistoryPayloadItem | undefined;
+			const normalized = this.normalizeTraktApiItem(
+				payload[offset],
+				sourceIndex,
+			);
+			const rawType =
+				raw?.type === "movie" || raw?.type === "episode" ? raw.type : "unknown";
+			const media = rawType === "movie" ? raw?.movie : raw?.show;
+			const title = this.getOptionalStringValue(media?.title);
+			const year = this.getOptionalIntegerValue(media?.year);
+			const traktId = this.getOptionalIdentifierValue(media?.ids?.trakt);
+			const traktSlug = this.getOptionalStringValue(media?.ids?.slug);
+			const stableIdentity =
+				traktId ?? traktSlug ?? `${title ?? "unknown"}:${year ?? ""}`;
+			const traktMediaKey =
+				rawType === "movie"
+					? `movie:${stableIdentity}`
+					: rawType === "episode"
+						? `show:${stableIdentity}`
+						: undefined;
+			const parsedWatchedAt =
+				typeof raw?.watched_at === "string" &&
+				!Number.isNaN(Date.parse(raw.watched_at))
+					? new Date(raw.watched_at)
+					: undefined;
+
+			let initialOutcome: RecordedTraktPageItem["initialOutcome"] =
+				"couldnt_import";
+			let duplicate = false;
+			let currentNormalizedIndex: number | undefined;
+
+			if (normalized.item) {
+				currentNormalizedIndex = normalizedIndex;
+				normalizedIndex += 1;
+				const importKey = this.buildImportKey(normalized.item);
+				duplicate = seenImportKeys.has(importKey);
+				seenImportKeys.add(importKey);
+				const alreadyOnShelf = duplicate
+					? true
+					: await this.alreadyImported(userDid, normalized.item);
+				initialOutcome = alreadyOnShelf ? "already_on_shelf" : "pending";
+			} else if (
+				normalized.skip?.reason === "missing_tmdb_id" &&
+				traktMediaKey &&
+				parsedWatchedAt &&
+				(rawType === "movie" ||
+					(rawType === "episode" &&
+						Number.isInteger(raw?.episode?.season) &&
+						Number.isInteger(raw?.episode?.number)))
+			) {
+				initialOutcome = "unmatched";
+			}
+
+			await this.prisma.traktImportItem.upsert({
+				where: { jobId_sourceIndex: { jobId, sourceIndex } },
+				create: {
+					jobId,
+					sourceIndex,
+					outcome: initialOutcome,
+					mediaType: rawType,
+					watchedAt: parsedWatchedAt,
+					title,
+					year,
+					episodeTitle: this.getOptionalStringValue(raw?.episode?.title),
+					seasonNumber: this.getOptionalIntegerValue(raw?.episode?.season),
+					episodeNumber: this.getOptionalIntegerValue(raw?.episode?.number),
+					traktMediaKey,
+					traktId,
+					traktSlug,
+					tmdbId: normalized.item
+						? String(
+								normalized.item.type === "movie"
+									? normalized.item.movieTmdbId
+									: normalized.item.showTmdbId,
+							)
+						: undefined,
+					reason: normalized.skip?.reason,
+					message: normalized.skip?.message,
+				},
+				update: {},
+			});
+
+			recorded.push({
+				sourceIndex,
+				normalizedIndex: currentNormalizedIndex,
+				item: normalized.item,
+				initialOutcome,
+				duplicate,
+			});
+		}
+
+		return recorded;
+	}
+
+	private async finalizeRecordedPageOutcomes(
+		jobId: string,
+		recorded: RecordedTraktPageItem[],
+		errors: ImportErrorDto[],
+	): Promise<void> {
+		const errorsByNormalizedIndex = new Map(
+			errors.map((error) => [error.index - 1, error]),
+		);
+
+		for (const entry of recorded) {
+			if (!entry.item || entry.initialOutcome !== "pending") continue;
+			const error =
+				entry.normalizedIndex === undefined
+					? undefined
+					: errorsByNormalizedIndex.get(entry.normalizedIndex);
+			const createdWatchRkey =
+				entry.item.type === "movie"
+					? deterministicMovieWatchRkey(
+							String(entry.item.movieTmdbId),
+							entry.item.watchedAt,
+						)
+					: deterministicEpisodeWatchRkey(
+							String(entry.item.showTmdbId),
+							entry.item.seasonNumber ?? 0,
+							entry.item.episodeNumber ?? 0,
+							entry.item.watchedAt,
+						);
+
+			await this.prisma.traktImportItem.update({
+				where: { jobId_sourceIndex: { jobId, sourceIndex: entry.sourceIndex } },
+				data: error
+					? {
+							outcome: "couldnt_import",
+							reason: error.reason ?? error.code,
+							message: error.message,
+						}
+					: { outcome: "imported", createdWatchRkey },
+			});
+		}
+	}
+
 	private async processTraktImportJob(jobId: string): Promise<void> {
 		const job = await this.prisma.backgroundJob.findUnique({
 			where: { id: jobId },
@@ -744,6 +940,7 @@ export class ImportHistoryService {
 		if (
 			job.status === "completed" ||
 			job.status === "failed" ||
+			job.status === "paused" ||
 			job.nextRunAt > new Date()
 		) {
 			return;
@@ -773,10 +970,17 @@ export class ImportHistoryService {
 			const pageResult = await this.fetchTraktHistoryPage(
 				jobData.traktUsername,
 				jobData.currentPage,
+				{ endAt: new Date(jobData.snapshotAt) },
 			);
 			const totalPages =
 				pageResult.pageCount ?? jobData.totalPages ?? jobData.currentPage;
 			const normalized = this.normalizeTraktPage(
+				pageResult.payload,
+				jobData.sourceCount + 1,
+			);
+			const recordedItems = await this.recordTraktPageOutcomes(
+				job.id,
+				job.userDid,
 				pageResult.payload,
 				jobData.sourceCount + 1,
 			);
@@ -791,6 +995,11 @@ export class ImportHistoryService {
 					},
 				},
 			);
+			await this.finalizeRecordedPageOutcomes(
+				job.id,
+				recordedItems,
+				importResult.errors,
+			);
 			const nextPage = jobData.currentPage + 1;
 			const hasKnownTotalPages =
 				Number.isInteger(totalPages) && totalPages >= 1;
@@ -800,6 +1009,16 @@ export class ImportHistoryService {
 					? nextPage > totalPages
 					: pageResult.payload.length < TRAKT_HISTORY_PAGE_SIZE);
 
+			const pageUnmatchedCount = recordedItems.filter(
+				(recorded) => recorded.initialOutcome === "unmatched",
+			).length;
+			const pageAlreadyCount = recordedItems.filter(
+				(recorded) =>
+					recorded.initialOutcome === "already_on_shelf" || recorded.duplicate,
+			).length;
+			const pageCouldntImportCount = recordedItems.filter(
+				(recorded) => recorded.initialOutcome === "couldnt_import",
+			).length;
 			const updatedData: TraktImportJobData = {
 				...jobData,
 				currentPage: isComplete ? jobData.currentPage : nextPage,
@@ -811,7 +1030,10 @@ export class ImportHistoryService {
 					jobData.skippedCount +
 					normalized.skipped.length +
 					importResult.skipped,
-				failedCount: jobData.failedCount + importResult.failed,
+				unmatchedCount: jobData.unmatchedCount + pageUnmatchedCount,
+				alreadyOnShelfCount: jobData.alreadyOnShelfCount + pageAlreadyCount,
+				failedCount:
+					jobData.failedCount + importResult.failed + pageCouldntImportCount,
 			};
 
 			// Pace the import against the live repo-write budget: import and user
@@ -1123,7 +1345,7 @@ export class ImportHistoryService {
 	private async fetchTraktHistoryPage(
 		username: string,
 		page: number,
-		options?: { startAt?: Date },
+		options?: { startAt?: Date; endAt?: Date },
 	): Promise<{ payload: unknown[]; pageCount?: number }> {
 		const url = this.createTraktUrl(
 			`/users/${encodeURIComponent(username)}/history`,
@@ -1132,6 +1354,9 @@ export class ImportHistoryService {
 		url.searchParams.set("limit", String(TRAKT_HISTORY_PAGE_SIZE));
 		if (options?.startAt) {
 			url.searchParams.set("start_at", options.startAt.toISOString());
+		}
+		if (options?.endAt) {
+			url.searchParams.set("end_at", options.endAt.toISOString());
 		}
 
 		const { data, headers } =
@@ -1336,6 +1561,18 @@ export class ImportHistoryService {
 		return trimmed ? trimmed : undefined;
 	}
 
+	private getOptionalIntegerValue(value: unknown): number | undefined {
+		return typeof value === "number" && Number.isInteger(value)
+			? value
+			: undefined;
+	}
+
+	private getOptionalIdentifierValue(value: unknown): string | undefined {
+		if (typeof value === "number" && Number.isFinite(value))
+			return String(value);
+		return this.getOptionalStringValue(value);
+	}
+
 	private resolveTraktAvatarUrl(
 		avatar:
 			| {
@@ -1419,6 +1656,273 @@ export class ImportHistoryService {
 		});
 	}
 
+	async getTraktImportIssues(
+		userDid: string,
+		page = 1,
+		pageSize = 25,
+		outcome?: "unmatched" | "couldnt_import",
+	): Promise<PaginatedTraktImportIssuesDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		const safePage = Math.max(1, Math.floor(page));
+		const safePageSize = Math.min(100, Math.max(1, Math.floor(pageSize)));
+		const where = {
+			jobId: job.id,
+			outcome: outcome ?? { in: ["unmatched", "couldnt_import"] },
+		};
+		const [items, total] = await Promise.all([
+			this.prisma.traktImportItem.findMany({
+				where,
+				orderBy: { sourceIndex: "asc" },
+				skip: (safePage - 1) * safePageSize,
+				take: safePageSize,
+			}),
+			this.prisma.traktImportItem.count({ where }),
+		]);
+		return {
+			items: items.map((item) => this.mapTraktImportIssue(item)),
+			total,
+			page: safePage,
+			pageSize: safePageSize,
+		};
+	}
+
+	async getTraktMatchCandidates(
+		userDid: string,
+		matchKey: string,
+		query?: string,
+	): Promise<TraktMatchCandidateDto[]> {
+		const job = await this.requireTraktImportJob(userDid);
+		const source = await this.prisma.traktImportItem.findFirst({
+			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
+			orderBy: { sourceIndex: "asc" },
+		});
+		if (!source) throw new NotFoundException("Unmatched Trakt title not found");
+		const searchQuery = query?.trim() || source.title || "";
+		if (!searchQuery) return [];
+
+		if (source.mediaType === "movie") {
+			const response = await this.moviesService.searchMovies(searchQuery);
+			return response.results
+				.sort(
+					(a, b) =>
+						this.candidateYearScore(b.release_date, source.year) -
+						this.candidateYearScore(a.release_date, source.year),
+				)
+				.slice(0, 10)
+				.map((movie) => ({
+					tmdbId: String(movie.id),
+					mediaType: "movie" as const,
+					title: movie.title,
+					year: this.yearFromDate(movie.release_date),
+					posterPath: movie.poster_path,
+					overview: movie.overview,
+				}));
+		}
+
+		const response = await this.showsService.searchShows(searchQuery);
+		return response.results
+			.sort(
+				(a, b) =>
+					this.candidateYearScore(b.first_air_date, source.year) -
+					this.candidateYearScore(a.first_air_date, source.year),
+			)
+			.slice(0, 10)
+			.map((show) => ({
+				tmdbId: String(show.id),
+				mediaType: "show" as const,
+				title: show.name,
+				year: this.yearFromDate(show.first_air_date),
+				posterPath: show.poster_path,
+				overview: show.overview,
+			}));
+	}
+
+	async confirmTraktMatch(
+		userDid: string,
+		matchKey: string,
+		tmdbId: string,
+	): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		const rows = await this.prisma.traktImportItem.findMany({
+			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
+			orderBy: { sourceIndex: "asc" },
+		});
+		if (rows.length === 0)
+			throw new NotFoundException("Unmatched Trakt title not found");
+		const session = await this.restoreImportSession(userDid);
+		if (!session) throw new BadRequestException("Your sign-in session expired");
+		const mediaType = rows[0].mediaType === "movie" ? "movie" : "show";
+		await this.prisma.traktImportMatch.upsert({
+			where: { jobId_matchKey: { jobId: job.id, matchKey } },
+			create: { jobId: job.id, matchKey, mediaType, tmdbId },
+			update: { tmdbId, confirmedAt: new Date() },
+		});
+
+		for (const row of rows) {
+			if (!row.watchedAt) {
+				await this.markTraktItemCouldntImport(
+					row.id,
+					"invalid_watched_at",
+					"Missing watch date",
+				);
+				continue;
+			}
+			const item: NormalizedImportItemDto | null =
+				row.mediaType === "movie"
+					? {
+							type: "movie",
+							movieTmdbId: Number(tmdbId),
+							watchedAt: row.watchedAt.toISOString(),
+						}
+					: row.seasonNumber !== null && row.episodeNumber !== null
+						? {
+								type: "episode",
+								showTmdbId: Number(tmdbId),
+								seasonNumber: row.seasonNumber,
+								episodeNumber: row.episodeNumber,
+								watchedAt: row.watchedAt.toISOString(),
+							}
+						: null;
+			if (!item || !Number.isInteger(Number(tmdbId)) || Number(tmdbId) <= 0) {
+				await this.markTraktItemCouldntImport(
+					row.id,
+					"invalid_match",
+					"The selected TMDB item is invalid",
+				);
+				continue;
+			}
+			const result = await this.importNormalizedItems(userDid, session, [item]);
+			if (result.imported > 0) {
+				await this.prisma.traktImportItem.update({
+					where: { id: row.id },
+					data: {
+						outcome: "imported",
+						tmdbId,
+						reason: null,
+						message: null,
+						createdWatchRkey:
+							item.type === "movie"
+								? deterministicMovieWatchRkey(tmdbId, item.watchedAt)
+								: deterministicEpisodeWatchRkey(
+										tmdbId,
+										item.seasonNumber ?? 0,
+										item.episodeNumber ?? 0,
+										item.watchedAt,
+									),
+					},
+				});
+			} else if (result.skipped > 0) {
+				await this.prisma.traktImportItem.update({
+					where: { id: row.id },
+					data: {
+						outcome: "already_on_shelf",
+						tmdbId,
+						reason: null,
+						message: null,
+					},
+				});
+			} else {
+				const error = result.errors[0];
+				await this.markTraktItemCouldntImport(
+					row.id,
+					error?.reason ?? error?.code ?? "write_failed",
+					error?.message ?? "This Watch could not be added",
+				);
+			}
+		}
+
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	async rejectTraktMatch(
+		userDid: string,
+		matchKey: string,
+	): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		await this.prisma.traktImportItem.updateMany({
+			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
+			data: {
+				outcome: "couldnt_import",
+				reason: "no_tmdb_match",
+				message: "You confirmed that no matching TMDB item exists.",
+			},
+		});
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	private async mapTraktImportJobWithIssues(
+		job: NonNullable<BackgroundJobRecord>,
+	): Promise<TraktImportJobDto> {
+		const [items, issueRows] = await Promise.all([
+			this.prisma.traktImportItem.findMany({
+				where: { jobId: job.id },
+				orderBy: { sourceIndex: "asc" },
+			}),
+			this.prisma.traktImportItem.findMany({
+				where: {
+					jobId: job.id,
+					outcome: { in: ["unmatched", "couldnt_import"] },
+				},
+				orderBy: { sourceIndex: "asc" },
+				take: 25,
+			}),
+		]);
+		const base = this.mapTraktImportJob(job);
+		const importedCount = items.filter(
+			(item) => item.outcome === "imported",
+		).length;
+		const alreadyOnShelfCount = items.filter(
+			(item) => item.outcome === "already_on_shelf",
+		).length;
+		const unmatchedItems = items.filter((item) => item.outcome === "unmatched");
+		const couldntImportCount = items.filter(
+			(item) => item.outcome === "couldnt_import",
+		).length;
+		const groups = new Map<
+			string,
+			TraktImportJobDto["unmatchedGroups"][number]
+		>();
+		for (const item of unmatchedItems) {
+			if (!item.traktMediaKey) continue;
+			const existing = groups.get(item.traktMediaKey);
+			if (existing) {
+				existing.watchCount += 1;
+				if (item.watchedAt)
+					existing.watchedAt.push(item.watchedAt.toISOString());
+				continue;
+			}
+			groups.set(item.traktMediaKey, {
+				matchKey: item.traktMediaKey,
+				mediaType: item.mediaType === "movie" ? "movie" : "show",
+				title: item.title ?? "Untitled",
+				year: item.year ?? undefined,
+				watchCount: 1,
+				watchedAt: item.watchedAt ? [item.watchedAt.toISOString()] : [],
+			});
+		}
+		return {
+			...base,
+			sourceCount: items.length || base.sourceCount,
+			// Jobs created before durable outcome rows were introduced retain their
+			// aggregate counters. New jobs derive all result counts from the complete
+			// item ledger so matching changes are reflected immediately.
+			importedCount: items.length ? importedCount : base.importedCount,
+			skippedCount: items.length ? alreadyOnShelfCount : base.skippedCount,
+			failedCount: items.length ? couldntImportCount : base.failedCount,
+			alreadyOnShelfCount: items.length
+				? alreadyOnShelfCount
+				: base.alreadyOnShelfCount,
+			unmatchedCount: items.length
+				? unmatchedItems.length
+				: base.unmatchedCount,
+			couldntImportCount: items.length
+				? couldntImportCount
+				: base.couldntImportCount,
+			issuesPreview: issueRows.map((item) => this.mapTraktImportIssue(item)),
+			unmatchedGroups: [...groups.values()],
+		};
+	}
+
 	private mapTraktImportJob(
 		job: NonNullable<BackgroundJobRecord>,
 	): TraktImportJobDto {
@@ -1434,6 +1938,13 @@ export class ImportHistoryService {
 			importedCount: jobData.importedCount,
 			skippedCount: jobData.skippedCount,
 			failedCount: jobData.failedCount,
+			alreadyOnShelfCount: jobData.alreadyOnShelfCount,
+			unmatchedCount: jobData.unmatchedCount,
+			couldntImportCount: jobData.failedCount,
+			issuesPreview: [],
+			unmatchedGroups: [],
+			acknowledgedAt: jobData.acknowledgedAt,
+			reminderSnoozedUntil: jobData.reminderSnoozedUntil,
 			nextRunAt: job.nextRunAt.toISOString(),
 			lastError: job.lastError ?? undefined,
 			profileUsername: jobData.profileUsername,
@@ -1445,6 +1956,81 @@ export class ImportHistoryService {
 			createdAt: job.createdAt.toISOString(),
 			updatedAt: job.updatedAt.toISOString(),
 		};
+	}
+
+	private mapTraktImportIssue(item: {
+		id: string;
+		sourceIndex: number;
+		outcome: string;
+		mediaType: string;
+		title: string | null;
+		year: number | null;
+		episodeTitle: string | null;
+		seasonNumber: number | null;
+		episodeNumber: number | null;
+		watchedAt: Date | null;
+		reason: string | null;
+		message: string | null;
+	}): TraktImportIssueDto {
+		return {
+			id: item.id,
+			sourceIndex: item.sourceIndex,
+			outcome: item.outcome === "unmatched" ? "unmatched" : "couldnt_import",
+			mediaType:
+				item.mediaType === "movie" || item.mediaType === "episode"
+					? item.mediaType
+					: "unknown",
+			title: item.title ?? undefined,
+			year: item.year ?? undefined,
+			episodeTitle: item.episodeTitle ?? undefined,
+			seasonNumber: item.seasonNumber ?? undefined,
+			episodeNumber: item.episodeNumber ?? undefined,
+			watchedAt: item.watchedAt?.toISOString(),
+			reason: item.reason ?? undefined,
+			message: item.message ?? undefined,
+		};
+	}
+
+	private async requireTraktImportJob(userDid: string) {
+		const job = await this.prisma.backgroundJob.findFirst({
+			where: { type: TRAKT_IMPORT_JOB_TYPE, userDid },
+			orderBy: { createdAt: "desc" },
+		});
+		if (!job) throw new NotFoundException("Trakt import not found");
+		return job;
+	}
+
+	private async getRequiredCurrentTraktImport(
+		userDid: string,
+	): Promise<TraktImportJobDto> {
+		const job = await this.getCurrentTraktImport(userDid);
+		if (!job) throw new NotFoundException("Trakt import not found");
+		return job;
+	}
+
+	private async markTraktItemCouldntImport(
+		id: string,
+		reason: string,
+		message: string,
+	): Promise<void> {
+		await this.prisma.traktImportItem.update({
+			where: { id },
+			data: { outcome: "couldnt_import", reason, message },
+		});
+	}
+
+	private yearFromDate(value?: string): number | undefined {
+		if (!value) return undefined;
+		const year = Number.parseInt(value.slice(0, 4), 10);
+		return Number.isInteger(year) ? year : undefined;
+	}
+
+	private candidateYearScore(
+		value: string | undefined,
+		sourceYear: number | null,
+	): number {
+		if (!sourceYear) return 0;
+		return this.yearFromDate(value) === sourceYear ? 1 : 0;
 	}
 
 	private buildProfileFromJobData(

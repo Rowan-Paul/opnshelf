@@ -4,6 +4,8 @@ import { TraktSyncBanner } from "./TraktSyncBanner";
 
 const mockUseAuth = vi.fn();
 const mockUseQuery = vi.fn();
+const mockMutate = vi.fn();
+const mockInvalidateQueries = vi.fn();
 
 vi.mock("#/lib/auth-context", () => ({
 	useAuth: () => mockUseAuth(),
@@ -13,6 +15,14 @@ vi.mock("#/lib/auth-context", () => ({
 // helpers (isActiveTraktImportStatus, progress, getRetryReason) run for real.
 vi.mock("@tanstack/react-query", () => ({
 	useQuery: (opts: unknown) => mockUseQuery(opts),
+	useMutation: () => ({ mutate: mockMutate, isPending: false }),
+	useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+	Link: ({ children, ...props }: React.ComponentProps<"a">) => (
+		<a {...props}>{children}</a>
+	),
 }));
 
 // Keep the real status helpers, but stub the generated query-options builder —
@@ -22,6 +32,10 @@ vi.mock("@opnshelf/api", async (importActual) => ({
 	usersControllerGetMyCurrentTraktImportOptions: () => ({
 		queryKey: ["trakt-import-current"],
 	}),
+	usersControllerGetMyCurrentTraktImportQueryKey: () => [
+		"trakt-import-current",
+	],
+	usersControllerAcknowledgeMyTraktImportMutation: () => ({}),
 }));
 
 function job(overrides: Record<string, unknown>) {
@@ -33,6 +47,8 @@ function job(overrides: Record<string, unknown>) {
 		importedCount: 0,
 		skippedCount: 0,
 		failedCount: 0,
+		couldntImportCount: 0,
+		unmatchedGroups: [],
 		...overrides,
 	};
 }
@@ -56,10 +72,22 @@ describe("TraktSyncBanner", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders nothing when the job is terminal", () => {
-		mockUseQuery.mockReturnValue({ data: job({ status: "completed" }) });
+	it("renders nothing when a terminal job has been acknowledged", () => {
+		mockUseQuery.mockReturnValue({
+			data: job({
+				status: "completed",
+				acknowledgedAt: new Date().toISOString(),
+			}),
+		});
 		const { container } = render(<TraktSyncBanner />);
 		expect(container.firstChild).toBeNull();
+	});
+
+	it("shows an unacknowledged terminal result", () => {
+		mockUseQuery.mockReturnValue({ data: job({ status: "completed" }) });
+		render(<TraktSyncBanner />);
+		expect(screen.getByText("Your Trakt import is complete.")).toBeTruthy();
+		expect(screen.getByText("Review result")).toBeTruthy();
 	});
 
 	it("shows a background-sync message with progress while running", () => {

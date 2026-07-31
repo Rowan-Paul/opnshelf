@@ -14,6 +14,11 @@ export type TraktImportJobData = {
 	importedCount: number;
 	skippedCount: number;
 	failedCount: number;
+	unmatchedCount: number;
+	alreadyOnShelfCount: number;
+	snapshotAt: string;
+	acknowledgedAt?: string;
+	reminderSnoozedUntil?: string;
 	profileUsername?: string;
 	profileSlug?: string;
 	profileName?: string;
@@ -46,6 +51,17 @@ export function parseTraktImportData(json: unknown): TraktImportJobData {
 		importedCount: Number(data.importedCount ?? 0),
 		skippedCount: Number(data.skippedCount ?? 0),
 		failedCount: Number(data.failedCount ?? 0),
+		unmatchedCount: Number(data.unmatchedCount ?? 0),
+		alreadyOnShelfCount: Number(
+			data.alreadyOnShelfCount ?? data.skippedCount ?? 0,
+		),
+		snapshotAt: String(data.snapshotAt ?? new Date(0).toISOString()),
+		acknowledgedAt: data.acknowledgedAt
+			? String(data.acknowledgedAt)
+			: undefined,
+		reminderSnoozedUntil: data.reminderSnoozedUntil
+			? String(data.reminderSnoozedUntil)
+			: undefined,
 		profileUsername: data.profileUsername
 			? String(data.profileUsername)
 			: undefined,
@@ -87,6 +103,9 @@ export function buildTraktImportData(
 		importedCount: 0,
 		skippedCount: 0,
 		failedCount: 0,
+		unmatchedCount: 0,
+		alreadyOnShelfCount: 0,
+		snapshotAt: new Date().toISOString(),
 		...partial,
 	};
 }
