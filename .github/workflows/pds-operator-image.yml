@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
   group: pds-operator-image
@@ -24,6 +25,7 @@ concurrency:
 env:
   UPSTREAM_URL: https://tangled.org/brookie.blog/pds-operator
   HUB_REPO: rowanpaul/pds-operator
+  GHCR_REPO: ghcr.io/rowan-paul/pds-operator
 
 jobs:
   build-and-publish:
@@ -43,34 +45,12 @@ jobs:
         id: dedupe
         run: |
           set -euo pipefail
-          if docker buildx imagetools inspect "$HUB_REPO:sha-$SHA12" >/dev/null 2>&1; then
+          if docker buildx imagetools inspect "$HUB_REPO:sha-$SHA12" >/dev/null 2>&1 \
+            && docker buildx imagetools inspect "$GHCR_REPO:sha-$SHA12" >/dev/null 2>&1; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-
-      # Docker Hub creates repositories using the account's default visibility.
-      # Railway pulls this image anonymously, so keep the supply-chain output
-      # public even when the repository was first created by this workflow.
-      - name: Ensure Docker Hub repository is public
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          AUTH_TOKEN="$(jq -nc \
-            --arg username "$DOCKERHUB_USERNAME" \
-            --arg password "$DOCKERHUB_TOKEN" \
-            '{username: $username, password: $password}' \
-            | curl -fsS -H 'content-type: application/json' -d @- \
-              https://hub.docker.com/v2/users/login/ \
-            | jq -er '.token')"
-          curl -fsS -X PATCH \
-            -H "Authorization: Bearer $AUTH_TOKEN" \
-            -H 'content-type: application/json' \
-            -d '{"is_private": false}' \
-            "https://hub.docker.com/v2/namespaces/${HUB_REPO%/*}/repositories/${HUB_REPO#*/}" \
-            | jq -e '.is_private == false' >/dev/null
 
       - name: Install and test upstream server
         if: steps.dedupe.outputs.skip != 'true'
@@ -110,15 +90,21 @@ jobs:
           for _ in $(seq 1 30); do curl -fsS http://localhost:18787/ >/dev/null && break; sleep 1; done
           docker exec "$container" node -e "const D=require('better-sqlite3'); const db=new D('/data/data.sqlite',{readonly:true}); if (!db.prepare('select count(*) as count from enroll_tokens').get().count) process.exit(1)"
 
-      - name: Push Docker Hub tags
+      - name: Push Docker Hub and GHCR tags
         if: steps.dedupe.outputs.skip != 'true'
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          GHCR_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker tag pds-operator-candidate:ci "$HUB_REPO:sha-$SHA12"
           docker tag pds-operator-candidate:ci "$HUB_REPO:latest"
+          docker tag pds-operator-candidate:ci "$GHCR_REPO:sha-$SHA12"
+          docker tag pds-operator-candidate:ci "$GHCR_REPO:latest"
           docker push "$HUB_REPO:sha-$SHA12"
           docker push "$HUB_REPO:latest"
+          docker push "$GHCR_REPO:sha-$SHA12"
+          docker push "$GHCR_REPO:latest"
