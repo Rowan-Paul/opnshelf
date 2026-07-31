@@ -1,242 +1,654 @@
+import type {
+	BlockNode,
+	HeadingNode,
+	ImageNode,
+	InlineNode,
+	ListItemNode,
+	ListNode,
+	MarkdownDocument,
+	TextNode,
+} from "@tanstack/markdown";
+import { parseMarkdown } from "@tanstack/markdown/parser";
+import { Image } from "expo-image";
 import type { ReactNode } from "react";
-import { Linking, View } from "react-native";
+import { Linking, type TextStyle, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { openExternalWebUrl } from "@/lib/safe-links";
 
-/**
- * Minimal markdown renderer for the review editor's live preview.
- *
- * It deliberately covers exactly the subset the toolbar can emit — headings,
- * bold, italic, inline code, fenced code, bullet/ordered lists, blockquotes and
- * links — rather than pulling in a full CommonMark engine. The mobile app has no
- * markdown dependency and adding an older RN markdown lib against React 19 / RN
- * 0.85 isn't worth it for a preview of known-shape input. If reviews ever need
- * full-fidelity rendering on a read screen, revisit with a real parser.
- */
-
 const MONO = "Courier";
-// RN can't synthesize weight from the single-face `Inter` family, so `font-bold`
-// / `font-semibold` do nothing. Point bold at the registered bold face instead
-// (see the weighted aliases in _layout.tsx). Same story for italic — the base
-// family has no italic face, so `italic` (fontStyle) is a no-op; use the loaded
-// italic face directly.
 const BOLD = "Inter-Bold";
 const ITALIC = "Inter-Italic";
 
-// Inline tokens, ordered so `**bold**` wins over `*italic*` at the same index.
-const INLINE = new RegExp(
-	[
-		"\\*\\*([^*]+)\\*\\*", // bold
-		"`([^`]+)`", // inline code
-		"\\[([^\\]]+)\\]\\(([^)\\s]+)\\)", // [label](url)
-		"\\*([^*]+)\\*", // italic (asterisk)
-		"_([^_]+)_", // italic (underscore)
-	].join("|"),
-	"g",
-);
-
-/** Render inline markdown within a single block of text. */
-function renderInline(text: string, keyPrefix: string): ReactNode[] {
-	const nodes: ReactNode[] = [];
-	let lastIndex = 0;
-	let match: RegExpExecArray | null;
-	INLINE.lastIndex = 0;
-
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-	while ((match = INLINE.exec(text)) !== null) {
-		if (match.index > lastIndex) {
-			nodes.push(text.slice(lastIndex, match.index));
-		}
-		// The match offset is a stable position within the source string, so it
-		// makes a safe React key (unlike an array index).
-		const key = `${keyPrefix}-${match.index}`;
-		const [, bold, code, linkLabel, linkUrl, italicStar, italicUnderscore] =
-			match;
-
-		if (bold !== undefined) {
-			nodes.push(
-				<Text
-					key={key}
-					className="text-foreground"
-					style={{ fontFamily: BOLD }}
-				>
-					{bold}
-				</Text>,
-			);
-		} else if (code !== undefined) {
-			nodes.push(
-				<Text
-					key={key}
-					className="bg-background-subtle text-foreground"
-					style={{ fontFamily: MONO }}
-				>
-					{code}
-				</Text>,
-			);
-		} else if (linkLabel !== undefined && linkUrl !== undefined) {
-			nodes.push(
-				<Text
-					key={key}
-					className="text-accent underline"
-					onPress={() => {
-						openExternalWebUrl(linkUrl, Linking.openURL);
-					}}
-				>
-					{linkLabel}
-				</Text>,
-			);
-		} else {
-			const italic = italicStar ?? italicUnderscore;
-			nodes.push(
-				<Text
-					key={key}
-					className="text-foreground"
-					style={{ fontFamily: ITALIC }}
-				>
-					{italic}
-				</Text>,
-			);
-		}
-		lastIndex = INLINE.lastIndex;
-	}
-
-	if (lastIndex < text.length) {
-		nodes.push(text.slice(lastIndex));
-	}
-	return nodes;
-}
-
-// Size + color per level; weight comes from the explicit display face below
-// (the base display family has no bold/semibold face, so `font-bold` is a no-op).
-const HEADING_CLASS: Record<number, string> = {
+const HEADING_CLASS: Record<HeadingNode["depth"], string> = {
 	1: "text-foreground text-xl",
 	2: "text-foreground text-lg",
 	3: "text-foreground text-base",
+	4: "text-foreground text-base",
+	5: "text-foreground text-sm",
+	6: "text-muted-foreground text-sm",
 };
-const HEADING_FAMILY: Record<number, string> = {
+
+const HEADING_FAMILY: Record<HeadingNode["depth"], string> = {
 	1: "PlusJakartaSans-Bold",
 	2: "PlusJakartaSans-Bold",
 	3: "PlusJakartaSans-SemiBold",
+	4: "PlusJakartaSans-SemiBold",
+	5: "PlusJakartaSans-SemiBold",
+	6: "PlusJakartaSans-SemiBold",
 };
 
-interface ListItem {
-	id: string;
-	text: string;
+const AUTOLINK_RE = /<((?:https?:\/\/)[^<>\s]+)>/gi;
+
+function normalizeMarkdownSource(markdown: string) {
+	return markdown.replace(/\r\n/g, "\n").replace(/<br\s*\/?>/gi, "\n");
 }
 
-type Block =
-	| { id: string; kind: "heading"; level: number; text: string }
-	| { id: string; kind: "code"; text: string }
-	| { id: string; kind: "quote"; text: string }
-	| { id: string; kind: "ul"; items: ListItem[] }
-	| { id: string; kind: "ol"; items: ListItem[] }
-	| { id: string; kind: "p"; text: string };
-
-/** Group raw markdown lines into renderable blocks with stable ids. */
-function parseBlocks(markdown: string): Block[] {
-	// A lone `\` at end of line is a markdown hard break (what the editor emits
-	// for a soft return); drop the marker and let the newline render as the break
-	// so the card matches the editor.
-	const lines = markdown
-		.replace(/\r\n/g, "\n")
-		// The editor serialises some hard breaks as literal <br> HTML; render them
-		// as newlines instead of showing "<br />" as text.
-		.replace(/<br\s*\/?>/gi, "\n")
-		.replace(/\\$/gm, "")
-		.split("\n");
-	const blocks: Block[] = [];
-	let i = 0;
-	let seq = 0;
-	const nextId = () => {
-		seq += 1;
-		return `b${seq}`;
-	};
-
-	while (i < lines.length) {
-		const line = lines[i];
-
-		if (line.trim().length === 0) {
-			i += 1;
-			continue;
+function pushTextWithBreaks(nodes: InlineNode[], value: string) {
+	const parts = value.split("\n");
+	for (const [index, part] of parts.entries()) {
+		if (part.length > 0) {
+			nodes.push({ type: "text", value: part });
 		}
-
-		// Fenced code block.
-		if (/^```/.test(line)) {
-			const body: string[] = [];
-			i += 1;
-			while (i < lines.length && !/^```/.test(lines[i])) {
-				body.push(lines[i]);
-				i += 1;
-			}
-			i += 1; // skip closing fence
-			blocks.push({ id: nextId(), kind: "code", text: body.join("\n") });
-			continue;
+		if (index < parts.length - 1) {
+			nodes.push({ type: "break" });
 		}
+	}
+}
 
-		const heading = line.match(/^(#{1,6})\s+(.*)$/);
-		if (heading) {
-			blocks.push({
-				id: nextId(),
-				kind: "heading",
-				level: Math.min(heading[1].length, 3),
-				text: heading[2],
-			});
-			i += 1;
-			continue;
-		}
+function transformTextNode(node: TextNode): InlineNode[] {
+	const nodes: InlineNode[] = [];
+	let lastIndex = 0;
+	AUTOLINK_RE.lastIndex = 0;
 
-		if (/^>\s?/.test(line)) {
-			const quote: string[] = [];
-			while (i < lines.length && /^>\s?/.test(lines[i])) {
-				quote.push(lines[i].replace(/^>\s?/, ""));
-				i += 1;
-			}
-			blocks.push({ id: nextId(), kind: "quote", text: quote.join("\n") });
-			continue;
+	for (const match of node.value.matchAll(AUTOLINK_RE)) {
+		const href = match[1];
+		const index = match.index ?? 0;
+		if (index > lastIndex) {
+			pushTextWithBreaks(nodes, node.value.slice(lastIndex, index));
 		}
-
-		if (/^[-*]\s+/.test(line)) {
-			const items: ListItem[] = [];
-			while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
-				items.push({ id: nextId(), text: lines[i].replace(/^[-*]\s+/, "") });
-				i += 1;
-			}
-			blocks.push({ id: nextId(), kind: "ul", items });
-			continue;
-		}
-
-		if (/^\d+\.\s+/.test(line)) {
-			const items: ListItem[] = [];
-			while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
-				items.push({ id: nextId(), text: lines[i].replace(/^\d+\.\s+/, "") });
-				i += 1;
-			}
-			blocks.push({ id: nextId(), kind: "ol", items });
-			continue;
-		}
-
-		// Paragraph: gather consecutive plain lines.
-		const para: string[] = [];
-		while (
-			i < lines.length &&
-			lines[i].trim().length > 0 &&
-			!/^(```|#{1,6}\s|>\s?|[-*]\s|\d+\.\s)/.test(lines[i])
-		) {
-			para.push(lines[i]);
-			i += 1;
-		}
-		blocks.push({ id: nextId(), kind: "p", text: para.join("\n") });
+		nodes.push({
+			type: "link",
+			href,
+			children: [{ type: "text", value: href }],
+		});
+		lastIndex = index + match[0].length;
 	}
 
-	return blocks;
+	if (lastIndex < node.value.length) {
+		pushTextWithBreaks(nodes, node.value.slice(lastIndex));
+	}
+
+	return nodes;
 }
 
-/**
- * A whole-line-clamped preview of a review body. RN can't line-clamp the block
- * renderer above (multiple Views), so this flattens block markers to a single
- * inline flow and clamps with `numberOfLines` — keeping inline bold/italic/code/
- * links while cutting cleanly on a line boundary (no mid-line slice).
- */
+function transformInlineNode(node: InlineNode): InlineNode[] {
+	switch (node.type) {
+		case "text":
+			return transformTextNode(node);
+		case "strong":
+			return [
+				{
+					...node,
+					children: transformInlineNodes(node.children),
+				},
+			];
+		case "emphasis":
+			return [
+				{
+					...node,
+					children: transformInlineNodes(node.children),
+				},
+			];
+		case "strike":
+			return [
+				{
+					...node,
+					children: transformInlineNodes(node.children),
+				},
+			];
+		case "link":
+			return [
+				{
+					...node,
+					children: transformInlineNodes(node.children),
+				},
+			];
+		default:
+			return [node];
+	}
+}
+
+function transformInlineNodes(nodes: InlineNode[]): InlineNode[] {
+	return nodes.flatMap(transformInlineNode);
+}
+
+function transformBlockNode(node: BlockNode): BlockNode {
+	switch (node.type) {
+		case "heading":
+		case "paragraph":
+			return { ...node, children: transformInlineNodes(node.children) };
+		case "blockquote":
+			return { ...node, children: node.children.map(transformBlockNode) };
+		case "list":
+			return {
+				...node,
+				items: node.items.map((item) => ({
+					...item,
+					children: item.children.map(transformBlockNode),
+				})),
+			};
+		default:
+			return node;
+	}
+}
+
+function parseReviewMarkdown(markdown: string): MarkdownDocument {
+	const document = parseMarkdown(normalizeMarkdownSource(markdown));
+	return {
+		...document,
+		children: document.children.map(transformBlockNode),
+	};
+}
+
+function inlineTextValue(nodes: InlineNode[]): string {
+	return nodes
+		.map((node) => {
+			switch (node.type) {
+				case "text":
+					return node.value;
+				case "inlineCode":
+					return node.value;
+				case "strong":
+				case "emphasis":
+				case "strike":
+				case "link":
+					return inlineTextValue(node.children);
+				case "image":
+					return node.alt || node.src;
+				case "footnoteReference":
+					return `[${node.number}]`;
+				case "break":
+					return "\n";
+				case "inlineHtml":
+					return node.value;
+				default:
+					return "";
+			}
+		})
+		.join("");
+}
+
+function renderInlineNodes(
+	nodes: InlineNode[],
+	keyPrefix: string,
+): ReactNode[] {
+	return nodes.map((node, index) => {
+		const key = `${keyPrefix}-${index}`;
+		switch (node.type) {
+			case "text":
+				return node.value;
+			case "break":
+				return "\n";
+			case "inlineCode":
+				return (
+					<Text
+						key={key}
+						className="bg-background-subtle text-foreground"
+						style={{ fontFamily: MONO }}
+					>
+						{node.value}
+					</Text>
+				);
+			case "strong":
+				return (
+					<Text
+						key={key}
+						className="text-foreground"
+						style={{ fontFamily: BOLD }}
+					>
+						{renderInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "emphasis":
+				return (
+					<Text
+						key={key}
+						className="text-foreground"
+						style={{ fontFamily: ITALIC }}
+					>
+						{renderInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "strike":
+				return (
+					<Text key={key} className="text-foreground line-through">
+						{renderInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "link":
+				return (
+					<Text
+						key={key}
+						className="text-accent underline"
+						onPress={() => {
+							openExternalWebUrl(node.href, Linking.openURL);
+						}}
+					>
+						{renderInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "footnoteReference":
+				return `[${node.number}]`;
+			case "inlineHtml":
+				return node.value;
+			case "image":
+				return node.alt || node.src;
+			default:
+				return null;
+		}
+	});
+}
+
+function splitInlineRuns(nodes: InlineNode[]) {
+	const runs: Array<
+		| { type: "text"; nodes: Exclude<InlineNode, ImageNode>[] }
+		| { type: "image"; node: ImageNode }
+	> = [];
+	let current: Exclude<InlineNode, ImageNode>[] = [];
+
+	for (const node of nodes) {
+		if (node.type === "image") {
+			if (current.length > 0) {
+				runs.push({ type: "text", nodes: [...current] });
+				current = [];
+			}
+			runs.push({ type: "image", node });
+			continue;
+		}
+		current.push(node);
+	}
+
+	if (current.length > 0) {
+		runs.push({ type: "text", nodes: [...current] });
+	}
+
+	return runs;
+}
+
+function renderInlineFlow(
+	nodes: InlineNode[],
+	keyPrefix: string,
+	textClassName: string,
+	textStyle?: TextStyle,
+) {
+	const runs = splitInlineRuns(nodes);
+	if (runs.length === 0) {
+		return null;
+	}
+	if (runs.length === 1 && runs[0]?.type === "text") {
+		return (
+			<Text
+				key={`${keyPrefix}-text`}
+				className={textClassName}
+				style={textStyle}
+			>
+				{renderInlineNodes(runs[0].nodes, `${keyPrefix}-text`)}
+			</Text>
+		);
+	}
+
+	return (
+		<View key={`${keyPrefix}-flow`} className="gap-3">
+			{runs.map((run, index) => {
+				const key = `${keyPrefix}-run-${index}`;
+				if (run.type === "image") {
+					return (
+						<Image
+							key={key}
+							source={{ uri: run.node.src }}
+							accessibilityLabel={run.node.alt}
+							contentFit="contain"
+							style={{ width: "100%", height: 240, borderRadius: 12 }}
+						/>
+					);
+				}
+				return (
+					<Text key={key} className={textClassName} style={textStyle}>
+						{renderInlineNodes(run.nodes, key)}
+					</Text>
+				);
+			})}
+		</View>
+	);
+}
+
+function renderBlockNode(
+	node: BlockNode,
+	key: string,
+	context?: { quoted?: boolean },
+): ReactNode {
+	switch (node.type) {
+		case "heading":
+			return (
+				<Text
+					key={key}
+					className={HEADING_CLASS[node.depth]}
+					style={{ fontFamily: HEADING_FAMILY[node.depth] }}
+				>
+					{renderInlineNodes(node.children, key)}
+				</Text>
+			);
+		case "paragraph":
+			return renderInlineFlow(
+				node.children,
+				key,
+				context?.quoted
+					? "text-muted-foreground leading-6"
+					: "text-foreground leading-6",
+				context?.quoted ? { fontFamily: ITALIC } : undefined,
+			);
+		case "code":
+			return (
+				<View key={key} className="rounded-lg bg-background-subtle p-3">
+					<Text
+						className="text-foreground text-sm"
+						style={{ fontFamily: MONO }}
+					>
+						{node.value}
+					</Text>
+				</View>
+			);
+		case "blockquote":
+			return (
+				<View key={key} className="gap-3 border-border-strong border-l-2 pl-3">
+					{node.children.map((child, index) =>
+						renderBlockNode(child, `${key}-${index}`, { quoted: true }),
+					)}
+				</View>
+			);
+		case "list":
+			return (
+				<View key={key} className="gap-2">
+					{node.items.map((item, index) =>
+						renderListItem(node, item, index, `${key}-${index}`),
+					)}
+				</View>
+			);
+		case "thematicBreak":
+			return <View key={key} className="h-px bg-border" />;
+		case "html":
+			return (
+				<Text key={key} className="text-foreground leading-6">
+					{node.value}
+				</Text>
+			);
+		case "table":
+			return (
+				<View key={key} className="gap-2 rounded-lg bg-background-subtle p-3">
+					{node.header.length > 0 ? (
+						<View className="flex-row flex-wrap gap-2">
+							{node.header.map((cell, index) => (
+								<Text
+									key={`${key}-header-${inlineTextValue(cell.children) || "cell"}`}
+									className="text-foreground"
+									style={{ fontFamily: BOLD }}
+								>
+									{renderInlineNodes(cell.children, `${key}-header-${index}`)}
+								</Text>
+							))}
+						</View>
+					) : null}
+					{node.rows.map((row, rowIndex) => (
+						<View
+							key={`${key}-row-${row.map((cell) => inlineTextValue(cell.children) || "cell").join("|")}`}
+							className="flex-row flex-wrap gap-2"
+						>
+							{row.map((cell, cellIndex) => (
+								<Text
+									key={`${key}-row-cell-${inlineTextValue(cell.children) || "cell"}`}
+									className="text-foreground"
+								>
+									{renderInlineNodes(
+										cell.children,
+										`${key}-row-${rowIndex}-${cellIndex}`,
+									)}
+								</Text>
+							))}
+						</View>
+					))}
+				</View>
+			);
+		case "footnotes":
+			return (
+				<View key={key} className="gap-2">
+					{node.items.map((item) => (
+						<View key={`${key}-${item.id}`} className="flex-row gap-2">
+							<Text className="text-muted-foreground">{item.number}.</Text>
+							<View className="flex-1 gap-2">
+								{item.children.map((child, childIndex) =>
+									renderBlockNode(child, `${key}-${item.id}-${childIndex}`),
+								)}
+							</View>
+						</View>
+					))}
+				</View>
+			);
+		case "callout":
+			return (
+				<View
+					key={key}
+					className="rounded-lg border border-border bg-background-subtle p-3"
+				>
+					<Text className="mb-2 text-foreground" style={{ fontFamily: BOLD }}>
+						{node.title}
+					</Text>
+					<View className="gap-3">
+						{node.children.map((child, index) =>
+							renderBlockNode(child, `${key}-${index}`),
+						)}
+					</View>
+				</View>
+			);
+		case "component":
+			return (
+				<View key={key} className="gap-3">
+					{node.children.map((child, index) =>
+						renderBlockNode(child, `${key}-${index}`),
+					)}
+				</View>
+			);
+	}
+}
+
+function renderListItem(
+	list: ListNode,
+	item: ListItemNode,
+	index: number,
+	key: string,
+) {
+	const marker = list.ordered
+		? `${(list.start ?? 1) + index}.`
+		: item.checked === true
+			? "☑"
+			: item.checked === false
+				? "☐"
+				: "•";
+	return (
+		<View key={key} className="flex-row gap-2">
+			<Text className="text-muted-foreground leading-6">{marker}</Text>
+			<View className="min-w-0 flex-1 gap-2">
+				{item.children.map((child, childIndex) =>
+					renderBlockNode(child, `${key}-${childIndex}`),
+				)}
+			</View>
+		</View>
+	);
+}
+
+function renderPreviewInlineNodes(
+	nodes: InlineNode[],
+	keyPrefix: string,
+): ReactNode[] {
+	return nodes.map((node, index) => {
+		const key = `${keyPrefix}-${index}`;
+		switch (node.type) {
+			case "text":
+				return node.value;
+			case "break":
+				return "\n";
+			case "inlineCode":
+				return (
+					<Text
+						key={key}
+						className="bg-background-subtle text-foreground"
+						style={{ fontFamily: MONO }}
+					>
+						{node.value}
+					</Text>
+				);
+			case "strong":
+				return (
+					<Text
+						key={key}
+						className="text-foreground"
+						style={{ fontFamily: BOLD }}
+					>
+						{renderPreviewInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "emphasis":
+				return (
+					<Text
+						key={key}
+						className="text-foreground"
+						style={{ fontFamily: ITALIC }}
+					>
+						{renderPreviewInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "strike":
+				return (
+					<Text key={key} className="text-foreground line-through">
+						{renderPreviewInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "link":
+				return (
+					<Text key={key} className="text-accent underline">
+						{renderPreviewInlineNodes(node.children, key)}
+					</Text>
+				);
+			case "image":
+				return node.alt || "";
+			case "footnoteReference":
+				return `[${node.number}]`;
+			case "inlineHtml":
+				return node.value;
+			default:
+				return null;
+		}
+	});
+}
+
+function appendPreviewText(
+	nodes: ReactNode[],
+	value: ReactNode | null,
+	separator = "\n",
+) {
+	if (value == null) {
+		return;
+	}
+	if (nodes.length > 0) {
+		nodes.push(separator);
+	}
+	if (Array.isArray(value)) {
+		nodes.push(...value);
+		return;
+	}
+	nodes.push(value);
+}
+
+function buildPreviewNodes(
+	blocks: BlockNode[],
+	keyPrefix: string,
+): ReactNode[] {
+	const nodes: ReactNode[] = [];
+
+	for (const [index, block] of blocks.entries()) {
+		const key = `${keyPrefix}-${index}`;
+		switch (block.type) {
+			case "heading":
+			case "paragraph":
+				appendPreviewText(nodes, renderPreviewInlineNodes(block.children, key));
+				break;
+			case "code":
+				appendPreviewText(
+					nodes,
+					<Text
+						key={`${key}-code`}
+						className="text-foreground"
+						style={{ fontFamily: MONO }}
+					>
+						{block.value}
+					</Text>,
+				);
+				break;
+			case "blockquote":
+				appendPreviewText(nodes, buildPreviewNodes(block.children, key));
+				break;
+			case "list":
+				for (const [itemIndex, item] of block.items.entries()) {
+					const marker = block.ordered
+						? `${(block.start ?? 1) + itemIndex}. `
+						: item.checked === true
+							? "☑ "
+							: item.checked === false
+								? "☐ "
+								: "• ";
+					appendPreviewText(nodes, [
+						marker,
+						...buildPreviewNodes(item.children, `${key}-${itemIndex}`),
+					]);
+				}
+				break;
+			case "thematicBreak":
+				appendPreviewText(nodes, " ");
+				break;
+			case "html":
+				appendPreviewText(nodes, block.value);
+				break;
+			case "table":
+				appendPreviewText(nodes, [
+					...block.header.flatMap((cell, cellIndex) => [
+						cellIndex > 0 ? " | " : "",
+						...renderPreviewInlineNodes(
+							cell.children,
+							`${key}-header-${cellIndex}`,
+						),
+					]),
+				]);
+				break;
+			case "footnotes":
+				for (const footnote of block.items) {
+					appendPreviewText(nodes, buildPreviewNodes(footnote.children, key));
+				}
+				break;
+			case "callout":
+				appendPreviewText(nodes, [
+					block.title,
+					block.children.length > 0 ? "\n" : "",
+					...buildPreviewNodes(block.children, key),
+				]);
+				break;
+			case "component":
+				appendPreviewText(nodes, buildPreviewNodes(block.children, key));
+				break;
+		}
+	}
+
+	return nodes;
+}
+
 export function MarkdownPreview({
 	value,
 	numberOfLines,
@@ -244,111 +656,32 @@ export function MarkdownPreview({
 	value: string;
 	numberOfLines: number;
 }) {
-	const text = value
-		.replace(/<br\s*\/?>/gi, "\n")
-		.replace(/```/g, "")
-		.replace(/^#{1,6}\s+/gm, "")
-		.replace(/^>\s?/gm, "")
-		.replace(/^[-*]\s+/gm, "• ")
-		.replace(/\n{2,}/g, "\n")
-		.trim();
+	const document = parseReviewMarkdown(value);
+	const nodes = buildPreviewNodes(document.children, "preview");
+
 	return (
 		<Text
 			className="text-foreground leading-6"
 			numberOfLines={numberOfLines}
 			ellipsizeMode="tail"
 		>
-			{renderInline(text, "preview")}
+			{nodes}
 		</Text>
 	);
 }
 
-/** Renders the supported markdown subset as native RN views. */
 export function Markdown({ value }: { value: string }) {
-	const blocks = parseBlocks(value);
+	const document = parseReviewMarkdown(value);
 
-	if (blocks.length === 0) {
+	if (document.children.length === 0) {
 		return null;
 	}
 
 	return (
 		<View className="gap-3">
-			{blocks.map((block) => {
-				switch (block.kind) {
-					case "heading":
-						return (
-							<Text
-								key={block.id}
-								className={HEADING_CLASS[block.level]}
-								style={{ fontFamily: HEADING_FAMILY[block.level] }}
-							>
-								{renderInline(block.text, block.id)}
-							</Text>
-						);
-					case "code":
-						return (
-							<View
-								key={block.id}
-								className="rounded-lg bg-background-subtle p-3"
-							>
-								<Text
-									className="text-foreground text-sm"
-									style={{ fontFamily: MONO }}
-								>
-									{block.text}
-								</Text>
-							</View>
-						);
-					case "quote":
-						return (
-							<View
-								key={block.id}
-								className="border-border-strong border-l-2 pl-3"
-							>
-								<Text
-									className="text-muted-foreground leading-6"
-									style={{ fontFamily: ITALIC }}
-								>
-									{renderInline(block.text, block.id)}
-								</Text>
-							</View>
-						);
-					case "ul":
-						return (
-							<View key={block.id} className="gap-1">
-								{block.items.map((item) => (
-									<View key={item.id} className="flex-row gap-2">
-										<Text className="text-muted-foreground">{"•"}</Text>
-										<Text className="flex-1 text-foreground leading-6">
-											{renderInline(item.text, item.id)}
-										</Text>
-									</View>
-								))}
-							</View>
-						);
-					case "ol":
-						return (
-							<View key={block.id} className="gap-1">
-								{block.items.map((item, itemIndex) => (
-									<View key={item.id} className="flex-row gap-2">
-										<Text className="text-muted-foreground">
-											{itemIndex + 1}.
-										</Text>
-										<Text className="flex-1 text-foreground leading-6">
-											{renderInline(item.text, item.id)}
-										</Text>
-									</View>
-								))}
-							</View>
-						);
-					default:
-						return (
-							<Text key={block.id} className="text-foreground leading-6">
-								{renderInline(block.text, block.id)}
-							</Text>
-						);
-				}
-			})}
+			{document.children.map((block, index) =>
+				renderBlockNode(block, `block-${index}`),
+			)}
 		</View>
 	);
 }
