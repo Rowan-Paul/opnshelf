@@ -6,7 +6,6 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import {
 	deterministicEpisodeWatchRkey,
@@ -24,10 +23,8 @@ import type {
 	PaginatedTraktImportIssuesDto,
 	StartTraktImportResponseDto,
 	TraktHistoryPreviewItemDto,
-	TraktImportIssueDto,
 	TraktImportJobDto,
 	TraktMatchCandidateDto,
-	TraktPublicProfileDto,
 } from "./dto/import-history.dto";
 import type { AuthService } from "../auth/auth.service";
 import {
@@ -55,18 +52,23 @@ import {
 import {
 	TRAKT_PREVIEW_ITEM_LIMIT,
 	type TraktHistoryPayloadItem,
-	type TraktProfilePayload,
 	buildImportKey,
 	candidateYearScore,
 	describeImportItem,
 	getOptionalIdentifierValue,
 	getOptionalIntegerValue,
 	getOptionalStringValue,
-	mapTraktProfilePayload,
 	normalizeTraktApiItem,
 	normalizeTraktPage,
 	yearFromDate,
 } from "./trakt-normalize";
+import { TRAKT_HISTORY_PAGE_SIZE, TraktApiClient } from "./trakt-api.client";
+import {
+	type BackgroundJobRecord,
+	buildProfileFromJobData,
+	mapTraktImportIssue,
+	mapTraktImportJob,
+} from "./trakt-job-dto";
 
 interface ATSession {
 	did: string;
@@ -80,9 +82,24 @@ type TraktJobStatus =
 	| "completed"
 	| "failed";
 
-type BackgroundJobRecord = Awaited<
-	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
->;
+/** A PDS record built and ready to write, paired with the item it came from. */
+type PendingWrite = {
+	itemIndex: number;
+	item: NormalizedImportItemDto;
+	rkey: string;
+	collection: string;
+	record: unknown;
+} & (
+	| { type: "movie"; movieTmdbId: string }
+	| {
+			type: "episode";
+			showTmdbId: string;
+			seasonNumber: number;
+			episodeNumber: number;
+	  }
+);
+
+type WriteResult = { uri: string; cid: string };
 
 type RecordedTraktPageItem = {
 	sourceIndex: number;
@@ -97,7 +114,6 @@ type RecordedTraktPageItem = {
 	duplicate: boolean;
 };
 
-const TRAKT_HISTORY_PAGE_SIZE = 100;
 const TRAKT_PREVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"queued",
@@ -123,29 +139,25 @@ const PDS_WRITE_RESERVE_POINTS = 1000;
 @Injectable()
 export class ImportHistoryService {
 	private readonly logger = new Logger(ImportHistoryService.name);
-	private readonly traktApiKey: string;
-	private readonly traktBaseUrl = "https://api.trakt.tv";
-	private readonly traktUserAgent = "Opnshelf/1.0 (+https://opnshelf.xyz)";
 
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
-		private readonly configService: ConfigService,
+		private readonly traktApi: TraktApiClient,
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore">,
-	) {
-		this.traktApiKey = this.configService.get<string>("TRAKT_API_KEY") ?? "";
-	}
+	) {}
 
 	async fetchTraktPublicHistory(
 		username: string,
 	): Promise<FetchTraktPublicHistoryResponseDto> {
 		try {
-			this.ensureTraktConfigured();
+			this.traktApi.ensureConfigured();
 
-			const normalizedUsername = this.normalizeUsername(username);
-			const profile = await this.fetchTraktPublicProfile(normalizedUsername);
+			const normalizedUsername = this.traktApi.normalizeUsername(username);
+			const profile =
+				await this.traktApi.fetchPublicProfile(normalizedUsername);
 			const startAt = new Date(Date.now() - TRAKT_PREVIEW_WINDOW_MS);
 			let page = 1;
 			let pageCount = Number.POSITIVE_INFINITY;
@@ -154,7 +166,7 @@ export class ImportHistoryService {
 			const previewItems: TraktHistoryPreviewItemDto[] = [];
 
 			while (page <= pageCount) {
-				const pageResult = await this.fetchTraktHistoryPage(
+				const pageResult = await this.traktApi.fetchHistoryPage(
 					normalizedUsername,
 					page,
 					{ startAt },
@@ -207,8 +219,8 @@ export class ImportHistoryService {
 		username: string,
 	): Promise<StartTraktImportResponseDto> {
 		try {
-			this.ensureTraktConfigured();
-			const normalizedUsername = this.normalizeUsername(username);
+			this.traktApi.ensureConfigured();
+			const normalizedUsername = this.traktApi.normalizeUsername(username);
 			const existingJob = await this.findLatestTraktImportJob(userDid, {
 				statuses: [
 					...ACTIVE_TRAKT_JOB_STATUSES,
@@ -220,16 +232,16 @@ export class ImportHistoryService {
 
 			if (existingJob) {
 				const existingData = parseTraktImportData(existingJob.data);
-				const existingProfile = this.buildProfileFromJobData(existingData);
+				const existingProfile = buildProfileFromJobData(existingData);
 				return {
 					profile: existingProfile,
 					previewItems: [],
 					sourcePreviewCount: 0,
-					job: this.mapTraktImportJob(existingJob),
+					job: mapTraktImportJob(existingJob),
 				};
 			}
 
-			const preview = await this.fetchTraktPreview(normalizedUsername);
+			const preview = await this.traktApi.fetchPreview(normalizedUsername);
 			const job = await this.prisma.backgroundJob.create({
 				data: {
 					type: TRAKT_IMPORT_JOB_TYPE,
@@ -250,7 +262,7 @@ export class ImportHistoryService {
 				profile: preview.profile,
 				previewItems: preview.previewItems,
 				sourcePreviewCount: preview.sourcePreviewCount,
-				job: this.mapTraktImportJob(job),
+				job: mapTraktImportJob(job),
 			};
 		} catch (error) {
 			throw toPublicTraktException(error);
@@ -377,30 +389,134 @@ export class ImportHistoryService {
 			);
 		}
 
+		const built = await this.buildPendingWrites(userDid, items);
+		const { pendingWrites } = built;
 		let imported = 0;
+		let skipped = built.skipped;
+		let failed = built.failed;
+		const errors: ImportErrorDto[] = [...built.errors];
+
+		if (pendingWrites.length === 0) {
+			return { imported, skipped, failed, errors };
+		}
+
+		const agent = new Agent(
+			session as unknown as ConstructorParameters<typeof Agent>[0],
+		);
+
+		for (
+			let batchStart = 0;
+			batchStart < pendingWrites.length;
+			batchStart += PDS_APPLY_WRITES_BATCH_SIZE
+		) {
+			const batch = pendingWrites.slice(
+				batchStart,
+				batchStart + PDS_APPLY_WRITES_BATCH_SIZE,
+			);
+			const batchLabel = `${batchStart + 1}–${batchStart + batch.length}`;
+			let results: WriteResult[] | undefined;
+
+			this.logger.debug(
+				`PDS applyWrites: sending batch of ${batch.length} records (items ${batchLabel}) to ${session.did}`,
+			);
+			try {
+				const created = await this.applyWriteBatch(
+					agent,
+					session,
+					batch,
+					"create",
+					options,
+				);
+				results = created.results;
+				this.logger.debug(
+					`PDS applyWrites: batch of ${batch.length} succeeded (commit ${created.commitCid})`,
+				);
+			} catch (writeError) {
+				let error: unknown = writeError;
+				// Crash-recovery / idempotent re-import: rkeys are deterministic
+				// content hashes, so if a previous run wrote these records to the
+				// PDS but died before the DB write, the `create` batch fails with
+				// "record already exists". Retry the same batch as `update` ops —
+				// the record at that rkey is byte-identical, so this is an
+				// idempotent overwrite. Keeps batching (one extra round-trip per
+				// affected batch, not per item).
+				if (!isPdsRateLimitError(error) && isRecordExistsError(error)) {
+					this.logger.debug(
+						`PDS applyWrites: batch ${batchLabel} already exists, retrying as update (idempotent re-import)`,
+					);
+					try {
+						const updated = await this.applyWriteBatch(
+							agent,
+							session,
+							batch,
+							"update",
+							options,
+						);
+						results = updated.results;
+					} catch (retryError) {
+						// Update retry also failed — fall through to normal error
+						// handling below using the retry error.
+						error = retryError;
+					}
+				}
+
+				if (!results) {
+					if (isPdsRateLimitError(error)) {
+						this.logger.warn(
+							`PDS applyWrites: rate limited on batch ${batchLabel}`,
+						);
+						throw new PdsRateLimitError(getPdsRetryAfterSeconds(error));
+					}
+					this.logger.warn(
+						`PDS applyWrites: batch ${batchLabel} failed: ${getErrorMessage(error)}`,
+					);
+					const classified = classifyImportWriteError(error);
+					for (const pw of batch) {
+						failed += 1;
+						errors.push({
+							index: pw.itemIndex + 1,
+							code: "write_failed",
+							reason: classified.reason,
+							message: classified.message,
+						});
+					}
+					continue;
+				}
+			}
+
+			const indexed = await this.indexWrittenBatch(userDid, batch, results);
+			imported += indexed.imported;
+			skipped += indexed.skipped;
+			failed += indexed.failed;
+			errors.push(...indexed.errors);
+		}
+
+		return {
+			imported,
+			skipped,
+			failed,
+			errors,
+		};
+	}
+
+	/**
+	 * Phase 1: drop duplicates and build the PDS records. No network calls, so a
+	 * whole page is prepared before we spend any of the write budget.
+	 */
+	private async buildPendingWrites(
+		userDid: string,
+		items: NormalizedImportItemDto[],
+	): Promise<{
+		pendingWrites: PendingWrite[];
+		skipped: number;
+		failed: number;
+		errors: ImportErrorDto[];
+	}> {
+		const pendingWrites: PendingWrite[] = [];
+		const dedupeSet = new Set<string>();
 		let skipped = 0;
 		let failed = 0;
 		const errors: ImportErrorDto[] = [];
-		const dedupeSet = new Set<string>();
-
-		type PendingWrite = {
-			itemIndex: number;
-			item: NormalizedImportItemDto;
-			rkey: string;
-			collection: string;
-			record: unknown;
-		} & (
-			| { type: "movie"; movieTmdbId: string }
-			| {
-					type: "episode";
-					showTmdbId: string;
-					seasonNumber: number;
-					episodeNumber: number;
-			  }
-		);
-
-		// Phase 1: filter duplicates and build PDS records (no network calls)
-		const pendingWrites: PendingWrite[] = [];
 
 		for (let index = 0; index < items.length; index++) {
 			const item = items[index];
@@ -411,8 +527,7 @@ export class ImportHistoryService {
 			}
 			dedupeSet.add(dedupeKey);
 
-			const alreadyImported = await this.alreadyImported(userDid, item);
-			if (alreadyImported) {
+			if (await this.alreadyImported(userDid, item)) {
 				skipped += 1;
 				continue;
 			}
@@ -480,221 +595,114 @@ export class ImportHistoryService {
 			});
 		}
 
-		if (pendingWrites.length === 0) {
-			return { imported, skipped, failed, errors };
-		}
+		return { pendingWrites, skipped, failed, errors };
+	}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+	/**
+	 * Phase 2: one applyWrites round-trip for the whole batch. `op` is "update"
+	 * only on the idempotent re-import path, where the records already exist.
+	 */
+	private async applyWriteBatch(
+		agent: Agent,
+		session: ATSession,
+		batch: PendingWrite[],
+		op: "create" | "update",
+		options?: { onRateLimit?: (snapshot: PdsRateLimitSnapshot) => void },
+	): Promise<{ results: WriteResult[]; commitCid: string }> {
+		const response = await agent.com.atproto.repo.applyWrites({
+			repo: session.did,
+			writes: batch.map((pw) => ({
+				$type: `com.atproto.repo.applyWrites#${op}` as
+					| "com.atproto.repo.applyWrites#create"
+					| "com.atproto.repo.applyWrites#update",
+				collection: pw.collection,
+				rkey: pw.rkey,
+				value: pw.record as Record<string, unknown>,
+			})),
+			validate: false,
+		});
 
-		for (
-			let batchStart = 0;
-			batchStart < pendingWrites.length;
-			batchStart += PDS_APPLY_WRITES_BATCH_SIZE
-		) {
-			const batch = pendingWrites.slice(
-				batchStart,
-				batchStart + PDS_APPLY_WRITES_BATCH_SIZE,
-			);
-
-			type WriteResult = { uri: string; cid: string };
-			let batchResults: WriteResult[];
-
-			this.logger.debug(
-				`PDS applyWrites: sending batch of ${batch.length} records (items ${batchStart + 1}–${batchStart + batch.length}) to ${session.did}`,
-			);
-			try {
-				const response = await agent.com.atproto.repo.applyWrites({
-					repo: session.did,
-					writes: batch.map((pw) => ({
-						$type: "com.atproto.repo.applyWrites#create" as const,
-						collection: pw.collection,
-						rkey: pw.rkey,
-						value: pw.record as Record<string, unknown>,
-					})),
-					validate: false,
-				});
-				this.logger.debug(
-					`PDS applyWrites: batch of ${batch.length} succeeded (commit ${response.data.commit?.cid ?? "unknown"})`,
-				);
-				reportPdsRateLimit(response.headers, options);
-				batchResults = batch.map((pw, i) => {
-					const result = response.data.results?.[i] as
-						| { uri?: string; cid?: string }
-						| undefined;
-					return {
-						uri:
-							result?.uri ?? `at://${session.did}/${pw.collection}/${pw.rkey}`,
-						cid: result?.cid ?? "",
-					};
-				});
-			} catch (writeError) {
-				let error: unknown = writeError;
-				// Crash-recovery / idempotent re-import: rkeys are deterministic
-				// content hashes, so if a previous run wrote these records to the
-				// PDS but died before the DB write, the `create` batch fails with
-				// "record already exists". Retry the same batch as `update` ops —
-				// the record at that rkey is byte-identical, so this is an
-				// idempotent overwrite. Keeps batching (one extra round-trip per
-				// affected batch, not per item).
-				if (!isPdsRateLimitError(error) && isRecordExistsError(error)) {
-					this.logger.debug(
-						`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} already exists, retrying as update (idempotent re-import)`,
-					);
-					try {
-						const response = await agent.com.atproto.repo.applyWrites({
-							repo: session.did,
-							writes: batch.map((pw) => ({
-								$type: "com.atproto.repo.applyWrites#update" as const,
-								collection: pw.collection,
-								rkey: pw.rkey,
-								value: pw.record as Record<string, unknown>,
-							})),
-							validate: false,
-						});
-						batchResults = batch.map((pw, i) => {
-							const result = response.data.results?.[i] as
-								| { uri?: string; cid?: string }
-								| undefined;
-							return {
-								uri:
-									result?.uri ??
-									`at://${session.did}/${pw.collection}/${pw.rkey}`,
-								cid: result?.cid ?? "",
-							};
-						});
-						reportPdsRateLimit(response.headers, options);
-						// Fall through to indexing with the update results.
-						for (let i = 0; i < batch.length; i++) {
-							const pw = batch[i];
-							const { uri, cid } = batchResults[i];
-							try {
-								if (pw.type === "movie") {
-									await this.moviesService.indexTrackedMovie(
-										uri,
-										cid,
-										pw.rkey,
-										userDid,
-										pw.movieTmdbId,
-										pw.item.watchedAt,
-									);
-								} else {
-									await this.showsService.indexTrackedEpisode(
-										uri,
-										cid,
-										pw.rkey,
-										userDid,
-										pw.showTmdbId,
-										pw.seasonNumber,
-										pw.episodeNumber,
-										pw.item.watchedAt,
-									);
-								}
-								imported += 1;
-							} catch (indexError) {
-								const itemContext = describeImportItem(pw.item);
-								const classified = classifyImportWriteError(indexError);
-								this.logger.warn(
-									`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
-								);
-								if (classified.reason === "duplicate_record") {
-									skipped += 1;
-									continue;
-								}
-								failed += 1;
-								errors.push({
-									index: pw.itemIndex + 1,
-									code: "write_failed",
-									reason: classified.reason,
-									message: classified.message,
-								});
-							}
-						}
-						continue;
-					} catch (retryError) {
-						// Update retry also failed — fall through to normal error
-						// handling below using the retry error.
-						error = retryError;
-					}
-				}
-				if (isPdsRateLimitError(error)) {
-					this.logger.warn(
-						`PDS applyWrites: rate limited on batch ${batchStart + 1}–${batchStart + batch.length}`,
-					);
-					throw new PdsRateLimitError(getPdsRetryAfterSeconds(error));
-				}
-				const errMsg = getErrorMessage(error);
-				this.logger.warn(
-					`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} failed: ${errMsg}`,
-				);
-				const classified = classifyImportWriteError(error);
-				for (const pw of batch) {
-					failed += 1;
-					errors.push({
-						index: pw.itemIndex + 1,
-						code: "write_failed",
-						reason: classified.reason,
-						message: classified.message,
-					});
-				}
-				continue;
-			}
-
-			// Phase 3: index each result (TMDB fetch + DB write)
-			for (let i = 0; i < batch.length; i++) {
-				const pw = batch[i];
-				const { uri, cid } = batchResults[i];
-				try {
-					if (pw.type === "movie") {
-						await this.moviesService.indexTrackedMovie(
-							uri,
-							cid,
-							pw.rkey,
-							userDid,
-							pw.movieTmdbId,
-							pw.item.watchedAt,
-						);
-					} else {
-						await this.showsService.indexTrackedEpisode(
-							uri,
-							cid,
-							pw.rkey,
-							userDid,
-							pw.showTmdbId,
-							pw.seasonNumber,
-							pw.episodeNumber,
-							pw.item.watchedAt,
-						);
-					}
-					imported += 1;
-				} catch (error) {
-					const itemContext = describeImportItem(pw.item);
-					const classified = classifyImportWriteError(error);
-					this.logger.warn(
-						`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
-					);
-					if (classified.reason === "duplicate_record") {
-						skipped += 1;
-						continue;
-					}
-					failed += 1;
-					errors.push({
-						index: pw.itemIndex + 1,
-						code: "write_failed",
-						reason: classified.reason,
-						message: classified.message,
-					});
-				}
-			}
-		}
+		reportPdsRateLimit(response.headers, options);
 
 		return {
-			imported,
-			skipped,
-			failed,
-			errors,
+			commitCid: response.data.commit?.cid ?? "unknown",
+			results: batch.map((pw, i) => {
+				const result = response.data.results?.[i] as
+					| { uri?: string; cid?: string }
+					| undefined;
+				return {
+					uri: result?.uri ?? `at://${session.did}/${pw.collection}/${pw.rkey}`,
+					cid: result?.cid ?? "",
+				};
+			}),
 		};
+	}
+
+	/**
+	 * Phase 3: index each written record (TMDB fetch + DB write). A failure here
+	 * is per-item, never fatal for the batch.
+	 */
+	private async indexWrittenBatch(
+		userDid: string,
+		batch: PendingWrite[],
+		results: WriteResult[],
+	): Promise<{
+		imported: number;
+		skipped: number;
+		failed: number;
+		errors: ImportErrorDto[];
+	}> {
+		let imported = 0;
+		let skipped = 0;
+		let failed = 0;
+		const errors: ImportErrorDto[] = [];
+
+		for (let i = 0; i < batch.length; i++) {
+			const pw = batch[i];
+			const { uri, cid } = results[i];
+			try {
+				if (pw.type === "movie") {
+					await this.moviesService.indexTrackedMovie(
+						uri,
+						cid,
+						pw.rkey,
+						userDid,
+						pw.movieTmdbId,
+						pw.item.watchedAt,
+					);
+				} else {
+					await this.showsService.indexTrackedEpisode(
+						uri,
+						cid,
+						pw.rkey,
+						userDid,
+						pw.showTmdbId,
+						pw.seasonNumber,
+						pw.episodeNumber,
+						pw.item.watchedAt,
+					);
+				}
+				imported += 1;
+			} catch (error) {
+				const classified = classifyImportWriteError(error);
+				this.logger.warn(
+					`Failed to index item at index ${pw.itemIndex + 1} (${describeImportItem(pw.item)}): ${classified.rawMessage}`,
+				);
+				if (classified.reason === "duplicate_record") {
+					skipped += 1;
+					continue;
+				}
+				failed += 1;
+				errors.push({
+					index: pw.itemIndex + 1,
+					code: "write_failed",
+					reason: classified.reason,
+					message: classified.message,
+				});
+			}
+		}
+
+		return { imported, skipped, failed, errors };
 	}
 
 	private async recordTraktPageOutcomes(
@@ -878,7 +886,7 @@ export class ImportHistoryService {
 		});
 
 		try {
-			const pageResult = await this.fetchTraktHistoryPage(
+			const pageResult = await this.traktApi.fetchHistoryPage(
 				jobData.traktUsername,
 				jobData.currentPage,
 				{ endAt: new Date(jobData.snapshotAt) },
@@ -1056,51 +1064,6 @@ export class ImportHistoryService {
 		});
 	}
 
-	private async fetchTraktPreview(username: string): Promise<{
-		profile: TraktPublicProfileDto;
-		previewItems: TraktHistoryPreviewItemDto[];
-		sourcePreviewCount: number;
-	}> {
-		const profile = await this.fetchTraktPublicProfile(username);
-		const pageResult = await this.fetchTraktHistoryPage(username, 1);
-		const normalized = normalizeTraktPage(pageResult.payload, 1);
-
-		return {
-			profile,
-			previewItems: normalized.previewItems,
-			sourcePreviewCount: pageResult.payload.length,
-		};
-	}
-
-	private async fetchTraktHistoryPage(
-		username: string,
-		page: number,
-		options?: { startAt?: Date; endAt?: Date },
-	): Promise<{ payload: unknown[]; pageCount?: number }> {
-		const url = this.createTraktUrl(
-			`/users/${encodeURIComponent(username)}/history`,
-		);
-		url.searchParams.set("page", String(page));
-		url.searchParams.set("limit", String(TRAKT_HISTORY_PAGE_SIZE));
-		if (options?.startAt) {
-			url.searchParams.set("start_at", options.startAt.toISOString());
-		}
-		if (options?.endAt) {
-			url.searchParams.set("end_at", options.endAt.toISOString());
-		}
-
-		const { data, headers } =
-			await this.fetchTraktJsonWithHeaders<unknown>(url);
-		if (!Array.isArray(data)) {
-			throw new BadRequestException("Unexpected Trakt response format");
-		}
-
-		return {
-			payload: data,
-			pageCount: this.parsePaginationPageCount(headers),
-		};
-	}
-
 	private async alreadyImported(
 		userDid: string,
 		item: NormalizedImportItemDto,
@@ -1143,121 +1106,6 @@ export class ImportHistoryService {
 		}
 
 		return false;
-	}
-
-	private createTraktUrl(pathname: string): URL {
-		return new URL(pathname, this.traktBaseUrl);
-	}
-
-	private async fetchTraktPublicProfile(
-		username: string,
-	): Promise<TraktPublicProfileDto> {
-		const url = this.createTraktUrl(
-			`/users/${encodeURIComponent(username)}?extended=full`,
-		);
-		const payload = await this.fetchTraktJson<unknown>(url);
-
-		if (!payload || typeof payload !== "object") {
-			throw new BadRequestException("Unexpected Trakt profile format");
-		}
-
-		return mapTraktProfilePayload(payload as TraktProfilePayload, username);
-	}
-
-	private async fetchTraktJson<T>(url: URL): Promise<T> {
-		const { data } = await this.fetchTraktJsonWithHeaders<T>(url);
-		return data;
-	}
-
-	private async fetchTraktJsonWithHeaders<T>(
-		url: URL,
-	): Promise<{ data: T; headers: Headers }> {
-		const response = await fetch(url.toString(), {
-			headers: {
-				"trakt-api-key": this.traktApiKey,
-				"trakt-api-version": "2",
-				"User-Agent": this.traktUserAgent,
-			},
-			signal: AbortSignal.timeout(12_000),
-		});
-
-		if (response.status === 404) {
-			throw new TraktApiError("Trakt user not found", 404);
-		}
-		if (response.status === 401 || response.status === 403) {
-			throw new TraktApiError(
-				"Trakt profile is private or unavailable. Try CSV import instead.",
-				response.status,
-			);
-		}
-		if (response.status === 429) {
-			throw new TraktApiError(
-				"Trakt rate limit reached. We will retry in the background shortly.",
-				429,
-				this.parseRetryAfterSeconds(response.headers),
-			);
-		}
-		if (response.status >= 500) {
-			throw new TraktApiError(
-				"Trakt is temporarily unavailable. Please retry later or use CSV import.",
-				response.status,
-			);
-		}
-		if (!response.ok) {
-			throw new TraktApiError(
-				"Failed to fetch Trakt public history",
-				response.status,
-			);
-		}
-
-		return {
-			data: (await response.json()) as T,
-			headers: response.headers ?? new Headers(),
-		};
-	}
-
-	private parsePaginationPageCount(headers: Headers): number | undefined {
-		const rawValue = headers.get("x-pagination-page-count");
-		if (!rawValue) {
-			return undefined;
-		}
-
-		const parsed = Number.parseInt(rawValue, 10);
-		if (!Number.isInteger(parsed) || parsed < 1) {
-			return undefined;
-		}
-
-		return parsed;
-	}
-
-	private parseRetryAfterSeconds(headers: Headers): number | undefined {
-		const rawValue = headers.get("retry-after");
-		if (!rawValue) {
-			return undefined;
-		}
-
-		const parsed = Number.parseInt(rawValue, 10);
-		if (!Number.isInteger(parsed) || parsed < 1) {
-			return undefined;
-		}
-
-		return parsed;
-	}
-
-	private ensureTraktConfigured(): void {
-		if (!this.traktApiKey) {
-			throw new BadRequestException(
-				"Trakt import is not configured on this server. You can still import via CSV.",
-			);
-		}
-	}
-
-	private normalizeUsername(username: string): string {
-		const normalizedUsername = username.trim();
-		if (!normalizedUsername) {
-			throw new BadRequestException("Trakt username is required");
-		}
-		return normalizedUsername;
 	}
 
 	private async findLatestTraktImportJob(
@@ -1304,7 +1152,7 @@ export class ImportHistoryService {
 			this.prisma.traktImportItem.count({ where }),
 		]);
 		return {
-			items: items.map((item) => this.mapTraktImportIssue(item)),
+			items: items.map((item) => mapTraktImportIssue(item)),
 			total,
 			page: safePage,
 			pageSize: safePageSize,
@@ -1492,7 +1340,7 @@ export class ImportHistoryService {
 				take: 25,
 			}),
 		]);
-		const base = this.mapTraktImportJob(job);
+		const base = mapTraktImportJob(job);
 		const importedCount = items.filter(
 			(item) => item.outcome === "imported",
 		).length;
@@ -1543,76 +1391,8 @@ export class ImportHistoryService {
 			couldntImportCount: items.length
 				? couldntImportCount
 				: base.couldntImportCount,
-			issuesPreview: issueRows.map((item) => this.mapTraktImportIssue(item)),
+			issuesPreview: issueRows.map((item) => mapTraktImportIssue(item)),
 			unmatchedGroups: [...groups.values()],
-		};
-	}
-
-	private mapTraktImportJob(
-		job: NonNullable<BackgroundJobRecord>,
-	): TraktImportJobDto {
-		const jobData = parseTraktImportData(job.data);
-		return {
-			id: job.id,
-			traktUsername: jobData.traktUsername,
-			status: job.status as TraktImportJobDto["status"],
-			currentPage: jobData.currentPage,
-			totalPages: jobData.totalPages ?? undefined,
-			sourceCount: jobData.sourceCount,
-			normalizedCount: jobData.normalizedCount,
-			importedCount: jobData.importedCount,
-			skippedCount: jobData.skippedCount,
-			failedCount: jobData.failedCount,
-			alreadyOnShelfCount: jobData.alreadyOnShelfCount,
-			unmatchedCount: jobData.unmatchedCount,
-			couldntImportCount: jobData.failedCount,
-			issuesPreview: [],
-			unmatchedGroups: [],
-			acknowledgedAt: jobData.acknowledgedAt,
-			reminderSnoozedUntil: jobData.reminderSnoozedUntil,
-			nextRunAt: job.nextRunAt.toISOString(),
-			lastError: job.lastError ?? undefined,
-			profileUsername: jobData.profileUsername,
-			profileSlug: jobData.profileSlug,
-			profileName: jobData.profileName,
-			profileAvatarUrl: jobData.profileAvatarUrl,
-			startedAt: job.startedAt?.toISOString(),
-			completedAt: job.completedAt?.toISOString(),
-			createdAt: job.createdAt.toISOString(),
-			updatedAt: job.updatedAt.toISOString(),
-		};
-	}
-
-	private mapTraktImportIssue(item: {
-		id: string;
-		sourceIndex: number;
-		outcome: string;
-		mediaType: string;
-		title: string | null;
-		year: number | null;
-		episodeTitle: string | null;
-		seasonNumber: number | null;
-		episodeNumber: number | null;
-		watchedAt: Date | null;
-		reason: string | null;
-		message: string | null;
-	}): TraktImportIssueDto {
-		return {
-			id: item.id,
-			sourceIndex: item.sourceIndex,
-			outcome: item.outcome === "unmatched" ? "unmatched" : "couldnt_import",
-			mediaType:
-				item.mediaType === "movie" || item.mediaType === "episode"
-					? item.mediaType
-					: "unknown",
-			title: item.title ?? undefined,
-			year: item.year ?? undefined,
-			episodeTitle: item.episodeTitle ?? undefined,
-			seasonNumber: item.seasonNumber ?? undefined,
-			episodeNumber: item.episodeNumber ?? undefined,
-			watchedAt: item.watchedAt?.toISOString(),
-			reason: item.reason ?? undefined,
-			message: item.message ?? undefined,
 		};
 	}
 
@@ -1642,19 +1422,6 @@ export class ImportHistoryService {
 			where: { id },
 			data: { outcome: "couldnt_import", reason, message },
 		});
-	}
-
-	private buildProfileFromJobData(
-		jobData: TraktImportJobData,
-	): TraktPublicProfileDto {
-		return {
-			username: jobData.profileUsername ?? jobData.traktUsername,
-			slug: jobData.profileSlug ?? jobData.traktUsername,
-			name: jobData.profileName,
-			isPrivate: false,
-			isVip: false,
-			avatarUrl: jobData.profileAvatarUrl,
-		};
 	}
 
 	private async restoreImportSession(

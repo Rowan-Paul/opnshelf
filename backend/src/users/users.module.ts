@@ -11,6 +11,7 @@ import { SocialModule } from "../social/social.module";
 import { BackgroundJobWorkerService } from "./background-job-worker.service";
 import { ImportHistoryService } from "./import-history.service";
 import { ProfileService } from "./profile.service";
+import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
@@ -31,6 +32,7 @@ import { UsersService } from "./users.service";
 	providers: [
 		UsersService,
 		ImportHistoryService,
+		TraktApiClient,
 		BackgroundJobWorkerService,
 		UserDeletionService,
 		ProfileService,

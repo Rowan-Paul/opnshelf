@@ -7,6 +7,7 @@ import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ShowsService } from "../shows/shows.service";
 import { ImportHistoryService } from "./import-history.service";
+import { TraktApiClient } from "./trakt-api.client";
 
 vi.mock("@atproto/api");
 
@@ -116,7 +117,7 @@ describe("ImportHistoryService", () => {
 			prisma,
 			moviesService,
 			showsService,
-			configService,
+			new TraktApiClient(configService),
 			authService,
 		);
 		global.fetch = vi.fn() as unknown as typeof fetch;
