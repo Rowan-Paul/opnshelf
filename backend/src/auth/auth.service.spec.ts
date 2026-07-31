@@ -814,6 +814,41 @@ describe("AuthService", () => {
 			expect(typeof result.sessionId).toBe("string");
 			expect(result.sessionId.length).toBeGreaterThan(0);
 		});
+
+		it("accepts granted scopes exposed through the OAuth session token info", async () => {
+			const resolvedCoreScope = [
+				"atproto",
+				"blob:image/jpeg",
+				"blob:image/png",
+				"blob:image/webp",
+				...[
+					"movie",
+					"episode",
+					"list",
+					"list.item",
+					"library.item",
+					"follow",
+					"profile",
+					"note",
+					"review",
+					"review.like",
+					"rating",
+				].flatMap((name) =>
+					["create", "update", "delete"].map(
+						(action) => `repo:xyz.opnshelf.${name}?action=${action}`,
+					),
+				),
+			].join(" ");
+			const getTokenInfo = vi
+				.fn()
+				.mockResolvedValue({ scope: resolvedCoreScope });
+
+			await expect(
+				service.assertGrantedScopes({ getTokenInfo }, {}),
+			).resolves.toBeUndefined();
+
+			expect(getTokenInfo).toHaveBeenCalledWith(false);
+		});
 	});
 
 	describe("restore", () => {

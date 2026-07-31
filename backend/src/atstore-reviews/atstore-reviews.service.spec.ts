@@ -90,6 +90,24 @@ describe("AtStoreReviewsService", () => {
 		).resolves.toEqual({ eligible: true, permissionGranted: true });
 	});
 
+	it("reports permission from the OAuth session's resolved token scopes", async () => {
+		prisma.user.findUnique.mockResolvedValue({
+			onboardingCompletedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+			atStoreReviewHandledAt: null,
+		});
+		agentHarness.listRecords.mockResolvedValue({ data: { records: [] } });
+
+		await expect(
+			service.getPrompt(did, {
+				did,
+				getTokenInfo: vi.fn().mockResolvedValue({
+					scope:
+						"atproto repo:fyi.atstore.profile?action=create repo:fyi.atstore.listing.review?action=create",
+				}),
+			}),
+		).resolves.toEqual({ eligible: true, permissionGranted: true });
+	});
+
 	it("marks a matching existing PDS review handled and hides the prompt", async () => {
 		prisma.user.findUnique.mockResolvedValue({
 			onboardingCompletedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),

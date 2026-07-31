@@ -3,13 +3,36 @@
  * deliberately boring and explicit: optional ecosystems must never leak into
  * the sign-in consent screen.
  */
+export const CORE_PERMISSION_SET_SCOPE = "include:xyz.opnshelf.core";
+
 export const CORE_OAUTH_SCOPES = [
 	"atproto",
-	"include:xyz.opnshelf.core",
+	CORE_PERMISSION_SET_SCOPE,
 	"blob:image/jpeg",
 	"blob:image/png",
 	"blob:image/webp",
 ] as const;
+
+const CORE_REPO_COLLECTIONS = [
+	"xyz.opnshelf.movie",
+	"xyz.opnshelf.episode",
+	"xyz.opnshelf.list",
+	"xyz.opnshelf.list.item",
+	"xyz.opnshelf.library.item",
+	"xyz.opnshelf.follow",
+	"xyz.opnshelf.profile",
+	"xyz.opnshelf.note",
+	"xyz.opnshelf.review",
+	"xyz.opnshelf.review.like",
+	"xyz.opnshelf.rating",
+] as const;
+
+const REPO_ACTIONS = ["create", "update", "delete"] as const;
+
+/** Granular scopes returned by authorization servers after resolving Core. */
+export const CORE_GRANTED_SCOPES = CORE_REPO_COLLECTIONS.flatMap((collection) =>
+	REPO_ACTIONS.map((action) => `repo:${collection}?action=${action}`),
+);
 
 export type BlogMirrorFormat = "markdown" | "leaflet" | "offprint" | "pckt";
 export type OAuthIntegration = "atstore" | "blog" | "bluesky";
@@ -21,6 +44,10 @@ export const BLUESKY_OAUTH_SCOPES = [
 ] as const;
 export const ATSTORE_REVIEW_OAUTH_SCOPES = [
 	"include:fyi.atstore.authThirdPartyReviews",
+] as const;
+export const ATSTORE_REVIEW_GRANTED_SCOPES = [
+	"repo:fyi.atstore.profile?action=create",
+	"repo:fyi.atstore.listing.review?action=create",
 ] as const;
 
 export interface OAuthScopePreferences {
@@ -65,4 +92,54 @@ export function includesRequestedScopes(
 		).filter(Boolean),
 	);
 	return requiredScopes.every((scope) => granted.has(scope));
+}
+
+export function includesPermissionSetGrant(
+	grantedScope: string | string[] | undefined,
+	includeScope: string,
+	expandedScopes: readonly string[],
+): boolean {
+	return (
+		includesRequestedScopes(grantedScope, [includeScope]) ||
+		includesRequestedScopes(grantedScope, expandedScopes)
+	);
+}
+
+/**
+ * Verify callback capabilities rather than the literal request tokens.
+ * Authorization servers resolve `include:` permission sets and return their
+ * granular permissions in the token response, so either representation is
+ * valid evidence of the grant.
+ */
+export function includesOAuthCapabilities(
+	grantedScope: string | string[] | undefined,
+	preferences: OAuthScopePreferences = {},
+): boolean {
+	const directScopes: string[] = CORE_OAUTH_SCOPES.filter(
+		(scope) => scope !== CORE_PERMISSION_SET_SCOPE,
+	);
+	if (preferences.blogEnabled) {
+		directScopes.push(...BLOG_OAUTH_SCOPES);
+		if (preferences.reviewsMirrorFormat === "offprint") {
+			directScopes.push(OFFPRINT_OAUTH_SCOPE);
+		}
+	}
+	if (preferences.blueskyEnabled) {
+		directScopes.push(...BLUESKY_OAUTH_SCOPES);
+	}
+
+	return (
+		includesRequestedScopes(grantedScope, directScopes) &&
+		includesPermissionSetGrant(
+			grantedScope,
+			CORE_PERMISSION_SET_SCOPE,
+			CORE_GRANTED_SCOPES,
+		) &&
+		(!preferences.atStoreReviewEnabled ||
+			includesPermissionSetGrant(
+				grantedScope,
+				ATSTORE_REVIEW_OAUTH_SCOPES[0],
+				ATSTORE_REVIEW_GRANTED_SCOPES,
+			))
+	);
 }

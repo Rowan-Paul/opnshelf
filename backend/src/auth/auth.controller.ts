@@ -496,7 +496,7 @@ export class AuthController {
 			// Every callback must carry Core plus the complete saved/requested set.
 			// A partial grant never replaces a working session.
 			try {
-				this.authService.assertGrantedScopes(
+				await this.authService.assertGrantedScopes(
 					session,
 					statePayload.requestedPreferences ?? {},
 				);

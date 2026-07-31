@@ -17,8 +17,7 @@ import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 import {
 	buildOAuthScope,
-	buildOAuthScopes,
-	includesRequestedScopes,
+	includesOAuthCapabilities,
 	type OAuthIntegration,
 	type OAuthScopePreferences,
 } from "./oauth-scopes";
@@ -368,20 +367,20 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/** Reject partial grants before replacing an otherwise working session. */
-	assertGrantedScopes(
+	async assertGrantedScopes(
 		session: unknown,
 		preferences: OAuthScopePreferences,
-	): void {
+	): Promise<void> {
 		const candidate = session as {
-			scope?: string | string[];
-			tokenSet?: { scope?: string | string[] };
+			getTokenInfo?: (
+				refresh?: boolean | "auto",
+			) => Promise<{ scope?: string | string[] }>;
 		};
-		if (
-			!includesRequestedScopes(
-				candidate.scope ?? candidate.tokenSet?.scope,
-				buildOAuthScopes(preferences),
-			)
-		) {
+		const grantedScope =
+			typeof candidate.getTokenInfo === "function"
+				? (await candidate.getTokenInfo(false)).scope
+				: undefined;
+		if (!includesOAuthCapabilities(grantedScope, preferences)) {
 			throw new Error(
 				"OAuth authorization did not grant every requested permission",
 			);

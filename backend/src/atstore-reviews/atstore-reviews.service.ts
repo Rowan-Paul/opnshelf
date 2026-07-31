@@ -7,8 +7,9 @@ import {
 	NotFoundException,
 } from "@nestjs/common";
 import {
+	ATSTORE_REVIEW_GRANTED_SCOPES,
 	ATSTORE_REVIEW_OAUTH_SCOPES,
-	includesRequestedScopes,
+	includesPermissionSetGrant,
 } from "../auth/oauth-scopes";
 import { PrismaService } from "../prisma/prisma.service";
 import type { PublishAtStoreReviewDto } from "./dto/atstore-review.dto";
@@ -17,6 +18,9 @@ export interface ATSession {
 	did: string;
 	scope?: string | string[];
 	tokenSet?: { scope?: string | string[] };
+	getTokenInfo?: (
+		refresh?: boolean | "auto",
+	) => Promise<{ scope?: string | string[] }>;
 }
 
 const ATSTORE_ORIGIN = "https://atstore.fyi";
@@ -45,9 +49,14 @@ export class AtStoreReviewsService {
 		did: string,
 		session: ATSession,
 	): Promise<{ eligible: boolean; permissionGranted: boolean }> {
-		const permissionGranted = includesRequestedScopes(
-			session.scope ?? session.tokenSet?.scope,
-			ATSTORE_REVIEW_OAUTH_SCOPES,
+		const tokenInfo =
+			typeof session.getTokenInfo === "function"
+				? await session.getTokenInfo(false)
+				: undefined;
+		const permissionGranted = includesPermissionSetGrant(
+			tokenInfo?.scope ?? session.scope ?? session.tokenSet?.scope,
+			ATSTORE_REVIEW_OAUTH_SCOPES[0],
+			ATSTORE_REVIEW_GRANTED_SCOPES,
 		);
 		const user = await this.prisma.user.findUnique({
 			where: { did },

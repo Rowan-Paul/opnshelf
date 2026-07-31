@@ -1,4 +1,10 @@
-import { buildOAuthScopes, includesRequestedScopes } from "./oauth-scopes";
+import {
+	ATSTORE_REVIEW_GRANTED_SCOPES,
+	CORE_GRANTED_SCOPES,
+	buildOAuthScopes,
+	includesOAuthCapabilities,
+	includesRequestedScopes,
+} from "./oauth-scopes";
 
 describe("progressive OAuth scopes", () => {
 	it("keeps external ecosystems out of Core login", () => {
@@ -42,5 +48,32 @@ describe("progressive OAuth scopes", () => {
 		expect(
 			includesRequestedScopes("atproto repo:app.bsky.feed.post", required),
 		).toBe(false);
+	});
+
+	it("accepts permission sets resolved to granular capabilities", () => {
+		const granted = [
+			"atproto",
+			"blob:image/jpeg",
+			"blob:image/png",
+			"blob:image/webp",
+			...CORE_GRANTED_SCOPES,
+			...ATSTORE_REVIEW_GRANTED_SCOPES,
+		];
+
+		expect(
+			includesOAuthCapabilities(granted, { atStoreReviewEnabled: true }),
+		).toBe(true);
+	});
+
+	it("rejects a resolved permission set missing one capability", () => {
+		const granted = [
+			"atproto",
+			"blob:image/jpeg",
+			"blob:image/png",
+			"blob:image/webp",
+			...CORE_GRANTED_SCOPES.slice(1),
+		];
+
+		expect(includesOAuthCapabilities(granted)).toBe(false);
 	});
 });
