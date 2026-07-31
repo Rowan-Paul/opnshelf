@@ -749,6 +749,54 @@ describe("AuthService", () => {
 			);
 			expect(result).toBe(mockUrl.toString());
 		});
+
+		it("requests the saved cumulative permissions for a returning handle", async () => {
+			const mockUrl = new URL("https://pds.example/authorize?state=returning");
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:returning",
+				handle: "reader.example",
+				blogIntegrationEnabled: true,
+				blueskyCrossPostEnabled: true,
+				reviewsMirrorFormat: "offprint",
+			});
+			sharedOAuthClient.authorize.mockResolvedValue(mockUrl);
+
+			await service.authorize("@Reader.Example");
+
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+				where: { handle: "reader.example" },
+				select: {
+					did: true,
+					handle: true,
+					blogIntegrationEnabled: true,
+					blueskyCrossPostEnabled: true,
+					reviewsMirrorFormat: true,
+				},
+			});
+			expect(sharedOAuthClient.authorize).toHaveBeenCalledWith(
+				"@Reader.Example",
+				expect.objectContaining({
+					scope: expect.stringContaining("repo:site.standard.document"),
+				}),
+			);
+			const authorizeOptions =
+				sharedOAuthClient.authorize.mock.calls.at(-1)?.[1];
+			expect(authorizeOptions.scope).toContain(
+				"repo:app.bsky.feed.post?action=create&action=update",
+			);
+			expect(authorizeOptions.scope).toContain(
+				"repo:app.offprint.document.article",
+			);
+			expect(JSON.parse(authorizeOptions.state)).toEqual({
+				requestedPreferences: {
+					blogEnabled: true,
+					blueskyEnabled: true,
+					reviewsMirrorFormat: "offprint",
+				},
+				accountDid: "did:plc:returning",
+				accountHandle: "reader.example",
+			});
+		});
 	});
 
 	describe("callback", () => {

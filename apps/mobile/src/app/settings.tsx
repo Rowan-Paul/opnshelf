@@ -1,5 +1,6 @@
 import {
 	type AccountDeletionJobDto,
+	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
@@ -30,6 +31,7 @@ import {
 	Switch,
 	View,
 } from "react-native";
+import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { useDialog } from "@/components/ui/dialog";
@@ -148,7 +150,7 @@ function AppearanceSetting() {
 
 export default function SettingsScreen() {
 	const { showDialog } = useDialog();
-	const { user, signOut } = useAuth();
+	const { user, signOut, runAuthorizationUrl } = useAuth();
 	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
 	const queryClient = useQueryClient();
@@ -192,6 +194,27 @@ export default function SettingsScreen() {
 			),
 	});
 
+	const permissionChangeMutation = useMutation({
+		mutationKey: ["auth", "permissions", "change"],
+		...authControllerPermissionsMutation(),
+		onSuccess: async (result) => {
+			await runAuthorizationUrl(result.authorizationUrl);
+		},
+		onError: (error) =>
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Could not start the permission change",
+			),
+	});
+
+	const requestPermissionChange = (
+		integration: "blog" | "bluesky",
+		action: "connect" | "disconnect",
+	) => {
+		permissionChangeMutation.mutate({ body: { integration, action } });
+	};
+
 	// Blog-mirror publication (#118). Reviews are opnshelf-owned records; a
 	// publication here is an *optional* blog to also mirror new reviews to. The
 	// live picker — not the cached setting — is the source of truth at selection
@@ -206,10 +229,6 @@ export default function SettingsScreen() {
 	});
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
-
-	const handleSelectPublication = (uri: string | null) => {
-		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
-	};
 
 	const confirmPublicationService = (publication: {
 		uri: string;
@@ -603,6 +622,22 @@ export default function SettingsScreen() {
 						title="Blog mirror"
 						description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own AT Protocol blog publications."
 					>
+						<IntegrationPermissionRow
+							name="Blog mirroring"
+							description={
+								storedPublicationUri
+									? "Allow Opnshelf to publish and update Review mirrors in the selected publication."
+									: "Choose a publication below before connecting Blog mirroring."
+							}
+							connected={settings?.blogIntegrationEnabled ?? false}
+							disabled={
+								permissionChangeMutation.isPending ||
+								(!(settings?.blogIntegrationEnabled ?? false) &&
+									!storedPublicationUri)
+							}
+							onConfirm={(action) => requestPermissionChange("blog", action)}
+						/>
+
 						{storedTargetMissing && (
 							<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
 								<AlertTriangle color={PRIMARY} size={16} />
@@ -621,38 +656,6 @@ export default function SettingsScreen() {
 							</Text>
 						) : (
 							<View className="gap-2">
-								{/* "None" — don't mirror to a blog. */}
-								{(() => {
-									const checked = storedPublicationUri === null;
-									return (
-										<Pressable
-											disabled={settingsBusy}
-											onPress={() => handleSelectPublication(null)}
-											className={
-												checked
-													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
-													: "flex-row items-center gap-3 rounded-lg border border-border p-3"
-											}
-											style={{ opacity: settingsBusy ? 0.6 : 1 }}
-										>
-											<View
-												className={
-													checked
-														? "size-5 items-center justify-center rounded-full border-2 border-primary"
-														: "size-5 items-center justify-center rounded-full border-2 border-border"
-												}
-											>
-												{checked ? (
-													<View className="size-2.5 rounded-full bg-primary" />
-												) : null}
-											</View>
-											<Text className="flex-1 font-medium text-foreground text-sm">
-												None — don't mirror to a blog
-											</Text>
-										</Pressable>
-									);
-								})()}
-
 								{(myPublications?.items ?? []).map((pub) => {
 									const checked = storedPublicationUri === pub.uri;
 									return (
@@ -695,8 +698,25 @@ export default function SettingsScreen() {
 										</Pressable>
 									);
 								})}
+								<Text className="pt-1 text-muted-foreground text-xs leading-5">
+									Disconnect above to stop mirroring. Your publication choice
+									stays saved for reconnection.
+								</Text>
 							</View>
 						)}
+					</SettingsSection>
+
+					<SettingsSection
+						title="Bluesky Cross-posts"
+						description="Connect once, then choose which Reviews should also appear on Bluesky when you publish them."
+					>
+						<IntegrationPermissionRow
+							name="Bluesky Cross-posts"
+							description="Allow Opnshelf to create and update posts for Reviews you explicitly select."
+							connected={settings?.blueskyCrossPostEnabled ?? false}
+							disabled={permissionChangeMutation.isPending}
+							onConfirm={(action) => requestPermissionChange("bluesky", action)}
+						/>
 					</SettingsSection>
 
 					{/* Import history */}

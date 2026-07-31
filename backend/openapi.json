@@ -632,37 +632,29 @@
       }
     },
     "/auth/permissions": {
-      "get": {
+      "post": {
         "operationId": "AuthController_permissions",
-        "parameters": [
-          {
-            "name": "action",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "connect",
-                "disconnect"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "integration",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "blog",
-                "bluesky"
-              ],
-              "type": "string"
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionChangeDto"
+              }
             }
           }
-        ],
+        },
         "responses": {
-          "302": {
-            "description": "Redirect to OAuth authorization"
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionChangeResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Start an account-wide external integration permission change",
@@ -5710,6 +5702,41 @@
           "did",
           "handle",
           "sessionId"
+        ]
+      },
+      "PermissionChangeDto": {
+        "type": "object",
+        "properties": {
+          "integration": {
+            "type": "string",
+            "enum": [
+              "blog",
+              "bluesky"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "connect",
+              "disconnect"
+            ]
+          }
+        },
+        "required": [
+          "integration",
+          "action"
+        ]
+      },
+      "PermissionChangeResponseDto": {
+        "type": "object",
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "description": "Authorization URL for the cumulative OAuth permission set"
+          }
+        },
+        "required": [
+          "authorizationUrl"
         ]
       },
       "UserDto": {

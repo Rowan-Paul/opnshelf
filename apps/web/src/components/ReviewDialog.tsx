@@ -119,7 +119,9 @@ export function ReviewDialog({
 	});
 	const blogName =
 		settings?.reviewsPublicationName ?? settings?.reviewsPublicationUri ?? null;
-	const hasBlog = !!settings?.reviewsPublicationUri;
+	const hasBlog =
+		!!settings?.reviewsPublicationUri && settings.blogIntegrationEnabled;
+	const hasBluesky = settings?.blueskyCrossPostEnabled === true;
 
 	const wasPending = useRef(false);
 	const isEditing = !!review;
@@ -384,7 +386,7 @@ export function ReviewDialog({
 					</label>
 				)}
 
-				{!isEditing && (
+				{!isEditing && hasBluesky && (
 					<label className="flex cursor-pointer items-start gap-2 text-sm">
 						<input
 							type="checkbox"

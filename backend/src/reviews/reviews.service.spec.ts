@@ -537,6 +537,64 @@ describe("ReviewsService", () => {
 			expect(result.blueskyCrossPost).toEqual({ status: "not_requested" });
 		});
 
+		it("does not mirror to a saved publication while Blog mirroring is disconnected", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				blogIntegrationEnabled: false,
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/leaflet",
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+					cid: "cid-review",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+			});
+
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(mockPutRecord).toHaveBeenCalledWith(
+				expect.objectContaining({ collection: "xyz.opnshelf.review" }),
+			);
+			expect(mockDeleteRecord).not.toHaveBeenCalled();
+		});
+
+		it("does not cross-post when Bluesky is disconnected, even if requested", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				blueskyCrossPostEnabled: false,
+				handle: "alice.example",
+				reviewsPublicationUri: null,
+			});
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.review/testtid123",
+					cid: "cid-review",
+				},
+			});
+			mockPrismaService.review.create.mockImplementation(
+				({ data }: { data: Record<string, unknown> }) => createdRow(data),
+			);
+
+			const result = await service.createReview(session.did, session, {
+				mediaType: "movie",
+				mediaId: "123",
+				title: "My take",
+				markdown: "Loved it.",
+				postToBluesky: true,
+			});
+
+			expect(mockPutRecord).toHaveBeenCalledTimes(1);
+			expect(result.blueskyCrossPost).toEqual({ status: "not_requested" });
+		});
+
 		it("creates a spoiler-safe Bluesky Cross-post after the Review", async () => {
 			mockPrismaService.user.findUnique.mockResolvedValue({
 				handle: "alice.example",

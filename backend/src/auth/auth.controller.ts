@@ -28,6 +28,10 @@ import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import type { OAuthIntegration, OAuthScopePreferences } from "./oauth-scopes";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
+import {
+	PermissionChangeDto,
+	PermissionChangeResponseDto,
+} from "./dto/permission-change.dto";
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
 import { VerifyEmailDto, VerifyEmailResponseDto } from "./dto/verify-email.dto";
@@ -615,11 +619,19 @@ export class AuthController {
 				callbackError.params?.get("error") === "access_denied" &&
 				Boolean(statePayload.accountDid);
 			if (declined && statePayload.accountDid) {
+				const declinedConnection =
+					statePayload.permissionChange === "blog"
+						? statePayload.requestedPreferences?.blogEnabled
+						: statePayload.permissionChange === "bluesky"
+							? statePayload.requestedPreferences?.blueskyEnabled
+							: false;
 				if (statePayload.permissionChange) {
-					await this.authService.disableIntegration(
-						statePayload.accountDid,
-						statePayload.permissionChange,
-					);
+					if (declinedConnection) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							statePayload.permissionChange,
+						);
+					}
 				} else if (statePayload.requestedPreferences) {
 					// A returning user declined saved optional access. Downscope the
 					// account and restart Core-only without touching prior sessions.
@@ -664,31 +676,21 @@ export class AuthController {
 	}
 
 	/** Explicitly request (or remove) one external integration's cumulative scope. */
-	@Get("auth/permissions")
+	@Post("auth/permissions")
+	@HttpCode(HttpStatus.OK)
 	@UseGuards(AuthGuard)
 	@ApiOperation({
 		summary: "Start an account-wide external integration permission change",
 	})
-	@ApiQuery({ name: "integration", required: true, enum: ["blog", "bluesky"] })
-	@ApiQuery({ name: "action", required: true, enum: ["connect", "disconnect"] })
-	@ApiResponse({ status: 302, description: "Redirect to OAuth authorization" })
+	@ApiResponse({ status: 200, type: PermissionChangeResponseDto })
 	async permissions(
 		@Req() req: AuthenticatedRequest,
-		@Query("integration") integrationRaw: string | undefined,
-		@Query("action") actionRaw: string | undefined,
-		@Res() res: Response,
-	) {
+		@Body() dto: PermissionChangeDto,
+	): Promise<PermissionChangeResponseDto> {
 		const did = req.user?.did;
 		if (!did) throw new BadRequestException("User not found in request");
-		const integration: OAuthIntegration | undefined =
-			integrationRaw === "blog" || integrationRaw === "bluesky"
-				? integrationRaw
-				: undefined;
-		if (!integration) throw new BadRequestException("Unknown integration");
-		if (actionRaw !== "connect" && actionRaw !== "disconnect") {
-			throw new BadRequestException("Unknown permission action");
-		}
-		const enable = actionRaw === "connect";
+		const { integration, action } = dto;
+		const enable = action === "connect";
 		const user = await this.authService.getUser(did);
 		if (!user) throw new BadRequestException("User not found");
 		if (enable && integration === "blog" && !user.reviewsPublicationUri) {
@@ -713,13 +715,13 @@ export class AuthController {
 				integration === "bluesky" ? enable : user.blueskyCrossPostEnabled,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
 		};
-		return res.redirect(
-			await this.authService.authorizePermissionChange(
+		return {
+			authorizationUrl: await this.authService.authorizePermissionChange(
 				user.handle,
 				integration,
 				preferences,
 			),
-		);
+		};
 	}
 
 	private async applyPermissionChange(

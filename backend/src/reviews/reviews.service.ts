@@ -586,7 +586,7 @@ export class ReviewsService {
 			blueskyPostUri: string | null;
 			blueskyPostCid: string | null;
 		},
-	): Promise<Extract<BlueskyCrossPostResult, { status: "posted" }>> {
+	): Promise<BlueskyCrossPostResult> {
 		if (review.blueskyPostUri) {
 			return {
 				status: "posted",
@@ -598,13 +598,16 @@ export class ReviewsService {
 		const [user, mediaByReviewId] = await Promise.all([
 			this.prisma.user.findUnique({
 				where: { did: userDid },
-				select: { handle: true },
+				select: { handle: true, blueskyCrossPostEnabled: true },
 			}),
 			this.enrichMediaForReviews([review]),
 		]);
 		const media = mediaByReviewId.get(review.id);
 		if (!user || !media) {
 			throw new NotFoundException("Review media or author not found");
+		}
+		if (user.blueskyCrossPostEnabled === false) {
+			return { status: "not_requested" };
 		}
 
 		// Land readers on the media page with the review reader already open, so a
@@ -1001,8 +1004,20 @@ export class ReviewsService {
 	}> {
 		const user = await this.prisma.user.findUnique({
 			where: { did: userDid },
-			select: { reviewsPublicationUri: true, reviewsMirrorFormat: true },
+			select: {
+				blogIntegrationEnabled: true,
+				reviewsPublicationUri: true,
+				reviewsMirrorFormat: true,
+			},
 		});
+		// Disconnecting is an authorization change, not a content change. Keep any
+		// existing pointer untouched and do not write or delete external records.
+		if (user?.blogIntegrationEnabled === false) {
+			return {
+				blogDocumentUri: review.blogDocumentUri,
+				blogDocumentCid: review.blogDocumentCid,
+			};
+		}
 		// Opted out per-review, or no blog configured: ensure no mirror exists.
 		const publicationUri = review.mirrorToBlog
 			? (user?.reviewsPublicationUri ?? null)

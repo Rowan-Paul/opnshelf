@@ -30,6 +30,7 @@ describe("AuthController", () => {
 	const mockAuthService: {
 		getClientMetadata: Mock;
 		authorize: Mock;
+		authorizePermissionChange: Mock;
 		authorizeWithPds: Mock;
 		callback: Mock;
 		parseOAuthAppState: Mock;
@@ -50,6 +51,7 @@ describe("AuthController", () => {
 	} = {
 		getClientMetadata: vi.fn(),
 		authorize: vi.fn(),
+		authorizePermissionChange: vi.fn(),
 		authorizeWithPds: vi.fn(),
 		callback: vi.fn(),
 		parseOAuthAppState: vi.fn().mockReturnValue({}),
@@ -565,6 +567,155 @@ describe("AuthController", () => {
 				"opnshelf://auth/complete?error=callback_failed",
 			);
 		});
+
+		it("keeps an integration disabled when connecting it is declined", async () => {
+			const error = Object.assign(new Error("Permission declined"), {
+				state: "permission-state",
+				params: new URLSearchParams("error=access_denied"),
+			});
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "blog",
+				requestedPreferences: {
+					blogEnabled: true,
+					blueskyEnabled: false,
+				},
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(mockAuthService.disableIntegration).toHaveBeenCalledWith(
+				"did:plc:abc123",
+				"blog",
+			);
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=permission_declined",
+			);
+		});
+
+		it("keeps an integration enabled when disconnecting it is declined", async () => {
+			const error = Object.assign(new Error("Permission declined"), {
+				state: "permission-state",
+				params: new URLSearchParams("error=access_denied"),
+			});
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "blog",
+				requestedPreferences: {
+					blogEnabled: false,
+					blueskyEnabled: true,
+				},
+			});
+
+			await controller.callback(createMockRequest(), createMockResponse());
+
+			expect(mockAuthService.disableIntegration).not.toHaveBeenCalled();
+		});
+
+		it("rejects a callback missing any required Core permission before profile work", async () => {
+			const mockSession = { did: "did:plc:partial", scope: "atproto" };
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				state: '{"requestedPreferences":{}}',
+				sessionId: "partial-session",
+			});
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				requestedPreferences: {},
+			});
+			mockAuthService.assertGrantedScopes.mockImplementationOnce(() => {
+				throw new Error("missing Core permission");
+			});
+			const res = createMockResponse();
+
+			await controller.callback(
+				createMockRequest({ url: "/auth/callback?code=partial&state=xyz" }),
+				res,
+			);
+
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledWith(
+				"partial-session",
+			);
+			expect(mockAuthService.fetchProfile).not.toHaveBeenCalled();
+			expect(mockAuthService.upsertUser).not.toHaveBeenCalled();
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/login?error=callback_failed",
+			);
+		});
+
+		it("preserves native account identity on its first scoped callback", async () => {
+			const mockSession = { did: "did:plc:native" };
+			const mockProfile = {
+				did: "did:plc:native",
+				handle: "native.opnshelf.xyz",
+				displayName: null,
+				avatar: null,
+			};
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				sessionId: "native-oauth-session",
+			});
+			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:native",
+				isNativePds: true,
+				emailVerifiedAt: new Date(),
+				profileUri: null,
+			});
+			mockAuthService.upsertUser.mockResolvedValue({ isNewUser: false });
+
+			await controller.callback(
+				createMockRequest({ url: "/auth/callback?code=native&state=xyz" }),
+				createMockResponse(),
+			);
+
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				mockProfile,
+				undefined,
+				{ emailVerified: true, isNativePds: true },
+			);
+			expect(mockUsersService.initializeProfileForNewUser).toHaveBeenCalled();
+		});
+	});
+
+	describe("permissions", () => {
+		it("returns an authorization URL for an authenticated Blog connection", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "reader.example",
+				reviewsPublicationUri:
+					"at://did:plc:abc123/site.standard.publication/main",
+				reviewsMirrorFormat: "leaflet",
+				blogIntegrationEnabled: false,
+				blueskyCrossPostEnabled: false,
+			});
+			mockAuthService.authorizePermissionChange.mockResolvedValue(
+				"https://pds.example/authorize?request=blog",
+			);
+			const req = createMockRequest({
+				user: { did: "did:plc:abc123", session: { did: "did:plc:abc123" } },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+			const result = await controller.permissions(req, {
+				integration: "blog",
+				action: "connect",
+			});
+
+			expect(result).toEqual({
+				authorizationUrl: "https://pds.example/authorize?request=blog",
+			});
+			expect(mockAuthService.authorizePermissionChange).toHaveBeenCalledWith(
+				"reader.example",
+				"blog",
+				{
+					blogEnabled: true,
+					blueskyEnabled: false,
+					reviewsMirrorFormat: "leaflet",
+				},
+			);
+		});
 	});
 
 	describe("me", () => {
@@ -767,6 +918,50 @@ describe("AuthController", () => {
 				coreOAuthUrl: "https://pds.example/authorize",
 			});
 			expect(mockAuthService.markEmailVerified).toHaveBeenCalled();
+		});
+
+		it("revokes the exact Bearer bootstrap after creating the Core authorization", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				emailVerifiedAt: null,
+			});
+			const req = createMockRequest({
+				headers: { authorization: "Bearer native-bootstrap" },
+				user: { did: "did:plc:abc123", session: {} },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+			await controller.verifyEmail(req, { code: "abc" });
+
+			expect(mockAuthService.authorize).toHaveBeenCalled();
+			expect(mockAuthService.revokeBySessionId).toHaveBeenCalledWith(
+				"native-bootstrap",
+			);
+			expect(
+				mockAuthService.authorize.mock.invocationCallOrder[0],
+			).toBeLessThan(
+				mockAuthService.revokeBySessionId.mock.invocationCallOrder[0],
+			);
+		});
+
+		it("retains the bootstrap when Core authorization cannot be created", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "jane.opnshelf.xyz",
+				emailVerifiedAt: null,
+			});
+			mockAuthService.authorize.mockRejectedValueOnce(
+				new Error("authorization unavailable"),
+			);
+			const req = createMockRequest({
+				cookies: { session: "native-cookie-bootstrap" },
+				user: { did: "did:plc:abc123", session: {} },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+			await expect(
+				controller.verifyEmail(req, { code: "abc" }),
+			).rejects.toThrow("authorization unavailable");
+			expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
 		});
 	});
 

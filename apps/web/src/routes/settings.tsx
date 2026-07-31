@@ -1,6 +1,7 @@
 import {
 	type AccountDeletionJobDto,
 	authControllerMeOptions,
+	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
@@ -31,6 +32,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { IntegrationPermissionRow } from "#/components/settings/IntegrationPermissionRow";
 import { RowListSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -120,6 +122,28 @@ function SettingsPage() {
 			);
 		},
 	});
+
+	const permissionChangeMutation = useMutation({
+		mutationKey: ["auth", "permissions", "change"],
+		...authControllerPermissionsMutation(),
+		onSuccess: (result) => {
+			window.location.assign(result.authorizationUrl);
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Could not start the permission change",
+			);
+		},
+	});
+
+	const requestPermissionChange = (
+		integration: "blog" | "bluesky",
+		action: "connect" | "disconnect",
+	) => {
+		permissionChangeMutation.mutate({ body: { integration, action } });
+	};
 
 	const updateProfileMutation = useMutation({
 		mutationKey: ["users", "me", "profile", "update"],
@@ -271,10 +295,6 @@ function SettingsPage() {
 		: (pendingPublication?.service ?? "unknown");
 	const requiresServiceChoice =
 		leafletRejected || pendingPublication?.service === "unknown";
-
-	const handleSelectPublication = (uri: string | null) => {
-		updateSettingsMutation.mutate({ body: { reviewsPublicationUri: uri } });
-	};
 
 	const confirmPublicationService = () => {
 		if (!pendingPublication) return;
@@ -565,6 +585,22 @@ function SettingsPage() {
 								reviews to one of your own AT Protocol publications as well.
 							</p>
 
+							<IntegrationPermissionRow
+								name="Blog mirroring"
+								description={
+									storedPublicationUri
+										? "Allow Opnshelf to publish and update review mirrors in the selected publication."
+										: "Choose a publication below before connecting Blog mirroring."
+								}
+								connected={userSettings?.blogIntegrationEnabled ?? false}
+								disabled={
+									permissionChangeMutation.isPending ||
+									(!(userSettings?.blogIntegrationEnabled ?? false) &&
+										!storedPublicationUri)
+								}
+								onConfirm={(action) => requestPermissionChange("blog", action)}
+							/>
+
 							{storedTargetMissing && (
 								<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
 									<AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -587,23 +623,6 @@ function SettingsPage() {
 									className="space-y-2"
 									disabled={updateSettingsMutation.isPending}
 								>
-									<label className="flex cursor-pointer items-center justify-between rounded-lg border border-(--border) p-3 transition-colors hover:border-(--accent) has-checked:border-(--accent) has-checked:bg-(--accent-subtle)">
-										<div className="flex items-center gap-3">
-											<input
-												type="radio"
-												name="reviews-publication"
-												className="size-4 accent-(--accent)"
-												checked={storedPublicationUri === null}
-												onChange={() => handleSelectPublication(null)}
-											/>
-											<div>
-												<p className="font-medium text-sm">None</p>
-												<p className="text-(--foreground-muted) text-xs">
-													Don't mirror reviews to a blog
-												</p>
-											</div>
-										</div>
-									</label>
 									{(myPublications?.items ?? []).map((pub) => (
 										<label
 											key={pub.uri}
@@ -635,8 +654,29 @@ function SettingsPage() {
 											</div>
 										</label>
 									))}
+									<p className="pt-1 text-(--foreground-muted) text-xs">
+										Disconnect above to stop mirroring. Your publication choice
+										stays saved for reconnection.
+									</p>
 								</fieldset>
 							)}
+						</section>
+
+						<section className="border-(--border) border-b p-5 sm:p-7">
+							<h2 className="font-semibold text-lg">Bluesky Cross-posts</h2>
+							<p className="mt-1 mb-4 text-(--foreground-muted) text-sm">
+								Connect once, then choose which Reviews should also appear on
+								Bluesky when you publish them.
+							</p>
+							<IntegrationPermissionRow
+								name="Bluesky Cross-posts"
+								description="Allow Opnshelf to create and update posts for Reviews you explicitly select."
+								connected={userSettings?.blueskyCrossPostEnabled ?? false}
+								disabled={permissionChangeMutation.isPending}
+								onConfirm={(action) =>
+									requestPermissionChange("bluesky", action)
+								}
+							/>
 						</section>
 
 						<Dialog

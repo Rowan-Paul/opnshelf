@@ -89,7 +89,9 @@ export function ReviewEditorSheet({
 		...usersControllerGetMySettingsOptions(),
 		enabled: isAuthenticated,
 	});
-	const hasBlog = !!settings?.reviewsPublicationUri;
+	const hasBlog =
+		!!settings?.reviewsPublicationUri && settings.blogIntegrationEnabled;
+	const hasBluesky = settings?.blueskyCrossPostEnabled === true;
 	const blogName =
 		settings?.reviewsPublicationName ?? settings?.reviewsPublicationUri ?? null;
 	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
@@ -277,7 +279,7 @@ export function ReviewEditorSheet({
 							</View>
 						) : null}
 
-						{!isEditing ? (
+						{!isEditing && hasBluesky ? (
 							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
 								<Text className="flex-1 font-medium text-foreground text-sm">
 									Also post on Bluesky

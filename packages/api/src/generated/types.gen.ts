@@ -209,6 +209,18 @@ export type RegisterResponseDto = {
     sessionId: string;
 };
 
+export type PermissionChangeDto = {
+    integration: 'blog' | 'bluesky';
+    action: 'connect' | 'disconnect';
+};
+
+export type PermissionChangeResponseDto = {
+    /**
+     * Authorization URL for the cumulative OAuth permission set
+     */
+    authorizationUrl: string;
+};
+
 export type UserDto = {
     /**
      * User DID (decentralized identifier)
@@ -2484,14 +2496,17 @@ export type AuthControllerCallbackData = {
 };
 
 export type AuthControllerPermissionsData = {
-    body?: never;
+    body: PermissionChangeDto;
     path?: never;
-    query: {
-        action: 'connect' | 'disconnect';
-        integration: 'blog' | 'bluesky';
-    };
+    query?: never;
     url: '/auth/permissions';
 };
+
+export type AuthControllerPermissionsResponses = {
+    200: PermissionChangeResponseDto;
+};
+
+export type AuthControllerPermissionsResponse = AuthControllerPermissionsResponses[keyof AuthControllerPermissionsResponses];
 
 export type AuthControllerMeData = {
     body?: never;
