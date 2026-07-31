@@ -12,17 +12,21 @@ export const CORE_OAUTH_SCOPES = [
 ] as const;
 
 export type BlogMirrorFormat = "markdown" | "leaflet" | "offprint" | "pckt";
-export type OAuthIntegration = "blog" | "bluesky";
+export type OAuthIntegration = "atstore" | "blog" | "bluesky";
 
 export const BLOG_OAUTH_SCOPES = ["repo:site.standard.document"] as const;
 export const OFFPRINT_OAUTH_SCOPE = "repo:app.offprint.document.article";
 export const BLUESKY_OAUTH_SCOPES = [
 	"repo:app.bsky.feed.post?action=create&action=update",
 ] as const;
+export const ATSTORE_REVIEW_OAUTH_SCOPES = [
+	"include:fyi.atstore.authThirdPartyReviews",
+] as const;
 
 export interface OAuthScopePreferences {
 	blogEnabled?: boolean;
 	blueskyEnabled?: boolean;
+	atStoreReviewEnabled?: boolean;
 	reviewsMirrorFormat?: BlogMirrorFormat | null;
 }
 
@@ -37,6 +41,9 @@ export function buildOAuthScopes(
 		}
 	}
 	if (preferences.blueskyEnabled) scopes.push(...BLUESKY_OAUTH_SCOPES);
+	if (preferences.atStoreReviewEnabled) {
+		scopes.push(...ATSTORE_REVIEW_OAUTH_SCOPES);
+	}
 	return scopes;
 }
 

@@ -31,6 +31,12 @@ export class AtStoreReviewPromptDto {
 			"Whether the Home review request should be shown for this visit. False also covers a failed external preflight.",
 	})
 	eligible!: boolean;
+
+	@ApiProperty({
+		description:
+			"Whether this device session already has the AT Store review permission",
+	})
+	permissionGranted!: boolean;
 }
 
 export class PublishAtStoreReviewResponseDto {

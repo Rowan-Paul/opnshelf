@@ -210,8 +210,9 @@ export type RegisterResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'blog' | 'bluesky';
+    integration: 'atstore' | 'blog' | 'bluesky';
     action: 'connect' | 'disconnect';
+    platform?: 'mobile';
 };
 
 export type PermissionChangeResponseDto = {
@@ -1930,6 +1931,10 @@ export type AtStoreReviewPromptDto = {
      * Whether the Home review request should be shown for this visit. False also covers a failed external preflight.
      */
     eligible: boolean;
+    /**
+     * Whether this device session already has the AT Store review permission
+     */
+    permissionGranted: boolean;
 };
 
 export type PublishAtStoreReviewDto = {

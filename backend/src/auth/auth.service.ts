@@ -52,6 +52,7 @@ const MAX_CACHED_DEVICE_SESSIONS = 1000;
 /** Core-only login scope; integrations are requested only when enabled. */
 export const OAUTH_SCOPE = buildOAuthScope();
 export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
+	atStoreReviewEnabled: true,
 	blogEnabled: true,
 	blueskyEnabled: true,
 	reviewsMirrorFormat: "offprint",
@@ -417,6 +418,9 @@ export class AuthService implements OnModuleInit {
 		did: string,
 		integration: OAuthIntegration,
 	): Promise<void> {
+		// AT Store review access is intentionally session-only. There is no saved
+		// integration preference to clear when its one-time consent is declined.
+		if (integration === "atstore") return;
 		await this.prisma.user.update({
 			where: { did },
 			data:
@@ -448,6 +452,7 @@ export class AuthService implements OnModuleInit {
 					: undefined;
 
 			const permissionChange =
+				parsed.permissionChange === "atstore" ||
 				parsed.permissionChange === "blog" ||
 				parsed.permissionChange === "bluesky"
 					? parsed.permissionChange

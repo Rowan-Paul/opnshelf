@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 type CompleteParams = {
 	session?: string;
 	error?: string;
+	permission?: string;
 };
 
 function errorMessage(code: string): string {
@@ -26,6 +27,8 @@ function errorMessage(code: string): string {
 			return "Authentication failed. Please check your handle and try again.";
 		case "callback_failed":
 			return "Something went wrong during sign in. Please try again.";
+		case "permission_declined":
+			return "Review permission was not granted.";
 		default:
 			return "An unexpected error occurred. Please try again.";
 	}
@@ -39,7 +42,7 @@ function isMaintenanceError(error: unknown): boolean {
 
 export default function AuthCompleteScreen() {
 	const { completeSession } = useAuth();
-	const { session, error } = useLocalSearchParams<CompleteParams>();
+	const { session, error, permission } = useLocalSearchParams<CompleteParams>();
 	const [message, setMessage] = useState<string | null>(null);
 	// Guard against double-invocation (re-renders / strict mode) completing twice.
 	const handled = useRef(false);
@@ -52,7 +55,10 @@ export default function AuthCompleteScreen() {
 
 		if (error) {
 			setMessage(errorMessage(error));
-			const timer = setTimeout(() => router.replace("/login"), 1500);
+			const timer = setTimeout(
+				() => router.replace(permission === "atstore" ? "/" : "/login"),
+				1500,
+			);
 			return () => clearTimeout(timer);
 		}
 		if (!session) {
@@ -64,7 +70,9 @@ export default function AuthCompleteScreen() {
 			.then(() => {
 				// Hand off to the index gate, which routes to verify-email /
 				// onboarding / tabs based on the freshly fetched user.
-				router.replace("/");
+				router.replace(
+					(permission === "atstore" ? "/atstore-review" : "/") as Href,
+				);
 			})
 			.catch((err) => {
 				console.error("Failed to complete auth:", err);
@@ -75,7 +83,7 @@ export default function AuthCompleteScreen() {
 				);
 				setTimeout(() => router.replace("/login"), 1500);
 			});
-	}, [completeSession, session, error]);
+	}, [completeSession, session, error, permission]);
 
 	return (
 		<Screen>

@@ -3,6 +3,7 @@ import type { Href } from "expo-router";
 import { useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AtStoreReviewPrompt } from "@/components/home/atstore-review-prompt";
 import { FriendsActivity } from "@/components/home/FriendsActivity";
 import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
@@ -79,6 +80,8 @@ export default function HomeScreen() {
 						}
 						isLoading={profileLoading || (!profile && !!user?.handle)}
 					/>
+
+					<AtStoreReviewPrompt />
 
 					<UpNextPreview handle={user?.handle} />
 

@@ -57,7 +57,12 @@ function AuthCompletePage() {
 				}
 				setStatus("success");
 				// Redirect to onboarding for new users, otherwise home
-				const redirectTo = data?.needsOnboarding ? "/onboarding" : "/dashboard";
+				const permission = (search as { permission?: string }).permission;
+				const redirectTo = data?.needsOnboarding
+					? "/onboarding"
+					: permission === "atstore"
+						? "/dashboard?review=compose"
+						: "/dashboard";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {

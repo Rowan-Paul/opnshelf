@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, ChevronRight, Clock, Film, Loader2, Tv } from "lucide-react";
 import { useEffect } from "react";
+import { AtStoreReviewPrompt } from "#/components/atstore/AtStoreReviewPrompt";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
 import { StatsStrip } from "#/components/StatsStrip";
@@ -290,6 +291,10 @@ function Dashboard() {
 					reviewsCount={profile?.reviewsCount ?? 0}
 					isLoading={profileLoading || (!profile && !!user?.handle)}
 				/>
+			</div>
+
+			<div className="mb-8">
+				<AtStoreReviewPrompt />
 			</div>
 
 			<div className="grid gap-8 lg:grid-cols-3">

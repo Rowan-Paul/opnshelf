@@ -8,6 +8,7 @@ describe("progressive OAuth scopes", () => {
 		expect(scopes).toContain("blob:image/webp");
 		expect(scopes).not.toContain("repo:site.standard.document");
 		expect(scopes).not.toContain("repo:app.bsky.feed.post");
+		expect(scopes).not.toContain("include:fyi.atstore.authThirdPartyReviews");
 	});
 
 	it("adds only the selected cumulative integrations", () => {
@@ -27,6 +28,12 @@ describe("progressive OAuth scopes", () => {
 		expect(both).toContain(
 			"repo:app.bsky.feed.post?action=create&action=update",
 		);
+
+		const atStoreReview = buildOAuthScopes({ atStoreReviewEnabled: true });
+		expect(atStoreReview).toContain(
+			"include:fyi.atstore.authThirdPartyReviews",
+		);
+		expect(atStoreReview).not.toContain("repo:site.standard.document");
 	});
 
 	it("rejects partial grants", () => {

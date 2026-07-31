@@ -517,6 +517,34 @@ describe("AuthController", () => {
 			);
 		});
 
+		it("resumes an AT Store permission grant in the mobile composer", async () => {
+			const mockSession = { did: "did:plc:abc123" };
+			mockAuthService.callback.mockResolvedValue({
+				session: mockSession,
+				state: "permission-state",
+				sessionId: "session-123",
+			});
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				platform: "mobile",
+				permissionChange: "atstore",
+				requestedPreferences: { atStoreReviewEnabled: true },
+			});
+			mockAuthService.fetchProfile.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "reader.example",
+				displayName: "Reader",
+				avatar: null,
+			});
+			mockAuthService.upsertUser.mockResolvedValue({ isNewUser: false });
+
+			const res = createMockResponse();
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?session=session-123&permission=atstore",
+			);
+		});
+
 		it("should redirect with error on callback failure", async () => {
 			mockAuthService.callback.mockRejectedValue(new Error("OAuth error"));
 
@@ -714,6 +742,40 @@ describe("AuthController", () => {
 					blueskyEnabled: false,
 					reviewsMirrorFormat: "leaflet",
 				},
+			);
+		});
+
+		it("requests the one-time AT Store bundle with mobile resume state", async () => {
+			mockAuthService.getUser.mockResolvedValue({
+				did: "did:plc:abc123",
+				handle: "reader.example",
+				reviewsMirrorFormat: "markdown",
+				blogIntegrationEnabled: false,
+				blueskyCrossPostEnabled: false,
+			});
+			mockAuthService.authorizePermissionChange.mockResolvedValue(
+				"https://pds.example/authorize?request=atstore",
+			);
+			const req = createMockRequest({
+				user: { did: "did:plc:abc123", session: { did: "did:plc:abc123" } },
+			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
+
+			await controller.permissions(req, {
+				integration: "atstore",
+				action: "connect",
+				platform: "mobile",
+			});
+
+			expect(mockAuthService.authorizePermissionChange).toHaveBeenCalledWith(
+				"reader.example",
+				"atstore",
+				{
+					atStoreReviewEnabled: true,
+					blogEnabled: false,
+					blueskyEnabled: false,
+					reviewsMirrorFormat: "markdown",
+				},
+				{ platform: "mobile" },
 			);
 		});
 	});

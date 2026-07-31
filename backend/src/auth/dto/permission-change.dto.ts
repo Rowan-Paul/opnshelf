@@ -1,8 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn } from "class-validator";
+import { IsIn, IsOptional } from "class-validator";
 
-export const OAUTH_INTEGRATIONS = ["blog", "bluesky"] as const;
+export const OAUTH_INTEGRATIONS = ["atstore", "blog", "bluesky"] as const;
 export const OAUTH_PERMISSION_ACTIONS = ["connect", "disconnect"] as const;
+export const OAUTH_PERMISSION_PLATFORMS = ["mobile"] as const;
 
 export type OAuthIntegrationInput = (typeof OAUTH_INTEGRATIONS)[number];
 export type OAuthPermissionAction = (typeof OAUTH_PERMISSION_ACTIONS)[number];
@@ -15,6 +16,11 @@ export class PermissionChangeDto {
 	@ApiProperty({ enum: OAUTH_PERMISSION_ACTIONS })
 	@IsIn(OAUTH_PERMISSION_ACTIONS)
 	action: OAuthPermissionAction;
+
+	@ApiProperty({ enum: OAUTH_PERMISSION_PLATFORMS, required: false })
+	@IsOptional()
+	@IsIn(OAUTH_PERMISSION_PLATFORMS)
+	platform?: "mobile";
 }
 
 export class PermissionChangeResponseDto {

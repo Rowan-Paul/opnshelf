@@ -6,11 +6,17 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import {
+	ATSTORE_REVIEW_OAUTH_SCOPES,
+	includesRequestedScopes,
+} from "../auth/oauth-scopes";
 import { PrismaService } from "../prisma/prisma.service";
 import type { PublishAtStoreReviewDto } from "./dto/atstore-review.dto";
 
 export interface ATSession {
 	did: string;
+	scope?: string | string[];
+	tokenSet?: { scope?: string | string[] };
 }
 
 const ATSTORE_ORIGIN = "https://atstore.fyi";
@@ -38,7 +44,11 @@ export class AtStoreReviewsService {
 	async getPrompt(
 		did: string,
 		session: ATSession,
-	): Promise<{ eligible: boolean }> {
+	): Promise<{ eligible: boolean; permissionGranted: boolean }> {
+		const permissionGranted = includesRequestedScopes(
+			session.scope ?? session.tokenSet?.scope,
+			ATSTORE_REVIEW_OAUTH_SCOPES,
+		);
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 			select: { onboardingCompletedAt: true, atStoreReviewHandledAt: true },
@@ -50,16 +60,16 @@ export class AtStoreReviewsService {
 			!user.onboardingCompletedAt ||
 			Date.now() - user.onboardingCompletedAt.getTime() < ONBOARDING_AGE_MS
 		) {
-			return { eligible: false };
+			return { eligible: false, permissionGranted };
 		}
 
 		try {
 			const listingUri = await this.resolveListingUri();
 			if (await this.hasExistingReview(session, listingUri)) {
 				await this.markHandled(did);
-				return { eligible: false };
+				return { eligible: false, permissionGranted };
 			}
-			return { eligible: true };
+			return { eligible: true, permissionGranted };
 		} catch (error) {
 			// A prompt must never make Home unavailable. A later Home visit retries
 			// both the public directory and the user's PDS preflight.
@@ -67,7 +77,7 @@ export class AtStoreReviewsService {
 				`AT Store review preflight unavailable for ${did}`,
 				error instanceof Error ? error.message : undefined,
 			);
-			return { eligible: false };
+			return { eligible: false, permissionGranted };
 		}
 	}
 

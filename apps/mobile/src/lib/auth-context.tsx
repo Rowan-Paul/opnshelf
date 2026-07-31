@@ -38,7 +38,7 @@ interface AuthContextType {
 	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
 	login: (handle?: string) => Promise<void>;
 	/** Continue an authorization request already created by the backend. */
-	runAuthorizationUrl: (authorizationUrl: string) => Promise<void>;
+	runAuthorizationUrl: (authorizationUrl: string) => Promise<boolean>;
 	/**
 	 * Persist a session id returned by the OAuth flow and fetch the user. Used by
 	 * the in-app auth session result and by the `auth/complete` deep-link route
@@ -196,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				AUTH_REDIRECT_URL,
 			);
 			if (result.type !== "success") {
-				return;
+				return false;
 			}
 			const url = new URL(result.url);
 			const error = url.searchParams.get("error");
@@ -208,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				throw new Error("No session returned from auth flow");
 			}
 			await completeSession(session);
+			return true;
 		},
 		[completeSession],
 	);

@@ -65,6 +65,7 @@ describe("AtStoreReviewsService", () => {
 
 		await expect(service.getPrompt(did, session)).resolves.toEqual({
 			eligible: true,
+			permissionGranted: false,
 		});
 		expect(agentHarness.listRecords).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -72,6 +73,21 @@ describe("AtStoreReviewsService", () => {
 				collection: "fyi.atstore.listing.review",
 			}),
 		);
+	});
+
+	it("reports review permission for the upgraded device session", async () => {
+		prisma.user.findUnique.mockResolvedValue({
+			onboardingCompletedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+			atStoreReviewHandledAt: null,
+		});
+		agentHarness.listRecords.mockResolvedValue({ data: { records: [] } });
+
+		await expect(
+			service.getPrompt(did, {
+				did,
+				scope: "atproto include:fyi.atstore.authThirdPartyReviews",
+			}),
+		).resolves.toEqual({ eligible: true, permissionGranted: true });
 	});
 
 	it("marks a matching existing PDS review handled and hides the prompt", async () => {
@@ -85,6 +101,7 @@ describe("AtStoreReviewsService", () => {
 
 		await expect(service.getPrompt(did, session)).resolves.toEqual({
 			eligible: false,
+			permissionGranted: false,
 		});
 		expect(prisma.user.update).toHaveBeenCalledWith({
 			where: { did },
@@ -101,6 +118,7 @@ describe("AtStoreReviewsService", () => {
 
 		await expect(service.getPrompt(did, session)).resolves.toEqual({
 			eligible: false,
+			permissionGranted: false,
 		});
 		expect(prisma.user.update).not.toHaveBeenCalled();
 	});

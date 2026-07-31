@@ -212,7 +212,9 @@ export default function SettingsScreen() {
 		integration: "blog" | "bluesky",
 		action: "connect" | "disconnect",
 	) => {
-		permissionChangeMutation.mutate({ body: { integration, action } });
+		permissionChangeMutation.mutate({
+			body: { integration, action, platform: "mobile" },
+		});
 	};
 
 	// Blog-mirror publication (#118). Reviews are opnshelf-owned records; a

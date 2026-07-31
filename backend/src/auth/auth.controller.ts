@@ -595,10 +595,14 @@ export class AuthController {
 			}
 
 			// Redirect to mobile deep link (with session token) or web frontend (uses cookie)
+			const permissionQuery =
+				statePayload.permissionChange === "atstore"
+					? "?permission=atstore"
+					: "";
 			const completeUrl =
 				platform === "mobile"
-					? `opnshelf://auth/complete?session=${encodeURIComponent(sessionId)}`
-					: new URL("/auth/complete", frontendUrl).toString();
+					? `opnshelf://auth/complete?session=${encodeURIComponent(sessionId)}${permissionQuery ? "&permission=atstore" : ""}`
+					: new URL(`/auth/complete${permissionQuery}`, frontendUrl).toString();
 
 			return res.redirect(completeUrl);
 		} catch (error) {
@@ -620,11 +624,13 @@ export class AuthController {
 				Boolean(statePayload.accountDid);
 			if (declined && statePayload.accountDid) {
 				const declinedConnection =
-					statePayload.permissionChange === "blog"
-						? statePayload.requestedPreferences?.blogEnabled
-						: statePayload.permissionChange === "bluesky"
-							? statePayload.requestedPreferences?.blueskyEnabled
-							: false;
+					statePayload.permissionChange === "atstore"
+						? statePayload.requestedPreferences?.atStoreReviewEnabled
+						: statePayload.permissionChange === "blog"
+							? statePayload.requestedPreferences?.blogEnabled
+							: statePayload.permissionChange === "bluesky"
+								? statePayload.requestedPreferences?.blueskyEnabled
+								: false;
 				if (statePayload.permissionChange) {
 					if (declinedConnection) {
 						await this.authService.disableIntegration(
@@ -657,6 +663,19 @@ export class AuthController {
 			const platform =
 				statePayload.platform ||
 				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
+			if (statePayload.permissionChange === "atstore") {
+				if (platform === "mobile") {
+					return res.redirect(
+						`opnshelf://auth/complete?error=${declined ? "permission_declined" : "callback_failed"}&permission=atstore`,
+					);
+				}
+				const dashboardUrl = new URL("/dashboard", frontendUrl);
+				dashboardUrl.searchParams.set(
+					"review",
+					declined ? "permission-declined" : "permission-failed",
+				);
+				return res.redirect(dashboardUrl.toString());
+			}
 			if (platform === "mobile") {
 				return res.redirect(
 					this.resolveErrorRedirect(
@@ -689,7 +708,7 @@ export class AuthController {
 	): Promise<PermissionChangeResponseDto> {
 		const did = req.user?.did;
 		if (!did) throw new BadRequestException("User not found in request");
-		const { integration, action } = dto;
+		const { integration, action, platform } = dto;
 		const enable = action === "connect";
 		const user = await this.authService.getUser(did);
 		if (!user) throw new BadRequestException("User not found");
@@ -709,19 +728,26 @@ export class AuthController {
 			}
 		}
 		const preferences: OAuthScopePreferences = {
+			...(integration === "atstore" ? { atStoreReviewEnabled: enable } : {}),
 			blogEnabled:
 				integration === "blog" ? enable : user.blogIntegrationEnabled,
 			blueskyEnabled:
 				integration === "bluesky" ? enable : user.blueskyCrossPostEnabled,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
 		};
-		return {
-			authorizationUrl: await this.authService.authorizePermissionChange(
-				user.handle,
-				integration,
-				preferences,
-			),
-		};
+		const authorizationUrl = platform
+			? await this.authService.authorizePermissionChange(
+					user.handle,
+					integration,
+					preferences,
+					{ platform },
+				)
+			: await this.authService.authorizePermissionChange(
+					user.handle,
+					integration,
+					preferences,
+				);
+		return { authorizationUrl };
 	}
 
 	private async applyPermissionChange(

@@ -5710,6 +5710,7 @@
           "integration": {
             "type": "string",
             "enum": [
+              "atstore",
               "blog",
               "bluesky"
             ]
@@ -5719,6 +5720,12 @@
             "enum": [
               "connect",
               "disconnect"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "mobile"
             ]
           }
         },
@@ -9492,10 +9499,15 @@
           "eligible": {
             "type": "boolean",
             "description": "Whether the Home review request should be shown for this visit. False also covers a failed external preflight."
+          },
+          "permissionGranted": {
+            "type": "boolean",
+            "description": "Whether this device session already has the AT Store review permission"
           }
         },
         "required": [
-          "eligible"
+          "eligible",
+          "permissionGranted"
         ]
       },
       "PublishAtStoreReviewDto": {

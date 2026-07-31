@@ -103,6 +103,15 @@ export default function RootLayout() {
 					options={{ headerShown: true }}
 				/>
 				<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
+				<Stack.Screen
+					name="atstore-review"
+					options={{
+						presentation: "formSheet",
+						sheetAllowedDetents: [0.75, 1],
+						sheetGrabberVisible: true,
+						contentStyle: { backgroundColor: "transparent" },
+					}}
+				/>
 				<Stack.Screen name="profile/[handle]" options={{ headerShown: true }} />
 				<Stack.Screen
 					name="profile/[handle]/shelf"
