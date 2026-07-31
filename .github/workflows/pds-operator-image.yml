@@ -66,10 +66,10 @@ jobs:
               https://hub.docker.com/v2/users/login/ \
             | jq -er '.token')"
           curl -fsS -X PATCH \
-            -H "Authorization: JWT $AUTH_TOKEN" \
+            -H "Authorization: Bearer $AUTH_TOKEN" \
             -H 'content-type: application/json' \
             -d '{"is_private": false}' \
-            "https://hub.docker.com/v2/repositories/$HUB_REPO/" \
+            "https://hub.docker.com/v2/namespaces/${HUB_REPO%/*}/repositories/${HUB_REPO#*/}" \
             | jq -e '.is_private == false' >/dev/null
 
       - name: Install and test upstream server
