@@ -849,6 +849,37 @@ describe("AuthService", () => {
 
 			expect(getTokenInfo).toHaveBeenCalledWith(false);
 		});
+
+		it("accepts Core repo permissions canonicalized by the Bluesky PDS", async () => {
+			const blueskyCoreScope = [
+				"atproto",
+				"blob:image/jpeg",
+				"blob:image/png",
+				"blob:image/webp",
+				"repo:xyz.opnshelf.movie",
+				"repo:xyz.opnshelf.episode",
+				"repo:xyz.opnshelf.list",
+				"repo:xyz.opnshelf.list.item",
+				"repo:xyz.opnshelf.library.item",
+				"repo:xyz.opnshelf.follow",
+				"repo:xyz.opnshelf.profile",
+				"repo:xyz.opnshelf.note",
+				"repo:xyz.opnshelf.review",
+				"repo:xyz.opnshelf.review.like",
+				"repo:xyz.opnshelf.rating",
+			].join(" ");
+
+			await expect(
+				service.assertGrantedScopes(
+					{
+						getTokenInfo: vi.fn().mockResolvedValue({
+							scope: blueskyCoreScope,
+						}),
+					},
+					{},
+				),
+			).resolves.toBeUndefined();
+		});
 	});
 
 	describe("restore", () => {

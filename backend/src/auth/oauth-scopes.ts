@@ -84,14 +84,70 @@ export function includesRequestedScopes(
 	grantedScope: string | string[] | undefined,
 	requiredScopes: readonly string[],
 ): boolean {
-	if (!grantedScope) return false;
-	const granted = new Set(
-		(Array.isArray(grantedScope)
-			? grantedScope
-			: grantedScope.split(/\s+/)
-		).filter(Boolean),
-	);
+	const granted = new Set(scopeValues(grantedScope));
 	return requiredScopes.every((scope) => granted.has(scope));
+}
+
+function scopeValues(grantedScope: string | string[] | undefined): string[] {
+	if (!grantedScope) return [];
+	return (Array.isArray(grantedScope) ? grantedScope : [grantedScope])
+		.flatMap((scope) => scope.split(/\s+/))
+		.filter(Boolean);
+}
+
+interface RepoPermission {
+	collections: Set<string>;
+	actions: Set<string>;
+}
+
+function parseRepoPermission(scope: string): RepoPermission | undefined {
+	if (!scope.startsWith("repo:")) return undefined;
+
+	const queryIndex = scope.indexOf("?");
+	const positional = scope.slice(5, queryIndex === -1 ? undefined : queryIndex);
+	const params = new URLSearchParams(
+		queryIndex === -1 ? undefined : scope.slice(queryIndex + 1),
+	);
+	for (const key of params.keys()) {
+		if (key !== "collection" && key !== "action") return undefined;
+	}
+	if (positional && params.has("collection")) return undefined;
+
+	const collections = new Set(
+		positional ? [positional] : params.getAll("collection"),
+	);
+	const explicitActions = params.getAll("action");
+	const actions = new Set(
+		explicitActions.length > 0 ? explicitActions : REPO_ACTIONS,
+	);
+	if (
+		collections.size === 0 ||
+		[...actions].some(
+			(action) => !REPO_ACTIONS.some((allowed) => allowed === action),
+		)
+	) {
+		return undefined;
+	}
+
+	return { collections, actions };
+}
+
+function grantsRepoPermission(granted: string, required: string): boolean {
+	if (granted === required) return true;
+	const grantedPermission = parseRepoPermission(granted);
+	const requiredPermission = parseRepoPermission(required);
+	if (!grantedPermission || !requiredPermission) return false;
+
+	return (
+		[...requiredPermission.collections].every(
+			(collection) =>
+				grantedPermission.collections.has("*") ||
+				grantedPermission.collections.has(collection),
+		) &&
+		[...requiredPermission.actions].every((action) =>
+			grantedPermission.actions.has(action),
+		)
+	);
 }
 
 export function includesPermissionSetGrant(
@@ -99,9 +155,12 @@ export function includesPermissionSetGrant(
 	includeScope: string,
 	expandedScopes: readonly string[],
 ): boolean {
+	const granted = scopeValues(grantedScope);
 	return (
-		includesRequestedScopes(grantedScope, [includeScope]) ||
-		includesRequestedScopes(grantedScope, expandedScopes)
+		granted.includes(includeScope) ||
+		expandedScopes.every((required) =>
+			granted.some((candidate) => grantsRepoPermission(candidate, required)),
+		)
 	);
 }
 
