@@ -1907,6 +1907,31 @@ export type SetRatingDto = {
     rating: number;
 };
 
+export type AtStoreReviewPromptDto = {
+    /**
+     * Whether the Home review request should be shown for this visit. False also covers a failed external preflight.
+     */
+    eligible: boolean;
+};
+
+export type PublishAtStoreReviewDto = {
+    /**
+     * AT Store rating from 1 through 5
+     */
+    rating: number;
+    /**
+     * Optional plain-text AT Store review
+     */
+    text?: string;
+};
+
+export type PublishAtStoreReviewResponseDto = {
+    /**
+     * AT URI of the review record
+     */
+    uri: string;
+};
+
 export type UnifiedSearchResultDto = {
     id: number;
     media_type: 'movie' | 'tv';
@@ -4788,6 +4813,50 @@ export type RatingsControllerClearRatingResponses = {
      */
     200: unknown;
 };
+
+export type AtStoreReviewsControllerGetPromptData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/at-store-review/prompt';
+};
+
+export type AtStoreReviewsControllerGetPromptErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type AtStoreReviewsControllerGetPromptResponses = {
+    200: AtStoreReviewPromptDto;
+};
+
+export type AtStoreReviewsControllerGetPromptResponse = AtStoreReviewsControllerGetPromptResponses[keyof AtStoreReviewsControllerGetPromptResponses];
+
+export type AtStoreReviewsControllerDismissData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/at-store-review/dismiss';
+};
+
+export type AtStoreReviewsControllerDismissResponses = {
+    200: unknown;
+};
+
+export type AtStoreReviewsControllerPublishData = {
+    body: PublishAtStoreReviewDto;
+    path?: never;
+    query?: never;
+    url: '/at-store-review/publish';
+};
+
+export type AtStoreReviewsControllerPublishResponses = {
+    200: PublishAtStoreReviewResponseDto;
+};
+
+export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
 
 export type SearchControllerSearchAllData = {
     body?: never;

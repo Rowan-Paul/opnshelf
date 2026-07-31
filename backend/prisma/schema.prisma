@@ -26,6 +26,10 @@ model User {
   // Reader preference: suppress Spoiler Shields entirely (ADR-0016).
   alwaysShowSpoilers Boolean @default(false)
   onboardingCompletedAt DateTime?
+  // One-time AT Store review request state. `atStoreReviewRkey` is allocated
+  // before the PDS write so retries use the same record key.
+  atStoreReviewHandledAt DateTime?
+  atStoreReviewRkey String?
   emailVerifiedAt DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with

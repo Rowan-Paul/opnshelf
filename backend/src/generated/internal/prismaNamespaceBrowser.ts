@@ -108,6 +108,8 @@ export const UserScalarFieldEnum = {
   watchCountry: 'watchCountry',
   alwaysShowSpoilers: 'alwaysShowSpoilers',
   onboardingCompletedAt: 'onboardingCompletedAt',
+  atStoreReviewHandledAt: 'atStoreReviewHandledAt',
+  atStoreReviewRkey: 'atStoreReviewRkey',
   emailVerifiedAt: 'emailVerifiedAt',
   backfillStartedAt: 'backfillStartedAt',
   lastIngestAt: 'lastIngestAt',

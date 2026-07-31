@@ -12,6 +12,10 @@ _Avoid_: Review (a Review is the long-form text, not the score)
 A user's long-form textual piece about a media item, stored as an opnshelf-controlled `xyz.opnshelf.review` record. A Review carries no numeric score — the score is a separate Rating. A bare "8/10" with no prose is a Rating, not a Review. A user may write zero or many Reviews about the same media item (e.g. a first-watch piece and a later rewatch essay). A Review may optionally be mirrored to the author's own standard.site blog as a `site.standard.document`.
 _Avoid_: Rating (the numeric score is a separate entity)
 
+**AT Store Review**:
+A user's 1–5 star assessment of OpnShelf for the AT Store directory, optionally accompanied by text. It evaluates the app rather than a **Media Item** and is therefore distinct from both a **Review** and a **Rating**.
+_Avoid_: Review (reserved for long-form writing about a Media Item), Rating (reserved for a Media Item score)
+
 **Spoiler Flag**:
 An author-declared marker on a Review meaning the body contains spoilers, whole-review granularity (no inline spans). The Review title is outside the spoiler boundary by author contract: it stays visible on every surface, including the Bluesky Cross-post, so authors must keep titles spoiler-free. Absence of the flag means "no spoilers", including for all pre-existing Reviews.
 Surfaces that cannot render a Spoiler Shield — the blog mirror — carry a leading spoiler warning as body prefix and as the document's description/excerpt instead of redacting content; the author's own blog audience gets a warned full text, never a stub.

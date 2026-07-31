@@ -4689,6 +4689,102 @@
         ]
       }
     },
+    "/at-store-review/prompt": {
+      "get": {
+        "operationId": "AtStoreReviewsController_getPrompt",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtStoreReviewPromptDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check whether to show the AT Store review request",
+        "tags": [
+          "at-store-reviews"
+        ]
+      }
+    },
+    "/at-store-review/dismiss": {
+      "post": {
+        "operationId": "AtStoreReviewsController_dismiss",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Permanently dismiss the AT Store review request",
+        "tags": [
+          "at-store-reviews"
+        ]
+      }
+    },
+    "/at-store-review/publish": {
+      "post": {
+        "operationId": "AtStoreReviewsController_publish",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishAtStoreReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishAtStoreReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish an AT Store review to the user's PDS",
+        "tags": [
+          "at-store-reviews"
+        ]
+      }
+    },
     "/search/all": {
       "get": {
         "operationId": "SearchController_searchAll",
@@ -9308,6 +9404,47 @@
           "mediaType",
           "mediaId",
           "rating"
+        ]
+      },
+      "AtStoreReviewPromptDto": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean",
+            "description": "Whether the Home review request should be shown for this visit. False also covers a failed external preflight."
+          }
+        },
+        "required": [
+          "eligible"
+        ]
+      },
+      "PublishAtStoreReviewDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "description": "AT Store rating from 1 through 5"
+          },
+          "text": {
+            "type": "string",
+            "description": "Optional plain-text AT Store review",
+            "maxLength": 8000
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      },
+      "PublishAtStoreReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "AT URI of the review record"
+          }
+        },
+        "required": [
+          "uri"
         ]
       },
       "UnifiedSearchResultDto": {
