@@ -267,7 +267,7 @@ export default function SearchScreen() {
 		if (activeQuery.isLoading) {
 			return (
 				<View className="px-3 pt-3">
-					<PosterGridSkeleton />
+					<PosterGridSkeleton columns={numColumns} />
 				</View>
 			);
 		}

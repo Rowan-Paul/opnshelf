@@ -6,9 +6,16 @@ const IDX = (n: number) => Array.from({ length: n }, (_, i) => i);
 const PULSE = "animate-pulse rounded bg-(--background-subtle)";
 
 /** Poster grid (search results, shelf/library/list pages). */
-export function PosterGridSkeleton({ count = 12 }: { count?: number }) {
+export function PosterGridSkeleton({
+	count = 12,
+	gridClassName = "grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6",
+}: {
+	count?: number;
+	/** Override the responsive column classes to match a specific real grid. */
+	gridClassName?: string;
+}) {
 	return (
-		<div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+		<div className={`grid ${gridClassName}`}>
 			{IDX(count).map((i) => (
 				<div key={i}>
 					<div className={`aspect-[2/3] rounded-lg ${PULSE}`} />
