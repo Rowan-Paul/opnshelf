@@ -49,6 +49,13 @@ describe("TraktSyncBanner", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
+	it("renders nothing when logged out with an active import cached", () => {
+		mockUseAuth.mockReturnValue({ isAuthenticated: false });
+		mockUseQuery.mockReturnValue({ data: job({ status: "running" }) });
+		const { container } = render(<TraktSyncBanner />);
+		expect(container.firstChild).toBeNull();
+	});
+
 	it("renders nothing when the job is terminal", () => {
 		mockUseQuery.mockReturnValue({ data: job({ status: "completed" }) });
 		const { container } = render(<TraktSyncBanner />);

@@ -49,7 +49,7 @@ export function TraktSyncBanner() {
 		},
 	});
 
-	if (!job || !isActiveTraktImportStatus(job.status)) {
+	if (!isAuthenticated || !job || !isActiveTraktImportStatus(job.status)) {
 		return null;
 	}
 
