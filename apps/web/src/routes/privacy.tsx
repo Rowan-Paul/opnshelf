@@ -134,8 +134,7 @@ function PrivacyPolicyPage() {
 						<p>
 							Your data is retained for as long as your account is active. You
 							can request deletion of your account and associated data by
-							contacting us. During the development preview period, data may
-							occasionally be reset.
+							contacting us.
 						</p>
 					</section>
 

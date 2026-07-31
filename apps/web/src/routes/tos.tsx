@@ -32,10 +32,6 @@ function TermsOfServicePage() {
 							bound by these Terms of Service. If you do not agree to these
 							terms, please do not use the Service.
 						</p>
-						<p>
-							Opnshelf is currently in development preview. Features may change
-							and data may be reset without notice.
-						</p>
 					</section>
 
 					<section className="space-y-3">
@@ -113,8 +109,7 @@ function TermsOfServicePage() {
 							The Service is provided "as is" and "as available" without
 							warranties of any kind, either express or implied. We do not
 							guarantee that the Service will be uninterrupted, error-free, or
-							that any data will be permanently retained, particularly during
-							the development preview period.
+							that any data will be permanently retained.
 						</p>
 					</section>
 

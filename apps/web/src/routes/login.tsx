@@ -4,7 +4,7 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
@@ -91,16 +91,6 @@ function LoginPage() {
 					<h1 className="text-display-2">Welcome to Opnshelf</h1>
 					<p className="mt-2 text-(--foreground-muted)">
 						Track what you watch with your AT Protocol account
-					</p>
-				</div>
-
-				{/* Development Warning */}
-				<div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
-					<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-					<p>
-						<span className="font-semibold">Development Preview</span> — This
-						app is still in development. Things will change and your data might
-						be reset.
 					</p>
 				</div>
 
