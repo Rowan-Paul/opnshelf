@@ -48,6 +48,10 @@ model User {
   showTangledOnProfile Boolean @default(true)
   reviewsPublicationUri String?
   reviewsPublicationName String?
+  // Account-wide integrations. Configuration is retained when disabled so an
+  // explicit reconnect can resume the same publication/pointers.
+  blogIntegrationEnabled Boolean @default(false)
+  blueskyCrossPostEnabled Boolean @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains
   // markdown until a user selects a supported reader-specific format.
   reviewsMirrorFormat BlogMirrorFormat @default(markdown)

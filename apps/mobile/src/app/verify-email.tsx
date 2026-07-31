@@ -29,7 +29,7 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function VerifyEmailScreen() {
-	const { user, isLoading, isAuthenticated } = useAuth();
+	const { user, isLoading, isAuthenticated, runAuthorizationUrl } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [code, setCode] = useState("");
@@ -50,8 +50,14 @@ export default function VerifyEmailScreen() {
 			});
 			return data;
 		},
-		onSuccess: async () => {
+		onSuccess: async (result) => {
 			posthog?.capture("email_verified", { platform: "mobile" });
+			// The credential session was bootstrap-only and is now revoked. Re-enter
+			// via the regular Core OAuth flow before onboarding can write records.
+			if (result?.coreOAuthUrl) {
+				await runAuthorizationUrl(result.coreOAuthUrl);
+				return;
+			}
 			const meKey = authControllerMeQueryKey();
 			// Optimistically clear the gate so the redirect below fires immediately;
 			// the invalidate then refetches the authoritative record.

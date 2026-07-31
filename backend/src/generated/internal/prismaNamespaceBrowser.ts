@@ -120,6 +120,8 @@ export const UserScalarFieldEnum = {
   showTangledOnProfile: 'showTangledOnProfile',
   reviewsPublicationUri: 'reviewsPublicationUri',
   reviewsPublicationName: 'reviewsPublicationName',
+  blogIntegrationEnabled: 'blogIntegrationEnabled',
+  blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

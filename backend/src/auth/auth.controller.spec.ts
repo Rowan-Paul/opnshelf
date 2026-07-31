@@ -37,6 +37,9 @@ describe("AuthController", () => {
 		upsertUser: Mock;
 		getUser: Mock;
 		hasBlueskyProfile: Mock;
+		assertGrantedScopes: Mock;
+		completePermissionChange: Mock;
+		disableIntegration: Mock;
 		revokeBySessionId: Mock;
 		registerAccount: Mock;
 		createCredentialSession: Mock;
@@ -54,6 +57,9 @@ describe("AuthController", () => {
 		upsertUser: vi.fn(),
 		getUser: vi.fn(),
 		hasBlueskyProfile: vi.fn().mockResolvedValue(false),
+		assertGrantedScopes: vi.fn(),
+		completePermissionChange: vi.fn().mockResolvedValue(undefined),
+		disableIntegration: vi.fn().mockResolvedValue(undefined),
 		revokeBySessionId: vi.fn(),
 		registerAccount: vi.fn(),
 		createCredentialSession: vi.fn().mockResolvedValue("session-123"),
@@ -115,6 +121,9 @@ describe("AuthController", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		mockAuthService.parseOAuthAppState.mockReturnValue({});
+		mockAuthService.authorize.mockResolvedValue(
+			"https://pds.example/authorize",
+		);
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [AuthController],
@@ -680,7 +689,7 @@ describe("AuthController", () => {
 				user: { did, session: {} },
 			} as unknown as import("express").Request) as unknown as import("../auth/types").AuthenticatedRequest;
 
-		it("confirms the code, seeds the profile, and marks verified for an unverified user", async () => {
+		it("confirms the code, revokes bootstrap credentials, and starts Core OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
 				handle: "jane.opnshelf.xyz",
@@ -690,7 +699,10 @@ describe("AuthController", () => {
 
 			const result = await controller.verifyEmail(reqFor(), { code: " abc " });
 
-			expect(result).toEqual({ verified: true });
+			expect(result).toEqual({
+				verified: true,
+				coreOAuthUrl: "https://pds.example/authorize",
+			});
 			// Verify reuses the guard's already-restored session (req.user.session),
 			// it does NOT restore again — that double-restore is the logout bug.
 			expect(mockAuthService.restore).not.toHaveBeenCalled();
@@ -701,14 +713,13 @@ describe("AuthController", () => {
 			expect(mockAuthService.markEmailVerified).toHaveBeenCalledWith(
 				"did:plc:abc123",
 			);
-			expect(mockUsersService.initializeProfileForNewUser).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				{},
-				{ handle: "jane.opnshelf.xyz", displayName: null, avatarUrl: null },
+			expect(mockAuthService.authorize).toHaveBeenCalledWith(
+				"jane.opnshelf.xyz",
 			);
+			expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
 		});
 
-		it("does not re-seed when the user was already verified", async () => {
+		it("still hands an already verified native account into Core OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
 				handle: "jane.opnshelf.xyz",
@@ -719,12 +730,12 @@ describe("AuthController", () => {
 			await controller.verifyEmail(reqFor(), { code: "abc" });
 
 			expect(mockAuthService.confirmEmailWithCode).toHaveBeenCalled();
-			expect(
-				mockUsersService.initializeProfileForNewUser,
-			).not.toHaveBeenCalled();
+			expect(mockAuthService.authorize).toHaveBeenCalledWith(
+				"jane.opnshelf.xyz",
+			);
 		});
 
-		it("maps an invalid code to BadRequestException and does not seed", async () => {
+		it("maps an invalid code to BadRequestException and does not start OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
 				handle: "jane.opnshelf.xyz",
@@ -739,25 +750,22 @@ describe("AuthController", () => {
 				controller.verifyEmail(reqFor(), { code: "nope" }),
 			).rejects.toThrow(BadRequestException);
 			expect(mockAuthService.markEmailVerified).not.toHaveBeenCalled();
-			expect(
-				mockUsersService.initializeProfileForNewUser,
-			).not.toHaveBeenCalled();
+			expect(mockAuthService.authorize).not.toHaveBeenCalled();
 		});
 
-		it("still verifies even if profile seeding fails", async () => {
+		it("does not seed with the credential session", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
 				handle: "jane.opnshelf.xyz",
 				displayName: null,
 				emailVerifiedAt: null,
 			});
-			mockUsersService.initializeProfileForNewUser.mockRejectedValueOnce(
-				new Error("PDS down"),
-			);
-
 			const result = await controller.verifyEmail(reqFor(), { code: "abc" });
 
-			expect(result).toEqual({ verified: true });
+			expect(result).toEqual({
+				verified: true,
+				coreOAuthUrl: "https://pds.example/authorize",
+			});
 			expect(mockAuthService.markEmailVerified).toHaveBeenCalled();
 		});
 	});

@@ -104,7 +104,7 @@ vi.mock("@atproto/api", () => ({
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
-import { AuthService, OAUTH_SCOPE } from "./auth.service";
+import { AuthService, DECLARED_OAUTH_SCOPE, OAUTH_SCOPE } from "./auth.service";
 
 describe("AuthService", () => {
 	let service: AuthService;
@@ -168,11 +168,11 @@ describe("AuthService", () => {
 		it("should initialize the OAuth client with shared metadata", () => {
 			expect(NodeOAuthClient).toHaveBeenCalledWith({
 				clientMetadata: {
-					client_id: `http://localhost?redirect_uri=${encodeURIComponent("http://127.0.0.1:3001/auth/callback")}&scope=${encodeURIComponent(OAUTH_SCOPE)}`,
+					client_id: `http://localhost?redirect_uri=${encodeURIComponent("http://127.0.0.1:3001/auth/callback")}&scope=${encodeURIComponent(DECLARED_OAUTH_SCOPE)}`,
 					client_name: "Opnshelf",
 					client_uri: "http://127.0.0.1:3001",
 					redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
-					scope: OAUTH_SCOPE,
+					scope: DECLARED_OAUTH_SCOPE,
 					grant_types: ["authorization_code", "refresh_token"],
 					response_types: ["code"],
 					application_type: "native",
@@ -624,8 +624,7 @@ describe("AuthService", () => {
 				client_name: "Opnshelf",
 				client_uri: "http://127.0.0.1:3001",
 				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
-				scope:
-					"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication repo:app.offprint.document.article repo:app.bsky.feed.post blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
+				scope: DECLARED_OAUTH_SCOPE,
 				grant_types: ["authorization_code", "refresh_token"],
 				response_types: ["code"],
 				application_type: "native",
@@ -738,9 +737,14 @@ describe("AuthService", () => {
 			expect(sharedOAuthClient.authorize).toHaveBeenCalledWith(
 				"user.bsky.social",
 				{
-					scope:
-						"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication repo:app.offprint.document.article repo:app.bsky.feed.post blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
-					state: undefined,
+					scope: OAUTH_SCOPE,
+					state: JSON.stringify({
+						requestedPreferences: {
+							blogEnabled: false,
+							blueskyEnabled: false,
+						},
+						accountHandle: "user.bsky.social",
+					}),
 				},
 			);
 			expect(result).toBe(mockUrl.toString());
@@ -1060,9 +1064,9 @@ describe("AuthService", () => {
 			// - repo:xyz.opnshelf.note: write note records
 			// - blob:*/*: upload profile images
 			// - rpc:app.bsky.actor.getProfile: fetch user profiles via Bluesky AppView
-			expect(OAUTH_SCOPE).toBe(
-				"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication repo:app.offprint.document.article repo:app.bsky.feed.post blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview",
-			);
+			expect(OAUTH_SCOPE).toContain("blob:image/jpeg");
+			expect(OAUTH_SCOPE).not.toContain("site.standard.document");
+			expect(OAUTH_SCOPE).not.toContain("app.bsky.feed.post");
 		});
 	});
 });

@@ -15,6 +15,13 @@ import {
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
+import {
+	buildOAuthScope,
+	buildOAuthScopes,
+	includesRequestedScopes,
+	type OAuthIntegration,
+	type OAuthScopePreferences,
+} from "./oauth-scopes";
 
 const BLUESKY_PUBLIC_API = "https://public.api.bsky.app/xrpc";
 
@@ -42,12 +49,21 @@ export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
  */
 const MAX_CACHED_DEVICE_SESSIONS = 1000;
 
-export const OAUTH_SCOPE =
-	"atproto repo:xyz.opnshelf.movie repo:xyz.opnshelf.episode repo:xyz.opnshelf.list repo:xyz.opnshelf.list.item repo:xyz.opnshelf.library.item repo:xyz.opnshelf.follow repo:xyz.opnshelf.profile repo:xyz.opnshelf.note repo:xyz.opnshelf.review repo:xyz.opnshelf.review.like repo:xyz.opnshelf.rating repo:site.standard.document repo:site.standard.publication repo:app.offprint.document.article repo:app.bsky.feed.post blob:*/* rpc:app.bsky.actor.getProfile?aud=did:web:api.bsky.app%23bsky_appview";
+/** Core-only login scope; integrations are requested only when enabled. */
+export const OAUTH_SCOPE = buildOAuthScope();
+export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
+	blogEnabled: true,
+	blueskyEnabled: true,
+	reviewsMirrorFormat: "offprint",
+});
 
 export interface OAuthAppState {
 	platform?: "mobile";
 	timezone?: string;
+	permissionChange?: OAuthIntegration;
+	requestedPreferences?: OAuthScopePreferences;
+	accountDid?: string;
+	accountHandle?: string;
 }
 
 interface OAuthClientConfig {
@@ -262,13 +278,56 @@ export class AuthService implements OnModuleInit {
 	 * @param handle - User's AT Protocol handle (e.g., user.bsky.social)
 	 * @returns The authorization URL to redirect the user to
 	 */
-	async authorize(handle: string, appState?: OAuthAppState): Promise<string> {
+	async authorize(
+		handle: string,
+		appState?: OAuthAppState,
+		preferences?: OAuthScopePreferences,
+	): Promise<string> {
 		const client = this.getBaseClient();
+		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
+		const knownUser = await this.prisma.user.findUnique({
+			where: { handle: normalizedHandle },
+			select: {
+				did: true,
+				handle: true,
+				blogIntegrationEnabled: true,
+				blueskyCrossPostEnabled: true,
+				reviewsMirrorFormat: true,
+			},
+		});
+		const resolvedPreferences = preferences ?? {
+			blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
+			blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
+			reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
+		};
 		const url = await client.authorize(handle, {
-			scope: OAUTH_SCOPE,
-			state: this.serializeOAuthAppState(appState),
+			scope: buildOAuthScope(resolvedPreferences),
+			state: this.serializeOAuthAppState({
+				...appState,
+				requestedPreferences: resolvedPreferences,
+				accountDid: knownUser?.did,
+				accountHandle: knownUser?.handle ?? normalizedHandle,
+			}),
 		});
 		return url.toString();
+	}
+
+	/** Starts an atomic, cumulative account-wide permission replacement. */
+	async authorizePermissionChange(
+		handle: string,
+		integration: OAuthIntegration,
+		preferences: OAuthScopePreferences,
+		appState?: OAuthAppState,
+	): Promise<string> {
+		return this.authorize(
+			handle,
+			{
+				...appState,
+				permissionChange: integration,
+				requestedPreferences: preferences,
+			},
+			preferences,
+		);
 	}
 
 	/**
@@ -307,6 +366,66 @@ export class AuthService implements OnModuleInit {
 		return { ...result, sessionId };
 	}
 
+	/** Reject partial grants before replacing an otherwise working session. */
+	assertGrantedScopes(
+		session: unknown,
+		preferences: OAuthScopePreferences,
+	): void {
+		const candidate = session as {
+			scope?: string | string[];
+			tokenSet?: { scope?: string | string[] };
+		};
+		if (
+			!includesRequestedScopes(
+				candidate.scope ?? candidate.tokenSet?.scope,
+				buildOAuthScopes(preferences),
+			)
+		) {
+			throw new Error(
+				"OAuth authorization did not grant every requested permission",
+			);
+		}
+	}
+
+	/** Persist account-wide integration state and revoke superseded devices atomically. */
+	async completePermissionChange(
+		did: string,
+		retainedSessionId: string,
+		preferences: OAuthScopePreferences,
+	): Promise<void> {
+		await this.prisma.$transaction(async (tx) => {
+			await tx.user.update({
+				where: { did },
+				data: {
+					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
+					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
+				},
+			});
+			await tx.authSession.deleteMany({
+				where: { userDid: did, id: { not: retainedSessionId } },
+			});
+		});
+		for (const [slot] of this.oauthClients) {
+			if (slot !== retainedSessionId) this.oauthClients.delete(slot);
+		}
+		for (const [slot] of this.credentialSessions) {
+			if (slot !== retainedSessionId) this.credentialSessions.delete(slot);
+		}
+	}
+
+	async disableIntegration(
+		did: string,
+		integration: OAuthIntegration,
+	): Promise<void> {
+		await this.prisma.user.update({
+			where: { did },
+			data:
+				integration === "blog"
+					? { blogIntegrationEnabled: false }
+					: { blueskyCrossPostEnabled: false },
+		});
+	}
+
 	parseOAuthAppState(rawState: string | null | undefined): OAuthAppState {
 		if (!rawState) {
 			return {};
@@ -316,6 +435,10 @@ export class AuthService implements OnModuleInit {
 			const parsed = JSON.parse(rawState) as {
 				platform?: unknown;
 				timezone?: unknown;
+				permissionChange?: unknown;
+				requestedPreferences?: OAuthScopePreferences;
+				accountDid?: unknown;
+				accountHandle?: unknown;
 			};
 
 			const platform = parsed.platform === "mobile" ? "mobile" : undefined;
@@ -324,7 +447,23 @@ export class AuthService implements OnModuleInit {
 					? parsed.timezone
 					: undefined;
 
-			return { platform, timezone };
+			const permissionChange =
+				parsed.permissionChange === "blog" ||
+				parsed.permissionChange === "bluesky"
+					? parsed.permissionChange
+					: undefined;
+			return {
+				platform,
+				timezone,
+				permissionChange,
+				requestedPreferences: parsed.requestedPreferences,
+				accountDid:
+					typeof parsed.accountDid === "string" ? parsed.accountDid : undefined,
+				accountHandle:
+					typeof parsed.accountHandle === "string"
+						? parsed.accountHandle
+						: undefined,
+			};
 		} catch {
 			return {};
 		}
@@ -926,7 +1065,19 @@ export class AuthService implements OnModuleInit {
 		if (appState.timezone && appState.timezone.trim() !== "") {
 			payload.timezone = appState.timezone;
 		}
-		if (!payload.platform && !payload.timezone) {
+		if (appState.permissionChange)
+			payload.permissionChange = appState.permissionChange;
+		if (appState.requestedPreferences) {
+			payload.requestedPreferences = appState.requestedPreferences;
+		}
+		if (appState.accountDid) payload.accountDid = appState.accountDid;
+		if (appState.accountHandle) payload.accountHandle = appState.accountHandle;
+		if (
+			!payload.platform &&
+			!payload.timezone &&
+			!payload.permissionChange &&
+			!payload.requestedPreferences
+		) {
 			return undefined;
 		}
 		return JSON.stringify(payload);
@@ -1095,7 +1246,7 @@ export class AuthService implements OnModuleInit {
 		const redirectUri = `${clientUri}/auth/callback`;
 		const metadataClientId = `${backendUrl}/.well-known/oauth-client-metadata.json`;
 		const runtimeClientId = isLocalhost
-			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(OAUTH_SCOPE)}`
+			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(DECLARED_OAUTH_SCOPE)}`
 			: metadataClientId;
 
 		return {
@@ -1117,7 +1268,7 @@ export class AuthService implements OnModuleInit {
 			client_name: "Opnshelf",
 			client_uri: oauthClientConfig.clientUri,
 			redirect_uris: [oauthClientConfig.redirectUri],
-			scope: OAUTH_SCOPE,
+			scope: DECLARED_OAUTH_SCOPE,
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
 			application_type: oauthClientConfig.applicationType,

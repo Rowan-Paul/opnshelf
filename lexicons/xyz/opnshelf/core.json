@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "xyz.opnshelf.core",
+  "defs": {
+    "main": {
+      "type": "permission-set",
+      "title": "Core Opnshelf Access",
+      "detail": "Create, update, and delete your Opnshelf records.",
+      "permissions": [
+        {
+          "type": "permission",
+          "resource": "repo",
+          "collection": [
+            "xyz.opnshelf.movie",
+            "xyz.opnshelf.episode",
+            "xyz.opnshelf.list",
+            "xyz.opnshelf.list.item",
+            "xyz.opnshelf.library.item",
+            "xyz.opnshelf.follow",
+            "xyz.opnshelf.profile",
+            "xyz.opnshelf.note",
+            "xyz.opnshelf.review",
+            "xyz.opnshelf.review.like",
+            "xyz.opnshelf.rating"
+          ]
+        }
+      ]
+    }
+  }
+}

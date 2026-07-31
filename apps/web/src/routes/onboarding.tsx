@@ -179,7 +179,6 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 
 function VerifyEmailStep() {
 	const { user } = useAuth();
-	const queryClient = useQueryClient();
 	const [code, setCode] = useState("");
 	const [cooldown, setCooldown] = useState(0);
 
@@ -192,13 +191,11 @@ function VerifyEmailStep() {
 	const verifyMutation = useMutation({
 		mutationKey: ["auth", "verify-email"],
 		...authControllerVerifyEmailMutation(),
-		onSuccess: async () => {
+		onSuccess: async (result) => {
 			posthog.capture("email_verified", { platform: "web" });
-			// Flips needsEmailVerification to false; the parent re-renders into the
-			// welcome step, which is where we greet them — no toast needed here.
-			await queryClient.invalidateQueries({
-				queryKey: authControllerMeOptions().queryKey,
-			});
+			// Native signup credentials are bootstrap-only. Continue through the
+			// scoped Core OAuth flow before any repository seeding/onboarding.
+			if (result.coreOAuthUrl) window.location.assign(result.coreOAuthUrl);
 		},
 		onError: (error) => {
 			toast.error(

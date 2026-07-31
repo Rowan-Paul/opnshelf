@@ -26,6 +26,7 @@ import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { UsersService } from "../users/users.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
+import type { OAuthIntegration, OAuthScopePreferences } from "./oauth-scopes";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
@@ -36,7 +37,11 @@ import type { AuthenticatedRequest } from "./types";
 const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
 const TIMEZONE_COOKIE_NAME = "auth_timezone";
-type OAuthErrorCode = "handle_required" | "auth_failed" | "callback_failed";
+type OAuthErrorCode =
+	| "handle_required"
+	| "auth_failed"
+	| "callback_failed"
+	| "permission_declined";
 type AuthPlatform = "mobile" | undefined;
 
 @ApiTags("auth")
@@ -484,6 +489,17 @@ export class AuthController {
 			const { session, state, sessionId } =
 				await this.authService.callback(params);
 			const statePayload = this.authService.parseOAuthAppState(state);
+			// Every callback must carry Core plus the complete saved/requested set.
+			// A partial grant never replaces a working session.
+			try {
+				this.authService.assertGrantedScopes(
+					session,
+					statePayload.requestedPreferences ?? {},
+				);
+			} catch (error) {
+				await this.authService.revokeBySessionId(sessionId);
+				throw error;
+			}
 
 			// Prefer OAuth state (survives iOS auth sessions), then cookie fallback.
 			const timezone = statePayload.timezone || cookies?.[TIMEZONE_COOKIE_NAME];
@@ -493,11 +509,24 @@ export class AuthController {
 			// OAuth accounts authenticate against their own (external) PDS, which
 			// has already verified them upstream — mark them verified and external
 			// so they are never caught by the native verify-email gate.
+			const existingUser = await this.authService.getUser(session.did);
 			const { isNewUser } = await this.authService.upsertUser(
 				profile,
 				timezone,
-				{ emailVerified: true, isNativePds: false },
+				{
+					emailVerified: true,
+					isNativePds: existingUser?.isNativePds ?? false,
+				},
 			);
+
+			if (statePayload.permissionChange && statePayload.requestedPreferences) {
+				await this.applyPermissionChange(
+					session.did,
+					sessionId,
+					statePayload.permissionChange,
+					statePayload.requestedPreferences,
+				);
+			}
 
 			// Clear timezone cookie after use
 			if (timezone) {
@@ -520,7 +549,15 @@ export class AuthController {
 				);
 			}
 
-			if (isNewUser) {
+			const persistedUser = await this.authService.getUser(session.did);
+			// A native account already has a DB row before it reaches OAuth. Its
+			// first scoped callback, not its credential bootstrap, performs seeding.
+			if (
+				isNewUser ||
+				(persistedUser?.isNativePds &&
+					persistedUser.emailVerifiedAt &&
+					!persistedUser.profileUri)
+			) {
 				await this.usersService.initializeProfileForNewUser(
 					session.did,
 					session,
@@ -571,19 +608,133 @@ export class AuthController {
 					? (error as { state: string }).state
 					: undefined;
 			const statePayload = this.authService.parseOAuthAppState(stateFromError);
+			const callbackError = error as {
+				params?: { get(name: string): string | null };
+			};
+			const declined =
+				callbackError.params?.get("error") === "access_denied" &&
+				Boolean(statePayload.accountDid);
+			if (declined && statePayload.accountDid) {
+				if (statePayload.permissionChange) {
+					await this.authService.disableIntegration(
+						statePayload.accountDid,
+						statePayload.permissionChange,
+					);
+				} else if (statePayload.requestedPreferences) {
+					// A returning user declined saved optional access. Downscope the
+					// account and restart Core-only without touching prior sessions.
+					if (statePayload.requestedPreferences.blogEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"blog",
+						);
+					}
+					if (statePayload.requestedPreferences.blueskyEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"bluesky",
+						);
+					}
+					if (statePayload.accountHandle) {
+						return res.redirect(
+							await this.authService.authorize(statePayload.accountHandle),
+						);
+					}
+				}
+			}
 			const platform =
 				statePayload.platform ||
 				(cookies?.[PLATFORM_COOKIE_NAME] === "mobile" ? "mobile" : undefined);
 			if (platform === "mobile") {
 				return res.redirect(
-					this.resolveErrorRedirect("callback_failed", platform),
+					this.resolveErrorRedirect(
+						declined ? "permission_declined" : "callback_failed",
+						platform,
+					),
 				);
 			}
 
 			return res.redirect(
-				this.resolveErrorRedirect("callback_failed", platform),
+				this.resolveErrorRedirect(
+					declined ? "permission_declined" : "callback_failed",
+					platform,
+				),
 			);
 		}
+	}
+
+	/** Explicitly request (or remove) one external integration's cumulative scope. */
+	@Get("auth/permissions")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Start an account-wide external integration permission change",
+	})
+	@ApiQuery({ name: "integration", required: true, enum: ["blog", "bluesky"] })
+	@ApiQuery({ name: "action", required: true, enum: ["connect", "disconnect"] })
+	@ApiResponse({ status: 302, description: "Redirect to OAuth authorization" })
+	async permissions(
+		@Req() req: AuthenticatedRequest,
+		@Query("integration") integrationRaw: string | undefined,
+		@Query("action") actionRaw: string | undefined,
+		@Res() res: Response,
+	) {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		const integration: OAuthIntegration | undefined =
+			integrationRaw === "blog" || integrationRaw === "bluesky"
+				? integrationRaw
+				: undefined;
+		if (!integration) throw new BadRequestException("Unknown integration");
+		if (actionRaw !== "connect" && actionRaw !== "disconnect") {
+			throw new BadRequestException("Unknown permission action");
+		}
+		const enable = actionRaw === "connect";
+		const user = await this.authService.getUser(did);
+		if (!user) throw new BadRequestException("User not found");
+		if (enable && integration === "blog" && !user.reviewsPublicationUri) {
+			throw new BadRequestException(
+				"Choose a public publication before connecting blog mirroring",
+			);
+		}
+		if (enable && integration === "bluesky") {
+			const hasProfile = await this.authService.hasBlueskyProfile(
+				req.user.session as { did: string } | undefined,
+			);
+			if (!hasProfile) {
+				throw new BadRequestException(
+					"A public Bluesky profile is required before connecting Cross-posts",
+				);
+			}
+		}
+		const preferences: OAuthScopePreferences = {
+			blogEnabled:
+				integration === "blog" ? enable : user.blogIntegrationEnabled,
+			blueskyEnabled:
+				integration === "bluesky" ? enable : user.blueskyCrossPostEnabled,
+			reviewsMirrorFormat: user.reviewsMirrorFormat,
+		};
+		return res.redirect(
+			await this.authService.authorizePermissionChange(
+				user.handle,
+				integration,
+				preferences,
+			),
+		);
+	}
+
+	private async applyPermissionChange(
+		did: string,
+		sessionId: string,
+		_integration: OAuthIntegration,
+		preferences: OAuthScopePreferences,
+	): Promise<void> {
+		// A scope replacement is deliberately disruptive: saved settings are
+		// account-wide, so every other device must authenticate with this set.
+		await this.authService.completePermissionChange(
+			did,
+			sessionId,
+			preferences,
+		);
 	}
 
 	/**
@@ -658,9 +809,8 @@ export class AuthController {
 	/**
 	 * Confirm the signup verification code for a native PDS account.
 	 *
-	 * On success the account is verified (records can be written), so we seed the
-	 * profile + default lists that signup deliberately skipped, and mirror the
-	 * verified status into our DB.
+	 * On success the bootstrap credential is revoked and the client is handed
+	 * into Core OAuth. Seeding happens only in that scoped OAuth callback.
 	 */
 	@Post("auth/verify-email")
 	@HttpCode(HttpStatus.OK)
@@ -689,9 +839,6 @@ export class AuthController {
 			throw new BadRequestException("User not found");
 		}
 
-		// Only seed if this verification is the transition from unverified.
-		const wasUnverified = user.emailVerifiedAt === null;
-
 		try {
 			await this.authService.confirmEmailWithCode(session, dto.code);
 		} catch (error) {
@@ -699,26 +846,13 @@ export class AuthController {
 		}
 
 		await this.authService.markEmailVerified(did);
-
-		if (wasUnverified && session) {
-			try {
-				await this.usersService.initializeProfileForNewUser(
-					did,
-					session as unknown as { did: string },
-					{
-						handle: user.handle,
-						displayName: user.displayName,
-						avatarUrl: null,
-					},
-				);
-			} catch (error) {
-				// Verification succeeded; seeding is idempotent and retried lazily
-				// on the next profile write, so don't fail the request.
-				this.logger.error(`Profile seeding failed for ${did}`, error);
-			}
+		const coreOAuthUrl = await this.authService.authorize(user.handle);
+		const bootstrapSessionId = extractSessionId(req);
+		if (bootstrapSessionId) {
+			await this.authService.revokeBySessionId(bootstrapSessionId);
 		}
 
-		return { verified: true };
+		return { verified: true, coreOAuthUrl };
 	}
 
 	/**

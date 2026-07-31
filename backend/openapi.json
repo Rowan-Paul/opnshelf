@@ -631,6 +631,46 @@
         ]
       }
     },
+    "/auth/permissions": {
+      "get": {
+        "operationId": "AuthController_permissions",
+        "parameters": [
+          {
+            "name": "action",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "connect",
+                "disconnect"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "integration",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "blog",
+                "bluesky"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to OAuth authorization"
+          }
+        },
+        "summary": "Start an account-wide external integration permission change",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -5775,10 +5815,15 @@
           "verified": {
             "type": "boolean",
             "description": "Whether the account is now verified"
+          },
+          "coreOAuthUrl": {
+            "type": "string",
+            "description": "Core OAuth authorization URL. The bootstrap credential is revoked before this is returned."
           }
         },
         "required": [
-          "verified"
+          "verified",
+          "coreOAuthUrl"
         ]
       },
       "TMDBShowResultDto": {
@@ -6844,6 +6889,12 @@
               "offprint",
               "pckt"
             ]
+          },
+          "blogIntegrationEnabled": {
+            "type": "boolean"
+          },
+          "blueskyCrossPostEnabled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6853,7 +6904,9 @@
           "alwaysShowSpoilers",
           "reviewsPublicationUri",
           "reviewsPublicationName",
-          "reviewsMirrorFormat"
+          "reviewsMirrorFormat",
+          "blogIntegrationEnabled",
+          "blueskyCrossPostEnabled"
         ]
       },
       "UpdateUserSettingsDto": {

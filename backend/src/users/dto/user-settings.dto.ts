@@ -146,6 +146,12 @@ export class UserSettingsDto {
 		enum: ["markdown", "leaflet", "offprint", "pckt"],
 	})
 	reviewsMirrorFormat!: string;
+
+	@ApiProperty()
+	blogIntegrationEnabled!: boolean;
+
+	@ApiProperty()
+	blueskyCrossPostEnabled!: boolean;
 }
 
 export class UpdateUserProfileDto {

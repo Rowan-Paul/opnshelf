@@ -14,4 +14,10 @@ export class VerifyEmailDto {
 export class VerifyEmailResponseDto {
 	@ApiProperty({ description: "Whether the account is now verified" })
 	verified: boolean;
+
+	@ApiProperty({
+		description:
+			"Core OAuth authorization URL. The bootstrap credential is revoked before this is returned.",
+	})
+	coreOAuthUrl: string;
 }

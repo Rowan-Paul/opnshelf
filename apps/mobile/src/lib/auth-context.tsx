@@ -37,6 +37,8 @@ interface AuthContextType {
 	isAuthenticated: boolean;
 	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
 	login: (handle?: string) => Promise<void>;
+	/** Continue an authorization request already created by the backend. */
+	runAuthorizationUrl: (authorizationUrl: string) => Promise<void>;
 	/**
 	 * Persist a session id returned by the OAuth flow and fetch the user. Used by
 	 * the in-app auth session result and by the `auth/complete` deep-link route
@@ -295,6 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isAuthenticated: !!user,
 		login,
 		completeSession,
+		runAuthorizationUrl: runAuthFlow,
 		register,
 		signOut,
 	};

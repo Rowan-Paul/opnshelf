@@ -66,6 +66,8 @@ export class UsersService {
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
 				reviewsMirrorFormat: true,
+				blogIntegrationEnabled: true,
+				blueskyCrossPostEnabled: true,
 			},
 		});
 
@@ -81,6 +83,8 @@ export class UsersService {
 			reviewsPublicationUri: user.reviewsPublicationUri,
 			reviewsPublicationName: user.reviewsPublicationName,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
+			blogIntegrationEnabled: user.blogIntegrationEnabled,
+			blueskyCrossPostEnabled: user.blueskyCrossPostEnabled,
 		};
 	}
 
@@ -159,6 +163,8 @@ export class UsersService {
 				reviewsPublicationUri: true,
 				reviewsPublicationName: true,
 				reviewsMirrorFormat: true,
+				blogIntegrationEnabled: true,
+				blueskyCrossPostEnabled: true,
 			},
 		});
 
@@ -189,6 +195,8 @@ export class UsersService {
 			reviewsPublicationUri: updatedUser.reviewsPublicationUri,
 			reviewsPublicationName: updatedUser.reviewsPublicationName,
 			reviewsMirrorFormat: updatedUser.reviewsMirrorFormat,
+			blogIntegrationEnabled: updatedUser.blogIntegrationEnabled,
+			blueskyCrossPostEnabled: updatedUser.blueskyCrossPostEnabled,
 		};
 	}
 

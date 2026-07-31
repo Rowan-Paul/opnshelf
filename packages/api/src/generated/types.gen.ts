@@ -279,6 +279,10 @@ export type VerifyEmailResponseDto = {
      * Whether the account is now verified
      */
     verified: boolean;
+    /**
+     * Core OAuth authorization URL. The bootstrap credential is revoked before this is returned.
+     */
+    coreOAuthUrl: string;
 };
 
 export type TmdbShowResultDto = {
@@ -746,6 +750,8 @@ export type UserSettingsDto = {
      * Explicit reader format used for blog mirrors; Markdown is the portable default
      */
     reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
+    blogIntegrationEnabled: boolean;
+    blueskyCrossPostEnabled: boolean;
 };
 
 export type UpdateUserSettingsDto = {
@@ -2475,6 +2481,16 @@ export type AuthControllerCallbackData = {
     path?: never;
     query?: never;
     url: '/auth/callback';
+};
+
+export type AuthControllerPermissionsData = {
+    body?: never;
+    path?: never;
+    query: {
+        action: 'connect' | 'disconnect';
+        integration: 'blog' | 'bluesky';
+    };
+    url: '/auth/permissions';
 };
 
 export type AuthControllerMeData = {

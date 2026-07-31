@@ -43,6 +43,10 @@ _Avoid_: Heart, upvote, helpful vote
 **Publication**:
 A `site.standard.publication` record in a user's PDS that the user already owns (e.g. a Leaflet publication). A user may optionally select one in their opnshelf settings as the target for blog-mirrored Reviews. opnshelf does **not** mint publications; reviewing does not require owning a blog. When a Review is mirrored to a blog, the resulting `site.standard.document`'s `site` field points at the chosen publication.
 
+**Blog Mirror**:
+The current external blog document that opnshelf keeps synchronized with a Review. A Review has at most one managed Blog Mirror; disconnecting pauses it, while changing its **Publication** abandons it unchanged and the next mirrored publish creates a new Blog Mirror as the historical copy remains independent.
+_Avoid_: Blog copy (does not distinguish the managed mirror from abandoned historical copies), blog version (implies revision history)
+
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
 
@@ -78,6 +82,14 @@ _Avoid_: Actor (too narrow — excludes directors/crew), User (an account holder
 **User**:
 An opnshelf account holder, identified by DID and handle, with a profile at `/profile/{handle}`. Found via social people search. In the ⌘K palette, User results appear under the **People** heading. Distinct from _Person_ (a TMDB cast/crew member with no opnshelf account).
 _Avoid_: Person (reserved for TMDB cast/crew), Member
+
+**Core Opnshelf Access**:
+Permission to use Opnshelf-owned capabilities and records. A User grants this access when signing in; capabilities owned by another ecosystem require **External Integration Access** when the User chooses them.
+_Avoid_: Full access (incorrectly suggests access to unrelated AT Protocol services), basic access (undersells write access)
+
+**External Integration Access**:
+Permission for one optional ecosystem outside Opnshelf, enabled and disabled independently for a User across all devices. Declining or disconnecting one integration leaves **Core Opnshelf Access** and every other integration unchanged.
+_Avoid_: External publishing access (incorrectly combines independent ecosystems), add-on scope (implementation language)
 
 **Home**:
 The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
