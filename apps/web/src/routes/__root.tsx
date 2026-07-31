@@ -1,4 +1,4 @@
-import { authControllerMeOptions } from "@opnshelf/api";
+import { authControllerMeOptions, isUnauthorizedError } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -30,16 +30,6 @@ interface MyRouterContext {
 }
 
 const THEME_INIT_SCRIPT = `(() => {try{const s=localStorage.getItem('theme'),m=s==='light'||s==='dark'||s==='auto'?s:'auto',d=window.matchMedia('(prefers-color-scheme: dark)').matches,r=m==='auto'?(d?'dark':'light'):m;document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(r);m!=='auto'&&document.documentElement.setAttribute('data-theme',m);document.documentElement.style.colorScheme=r;}catch(e){}})()`;
-
-function isUnauthorizedError(error: unknown): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		("status" in error || "statusCode" in error) &&
-		((error as Record<string, unknown>).status === 401 ||
-			(error as Record<string, unknown>).statusCode === 401)
-	);
-}
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context, location }) => {

@@ -5,6 +5,7 @@ import {
 	getAccountDeletionStatusMessage,
 	isActiveAccountDeletionStatus,
 	isActiveTraktImportStatus,
+	isUnauthorizedError,
 	reviewsControllerListMyPublicationsOptions,
 	type TraktImportJobDto,
 	usersControllerDeleteMyAccountMutation,
@@ -47,16 +48,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
-
-function isUnauthorizedError(error: unknown): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		("status" in error || "statusCode" in error) &&
-		((error as Record<string, unknown>).status === 401 ||
-			(error as Record<string, unknown>).statusCode === 401)
-	);
-}
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";

@@ -1,13 +1,10 @@
 import { Agent } from "@atproto/api";
 import {
 	BadRequestException,
-	HttpException,
-	HttpStatus,
 	Inject,
 	Injectable,
 	Logger,
 	NotFoundException,
-	ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
@@ -39,58 +36,41 @@ import {
 	parseTraktImportData,
 	type TraktImportJobData,
 } from "./background-job-data";
+import {
+	PDS_RETRY_FALLBACK_SECONDS,
+	PDS_RETRY_MAX_SECONDS,
+	PdsRateLimitError,
+	type PdsRateLimitSnapshot,
+	TraktApiError,
+	classifyImportWriteError,
+	formatRetryDelay,
+	getErrorMessage,
+	getPdsRetryAfterSeconds,
+	isPdsRateLimitError,
+	isRecordExistsError,
+	reportPdsRateLimit,
+	secondsUntilPdsReset,
+	toPublicTraktException,
+} from "./import-errors";
+import {
+	TRAKT_PREVIEW_ITEM_LIMIT,
+	type TraktHistoryPayloadItem,
+	type TraktProfilePayload,
+	buildImportKey,
+	candidateYearScore,
+	describeImportItem,
+	getOptionalIdentifierValue,
+	getOptionalIntegerValue,
+	getOptionalStringValue,
+	mapTraktProfilePayload,
+	normalizeTraktApiItem,
+	normalizeTraktPage,
+	yearFromDate,
+} from "./trakt-normalize";
 
 interface ATSession {
 	did: string;
 }
-
-type TraktProfilePayload = {
-	username?: unknown;
-	name?: unknown;
-	private?: unknown;
-	vip?: unknown;
-	ids?: {
-		slug?: unknown;
-	};
-	images?: {
-		avatar?: {
-			full?: unknown;
-			medium?: unknown;
-			thumb?: unknown;
-		};
-	};
-};
-
-type TraktHistoryPayloadItem = {
-	type?: unknown;
-	action?: unknown;
-	watched_at?: unknown;
-	movie?: {
-		title?: unknown;
-		year?: unknown;
-		ids?: {
-			tmdb?: unknown;
-			trakt?: unknown;
-			slug?: unknown;
-			imdb?: unknown;
-		};
-	};
-	show?: {
-		title?: unknown;
-		year?: unknown;
-		ids?: {
-			tmdb?: unknown;
-			trakt?: unknown;
-			slug?: unknown;
-			imdb?: unknown;
-		};
-	};
-	episode?: {
-		season?: unknown;
-		number?: unknown;
-		title?: unknown;
-	};
-};
 
 type TraktJobStatus =
 	| "queued"
@@ -99,25 +79,6 @@ type TraktJobStatus =
 	| "paused"
 	| "completed"
 	| "failed";
-
-type ImportWriteFailureReason =
-	| "duplicate_record"
-	| "metadata_unavailable"
-	| "upstream_write_failed"
-	| "unknown";
-
-type ClassifiedImportWriteError = {
-	reason: ImportWriteFailureReason;
-	message: string;
-	rawMessage: string;
-};
-
-type PdsRateLimitSnapshot = {
-	/** Points remaining in the current (binding) repo-write window. */
-	remaining?: number;
-	/** Unix epoch (seconds) when that window resets. */
-	reset?: number;
-};
 
 type BackgroundJobRecord = Awaited<
 	ReturnType<PrismaService["backgroundJob"]["findFirst"]>
@@ -137,7 +98,6 @@ type RecordedTraktPageItem = {
 };
 
 const TRAKT_HISTORY_PAGE_SIZE = 100;
-const TRAKT_PREVIEW_ITEM_LIMIT = 5;
 const TRAKT_PREVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
 	"queued",
@@ -150,14 +110,6 @@ const STALE_RUNNING_MS = 5 * 60 * 1000;
 const TRAKT_RATE_LIMIT_BACKOFF_SECONDS = [60, 300, 600]; // 1min, 5min, 10min, then +5min each time
 const TRAKT_PAGE_DELAY_MS = 800;
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
-const PDS_RETRY_FALLBACK_SECONDS = 60;
-// PDS repo writes have BOTH an hourly and a daily budget. When the daily budget
-// (atproto: ~35k points/day) is exhausted, ratelimit-reset points at the next
-// day rollover — up to ~24h out. Cap at 25h (24h + 1h margin) so clock skew or a
-// window measured slightly past 24h can't clip a legitimate reset and re-trip us.
-// A 1h cap made us wake hourly, re-trip the still-empty daily budget, and
-// busy-loop forever without progress.
-const PDS_RETRY_MAX_SECONDS = 25 * 60 * 60;
 // Leave at least this many repo-write points unspent in the current window so
 // the user's own interactive writes (rate, review, mark-watched) are never
 // starved by a background import — they share one per-account PDS budget. We
@@ -168,47 +120,12 @@ const PDS_RETRY_MAX_SECONDS = 25 * 60 * 60;
 // ponytail: fixed reserve; revisit only if the PDS exposes per-route budgets.
 const PDS_WRITE_RESERVE_POINTS = 1000;
 
-/**
- * Humanize a retry delay for user-facing status messages. Rate-limit waits can
- * be many minutes now (PDS write budgets refill hourly), so raw seconds —
- * "Retrying in 2717 seconds" — read badly.
- */
-function formatRetryDelay(totalSeconds: number): string {
-	const s = Math.max(0, Math.round(totalSeconds));
-	if (s < 60) return `${s} second${s === 1 ? "" : "s"}`;
-	const minutes = Math.round(s / 60);
-	if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
-	const hours = Math.floor(minutes / 60);
-	const remMinutes = minutes % 60;
-	const hourPart = `${hours} hour${hours === 1 ? "" : "s"}`;
-	return remMinutes > 0
-		? `${hourPart} ${remMinutes} minute${remMinutes === 1 ? "" : "s"}`
-		: hourPart;
-}
-
-class TraktApiError extends Error {
-	constructor(
-		message: string,
-		public readonly status: number,
-		public readonly retryAfterSeconds?: number,
-	) {
-		super(message);
-	}
-}
-
-class PdsRateLimitError extends Error {
-	constructor(public readonly retryAfterSeconds?: number) {
-		super("PDS rate limit reached");
-	}
-}
-
 @Injectable()
 export class ImportHistoryService {
 	private readonly logger = new Logger(ImportHistoryService.name);
 	private readonly traktApiKey: string;
 	private readonly traktBaseUrl = "https://api.trakt.tv";
 	private readonly traktUserAgent = "Opnshelf/1.0 (+https://opnshelf.xyz)";
-	private readonly allowedActions = new Set(["watch", "scrobble", "checkin"]);
 
 	constructor(
 		private readonly prisma: PrismaService,
@@ -246,7 +163,7 @@ export class ImportHistoryService {
 				const baseIndex = items.length + skipped.length + 1;
 
 				for (let i = 0; i < pageResult.payload.length; i++) {
-					const result = this.normalizeTraktApiItem(
+					const result = normalizeTraktApiItem(
 						pageResult.payload[i],
 						baseIndex + i,
 					);
@@ -281,7 +198,7 @@ export class ImportHistoryService {
 				skipped,
 			};
 		} catch (error) {
-			throw this.toPublicTraktException(error);
+			throw toPublicTraktException(error);
 		}
 	}
 
@@ -336,7 +253,7 @@ export class ImportHistoryService {
 				job: this.mapTraktImportJob(job),
 			};
 		} catch (error) {
-			throw this.toPublicTraktException(error);
+			throw toPublicTraktException(error);
 		}
 	}
 
@@ -487,7 +404,7 @@ export class ImportHistoryService {
 
 		for (let index = 0; index < items.length; index++) {
 			const item = items[index];
-			const dedupeKey = this.buildImportKey(item);
+			const dedupeKey = buildImportKey(item);
 			if (dedupeSet.has(dedupeKey)) {
 				skipped += 1;
 				continue;
@@ -601,7 +518,7 @@ export class ImportHistoryService {
 				this.logger.debug(
 					`PDS applyWrites: batch of ${batch.length} succeeded (commit ${response.data.commit?.cid ?? "unknown"})`,
 				);
-				this.reportPdsRateLimit(response.headers, options);
+				reportPdsRateLimit(response.headers, options);
 				batchResults = batch.map((pw, i) => {
 					const result = response.data.results?.[i] as
 						| { uri?: string; cid?: string }
@@ -621,10 +538,7 @@ export class ImportHistoryService {
 				// the record at that rkey is byte-identical, so this is an
 				// idempotent overwrite. Keeps batching (one extra round-trip per
 				// affected batch, not per item).
-				if (
-					!this.isPdsRateLimitError(error) &&
-					this.isRecordExistsError(error)
-				) {
+				if (!isPdsRateLimitError(error) && isRecordExistsError(error)) {
 					this.logger.debug(
 						`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} already exists, retrying as update (idempotent re-import)`,
 					);
@@ -650,7 +564,7 @@ export class ImportHistoryService {
 								cid: result?.cid ?? "",
 							};
 						});
-						this.reportPdsRateLimit(response.headers, options);
+						reportPdsRateLimit(response.headers, options);
 						// Fall through to indexing with the update results.
 						for (let i = 0; i < batch.length; i++) {
 							const pw = batch[i];
@@ -679,8 +593,8 @@ export class ImportHistoryService {
 								}
 								imported += 1;
 							} catch (indexError) {
-								const itemContext = this.describeImportItem(pw.item);
-								const classified = this.classifyImportWriteError(indexError);
+								const itemContext = describeImportItem(pw.item);
+								const classified = classifyImportWriteError(indexError);
 								this.logger.warn(
 									`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
 								);
@@ -704,17 +618,17 @@ export class ImportHistoryService {
 						error = retryError;
 					}
 				}
-				if (this.isPdsRateLimitError(error)) {
+				if (isPdsRateLimitError(error)) {
 					this.logger.warn(
 						`PDS applyWrites: rate limited on batch ${batchStart + 1}–${batchStart + batch.length}`,
 					);
-					throw new PdsRateLimitError(this.getPdsRetryAfterSeconds(error));
+					throw new PdsRateLimitError(getPdsRetryAfterSeconds(error));
 				}
-				const errMsg = this.getErrorMessage(error);
+				const errMsg = getErrorMessage(error);
 				this.logger.warn(
 					`PDS applyWrites: batch ${batchStart + 1}–${batchStart + batch.length} failed: ${errMsg}`,
 				);
-				const classified = this.classifyImportWriteError(error);
+				const classified = classifyImportWriteError(error);
 				for (const pw of batch) {
 					failed += 1;
 					errors.push({
@@ -755,8 +669,8 @@ export class ImportHistoryService {
 					}
 					imported += 1;
 				} catch (error) {
-					const itemContext = this.describeImportItem(pw.item);
-					const classified = this.classifyImportWriteError(error);
+					const itemContext = describeImportItem(pw.item);
+					const classified = classifyImportWriteError(error);
 					this.logger.warn(
 						`Failed to index item at index ${pw.itemIndex + 1} (${itemContext}): ${classified.rawMessage}`,
 					);
@@ -796,17 +710,14 @@ export class ImportHistoryService {
 		for (let offset = 0; offset < payload.length; offset++) {
 			const sourceIndex = startIndex + offset;
 			const raw = payload[offset] as TraktHistoryPayloadItem | undefined;
-			const normalized = this.normalizeTraktApiItem(
-				payload[offset],
-				sourceIndex,
-			);
+			const normalized = normalizeTraktApiItem(payload[offset], sourceIndex);
 			const rawType =
 				raw?.type === "movie" || raw?.type === "episode" ? raw.type : "unknown";
 			const media = rawType === "movie" ? raw?.movie : raw?.show;
-			const title = this.getOptionalStringValue(media?.title);
-			const year = this.getOptionalIntegerValue(media?.year);
-			const traktId = this.getOptionalIdentifierValue(media?.ids?.trakt);
-			const traktSlug = this.getOptionalStringValue(media?.ids?.slug);
+			const title = getOptionalStringValue(media?.title);
+			const year = getOptionalIntegerValue(media?.year);
+			const traktId = getOptionalIdentifierValue(media?.ids?.trakt);
+			const traktSlug = getOptionalStringValue(media?.ids?.slug);
 			const stableIdentity =
 				traktId ?? traktSlug ?? `${title ?? "unknown"}:${year ?? ""}`;
 			const traktMediaKey =
@@ -829,7 +740,7 @@ export class ImportHistoryService {
 			if (normalized.item) {
 				currentNormalizedIndex = normalizedIndex;
 				normalizedIndex += 1;
-				const importKey = this.buildImportKey(normalized.item);
+				const importKey = buildImportKey(normalized.item);
 				duplicate = seenImportKeys.has(importKey);
 				seenImportKeys.add(importKey);
 				const alreadyOnShelf = duplicate
@@ -858,9 +769,9 @@ export class ImportHistoryService {
 					watchedAt: parsedWatchedAt,
 					title,
 					year,
-					episodeTitle: this.getOptionalStringValue(raw?.episode?.title),
-					seasonNumber: this.getOptionalIntegerValue(raw?.episode?.season),
-					episodeNumber: this.getOptionalIntegerValue(raw?.episode?.number),
+					episodeTitle: getOptionalStringValue(raw?.episode?.title),
+					seasonNumber: getOptionalIntegerValue(raw?.episode?.season),
+					episodeNumber: getOptionalIntegerValue(raw?.episode?.number),
 					traktMediaKey,
 					traktId,
 					traktSlug,
@@ -974,7 +885,7 @@ export class ImportHistoryService {
 			);
 			const totalPages =
 				pageResult.pageCount ?? jobData.totalPages ?? jobData.currentPage;
-			const normalized = this.normalizeTraktPage(
+			const normalized = normalizeTraktPage(
 				pageResult.payload,
 				jobData.sourceCount + 1,
 			);
@@ -1044,9 +955,7 @@ export class ImportHistoryService {
 				!isComplete &&
 				rateLimit?.remaining !== undefined &&
 				rateLimit.remaining < PDS_WRITE_RESERVE_POINTS;
-			const throttleSeconds = lowBudget
-				? this.secondsUntilPdsReset(rateLimit)
-				: 0;
+			const throttleSeconds = lowBudget ? secondsUntilPdsReset(rateLimit) : 0;
 			if (lowBudget) {
 				this.logger.log(
 					`Pacing import for job ${job.id}: ${rateLimit?.remaining} write points left, pausing ${throttleSeconds}s for budget to refill.`,
@@ -1126,7 +1035,7 @@ export class ImportHistoryService {
 				return;
 			}
 
-			await this.failTraktImportJob(job.id, this.getErrorMessage(error));
+			await this.failTraktImportJob(job.id, getErrorMessage(error));
 		}
 	}
 
@@ -1154,191 +1063,12 @@ export class ImportHistoryService {
 	}> {
 		const profile = await this.fetchTraktPublicProfile(username);
 		const pageResult = await this.fetchTraktHistoryPage(username, 1);
-		const normalized = this.normalizeTraktPage(pageResult.payload, 1);
+		const normalized = normalizeTraktPage(pageResult.payload, 1);
 
 		return {
 			profile,
 			previewItems: normalized.previewItems,
 			sourcePreviewCount: pageResult.payload.length,
-		};
-	}
-
-	private normalizeTraktPage(
-		payload: unknown[],
-		startIndex: number,
-	): {
-		items: NormalizedImportItemDto[];
-		skipped: ImportSkipDto[];
-		previewItems: TraktHistoryPreviewItemDto[];
-	} {
-		const items: NormalizedImportItemDto[] = [];
-		const skipped: ImportSkipDto[] = [];
-		const previewItems: TraktHistoryPreviewItemDto[] = [];
-
-		for (let index = 0; index < payload.length; index++) {
-			const result = this.normalizeTraktApiItem(
-				payload[index],
-				startIndex + index,
-			);
-			if (result.item) {
-				items.push(result.item);
-				if (
-					result.previewItem &&
-					previewItems.length < TRAKT_PREVIEW_ITEM_LIMIT
-				) {
-					previewItems.push(result.previewItem);
-				}
-			} else if (result.skip) {
-				skipped.push(result.skip);
-			}
-		}
-
-		return { items, skipped, previewItems };
-	}
-
-	private normalizeTraktApiItem(
-		rawItem: unknown,
-		index: number,
-	): {
-		item?: NormalizedImportItemDto;
-		skip?: ImportSkipDto;
-		previewItem?: TraktHistoryPreviewItemDto;
-	} {
-		if (!rawItem || typeof rawItem !== "object") {
-			return {
-				skip: {
-					index,
-					reason: "unsupported_type",
-					message: "Invalid item format",
-				},
-			};
-		}
-
-		const item = rawItem as TraktHistoryPayloadItem;
-		const action =
-			typeof item.action === "string" ? (item.action as string) : "watch";
-		if (!this.allowedActions.has(action)) {
-			return {
-				skip: {
-					index,
-					reason: "unsupported_action",
-					message: `Unsupported action: ${String(item.action ?? "unknown")}`,
-				},
-			};
-		}
-
-		const normalizedAction = action as "watch" | "scrobble" | "checkin";
-		if (
-			typeof item.watched_at !== "string" ||
-			Number.isNaN(Date.parse(item.watched_at))
-		) {
-			return {
-				skip: {
-					index,
-					reason: "invalid_watched_at",
-					message: "Missing or invalid watched_at timestamp",
-				},
-			};
-		}
-
-		const watchedAt = new Date(item.watched_at).toISOString();
-
-		if (item.type === "movie") {
-			const tmdbId = item.movie?.ids?.tmdb;
-			if (
-				typeof tmdbId !== "number" ||
-				!Number.isInteger(tmdbId) ||
-				tmdbId < 1
-			) {
-				return {
-					skip: {
-						index,
-						reason: "missing_tmdb_id",
-						message: "Movie item is missing a TMDB id",
-					},
-				};
-			}
-
-			return {
-				item: {
-					type: "movie",
-					movieTmdbId: tmdbId,
-					action: normalizedAction,
-					watchedAt,
-				},
-				previewItem: {
-					type: "movie",
-					title: this.getStringValue(item.movie?.title, "Untitled movie"),
-					subtitle: this.buildMovieSubtitle(item.movie?.year),
-					watchedAt,
-				},
-			};
-		}
-
-		if (item.type === "episode") {
-			const tmdbId = item.show?.ids?.tmdb;
-			const seasonNumber = item.episode?.season;
-			const episodeNumber = item.episode?.number;
-
-			if (
-				typeof tmdbId !== "number" ||
-				!Number.isInteger(tmdbId) ||
-				tmdbId < 1
-			) {
-				return {
-					skip: {
-						index,
-						reason: "missing_tmdb_id",
-						message: "Episode item is missing a show TMDB id",
-					},
-				};
-			}
-
-			if (
-				typeof seasonNumber !== "number" ||
-				typeof episodeNumber !== "number" ||
-				!Number.isInteger(seasonNumber) ||
-				!Number.isInteger(episodeNumber) ||
-				seasonNumber < 0 ||
-				episodeNumber < 1
-			) {
-				return {
-					skip: {
-						index,
-						reason: "missing_episode_ref",
-						message: "Episode item is missing season and episode numbers",
-					},
-				};
-			}
-
-			return {
-				item: {
-					type: "episode",
-					showTmdbId: tmdbId,
-					seasonNumber,
-					episodeNumber,
-					action: normalizedAction,
-					watchedAt,
-				},
-				previewItem: {
-					type: "episode",
-					title: this.getStringValue(item.show?.title, "Untitled show"),
-					subtitle: this.buildEpisodeSubtitle(
-						seasonNumber,
-						episodeNumber,
-						item.episode?.title,
-					),
-					watchedAt,
-				},
-			};
-		}
-
-		return {
-			skip: {
-				index,
-				reason: "unsupported_type",
-				message: `Unsupported item type: ${String(item.type ?? "unknown")}`,
-			},
 		};
 	}
 
@@ -1369,13 +1099,6 @@ export class ImportHistoryService {
 			payload: data,
 			pageCount: this.parsePaginationPageCount(headers),
 		};
-	}
-
-	private buildImportKey(item: NormalizedImportItemDto): string {
-		if (item.type === "movie") {
-			return `movie:${item.movieTmdbId}:${item.watchedAt}`;
-		}
-		return `episode:${item.showTmdbId}:${item.seasonNumber}:${item.episodeNumber}:${item.watchedAt}`;
 	}
 
 	private async alreadyImported(
@@ -1422,17 +1145,6 @@ export class ImportHistoryService {
 		return false;
 	}
 
-	private describeImportItem(item: NormalizedImportItemDto): string {
-		const watchedAt = item.watchedAt;
-		const action = item.action ?? "watch";
-
-		if (item.type === "movie") {
-			return `movie tmdb=${item.movieTmdbId ?? "unknown"}, watchedAt=${watchedAt}, action=${action}`;
-		}
-
-		return `episode showTmdb=${item.showTmdbId ?? "unknown"}, season=${item.seasonNumber ?? "unknown"}, episode=${item.episodeNumber ?? "unknown"}, watchedAt=${watchedAt}, action=${action}`;
-	}
-
 	private createTraktUrl(pathname: string): URL {
 		return new URL(pathname, this.traktBaseUrl);
 	}
@@ -1449,24 +1161,7 @@ export class ImportHistoryService {
 			throw new BadRequestException("Unexpected Trakt profile format");
 		}
 
-		return this.mapTraktProfilePayload(
-			payload as TraktProfilePayload,
-			username,
-		);
-	}
-
-	private mapTraktProfilePayload(
-		profile: TraktProfilePayload,
-		fallbackUsername: string,
-	): TraktPublicProfileDto {
-		return {
-			username: this.getStringValue(profile.username, fallbackUsername),
-			slug: this.getStringValue(profile.ids?.slug, fallbackUsername),
-			name: this.getOptionalStringValue(profile.name),
-			isPrivate: profile.private === true,
-			isVip: profile.vip === true,
-			avatarUrl: this.resolveTraktAvatarUrl(profile.images?.avatar),
-		};
+		return mapTraktProfilePayload(payload as TraktProfilePayload, username);
 	}
 
 	private async fetchTraktJson<T>(url: URL): Promise<T> {
@@ -1547,76 +1242,6 @@ export class ImportHistoryService {
 		}
 
 		return parsed;
-	}
-
-	private getStringValue(value: unknown, fallback: string): string {
-		return typeof value === "string" && value.trim() ? value.trim() : fallback;
-	}
-
-	private getOptionalStringValue(value: unknown): string | undefined {
-		if (typeof value !== "string") {
-			return undefined;
-		}
-		const trimmed = value.trim();
-		return trimmed ? trimmed : undefined;
-	}
-
-	private getOptionalIntegerValue(value: unknown): number | undefined {
-		return typeof value === "number" && Number.isInteger(value)
-			? value
-			: undefined;
-	}
-
-	private getOptionalIdentifierValue(value: unknown): string | undefined {
-		if (typeof value === "number" && Number.isFinite(value))
-			return String(value);
-		return this.getOptionalStringValue(value);
-	}
-
-	private resolveTraktAvatarUrl(
-		avatar:
-			| {
-					full?: unknown;
-					medium?: unknown;
-					thumb?: unknown;
-			  }
-			| undefined,
-	): string | undefined {
-		const candidate =
-			this.getOptionalStringValue(avatar?.full) ??
-			this.getOptionalStringValue(avatar?.medium) ??
-			this.getOptionalStringValue(avatar?.thumb);
-
-		if (!candidate) {
-			return undefined;
-		}
-
-		if (candidate.startsWith("//")) {
-			return `https:${candidate}`;
-		}
-
-		if (candidate.startsWith("http://")) {
-			return `https://${candidate.slice("http://".length)}`;
-		}
-
-		return candidate;
-	}
-
-	private buildMovieSubtitle(year: unknown): string {
-		if (typeof year === "number" && Number.isInteger(year) && year > 1800) {
-			return `Movie • ${year}`;
-		}
-		return "Movie";
-	}
-
-	private buildEpisodeSubtitle(
-		seasonNumber: number,
-		episodeNumber: number,
-		episodeTitle: unknown,
-	): string {
-		const episodeCode = `S${String(seasonNumber).padStart(2, "0")}E${String(episodeNumber).padStart(2, "0")}`;
-		const title = this.getOptionalStringValue(episodeTitle);
-		return title ? `${episodeCode} • ${title}` : episodeCode;
 	}
 
 	private ensureTraktConfigured(): void {
@@ -1705,15 +1330,15 @@ export class ImportHistoryService {
 			return response.results
 				.sort(
 					(a, b) =>
-						this.candidateYearScore(b.release_date, source.year) -
-						this.candidateYearScore(a.release_date, source.year),
+						candidateYearScore(b.release_date, source.year) -
+						candidateYearScore(a.release_date, source.year),
 				)
 				.slice(0, 10)
 				.map((movie) => ({
 					tmdbId: String(movie.id),
 					mediaType: "movie" as const,
 					title: movie.title,
-					year: this.yearFromDate(movie.release_date),
+					year: yearFromDate(movie.release_date),
 					posterPath: movie.poster_path,
 					overview: movie.overview,
 				}));
@@ -1723,15 +1348,15 @@ export class ImportHistoryService {
 		return response.results
 			.sort(
 				(a, b) =>
-					this.candidateYearScore(b.first_air_date, source.year) -
-					this.candidateYearScore(a.first_air_date, source.year),
+					candidateYearScore(b.first_air_date, source.year) -
+					candidateYearScore(a.first_air_date, source.year),
 			)
 			.slice(0, 10)
 			.map((show) => ({
 				tmdbId: String(show.id),
 				mediaType: "show" as const,
 				title: show.name,
-				year: this.yearFromDate(show.first_air_date),
+				year: yearFromDate(show.first_air_date),
 				posterPath: show.poster_path,
 				overview: show.overview,
 			}));
@@ -2019,20 +1644,6 @@ export class ImportHistoryService {
 		});
 	}
 
-	private yearFromDate(value?: string): number | undefined {
-		if (!value) return undefined;
-		const year = Number.parseInt(value.slice(0, 4), 10);
-		return Number.isInteger(year) ? year : undefined;
-	}
-
-	private candidateYearScore(
-		value: string | undefined,
-		sourceYear: number | null,
-	): number {
-		if (!sourceYear) return 0;
-		return this.yearFromDate(value) === sourceYear ? 1 : 0;
-	}
-
 	private buildProfileFromJobData(
 		jobData: TraktImportJobData,
 	): TraktPublicProfileDto {
@@ -2054,200 +1665,9 @@ export class ImportHistoryService {
 			return session ? (session as unknown as ATSession) : null;
 		} catch (error) {
 			this.logger.warn(
-				`Failed to restore auth session for ${userDid}: ${this.getErrorMessage(error)}`,
+				`Failed to restore auth session for ${userDid}: ${getErrorMessage(error)}`,
 			);
 			return null;
 		}
-	}
-
-	private isPdsRateLimitError(error: unknown): boolean {
-		return (
-			typeof error === "object" &&
-			error !== null &&
-			"status" in error &&
-			(error as { status: unknown }).status === 429
-		);
-	}
-
-	/**
-	 * True when an applyWrites batch failed because a record at one of the
-	 * (deterministic) rkeys already exists in the PDS. This is the crash-recovery
-	 * signal: a prior run wrote to the PDS but died before the DB write. The
-	 * caller retries the batch as `update` ops, which is a safe idempotent
-	 * overwrite because the rkey is a content hash (existing record is identical).
-	 */
-	private isRecordExistsError(error: unknown): boolean {
-		const message = this.getErrorMessage(error).toLowerCase();
-		return (
-			message.includes("already exists") ||
-			message.includes("recordalreadyexists") ||
-			message.includes("could not create") ||
-			message.includes("invalidswap")
-		);
-	}
-
-	/**
-	 * Read the IETF RateLimit headers off a successful applyWrites response so the
-	 * caller can pace itself against the live repo-write budget. Returns undefined
-	 * when the PDS doesn't surface them (older builds) — callers fall back to
-	 * reacting to a 429 instead.
-	 */
-	private parsePdsRateLimitSnapshot(
-		headers: unknown,
-	): PdsRateLimitSnapshot | undefined {
-		if (typeof headers !== "object" || headers === null) return undefined;
-		const h = headers as Record<string, string>;
-		const remainingRaw = h["ratelimit-remaining"] ?? h["RateLimit-Remaining"];
-		const resetRaw = h["ratelimit-reset"] ?? h["RateLimit-Reset"];
-		const remaining =
-			remainingRaw === undefined ? undefined : Number(remainingRaw);
-		const reset = resetRaw === undefined ? undefined : Number(resetRaw);
-		const snapshot: PdsRateLimitSnapshot = {
-			remaining: Number.isFinite(remaining) ? remaining : undefined,
-			reset: Number.isFinite(reset) ? reset : undefined,
-		};
-		return snapshot.remaining === undefined && snapshot.reset === undefined
-			? undefined
-			: snapshot;
-	}
-
-	private reportPdsRateLimit(
-		headers: unknown,
-		options?: { onRateLimit?: (snapshot: PdsRateLimitSnapshot) => void },
-	): void {
-		if (!options?.onRateLimit) return;
-		const snapshot = this.parsePdsRateLimitSnapshot(headers);
-		if (snapshot) options.onRateLimit(snapshot);
-	}
-
-	/** Seconds until the binding repo-write window resets, floored and capped. */
-	private secondsUntilPdsReset(snapshot?: PdsRateLimitSnapshot): number {
-		if (snapshot?.reset !== undefined && Number.isFinite(snapshot.reset)) {
-			const delta = Math.ceil(snapshot.reset - Date.now() / 1000) + 1;
-			if (delta > 0) return Math.min(delta, PDS_RETRY_MAX_SECONDS);
-		}
-		return PDS_RETRY_FALLBACK_SECONDS;
-	}
-
-	private getPdsRetryAfterSeconds(error: unknown): number | undefined {
-		if (typeof error !== "object" || error === null) return undefined;
-		const headers = (error as Record<string, unknown>).headers;
-		if (!headers || typeof headers !== "object") return undefined;
-		const h = headers as Record<string, string>;
-
-		// The atproto PDS throttles repo writes with the IETF RateLimit headers,
-		// NOT Retry-After. `ratelimit-reset` is the absolute Unix epoch (seconds)
-		// when the (hourly) write budget refills — convert it to a delay from now.
-		// Reading the wrong header here is why we used to busy-retry every 60s and
-		// keep re-hitting the limit before the window had actually reset.
-		const reset = h["ratelimit-reset"] ?? h["RateLimit-Reset"];
-		if (reset) {
-			const resetEpoch = Number(reset);
-			if (Number.isFinite(resetEpoch)) {
-				// +1s so we resume just after the window rolls, not on its edge.
-				const delta = Math.ceil(resetEpoch - Date.now() / 1000) + 1;
-				if (delta > 0) return delta;
-			}
-		}
-
-		// Fallback: some proxies send a plain Retry-After (delta seconds).
-		const retryAfter = h["retry-after"] ?? h["Retry-After"];
-		if (retryAfter) {
-			const parsed = Number(retryAfter);
-			if (Number.isFinite(parsed)) return parsed;
-		}
-		return undefined;
-	}
-
-	private classifyImportWriteError(error: unknown): ClassifiedImportWriteError {
-		const rawMessage =
-			this.getErrorMessage(error) || "Failed to import watch item";
-		const normalizedMessage = rawMessage.toLowerCase();
-
-		if (
-			normalizedMessage.includes("unique constraint failed") ||
-			normalizedMessage.includes("duplicate key") ||
-			normalizedMessage.includes("duplicate") ||
-			normalizedMessage.includes("trackedmovie_rkey_key") ||
-			normalizedMessage.includes("trackedepisode_rkey_key") ||
-			normalizedMessage.includes("`rkey`")
-		) {
-			return {
-				reason: "duplicate_record",
-				message: "This watch was already imported.",
-				rawMessage,
-			};
-		}
-
-		if (
-			normalizedMessage.includes("tmdb") ||
-			normalizedMessage.includes("show details") ||
-			normalizedMessage.includes("movie details") ||
-			normalizedMessage.includes("metadata") ||
-			normalizedMessage.includes("season details") ||
-			normalizedMessage.includes("episode details")
-		) {
-			return {
-				reason: "metadata_unavailable",
-				message: "We couldn't fetch details for this title right now.",
-				rawMessage,
-			};
-		}
-
-		if (
-			normalizedMessage.includes("atproto") ||
-			normalizedMessage.includes("pds") ||
-			normalizedMessage.includes("putrecord") ||
-			normalizedMessage.includes("repo.putrecord") ||
-			normalizedMessage.includes("repo#putrecord") ||
-			normalizedMessage.includes("upstream")
-		) {
-			return {
-				reason: "upstream_write_failed",
-				message: "We couldn't save this watch right now. Please try again.",
-				rawMessage,
-			};
-		}
-
-		return {
-			reason: "unknown",
-			message: "We couldn't import this item.",
-			rawMessage,
-		};
-	}
-
-	private getErrorMessage(error: unknown): string {
-		if (error instanceof TraktApiError) {
-			return error.message;
-		}
-		if (error instanceof HttpException) {
-			return error.message;
-		}
-		if (error instanceof Error) {
-			return error.message;
-		}
-		return String(error);
-	}
-
-	private toPublicTraktException(error: unknown): Error {
-		if (error instanceof HttpException) {
-			return error;
-		}
-		if (error instanceof TraktApiError) {
-			if (error.status === 404) {
-				return new NotFoundException(error.message);
-			}
-			if (error.status === 401 || error.status === 403 || error.status < 500) {
-				return new BadRequestException(error.message);
-			}
-			if (error.status === 429) {
-				return new HttpException(error.message, HttpStatus.TOO_MANY_REQUESTS);
-			}
-			return new ServiceUnavailableException(error.message);
-		}
-		if (error instanceof Error) {
-			return error;
-		}
-		return new Error(String(error));
 	}
 }

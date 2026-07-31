@@ -1,17 +1,7 @@
-import { authControllerMeOptions } from "@opnshelf/api";
+import { authControllerMeOptions, isUnauthorizedError } from "@opnshelf/api";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { TraktImportManager } from "#/components/trakt/TraktImportManager";
 import { ssrAuthOptions } from "#/lib/api";
-
-function isUnauthorizedError(error: unknown): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		("status" in error || "statusCode" in error) &&
-		((error as Record<string, unknown>).status === 401 ||
-			(error as Record<string, unknown>).statusCode === 401)
-	);
-}
 
 export const Route = createFileRoute("/trakt-import")({
 	beforeLoad: async ({ context }) => {
