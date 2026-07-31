@@ -856,17 +856,7 @@ describe("AuthService", () => {
 				"blob:image/jpeg",
 				"blob:image/png",
 				"blob:image/webp",
-				"repo:xyz.opnshelf.movie",
-				"repo:xyz.opnshelf.episode",
-				"repo:xyz.opnshelf.list",
-				"repo:xyz.opnshelf.list.item",
-				"repo:xyz.opnshelf.library.item",
-				"repo:xyz.opnshelf.follow",
-				"repo:xyz.opnshelf.profile",
-				"repo:xyz.opnshelf.note",
-				"repo:xyz.opnshelf.review",
-				"repo:xyz.opnshelf.review.like",
-				"repo:xyz.opnshelf.rating",
+				"repo?collection=xyz.opnshelf.episode&collection=xyz.opnshelf.follow&collection=xyz.opnshelf.library.item&collection=xyz.opnshelf.list&collection=xyz.opnshelf.list.item&collection=xyz.opnshelf.movie&collection=xyz.opnshelf.note&collection=xyz.opnshelf.profile&collection=xyz.opnshelf.rating&collection=xyz.opnshelf.review&collection=xyz.opnshelf.review.like",
 			].join(" ");
 
 			await expect(

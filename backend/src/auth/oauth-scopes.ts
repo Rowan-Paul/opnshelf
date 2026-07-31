@@ -101,10 +101,14 @@ interface RepoPermission {
 }
 
 function parseRepoPermission(scope: string): RepoPermission | undefined {
-	if (!scope.startsWith("repo:")) return undefined;
+	if (!scope.startsWith("repo:") && !scope.startsWith("repo?")) {
+		return undefined;
+	}
 
 	const queryIndex = scope.indexOf("?");
-	const positional = scope.slice(5, queryIndex === -1 ? undefined : queryIndex);
+	const positional = scope.startsWith("repo:")
+		? scope.slice(5, queryIndex === -1 ? undefined : queryIndex)
+		: "";
 	const params = new URLSearchParams(
 		queryIndex === -1 ? undefined : scope.slice(queryIndex + 1),
 	);
