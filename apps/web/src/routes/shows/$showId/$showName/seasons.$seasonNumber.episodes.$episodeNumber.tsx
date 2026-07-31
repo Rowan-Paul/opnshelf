@@ -44,6 +44,7 @@ import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
+import ProgressCard from "../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
@@ -161,6 +162,19 @@ function EpisodeDetailPage() {
 	}, [watchHistory, seasonNum, episodeNum]);
 
 	const isWatched = episodeWatchHistory.length > 0;
+
+	// Season progress: distinct episodes watched within this season, out of
+	// the season's episode count (reuses the same show watch history query
+	// already fetched above, and the same episode_count source used for
+	// prev/next episode navigation).
+	const seasonEpisodesWatched = useMemo(() => {
+		if (!watchHistory || !Array.isArray(watchHistory)) return 0;
+		return new Set(
+			watchHistory
+				.filter((ep: { seasonNumber: number }) => ep.seasonNumber === seasonNum)
+				.map((ep: { episodeNumber: number }) => ep.episodeNumber),
+		).size;
+	}, [watchHistory, seasonNum]);
 
 	if (showLoading || episodeLoading) return <DetailPageSkeleton />;
 	if (showError || episodeError || !show || !episode) {
@@ -475,6 +489,15 @@ function EpisodeDetailPage() {
 							mediaType="show"
 							mediaId={`${showId}:season:${seasonNum}:episode:${episodeNum}`}
 						/>
+
+						{/* Season Progress */}
+						{isAuthenticated && currentSeasonEpisodeCount > 0 && (
+							<ProgressCard
+								episodesWatched={seasonEpisodesWatched}
+								totalEpisodes={currentSeasonEpisodeCount}
+								hideActions
+							/>
+						)}
 
 						{/* Your Activity */}
 						{isAuthenticated && (

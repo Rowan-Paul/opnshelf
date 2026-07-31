@@ -10,6 +10,10 @@ interface ProgressCardProps {
 	processing?: boolean;
 	onMarkWatched?: () => void;
 	onUnmarkWatched?: () => void;
+	/** Hide the mark/unmark button — for contexts (e.g. the episode detail
+	 * page) that show season progress read-only, without a season-level
+	 * watch action wired up. */
+	hideActions?: boolean;
 }
 
 export default function ProgressCard({
@@ -22,6 +26,7 @@ export default function ProgressCard({
 	processing = false,
 	onMarkWatched,
 	onUnmarkWatched,
+	hideActions = false,
 }: ProgressCardProps) {
 	const rawProgressPercentage =
 		totalEpisodes > 0 ? (episodesWatched / totalEpisodes) * 100 : 0;
@@ -56,7 +61,7 @@ export default function ProgressCard({
 					</span>
 				</div>
 
-				{isFullyWatched ? (
+				{hideActions ? null : isFullyWatched ? (
 					<button
 						type="button"
 						onClick={onUnmarkWatched}

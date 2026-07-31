@@ -21,6 +21,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -37,6 +38,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function EpisodeDetailScreen() {
@@ -72,6 +74,16 @@ export default function EpisodeDetailScreen() {
 		.sort((a, b) => a.season_number - b.season_number);
 	const currentSeasonCount =
 		seasons.find((s) => s.season_number === seasonNum)?.episode_count ?? 0;
+
+	// Season progress: distinct episodes watched within this season, out of
+	// the season's episode count. Reuses the same show watch history that
+	// backs the season screen's "Your Progress" card.
+	const watch = useWatchStatus({ mediaType: "show", showId: id });
+	const seasonEpisodesWatched = new Set(
+		(watch.showWatchHistory ?? [])
+			.filter((e) => e.seasonNumber === seasonNum)
+			.map((e) => e.episodeNumber),
+	).size;
 
 	let prevEpisode: { season: number; episode: number } | null = null;
 	if (episodeNum > 1) {
@@ -249,6 +261,13 @@ export default function EpisodeDetailScreen() {
 							<ChevronRight color="#94a3b8" size={18} />
 						</Pressable>
 					</View>
+
+					{watch.isAuthenticated ? (
+						<ProgressCard
+							episodesWatched={seasonEpisodesWatched}
+							totalEpisodes={currentSeasonCount}
+						/>
+					) : null}
 
 					<OverviewSection text={data.overview} />
 					<DetailsCard
