@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthModule } from "./auth/auth.module";
+import { AtStoreReviewsModule } from "./atstore-reviews/atstore-reviews.module";
 import { DiscoverModule } from "./discover/discover.module";
 import { FeedbackModule } from "./feedback/feedback.module";
 import { IngesterModule } from "./ingester/ingester.module";
@@ -11,6 +12,7 @@ import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { NotesModule } from "./notes/notes.module";
 import { PeopleModule } from "./people/people.module";
+import { PdsMaintenanceGuard } from "./pds/pds-maintenance.guard";
 import { RatingsModule } from "./ratings/ratings.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -36,6 +38,7 @@ import { UsersModule } from "./users/users.module";
 		PrismaModule,
 		MoviesModule,
 		AuthModule,
+		AtStoreReviewsModule,
 		IngesterModule,
 		UsersModule,
 		ListsModule,
@@ -52,6 +55,12 @@ import { UsersModule } from "./users/users.module";
 		DiscoverModule,
 	],
 	providers: [
+		// Must run before route handlers so an operator can freeze every unsafe
+		// request before a PDS database/blob cutover. See PdsMaintenanceGuard.
+		{
+			provide: APP_GUARD,
+			useClass: PdsMaintenanceGuard,
+		},
 		// ThrottlerGuard as an additional global guard — does not replace the
 		// custom AuthGuard, which is applied per-route via @UseGuards.
 		{

@@ -31,6 +31,12 @@ function errorMessage(code: string): string {
 	}
 }
 
+function isMaintenanceError(error: unknown): boolean {
+	if (!error || typeof error !== "object") return false;
+	const value = error as Record<string, unknown>;
+	return value.status === 503 || value.statusCode === 503;
+}
+
 export default function AuthCompleteScreen() {
 	const { completeSession } = useAuth();
 	const { session, error } = useLocalSearchParams<CompleteParams>();
@@ -62,7 +68,11 @@ export default function AuthCompleteScreen() {
 			})
 			.catch((err) => {
 				console.error("Failed to complete auth:", err);
-				setMessage("Failed to complete sign in. Please try again.");
+				setMessage(
+					isMaintenanceError(err)
+						? "Account storage maintenance is in progress. Please try again shortly."
+						: "Failed to complete sign in. Please try again.",
+				);
 				setTimeout(() => router.replace("/login"), 1500);
 			});
 	}, [completeSession, session, error]);

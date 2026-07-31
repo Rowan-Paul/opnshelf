@@ -1,0 +1,101 @@
+# Builds and gates the PDS Operator image before Railway automatically follows `latest`.
+name: pds-operator-image
+
+on:
+  schedule:
+    - cron: "37 4 * * 3"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Upstream git ref to build (default: upstream HEAD)"
+        required: false
+        default: ""
+      reason:
+        description: "Why this build is being dispatched"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pds-operator-image
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://tangled.org/brookie.blog/pds-operator
+  HUB_REPO: rowanpaul/pds-operator
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Clone upstream source
+        run: |
+          set -euo pipefail
+          git clone "$UPSTREAM_URL" .upstream
+          if [ -n "${{ inputs.ref }}" ]; then
+            git -C .upstream checkout "${{ inputs.ref }}"
+          fi
+          echo "SHA12=$(git -C .upstream rev-parse --short=12 HEAD)" >> "$GITHUB_ENV"
+
+      - name: Skip already-published commit
+        id: dedupe
+        run: |
+          set -euo pipefail
+          if docker buildx imagetools inspect "$HUB_REPO:sha-$SHA12" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install and test upstream server
+        if: steps.dedupe.outputs.skip != 'true'
+        working-directory: .upstream/server
+        run: |
+          set -euo pipefail
+          npm ci
+          npm test
+          npm run typecheck
+
+      - name: Build complete amd64 image
+        if: steps.dedupe.outputs.skip != 'true'
+        run: docker build --platform linux/amd64 -t pds-operator-candidate:ci .upstream
+
+      - name: Gate boot, login, enrollment, restart, and persistent state
+        if: steps.dedupe.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          container=pds-operator-gate
+          cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; docker volume rm pds-operator-gate-data >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker volume create pds-operator-gate-data
+          start() {
+            docker run -d --name "$container" -p 18787:8787 -v pds-operator-gate-data:/data \
+              -e HOST=0.0.0.0 -e PDS_HOSTNAME=gate.invalid -e PDS_ADMIN_IDENTIFIER=operator.gate.invalid \
+              -e PDS_ADMIN_PASSWORD=gate-app-password -e RELAY_HOSTNAME=bsky.network \
+              -e SESSION_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+              -e DASHBOARD_URL=http://localhost:18787 -e DB_PATH=/data/data.sqlite -e AUDIT_LOG_PATH=/data/audit.log \
+              pds-operator-candidate:ci
+          }
+          start
+          for _ in $(seq 1 30); do curl -fsS http://localhost:18787/ >/dev/null && break; sleep 1; done
+          curl -fsS http://localhost:18787/ | grep -qi 'pds operator'
+          docker exec "$container" node dist/cli.js enroll > enroll.out
+          grep -q 'passkey enrollment link' enroll.out
+          docker restart "$container" >/dev/null
+          for _ in $(seq 1 30); do curl -fsS http://localhost:18787/ >/dev/null && break; sleep 1; done
+          docker exec "$container" node -e "const D=require('better-sqlite3'); const db=new D('/data/data.sqlite',{readonly:true}); if (!db.prepare('select count(*) as count from enroll_tokens').get().count) process.exit(1)"
+
+      - name: Push Docker Hub tags
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker tag pds-operator-candidate:ci "$HUB_REPO:sha-$SHA12"
+          docker tag pds-operator-candidate:ci "$HUB_REPO:latest"
+          docker push "$HUB_REPO:sha-$SHA12"
+          docker push "$HUB_REPO:latest"

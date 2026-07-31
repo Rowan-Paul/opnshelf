@@ -19,6 +19,8 @@ function AuthCompletePage() {
 		"loading",
 	);
 	const [errorMessage, setErrorMessage] = useState("");
+	const maintenanceMessage =
+		"Account storage maintenance is in progress. Please try again shortly.";
 
 	// Helper function to get error message - memoized with useCallback
 	const getErrorMessage = useCallback((error: string): string => {
@@ -65,7 +67,17 @@ function AuthCompletePage() {
 			.catch((err) => {
 				console.error("Failed to fetch user:", err);
 				setStatus("error");
-				setErrorMessage("Failed to complete authentication. Please try again.");
+				const statusCode =
+					err && typeof err === "object" && "statusCode" in err
+						? (err as { statusCode?: unknown }).statusCode
+						: err && typeof err === "object" && "status" in err
+							? (err as { status?: unknown }).status
+							: undefined;
+				setErrorMessage(
+					statusCode === 503
+						? maintenanceMessage
+						: "Failed to complete authentication. Please try again.",
+				);
 			});
 	}, [queryClient, search, getErrorMessage]);
 

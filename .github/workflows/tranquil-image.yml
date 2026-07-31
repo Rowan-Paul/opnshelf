@@ -1,0 +1,108 @@
+# Builds the Tranquil PDS upstream image and publishes it directly to Docker Hub.
+# Railway follows `latest`; do not add a repository pin-bump or promotion step here.
+name: tranquil-image
+
+on:
+  schedule:
+    - cron: "37 4 * * 2"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Upstream git ref to build (default: upstream HEAD)"
+        required: false
+        default: ""
+      reason:
+        description: "Why this build is being dispatched"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tranquil-image
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://tangled.org/tranquil.farm/tranquil-pds
+  HUB_REPO: rowanpaul/tranquil-pds
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Clone upstream source
+        run: |
+          set -euo pipefail
+          git clone "$UPSTREAM_URL" .upstream
+          if [ -n "${{ inputs.ref }}" ]; then
+            git -C .upstream checkout "${{ inputs.ref }}"
+          fi
+          SHA12="$(git -C .upstream rev-parse --short=12 HEAD)"
+          VERSION="$(grep -m1 -E '^version *= *\"' .upstream/Cargo.toml | sed -E 's/.*\"([^\"]+)\".*/\1/')"
+          if [ -z "$VERSION" ]; then echo "FAIL: could not read workspace version from Cargo.toml"; exit 1; fi
+          echo "SHA12=$SHA12" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "upstream: v$VERSION @ $SHA12"
+
+      - name: Skip already-published commit
+        id: dedupe
+        run: |
+          set -euo pipefail
+          if docker buildx imagetools inspect "$HUB_REPO:sha-$SHA12" >/dev/null 2>&1; then
+            echo "$HUB_REPO:sha-$SHA12 already exists"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build (linux/amd64, upstream Dockerfile)
+        if: steps.dedupe.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 -f .upstream/Dockerfile -t tranquil-candidate:ci .upstream
+
+      - name: Gate boot and S3 blob backend
+        if: steps.dedupe.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          cleanup() { docker rm -f tqgate-pds tqgate-minio tqgate-pg >/dev/null 2>&1 || true; docker network rm tqgate >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker network create tqgate
+          docker run -d --name tqgate-pg --network tqgate -e POSTGRES_USER=tranquil -e POSTGRES_DB=tranquil -e POSTGRES_HOST_AUTH_METHOD=trust postgres:15
+          docker run -d --name tqgate-minio --network tqgate -e MINIO_ROOT_USER=gate -e MINIO_ROOT_PASSWORD=gate-secret-12345 minio/minio server /data
+          sleep 5
+          docker run --rm --network tqgate --entrypoint sh minio/mc -c "mc alias set m http://tqgate-minio:9000 gate gate-secret-12345 >/dev/null && mc mb m/tenant"
+          docker run -d --name tqgate-pds --network tqgate -p 13000:3000 \
+            -e DATABASE_URL=postgres://tranquil@tqgate-pg:5432/tranquil \
+            -e PDS_HOSTNAME=gate.test -e MASTER_KEY=gate-master-key-0123456789abcdef01 \
+            -e JWT_SECRET=gate-jwt-secret-0123456789abcdef01 -e DPOP_SECRET=gate-dpop-secret-0123456789abcdef0 \
+            -e REPO_BACKEND=postgres -e BLOB_STORAGE_BACKEND=s3 -e S3_BUCKET=tenant \
+            -e S3_ENDPOINT=http://tqgate-minio:9000 -e AWS_ACCESS_KEY_ID=gate \
+            -e AWS_SECRET_ACCESS_KEY=gate-secret-12345 -e AWS_REGION=us-east-1 tranquil-candidate:ci
+          healthy=""
+          for _ in $(seq 1 45); do
+            if body="$(curl -fsS http://localhost:13000/xrpc/_health 2>/dev/null)"; then echo "health: $body"; healthy=1; break; fi
+            sleep 2
+          done
+          docker logs tqgate-pds > boot.log 2>&1
+          if grep -Eiq 'panic|not (compiled|enabled|available)|invalid.*(backend|blob)' boot.log; then
+            echo 'S3 backend is unavailable or the candidate panicked:'
+            grep -Ei 'panic|not (compiled|enabled|available)|invalid.*(backend|blob)' boot.log | head -5
+            exit 1
+          fi
+          if [ -z "$healthy" ]; then tail -30 boot.log; exit 1; fi
+          echo "$body" | grep -q "$VERSION" || echo "WARN: health version did not mention $VERSION"
+
+      - name: Push Docker Hub tags
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          for tag in "v$VERSION" "sha-$SHA12" latest; do
+            docker tag tranquil-candidate:ci "$HUB_REPO:$tag"
+            docker push "$HUB_REPO:$tag"
+          done
