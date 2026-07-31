@@ -184,6 +184,104 @@ export class StartTraktImportDto {
 	username: string;
 }
 
+export class TraktImportIssueDto {
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	sourceIndex: number;
+
+	@ApiProperty({ enum: ["unmatched", "couldnt_import"] })
+	outcome: "unmatched" | "couldnt_import";
+
+	@ApiProperty({ enum: ["movie", "episode", "unknown"] })
+	mediaType: "movie" | "episode" | "unknown";
+
+	@ApiPropertyOptional()
+	title?: string;
+
+	@ApiPropertyOptional()
+	year?: number;
+
+	@ApiPropertyOptional()
+	episodeTitle?: string;
+
+	@ApiPropertyOptional()
+	seasonNumber?: number;
+
+	@ApiPropertyOptional()
+	episodeNumber?: number;
+
+	@ApiPropertyOptional()
+	watchedAt?: string;
+
+	@ApiPropertyOptional()
+	reason?: string;
+
+	@ApiPropertyOptional()
+	message?: string;
+}
+
+export class TraktUnmatchedGroupDto {
+	@ApiProperty()
+	matchKey: string;
+
+	@ApiProperty({ enum: ["movie", "show"] })
+	mediaType: "movie" | "show";
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	year?: number;
+
+	@ApiProperty()
+	watchCount: number;
+
+	@ApiProperty({ type: [String] })
+	watchedAt: string[];
+}
+
+export class TraktMatchCandidateDto {
+	@ApiProperty()
+	tmdbId: string;
+
+	@ApiProperty({ enum: ["movie", "show"] })
+	mediaType: "movie" | "show";
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	year?: number;
+
+	@ApiPropertyOptional()
+	posterPath?: string;
+
+	@ApiPropertyOptional()
+	overview?: string;
+}
+
+export class PaginatedTraktImportIssuesDto {
+	@ApiProperty({ type: [TraktImportIssueDto] })
+	items: TraktImportIssueDto[];
+
+	@ApiProperty()
+	total: number;
+
+	@ApiProperty()
+	page: number;
+
+	@ApiProperty()
+	pageSize: number;
+}
+
+export class ConfirmTraktMatchDto {
+	@ApiProperty({ description: "TMDB movie or show id" })
+	@IsString()
+	tmdbId: string;
+}
+
 export class TraktImportJobDto {
 	@ApiProperty()
 	id: string;
@@ -192,9 +290,22 @@ export class TraktImportJobDto {
 	traktUsername: string;
 
 	@ApiProperty({
-		enum: ["queued", "running", "waiting_retry", "completed", "failed"],
+		enum: [
+			"queued",
+			"running",
+			"waiting_retry",
+			"paused",
+			"completed",
+			"failed",
+		],
 	})
-	status: "queued" | "running" | "waiting_retry" | "completed" | "failed";
+	status:
+		| "queued"
+		| "running"
+		| "waiting_retry"
+		| "paused"
+		| "completed"
+		| "failed";
 
 	@ApiProperty()
 	currentPage: number;
@@ -216,6 +327,27 @@ export class TraktImportJobDto {
 
 	@ApiProperty()
 	failedCount: number;
+
+	@ApiProperty()
+	alreadyOnShelfCount: number;
+
+	@ApiProperty()
+	unmatchedCount: number;
+
+	@ApiProperty()
+	couldntImportCount: number;
+
+	@ApiProperty({ type: [TraktImportIssueDto] })
+	issuesPreview: TraktImportIssueDto[];
+
+	@ApiProperty({ type: [TraktUnmatchedGroupDto] })
+	unmatchedGroups: TraktUnmatchedGroupDto[];
+
+	@ApiPropertyOptional()
+	acknowledgedAt?: string;
+
+	@ApiPropertyOptional()
+	reminderSnoozedUntil?: string;
 
 	@ApiProperty()
 	nextRunAt: string;

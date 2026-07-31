@@ -31,14 +31,17 @@ import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	CompleteOnboardingResponseDto,
+	ConfirmTraktMatchDto,
 	FetchTraktPublicHistoryDto,
 	FetchTraktPublicHistoryResponseDto,
 	ImportBlueskyFollowsResponseDto,
 	ImportHistoryDto,
 	ImportHistoryResponseDto,
+	PaginatedTraktImportIssuesDto,
 	StartTraktImportDto,
 	StartTraktImportResponseDto,
 	TraktImportJobDto,
+	TraktMatchCandidateDto,
 } from "./dto/import-history.dto";
 import {
 	AccountDeletionJobDto,
@@ -443,6 +446,131 @@ export class UsersController {
 		}
 
 		return this.usersService.getCurrentTraktImport(did);
+	}
+
+	@Post("me/import/trakt/public/pause")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Pause the current Trakt import" })
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async pauseMyTraktImport(
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.pauseTraktImport(did);
+	}
+
+	@Post("me/import/trakt/public/resume")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Resume the current paused or stopped Trakt import",
+	})
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async resumeMyTraktImport(
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.resumeTraktImport(did);
+	}
+
+	@Post("me/import/trakt/public/acknowledge")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Acknowledge the latest Trakt import result" })
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async acknowledgeMyTraktImport(
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.acknowledgeTraktImport(did);
+	}
+
+	@Post("me/import/trakt/public/reminder/snooze")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Snooze the Trakt matching reminder for seven days",
+	})
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async snoozeMyTraktReminder(
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.snoozeTraktReminder(did);
+	}
+
+	@Get("me/import/trakt/public/issues")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "List every unresolved Trakt import item" })
+	@ApiQuery({ name: "page", required: false, type: Number })
+	@ApiQuery({ name: "pageSize", required: false, type: Number })
+	@ApiQuery({
+		name: "outcome",
+		required: false,
+		enum: ["unmatched", "couldnt_import"],
+	})
+	@ApiResponse({ status: 200, type: PaginatedTraktImportIssuesDto })
+	async getMyTraktImportIssues(
+		@Query("page") page: string | undefined,
+		@Query("pageSize") pageSize: string | undefined,
+		@Query("outcome") outcome: "unmatched" | "couldnt_import" | undefined,
+		@Req() req: AuthenticatedRequest,
+	): Promise<PaginatedTraktImportIssuesDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.getTraktImportIssues(
+			did,
+			Number(page ?? 1),
+			Number(pageSize ?? 25),
+			outcome,
+		);
+	}
+
+	@Get("me/import/trakt/public/matches/:matchKey/candidates")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Find TMDB candidates for an unmatched Trakt title",
+	})
+	@ApiQuery({ name: "query", required: false, type: String })
+	@ApiResponse({ status: 200, type: TraktMatchCandidateDto, isArray: true })
+	async getMyTraktMatchCandidates(
+		@Param("matchKey") matchKey: string,
+		@Query("query") query: string | undefined,
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktMatchCandidateDto[]> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.getTraktMatchCandidates(did, matchKey, query);
+	}
+
+	@Post("me/import/trakt/public/matches/:matchKey/confirm")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Confirm a TMDB match for grouped Trakt Watches" })
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async confirmMyTraktMatch(
+		@Param("matchKey") matchKey: string,
+		@Body() dto: ConfirmTraktMatchDto,
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.confirmTraktMatch(did, matchKey, dto.tmdbId);
+	}
+
+	@Post("me/import/trakt/public/matches/:matchKey/no-match")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Confirm that an unmatched Trakt title has no TMDB match",
+	})
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async rejectMyTraktMatch(
+		@Param("matchKey") matchKey: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.rejectTraktMatch(did, matchKey);
 	}
 
 	@Post("me/import/bluesky-follows")

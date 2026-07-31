@@ -1,6 +1,6 @@
 generator client {
-  provider   = "prisma-client"
-  output     = "../src/generated"
+  provider     = "prisma-client"
+  output       = "../src/generated"
   moduleFormat = "cjs"
 }
 
@@ -9,68 +9,68 @@ datasource db {
 }
 
 model User {
-  did         String   @id
-  handle      String   @unique
-  displayName String?
-  avatar      String?
-  profileRkey String?
-  profileUri  String?
-  profileCid  String?
-  profileDisplayName String?
-  profileAvatarCid String?
-  profileAvatarMimeType String?
-  profileUpdatedAt DateTime?
-  timezone     String   @default("UTC")
-  timeFormat   String   @default("24h")
-  watchCountry String   @default("US")
+  did                     String           @id
+  handle                  String           @unique
+  displayName             String?
+  avatar                  String?
+  profileRkey             String?
+  profileUri              String?
+  profileCid              String?
+  profileDisplayName      String?
+  profileAvatarCid        String?
+  profileAvatarMimeType   String?
+  profileUpdatedAt        DateTime?
+  timezone                String           @default("UTC")
+  timeFormat              String           @default("24h")
+  watchCountry            String           @default("US")
   // Reader preference: suppress Spoiler Shields entirely (ADR-0016).
-  alwaysShowSpoilers Boolean @default(false)
-  onboardingCompletedAt DateTime?
+  alwaysShowSpoilers      Boolean          @default(false)
+  onboardingCompletedAt   DateTime?
   // One-time AT Store review request state. `atStoreReviewRkey` is allocated
   // before the PDS write so retries use the same record key.
-  atStoreReviewHandledAt DateTime?
-  atStoreReviewRkey String?
-  emailVerifiedAt DateTime?
+  atStoreReviewHandledAt  DateTime?
+  atStoreReviewRkey       String?
+  emailVerifiedAt         DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with
   // Tab at sign-in/sign-up; lastIngestAt is bumped each time a watch record is
   // ingested. Together they let the shelf derive whether records are still
   // streaming in — see ShelfService.getSyncStatus.
-  backfillStartedAt DateTime?
-  lastIngestAt DateTime?
+  backfillStartedAt       DateTime?
+  lastIngestAt            DateTime?
   // True only for accounts created on opnshelf's own PDS (native signup).
   // External OAuth accounts are verified upstream, so the email-verification
   // gate must never apply to them — see needsEmailVerification in auth.controller.
-  isNativePds Boolean @default(false)
-  blueskyProfileUrl String?
-  tangledProfileUrl String?
-  showBlueskyOnProfile Boolean @default(true)
-  showTangledOnProfile Boolean @default(true)
-  reviewsPublicationUri String?
-  reviewsPublicationName String?
+  isNativePds             Boolean          @default(false)
+  blueskyProfileUrl       String?
+  tangledProfileUrl       String?
+  showBlueskyOnProfile    Boolean          @default(true)
+  showTangledOnProfile    Boolean          @default(true)
+  reviewsPublicationUri   String?
+  reviewsPublicationName  String?
   // Account-wide integrations. Configuration is retained when disabled so an
   // explicit reconnect can resume the same publication/pointers.
-  blogIntegrationEnabled Boolean @default(false)
-  blueskyCrossPostEnabled Boolean @default(false)
+  blogIntegrationEnabled  Boolean          @default(false)
+  blueskyCrossPostEnabled Boolean          @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains
   // markdown until a user selects a supported reader-specific format.
-  reviewsMirrorFormat BlogMirrorFormat @default(markdown)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  trackedMovies TrackedMovie[]
+  reviewsMirrorFormat     BlogMirrorFormat @default(markdown)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  trackedMovies   TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
-  lists        List[]
-  libraryItems LibraryItem[]
-  notes        Note[]
-  reviews      Review[]
-  publications Publication[]
-  ratings      Rating[]
-  reviewLikes  ReviewLike[]
-  feedback     Feedback[]
-  following    Follow[] @relation("UserFollowing")
-  followers    Follow[] @relation("UserFollowers")
-  circles      Circle[]
+  lists           List[]
+  libraryItems    LibraryItem[]
+  notes           Note[]
+  reviews         Review[]
+  publications    Publication[]
+  ratings         Rating[]
+  reviewLikes     ReviewLike[]
+  feedback        Feedback[]
+  following       Follow[]         @relation("UserFollowing")
+  followers       Follow[]         @relation("UserFollowers")
+  circles         Circle[]
 
   @@index([handle])
   @@index([profileAvatarCid])
@@ -94,8 +94,8 @@ model Follow {
   cid          String?
   createdAt    DateTime @default(now())
 
-  follower     User @relation("UserFollowing", fields: [followerDid], references: [did], onDelete: Cascade)
-  following    User @relation("UserFollowers", fields: [followingDid], references: [did], onDelete: Cascade)
+  follower      User           @relation("UserFollowing", fields: [followerDid], references: [did], onDelete: Cascade)
+  following     User           @relation("UserFollowers", fields: [followingDid], references: [did], onDelete: Cascade)
   circleMembers CircleMember[]
 
   @@id([followerDid, followingDid])
@@ -114,7 +114,7 @@ model Circle {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   CircleMember[]
+  members CircleMember[]
 
   @@unique([ownerDid, name])
   @@index([ownerDid])
@@ -153,7 +153,6 @@ enum LibraryFormat {
   dvd
 }
 
-
 // OAuth session storage for @atproto/oauth-client-node sessionStore
 // No FK to User because the OAuth library stores session before we create the User
 // Cookie stores opaque id (not DID) for session lookup
@@ -162,7 +161,7 @@ model AuthSession {
   // Not unique: one row per device session (id is the opaque cookie/Bearer
   // value). A user can be signed in on several devices at once.
   userDid     String
-  sessionData String   // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
+  sessionData String // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
   kind        String   @default("oauth") // "oauth" | "credential"
   // Absolute lifetime: the guard rejects the session once expiresAt <= now.
   // Defaults to now() at the DB level so the migration backfills existing rows
@@ -184,7 +183,7 @@ model AuthState {
   stateData String
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
+
   @@index([expiresAt])
 }
 
@@ -201,22 +200,72 @@ model BackgroundJob {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  traktItems   TraktImportItem[]
+  traktMatches TraktImportMatch[]
+
   @@index([type, status, nextRunAt])
   @@index([userDid, type])
 }
 
+// Durable, complete outcome for one source row in a User's single Trakt
+// Import. Rows remain for the account lifetime so the result and reconciliation
+// queue never imply that an omitted source item was imported.
+model TraktImportItem {
+  id               String        @id @default(cuid())
+  jobId            String
+  job              BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sourceIndex      Int
+  outcome          String
+  mediaType        String
+  watchedAt        DateTime?
+  title            String?
+  year             Int?
+  episodeTitle     String?
+  seasonNumber     Int?
+  episodeNumber    Int?
+  traktMediaKey    String?
+  traktId          String?
+  traktSlug        String?
+  tmdbId           String?
+  reason           String?
+  message          String?
+  createdWatchRkey String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([jobId, sourceIndex])
+  @@index([jobId, outcome, sourceIndex])
+  @@index([jobId, traktMediaKey])
+}
+
+// A User's explicit acceptance that one Trakt media identity should map to a
+// TMDB Media Item. It is evidence local to this Import, never an authoritative
+// mapping for another User.
+model TraktImportMatch {
+  id          String        @id @default(cuid())
+  jobId       String
+  job         BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  matchKey    String
+  mediaType   String
+  tmdbId      String
+  confirmedAt DateTime      @default(now())
+
+  @@unique([jobId, matchKey])
+  @@index([jobId])
+}
+
 model Movie {
-  movieId      String   @id
+  movieId      String    @id
   title        String
   posterPath   String?
   backdropPath String?
   releaseYear  Int?
   releaseDate  DateTime?
   overview     String?
-  colors       Json?    // { primary, secondary, accent, muted }
+  colors       Json? // { primary, secondary, accent, muted }
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   trackedBy    TrackedMovie[]
   listItems    ListItem[]
@@ -226,61 +275,61 @@ model Movie {
 }
 
 model Show {
-  showId        String   @id
-  title         String
-  posterPath    String?
-  backdropPath  String?
-  firstAirYear  Int?
-  firstAirDate  DateTime?
-  overview      String?
-  colors        Json?
+  showId       String    @id
+  title        String
+  posterPath   String?
+  backdropPath String?
+  firstAirYear Int?
+  firstAirDate DateTime?
+  overview     String?
+  colors       Json?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trackedBy     TrackedEpisode[]
-  listItems     ListItem[]
-  libraryItems  LibraryItem[]
-  seasons       Season[]
+  trackedBy    TrackedEpisode[]
+  listItems    ListItem[]
+  libraryItems LibraryItem[]
+  seasons      Season[]
 
   @@index([title])
 }
 
 model Season {
-  id            String    @id @default(cuid())
-  tmdbId        Int       @unique
-  showId        String
-  show          Show      @relation(fields: [showId], references: [showId], onDelete: Cascade)
-  seasonNumber  Int
-  name          String
-  posterPath    String?
-  airDate       DateTime?
-  episodeCount  Int?
+  id           String    @id @default(cuid())
+  tmdbId       Int       @unique
+  showId       String
+  show         Show      @relation(fields: [showId], references: [showId], onDelete: Cascade)
+  seasonNumber Int
+  name         String
+  posterPath   String?
+  airDate      DateTime?
+  episodeCount Int?
 
-  episodes      Episode[]
+  episodes Episode[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([showId, seasonNumber])
   @@index([showId])
 }
 
 model Episode {
-  id             String    @id @default(cuid())
-  tmdbId         Int       @unique
-  seasonId       String
-  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  showId         String
-  episodeNumber  Int
-  seasonNumber   Int
-  name           String
-  airDate        DateTime?
-  overview       String?
-  stillPath      String?
+  id            String    @id @default(cuid())
+  tmdbId        Int       @unique
+  seasonId      String
+  season        Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  showId        String
+  episodeNumber Int
+  seasonNumber  Int
+  name          String
+  airDate       DateTime?
+  overview      String?
+  stillPath     String?
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([showId, seasonNumber, episodeNumber])
   @@index([seasonId])
@@ -289,23 +338,24 @@ model Episode {
 }
 
 model TrackedMovie {
-  id          String   @id @default(cuid())
-  rkey        String
-  uri         String
-  cid         String
-  
-  userDid     String
-  user        User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
-  
-  movieId     String
-  movie       Movie    @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
-  
-  status      String   @default("watched")
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
+
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
+  movieId String
+  movie   Movie  @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+
+  status      String    @default("watched")
   watchedDate DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userDid, rkey], map: "TrackedMovie_userDid_rkey_key")
   @@index([userDid])
   @@index([movieId])
   @@index([status])
@@ -313,29 +363,29 @@ model TrackedMovie {
   @@index([watchedDate])
   @@index([uri])
   @@index([cid])
-  @@unique([userDid, rkey], map: "TrackedMovie_userDid_rkey_key")
 }
 
 model TrackedEpisode {
-  id            String   @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid       String
-  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
-  showId        String
-  show          Show     @relation(fields: [showId], references: [showId], onDelete: Cascade)
+  showId String
+  show   Show   @relation(fields: [showId], references: [showId], onDelete: Cascade)
 
   seasonNumber  Int
   episodeNumber Int
-  status        String   @default("watched")
+  status        String    @default("watched")
   watchedDate   DateTime?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([userDid, rkey], map: "TrackedEpisode_userDid_rkey_key")
   @@index([userDid])
   @@index([showId])
   @@index([seasonNumber])
@@ -345,28 +395,27 @@ model TrackedEpisode {
   @@index([watchedDate])
   @@index([uri])
   @@index([cid])
-  @@unique([userDid, rkey], map: "TrackedEpisode_userDid_rkey_key")
 }
 
 model List {
-  id          String   @id @default(cuid())
-  rkey        String
-  uri         String
-  cid         String?
-  
-  userDid     String
-  user        User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
-  
+  id   String  @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String?
+
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
+
   name        String
   description String?
   slug        String
-  isDefault   Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  items       ListItem[]
-  
+  isDefault   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items ListItem[]
+
   @@unique([userDid, slug])
   @@unique([userDid, rkey], map: "List_userDid_rkey_key")
   @@index([userDid])
@@ -374,32 +423,32 @@ model List {
 }
 
 model ListItem {
-  id            String    @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String?
+  id   String  @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String?
 
-  listId        String
-  list          List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId String
+  list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   // Denormalized repository owner for AT Protocol record identity. Ownership
   // is derived from the parent List when migrating existing rows.
-  userDid       String
+  userDid String
 
   mediaType     MediaType
   mediaId       String
   seasonNumber  Int       @default(0)
   episodeNumber Int       @default(0)
 
-  movieId       String?
-  movie         Movie?    @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
-  showId        String?
-  show          Show?     @relation(fields: [showId], references: [showId], onDelete: Cascade)
+  movieId String?
+  movie   Movie?  @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  showId  String?
+  show    Show?   @relation(fields: [showId], references: [showId], onDelete: Cascade)
 
-  notes         String?
-  position      Int       @default(0)
+  notes    String?
+  position Int     @default(0)
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([listId, mediaType, mediaId, seasonNumber, episodeNumber])
   @@unique([userDid, rkey], map: "ListItem_userDid_rkey_key")
@@ -411,13 +460,13 @@ model ListItem {
 // A film a user owns in a given Format (their Library). No parent record —
 // the Library is an umbrella, not an entity. See ADR 0009.
 model LibraryItem {
-  id            String        @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String?
+  id   String  @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String?
 
-  userDid       String
-  user          User          @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
   mediaType     MediaType
   mediaId       String
@@ -425,15 +474,15 @@ model LibraryItem {
   seasonNumber  Int           @default(0)
   episodeNumber Int           @default(0)
 
-  movieId       String?
-  movie         Movie?        @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
-  showId        String?
-  show          Show?         @relation(fields: [showId], references: [showId], onDelete: Cascade)
+  movieId String?
+  movie   Movie?  @relation(fields: [movieId], references: [movieId], onDelete: Cascade)
+  showId  String?
+  show    Show?   @relation(fields: [showId], references: [showId], onDelete: Cascade)
 
-  boxSet        String?
-  notes         String?
+  boxSet String?
+  notes  String?
 
-  createdAt     DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber, format])
   @@unique([userDid, rkey], map: "LibraryItem_userDid_rkey_key")
@@ -442,23 +491,23 @@ model LibraryItem {
 }
 
 model Note {
-  id            String   @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid       String
-  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
   mediaType     MediaType
   mediaId       String
-  seasonNumber  Int      @default(0)
-  episodeNumber Int      @default(0)
+  seasonNumber  Int       @default(0)
+  episodeNumber Int       @default(0)
 
-  content       String
+  content String
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
   @@unique([userDid, rkey], map: "Note_userDid_rkey_key")
@@ -473,26 +522,26 @@ model Note {
 // standard.site blog as a site.standard.document, in which case the mirror's
 // AT-URI/CID are stored below.
 model Review {
-  id            String   @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid       String
-  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
   // Media coordinates.
   mediaType     MediaType
   mediaId       String
-  seasonNumber  Int      @default(0)
-  episodeNumber Int      @default(0)
+  seasonNumber  Int       @default(0)
+  episodeNumber Int       @default(0)
 
-  title          String
+  title    String
   // Raw markdown source (the review record's `content`).
-  markdown       String
+  markdown String
   // Author-declared Spoiler Flag (ADR-0016). Whole-review; absent on the
   // record means false. The title is outside the spoiler boundary.
-  spoiler        Boolean  @default(false)
+  spoiler  Boolean @default(false)
 
   // Optional standard.site blog mirror (ADR-0013). Set only when the author has
   // selected a publication and the mirror write succeeded.
@@ -501,63 +550,63 @@ model Review {
   // Per-review opt-out: false excludes this single review from the blog mirror
   // even when the author has a publication configured (mirrors the record's
   // optional `mirrorToBlog`). Defaults to mirror.
-  mirrorToBlog    Boolean  @default(true)
+  mirrorToBlog    Boolean @default(true)
 
   // Optional one-time Bluesky Cross-post (ADR-0015). This is only a pointer to
   // the independent post; review edits/deletion never synchronize it.
-  blueskyPostUri  String?
-  blueskyPostCid  String?
+  blueskyPostUri String?
+  blueskyPostCid String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  likes         ReviewLike[]
+  likes ReviewLike[]
 
+  @@unique([userDid, rkey], map: "Review_userDid_rkey_key")
   @@index([userDid])
   @@index([mediaType, mediaId])
-  @@unique([userDid, rkey], map: "Review_userDid_rkey_key")
 }
 
 // A site.standard.publication the user owns in their own PDS (e.g. Leaflet).
 // opnshelf NO LONGER mints these (ADR-0013); the row is only a firehose-cached
 // mirror used to resolve the blog-mirror target the user selected in settings.
 model Publication {
-  id        String   @id @default(cuid())
-  rkey      String
-  uri       String
-  cid       String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid   String
-  user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
-  name      String
-  url       String
+  name String
+  url  String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userDid])
   @@unique([userDid, rkey], map: "Publication_userDid_rkey_key")
+  @@index([userDid])
 }
 
 model Rating {
-  id            String   @id @default(cuid())
-  rkey          String
-  uri           String
-  cid           String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid       String
-  user          User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
   mediaType     MediaType
   mediaId       String
-  seasonNumber  Int      @default(0)
-  episodeNumber Int      @default(0)
+  seasonNumber  Int       @default(0)
+  episodeNumber Int       @default(0)
 
-  rating        Int
+  rating Int
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userDid, mediaType, mediaId, seasonNumber, episodeNumber])
   @@unique([userDid, rkey], map: "Rating_userDid_rkey_key")
@@ -567,16 +616,16 @@ model Rating {
 }
 
 model ReviewLike {
-  id        String   @id @default(cuid())
-  rkey      String
-  uri       String
-  cid       String
+  id   String @id @default(cuid())
+  rkey String
+  uri  String
+  cid  String
 
-  userDid   String
-  user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid String
+  user    User   @relation(fields: [userDid], references: [did], onDelete: Cascade)
 
-  reviewId  String
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 

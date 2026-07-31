@@ -74,6 +74,17 @@ describe("ImportHistoryService", () => {
 			create: vi.fn(),
 			update: vi.fn(),
 		},
+		traktImportItem: {
+			upsert: vi.fn(),
+			update: vi.fn(),
+			updateMany: vi.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			count: vi.fn(),
+		},
+		traktImportMatch: {
+			upsert: vi.fn(),
+		},
 	} as unknown as PrismaService;
 
 	const moviesService = {
@@ -109,6 +120,13 @@ describe("ImportHistoryService", () => {
 			authService,
 		);
 		global.fetch = vi.fn() as unknown as typeof fetch;
+		prisma.traktImportItem.upsert = vi.fn().mockResolvedValue({});
+		prisma.traktImportItem.update = vi.fn().mockResolvedValue({});
+		prisma.traktImportItem.updateMany = vi.fn().mockResolvedValue({ count: 0 });
+		prisma.traktImportItem.findFirst = vi.fn().mockResolvedValue(null);
+		prisma.traktImportItem.findMany = vi.fn().mockResolvedValue([]);
+		prisma.traktImportItem.count = vi.fn().mockResolvedValue(0);
+		prisma.traktImportMatch.upsert = vi.fn().mockResolvedValue({});
 
 		(moviesService.buildMovieWatchRecord as Mock).mockReturnValue({
 			rkey: "rkey-movie-1",
@@ -205,7 +223,7 @@ describe("ImportHistoryService", () => {
 		);
 	});
 
-	it("reuses an existing active Trakt import job", async () => {
+	it("reuses the fixed import job without refreshing its Trakt snapshot", async () => {
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
@@ -244,6 +262,7 @@ describe("ImportHistoryService", () => {
 			},
 		});
 		expect(prisma.backgroundJob.create).not.toHaveBeenCalled();
+		expect(global.fetch).not.toHaveBeenCalled();
 	});
 
 	it("moves a job to waiting_retry when Trakt returns 429", async () => {
@@ -391,6 +410,56 @@ describe("ImportHistoryService", () => {
 						sourceCount: 1,
 					}),
 					lastError: null,
+				}),
+			}),
+		);
+	});
+
+	it("retains a valid Trakt title without a TMDB id as unmatched", async () => {
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.update = vi.fn().mockResolvedValue(job);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+
+		(global.fetch as Mock).mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						type: "movie",
+						action: "watch",
+						watched_at: "2026-03-22T12:00:00.000Z",
+						movie: {
+							title: "The Lord of the Rings: Extended Edition",
+							year: 2001,
+							ids: { trakt: 123, slug: "lotr-extended" },
+						},
+					},
+				]),
+				{ status: 200, headers: { "x-pagination-page-count": "1" } },
+			),
+		);
+
+		await service.processNextTraktImportJob();
+
+		expect(prisma.traktImportItem.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({
+					outcome: "unmatched",
+					traktMediaKey: "movie:123",
+					title: "The Lord of the Rings: Extended Edition",
+				}),
+			}),
+		);
+		expect(moviesService.buildMovieWatchRecord).not.toHaveBeenCalled();
+		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					status: "completed",
+					data: expect.objectContaining({
+						unmatchedCount: 1,
+						failedCount: 0,
+					}),
 				}),
 			}),
 		);
@@ -554,7 +623,7 @@ describe("ImportHistoryService", () => {
 		expect((nextRunAt.getTime() - Date.now()) / 1000).toBeLessThan(60);
 	});
 
-	it("prefers the newest active job over recent terminal jobs", async () => {
+	it("returns the newest durable import job", async () => {
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
 			buildTraktImportJob({
 				status: "running",
@@ -578,25 +647,21 @@ describe("ImportHistoryService", () => {
 			expect.objectContaining({
 				where: expect.objectContaining({
 					userDid: "did:plc:abc",
-					status: { in: ["queued", "running", "waiting_retry"] },
 				}),
-				orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+				orderBy: [{ createdAt: "desc" }],
 			}),
 		);
 	});
 
-	it("returns the newest recent terminal job using terminal-aware ordering", async () => {
-		prisma.backgroundJob.findFirst = vi
-			.fn()
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce(
-				buildTraktImportJob({
-					status: "completed",
-					importedCount: 199,
-					completedAt: new Date("2026-03-23T21:07:40.324Z"),
-					updatedAt: new Date("2026-03-23T21:07:40.324Z"),
-				}),
-			);
+	it("returns a terminal job without a retention cutoff", async () => {
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
+			buildTraktImportJob({
+				status: "completed",
+				importedCount: 199,
+				completedAt: new Date("2026-03-23T21:07:40.324Z"),
+				updatedAt: new Date("2026-03-23T21:07:40.324Z"),
+			}),
+		);
 
 		await expect(
 			service.getCurrentTraktImport("did:plc:abc"),
@@ -606,39 +671,27 @@ describe("ImportHistoryService", () => {
 			importedCount: 199,
 		});
 
-		expect(prisma.backgroundJob.findFirst).toHaveBeenNthCalledWith(
-			2,
+		expect(prisma.backgroundJob.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({
 					userDid: "did:plc:abc",
-					status: { in: ["completed", "failed"] },
-					updatedAt: expect.objectContaining({
-						gte: expect.any(Date),
-					}),
 				}),
-				orderBy: [
-					{ completedAt: "desc" },
-					{ updatedAt: "desc" },
-					{ createdAt: "desc" },
-				],
+				orderBy: [{ createdAt: "desc" }],
 			}),
 		);
 	});
 
 	it("keeps completed jobs completed when they include item-level failures", async () => {
-		prisma.backgroundJob.findFirst = vi
-			.fn()
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce(
-				buildTraktImportJob({
-					status: "completed",
-					importedCount: 150,
-					failedCount: 3,
-					lastError: null,
-					completedAt: new Date("2026-03-23T21:07:40.324Z"),
-					updatedAt: new Date("2026-03-23T21:07:40.324Z"),
-				}),
-			);
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(
+			buildTraktImportJob({
+				status: "completed",
+				importedCount: 150,
+				failedCount: 3,
+				lastError: null,
+				completedAt: new Date("2026-03-23T21:07:40.324Z"),
+				updatedAt: new Date("2026-03-23T21:07:40.324Z"),
+			}),
+		);
 
 		await expect(service.getCurrentTraktImport("did:plc:abc")).resolves.toEqual(
 			expect.objectContaining({

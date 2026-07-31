@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { ScrollView } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { TraktImportManager } from "@/components/trakt/TraktImportManager";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 export default function TraktImportScreen() {
@@ -17,7 +17,7 @@ export default function TraktImportScreen() {
 				keyboardShouldPersistTaps="handled"
 				showsVerticalScrollIndicator={false}
 			>
-				<TraktImportPanel />
+				<TraktImportManager />
 			</ScrollView>
 		</KeyboardAvoidingView>
 	);

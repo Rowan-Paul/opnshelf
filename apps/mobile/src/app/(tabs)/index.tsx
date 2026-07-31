@@ -10,6 +10,7 @@ import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
 import { StatsStrip } from "@/components/profile/StatsStrip";
+import { TraktHomePrompt } from "@/components/trakt/TraktHomePrompt";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
 
@@ -67,6 +68,7 @@ export default function HomeScreen() {
 			>
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />
+					<TraktHomePrompt />
 
 					<StatsStrip
 						activity={profile?.activityLast30Days}
