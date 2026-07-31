@@ -38,6 +38,11 @@ export {
 	isActiveAccountDeletionStatus,
 	isTerminalAccountDeletionStatus,
 } from "./account-deletion-status";
+export {
+	invalidateWatchActivityQueries,
+	isWatchActivityQueryKey,
+	WATCH_ACTIVITY_QUERY_IDS,
+} from "./watch-activity-queries";
 export type { TraktImportStatusJob } from "./trakt-import-status";
 export {
 	formatRetryCountdown,

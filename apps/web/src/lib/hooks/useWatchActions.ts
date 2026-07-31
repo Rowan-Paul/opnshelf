@@ -1,17 +1,11 @@
 import {
+	invalidateWatchActivityQueries,
 	moviesControllerDeleteWatchHistoryEntryMutation,
-	moviesControllerGetMovieWatchHistoryQueryKey,
-	moviesControllerGetUserMoviesPaginatedQueryKey,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
-	shelfControllerGetUserActivitySummaryQueryKey,
-	shelfControllerGetUserShelfQueryKey,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
-	showsControllerGetShowWatchHistoryQueryKey,
-	showsControllerGetUserEpisodesPaginatedQueryKey,
-	showsControllerGetUserUpNextOptions,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
@@ -83,6 +77,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const movieId = options.mediaType === "movie" ? options.movieId : "";
 	const showId = options.mediaType === "show" ? options.showId : "";
 
+	// Every watch mutation changes the same set of derived data: the shelf, the
+	// activity summary, up next, the tracked-movie/show lists and the profile
+	// stats behind the dashboard bar chart. One shared invalidation keeps them
+	// all in sync instead of each mutation listing its own subset.
+	const invalidateActivity = () => invalidateWatchActivityQueries(queryClient);
+
 	// Movie mutations
 	const markMovieWatched = useMutation({
 		mutationKey: ["movies", movieId, "markWatched"],
@@ -123,15 +123,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			);
 		},
 		onSettled: () => {
-			invalidateUserMoviesQueries();
-			if (options.mediaType === "movie") {
-				queryClient.invalidateQueries({
-					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-						path: { userDid, movieId: options.movieId },
-					}),
-				});
-			}
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 	});
 
@@ -171,15 +163,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			);
 		},
 		onSettled: () => {
-			invalidateUserMoviesQueries();
-			if (options.mediaType === "movie") {
-				queryClient.invalidateQueries({
-					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-						path: { userDid, movieId: options.movieId },
-					}),
-				});
-			}
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 	});
 
@@ -197,69 +181,9 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			);
 		},
 		onSettled: () => {
-			if (options.mediaType === "movie") {
-				queryClient.invalidateQueries({
-					queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-						path: { userDid, movieId: options.movieId },
-					}),
-				});
-			}
-			invalidateUserMoviesQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 	});
-
-	// Show mutations
-	const showWatchHistoryKey =
-		options.mediaType === "show"
-			? showsControllerGetShowWatchHistoryQueryKey({
-					path: { userDid, showId: options.showId },
-				})
-			: [];
-
-	const invalidateShowQueries = () => {
-		if (options.mediaType !== "show") return;
-		queryClient.invalidateQueries({ queryKey: showWatchHistoryKey });
-		queryClient.invalidateQueries({
-			queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
-				.queryKey,
-		});
-		// Profile "Recent Episodes" uses the paginated endpoint; partial match
-		// (no `query`) covers any page size.
-		queryClient.invalidateQueries({
-			queryKey: showsControllerGetUserEpisodesPaginatedQueryKey({
-				path: { userDid },
-			}),
-		});
-		queryClient.invalidateQueries({ queryKey: ["shows"] });
-	};
-
-	const invalidateShelfQueries = () => {
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserShelfQueryKey({
-				path: { userDid },
-			}),
-		});
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserActivitySummaryQueryKey({
-				path: { userDid },
-			}),
-		});
-	};
-
-	// Invalidate both the non-paginated user-movies list and the paginated
-	// variant used by the profile's "Recent Movies" section. Omitting `query`
-	// makes this a partial match, so any page size (e.g. limit: 8) is covered.
-	const invalidateUserMoviesQueries = () => {
-		queryClient.invalidateQueries({
-			queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
-		});
-		queryClient.invalidateQueries({
-			queryKey: moviesControllerGetUserMoviesPaginatedQueryKey({
-				path: { userDid },
-			}),
-		});
-	};
 
 	const markEpisodeWatched = useMutation({
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
@@ -267,8 +191,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onSuccess: (_data, variables) => {
 			captureWatchLogged("show", "episode", variables.body.watchedAt);
 			toast.success("Episode added to shelf");
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 			// Also invalidate season details so season page stays in sync
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
@@ -295,8 +218,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: (_data, variables) => {
 			toast.success("Episode removed from shelf");
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetSeasonDetailsQueryKey({
@@ -323,8 +245,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		onSuccess: (data, variables) => {
 			captureWatchLogged("show", "show", variables.body.watchedAt, data.count);
 			toastBulkResult(data, "Show added to shelf");
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 		onError: (error) => {
 			toast.error(
@@ -338,8 +259,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		...showsControllerUnmarkWatchedMutation(),
 		onSuccess: () => {
 			toast.success("Show removed from shelf");
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 		onError: (error) => {
 			toast.error(
@@ -361,8 +281,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				data.count,
 			);
 			toastBulkResult(data, "Season added to shelf");
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 			if (options.mediaType === "show") {
 				queryClient.invalidateQueries({
 					queryKey: showsControllerGetSeasonDetailsQueryKey({
@@ -397,8 +316,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			);
 		},
 		onSettled: () => {
-			invalidateShowQueries();
-			invalidateShelfQueries();
+			invalidateActivity();
 		},
 	});
 

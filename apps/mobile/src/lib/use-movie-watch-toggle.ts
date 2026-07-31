@@ -1,10 +1,9 @@
 import {
+	invalidateWatchActivityQueries,
 	moviesControllerGetUserMoviesOptions,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
-	shelfControllerGetUserActivitySummaryQueryKey,
-	shelfControllerGetUserShelfQueryKey,
 	type TrackedMovieDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import { useAuth } from "@/lib/auth-context";
  * wasteful. Reads the user's tracked-movies list once to derive watched state,
  * and exposes a single mark/unmark pair parameterised by `movieId` at call
  * time. Optimistically patches the shared tracked-movies cache and invalidates
- * the shelf on settle, matching `use-watch-actions`.
+ * every watch-activity query on settle, matching `use-watch-actions`.
  *
  * Movies only — show "watched" is per-episode and can't be a single toggle.
  */
@@ -46,16 +45,9 @@ export function useMovieWatchToggle() {
 		return set;
 	}, [userMovies]);
 
-	const invalidateShelf = useCallback(() => {
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-		});
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserActivitySummaryQueryKey({
-				path: { userDid },
-			}),
-		});
-	}, [queryClient, userDid]);
+	const invalidateActivity = useCallback(() => {
+		invalidateWatchActivityQueries(queryClient);
+	}, [queryClient]);
 
 	const errorMessage = (error: unknown, fallback: string) =>
 		error instanceof Error ? error.message : fallback;
@@ -87,8 +79,7 @@ export function useMovieWatchToggle() {
 			toast.success("Added to shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: userMoviesKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -119,8 +110,7 @@ export function useMovieWatchToggle() {
 			toast.success("Removed from shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: userMoviesKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 

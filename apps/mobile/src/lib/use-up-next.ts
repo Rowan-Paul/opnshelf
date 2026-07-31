@@ -1,9 +1,6 @@
 import {
-	shelfControllerGetUserActivitySummaryQueryKey,
-	shelfControllerGetUserShelfQueryKey,
-	showsControllerGetShowWatchHistoryQueryKey,
+	invalidateWatchActivityQueries,
 	showsControllerGetUserUpNextInfiniteOptions,
-	showsControllerGetUserUpNextQueryKey,
 	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import {
@@ -49,40 +46,24 @@ export function useUpNext(pageSize = 20) {
 }
 
 /**
- * Mark an episode watched from the Up Next queue. Invalidates the up-next list
- * (the "current" episode advances), the show's watch history, and the shelf —
- * mirroring the web `useMarkEpisodeWatched`.
+ * Mark an episode watched from the Up Next queue. Invalidates every
+ * watch-activity query — the up-next list (the "current" episode advances), the
+ * show's watch history, the shelf and the profile stats behind the dashboard
+ * bar chart — mirroring the web `useMarkEpisodeWatched`.
  */
 export function useMarkUpNextEpisode() {
-	const { user } = useAuth();
-	const userDid = user?.did ?? "";
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
 	return useMutation({
 		mutationKey: ["shows", "upNext", "markEpisodeWatched"],
 		...showsControllerMarkWatchedMutation(),
-		onSuccess: (_data, variables) => {
+		onSuccess: () => {
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});
 			toast.success("Episode added to shelf");
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryQueryKey({
-					path: { userDid, showId: variables.body.showId },
-				}),
-			});
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetUserUpNextQueryKey({ path: { userDid } }),
-			});
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-			});
-			queryClient.invalidateQueries({
-				queryKey: shelfControllerGetUserActivitySummaryQueryKey({
-					path: { userDid },
-				}),
-			});
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) => {
 			toast.error(

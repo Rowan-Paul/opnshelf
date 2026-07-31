@@ -1,5 +1,5 @@
 import {
-	showsControllerGetUserUpNextQueryKey,
+	invalidateWatchActivityQueries,
 	showsControllerMarkWatchedMutation,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,12 +39,7 @@ export function UpNextTab({
 		mutationKey: ["shows", "mark-watched"],
 		...showsControllerMarkWatchedMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetUserUpNextQueryKey({
-					path: { userDid },
-					query: { page: 1, pageSize: 20 },
-				}),
-			});
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) =>
 			toast.error(

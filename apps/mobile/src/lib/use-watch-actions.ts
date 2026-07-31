@@ -1,12 +1,11 @@
 import {
 	type EpisodeHistoryItemDto,
+	invalidateWatchActivityQueries,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
-	shelfControllerGetUserActivitySummaryQueryKey,
-	shelfControllerGetUserShelfQueryKey,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
@@ -86,8 +85,8 @@ function captureWatchLogged(
  * Optimistic strategy:
  * - Movies: optimistically push/remove the movie in the tracked-movies list and
  *   prepend/clear the per-movie watch-history list so the detail UI flips state
- *   immediately. Snapshot both, roll both back on error, invalidate both + the
- *   shelf on settle.
+ *   immediately. Snapshot both, roll both back on error, invalidate every
+ *   watch-activity query on settle.
  * - Shows: optimistically push/remove the (season, episode) entry in the show
  *   watch-history list. Show/season marks invalidate on settle (they touch many
  *   episodes server-side, so a full refetch is the safe reconciliation).
@@ -105,15 +104,12 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		void Haptics.impactAsync(style).catch(() => {});
 	};
 
-	const invalidateShelf = () => {
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-		});
-		queryClient.invalidateQueries({
-			queryKey: shelfControllerGetUserActivitySummaryQueryKey({
-				path: { userDid },
-			}),
-		});
+	// Every watch mutation changes the same set of derived data: the shelf, the
+	// activity summary, up next, the tracked-movie/show lists and the profile
+	// stats behind the dashboard bar chart. One shared invalidation keeps them
+	// all in sync instead of each mutation listing its own subset.
+	const invalidateActivity = () => {
+		invalidateWatchActivityQueries(queryClient);
 		// Refresh the Home-Screen Widget immediately rather than leaving it on
 		// the 30-minute periodic tick. Fires on settle (success and error), so
 		// the widget always converges to server truth after any watch mutation.
@@ -172,9 +168,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Added to shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: userMoviesKey });
-			queryClient.invalidateQueries({ queryKey: movieHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -213,9 +207,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Removed from shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: userMoviesKey });
-			queryClient.invalidateQueries({ queryKey: movieHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -258,9 +250,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Watch deleted");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: movieHistoryKey });
-			queryClient.invalidateQueries({ queryKey: userMoviesKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -304,8 +294,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Episode added to shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -346,8 +335,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Episode removed from shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -376,8 +364,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Watch deleted");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -393,8 +380,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toastBulkResult(toast, data, "Added to shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -415,8 +401,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toastBulkResult(toast, data, "Season added to shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -431,8 +416,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Removed from shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 
@@ -447,8 +431,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.success("Season removed from shelf");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: showHistoryKey });
-			invalidateShelf();
+			invalidateActivity();
 		},
 	});
 

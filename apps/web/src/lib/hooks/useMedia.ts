@@ -1,23 +1,18 @@
 import {
+	invalidateWatchActivityQueries,
 	type MoviesControllerGetMovieDetailsResponse,
 	type MoviesControllerGetUserMoviesResponse,
 	moviesControllerGetMovieDetailsOptions,
-	moviesControllerGetMovieWatchHistoryQueryKey,
 	moviesControllerGetUserMoviesOptions,
-	moviesControllerGetUserMoviesPaginatedQueryKey,
-	moviesControllerGetUserMoviesQueryKey,
 	moviesControllerGetWatchProvidersOptions,
 	moviesControllerMarkWatched,
 	moviesControllerUnmarkWatched,
 	type ShowsControllerGetShowDetailsResponse,
 	type ShowsControllerGetUserShowsResponse,
-	shelfControllerGetUserActivitySummaryQueryKey,
-	shelfControllerGetUserShelfQueryKey,
 	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetSeasonDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 	showsControllerGetShowWatchHistoryOptions,
-	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerGetUserShowsOptions,
 	showsControllerGetUserUpNextOptions,
 	showsControllerGetWatchProvidersOptions,
@@ -60,45 +55,9 @@ export function useUserMovies(userDid: string) {
 	});
 }
 
-// Invalidate the queries actually affected by marking/unmarking a movie:
-// the movie's own watch history, the user's tracked-movies lists (non-paginated
-// + paginated), and the shelf/activity summaries. Mirrors how useWatchActions
-// scopes the equivalent action instead of nuking the whole ["movies"] tree.
-function invalidateMovieWatchQueries(
-	queryClient: ReturnType<typeof useQueryClient>,
-	userDid: string,
-	movieId: string,
-) {
-	if (movieId) {
-		queryClient.invalidateQueries({
-			queryKey: moviesControllerGetMovieWatchHistoryQueryKey({
-				path: { userDid, movieId },
-			}),
-		});
-	}
-	queryClient.invalidateQueries({
-		queryKey: moviesControllerGetUserMoviesQueryKey({ path: { userDid } }),
-	});
-	queryClient.invalidateQueries({
-		queryKey: moviesControllerGetUserMoviesPaginatedQueryKey({
-			path: { userDid },
-		}),
-	});
-	queryClient.invalidateQueries({
-		queryKey: shelfControllerGetUserShelfQueryKey({ path: { userDid } }),
-	});
-	queryClient.invalidateQueries({
-		queryKey: shelfControllerGetUserActivitySummaryQueryKey({
-			path: { userDid },
-		}),
-	});
-}
-
 // Mark movie as watched mutation
 export function useMarkMovieWatched() {
 	const queryClient = useQueryClient();
-	const { user } = useAuth();
-	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationKey: ["movies", "markWatched"],
@@ -106,9 +65,9 @@ export function useMarkMovieWatched() {
 			const result = await moviesControllerMarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: (_data, variables) => {
+		onSuccess: () => {
 			toast.success("Added to shelf");
-			invalidateMovieWatchQueries(queryClient, userDid, variables.body.movieId);
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) => {
 			toast.error(
@@ -121,8 +80,6 @@ export function useMarkMovieWatched() {
 // Unmark movie as watched mutation
 export function useUnmarkMovieWatched() {
 	const queryClient = useQueryClient();
-	const { user } = useAuth();
-	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationKey: ["movies", "unmarkWatched"],
@@ -130,9 +87,9 @@ export function useUnmarkMovieWatched() {
 			const result = await moviesControllerUnmarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: (_data, variables) => {
+		onSuccess: () => {
 			toast.success("Removed from shelf");
-			invalidateMovieWatchQueries(queryClient, userDid, variables.path.movieId);
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) => {
 			toast.error(
@@ -200,8 +157,6 @@ export function useUserUpNext(userDid: string) {
 // Mark episode as watched mutation
 export function useMarkEpisodeWatched() {
 	const queryClient = useQueryClient();
-	const { user } = useAuth();
-	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationKey: ["shows", "markEpisodeWatched"],
@@ -211,21 +166,9 @@ export function useMarkEpisodeWatched() {
 			const result = await showsControllerMarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: (_data, variables) => {
+		onSuccess: () => {
 			toast.success("Episode added to shelf");
-			// Invalidate the specific show's watch history
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryQueryKey({
-					path: { userDid, showId: variables.body.showId },
-				}),
-			});
-			// Also invalidate up next queries - affects which episode is "current"
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
-					.queryKey,
-			});
-			// Invalidate general shows list
-			queryClient.invalidateQueries({ queryKey: ["shows"] });
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) => {
 			toast.error(
@@ -240,8 +183,6 @@ export function useMarkEpisodeWatched() {
 // Unmark episode as watched mutation
 export function useUnmarkEpisodeWatched() {
 	const queryClient = useQueryClient();
-	const { user } = useAuth();
-	const userDid = user?.did || "";
 
 	return useMutation({
 		mutationKey: ["shows", "unmarkEpisodeWatched"],
@@ -256,21 +197,9 @@ export function useUnmarkEpisodeWatched() {
 			const result = await showsControllerUnmarkWatched(variables);
 			return result.data;
 		},
-		onSuccess: (_data, variables) => {
+		onSuccess: () => {
 			toast.success("Episode removed from shelf");
-			// Invalidate the specific show's watch history
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetShowWatchHistoryQueryKey({
-					path: { userDid, showId: variables.path.showId },
-				}),
-			});
-			// Also invalidate up next queries - affects which episode is "current"
-			queryClient.invalidateQueries({
-				queryKey: showsControllerGetUserUpNextOptions({ path: { userDid } })
-					.queryKey,
-			});
-			// Invalidate general shows list
-			queryClient.invalidateQueries({ queryKey: ["shows"] });
+			invalidateWatchActivityQueries(queryClient);
 		},
 		onError: (error) => {
 			toast.error(
