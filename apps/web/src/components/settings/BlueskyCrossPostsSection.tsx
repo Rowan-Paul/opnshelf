@@ -15,7 +15,7 @@ export function BlueskyCrossPostsSection() {
 			</p>
 			<IntegrationPermissionRow
 				name="Bluesky Cross-posts"
-				description="Allow Opnshelf to create and update posts for Reviews you explicitly select."
+				description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 				connected={userSettings?.blueskyCrossPostEnabled ?? false}
 				disabled={isPending}
 				onConfirm={(action) => requestPermissionChange("bluesky", action)}

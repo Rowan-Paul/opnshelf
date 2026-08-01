@@ -712,7 +712,7 @@ export default function SettingsScreen() {
 					>
 						<IntegrationPermissionRow
 							name="Bluesky Cross-posts"
-							description="Allow Opnshelf to create and update posts for Reviews you explicitly select."
+							description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 							connected={settings?.blueskyCrossPostEnabled ?? false}
 							disabled={permissionChangeMutation.isPending}
 							onConfirm={(action) => requestPermissionChange("bluesky", action)}
