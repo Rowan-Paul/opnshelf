@@ -489,6 +489,25 @@ describe("ShowsService", () => {
 			expect(result.pageSize).toBe(8);
 		});
 
+		it("narrows the anchor query to one show when showId is given (issue #201)", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+
+			await service.getUserUpNext(
+				"did:plc:abc123",
+				1,
+				8,
+				"lastWatched",
+				"desc",
+				"show-1",
+			);
+
+			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ showId: "show-1" }),
+				}),
+			);
+		});
+
 		it("anchors on the most recent watch, so a rewatch of an early episode moves up-next back (issue #158 semantics)", async () => {
 			// The user is deep into the show (watched through S3E5), but their
 			// most recent watch is a rewatch of S1E2. The anchor query orders by

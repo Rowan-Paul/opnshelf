@@ -15,16 +15,18 @@ import { useAuth } from "@/lib/auth-context";
 /**
  * The current user's "Up Next" queue — tracked shows with their next unwatched
  * episode — as an infinite list. Mirrors the web up-next route over the shared
- * `showsControllerGetUserUpNext` procedure.
+ * `showsControllerGetUserUpNext` procedure. Pass `showId` when you only care
+ * about one show: the queue is paginated, so a show far down the list would
+ * otherwise be missing from the first page.
  */
-export function useUpNext(pageSize = 20) {
+export function useUpNext(pageSize = 20, showId?: string) {
 	const { user, isAuthenticated } = useAuth();
 	const userDid = user?.did ?? "";
 
 	const query = useInfiniteQuery({
 		...showsControllerGetUserUpNextInfiniteOptions({
 			path: { userDid },
-			query: { pageSize },
+			query: showId ? { pageSize, showId } : { pageSize },
 		}),
 		enabled: isAuthenticated && !!userDid,
 		initialPageParam: 1,

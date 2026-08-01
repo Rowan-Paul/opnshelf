@@ -500,6 +500,13 @@ export class PaginatedUpNextQueryDto {
 	@IsOptional()
 	@IsString()
 	sortOrder?: "asc" | "desc";
+
+	@ApiPropertyOptional({
+		description: "Only return up next for this show",
+	})
+	@IsOptional()
+	@IsString()
+	showId?: string;
 }
 
 export class PaginatedUpNextResponseDto {

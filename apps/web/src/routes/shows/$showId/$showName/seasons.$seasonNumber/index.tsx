@@ -117,7 +117,7 @@ function SeasonDetailPage() {
 		error: seasonError,
 	} = useSeasonDetails(showId, seasonNumber);
 
-	const { data: upNextData } = useUserUpNext(user?.did || "");
+	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
 	const { data: watchHistory } = useShowWatchHistory(showId);
 	const {
 		processingEpisode,

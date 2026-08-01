@@ -2867,6 +2867,10 @@ export type ShowsControllerGetUserUpNextData = {
          * Sort direction
          */
         sortOrder?: 'asc' | 'desc';
+        /**
+         * Only return up next for this show
+         */
+        showId?: string;
     };
     url: '/shows/user/{userDid}/up-next';
 };

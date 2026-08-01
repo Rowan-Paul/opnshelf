@@ -66,7 +66,7 @@ export default function SeasonDetailScreen() {
 	// Per-episode watched status (for the progress card) + the show's next
 	// unwatched episode (to flag the "Up Next" row), mirroring the web page.
 	const watch = useWatchStatus({ mediaType: "show", showId: id });
-	const { items: upNextItems } = useUpNext();
+	const { items: upNextItems } = useUpNext(20, id);
 
 	const totalEpisodes = data?.episodes.length ?? 0;
 	const episodesWatched = new Set(

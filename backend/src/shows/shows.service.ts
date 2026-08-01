@@ -453,10 +453,15 @@ export class ShowsService {
 		pageSize: number = 8,
 		sortBy: "lastWatched" | "title" | "progress" = "lastWatched",
 		sortOrder: "asc" | "desc" = "desc",
+		showIdFilter?: string,
 	) {
 		// Query 1: one anchor per show via Prisma distinct (S0 excluded, tie-broken)
 		const anchors = (await this.prisma.trackedEpisode.findMany({
-			where: { userDid, seasonNumber: { not: 0 } },
+			where: {
+				userDid,
+				seasonNumber: { not: 0 },
+				...(showIdFilter ? { showId: showIdFilter } : {}),
+			},
 			orderBy: [
 				{ watchedDate: "desc" },
 				{ createdAt: "desc" },

@@ -1230,6 +1230,15 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "showId",
+            "required": false,
+            "in": "query",
+            "description": "Only return up next for this show",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

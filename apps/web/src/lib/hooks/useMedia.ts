@@ -144,11 +144,12 @@ export function useUserShows(userDid: string, _pageSize = 20) {
 	});
 }
 
-// Get "Up Next" episodes for user
-export function useUserUpNext(userDid: string) {
+// Get "Up Next" episodes for user, optionally for a single show
+export function useUserUpNext(userDid: string, showId?: string) {
 	return useQuery({
 		...showsControllerGetUserUpNextOptions({
 			path: { userDid },
+			query: showId ? { showId } : undefined,
 		}),
 		enabled: !!userDid,
 	});

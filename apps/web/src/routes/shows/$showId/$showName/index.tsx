@@ -105,7 +105,7 @@ function ShowDetailPage() {
 		error: showError,
 	} = useShowDetails(showId);
 
-	const { data: upNextData } = useUserUpNext(userDid);
+	const { data: upNextData } = useUserUpNext(userDid, showId);
 	const { data: discoverShowsData } = useShowRecommendations(showId);
 	const { data: seasonDetails, isLoading: seasonLoading } = useSeasonDetails(
 		showId,
@@ -175,13 +175,10 @@ function ShowDetailPage() {
 			return `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`;
 		}
 		if (isTracking && uniqueEpisodesWatched > 0) {
-			return "Continue Watching";
+			return "Rewatch from start";
 		}
 		return "Start Watching";
 	};
-
-	const isStartWatching =
-		!nextEpisode && !(isTracking && uniqueEpisodesWatched > 0);
 
 	const firstSeasonNumber =
 		show?.seasons
@@ -304,40 +301,21 @@ function ShowDetailPage() {
 				actions={
 					isAuthenticated ? (
 						<>
-							{nextEpisode ? (
-								<Link
-									to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-									params={{
-										showId,
-										showName: slugifyName(show.name),
-										seasonNumber: String(nextEpisode.seasonNumber),
-										episodeNumber: String(nextEpisode.episodeNumber),
-									}}
-									className="btn btn-primary gap-2"
-								>
-									<Play className="size-4" />
-									{getCurrentEpisodeText()}
-								</Link>
-							) : isStartWatching ? (
-								<Link
-									to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-									params={{
-										showId,
-										showName: slugifyName(show.name),
-										seasonNumber: String(firstSeasonNumber),
-										episodeNumber: "1",
-									}}
-									className="btn btn-primary gap-2"
-								>
-									<Play className="size-4" />
-									{getCurrentEpisodeText()}
-								</Link>
-							) : (
-								<button type="button" className="btn btn-primary gap-2">
-									<Play className="size-4" />
-									{getCurrentEpisodeText()}
-								</button>
-							)}
+							<Link
+								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+								params={{
+									showId,
+									showName: slugifyName(show.name),
+									seasonNumber: String(
+										nextEpisode?.seasonNumber ?? firstSeasonNumber,
+									),
+									episodeNumber: String(nextEpisode?.episodeNumber ?? 1),
+								}}
+								className="btn btn-primary gap-2"
+							>
+								<Play className="size-4" />
+								{getCurrentEpisodeText()}
+							</Link>
 							<MediaActionsBar mediaType="show" mediaId={showId} />
 						</>
 					) : (
