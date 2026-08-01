@@ -902,11 +902,7 @@ export class AuthService implements OnModuleInit {
 	 * Normalise the client-supplied device headers. Returns null when the id is
 	 * missing or implausible, which tells the caller not to stamp at all.
 	 */
-	parseDeviceHeaders(raw: {
-		id?: string;
-		name?: string;
-		platform?: string;
-	}): {
+	parseDeviceHeaders(raw: { id?: string; name?: string; platform?: string }): {
 		deviceId: string;
 		name: string | null;
 		platform: string | null;
