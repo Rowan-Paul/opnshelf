@@ -44,25 +44,39 @@ function browserLabel(): string | undefined {
 		)?.brand;
 		return join(brand, data.platform);
 	}
-	const ua = navigator.userAgent;
-	const browser = /Firefox\//.test(ua)
+	return labelFromUserAgent(navigator.userAgent);
+}
+
+/**
+ * Best-effort label from a User-Agent string.
+ *
+ * Order matters: iOS and Android are checked before macOS and Linux, because
+ * every iPhone/iPad UA contains "like Mac OS X" and Android's contains "Linux".
+ * Testing for Mac first reported every iPhone as macOS.
+ *
+ * A UA is a claim, not a fact — "Request desktop site" on Android Firefox sends
+ * an X11/Linux UA, and this will faithfully report Linux. That's the ceiling of
+ * UA sniffing; the alternative is fingerprinting, which we don't do.
+ */
+export function labelFromUserAgent(ua: string): string | undefined {
+	const browser = /Firefox\/|FxiOS\//.test(ua)
 		? "Firefox"
-		: /Edg\//.test(ua)
+		: /Edg\/|EdgiOS\//.test(ua)
 			? "Edge"
-			: /Chrome\//.test(ua)
+			: /Chrome\/|CriOS\//.test(ua)
 				? "Chrome"
 				: /Safari\//.test(ua)
 					? "Safari"
 					: undefined;
-	const platform = /Mac/.test(ua)
-		? "macOS"
-		: /Windows/.test(ua)
-			? "Windows"
-			: /Android/.test(ua)
-				? "Android"
-				: /iPhone|iPad/.test(ua)
-					? "iOS"
-					: /Linux/.test(ua)
+	const platform = /iPhone|iPad|iPod/.test(ua)
+		? "iOS"
+		: /Android/.test(ua)
+			? "Android"
+			: /Windows/.test(ua)
+				? "Windows"
+				: /Mac/.test(ua)
+					? "macOS"
+					: /Linux|X11/.test(ua)
 						? "Linux"
 						: undefined;
 	return join(browser, platform);
