@@ -46,6 +46,17 @@ client.interceptors.response.use(async (response) => {
 	if (response.status === 401) {
 		onUnauthorized?.();
 	}
+	// Nest answers a `null` controller result with a bodiless 200, and the
+	// generated client turns an empty body into `{}`. Endpoints typed
+	// `X | null` then hand the app a truthy empty object, so `if (job)` passes
+	// and the first field read blows up. Give them real null instead.
+	if (response.ok && response.headers.get("content-length") === "0") {
+		return new Response("null", {
+			status: response.status,
+			statusText: response.statusText,
+			headers: { "content-type": "application/json" },
+		});
+	}
 	return response;
 });
 
