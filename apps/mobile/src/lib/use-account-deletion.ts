@@ -33,7 +33,11 @@ export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 		if (job && isActiveAccountDeletionStatus(job.status)) {
 			sawActiveJob.current = true;
 		}
-		if (job?.status === "completed") {
+		// Only sign out of a deletion we actually watched run. The server returns
+		// the most recent job whatever its status, so an account that was deleted
+		// and later signed up again still has a completed job on file — without
+		// this guard every sign-in gets signed straight back out.
+		if (sawActiveJob.current && job?.status === "completed") {
 			void signOut();
 		}
 	}, [job, signOut]);

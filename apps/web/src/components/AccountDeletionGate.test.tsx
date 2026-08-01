@@ -54,15 +54,33 @@ describe("AccountDeletionGate", () => {
 		expect(mockLogout).not.toHaveBeenCalled();
 	});
 
-	it("logs out once the job completes", async () => {
+	it("logs out once the job it was watching completes", async () => {
+		mockUseQuery.mockReturnValue({ data: job({}), error: null });
+		const view = render(<AccountDeletionGate />);
+
+		mockUseQuery.mockReturnValue({
+			data: job({ status: "completed" }),
+			error: null,
+		});
+		view.rerender(<AccountDeletionGate />);
+
+		await waitFor(() => expect(mockLogout).toHaveBeenCalled());
+		expect(screen.queryByText("Deleting your account")).toBeNull();
+	});
+
+	it("stays logged in when the only job on file finished long ago", async () => {
+		// An account that was deleted and signed up again keeps its old completed
+		// job, and the server hands back the most recent job whatever its status.
 		mockUseQuery.mockReturnValue({
 			data: job({ status: "completed" }),
 			error: null,
 		});
 		render(<AccountDeletionGate />);
 
-		await waitFor(() => expect(mockLogout).toHaveBeenCalled());
-		expect(screen.queryByText("Deleting your account")).toBeNull();
+		await waitFor(() =>
+			expect(screen.queryByText("Deleting your account")).toBeNull(),
+		);
+		expect(mockLogout).not.toHaveBeenCalled();
 	});
 
 	it("renders nothing when there is no deletion job", () => {
