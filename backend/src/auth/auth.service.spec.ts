@@ -1042,13 +1042,7 @@ describe("AuthService", () => {
 					handle: "user.custom-domain.test",
 				},
 			});
-			const mockGetProfile = vi.fn().mockResolvedValue({
-				data: {
-					handle: "handle.invalid",
-					displayName: "Test User",
-					avatar: "https://example.com/avatar.jpg",
-				},
-			});
+			const mockGetProfile = vi.fn();
 			const mockWithProxy = vi
 				.fn()
 				.mockReturnValue({ getProfile: mockGetProfile });
@@ -1063,6 +1057,15 @@ describe("AuthService", () => {
 				getProfile: mockGetProfile,
 				withProxy: mockWithProxy,
 			}));
+			const mockFetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					handle: "handle.invalid",
+					displayName: "Test User",
+					avatar: "https://example.com/avatar.jpg",
+				}),
+			});
+			vi.stubGlobal("fetch", mockFetch);
 
 			const mockSession = { did: "did:plc:abc123" };
 			const result = await service.fetchProfile(mockSession);
@@ -1074,11 +1077,15 @@ describe("AuthService", () => {
 				avatar: "https://example.com/avatar.jpg",
 			});
 			expect(mockDescribeRepo).toHaveBeenCalledWith({ repo: "did:plc:abc123" });
-			expect(mockWithProxy).toHaveBeenCalledWith(
-				"bsky_appview",
-				"did:web:api.bsky.app",
+			// The profile read must go to the public AppView over plain fetch. Going
+			// through the user's OAuth session lets a 401 from the AppView delete the
+			// session row that login just created.
+			expect(String(mockFetch.mock.calls[0][0])).toBe(
+				"https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=did%3Aplc%3Aabc123",
 			);
-			expect(mockGetProfile).toHaveBeenCalledWith({ actor: "did:plc:abc123" });
+			expect(mockWithProxy).not.toHaveBeenCalled();
+			expect(mockGetProfile).not.toHaveBeenCalled();
+			vi.unstubAllGlobals();
 		});
 
 		it("should handle missing displayName and avatar", async () => {
@@ -1090,11 +1097,7 @@ describe("AuthService", () => {
 					handle: "user.bsky.social",
 				},
 			});
-			const mockGetProfile = vi.fn().mockResolvedValue({
-				data: {
-					handle: "handle.invalid",
-				},
-			});
+			const mockGetProfile = vi.fn();
 			Agent.mockImplementation(() => ({
 				com: {
 					atproto: {
@@ -1106,6 +1109,13 @@ describe("AuthService", () => {
 				getProfile: mockGetProfile,
 				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({
+					ok: true,
+					json: async () => ({ handle: "handle.invalid" }),
+				}),
+			);
 
 			const mockSession = { did: "did:plc:abc123" };
 			const result = await service.fetchProfile(mockSession);
@@ -1116,6 +1126,7 @@ describe("AuthService", () => {
 				displayName: null,
 				avatar: null,
 			});
+			vi.unstubAllGlobals();
 		});
 
 		it("should still return the repo handle if the appview profile fetch fails", async () => {
@@ -1127,9 +1138,7 @@ describe("AuthService", () => {
 					handle: "user.custom-domain.test",
 				},
 			});
-			const mockGetProfile = vi
-				.fn()
-				.mockRejectedValue(new Error("profile fetch failed"));
+			const mockGetProfile = vi.fn();
 			Agent.mockImplementation(() => ({
 				com: {
 					atproto: {
@@ -1141,6 +1150,10 @@ describe("AuthService", () => {
 				getProfile: mockGetProfile,
 				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
 			}));
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({ ok: false, status: 401 }),
+			);
 
 			const mockSession = { did: "did:plc:abc123" };
 			const result = await service.fetchProfile(mockSession);
@@ -1151,6 +1164,7 @@ describe("AuthService", () => {
 				displayName: null,
 				avatar: null,
 			});
+			vi.unstubAllGlobals();
 		});
 	});
 

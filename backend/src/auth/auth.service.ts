@@ -904,14 +904,24 @@ export class AuthService implements OnModuleInit {
 		let avatar: string | null = null;
 
 		try {
-			// app.bsky.* methods aren't implemented by the PDS itself; route the
-			// request through the Bluesky AppView via the atproto-proxy header.
-			// The OAuth scope grants rpc:app.bsky.actor.getProfile for this aud.
-			const profile = await agent
-				.withProxy("bsky_appview", "did:web:api.bsky.app")
-				.getProfile({ actor: session.did });
-			displayName = profile.data.displayName || null;
-			avatar = profile.data.avatar || null;
+			// Read the display name and avatar from the public AppView, NOT through
+			// the user's OAuth session. A proxied app.bsky.* call that comes back
+			// 401 invalid_token (bsky.network does this when the granular scope is
+			// missing) makes the OAuth client delete the session it just stored, so
+			// the login completes with a cookie whose session row is already gone.
+			// This data is public, so an unauthenticated call has nothing to lose.
+			const url = new URL(`${BLUESKY_PUBLIC_API}/app.bsky.actor.getProfile`);
+			url.searchParams.set("actor", session.did);
+			const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+			if (!response.ok) {
+				throw new Error(`AppView returned ${response.status}`);
+			}
+			const profile = (await response.json()) as {
+				displayName?: string | null;
+				avatar?: string | null;
+			};
+			displayName = profile.displayName || null;
+			avatar = profile.avatar || null;
 		} catch (error) {
 			this.logger.warn(
 				`Failed to fetch app profile for ${session.did}; continuing with repo handle only`,
