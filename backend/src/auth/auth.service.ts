@@ -208,6 +208,14 @@ export class AuthService implements OnModuleInit {
 				return JSON.parse(record.sessionData) as NodeSavedSession;
 			},
 			del: async () => {
+				// The OAuth client drops a stored session on several paths (revoked
+				// token, failed refresh, 401 invalid_token from a resource server).
+				// Losing a session the user is actively using looks like a broken
+				// login, so record who asked and why.
+				this.logger.warn(
+					`OAuth store dropped the session for ${slot.slice(0, 8)}…`,
+					new Error("session store del").stack,
+				);
 				await this.prisma.authSession.deleteMany({ where: { id: slot } });
 				this.oauthClients.delete(slot);
 			},
@@ -393,6 +401,9 @@ export class AuthService implements OnModuleInit {
 		retainedSessionId: string,
 		preferences: OAuthScopePreferences,
 	): Promise<void> {
+		this.logger.log(
+			`Permission change for ${did}: dropping every session except ${retainedSessionId.slice(0, 8)}…`,
+		);
 		await this.prisma.$transaction(async (tx) => {
 			await tx.user.update({
 				where: { did },
