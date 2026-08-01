@@ -163,6 +163,16 @@ model AuthSession {
   userDid     String
   sessionData String // JSON-serialized session: NodeSavedSession (oauth) or credential tokens (credential)
   kind        String   @default("oauth") // "oauth" | "credential"
+  // Which install this session belongs to. Client-supplied (see ADR-0015): the
+  // platform vendor id on mobile, a localStorage UUID on web, claimed via the
+  // x-opnshelf-device header and stamped by the guard. A grouping and
+  // addressing key ONLY — never trusted for authorization. Not null so
+  // pre-ADR-0015 rows (backfilled with a random uuid) stay revocable.
+  deviceId       String
+  // Display label and platform as reported by the client; null until first
+  // stamped, which is what the UI shows as "Unknown device".
+  deviceName     String?
+  devicePlatform String? // "ios" | "android" | "web"
   // Absolute lifetime: the guard rejects the session once expiresAt <= now.
   // Defaults to now() at the DB level so the migration backfills existing rows
   // safely; the app always sets/extends it explicitly (= now + 14d) on write.

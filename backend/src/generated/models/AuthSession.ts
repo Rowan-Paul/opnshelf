@@ -29,6 +29,9 @@ export type AuthSessionMinAggregateOutputType = {
   userDid: string | null
   sessionData: string | null
   kind: string | null
+  deviceId: string | null
+  deviceName: string | null
+  devicePlatform: string | null
   expiresAt: Date | null
   lastUsedAt: Date | null
   createdAt: Date | null
@@ -40,6 +43,9 @@ export type AuthSessionMaxAggregateOutputType = {
   userDid: string | null
   sessionData: string | null
   kind: string | null
+  deviceId: string | null
+  deviceName: string | null
+  devicePlatform: string | null
   expiresAt: Date | null
   lastUsedAt: Date | null
   createdAt: Date | null
@@ -51,6 +57,9 @@ export type AuthSessionCountAggregateOutputType = {
   userDid: number
   sessionData: number
   kind: number
+  deviceId: number
+  deviceName: number
+  devicePlatform: number
   expiresAt: number
   lastUsedAt: number
   createdAt: number
@@ -64,6 +73,9 @@ export type AuthSessionMinAggregateInputType = {
   userDid?: true
   sessionData?: true
   kind?: true
+  deviceId?: true
+  deviceName?: true
+  devicePlatform?: true
   expiresAt?: true
   lastUsedAt?: true
   createdAt?: true
@@ -75,6 +87,9 @@ export type AuthSessionMaxAggregateInputType = {
   userDid?: true
   sessionData?: true
   kind?: true
+  deviceId?: true
+  deviceName?: true
+  devicePlatform?: true
   expiresAt?: true
   lastUsedAt?: true
   createdAt?: true
@@ -86,6 +101,9 @@ export type AuthSessionCountAggregateInputType = {
   userDid?: true
   sessionData?: true
   kind?: true
+  deviceId?: true
+  deviceName?: true
+  devicePlatform?: true
   expiresAt?: true
   lastUsedAt?: true
   createdAt?: true
@@ -170,6 +188,9 @@ export type AuthSessionGroupByOutputType = {
   userDid: string
   sessionData: string
   kind: string
+  deviceId: string
+  deviceName: string | null
+  devicePlatform: string | null
   expiresAt: Date
   lastUsedAt: Date
   createdAt: Date
@@ -202,6 +223,9 @@ export type AuthSessionWhereInput = {
   userDid?: Prisma.StringFilter<"AuthSession"> | string
   sessionData?: Prisma.StringFilter<"AuthSession"> | string
   kind?: Prisma.StringFilter<"AuthSession"> | string
+  deviceId?: Prisma.StringFilter<"AuthSession"> | string
+  deviceName?: Prisma.StringNullableFilter<"AuthSession"> | string | null
+  devicePlatform?: Prisma.StringNullableFilter<"AuthSession"> | string | null
   expiresAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   lastUsedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
@@ -213,6 +237,9 @@ export type AuthSessionOrderByWithRelationInput = {
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
   kind?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  deviceName?: Prisma.SortOrderInput | Prisma.SortOrder
+  devicePlatform?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   lastUsedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -227,6 +254,9 @@ export type AuthSessionWhereUniqueInput = Prisma.AtLeast<{
   userDid?: Prisma.StringFilter<"AuthSession"> | string
   sessionData?: Prisma.StringFilter<"AuthSession"> | string
   kind?: Prisma.StringFilter<"AuthSession"> | string
+  deviceId?: Prisma.StringFilter<"AuthSession"> | string
+  deviceName?: Prisma.StringNullableFilter<"AuthSession"> | string | null
+  devicePlatform?: Prisma.StringNullableFilter<"AuthSession"> | string | null
   expiresAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   lastUsedAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"AuthSession"> | Date | string
@@ -238,6 +268,9 @@ export type AuthSessionOrderByWithAggregationInput = {
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
   kind?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  deviceName?: Prisma.SortOrderInput | Prisma.SortOrder
+  devicePlatform?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   lastUsedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -255,6 +288,9 @@ export type AuthSessionScalarWhereWithAggregatesInput = {
   userDid?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
   sessionData?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
   kind?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
+  deviceId?: Prisma.StringWithAggregatesFilter<"AuthSession"> | string
+  deviceName?: Prisma.StringNullableWithAggregatesFilter<"AuthSession"> | string | null
+  devicePlatform?: Prisma.StringNullableWithAggregatesFilter<"AuthSession"> | string | null
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"AuthSession"> | Date | string
   lastUsedAt?: Prisma.DateTimeWithAggregatesFilter<"AuthSession"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AuthSession"> | Date | string
@@ -266,6 +302,9 @@ export type AuthSessionCreateInput = {
   userDid: string
   sessionData: string
   kind?: string
+  deviceId: string
+  deviceName?: string | null
+  devicePlatform?: string | null
   expiresAt?: Date | string
   lastUsedAt?: Date | string
   createdAt?: Date | string
@@ -277,6 +316,9 @@ export type AuthSessionUncheckedCreateInput = {
   userDid: string
   sessionData: string
   kind?: string
+  deviceId: string
+  deviceName?: string | null
+  devicePlatform?: string | null
   expiresAt?: Date | string
   lastUsedAt?: Date | string
   createdAt?: Date | string
@@ -288,6 +330,9 @@ export type AuthSessionUpdateInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
   kind?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  devicePlatform?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -299,6 +344,9 @@ export type AuthSessionUncheckedUpdateInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
   kind?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  devicePlatform?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -310,6 +358,9 @@ export type AuthSessionCreateManyInput = {
   userDid: string
   sessionData: string
   kind?: string
+  deviceId: string
+  deviceName?: string | null
+  devicePlatform?: string | null
   expiresAt?: Date | string
   lastUsedAt?: Date | string
   createdAt?: Date | string
@@ -321,6 +372,9 @@ export type AuthSessionUpdateManyMutationInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
   kind?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  devicePlatform?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,6 +386,9 @@ export type AuthSessionUncheckedUpdateManyInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   sessionData?: Prisma.StringFieldUpdateOperationsInput | string
   kind?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  devicePlatform?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -343,6 +400,9 @@ export type AuthSessionCountOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
   kind?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  deviceName?: Prisma.SortOrder
+  devicePlatform?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   lastUsedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -354,6 +414,9 @@ export type AuthSessionMaxOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
   kind?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  deviceName?: Prisma.SortOrder
+  devicePlatform?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   lastUsedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -365,6 +428,9 @@ export type AuthSessionMinOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   sessionData?: Prisma.SortOrder
   kind?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  deviceName?: Prisma.SortOrder
+  devicePlatform?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   lastUsedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -378,6 +444,9 @@ export type AuthSessionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   userDid?: boolean
   sessionData?: boolean
   kind?: boolean
+  deviceId?: boolean
+  deviceName?: boolean
+  devicePlatform?: boolean
   expiresAt?: boolean
   lastUsedAt?: boolean
   createdAt?: boolean
@@ -389,6 +458,9 @@ export type AuthSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   userDid?: boolean
   sessionData?: boolean
   kind?: boolean
+  deviceId?: boolean
+  deviceName?: boolean
+  devicePlatform?: boolean
   expiresAt?: boolean
   lastUsedAt?: boolean
   createdAt?: boolean
@@ -400,6 +472,9 @@ export type AuthSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   userDid?: boolean
   sessionData?: boolean
   kind?: boolean
+  deviceId?: boolean
+  deviceName?: boolean
+  devicePlatform?: boolean
   expiresAt?: boolean
   lastUsedAt?: boolean
   createdAt?: boolean
@@ -411,13 +486,16 @@ export type AuthSessionSelectScalar = {
   userDid?: boolean
   sessionData?: boolean
   kind?: boolean
+  deviceId?: boolean
+  deviceName?: boolean
+  devicePlatform?: boolean
   expiresAt?: boolean
   lastUsedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AuthSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "sessionData" | "kind" | "expiresAt" | "lastUsedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["authSession"]>
+export type AuthSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "sessionData" | "kind" | "deviceId" | "deviceName" | "devicePlatform" | "expiresAt" | "lastUsedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["authSession"]>
 
 export type $AuthSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AuthSession"
@@ -427,6 +505,9 @@ export type $AuthSessionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     userDid: string
     sessionData: string
     kind: string
+    deviceId: string
+    deviceName: string | null
+    devicePlatform: string | null
     expiresAt: Date
     lastUsedAt: Date
     createdAt: Date
@@ -858,6 +939,9 @@ export interface AuthSessionFieldRefs {
   readonly userDid: Prisma.FieldRef<"AuthSession", 'String'>
   readonly sessionData: Prisma.FieldRef<"AuthSession", 'String'>
   readonly kind: Prisma.FieldRef<"AuthSession", 'String'>
+  readonly deviceId: Prisma.FieldRef<"AuthSession", 'String'>
+  readonly deviceName: Prisma.FieldRef<"AuthSession", 'String'>
+  readonly devicePlatform: Prisma.FieldRef<"AuthSession", 'String'>
   readonly expiresAt: Prisma.FieldRef<"AuthSession", 'DateTime'>
   readonly lastUsedAt: Prisma.FieldRef<"AuthSession", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"AuthSession", 'DateTime'>

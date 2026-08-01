@@ -298,6 +298,40 @@ export type VerifyEmailResponseDto = {
     coreOAuthUrl: string;
 };
 
+export type DeviceDto = {
+    /**
+     * Opaque id of the install, used to revoke this device
+     */
+    deviceId: string;
+    /**
+     * Client-reported label, e.g. "iPhone 15 Pro"
+     */
+    name: string | null;
+    /**
+     * Client-reported platform
+     */
+    platform: 'ios' | 'android' | 'web';
+    /**
+     * Whether this is the device making the request
+     */
+    isCurrent: boolean;
+    /**
+     * Last authenticated request from this device
+     */
+    lastUsedAt: string;
+    /**
+     * When this device signed in
+     */
+    createdAt: string;
+};
+
+export type RevokeDevicesResponseDto = {
+    /**
+     * How many devices were signed out
+     */
+    revoked: number;
+};
+
 export type TmdbShowResultDto = {
     id: number;
     name: string;
@@ -2655,6 +2689,47 @@ export type AuthControllerResendVerificationResponses = {
      */
     200: unknown;
 };
+
+export type AuthControllerRevokeOtherDevicesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/devices';
+};
+
+export type AuthControllerRevokeOtherDevicesResponses = {
+    200: RevokeDevicesResponseDto;
+};
+
+export type AuthControllerRevokeOtherDevicesResponse = AuthControllerRevokeOtherDevicesResponses[keyof AuthControllerRevokeOtherDevicesResponses];
+
+export type AuthControllerListDevicesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/devices';
+};
+
+export type AuthControllerListDevicesResponses = {
+    200: Array<DeviceDto>;
+};
+
+export type AuthControllerListDevicesResponse = AuthControllerListDevicesResponses[keyof AuthControllerListDevicesResponses];
+
+export type AuthControllerRevokeDeviceData = {
+    body?: never;
+    path: {
+        deviceId: string;
+    };
+    query?: never;
+    url: '/auth/devices/{deviceId}';
+};
+
+export type AuthControllerRevokeDeviceResponses = {
+    200: RevokeDevicesResponseDto;
+};
+
+export type AuthControllerRevokeDeviceResponse = AuthControllerRevokeDeviceResponses[keyof AuthControllerRevokeDeviceResponses];
 
 export type AuthControllerLogoutData = {
     body?: never;

@@ -1,7 +1,8 @@
-import { configureApiClient } from "@opnshelf/api";
+import { configureApiClient, setDeviceIdentity } from "@opnshelf/api";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { env } from "#/env";
+import { browserDeviceIdentity } from "./device";
 
 /**
  * The subset of API call options this helper overrides. Using only `fetch`
@@ -33,6 +34,12 @@ export function setupApiClient() {
 
 	const apiUrl = env.VITE_API_URL;
 	configureApiClient(apiUrl);
+
+	// Claim this browser profile as a Device (ADR-0015). Browser-only: there's no
+	// localStorage during SSR, and the stamp only needs to happen once per client.
+	if (typeof window !== "undefined") {
+		setDeviceIdentity(browserDeviceIdentity());
+	}
 
 	return { apiUrl };
 }

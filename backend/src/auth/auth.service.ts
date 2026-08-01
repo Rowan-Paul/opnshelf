@@ -48,6 +48,26 @@ export const SESSION_SLIDE_MS = 24 * 60 * 60 * 1000; // 1 day
  */
 const MAX_CACHED_DEVICE_SESSIONS = 1000;
 
+/**
+ * Bounds on the client-supplied device headers (ADR-0015). The values reach us
+ * from an untrusted client and end up in the DB and in rendered UI, so the id is
+ * length-checked and the label is truncated and stripped of control characters.
+ */
+const DEVICE_ID_MAX = 128;
+const DEVICE_NAME_MAX = 64;
+const DEVICE_PLATFORMS = ["ios", "android", "web"] as const;
+
+export type DevicePlatform = (typeof DEVICE_PLATFORMS)[number];
+
+export interface DeviceSummary {
+	deviceId: string;
+	name: string | null;
+	platform: string | null;
+	isCurrent: boolean;
+	lastUsedAt: Date;
+	createdAt: Date;
+}
+
 /** Core-only login scope; integrations are requested only when enabled. */
 export const OAUTH_SCOPE = buildOAuthScope();
 export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
@@ -196,6 +216,11 @@ export class AuthService implements OnModuleInit {
 						sessionData: JSON.stringify(session),
 						kind: "oauth",
 						expiresAt,
+						// Placeholder identity: the client claims the real one via the
+						// x-opnshelf-device header on its first request (ADR-0015). A
+						// random value keeps the session addressable, and revocable,
+						// even if that stamp never arrives.
+						deviceId: randomUUID(),
 					},
 				});
 			},
@@ -800,6 +825,8 @@ export class AuthService implements OnModuleInit {
 				sessionData: data,
 				kind: "credential",
 				expiresAt,
+				// See buildSessionStore: placeholder until the client stamps.
+				deviceId: randomUUID(),
 			},
 		});
 	}
@@ -869,6 +896,161 @@ export class AuthService implements OnModuleInit {
 		} catch {
 			this.logger.warn("Failed to touch session");
 		}
+	}
+
+	/**
+	 * Normalise the client-supplied device headers. Returns null when the id is
+	 * missing or implausible, which tells the caller not to stamp at all.
+	 */
+	parseDeviceHeaders(raw: {
+		id?: string;
+		name?: string;
+		platform?: string;
+	}): {
+		deviceId: string;
+		name: string | null;
+		platform: string | null;
+	} | null {
+		const deviceId = raw.id?.trim();
+		if (!deviceId || deviceId.length > DEVICE_ID_MAX) {
+			return null;
+		}
+		// The client percent-encodes the label so the header stays ASCII. A
+		// malformed value is just a nameless device, never a failed request.
+		let decoded: string | undefined;
+		try {
+			decoded = raw.name ? decodeURIComponent(raw.name) : undefined;
+		} catch {
+			decoded = undefined;
+		}
+		// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
+		const name = decoded?.replace(/[\x00-\x1f\x7f]/g, "").trim();
+		const platform = raw.platform?.trim().toLowerCase();
+		return {
+			deviceId,
+			name: name ? name.slice(0, DEVICE_NAME_MAX) : null,
+			platform: DEVICE_PLATFORMS.includes(platform as DevicePlatform)
+				? (platform as DevicePlatform)
+				: null,
+		};
+	}
+
+	/**
+	 * Record which install this session belongs to (ADR-0015) and take the device
+	 * over: any *other* session of the same user carrying this deviceId is a
+	 * superseded login from the same install, so it is revoked here rather than
+	 * left valid for the rest of its 14 days.
+	 *
+	 * Called by the guard only when the incoming headers differ from what is
+	 * stored, so this is one write per session lifetime, not per request.
+	 * Best-effort, like touchSession: a failure must never fail a valid request.
+	 *
+	 * ponytail: the deleteMany IS the one-session-per-(user, device) invariant —
+	 * add a partial unique index only if duplicate rows ever show up in practice.
+	 */
+	async stampDevice(params: {
+		sessionId: string;
+		userDid: string;
+		deviceId: string;
+		name: string | null;
+		platform: string | null;
+	}): Promise<void> {
+		try {
+			const superseded = await this.prisma.authSession.findMany({
+				where: {
+					userDid: params.userDid,
+					deviceId: params.deviceId,
+					id: { not: params.sessionId },
+				},
+				select: { id: true },
+			});
+			await this.prisma.$transaction([
+				this.prisma.authSession.deleteMany({
+					where: { id: { in: superseded.map((row) => row.id) } },
+				}),
+				this.prisma.authSession.update({
+					where: { id: params.sessionId },
+					data: {
+						deviceId: params.deviceId,
+						deviceName: params.name,
+						devicePlatform: params.platform,
+					},
+				}),
+			]);
+			for (const row of superseded) {
+				this.oauthClients.delete(row.id);
+				this.credentialSessions.delete(row.id);
+			}
+		} catch {
+			this.logger.warn("Failed to stamp device on session");
+		}
+	}
+
+	/**
+	 * The user's signed-in devices, most recently used first. Never returns
+	 * AuthSession.id — that string is the live Bearer token. Expired rows are
+	 * filtered out because they linger in the table until the cleanup job runs,
+	 * and the guard would reject them anyway.
+	 */
+	async listDevices(
+		userDid: string,
+		currentSessionId: string,
+	): Promise<DeviceSummary[]> {
+		const rows = await this.prisma.authSession.findMany({
+			where: { userDid, expiresAt: { gt: new Date() } },
+			select: {
+				id: true,
+				deviceId: true,
+				deviceName: true,
+				devicePlatform: true,
+				lastUsedAt: true,
+				createdAt: true,
+			},
+			orderBy: { lastUsedAt: "desc" },
+		});
+		return rows.map((row) => ({
+			deviceId: row.deviceId,
+			name: row.deviceName,
+			platform: row.devicePlatform,
+			isCurrent: row.id === currentSessionId,
+			lastUsedAt: row.lastUsedAt,
+			createdAt: row.createdAt,
+		}));
+	}
+
+	/**
+	 * Revoke one device. Scoped by userDid: deviceId arrives from the client, so
+	 * on its own it must never be able to reach another user's session.
+	 * @returns how many sessions were revoked (0 = not this user's device)
+	 */
+	async revokeDevice(userDid: string, deviceId: string): Promise<number> {
+		return this.revokeWhere({ userDid, deviceId });
+	}
+
+	/** Revoke every device except the one making the request. */
+	async revokeOtherDevices(
+		userDid: string,
+		currentSessionId: string,
+	): Promise<number> {
+		return this.revokeWhere({ userDid, id: { not: currentSessionId } });
+	}
+
+	private async revokeWhere(
+		where: { userDid: string } & Record<string, unknown>,
+	): Promise<number> {
+		const doomed = await this.prisma.authSession.findMany({
+			where,
+			select: { id: true },
+		});
+		if (doomed.length === 0) return 0;
+		const { count } = await this.prisma.authSession.deleteMany({
+			where: { id: { in: doomed.map((row) => row.id) } },
+		});
+		for (const row of doomed) {
+			this.oauthClients.delete(row.id);
+			this.credentialSessions.delete(row.id);
+		}
+		return count;
 	}
 
 	/**

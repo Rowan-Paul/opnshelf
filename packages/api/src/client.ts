@@ -9,6 +9,21 @@ let sessionToken: string | null = null;
 /** Called when any API request returns 401. Set by the app to redirect to login. */
 let onUnauthorized: (() => void) | null = null;
 
+/**
+ * Which install this client is (ADR-0015). Sent on every request; the backend
+ * stamps it onto the session row the first time it differs, which is what makes
+ * the Devices screen possible. Each app supplies its own values — the platform
+ * vendor id on mobile, a localStorage uuid on web.
+ */
+let device: { id: string; name?: string; platform?: string } | null = null;
+
+export function setDeviceIdentity(
+	identity: { id: string; name?: string; platform?: string } | null,
+): void {
+	device = identity;
+	updateClientConfig();
+}
+
 export function setOnUnauthorized(callback: (() => void) | null): void {
 	onUnauthorized = callback;
 }
@@ -31,14 +46,26 @@ export function getSessionToken(): string | null {
 }
 
 function updateClientConfig() {
+	const headers: Record<string, string> = {};
+	if (sessionToken) {
+		headers.Authorization = `Bearer ${sessionToken}`;
+	}
+	if (device) {
+		headers["x-opnshelf-device"] = device.id;
+		// Header values must stay ASCII: a device name can carry anything the
+		// platform reports ("Rowans iPhone", non-Latin scripts), and a raw
+		// non-ASCII byte makes fetch throw before the request leaves.
+		if (device.name) {
+			headers["x-opnshelf-device-name"] = encodeURIComponent(device.name);
+		}
+		if (device.platform) {
+			headers["x-opnshelf-device-platform"] = device.platform;
+		}
+	}
 	client.setConfig({
 		baseUrl,
 		credentials: 'include',
-		headers: sessionToken
-			? {
-					Authorization: `Bearer ${sessionToken}`,
-				}
-			: undefined,
+		headers: Object.keys(headers).length > 0 ? headers : undefined,
 	});
 }
 

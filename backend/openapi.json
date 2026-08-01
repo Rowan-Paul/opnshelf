@@ -772,6 +772,82 @@
         ]
       }
     },
+    "/auth/devices": {
+      "get": {
+        "operationId": "AuthController_listDevices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the signed-in devices for this account",
+        "tags": [
+          "auth"
+        ]
+      },
+      "delete": {
+        "operationId": "AuthController_revokeOtherDevices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeDevicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sign out all other devices",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/devices/{deviceId}": {
+      "delete": {
+        "operationId": "AuthController_revokeDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeDevicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sign out one device",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
@@ -6120,6 +6196,62 @@
         "required": [
           "verified",
           "coreOAuthUrl"
+        ]
+      },
+      "DeviceDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Opaque id of the install, used to revoke this device"
+          },
+          "name": {
+            "type": "string",
+            "description": "Client-reported label, e.g. \"iPhone 15 Pro\"",
+            "nullable": true
+          },
+          "platform": {
+            "type": "string",
+            "description": "Client-reported platform",
+            "enum": [
+              "ios",
+              "android",
+              "web"
+            ],
+            "nullable": true
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "Whether this is the device making the request"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "description": "Last authenticated request from this device"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When this device signed in"
+          }
+        },
+        "required": [
+          "deviceId",
+          "name",
+          "platform",
+          "isCurrent",
+          "lastUsedAt",
+          "createdAt"
+        ]
+      },
+      "RevokeDevicesResponseDto": {
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "number",
+            "description": "How many devices were signed out"
+          }
+        },
+        "required": [
+          "revoked"
         ]
       },
       "TMDBShowResultDto": {

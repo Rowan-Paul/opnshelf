@@ -8,8 +8,11 @@ const { setSessionTokenMock } = vi.hoisted(() => ({
 
 vi.mock("@opnshelf/api", () => ({
 	configureApiClient: vi.fn(),
+	setDeviceIdentity: vi.fn(),
 	setSessionToken: setSessionTokenMock,
 }));
+
+vi.mock("./device", () => ({ nativeDeviceIdentity: vi.fn() }));
 
 vi.mock("expo-secure-store", () => ({
 	getItemAsync: vi.fn(),

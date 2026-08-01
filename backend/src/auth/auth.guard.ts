@@ -8,6 +8,15 @@ import { AuthService } from "./auth.service";
 import { extractSessionId } from "./session-id";
 import type { AuthenticatedRequest, AuthUser } from "./types";
 
+/** Read a single request header value, ignoring the repeated-header array form. */
+function header(
+	request: AuthenticatedRequest,
+	name: string,
+): string | undefined {
+	const value = request.headers?.[name];
+	return Array.isArray(value) ? value[0] : value;
+}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
 	constructor(private readonly authService: AuthService) {}
@@ -49,6 +58,28 @@ export class AuthGuard implements CanActivate {
 			sessionRecord.id,
 			sessionRecord.lastUsedAt,
 		);
+
+		// Claim the device this session belongs to (ADR-0015). Only written when
+		// the headers differ from what's stored, so it's one write per session
+		// lifetime — it can't ride on touchSession, which is throttled to a day
+		// and would leave a fresh session nameless until tomorrow.
+		const device = this.authService.parseDeviceHeaders({
+			id: header(request, "x-opnshelf-device"),
+			name: header(request, "x-opnshelf-device-name"),
+			platform: header(request, "x-opnshelf-device-platform"),
+		});
+		if (
+			device &&
+			(sessionRecord.deviceId !== device.deviceId ||
+				sessionRecord.deviceName !== device.name ||
+				sessionRecord.devicePlatform !== device.platform)
+		) {
+			await this.authService.stampDevice({
+				sessionId: sessionRecord.id,
+				userDid: sessionRecord.userDid,
+				...device,
+			});
+		}
 
 		// Attach user info to request
 		const authUser: AuthUser = {

@@ -116,6 +116,7 @@ describe("AuthService", () => {
 		authSession: {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
+			findMany: vi.fn(),
 			upsert: vi.fn(),
 			update: vi.fn(),
 			deleteMany: vi.fn(),
@@ -264,6 +265,200 @@ describe("AuthService", () => {
 			await expect(
 				service.revokeBySessionId("session-123"),
 			).resolves.toBeUndefined();
+		});
+	});
+
+	describe("parseDeviceHeaders", () => {
+		it("decodes the label, caps its length and strips control characters", () => {
+			const long = "A".repeat(100);
+			expect(
+				service.parseDeviceHeaders({
+					id: "device-a",
+					name: encodeURIComponent("Rowan's iPhone\u0000\u001f"),
+					platform: "IOS",
+				}),
+			).toEqual({
+				deviceId: "device-a",
+				name: "Rowan's iPhone",
+				platform: "ios",
+			});
+			expect(
+				service.parseDeviceHeaders({ id: "device-a", name: long })?.name,
+			).toHaveLength(64);
+		});
+
+		it("ignores a malformed label rather than failing the request", () => {
+			expect(
+				service.parseDeviceHeaders({ id: "device-a", name: "%E0%A4%A" }),
+			).toEqual({ deviceId: "device-a", name: null, platform: null });
+		});
+
+		it("rejects a missing or oversized id, and an unknown platform", () => {
+			expect(service.parseDeviceHeaders({})).toBeNull();
+			expect(service.parseDeviceHeaders({ id: "   " })).toBeNull();
+			expect(service.parseDeviceHeaders({ id: "x".repeat(129) })).toBeNull();
+			expect(
+				service.parseDeviceHeaders({ id: "device-a", platform: "toaster" })
+					?.platform,
+			).toBeNull();
+		});
+	});
+
+	describe("stampDevice", () => {
+		it("revokes the same install's older sessions but never the current one", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "older-session" },
+			]);
+			mockPrismaService.$transaction.mockResolvedValue([]);
+
+			await service.stampDevice({
+				sessionId: "session-123",
+				userDid: "did:plc:abc123",
+				deviceId: "device-a",
+				name: "Pixel 8",
+				platform: "android",
+			});
+
+			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:abc123",
+					deviceId: "device-a",
+					id: { not: "session-123" },
+				},
+				select: { id: true },
+			});
+			expect(mockPrismaService.$transaction).toHaveBeenCalledOnce();
+			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+				where: { id: { in: ["older-session"] } },
+			});
+			expect(mockPrismaService.authSession.update).toHaveBeenCalledWith({
+				where: { id: "session-123" },
+				data: {
+					deviceId: "device-a",
+					deviceName: "Pixel 8",
+					devicePlatform: "android",
+				},
+			});
+		});
+
+		it("swallows failures so a valid request still succeeds", async () => {
+			mockPrismaService.authSession.findMany.mockRejectedValue(
+				new Error("DB error"),
+			);
+
+			await expect(
+				service.stampDevice({
+					sessionId: "session-123",
+					userDid: "did:plc:abc123",
+					deviceId: "device-a",
+					name: null,
+					platform: null,
+				}),
+			).resolves.toBeUndefined();
+		});
+	});
+
+	describe("listDevices", () => {
+		it("flags the caller's own device and never returns the session id", async () => {
+			const lastUsedAt = new Date("2026-08-01T10:00:00.000Z");
+			const createdAt = new Date("2026-07-20T10:00:00.000Z");
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{
+					id: "session-123",
+					deviceId: "device-a",
+					deviceName: "iPhone 15 Pro",
+					devicePlatform: "ios",
+					lastUsedAt,
+					createdAt,
+				},
+				{
+					id: "session-456",
+					deviceId: "device-b",
+					deviceName: null,
+					devicePlatform: null,
+					lastUsedAt,
+					createdAt,
+				},
+			]);
+
+			const devices = await service.listDevices(
+				"did:plc:abc123",
+				"session-123",
+			);
+
+			expect(devices).toEqual([
+				{
+					deviceId: "device-a",
+					name: "iPhone 15 Pro",
+					platform: "ios",
+					isCurrent: true,
+					lastUsedAt,
+					createdAt,
+				},
+				{
+					deviceId: "device-b",
+					name: null,
+					platform: null,
+					isCurrent: false,
+					lastUsedAt,
+					createdAt,
+				},
+			]);
+			expect(JSON.stringify(devices)).not.toContain("session-123");
+			// Expired rows linger until the cleanup job, so they must be filtered.
+			expect(
+				mockPrismaService.authSession.findMany.mock.calls[0][0].where,
+			).toMatchObject({
+				userDid: "did:plc:abc123",
+				expiresAt: { gt: expect.any(Date) },
+			});
+		});
+	});
+
+	describe("revokeDevice", () => {
+		it("scopes the revoke to the caller's own DID", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-456" },
+			]);
+			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+
+			const revoked = await service.revokeDevice("did:plc:abc123", "device-b");
+
+			expect(revoked).toBe(1);
+			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:abc123", deviceId: "device-b" },
+				select: { id: true },
+			});
+		});
+
+		it("reports nothing revoked for another user's device", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([]);
+
+			await expect(
+				service.revokeDevice("did:plc:abc123", "someone-elses-device"),
+			).resolves.toBe(0);
+			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("revokeOtherDevices", () => {
+		it("keeps the current session and drops the rest", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-456" },
+				{ id: "session-789" },
+			]);
+			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 2 });
+
+			const revoked = await service.revokeOtherDevices(
+				"did:plc:abc123",
+				"session-123",
+			);
+
+			expect(revoked).toBe(2);
+			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:abc123", id: { not: "session-123" } },
+				select: { id: true },
+			});
 		});
 	});
 

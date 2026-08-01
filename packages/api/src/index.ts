@@ -17,6 +17,7 @@ export {
 	getLoginUrl,
 	getSessionToken,
 	getSignupUrl,
+	setDeviceIdentity,
 	setOnUnauthorized,
 	setSessionToken,
 } from "./client";

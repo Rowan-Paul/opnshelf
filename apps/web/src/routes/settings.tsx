@@ -6,6 +6,7 @@ import { AccountSection } from "#/components/settings/AccountSection";
 import { BlogMirrorSection } from "#/components/settings/BlogMirrorSection";
 import { BlueskyCrossPostsSection } from "#/components/settings/BlueskyCrossPostsSection";
 import { DeleteAccountSection } from "#/components/settings/DeleteAccountSection";
+import { DevicesSection } from "#/components/settings/DevicesSection";
 import { ImportHistorySection } from "#/components/settings/ImportHistorySection";
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
 import { ssrAuthOptions } from "#/lib/api";
@@ -102,6 +103,7 @@ function SettingsPage() {
 						<ImportHistorySection />
 						<BlogMirrorSection />
 						<BlueskyCrossPostsSection />
+						<DevicesSection />
 						<AccountSection user={user} />
 					</div>
 

@@ -1,5 +1,10 @@
-import { configureApiClient, setSessionToken } from "@opnshelf/api";
+import {
+	configureApiClient,
+	setDeviceIdentity,
+	setSessionToken,
+} from "@opnshelf/api";
 import * as SecureStore from "expo-secure-store";
+import { nativeDeviceIdentity } from "./device";
 import { env } from "./env";
 
 const SESSION_TOKEN_KEY = "opnshelf_session_token";
@@ -10,6 +15,12 @@ const SESSION_TOKEN_KEY = "opnshelf_session_token";
  */
 export function initializeApiClient(): void {
 	configureApiClient(env.apiUrl);
+	// Claim this install as a Device (ADR-0015). Fire-and-forget: the id only
+	// needs to be attached before the app's first authenticated request, and a
+	// failure here must not block startup.
+	void nativeDeviceIdentity()
+		.then(setDeviceIdentity)
+		.catch(() => setDeviceIdentity(null));
 }
 
 /**

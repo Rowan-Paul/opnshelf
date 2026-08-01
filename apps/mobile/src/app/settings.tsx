@@ -20,6 +20,7 @@ import {
 	ChevronRight,
 	Download,
 	MessageSquare,
+	Smartphone,
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
@@ -445,6 +446,15 @@ export default function SettingsScreen() {
 								<UserPen color="#94a3b8" size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									Edit profile
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</Link>
+						<Link href="/devices" asChild>
+							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
+								<Smartphone color="#94a3b8" size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									Devices
 								</Text>
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>

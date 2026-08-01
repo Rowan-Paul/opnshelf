@@ -95,6 +95,10 @@ _Avoid_: Full access (incorrectly suggests access to unrelated AT Protocol servi
 Permission for one optional ecosystem outside Opnshelf, enabled and disabled independently for a User across all devices. Declining or disconnecting one integration leaves **Core Opnshelf Access** and every other integration unchanged.
 _Avoid_: External publishing access (incorrectly combines independent ecosystems), add-on scope (implementation language)
 
+**Device**:
+One place a User is signed in from: the app on a phone or tablet, or a browser profile on a computer. A User has at most one Device per install per account, so signing in again from the same install takes over the existing Device instead of adding a second one. A Device is not a physical machine — two browser profiles on one laptop are two Devices, and clearing browser storage produces a new one. A User revokes a Device from the **Devices** settings surface; revoking ends that install's **Core Opnshelf Access** and leaves every other Device signed in, and it never changes **External Integration Access**, which is per-User across all Devices.
+_Avoid_: Session (the entity a User manages is the Device), Connected device (collides with **Connections**), Token, Login, Client
+
 **Home**:
 The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)

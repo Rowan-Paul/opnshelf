@@ -22,6 +22,8 @@ describe("AuthGuard", () => {
 		getSessionById: vi.fn(),
 		restoreBySession: vi.fn(),
 		touchSession: vi.fn(),
+		parseDeviceHeaders: vi.fn(),
+		stampDevice: vi.fn(),
 	};
 
 	// A session whose absolute lifetime is comfortably in the future.
@@ -178,6 +180,78 @@ describe("AuthGuard", () => {
 			expect((mockRequest as any).user).toEqual({
 				did: "did:plc:abc123",
 				session: mockSession,
+			});
+		});
+
+		describe("device stamping (ADR-0015)", () => {
+			const record = (overrides: Record<string, unknown> = {}) => ({
+				id: "session-123",
+				userDid: "did:plc:abc123",
+				sessionData: "{}",
+				deviceId: "device-a",
+				deviceName: "iPhone 15 Pro",
+				devicePlatform: "ios",
+				expiresAt: futureExpiry(),
+				lastUsedAt: new Date(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				...overrides,
+			});
+
+			beforeEach(() => {
+				mockAuthService.restoreBySession.mockResolvedValue({
+					did: "did:plc:abc123",
+				});
+			});
+
+			it("stamps when the claimed device differs from the stored one", async () => {
+				mockAuthService.getSessionById.mockResolvedValue(
+					record({ deviceId: "old-device", deviceName: null }),
+				);
+				mockAuthService.parseDeviceHeaders.mockReturnValue({
+					deviceId: "device-a",
+					name: "iPhone 15 Pro",
+					platform: "ios",
+				});
+
+				await guard.canActivate(
+					createMockExecutionContext({ session: "session-123" }),
+				);
+
+				expect(mockAuthService.stampDevice).toHaveBeenCalledWith({
+					sessionId: "session-123",
+					userDid: "did:plc:abc123",
+					deviceId: "device-a",
+					name: "iPhone 15 Pro",
+					platform: "ios",
+				});
+			});
+
+			it("does not write when the stored device already matches", async () => {
+				mockAuthService.getSessionById.mockResolvedValue(record());
+				mockAuthService.parseDeviceHeaders.mockReturnValue({
+					deviceId: "device-a",
+					name: "iPhone 15 Pro",
+					platform: "ios",
+				});
+
+				await guard.canActivate(
+					createMockExecutionContext({ session: "session-123" }),
+				);
+
+				expect(mockAuthService.stampDevice).not.toHaveBeenCalled();
+			});
+
+			it("leaves the session alone when no device headers are sent", async () => {
+				mockAuthService.getSessionById.mockResolvedValue(record());
+				mockAuthService.parseDeviceHeaders.mockReturnValue(null);
+
+				const result = await guard.canActivate(
+					createMockExecutionContext({ session: "session-123" }),
+				);
+
+				expect(result).toBe(true);
+				expect(mockAuthService.stampDevice).not.toHaveBeenCalled();
 			});
 		});
 

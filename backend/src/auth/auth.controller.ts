@@ -4,12 +4,15 @@ import {
 	Body,
 	ConflictException,
 	Controller,
+	Delete,
 	ForbiddenException,
 	Get,
 	HttpCode,
 	HttpException,
 	HttpStatus,
 	Logger,
+	NotFoundException,
+	Param,
 	Post,
 	Query,
 	Req,
@@ -28,6 +31,7 @@ import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import type { OAuthIntegration, OAuthScopePreferences } from "./oauth-scopes";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
+import { DeviceDto, RevokeDevicesResponseDto } from "./dto/device.dto";
 import {
 	PermissionChangeDto,
 	PermissionChangeResponseDto,
@@ -942,6 +946,62 @@ export class AuthController {
 					"Could not verify that code. Please try again.",
 				);
 		}
+	}
+
+	/**
+	 * The user's signed-in devices, most recently used first (ADR-0015).
+	 */
+	@Get("auth/devices")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "List the signed-in devices for this account" })
+	@ApiResponse({ status: 200, type: [DeviceDto] })
+	async listDevices(@Req() req: AuthenticatedRequest): Promise<DeviceDto[]> {
+		const sessionId = extractSessionId(req) ?? "";
+		const devices = await this.authService.listDevices(req.user.did, sessionId);
+		return devices.map((device) => ({
+			...device,
+			lastUsedAt: device.lastUsedAt.toISOString(),
+			createdAt: device.createdAt.toISOString(),
+		}));
+	}
+
+	/**
+	 * Sign out every device except the one making the request. The current
+	 * device keeps its session — settings already has a Sign out button for that.
+	 */
+	@Delete("auth/devices")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Sign out all other devices" })
+	@ApiResponse({ status: 200, type: RevokeDevicesResponseDto })
+	async revokeOtherDevices(
+		@Req() req: AuthenticatedRequest,
+	): Promise<RevokeDevicesResponseDto> {
+		const sessionId = extractSessionId(req) ?? "";
+		const revoked = await this.authService.revokeOtherDevices(
+			req.user.did,
+			sessionId,
+		);
+		return { revoked };
+	}
+
+	/**
+	 * Sign out one device. deviceId comes from the client, so the revoke is
+	 * scoped by DID — an unknown or someone else's device is a 404, never a
+	 * successful revoke.
+	 */
+	@Delete("auth/devices/:deviceId")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Sign out one device" })
+	@ApiResponse({ status: 200, type: RevokeDevicesResponseDto })
+	async revokeDevice(
+		@Req() req: AuthenticatedRequest,
+		@Param("deviceId") deviceId: string,
+	): Promise<RevokeDevicesResponseDto> {
+		const revoked = await this.authService.revokeDevice(req.user.did, deviceId);
+		if (revoked === 0) {
+			throw new NotFoundException("Device not found");
+		}
+		return { revoked };
 	}
 
 	/**
