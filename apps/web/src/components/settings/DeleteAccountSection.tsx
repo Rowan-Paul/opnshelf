@@ -1,15 +1,10 @@
 import {
-	type AccountDeletionJobDto,
-	getAccountDeletionProgress,
-	getAccountDeletionStatusMessage,
-	isActiveAccountDeletionStatus,
-	isUnauthorizedError,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
 } from "@opnshelf/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import {
@@ -20,15 +15,21 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
+import {
+	isAccountDeletionRunning,
+	useAccountDeletionJob,
+} from "#/lib/use-account-deletion";
 
 export function DeleteAccountSection() {
 	const { logout } = useAuth();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [confirmChecked, setConfirmChecked] = useState(false);
 	const [deletePDSData, setDeletePDSData] = useState(false);
-	const [deletionJob, setDeletionJob] = useState<AccountDeletionJobDto | null>(
-		null,
-	);
+	// The job lives on the server and is polled by `useAccountDeletionJob` (also
+	// mounted at the app root, which renders the blocking dialog), so it survives
+	// a page reload.
+	const deletionJob = useAccountDeletionJob();
+	const queryClient = useQueryClient();
 
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "me", "account", "delete"],
@@ -40,60 +41,25 @@ export function DeleteAccountSection() {
 		},
 	});
 
-	// Poll deletion status when there's an active job
-	const { data: deletionStatus, error: deletionError } = useQuery({
-		...usersControllerGetMyAccountDeletionOptions(),
-		enabled: !!deletionJob && isActiveAccountDeletionStatus(deletionJob.status),
-		refetchInterval: 2000,
-		retry: false,
-	});
-
-	useEffect(() => {
-		if (deletionStatus) {
-			setDeletionJob(deletionStatus);
-			if (deletionStatus.status === "completed") {
-				void logout();
-			}
-		}
-	}, [deletionStatus, logout]);
-
-	useEffect(() => {
-		if (deletionError && deletionJob && isUnauthorizedError(deletionError)) {
-			// The backend deletes the user and revokes the session atomically with
-			// (or right after) marking the job completed. If our next poll arrives
-			// after revocation, we get a 401 — treat that as "done" and sign out.
-			void logout();
-		}
-	}, [deletionError, deletionJob, logout]);
-
 	const handleDeleteAccount = async () => {
 		try {
-			const result = await deleteAccountMutation.mutateAsync({
-				body: { deletePDSData },
-			});
+			await deleteAccountMutation.mutateAsync({ body: { deletePDSData } });
 			if (!deletePDSData) {
 				// Immediate deletion, no job returned
 				await logout();
 				return;
 			}
-			// PDS deletion job started
-			if (result) {
-				setDeletionJob(result);
-				setShowDeleteDialog(false);
-			}
+			// PDS deletion job started — let the shared query pick it up.
+			setShowDeleteDialog(false);
+			await queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyAccountDeletionOptions().queryKey,
+			});
 		} catch {
 			// Error handled by mutation state
 		}
 	};
 
-	const isDeleting =
-		!!deletionJob && isActiveAccountDeletionStatus(deletionJob.status);
-	const deletionProgress = deletionJob
-		? getAccountDeletionProgress(deletionJob)
-		: null;
-	const deletionMessage = deletionJob
-		? getAccountDeletionStatusMessage(deletionJob)
-		: "";
+	const isDeleting = isAccountDeletionRunning(deletionJob);
 
 	return (
 		<>
@@ -108,12 +74,29 @@ export function DeleteAccountSection() {
 					Permanently delete your account and all associated data
 				</p>
 
-				{isDeleting && deletionJob ? (
+				{isDeleting ? (
 					<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
 						<Loader2 className="size-4 animate-spin" />
 						<span className="font-medium text-sm">
 							Account deletion in progress…
 						</span>
+					</div>
+				) : deletionJob?.status === "failed" ? (
+					<div className="space-y-2">
+						<p className="text-red-700 text-sm dark:text-red-300">
+							{deletionJob.lastError ?? "Account deletion failed."}
+						</p>
+						<Button
+							variant="outline"
+							onClick={handleDeleteAccount}
+							disabled={deleteAccountMutation.isPending}
+							className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
+						>
+							{deleteAccountMutation.isPending ? (
+								<Loader2 data-icon="inline-start" className="animate-spin" />
+							) : null}
+							Retry
+						</Button>
 					</div>
 				) : (
 					<button
@@ -213,61 +196,8 @@ export function DeleteAccountSection() {
 				</DialogContent>
 			</Dialog>
 
-			{/* Deletion Progress Dialog — non-dismissible */}
-			<Dialog open={isDeleting && !!deletionJob}>
-				<DialogContent
-					showCloseButton={false}
-					onInteractOutside={(e) => e.preventDefault()}
-					onEscapeKeyDown={(e) => e.preventDefault()}
-					className="sm:max-w-[425px]"
-				>
-					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-							<AlertTriangle className="size-5" />
-							Deleting your account
-						</DialogTitle>
-						<DialogDescription>
-							Please do not close this page until deletion is complete.
-						</DialogDescription>
-					</DialogHeader>
-
-					<div className="space-y-4 py-4">
-						<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
-							<Loader2 className="size-4 animate-spin" />
-							<span className="font-medium text-sm">{deletionMessage}</span>
-						</div>
-						{deletionProgress !== null && (
-							<div className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900">
-								<div
-									className="h-full rounded-full bg-red-600 transition-all dark:bg-red-400"
-									style={{ width: `${deletionProgress}%` }}
-								/>
-							</div>
-						)}
-						{deletionJob?.status === "failed" && (
-							<div className="space-y-2">
-								<p className="text-red-700 text-sm dark:text-red-300">
-									{deletionJob.lastError}
-								</p>
-								<Button
-									variant="outline"
-									onClick={handleDeleteAccount}
-									disabled={deleteAccountMutation.isPending}
-									className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
-								>
-									{deleteAccountMutation.isPending ? (
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
-										/>
-									) : null}
-									Retry
-								</Button>
-							</div>
-						)}
-					</div>
-				</DialogContent>
-			</Dialog>
+			{/* The blocking progress dialog lives at the app root
+			    (AccountDeletionGate), so it also shows after a page reload. */}
 		</>
 	);
 }

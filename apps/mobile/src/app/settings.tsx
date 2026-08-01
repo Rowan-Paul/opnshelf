@@ -1,11 +1,8 @@
 import {
-	type AccountDeletionJobDto,
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
-	isActiveAccountDeletionStatus,
 	isActiveTraktImportStatus,
-	isUnauthorizedError,
 	reviewsControllerListMyPublicationsOptions,
 	type TraktImportJobDto,
 	usersControllerDeleteMyAccountMutation,
@@ -26,10 +23,9 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	ActivityIndicator,
-	Modal,
 	Pressable,
 	ScrollView,
 	Switch,
@@ -48,6 +44,10 @@ import { useAuth } from "@/lib/auth-context";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
+import {
+	isAccountDeletionRunning,
+	useAccountDeletionJob,
+} from "@/lib/use-account-deletion";
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
@@ -330,10 +330,10 @@ export default function SettingsScreen() {
 		!publicationsError &&
 		!myPublications?.items.some((pub) => pub.uri === storedPublicationUri);
 
-	// Account deletion.
-	const [deletionJob, setDeletionJob] = useState<AccountDeletionJobDto | null>(
-		null,
-	);
+	// Account deletion. The job itself lives on the server and is polled by
+	// `useAccountDeletionJob` (also mounted at the app root, which renders the
+	// blocking overlay), so it survives an app restart.
+	const deletionJob = useAccountDeletionJob();
 
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "me", "account", "delete"],
@@ -344,46 +344,18 @@ export default function SettingsScreen() {
 			),
 	});
 
-	// Poll deletion status while a PDS-removal job is active.
-	const { data: deletionStatus, error: deletionError } = useQuery({
-		...usersControllerGetMyAccountDeletionOptions(),
-		enabled: !!deletionJob && isActiveAccountDeletionStatus(deletionJob.status),
-		refetchInterval: 2000,
-		retry: false,
-	});
-
-	useEffect(() => {
-		if (deletionStatus) {
-			setDeletionJob(deletionStatus);
-			if (deletionStatus.status === "completed") {
-				void signOut();
-			}
-		}
-	}, [deletionStatus, signOut]);
-
-	useEffect(() => {
-		if (deletionError && deletionJob && isUnauthorizedError(deletionError)) {
-			// The backend deletes the user and revokes the session atomically with
-			// (or right after) marking the job completed. If our next poll arrives
-			// after revocation, we get a 401 — treat that as "done" and sign out.
-			void signOut();
-		}
-	}, [deletionError, deletionJob, signOut]);
-
 	const runDeletion = async (deletePDSData: boolean) => {
 		try {
-			const result = await deleteAccountMutation.mutateAsync({
-				body: { deletePDSData },
-			});
+			await deleteAccountMutation.mutateAsync({ body: { deletePDSData } });
 			if (!deletePDSData) {
 				// Immediate deletion, no job returned (204).
 				await signOut();
 				return;
 			}
-			// PDS deletion job started — poll for progress.
-			if (result) {
-				setDeletionJob(result);
-			}
+			// PDS deletion job started — let the shared query pick it up.
+			await queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyAccountDeletionOptions().queryKey,
+			});
 		} catch {
 			// Surfaced by the mutation's onError toast.
 		}
@@ -425,8 +397,7 @@ export default function SettingsScreen() {
 		});
 	};
 
-	const isDeleting =
-		!!deletionJob && isActiveAccountDeletionStatus(deletionJob.status);
+	const isDeleting = isAccountDeletionRunning(deletionJob);
 	const deletionProgress = deletionJob
 		? getAccountDeletionProgress(deletionJob)
 		: null;
@@ -840,45 +811,8 @@ export default function SettingsScreen() {
 					</Text>
 				</ScrollView>
 			</Screen>
-
-			{/* Non-dismissible blocking overlay during PDS deletion — mirrors the web
-			    dialog. Covers the screen and the no-op onRequestClose swallows the
-			    Android hardware back, so the user can't navigate away mid-deletion
-			    (back button + swipe are also disabled via the Stack.Screen above). */}
-			<Modal
-				visible={isDeleting}
-				transparent
-				animationType="fade"
-				onRequestClose={() => {}}
-			>
-				<View className="flex-1 items-center justify-center bg-black/70 p-6">
-					<View className="w-full max-w-sm gap-4 rounded-2xl border border-destructive/40 bg-card p-6">
-						<View className="flex-row items-center gap-2">
-							<AlertTriangle color="#ef4444" size={20} />
-							<Text className="font-display font-semibold text-destructive text-lg">
-								Deleting your account
-							</Text>
-						</View>
-						<Text className="text-muted-foreground text-sm leading-5">
-							Please don't close the app until deletion is complete.
-						</Text>
-						<View className="flex-row items-center gap-2">
-							<ActivityIndicator size="small" color="#ef4444" />
-							<Text className="flex-1 font-medium text-destructive text-sm">
-								{deletionMessage}
-							</Text>
-						</View>
-						{deletionProgress !== null ? (
-							<View className="h-2 w-full overflow-hidden rounded-full bg-destructive/20">
-								<View
-									className="h-full rounded-full bg-destructive"
-									style={{ width: `${deletionProgress}%` }}
-								/>
-							</View>
-						) : null}
-					</View>
-				</View>
-			</Modal>
+			{/* The blocking overlay during PDS deletion lives at the app root
+			    (AccountDeletionGate), so it also shows after an app restart. */}
 		</>
 	);
 }

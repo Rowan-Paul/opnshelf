@@ -12,8 +12,27 @@ import { TextField } from "@/components/ui/text-field";
 
 type DialogAction = {
 	label: string;
-	variant?: "default" | "destructive";
+	variant?: "default" | "destructive" | "ghost";
 	onPress?: () => void;
+};
+
+/** Dismiss-only actions ("Cancel", "Keep editing") get quiet outline styling. */
+function actionVariant(
+	action: DialogAction,
+): "default" | "destructive" | "ghost" {
+	return action.variant ?? (action.onPress ? "default" : "ghost");
+}
+
+const ACTION_BOX: Record<string, string> = {
+	default: "bg-primary",
+	destructive: "bg-red-500",
+	ghost: "border border-border",
+};
+
+const ACTION_TEXT: Record<string, string> = {
+	default: "text-[#3f2e00]",
+	destructive: "text-white",
+	ghost: "text-foreground",
 };
 
 type DialogOptions = {
@@ -46,6 +65,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 		dismiss();
 		action.onPress?.();
 	};
+	const actions = dialog?.actions ?? [];
+	const stacked = actions.length > 2;
+	const orderedActions = stacked ? [...actions].reverse() : actions;
+
 	const submitInput = () => {
 		const input = dialog?.input;
 		if (!input) return;
@@ -95,23 +118,17 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 								onSubmitEditing={submitInput}
 							/>
 						) : null}
-						<View className="flex-row flex-wrap justify-end gap-2">
-							{dialog?.actions.map((action) => (
+						{/* Three or more actions don't fit side by side on a phone, so they
+						    stack full-width, most emphasized first and the cancel last. */}
+						<View className={stacked ? "gap-2" : "flex-row justify-end gap-2"}>
+							{orderedActions.map((action) => (
 								<Pressable
 									key={action.label}
 									onPress={() => pressAction(action)}
-									className={
-										action.variant === "destructive"
-											? "rounded-lg bg-red-500 px-3.5 py-2.5"
-											: "rounded-lg bg-primary px-3.5 py-2.5"
-									}
+									className={`items-center rounded-lg px-3.5 py-3 ${ACTION_BOX[actionVariant(action)]}`}
 								>
 									<Text
-										className={
-											action.variant === "destructive"
-												? "font-semibold text-white"
-												: "font-semibold text-[#3f2e00]"
-										}
+										className={`font-semibold ${ACTION_TEXT[actionVariant(action)]}`}
 									>
 										{action.label}
 									</Text>

@@ -17,6 +17,7 @@ import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
+import { AccountDeletionGate } from "@/components/AccountDeletionGate";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { initializeApiClient } from "@/lib/api";
@@ -135,6 +136,7 @@ export default function RootLayout() {
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
 				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
 			</Stack>
+			<AccountDeletionGate />
 			<ThemedStatusBar />
 		</Providers>
 	);

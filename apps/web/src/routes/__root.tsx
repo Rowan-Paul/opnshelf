@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
+import { AccountDeletionGate } from "#/components/AccountDeletionGate";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
@@ -111,6 +112,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 									<Footer />
 								</div>
 							)}
+							<AccountDeletionGate />
 							<Toaster />
 						</SearchDialogProvider>
 					</AuthProvider>
