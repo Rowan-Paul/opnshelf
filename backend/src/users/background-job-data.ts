@@ -31,13 +31,16 @@ export type AccountDeletionJobData = {
 	totalRecords: number;
 	deletedRecords: number;
 	currentStep?: string;
-	// Dynamic PDS-listed steps (list_items, lists) whose counts have already
+	// Dynamic PDS-listed steps whose counts have already
 	// been folded into totalRecords. Tracked so a resumed run doesn't double-add.
 	countedDynamicSteps?: string[];
-	// deletedRecords value at the moment the current step began. Lets a resumed
-	// run recompute deletedRecords as stepBaseline + within-step progress instead
-	// of double-counting records re-walked when the step restarts.
+	// Accumulated deletedRecords value at the start of the current worker tick.
+	// Each bounded tick adds its successfully handled records to this baseline.
 	stepBaseline?: number;
+	// Last successfully processed key for steps backed by an immutable local
+	// snapshot (currently managed blog mirrors). PDS-enumerated steps resume by
+	// listing the records that still exist instead.
+	stepCursor?: string;
 };
 
 export function parseTraktImportData(json: unknown): TraktImportJobData {
@@ -89,6 +92,7 @@ export function parseAccountDeletionData(
 			: undefined,
 		stepBaseline:
 			data.stepBaseline != null ? Number(data.stepBaseline) : undefined,
+		stepCursor: data.stepCursor ? String(data.stepCursor) : undefined,
 	};
 }
 

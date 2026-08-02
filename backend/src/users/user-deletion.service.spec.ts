@@ -191,13 +191,120 @@ describe("UserDeletionService", () => {
 			return job;
 		}
 
+		it("advances through a PDS collection across multiple worker ticks", async () => {
+			const job = queueJob({
+				deletePdsData: true,
+				totalRecords: 251,
+				deletedRecords: 0,
+			});
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			const episodeRkeys = new Set(
+				Array.from({ length: 250 }, (_, index) => `episode-${index}`),
+			);
+
+			mockListRecords.mockImplementation(
+				({ collection, cursor }: { collection: string; cursor?: string }) => {
+					const start = Number(cursor ?? 0);
+					const page =
+						collection === "xyz.opnshelf.episode"
+							? [...episodeRkeys].slice(start, start + 100)
+							: [];
+					return {
+						data: {
+							records: page.map((rkey) => ({
+								uri: `at://did:plc:test/${collection}/${rkey}`,
+							})),
+							cursor:
+								collection === "xyz.opnshelf.episode" &&
+								start + page.length < episodeRkeys.size
+									? String(start + page.length)
+									: undefined,
+						},
+					};
+				},
+			);
+			mockDeleteRecord.mockImplementation(
+				({ collection, rkey }: { collection: string; rkey: string }) => {
+					if (collection === "xyz.opnshelf.episode") episodeRkeys.delete(rkey);
+				},
+			);
+			prisma.backgroundJob.update = vi.fn().mockImplementation(({ data }) => {
+				if (data.data) job.data = data.data;
+				if (data.status) job.status = data.status;
+				return job;
+			});
+
+			for (let tick = 0; tick < 4 && episodeRkeys.size > 0; tick++) {
+				await service.processNextDeletionJob();
+			}
+			await service.processNextDeletionJob();
+
+			expect(episodeRkeys.size).toBe(0);
+			expect(
+				mockDeleteRecord.mock.calls
+					.filter(([input]) => input.collection === "xyz.opnshelf.episode")
+					.map(([input]) => input.rkey),
+			).toHaveLength(250);
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
+			expect(job.data).toEqual(
+				expect.objectContaining({
+					currentStep: "completed",
+					deletedRecords: 251,
+				}),
+			);
+		});
+
+		it("advances through managed blog mirrors across multiple worker ticks", async () => {
+			const job = queueJob({
+				deletePdsData: true,
+				totalRecords: 251,
+				deletedRecords: 0,
+				currentStep: "blog_mirrors",
+			});
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			const mirrorRows = Array.from({ length: 250 }, (_, index) => ({
+				rkey: `mirror-${String(index).padStart(3, "0")}`,
+			}));
+			const remaining = new Set(mirrorRows.map(({ rkey }) => rkey));
+			prisma.review.findMany = vi.fn().mockResolvedValue(mirrorRows);
+			mockDeleteRecord.mockImplementation(
+				({ collection, rkey }: { collection: string; rkey: string }) => {
+					if (collection !== "site.standard.document") return;
+					if (!remaining.delete(rkey)) {
+						throw { message: "Delete target record does not exist" };
+					}
+				},
+			);
+			prisma.backgroundJob.update = vi.fn().mockImplementation(({ data }) => {
+				if (data.data) job.data = data.data;
+				if (data.status) job.status = data.status;
+				return job;
+			});
+
+			for (let tick = 0; tick < 4 && remaining.size > 0; tick++) {
+				await service.processNextDeletionJob();
+			}
+
+			expect(remaining.size).toBe(0);
+		});
+
 		it("runs the full PDS pipeline, then deletes the user and revokes the session", async () => {
 			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
 			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
-			prisma.trackedMovie.findMany = vi
-				.fn()
-				.mockResolvedValue([{ rkey: "m1" }]);
-			prisma.rating.findMany = vi.fn().mockResolvedValue([{ rkey: "r1" }]);
+			mockListRecords.mockImplementation(
+				({ collection }: { collection: string }) => ({
+					data: {
+						records:
+							collection === "xyz.opnshelf.movie"
+								? [{ uri: `at://did:plc:test/${collection}/m1` }]
+								: collection === "xyz.opnshelf.rating"
+									? [{ uri: `at://did:plc:test/${collection}/r1` }]
+									: [],
+					},
+				}),
+			);
 
 			await service.processNextDeletionJob();
 
@@ -222,14 +329,62 @@ describe("UserDeletionService", () => {
 			);
 		});
 
+		it("deletes library items and review likes from the PDS", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			mockListRecords.mockImplementation(
+				({ collection }: { collection: string }) => ({
+					data: {
+						records: [
+							...(collection === "xyz.opnshelf.library.item"
+								? [{ uri: `at://did:plc:test/${collection}/library-1` }]
+								: []),
+							...(collection === "xyz.opnshelf.review.like"
+								? [{ uri: `at://did:plc:test/${collection}/like-1` }]
+								: []),
+						],
+					},
+				}),
+			);
+
+			await service.processNextDeletionJob();
+
+			expect(mockDeleteRecord).toHaveBeenCalledWith({
+				repo: "did:plc:test",
+				collection: "xyz.opnshelf.library.item",
+				rkey: "library-1",
+			});
+			expect(mockDeleteRecord).toHaveBeenCalledWith({
+				repo: "did:plc:test",
+				collection: "xyz.opnshelf.review.like",
+				rkey: "like-1",
+			});
+		});
+
 		it("stops after the per-tick batch and reschedules as waiting_retry", async () => {
 			queueJob({ deletePdsData: true, totalRecords: 250, deletedRecords: 0 });
 			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
-			prisma.trackedMovie.findMany = vi
-				.fn()
-				.mockResolvedValue(
-					Array.from({ length: 250 }, (_, i) => ({ rkey: `m${i}` })),
-				);
+			const movieRkeys = Array.from({ length: 250 }, (_, i) => `m${i}`);
+			mockListRecords.mockImplementation(
+				({ collection, cursor }: { collection: string; cursor?: string }) => {
+					if (collection !== "xyz.opnshelf.movie") {
+						return { data: { records: [] } };
+					}
+					const start = Number(cursor ?? 0);
+					const page = movieRkeys.slice(start, start + 100);
+					return {
+						data: {
+							records: page.map((rkey) => ({
+								uri: `at://did:plc:test/${collection}/${rkey}`,
+							})),
+							cursor:
+								start + page.length < movieRkeys.length
+									? String(start + page.length)
+									: undefined,
+						},
+					};
+				},
+			);
 
 			await service.processNextDeletionJob();
 
@@ -289,6 +444,51 @@ describe("UserDeletionService", () => {
 					}),
 				}),
 			);
+		});
+
+		it("fails the job when a PDS record cannot be deleted", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			mockListRecords.mockImplementation(
+				({ collection }: { collection: string }) => ({
+					data: {
+						records:
+							collection === "xyz.opnshelf.movie"
+								? [{ uri: `at://did:plc:test/${collection}/m1` }]
+								: [],
+					},
+				}),
+			);
+			mockDeleteRecord.mockRejectedValue(new Error("PDS timed out"));
+
+			await service.processNextDeletionJob();
+
+			expect(prisma.user.delete).not.toHaveBeenCalled();
+			expect(authService.revoke).not.toHaveBeenCalled();
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						status: "failed",
+						lastError: expect.stringContaining("PDS timed out"),
+					}),
+				}),
+			);
+		});
+
+		it("treats Tranquil's missing-record response as an idempotent delete", async () => {
+			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
+			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
+			mockDeleteRecord.mockRejectedValue({
+				error: "InvalidRequest",
+				status: 400,
+				message: "Delete target record does not exist",
+			});
+
+			await service.processNextDeletionJob();
+
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
 		});
 
 		it("skips PDS deletion entirely when deletePdsData is false", async () => {

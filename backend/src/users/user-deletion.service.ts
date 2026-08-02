@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
+import { $nsid as LIBRARY_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/library/item";
 import { $nsid as LIST_COLLECTION } from "../lexicons/xyz/opnshelf/list";
 import { $nsid as LIST_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/list/item";
 import { $nsid as MOVIE_COLLECTION } from "../lexicons/xyz/opnshelf/movie";
@@ -16,6 +17,7 @@ import { $nsid as PROFILE_COLLECTION } from "../lexicons/xyz/opnshelf/profile.de
 import { $nsid as RATING_COLLECTION } from "../lexicons/xyz/opnshelf/rating";
 import { $nsid as DOCUMENT_COLLECTION } from "../lexicons/site/standard/document";
 import { $nsid as REVIEW_COLLECTION } from "../lexicons/xyz/opnshelf/review";
+import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -50,10 +52,12 @@ const DELETION_BATCH_SIZE = 200;
 const PDS_DELETION_STEPS = [
 	"movies",
 	"episodes",
+	"library_items",
 	"ratings",
 	"follows",
 	"notes",
 	"reviews",
+	"review_likes",
 	"blog_mirrors",
 	"list_items",
 	"lists",
@@ -339,6 +343,7 @@ export class UserDeletionService {
 			// is recomputed (not double-counted) as the step is re-walked.
 			if (jobData.currentStep !== step) {
 				jobData.stepBaseline = jobData.deletedRecords;
+				jobData.stepCursor = undefined;
 				await this.updateJobData(jobId, jobData, { currentStep: step });
 			}
 
@@ -354,8 +359,10 @@ export class UserDeletionService {
 
 			if (!done) {
 				// Per-tick budget exhausted partway through this step. Persist
-				// progress and signal the caller to yield + reschedule. We stay on
-				// the same currentStep so next tick re-runs it (idempotently).
+				// the accumulated baseline and signal the caller to yield + reschedule.
+				// PDS-backed steps will list only records that still exist; locally
+				// sourced mirror records resume after stepCursor.
+				jobData.stepBaseline = jobData.deletedRecords;
 				await this.updateJobData(jobId, jobData);
 				return false;
 			}
@@ -427,6 +434,9 @@ export class UserDeletionService {
 				rkey,
 				`Failed to delete ${step} record ${rkey} from PDS`,
 			);
+			if (step === "blog_mirrors") {
+				jobData.stepCursor = rkey;
+			}
 			processedInStep++;
 			jobData.deletedRecords = stepBaseline + processedInStep;
 			budget.remaining--;
@@ -450,64 +460,49 @@ export class UserDeletionService {
 		jobData: AccountDeletionJobData,
 	): Promise<{ collection: string; rkeys: string[] }> {
 		switch (step) {
-			case "movies": {
-				const rows = await this.prisma.trackedMovie.findMany({
-					where: { userDid },
-					select: { rkey: true },
-				});
-				return {
-					collection: MOVIE_COLLECTION,
-					rkeys: rows.map((r) => r.rkey),
-				};
+			case "movies":
+				return this.listCollectionRecordKeys(agent, repoDid, MOVIE_COLLECTION);
+			case "episodes":
+				return this.listCollectionRecordKeys(
+					agent,
+					repoDid,
+					EPISODE_COLLECTION,
+				);
+			case "library_items": {
+				const result = await this.listCollectionRecordKeys(
+					agent,
+					repoDid,
+					LIBRARY_ITEM_COLLECTION,
+				);
+				await this.reconcileDynamicTotal(
+					jobId,
+					jobData,
+					"library_items",
+					result.rkeys.length,
+				);
+				return result;
 			}
-			case "episodes": {
-				const rows = await this.prisma.trackedEpisode.findMany({
-					where: { userDid },
-					select: { rkey: true },
-				});
-				return {
-					collection: EPISODE_COLLECTION,
-					rkeys: rows.map((r) => r.rkey),
-				};
-			}
-			case "ratings": {
-				const rows = await this.prisma.rating.findMany({
-					where: { userDid },
-					select: { rkey: true },
-				});
-				return {
-					collection: RATING_COLLECTION,
-					rkeys: rows.map((r) => r.rkey),
-				};
-			}
-			case "follows": {
-				const rows = await this.prisma.follow.findMany({
-					where: { followerDid: userDid, rkey: { not: null } },
-					select: { rkey: true },
-				});
-				return {
-					collection: FOLLOW_COLLECTION,
-					rkeys: rows
-						.map((r) => r.rkey)
-						.filter((rkey): rkey is string => rkey !== null),
-				};
-			}
-			case "notes": {
-				const rows = await this.prisma.note.findMany({
-					where: { userDid },
-					select: { rkey: true },
-				});
-				return { collection: NOTE_COLLECTION, rkeys: rows.map((r) => r.rkey) };
-			}
-			case "reviews": {
-				const rows = await this.prisma.review.findMany({
-					where: { userDid },
-					select: { rkey: true },
-				});
-				return {
-					collection: REVIEW_COLLECTION,
-					rkeys: rows.map((r) => r.rkey),
-				};
+			case "ratings":
+				return this.listCollectionRecordKeys(agent, repoDid, RATING_COLLECTION);
+			case "follows":
+				return this.listCollectionRecordKeys(agent, repoDid, FOLLOW_COLLECTION);
+			case "notes":
+				return this.listCollectionRecordKeys(agent, repoDid, NOTE_COLLECTION);
+			case "reviews":
+				return this.listCollectionRecordKeys(agent, repoDid, REVIEW_COLLECTION);
+			case "review_likes": {
+				const result = await this.listCollectionRecordKeys(
+					agent,
+					repoDid,
+					REVIEW_LIKE_COLLECTION,
+				);
+				await this.reconcileDynamicTotal(
+					jobId,
+					jobData,
+					"review_likes",
+					result.rkeys.length,
+				);
+				return result;
 			}
 			case "blog_mirrors": {
 				// Delete opnshelf-authored blog-mirror documents (ADR-0013). The
@@ -517,9 +512,13 @@ export class UserDeletionService {
 					where: { userDid, blogDocumentUri: { not: null } },
 					select: { rkey: true },
 				});
+				const rkeys = rows
+					.map((row) => row.rkey)
+					.sort()
+					.filter((rkey) => !jobData.stepCursor || rkey > jobData.stepCursor);
 				return {
 					collection: DOCUMENT_COLLECTION,
-					rkeys: rows.map((r) => r.rkey),
+					rkeys,
 				};
 			}
 			case "list_items": {
@@ -548,15 +547,26 @@ export class UserDeletionService {
 		}
 	}
 
+	private async listCollectionRecordKeys(
+		agent: Agent,
+		repoDid: string,
+		collection: string,
+	): Promise<{ collection: string; rkeys: string[] }> {
+		return {
+			collection,
+			rkeys: await this.listRepoRecordKeys(agent, repoDid, collection),
+		};
+	}
+
 	/**
-	 * list_items and lists are counted dynamically from the PDS (not known when
-	 * the job was created). Add their count to totalRecords exactly once, even
+	 * Collections absent from the local deletion estimate are counted dynamically
+	 * from the PDS. Add their count to totalRecords exactly once, even
 	 * across resumes, by tracking which dynamic steps we've already counted.
 	 */
 	private async reconcileDynamicTotal(
 		jobId: string,
 		jobData: AccountDeletionJobData,
-		step: "list_items" | "lists",
+		step: "library_items" | "review_likes" | "list_items" | "lists",
 		count: number,
 	): Promise<void> {
 		const counted = jobData.countedDynamicSteps ?? [];
@@ -599,7 +609,9 @@ export class UserDeletionService {
 			if (this.isRecordMissingError(error)) {
 				return;
 			}
-			this.logger.warn(`${warnPrefix}: ${error}`);
+			throw new Error(`${warnPrefix}: ${this.getErrorMessage(error)}`, {
+				cause: error,
+			});
 		}
 	}
 
@@ -627,8 +639,9 @@ export class UserDeletionService {
 				cursor = response.data.cursor;
 			} while (cursor);
 		} catch (error) {
-			this.logger.warn(
-				`Failed to list ${collection} records from PDS for user ${repoDid}: ${error}`,
+			throw new Error(
+				`Failed to list ${collection} records from PDS for user ${repoDid}: ${this.getErrorMessage(error)}`,
+				{ cause: error },
 			);
 		}
 
@@ -675,7 +688,13 @@ export class UserDeletionService {
 		return (
 			candidate.status === 404 ||
 			candidate.error === "RecordNotFound" ||
-			candidate.message?.includes("RecordNotFound") === true
+			candidate.message?.includes("RecordNotFound") === true ||
+			candidate.message?.includes("Delete target record does not exist") ===
+				true
 		);
+	}
+
+	private getErrorMessage(error: unknown): string {
+		return error instanceof Error ? error.message : String(error);
 	}
 }
