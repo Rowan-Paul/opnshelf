@@ -174,7 +174,13 @@ delete real accounts on `opnshelf.social`.
 - That OTA reaches users minutes after a merge to `main`, with no one looking at
   it on a device first. Staging on `develop` is the only gate in front of it, so
   layout changes in particular want checking on the `preview` channel before the
-  merge, not after.
+  merge, not after. `.github/workflows/staging.yml` keeps that channel current
+  on every push, so the check costs nothing but opening the app.
+- EAS Build allows 15 builds per platform per month on the free plan. A version
+  bump now costs two of them, a preview build off `develop` and a production
+  build off `main`, which caps releases that change the version at roughly seven
+  a month. Updates are unlimited, so releases that leave the version alone are
+  free.
 - A submitted Android build goes live to real users at 10% once reviewed, with
   no further gate. Ramping to 100% and halting a bad release are both manual
   console steps, so someone has to watch it.

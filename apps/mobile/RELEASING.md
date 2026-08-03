@@ -1,5 +1,10 @@
 # Releasing the mobile app
 
+Staging runs the same two routes off `develop`, aimed at the `preview` channel:
+push mobile changes and they go out as a preview update, bump `version` and you
+get a new sideloadable preview build instead
+(`.github/workflows/staging.yml`). Nothing below is needed to test a change.
+
 Two release paths, and pushing to `main` picks one for you. `version` in
 `app.config.ts` is the switch:
 

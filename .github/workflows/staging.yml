@@ -1,0 +1,130 @@
+name: Staging
+
+# The same two routes as the production release (ADR 0021), aimed at the
+# `preview` channel instead. `version` in `apps/mobile/app.config.ts` picks:
+#
+#   not bumped  -> OTA update on the preview channel. Next app launch.
+#   bumped      -> internal-distribution preview build. Sideload it.
+#
+# Exclusive for the same reason as production: the runtime version policy is
+# `appVersion`, so an update published after a bump targets a runtime no
+# installed preview binary has. It only lands while the version sits still.
+#
+# EAS Build on the free plan allows 15 builds per platform per month and the
+# same bump builds production again when it reaches `main`, so a bump costs two
+# of them. Updates are unlimited, so the OTA path is the cheap one by a mile.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+
+# A run only matters until the next push replaces it.
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+      update: ${{ steps.decide.outputs.update }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Decide what staging needs
+        id: decide
+        run: |
+          set -euo pipefail
+
+          app_version_at() {
+            { git show "$1:apps/mobile/app.config.ts" 2>/dev/null \
+              | grep -m1 -oE 'version: "[0-9]+\.[0-9]+\.[0-9]+"' \
+              | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+            } || true
+          }
+
+          # A force push or a fresh branch leaves no usable range, and guessing
+          # one would either build nothing or rebuild everything.
+          prev="${{ github.event.before }}"
+          if ! git cat-file -e "$prev^{commit}" 2>/dev/null; then
+            echo "No previous commit to compare against, skipping"
+            prev=""
+          fi
+
+          build=false
+          update=false
+          if [ -n "$prev" ]; then
+            if [ "$(app_version_at "$prev")" != "$(app_version_at HEAD)" ]; then
+              build=true
+            else
+              update=true
+            fi
+          fi
+
+          echo "Range ${prev:-none}..HEAD, build=$build update=$update"
+          {
+            echo "build=$build"
+            echo "update=$update"
+          } >> "$GITHUB_OUTPUT"
+
+      # ponytail: same dispatch trick as the release workflow. `preview` is
+      # internal distribution, so there is nothing to submit.
+      - name: Build a new preview binary
+        if: steps.decide.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run eas-build.yml --ref develop \
+            -f platform=all -f profile=preview -f submit=false
+
+  update:
+    needs: route
+    if: ${{ needs.route.outputs.update == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ github.workspace }}
+
+      - name: Publish the update
+        # Mirrors `build.preview.env` in eas.json, which `eas update` does not
+        # read. EXPO_PUBLIC_* values are inlined into the bundle as it is
+        # published, so leaving them out would ship a staging update that calls
+        # the production API - and per ADR 0021 those writes are real.
+        env:
+          EXPO_PUBLIC_API_URL: https://api.staging.opnshelf.xyz
+          EXPO_PUBLIC_SITE_URL: https://staging.opnshelf.xyz
+          EXPO_PUBLIC_POSTHOG_KEY: phc_your_api_key_here
+        run: |
+          eas update --non-interactive \
+            --channel preview \
+            --message "${{ github.sha }}"
