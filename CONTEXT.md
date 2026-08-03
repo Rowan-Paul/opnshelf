@@ -150,11 +150,19 @@ binary. Only `production`-channel builds ever go on a store track (ADR 0021).
 _Avoid_: Release channel (the retired Expo classic term), track (that's the store side)
 
 **Open Testing**:
-Play's public beta tier, which every production Android release is submitted to
-before promotion. Its `eas.json` track id is `beta`, not `open` - and `alpha` is
-closed testing, not open. Getting these two backwards publishes to the wrong
-audience (ADR 0021).
+Play's public beta tier. Its `eas.json` track id is `beta`, not `open` - and
+`alpha` is closed testing, not open. Getting these two backwards publishes to
+the wrong audience. Unused: releases go straight to the production track behind
+a **Staged Rollout** (ADR 0021).
 _Avoid_: Beta (ambiguous between the track id and the tier), alpha (that's closed testing)
+
+**Staged Rollout**:
+The fraction of Play users a production Android release reaches, set by
+`rollout` in `eas.json` (0.1) and only honoured when `releaseStatus` is
+`inProgress`. Ramping it up and halting a bad release are both manual Play
+Console steps. Apple's counterpart is **phased release**: a fixed seven-day
+automatic ramp, chosen at submission rather than set as a number (ADR 0021).
+_Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving between tracks)
 
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.

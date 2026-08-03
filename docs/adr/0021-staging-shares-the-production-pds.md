@@ -74,7 +74,7 @@ and ADR 0018.
 |---|---|---|---|---|
 | Local | `127.0.0.1:3001` | `development` | `development` | Dev client, never distributed |
 | Staging | `api.staging.opnshelf.xyz` | `preview` | `preview` | EAS internal distribution: sideloaded APK on Android, ad-hoc on iOS. No store track. |
-| Production | `api.opnshelf.xyz` | `production` | `production` | Play open testing, then promoted; TestFlight, then App Store |
+| Production | `api.opnshelf.xyz` | `production` | `production` | Play production at 10%, then ramped; TestFlight, then App Store |
 
 No Play track and no TestFlight build ever carries a staging build. Two reasons,
 both structural rather than preference:
@@ -87,9 +87,10 @@ both structural rather than preference:
    `appVersionSource` is `remote`, so repeat `preview` builds reuse a version
    code. Play rejects a duplicate. Sideloading does not care.
 
-Within production, `eas.json` submits Android to `track: beta`, which is Play's
-**open testing** track - the public beta. Google's track ids do not match the
-Play Console labels, so for the avoidance of a costly mistake:
+Within production, `eas.json` submits Android to `track: production` with
+`releaseStatus: inProgress` and `rollout: 0.1`, so a release reaches 10% of
+users and is ramped or halted from the console. Google's track ids do not match
+the Play Console labels, so for the avoidance of a costly mistake:
 
 | `eas.json` track | Play Console tier | Audience |
 |---|---|---|
@@ -98,10 +99,13 @@ Play Console labels, so for the avoidance of a costly mistake:
 | `beta` | Open testing | Anyone with the link |
 | `production` | Production | Everyone on the store |
 
-A release therefore lands on open testing and is promoted to production from the
-console. Closed testing stays in use as the narrower ring; internal testing is
-the one that goes unused, because staging already covers the "just me" case
-without touching a store.
+The earlier decision was `track: beta`, open testing, promoted to production
+from the console. That is now rejected: it costs two reviews and two waits, and
+open testing earns its keep only with a self-selected tester pool giving
+feedback, which this project does not have. A staged rollout on production gives
+the same protection - real users, a small fraction of them, one click to halt -
+for one review. Staging on `develop` and TestFlight internal remain the rings
+before any of it.
 
 On iOS the equivalent of open testing is **TestFlight external with a public
 link**, not TestFlight as a whole. TestFlight has two tiers and they are not
@@ -113,12 +117,15 @@ interchangeable:
 | TestFlight external | Anyone, by email or public link | 10,000 | Beta App Review, first build then each build |
 | App Store | Everyone | - | Full App Review |
 
-Two differences from Android worth planning around. `eas submit` only uploads to
-App Store Connect - it does not assign the build to a group, so reaching external
-testers is a manual step in the console, where `track: beta` on Android needed
-none. And Apple has no promotion ladder: every TestFlight build is a direct
-candidate for App Store submission from the same list, so there is no equivalent
-of promoting between tracks.
+Three differences from Android worth planning around. `eas submit` uploads to
+App Store Connect and can assign TestFlight groups through the `groups` submit
+field, but it never submits for App Review - that click stays in the console,
+where a `track: production` Android submit publishes on its own once reviewed.
+Apple has no promotion ladder: every TestFlight build is a direct candidate for
+App Store submission from the same list, so there is no equivalent of promoting
+between tracks. And Apple's answer to a staged rollout is **phased release**, a
+fixed seven-day automatic ramp (1, 2, 5, 10, 20, 50, 100%) chosen at submission
+and pausable, rather than a percentage you set yourself.
 
 TestFlight internal is worth using on iOS even though Android's internal testing
 is not, because it is free, needs no review, and gives a check of the production
@@ -161,11 +168,12 @@ delete real accounts on `opnshelf.social`.
   offer the production app back until it is reinstalled from a track.
 - A `preview` build cannot be submitted to a store without first giving the
   `preview` profile its own `autoIncrement`, which is a deliberate speed bump.
-- Submitting to open testing means every release waits on Google review, so
-  turnaround goes from minutes on internal testing to hours or days. Urgent
-  fixes should go out as an OTA update on the `production` channel instead.
-- Open testing is public, so a submitted build is findable by anyone with the
-  link before it reaches production.
+- Every store release waits on Google review, so turnaround is hours or days.
+  Urgent fixes should go out as an OTA update on the `production` channel
+  instead.
+- A submitted Android build goes live to real users at 10% once reviewed, with
+  no further gate. Ramping to 100% and halting a bad release are both manual
+  console steps, so someone has to watch it.
 
 ## Alternatives considered
 

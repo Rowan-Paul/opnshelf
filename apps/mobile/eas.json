@@ -37,7 +37,9 @@
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "beta"
+        "track": "production",
+        "releaseStatus": "inProgress",
+        "rollout": 0.1
       }
     }
   }

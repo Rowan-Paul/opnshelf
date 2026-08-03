@@ -25,11 +25,21 @@ with the EAS update insights before assuming an update landed.
 ```sh
 cd apps/mobile
 eas build --platform android --profile production   # versionCode auto-increments
-eas submit --platform android --latest               # → Play internal track
+eas submit --platform android --latest               # → Play production, 10%
 ```
 
-Submission lands on the **internal testing track** (`eas.json`); promote to
-production manually in Play Console. iOS: same commands with `--platform ios`.
+Android submissions land on the **production track** at a 10% staged rollout
+(`rollout` in `eas.json`), so once Google approves it they are live for real
+users with no further gate. Ramp to 100%, or halt, in Play Console.
+
+iOS: same commands with `--platform ios`, but `eas submit` only uploads to App
+Store Connect. The build reaches TestFlight from there; releasing to the App
+Store is a manual submit-for-review in the console, with phased release as the
+staged-rollout equivalent.
+
+Bumping `version` in `app.config.ts` on `develop` is the trigger for an
+automatic build and submit when the release reaches `main` (see
+`.github/workflows/release.yml`). These commands are the manual path.
 
 ### Gotchas (all learned the hard way)
 
