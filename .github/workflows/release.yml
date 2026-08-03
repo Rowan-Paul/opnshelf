@@ -2,8 +2,8 @@ name: Release
 
 # `main` is release-only (ADR 0021), so every push to it is a release. This
 # publishes a GitHub release for that push, with the commit subjects that just
-# went from staging to production as the body, and kicks off a store build when
-# the mobile app version changed.
+# went from staging to production as the body, then gets the change to phones
+# by whichever of the two routes fits.
 #
 # ponytail: commit subjects, not PR titles. Work lands as direct commits on
 # `develop`, so GitHub's own --generate-notes (which lists merged PRs only)
@@ -11,15 +11,21 @@ name: Release
 # plus a .github/release.yml label config once every change goes through a
 # labelled PR.
 #
-# The release version IS the mobile app version in `apps/mobile/app.config.ts`,
-# always, so `v1.1.0` on GitHub and 1.1.0 in the stores are the same thing. The
-# release fails if that version was not bumped since the last one, which is the
-# only way to keep the two equal without CI committing to `main` behind your
-# back. Bump it on `develop`; nothing happens until the merge lands here.
+# `version` in `apps/mobile/app.config.ts` is the switch:
 #
-# Every release therefore ships a store build, including one that only touched
-# web or backend. That is the price of the versions matching: no free releases,
-# and each one waits on store review.
+#   bumped      -> store build and submit, both platforms. Hours to days.
+#   not bumped  -> OTA update on the production channel. Next app launch.
+#
+# The two are exclusive by construction, not by preference. The runtime version
+# policy is `appVersion`, and an update only loads on a binary whose runtime
+# string matches exactly, so an OTA published after a bump would target a
+# version nobody has installed yet. Leaving the version alone is what makes the
+# OTA land. Bump it on `develop`; nothing fires until the merge reaches here.
+#
+# Tags stay three-part: the higher of the app version and the newest tag with
+# its patch bumped. A bump to 1.1.0 lands exactly on v1.1.0; OTA-only releases
+# in between walk v1.1.1, v1.1.2 and do not match the app version, which is the
+# cost of giving every release its own notes.
 on:
   push:
     branches: [main]
@@ -31,6 +37,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.publish.outputs.tag }}
+      store_release: ${{ steps.publish.outputs.store_release }}
+      ota_release: ${{ steps.publish.outputs.ota_release }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,14 +54,18 @@ jobs:
           set -euo pipefail
 
           # The app version as of a given ref, or of the working tree when
-          # called with no argument.
+          # called with no argument. Empty when the ref predates the file, as
+          # v0.1.0 does - the trailing `|| true` is what keeps that an empty
+          # string the caller can test rather than a pipefail that kills the
+          # job before anything is published.
           app_version_at() {
-            if [ -n "$1" ]; then
-              git show "$1:apps/mobile/app.config.ts" 2>/dev/null || true
-            else
-              cat apps/mobile/app.config.ts
-            fi | grep -m1 -oE 'version: "[0-9]+\.[0-9]+\.[0-9]+"' \
-               | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+            { if [ -n "$1" ]; then
+                git show "$1:apps/mobile/app.config.ts" 2>/dev/null || true
+              else
+                cat apps/mobile/app.config.ts
+              fi | grep -m1 -oE 'version: "[0-9]+\.[0-9]+\.[0-9]+"' \
+                 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+            } || true
           }
 
           app_version=$(app_version_at)
@@ -60,35 +74,90 @@ jobs:
             exit 1
           fi
 
-          # The release version is the app version, with nothing in between to
-          # let them drift. Refusing here, before anything is published, is what
-          # keeps them equal - the alternative is CI committing a bump to `main`
-          # and `develop` inheriting a divergence it never asked for.
-          tag="v$app_version"
-          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo "::error::$tag already exists. Bump version in \
-          apps/mobile/app.config.ts on develop, then merge again."
-            exit 1
+          prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          prev_app_version=$(app_version_at "$prev")
+          range="${prev:+$prev..}HEAD"
+
+          # An unknown previous version means neither route can be justified:
+          # do not build, do not push code to installed apps.
+          store_release=false
+          ota_release=false
+          if [ -n "$prev_app_version" ]; then
+            if [ "$app_version" != "$prev_app_version" ]; then
+              store_release=true
+            elif ! git diff --quiet "$prev" HEAD -- apps/mobile packages; then
+              # Nothing shipped in the app itself means nothing to send to it.
+              ota_release=true
+            fi
           fi
 
-          prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
-          range="${prev:+$prev..}HEAD"
-          echo "Tag $tag, app version $app_version, notes range $range"
+          # Always higher than every existing tag, so it can never collide.
+          newest=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sed 's/^v//' | sort -V | tail -1)
+          bumped="$app_version"
+          if [ -n "$newest" ]; then
+            bumped=$(echo "$newest" | awk -F. '{print $1"."$2"."$3 + 1}')
+          fi
+          tag="v$(printf '%s\n%s\n' "$app_version" "$bumped" | sort -V | tail -1)"
+
+          echo "Tag $tag, app ${prev_app_version:-unknown} -> $app_version," \
+            "store=$store_release ota=$ota_release, notes range $range"
+          {
+            echo "tag=$tag"
+            echo "store_release=$store_release"
+            echo "ota_release=$ota_release"
+          } >> "$GITHUB_OUTPUT"
 
           git log --no-merges --reverse --pretty='- %s' "$range" > notes.md
           gh release create "$tag" --title "$tag" --notes-file notes.md \
             --target "$GITHUB_SHA"
 
-      # Unconditional: a release cannot get this far without a new app version,
-      # because the step above refuses to publish one that reuses a tag.
-      #
       # ponytail: dispatch the existing manual workflow instead of repeating its
       # EAS setup and secret handling here. It runs as its own job, so a flaky
       # EAS build does not turn the release run red. workflow_dispatch is one of
       # the two events GITHUB_TOKEN is allowed to trigger.
       - name: Build and submit the store release
+        if: steps.publish.outputs.store_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run eas-build.yml --ref main \
             -f platform=all -f profile=production -f submit=true
+
+  # Its own job rather than a step, because publishing an update needs the whole
+  # pnpm and EAS toolchain that the release job has no other use for.
+  ota:
+    needs: release
+    if: ${{ needs.release.outputs.ota_release == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ${{ github.workspace }}
+
+      - name: Publish the update
+        run: |
+          eas update --non-interactive \
+            --channel production \
+            --environment production \
+            --message "${{ needs.release.outputs.tag }}"
