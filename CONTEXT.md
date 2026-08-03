@@ -141,6 +141,14 @@ A named grouping of Library Items within a user's Library (e.g. "The Lord of the
 The deployed environment that runs unreleased code, at `staging.opnshelf.xyz` with its API at `api.staging.opnshelf.xyz`. A Railway environment in the `opnshelf` project, deployed from the `develop` branch, with its own Postgres and its own Tab instance. It shares the production PDS, so its writes are real public records (see ADR 0021).
 _Avoid_: Test environment (suggests writes are fake — they are not), dev (that's your machine)
 
+**Update Channel**:
+The EAS Update channel baked into a mobile binary at build time, which decides
+which OTA updates it accepts: `development` for the dev client, `preview` for
+**Staging**, `production` for store builds. Distinct from a store track (Play
+internal/closed/open testing, TestFlight), which decides who can install a
+binary. Only `production`-channel builds ever go on a store track (ADR 0021).
+_Avoid_: Release channel (the retired Expo classic term), track (that's the store side)
+
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
 

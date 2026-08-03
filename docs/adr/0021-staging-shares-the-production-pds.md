@@ -68,6 +68,35 @@ bundle id - was rejected because it drags in a second provisioning profile, a
 second OAuth redirect scheme, and separate app groups for the widgets in ADR 0017
 and ADR 0018.
 
+**Store tracks carry production builds only.** The full mapping:
+
+| Environment | API | Build profile | Update channel | How it reaches a device |
+|---|---|---|---|---|
+| Local | `127.0.0.1:3001` | `development` | `development` | Dev client, never distributed |
+| Staging | `api.staging.opnshelf.xyz` | `preview` | `preview` | EAS internal distribution: sideloaded APK on Android, ad-hoc on iOS. No store track. |
+| Production | `api.opnshelf.xyz` | `production` | `production` | Play internal testing, then promoted; TestFlight, then App Store |
+
+No Play track and no TestFlight build ever carries a staging build. Two reasons,
+both structural rather than preference:
+
+1. There is one bundle id, so every store track is a stage of the same app
+   record and any build on a track can be promoted to production. A staging
+   build on a track is one careless promotion away from being public, and its
+   `channel: preview` would then pull staging OTA updates onto public installs.
+2. `autoIncrement` is set only on the `production` profile while
+   `appVersionSource` is `remote`, so repeat `preview` builds reuse a version
+   code. Play rejects a duplicate. Sideloading does not care.
+
+Within production, `eas.json` submits Android to `track: internal`, so a release
+lands on Play internal testing and is promoted from there in the console. Closed
+testing and open testing are deliberately unused: with a single tester there is
+nobody for them to serve. iOS goes to TestFlight and is released from there.
+
+`runtimeVersion` uses the `appVersion` policy, so staging and production builds
+share runtime `1.0.0`. The channel is the only thing separating their OTA
+updates - an update published to `production` reaches every production-channel
+build on that runtime.
+
 **Staging holds the production PDS admin credentials.** Without them, signup and
 account deletion are the only two flows staging can never test, and they are
 among the most fragile. The accepted risk is that a staging bug can create or
@@ -95,6 +124,10 @@ delete real accounts on `opnshelf.social`.
   staging DNS records are DNS-only and Railway issues the certificates.
 - Analytics-driven behaviour cannot be tested on staging, because analytics are
   off there.
+- Installing the staging APK replaces the production app, and Play will not
+  offer the production app back until it is reinstalled from a track.
+- A `preview` build cannot be submitted to a store without first giving the
+  `preview` profile its own `autoIncrement`, which is a deliberate speed bump.
 
 ## Alternatives considered
 
