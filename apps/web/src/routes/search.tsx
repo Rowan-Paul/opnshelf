@@ -367,7 +367,11 @@ function SearchPage() {
 				</div>
 			</div>
 
-			<div className="mb-6 border-(--border) border-b">
+			{/* ponytail: tabs only filter search results, so they stay hidden on
+			    the discover state instead of filtering the rows too. */}
+			<div
+				className={`mb-6 border-(--border) border-b ${query ? "" : "hidden"}`}
+			>
 				<nav className="flex gap-1 overflow-x-auto">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;

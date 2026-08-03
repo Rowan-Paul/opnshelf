@@ -378,32 +378,36 @@ export default function SearchScreen() {
 					returnKeyType="search"
 				/>
 
-				<View className="mt-3 flex-row gap-2">
-					{TABS.map((tab) => {
-						const isActive = activeTab === tab.key;
-						return (
-							<Pressable
-								key={tab.key}
-								onPress={() => setActiveTab(tab.key)}
-								className={cn(
-									"rounded-full px-3 py-1.5",
-									isActive ? "bg-primary" : "bg-background-subtle",
-								)}
-							>
-								<Text
+				{/* ponytail: pills only filter search results, so they stay hidden
+				    on the discover state instead of filtering the rails too. */}
+				{query.length > 0 ? (
+					<View className="mt-3 flex-row gap-2">
+						{TABS.map((tab) => {
+							const isActive = activeTab === tab.key;
+							return (
+								<Pressable
+									key={tab.key}
+									onPress={() => setActiveTab(tab.key)}
 									className={cn(
-										"font-medium text-sm",
-										isActive
-											? "text-primary-foreground"
-											: "text-muted-foreground",
+										"rounded-full px-3 py-1.5",
+										isActive ? "bg-primary" : "bg-background-subtle",
 									)}
 								>
-									{tab.label}
-								</Text>
-							</Pressable>
-						);
-					})}
-				</View>
+									<Text
+										className={cn(
+											"font-medium text-sm",
+											isActive
+												? "text-primary-foreground"
+												: "text-muted-foreground",
+										)}
+									>
+										{tab.label}
+									</Text>
+								</Pressable>
+							);
+						})}
+					</View>
+				) : null}
 			</View>
 
 			<View className="flex-1">{renderBody()}</View>
