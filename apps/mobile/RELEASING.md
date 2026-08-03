@@ -1,18 +1,28 @@
 # Releasing the mobile app
 
-Two release paths. Pick the cheapest one that ships your change.
+Two release paths. The store build is the normal one; OTA is the escape hatch
+for an urgent fix that cannot wait on review.
 
-## OTA update (JS/asset changes only)
+## OTA update (manual, JS/asset changes only)
 
 ```sh
 cd apps/mobile
 eas update --channel production --environment production --message "what changed"
 ```
 
-Users pick it up on their next app launch. The runtime version policy is
-`appVersion` (see `app.config.ts`), so an update only reaches binaries whose
-app version matches the one you publish from — bump `version` and the OTA
-audience becomes the *next* store build.
+Users pick it up on their next app launch. Never automated, and there is a trap
+in doing it by hand. The runtime version policy is `appVersion` (see
+`app.config.ts`), so an update only reaches binaries whose app version matches
+the tree you publish from. Because every release bumps that version, `develop`
+usually sits one version ahead of what people have installed, and an update
+published from it reaches nobody until the matching build clears review.
+
+To reach the installed base, publish from the commit whose `version` matches
+the store build people are running — normally the release tag:
+
+```sh
+git switch --detach v1.0.0    # whatever the stores are serving
+```
 
 **A store binary only receives OTA updates if it was built after commit
 `0729ba0` (2026-05-30, "Enable Expo updates for mobile app").** The Play Store

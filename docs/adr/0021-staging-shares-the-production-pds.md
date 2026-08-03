@@ -168,9 +168,12 @@ delete real accounts on `opnshelf.social`.
   offer the production app back until it is reinstalled from a track.
 - A `preview` build cannot be submitted to a store without first giving the
   `preview` profile its own `autoIncrement`, which is a deliberate speed bump.
-- Every store release waits on Google review, so turnaround is hours or days.
-  Urgent fixes should go out as an OTA update on the `production` channel
-  instead.
+- Every store release waits on Google review, so turnaround is hours or days,
+  and there is no faster automated path. The release version is the app version
+  (`.github/workflows/release.yml`), so every release bumps it, and under the
+  `appVersion` runtime policy an OTA published from that tree targets a runtime
+  no installed binary has. An urgent OTA is therefore a manual job, published
+  from the tag the stores are currently serving.
 - A submitted Android build goes live to real users at 10% once reviewed, with
   no further gate. Ramping to 100% and halting a bad release are both manual
   console steps, so someone has to watch it.
