@@ -107,9 +107,7 @@ export function TraktImportPanel({
 						</Text>
 					</View>
 					<Text className="text-muted-foreground text-sm">
-						{preview.importableCount} importable item
-						{preview.importableCount === 1 ? "" : "s"} found in the recent
-						history preview.
+						Showing the last few items from your history.
 					</Text>
 
 					{preview.previewItems.length > 0 ? (
