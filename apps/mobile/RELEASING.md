@@ -37,9 +37,14 @@ Store Connect. The build reaches TestFlight from there; releasing to the App
 Store is a manual submit-for-review in the console, with phased release as the
 staged-rollout equivalent.
 
-Bumping `version` in `app.config.ts` on `develop` is the trigger for an
-automatic build and submit when the release reaches `main` (see
-`.github/workflows/release.yml`). These commands are the manual path.
+These commands are the manual path. The automatic one runs on every push to
+`main` and nowhere else: it tags the release `v<version>` straight from
+`app.config.ts`, publishes the GitHub release, and builds and submits both
+platforms (see `.github/workflows/release.yml`).
+
+So bump `version` on `develop` as part of the work, then merge. Editing it on
+`develop` builds nothing on its own. Merging without having bumped it fails the
+release, which is what keeps the GitHub version and the store version equal.
 
 ### Gotchas (all learned the hard way)
 

@@ -11,18 +11,15 @@ name: Release
 # plus a .github/release.yml label config once every change goes through a
 # labelled PR.
 #
-# Tags are always three-part semver. The tag is whichever is higher: the mobile
-# app version in `apps/mobile/app.config.ts`, or the newest existing tag with
-# its patch bumped. So web and backend releases walk v1.0.1, v1.0.2, and a bump
-# of the app version to 1.1.0 lands exactly on v1.1.0.
+# The release version IS the mobile app version in `apps/mobile/app.config.ts`,
+# always, so `v1.1.0` on GitHub and 1.1.0 in the stores are the same thing. The
+# release fails if that version was not bumped since the last one, which is the
+# only way to keep the two equal without CI committing to `main` behind your
+# back. Bump it on `develop`; nothing happens until the merge lands here.
 #
-# That means the app version should move by minor, not patch. Setting it to
-# 1.0.1 while the repo has already released v1.0.3 leaves the tag at v1.0.4:
-# never wrong, never stuck, but no longer equal to the app version.
-#
-# A store build is triggered by the app version changing since the previous
-# release, read straight out of app.config.ts at both tags. Web and backend
-# releases never burn build minutes.
+# Every release therefore ships a store build, including one that only touched
+# web or backend. That is the price of the versions matching: no free releases,
+# and each one waits on store review.
 on:
   push:
     branches: [main]
@@ -63,40 +60,33 @@ jobs:
             exit 1
           fi
 
+          # The release version is the app version, with nothing in between to
+          # let them drift. Refusing here, before anything is published, is what
+          # keeps them equal - the alternative is CI committing a bump to `main`
+          # and `develop` inheriting a divergence it never asked for.
+          tag="v$app_version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::$tag already exists. Bump version in \
+          apps/mobile/app.config.ts on develop, then merge again."
+            exit 1
+          fi
+
           prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
-          prev_app_version=$(app_version_at "$prev")
-
-          # Unknown previous version means skip the build rather than guess one
-          # into existence.
-          new_app_version=false
-          if [ -n "$prev_app_version" ] && [ "$app_version" != "$prev_app_version" ]; then
-            new_app_version=true
-          fi
-          echo "new_app_version=$new_app_version" >> "$GITHUB_OUTPUT"
-
-          # Highest of the app version and the newest tag's patch + 1, so the
-          # tag is always three-part and always moves forward.
-          newest=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sed 's/^v//' | sort -V | tail -1)
-          bumped="$app_version"
-          if [ -n "$newest" ]; then
-            bumped=$(echo "$newest" | awk -F. '{print $1"."$2"."$3 + 1}')
-          fi
-          tag="v$(printf '%s\n%s\n' "$app_version" "$bumped" | sort -V | tail -1)"
-
           range="${prev:+$prev..}HEAD"
-          echo "Tag $tag, app $prev_app_version -> $app_version, notes range $range"
+          echo "Tag $tag, app version $app_version, notes range $range"
 
           git log --no-merges --reverse --pretty='- %s' "$range" > notes.md
           gh release create "$tag" --title "$tag" --notes-file notes.md \
             --target "$GITHUB_SHA"
 
+      # Unconditional: a release cannot get this far without a new app version,
+      # because the step above refuses to publish one that reuses a tag.
+      #
       # ponytail: dispatch the existing manual workflow instead of repeating its
       # EAS setup and secret handling here. It runs as its own job, so a flaky
       # EAS build does not turn the release run red. workflow_dispatch is one of
       # the two events GITHUB_TOKEN is allowed to trigger.
       - name: Build and submit the store release
-        if: steps.publish.outputs.new_app_version == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
