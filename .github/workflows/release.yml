@@ -1,8 +1,9 @@
-name: Release notes
+name: Release
 
 # `main` is release-only (ADR 0021), so every push to it is a release. This
-# publishes a GitHub release for that push, tagged with the date, with the
-# commit subjects that just went from staging to production as the body.
+# publishes a GitHub release for that push, with the commit subjects that just
+# went from staging to production as the body, and kicks off a store build when
+# the mobile app version changed.
 #
 # ponytail: commit subjects, not PR titles. Work lands as direct commits on
 # `develop`, so GitHub's own --generate-notes (which lists merged PRs only)
@@ -16,12 +17,17 @@ name: Release notes
 # Releases that ship without an app-version bump get a counter: v1.0.0, then
 # v1.0.0.2, v1.0.0.3. Bump `version` in app.config.ts and the next release is
 # v1.1.0.
+#
+# Bumping that version is therefore how you ask for a store build: a release
+# whose tag has no counter suffix is a new app version, and only those trigger
+# EAS. Web and backend releases never burn build minutes.
 on:
   push:
     branches: [main]
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -32,6 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Publish release
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -46,7 +53,12 @@ jobs:
 
           existing=$(git tag -l "v$app_version" "v$app_version.*" | wc -l | tr -d ' ')
           tag="v$app_version"
-          if [ "$existing" -gt 0 ]; then tag="v$app_version.$((existing + 1))"; fi
+          new_app_version=true
+          if [ "$existing" -gt 0 ]; then
+            tag="v$app_version.$((existing + 1))"
+            new_app_version=false
+          fi
+          echo "new_app_version=$new_app_version" >> "$GITHUB_OUTPUT"
 
           prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
           range="${prev:+$prev..}HEAD"
@@ -55,3 +67,15 @@ jobs:
           git log --no-merges --reverse --pretty='- %s' "$range" > notes.md
           gh release create "$tag" --title "$tag" --notes-file notes.md \
             --target "$GITHUB_SHA"
+
+      # ponytail: dispatch the existing manual workflow instead of repeating its
+      # EAS setup and secret handling here. It runs as its own job, so a flaky
+      # EAS build does not turn the release run red. workflow_dispatch is one of
+      # the two events GITHUB_TOKEN is allowed to trigger.
+      - name: Build and submit the store release
+        if: steps.publish.outputs.new_app_version == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run eas-build.yml --ref main \
+            -f platform=all -f profile=production -f submit=true
