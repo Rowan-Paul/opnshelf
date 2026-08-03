@@ -156,8 +156,11 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Publish the update
+        # No --non-interactive: `eas update` hands it to `expo export`, which
+        # rejects it and tells you to set CI instead. Actions already sets
+        # CI=true on every step, so the flag was only ever noise in the log.
         run: |
-          eas update --non-interactive \
+          eas update \
             --channel production \
             --environment production \
             --message "${{ needs.release.outputs.tag }}"
