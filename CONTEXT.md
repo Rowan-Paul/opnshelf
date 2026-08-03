@@ -137,9 +137,18 @@ _Avoid_: Category (overloaded), Edition
 **Box Set**:
 A named grouping of Library Items within a user's Library (e.g. "The Lord of the Rings Trilogy"). A subdivision of the Library, not of a List.
 
+**Staging**:
+The deployed environment that runs unreleased code, at `staging.opnshelf.xyz` with its API at `api.staging.opnshelf.xyz`. A Railway environment in the `opnshelf` project, deployed from the `develop` branch, with its own Postgres and its own Tab instance. It shares the production PDS, so its writes are real public records (see ADR 0021).
+_Avoid_: Test environment (suggests writes are fake — they are not), dev (that's your machine)
+
+**Staging Account**:
+The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
+
 ## Flagged ambiguities
 
 - **"Activity" (feed) vs "activity graph"**: An **Activity** is a feed item (a followed user's Watch or Review). The "profile activity graph" (`ProfileActivityDayDto`) is unrelated — it is a per-day count of the profile owner's own **Watches**, a contribution-style heatmap. The feed is about people you follow; the graph is about one user's watching cadence.
 
 - **"Review" vs "Rating"**: These are two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (an `xyz.opnshelf.review` record) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
+- **`TAB_URL` on Staging**: Must point at Staging's own Tab, never production's. Tab channels carry no consumer id and share one cursor, so a Staging backend on production's Tab acks events production never receives, and those records vanish from the production index with no error. See ADR 0021.
+
 - **"Top reviews"**: Reviews do not carry a rating, so the old `likeCount DESC, rating DESC, createdAt DESC` tiebreak does not apply as-is. A Review's tiebreak rating, if used, comes from the author's separate Rating for the same media (a join), not from the Review itself.

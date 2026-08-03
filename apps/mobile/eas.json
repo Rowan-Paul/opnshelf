@@ -15,6 +15,10 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.staging.opnshelf.xyz",
+        "EXPO_PUBLIC_SITE_URL": "https://staging.opnshelf.xyz"
+      },
       "ios": {
         "simulator": false
       }
