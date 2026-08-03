@@ -149,6 +149,13 @@ internal/closed/open testing, TestFlight), which decides who can install a
 binary. Only `production`-channel builds ever go on a store track (ADR 0021).
 _Avoid_: Release channel (the retired Expo classic term), track (that's the store side)
 
+**Open Testing**:
+Play's public beta tier, which every production Android release is submitted to
+before promotion. Its `eas.json` track id is `beta`, not `open` - and `alpha` is
+closed testing, not open. Getting these two backwards publishes to the wrong
+audience (ADR 0021).
+_Avoid_: Beta (ambiguous between the track id and the tier), alpha (that's closed testing)
+
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
 

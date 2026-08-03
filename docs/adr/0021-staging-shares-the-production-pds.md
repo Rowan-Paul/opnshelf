@@ -74,7 +74,7 @@ and ADR 0018.
 |---|---|---|---|---|
 | Local | `127.0.0.1:3001` | `development` | `development` | Dev client, never distributed |
 | Staging | `api.staging.opnshelf.xyz` | `preview` | `preview` | EAS internal distribution: sideloaded APK on Android, ad-hoc on iOS. No store track. |
-| Production | `api.opnshelf.xyz` | `production` | `production` | Play internal testing, then promoted; TestFlight, then App Store |
+| Production | `api.opnshelf.xyz` | `production` | `production` | Play open testing, then promoted; TestFlight, then App Store |
 
 No Play track and no TestFlight build ever carries a staging build. Two reasons,
 both structural rather than preference:
@@ -87,10 +87,21 @@ both structural rather than preference:
    `appVersionSource` is `remote`, so repeat `preview` builds reuse a version
    code. Play rejects a duplicate. Sideloading does not care.
 
-Within production, `eas.json` submits Android to `track: internal`, so a release
-lands on Play internal testing and is promoted from there in the console. Closed
-testing and open testing are deliberately unused: with a single tester there is
-nobody for them to serve. iOS goes to TestFlight and is released from there.
+Within production, `eas.json` submits Android to `track: beta`, which is Play's
+**open testing** track - the public beta. Google's track ids do not match the
+Play Console labels, so for the avoidance of a costly mistake:
+
+| `eas.json` track | Play Console tier | Audience |
+|---|---|---|
+| `internal` | Internal testing | Named testers, no review |
+| `alpha` | Closed testing | Invited testers or lists |
+| `beta` | Open testing | Anyone with the link |
+| `production` | Production | Everyone on the store |
+
+A release therefore lands on open testing and is promoted to production from the
+console. Closed testing stays in use as the narrower ring; internal testing is
+the one that goes unused, because staging already covers the "just me" case
+without touching a store. iOS goes to TestFlight and is released from there.
 
 `runtimeVersion` uses the `appVersion` policy, so staging and production builds
 share runtime `1.0.0`. The channel is the only thing separating their OTA
@@ -128,6 +139,11 @@ delete real accounts on `opnshelf.social`.
   offer the production app back until it is reinstalled from a track.
 - A `preview` build cannot be submitted to a store without first giving the
   `preview` profile its own `autoIncrement`, which is a deliberate speed bump.
+- Submitting to open testing means every release waits on Google review, so
+  turnaround goes from minutes on internal testing to hours or days. Urgent
+  fixes should go out as an OTA update on the `production` channel instead.
+- Open testing is public, so a submitted build is findable by anyone with the
+  link before it reaches production.
 
 ## Alternatives considered
 
