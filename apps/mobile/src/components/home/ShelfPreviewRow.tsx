@@ -1,7 +1,7 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
-import type { Href } from "expo-router";
+import { type Href, Link } from "expo-router";
 import { Film } from "lucide-react-native";
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { Text } from "@/components/ui/text";
@@ -48,7 +48,16 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 			) : isError ? (
 				<EmptyCard text="Couldn't load your shelf." />
 			) : items.length === 0 ? (
-				<EmptyCard text="Your shelf is empty. Track movies and shows to see them here." />
+				<Link href="/search" asChild>
+					<Pressable className="items-center gap-2 rounded-xl border border-border bg-card p-6">
+						<Text className="text-center text-muted-foreground text-sm">
+							Your shelf is empty. Track movies and shows to see them here.
+						</Text>
+						<Text className="font-semibold text-primary text-sm">
+							Discover something to watch
+						</Text>
+					</Pressable>
+				</Link>
 			) : (
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">

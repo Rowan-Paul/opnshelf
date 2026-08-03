@@ -17,7 +17,6 @@ import { useAuth } from "#/lib/auth-context";
 import { withUserLocale } from "#/lib/date-utils";
 import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
-import { useSearchDialog } from "#/lib/search-dialog-context";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
 import DashboardMediaCard from "../components/DashboardMediaCard";
 export const Route = createFileRoute("/dashboard")({
@@ -115,7 +114,6 @@ function Dashboard() {
 		isLoading: authLoading,
 	} = useAuth();
 	const navigate = useNavigate();
-	const { setOpen: setSearchOpen } = useSearchDialog();
 	const userDid = user?.did;
 	const userTimezone = userSettings?.timezone;
 	const userTimeFormat = userSettings?.timeFormat;
@@ -359,14 +357,13 @@ function Dashboard() {
 								<p className="mb-4 text-(--foreground-muted) text-sm">
 									Start tracking shows to see your next episodes here.
 								</p>
-								<button
-									type="button"
-									onClick={() => setSearchOpen(true)}
+								<Link
+									to="/search"
 									className="btn btn-primary inline-flex gap-2"
 								>
 									<Tv className="size-4" />
-									Discover Shows
-								</button>
+									Discover shows
+								</Link>
 							</div>
 						)}
 					</section>
@@ -452,14 +449,13 @@ function Dashboard() {
 								<p className="mb-4 text-(--foreground-muted) text-sm">
 									Start tracking movies and shows to see them here!
 								</p>
-								<button
-									type="button"
-									onClick={() => setSearchOpen(true)}
+								<Link
+									to="/search"
 									className="btn btn-primary inline-flex gap-2"
 								>
 									<Film className="size-4" />
-									Discover Content
-								</button>
+									Discover movies and shows
+								</Link>
 							</div>
 						)}
 					</section>

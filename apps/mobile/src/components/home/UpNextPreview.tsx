@@ -46,6 +46,7 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 					icon={Tv}
 					title="All caught up!"
 					message="No upcoming episodes to watch. Track a show to see it here."
+					action={{ label: "Find a show", href: "/search" }}
 				/>
 			) : (
 				<View className="gap-3">

@@ -1,6 +1,12 @@
+import { type Href, Link } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import { AlertTriangle, SearchX } from "lucide-react-native";
-import { ActivityIndicator, useColorScheme, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	useColorScheme,
+	View,
+} from "react-native";
 import { Text } from "@/components/ui/text";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
@@ -39,15 +45,20 @@ export function ErrorState({
 	);
 }
 
-/** Full-screen empty state with a customizable icon and copy. */
+/**
+ * Full-screen empty state with a customizable icon and copy, plus an optional
+ * link out (e.g. dead-end dashboard sections pointing at Discover).
+ */
 export function EmptyState({
 	icon: Icon = SearchX,
 	title,
 	message,
+	action,
 }: {
 	icon?: LucideIcon;
 	title: string;
 	message?: string;
+	action?: { label: string; href: Href };
 }) {
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
@@ -59,6 +70,15 @@ export function EmptyState({
 				<Text className="text-center text-muted-foreground text-sm">
 					{message}
 				</Text>
+			) : null}
+			{action ? (
+				<Link href={action.href} asChild>
+					<Pressable className="mt-2 rounded-lg border border-border px-4 py-2.5">
+						<Text className="font-semibold text-primary text-sm">
+							{action.label}
+						</Text>
+					</Pressable>
+				</Link>
 			) : null}
 		</View>
 	);
