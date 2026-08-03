@@ -101,7 +101,29 @@ Play Console labels, so for the avoidance of a costly mistake:
 A release therefore lands on open testing and is promoted to production from the
 console. Closed testing stays in use as the narrower ring; internal testing is
 the one that goes unused, because staging already covers the "just me" case
-without touching a store. iOS goes to TestFlight and is released from there.
+without touching a store.
+
+On iOS the equivalent of open testing is **TestFlight external with a public
+link**, not TestFlight as a whole. TestFlight has two tiers and they are not
+interchangeable:
+
+| Tier | Who | Limit | Review |
+|---|---|---|---|
+| TestFlight internal | App Store Connect team members | 100 | None |
+| TestFlight external | Anyone, by email or public link | 10,000 | Beta App Review, first build then each build |
+| App Store | Everyone | - | Full App Review |
+
+Two differences from Android worth planning around. `eas submit` only uploads to
+App Store Connect - it does not assign the build to a group, so reaching external
+testers is a manual step in the console, where `track: beta` on Android needed
+none. And Apple has no promotion ladder: every TestFlight build is a direct
+candidate for App Store submission from the same list, so there is no equivalent
+of promoting between tracks.
+
+TestFlight internal is worth using on iOS even though Android's internal testing
+is not, because it is free, needs no review, and gives a check of the production
+build against the production API before anything external sees it. An Android
+AAB cannot be sideloaded, so it has no cheap equivalent.
 
 `runtimeVersion` uses the `appVersion` policy, so staging and production builds
 share runtime `1.0.0`. The channel is the only thing separating their OTA
