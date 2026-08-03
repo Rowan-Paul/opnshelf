@@ -29,6 +29,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { guessWatchCountry } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
 import { useFollowToggle, useSuggestions } from "@/lib/use-social";
@@ -328,7 +329,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
-	const [country, setCountry] = useState("US");
+	const [country, setCountry] = useState(guessWatchCountry);
 	const [timezone, setTimezone] = useState(() => {
 		try {
 			return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -342,7 +343,9 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	useEffect(() => {
 		if (!settings) return;
-		setCountry(settings.watchCountry);
+		// "US" is the column default, so during onboarding it means "never
+		// picked" far more often than "picked the US" — keep the device guess.
+		if (settings.watchCountry !== "US") setCountry(settings.watchCountry);
 		setTimezone(settings.timezone);
 	}, [settings]);
 

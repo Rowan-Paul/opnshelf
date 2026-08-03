@@ -37,6 +37,7 @@ import { TraktImport } from "#/components/trakt/TraktImport";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { guessWatchCountry } from "#/lib/countries";
 
 export const Route = createFileRoute("/onboarding")({
 	head: () => ({
@@ -573,7 +574,13 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	useEffect(() => {
 		if (!settings) return;
-		setCountry(settings.watchCountry);
+		// "US" is the column default, so during onboarding it means "never
+		// picked" far more often than "picked the US" — guess from the browser.
+		setCountry(
+			settings.watchCountry === "US"
+				? guessWatchCountry()
+				: settings.watchCountry,
+		);
 		setTimezone(settings.timezone);
 	}, [settings]);
 
