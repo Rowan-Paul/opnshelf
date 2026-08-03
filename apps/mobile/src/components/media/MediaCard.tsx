@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import { type Href, Link } from "expo-router";
 import { Check, Plus, Star, X } from "lucide-react-native";
 import { useState } from "react";
@@ -278,7 +279,16 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 			<MediaCardBase
 				item={item}
 				overlay={cornerToggle}
-				onLongPress={isAuthenticated ? () => setQuickVisible(true) : undefined}
+				onLongPress={
+					isAuthenticated
+						? () => {
+								void Haptics.impactAsync(
+									Haptics.ImpactFeedbackStyle.Medium,
+								).catch(() => {});
+								setQuickVisible(true);
+							}
+						: undefined
+				}
 			/>
 
 			<MediaQuickActionsSheet
