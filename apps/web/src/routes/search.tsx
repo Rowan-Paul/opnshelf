@@ -2,13 +2,17 @@ import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
 	discoverControllerTrendingOptions,
+	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
 	peopleControllerSearchPeopleOptions,
 	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
+	showsControllerDiscoverShowsOptions,
 	socialControllerFollowMutation,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
+	type TmdbMovieResultDto,
+	type TmdbShowResultDto,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,6 +86,32 @@ function getBackdropUrl(item: UnifiedSearchResultDto): string | undefined {
 	return item.backdrop_path
 		? `https://image.tmdb.org/t/p/original${item.backdrop_path}`
 		: undefined;
+}
+
+/**
+ * TMDB discover rows come back movie- or show-shaped; DiscoverRow speaks the
+ * unified search shape, so widen them here instead of teaching it a second type.
+ */
+function toUnifiedResult(
+	r: TmdbMovieResultDto | TmdbShowResultDto,
+	mediaType: "movie" | "tv",
+): UnifiedSearchResultDto {
+	const movie = mediaType === "movie" ? (r as TmdbMovieResultDto) : null;
+	const show = mediaType === "tv" ? (r as TmdbShowResultDto) : null;
+	return {
+		id: r.id,
+		media_type: mediaType,
+		title: movie?.title,
+		name: show?.name,
+		poster_path: r.poster_path,
+		backdrop_path: r.backdrop_path,
+		release_date: movie?.release_date,
+		first_air_date: show?.first_air_date,
+		overview: r.overview,
+		popularity: 0,
+		vote_average: r.vote_average ?? 0,
+		vote_count: 0,
+	};
 }
 
 function DiscoverRow({
@@ -282,6 +312,44 @@ function SearchPage() {
 		...discoverControllerBecauseYouWatchedOptions(),
 		enabled: browsing && isAuthenticated,
 	});
+	// Public TMDB rows, so guests and brand-new accounts get more than the one
+	// trending row (issue #206).
+	const { data: popularMoviesData } = useQuery({
+		...moviesControllerDiscoverMoviesOptions(),
+		enabled: browsing,
+	});
+	const { data: popularShowsData } = useQuery({
+		...showsControllerDiscoverShowsOptions(),
+		enabled: browsing,
+	});
+
+	// Popular overlaps trending heavily (half the movie row, measured), so the
+	// popular rows only show what the rows above them didn't.
+	const shownKeys = useMemo(
+		() =>
+			new Set(
+				[
+					...(fromFollowsData?.results ?? []),
+					...(trendingData?.results ?? []),
+					...(becauseYouWatchedData?.rows ?? []).flatMap((r) => r.results),
+				].map((r) => `${r.media_type}-${r.id}`),
+			),
+		[fromFollowsData, trendingData, becauseYouWatchedData],
+	);
+	const popularMovieItems = useMemo(
+		() =>
+			(popularMoviesData?.results ?? [])
+				.filter((r) => !shownKeys.has(`movie-${r.id}`))
+				.map((r) => toUnifiedResult(r, "movie")),
+		[popularMoviesData, shownKeys],
+	);
+	const popularShowItems = useMemo(
+		() =>
+			(popularShowsData?.results ?? [])
+				.filter((r) => !shownKeys.has(`tv-${r.id}`))
+				.map((r) => toUnifiedResult(r, "tv")),
+		[popularShowsData, shownKeys],
+	);
 
 	// TMDB multi-search can return the same id twice → dedupe before rendering
 	// so React keys stay unique (was "two children with the same key").
@@ -673,6 +741,10 @@ function SearchPage() {
 						title="Trending this week"
 						items={trendingData?.results ?? []}
 					/>
+
+					<DiscoverRow title="Popular movies" items={popularMovieItems} />
+
+					<DiscoverRow title="Popular shows" items={popularShowItems} />
 				</div>
 			)}
 		</div>

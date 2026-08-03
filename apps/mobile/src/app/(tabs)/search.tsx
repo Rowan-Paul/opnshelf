@@ -2,10 +2,14 @@ import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
 	discoverControllerTrendingOptions,
+	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
 	peopleControllerSearchPeopleOptions,
 	searchControllerSearchAllOptions,
+	showsControllerDiscoverShowsOptions,
 	socialControllerSearchPeopleOptions,
+	type TmdbMovieResultDto,
+	type TmdbShowResultDto,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
@@ -100,6 +104,23 @@ function toMediaCardItem(r: UnifiedSearchResultDto): MediaCardItem {
 	};
 }
 
+/** TMDB discover rows: movies carry title/release_date, shows name/first_air_date. */
+function toDiscoverCardItem(
+	r: TmdbMovieResultDto | TmdbShowResultDto,
+	type: "movie" | "show",
+): MediaCardItem {
+	const movie = type === "movie" ? (r as TmdbMovieResultDto) : null;
+	const show = type === "show" ? (r as TmdbShowResultDto) : null;
+	return {
+		id: r.id,
+		type,
+		title: movie?.title || show?.name || "Untitled",
+		posterPath: r.poster_path,
+		year: yearFromDate(movie?.release_date || show?.first_air_date),
+		rating: r.vote_average,
+	};
+}
+
 /** Horizontal rail mirroring SimilarMedia's SimilarRail. Renders nothing when empty. */
 function DiscoverRail({
 	title,
@@ -146,16 +167,38 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 		enabled: isAuthenticated,
 	});
 	const trending = useQuery(discoverControllerTrendingOptions());
+	// Public TMDB rails, so guests and brand-new accounts get more than the one
+	// trending row (issue #206).
+	const popularMovies = useQuery(moviesControllerDiscoverMoviesOptions());
+	const popularShows = useQuery(showsControllerDiscoverShowsOptions());
 
 	const followsItems = (fromFollows.data?.results ?? []).map(toMediaCardItem);
 	const trendingItems = (trending.data?.results ?? []).map(toMediaCardItem);
 	const rows = becauseYouWatched.data?.rows ?? [];
+
+	// Popular overlaps trending heavily (half the movie rail, measured), so the
+	// popular rails only show what the rails above them didn't.
+	const shownKeys = new Set(
+		[
+			...(fromFollows.data?.results ?? []),
+			...(trending.data?.results ?? []),
+			...rows.flatMap((r) => r.results),
+		].map((r) => `${r.media_type}-${r.id}`),
+	);
+	const movieItems = (popularMovies.data?.results ?? [])
+		.filter((r) => !shownKeys.has(`movie-${r.id}`))
+		.map((r) => toDiscoverCardItem(r, "movie"));
+	const showItems = (popularShows.data?.results ?? [])
+		.filter((r) => !shownKeys.has(`tv-${r.id}`))
+		.map((r) => toDiscoverCardItem(r, "show"));
 
 	const [refreshing, setRefreshing] = useState(false);
 	const onRefresh = async () => {
 		setRefreshing(true);
 		await Promise.all([
 			trending.refetch(),
+			popularMovies.refetch(),
+			popularShows.refetch(),
 			isAuthenticated ? fromFollows.refetch() : null,
 			isAuthenticated ? becauseYouWatched.refetch() : null,
 		]);
@@ -180,6 +223,8 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 				/>
 			))}
 			<DiscoverRail title="Trending this week" items={trendingItems} />
+			<DiscoverRail title="Popular movies" items={movieItems} />
+			<DiscoverRail title="Popular shows" items={showItems} />
 		</ScrollView>
 	);
 }
