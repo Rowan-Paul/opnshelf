@@ -1,10 +1,11 @@
 import type { UpNextShowDto } from "@opnshelf/api";
 import { Link } from "expo-router";
 import { Calendar, Plus } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { posterUrl } from "@/lib/tmdb";
+import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
 function formatAirDate(iso?: string): string | undefined {
 	if (!iso) return undefined;
@@ -23,22 +24,18 @@ function formatAirDate(iso?: string): string | undefined {
  * by the dashboard preview, the self-profile preview, and the full Up Next
  * screen. `isOwner` (default true) gates the action so other users' queues are
  * read-only.
+ *
+ * The card owns its mark-watched mutation, so marking several episodes at once
+ * only spins the cards being marked.
  */
 export function UpNextCard({
 	item,
-	onMarkWatched,
-	isMarking,
 	isOwner = true,
 }: {
 	item: UpNextShowDto;
-	onMarkWatched: (
-		showId: string,
-		seasonNumber: number,
-		episodeNumber: number,
-	) => void;
-	isMarking?: boolean;
 	isOwner?: boolean;
 }) {
+	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
 	const progress =
 		item.totalEpisodes > 0
@@ -107,13 +104,24 @@ export function UpNextCard({
 							<Pressable
 								onPress={(e) => {
 									e.stopPropagation();
-									onMarkWatched(item.showId, ep.seasonNumber, ep.episodeNumber);
+									markEpisode.mutate({
+										body: {
+											showId: item.showId,
+											seasonNumber: ep.seasonNumber,
+											episodeNumber: ep.episodeNumber,
+										},
+									});
 								}}
-								disabled={isMarking}
+								disabled={markEpisode.isPending}
+								accessibilityState={{ busy: markEpisode.isPending }}
 								className="flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5"
-								style={{ opacity: isMarking ? 0.6 : 1 }}
+								style={{ opacity: markEpisode.isPending ? 0.6 : 1 }}
 							>
-								<Plus color="#3f2e00" size={16} strokeWidth={3} />
+								{markEpisode.isPending ? (
+									<ActivityIndicator size="small" color="#3f2e00" />
+								) : (
+									<Plus color="#3f2e00" size={16} strokeWidth={3} />
+								)}
 								<Text className="font-semibold text-primary-foreground text-sm">
 									Add to shelf
 								</Text>

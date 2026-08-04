@@ -42,7 +42,6 @@ import {
 	usePublicProfile,
 } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
-import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
 const POSTER_W = 110;
 
@@ -69,7 +68,6 @@ export default function ProfileTab() {
 	const lists = useProfileLists(userDid);
 	const library = useUserLibrary(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 3);
-	const markUpNext = useMarkUpNextEpisode();
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	const shelfHref = `/profile/${handle}/shelf` as Href;
@@ -201,12 +199,6 @@ export default function ProfileTab() {
 											<UpNextCard
 												key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 												item={item}
-												onMarkWatched={(showId, seasonNumber, episodeNumber) =>
-													markUpNext.mutate({
-														body: { showId, seasonNumber, episodeNumber },
-													})
-												}
-												isMarking={markUpNext.isPending}
 											/>
 										))}
 									</View>

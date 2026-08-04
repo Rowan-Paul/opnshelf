@@ -4,7 +4,7 @@ import { SectionHeader } from "@/components/home/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
-import { useMarkUpNextEpisode, useUpNext } from "@/lib/use-up-next";
+import { useUpNext } from "@/lib/use-up-next";
 
 /**
  * "Up Next" preview for the home dashboard: the next few unwatched episodes
@@ -18,17 +18,8 @@ import { useMarkUpNextEpisode, useUpNext } from "@/lib/use-up-next";
  */
 export function UpNextPreview({ handle }: { handle: string | undefined }) {
 	const { items, isLoading, isError } = useUpNext();
-	const markEpisode = useMarkUpNextEpisode();
 
 	const preview = items.slice(0, 4);
-
-	const handleMarkWatched = (
-		showId: string,
-		seasonNumber: number,
-		episodeNumber: number,
-	) => {
-		markEpisode.mutate({ body: { showId, seasonNumber, episodeNumber } });
-	};
 
 	return (
 		<View>
@@ -54,8 +45,6 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 						<UpNextCard
 							key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 							item={item}
-							onMarkWatched={handleMarkWatched}
-							isMarking={markEpisode.isPending}
 						/>
 					))}
 				</View>

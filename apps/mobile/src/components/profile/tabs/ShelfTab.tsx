@@ -317,6 +317,13 @@ function ShelfWatchCard({
 						: undefined,
 				}}
 				onRemove={isOwner ? remove : undefined}
+				// Each card mounts its own mutation, so removing several at once
+				// spins only the cards actually being removed.
+				isRemoving={
+					isMovie
+						? actions.isDeleteMovieEntryPending
+						: actions.isDeleteEpisodeEntryPending
+				}
 			/>
 		</View>
 	);

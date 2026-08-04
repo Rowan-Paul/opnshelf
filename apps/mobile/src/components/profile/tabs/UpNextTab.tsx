@@ -1,13 +1,7 @@
-import {
-	invalidateWatchActivityQueries,
-	showsControllerMarkWatchedMutation,
-} from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tv } from "lucide-react-native";
 import { View } from "react-native";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { useToast } from "@/components/ui/toast";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useProfileUpNext } from "@/lib/use-public-profile";
@@ -32,20 +26,6 @@ export function UpNextTab({
 	showHeading?: boolean;
 }) {
 	const { data, isLoading, isError } = useProfileUpNext(userDid);
-	const queryClient = useQueryClient();
-	const toast = useToast();
-
-	const markWatched = useMutation({
-		mutationKey: ["shows", "mark-watched"],
-		...showsControllerMarkWatchedMutation(),
-		onSuccess: () => {
-			invalidateWatchActivityQueries(queryClient);
-		},
-		onError: (error) =>
-			toast.error(
-				error instanceof Error ? error.message : "Couldn't mark watched",
-			),
-	});
 
 	const items = data?.items ?? [];
 
@@ -74,12 +54,6 @@ export function UpNextTab({
 							key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 							item={item}
 							isOwner={isOwner}
-							onMarkWatched={(showId, seasonNumber, episodeNumber) =>
-								markWatched.mutate({
-									body: { showId, seasonNumber, episodeNumber },
-								})
-							}
-							isMarking={markWatched.isPending}
 						/>
 					))}
 				</View>

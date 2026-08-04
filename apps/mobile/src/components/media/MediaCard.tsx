@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { type Href, Link } from "expo-router";
 import { Check, Plus, Star, X } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { NoteEditorSheet } from "@/components/detail/NoteEditorSheet";
 import { RatingSheet } from "@/components/detail/RatingSheet";
 import { AddToListSheet } from "@/components/lists/AddToListSheet";
@@ -66,13 +66,18 @@ export function MediaCard({
 	item,
 	actions = false,
 	onRemove,
+	isRemoving,
 }: {
 	item: MediaCardItem;
 	actions?: boolean;
 	onRemove?: () => void;
+	/** Spins the remove button while this card's removal is in flight. */
+	isRemoving?: boolean;
 }) {
 	if (actions) return <MediaCardWithActions item={item} />;
-	return <MediaCardBase item={item} onRemove={onRemove} />;
+	return (
+		<MediaCardBase item={item} onRemove={onRemove} isRemoving={isRemoving} />
+	);
 }
 
 const href = (item: MediaCardItem): Href =>
@@ -87,12 +92,14 @@ function MediaCardBase({
 	overlay,
 	onLongPress,
 	onRemove,
+	isRemoving,
 }: {
 	item: MediaCardItem;
 	/** Optional corner overlay rendered on top of the poster. */
 	overlay?: React.ReactNode;
 	onLongPress?: () => void;
 	onRemove?: () => void;
+	isRemoving?: boolean;
 }) {
 	return (
 		<Link href={href(item)} asChild>
@@ -120,10 +127,16 @@ function MediaCardBase({
 								event.stopPropagation();
 								onRemove();
 							}}
+							disabled={isRemoving}
 							className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 							accessibilityLabel="Remove this watch"
+							accessibilityState={{ busy: isRemoving }}
 						>
-							<X color="#ffffff" size={15} />
+							{isRemoving ? (
+								<ActivityIndicator size="small" color="#ffffff" />
+							) : (
+								<X color="#ffffff" size={15} />
+							)}
 						</Pressable>
 					) : null}
 				</View>
@@ -260,13 +273,19 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 				toggleWatched();
 			}}
 			disabled={isWatchPending}
+			accessibilityState={{ busy: isWatchPending, checked: watched }}
 			className={
 				watched
 					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
 					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			}
 		>
-			{watched ? (
+			{isWatchPending ? (
+				<ActivityIndicator
+					size="small"
+					color={watched ? "#3f2e00" : "#ffffff"}
+				/>
+			) : watched ? (
 				<Check color="#3f2e00" size={16} strokeWidth={3} />
 			) : (
 				<Plus color="#ffffff" size={16} strokeWidth={2.5} />
