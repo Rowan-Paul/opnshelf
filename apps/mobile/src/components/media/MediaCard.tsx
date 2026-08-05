@@ -274,17 +274,17 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 			}}
 			disabled={isWatchPending}
 			accessibilityState={{ busy: isWatchPending, checked: watched }}
+			// Pending drops back to the neutral dark circle: one in-progress look
+			// whichever way the toggle is going, instead of a yellow "on shelf"
+			// badge while the removal is still in flight.
 			className={
-				watched
+				watched && !isWatchPending
 					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
 					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			}
 		>
 			{isWatchPending ? (
-				<ActivityIndicator
-					size="small"
-					color={watched ? "#3f2e00" : "#ffffff"}
-				/>
+				<ActivityIndicator size="small" color="#ffffff" />
 			) : watched ? (
 				<Check color="#3f2e00" size={16} strokeWidth={3} />
 			) : (
