@@ -110,7 +110,12 @@ jobs:
             echo "ota_release=$ota_release"
           } >> "$GITHUB_OUTPUT"
 
-          git log --no-merges --reverse --pretty='- %s' "$range" > notes.md
+          # ponytail: %h and nothing more. GitHub autolinks a bare short SHA in
+          # a release body, so this buys clickable commits without a second API
+          # call. No author: every commit here is one person's, and mapping an
+          # email to a @handle needs a lookup per commit. Add %an when that
+          # stops being true.
+          git log --no-merges --reverse --pretty='- %s (%h)' "$range" > notes.md
           gh release create "$tag" --title "$tag" --notes-file notes.md \
             --target "$GITHUB_SHA"
 
