@@ -57,10 +57,12 @@ jobs:
           # called with no argument. Empty when the ref predates the file, as
           # v0.1.0 does - the trailing `|| true` is what keeps that an empty
           # string the caller can test rather than a pipefail that kills the
-          # job before anything is published.
+          # job before anything is published. `${1:-}` because `set -u` makes a
+          # bare `$1` fatal on exactly that no-argument call.
           app_version_at() {
-            { if [ -n "$1" ]; then
-                git show "$1:apps/mobile/app.config.ts" 2>/dev/null || true
+            ref="${1:-}"
+            { if [ -n "$ref" ]; then
+                git show "$ref:apps/mobile/app.config.ts" 2>/dev/null || true
               else
                 cat apps/mobile/app.config.ts
               fi | grep -m1 -oE 'version: "[0-9]+\.[0-9]+\.[0-9]+"' \
