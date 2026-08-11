@@ -1,23 +1,28 @@
 #!/usr/bin/env sh
 
-staged_files=$(mktemp)
+# Verify only. This hook deliberately writes nothing: not to your files, not to
+# the index.
+#
+# It used to run `check:write` and then `git add` every staged file, which broke
+# two ways:
+#
+#   1. `git add <file>` stages the whole working-tree file. On a partially
+#      staged file that swallows the unstaged half, quietly destroying a
+#      deliberate `git add -p` or another session's edits to a shared file.
+#   2. `check:write` reformats the entire repo, so committing one package could
+#      rewrite files in another that the commit had nothing to do with.
+#
+# Formatting is yours to run: `pnpm check:write` fixes everything it can.
 
-git diff --cached --name-only --diff-filter=ACMR -z >"$staged_files"
-
-# Run type checking first
 pnpm typecheck || {
-  rm -f "$staged_files"
-  exit 1
+	echo ""
+	echo "pre-commit: type errors above. Fix them, then commit again."
+	exit 1
 }
 
-# Run linting/formatting
-pnpm check:write || {
-  rm -f "$staged_files"
-  exit 1
+pnpm check || {
+	echo ""
+	echo "pre-commit: lint or formatting issues above."
+	echo "Run 'pnpm check:write', review what it changed, then stage and commit."
+	exit 1
 }
-
-if [ -s "$staged_files" ]; then
-  xargs -0 git add -- <"$staged_files"
-fi
-
-rm -f "$staged_files"
