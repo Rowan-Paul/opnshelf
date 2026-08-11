@@ -11,9 +11,13 @@ const host = env.posthogHost;
  * provider is simply skipped (see components/Providers.tsx) and `posthog` is
  * left null. The rest of the app must guard on `isPostHogEnabled`/null.
  */
-export const isPostHogEnabled = !!apiKey && apiKey !== "phc_your_api_key_here";
+// ponytail: dev builds read the production key from apps/mobile/.env, so gate
+// on __DEV__ rather than running a second PostHog project. Preview builds are
+// already disabled by the placeholder key in eas.json.
+export const isPostHogEnabled =
+	!__DEV__ && !!apiKey && apiKey !== "phc_your_api_key_here";
 
-if (!isPostHogEnabled) {
+if (!isPostHogEnabled && !__DEV__) {
 	console.warn(
 		"PostHog key not configured (EXPO_PUBLIC_POSTHOG_KEY). Analytics disabled.",
 	);

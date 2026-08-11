@@ -53,6 +53,13 @@ function AuthCompletePage() {
 					posthog.identify(data.did, {
 						$set_once: { first_login_date: new Date().toISOString() },
 					});
+					// OAuth accounts never pass through /signup, so without this the
+					// activation funnel only ever saw native password signups. May fire
+					// again if someone abandons onboarding and returns; funnels count
+					// the first occurrence per person, so duplicates are harmless.
+					if (data.needsOnboarding) {
+						posthog.capture("user_signed_up", { method: "oauth" });
+					}
 					posthog.capture("user_logged_in");
 				}
 				setStatus("success");
