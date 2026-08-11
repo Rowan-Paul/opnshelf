@@ -3,6 +3,7 @@ import {
 	listsControllerGetPublicUserListsOptions,
 	moviesControllerGetUserMoviesPaginatedOptions,
 	showsControllerGetUserEpisodesPaginatedOptions,
+	slugifyName,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
@@ -16,7 +17,6 @@ import { SpoilerShield } from "#/components/SpoilerShield";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
-import { toSlug } from "#/lib/slug";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
 const SCROLL_ROW =
@@ -284,8 +284,8 @@ function ProfileReviewCard({
 	review: UserReviewDto;
 	authorDid: string;
 }) {
-	const showName = review.title?.split(" — ")[0] ?? "";
-	const slug = toSlug(showName);
+	const showName = review.mediaTitle ?? "";
+	const slug = slugifyName(showName);
 
 	const href = (() => {
 		if (review.mediaType === "movie") {
@@ -313,7 +313,7 @@ function ProfileReviewCard({
 			}
 			to={href}
 			hash={`review-${review.id}`}
-			title={review.title || "Unknown"}
+			title={review.mediaLabel || "Unknown"}
 			meta={review.reviewTitle}
 		>
 			{review.markdown && (

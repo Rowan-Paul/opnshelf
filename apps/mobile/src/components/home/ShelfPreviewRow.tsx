@@ -6,6 +6,7 @@ import { SectionHeader } from "@/components/home/SectionHeader";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { showHref } from "@/lib/media-href";
 import { useProfileShelf } from "@/lib/use-public-profile";
 
 type ShelfItem = ShelfResponseDto["items"][number];
@@ -103,7 +104,12 @@ export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
 		// Title line shows the episode title; the show drops to the label line.
 		title: item.episodeTitle ?? item.showTitle,
 		posterPath: item.posterPath,
-		href: `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
+		href: showHref(
+			item.showId,
+			item.showTitle,
+			item.seasonNumber,
+			item.episodeNumber,
+		),
 		episode: {
 			seasonNumber: item.seasonNumber,
 			episodeNumber: item.episodeNumber,

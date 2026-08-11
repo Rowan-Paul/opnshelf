@@ -85,7 +85,9 @@ export class ReviewsController {
 				mediaId: review.mediaId,
 				seasonNumber: review.seasonNumber || undefined,
 				episodeNumber: review.episodeNumber || undefined,
-				title: review.mediaTitle,
+				// `mediaLabel` is for display, `mediaTitle` is the slug source.
+				mediaLabel: review.mediaLabel ?? undefined,
+				mediaTitle: review.mediaTitle ?? undefined,
 				posterPath: review.posterPath ?? undefined,
 				likeCount: review.likeCount,
 				hasLiked: review.hasLiked,
@@ -117,7 +119,7 @@ export class ReviewsController {
 			items: result.items.map((review) => ({
 				id: review.id,
 				rkey: review.rkey,
-				title: review.title,
+				reviewTitle: review.title,
 				markdown: review.markdown,
 				spoiler: review.spoiler,
 				description: review.description ?? undefined,
@@ -157,7 +159,7 @@ export class ReviewsController {
 		return {
 			id: review.id,
 			rkey: review.rkey,
-			title: review.title,
+			reviewTitle: review.title,
 			markdown: review.markdown,
 			spoiler: review.spoiler,
 			description: review.description ?? undefined,
@@ -166,6 +168,7 @@ export class ReviewsController {
 			seasonNumber: review.seasonNumber || undefined,
 			episodeNumber: review.episodeNumber || undefined,
 			mediaTitle: review.mediaTitle ?? undefined,
+			mediaLabel: review.mediaLabel ?? undefined,
 			posterPath: review.posterPath ?? undefined,
 			author: {
 				did: review.author.did,
@@ -382,7 +385,7 @@ export class ReviewsController {
 		return {
 			id: review.id,
 			rkey: review.rkey,
-			title: review.title,
+			reviewTitle: review.title,
 			markdown: review.markdown,
 			spoiler: review.spoiler,
 			blogDocumentUri: review.blogDocumentUri,

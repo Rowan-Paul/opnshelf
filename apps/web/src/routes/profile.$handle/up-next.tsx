@@ -1,5 +1,6 @@
 import {
 	showsControllerGetUserUpNextOptions,
+	slugifyName,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,6 @@ import { Pagination } from "#/components/Pagination";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import { useMarkEpisodeWatched } from "#/lib/hooks";
-import { toSlug } from "#/lib/slug";
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
@@ -147,7 +147,7 @@ function ProfileUpNextPage() {
 									to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 									params={{
 										showId: item.showId,
-										showName: toSlug(show.title),
+										showName: slugifyName(show.title),
 										seasonNumber: String(nextEp.seasonNumber),
 										episodeNumber: String(nextEp.episodeNumber),
 									}}
@@ -178,7 +178,7 @@ function ProfileUpNextPage() {
 													to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 													params={{
 														showId: item.showId,
-														showName: toSlug(show.title),
+														showName: slugifyName(show.title),
 														seasonNumber: String(nextEp.seasonNumber),
 														episodeNumber: String(nextEp.episodeNumber),
 													}}

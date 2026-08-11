@@ -36,6 +36,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
+import { personHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { profileUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
@@ -54,13 +55,13 @@ const TABS: { key: Tab; label: string }[] = [
 
 /**
  * Row for a TMDB person (cast/crew) search result: headshot, name, department.
- * Tapping opens the person detail page (`/person/[id]`). Distinct from
+ * Tapping opens the person detail page (`/people/[id]/[name]`). Distinct from
  * `PersonRow`, which is for app users (social) and links to a profile.
  */
 function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
 	const url = profileUrl(person.profile_path);
 	return (
-		<Link href={`/person/${person.id}` as const} asChild>
+		<Link href={personHref(person.id, person.name)} asChild>
 			<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-3">
 				<View className="size-11 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
 					{url ? (

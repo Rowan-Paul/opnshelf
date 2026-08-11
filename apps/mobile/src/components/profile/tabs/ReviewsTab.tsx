@@ -203,7 +203,7 @@ function ReviewCard({
 	const confirmDelete = () =>
 		showDialog({
 			title: "Delete review?",
-			description: `This permanently deletes your review for "${review.title || "this title"}". This can't be undone.`,
+			description: `This permanently deletes your review for "${review.mediaLabel || "this title"}". This can't be undone.`,
 			actions: [
 				{ label: "Cancel" },
 				{ label: "Delete", variant: "destructive", onPress: performDelete },
@@ -240,7 +240,7 @@ function ReviewCard({
 						: undefined
 				}
 				href={mediaHref({ ...review, reviewId: review.id })}
-				title={review.title || "Unknown"}
+				title={review.mediaLabel || "Unknown"}
 				meta={new Date(review.createdAt).toLocaleDateString()}
 				headerRight={
 					isOwner ? (

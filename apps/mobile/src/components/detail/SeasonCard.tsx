@@ -11,6 +11,8 @@ import { useWatchStatus } from "@/lib/use-watch-status";
 
 export type SeasonCardData = {
 	showId: number;
+	/** The show's URL slug, so this row links to the same URL the web serves. */
+	showSlug: string;
 	seasonNumber: number;
 	name: string;
 	posterPath?: string | null;
@@ -52,7 +54,10 @@ function SeasonCardBase({
 		.join(" · ");
 
 	return (
-		<Link href={`/show/${season.showId}/season/${season.seasonNumber}`} asChild>
+		<Link
+			href={`/shows/${season.showId}/${season.showSlug}/seasons/${season.seasonNumber}`}
+			asChild
+		>
 			<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-2">
 				<View className="aspect-2/3 w-14 overflow-hidden rounded-md bg-background-subtle">
 					<PosterImage

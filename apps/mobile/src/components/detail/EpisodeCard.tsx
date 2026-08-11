@@ -11,6 +11,8 @@ import { useWatchStatus } from "@/lib/use-watch-status";
 
 export type EpisodeCardData = {
 	showId: number;
+	/** The show's URL slug, so this row links to the same URL the web serves. */
+	showSlug: string;
 	seasonNumber: number;
 	episodeNumber: number;
 	name: string;
@@ -55,7 +57,7 @@ function EpisodeCardBase({
 }) {
 	return (
 		<Link
-			href={`/show/${episode.showId}/season/${episode.seasonNumber}/episode/${episode.episodeNumber}`}
+			href={`/shows/${episode.showId}/${episode.showSlug}/seasons/${episode.seasonNumber}/episodes/${episode.episodeNumber}`}
 			asChild
 		>
 			<Pressable className="rounded-lg border border-border bg-card p-2">

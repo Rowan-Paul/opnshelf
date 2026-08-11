@@ -61,8 +61,8 @@ function AuthCompletePage() {
 				const redirectTo = data?.needsOnboarding
 					? "/onboarding"
 					: permission === "atstore"
-						? "/dashboard?review=compose"
-						: "/dashboard";
+						? "/?review=compose"
+						: "/";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {

@@ -133,7 +133,7 @@ export class ReviewResponseDto {
 	rkey: string;
 
 	@ApiProperty()
-	title: string;
+	reviewTitle: string;
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
@@ -202,7 +202,7 @@ export class CanonicalReviewResponseDto {
 	rkey: string;
 
 	@ApiProperty()
-	title: string;
+	reviewTitle: string;
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;
@@ -232,9 +232,17 @@ export class CanonicalReviewResponseDto {
 
 	@ApiPropertyOptional({
 		type: String,
-		description: "Title of the underlying media item",
+		description:
+			"Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).",
 	})
 	mediaTitle?: string;
+
+	@ApiPropertyOptional({
+		type: String,
+		description:
+			"Human-readable label for the media, composite for a season or episode. Display only — never build a URL from it.",
+	})
+	mediaLabel?: string;
 
 	@ApiPropertyOptional({
 		type: String,
@@ -309,8 +317,17 @@ export class UserReviewDto {
 	@ApiPropertyOptional()
 	episodeNumber?: number;
 
-	@ApiPropertyOptional({ description: "Title of the movie or show" })
-	title?: string;
+	@ApiPropertyOptional({
+		description:
+			'Human-readable label for the media. Composite for a season or episode, e.g. "Breaking Bad — S1E1: Pilot". Display only — never build a URL from it.',
+	})
+	mediaLabel?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).",
+	})
+	mediaTitle?: string;
 
 	@ApiPropertyOptional({ description: "Poster path for the movie or show" })
 	posterPath?: string;
@@ -404,7 +421,7 @@ export class MediaReviewItemDto {
 	rkey: string;
 
 	@ApiProperty()
-	title: string;
+	reviewTitle: string;
 
 	@ApiProperty({ description: "Review body as markdown source" })
 	markdown: string;

@@ -18,6 +18,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
+import { startPromptCooldown } from "#/lib/prompt-state";
 
 const PLATFORM = { platform: "web" } as const;
 
@@ -72,6 +73,7 @@ export function AtStoreReviewPrompt() {
 				eligible: false,
 				permissionGranted: prompt?.permissionGranted ?? false,
 			});
+			startPromptCooldown();
 			posthog.capture("atstore_review_prompt_dismissed", PLATFORM);
 		},
 		onError: () => toast.error("Could not dismiss the review request"),
@@ -143,10 +145,10 @@ export function AtStoreReviewPrompt() {
 							<Store className="size-5" aria-hidden="true" />
 						</div>
 						<div>
-							<h2 className="font-semibold text-lg">Enjoying OpnShelf?</h2>
+							<h2 className="font-semibold text-lg">Enjoying Opnshelf?</h2>
 							<p className="mt-1 max-w-xl text-(--foreground-muted) text-sm leading-6">
 								Share your experience on AT Store. It helps others discover
-								OpnShelf.
+								Opnshelf.
 							</p>
 						</div>
 					</div>
@@ -176,9 +178,9 @@ export function AtStoreReviewPrompt() {
 			>
 				<DialogContent className="sm:max-w-xl" showCloseButton={false}>
 					<DialogHeader>
-						<DialogTitle>Review OpnShelf</DialogTitle>
+						<DialogTitle>Review Opnshelf</DialogTitle>
 						<DialogDescription>
-							Your review will appear on OpnShelf’s page at atstore.fyi.
+							Your review will appear on Opnshelf’s page at atstore.fyi.
 						</DialogDescription>
 					</DialogHeader>
 

@@ -39,7 +39,7 @@ export default function Header() {
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
 	const navigation = [
-		{ name: "Home", href: "/dashboard", icon: Home },
+		{ name: "Home", href: "/", icon: Home },
 		{ name: "Discover", href: "/search", icon: Compass },
 		{ name: "Activity", href: "/activity", icon: Rss },
 		{ name: "Connections", href: "/connections", icon: Users },

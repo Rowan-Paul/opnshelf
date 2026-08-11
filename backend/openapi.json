@@ -8792,9 +8792,13 @@
           "episodeNumber": {
             "type": "number"
           },
-          "title": {
+          "mediaLabel": {
             "type": "string",
-            "description": "Title of the movie or show"
+            "description": "Human-readable label for the media. Composite for a season or episode, e.g. \"Breaking Bad — S1E1: Pilot\". Display only — never build a URL from it."
+          },
+          "mediaTitle": {
+            "type": "string",
+            "description": "Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023)."
           },
           "posterPath": {
             "type": "string",
@@ -8864,7 +8868,7 @@
             "type": "string",
             "description": "AT record key of the review"
           },
-          "title": {
+          "reviewTitle": {
             "type": "string"
           },
           "markdown": {
@@ -8925,7 +8929,7 @@
         "required": [
           "id",
           "rkey",
-          "title",
+          "reviewTitle",
           "markdown",
           "spoiler",
           "userDid",
@@ -8992,7 +8996,7 @@
             "type": "string",
             "description": "AT record key of the review"
           },
-          "title": {
+          "reviewTitle": {
             "type": "string"
           },
           "markdown": {
@@ -9027,7 +9031,11 @@
           },
           "mediaTitle": {
             "type": "string",
-            "description": "Title of the underlying media item"
+            "description": "Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023)."
+          },
+          "mediaLabel": {
+            "type": "string",
+            "description": "Human-readable label for the media, composite for a season or episode. Display only — never build a URL from it."
           },
           "posterPath": {
             "type": "string",
@@ -9050,7 +9058,7 @@
         "required": [
           "id",
           "rkey",
-          "title",
+          "reviewTitle",
           "markdown",
           "spoiler",
           "mediaType",
@@ -9117,7 +9125,7 @@
           "rkey": {
             "type": "string"
           },
-          "title": {
+          "reviewTitle": {
             "type": "string"
           },
           "markdown": {
@@ -9165,7 +9173,7 @@
         "required": [
           "id",
           "rkey",
-          "title",
+          "reviewTitle",
           "markdown",
           "spoiler",
           "mirrorToBlog",
@@ -9264,7 +9272,7 @@
           "rkey": {
             "type": "string"
           },
-          "title": {
+          "reviewTitle": {
             "type": "string"
           },
           "markdown": {
@@ -9315,7 +9323,7 @@
         "required": [
           "id",
           "rkey",
-          "title",
+          "reviewTitle",
           "markdown",
           "spoiler",
           "mirrorToBlog",
@@ -9835,9 +9843,13 @@
           "episodeNumber": {
             "type": "number"
           },
-          "title": {
+          "mediaLabel": {
             "type": "string",
-            "description": "Title of the movie or show"
+            "description": "Human-readable label for the media. Display only — never build a URL from it."
+          },
+          "mediaTitle": {
+            "type": "string",
+            "description": "Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023)."
           },
           "posterPath": {
             "type": "string",

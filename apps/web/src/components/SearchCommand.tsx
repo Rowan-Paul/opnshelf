@@ -305,7 +305,7 @@ export function SearchCommand({
 					key: "dashboard",
 					label: "Dashboard",
 					Icon: Home,
-					run: () => goTo("/dashboard"),
+					run: () => goTo("/"),
 				},
 				{
 					key: "calendar",
@@ -317,7 +317,7 @@ export function SearchCommand({
 					key: "following",
 					label: "Following",
 					Icon: Users,
-					run: () => goTo("/following"),
+					run: () => goTo("/activity"),
 				},
 				...(currentUserHandle
 					? [
@@ -696,10 +696,7 @@ export function SearchCommand({
 					{/* Navigation — only when not searching and authenticated */}
 					{!hasSearchQuery && isAuthenticated && (
 						<CommandGroup heading="Navigation">
-							<CommandItem
-								value="dashboard"
-								onSelect={() => goTo("/dashboard")}
-							>
+							<CommandItem value="dashboard" onSelect={() => goTo("/")}>
 								<Home />
 								<span>Dashboard</span>
 							</CommandItem>
@@ -707,10 +704,7 @@ export function SearchCommand({
 								<Calendar />
 								<span>Calendar</span>
 							</CommandItem>
-							<CommandItem
-								value="following"
-								onSelect={() => goTo("/following")}
-							>
+							<CommandItem value="following" onSelect={() => goTo("/activity")}>
 								<Users />
 								<span>Following</span>
 							</CommandItem>

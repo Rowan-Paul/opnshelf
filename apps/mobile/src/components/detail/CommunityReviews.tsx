@@ -170,7 +170,7 @@ function ReviewCard({
 	const onShare = () => {
 		if (!shareUrl) return;
 		// message carries the URL (Android ignores the `url` field).
-		Share.share({ message: shareUrl, title: review.title })
+		Share.share({ message: shareUrl, title: review.reviewTitle })
 			.then((result) => {
 				if (result.action === Share.sharedAction) {
 					posthog?.capture("share_completed", { surface: "review_card" });
@@ -230,9 +230,9 @@ function ReviewCard({
 				) : null}
 			</View>
 
-			{review.title ? (
+			{review.reviewTitle ? (
 				<Text className="font-display font-semibold text-base text-foreground">
-					{review.title}
+					{review.reviewTitle}
 				</Text>
 			) : null}
 
@@ -492,7 +492,7 @@ export function CommunityReviews({
 				visible={editorVisible}
 				onDismiss={() => setEditorVisible(false)}
 				isEditing={!!editing}
-				initialTitle={editing?.title ?? ""}
+				initialTitle={editing?.reviewTitle ?? ""}
 				initialMarkdown={editing?.markdown ?? ""}
 				initialSpoiler={editing?.spoiler ?? false}
 				initialMirrorToBlog={editing?.mirrorToBlog ?? true}

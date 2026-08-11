@@ -13,7 +13,7 @@ A user's long-form textual piece about a media item, stored as an opnshelf-contr
 _Avoid_: Rating (the numeric score is a separate entity)
 
 **AT Store Review**:
-A user's 1–5 star assessment of OpnShelf for the AT Store directory, optionally accompanied by text. It evaluates the app rather than a **Media Item** and is therefore distinct from both a **Review** and a **Rating**.
+A user's 1–5 star assessment of Opnshelf for the AT Store directory, optionally accompanied by text. It evaluates Opnshelf as a whole rather than a **Media Item**, and is therefore distinct from both a **Review** and a **Rating**.
 _Avoid_: Review (reserved for long-form writing about a Media Item), Rating (reserved for a Media Item score)
 
 **Spoiler Flag**:
@@ -103,6 +103,14 @@ _Avoid_: Session (the entity a User manages is the Device), Connected device (co
 The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
+**Prompt**:
+A dismissible card in the reserved slot on **Home** that asks for one optional action and renders nothing when it does not apply. Today there are two: resume a stalled **Trakt Import**, and leave an **AT Store Review**. At most one shows at a time, and dismissing any of them silences the slot for a few days.
+_Avoid_: CTA (names a button, and every button on the site is one), Banner (that is the site-wide strip), notification, nag
+
+**Banner**:
+The slim full-width strip directly below the header, carrying one site-wide message on every page. Today there is one: **Trakt Import** progress. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
+_Avoid_: Prompt (that is the Home card), toast, notification, alert
+
 **Home-Screen Widget**:
 A home-screen widget on Android and iOS, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
@@ -136,6 +144,18 @@ _Avoid_: Category (overloaded), Edition
 
 **Box Set**:
 A named grouping of Library Items within a user's Library (e.g. "The Lord of the Rings Trilogy"). A subdivision of the Library, not of a List.
+
+**Mobile App**:
+The iOS and Android native clients — one product on two platforms, installed from a **Store Listing**. Distinct from the **Web App**, which needs no install. "The app" bare is banned: it collides with Opnshelf the product (see **AT Store Review**) and with the Web App.
+_Avoid_: The app (bare), native app, phone app (it runs on tablets too)
+
+**Web App**:
+The browser client at `opnshelf.xyz`. Reaches every platform without an install, and is the only client a signed-out visitor can use.
+_Avoid_: The app (bare), the site, the website, desktop app (it runs on phones too)
+
+**Store Listing**:
+The public App Store or Google Play page for the **Mobile App**, and the destination of every download link on the **Web App**. A visitor may leave a star rating there; that belongs to Apple or Google and is not a **Review**, a **Rating**, or an **AT Store Review**.
+_Avoid_: App page, download page (that would be a Web App route, not the store's)
 
 **Staging**:
 The deployed environment that runs unreleased code, at `staging.opnshelf.xyz` with its API at `api.staging.opnshelf.xyz`. A Railway environment in the `opnshelf` project, deployed from the `develop` branch, with its own Postgres and its own Tab instance. It shares the production PDS, so its writes are real public records (see ADR 0021).

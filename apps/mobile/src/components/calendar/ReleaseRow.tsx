@@ -4,6 +4,7 @@ import { ChevronRight, Film, Tv } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
+import { movieHref, showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
 
 function displayTitle(item: ReleaseCalendarItemDto): string {
@@ -45,8 +46,9 @@ function relativeDate(dateStr: string): string | undefined {
 }
 
 function hrefFor(item: ReleaseCalendarItemDto): Href | null {
+	// `title` is the movie or show title; the episode detail is in `subtitle`.
 	if (item.mediaType === "movie" && item.movieId) {
-		return `/movie/${item.movieId}` as const;
+		return movieHref(item.movieId, item.title);
 	}
 	if (
 		item.mediaType === "show" &&
@@ -55,9 +57,14 @@ function hrefFor(item: ReleaseCalendarItemDto): Href | null {
 		item.seasonNumber !== undefined &&
 		item.episodeNumber !== undefined
 	) {
-		return `/show/${item.showId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href;
+		return showHref(
+			item.showId,
+			item.title,
+			item.seasonNumber,
+			item.episodeNumber,
+		);
 	}
-	if (item.showId) return `/show/${item.showId}` as const;
+	if (item.showId) return showHref(item.showId, item.title);
 	return null;
 }
 

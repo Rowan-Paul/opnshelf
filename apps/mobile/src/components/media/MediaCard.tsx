@@ -10,6 +10,7 @@ import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsShee
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { movieHref, showHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
 import { useListMembership } from "@/lib/use-lists";
@@ -83,8 +84,8 @@ export function MediaCard({
 const href = (item: MediaCardItem): Href =>
 	item.href ??
 	(item.type === "movie"
-		? (`/movie/${item.id}` as const)
-		: (`/show/${item.id}` as const));
+		? movieHref(item.id, item.title)
+		: showHref(item.id, item.title));
 
 /** Read-only poster card: poster + title/year/rating, linking to detail. */
 function MediaCardBase({

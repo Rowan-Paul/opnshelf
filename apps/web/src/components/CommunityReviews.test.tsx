@@ -44,7 +44,7 @@ vi.mock("@tanstack/react-router", () => ({
 function review(overrides: Record<string, unknown>) {
 	return {
 		id: "r1",
-		title: "A title",
+		reviewTitle: "A title",
 		markdown: "Body text",
 		userDid: "did:plc:u1",
 		userHandle: "user1",
@@ -88,7 +88,7 @@ describe("CommunityReviews", () => {
 			data: {
 				items: [
 					review({
-						title: "Great movie!",
+						reviewTitle: "Great movie!",
 						markdown: "Loved every minute.",
 						userDisplayName: "User One",
 						likeCount: 3,
@@ -130,7 +130,7 @@ describe("CommunityReviews", () => {
 			data: {
 				items: [
 					review({
-						title: "Great movie!",
+						reviewTitle: "Great movie!",
 						posterPath: "/abc.jpg",
 						reviewUrl: "/reviews/user1/my-rkey",
 					}),
@@ -158,14 +158,14 @@ describe("CommunityReviews", () => {
 				items: [
 					review({
 						id: "r2",
-						title: "Good",
+						reviewTitle: "Good",
 						userDid: "did:plc:u2",
 						userHandle: "other",
 						likeCount: 2,
 					}),
 					review({
 						id: "r1",
-						title: "My take",
+						reviewTitle: "My take",
 						userDid: "did:plc:me",
 						userHandle: "me",
 					}),

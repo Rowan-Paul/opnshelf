@@ -17,8 +17,6 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as FollowingRouteImport } from './routes/following'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
@@ -86,16 +84,6 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FollowingRoute = FollowingRouteImport.update({
-  id: '/following',
-  path: '/following',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectionsRoute = ConnectionsRouteImport.update({
@@ -256,8 +244,6 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
   '/connections': typeof ConnectionsRoute
-  '/dashboard': typeof DashboardRoute
-  '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -296,8 +282,6 @@ export interface FileRoutesByTo {
   '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
   '/connections': typeof ConnectionsRoute
-  '/dashboard': typeof DashboardRoute
-  '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -333,8 +317,6 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
   '/connections': typeof ConnectionsRoute
-  '/dashboard': typeof DashboardRoute
-  '/following': typeof FollowingRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -375,8 +357,6 @@ export interface FileRouteTypes {
     | '/activity'
     | '/calendar'
     | '/connections'
-    | '/dashboard'
-    | '/following'
     | '/login'
     | '/onboarding'
     | '/privacy'
@@ -415,8 +395,6 @@ export interface FileRouteTypes {
     | '/activity'
     | '/calendar'
     | '/connections'
-    | '/dashboard'
-    | '/following'
     | '/login'
     | '/onboarding'
     | '/privacy'
@@ -451,8 +429,6 @@ export interface FileRouteTypes {
     | '/activity'
     | '/calendar'
     | '/connections'
-    | '/dashboard'
-    | '/following'
     | '/login'
     | '/onboarding'
     | '/privacy'
@@ -492,8 +468,6 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   CalendarRoute: typeof CalendarRoute
   ConnectionsRoute: typeof ConnectionsRoute
-  DashboardRoute: typeof DashboardRoute
-  FollowingRoute: typeof FollowingRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -569,20 +543,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/following': {
-      id: '/following'
-      path: '/following'
-      fullPath: '/following'
-      preLoaderRoute: typeof FollowingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connections': {
@@ -862,8 +822,6 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityRoute: ActivityRoute,
   CalendarRoute: CalendarRoute,
   ConnectionsRoute: ConnectionsRoute,
-  DashboardRoute: DashboardRoute,
-  FollowingRoute: FollowingRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,

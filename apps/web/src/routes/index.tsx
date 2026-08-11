@@ -8,14 +8,16 @@ import {
 	UserCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { HomeView } from "#/components/home/HomeView";
 import LoadingState from "#/components/LoadingState";
+import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
 		meta: [{ title: "Opnshelf - Track What You Watch" }],
 	}),
-	component: LandingPage,
+	component: IndexPage,
 });
 
 const HERO_BACKDROPS = [
@@ -63,28 +65,33 @@ const SCREENSHOT_SECTIONS = [
 	},
 ];
 
-function LandingPage() {
+/**
+ * `/` is Home for a signed-in visitor and the landing page for everyone else.
+ *
+ * There is no redirect: the Mobile App serves Home at `/` too, and the routes
+ * match (ADR 0023). This replaced a bounce to `/dashboard`, a route whose name
+ * the glossary had already retired in favour of Home.
+ */
+function IndexPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!authLoading && isAuthenticated) {
-			if (user?.needsOnboarding) {
-				navigate({ to: "/onboarding" });
-			} else {
-				navigate({ to: "/dashboard" });
-			}
+		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
+			navigate({ to: "/onboarding" });
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
+	if (authLoading) return <LoadingState />;
+	if (isAuthenticated) return <HomeView />;
+	return <LandingPage />;
+}
+
+function LandingPage() {
 	const backdropUrl = useMemo(
 		() => HERO_BACKDROPS[Math.floor(Math.random() * HERO_BACKDROPS.length)],
 		[],
 	);
-
-	if (authLoading || isAuthenticated) {
-		return <LoadingState />;
-	}
 
 	return (
 		<div className="min-h-screen">
@@ -133,6 +140,13 @@ function LandingPage() {
 								<ArrowRight className="size-5" />
 							</Link>
 						</div>
+
+						{/* Mobile App. The MobileAppBanner deliberately skips `/`, so
+						    this is the only ask a phone visitor sees here. */}
+						<p className="mt-10 mb-4 text-sm text-white/60">
+							Also on iPhone and Android
+						</p>
+						<StoreBadges />
 					</div>
 				</div>
 			</section>

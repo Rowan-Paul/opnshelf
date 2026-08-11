@@ -11,6 +11,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import { AccountDeletionGate } from "#/components/AccountDeletionGate";
+import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
@@ -71,6 +72,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				content:
 					"Track what you watch and discover what others are watching. A personal media tracker built on the AT Protocol.",
 			},
+			// Apple's Smart App Banner. Only iOS Safari renders it, and only it
+			// knows whether the app is already installed, so it shows "OPEN"
+			// rather than nagging an existing user. Every other mobile browser
+			// gets our own MobileAppBanner instead.
+			// ponytail: not gated to non-landing routes like our Banner is. A head
+			// tag has no route context here, and it is inert everywhere else.
+			{ name: "apple-itunes-app", content: "app-id=6758867162" },
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
@@ -108,6 +116,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								<div className="flex min-h-screen flex-col">
 									<Header />
 									<TraktSyncBanner />
+									<MobileAppBanner />
 									<main className="flex-1">{children}</main>
 									<Footer />
 								</div>

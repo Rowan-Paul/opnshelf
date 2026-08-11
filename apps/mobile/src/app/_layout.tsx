@@ -130,11 +130,11 @@ export default function RootLayout() {
 					name="profile/[handle]/connections"
 					options={{ headerShown: true }}
 				/>
-				<Stack.Screen name="movie/[id]" />
-				<Stack.Screen name="person/[id]" />
-				<Stack.Screen name="show/[id]/index" />
-				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
-				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
+				<Stack.Screen name="movies/[id]/[name]/index" />
+				<Stack.Screen name="people/[id]/[name]" />
+				<Stack.Screen name="shows/[id]/[name]/index" />
+				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/index" />
+				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
 			</Stack>
 			<AccountDeletionGate />
 			<ThemedStatusBar />

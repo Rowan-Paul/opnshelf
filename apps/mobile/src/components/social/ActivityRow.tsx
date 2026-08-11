@@ -5,6 +5,7 @@ import { Clock, User } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
 import { Text } from "@/components/ui/text";
+import { mediaHref } from "@/lib/media-href";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /** Absolute date + time, mirroring web ("Jun 18, 3:42 PM"). */
@@ -26,19 +27,35 @@ export function activityMediaHref(activity: FollowedActivityItemDto): Href {
 	// movie page 404'd for show reviews).
 	// Review activities carry reviewId so the detail screen scrolls to and
 	// highlights that review (same deep-link the profile reviews list uses).
-	const q =
+	const _q =
 		activity.type === "review" && activity.reviewId
 			? `?reviewId=${encodeURIComponent(activity.reviewId)}`
 			: "";
+	const reviewId =
+		activity.type === "review" && activity.reviewId
+			? activity.reviewId
+			: undefined;
 	if (activity.movieId) {
-		return `/movie/${activity.movieId}${q}` as Href;
+		return mediaHref({
+			mediaType: "movie",
+			mediaId: String(activity.movieId),
+			mediaTitle: activity.title,
+			reviewId,
+		});
 	}
-	if (activity.showId && activity.seasonNumber !== undefined) {
-		return activity.episodeNumber !== undefined
-			? (`/show/${activity.showId}/season/${activity.seasonNumber}/episode/${activity.episodeNumber}${q}` as Href)
-			: (`/show/${activity.showId}/season/${activity.seasonNumber}${q}` as Href);
-	}
-	return `/show/${activity.showId}${q}` as Href;
+	return mediaHref({
+		mediaType:
+			activity.seasonNumber === undefined
+				? "show"
+				: activity.episodeNumber === undefined
+					? "season"
+					: "episode",
+		mediaId: String(activity.showId),
+		mediaTitle: activity.showTitle,
+		seasonNumber: activity.seasonNumber,
+		episodeNumber: activity.episodeNumber,
+		reviewId,
+	});
 }
 
 /**

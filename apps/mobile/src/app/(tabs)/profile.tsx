@@ -280,7 +280,7 @@ export default function ProfileTab() {
 														: undefined
 												}
 												href={mediaHref({ ...review, reviewId: review.id })}
-												title={review.title || "Unknown"}
+												title={review.mediaLabel || "Unknown"}
 												meta={review.reviewTitle}
 											>
 												{review.markdown ? (

@@ -1,15 +1,8 @@
-import slugify from "slugify";
+// The slug lives in @opnshelf/api so the Web App and the Mobile App build
+// byte-identical URLs (ADR 0023). Re-exported for callers that import it here.
+import { slugifyName } from "@opnshelf/api";
 
-/**
- * Convert a show/movie name to a URL-friendly slug
- */
-export function slugifyName(name: string): string {
-	return slugify(name, {
-		lower: true,
-		strict: true,
-		trim: true,
-	});
-}
+export { slugifyName };
 
 /**
  * Build a show detail URL

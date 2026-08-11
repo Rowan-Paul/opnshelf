@@ -90,11 +90,11 @@ export function AtStoreReviewPrompt() {
 				</View>
 				<View className="min-w-0 flex-1 gap-1">
 					<Text className="font-display font-semibold text-foreground text-lg">
-						Enjoying OpnShelf?
+						Enjoying Opnshelf?
 					</Text>
 					<Text className="text-muted-foreground text-sm leading-5">
 						Share your experience on AT Store. It helps others discover
-						OpnShelf.
+						Opnshelf.
 					</Text>
 				</View>
 			</View>

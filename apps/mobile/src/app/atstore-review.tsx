@@ -105,10 +105,10 @@ export default function AtStoreReviewScreen() {
 		>
 			<View className="gap-2">
 				<Text className="font-bold font-display text-2xl text-foreground">
-					Review OpnShelf
+					Review Opnshelf
 				</Text>
 				<Text className="text-muted-foreground text-sm leading-5">
-					Your review will appear on OpnShelf’s page at atstore.fyi.
+					Your review will appear on Opnshelf’s page at atstore.fyi.
 				</Text>
 			</View>
 

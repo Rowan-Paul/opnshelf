@@ -102,6 +102,9 @@ export class NotesService {
 			return {
 				...note,
 				title: media?.title,
+				// Notes only attach to a movie or show, never a season or episode,
+				// so the display label is already the parent title (ADR 0023).
+				mediaTitle: media?.title,
 				posterPath: media?.posterPath,
 			};
 		});

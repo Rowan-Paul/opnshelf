@@ -1,4 +1,7 @@
-import { reviewsControllerGetCanonicalReviewOptions } from "@opnshelf/api";
+import {
+	reviewsControllerGetCanonicalReviewOptions,
+	slugifyName,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays } from "lucide-react";
@@ -6,7 +9,6 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
 import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
-import { toSlug } from "#/lib/slug";
 
 export const Route = createFileRoute("/reviews/$handle/$rkey")({
 	loader: async ({ context, params }) => {
@@ -31,7 +33,7 @@ export const Route = createFileRoute("/reviews/$handle/$rkey")({
 		}
 	},
 	head: ({ loaderData }) => {
-		const title = loaderData?.review.title ?? "Review";
+		const title = loaderData?.review.reviewTitle ?? "Review";
 		const author =
 			loaderData?.review.author.displayName ||
 			loaderData?.review.author.handle ||
@@ -61,7 +63,7 @@ function mediaHref(review: {
 }): string {
 	// The media title carries the show name as the first " — "-separated part.
 	const baseName = review.mediaTitle?.split(" — ")[0] ?? "";
-	const slug = toSlug(baseName);
+	const slug = slugifyName(baseName);
 	switch (review.mediaType) {
 		case "movie":
 			return `/movies/${review.mediaId}/${slug}`;
@@ -114,7 +116,7 @@ function CanonicalReviewPage() {
 					>
 						<img
 							src={posterUrl}
-							alt={review.mediaTitle ?? review.title}
+							alt={review.mediaLabel ?? review.reviewTitle}
 							className="aspect-2/3 w-full rounded-lg border border-(--border) object-cover"
 						/>
 					</Link>
@@ -122,7 +124,7 @@ function CanonicalReviewPage() {
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-start justify-between gap-4">
-						<h1 className="text-display-2">{review.title}</h1>
+						<h1 className="text-display-2">{review.reviewTitle}</h1>
 						{/* Share the media page with this review open rather than the bare
 						    review page — it keeps a first-time visitor oriented. */}
 						<ShareButton

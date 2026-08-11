@@ -119,7 +119,7 @@ export default function ReviewDetailScreen() {
 		// message carries the URL (Android ignores the `url` field).
 		Share.share({
 			message: webReviewUrl(review, review.author.handle, rkey),
-			title: review.title,
+			title: review.reviewTitle,
 		})
 			.then((result) => {
 				if (result.action === Share.sharedAction) {
@@ -150,7 +150,7 @@ export default function ReviewDetailScreen() {
 	return (
 		<View className="flex-1 bg-background">
 			<Stack.Screen
-				options={{ headerShown: true, title: review?.title ?? "Review" }}
+				options={{ headerShown: true, title: review?.reviewTitle ?? "Review" }}
 			/>
 			{isLoading ? (
 				<View className="gap-4 p-4 pb-12">
@@ -216,7 +216,7 @@ export default function ReviewDetailScreen() {
 							selectable
 							className="font-bold font-display text-2xl text-foreground"
 						>
-							{review.title}
+							{review.reviewTitle}
 						</Text>
 						<View className="flex-row items-center justify-between gap-3">
 							<Link href={`/profile/${review.author.handle}` as Href} asChild>
