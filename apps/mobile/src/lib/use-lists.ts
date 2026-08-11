@@ -269,6 +269,9 @@ export function useListMembership(target: ListMembershipTarget) {
 		enabled: isAuthenticated && !!target.mediaId,
 	});
 
+	const listName = (slug: string) =>
+		membershipQuery.data?.find((l) => l.listSlug === slug)?.listName ?? "list";
+
 	const patchMembership = (slug: string, isInList: boolean) => {
 		queryClient.setQueryData<ListsForItemDto[]>(listsForItemKey, (old) =>
 			Array.isArray(old)
@@ -293,6 +296,7 @@ export function useListMembership(target: ListMembershipTarget) {
 		},
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "added", resolvedMediaType);
+			toast.success(`Added to ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
@@ -314,6 +318,7 @@ export function useListMembership(target: ListMembershipTarget) {
 		},
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "removed", resolvedMediaType);
+			toast.success(`Removed from ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
