@@ -89,21 +89,32 @@ function SettingsSection({
 
 /** "v1.0.0 · update 019f40cf · Jul 8, 2026" once an OTA update is running, or
  * "v1.0.0 · embedded" for the build's own bundle (also what dev/Expo Go shows,
- * since `Updates.isEnabled` is false there). */
+ * since `Updates.isEnabled` is false there).
+ *
+ * A non-production channel is named: `preview` and the store build carry the same
+ * version, so without it there is nothing on screen to tell a tester which one
+ * they are looking at. `Updates.channel` is null on a dev build. */
 function formatVersionLine(): string {
 	const version = nativeApplicationVersion ?? "?";
-	if (!Updates.isEnabled || !Updates.updateId) {
-		return `v${version} · embedded`;
+	const parts = [`v${version}`];
+	if (Updates.channel && Updates.channel !== "production") {
+		parts.push(Updates.channel);
 	}
-	const shortId = Updates.updateId.slice(0, 8);
-	const date = Updates.createdAt
-		? Updates.createdAt.toLocaleDateString(undefined, {
+	if (!Updates.isEnabled || !Updates.updateId) {
+		parts.push("embedded");
+		return parts.join(" · ");
+	}
+	parts.push(`update ${Updates.updateId.slice(0, 8)}`);
+	if (Updates.createdAt) {
+		parts.push(
+			Updates.createdAt.toLocaleDateString(undefined, {
 				month: "short",
 				day: "numeric",
 				year: "numeric",
-			})
-		: null;
-	return `v${version} · update ${shortId}${date ? ` · ${date}` : ""}`;
+			}),
+		);
+	}
+	return parts.join(" · ");
 }
 
 const APPEARANCE_OPTIONS: { value: ThemePreference; label: string }[] = [
