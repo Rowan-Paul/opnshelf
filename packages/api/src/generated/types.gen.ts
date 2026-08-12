@@ -2586,16 +2586,6 @@ export type AuthControllerSignupData = {
     url: '/auth/signup';
 };
 
-export type AuthControllerLoginWithPdsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        timezone?: unknown;
-        platform?: unknown;
-    };
-    url: '/auth/login/pds';
-};
-
 export type AuthControllerRegisterData = {
     body: RegisterDto;
     path?: never;

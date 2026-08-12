@@ -59,8 +59,7 @@ const GOOGLE_COOKIE_MAX_AGE_MS = 15 * 60 * 1000;
 type GoogleSignupError =
 	| "google_unavailable"
 	| "google_failed"
-	| "google_email_unverified"
-	| "google_already_linked";
+	| "google_email_unverified";
 type OAuthErrorCode =
 	| "handle_required"
 	| "auth_failed"
@@ -258,28 +257,11 @@ export class AuthController {
 		return this.startPdsAuthorize(platform, timezone, res, "create");
 	}
 
-	/**
-	 * Start OAuth *sign-in* via the configured PDS.
-	 *
-	 * Same page as `auth/signup` but without `prompt=create`, so the PDS shows
-	 * its sign-in form. That is the entry point for someone who signed up with
-	 * Google and does not know their handle: the PDS page has the Google button.
-	 */
-	@Get("auth/login/pds")
-	@ApiOperation({ summary: "Start AT Protocol OAuth sign-in via our PDS" })
-	@ApiQuery({ name: "platform", required: false })
-	@ApiQuery({ name: "timezone", required: false })
-	@ApiResponse({
-		status: 302,
-		description: "Redirect to PDS authorization server",
-	})
-	async loginWithPds(
-		@Query("platform") platform: string | undefined,
-		@Query("timezone") timezone: string | undefined,
-		@Res() res: Response,
-	) {
-		return this.startPdsAuthorize(platform, timezone, res, undefined);
-	}
+	// NB: there is deliberately no public "sign in via the PDS page" route.
+	// Sending an unlinked Google account to that page makes Tranquil turn the
+	// sign-in into its own registration, invite-code field and all. Every Google
+	// entry point goes through `auth/google/start` instead, and the callback
+	// hands an already-linked account on to the PDS sign-in page itself.
 
 	private async startPdsAuthorize(
 		platform: string | undefined,
@@ -527,14 +509,30 @@ export class AuthController {
 			return res.redirect(url.toString());
 		} catch (err) {
 			// ponytail: substring match on the PDS message. It is the only way to
-			// tell "already has an account" from a bad token, and getting that
-			// wrong just means a returning user sees a vaguer toast.
+			// tell "already has an account" from a bad token, and getting it wrong
+			// only costs a returning user a vaguer error.
 			const message =
 				err && typeof err === "object" && "message" in err
 					? String((err as { message?: unknown }).message)
 					: "";
 			if (message.includes("already linked")) {
-				return res.redirect(this.buildSignupErrorUrl("google_already_linked"));
+				// Not an error: this Google account already has an opnshelf account,
+				// so the same button has to sign them in. Only the PDS can mint a
+				// session for an existing account, so hand to its sign-in page (no
+				// `prompt=create`), where one more Google click finishes the job.
+				//
+				// Never send them through the PDS page *before* this check: for an
+				// unlinked Google account Tranquil turns a sign-in into its own
+				// registration, invite-code field and all (handle_sso_login in
+				// sso_endpoints.rs). Going through us first is what avoids that.
+				try {
+					return res.redirect(
+						await this.authService.authorizeWithPds(undefined, undefined),
+					);
+				} catch (authError) {
+					this.logger.error("Google sign-in handoff failed", authError);
+					return res.redirect(this.buildSignupErrorUrl("google_failed"));
+				}
 			}
 			this.logger.error("Google signup callback failed", err);
 			return res.redirect(this.buildSignupErrorUrl("google_failed"));

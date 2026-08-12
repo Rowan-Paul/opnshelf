@@ -1481,7 +1481,7 @@ describe("AuthController", () => {
 			);
 		});
 
-		it("sends a returning Google user to sign in instead", async () => {
+		it("signs a returning Google user in instead of erroring", async () => {
 			mockAuthService.startSsoRegistration.mockRejectedValue({
 				error: "InvalidRequest",
 				message: "This account is already linked to an existing user.",
@@ -1491,8 +1491,19 @@ describe("AuthController", () => {
 
 			await controller.googleCallback("code", "st", undefined, req, res);
 
+			// Sign-in, not signup: no prompt=create, because the account exists.
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(
+				undefined,
+				undefined,
+			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/signup?error=google_already_linked",
+				"https://opnshelf.social/oauth/authorize",
+			);
+			// It must never park a pending registration for an account that exists.
+			expect(res.cookie).not.toHaveBeenCalledWith(
+				"google_pending",
+				expect.anything(),
+				expect.anything(),
 			);
 		});
 

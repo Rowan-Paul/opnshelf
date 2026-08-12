@@ -32,8 +32,6 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 	google_failed: "We couldn't finish signing you up with Google. Try again.",
 	google_email_unverified:
 		"Google hasn't verified that email address. Sign up with a password instead.",
-	google_already_linked:
-		"That Google account already has an Opnshelf account. Sign in instead.",
 };
 
 export const Route = createFileRoute("/signup")({

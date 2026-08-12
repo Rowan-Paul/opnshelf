@@ -153,15 +153,15 @@ function LoginPage() {
 					</div>
 
 					<div className="space-y-3">
-						{/* Goes to our PDS's own sign-in page, which leads with its Google
-						    button. That is the route for anyone who signed up with Google
-						    and never learned their handle. */}
+						{/* Same endpoint as the signup page on purpose. It signs in an
+						    account we already know and creates one we don't, and either
+						    way it never shows the PDS's invite-code form. */}
 						<a
-							href={`${env.VITE_API_URL}/auth/login/pds`}
+							href={`${env.VITE_API_URL}/auth/google/start`}
 							className="btn btn-secondary w-full"
 						>
 							<GoogleMark className="size-4" />
-							Sign in with Google
+							Continue with Google
 						</a>
 
 						<button
