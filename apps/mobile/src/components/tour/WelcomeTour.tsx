@@ -203,15 +203,27 @@ export function WelcomeTour() {
 	}, [index, end]);
 
 	const rect = useAnchorRect(step?.anchor, index);
+	// Anchors are measured in window coordinates, but the hole is positioned
+	// inside this overlay. The two origins differ by the system bars, which put
+	// every ring a status bar too high, so measure this view and work in its own
+	// coordinate space instead of assuming the offset is zero.
+	const overlayRef = useRef<View>(null);
+	const [frame, setFrame] = useState<AnchorRect | null>(null);
+	const measureOverlay = useCallback(() => {
+		overlayRef.current?.measureInWindow((x, y, width, height) => {
+			setFrame({ x, y, width, height });
+		});
+	}, []);
 
 	if (!step || index === null) return null;
 
 	const isLast = index === TOUR_STEPS.length - 1;
 	const window = Dimensions.get("window");
+	const height = frame?.height || window.height;
 	const hole = rect
 		? {
-				top: rect.y - HOLE_PAD,
-				left: rect.x - HOLE_PAD,
+				top: rect.y - (frame?.y ?? 0) - HOLE_PAD,
+				left: rect.x - (frame?.x ?? 0) - HOLE_PAD,
 				width: rect.width + HOLE_PAD * 2,
 				height: rect.height + HOLE_PAD * 2,
 			}
@@ -221,16 +233,21 @@ export function WelcomeTour() {
 	// when the step has nothing to point at.
 	const cardTop = !hole
 		? undefined
-		: hole.top + hole.height + 320 < window.height
+		: hole.top + hole.height + 320 < height
 			? hole.top + hole.height + 12
 			: undefined;
 	const cardBottom =
 		hole && cardTop === undefined
-			? Math.max(insets.bottom + 12, window.height - hole.top + 12)
+			? Math.max(insets.bottom + 12, height - hole.top + 12)
 			: undefined;
 
 	return (
-		<View className="absolute inset-0" pointerEvents="box-none">
+		<View
+			ref={overlayRef}
+			onLayout={measureOverlay}
+			className="absolute inset-0"
+			pointerEvents="box-none"
+		>
 			{/* Four dim panels around the target rather than one overlay with a
 			    cut-out: the hole is a real gap, so the long-press step can be tried
 			    on the poster it points at. */}
@@ -278,7 +295,7 @@ export function WelcomeTour() {
 				style={{
 					left: 16,
 					right: 16,
-					top: cardTop ?? (hole ? undefined : window.height / 2 - 140),
+					top: cardTop ?? (hole ? undefined : height / 2 - 140),
 					bottom: cardBottom,
 				}}
 			>
