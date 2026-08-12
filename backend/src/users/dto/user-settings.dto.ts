@@ -2,8 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
 	IsBoolean,
 	IsIn,
+	IsInt,
 	IsOptional,
 	IsString,
+	Min,
 	ValidateIf,
 } from "class-validator";
 
@@ -63,6 +65,26 @@ export class UpdateUserSettingsDto {
 	@IsOptional()
 	@IsIn(["markdown", "leaflet", "offprint", "pckt"])
 	reviewsMirrorFormat?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Welcome Tour version the Web App has finished. Send the client's current version on finish or skip, or 0 to replay it.",
+		minimum: 0,
+	})
+	@IsOptional()
+	@IsInt()
+	@Min(0)
+	welcomeTourWebVersion?: number;
+
+	@ApiPropertyOptional({
+		description:
+			"Welcome Tour version the Mobile App has finished. Send the client's current version on finish or skip, or 0 to replay it.",
+		minimum: 0,
+	})
+	@IsOptional()
+	@IsInt()
+	@Min(0)
+	welcomeTourMobileVersion?: number;
 }
 
 export class DeleteUserAccountDto {
@@ -152,6 +174,18 @@ export class UserSettingsDto {
 
 	@ApiProperty()
 	blueskyCrossPostEnabled!: boolean;
+
+	@ApiProperty({
+		description:
+			"Welcome Tour version the Web App has finished; 0 means it has never run",
+	})
+	welcomeTourWebVersion!: number;
+
+	@ApiProperty({
+		description:
+			"Welcome Tour version the Mobile App has finished; 0 means it has never run",
+	})
+	welcomeTourMobileVersion!: number;
 }
 
 export class UpdateUserProfileDto {

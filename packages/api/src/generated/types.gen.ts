@@ -799,6 +799,14 @@ export type UserSettingsDto = {
     reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
     blogIntegrationEnabled: boolean;
     blueskyCrossPostEnabled: boolean;
+    /**
+     * Welcome Tour version the Web App has finished; 0 means it has never run
+     */
+    welcomeTourWebVersion: number;
+    /**
+     * Welcome Tour version the Mobile App has finished; 0 means it has never run
+     */
+    welcomeTourMobileVersion: number;
 };
 
 export type UpdateUserSettingsDto = {
@@ -826,6 +834,14 @@ export type UpdateUserSettingsDto = {
      * Explicit reader format for blog mirrors. Markdown is the portable default.
      */
     reviewsMirrorFormat?: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
+    /**
+     * Welcome Tour version the Web App has finished. Send the client's current version on finish or skip, or 0 to replay it.
+     */
+    welcomeTourWebVersion?: number;
+    /**
+     * Welcome Tour version the Mobile App has finished. Send the client's current version on finish or skip, or 0 to replay it.
+     */
+    welcomeTourMobileVersion?: number;
 };
 
 export type UpdateUserProfileDto = {

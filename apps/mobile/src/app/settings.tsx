@@ -18,6 +18,7 @@ import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
 	ChevronRight,
+	Compass,
 	Download,
 	MessageSquare,
 	Smartphone,
@@ -34,6 +35,7 @@ import {
 } from "react-native";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
+import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
@@ -459,6 +461,23 @@ export default function SettingsScreen() {
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
 						</Link>
+					</View>
+
+					{/* Welcome tour */}
+					<View className="gap-3 rounded-xl border border-border bg-card p-4">
+						<Text className="font-display font-semibold text-foreground text-lg">
+							Welcome tour
+						</Text>
+						<Pressable
+							onPress={replayWelcomeTour}
+							className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+						>
+							<Compass color="#94a3b8" size={20} />
+							<Text className="flex-1 font-medium text-foreground">
+								Take the tour again
+							</Text>
+							<ChevronRight color="#94a3b8" size={18} />
+						</Pressable>
 					</View>
 
 					{/* Appearance */}

@@ -29,6 +29,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
+import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { Screen } from "@/components/ui/screen";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -126,9 +127,12 @@ function toDiscoverCardItem(
 function DiscoverRail({
 	title,
 	items,
+	anchorFirstCard,
 }: {
 	title: string;
 	items: MediaCardItem[];
+	/** Marks the first poster as the Welcome Tour's long-press target. */
+	anchorFirstCard?: boolean;
 }) {
 	if (items.length === 0) return null;
 	return (
@@ -147,11 +151,18 @@ function DiscoverRail({
 				showsHorizontalScrollIndicator={false}
 				contentContainerClassName="items-start gap-3 px-4"
 			>
-				{items.map((item) => (
-					<View key={`${item.type}-${item.id}`} className="w-28">
-						<MediaCard item={item} actions />
-					</View>
-				))}
+				{items.map((item, cardIndex) => {
+					const key = `${item.type}-${item.id}`;
+					return anchorFirstCard && cardIndex === 0 ? (
+						<TourAnchor key={key} id="media-card" className="w-28">
+							<MediaCard item={item} actions />
+						</TourAnchor>
+					) : (
+						<View key={key} className="w-28">
+							<MediaCard item={item} actions />
+						</View>
+					);
+				})}
 			</ScrollView>
 		</View>
 	);
@@ -193,6 +204,21 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 		.filter((r) => !shownKeys.has(`tv-${r.id}`))
 		.map((r) => toDiscoverCardItem(r, "show"));
 
+	// One list so the Welcome Tour's long-press step can point at the first
+	// poster that actually rendered, whichever rail that turns out to be.
+	const rails = [
+		{ key: "follows", title: "From your follows", items: followsItems },
+		...rows.map((row) => ({
+			key: `${row.seedMediaType}-${row.seedId}`,
+			title: `Because you watched ${row.seedTitle}`,
+			items: row.results.map(toMediaCardItem),
+		})),
+		{ key: "trending", title: "Trending this week", items: trendingItems },
+		{ key: "movies", title: "Popular movies", items: movieItems },
+		{ key: "shows", title: "Popular shows", items: showItems },
+	];
+	const firstFilledRail = rails.find((rail) => rail.items.length > 0)?.key;
+
 	const [refreshing, setRefreshing] = useState(false);
 	const onRefresh = async () => {
 		setRefreshing(true);
@@ -215,17 +241,14 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 			}
 		>
-			<DiscoverRail title="From your follows" items={followsItems} />
-			{rows.map((row) => (
+			{rails.map((rail) => (
 				<DiscoverRail
-					key={`${row.seedMediaType}-${row.seedId}`}
-					title={`Because you watched ${row.seedTitle}`}
-					items={row.results.map(toMediaCardItem)}
+					key={rail.key}
+					title={rail.title}
+					items={rail.items}
+					anchorFirstCard={rail.key === firstFilledRail}
 				/>
 			))}
-			<DiscoverRail title="Trending this week" items={trendingItems} />
-			<DiscoverRail title="Popular movies" items={movieItems} />
-			<DiscoverRail title="Popular shows" items={showItems} />
 		</ScrollView>
 	);
 }
@@ -403,7 +426,7 @@ export default function SearchScreen() {
 
 	return (
 		<Screen className="px-0">
-			<View className="px-4 pt-3 pb-3">
+			<TourAnchor id="discover" className="px-4 pt-3 pb-3">
 				<Text className="mb-3 font-bold font-display text-2xl text-foreground">
 					Search
 				</Text>
@@ -454,7 +477,7 @@ export default function SearchScreen() {
 						})}
 					</View>
 				) : null}
-			</View>
+			</TourAnchor>
 
 			<View className="flex-1">{renderBody()}</View>
 		</Screen>

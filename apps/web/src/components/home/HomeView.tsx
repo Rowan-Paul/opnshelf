@@ -302,7 +302,9 @@ export function HomeView() {
 					{/* Up Next - Shows the next episodes to watch */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Up Next</h2>
+							<h2 className="text-display-3" data-tour="up-next">
+								Up Next
+							</h2>
 							{user && (
 								<Link
 									to="/profile/$handle/up-next"
@@ -367,7 +369,9 @@ export function HomeView() {
 					{/* Continue Watching */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Your Shelf</h2>
+							<h2 className="text-display-3" data-tour="shelf">
+								Your Shelf
+							</h2>
 							{user && (
 								<Link
 									to="/profile/$handle/shelf"

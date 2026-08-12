@@ -19,6 +19,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserRow } from "@/components/social/UserRow";
+import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -81,14 +82,14 @@ export default function ConnectionsScreen() {
 
 	return (
 		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<View className="px-4 pt-3 pb-3">
+			<TourAnchor id="connections" className="px-4 pt-3 pb-3">
 				<Text className="font-bold font-display text-2xl text-foreground">
 					Connections
 				</Text>
 				<Text className="text-muted-foreground text-sm">
 					Find people to follow and organise them into circles
 				</Text>
-			</View>
+			</TourAnchor>
 
 			<View className="px-4 pb-3">
 				<TextField

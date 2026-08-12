@@ -54,12 +54,12 @@ export type AuthState = Prisma.AuthStateModel
 export type BackgroundJob = Prisma.BackgroundJobModel
 /**
  * Model TraktImportItem
- *
+ * 
  */
 export type TraktImportItem = Prisma.TraktImportItemModel
 /**
  * Model TraktImportMatch
- *
+ * 
  */
 export type TraktImportMatch = Prisma.TraktImportMatchModel
 /**

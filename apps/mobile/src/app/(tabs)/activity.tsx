@@ -10,6 +10,7 @@ import { ActivityIndicator, RefreshControl, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
+import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -84,14 +85,14 @@ export default function ActivityScreen() {
 
 	return (
 		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-			<View className="px-4 pt-3 pb-3">
+			<TourAnchor id="activity" className="px-4 pt-3 pb-3">
 				<Text className="font-bold font-display text-2xl text-foreground">
 					Activity
 				</Text>
 				<Text className="text-muted-foreground text-sm">
 					Recent watches and reviews from people you follow
 				</Text>
-			</View>
+			</TourAnchor>
 
 			{circles.length > 0 ? (
 				<CircleFilterBar

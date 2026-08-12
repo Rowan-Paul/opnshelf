@@ -7323,6 +7323,14 @@
           },
           "blueskyCrossPostEnabled": {
             "type": "boolean"
+          },
+          "welcomeTourWebVersion": {
+            "type": "number",
+            "description": "Welcome Tour version the Web App has finished; 0 means it has never run"
+          },
+          "welcomeTourMobileVersion": {
+            "type": "number",
+            "description": "Welcome Tour version the Mobile App has finished; 0 means it has never run"
           }
         },
         "required": [
@@ -7334,7 +7342,9 @@
           "reviewsPublicationName",
           "reviewsMirrorFormat",
           "blogIntegrationEnabled",
-          "blueskyCrossPostEnabled"
+          "blueskyCrossPostEnabled",
+          "welcomeTourWebVersion",
+          "welcomeTourMobileVersion"
         ]
       },
       "UpdateUserSettingsDto": {
@@ -7374,6 +7384,16 @@
               "offprint",
               "pckt"
             ]
+          },
+          "welcomeTourWebVersion": {
+            "type": "number",
+            "description": "Welcome Tour version the Web App has finished. Send the client's current version on finish or skip, or 0 to replay it.",
+            "minimum": 0
+          },
+          "welcomeTourMobileVersion": {
+            "type": "number",
+            "description": "Welcome Tour version the Mobile App has finished. Send the client's current version on finish or skip, or 0 to replay it.",
+            "minimum": 0
           }
         }
       },

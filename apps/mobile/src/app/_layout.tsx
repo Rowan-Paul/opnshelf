@@ -20,6 +20,7 @@ import { useEffect, useRef } from "react";
 import { AccountDeletionGate } from "@/components/AccountDeletionGate";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
+import { WelcomeTour } from "@/components/tour/WelcomeTour";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { posthog } from "@/lib/posthog";
@@ -137,6 +138,9 @@ export default function RootLayout() {
 				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
 			</Stack>
 			<AccountDeletionGate />
+			{/* Above the tabs: the tour walks the user across them and has to
+			    survive each navigation (ADR 0024). */}
+			<WelcomeTour />
 			<ThemedStatusBar />
 		</Providers>
 	);

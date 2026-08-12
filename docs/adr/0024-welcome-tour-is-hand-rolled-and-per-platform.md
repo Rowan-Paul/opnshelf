@@ -73,6 +73,22 @@ partial replay needs per-step state and is not worth it.
 New users flow from the last Onboarding step into the tour. Existing users get
 the same full tour, once, on their next **Home** visit.
 
+## As built
+
+Two details settled during the build.
+
+**Up Next and Shelf stay on Home.** Both steps point at the section header on
+Home rather than walking to the drill-down page. On the **Mobile App** those two
+pages put their title in the native stack header, which the overlay cannot
+measure, so there was nothing on-screen to anchor. The tour therefore visits four
+surfaces (Discover, Connections, Activity, Home) and ends where it finishes.
+Home holds those sections below the fold, so the tour scrolls its own target into
+view; Home hands its scroll view over for that.
+
+**The web tail points at the ⌘K button, not into the palette.** The button
+carries the shortcut on its face, and pointing at it keeps the tour clear of
+cmdk's focus trap.
+
 ## Consequences
 
 - The tour is authed-only. Long-press quick actions are gated on

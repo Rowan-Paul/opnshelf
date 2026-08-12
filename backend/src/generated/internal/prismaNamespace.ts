@@ -2261,6 +2261,8 @@ export const UserScalarFieldEnum = {
   onboardingCompletedAt: 'onboardingCompletedAt',
   atStoreReviewHandledAt: 'atStoreReviewHandledAt',
   atStoreReviewRkey: 'atStoreReviewRkey',
+  welcomeTourWebVersion: 'welcomeTourWebVersion',
+  welcomeTourMobileVersion: 'welcomeTourMobileVersion',
   emailVerifiedAt: 'emailVerifiedAt',
   backfillStartedAt: 'backfillStartedAt',
   lastIngestAt: 'lastIngestAt',
@@ -2747,6 +2749,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'BlogMirrorFormat'
  */
 export type EnumBlogMirrorFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlogMirrorFormat'>
@@ -2771,20 +2787,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 

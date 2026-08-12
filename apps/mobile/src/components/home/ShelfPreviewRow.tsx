@@ -4,6 +4,7 @@ import { Film } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { showHref } from "@/lib/media-href";
@@ -33,7 +34,9 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 
 	return (
 		<View>
-			<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
+			<TourAnchor id="shelf">
+				<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
+			</TourAnchor>
 			{isLoading ? (
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">

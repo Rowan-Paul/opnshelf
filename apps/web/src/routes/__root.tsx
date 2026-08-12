@@ -12,6 +12,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import { AccountDeletionGate } from "#/components/AccountDeletionGate";
 import { MobileAppBanner } from "#/components/MobileAppBanner";
+import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
@@ -122,6 +123,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								</div>
 							)}
 							<AccountDeletionGate />
+							{/* Above the router: the tour walks the user across routes
+							    and has to survive each change (ADR 0024). */}
+							{!isEmbed && <WelcomeTour />}
 							<Toaster />
 						</SearchDialogProvider>
 					</AuthProvider>

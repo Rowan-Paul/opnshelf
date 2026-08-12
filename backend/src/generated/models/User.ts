@@ -20,8 +20,20 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
+}
+
+export type UserAvgAggregateOutputType = {
+  welcomeTourWebVersion: number | null
+  welcomeTourMobileVersion: number | null
+}
+
+export type UserSumAggregateOutputType = {
+  welcomeTourWebVersion: number | null
+  welcomeTourMobileVersion: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -43,6 +55,8 @@ export type UserMinAggregateOutputType = {
   onboardingCompletedAt: Date | null
   atStoreReviewHandledAt: Date | null
   atStoreReviewRkey: string | null
+  welcomeTourWebVersion: number | null
+  welcomeTourMobileVersion: number | null
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
   lastIngestAt: Date | null
@@ -79,6 +93,8 @@ export type UserMaxAggregateOutputType = {
   onboardingCompletedAt: Date | null
   atStoreReviewHandledAt: Date | null
   atStoreReviewRkey: string | null
+  welcomeTourWebVersion: number | null
+  welcomeTourMobileVersion: number | null
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
   lastIngestAt: Date | null
@@ -115,6 +131,8 @@ export type UserCountAggregateOutputType = {
   onboardingCompletedAt: number
   atStoreReviewHandledAt: number
   atStoreReviewRkey: number
+  welcomeTourWebVersion: number
+  welcomeTourMobileVersion: number
   emailVerifiedAt: number
   backfillStartedAt: number
   lastIngestAt: number
@@ -133,6 +151,16 @@ export type UserCountAggregateOutputType = {
   _all: number
 }
 
+
+export type UserAvgAggregateInputType = {
+  welcomeTourWebVersion?: true
+  welcomeTourMobileVersion?: true
+}
+
+export type UserSumAggregateInputType = {
+  welcomeTourWebVersion?: true
+  welcomeTourMobileVersion?: true
+}
 
 export type UserMinAggregateInputType = {
   did?: true
@@ -153,6 +181,8 @@ export type UserMinAggregateInputType = {
   onboardingCompletedAt?: true
   atStoreReviewHandledAt?: true
   atStoreReviewRkey?: true
+  welcomeTourWebVersion?: true
+  welcomeTourMobileVersion?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
   lastIngestAt?: true
@@ -189,6 +219,8 @@ export type UserMaxAggregateInputType = {
   onboardingCompletedAt?: true
   atStoreReviewHandledAt?: true
   atStoreReviewRkey?: true
+  welcomeTourWebVersion?: true
+  welcomeTourMobileVersion?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
   lastIngestAt?: true
@@ -225,6 +257,8 @@ export type UserCountAggregateInputType = {
   onboardingCompletedAt?: true
   atStoreReviewHandledAt?: true
   atStoreReviewRkey?: true
+  welcomeTourWebVersion?: true
+  welcomeTourMobileVersion?: true
   emailVerifiedAt?: true
   backfillStartedAt?: true
   lastIngestAt?: true
@@ -281,6 +315,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UserAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UserSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -311,6 +357,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
+  _avg?: UserAvgAggregateInputType
+  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -334,6 +382,8 @@ export type UserGroupByOutputType = {
   onboardingCompletedAt: Date | null
   atStoreReviewHandledAt: Date | null
   atStoreReviewRkey: string | null
+  welcomeTourWebVersion: number
+  welcomeTourMobileVersion: number
   emailVerifiedAt: Date | null
   backfillStartedAt: Date | null
   lastIngestAt: Date | null
@@ -350,6 +400,8 @@ export type UserGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -391,6 +443,8 @@ export type UserWhereInput = {
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewRkey?: Prisma.StringNullableFilter<"User"> | string | null
+  welcomeTourWebVersion?: Prisma.IntFilter<"User"> | number
+  welcomeTourMobileVersion?: Prisma.IntFilter<"User"> | number
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastIngestAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -440,6 +494,8 @@ export type UserOrderByWithRelationInput = {
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewRkey?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIngestAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -492,6 +548,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewRkey?: Prisma.StringNullableFilter<"User"> | string | null
+  welcomeTourWebVersion?: Prisma.IntFilter<"User"> | number
+  welcomeTourMobileVersion?: Prisma.IntFilter<"User"> | number
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastIngestAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -541,6 +599,8 @@ export type UserOrderByWithAggregationInput = {
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewRkey?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastIngestAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -557,8 +617,10 @@ export type UserOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
+  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
+  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -583,6 +645,8 @@ export type UserScalarWhereWithAggregatesInput = {
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   atStoreReviewRkey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  welcomeTourWebVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
+  welcomeTourMobileVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   backfillStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   lastIngestAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -619,6 +683,8 @@ export type UserCreateInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -668,6 +734,8 @@ export type UserUncheckedCreateInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -717,6 +785,8 @@ export type UserUpdateInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -766,6 +836,8 @@ export type UserUncheckedUpdateInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -815,6 +887,8 @@ export type UserCreateManyInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -851,6 +925,8 @@ export type UserUpdateManyMutationInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -887,6 +963,8 @@ export type UserUncheckedUpdateManyInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -923,6 +1001,8 @@ export type UserCountOrderByAggregateInput = {
   onboardingCompletedAt?: Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrder
   atStoreReviewRkey?: Prisma.SortOrder
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
   lastIngestAt?: Prisma.SortOrder
@@ -938,6 +1018,11 @@ export type UserCountOrderByAggregateInput = {
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type UserAvgOrderByAggregateInput = {
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -959,6 +1044,8 @@ export type UserMaxOrderByAggregateInput = {
   onboardingCompletedAt?: Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrder
   atStoreReviewRkey?: Prisma.SortOrder
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
   lastIngestAt?: Prisma.SortOrder
@@ -995,6 +1082,8 @@ export type UserMinOrderByAggregateInput = {
   onboardingCompletedAt?: Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrder
   atStoreReviewRkey?: Prisma.SortOrder
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   backfillStartedAt?: Prisma.SortOrder
   lastIngestAt?: Prisma.SortOrder
@@ -1010,6 +1099,11 @@ export type UserMinOrderByAggregateInput = {
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type UserSumOrderByAggregateInput = {
+  welcomeTourWebVersion?: Prisma.SortOrder
+  welcomeTourMobileVersion?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -1031,6 +1125,14 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type EnumBlogMirrorFormatFieldUpdateOperationsInput = {
@@ -1242,6 +1344,8 @@ export type UserCreateWithoutFollowingInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1290,6 +1394,8 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1343,6 +1449,8 @@ export type UserCreateWithoutFollowersInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1391,6 +1499,8 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1455,6 +1565,8 @@ export type UserUpdateWithoutFollowingInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1503,6 +1615,8 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1562,6 +1676,8 @@ export type UserUpdateWithoutFollowersInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1610,6 +1726,8 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1658,6 +1776,8 @@ export type UserCreateWithoutCirclesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1706,6 +1826,8 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1770,6 +1892,8 @@ export type UserUpdateWithoutCirclesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1818,6 +1942,8 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1866,6 +1992,8 @@ export type UserCreateWithoutTrackedMoviesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1914,6 +2042,8 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -1978,6 +2108,8 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2026,6 +2158,8 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2074,6 +2208,8 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2122,6 +2258,8 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2186,6 +2324,8 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2234,6 +2374,8 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2282,6 +2424,8 @@ export type UserCreateWithoutListsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2330,6 +2474,8 @@ export type UserUncheckedCreateWithoutListsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2394,6 +2540,8 @@ export type UserUpdateWithoutListsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2442,6 +2590,8 @@ export type UserUncheckedUpdateWithoutListsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2490,6 +2640,8 @@ export type UserCreateWithoutLibraryItemsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2538,6 +2690,8 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2602,6 +2756,8 @@ export type UserUpdateWithoutLibraryItemsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2650,6 +2806,8 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2698,6 +2856,8 @@ export type UserCreateWithoutNotesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2746,6 +2906,8 @@ export type UserUncheckedCreateWithoutNotesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2810,6 +2972,8 @@ export type UserUpdateWithoutNotesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2858,6 +3022,8 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2906,6 +3072,8 @@ export type UserCreateWithoutReviewsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -2954,6 +3122,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3018,6 +3188,8 @@ export type UserUpdateWithoutReviewsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3066,6 +3238,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3114,6 +3288,8 @@ export type UserCreateWithoutPublicationsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3162,6 +3338,8 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3226,6 +3404,8 @@ export type UserUpdateWithoutPublicationsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3274,6 +3454,8 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3322,6 +3504,8 @@ export type UserCreateWithoutRatingsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3370,6 +3554,8 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3434,6 +3620,8 @@ export type UserUpdateWithoutRatingsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3482,6 +3670,8 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3530,6 +3720,8 @@ export type UserCreateWithoutReviewLikesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3578,6 +3770,8 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3642,6 +3836,8 @@ export type UserUpdateWithoutReviewLikesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3690,6 +3886,8 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3738,6 +3936,8 @@ export type UserCreateWithoutFeedbackInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3786,6 +3986,8 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
   atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
   emailVerifiedAt?: Date | string | null
   backfillStartedAt?: Date | string | null
   lastIngestAt?: Date | string | null
@@ -3850,6 +4052,8 @@ export type UserUpdateWithoutFeedbackInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3898,6 +4102,8 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4085,6 +4291,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
   atStoreReviewRkey?: boolean
+  welcomeTourWebVersion?: boolean
+  welcomeTourMobileVersion?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
   lastIngestAt?: boolean
@@ -4135,6 +4343,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
   atStoreReviewRkey?: boolean
+  welcomeTourWebVersion?: boolean
+  welcomeTourMobileVersion?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
   lastIngestAt?: boolean
@@ -4171,6 +4381,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
   atStoreReviewRkey?: boolean
+  welcomeTourWebVersion?: boolean
+  welcomeTourMobileVersion?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
   lastIngestAt?: boolean
@@ -4207,6 +4419,8 @@ export type UserSelectScalar = {
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
   atStoreReviewRkey?: boolean
+  welcomeTourWebVersion?: boolean
+  welcomeTourMobileVersion?: boolean
   emailVerifiedAt?: boolean
   backfillStartedAt?: boolean
   lastIngestAt?: boolean
@@ -4224,7 +4438,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -4280,6 +4494,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     onboardingCompletedAt: Date | null
     atStoreReviewHandledAt: Date | null
     atStoreReviewRkey: string | null
+    welcomeTourWebVersion: number
+    welcomeTourMobileVersion: number
     emailVerifiedAt: Date | null
     backfillStartedAt: Date | null
     lastIngestAt: Date | null
@@ -4749,6 +4965,8 @@ export interface UserFieldRefs {
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly atStoreReviewHandledAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly atStoreReviewRkey: Prisma.FieldRef<"User", 'String'>
+  readonly welcomeTourWebVersion: Prisma.FieldRef<"User", 'Int'>
+  readonly welcomeTourMobileVersion: Prisma.FieldRef<"User", 'Int'>
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly backfillStartedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly lastIngestAt: Prisma.FieldRef<"User", 'DateTime'>

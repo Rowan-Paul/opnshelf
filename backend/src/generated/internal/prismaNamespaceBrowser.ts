@@ -112,6 +112,8 @@ export const UserScalarFieldEnum = {
   onboardingCompletedAt: 'onboardingCompletedAt',
   atStoreReviewHandledAt: 'atStoreReviewHandledAt',
   atStoreReviewRkey: 'atStoreReviewRkey',
+  welcomeTourWebVersion: 'welcomeTourWebVersion',
+  welcomeTourMobileVersion: 'welcomeTourMobileVersion',
   emailVerifiedAt: 'emailVerifiedAt',
   backfillStartedAt: 'backfillStartedAt',
   lastIngestAt: 'lastIngestAt',

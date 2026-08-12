@@ -415,6 +415,7 @@ export function SearchCommand({
 				onClick={() => handleOpenChange(true)}
 				className="group flex h-9 items-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-3 text-(--foreground-muted) transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle) hover:text-(--foreground)"
 				aria-label="Search"
+				data-tour="command"
 			>
 				<Search className="size-4" />
 				<span className="hidden text-sm sm:inline">Search</span>
