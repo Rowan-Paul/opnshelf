@@ -1495,6 +1495,7 @@ describe("AuthController", () => {
 			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(
 				undefined,
 				undefined,
+				"google",
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
 				"https://opnshelf.social/oauth/authorize",

@@ -518,8 +518,8 @@ export class AuthController {
 			if (message.includes("already linked")) {
 				// Not an error: this Google account already has an opnshelf account,
 				// so the same button has to sign them in. Only the PDS can mint a
-				// session for an existing account, so hand to its sign-in page (no
-				// `prompt=create`), where one more Google click finishes the job.
+				// session for an existing account, so hand it an explicit Google hint
+				// (and no `prompt=create`) to skip the PDS's provider picker.
 				//
 				// Never send them through the PDS page *before* this check: for an
 				// unlinked Google account Tranquil turns a sign-in into its own
@@ -527,7 +527,11 @@ export class AuthController {
 				// sso_endpoints.rs). Going through us first is what avoids that.
 				try {
 					return res.redirect(
-						await this.authService.authorizeWithPds(undefined, undefined),
+						await this.authService.authorizeWithPds(
+							undefined,
+							undefined,
+							"google",
+						),
 					);
 				} catch (authError) {
 					this.logger.error("Google sign-in handoff failed", authError);

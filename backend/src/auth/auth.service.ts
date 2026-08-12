@@ -367,11 +367,13 @@ export class AuthService implements OnModuleInit {
 	 * Start the OAuth flow targeting a specific PDS directly.
 	 * The PDS's built-in authorization page supports both sign-in and account creation.
 	 * @param prompt pass "create" for signup; omit it for sign-in
+	 * @param sso optionally send sign-in straight to an enabled SSO provider
 	 * @returns The authorization URL to redirect the user to the PDS
 	 */
 	async authorizeWithPds(
 		appState?: OAuthAppState,
 		prompt?: "create",
+		sso?: "google",
 	): Promise<string> {
 		const client = this.getBaseClient();
 		const pdsUrl = this.configService.get<string>("PDS_URL");
@@ -386,6 +388,7 @@ export class AuthService implements OnModuleInit {
 			...(prompt && { prompt }),
 			state: this.serializeOAuthAppState(appState),
 		});
+		if (sso) url.searchParams.set("sso", sso);
 		return url.toString();
 	}
 

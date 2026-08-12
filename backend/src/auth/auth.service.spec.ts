@@ -1021,6 +1021,20 @@ describe("AuthService", () => {
 				sharedOAuthClient.authorize.mock.calls.at(-1)?.[1],
 			).not.toHaveProperty("prompt");
 		});
+
+		it("adds an SSO provider hint to the PDS authorize URL", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize?request_uri=urn%3Arequest"),
+			);
+
+			const url = await service.authorizeWithPds(
+				undefined,
+				undefined,
+				"google",
+			);
+
+			expect(new URL(url).searchParams.get("sso")).toBe("google");
+		});
 	});
 
 	describe("callback", () => {
