@@ -45,10 +45,13 @@ import {
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
 import { VerifyEmailDto, VerifyEmailResponseDto } from "./dto/verify-email.dto";
-import { extractSessionId } from "./session-id";
+import {
+	extractSessionId,
+	LEGACY_SESSION_COOKIE_NAME,
+	SESSION_COOKIE_NAME,
+} from "./session-id";
 import type { AuthenticatedRequest } from "./types";
 
-const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
 const TIMEZONE_COOKIE_NAME = "auth_timezone";
 /** CSRF state for the Google consent round trip. */
@@ -93,8 +96,8 @@ export class AuthController {
 	) {}
 
 	/**
-	 * Root domain for cookie in production (e.g. opnshelf.xyz) so cookie is sent to apex and all subdomains (api, www, etc.).
-	 * Use bare hostname without leading dot for reliable behavior on apex domain.
+	 * Scope used only to clear session cookies issued before sessions became
+	 * host-only. New session cookies must never use this domain.
 	 */
 	private getCookieDomain(): string | undefined {
 		const isProduction =
@@ -410,14 +413,12 @@ export class AuthController {
 
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
-		const cookieDomain = this.getCookieDomain();
 		res.cookie(SESSION_COOKIE_NAME, sessionId, {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: "lax",
 			maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
 			path: "/",
-			...(cookieDomain && { domain: cookieDomain }),
 		});
 
 		return {
@@ -787,7 +788,6 @@ export class AuthController {
 			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
-		const cookieDomain = this.getCookieDomain();
 		const cookies = req.cookies as Record<string, string | undefined>;
 
 		try {
@@ -877,15 +877,15 @@ export class AuthController {
 				);
 			}
 
-			// Set session cookie with the opaque per-device id minted by callback()
-			// (domain set so frontend at opnshelf.xyz receives it).
+			// Keep the session cookie host-only to isolate api.opnshelf.xyz from
+			// api.staging.opnshelf.xyz. The frontend sends it to the API with
+			// credentials: include; it never needs to receive the cookie itself.
 			res.cookie(SESSION_COOKIE_NAME, sessionId, {
 				httpOnly: true,
 				secure: isProduction,
 				sameSite: "lax",
 				maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
 				path: "/",
-				...(cookieDomain && { domain: cookieDomain }),
 			});
 
 			// Check if request originated from mobile app (reuse cookies variable)
@@ -1316,14 +1316,31 @@ export class AuthController {
 			this.configService.get<string>("NODE_ENV") === "production";
 		const cookieDomain = this.getCookieDomain();
 
-		// Clear the session cookie (same options as set, including domain)
+		// Clear the current host-only cookie.
 		res.clearCookie(SESSION_COOKIE_NAME, {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: "lax",
 			path: "/",
-			...(cookieDomain && { domain: cookieDomain }),
 		});
+		// Also clear legacy cookies issued by this environment. Staging's legacy
+		// domain is staging.opnshelf.xyz, so this does not sign the user out of the
+		// production parent-domain session.
+		res.clearCookie(LEGACY_SESSION_COOKIE_NAME, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax",
+			path: "/",
+		});
+		if (cookieDomain) {
+			res.clearCookie(LEGACY_SESSION_COOKIE_NAME, {
+				httpOnly: true,
+				secure: isProduction,
+				sameSite: "lax",
+				path: "/",
+				domain: cookieDomain,
+			});
+		}
 
 		if (sessionId) {
 			await this.authService.revokeBySessionId(sessionId);

@@ -345,7 +345,7 @@ describe("AuthController", () => {
 				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.objectContaining({
 					httpOnly: true,
@@ -1223,15 +1223,15 @@ describe("AuthController", () => {
 				undefined,
 				{ emailVerified: true, isNativePds: false },
 			);
-			// In test/dev mode, domain should not be set
+			// The session cookie is host-only in every environment.
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.not.objectContaining({ domain: expect.any(String) }),
 			);
 		});
 
-		it("should set domain in production", async () => {
+		it("should keep the session cookie host-only in production", async () => {
 			// Override to production config
 			mockConfigService.get.mockImplementation((key: string) => {
 				const config: Record<string, string> = {
@@ -1266,12 +1266,16 @@ describe("AuthController", () => {
 				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.objectContaining({
 					secure: true,
-					domain: "opnshelf.xyz",
 				}),
+			);
+			expect(res.cookie).toHaveBeenCalledWith(
+				"opnshelf_session",
+				"session-123",
+				expect.not.objectContaining({ domain: expect.any(String) }),
 			);
 		});
 	});
@@ -1334,7 +1338,7 @@ describe("AuthController", () => {
 			);
 			expect(mockAuthService.createCredentialSession).toHaveBeenCalled();
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"sess-1",
 				expect.objectContaining({ httpOnly: true }),
 			);
