@@ -5,10 +5,11 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
-import { Animated, Pressable, View } from "react-native";
+import { Animated, PanResponder, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 
@@ -54,6 +55,41 @@ function ToastItem({
 	onDismiss: (id: number) => void;
 }) {
 	const opacity = useRef(new Animated.Value(0)).current;
+	const translateY = useRef(new Animated.Value(0)).current;
+
+	// Swipe up to dismiss. PanResponder over Reanimated: the fade already runs on
+	// Animated, and only a drag past the threshold claims the touch, so the tap
+	// and the action button keep working.
+	const pan = useMemo(
+		() =>
+			PanResponder.create({
+				onMoveShouldSetPanResponder: (_event, gesture) => gesture.dy < -6,
+				onPanResponderMove: (_event, gesture) =>
+					translateY.setValue(Math.min(0, gesture.dy)),
+				onPanResponderRelease: (_event, gesture) => {
+					if (gesture.dy < -40) {
+						Animated.parallel([
+							Animated.timing(translateY, {
+								toValue: -80,
+								duration: 140,
+								useNativeDriver: true,
+							}),
+							Animated.timing(opacity, {
+								toValue: 0,
+								duration: 140,
+								useNativeDriver: true,
+							}),
+						]).start(() => onDismiss(toast.id));
+						return;
+					}
+					Animated.spring(translateY, {
+						toValue: 0,
+						useNativeDriver: true,
+					}).start();
+				},
+			}),
+		[onDismiss, opacity, toast.id, translateY],
+	);
 
 	useEffect(() => {
 		Animated.timing(opacity, {
@@ -70,12 +106,14 @@ function ToastItem({
 
 	return (
 		<Animated.View
+			{...pan.panHandlers}
 			style={{
 				left: 16,
 				opacity,
 				position: "absolute",
 				right: 16,
 				top: top + index * 66,
+				transform: [{ translateY }],
 			}}
 		>
 			<Pressable
