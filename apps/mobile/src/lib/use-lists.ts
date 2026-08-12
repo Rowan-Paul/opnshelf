@@ -229,6 +229,9 @@ interface ListMembershipTarget {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/** Defaults to true. See the note on NoteTarget.enabled: a poster grid mounts
+	 *  one of these per card and trips the API's rate limit. */
+	enabled?: boolean;
 }
 
 /**
@@ -266,7 +269,7 @@ export function useListMembership(target: ListMembershipTarget) {
 				episodeNumber: target.episodeNumber,
 			},
 		}),
-		enabled: isAuthenticated && !!target.mediaId,
+		enabled: isAuthenticated && !!target.mediaId && target.enabled !== false,
 	});
 
 	const listName = (slug: string) =>

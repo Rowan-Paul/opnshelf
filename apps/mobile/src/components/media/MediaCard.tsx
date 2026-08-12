@@ -223,12 +223,29 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 	const coords = ep
 		? { seasonNumber: ep.seasonNumber, episodeNumber: ep.episodeNumber }
 		: {};
-	const review = useReview({ mediaType: item.type, mediaId, ...coords });
-	const note = useNote({ mediaType: item.type, mediaId, ...coords });
+	// Rating, note and list membership are only read inside the quick-action
+	// sheets, so they wait for a long press. Fetching them on mount cost four
+	// requests per card, and one screen of posters was enough to spend the API's
+	// whole per-minute budget: the sheet then opened on a 429 and showed no lists
+	// at all. The corner watched badge is on the card itself, so that one stays.
+	const [engaged, setEngaged] = useState(false);
+	const review = useReview({
+		mediaType: item.type,
+		mediaId,
+		...coords,
+		enabled: engaged,
+	});
+	const note = useNote({
+		mediaType: item.type,
+		mediaId,
+		...coords,
+		enabled: engaged,
+	});
 	const listMembership = useListMembership({
 		mediaType: item.type,
 		mediaId,
 		...coords,
+		enabled: engaged,
 	});
 
 	const [quickVisible, setQuickVisible] = useState(false);
@@ -305,6 +322,7 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 								void Haptics.impactAsync(
 									Haptics.ImpactFeedbackStyle.Medium,
 								).catch(() => {});
+								setEngaged(true);
 								setQuickVisible(true);
 							}
 						: undefined

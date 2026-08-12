@@ -14,6 +14,12 @@ interface NoteTarget {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/**
+	 * Defaults to true. A grid of posters mounts one of these per card, which is
+	 * enough requests at once to trip the API's rate limit, so a card passes
+	 * false until the user actually opens its quick actions.
+	 */
+	enabled?: boolean;
 }
 
 function resolveMediaType(
@@ -55,7 +61,11 @@ export function useNote(target: NoteTarget) {
 
 	const noteQuery = useQuery({
 		...notesControllerGetNoteOptions({ path: { userDid }, query }),
-		enabled: isAuthenticated && !!userDid && !!target.mediaId,
+		enabled:
+			isAuthenticated &&
+			!!userDid &&
+			!!target.mediaId &&
+			target.enabled !== false,
 	});
 
 	const note = noteQuery.data ?? null;
