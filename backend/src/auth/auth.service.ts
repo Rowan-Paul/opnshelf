@@ -366,9 +366,13 @@ export class AuthService implements OnModuleInit {
 	/**
 	 * Start the OAuth flow targeting a specific PDS directly.
 	 * The PDS's built-in authorization page supports both sign-in and account creation.
+	 * @param prompt pass "create" for signup; omit it for sign-in
 	 * @returns The authorization URL to redirect the user to the PDS
 	 */
-	async authorizeWithPds(appState?: OAuthAppState): Promise<string> {
+	async authorizeWithPds(
+		appState?: OAuthAppState,
+		prompt?: "create",
+	): Promise<string> {
 		const client = this.getBaseClient();
 		const pdsUrl = this.configService.get<string>("PDS_URL");
 		if (!pdsUrl) {
@@ -376,7 +380,10 @@ export class AuthService implements OnModuleInit {
 		}
 		const url = await client.authorize(pdsUrl, {
 			scope: OAUTH_SCOPE,
-			prompt: "create",
+			// Without `create` the PDS shows its sign-in page instead of its signup
+			// form, which is what a returning user who doesn't know their handle (or
+			// who signed up with Google) needs.
+			...(prompt && { prompt }),
 			state: this.serializeOAuthAppState(appState),
 		});
 		return url.toString();
@@ -712,6 +719,108 @@ export class AuthService implements OnModuleInit {
 			refreshJwt: session.refreshJwt,
 			pdsUrl,
 		};
+	}
+
+	/**
+	 * Trade a Google `id_token` for a pending PDS registration.
+	 *
+	 * `POST /oauth/sso/register-token` is our own addition to the Tranquil fork.
+	 * The PDS verifies the token against Google's JWKS itself (signature,
+	 * audience, issuer, expiry), so opnshelf can never assert an identity it
+	 * hasn't proven. The returned token is what `completeSsoRegistration` spends.
+	 */
+	async startSsoRegistration(idToken: string): Promise<{
+		token: string;
+		email: string | null;
+		emailVerified: boolean;
+		providerUsername: string | null;
+	}> {
+		const data = (await this.pdsSsoPost("register-token", {
+			provider: "google",
+			id_token: idToken,
+		})) as {
+			token: string;
+			email?: string | null;
+			emailVerified?: boolean;
+			providerUsername?: string | null;
+		};
+		return {
+			token: data.token,
+			email: data.email ?? null,
+			emailVerified: data.emailVerified === true,
+			providerUsername: data.providerUsername ?? null,
+		};
+	}
+
+	/**
+	 * Spend a pending SSO registration: this is what actually creates the account.
+	 *
+	 * We deliberately send no `email`. The PDS then falls back to the email the
+	 * provider reported, which is the only value its auto-verify check accepts
+	 * (it compares character for character). Sending our own copy would risk a
+	 * mismatch that drops the user onto an emailed code Tranquil cannot send.
+	 *
+	 * `accessJwt`/`refreshJwt` come back only when that auto-verify succeeded.
+	 */
+	async completeSsoRegistration(params: {
+		token: string;
+		handle: string;
+		inviteCode: string;
+	}): Promise<{
+		did: string;
+		handle: string;
+		accessJwt: string | null;
+		refreshJwt: string | null;
+	}> {
+		const data = (await this.pdsSsoPost("complete-registration", {
+			token: params.token,
+			handle: params.handle,
+			invite_code: params.inviteCode,
+		})) as {
+			did: string;
+			handle: string;
+			accessJwt?: string;
+			refreshJwt?: string;
+		};
+		return {
+			did: data.did,
+			handle: data.handle,
+			accessJwt: data.accessJwt ?? null,
+			refreshJwt: data.refreshJwt ?? null,
+		};
+	}
+
+	/**
+	 * POST to one of the PDS's `/oauth/sso/*` endpoints. These are plain JSON
+	 * routes, not XRPC, and need no auth — the invite code is the only gate.
+	 *
+	 * Errors are rethrown in the `{ error, message }` shape the rest of the
+	 * signup path already maps to HTTP responses.
+	 */
+	private async pdsSsoPost(
+		path: string,
+		body: Record<string, unknown>,
+	): Promise<unknown> {
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
+		const res = await fetch(`${pdsUrl}/oauth/sso/${path}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
+			signal: AbortSignal.timeout(30_000),
+		});
+		const data = await res.json().catch(() => null);
+		if (!res.ok) {
+			const parsed = (data ?? {}) as { error?: string; message?: string };
+			throw {
+				status: res.status,
+				error: parsed.error ?? "PdsSsoRequestFailed",
+				message: parsed.message ?? `sso/${path} failed (${res.status})`,
+			};
+		}
+		return data;
 	}
 
 	/**

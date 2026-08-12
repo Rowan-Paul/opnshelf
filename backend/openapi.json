@@ -552,6 +552,34 @@
         ]
       }
     },
+    "/auth/login/pds": {
+      "get": {
+        "operationId": "AuthController_loginWithPds",
+        "parameters": [
+          {
+            "name": "timezone",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "platform",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to PDS authorization server"
+          }
+        },
+        "summary": "Start AT Protocol OAuth sign-in via our PDS",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/register": {
       "post": {
         "operationId": "AuthController_register",
@@ -588,6 +616,80 @@
           }
         },
         "summary": "Create an account on opnshelf's PDS (captcha + invite gated)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/start": {
+      "get": {
+        "operationId": "AuthController_googleStart",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google"
+          }
+        },
+        "summary": "Start a Google-backed signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleCallback",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to the handle picker"
+          }
+        },
+        "summary": "Google OAuth callback for signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/register": {
+      "post": {
+        "operationId": "AuthController_googleRegister",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleRegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Google signup was not started"
+          },
+          "403": {
+            "description": "Captcha verification failed"
+          },
+          "409": {
+            "description": "Username already taken"
+          },
+          "429": {
+            "description": "Too many signup attempts"
+          }
+        },
+        "summary": "Create an account from a verified Google identity",
         "tags": [
           "auth"
         ]
@@ -6040,6 +6142,48 @@
           "did",
           "handle",
           "sessionId"
+        ]
+      },
+      "GoogleRegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz",
+            "example": "jane"
+          },
+          "captchaToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token proving the request is human"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          }
+        },
+        "required": [
+          "username",
+          "captchaToken"
+        ]
+      },
+      "GoogleRegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "coreOAuthUrl": {
+            "type": "string",
+            "description": "Where to send the browser next: the PDS authorization page that grants opnshelf its scopes and triggers seeding"
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "coreOAuthUrl"
         ]
       },
       "PermissionChangeDto": {

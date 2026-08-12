@@ -134,19 +134,22 @@ describe("AuthService", () => {
 		},
 	};
 
+	const baseConfig: Record<string, string | number> = {
+		BACKEND_PUBLIC_URL: "http://127.0.0.1:3001",
+		PDS_URL: "https://opnshelf.social",
+		PORT: 3001,
+		NODE_ENV: "test",
+	};
+
 	const mockConfigService = {
-		get: vi.fn((key: string) => {
-			const config: Record<string, string | number> = {
-				BACKEND_PUBLIC_URL: "http://127.0.0.1:3001",
-				PORT: 3001,
-				NODE_ENV: "test",
-			};
-			return config[key];
-		}),
+		get: vi.fn((key: string) => baseConfig[key]),
 	};
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		// Tests that override get() with mockImplementation leak into every later
+		// test (clearAllMocks doesn't undo it), so restore the base config here.
+		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
 		credentialSessionHarness.instances.length = 0;
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -991,6 +994,32 @@ describe("AuthService", () => {
 				accountDid: "did:plc:returning",
 				accountHandle: "reader.example",
 			});
+		});
+	});
+
+	describe("authorizeWithPds", () => {
+		it("asks for the signup form when given prompt=create", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize"),
+			);
+
+			await service.authorizeWithPds(undefined, "create");
+
+			expect(sharedOAuthClient.authorize.mock.calls.at(-1)?.[1].prompt).toBe(
+				"create",
+			);
+		});
+
+		it("omits prompt entirely for sign-in, so the PDS shows its login page", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize"),
+			);
+
+			await service.authorizeWithPds(undefined, undefined);
+
+			expect(
+				sharedOAuthClient.authorize.mock.calls.at(-1)?.[1],
+			).not.toHaveProperty("prompt");
 		});
 	});
 

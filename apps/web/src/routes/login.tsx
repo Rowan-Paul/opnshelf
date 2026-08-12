@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
+import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
@@ -165,6 +166,18 @@ function LoginPage() {
 							"Create New Account"
 						)}
 					</button>
+
+					{/* For anyone who signed up with Google and never learned their
+					    handle. The PDS sign-in page has the Google button. */}
+					<p className="mt-4 text-center text-(--foreground-muted) text-sm">
+						Signed up with Google?{" "}
+						<a
+							href={`${env.VITE_API_URL}/auth/login/pds`}
+							className="text-(--accent) hover:underline"
+						>
+							Sign in without your handle
+						</a>
+					</p>
 				</div>
 
 				{/* Info */}

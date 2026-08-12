@@ -21,6 +21,7 @@ import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
@@ -104,6 +105,11 @@ const ActivityRoute = ActivityRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupGoogleRoute = SignupGoogleRouteImport.update({
+  id: '/signup_/google',
+  path: '/signup/google',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/signup/google': typeof SignupGoogleRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/signup/google': typeof SignupGoogleRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/signup_/google': typeof SignupGoogleRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
+    | '/signup/google'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
+    | '/signup/google'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
+    | '/signup_/google'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
+  SignupGoogleRoute: typeof SignupGoogleRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup_/google': {
+      id: '/signup_/google'
+      path: '/signup/google'
+      fullPath: '/signup/google'
+      preLoaderRoute: typeof SignupGoogleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/$handle': {
@@ -834,6 +854,7 @@ const rootRouteChildren: RootRouteChildren = {
   CirclesCircleIdRoute: CirclesCircleIdRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
+  SignupGoogleRoute: SignupGoogleRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,

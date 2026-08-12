@@ -209,6 +209,30 @@ export type RegisterResponseDto = {
     sessionId: string;
 };
 
+export type GoogleRegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz
+     */
+    username: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type GoogleRegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Where to send the browser next: the PDS authorization page that grants opnshelf its scopes and triggers seeding
+     */
+    coreOAuthUrl: string;
+};
+
 export type PermissionChangeDto = {
     integration: 'atstore' | 'blog' | 'bluesky';
     action: 'connect' | 'disconnect';
@@ -2562,6 +2586,16 @@ export type AuthControllerSignupData = {
     url: '/auth/signup';
 };
 
+export type AuthControllerLoginWithPdsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        timezone?: unknown;
+        platform?: unknown;
+    };
+    url: '/auth/login/pds';
+};
+
 export type AuthControllerRegisterData = {
     body: RegisterDto;
     path?: never;
@@ -2589,6 +2623,52 @@ export type AuthControllerRegisterResponses = {
 };
 
 export type AuthControllerRegisterResponse = AuthControllerRegisterResponses[keyof AuthControllerRegisterResponses];
+
+export type AuthControllerGoogleStartData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/start';
+};
+
+export type AuthControllerGoogleCallbackData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/callback';
+};
+
+export type AuthControllerGoogleRegisterData = {
+    body: GoogleRegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/google/register';
+};
+
+export type AuthControllerGoogleRegisterErrors = {
+    /**
+     * Google signup was not started
+     */
+    400: unknown;
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerGoogleRegisterResponses = {
+    201: GoogleRegisterResponseDto;
+};
+
+export type AuthControllerGoogleRegisterResponse = AuthControllerGoogleRegisterResponses[keyof AuthControllerGoogleRegisterResponses];
 
 export type AuthControllerSuggestionsData = {
     body?: never;
