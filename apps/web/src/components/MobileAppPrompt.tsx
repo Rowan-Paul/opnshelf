@@ -42,11 +42,10 @@ export function MobileAppPrompt() {
 						</p>
 					</div>
 				</div>
-				<div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
-					<StoreBadges
-						className="justify-start sm:justify-end"
-						platform={platform}
-					/>
+				{/* One row, dismiss left of the badges: the shape the Trakt and AT Store
+				    Prompts use. Stacking it under the badges left it hanging off the
+				    right edge with nothing to line up against. */}
+				<div className="flex shrink-0 items-center gap-3">
 					<Button
 						type="button"
 						variant="ghost"
@@ -61,6 +60,7 @@ export function MobileAppPrompt() {
 					>
 						No thanks
 					</Button>
+					<StoreBadges platform={platform} />
 				</div>
 			</div>
 		</section>
