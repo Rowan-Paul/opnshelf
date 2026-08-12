@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.rowanpaul.opnshelf",
+      "sha256_cert_fingerprints": [
+        "F1:50:5B:B4:D7:02:19:3E:80:BD:8D:9C:6A:4A:96:94:69:00:18:EF:EA:94:18:F5:D6:A9:5B:0C:21:8F:59:8F",
+        "22:2C:F5:CB:68:09:27:17:A8:25:6E:07:7E:DA:CF:E5:95:88:92:DF:A0:60:E9:95:59:B9:1D:A8:DF:6F:C2:E9"
+      ]
+    }
+  }
+]

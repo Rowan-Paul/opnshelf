@@ -1,6 +1,6 @@
 import type { MediaInListDto } from "@opnshelf/api";
-import type { Href } from "expo-router";
 import type { MediaCardItem } from "@/components/media/MediaCard";
+import { showHref } from "./media-href";
 
 /**
  * `MediaInListDto.media` arrives as loosely-typed JSON (TMDB shape). These
@@ -63,7 +63,12 @@ export function listItemToMediaCardItem(item: MediaInListDto): MediaCardItem {
 			...base,
 			// Title line shows the episode title; the show drops to the label line.
 			title: item.episodeName ?? showTitle,
-			href: `/show/${item.mediaId}/season/${item.seasonNumber}/episode/${item.episodeNumber}` as Href,
+			href: showHref(
+				item.mediaId,
+				showTitle,
+				item.seasonNumber,
+				item.episodeNumber,
+			),
 			episode: {
 				seasonNumber: item.seasonNumber,
 				episodeNumber: item.episodeNumber,
@@ -75,7 +80,7 @@ export function listItemToMediaCardItem(item: MediaInListDto): MediaCardItem {
 	if (item.seasonNumber != null) {
 		return {
 			...base,
-			href: `/show/${item.mediaId}/season/${item.seasonNumber}` as Href,
+			href: showHref(item.mediaId, showTitle, item.seasonNumber),
 			label: `Season ${item.seasonNumber}`,
 		};
 	}

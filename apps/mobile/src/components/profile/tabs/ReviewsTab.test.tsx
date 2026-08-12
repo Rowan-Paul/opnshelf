@@ -109,7 +109,8 @@ vi.mock("@/lib/posthog", () => ({ posthog: undefined }));
 
 const review = (id: string, title: string) => ({
 	id,
-	title,
+	mediaLabel: title,
+	mediaTitle: title,
 	createdAt: "2026-07-20T00:00:00.000Z",
 	posterPath: null,
 	reviewTitle: null,

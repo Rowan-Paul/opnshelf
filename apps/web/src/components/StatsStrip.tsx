@@ -1,8 +1,8 @@
 import type { MostWatchedShowDto, ProfileActivityDayDto } from "@opnshelf/api";
+import { slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import { useState } from "react";
-import { toSlug } from "#/lib/slug";
 
 /** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
 function formatDayLabel(date: string): string {
@@ -138,7 +138,7 @@ function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 	return (
 		<Link
 			to="/shows/$showId/$showName"
-			params={{ showId: show.showId, showName: toSlug(show.title) }}
+			params={{ showId: show.showId, showName: slugifyName(show.title) }}
 			className="flex items-center gap-3"
 		>
 			{show.posterPath ? (

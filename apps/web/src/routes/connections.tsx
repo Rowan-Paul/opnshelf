@@ -137,7 +137,9 @@ function ConnectionsPage() {
 	return (
 		<div className="container-app py-8">
 			<div className="mb-6">
-				<h1 className="font-bold font-display text-3xl">Connections</h1>
+				<h1 className="font-bold font-display text-3xl" data-tour="connections">
+					Connections
+				</h1>
 				<p className="text-(--foreground-muted)">
 					Find people to follow and organise them into circles
 				</p>

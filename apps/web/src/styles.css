@@ -563,22 +563,27 @@ body {
    Scrollbar
    ========================================================================== */
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* Only where there is a real pointer. Styling the scrollbar at all turns
+   Android Chrome's overlay scrollbar into one that reserves width, which insets
+   the whole page by 8px and leaves a track down the right edge. */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-::-webkit-scrollbar-thumb {
-  background-color: var(--border-strong);
-  border-radius: 4px;
-}
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 4px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--foreground-subtle);
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--foreground-subtle);
+  }
 }
 
 /* ==========================================================================

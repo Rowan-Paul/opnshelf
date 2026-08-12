@@ -229,6 +229,9 @@ interface ListMembershipTarget {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/** Defaults to true. See the note on NoteTarget.enabled: a poster grid mounts
+	 *  one of these per card and trips the API's rate limit. */
+	enabled?: boolean;
 }
 
 /**
@@ -266,8 +269,11 @@ export function useListMembership(target: ListMembershipTarget) {
 				episodeNumber: target.episodeNumber,
 			},
 		}),
-		enabled: isAuthenticated && !!target.mediaId,
+		enabled: isAuthenticated && !!target.mediaId && target.enabled !== false,
 	});
+
+	const listName = (slug: string) =>
+		membershipQuery.data?.find((l) => l.listSlug === slug)?.listName ?? "list";
 
 	const patchMembership = (slug: string, isInList: boolean) => {
 		queryClient.setQueryData<ListsForItemDto[]>(listsForItemKey, (old) =>
@@ -293,6 +299,7 @@ export function useListMembership(target: ListMembershipTarget) {
 		},
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "added", resolvedMediaType);
+			toast.success(`Added to ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
@@ -314,6 +321,7 @@ export function useListMembership(target: ListMembershipTarget) {
 		},
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "removed", resolvedMediaType);
+			toast.success(`Removed from ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {

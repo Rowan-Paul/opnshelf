@@ -673,7 +673,7 @@ export class AuthController {
 						`opnshelf://auth/complete?error=${declined ? "permission_declined" : "callback_failed"}&permission=atstore`,
 					);
 				}
-				const dashboardUrl = new URL("/dashboard", frontendUrl);
+				const dashboardUrl = new URL("/", frontendUrl);
 				dashboardUrl.searchParams.set(
 					"review",
 					declined ? "permission-declined" : "permission-failed",

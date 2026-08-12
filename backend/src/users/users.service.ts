@@ -68,6 +68,8 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				welcomeTourWebVersion: true,
+				welcomeTourMobileVersion: true,
 			},
 		});
 
@@ -85,6 +87,8 @@ export class UsersService {
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
 			blogIntegrationEnabled: user.blogIntegrationEnabled,
 			blueskyCrossPostEnabled: user.blueskyCrossPostEnabled,
+			welcomeTourWebVersion: user.welcomeTourWebVersion,
+			welcomeTourMobileVersion: user.welcomeTourMobileVersion,
 		};
 	}
 
@@ -153,6 +157,12 @@ export class UsersService {
 				...(dto.reviewsMirrorFormat !== undefined && {
 					reviewsMirrorFormat: dto.reviewsMirrorFormat as BlogMirrorFormat,
 				}),
+				...(dto.welcomeTourWebVersion !== undefined && {
+					welcomeTourWebVersion: dto.welcomeTourWebVersion,
+				}),
+				...(dto.welcomeTourMobileVersion !== undefined && {
+					welcomeTourMobileVersion: dto.welcomeTourMobileVersion,
+				}),
 				...reviewsPublicationPatch,
 			},
 			select: {
@@ -165,6 +175,8 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				welcomeTourWebVersion: true,
+				welcomeTourMobileVersion: true,
 			},
 		});
 
@@ -197,6 +209,8 @@ export class UsersService {
 			reviewsMirrorFormat: updatedUser.reviewsMirrorFormat,
 			blogIntegrationEnabled: updatedUser.blogIntegrationEnabled,
 			blueskyCrossPostEnabled: updatedUser.blueskyCrossPostEnabled,
+			welcomeTourWebVersion: updatedUser.welcomeTourWebVersion,
+			welcomeTourMobileVersion: updatedUser.welcomeTourMobileVersion,
 		};
 	}
 

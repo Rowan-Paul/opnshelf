@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["FNW3B5Q58G.com.rowanpaul.opnshelf"],
+        "components": [
+          {
+            "/": "/profile/*/library",
+            "exclude": true,
+            "comment": "No mobile screen for the Library yet"
+          },
+          {
+            "/": "/profile/*/notes",
+            "exclude": true,
+            "comment": "No mobile screen for notes yet"
+          },
+          { "/": "/movies/*" },
+          { "/": "/shows/*" },
+          { "/": "/people/*" },
+          { "/": "/reviews/*" },
+          { "/": "/profile/*" }
+        ]
+      }
+    ]
+  }
+}

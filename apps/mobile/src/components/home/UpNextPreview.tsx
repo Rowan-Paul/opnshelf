@@ -1,6 +1,7 @@
 import { Tv } from "lucide-react-native";
 import { View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
+import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
@@ -23,11 +24,13 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 
 	return (
 		<View>
-			<SectionHeader
-				icon={Tv}
-				title="Up Next"
-				href={handle ? (`/profile/${handle}/up-next` as const) : undefined}
-			/>
+			<TourAnchor id="up-next">
+				<SectionHeader
+					icon={Tv}
+					title="Up Next"
+					href={handle ? (`/profile/${handle}/up-next` as const) : undefined}
+				/>
+			</TourAnchor>
 			{isLoading ? (
 				<UpNextSkeleton />
 			) : isError ? (

@@ -64,7 +64,8 @@ vi.mock("@/lib/media-href", () => ({ mediaHref: () => "/media" }));
 
 const note = (id: string, title: string) => ({
 	id,
-	title,
+	mediaLabel: title,
+	mediaTitle: title,
 	content: `${title} content`,
 	updatedAt: "2026-07-20T00:00:00.000Z",
 	posterPath: null,

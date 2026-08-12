@@ -1,3 +1,4 @@
+import type { RatingResponseDto } from "@opnshelf/api";
 import {
 	ratingsControllerClearRatingMutation,
 	ratingsControllerGetBatchRatingsMutation,
@@ -110,19 +111,49 @@ export function useSetRating({
 			"set",
 		],
 		...ratingsControllerSetRatingMutation(),
+		// A Rating is a PDS write, so the round trip runs into seconds. Paint the
+		// new value at once and let the refetch confirm it: waiting on the server
+		// left the stars showing the old rating, which reads as a dead click.
+		onMutate: async (variables) => {
+			await queryClient.cancelQueries({ queryKey: ratingKey });
+			const previous = queryClient.getQueryData<RatingResponseDto | null>(
+				ratingKey,
+			);
+			queryClient.setQueryData<RatingResponseDto | null>(ratingKey, (old) =>
+				old
+					? { ...old, rating: variables.body.rating }
+					: {
+							// No id or rkey until the server answers, so Clear stays
+							// disabled for as long as this stand-in is on screen.
+							id: "",
+							rkey: "",
+							rating: variables.body.rating,
+							mediaType: resolvedMediaType,
+							mediaId,
+							seasonNumber,
+							episodeNumber,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						},
+			);
+			return { previous };
+		},
 		onSuccess: (_data, variables) => {
 			posthog.capture("rating_saved", {
 				media_type: resolvedMediaType,
 				rating: variables.body.rating,
 				source: "web",
 			});
-			queryClient.invalidateQueries({ queryKey: ratingKey });
-			queryClient.invalidateQueries({ queryKey: mediaRatingKey });
 		},
-		onError: (error) => {
+		onError: (error, _variables, context) => {
+			queryClient.setQueryData(ratingKey, context?.previous);
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save rating",
 			);
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ratingKey });
+			queryClient.invalidateQueries({ queryKey: mediaRatingKey });
 		},
 	});
 }
@@ -178,14 +209,23 @@ export function useClearRating({
 			"clear",
 		],
 		...ratingsControllerClearRatingMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ratingKey });
-			queryClient.invalidateQueries({ queryKey: mediaRatingKey });
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ratingKey });
+			const previous = queryClient.getQueryData<RatingResponseDto | null>(
+				ratingKey,
+			);
+			queryClient.setQueryData<RatingResponseDto | null>(ratingKey, null);
+			return { previous };
 		},
-		onError: (error) => {
+		onError: (error, _variables, context) => {
+			queryClient.setQueryData(ratingKey, context?.previous);
 			toast.error(
 				error instanceof Error ? error.message : "Failed to clear rating",
 			);
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ratingKey });
+			queryClient.invalidateQueries({ queryKey: mediaRatingKey });
 		},
 	});
 }

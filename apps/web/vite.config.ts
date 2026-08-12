@@ -14,6 +14,14 @@ const config = defineConfig({
 			"/ingest/**": {
 				proxy: "https://eu.i.posthog.com/**",
 			},
+			// Apple requires the association file at an extensionless path, served
+			// as application/json. Nitro's static handler types an extensionless
+			// file as text/plain and a `headers` rule does not override it, so the
+			// real file keeps its .json extension and this serves it internally.
+			// A redirect would not work: iOS does not follow them for this file.
+			"/.well-known/apple-app-site-association": {
+				proxy: "/.well-known/apple-app-site-association.json",
+			},
 		},
 	},
 	server: {

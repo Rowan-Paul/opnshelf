@@ -45,12 +45,12 @@ const TOAST_DURATION = 3600;
 function ToastItem({
 	toast,
 	index,
-	bottom,
+	top,
 	onDismiss,
 }: {
 	toast: ToastState;
 	index: number;
-	bottom: number;
+	top: number;
 	onDismiss: (id: number) => void;
 }) {
 	const opacity = useRef(new Animated.Value(0)).current;
@@ -71,11 +71,11 @@ function ToastItem({
 	return (
 		<Animated.View
 			style={{
-				bottom: bottom + index * 66,
 				left: 16,
 				opacity,
 				position: "absolute",
 				right: 16,
+				top: top + index * 66,
 			}}
 		>
 			<Pressable
@@ -155,7 +155,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 					key={toast.id}
 					toast={toast}
 					index={index}
-					bottom={insets.bottom + 72}
+					// Below the status bar, and clear of the sheets that slide up from
+					// the bottom.
+					top={insets.top + 12}
 					onDismiss={dismiss}
 				/>
 			))}

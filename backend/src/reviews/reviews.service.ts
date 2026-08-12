@@ -1,5 +1,6 @@
 import { rebaseAvatarUrl } from "../users/avatar-url";
 import { Agent } from "@atproto/api";
+import slugifyLib from "slugify";
 import { TID } from "@atproto/common";
 import {
 	ConflictException,
@@ -84,6 +85,36 @@ function detectPublicationService(publication: {
 }
 
 type MediaType = "movie" | "show" | "season" | "episode";
+
+/**
+ * Display label and slug source for the media a Review points at.
+ *
+ * `title` is what a human reads and is composite for a season or episode
+ * ("Breaking Bad — S1E1: Pilot"). `mediaTitle` is the title of the movie or
+ * show that `mediaId` identifies, never composite, because it is what URL slugs
+ * are built from — web slugs an episode URL from the show name alone, so
+ * slugging the composite would produce a different URL for the same page
+ * (ADR 0023).
+ */
+type MediaLabel = {
+	/** Composite for a season or episode: "Breaking Bad — S1E1: Pilot". */
+	label: string;
+	/** Title of the movie or show `mediaId` identifies. Never composite. */
+	mediaTitle: string;
+	posterPath: string | null;
+};
+
+/**
+ * Canonical media-name slug. Must stay identical to `slugifyName` in
+ * @opnshelf/api — see the parity test in reviews.media-url.spec.ts. The backend
+ * cannot import that package (it would pull the whole generated client), so
+ * this is a deliberate second copy guarded by a test.
+ */
+export function slugifyMediaName(name: string): string {
+	// The `|| "-"` matters: an empty slug collapses the URL to `/movies/603/`,
+	// which matches no route. Kept identical to @opnshelf/api.
+	return slugifyLib(name, { lower: true, strict: true, trim: true }) || "-";
+}
 
 const MAX_SLUG_LENGTH = 80;
 
@@ -215,14 +246,24 @@ const MEDIA_TYPE_LABEL: Record<MediaType, string> = {
  * routes resolve by id (and season/episode numbers) — so a slug of the media
  * title is fine even for the composite season/episode titles.
  */
-function mediaPageUrl(
+/**
+ * Public opnshelf.xyz URL for a Media Item. These go out in Bluesky
+ * Cross-posts and Blog Mirrors, so they are the most visible URLs we emit and
+ * must be byte-identical to what the Web App and Mobile App build (ADR 0023).
+ *
+ * `mediaTitle` must be the movie or show title, never the composite label: web
+ * slugs an episode URL from the show name alone. And the slug uses the same
+ * options as `slugifyName` in @opnshelf/api, not the blog-path `slugify` above,
+ * which mangles accents ("Pokémon" -> "pok-mon").
+ */
+export function mediaPageUrl(
 	mediaType: MediaType,
 	mediaId: string,
 	seasonNumber: number | undefined,
 	episodeNumber: number | undefined,
-	title: string,
+	mediaTitle: string,
 ): string {
-	const slug = slugify(title);
+	const slug = slugifyMediaName(mediaTitle);
 	switch (mediaType) {
 		case "movie":
 			return `${PUBLIC_SITE_ORIGIN}/movies/${mediaId}/${slug}`;
@@ -412,7 +453,8 @@ export class ReviewsService {
 			mediaId: review.mediaId,
 			seasonNumber: review.seasonNumber,
 			episodeNumber: review.episodeNumber,
-			mediaTitle: media?.title ?? null,
+			mediaLabel: media?.label ?? null,
+			mediaTitle: media?.mediaTitle ?? null,
 			posterPath: media?.posterPath ?? null,
 			author: {
 				did: user.did,
@@ -441,7 +483,7 @@ export class ReviewsService {
 			seasonNumber: number;
 			episodeNumber: number;
 		}>,
-	): Promise<Map<string, { title: string; posterPath: string | null }>> {
+	): Promise<Map<string, MediaLabel>> {
 		const movieIds = reviews
 			.filter((r) => r.mediaType === "movie")
 			.map((r) => r.mediaId);
@@ -484,51 +526,46 @@ export class ReviewsService {
 				: Promise.resolve([]),
 		]);
 
-		const movieMap = new Map<
-			string,
-			{ title: string; posterPath: string | null }
-		>();
+		const movieMap = new Map<string, MediaLabel>();
 		for (const m of movies) {
-			movieMap.set(m.movieId, { title: m.title, posterPath: m.posterPath });
+			movieMap.set(m.movieId, {
+				label: m.title,
+				mediaTitle: m.title,
+				posterPath: m.posterPath,
+			});
 		}
-		const showMap = new Map<
-			string,
-			{ title: string; posterPath: string | null }
-		>();
+		const showMap = new Map<string, MediaLabel>();
 		for (const s of shows) {
-			showMap.set(s.showId, { title: s.title, posterPath: s.posterPath });
+			showMap.set(s.showId, {
+				label: s.title,
+				mediaTitle: s.title,
+				posterPath: s.posterPath,
+			});
 		}
-		const seasonMap = new Map<
-			string,
-			{ title: string; posterPath: string | null }
-		>();
+		const seasonMap = new Map<string, MediaLabel>();
 		for (const s of seasons) {
 			const key = `${s.showId}:${s.seasonNumber}`;
 			seasonMap.set(key, {
-				title: `${s.show.title} — ${s.name}`,
+				label: `${s.show.title} — ${s.name}`,
+				mediaTitle: s.show.title,
 				posterPath: s.posterPath ?? s.show.posterPath,
 			});
 		}
-		const episodeMap = new Map<
-			string,
-			{ title: string; posterPath: string | null }
-		>();
+		const episodeMap = new Map<string, MediaLabel>();
 		for (const e of episodes) {
 			const key = `${e.showId}:${e.seasonNumber}:${e.episodeNumber}`;
 			episodeMap.set(key, {
-				title: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
+				label: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
+				mediaTitle: e.season.show.title,
 				// Cover is always the portrait media poster, never the landscape
 				// episode still — fall back season → show.
 				posterPath: e.season.posterPath ?? e.season.show.posterPath,
 			});
 		}
 
-		const byReviewId = new Map<
-			string,
-			{ title: string; posterPath: string | null }
-		>();
+		const byReviewId = new Map<string, MediaLabel>();
 		for (const review of reviews) {
-			let media: { title: string; posterPath: string | null } | undefined;
+			let media: MediaLabel | undefined;
 			if (review.mediaType === "movie") {
 				media = movieMap.get(review.mediaId);
 			} else if (review.mediaType === "show") {
@@ -617,13 +654,13 @@ export class ReviewsService {
 			review.mediaId,
 			review.seasonNumber || undefined,
 			review.episodeNumber || undefined,
-			media.title,
+			media.mediaTitle,
 		)}?review=${encodeURIComponent(`/reviews/${user.handle}/${review.rkey}`)}`;
-		const text = composeBlueskyPostText(media.title, review.title);
+		const text = composeBlueskyPostText(media.label, review.title);
 		const thumb = await this.uploadBlueskyThumbnail(agent, media.posterPath);
 		const external: Record<string, unknown> = {
 			uri: shareUrl,
-			title: `${review.title} — ${media.title}`,
+			title: `${review.title} — ${media.label}`,
 			description: `A review by @${user.handle} on Opnshelf.`,
 		};
 		if (thumb) external.thumb = thumb;
@@ -725,7 +762,8 @@ export class ReviewsService {
 			return {
 				...review,
 				description: excerptOf(review.markdown),
-				mediaTitle: media?.title,
+				mediaLabel: media?.label,
+				mediaTitle: media?.mediaTitle,
 				posterPath: media?.posterPath,
 				likeCount: review._count.likes,
 				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
@@ -857,7 +895,8 @@ export class ReviewsService {
 				const media = mediaByReviewId.get(review.id);
 				return {
 					...review,
-					mediaTitle: media?.title,
+					mediaLabel: media?.label,
+					mediaTitle: media?.mediaTitle,
 					posterPath: media?.posterPath ?? null,
 				};
 			}),
@@ -1050,7 +1089,8 @@ export class ReviewsService {
 
 			// Resolve the media header (title + poster) and the opnshelf backlink.
 			const media = (await this.enrichMediaForReviews([review])).get(review.id);
-			const mediaTitle = media?.title ?? null;
+			const mediaLabel = media?.label ?? null;
+			const mediaTitle = media?.mediaTitle ?? null;
 			const mediaUrl = mediaTitle
 				? mediaPageUrl(
 						mediaType,
@@ -1065,7 +1105,7 @@ export class ReviewsService {
 			// mirror in full, prefixed with a warning, and the warning also replaces
 			// the body excerpt in the document's description/textContent.
 			const spoilerWarning = review.spoiler
-				? `⚠️ Contains spoilers${mediaTitle ? ` for ${mediaTitle}` : ""}.`
+				? `⚠️ Contains spoilers${mediaLabel ? ` for ${mediaLabel}` : ""}.`
 				: undefined;
 			const mirrorBody = spoilerWarning
 				? `${spoilerWarning}\n\n${review.markdown}`
@@ -1073,7 +1113,8 @@ export class ReviewsService {
 
 			const contentMarkdown = buildMirrorContentMarkdown({
 				body: mirrorBody,
-				mediaTitle,
+				// Display gets the composite label; only the URL uses the parent title.
+				mediaTitle: mediaLabel,
 				posterPath: media?.posterPath ?? null,
 				mediaUrl,
 				typeLabel: MEDIA_TYPE_LABEL[mediaType],
@@ -1082,21 +1123,21 @@ export class ReviewsService {
 				user?.reviewsMirrorFormat === "leaflet"
 					? (buildLeafletMirrorContent({
 							body: mirrorBody,
-							mediaTitle,
+							mediaTitle: mediaLabel,
 							mediaUrl,
 							typeLabel: MEDIA_TYPE_LABEL[mediaType],
 						}) as DocumentRecord["content"])
 					: user?.reviewsMirrorFormat === "offprint"
 						? (buildOffprintMirrorContent({
 								body: mirrorBody,
-								mediaTitle,
+								mediaTitle: mediaLabel,
 								mediaUrl,
 								typeLabel: MEDIA_TYPE_LABEL[mediaType],
 							}) as DocumentRecord["content"])
 						: user?.reviewsMirrorFormat === "pckt"
 							? (buildPcktMirrorContent({
 									body: mirrorBody,
-									mediaTitle,
+									mediaTitle: mediaLabel,
 									mediaUrl,
 									typeLabel: MEDIA_TYPE_LABEL[mediaType],
 								}) as DocumentRecord["content"])

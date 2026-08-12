@@ -1,6 +1,7 @@
 import {
 	reviewsControllerDeleteReviewMutation,
 	reviewsControllerGetUserReviewsQueryKey,
+	slugifyName,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
@@ -16,7 +17,6 @@ import { ReviewDialog } from "#/components/ReviewDialog";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
-import { toSlug } from "#/lib/slug";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
 	loader: async ({ context, params }) => {
@@ -150,8 +150,8 @@ function ReviewCard({
 		);
 	};
 
-	const showName = review.title?.split(" — ")[0] ?? "";
-	const slug = toSlug(showName);
+	const showName = review.mediaTitle ?? "";
+	const slug = slugifyName(showName);
 
 	const href = (() => {
 		if (review.mediaType === "movie") {
@@ -179,7 +179,7 @@ function ReviewCard({
 				posterUrl={posterUrl}
 				to={href}
 				hash={`review-${review.id}`}
-				title={review.title || "Unknown"}
+				title={review.mediaLabel || "Unknown"}
 				meta={new Date(review.createdAt).toLocaleDateString()}
 				headerRight={
 					isOwner ? (
@@ -242,8 +242,8 @@ function ReviewCard({
 				description={
 					<>
 						This permanently deletes your review for{" "}
-						<strong>{review.title || "this title"}</strong> from your shelf.
-						This action cannot be undone.
+						<strong>{review.mediaLabel || "this title"}</strong> from your
+						shelf. This action cannot be undone.
 					</>
 				}
 				confirmLabel="Delete review"

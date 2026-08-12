@@ -1,10 +1,10 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
+import { slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import FeedItemActions from "#/components/FeedItemActions";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import StarRating from "#/components/StarRating";
-import { toSlug } from "#/lib/slug";
 import { UserAvatar } from "./UserAvatar";
 
 interface ActivityCardProps {
@@ -32,7 +32,7 @@ export function ActivityCard({
 								}
 								params={{
 									movieId: String(activity.movieId),
-									movieName: toSlug(activity.title || ""),
+									movieName: slugifyName(activity.title || ""),
 								}}
 							>
 								<img
@@ -53,7 +53,7 @@ export function ActivityCard({
 								}
 								params={{
 									showId: String(activity.showId),
-									showName: toSlug(activity.showTitle || ""),
+									showName: slugifyName(activity.showTitle || ""),
 								}}
 							>
 								<img
@@ -112,7 +112,7 @@ export function ActivityCard({
 										}
 										params={{
 											movieId: String(activity.movieId),
-											movieName: toSlug(activity.title || ""),
+											movieName: slugifyName(activity.title || ""),
 										}}
 										className="font-medium text-(--foreground) hover:text-(--accent)"
 									>
@@ -128,7 +128,7 @@ export function ActivityCard({
 										}
 										params={{
 											showId: String(activity.showId),
-											showName: toSlug(activity.showTitle || ""),
+											showName: slugifyName(activity.showTitle || ""),
 										}}
 										className="font-medium text-(--foreground) hover:text-(--accent)"
 									>
@@ -159,7 +159,7 @@ export function ActivityCard({
 								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 								params={{
 									showId: String(activity.showId),
-									showName: toSlug(activity.showTitle || ""),
+									showName: slugifyName(activity.showTitle || ""),
 									seasonNumber: String(activity.seasonNumber || 0),
 									episodeNumber: String(activity.episodeNumber || 0),
 								}}

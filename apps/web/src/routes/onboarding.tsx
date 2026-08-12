@@ -81,7 +81,7 @@ function OnboardingPage() {
 		if (initialCheckDone.current) return;
 		initialCheckDone.current = true;
 		if (isAuthenticated && !user?.needsOnboarding) {
-			navigate({ to: "/dashboard" });
+			navigate({ to: "/" });
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
@@ -875,7 +875,7 @@ function DoneStep({
 			) : (
 				<button
 					type="button"
-					onClick={() => navigate({ to: "/dashboard" })}
+					onClick={() => navigate({ to: "/" })}
 					className="btn btn-primary inline-flex"
 				>
 					Go to Dashboard

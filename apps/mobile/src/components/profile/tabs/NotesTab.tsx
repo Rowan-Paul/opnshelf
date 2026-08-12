@@ -93,7 +93,7 @@ function NoteCard({ note }: { note: UserNoteDto }) {
 					: undefined
 			}
 			href={mediaHref(note)}
-			title={note.title || "Unknown title"}
+			title={note.mediaLabel || "Unknown title"}
 			meta={new Date(note.updatedAt).toLocaleDateString()}
 		>
 			<Text className="text-foreground text-sm leading-5" numberOfLines={5}>

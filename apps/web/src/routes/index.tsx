@@ -4,18 +4,21 @@ import {
 	Clapperboard,
 	Compass,
 	LayoutDashboard,
+	Smartphone,
 	Sparkles,
 	UserCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { HomeView } from "#/components/home/HomeView";
 import LoadingState from "#/components/LoadingState";
+import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
 		meta: [{ title: "Opnshelf - Track What You Watch" }],
 	}),
-	component: LandingPage,
+	component: IndexPage,
 });
 
 const HERO_BACKDROPS = [
@@ -63,28 +66,33 @@ const SCREENSHOT_SECTIONS = [
 	},
 ];
 
-function LandingPage() {
+/**
+ * `/` is Home for a signed-in visitor and the landing page for everyone else.
+ *
+ * There is no redirect: the Mobile App serves Home at `/` too, and the routes
+ * match (ADR 0023). This replaced a bounce to `/dashboard`, a route whose name
+ * the glossary had already retired in favour of Home.
+ */
+function IndexPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!authLoading && isAuthenticated) {
-			if (user?.needsOnboarding) {
-				navigate({ to: "/onboarding" });
-			} else {
-				navigate({ to: "/dashboard" });
-			}
+		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
+			navigate({ to: "/onboarding" });
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
+	if (authLoading) return <LoadingState />;
+	if (isAuthenticated) return <HomeView />;
+	return <LandingPage />;
+}
+
+function LandingPage() {
 	const backdropUrl = useMemo(
 		() => HERO_BACKDROPS[Math.floor(Math.random() * HERO_BACKDROPS.length)],
 		[],
 	);
-
-	if (authLoading || isAuthenticated) {
-		return <LoadingState />;
-	}
 
 	return (
 		<div className="min-h-screen">
@@ -133,6 +141,13 @@ function LandingPage() {
 								<ArrowRight className="size-5" />
 							</Link>
 						</div>
+
+						{/* Mobile App. The MobileAppBanner deliberately skips `/`, so
+						    this is the only ask a phone visitor sees here. */}
+						<p className="mt-10 mb-4 text-sm text-white/60">
+							Also on iPhone and Android
+						</p>
+						<StoreBadges />
 					</div>
 				</div>
 			</section>
@@ -177,6 +192,44 @@ function LandingPage() {
 					</section>
 				);
 			})}
+
+			{/* Mobile App. Led by the Home-Screen Widget because it is the one
+			    thing the Web App cannot do, which is the only honest argument
+			    for installing. */}
+			<section className="border-(--border) border-t py-20 lg:py-28">
+				<div className="container-app">
+					<div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-20">
+						<div className="flex-1">
+							<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
+								<Smartphone className="h-6 w-6" />
+							</div>
+							<h2 className="mb-4 text-display-2">On your home screen</h2>
+							<p className="mb-8 max-w-md text-(--foreground-muted) text-lg leading-relaxed">
+								Put your watching year on your home screen. The widget shows
+								your last 30 days and your total, and opens your profile in a
+								tap.
+							</p>
+							<StoreBadges className="justify-start" />
+						</div>
+
+						<div className="w-full flex-1">
+							<img
+								src="/screenshots/widget-android.png"
+								alt="The Opnshelf home-screen widget, showing a bar graph of the last 30 days of watches and a total count"
+								width={946}
+								height={512}
+								className="w-full shadow-xl"
+								/* The crop is the widget's exact bounds, so the launcher
+								   wallpaper survives in its rounded corners. Clipping at the
+								   widget's own radius removes it. Measured: 42px clears every
+								   wallpaper pixel, so 48px (5.07% by 9.38% of 946x512) has
+								   margin. Percentages, so it holds at any render width. */
+								style={{ borderRadius: "5.07% / 9.38%" }}
+							/>
+						</div>
+					</div>
+				</div>
+			</section>
 
 			{/* Extra features row (compact) */}
 			<section className="border-(--border) border-t py-20">

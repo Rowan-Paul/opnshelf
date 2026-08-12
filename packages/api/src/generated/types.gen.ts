@@ -799,6 +799,14 @@ export type UserSettingsDto = {
     reviewsMirrorFormat: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
     blogIntegrationEnabled: boolean;
     blueskyCrossPostEnabled: boolean;
+    /**
+     * Welcome Tour version the Web App has finished; 0 means it has never run
+     */
+    welcomeTourWebVersion: number;
+    /**
+     * Welcome Tour version the Mobile App has finished; 0 means it has never run
+     */
+    welcomeTourMobileVersion: number;
 };
 
 export type UpdateUserSettingsDto = {
@@ -826,6 +834,14 @@ export type UpdateUserSettingsDto = {
      * Explicit reader format for blog mirrors. Markdown is the portable default.
      */
     reviewsMirrorFormat?: 'markdown' | 'leaflet' | 'offprint' | 'pckt';
+    /**
+     * Welcome Tour version the Web App has finished. Send the client's current version on finish or skip, or 0 to replay it.
+     */
+    welcomeTourWebVersion?: number;
+    /**
+     * Welcome Tour version the Mobile App has finished. Send the client's current version on finish or skip, or 0 to replay it.
+     */
+    welcomeTourMobileVersion?: number;
 };
 
 export type UpdateUserProfileDto = {
@@ -1404,9 +1420,13 @@ export type UserReviewDto = {
     seasonNumber?: number;
     episodeNumber?: number;
     /**
-     * Title of the movie or show
+     * Human-readable label for the media. Composite for a season or episode, e.g. "Breaking Bad — S1E1: Pilot". Display only — never build a URL from it.
      */
-    title?: string;
+    mediaLabel?: string;
+    /**
+     * Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).
+     */
+    mediaTitle?: string;
     /**
      * Poster path for the movie or show
      */
@@ -1441,7 +1461,7 @@ export type MediaReviewItemDto = {
      * AT record key of the review
      */
     rkey: string;
-    title: string;
+    reviewTitle: string;
     /**
      * Review body as markdown source
      */
@@ -1508,7 +1528,7 @@ export type CanonicalReviewResponseDto = {
      * AT record key of the review
      */
     rkey: string;
-    title: string;
+    reviewTitle: string;
     /**
      * Review body as markdown source
      */
@@ -1526,9 +1546,13 @@ export type CanonicalReviewResponseDto = {
     seasonNumber?: number;
     episodeNumber?: number;
     /**
-     * Title of the underlying media item
+     * Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).
      */
     mediaTitle?: string;
+    /**
+     * Human-readable label for the media, composite for a season or episode. Display only — never build a URL from it.
+     */
+    mediaLabel?: string;
     /**
      * Poster path of the underlying media item (the review cover)
      */
@@ -1568,7 +1592,7 @@ export type MyPublicationsResponseDto = {
 export type ReviewResponseDto = {
     id: string;
     rkey: string;
-    title: string;
+    reviewTitle: string;
     /**
      * Review body as markdown source
      */
@@ -1647,7 +1671,7 @@ export type BlueskyCrossPostResultDto = {
 export type CreateReviewResponseDto = {
     id: string;
     rkey: string;
-    title: string;
+    reviewTitle: string;
     /**
      * Review body as markdown source
      */
@@ -1895,9 +1919,13 @@ export type UserNoteDto = {
     seasonNumber?: number;
     episodeNumber?: number;
     /**
-     * Title of the movie or show
+     * Human-readable label for the media. Display only — never build a URL from it.
      */
-    title?: string;
+    mediaLabel?: string;
+    /**
+     * Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).
+     */
+    mediaTitle?: string;
     /**
      * Poster path for the movie or show
      */

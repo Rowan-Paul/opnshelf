@@ -127,8 +127,17 @@ export class UserNoteDto {
 	@ApiPropertyOptional()
 	episodeNumber?: number;
 
-	@ApiPropertyOptional({ description: "Title of the movie or show" })
-	title?: string;
+	@ApiPropertyOptional({
+		description:
+			"Human-readable label for the media. Display only — never build a URL from it.",
+	})
+	mediaLabel?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).",
+	})
+	mediaTitle?: string;
 
 	@ApiPropertyOptional({ description: "Poster path for the movie or show" })
 	posterPath?: string;

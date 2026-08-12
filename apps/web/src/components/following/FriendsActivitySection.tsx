@@ -28,7 +28,7 @@ export function FriendsActivitySection({
 			<div className="mb-4 flex items-center justify-between">
 				<h2 className="text-display-3">Friend Activity</h2>
 				<Link
-					to="/following"
+					to="/activity"
 					className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
 				>
 					<Users className="size-4" />
@@ -67,7 +67,7 @@ export function FriendsActivitySection({
 					<p className="text-(--foreground-muted)">
 						Activity from people you follow will appear here.
 					</p>
-					<Link to="/following" className="btn btn-primary mt-4 inline-flex">
+					<Link to="/activity" className="btn btn-primary mt-4 inline-flex">
 						<Users className="mr-2 size-4" />
 						Find people to follow
 					</Link>

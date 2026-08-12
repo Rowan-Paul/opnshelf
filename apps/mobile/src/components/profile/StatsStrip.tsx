@@ -5,6 +5,7 @@ import { useState } from "react";
 import { type LayoutChangeEvent, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
+import { showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
 
 /** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
@@ -184,7 +185,7 @@ function NumberStat({ label, value }: { label: string; value: number }) {
 
 function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 	return (
-		<Link href={`/show/${show.showId}` as const} asChild>
+		<Link href={showHref(show.showId, show.title)} asChild>
 			<Pressable className="flex-row items-center gap-2">
 				<View className="h-14 w-10 overflow-hidden rounded">
 					<PosterImage

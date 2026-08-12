@@ -43,7 +43,7 @@ function ReviewCard({
 }: {
 	review: {
 		id: string;
-		title: string;
+		reviewTitle: string;
 		markdown: string;
 		spoiler: boolean;
 		reviewUrl?: string;
@@ -151,10 +151,10 @@ function ReviewCard({
 			onClick={openReview}
 			className="transition-colors hover:text-(--accent)"
 		>
-			{review.title}
+			{review.reviewTitle}
 		</a>
 	) : (
-		review.title
+		review.reviewTitle
 	);
 
 	return (
@@ -229,7 +229,7 @@ function ReviewCard({
 							href={review.reviewUrl}
 							onClick={openReview}
 							className="shrink-0"
-							aria-label={`Open review: ${review.title}`}
+							aria-label={`Open review: ${review.reviewTitle}`}
 						>
 							<img
 								src={cover}
@@ -309,7 +309,7 @@ function ReviewCard({
 						episodeNumber={episodeNumber}
 						review={{
 							id: review.id,
-							title: review.title,
+							title: review.reviewTitle,
 							markdown: review.markdown,
 							mirrorToBlog: review.mirrorToBlog,
 							spoiler: review.spoiler,
@@ -323,8 +323,8 @@ function ReviewCard({
 						description={
 							<>
 								This permanently deletes your review{" "}
-								<strong>{review.title}</strong> from your shelf. This action
-								cannot be undone.
+								<strong>{review.reviewTitle}</strong> from your shelf. This
+								action cannot be undone.
 							</>
 						}
 						confirmLabel="Delete review"

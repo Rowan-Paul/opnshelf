@@ -419,7 +419,9 @@ function SearchPage() {
 	return (
 		<div className="container-app py-8">
 			<div className="mx-auto mb-8 max-w-2xl">
-				<h1 className="mb-4 text-center text-display-2">Search</h1>
+				<h1 className="mb-4 text-center text-display-2" data-tour="discover">
+					Search
+				</h1>
 				<div className="relative">
 					<Search className="absolute top-1/2 left-4 size-5 -translate-y-1/2 text-(--foreground-muted)" />
 					<input

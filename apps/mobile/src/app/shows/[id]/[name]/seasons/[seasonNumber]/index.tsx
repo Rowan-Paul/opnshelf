@@ -39,8 +39,11 @@ import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function SeasonDetailScreen() {
-	const { id, seasonNumber, reviewId } = useLocalSearchParams<{
+	const { id, name, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
+		// The slug segment. Carried through sibling links so in-app navigation
+		// produces the same URLs the Web App does (ADR 0023).
+		name: string;
 		seasonNumber: string;
 		reviewId?: string;
 	}>();
@@ -95,7 +98,7 @@ export default function SeasonDetailScreen() {
 			: undefined;
 	const goToSeason = (season: number) => {
 		// Replace rather than push so paging between seasons doesn't stack history.
-		router.replace(`/show/${id}/season/${season}` as const);
+		router.replace(`/shows/${id}/${name}/seasons/${season}` as const);
 	};
 
 	return (
@@ -133,14 +136,14 @@ export default function SeasonDetailScreen() {
 						title={data.name}
 						backdropUrl={backdropUrl(showData?.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
-						posterHref={`/show/${id}`}
+						posterHref={`/shows/${id}/${name}`}
 						rating={data.vote_average}
 					>
 						<View className="gap-3">
 							<View className="flex-row flex-wrap items-center gap-x-1">
 								{showData?.name ? (
 									<>
-										<Link href={`/show/${id}`} asChild>
+										<Link href={`/shows/${id}/${name}`} asChild>
 											<Pressable>
 												<Text className="font-medium text-primary text-xs">
 													{showData.name}
@@ -266,6 +269,7 @@ export default function SeasonDetailScreen() {
 									upNext={ep.episode_number === upNextEpisodeNumber}
 									episode={{
 										showId,
+										showSlug: name,
 										seasonNumber: ep.season_number,
 										episodeNumber: ep.episode_number,
 										name: ep.name,

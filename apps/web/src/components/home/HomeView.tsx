@@ -5,12 +5,15 @@ import {
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, ChevronRight, Clock, Film, Loader2, Tv } from "lucide-react";
 import { useEffect } from "react";
 import { AtStoreReviewPrompt } from "#/components/atstore/AtStoreReviewPrompt";
+import DashboardMediaCard from "#/components/DashboardMediaCard";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
+import { MobileAppPrompt } from "#/components/MobileAppPrompt";
+import { PromptSlot } from "#/components/PromptSlot";
 import { StatsStrip } from "#/components/StatsStrip";
 import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
@@ -18,13 +21,6 @@ import { withUserLocale } from "#/lib/date-utils";
 import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "#/lib/url-utils";
-import DashboardMediaCard from "../components/DashboardMediaCard";
-export const Route = createFileRoute("/dashboard")({
-	head: () => ({
-		meta: [{ title: "Home | Opnshelf" }],
-	}),
-	component: Dashboard,
-});
 
 // Helper function to format relative time
 function formatRelativeDate(dateStr: string): string {
@@ -106,7 +102,7 @@ function formatWatchedDate(
 	return `${formattedDate} at ${timeString}`;
 }
 
-function Dashboard() {
+export function HomeView() {
 	const {
 		user,
 		userSettings,
@@ -292,13 +288,13 @@ function Dashboard() {
 				/>
 			</div>
 
-			<div className="mb-8">
+			{/* Priority order, highest first: Trakt blocks the user's own data, the
+			    Mobile App is new to them, AT Store is a favour to us. */}
+			<PromptSlot>
 				<TraktHomePrompt />
-			</div>
-
-			<div className="mb-8">
+				<MobileAppPrompt />
 				<AtStoreReviewPrompt />
-			</div>
+			</PromptSlot>
 
 			<div className="grid gap-8 lg:grid-cols-3">
 				{/* Main Content - Continue Watching */}
@@ -306,7 +302,9 @@ function Dashboard() {
 					{/* Up Next - Shows the next episodes to watch */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Up Next</h2>
+							<h2 className="text-display-3" data-tour="up-next">
+								Up Next
+							</h2>
 							{user && (
 								<Link
 									to="/profile/$handle/up-next"
@@ -371,7 +369,9 @@ function Dashboard() {
 					{/* Continue Watching */}
 					<section>
 						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3">Your Shelf</h2>
+							<h2 className="text-display-3" data-tour="shelf">
+								Your Shelf
+							</h2>
 							{user && (
 								<Link
 									to="/profile/$handle/shelf"

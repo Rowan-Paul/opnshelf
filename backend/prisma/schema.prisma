@@ -30,6 +30,11 @@ model User {
   // before the PDS write so retries use the same record key.
   atStoreReviewHandledAt  DateTime?
   atStoreReviewRkey       String?
+  // Welcome Tour seen-state, one version per client (ADR 0024). A value below
+  // that client's current tour version replays its whole tour; the two clients
+  // are separate because only the mobile tour carries the gestures.
+  welcomeTourWebVersion    Int             @default(0)
+  welcomeTourMobileVersion Int             @default(0)
   emailVerifiedAt         DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with

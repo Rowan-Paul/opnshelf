@@ -305,7 +305,7 @@ export function SearchCommand({
 					key: "dashboard",
 					label: "Dashboard",
 					Icon: Home,
-					run: () => goTo("/dashboard"),
+					run: () => goTo("/"),
 				},
 				{
 					key: "calendar",
@@ -317,7 +317,7 @@ export function SearchCommand({
 					key: "following",
 					label: "Following",
 					Icon: Users,
-					run: () => goTo("/following"),
+					run: () => goTo("/activity"),
 				},
 				...(currentUserHandle
 					? [
@@ -415,6 +415,7 @@ export function SearchCommand({
 				onClick={() => handleOpenChange(true)}
 				className="group flex h-9 items-center gap-2 rounded-md border border-(--border) bg-(--background-elevated) px-3 text-(--foreground-muted) transition-colors hover:border-(--border-strong) hover:bg-(--background-subtle) hover:text-(--foreground)"
 				aria-label="Search"
+				data-tour="command"
 			>
 				<Search className="size-4" />
 				<span className="hidden text-sm sm:inline">Search</span>
@@ -696,10 +697,7 @@ export function SearchCommand({
 					{/* Navigation — only when not searching and authenticated */}
 					{!hasSearchQuery && isAuthenticated && (
 						<CommandGroup heading="Navigation">
-							<CommandItem
-								value="dashboard"
-								onSelect={() => goTo("/dashboard")}
-							>
+							<CommandItem value="dashboard" onSelect={() => goTo("/")}>
 								<Home />
 								<span>Dashboard</span>
 							</CommandItem>
@@ -707,10 +705,7 @@ export function SearchCommand({
 								<Calendar />
 								<span>Calendar</span>
 							</CommandItem>
-							<CommandItem
-								value="following"
-								onSelect={() => goTo("/following")}
-							>
+							<CommandItem value="following" onSelect={() => goTo("/activity")}>
 								<Users />
 								<span>Following</span>
 							</CommandItem>

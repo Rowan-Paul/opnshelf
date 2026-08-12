@@ -10,6 +10,10 @@ import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
 import { StatsStrip } from "@/components/profile/StatsStrip";
+import {
+	registerTourScroller,
+	setTourScrollOffset,
+} from "@/components/tour/WelcomeTour";
 import { TraktHomePrompt } from "@/components/trakt/TraktHomePrompt";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
@@ -51,6 +55,13 @@ export default function HomeScreen() {
 	return (
 		<View className="flex-1 bg-background">
 			<ScrollView
+				// Handed to the Welcome Tour so it can scroll its own target into
+				// view: the Up Next and Shelf steps point below the fold.
+				ref={registerTourScroller}
+				onScroll={(event) =>
+					setTourScrollOffset(event.nativeEvent.contentOffset.y)
+				}
+				scrollEventThrottle={64}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{
 					// + 12 = the pt-3 the other tabs give their title row.

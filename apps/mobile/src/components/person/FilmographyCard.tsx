@@ -4,6 +4,7 @@ import { Check, Plus } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
+import { movieHref, showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
 
 /** Best human-readable role label for a (possibly merged) filmography credit. */
@@ -46,8 +47,8 @@ export function FilmographyCard({
 }) {
 	const isMovie = item.media_type === "movie";
 	const href = isMovie
-		? (`/movie/${item.id}` as const)
-		: (`/show/${item.id}` as const);
+		? movieHref(item.id, item.title)
+		: showHref(item.id, item.title);
 	const role = getRoleText(item);
 	const year = getYear(item);
 	const showToggle = isMovie && canToggle;

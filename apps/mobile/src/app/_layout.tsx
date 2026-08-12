@@ -20,6 +20,7 @@ import { useEffect, useRef } from "react";
 import { AccountDeletionGate } from "@/components/AccountDeletionGate";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
+import { WelcomeTour } from "@/components/tour/WelcomeTour";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { posthog } from "@/lib/posthog";
@@ -130,13 +131,16 @@ export default function RootLayout() {
 					name="profile/[handle]/connections"
 					options={{ headerShown: true }}
 				/>
-				<Stack.Screen name="movie/[id]" />
-				<Stack.Screen name="person/[id]" />
-				<Stack.Screen name="show/[id]/index" />
-				<Stack.Screen name="show/[id]/season/[seasonNumber]/index" />
-				<Stack.Screen name="show/[id]/season/[seasonNumber]/episode/[episodeNumber]/index" />
+				<Stack.Screen name="movies/[id]/[name]/index" />
+				<Stack.Screen name="people/[id]/[name]" />
+				<Stack.Screen name="shows/[id]/[name]/index" />
+				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/index" />
+				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
 			</Stack>
 			<AccountDeletionGate />
+			{/* Above the tabs: the tour walks the user across them and has to
+			    survive each navigation (ADR 0024). */}
+			<WelcomeTour />
 			<ThemedStatusBar />
 		</Providers>
 	);

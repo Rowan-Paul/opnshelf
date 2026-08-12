@@ -1,8 +1,8 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
+import { slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import StarRating from "#/components/StarRating";
-import { toSlug } from "#/lib/slug";
 import { UserAvatar } from "./UserAvatar";
 
 interface MiniActivityCardProps {
@@ -26,7 +26,7 @@ export function MiniActivityCard({
 				{/* Header */}
 				<p className="text-sm">
 					<Link
-						to={"/following" as const}
+						to={"/activity" as const}
 						className="font-semibold hover:text-(--accent)"
 					>
 						{String(activity.actor.displayName) || activity.actor.handle}
@@ -47,7 +47,7 @@ export function MiniActivityCard({
 							}
 							params={{
 								movieId: String(activity.movieId),
-								movieName: toSlug(activity.title || ""),
+								movieName: slugifyName(activity.title || ""),
 							}}
 							className="font-medium hover:text-(--accent)"
 						>
@@ -61,7 +61,7 @@ export function MiniActivityCard({
 							}
 							params={{
 								showId: String(activity.showId),
-								showName: toSlug(activity.showTitle || ""),
+								showName: slugifyName(activity.showTitle || ""),
 							}}
 							className="font-medium hover:text-(--accent)"
 						>
@@ -79,7 +79,7 @@ export function MiniActivityCard({
 							to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 							params={{
 								showId: String(activity.showId),
-								showName: toSlug(activity.showTitle || ""),
+								showName: slugifyName(activity.showTitle || ""),
 								seasonNumber: String(activity.seasonNumber || 0),
 								episodeNumber: String(activity.episodeNumber || 0),
 							}}

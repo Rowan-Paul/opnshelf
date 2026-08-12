@@ -1,4 +1,7 @@
-import { reviewsControllerGetCanonicalReviewOptions } from "@opnshelf/api";
+import {
+	reviewsControllerGetCanonicalReviewOptions,
+	slugifyName,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { CalendarDays, ExternalLink, Loader2 } from "lucide-react";
@@ -13,7 +16,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { toSlug } from "#/lib/slug";
 
 function parseReviewUrl(reviewUrl: string | null) {
 	if (!reviewUrl) return null;
@@ -36,7 +38,7 @@ function mediaHref(review: {
 	episodeNumber?: number;
 	mediaTitle?: string | null;
 }) {
-	const slug = toSlug(review.mediaTitle?.split(" — ")[0] ?? "");
+	const slug = slugifyName(review.mediaTitle?.split(" — ")[0] ?? "");
 	switch (review.mediaType) {
 		case "movie":
 			return `/movies/${review.mediaId}/${slug}`;
@@ -101,7 +103,7 @@ export function ReviewReaderDialog({
 								Review of {review.mediaTitle ?? "this title"}
 							</p>
 							<DialogTitle className="mt-2 font-display text-2xl leading-tight sm:text-3xl">
-								{review.title}
+								{review.reviewTitle}
 							</DialogTitle>
 						</div>
 

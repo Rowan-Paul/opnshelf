@@ -1,6 +1,7 @@
 import {
 	notesControllerGetUserNotesOptions,
 	notesControllerGetUserNotesQueryKey,
+	slugifyName,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
-import { toSlug } from "#/lib/slug";
 export const Route = createFileRoute("/profile/$handle/notes")({
 	loader: async ({ context, params }) => {
 		try {
@@ -44,7 +44,7 @@ function getNoteLink(note: {
 	episodeNumber?: number;
 	title?: string;
 }) {
-	const nameSlug = toSlug(note.title || "");
+	const nameSlug = slugifyName(note.title || "");
 	if (note.mediaType === "movie") {
 		return {
 			to: "/movies/$movieId/$movieName" as const,

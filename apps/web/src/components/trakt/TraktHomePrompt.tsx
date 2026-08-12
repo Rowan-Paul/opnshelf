@@ -6,6 +6,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Film, TimerReset } from "lucide-react";
+import { startPromptCooldown } from "#/lib/prompt-state";
 
 export function TraktHomePrompt() {
 	const queryClient = useQueryClient();
@@ -15,10 +16,12 @@ export function TraktHomePrompt() {
 	const snooze = useMutation({
 		mutationKey: ["trakt", "import", "reminder", "snooze"],
 		...usersControllerSnoozeMyTraktReminderMutation(),
-		onSuccess: () =>
+		onSuccess: () => {
+			startPromptCooldown();
 			queryClient.invalidateQueries({
 				queryKey: usersControllerGetMyCurrentTraktImportQueryKey(),
-			}),
+			});
+		},
 	});
 	if (!job || !job.acknowledgedAt) return null;
 	if (

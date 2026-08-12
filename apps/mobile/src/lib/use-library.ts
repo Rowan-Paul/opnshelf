@@ -107,6 +107,7 @@ export function useLibraryOwnership(target: LibraryTarget) {
 				media_type: resolvedMediaType,
 				format: variables.body.format,
 			});
+			toast.success(`Added ${FORMAT_LABELS[variables.body.format]} to library`);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to add to library")),
@@ -122,6 +123,9 @@ export function useLibraryOwnership(target: LibraryTarget) {
 				media_type: resolvedMediaType,
 				format: variables.path.format,
 			});
+			toast.success(
+				`Removed ${FORMAT_LABELS[variables.path.format as LibraryFormat]} from library`,
+			);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to remove from library")),

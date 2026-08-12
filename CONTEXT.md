@@ -13,7 +13,7 @@ A user's long-form textual piece about a media item, stored as an opnshelf-contr
 _Avoid_: Rating (the numeric score is a separate entity)
 
 **AT Store Review**:
-A user's 1–5 star assessment of OpnShelf for the AT Store directory, optionally accompanied by text. It evaluates the app rather than a **Media Item** and is therefore distinct from both a **Review** and a **Rating**.
+A user's 1–5 star assessment of Opnshelf for the AT Store directory, optionally accompanied by text. It evaluates Opnshelf as a whole rather than a **Media Item**, and is therefore distinct from both a **Review** and a **Rating**.
 _Avoid_: Review (reserved for long-form writing about a Media Item), Rating (reserved for a Media Item score)
 
 **Spoiler Flag**:
@@ -65,8 +65,16 @@ _Avoid_: View, log entry (a watchlist add is a separate, un-watched state)
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile.
-_Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup)
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
+_Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
+
+**Welcome Tour**:
+The one-shot orientation that runs after **Onboarding** by walking the user through the real app: **Discover**, **Connections**, **Activity**, **Up Next** and **Shelf**, plus a client-specific tail — long-press quick actions and shake-to-feedback on the **Mobile App**, the ⌘K palette and its feedback dialog on the **Web App**. The orientation steps are the same on both clients because the routes and names already are; only the tail differs. Authed-only. Seen-state is an int version per client, stored on the User, so bumping a version replays that client's whole tour and it never replays on reinstall. Skip is on every step and counts as completed, and a Settings entry re-runs it. See ADR 0024.
+_Avoid_: Onboarding (that's the account-setup wizard that precedes it), tutorial, walkthrough, product tour, coach marks
+
+**Tour Step**:
+One stop on the **Welcome Tour**: navigate to a surface, then explain one thing there. A Step anchors to a structurally stable element — a page header, a tab entry, a section header — never to content, so it behaves the same on an empty account as on a full one. A Step with nothing to anchor to (shake, which is a gesture rather than a control) shows its card unanchored, as does a Step whose target has not appeared before its timeout.
+_Avoid_: Spotlight (the dimmed cutout is one part of a Step, and bare "Spotlight" collides with **Discover** and with the macOS feature), coach mark, tooltip (that's the Radix hover component), slide, page
 
 **Trakt Import**:
 The single optional transfer of a fixed snapshot of a User's public Trakt watch history into opnshelf **Watches**. The snapshot is taken when the User starts the Import; Watches added to Trakt afterward are outside it. A User may start only one Trakt Import; automatic retries, recovery from an error, and resuming after the User **Pauses** it all continue that same Import from its saved position rather than starting over. Every source item has one of four outcomes: **Imported**, **Already on your Shelf**, **Unmatched**, or **Couldn't import**. An Unmatched item is a valid Trakt Watch without an authoritative TMDB mapping; the User may explicitly match its Trakt media identity to a suggested or searched TMDB **Media Item**, applying that choice to all grouped watch dates. The resulting Watches belong to the chosen Media Item, so any Trakt-only edition distinction is intentionally lost. Item-level issues are an expected outcome. **Completed with issues** means the entire available history was examined but one or more items remain Unmatched or couldn't be imported; **Import stopped** means an error ended processing before the entire history was examined. A User-paused Import is **Paused**, not stopped. The Import and its item outcomes remain available until the User deletes their account.
@@ -103,6 +111,14 @@ _Avoid_: Session (the entity a User manages is the Device), Connected device (co
 The personal landing surface (dashboard): your shelf summary, up-next, and a short preview of the **Activity Feed**. One name across web and mobile — the web route was historically `/dashboard`.
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
+**Prompt**:
+A dismissible card in the reserved slot on **Home** that asks for one optional action and renders nothing when it does not apply. Today there are two: resume a stalled **Trakt Import**, and leave an **AT Store Review**. At most one shows at a time, and dismissing any of them silences the slot for a few days.
+_Avoid_: CTA (names a button, and every button on the site is one), Banner (that is the site-wide strip), notification, nag
+
+**Banner**:
+The slim full-width strip directly below the header, carrying one site-wide message on every page. Today there is one: **Trakt Import** progress. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
+_Avoid_: Prompt (that is the Home card), toast, notification, alert
+
 **Home-Screen Widget**:
 A home-screen widget on Android and iOS, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
@@ -136,6 +152,18 @@ _Avoid_: Category (overloaded), Edition
 
 **Box Set**:
 A named grouping of Library Items within a user's Library (e.g. "The Lord of the Rings Trilogy"). A subdivision of the Library, not of a List.
+
+**Mobile App**:
+The iOS and Android native clients — one product on two platforms, installed from a **Store Listing**. Distinct from the **Web App**, which needs no install. "The app" bare is banned: it collides with Opnshelf the product (see **AT Store Review**) and with the Web App.
+_Avoid_: The app (bare), native app, phone app (it runs on tablets too)
+
+**Web App**:
+The browser client at `opnshelf.xyz`. Reaches every platform without an install, and is the only client a signed-out visitor can use.
+_Avoid_: The app (bare), the site, the website, desktop app (it runs on phones too)
+
+**Store Listing**:
+The public App Store or Google Play page for the **Mobile App**, and the destination of every download link on the **Web App**. A visitor may leave a star rating there; that belongs to Apple or Google and is not a **Review**, a **Rating**, or an **AT Store Review**.
+_Avoid_: App page, download page (that would be a Web App route, not the store's)
 
 **Staging**:
 The deployed environment that runs unreleased code, at `staging.opnshelf.xyz` with its API at `api.staging.opnshelf.xyz`. A Railway environment in the `opnshelf` project, deployed from the `develop` branch, with its own Postgres and its own Tab instance. It shares the production PDS, so its writes are real public records (see ADR 0021).
@@ -173,5 +201,7 @@ The separate opnshelf account used only on **Staging**, kept apart from the prod
 
 - **"Review" vs "Rating"**: These are two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (an `xyz.opnshelf.review` record) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
 - **`TAB_URL` on Staging**: Must point at Staging's own Tab, never production's. Tab channels carry no consumer id and share one cursor, so a Staging backend on production's Tab acks events production never receives, and those records vanish from the production index with no error. See ADR 0021.
+
+- **Welcome Tour vs Prompt**: Both interrupt on **Home**, and their state rules are opposites on purpose. A **Prompt** is dismissed per device (localStorage, with a cooldown) because a device-scoped ask must not follow you to another screen. A **Welcome Tour** is stamped on the User, so it does not replay on reinstall or after a browser-storage clear. Do not reuse the prompt-slot machinery for the tour.
 
 - **"Top reviews"**: Reviews do not carry a rating, so the old `likeCount DESC, rating DESC, createdAt DESC` tiebreak does not apply as-is. A Review's tiebreak rating, if used, comes from the author's separate Rating for the same media (a join), not from the Review itself.

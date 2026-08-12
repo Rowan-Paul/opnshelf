@@ -24,6 +24,9 @@ interface ReviewTarget {
 	mediaId: string;
 	seasonNumber?: number;
 	episodeNumber?: number;
+	/** Defaults to true. See the note on NoteTarget.enabled: a poster grid mounts
+	 *  one of these per card and trips the API's rate limit. */
+	enabled?: boolean;
 }
 
 function resolveMediaType(
@@ -89,7 +92,11 @@ export function useReview(target: ReviewTarget) {
 		},
 	});
 
-	const enabled = isAuthenticated && !!userDid && !!target.mediaId;
+	const enabled =
+		isAuthenticated &&
+		!!userDid &&
+		!!target.mediaId &&
+		target.enabled !== false;
 
 	const ratingQuery = useQuery({
 		...ratingsControllerGetRatingOptions({
@@ -113,7 +120,7 @@ export function useReview(target: ReviewTarget) {
 				episodeNumber: target.episodeNumber,
 			},
 		}),
-		enabled: isAuthenticated && !!target.mediaId,
+		enabled: isAuthenticated && !!target.mediaId && target.enabled !== false,
 	});
 
 	const ratingRecord = ratingQuery.data ?? null;

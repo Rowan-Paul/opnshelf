@@ -70,7 +70,9 @@ function ActivityPage() {
 	return (
 		<div className="container-app py-8">
 			<div className="mb-6">
-				<h1 className="font-bold font-display text-3xl">Activity</h1>
+				<h1 className="font-bold font-display text-3xl" data-tour="activity">
+					Activity
+				</h1>
 				<p className="text-(--foreground-muted)">
 					Recent watches and reviews from people you follow
 				</p>

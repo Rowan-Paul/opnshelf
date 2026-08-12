@@ -11,6 +11,7 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { PosterRowSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { personHref } from "@/lib/media-href";
 import { profileUrl } from "@/lib/tmdb";
 
 type CreditPerson = {
@@ -23,7 +24,7 @@ type CreditPerson = {
 function CreditCard({ person }: { person: CreditPerson }) {
 	const url = profileUrl(person.profile_path);
 	return (
-		<Link href={`/person/${person.id}` as const} asChild>
+		<Link href={personHref(person.id, person.name)} asChild>
 			<Pressable className="w-20">
 				<View className="aspect-2/3 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-background-subtle">
 					{url ? (

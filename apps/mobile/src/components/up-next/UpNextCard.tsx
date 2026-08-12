@@ -4,6 +4,7 @@ import { Calendar, Plus } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
+import { showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
@@ -45,9 +46,12 @@ export function UpNextCard({
 
 	return (
 		<Link
-			href={
-				`/show/${show.showId}/season/${ep.seasonNumber}/episode/${ep.episodeNumber}` as const
-			}
+			href={showHref(
+				show.showId,
+				show.title,
+				ep.seasonNumber,
+				ep.episodeNumber,
+			)}
 			asChild
 		>
 			<Pressable className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
