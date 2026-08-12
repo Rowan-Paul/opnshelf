@@ -220,14 +220,11 @@ export function WelcomeTour() {
 	const isLast = index === TOUR_STEPS.length - 1;
 	const window = Dimensions.get("window");
 	const height = frame?.height || window.height;
-	const hole = rect
-		? {
-				top: rect.y - (frame?.y ?? 0) - HOLE_PAD,
-				left: rect.x - (frame?.x ?? 0) - HOLE_PAD,
-				width: rect.width + HOLE_PAD * 2,
-				height: rect.height + HOLE_PAD * 2,
-			}
-		: null;
+	const width = frame?.width || window.width;
+	// Clamped to the overlay: a page header is full width, so the padding would
+	// otherwise push both sides past the screen and clip the border lines and
+	// corners off. Clamped, the ring hugs the edge and still reads as closed.
+	const hole = rect ? clampToBox(rect, frame, width, height) : null;
 
 	// Card below the hole when it fits, above it when it does not, and centred
 	// when the step has nothing to point at.
@@ -338,6 +335,28 @@ export function WelcomeTour() {
 			</View>
 		</View>
 	);
+}
+
+/**
+ * The padded hole around an anchor, in overlay coordinates, with every edge kept
+ * inside the overlay.
+ */
+function clampToBox(
+	rect: AnchorRect,
+	frame: AnchorRect | null,
+	width: number,
+	height: number,
+) {
+	const rawTop = rect.y - (frame?.y ?? 0) - HOLE_PAD;
+	const rawLeft = rect.x - (frame?.x ?? 0) - HOLE_PAD;
+	const top = Math.max(0, rawTop);
+	const left = Math.max(0, rawLeft);
+	return {
+		top,
+		left,
+		width: Math.min(width, rawLeft + rect.width + HOLE_PAD * 2) - left,
+		height: Math.min(height, rawTop + rect.height + HOLE_PAD * 2) - top,
+	};
 }
 
 /** One dim panel. Swallows the touches that land on it. */
