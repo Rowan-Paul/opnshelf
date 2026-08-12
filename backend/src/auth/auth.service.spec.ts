@@ -764,6 +764,58 @@ describe("AuthService", () => {
 			expect(result).toEqual({ user: mockUser, isNewUser: true });
 			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
 		});
+
+		it("should recover when the Postgres adapter nests the constraint fields", async () => {
+			const profile = {
+				did: "did:plc:new123",
+				handle: "user.bsky.social",
+				displayName: "New User",
+				avatar: null,
+			};
+			const mockUser = {
+				...profile,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			const handleConflictError = {
+				code: "P2002",
+				meta: {
+					driverAdapterError: {
+						cause: {
+							kind: "UniqueConstraintViolation",
+							constraint: { fields: ["handle"] },
+						},
+					},
+				},
+			};
+
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: typeof mockPrismaService) => unknown) =>
+					fn(mockPrismaService),
+			);
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({
+					did: "did:plc:old123",
+					handle: profile.handle,
+					emailVerifiedAt: null,
+					isNativePds: false,
+					avatar: null,
+				});
+			mockPrismaService.user.upsert
+				.mockRejectedValueOnce(handleConflictError)
+				.mockResolvedValueOnce(mockUser);
+			mockPrismaService.user.update.mockResolvedValue({});
+
+			const result = await service.upsertUser(profile);
+
+			expect(result).toEqual({ user: mockUser, isNewUser: true });
+			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { did: "did:plc:old123" } }),
+			);
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
+		});
 	});
 
 	describe("parseOAuthAppState", () => {

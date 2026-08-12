@@ -1430,8 +1430,22 @@ export class AuthService implements OnModuleInit {
 		}
 		const constraintFields = (meta as { constraint?: { fields?: unknown } })
 			.constraint?.fields;
-		return Array.isArray(constraintFields)
-			? constraintFields.includes("handle")
+		if (Array.isArray(constraintFields)) {
+			return constraintFields.includes("handle");
+		}
+
+		// Prisma's JS driver adapters wrap the database cause one level deeper:
+		// meta.driverAdapterError.cause.constraint.fields. This is the production
+		// shape emitted by @prisma/adapter-pg for P2002 errors.
+		const adapterConstraintFields = (
+			meta as {
+				driverAdapterError?: {
+					cause?: { constraint?: { fields?: unknown } };
+				};
+			}
+		).driverAdapterError?.cause?.constraint?.fields;
+		return Array.isArray(adapterConstraintFields)
+			? adapterConstraintFields.includes("handle")
 			: false;
 	}
 
