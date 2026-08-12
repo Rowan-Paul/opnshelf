@@ -129,7 +129,9 @@ export function RatingDialog({
 						<button
 							type="button"
 							onClick={handleClear}
-							disabled={isPending}
+							// No id yet means the optimistic rating is still on screen and
+							// there is nothing to clear server-side.
+							disabled={isPending || !ratingRecord?.id}
 							className="btn btn-ghost btn-sm gap-1 text-(--foreground-muted)"
 						>
 							{clearRatingMutation.isPending ? (
