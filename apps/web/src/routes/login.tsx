@@ -7,6 +7,7 @@ import {
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
 import { env } from "#/env";
@@ -151,33 +152,34 @@ function LoginPage() {
 						<div className="h-px flex-1 bg-(--border)" />
 					</div>
 
-					<button
-						type="button"
-						onClick={handleSignup}
-						disabled={isLoading || isSignupLoading}
-						className="btn btn-secondary w-full"
-					>
-						{isSignupLoading ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Connecting...
-							</>
-						) : (
-							"Create New Account"
-						)}
-					</button>
-
-					{/* For anyone who signed up with Google and never learned their
-					    handle. The PDS sign-in page has the Google button. */}
-					<p className="mt-4 text-center text-(--foreground-muted) text-sm">
-						Signed up with Google?{" "}
+					<div className="space-y-3">
+						{/* Goes to our PDS's own sign-in page, which leads with its Google
+						    button. That is the route for anyone who signed up with Google
+						    and never learned their handle. */}
 						<a
 							href={`${env.VITE_API_URL}/auth/login/pds`}
-							className="text-(--accent) hover:underline"
+							className="btn btn-secondary w-full"
 						>
-							Sign in without your handle
+							<GoogleMark className="size-4" />
+							Sign in with Google
 						</a>
-					</p>
+
+						<button
+							type="button"
+							onClick={handleSignup}
+							disabled={isLoading || isSignupLoading}
+							className="btn btn-secondary w-full"
+						>
+							{isSignupLoading ? (
+								<>
+									<Loader2 className="size-4 animate-spin" />
+									Connecting...
+								</>
+							) : (
+								"Create New Account"
+							)}
+						</button>
+					</div>
 				</div>
 
 				{/* Info */}
