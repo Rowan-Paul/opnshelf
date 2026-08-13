@@ -479,9 +479,32 @@ export class AuthController {
 			return res.redirect(this.buildSignupErrorUrl("google_failed"));
 		}
 
+		let coreOAuthUrl: string | undefined;
 		try {
 			const idToken = await this.googleOAuth.exchangeCode(code);
-			const pending = await this.authService.startSsoRegistration(idToken);
+			// Create the Core OAuth request before account creation and bind the
+			// verified Google registration to it. Tranquil can then take the newly
+			// created account straight to consent without authenticating with Google
+			// a second time.
+			coreOAuthUrl = await this.authService.authorizeWithPds();
+			const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
+			if (!requestUri) {
+				throw new Error("PDS authorization URL omitted request_uri");
+			}
+			const pending = await this.authService.startSsoRegistration(
+				idToken,
+				requestUri,
+			);
+			if (pending.redirectUrl) {
+				// Returning account: the verified id_token authenticated it and the PDS
+				// already bound its DID to Core OAuth. No second Google round trip.
+				return res.redirect(pending.redirectUrl);
+			}
+			if (!pending.token) {
+				throw new Error(
+					"PDS returned neither a registration token nor redirect",
+				);
+			}
 
 			// The PDS only auto-verifies the email channel when Google says the
 			// address is verified. Without that the account would be created and
@@ -526,18 +549,13 @@ export class AuthController {
 				// unlinked Google account Tranquil turns a sign-in into its own
 				// registration, invite-code field and all (handle_sso_login in
 				// sso_endpoints.rs). Going through us first is what avoids that.
-				try {
-					return res.redirect(
-						await this.authService.authorizeWithPds(
-							undefined,
-							undefined,
-							"google",
-						),
-					);
-				} catch (authError) {
-					this.logger.error("Google sign-in handoff failed", authError);
+				if (!coreOAuthUrl) {
+					this.logger.error("Google sign-in handoff had no OAuth request");
 					return res.redirect(this.buildSignupErrorUrl("google_failed"));
 				}
+				const signInUrl = new URL(coreOAuthUrl);
+				signInUrl.searchParams.set("sso", "google");
+				return res.redirect(signInUrl.toString());
 			}
 			this.logger.error("Google signup callback failed", err);
 			return res.redirect(this.buildSignupErrorUrl("google_failed"));
@@ -618,15 +636,6 @@ export class AuthController {
 			throw this.mapCreateAccountError(error);
 		}
 
-		// Session tokens only come back when the PDS auto-verified the email. We
-		// don't use them (Core OAuth mints the real session), but their absence
-		// means the account is gated and the user is stuck, so say so loudly.
-		if (!account.accessJwt) {
-			this.logger.error(
-				`Google signup for ${account.did} did not auto-verify its email; the account is gated`,
-			);
-		}
-
 		res.clearCookie(GOOGLE_PENDING_COOKIE_NAME, { path: "/" });
 
 		await this.authService.upsertUser(
@@ -642,18 +651,20 @@ export class AuthController {
 			{ isNativePds: true, emailVerified: true },
 		);
 
-		// Straight to the PDS sign-in page (no `prompt=create`, the account exists).
-		// The user clicks Google once more there, and the OAuth callback registers
-		// the repo with Tab and seeds the profile and default lists.
-		const coreOAuthUrl = await this.authService.authorizeWithPds(
-			{ timezone: dto.timezone },
-			undefined,
-		);
+		// The pending registration is already bound to Core OAuth. Preserve the
+		// picker timezone through its callback and continue directly to consent.
+		if (dto.timezone) {
+			res.cookie(TIMEZONE_COOKIE_NAME, dto.timezone, {
+				httpOnly: true,
+				maxAge: 5 * 60 * 1000,
+				sameSite: "lax",
+			});
+		}
 
 		return {
 			did: account.did,
 			handle: account.handle,
-			coreOAuthUrl,
+			coreOAuthUrl: account.redirectUrl,
 		};
 	}
 

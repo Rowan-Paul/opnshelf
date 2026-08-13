@@ -1322,6 +1322,64 @@ describe("AuthService", () => {
 		});
 	});
 
+	describe("delegated Google SSO", () => {
+		it("binds the verified id_token to the prepared OAuth request", async () => {
+			const mockFetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					token: "pending-token",
+					email: "jane@example.com",
+					emailVerified: true,
+					providerUsername: "Jane",
+				}),
+			});
+			vi.stubGlobal("fetch", mockFetch);
+
+			const result = await service.startSsoRegistration(
+				"verified-id-token",
+				"urn:ietf:params:oauth:request_uri:abc",
+			);
+
+			expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+				provider: "google",
+				id_token: "verified-id-token",
+				request_uri: "urn:ietf:params:oauth:request_uri:abc",
+			});
+			expect(result).toEqual({
+				token: "pending-token",
+				email: "jane@example.com",
+				emailVerified: true,
+				providerUsername: "Jane",
+				redirectUrl: null,
+			});
+			vi.unstubAllGlobals();
+		});
+
+		it("resolves the PDS consent redirect returned after registration", async () => {
+			const mockFetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					did: "did:plc:jane",
+					handle: "jane.opnshelf.social",
+					redirectUrl:
+						"/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
+				}),
+			});
+			vi.stubGlobal("fetch", mockFetch);
+
+			const result = await service.completeSsoRegistration({
+				token: "pending-token",
+				handle: "jane.opnshelf.social",
+				inviteCode: "invite-code",
+			});
+
+			expect(result.redirectUrl).toBe(
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
+			);
+			vi.unstubAllGlobals();
+		});
+	});
+
 	describe("fetchProfile", () => {
 		it("should fetch the canonical handle from the repo and profile extras from appview", async () => {
 			const { Agent } = (await import("@atproto/api")) as unknown as {

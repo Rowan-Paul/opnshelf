@@ -1402,6 +1402,8 @@ describe("AuthController", () => {
 		const account = {
 			did: "did:plc:jane",
 			handle: "jane.opnshelf.xyz",
+			redirectUrl:
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
 			accessJwt: "a",
 			refreshJwt: "r",
 		};
@@ -1424,10 +1426,11 @@ describe("AuthController", () => {
 				email: "jane@gmail.com",
 				emailVerified: true,
 				providerUsername: "Jane Doe",
+				redirectUrl: null,
 			});
 			mockAuthService.completeSsoRegistration.mockResolvedValue(account);
 			mockAuthService.authorizeWithPds.mockResolvedValue(
-				"https://opnshelf.social/oauth/authorize",
+				"https://opnshelf.social/oauth/authorize?request_uri=urn%3Arequest",
 			);
 		});
 
@@ -1445,6 +1448,11 @@ describe("AuthController", () => {
 			const res = createMockResponse();
 
 			await controller.googleCallback("code", "st", undefined, req, res);
+
+			expect(mockAuthService.startSsoRegistration).toHaveBeenCalledWith(
+				"id-token",
+				"urn:request",
+			);
 
 			expect(res.cookie).toHaveBeenCalledWith(
 				"google_pending",
@@ -1474,6 +1482,7 @@ describe("AuthController", () => {
 				email: "jane@gmail.com",
 				emailVerified: false,
 				providerUsername: null,
+				redirectUrl: null,
 			});
 			const req = createMockRequest({ cookies: { google_state: "st" } });
 			const res = createMockResponse();
@@ -1486,23 +1495,21 @@ describe("AuthController", () => {
 		});
 
 		it("signs a returning Google user in instead of erroring", async () => {
-			mockAuthService.startSsoRegistration.mockRejectedValue({
-				error: "InvalidRequest",
-				message: "This account is already linked to an existing user.",
+			mockAuthService.startSsoRegistration.mockResolvedValue({
+				token: null,
+				email: "jane@gmail.com",
+				emailVerified: true,
+				providerUsername: "Jane Doe",
+				redirectUrl:
+					"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
 			});
 			const req = createMockRequest({ cookies: { google_state: "st" } });
 			const res = createMockResponse();
 
 			await controller.googleCallback("code", "st", undefined, req, res);
 
-			// Sign-in, not signup: no prompt=create, because the account exists.
-			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(
-				undefined,
-				undefined,
-				"google",
-			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"https://opnshelf.social/oauth/authorize",
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
 			);
 			// It must never park a pending registration for an account that exists.
 			expect(res.cookie).not.toHaveBeenCalledWith(
@@ -1538,16 +1545,16 @@ describe("AuthController", () => {
 				"Europe/Amsterdam",
 				{ isNativePds: true, emailVerified: true },
 			);
-			// Sign-in, not signup: the account already exists.
-			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(
-				expect.anything(),
-				undefined,
-			);
 			expect(result).toEqual({
 				did: account.did,
 				handle: account.handle,
-				coreOAuthUrl: "https://opnshelf.social/oauth/authorize",
+				coreOAuthUrl: account.redirectUrl,
 			});
+			expect(res.cookie).toHaveBeenCalledWith(
+				"auth_timezone",
+				"Europe/Amsterdam",
+				expect.objectContaining({ httpOnly: true }),
+			);
 		});
 
 		it("rejects with 400 when there is no pending Google signup", async () => {

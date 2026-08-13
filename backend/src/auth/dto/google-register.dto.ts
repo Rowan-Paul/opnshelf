@@ -21,7 +21,7 @@ export class GoogleRegisterResponseDto {
 
 	@ApiProperty({
 		description:
-			"Where to send the browser next: the PDS authorization page that grants opnshelf its scopes and triggers seeding",
+			"Where to send the browser next: the PDS consent page for the OAuth request bound to this registration",
 	})
 	coreOAuthUrl: string;
 }

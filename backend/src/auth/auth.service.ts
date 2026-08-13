@@ -732,26 +732,37 @@ export class AuthService implements OnModuleInit {
 	 * audience, issuer, expiry), so opnshelf can never assert an identity it
 	 * hasn't proven. The returned token is what `completeSsoRegistration` spends.
 	 */
-	async startSsoRegistration(idToken: string): Promise<{
-		token: string;
+	async startSsoRegistration(
+		idToken: string,
+		requestUri: string,
+	): Promise<{
+		token: string | null;
 		email: string | null;
 		emailVerified: boolean;
 		providerUsername: string | null;
+		redirectUrl: string | null;
 	}> {
 		const data = (await this.pdsSsoPost("register-token", {
 			provider: "google",
 			id_token: idToken,
+			request_uri: requestUri,
 		})) as {
-			token: string;
+			token?: string | null;
 			email?: string | null;
 			emailVerified?: boolean;
 			providerUsername?: string | null;
+			redirectUrl?: string | null;
 		};
+		const pdsUrl = this.configService.get<string>("PDS_URL");
 		return {
-			token: data.token,
+			token: data.token ?? null,
 			email: data.email ?? null,
 			emailVerified: data.emailVerified === true,
 			providerUsername: data.providerUsername ?? null,
+			redirectUrl:
+				data.redirectUrl && pdsUrl
+					? new URL(data.redirectUrl, pdsUrl).toString()
+					: null,
 		};
 	}
 
@@ -763,7 +774,8 @@ export class AuthService implements OnModuleInit {
 	 * (it compares character for character). Sending our own copy would risk a
 	 * mismatch that drops the user onto an emailed code Tranquil cannot send.
 	 *
-	 * `accessJwt`/`refreshJwt` come back only when that auto-verify succeeded.
+	 * A registration bound to Core OAuth returns its consent redirect. Legacy
+	 * standalone registrations may additionally return session JWTs.
 	 */
 	async completeSsoRegistration(params: {
 		token: string;
@@ -772,6 +784,7 @@ export class AuthService implements OnModuleInit {
 	}): Promise<{
 		did: string;
 		handle: string;
+		redirectUrl: string;
 		accessJwt: string | null;
 		refreshJwt: string | null;
 	}> {
@@ -782,12 +795,18 @@ export class AuthService implements OnModuleInit {
 		})) as {
 			did: string;
 			handle: string;
+			redirectUrl: string;
 			accessJwt?: string;
 			refreshJwt?: string;
 		};
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
 		return {
 			did: data.did,
 			handle: data.handle,
+			redirectUrl: new URL(data.redirectUrl, pdsUrl).toString(),
 			accessJwt: data.accessJwt ?? null,
 			refreshJwt: data.refreshJwt ?? null,
 		};
