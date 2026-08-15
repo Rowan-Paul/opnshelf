@@ -181,7 +181,7 @@ describe("SocialService", () => {
 		});
 	});
 
-	it("logs best-effort PDS delete failures at debug while still unfollowing locally", async () => {
+	it("preserves the local follow when the PDS delete fails transiently", async () => {
 		prisma.user.findUnique = vi
 			.fn()
 			.mockResolvedValue({ did: "did:plc:target" });
@@ -190,35 +190,27 @@ describe("SocialService", () => {
 			.mockResolvedValue({ rkey: "follow-rkey-123" });
 		prisma.follow.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
 		mockDeleteRecord.mockRejectedValue(new Error("pds unavailable"));
-		const debugSpy = vi.spyOn(
-			(
-				service as unknown as {
-					logger: { debug: (...args: unknown[]) => void };
-				}
-			).logger,
-			"debug",
-		);
-		const warnSpy = vi.spyOn(
-			(service as unknown as { logger: { warn: (...args: unknown[]) => void } })
-				.logger,
-			"warn",
-		);
+		await expect(
+			service.unfollow("did:plc:self", session, "did:plc:target"),
+		).rejects.toThrow("pds unavailable");
+
+		expect(prisma.follow.deleteMany).not.toHaveBeenCalled();
+	});
+
+	it("deletes the local follow when the PDS record is already missing", async () => {
+		prisma.user.findUnique = vi
+			.fn()
+			.mockResolvedValue({ did: "did:plc:target" });
+		prisma.follow.findFirst = vi
+			.fn()
+			.mockResolvedValue({ rkey: "follow-rkey-123" });
+		prisma.follow.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
+		mockDeleteRecord.mockRejectedValue({ status: 404 });
 
 		await expect(
 			service.unfollow("did:plc:self", session, "did:plc:target"),
 		).resolves.toBeUndefined();
-
-		expect(debugSpy).toHaveBeenCalledWith(
-			"Failed to delete follow record follow-rkey-123 from PDS",
-			expect.any(Error),
-		);
-		expect(warnSpy).not.toHaveBeenCalled();
-		expect(prisma.follow.deleteMany).toHaveBeenCalledWith({
-			where: {
-				followerDid: "did:plc:self",
-				followingDid: "did:plc:target",
-			},
-		});
+		expect(prisma.follow.deleteMany).toHaveBeenCalledTimes(1);
 	});
 
 	it("rejects self-follow", async () => {

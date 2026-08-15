@@ -29,8 +29,6 @@ describe("MoviesController", () => {
 		markWatched: vi.fn(),
 		indexTrackedMovie: vi.fn(),
 		unmarkWatched: vi.fn(),
-		removeAllTrackedMovies: vi.fn(),
-		removeLatestTrackedMovie: vi.fn(),
 		ensureMovieHasColors: vi.fn(),
 		upsertMovie: vi.fn(),
 	};
@@ -411,12 +409,6 @@ describe("MoviesController", () => {
 				mode: "latest",
 				rkey: "movie-123-1234567890",
 			});
-			mockMoviesService.removeLatestTrackedMovie.mockResolvedValue({
-				count: 1,
-			} as unknown as ReturnType<
-				typeof mockMoviesService.removeLatestTrackedMovie
-			>);
-
 			const req = createMockRequest(mockUser);
 			await controller.unmarkWatched("123", "latest", req);
 
@@ -425,10 +417,6 @@ describe("MoviesController", () => {
 				mockUser.session,
 				"123",
 				"latest",
-			);
-			expect(mockMoviesService.removeLatestTrackedMovie).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				"123",
 			);
 		});
 
@@ -443,12 +431,6 @@ describe("MoviesController", () => {
 				mode: "all",
 				deletedCount: 3,
 			});
-			mockMoviesService.removeAllTrackedMovies.mockResolvedValue({
-				count: 3,
-			} as unknown as ReturnType<
-				typeof mockMoviesService.removeAllTrackedMovies
-			>);
-
 			const req = createMockRequest(mockUser);
 			await controller.unmarkWatched("123", "all", req);
 
@@ -458,32 +440,20 @@ describe("MoviesController", () => {
 				"123",
 				"all",
 			);
-			expect(mockMoviesService.removeAllTrackedMovies).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				"123",
-			);
 		});
 
-		it("should handle failure when removing from local DB", async () => {
+		it("should propagate service failures without a separate local cleanup", async () => {
 			const mockUser = {
 				did: "did:plc:abc123",
 				session: { did: "did:plc:abc123" },
 			};
 
-			mockMoviesService.unmarkWatched.mockResolvedValue({
-				movieId: "456",
-				mode: "latest",
-				rkey: "movie-456-1234567890",
-			});
-			mockMoviesService.removeLatestTrackedMovie.mockRejectedValue(
-				new Error("DB error"),
-			);
+			mockMoviesService.unmarkWatched.mockRejectedValue(new Error("PDS error"));
 
 			const req = createMockRequest(mockUser);
-			// Should not throw
 			await expect(
 				controller.unmarkWatched("456", "latest", req),
-			).resolves.not.toThrow();
+			).rejects.toThrow("PDS error");
 		});
 	});
 });

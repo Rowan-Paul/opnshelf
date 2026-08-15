@@ -30,8 +30,6 @@ describe("ShowsController", () => {
 		markEpisodeWatched: vi.fn(),
 		indexTrackedEpisode: vi.fn(),
 		unmarkEpisodeWatched: vi.fn(),
-		removeAllTrackedEpisodes: vi.fn(),
-		removeLatestTrackedEpisode: vi.fn(),
 		getShowByTMDBId: vi.fn(),
 		getEpisodeWatchHistory: vi.fn(),
 		removeTrackedEpisodeById: vi.fn(),
@@ -207,12 +205,6 @@ describe("ShowsController", () => {
 			mockUser.session,
 			"123",
 			"all",
-			1,
-			2,
-		);
-		expect(mockShowsService.removeAllTrackedEpisodes).toHaveBeenCalledWith(
-			"did:plc:abc123",
-			"123",
 			1,
 			2,
 		);

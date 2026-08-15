@@ -1,6 +1,7 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	$nsid as COLLECTION,
 	main as episodeSchema,
@@ -1072,6 +1073,7 @@ export class ShowsService {
 				orderBy: { watchedDate: "desc" },
 			});
 
+			let firstFailure: unknown;
 			for (const tracked of trackedEpisodes) {
 				try {
 					await agent.com.atproto.repo.deleteRecord({
@@ -1079,12 +1081,17 @@ export class ShowsService {
 						collection: COLLECTION,
 						rkey: tracked.rkey,
 					});
-				} catch {
-					this.logger.warn(
-						`Failed to delete episode record ${tracked.rkey}, may not exist in PDS`,
-					);
+				} catch (error) {
+					if (!isAtprotoRecordMissingError(error)) {
+						firstFailure ??= error;
+						continue;
+					}
 				}
+
+				await this.removeTrackedEpisodeAfterPdsDelete(userDid, tracked.rkey);
 			}
+
+			if (firstFailure) throw firstFailure;
 
 			return { showId, mode, deletedCount: trackedEpisodes.length };
 		}
@@ -1097,55 +1104,31 @@ export class ShowsService {
 			return { showId, mode };
 		}
 
-		await agent.com.atproto.repo.deleteRecord({
-			repo: session.did,
-			collection: COLLECTION,
-			rkey: latestWatch.rkey,
-		});
+		try {
+			await agent.com.atproto.repo.deleteRecord({
+				repo: session.did,
+				collection: COLLECTION,
+				rkey: latestWatch.rkey,
+			});
+		} catch (error) {
+			if (!isAtprotoRecordMissingError(error)) throw error;
+		}
 
+		await this.removeTrackedEpisodeAfterPdsDelete(userDid, latestWatch.rkey);
 		return { showId, mode, rkey: latestWatch.rkey };
 	}
 
-	async removeAllTrackedEpisodes(
+	private async removeTrackedEpisodeAfterPdsDelete(
 		userDid: string,
-		showId: string,
-		seasonNumber?: number,
-		episodeNumber?: number,
-	) {
-		await this.prisma.trackedEpisode.deleteMany({
-			where: {
-				userDid,
-				showId,
-				...(seasonNumber !== undefined && { seasonNumber }),
-				...(episodeNumber !== undefined && { episodeNumber }),
-			},
-		});
-	}
-
-	async removeLatestTrackedEpisode(
-		userDid: string,
-		showId: string,
-		seasonNumber?: number,
-		episodeNumber?: number,
-	) {
-		const latest = await this.prisma.trackedEpisode.findFirst({
-			where: {
-				userDid,
-				showId,
-				...(seasonNumber !== undefined && { seasonNumber }),
-				...(episodeNumber !== undefined && { episodeNumber }),
-			},
-			orderBy: {
-				watchedDate: "desc",
-			},
-		});
-
-		if (latest) {
-			await this.prisma.trackedEpisode.delete({
-				where: {
-					id: latest.id,
-				},
-			});
+		rkey: string,
+	): Promise<void> {
+		try {
+			await this.prisma.trackedEpisode.deleteMany({ where: { userDid, rkey } });
+		} catch (error) {
+			this.logger.warn(
+				{ err: error instanceof Error ? error.message : String(error) },
+				"Failed to optimistically remove tracked episode; firehose will catch it",
+			);
 		}
 	}
 

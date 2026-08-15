@@ -21,6 +21,7 @@ import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
 	TRAKT_IMPORT_JOB_TYPE,
@@ -48,7 +49,7 @@ const DELETION_BATCH_SIZE = 200;
 
 // Ordered PDS deletion steps. Resume picks up at the persisted currentStep and
 // skips earlier steps entirely (their records are already gone — re-deleting is
-// a no-op via isRecordMissingError, but skipping avoids needless PDS calls).
+// a no-op via isAtprotoRecordMissingError, but skipping avoids needless PDS calls).
 const PDS_DELETION_STEPS = [
 	"movies",
 	"episodes",
@@ -172,7 +173,7 @@ export class UserDeletionService {
 	/**
 	 * Reset deletion jobs orphaned in "running" by a crash back to a re-pickable
 	 * state. Resume is idempotent: PDS deletes for already-removed records are
-	 * no-ops (isRecordMissingError), and resume continues from the persisted
+	 * no-ops (isAtprotoRecordMissingError), and resume continues from the persisted
 	 * currentStep. Crucially this also un-wedges the user: createDeletionJob's
 	 * Conflict guard counts the job as active (waiting_retry is an active
 	 * status), but the worker can now pick it up again instead of it sitting in
@@ -308,7 +309,7 @@ export class UserDeletionService {
 	 * Resumes from jobData.currentStep: earlier steps are skipped (their records
 	 * are already deleted). Within a step we re-list/re-query each tick and rely
 	 * on idempotency — tryDeleteRecord treats missing records as success
-	 * (isRecordMissingError), so re-running deletes nothing twice.
+	 * (isAtprotoRecordMissingError), so re-running deletes nothing twice.
 	 *
 	 * Returns true when all PDS steps are complete, false when the per-tick
 	 * budget was exhausted and the caller should yield and reschedule.
@@ -605,7 +606,7 @@ export class UserDeletionService {
 				rkey,
 			});
 		} catch (error) {
-			if (this.isRecordMissingError(error)) {
+			if (isAtprotoRecordMissingError(error)) {
 				return;
 			}
 			throw new Error(`${warnPrefix}: ${this.getErrorMessage(error)}`, {
@@ -671,26 +672,6 @@ export class UserDeletionService {
 			);
 			return null;
 		}
-	}
-
-	private isRecordMissingError(error: unknown): boolean {
-		if (!error || typeof error !== "object") {
-			return false;
-		}
-
-		const candidate = error as {
-			error?: string;
-			status?: number;
-			message?: string;
-		};
-
-		return (
-			candidate.status === 404 ||
-			candidate.error === "RecordNotFound" ||
-			candidate.message?.includes("RecordNotFound") === true ||
-			candidate.message?.includes("Delete target record does not exist") ===
-				true
-		);
 	}
 
 	private getErrorMessage(error: unknown): string {

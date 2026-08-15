@@ -4,7 +4,6 @@ import { TID } from "@atproto/common";
 import {
 	BadRequestException,
 	Injectable,
-	Logger,
 	NotFoundException,
 } from "@nestjs/common";
 import {
@@ -14,6 +13,7 @@ import {
 import type { Main as FollowRecord } from "../lexicons/xyz/opnshelf/follow.defs";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import type {
 	CircleDto,
 	FollowedActivityFeedDto,
@@ -94,8 +94,6 @@ const MAX_WATCHERS_PAGE_SIZE = 10;
 
 @Injectable()
 export class SocialService {
-	private readonly logger = new Logger(SocialService.name);
-
 	constructor(private readonly prisma: PrismaService) {}
 
 	async getSuggestions(
@@ -1016,10 +1014,7 @@ export class SocialService {
 				rkey,
 			});
 		} catch (error) {
-			this.logger.debug(
-				`Failed to delete follow record ${rkey} from PDS`,
-				error,
-			);
+			if (!isAtprotoRecordMissingError(error)) throw error;
 		}
 	}
 
