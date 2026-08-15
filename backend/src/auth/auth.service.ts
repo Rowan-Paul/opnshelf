@@ -1163,7 +1163,7 @@ export class AuthService implements OnModuleInit {
 	}
 
 	private async revokeWhere(
-		where: { userDid: string } & Record<string, unknown>,
+		where: ({ userDid: string } & Record<string, unknown>) | { id: string },
 	): Promise<number> {
 		const doomed = await this.prisma.authSession.findMany({
 			where,
@@ -1185,25 +1185,15 @@ export class AuthService implements OnModuleInit {
 	 * deletion / bulk revoke.
 	 * @param did - User's DID
 	 */
-	async revoke(did: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { userDid: did } });
-		} catch (error) {
-			this.logger.error(`Failed to revoke session for ${did}`, error);
-		}
+	async revoke(did: string): Promise<number> {
+		return this.revokeWhere({ userDid: did });
 	}
 
 	/**
 	 * Revoke session by opaque id (cookie value). Used on logout.
 	 */
-	async revokeBySessionId(sessionId: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
-			this.oauthClients.delete(sessionId);
-			this.credentialSessions.delete(sessionId);
-		} catch (error) {
-			this.logger.error("Failed to revoke session by id", error);
-		}
+	async revokeBySessionId(sessionId: string): Promise<number> {
+		return this.revokeWhere({ id: sessionId });
 	}
 
 	/**

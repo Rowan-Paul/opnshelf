@@ -88,13 +88,13 @@ export class UserDeletionService {
 			where: { userDid: did, type: TRAKT_IMPORT_JOB_TYPE },
 		});
 
-		await this.prisma.user.delete({
-			where: { did },
-		});
-
 		// Revoke the OAuth session too — it lives in a standalone table (no FK
 		// cascade), so deleting the user alone leaves a live session behind.
 		await this.authService.revoke(did);
+
+		await this.prisma.user.delete({
+			where: { did },
+		});
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
@@ -280,11 +280,10 @@ export class UserDeletionService {
 			await this.prisma.backgroundJob.deleteMany({
 				where: { userDid: job.userDid, type: TRAKT_IMPORT_JOB_TYPE },
 			});
-			await this.prisma.user.delete({ where: { did: job.userDid } });
-
 			// Revoke the OAuth session (standalone table, no FK cascade) so a
 			// deleted account doesn't leave a live session behind.
 			await this.authService.revoke(job.userDid);
+			await this.prisma.user.delete({ where: { did: job.userDid } });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error(

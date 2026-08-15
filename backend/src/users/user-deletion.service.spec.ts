@@ -72,6 +72,8 @@ describe("UserDeletionService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		authService.restore = vi.fn();
+		authService.revoke = vi.fn().mockResolvedValue(undefined);
 
 		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:test" });
 		prisma.user.delete = vi.fn().mockResolvedValue(undefined);
@@ -118,6 +120,19 @@ describe("UserDeletionService", () => {
 			// The OAuth session must be revoked too — it's a standalone table with
 			// no FK cascade, so a deleted account would otherwise keep a live session.
 			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
+			expect(
+				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
+			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
+		});
+
+		it("leaves the user intact when session revocation fails", async () => {
+			authService.revoke = vi.fn().mockRejectedValue(new Error("DB error"));
+
+			await expect(service.deleteUserSync("did:plc:test")).rejects.toThrow(
+				"DB error",
+			);
+
+			expect(prisma.user.delete).not.toHaveBeenCalled();
 		});
 
 		it("throws when user not found", async () => {
@@ -290,7 +305,7 @@ describe("UserDeletionService", () => {
 			expect(remaining.size).toBe(0);
 		});
 
-		it("runs the full PDS pipeline, then deletes the user and revokes the session", async () => {
+		it("runs the full PDS pipeline, then revokes the session and deletes the user", async () => {
 			queueJob({ deletePdsData: true, totalRecords: 1, deletedRecords: 0 });
 			authService.restore = vi.fn().mockResolvedValue({ did: "did:plc:test" });
 			mockListRecords.mockImplementation(
@@ -322,9 +337,48 @@ describe("UserDeletionService", () => {
 				where: { did: "did:plc:test" },
 			});
 			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
+			expect(
+				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
+			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
 			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ status: "completed" }),
+				}),
+			);
+		});
+
+		it("fails the job and leaves the user intact when session revocation fails", async () => {
+			queueJob({ deletePdsData: false, totalRecords: 0, deletedRecords: 0 });
+			authService.revoke = vi.fn().mockRejectedValue(new Error("DB error"));
+
+			await service.processNextDeletionJob();
+
+			expect(prisma.user.delete).not.toHaveBeenCalled();
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						status: "failed",
+						lastError: "DB error",
+					}),
+				}),
+			);
+		});
+
+		it("fails the job without recreating sessions when user deletion fails", async () => {
+			queueJob({ deletePdsData: false, totalRecords: 0, deletedRecords: 0 });
+			prisma.user.delete = vi
+				.fn()
+				.mockRejectedValue(new Error("delete failed"));
+
+			await service.processNextDeletionJob();
+
+			expect(authService.revoke).toHaveBeenCalledOnce();
+			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						status: "failed",
+						lastError: "delete failed",
+					}),
 				}),
 			);
 		});

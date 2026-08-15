@@ -228,46 +228,97 @@ describe("AuthService", () => {
 	});
 
 	describe("revoke", () => {
-		it("should delete session by DID", async () => {
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+		it("deletes every session for the DID and clears matching live managers", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-123" },
+				{ id: "session-456" },
+			]);
+			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 2 });
+			const oauthClients = Reflect.get(service, "oauthClients") as Map<
+				string,
+				unknown
+			>;
+			const credentialSessions = Reflect.get(
+				service,
+				"credentialSessions",
+			) as Map<string, unknown>;
+			oauthClients.set("session-123", {});
+			oauthClients.set("unrelated", {});
+			credentialSessions.set("session-456", {});
+			credentialSessions.set("unrelated", {});
 
-			await service.revoke("did:plc:abc123");
+			await expect(service.revoke("did:plc:abc123")).resolves.toBe(2);
 
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
+				select: { id: true },
 			});
+			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+				where: { id: { in: ["session-123", "session-456"] } },
+			});
+			expect(oauthClients.has("session-123")).toBe(false);
+			expect(credentialSessions.has("session-456")).toBe(false);
+			expect(oauthClients.has("unrelated")).toBe(true);
+			expect(credentialSessions.has("unrelated")).toBe(true);
 		});
 
-		it("should handle errors gracefully", async () => {
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(
-				new Error("DB error"),
-			);
+		it("propagates the original database error", async () => {
+			const databaseError = new Error("DB error");
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-123" },
+			]);
+			mockPrismaService.authSession.deleteMany.mockRejectedValue(databaseError);
 
-			// Should not throw
-			await expect(service.revoke("did:plc:abc123")).resolves.toBeUndefined();
+			await expect(service.revoke("did:plc:abc123")).rejects.toBe(
+				databaseError,
+			);
 		});
 	});
 
 	describe("revokeBySessionId", () => {
-		it("should delete session by id", async () => {
+		it("deletes the session by id and clears its live managers", async () => {
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-123" },
+			]);
 			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+			const oauthClients = Reflect.get(service, "oauthClients") as Map<
+				string,
+				unknown
+			>;
+			const credentialSessions = Reflect.get(
+				service,
+				"credentialSessions",
+			) as Map<string, unknown>;
+			oauthClients.set("session-123", {});
+			oauthClients.set("unrelated", {});
+			credentialSessions.set("session-123", {});
+			credentialSessions.set("unrelated", {});
 
-			await service.revokeBySessionId("session-123");
+			await expect(service.revokeBySessionId("session-123")).resolves.toBe(1);
 
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
 				where: { id: "session-123" },
+				select: { id: true },
 			});
+			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
+				where: { id: { in: ["session-123"] } },
+			});
+			expect(oauthClients.has("session-123")).toBe(false);
+			expect(credentialSessions.has("session-123")).toBe(false);
+			expect(oauthClients.has("unrelated")).toBe(true);
+			expect(credentialSessions.has("unrelated")).toBe(true);
 		});
 
-		it("should handle errors gracefully", async () => {
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(
-				new Error("DB error"),
-			);
+		it("propagates the original database error", async () => {
+			const databaseError = new Error("DB error");
+			mockPrismaService.authSession.findMany.mockResolvedValue([
+				{ id: "session-123" },
+			]);
+			mockPrismaService.authSession.deleteMany.mockRejectedValue(databaseError);
 
-			// Should not throw
-			await expect(
-				service.revokeBySessionId("session-123"),
-			).resolves.toBeUndefined();
+			await expect(service.revokeBySessionId("session-123")).rejects.toBe(
+				databaseError,
+			);
 		});
 	});
 
