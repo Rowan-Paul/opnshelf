@@ -14,6 +14,37 @@ vi.mock("@atproto/api");
 describe("ImportHistoryService", () => {
 	let service: ImportHistoryService;
 
+	function deferred<T>() {
+		let resolve!: (value: T) => void;
+		let reject!: (reason?: unknown) => void;
+		const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+			resolve = resolvePromise;
+			reject = rejectPromise;
+		});
+		return { promise, resolve, reject };
+	}
+
+	function traktMoviePage(pageCount = 1) {
+		return new Response(
+			JSON.stringify([
+				{
+					type: "movie",
+					action: "watch",
+					watched_at: "2026-03-22T12:00:00.000Z",
+					movie: {
+						title: "Arrival",
+						year: 2016,
+						ids: { tmdb: 329865 },
+					},
+				},
+			]),
+			{
+				status: 200,
+				headers: { "x-pagination-page-count": String(pageCount) },
+			},
+		);
+	}
+
 	function buildTraktImportJob(overrides: Record<string, unknown> = {}) {
 		const {
 			traktUsername = "alice",
@@ -74,6 +105,7 @@ describe("ImportHistoryService", () => {
 			findUnique: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		traktImportItem: {
 			upsert: vi.fn(),
@@ -128,6 +160,7 @@ describe("ImportHistoryService", () => {
 		prisma.traktImportItem.findMany = vi.fn().mockResolvedValue([]);
 		prisma.traktImportItem.count = vi.fn().mockResolvedValue(0);
 		prisma.traktImportMatch.upsert = vi.fn().mockResolvedValue({});
+		prisma.backgroundJob.updateMany = vi.fn().mockResolvedValue({ count: 1 });
 
 		(moviesService.buildMovieWatchRecord as Mock).mockReturnValue({
 			rkey: "rkey-movie-1",
@@ -286,9 +319,9 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.updateMany).toHaveBeenLastCalledWith(
 			expect.objectContaining({
-				where: { id: "job-1" },
+				where: expect.objectContaining({ id: "job-1" }),
 				data: expect.objectContaining({
 					status: "waiting_retry",
 					// 60s backoff is humanized to "1 minute", not "60 seconds".
@@ -343,7 +376,7 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		const retryCall = (prisma.backgroundJob.update as Mock).mock.calls.find(
+		const retryCall = (prisma.backgroundJob.updateMany as Mock).mock.calls.find(
 			([arg]) => arg?.data?.status === "waiting_retry",
 		);
 		if (!retryCall) throw new Error("expected a waiting_retry update");
@@ -400,9 +433,9 @@ describe("ImportHistoryService", () => {
 			"2026-03-22T12:00:00.000Z",
 			deterministicMovieWatchRkey("329865", "2026-03-22T12:00:00.000Z"),
 		);
-		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.updateMany).toHaveBeenLastCalledWith(
 			expect.objectContaining({
-				where: { id: "job-1" },
+				where: expect.objectContaining({ id: "job-1" }),
 				data: expect.objectContaining({
 					status: "completed",
 					data: expect.objectContaining({
@@ -453,7 +486,7 @@ describe("ImportHistoryService", () => {
 			}),
 		);
 		expect(moviesService.buildMovieWatchRecord).not.toHaveBeenCalled();
-		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.updateMany).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					status: "completed",
@@ -499,9 +532,9 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		expect(prisma.backgroundJob.update).toHaveBeenLastCalledWith(
+		expect(prisma.backgroundJob.updateMany).toHaveBeenLastCalledWith(
 			expect.objectContaining({
-				where: { id: "job-1" },
+				where: expect.objectContaining({ id: "job-1" }),
 				data: expect.objectContaining({
 					status: "running",
 					data: expect.objectContaining({
@@ -564,7 +597,7 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		const pauseCall = (prisma.backgroundJob.update as Mock).mock.calls.find(
+		const pauseCall = (prisma.backgroundJob.updateMany as Mock).mock.calls.find(
 			([arg]) => arg?.data?.status === "waiting_retry",
 		);
 		if (!pauseCall) throw new Error("expected a waiting_retry pause update");
@@ -616,12 +649,191 @@ describe("ImportHistoryService", () => {
 
 		await service.processNextTraktImportJob();
 
-		const lastCall = (prisma.backgroundJob.update as Mock).mock.calls.at(-1);
+		const lastCall = (prisma.backgroundJob.updateMany as Mock).mock.calls.at(
+			-1,
+		);
 		expect(lastCall?.[0].data.status).toBe("running");
 		expect(lastCall?.[0].data.lastError).toBeNull();
 		const nextRunAt = lastCall?.[0].data.nextRunAt as Date;
 		// Schedules the next page promptly (the 800ms inter-page delay), not a wait.
 		expect((nextRunAt.getTime() - Date.now()) / 1000).toBeLessThan(60);
+	});
+
+	it("does not claim a job paused after it was selected", async () => {
+		const job = buildTraktImportJob();
+		const restoreStarted = deferred<void>();
+		const finishRestore = deferred<{ did: string }>();
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.updateMany = vi.fn().mockResolvedValue({ count: 0 });
+		(authService.restore as Mock).mockImplementation(() => {
+			restoreStarted.resolve();
+			return finishRestore.promise;
+		});
+
+		const processing = service.processNextTraktImportJob();
+		await restoreStarted.promise;
+		finishRestore.resolve({ did: "did:plc:abc" });
+		await processing;
+
+		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledOnce();
+		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: {
+					id: "job-1",
+					updatedAt: new Date("2026-03-23T18:00:00.000Z"),
+					status: { in: ["queued", "running", "waiting_retry"] },
+					nextRunAt: { lte: expect.any(Date) },
+				},
+			}),
+		);
+		expect(global.fetch).not.toHaveBeenCalled();
+		expect(prisma.traktImportItem.upsert).not.toHaveBeenCalled();
+	});
+
+	it("persists page progress without making a concurrent pause runnable", async () => {
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		const pausedAt = new Date("2026-03-23T18:00:05.000Z");
+		const pausedNextRunAt = new Date("2026-03-23T18:00:04.000Z");
+		let latest = job;
+		const fetchStarted = deferred<void>();
+		const page = deferred<Response>();
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockImplementation(() => latest);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(global.fetch as Mock).mockImplementation(() => {
+			fetchStarted.resolve();
+			return page.promise;
+		});
+
+		const processing = service.processNextTraktImportJob();
+		await fetchStarted.promise;
+		latest = buildTraktImportJob({
+			status: "paused",
+			updatedAt: pausedAt,
+			nextRunAt: pausedNextRunAt,
+		});
+		page.resolve(traktMoviePage());
+		await processing;
+
+		const finalWrite = (prisma.backgroundJob.updateMany as Mock).mock.calls.at(
+			-1,
+		)?.[0];
+		expect(finalWrite.where).toEqual({ id: "job-1", updatedAt: pausedAt });
+		expect(finalWrite.data).toMatchObject({
+			status: "paused",
+			nextRunAt: pausedNextRunAt,
+			data: { importedCount: 1, normalizedCount: 1, sourceCount: 1 },
+		});
+	});
+
+	it.each([
+		["acknowledgedAt", "2026-03-23T18:00:03.000Z"],
+		["reminderSnoozedUntil", "2026-03-30T18:00:03.000Z"],
+	] as const)(
+		"keeps newest %s while persisting page progress",
+		async (controlField, controlValue) => {
+			const job = buildTraktImportJob({ profileAvatarUrl: null });
+			const controlledAt = new Date("2026-03-23T18:00:03.000Z");
+			let latest = job;
+			const fetchStarted = deferred<void>();
+			const page = deferred<Response>();
+			prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+			prisma.backgroundJob.findUnique = vi
+				.fn()
+				.mockImplementation(() => latest);
+			(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+			prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+			(global.fetch as Mock).mockImplementation(() => {
+				fetchStarted.resolve();
+				return page.promise;
+			});
+
+			const processing = service.processNextTraktImportJob();
+			await fetchStarted.promise;
+			latest = buildTraktImportJob({
+				status: "running",
+				updatedAt: controlledAt,
+				data: { ...job.data, [controlField]: controlValue },
+			});
+			page.resolve(traktMoviePage());
+			await processing;
+
+			const finalWrite = (
+				prisma.backgroundJob.updateMany as Mock
+			).mock.calls.at(-1)?.[0];
+			expect(finalWrite.where).toEqual({
+				id: "job-1",
+				updatedAt: controlledAt,
+			});
+			expect(finalWrite.data.data).toMatchObject({
+				importedCount: 1,
+				normalizedCount: 1,
+				sourceCount: 1,
+				[controlField]: controlValue,
+			});
+		},
+	);
+
+	it("does not replace a concurrent pause with a Trakt retry", async () => {
+		const job = buildTraktImportJob();
+		const pausedAt = new Date("2026-03-23T18:00:06.000Z");
+		const pausedNextRunAt = new Date("2026-03-23T18:00:05.000Z");
+		let latest = job;
+		const fetchStarted = deferred<void>();
+		const page = deferred<Response>();
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockImplementation(() => latest);
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		(global.fetch as Mock).mockImplementation(() => {
+			fetchStarted.resolve();
+			return page.promise;
+		});
+
+		const processing = service.processNextTraktImportJob();
+		await fetchStarted.promise;
+		latest = buildTraktImportJob({
+			status: "paused",
+			updatedAt: pausedAt,
+			nextRunAt: pausedNextRunAt,
+		});
+		page.resolve(
+			new Response(JSON.stringify({}), {
+				status: 429,
+				headers: { "retry-after": "42" },
+			}),
+		);
+		await processing;
+
+		const finalWrite = (prisma.backgroundJob.updateMany as Mock).mock.calls.at(
+			-1,
+		)?.[0];
+		expect(finalWrite.where).toEqual({ id: "job-1", updatedAt: pausedAt });
+		expect(finalWrite.data).toMatchObject({
+			status: "paused",
+			nextRunAt: pausedNextRunAt,
+			lastError: null,
+			data: { rateLimitRetries: 1 },
+		});
+	});
+
+	it("fails observably after three final-state CAS conflicts", async () => {
+		const job = buildTraktImportJob({ profileAvatarUrl: null });
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.updateMany = vi
+			.fn()
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValue({ count: 0 });
+		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
+		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
+		(global.fetch as Mock).mockResolvedValue(traktMoviePage());
+
+		await expect(service.processNextTraktImportJob()).rejects.toThrow(
+			"after 3 concurrent updates",
+		);
+		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledTimes(4);
 	});
 
 	it("returns the newest durable import job", async () => {
