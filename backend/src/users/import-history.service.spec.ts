@@ -661,10 +661,17 @@ describe("ImportHistoryService", () => {
 
 	it("does not claim a job paused after it was selected", async () => {
 		const job = buildTraktImportJob();
+		const paused = buildTraktImportJob({
+			status: "paused",
+			updatedAt: new Date("2026-03-23T18:00:01.000Z"),
+		});
 		const restoreStarted = deferred<void>();
 		const finishRestore = deferred<{ did: string }>();
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
-		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
+		prisma.backgroundJob.findUnique = vi
+			.fn()
+			.mockResolvedValueOnce(job)
+			.mockResolvedValueOnce(paused);
 		prisma.backgroundJob.updateMany = vi.fn().mockResolvedValue({ count: 0 });
 		(authService.restore as Mock).mockImplementation(() => {
 			restoreStarted.resolve();
@@ -677,6 +684,10 @@ describe("ImportHistoryService", () => {
 		await processing;
 
 		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledOnce();
+		expect(prisma.backgroundJob.findUnique).toHaveBeenCalledTimes(2);
+		expect(prisma.backgroundJob.findUnique).toHaveBeenLastCalledWith({
+			where: { id: "job-1" },
+		});
 		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: {
@@ -690,6 +701,53 @@ describe("ImportHistoryService", () => {
 		expect(global.fetch).not.toHaveBeenCalled();
 		expect(prisma.traktImportItem.upsert).not.toHaveBeenCalled();
 	});
+
+	it.each([
+		["pause", "queued", "running", "paused"],
+		["resume", "paused", "failed", "queued"],
+	] as const)(
+		"retries a conflicting %s control with the newest version predicate",
+		async (action, firstStatus, secondStatus, expectedStatus) => {
+			const firstAt = new Date("2026-03-23T18:00:00.000Z");
+			const secondAt = new Date("2026-03-23T18:00:01.000Z");
+			const first = buildTraktImportJob({
+				status: firstStatus,
+				updatedAt: firstAt,
+			});
+			const second = buildTraktImportJob({
+				status: secondStatus,
+				updatedAt: secondAt,
+			});
+			prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(first);
+			prisma.backgroundJob.findUnique = vi
+				.fn()
+				.mockResolvedValueOnce(first)
+				.mockResolvedValueOnce(second);
+			prisma.backgroundJob.updateMany = vi
+				.fn()
+				.mockResolvedValueOnce({ count: 0 })
+				.mockResolvedValueOnce({ count: 1 });
+
+			if (action === "pause") {
+				await service.pauseTraktImport("did:plc:abc");
+			} else {
+				await service.resumeTraktImport("did:plc:abc");
+			}
+
+			expect(prisma.backgroundJob.updateMany).toHaveBeenCalledTimes(2);
+			expect(
+				(prisma.backgroundJob.updateMany as Mock).mock.calls[0][0],
+			).toMatchObject({
+				where: { id: "job-1", updatedAt: firstAt, status: firstStatus },
+			});
+			expect(
+				(prisma.backgroundJob.updateMany as Mock).mock.calls[1][0],
+			).toMatchObject({
+				where: { id: "job-1", updatedAt: secondAt, status: secondStatus },
+				data: { status: expectedStatus },
+			});
+		},
+	);
 
 	it("persists page progress without making a concurrent pause runnable", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
@@ -818,22 +876,37 @@ describe("ImportHistoryService", () => {
 		});
 	});
 
-	it("fails observably after three final-state CAS conflicts", async () => {
+	it("records a failed job after three final-state CAS conflicts", async () => {
 		const job = buildTraktImportJob({ profileAvatarUrl: null });
 		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(job);
 		prisma.backgroundJob.findUnique = vi.fn().mockResolvedValue(job);
 		prisma.backgroundJob.updateMany = vi
 			.fn()
 			.mockResolvedValueOnce({ count: 1 })
-			.mockResolvedValue({ count: 0 });
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 1 });
 		(authService.restore as Mock).mockResolvedValue({ did: "did:plc:abc" });
 		prisma.trackedMovie.findFirst = vi.fn().mockResolvedValue(null);
 		(global.fetch as Mock).mockResolvedValue(traktMoviePage());
 
-		await expect(service.processNextTraktImportJob()).rejects.toThrow(
-			"after 3 concurrent updates",
+		await service.processNextTraktImportJob();
+
+		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledTimes(5);
+		expect(prisma.backgroundJob.updateMany).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				where: {
+					id: "job-1",
+					updatedAt: new Date("2026-03-23T18:00:00.000Z"),
+				},
+				data: expect.objectContaining({
+					status: "failed",
+					lastError: expect.stringContaining("after 3 concurrent updates"),
+					completedAt: expect.any(Date),
+				}),
+			}),
 		);
-		expect(prisma.backgroundJob.updateMany).toHaveBeenCalledTimes(4);
 	});
 
 	it("returns the newest durable import job", async () => {

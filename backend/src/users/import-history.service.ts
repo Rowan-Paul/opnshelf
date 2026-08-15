@@ -296,28 +296,13 @@ export class ImportHistoryService {
 
 	async pauseTraktImport(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		if (ACTIVE_TRAKT_JOB_STATUSES.includes(job.status as TraktJobStatus)) {
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: { status: "paused", nextRunAt: new Date() },
-			});
-		}
+		await this.persistTraktStatusControl(job.id, "pause");
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
 	async resumeTraktImport(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		if (job.status === "paused" || job.status === "failed") {
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: {
-					status: "queued",
-					nextRunAt: new Date(),
-					lastError: null,
-					completedAt: null,
-				},
-			});
-		}
+		await this.persistTraktStatusControl(job.id, "resume");
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
@@ -336,6 +321,51 @@ export class ImportHistoryService {
 		).toISOString();
 		await this.persistTraktControl(job.id, { reminderSnoozedUntil });
 		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	private async persistTraktStatusControl(
+		jobId: string,
+		action: "pause" | "resume",
+	): Promise<void> {
+		for (let attempt = 0; attempt < TRAKT_JOB_CAS_RETRIES; attempt += 1) {
+			const latest = await this.prisma.backgroundJob.findUnique({
+				where: { id: jobId },
+			});
+			if (!latest) {
+				throw new NotFoundException("Trakt import job not found");
+			}
+			const applicable =
+				action === "pause"
+					? ACTIVE_TRAKT_JOB_STATUSES.includes(latest.status as TraktJobStatus)
+					: latest.status === "paused" || latest.status === "failed";
+			if (!applicable) {
+				return;
+			}
+
+			const result = await this.prisma.backgroundJob.updateMany({
+				where: {
+					id: jobId,
+					updatedAt: latest.updatedAt,
+					status: latest.status,
+				},
+				data:
+					action === "pause"
+						? { status: "paused", nextRunAt: new Date() }
+						: {
+								status: "queued",
+								nextRunAt: new Date(),
+								lastError: null,
+								completedAt: null,
+							},
+			});
+			if (result.count === 1) {
+				return;
+			}
+		}
+
+		throw new TraktJobCasError(
+			`Could not ${action} Trakt import job ${jobId} after ${TRAKT_JOB_CAS_RETRIES} concurrent updates.`,
+		);
 	}
 
 	private async persistTraktControl(
@@ -923,6 +953,18 @@ export class ImportHistoryService {
 			},
 		});
 		if (claim.count === 0) {
+			const current = await this.prisma.backgroundJob.findUnique({
+				where: { id: job.id },
+			});
+			if (
+				current &&
+				ACTIVE_TRAKT_JOB_STATUSES.includes(current.status as TraktJobStatus) &&
+				current.nextRunAt <= new Date()
+			) {
+				this.logger.debug(
+					`Lost the claim race for Trakt import job ${job.id}; leaving its newer state untouched.`,
+				);
+			}
 			return;
 		}
 
@@ -1028,9 +1070,6 @@ export class ImportHistoryService {
 				completedAt: isComplete ? new Date() : null,
 			});
 		} catch (error) {
-			if (error instanceof TraktJobCasError) {
-				throw error;
-			}
 			if (error instanceof PdsRateLimitError) {
 				const retryAfterSeconds = Math.min(
 					Math.max(
