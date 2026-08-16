@@ -8,6 +8,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 vi.mock("../prisma/prisma.service", () => ({
 	PrismaService: vi.fn().mockImplementation(() => ({
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 		authSession: {
 			findUnique: vi.fn(),
 			upsert: vi.fn(),
@@ -113,6 +114,7 @@ describe("AuthService", () => {
 
 	const mockPrismaService = {
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 		authSession: {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
@@ -147,6 +149,7 @@ describe("AuthService", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		mockPrismaService.$queryRaw.mockResolvedValue([]);
 		// Tests that override get() with mockImplementation leak into every later
 		// test (clearAllMocks doesn't undo it), so restore the base config here.
 		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
@@ -228,12 +231,11 @@ describe("AuthService", () => {
 	});
 
 	describe("revoke", () => {
-		it("deletes every session for the DID and clears matching live managers", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
+		it("atomically deletes every session for the DID and clears matching live managers", async () => {
+			mockPrismaService.$queryRaw.mockResolvedValue([
 				{ id: "session-123" },
 				{ id: "session-456" },
 			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 2 });
 			const oauthClients = Reflect.get(service, "oauthClients") as Map<
 				string,
 				unknown
@@ -249,13 +251,16 @@ describe("AuthService", () => {
 
 			await expect(service.revoke("did:plc:abc123")).resolves.toBe(2);
 
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123" },
-				select: { id: true },
-			});
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: { id: { in: ["session-123", "session-456"] } },
-			});
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				strings: string[];
+				values: unknown[];
+			};
+			expect(query.strings.join(" ")).toContain('DELETE FROM "AuthSession"');
+			expect(query.strings.join(" ")).toContain('RETURNING "id"');
+			expect(query.values).toEqual(["did:plc:abc123"]);
+			expect(mockPrismaService.authSession.findMany).not.toHaveBeenCalled();
+			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
 			expect(oauthClients.has("session-123")).toBe(false);
 			expect(credentialSessions.has("session-456")).toBe(false);
 			expect(oauthClients.has("unrelated")).toBe(true);
@@ -264,10 +269,7 @@ describe("AuthService", () => {
 
 		it("propagates the original database error", async () => {
 			const databaseError = new Error("DB error");
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "session-123" },
-			]);
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(databaseError);
+			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
 
 			await expect(service.revoke("did:plc:abc123")).rejects.toBe(
 				databaseError,
@@ -277,10 +279,7 @@ describe("AuthService", () => {
 
 	describe("revokeBySessionId", () => {
 		it("deletes the session by id and clears its live managers", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "session-123" },
-			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-123" }]);
 			const oauthClients = Reflect.get(service, "oauthClients") as Map<
 				string,
 				unknown
@@ -296,13 +295,10 @@ describe("AuthService", () => {
 
 			await expect(service.revokeBySessionId("session-123")).resolves.toBe(1);
 
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { id: "session-123" },
-				select: { id: true },
-			});
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: { id: { in: ["session-123"] } },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["session-123"]);
 			expect(oauthClients.has("session-123")).toBe(false);
 			expect(credentialSessions.has("session-123")).toBe(false);
 			expect(oauthClients.has("unrelated")).toBe(true);
@@ -311,10 +307,7 @@ describe("AuthService", () => {
 
 		it("propagates the original database error", async () => {
 			const databaseError = new Error("DB error");
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "session-123" },
-			]);
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(databaseError);
+			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
 
 			await expect(service.revokeBySessionId("session-123")).rejects.toBe(
 				databaseError,
@@ -471,37 +464,31 @@ describe("AuthService", () => {
 
 	describe("revokeDevice", () => {
 		it("scopes the revoke to the caller's own DID", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "session-456" },
-			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-456" }]);
 
 			const revoked = await service.revokeDevice("did:plc:abc123", "device-b");
 
 			expect(revoked).toBe(1);
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123", deviceId: "device-b" },
-				select: { id: true },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["did:plc:abc123", "device-b"]);
 		});
 
 		it("reports nothing revoked for another user's device", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([]);
-
 			await expect(
 				service.revokeDevice("did:plc:abc123", "someone-elses-device"),
 			).resolves.toBe(0);
-			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
 		});
 	});
 
 	describe("revokeOtherDevices", () => {
 		it("keeps the current session and drops the rest", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
+			mockPrismaService.$queryRaw.mockResolvedValue([
 				{ id: "session-456" },
 				{ id: "session-789" },
 			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 2 });
 
 			const revoked = await service.revokeOtherDevices(
 				"did:plc:abc123",
@@ -509,10 +496,10 @@ describe("AuthService", () => {
 			);
 
 			expect(revoked).toBe(2);
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123", id: { not: "session-123" } },
-				select: { id: true },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["did:plc:abc123", "session-123"]);
 		});
 	});
 

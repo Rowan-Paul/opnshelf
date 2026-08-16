@@ -24,6 +24,7 @@ import type { AuthService } from "../auth/auth.service";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
+	TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
 	TRAKT_IMPORT_JOB_TYPE,
 	buildAccountDeletionData,
 	parseAccountDeletionData,
@@ -85,17 +86,31 @@ export class UserDeletionService {
 			throw new NotFoundException("User not found");
 		}
 
-		await this.prisma.backgroundJob.deleteMany({
-			where: { userDid: did, type: TRAKT_IMPORT_JOB_TYPE },
-		});
-
 		// Revoke the OAuth session too — it lives in a standalone table (no FK
 		// cascade), so deleting the user alone leaves a live session behind.
 		await this.authService.revoke(did);
 
-		await this.prisma.user.delete({
-			where: { did },
-		});
+		await this.deleteLocalAccount(did);
+	}
+
+	private async deleteLocalAccount(did: string): Promise<void> {
+		// Revocation happens before entering this helper. Keep Trakt history and the
+		// user in one transaction so a failed User delete cannot strand a live
+		// account after its durable import ledger was removed.
+		await this.prisma.$transaction([
+			this.prisma.backgroundJob.deleteMany({
+				where: {
+					userDid: did,
+					type: {
+						in: [
+							TRAKT_IMPORT_JOB_TYPE,
+							TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
+						],
+					},
+				},
+			}),
+			this.prisma.user.delete({ where: { did } }),
+		]);
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
@@ -275,16 +290,10 @@ export class UserDeletionService {
 				},
 			});
 
-			// Durable Trakt outcomes live for the account lifetime. Remove the Trakt
-			// job explicitly here (its item/match rows cascade) while preserving this
-			// account-deletion job until the worker has finished cleanly.
-			await this.prisma.backgroundJob.deleteMany({
-				where: { userDid: job.userDid, type: TRAKT_IMPORT_JOB_TYPE },
-			});
 			// Revoke the OAuth session (standalone table, no FK cascade) so a
 			// deleted account doesn't leave a live session behind.
 			await this.authService.revoke(job.userDid);
-			await this.prisma.user.delete({ where: { did: job.userDid } });
+			await this.deleteLocalAccount(job.userDid);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error(
