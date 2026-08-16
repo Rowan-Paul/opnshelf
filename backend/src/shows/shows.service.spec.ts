@@ -887,6 +887,9 @@ describe("ShowsService", () => {
 				collection: "xyz.opnshelf.episode",
 				rkey: "rk1",
 			});
+			expect(mockPrismaService.trackedEpisode.deleteMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:abc123", rkey: "rk1" },
+			});
 		});
 
 		it("should delete all episode records in all mode", async () => {
@@ -904,7 +907,58 @@ describe("ShowsService", () => {
 			);
 
 			expect(mockDeleteRecord).toHaveBeenCalledTimes(2);
+			expect(mockPrismaService.trackedEpisode.deleteMany).toHaveBeenCalledTimes(
+				2,
+			);
 			expect(result).toEqual({ showId: "123", mode: "all", deletedCount: 2 });
+		});
+
+		it("attempts the full batch but preserves rows for transient failures", async () => {
+			const transient = new Error("network unavailable");
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ id: "1", rkey: "success" },
+				{ id: "2", rkey: "missing" },
+				{ id: "3", rkey: "transient" },
+			]);
+			mockDeleteRecord
+				.mockResolvedValueOnce({})
+				.mockRejectedValueOnce({ error: "RecordNotFound" })
+				.mockRejectedValueOnce(transient);
+
+			await expect(
+				service.unmarkEpisodeWatched(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"123",
+					"all",
+				),
+			).rejects.toBe(transient);
+
+			expect(mockDeleteRecord).toHaveBeenCalledTimes(3);
+			expect(mockPrismaService.trackedEpisode.deleteMany.mock.calls).toEqual([
+				[{ where: { userDid: "did:plc:abc123", rkey: "success" } }],
+				[{ where: { userDid: "did:plc:abc123", rkey: "missing" } }],
+			]);
+		});
+
+		it("preserves the latest local row when the PDS delete fails", async () => {
+			mockPrismaService.trackedEpisode.findFirst.mockResolvedValue({
+				id: "1",
+				rkey: "rk1",
+			});
+			mockDeleteRecord.mockRejectedValue(new Error("network unavailable"));
+
+			await expect(
+				service.unmarkEpisodeWatched(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"123",
+					"latest",
+				),
+			).rejects.toThrow("network unavailable");
+			expect(
+				mockPrismaService.trackedEpisode.deleteMany,
+			).not.toHaveBeenCalled();
 		});
 	});
 

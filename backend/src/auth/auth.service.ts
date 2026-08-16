@@ -14,6 +14,7 @@ import {
 } from "@atproto/oauth-client-node";
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
 	buildOAuthScope,
@@ -1151,7 +1152,9 @@ export class AuthService implements OnModuleInit {
 	 * @returns how many sessions were revoked (0 = not this user's device)
 	 */
 	async revokeDevice(userDid: string, deviceId: string): Promise<number> {
-		return this.revokeWhere({ userDid, deviceId });
+		return this.revokeWhere(
+			Prisma.sql`"userDid" = ${userDid} AND "deviceId" = ${deviceId}`,
+		);
 	}
 
 	/** Revoke every device except the one making the request. */
@@ -1159,25 +1162,26 @@ export class AuthService implements OnModuleInit {
 		userDid: string,
 		currentSessionId: string,
 	): Promise<number> {
-		return this.revokeWhere({ userDid, id: { not: currentSessionId } });
+		return this.revokeWhere(
+			Prisma.sql`"userDid" = ${userDid} AND "id" <> ${currentSessionId}`,
+		);
 	}
 
-	private async revokeWhere(
-		where: { userDid: string } & Record<string, unknown>,
-	): Promise<number> {
-		const doomed = await this.prisma.authSession.findMany({
-			where,
-			select: { id: true },
-		});
-		if (doomed.length === 0) return 0;
-		const { count } = await this.prisma.authSession.deleteMany({
-			where: { id: { in: doomed.map((row) => row.id) } },
-		});
+	private async revokeWhere(predicate: Prisma.Sql): Promise<number> {
+		// PostgreSQL returns exactly the rows deleted by this statement, closing the
+		// find-then-delete window where a newly inserted session could survive.
+		const doomed = await this.prisma.$queryRaw<
+			Array<{ id: string }>
+		>(Prisma.sql`
+			DELETE FROM "AuthSession"
+			WHERE ${predicate}
+			RETURNING "id"
+		`);
 		for (const row of doomed) {
 			this.oauthClients.delete(row.id);
 			this.credentialSessions.delete(row.id);
 		}
-		return count;
+		return doomed.length;
 	}
 
 	/**
@@ -1185,25 +1189,15 @@ export class AuthService implements OnModuleInit {
 	 * deletion / bulk revoke.
 	 * @param did - User's DID
 	 */
-	async revoke(did: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { userDid: did } });
-		} catch (error) {
-			this.logger.error(`Failed to revoke session for ${did}`, error);
-		}
+	async revoke(did: string): Promise<number> {
+		return this.revokeWhere(Prisma.sql`"userDid" = ${did}`);
 	}
 
 	/**
 	 * Revoke session by opaque id (cookie value). Used on logout.
 	 */
-	async revokeBySessionId(sessionId: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
-			this.oauthClients.delete(sessionId);
-			this.credentialSessions.delete(sessionId);
-		} catch (error) {
-			this.logger.error("Failed to revoke session by id", error);
-		}
+	async revokeBySessionId(sessionId: string): Promise<number> {
+		return this.revokeWhere(Prisma.sql`"id" = ${sessionId}`);
 	}
 
 	/**
