@@ -219,6 +219,9 @@ model BackgroundJob {
   traktMatches TraktImportMatch[]
 
   @@index([type, status, nextRunAt])
+  // One trakt_import per User is enforced by the PostgreSQL partial index
+  // BackgroundJob_one_trakt_import_per_user_key in migration 20260816120000.
+  // Do not replace it with @@unique([userDid, type]); other job types may repeat.
   @@index([userDid, type])
 }
 
