@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
 import { ConfigService } from "@nestjs/config";
 import { deterministicMovieWatchRkey } from "../common/watch-rkey";
+import { Prisma } from "../generated/client";
 import type { AuthService } from "../auth/auth.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -13,6 +14,7 @@ vi.mock("@atproto/api");
 
 describe("ImportHistoryService", () => {
 	let service: ImportHistoryService;
+	let traktApi: TraktApiClient;
 
 	function deferred<T>() {
 		let resolve!: (value: T) => void;
@@ -145,11 +147,12 @@ describe("ImportHistoryService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		traktApi = new TraktApiClient(configService);
 		service = new ImportHistoryService(
 			prisma,
 			moviesService,
 			showsService,
-			new TraktApiClient(configService),
+			traktApi,
 			authService,
 		);
 		global.fetch = vi.fn() as unknown as typeof fetch;
@@ -297,6 +300,132 @@ describe("ImportHistoryService", () => {
 		});
 		expect(prisma.backgroundJob.create).not.toHaveBeenCalled();
 		expect(global.fetch).not.toHaveBeenCalled();
+	});
+
+	it("returns one authoritative job when concurrent starts race", async () => {
+		const winner = buildTraktImportJob({
+			id: "job-winner",
+			traktUsername: "alice",
+			profileUsername: "alice",
+			profileSlug: "alice",
+			profileName: "Alice Winner",
+			profileAvatarUrl: "https://example.com/alice.jpg",
+		});
+		const winnerVisible = deferred<void>();
+		let lookupCount = 0;
+		prisma.backgroundJob.findFirst = vi.fn().mockImplementation(async () => {
+			lookupCount += 1;
+			if (lookupCount <= 2) return null;
+			await winnerVisible.promise;
+			return winner;
+		});
+
+		vi.spyOn(traktApi, "fetchPreview").mockImplementation(async (username) => ({
+			profile: {
+				username,
+				slug: username,
+				name: username === "alice" ? "Alice Winner" : "Bob Loser",
+				avatarUrl: `https://example.com/${username}.jpg`,
+				isPrivate: false,
+				isVip: false,
+			},
+			previewItems: [],
+			sourcePreviewCount: 1,
+		}));
+
+		let createCount = 0;
+		let successfulCreateCount = 0;
+		prisma.backgroundJob.create = vi.fn().mockImplementation(async () => {
+			createCount += 1;
+			if (createCount === 1) {
+				successfulCreateCount += 1;
+				winnerVisible.resolve();
+				return winner;
+			}
+			throw new Prisma.PrismaClientKnownRequestError("duplicate Trakt import", {
+				code: "P2002",
+				clientVersion: "test",
+			});
+		});
+
+		const [first, second] = await Promise.all([
+			service.startTraktImport("did:plc:abc", "alice"),
+			service.startTraktImport("did:plc:abc", "bob"),
+		]);
+
+		expect(first.job.id).toBe("job-winner");
+		expect(second.job.id).toBe("job-winner");
+		expect(first.profile).toMatchObject({
+			username: "alice",
+			name: "Alice Winner",
+		});
+		expect(second.profile).toMatchObject({
+			username: "alice",
+			name: "Alice Winner",
+		});
+		expect(second.profile.username).not.toBe("bob");
+		expect(prisma.backgroundJob.create).toHaveBeenCalledTimes(2);
+		expect(
+			(prisma.backgroundJob.create as Mock).mock.calls[1][0],
+		).toMatchObject({
+			data: {
+				userDid: "did:plc:abc",
+				data: {
+					traktUsername: "bob",
+					profileUsername: "bob",
+					profileName: "Bob Loser",
+				},
+			},
+		});
+		expect(successfulCreateCount).toBe(1);
+	});
+
+	it("propagates an unrelated create failure", async () => {
+		const failure = new Error("database unavailable");
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+		vi.spyOn(traktApi, "fetchPreview").mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice",
+				avatarUrl: undefined,
+				isPrivate: false,
+				isVip: false,
+			},
+			previewItems: [],
+			sourcePreviewCount: 0,
+		});
+		prisma.backgroundJob.create = vi.fn().mockRejectedValue(failure);
+
+		await expect(service.startTraktImport("did:plc:abc", "alice")).rejects.toBe(
+			failure,
+		);
+	});
+
+	it("rethrows the unique error when no winning job is visible", async () => {
+		const uniqueFailure = new Prisma.PrismaClientKnownRequestError(
+			"duplicate Trakt import",
+			{ code: "P2002", clientVersion: "test" },
+		);
+		prisma.backgroundJob.findFirst = vi.fn().mockResolvedValue(null);
+		vi.spyOn(traktApi, "fetchPreview").mockResolvedValue({
+			profile: {
+				username: "alice",
+				slug: "alice",
+				name: "Alice",
+				avatarUrl: undefined,
+				isPrivate: false,
+				isVip: false,
+			},
+			previewItems: [],
+			sourcePreviewCount: 0,
+		});
+		prisma.backgroundJob.create = vi.fn().mockRejectedValue(uniqueFailure);
+
+		await expect(service.startTraktImport("did:plc:abc", "alice")).rejects.toBe(
+			uniqueFailure,
+		);
+		expect(prisma.backgroundJob.findFirst).toHaveBeenCalledTimes(2);
 	});
 
 	it("moves a job to waiting_retry when Trakt returns 429", async () => {

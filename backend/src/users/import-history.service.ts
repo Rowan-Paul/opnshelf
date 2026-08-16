@@ -6,6 +6,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "../generated/client";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import {
 	deterministicEpisodeWatchRkey,
@@ -147,6 +148,13 @@ type TraktJobPersistence = {
 
 class TraktJobCasError extends Error {}
 
+function isUniqueConstraintError(error: unknown): boolean {
+	return (
+		error instanceof Prisma.PrismaClientKnownRequestError &&
+		error.code === "P2002"
+	);
+}
+
 @Injectable()
 export class ImportHistoryService {
 	private readonly logger = new Logger(ImportHistoryService.name);
@@ -242,32 +250,45 @@ export class ImportHistoryService {
 			});
 
 			if (existingJob) {
-				const existingData = parseTraktImportData(existingJob.data);
-				const existingProfile = buildProfileFromJobData(existingData);
-				return {
-					profile: existingProfile,
-					previewItems: [],
-					sourcePreviewCount: 0,
-					job: mapTraktImportJob(existingJob),
-				};
+				return this.mapExistingTraktImport(existingJob);
 			}
 
 			const preview = await this.traktApi.fetchPreview(normalizedUsername);
-			const job = await this.prisma.backgroundJob.create({
-				data: {
-					type: TRAKT_IMPORT_JOB_TYPE,
-					userDid,
-					status: "queued",
-					nextRunAt: new Date(),
-					data: buildTraktImportData({
-						traktUsername: normalizedUsername,
-						profileUsername: preview.profile.username,
-						profileSlug: preview.profile.slug,
-						profileName: preview.profile.name,
-						profileAvatarUrl: preview.profile.avatarUrl,
-					}),
-				},
-			});
+			let job: NonNullable<BackgroundJobRecord>;
+			try {
+				job = await this.prisma.backgroundJob.create({
+					data: {
+						type: TRAKT_IMPORT_JOB_TYPE,
+						userDid,
+						status: "queued",
+						nextRunAt: new Date(),
+						data: buildTraktImportData({
+							traktUsername: normalizedUsername,
+							profileUsername: preview.profile.username,
+							profileSlug: preview.profile.slug,
+							profileName: preview.profile.name,
+							profileAvatarUrl: preview.profile.avatarUrl,
+						}),
+					},
+				});
+			} catch (error) {
+				if (!isUniqueConstraintError(error)) {
+					throw error;
+				}
+
+				const winningJob = await this.findLatestTraktImportJob(userDid, {
+					statuses: [
+						...ACTIVE_TRAKT_JOB_STATUSES,
+						"paused",
+						"completed",
+						"failed",
+					],
+				});
+				if (!winningJob) {
+					throw error;
+				}
+				return this.mapExistingTraktImport(winningJob);
+			}
 
 			return {
 				profile: preview.profile,
@@ -278,6 +299,18 @@ export class ImportHistoryService {
 		} catch (error) {
 			throw toPublicTraktException(error);
 		}
+	}
+
+	private mapExistingTraktImport(
+		job: NonNullable<BackgroundJobRecord>,
+	): StartTraktImportResponseDto {
+		const data = parseTraktImportData(job.data);
+		return {
+			profile: buildProfileFromJobData(data),
+			previewItems: [],
+			sourcePreviewCount: 0,
+			job: mapTraktImportJob(job),
+		};
 	}
 
 	async getCurrentTraktImport(
