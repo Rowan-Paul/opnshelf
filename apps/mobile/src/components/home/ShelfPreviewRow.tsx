@@ -9,6 +9,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { showHref } from "@/lib/media-href";
 import { useProfileShelf } from "@/lib/use-public-profile";
+import { formatWatchDateTime } from "@/lib/watch-date";
 
 type ShelfItem = ShelfResponseDto["items"][number];
 
@@ -99,6 +100,7 @@ export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
 			title: item.title,
 			posterPath: item.posterPath,
 			year: item.releaseYear ? String(item.releaseYear) : undefined,
+			timestamp: formatWatchDateTime(item.watchedDate),
 		};
 	}
 	return {
@@ -119,5 +121,6 @@ export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
 			showTitle: item.showTitle,
 			episodeTitle: item.episodeTitle,
 		},
+		timestamp: formatWatchDateTime(item.watchedDate),
 	};
 }

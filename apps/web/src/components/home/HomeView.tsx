@@ -66,7 +66,8 @@ function getEpisodeInfo(item: ReleaseCalendarItemDto): string | undefined {
 	return undefined;
 }
 
-// Helper function to format watched time (e.g. "Apr 9 at 2:30 PM", "Jan 15, 2024 at 2:30 PM")
+// Helper function to format watched time (e.g. "Apr 9 · 2:30 PM"). The
+// compact separator remains meaningful if a narrow shelf card wraps the time.
 function formatWatchedDate(
 	dateStr: string,
 	timezone?: string,
@@ -89,7 +90,7 @@ function formatWatchedDate(
 			"en-US",
 			withUserLocale({ month: "short", day: "numeric" }, timezone, timeFormat),
 		);
-		return `${formattedDate} at ${timeString}`;
+		return `${formattedDate} · ${timeString}`;
 	}
 	const formattedDate = date.toLocaleDateString(
 		"en-US",
@@ -99,7 +100,7 @@ function formatWatchedDate(
 			timeFormat,
 		),
 	);
-	return `${formattedDate} at ${timeString}`;
+	return `${formattedDate} · ${timeString}`;
 }
 
 export function HomeView() {

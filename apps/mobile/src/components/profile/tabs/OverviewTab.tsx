@@ -23,6 +23,7 @@ import {
 	useProfileReviews,
 	useProfileShelf,
 } from "@/lib/use-public-profile";
+import { formatWatchDateTime } from "@/lib/watch-date";
 
 const POSTER_W = 120;
 
@@ -128,6 +129,7 @@ export function OverviewTab({
 		title: m.movie.title,
 		posterPath: m.movie.posterPath,
 		year: m.movie.releaseYear ? String(m.movie.releaseYear) : undefined,
+		timestamp: formatWatchDateTime(m.watchedDate),
 	}));
 
 	const episodeItems: MediaCardItem[] = (episodes.data?.items ?? [])

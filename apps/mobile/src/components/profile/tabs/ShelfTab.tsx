@@ -23,16 +23,6 @@ import { useWatchActions } from "@/lib/use-watch-actions";
 
 type Filter = "all" | "movie" | "episode";
 
-function formatWatchDate(date: string): string {
-	return new Intl.DateTimeFormat(undefined, {
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	}).format(new Date(date));
-}
-
 function sectionLabel(date: string): string {
 	const watched = new Date(date);
 	const now = new Date();
@@ -310,12 +300,7 @@ function ShelfWatchCard({
 	return (
 		<View className="px-1 pb-3" style={{ width: `${100 / columns}%` }}>
 			<MediaCard
-				item={{
-					...shelfItemToCardItem(item),
-					timestamp: item.watchedDate
-						? formatWatchDate(item.watchedDate)
-						: undefined,
-				}}
+				item={shelfItemToCardItem(item)}
 				onRemove={isOwner ? remove : undefined}
 				// Each card mounts its own mutation, so removing several at once
 				// spins only the cards actually being removed.
