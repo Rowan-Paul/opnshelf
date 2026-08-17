@@ -22,8 +22,8 @@ The stack forces most of the decisions:
 - `client_id` for OAuth is derived from `backendUrl`
   (`auth.service.ts:1450`), so any backend with a public HTTPS origin serves its
   own client metadata.
-- The session cookie domain is the hostname of `FRONTEND_URL`
-  (`auth.controller.ts:83-97`), and is only set when `NODE_ENV=production`.
+- Web sessions use a distinct host-only API cookie. The legacy parent-domain
+  `session` cookie remains a read fallback during migration.
 - The PDS already lives in its own Railway project (ADR 0019).
 
 ## Decision
@@ -54,11 +54,12 @@ previous convention was to commit straight to `main`, and that convention is now
 wrong: a push to `main` deploys to production and skips staging.
 
 **Domains nest, they do not sit side by side.** Staging web is
-`staging.opnshelf.xyz` and the staging API is `api.staging.opnshelf.xyz`. The
-cookie domain is taken from `FRONTEND_URL`'s hostname, so `staging.opnshelf.xyz`
-covers `api.staging.opnshelf.xyz` while a sibling `api-staging.opnshelf.xyz`
-would never receive the session cookie. Staging runs `NODE_ENV=production` or the
-cookie is neither secure nor domain-scoped.
+`staging.opnshelf.xyz` and the staging API is `api.staging.opnshelf.xyz`. Session
+cookies are host-only on each API hostname and use the `opnshelf_session` name,
+so the production cookie cannot shadow a staging session. This isolation is
+necessary because a parent-domain production cookie for `opnshelf.xyz` is also
+sent to `api.staging.opnshelf.xyz`. Staging runs `NODE_ENV=production` so the
+cookie is secure.
 
 **One mobile app, not two.** The staging build keeps
 `com.rowanpaul.opnshelf` and the `opnshelf` scheme, and is installed through EAS

@@ -185,7 +185,7 @@ function MediaCardBase({
 					<Text
 						selectable
 						className="mt-1 text-muted-foreground text-xs"
-						numberOfLines={1}
+						numberOfLines={2}
 					>
 						{item.timestamp}
 					</Text>

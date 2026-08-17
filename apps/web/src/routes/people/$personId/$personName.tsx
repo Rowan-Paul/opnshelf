@@ -25,6 +25,10 @@ import {
 	RowListSkeleton,
 } from "../../../components/skeletons";
 
+/** Poster columns for this page; the left column is only 2/3 wide from lg up. */
+const POSTER_GRID =
+	"grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4";
+
 function getRoleText(item: PersonFilmographyItemDto): string | undefined {
 	if (item.character) return item.character;
 	if (item.job) return item.job;
@@ -149,7 +153,7 @@ function PersonDetailPage() {
 						<div className="space-y-8">
 							<section>
 								<h2 className="mb-4 text-display-3">Filmography</h2>
-								<PosterGridSkeleton count={12} />
+								<PosterGridSkeleton count={12} gridClassName={POSTER_GRID} />
 							</section>
 						</div>
 
@@ -306,7 +310,7 @@ function PersonDetailPage() {
 						{knownForItems.length > 0 && (
 							<section>
 								<h2 className="mb-4 text-display-3">Known For</h2>
-								<div className="flex flex-wrap gap-4">
+								<div className={`grid ${POSTER_GRID}`}>
 									{knownForItems.map((item) => (
 										<ActionableMediaCard
 											key={`known-${item.id}-${item.media_type}`}
@@ -325,9 +329,9 @@ function PersonDetailPage() {
 											}
 											role={getRoleText(item)}
 											year={getYear(item)}
-											size="md"
 											layout="poster"
 											interactive={isAuthenticated}
+											fill
 										/>
 									))}
 								</div>
@@ -343,7 +347,7 @@ function PersonDetailPage() {
 								</p>
 							) : (
 								<>
-									<div className="flex flex-wrap gap-4">
+									<div className={`grid ${POSTER_GRID}`}>
 										{allFilmography.map((item) => (
 											<ActionableMediaCard
 												key={`film-${item.id}-${item.media_type}`}
@@ -362,9 +366,9 @@ function PersonDetailPage() {
 												}
 												role={getRoleText(item)}
 												year={getYear(item)}
-												size="md"
 												layout="poster"
 												interactive={isAuthenticated}
+												fill
 											/>
 										))}
 									</div>

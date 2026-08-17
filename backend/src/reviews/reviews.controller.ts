@@ -91,6 +91,7 @@ export class ReviewsController {
 				posterPath: review.posterPath ?? undefined,
 				likeCount: review.likeCount,
 				hasLiked: review.hasLiked,
+				authorRating: review.authorRating ?? undefined,
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),

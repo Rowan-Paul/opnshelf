@@ -1,8 +1,11 @@
 export const TRAKT_IMPORT_JOB_TYPE = "trakt_import" as const;
+export const TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE =
+	"trakt_import_archived_duplicate" as const;
 export const ACCOUNT_DELETION_JOB_TYPE = "account_deletion" as const;
 
 export type BackgroundJobType =
 	| typeof TRAKT_IMPORT_JOB_TYPE
+	| typeof TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE
 	| typeof ACCOUNT_DELETION_JOB_TYPE;
 
 export type TraktImportJobData = {

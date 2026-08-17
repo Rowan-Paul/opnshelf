@@ -8,6 +8,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 vi.mock("../prisma/prisma.service", () => ({
 	PrismaService: vi.fn().mockImplementation(() => ({
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 		authSession: {
 			findUnique: vi.fn(),
 			upsert: vi.fn(),
@@ -113,6 +114,7 @@ describe("AuthService", () => {
 
 	const mockPrismaService = {
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 		authSession: {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
@@ -134,19 +136,23 @@ describe("AuthService", () => {
 		},
 	};
 
+	const baseConfig: Record<string, string | number> = {
+		BACKEND_PUBLIC_URL: "http://127.0.0.1:3001",
+		PDS_URL: "https://opnshelf.social",
+		PORT: 3001,
+		NODE_ENV: "test",
+	};
+
 	const mockConfigService = {
-		get: vi.fn((key: string) => {
-			const config: Record<string, string | number> = {
-				BACKEND_PUBLIC_URL: "http://127.0.0.1:3001",
-				PORT: 3001,
-				NODE_ENV: "test",
-			};
-			return config[key];
-		}),
+		get: vi.fn((key: string) => baseConfig[key]),
 	};
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		mockPrismaService.$queryRaw.mockResolvedValue([]);
+		// Tests that override get() with mockImplementation leak into every later
+		// test (clearAllMocks doesn't undo it), so restore the base config here.
+		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
 		credentialSessionHarness.instances.length = 0;
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -225,46 +231,87 @@ describe("AuthService", () => {
 	});
 
 	describe("revoke", () => {
-		it("should delete session by DID", async () => {
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+		it("atomically deletes every session for the DID and clears matching live managers", async () => {
+			mockPrismaService.$queryRaw.mockResolvedValue([
+				{ id: "session-123" },
+				{ id: "session-456" },
+			]);
+			const oauthClients = Reflect.get(service, "oauthClients") as Map<
+				string,
+				unknown
+			>;
+			const credentialSessions = Reflect.get(
+				service,
+				"credentialSessions",
+			) as Map<string, unknown>;
+			oauthClients.set("session-123", {});
+			oauthClients.set("unrelated", {});
+			credentialSessions.set("session-456", {});
+			credentialSessions.set("unrelated", {});
 
-			await service.revoke("did:plc:abc123");
+			await expect(service.revoke("did:plc:abc123")).resolves.toBe(2);
 
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123" },
-			});
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				strings: string[];
+				values: unknown[];
+			};
+			expect(query.strings.join(" ")).toContain('DELETE FROM "AuthSession"');
+			expect(query.strings.join(" ")).toContain('RETURNING "id"');
+			expect(query.values).toEqual(["did:plc:abc123"]);
+			expect(mockPrismaService.authSession.findMany).not.toHaveBeenCalled();
+			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
+			expect(oauthClients.has("session-123")).toBe(false);
+			expect(credentialSessions.has("session-456")).toBe(false);
+			expect(oauthClients.has("unrelated")).toBe(true);
+			expect(credentialSessions.has("unrelated")).toBe(true);
 		});
 
-		it("should handle errors gracefully", async () => {
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(
-				new Error("DB error"),
-			);
+		it("propagates the original database error", async () => {
+			const databaseError = new Error("DB error");
+			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
 
-			// Should not throw
-			await expect(service.revoke("did:plc:abc123")).resolves.toBeUndefined();
+			await expect(service.revoke("did:plc:abc123")).rejects.toBe(
+				databaseError,
+			);
 		});
 	});
 
 	describe("revokeBySessionId", () => {
-		it("should delete session by id", async () => {
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+		it("deletes the session by id and clears its live managers", async () => {
+			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-123" }]);
+			const oauthClients = Reflect.get(service, "oauthClients") as Map<
+				string,
+				unknown
+			>;
+			const credentialSessions = Reflect.get(
+				service,
+				"credentialSessions",
+			) as Map<string, unknown>;
+			oauthClients.set("session-123", {});
+			oauthClients.set("unrelated", {});
+			credentialSessions.set("session-123", {});
+			credentialSessions.set("unrelated", {});
 
-			await service.revokeBySessionId("session-123");
+			await expect(service.revokeBySessionId("session-123")).resolves.toBe(1);
 
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: { id: "session-123" },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["session-123"]);
+			expect(oauthClients.has("session-123")).toBe(false);
+			expect(credentialSessions.has("session-123")).toBe(false);
+			expect(oauthClients.has("unrelated")).toBe(true);
+			expect(credentialSessions.has("unrelated")).toBe(true);
 		});
 
-		it("should handle errors gracefully", async () => {
-			mockPrismaService.authSession.deleteMany.mockRejectedValue(
-				new Error("DB error"),
-			);
+		it("propagates the original database error", async () => {
+			const databaseError = new Error("DB error");
+			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
 
-			// Should not throw
-			await expect(
-				service.revokeBySessionId("session-123"),
-			).resolves.toBeUndefined();
+			await expect(service.revokeBySessionId("session-123")).rejects.toBe(
+				databaseError,
+			);
 		});
 	});
 
@@ -417,37 +464,31 @@ describe("AuthService", () => {
 
 	describe("revokeDevice", () => {
 		it("scopes the revoke to the caller's own DID", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "session-456" },
-			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
+			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-456" }]);
 
 			const revoked = await service.revokeDevice("did:plc:abc123", "device-b");
 
 			expect(revoked).toBe(1);
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123", deviceId: "device-b" },
-				select: { id: true },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["did:plc:abc123", "device-b"]);
 		});
 
 		it("reports nothing revoked for another user's device", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([]);
-
 			await expect(
 				service.revokeDevice("did:plc:abc123", "someone-elses-device"),
 			).resolves.toBe(0);
-			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
 		});
 	});
 
 	describe("revokeOtherDevices", () => {
 		it("keeps the current session and drops the rest", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
+			mockPrismaService.$queryRaw.mockResolvedValue([
 				{ id: "session-456" },
 				{ id: "session-789" },
 			]);
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 2 });
 
 			const revoked = await service.revokeOtherDevices(
 				"did:plc:abc123",
@@ -455,10 +496,10 @@ describe("AuthService", () => {
 			);
 
 			expect(revoked).toBe(2);
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: { userDid: "did:plc:abc123", id: { not: "session-123" } },
-				select: { id: true },
-			});
+			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
+				values: unknown[];
+			};
+			expect(query.values).toEqual(["did:plc:abc123", "session-123"]);
 		});
 	});
 
@@ -761,6 +802,58 @@ describe("AuthService", () => {
 			expect(result).toEqual({ user: mockUser, isNewUser: true });
 			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
 		});
+
+		it("should recover when the Postgres adapter nests the constraint fields", async () => {
+			const profile = {
+				did: "did:plc:new123",
+				handle: "user.bsky.social",
+				displayName: "New User",
+				avatar: null,
+			};
+			const mockUser = {
+				...profile,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			const handleConflictError = {
+				code: "P2002",
+				meta: {
+					driverAdapterError: {
+						cause: {
+							kind: "UniqueConstraintViolation",
+							constraint: { fields: ["handle"] },
+						},
+					},
+				},
+			};
+
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: typeof mockPrismaService) => unknown) =>
+					fn(mockPrismaService),
+			);
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({
+					did: "did:plc:old123",
+					handle: profile.handle,
+					emailVerifiedAt: null,
+					isNativePds: false,
+					avatar: null,
+				});
+			mockPrismaService.user.upsert
+				.mockRejectedValueOnce(handleConflictError)
+				.mockResolvedValueOnce(mockUser);
+			mockPrismaService.user.update.mockResolvedValue({});
+
+			const result = await service.upsertUser(profile);
+
+			expect(result).toEqual({ user: mockUser, isNewUser: true });
+			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { did: "did:plc:old123" } }),
+			);
+			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
+		});
 	});
 
 	describe("parseOAuthAppState", () => {
@@ -994,6 +1087,46 @@ describe("AuthService", () => {
 		});
 	});
 
+	describe("authorizeWithPds", () => {
+		it("asks for the signup form when given prompt=create", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize"),
+			);
+
+			await service.authorizeWithPds(undefined, "create");
+
+			expect(sharedOAuthClient.authorize.mock.calls.at(-1)?.[1].prompt).toBe(
+				"create",
+			);
+		});
+
+		it("omits prompt entirely for sign-in, so the PDS shows its login page", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize"),
+			);
+
+			await service.authorizeWithPds(undefined, undefined);
+
+			expect(
+				sharedOAuthClient.authorize.mock.calls.at(-1)?.[1],
+			).not.toHaveProperty("prompt");
+		});
+
+		it("adds an SSO provider hint to the PDS authorize URL", async () => {
+			sharedOAuthClient.authorize.mockResolvedValue(
+				new URL("https://pds.example/authorize?request_uri=urn%3Arequest"),
+			);
+
+			const url = await service.authorizeWithPds(
+				undefined,
+				undefined,
+				"google",
+			);
+
+			expect(new URL(url).searchParams.get("sso")).toBe("google");
+		});
+	});
+
 	describe("callback", () => {
 		it("should call the OAuth client and return session + a fresh session id", async () => {
 			const mockResult = { session: { did: "did:plc:abc123" }, state: "xyz" };
@@ -1224,6 +1357,64 @@ describe("AuthService", () => {
 
 		it("should return false when there is no session", async () => {
 			await expect(service.hasBlueskyProfile(undefined)).resolves.toBe(false);
+		});
+	});
+
+	describe("delegated Google SSO", () => {
+		it("binds the verified id_token to the prepared OAuth request", async () => {
+			const mockFetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					token: "pending-token",
+					email: "jane@example.com",
+					emailVerified: true,
+					providerUsername: "Jane",
+				}),
+			});
+			vi.stubGlobal("fetch", mockFetch);
+
+			const result = await service.startSsoRegistration(
+				"verified-id-token",
+				"urn:ietf:params:oauth:request_uri:abc",
+			);
+
+			expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+				provider: "google",
+				id_token: "verified-id-token",
+				request_uri: "urn:ietf:params:oauth:request_uri:abc",
+			});
+			expect(result).toEqual({
+				token: "pending-token",
+				email: "jane@example.com",
+				emailVerified: true,
+				providerUsername: "Jane",
+				redirectUrl: null,
+			});
+			vi.unstubAllGlobals();
+		});
+
+		it("resolves the PDS consent redirect returned after registration", async () => {
+			const mockFetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					did: "did:plc:jane",
+					handle: "jane.opnshelf.social",
+					redirectUrl:
+						"/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
+				}),
+			});
+			vi.stubGlobal("fetch", mockFetch);
+
+			const result = await service.completeSsoRegistration({
+				token: "pending-token",
+				handle: "jane.opnshelf.social",
+				inviteCode: "invite-code",
+			});
+
+			expect(result.redirectUrl).toBe(
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
+			);
+			vi.unstubAllGlobals();
 		});
 	});
 

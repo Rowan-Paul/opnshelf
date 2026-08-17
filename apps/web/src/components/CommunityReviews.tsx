@@ -15,6 +15,7 @@ import { ReviewDialog } from "./ReviewDialog";
 import { ReviewReaderDialog } from "./ReviewReaderDialog";
 import { ShareButton } from "./ShareButton";
 import { SpoilerShield } from "./SpoilerShield";
+import StarRating from "./StarRating";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -55,6 +56,7 @@ function ReviewCard({
 		likeCount: number;
 		hasLiked: boolean;
 		mirrorToBlog?: boolean;
+		authorRating?: number | null;
 		createdAt: string;
 	};
 	mediaType: "movie" | "show";
@@ -195,31 +197,36 @@ function ReviewCard({
 						</p>
 					</div>
 				</Link>
-				{isOwnReview && (
-					<div className="flex shrink-0 items-center gap-1">
-						<button
-							type="button"
-							onClick={() => setEditOpen(true)}
-							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-							aria-label="Edit review"
-						>
-							<Pencil className="size-3.5" />
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmOpen(true)}
-							disabled={deleteMutation.isPending}
-							className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-							aria-label="Delete review"
-						>
-							{deleteMutation.isPending ? (
-								<Loader2 className="size-3.5 animate-spin" />
-							) : (
-								<Trash2 className="size-3.5" />
-							)}
-						</button>
-					</div>
-				)}
+				<div className="flex shrink-0 items-center gap-2">
+					{review.authorRating != null && review.authorRating > 0 && (
+						<StarRating value={review.authorRating} readOnly size="sm" />
+					)}
+					{isOwnReview && (
+						<div className="flex items-center gap-1">
+							<button
+								type="button"
+								onClick={() => setEditOpen(true)}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								aria-label="Edit review"
+							>
+								<Pencil className="size-3.5" />
+							</button>
+							<button
+								type="button"
+								onClick={() => setConfirmOpen(true)}
+								disabled={deleteMutation.isPending}
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								aria-label="Delete review"
+							>
+								{deleteMutation.isPending ? (
+									<Loader2 className="size-3.5 animate-spin" />
+								) : (
+									<Trash2 className="size-3.5" />
+								)}
+							</button>
+						</div>
+					)}
+				</div>
 			</div>
 
 			<div className="flex gap-3">

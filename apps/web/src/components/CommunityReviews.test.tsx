@@ -107,6 +107,26 @@ describe("CommunityReviews", () => {
 		expect(screen.getByText("3")).toBeTruthy();
 	});
 
+	it("shows the author's positive rating beside the review header", () => {
+		mockUseMediaReviews.mockReturnValue({
+			data: { items: [review({ authorRating: 8 })] },
+			isLoading: false,
+		});
+
+		render(<CommunityReviews mediaType="movie" mediaId="123" />);
+		expect(screen.getByLabelText("Rating: 4.0 out of 5")).toBeTruthy();
+	});
+
+	it.each([null, 0])("does not show a rating for %s", (authorRating) => {
+		mockUseMediaReviews.mockReturnValue({
+			data: { items: [review({ authorRating })] },
+			isLoading: false,
+		});
+
+		render(<CommunityReviews mediaType="movie" mediaId="123" />);
+		expect(screen.queryByRole("img", { name: /Rating:/ })).toBeNull();
+	});
+
 	it("clamps a long review and links Read more to the review page", () => {
 		const longBody = `${"word ".repeat(120)}END`;
 		mockUseMediaReviews.mockReturnValue({

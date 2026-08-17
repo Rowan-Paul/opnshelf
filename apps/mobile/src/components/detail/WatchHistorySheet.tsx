@@ -1,23 +1,11 @@
 import { Plus, X } from "lucide-react-native";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { formatWatchDateTime } from "@/lib/watch-date";
 
 export interface WatchHistoryEntry {
 	id: string;
 	watchedDate?: string;
-}
-
-function formatWatchedDateTime(iso?: string): string {
-	if (!iso) return "Unknown date";
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return "Unknown date";
-	return d.toLocaleString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	});
 }
 
 /**
@@ -91,7 +79,7 @@ export function WatchHistorySheet({
 										className="flex-row items-center gap-2 rounded-lg p-2"
 									>
 										<Text className="flex-1 font-medium text-foreground text-sm">
-											{formatWatchedDateTime(entry.watchedDate)}
+											{formatWatchDateTime(entry.watchedDate) ?? "Unknown date"}
 										</Text>
 										<Pressable
 											hitSlop={8}

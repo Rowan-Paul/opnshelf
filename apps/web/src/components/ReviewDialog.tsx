@@ -263,7 +263,8 @@ export function ReviewDialog({
 								: "Write a Review"}
 					</DialogTitle>
 					<DialogDescription className="sr-only">
-						Write a long-form review for this title. A title is required.
+						Write a long-form review for this title. A title and review body are
+						required.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -323,7 +324,9 @@ export function ReviewDialog({
 					/>
 				</div>
 
-				<span className="text-(--foreground-muted) text-sm">Review</span>
+				<span className="text-(--foreground-muted) text-sm">
+					Review <span className="text-red-500">*</span>
+				</span>
 
 				{mounted ? (
 					<Suspense

@@ -316,6 +316,90 @@ describe("ReviewsService", () => {
 		});
 	});
 
+	describe("getUserReviews", () => {
+		it("batch joins ratings by exact media coordinates", async () => {
+			const base = {
+				rkey: "rk",
+				title: "t",
+				markdown: "m",
+				spoiler: false,
+				userDid: "did:plc:alice",
+				_count: { likes: 0 },
+				likes: [],
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			mockPrismaService.review.findMany.mockResolvedValue([
+				{
+					...base,
+					id: "movie-review",
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
+				},
+				{
+					...base,
+					id: "episode-review",
+					mediaType: "episode",
+					mediaId: "456",
+					seasonNumber: 2,
+					episodeNumber: 3,
+				},
+			]);
+			mockPrismaService.review.count.mockResolvedValue(2);
+			mockPrismaService.rating.findMany.mockResolvedValue([
+				{
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					rating: 8,
+				},
+				{
+					mediaType: "episode",
+					mediaId: "456",
+					seasonNumber: 2,
+					episodeNumber: 3,
+					rating: 6,
+				},
+			]);
+			mockPrismaService.movie.findMany.mockResolvedValue([]);
+			mockPrismaService.episode.findMany.mockResolvedValue([]);
+
+			const result = await service.getUserReviews("did:plc:alice");
+
+			expect(result.items.map((review) => review.authorRating)).toEqual([8, 6]);
+			expect(mockPrismaService.rating.findMany).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.rating.findMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:alice",
+					OR: [
+						{
+							mediaType: "movie",
+							mediaId: "123",
+							seasonNumber: 0,
+							episodeNumber: 0,
+						},
+						{
+							mediaType: "episode",
+							mediaId: "456",
+							seasonNumber: 2,
+							episodeNumber: 3,
+						},
+					],
+				},
+				select: {
+					mediaType: true,
+					mediaId: true,
+					seasonNumber: true,
+					episodeNumber: true,
+					rating: true,
+				},
+			});
+		});
+	});
+
 	describe("getMediaReviews", () => {
 		it("returns reviews sorted by likes and date, enriched with the media poster", async () => {
 			mockPrismaService.review.findMany.mockResolvedValue([

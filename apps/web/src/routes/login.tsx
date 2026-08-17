@@ -7,8 +7,10 @@ import {
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
+import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
@@ -150,21 +152,34 @@ function LoginPage() {
 						<div className="h-px flex-1 bg-(--border)" />
 					</div>
 
-					<button
-						type="button"
-						onClick={handleSignup}
-						disabled={isLoading || isSignupLoading}
-						className="btn btn-secondary w-full"
-					>
-						{isSignupLoading ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Connecting...
-							</>
-						) : (
-							"Create New Account"
-						)}
-					</button>
+					<div className="space-y-3">
+						{/* Same endpoint as the signup page on purpose. It signs in an
+						    account we already know and creates one we don't, and either
+						    way it never shows the PDS's invite-code form. */}
+						<a
+							href={`${env.VITE_API_URL}/auth/google/start`}
+							className="btn btn-secondary w-full"
+						>
+							<GoogleMark className="size-4" />
+							Continue with Google
+						</a>
+
+						<button
+							type="button"
+							onClick={handleSignup}
+							disabled={isLoading || isSignupLoading}
+							className="btn btn-secondary w-full"
+						>
+							{isSignupLoading ? (
+								<>
+									<Loader2 className="size-4 animate-spin" />
+									Connecting...
+								</>
+							) : (
+								"Create New Account"
+							)}
+						</button>
+					</div>
 				</div>
 
 				{/* Info */}

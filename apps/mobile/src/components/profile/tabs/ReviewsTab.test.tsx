@@ -64,6 +64,10 @@ vi.mock("@/components/profile/ProfileContentCard", async () => {
 	};
 });
 
+vi.mock("@/components/profile/ProfileReviewRating", () => ({
+	ProfileReviewRating: () => null,
+}));
+
 vi.mock("@/components/detail/ReviewEditorSheet", () => ({
 	ReviewEditorSheet: () => null,
 }));

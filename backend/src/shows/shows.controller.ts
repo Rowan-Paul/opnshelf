@@ -376,29 +376,6 @@ export class ShowsController {
 			seasonNumber ? Number(seasonNumber) : undefined,
 			episodeNumber ? Number(episodeNumber) : undefined,
 		);
-
-		try {
-			if (mode === "all") {
-				await this.showsService.removeAllTrackedEpisodes(
-					user.did,
-					showId,
-					seasonNumber ? Number(seasonNumber) : undefined,
-					episodeNumber ? Number(episodeNumber) : undefined,
-				);
-			} else {
-				await this.showsService.removeLatestTrackedEpisode(
-					user.did,
-					showId,
-					seasonNumber ? Number(seasonNumber) : undefined,
-					episodeNumber ? Number(episodeNumber) : undefined,
-				);
-			}
-		} catch (err: unknown) {
-			this.logger.warn(
-				{ err: err instanceof Error ? err.message : String(err) },
-				"Failed to optimistically remove from DB; firehose will catch it",
-			);
-		}
 	}
 
 	@Get(":showId")

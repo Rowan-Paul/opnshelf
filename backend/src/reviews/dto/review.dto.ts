@@ -340,6 +340,14 @@ export class UserReviewDto {
 	})
 	hasLiked: boolean;
 
+	@ApiPropertyOptional({
+		type: Number,
+		description:
+			"The author's own rating for this exact media item, joined from the separate Rating entity.",
+		nullable: true,
+	})
+	authorRating?: number | null;
+
 	@ApiProperty()
 	createdAt: string;
 

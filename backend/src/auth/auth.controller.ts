@@ -23,8 +23,10 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
+import { randomUUID } from "node:crypto";
 import { IngesterService } from "../ingester/ingester.service";
 import { CaptchaService } from "../pds/captcha.service";
+import { GoogleOAuthService } from "../pds/google-oauth.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { UsersService } from "../users/users.service";
 import { AuthGuard } from "./auth.guard";
@@ -36,15 +38,31 @@ import {
 	PermissionChangeDto,
 	PermissionChangeResponseDto,
 } from "./dto/permission-change.dto";
+import {
+	GoogleRegisterDto,
+	GoogleRegisterResponseDto,
+} from "./dto/google-register.dto";
 import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
 import { UserDto } from "./dto/user.dto";
 import { VerifyEmailDto, VerifyEmailResponseDto } from "./dto/verify-email.dto";
-import { extractSessionId } from "./session-id";
+import {
+	extractSessionId,
+	LEGACY_SESSION_COOKIE_NAME,
+	SESSION_COOKIE_NAME,
+} from "./session-id";
 import type { AuthenticatedRequest } from "./types";
 
-const SESSION_COOKIE_NAME = "session";
 const PLATFORM_COOKIE_NAME = "auth_platform";
 const TIMEZONE_COOKIE_NAME = "auth_timezone";
+/** CSRF state for the Google consent round trip. */
+const GOOGLE_STATE_COOKIE_NAME = "google_state";
+/** Holds the PDS pending-registration token between Google and the handle picker. */
+const GOOGLE_PENDING_COOKIE_NAME = "google_pending";
+const GOOGLE_COOKIE_MAX_AGE_MS = 15 * 60 * 1000;
+type GoogleSignupError =
+	| "google_unavailable"
+	| "google_failed"
+	| "google_email_unverified";
 type OAuthErrorCode =
 	| "handle_required"
 	| "auth_failed"
@@ -74,11 +92,12 @@ export class AuthController {
 		private readonly usersService: UsersService,
 		private readonly tranquilAdmin: TranquilAdminService,
 		private readonly captcha: CaptchaService,
+		private readonly googleOAuth: GoogleOAuthService,
 	) {}
 
 	/**
-	 * Root domain for cookie in production (e.g. opnshelf.xyz) so cookie is sent to apex and all subdomains (api, www, etc.).
-	 * Use bare hostname without leading dot for reliable behavior on apex domain.
+	 * Scope used only to clear session cookies issued before sessions became
+	 * host-only. New session cookies must never use this domain.
 	 */
 	private getCookieDomain(): string | undefined {
 		const isProduction =
@@ -102,6 +121,15 @@ export class AuthController {
 			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
 		// Pass the error code so the /login route can show a friendly toast.
 		const url = new URL("/login", frontendUrl);
+		url.searchParams.set("error", errorCode);
+		return url.toString();
+	}
+
+	/** Bounce back to the signup form with a code it turns into a toast. */
+	private buildSignupErrorUrl(errorCode: GoogleSignupError): string {
+		const frontendUrl =
+			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
+		const url = new URL("/signup", frontendUrl);
 		url.searchParams.set("error", errorCode);
 		return url.toString();
 	}
@@ -229,6 +257,21 @@ export class AuthController {
 		@Query("timezone") timezone: string | undefined,
 		@Res() res: Response,
 	) {
+		return this.startPdsAuthorize(platform, timezone, res, "create");
+	}
+
+	// NB: there is deliberately no public "sign in via the PDS page" route.
+	// Sending an unlinked Google account to that page makes Tranquil turn the
+	// sign-in into its own registration, invite-code field and all. Every Google
+	// entry point goes through `auth/google/start` instead, and the callback
+	// hands an already-linked account on to the PDS sign-in page itself.
+
+	private async startPdsAuthorize(
+		platform: string | undefined,
+		timezone: string | undefined,
+		res: Response,
+		prompt: "create" | undefined,
+	) {
 		const mobilePlatform: "mobile" | undefined =
 			platform === "mobile" ? "mobile" : undefined;
 		const oauthAppState = {
@@ -253,10 +296,13 @@ export class AuthController {
 		}
 
 		try {
-			const authUrl = await this.authService.authorizeWithPds(oauthAppState);
+			const authUrl = await this.authService.authorizeWithPds(
+				oauthAppState,
+				prompt,
+			);
 			return res.redirect(authUrl);
 		} catch (error) {
-			this.logger.error("OAuth PDS signup authorization failed", error);
+			this.logger.error("OAuth PDS authorization failed", error);
 			return res.redirect(
 				this.resolveErrorRedirect("auth_failed", mobilePlatform),
 			);
@@ -367,14 +413,12 @@ export class AuthController {
 
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
-		const cookieDomain = this.getCookieDomain();
 		res.cookie(SESSION_COOKIE_NAME, sessionId, {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: "lax",
 			maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
 			path: "/",
-			...(cookieDomain && { domain: cookieDomain }),
 		});
 
 		return {
@@ -382,6 +426,274 @@ export class AuthController {
 			handle: account.handle,
 			sessionId,
 		};
+	}
+
+	/**
+	 * Start "Continue with Google".
+	 *
+	 * opnshelf runs the Google round trip itself so it keeps its own signup UI;
+	 * the PDS's Svelte pages are never involved. Web only on purpose: shipping a
+	 * Google button in the iOS app trips App Store guideline 4.8, which needs
+	 * Apple SSO alongside it.
+	 */
+	@Get("auth/google/start")
+	@ApiOperation({ summary: "Start a Google-backed signup" })
+	@ApiResponse({ status: 302, description: "Redirect to Google" })
+	googleStart(@Res() res: Response) {
+		if (!this.googleOAuth.configured) {
+			return res.redirect(this.buildSignupErrorUrl("google_unavailable"));
+		}
+		// No timezone here: the handle picker posts the browser's timezone with the
+		// account details, which is the only place it's read.
+		const state = randomUUID();
+		res.cookie(GOOGLE_STATE_COOKIE_NAME, state, this.googleCookieOptions());
+		return res.redirect(this.googleOAuth.buildAuthUrl(state));
+	}
+
+	/**
+	 * Google's redirect target. Exchanges the code, has the PDS verify the
+	 * resulting `id_token`, and parks the pending-registration token in an
+	 * httpOnly cookie so the handle picker can spend it.
+	 *
+	 * No account exists yet at this point — that happens in `googleRegister`
+	 * once the user has picked a handle and cleared the captcha.
+	 */
+	@Get("auth/google/callback")
+	@ApiOperation({ summary: "Google OAuth callback for signup" })
+	@ApiResponse({ status: 302, description: "Redirect to the handle picker" })
+	async googleCallback(
+		@Query("code") code: string | undefined,
+		@Query("state") state: string | undefined,
+		@Query("error") error: string | undefined,
+		@Req() req: Request,
+		@Res() res: Response,
+	) {
+		const cookies = req.cookies as Record<string, string | undefined>;
+		const expectedState = cookies?.[GOOGLE_STATE_COOKIE_NAME];
+		res.clearCookie(GOOGLE_STATE_COOKIE_NAME, { path: "/" });
+
+		if (error || !code || !state || !expectedState || state !== expectedState) {
+			if (error) {
+				this.logger.warn(`Google returned an error on callback: ${error}`);
+			}
+			return res.redirect(this.buildSignupErrorUrl("google_failed"));
+		}
+
+		let coreOAuthUrl: string | undefined;
+		try {
+			const idToken = await this.googleOAuth.exchangeCode(code);
+			// Create the Core OAuth request before account creation and bind the
+			// verified Google registration to it. Tranquil can then take the newly
+			// created account straight to consent without authenticating with Google
+			// a second time.
+			coreOAuthUrl = await this.authService.authorizeWithPds();
+			const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
+			if (!requestUri) {
+				throw new Error("PDS authorization URL omitted request_uri");
+			}
+			const pending = await this.authService.startSsoRegistration(
+				idToken,
+				requestUri,
+			);
+			if (pending.redirectUrl) {
+				// Returning account: the verified id_token authenticated it and the PDS
+				// already bound its DID to Core OAuth. No second Google round trip.
+				return res.redirect(pending.redirectUrl);
+			}
+			if (!pending.token) {
+				throw new Error(
+					"PDS returned neither a registration token nor redirect",
+				);
+			}
+
+			// The PDS only auto-verifies the email channel when Google says the
+			// address is verified. Without that the account would be created and
+			// then gated behind a code Tranquil currently cannot email, so refuse
+			// before anything is created.
+			if (!pending.email || !pending.emailVerified) {
+				return res.redirect(
+					this.buildSignupErrorUrl("google_email_unverified"),
+				);
+			}
+
+			res.cookie(
+				GOOGLE_PENDING_COOKIE_NAME,
+				pending.token,
+				this.googleCookieOptions(),
+			);
+
+			const url = new URL("/signup/google", this.getFrontendUrl());
+			// Display only. The account is created from the cookie-held token and
+			// the email the PDS already has, never from these params.
+			url.searchParams.set("email", pending.email);
+			const suggested = this.suggestUsername(pending.providerUsername);
+			if (suggested) {
+				url.searchParams.set("suggested", suggested);
+			}
+			return res.redirect(url.toString());
+		} catch (err) {
+			// ponytail: substring match on the PDS message. It is the only way to
+			// tell "already has an account" from a bad token, and getting it wrong
+			// only costs a returning user a vaguer error.
+			const message =
+				err && typeof err === "object" && "message" in err
+					? String((err as { message?: unknown }).message)
+					: "";
+			if (message.includes("already linked")) {
+				// Not an error: this Google account already has an opnshelf account,
+				// so the same button has to sign them in. Only the PDS can mint a
+				// session for an existing account, so hand it an explicit Google hint
+				// (and no `prompt=create`) to skip the PDS's provider picker.
+				//
+				// Never send them through the PDS page *before* this check: for an
+				// unlinked Google account Tranquil turns a sign-in into its own
+				// registration, invite-code field and all (handle_sso_login in
+				// sso_endpoints.rs). Going through us first is what avoids that.
+				if (!coreOAuthUrl) {
+					this.logger.error("Google sign-in handoff had no OAuth request");
+					return res.redirect(this.buildSignupErrorUrl("google_failed"));
+				}
+				const signInUrl = new URL(coreOAuthUrl);
+				signInUrl.searchParams.set("sso", "google");
+				return res.redirect(signInUrl.toString());
+			}
+			this.logger.error("Google signup callback failed", err);
+			return res.redirect(this.buildSignupErrorUrl("google_failed"));
+		}
+	}
+
+	/**
+	 * Finish a Google signup: create the account on our PDS and hand straight
+	 * into Core OAuth.
+	 *
+	 * Unlike password signup there is no verification step to wait for — Google
+	 * already verified the email — so this skips the bootstrap credential session
+	 * entirely and lets the OAuth callback do the Tab registration and seeding.
+	 */
+	@Post("auth/google/register")
+	@HttpCode(HttpStatus.CREATED)
+	@ApiOperation({
+		summary: "Create an account from a verified Google identity",
+	})
+	@ApiResponse({ status: HttpStatus.CREATED, type: GoogleRegisterResponseDto })
+	@ApiResponse({ status: 400, description: "Google signup was not started" })
+	@ApiResponse({ status: 403, description: "Captcha verification failed" })
+	@ApiResponse({ status: 409, description: "Username already taken" })
+	@ApiResponse({ status: 429, description: "Too many signup attempts" })
+	async googleRegister(
+		@Body() dto: GoogleRegisterDto,
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<GoogleRegisterResponseDto> {
+		const ip = this.getClientIp(req);
+		this.enforceRegisterRateLimit(ip);
+
+		const human = await this.captcha.verify(dto.captchaToken, ip);
+		if (!human) {
+			throw new ForbiddenException("Captcha verification failed");
+		}
+
+		const cookies = req.cookies as Record<string, string | undefined>;
+		const pendingToken = cookies?.[GOOGLE_PENDING_COOKIE_NAME];
+		if (!pendingToken) {
+			throw new BadRequestException(
+				"Your Google sign-in expired. Please start again.",
+			);
+		}
+
+		const handleDomain = this.configService.get<string>("PDS_HANDLE_DOMAIN");
+		if (!handleDomain) {
+			this.logger.error("PDS_HANDLE_DOMAIN is not configured");
+			throw new ServiceUnavailableException("Signup is not configured");
+		}
+		const handle = `${dto.username.toLowerCase()}.${handleDomain}`;
+
+		let inviteCode: string;
+		try {
+			inviteCode = await this.tranquilAdmin.mintInviteCode(1);
+		} catch (error) {
+			this.logger.error("Failed to mint invite code for Google signup", error);
+			throw new ServiceUnavailableException(
+				"Could not allocate an invite right now",
+			);
+		}
+
+		let account: Awaited<
+			ReturnType<typeof this.authService.completeSsoRegistration>
+		>;
+		try {
+			account = await this.authService.completeSsoRegistration({
+				token: pendingToken,
+				handle,
+				inviteCode,
+			});
+		} catch (error) {
+			void this.tranquilAdmin
+				.disableInviteCodes([inviteCode])
+				.catch(() => undefined);
+			// Keep the pending cookie: a taken username is worth retrying without
+			// sending the user back through Google.
+			throw this.mapCreateAccountError(error);
+		}
+
+		res.clearCookie(GOOGLE_PENDING_COOKIE_NAME, { path: "/" });
+
+		await this.authService.upsertUser(
+			{
+				did: account.did,
+				handle: account.handle,
+				displayName: null,
+				avatar: null,
+			},
+			dto.timezone,
+			// Native account on our PDS, but already verified by Google, so it must
+			// not be caught by the verify-email gate (see needsEmailVerification).
+			{ isNativePds: true, emailVerified: true },
+		);
+
+		// The pending registration is already bound to Core OAuth. Preserve the
+		// picker timezone through its callback and continue directly to consent.
+		if (dto.timezone) {
+			res.cookie(TIMEZONE_COOKIE_NAME, dto.timezone, {
+				httpOnly: true,
+				maxAge: 5 * 60 * 1000,
+				sameSite: "lax",
+			});
+		}
+
+		return {
+			did: account.did,
+			handle: account.handle,
+			coreOAuthUrl: account.redirectUrl,
+		};
+	}
+
+	private googleCookieOptions() {
+		return {
+			httpOnly: true,
+			secure: this.configService.get<string>("NODE_ENV") === "production",
+			sameSite: "lax" as const,
+			maxAge: GOOGLE_COOKIE_MAX_AGE_MS,
+			path: "/",
+		};
+	}
+
+	private getFrontendUrl(): string {
+		return (
+			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000"
+		);
+	}
+
+	/** Turn a Google display name into something the username field accepts. */
+	private suggestUsername(providerUsername: string | null): string | null {
+		if (!providerUsername) return null;
+		const slug = providerUsername
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "")
+			.slice(0, 63)
+			.replace(/-+$/g, "");
+		return slug.length >= 3 ? slug : null;
 	}
 
 	private getClientIp(req: Request): string {
@@ -487,7 +799,6 @@ export class AuthController {
 			this.configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
 		const isProduction =
 			this.configService.get<string>("NODE_ENV") === "production";
-		const cookieDomain = this.getCookieDomain();
 		const cookies = req.cookies as Record<string, string | undefined>;
 
 		try {
@@ -577,15 +888,15 @@ export class AuthController {
 				);
 			}
 
-			// Set session cookie with the opaque per-device id minted by callback()
-			// (domain set so frontend at opnshelf.xyz receives it).
+			// Keep the session cookie host-only to isolate api.opnshelf.xyz from
+			// api.staging.opnshelf.xyz. The frontend sends it to the API with
+			// credentials: include; it never needs to receive the cookie itself.
 			res.cookie(SESSION_COOKIE_NAME, sessionId, {
 				httpOnly: true,
 				secure: isProduction,
 				sameSite: "lax",
 				maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
 				path: "/",
-				...(cookieDomain && { domain: cookieDomain }),
 			});
 
 			// Check if request originated from mobile app (reuse cookies variable)
@@ -1016,14 +1327,31 @@ export class AuthController {
 			this.configService.get<string>("NODE_ENV") === "production";
 		const cookieDomain = this.getCookieDomain();
 
-		// Clear the session cookie (same options as set, including domain)
+		// Clear the current host-only cookie.
 		res.clearCookie(SESSION_COOKIE_NAME, {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: "lax",
 			path: "/",
-			...(cookieDomain && { domain: cookieDomain }),
 		});
+		// Also clear legacy cookies issued by this environment. Staging's legacy
+		// domain is staging.opnshelf.xyz, so this does not sign the user out of the
+		// production parent-domain session.
+		res.clearCookie(LEGACY_SESSION_COOKIE_NAME, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: "lax",
+			path: "/",
+		});
+		if (cookieDomain) {
+			res.clearCookie(LEGACY_SESSION_COOKIE_NAME, {
+				httpOnly: true,
+				secure: isProduction,
+				sameSite: "lax",
+				path: "/",
+				domain: cookieDomain,
+			});
+		}
 
 		if (sessionId) {
 			await this.authService.revokeBySessionId(sessionId);

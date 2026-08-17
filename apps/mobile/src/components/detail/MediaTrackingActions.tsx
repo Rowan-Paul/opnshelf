@@ -11,6 +11,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { formatWatchDateTime } from "@/lib/watch-date";
 
 type MediaTrackingActionsProps =
 	| { mediaType: "movie"; movieId: string }
@@ -27,17 +28,6 @@ type MediaTrackingActionsProps =
 			seasonNumber: number;
 			episodeNumber: number;
 	  };
-
-function formatWatchedDate(iso?: string) {
-	if (!iso) return undefined;
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return undefined;
-	return d.toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-}
 
 /**
  * The shared "shelf" split button for every media detail surface — movie, show,
@@ -75,7 +65,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	switch (props.mediaType) {
 		case "movie": {
 			isOnShelf = !!status.isWatched;
-			const date = formatWatchedDate(status.latestWatchedDate);
+			const date = formatWatchDateTime(status.latestWatchedDate);
 			detail = date
 				? `${date}${status.totalMovieWatches > 1 ? ` · ${status.totalMovieWatches} watches` : ""}`
 				: undefined;
@@ -105,7 +95,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			isOnShelf =
 				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
 				false;
-			const watchedDate = formatWatchedDate(
+			const watchedDate = formatWatchDateTime(
 				[...showHistory]
 					.filter(
 						(ep) =>

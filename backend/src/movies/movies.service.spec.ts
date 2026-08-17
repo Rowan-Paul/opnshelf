@@ -648,6 +648,12 @@ describe("MoviesService", () => {
 				collection: "xyz.opnshelf.movie",
 				rkey: "movie-123-1234567890",
 			});
+			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:abc123",
+					rkey: "movie-123-1234567890",
+				},
+			});
 			expect(result).toEqual({
 				movieId: "123",
 				mode: "latest",
@@ -677,6 +683,9 @@ describe("MoviesService", () => {
 				orderBy: { watchedDate: "desc" },
 			});
 			expect(mockDeleteRecord).toHaveBeenCalledTimes(2);
+			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledTimes(
+				2,
+			);
 			expect(mockDeleteRecord).toHaveBeenNthCalledWith(1, {
 				repo: "did:plc:abc123",
 				collection: "xyz.opnshelf.movie",
@@ -724,6 +733,59 @@ describe("MoviesService", () => {
 				deletedCount: 1,
 			});
 			expect(warnSpy).not.toHaveBeenCalled();
+			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:abc123",
+					rkey: "movie-123-1234567890",
+				},
+			});
+		});
+
+		it("attempts the full batch but preserves rows for transient failures", async () => {
+			const transient = new Error("network unavailable");
+			mockPrismaService.trackedMovie.findMany.mockResolvedValue([
+				{ id: "1", rkey: "success", movieId: "123" },
+				{ id: "2", rkey: "missing", movieId: "123" },
+				{ id: "3", rkey: "transient", movieId: "123" },
+			]);
+			mockDeleteRecord
+				.mockResolvedValueOnce({})
+				.mockRejectedValueOnce({ status: 404 })
+				.mockRejectedValueOnce(transient);
+
+			await expect(
+				service.unmarkWatched(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"123",
+					"all",
+				),
+			).rejects.toBe(transient);
+
+			expect(mockDeleteRecord).toHaveBeenCalledTimes(3);
+			expect(mockPrismaService.trackedMovie.deleteMany.mock.calls).toEqual([
+				[{ where: { userDid: "did:plc:abc123", rkey: "success" } }],
+				[{ where: { userDid: "did:plc:abc123", rkey: "missing" } }],
+			]);
+		});
+
+		it("preserves the latest local row when the PDS delete fails", async () => {
+			mockPrismaService.trackedMovie.findFirst.mockResolvedValue({
+				id: "1",
+				rkey: "rk1",
+				movieId: "123",
+			});
+			mockDeleteRecord.mockRejectedValue(new Error("network unavailable"));
+
+			await expect(
+				service.unmarkWatched(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"123",
+					"latest",
+				),
+			).rejects.toThrow("network unavailable");
+			expect(mockPrismaService.trackedMovie.deleteMany).not.toHaveBeenCalled();
 		});
 
 		it("should return empty result when no watch record found in latest mode", async () => {
@@ -885,78 +947,6 @@ describe("MoviesService", () => {
 					"2024-01-15T10:00:00Z",
 				),
 			).rejects.toThrow("Movie not found");
-		});
-	});
-
-	describe("removeAllTrackedMovies", () => {
-		it("should delete all tracked movie records for user and movie", async () => {
-			mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
-				count: 2,
-			} as any);
-
-			await service.removeAllTrackedMovies("did:plc:abc123", "123");
-
-			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
-				where: {
-					userDid: "did:plc:abc123",
-					movieId: "123",
-				},
-			});
-		});
-
-		it("should handle when no records exist to delete", async () => {
-			mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
-				count: 0,
-			} as any);
-
-			await expect(
-				service.removeAllTrackedMovies("did:plc:abc123", "999"),
-			).resolves.not.toThrow();
-		});
-	});
-
-	describe("removeLatestTrackedMovie", () => {
-		beforeEach(() => {
-			mockPrismaService.trackedMovie.findFirst = vi.fn();
-			mockPrismaService.trackedMovie.delete = vi.fn();
-		});
-
-		it("should delete the latest tracked movie record", async () => {
-			const latestWatch = {
-				id: "tracked-1",
-				rkey: "movie-123-1234567890",
-				movieId: "123",
-			};
-
-			mockPrismaService.trackedMovie.findFirst.mockResolvedValue(latestWatch);
-			mockPrismaService.trackedMovie.delete.mockResolvedValue(latestWatch);
-
-			await service.removeLatestTrackedMovie("did:plc:abc123", "123");
-
-			expect(mockPrismaService.trackedMovie.findFirst).toHaveBeenCalledWith({
-				where: {
-					userDid: "did:plc:abc123",
-					movieId: "123",
-				},
-				orderBy: {
-					watchedDate: "desc",
-				},
-			});
-			expect(mockPrismaService.trackedMovie.delete).toHaveBeenCalledWith({
-				where: {
-					id: "tracked-1",
-				},
-			});
-		});
-
-		it("should handle when no records exist to delete", async () => {
-			mockPrismaService.trackedMovie.findFirst.mockResolvedValue(null);
-
-			await expect(
-				service.removeLatestTrackedMovie("did:plc:abc123", "999"),
-			).resolves.not.toThrow();
-
-			expect(mockPrismaService.trackedMovie.delete).not.toHaveBeenCalled();
 		});
 	});
 

@@ -25,6 +25,17 @@ describe("extractSessionId", () => {
 		);
 	});
 
+	it("prefers the isolated cookie over a legacy parent-domain cookie", () => {
+		expect(
+			extractSessionId({
+				cookies: {
+					session: "production-session",
+					opnshelf_session: "staging-session",
+				},
+			}),
+		).toBe("staging-session");
+	});
+
 	it.each(["", "Bearer", "Bearer   ", "Basic value", "Bearer one two"])(
 		"falls back to the cookie for malformed authorization %j",
 		(authorization) => {

@@ -6,6 +6,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "../generated/client";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import {
 	deterministicEpisodeWatchRkey,
@@ -135,6 +136,24 @@ const PDS_APPLY_WRITES_BATCH_SIZE = 200;
 // ~300 writes of headroom for the user.
 // ponytail: fixed reserve; revisit only if the PDS exposes per-route budgets.
 const PDS_WRITE_RESERVE_POINTS = 1000;
+const TRAKT_JOB_CAS_RETRIES = 3;
+
+type TraktJobPersistence = {
+	status: TraktJobStatus;
+	data?: TraktImportJobData;
+	nextRunAt: Date;
+	lastError: string | null;
+	completedAt: Date | null;
+};
+
+class TraktJobCasError extends Error {}
+
+function isUniqueConstraintError(error: unknown): boolean {
+	return (
+		error instanceof Prisma.PrismaClientKnownRequestError &&
+		error.code === "P2002"
+	);
+}
 
 @Injectable()
 export class ImportHistoryService {
@@ -231,32 +250,45 @@ export class ImportHistoryService {
 			});
 
 			if (existingJob) {
-				const existingData = parseTraktImportData(existingJob.data);
-				const existingProfile = buildProfileFromJobData(existingData);
-				return {
-					profile: existingProfile,
-					previewItems: [],
-					sourcePreviewCount: 0,
-					job: mapTraktImportJob(existingJob),
-				};
+				return this.mapExistingTraktImport(existingJob);
 			}
 
 			const preview = await this.traktApi.fetchPreview(normalizedUsername);
-			const job = await this.prisma.backgroundJob.create({
-				data: {
-					type: TRAKT_IMPORT_JOB_TYPE,
-					userDid,
-					status: "queued",
-					nextRunAt: new Date(),
-					data: buildTraktImportData({
-						traktUsername: normalizedUsername,
-						profileUsername: preview.profile.username,
-						profileSlug: preview.profile.slug,
-						profileName: preview.profile.name,
-						profileAvatarUrl: preview.profile.avatarUrl,
-					}),
-				},
-			});
+			let job: NonNullable<BackgroundJobRecord>;
+			try {
+				job = await this.prisma.backgroundJob.create({
+					data: {
+						type: TRAKT_IMPORT_JOB_TYPE,
+						userDid,
+						status: "queued",
+						nextRunAt: new Date(),
+						data: buildTraktImportData({
+							traktUsername: normalizedUsername,
+							profileUsername: preview.profile.username,
+							profileSlug: preview.profile.slug,
+							profileName: preview.profile.name,
+							profileAvatarUrl: preview.profile.avatarUrl,
+						}),
+					},
+				});
+			} catch (error) {
+				if (!isUniqueConstraintError(error)) {
+					throw error;
+				}
+
+				const winningJob = await this.findLatestTraktImportJob(userDid, {
+					statuses: [
+						...ACTIVE_TRAKT_JOB_STATUSES,
+						"paused",
+						"completed",
+						"failed",
+					],
+				});
+				if (!winningJob) {
+					throw error;
+				}
+				return this.mapExistingTraktImport(winningJob);
+			}
 
 			return {
 				profile: preview.profile,
@@ -267,6 +299,18 @@ export class ImportHistoryService {
 		} catch (error) {
 			throw toPublicTraktException(error);
 		}
+	}
+
+	private mapExistingTraktImport(
+		job: NonNullable<BackgroundJobRecord>,
+	): StartTraktImportResponseDto {
+		const data = parseTraktImportData(job.data);
+		return {
+			profile: buildProfileFromJobData(data),
+			previewItems: [],
+			sourcePreviewCount: 0,
+			job: mapTraktImportJob(job),
+		};
 	}
 
 	async getCurrentTraktImport(
@@ -285,52 +329,104 @@ export class ImportHistoryService {
 
 	async pauseTraktImport(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		if (ACTIVE_TRAKT_JOB_STATUSES.includes(job.status as TraktJobStatus)) {
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: { status: "paused", nextRunAt: new Date() },
-			});
-		}
+		await this.persistTraktStatusControl(job.id, "pause");
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
 	async resumeTraktImport(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		if (job.status === "paused" || job.status === "failed") {
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: {
-					status: "queued",
-					nextRunAt: new Date(),
-					lastError: null,
-					completedAt: null,
-				},
-			});
-		}
+		await this.persistTraktStatusControl(job.id, "resume");
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
 	async acknowledgeTraktImport(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		const data = parseTraktImportData(job.data);
-		await this.prisma.backgroundJob.update({
-			where: { id: job.id },
-			data: { data: { ...data, acknowledgedAt: new Date().toISOString() } },
+		await this.persistTraktControl(job.id, {
+			acknowledgedAt: new Date().toISOString(),
 		});
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
 	async snoozeTraktReminder(userDid: string): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		const data = parseTraktImportData(job.data);
 		const reminderSnoozedUntil = new Date(
 			Date.now() + 7 * 24 * 60 * 60 * 1000,
 		).toISOString();
-		await this.prisma.backgroundJob.update({
-			where: { id: job.id },
-			data: { data: { ...data, reminderSnoozedUntil } },
-		});
+		await this.persistTraktControl(job.id, { reminderSnoozedUntil });
 		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
+	private async persistTraktStatusControl(
+		jobId: string,
+		action: "pause" | "resume",
+	): Promise<void> {
+		for (let attempt = 0; attempt < TRAKT_JOB_CAS_RETRIES; attempt += 1) {
+			const latest = await this.prisma.backgroundJob.findUnique({
+				where: { id: jobId },
+			});
+			if (!latest) {
+				throw new NotFoundException("Trakt import job not found");
+			}
+			const applicable =
+				action === "pause"
+					? ACTIVE_TRAKT_JOB_STATUSES.includes(latest.status as TraktJobStatus)
+					: latest.status === "paused" || latest.status === "failed";
+			if (!applicable) {
+				return;
+			}
+
+			const result = await this.prisma.backgroundJob.updateMany({
+				where: {
+					id: jobId,
+					updatedAt: latest.updatedAt,
+					status: latest.status,
+				},
+				data:
+					action === "pause"
+						? { status: "paused", nextRunAt: new Date() }
+						: {
+								status: "queued",
+								nextRunAt: new Date(),
+								lastError: null,
+								completedAt: null,
+							},
+			});
+			if (result.count === 1) {
+				return;
+			}
+		}
+
+		throw new TraktJobCasError(
+			`Could not ${action} Trakt import job ${jobId} after ${TRAKT_JOB_CAS_RETRIES} concurrent updates.`,
+		);
+	}
+
+	private async persistTraktControl(
+		jobId: string,
+		control: Pick<
+			TraktImportJobData,
+			"acknowledgedAt" | "reminderSnoozedUntil"
+		>,
+	): Promise<void> {
+		for (let attempt = 0; attempt < TRAKT_JOB_CAS_RETRIES; attempt += 1) {
+			const latest = await this.prisma.backgroundJob.findUnique({
+				where: { id: jobId },
+			});
+			if (!latest) {
+				throw new NotFoundException("Trakt import job not found");
+			}
+			const result = await this.prisma.backgroundJob.updateMany({
+				where: { id: jobId, updatedAt: latest.updatedAt },
+				data: { data: { ...parseTraktImportData(latest.data), ...control } },
+			});
+			if (result.count === 1) {
+				return;
+			}
+		}
+
+		throw new Error(
+			`Could not persist Trakt import controls for ${jobId} after ${TRAKT_JOB_CAS_RETRIES} concurrent updates.`,
+		);
 	}
 
 	/**
@@ -876,14 +972,34 @@ export class ImportHistoryService {
 			return;
 		}
 
-		await this.prisma.backgroundJob.update({
-			where: { id: job.id },
+		const claim = await this.prisma.backgroundJob.updateMany({
+			where: {
+				id: job.id,
+				updatedAt: job.updatedAt,
+				status: { in: ACTIVE_TRAKT_JOB_STATUSES },
+				nextRunAt: { lte: new Date() },
+			},
 			data: {
 				status: "running",
 				startedAt: job.startedAt ?? new Date(),
 				lastError: null,
 			},
 		});
+		if (claim.count === 0) {
+			const current = await this.prisma.backgroundJob.findUnique({
+				where: { id: job.id },
+			});
+			if (
+				current &&
+				ACTIVE_TRAKT_JOB_STATUSES.includes(current.status as TraktJobStatus) &&
+				current.nextRunAt <= new Date()
+			) {
+				this.logger.debug(
+					`Lost the claim race for Trakt import job ${job.id}; leaving its newer state untouched.`,
+				);
+			}
+			return;
+		}
 
 		try {
 			const pageResult = await this.traktApi.fetchHistoryPage(
@@ -970,25 +1086,21 @@ export class ImportHistoryService {
 				);
 			}
 
-			await this.prisma.backgroundJob.update({
-				where: { id: job.id },
-				data: {
-					status: isComplete
-						? "completed"
-						: lowBudget
-							? "waiting_retry"
-							: "running",
-					data: updatedData,
-					lastError: lowBudget
-						? `Pausing so your account stays under its PDS write limit. Retrying in ${formatRetryDelay(throttleSeconds)}.`
-						: null,
-					nextRunAt: isComplete
-						? new Date()
-						: lowBudget
-							? new Date(Date.now() + throttleSeconds * 1000)
-							: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),
-					completedAt: isComplete ? new Date() : null,
-				},
+			await this.persistTraktWorkerState(job.id, updatedData, {
+				status: isComplete
+					? "completed"
+					: lowBudget
+						? "waiting_retry"
+						: "running",
+				lastError: lowBudget
+					? `Pausing so your account stays under its PDS write limit. Retrying in ${formatRetryDelay(throttleSeconds)}.`
+					: null,
+				nextRunAt: isComplete
+					? new Date()
+					: lowBudget
+						? new Date(Date.now() + throttleSeconds * 1000)
+						: new Date(Date.now() + TRAKT_PAGE_DELAY_MS),
+				completedAt: isComplete ? new Date() : null,
 			});
 		} catch (error) {
 			if (error instanceof PdsRateLimitError) {
@@ -1002,13 +1114,11 @@ export class ImportHistoryService {
 				this.logger.warn(
 					`PDS rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s.`,
 				);
-				await this.prisma.backgroundJob.update({
-					where: { id: job.id },
-					data: {
-						status: "waiting_retry",
-						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
-						lastError: `PDS rate limit reached. Retrying in ${formatRetryDelay(retryAfterSeconds)}.`,
-					},
+				await this.persistTraktWorkerState(job.id, undefined, {
+					status: "waiting_retry",
+					nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
+					lastError: `PDS rate limit reached. Retrying in ${formatRetryDelay(retryAfterSeconds)}.`,
+					completedAt: null,
 				});
 				return;
 			}
@@ -1026,15 +1136,16 @@ export class ImportHistoryService {
 				this.logger.warn(
 					`Trakt rate limit reached for job ${job.id}. Retrying in ${retryAfterSeconds}s (attempt ${retryCount + 1}).`,
 				);
-				await this.prisma.backgroundJob.update({
-					where: { id: job.id },
-					data: {
+				await this.persistTraktWorkerState(
+					job.id,
+					{ ...jobData, rateLimitRetries: retryCount + 1 },
+					{
 						status: "waiting_retry",
-						data: { ...jobData, rateLimitRetries: retryCount + 1 },
 						nextRunAt: new Date(Date.now() + retryAfterSeconds * 1000),
 						lastError: `Trakt rate limit reached. Retrying in ${formatRetryDelay(retryAfterSeconds)}.`,
+						completedAt: null,
 					},
-				});
+				);
 				return;
 			}
 
@@ -1051,17 +1162,64 @@ export class ImportHistoryService {
 		jobId: string,
 		message?: string,
 	): Promise<void> {
-		await this.prisma.backgroundJob.update({
-			where: { id: jobId },
-			data: {
-				status: "failed",
-				lastError:
-					message ||
-					"Trakt import failed. Please retry later or use CSV import.",
-				completedAt: new Date(),
-				nextRunAt: new Date(),
-			},
+		await this.persistTraktWorkerState(jobId, undefined, {
+			status: "failed",
+			lastError:
+				message || "Trakt import failed. Please retry later or use CSV import.",
+			completedAt: new Date(),
+			nextRunAt: new Date(),
 		});
+	}
+
+	private async persistTraktWorkerState(
+		jobId: string,
+		workerData: TraktImportJobData | undefined,
+		workerState: Omit<TraktJobPersistence, "data">,
+	): Promise<void> {
+		for (let attempt = 0; attempt < TRAKT_JOB_CAS_RETRIES; attempt += 1) {
+			const latest = await this.prisma.backgroundJob.findUnique({
+				where: { id: jobId },
+			});
+			if (!latest) {
+				return;
+			}
+
+			const latestData = parseTraktImportData(latest.data);
+			const mergedData = workerData
+				? {
+						...workerData,
+						acknowledgedAt: latestData.acknowledgedAt,
+						reminderSnoozedUntil: latestData.reminderSnoozedUntil,
+					}
+				: latestData;
+			const paused = latest.status === "paused";
+			const terminal =
+				latest.status === "completed" || latest.status === "failed";
+			if (terminal && latest.status !== workerState.status) {
+				return;
+			}
+
+			const state: TraktJobPersistence = paused
+				? {
+						status: "paused",
+						data: mergedData,
+						nextRunAt: latest.nextRunAt,
+						lastError: latest.lastError,
+						completedAt: latest.completedAt,
+					}
+				: { ...workerState, data: mergedData };
+			const result = await this.prisma.backgroundJob.updateMany({
+				where: { id: jobId, updatedAt: latest.updatedAt },
+				data: state,
+			});
+			if (result.count === 1) {
+				return;
+			}
+		}
+
+		throw new TraktJobCasError(
+			`Could not persist Trakt import job ${jobId} after ${TRAKT_JOB_CAS_RETRIES} concurrent updates.`,
+		);
 	}
 
 	private async alreadyImported(

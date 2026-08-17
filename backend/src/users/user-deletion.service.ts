@@ -21,8 +21,10 @@ import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
+	TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
 	TRAKT_IMPORT_JOB_TYPE,
 	buildAccountDeletionData,
 	parseAccountDeletionData,
@@ -48,7 +50,7 @@ const DELETION_BATCH_SIZE = 200;
 
 // Ordered PDS deletion steps. Resume picks up at the persisted currentStep and
 // skips earlier steps entirely (their records are already gone — re-deleting is
-// a no-op via isRecordMissingError, but skipping avoids needless PDS calls).
+// a no-op via isAtprotoRecordMissingError, but skipping avoids needless PDS calls).
 const PDS_DELETION_STEPS = [
 	"movies",
 	"episodes",
@@ -84,17 +86,31 @@ export class UserDeletionService {
 			throw new NotFoundException("User not found");
 		}
 
-		await this.prisma.backgroundJob.deleteMany({
-			where: { userDid: did, type: TRAKT_IMPORT_JOB_TYPE },
-		});
-
-		await this.prisma.user.delete({
-			where: { did },
-		});
-
 		// Revoke the OAuth session too — it lives in a standalone table (no FK
 		// cascade), so deleting the user alone leaves a live session behind.
 		await this.authService.revoke(did);
+
+		await this.deleteLocalAccount(did);
+	}
+
+	private async deleteLocalAccount(did: string): Promise<void> {
+		// Revocation happens before entering this helper. Keep Trakt history and the
+		// user in one transaction so a failed User delete cannot strand a live
+		// account after its durable import ledger was removed.
+		await this.prisma.$transaction([
+			this.prisma.backgroundJob.deleteMany({
+				where: {
+					userDid: did,
+					type: {
+						in: [
+							TRAKT_IMPORT_JOB_TYPE,
+							TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
+						],
+					},
+				},
+			}),
+			this.prisma.user.delete({ where: { did } }),
+		]);
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
@@ -172,7 +188,7 @@ export class UserDeletionService {
 	/**
 	 * Reset deletion jobs orphaned in "running" by a crash back to a re-pickable
 	 * state. Resume is idempotent: PDS deletes for already-removed records are
-	 * no-ops (isRecordMissingError), and resume continues from the persisted
+	 * no-ops (isAtprotoRecordMissingError), and resume continues from the persisted
 	 * currentStep. Crucially this also un-wedges the user: createDeletionJob's
 	 * Conflict guard counts the job as active (waiting_retry is an active
 	 * status), but the worker can now pick it up again instead of it sitting in
@@ -274,17 +290,10 @@ export class UserDeletionService {
 				},
 			});
 
-			// Durable Trakt outcomes live for the account lifetime. Remove the Trakt
-			// job explicitly here (its item/match rows cascade) while preserving this
-			// account-deletion job until the worker has finished cleanly.
-			await this.prisma.backgroundJob.deleteMany({
-				where: { userDid: job.userDid, type: TRAKT_IMPORT_JOB_TYPE },
-			});
-			await this.prisma.user.delete({ where: { did: job.userDid } });
-
 			// Revoke the OAuth session (standalone table, no FK cascade) so a
 			// deleted account doesn't leave a live session behind.
 			await this.authService.revoke(job.userDid);
+			await this.deleteLocalAccount(job.userDid);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error(
@@ -309,7 +318,7 @@ export class UserDeletionService {
 	 * Resumes from jobData.currentStep: earlier steps are skipped (their records
 	 * are already deleted). Within a step we re-list/re-query each tick and rely
 	 * on idempotency — tryDeleteRecord treats missing records as success
-	 * (isRecordMissingError), so re-running deletes nothing twice.
+	 * (isAtprotoRecordMissingError), so re-running deletes nothing twice.
 	 *
 	 * Returns true when all PDS steps are complete, false when the per-tick
 	 * budget was exhausted and the caller should yield and reschedule.
@@ -606,7 +615,7 @@ export class UserDeletionService {
 				rkey,
 			});
 		} catch (error) {
-			if (this.isRecordMissingError(error)) {
+			if (isAtprotoRecordMissingError(error)) {
 				return;
 			}
 			throw new Error(`${warnPrefix}: ${this.getErrorMessage(error)}`, {
@@ -672,26 +681,6 @@ export class UserDeletionService {
 			);
 			return null;
 		}
-	}
-
-	private isRecordMissingError(error: unknown): boolean {
-		if (!error || typeof error !== "object") {
-			return false;
-		}
-
-		const candidate = error as {
-			error?: string;
-			status?: number;
-			message?: string;
-		};
-
-		return (
-			candidate.status === 404 ||
-			candidate.error === "RecordNotFound" ||
-			candidate.message?.includes("RecordNotFound") === true ||
-			candidate.message?.includes("Delete target record does not exist") ===
-				true
-		);
 	}
 
 	private getErrorMessage(error: unknown): string {

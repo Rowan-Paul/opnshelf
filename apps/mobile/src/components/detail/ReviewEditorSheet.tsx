@@ -120,6 +120,7 @@ export function ReviewEditorSheet({
 	const hasBody = markdown.trim().length > 0;
 	const hasTitle = title.trim().length > 0;
 	const needsTitle = hasBody && !hasTitle;
+	const needsBody = hasTitle && !hasBody;
 	// The WYSIWYG editor has no hard maxLength, so enforce the cap on the
 	// serialized markdown here (mirrors the web ReviewDialog).
 	const overLimit = markdown.length > MAX_LENGTH;
@@ -204,12 +205,17 @@ export function ReviewEditorSheet({
 
 						<TextField
 							variant="subtle"
+							label="Title *"
 							value={title}
 							onChangeText={setTitle}
 							placeholder="Review title"
+							accessibilityLabel="Review title, required"
 							maxLength={300}
 						/>
 
+						<Text className="font-medium text-foreground text-sm">
+							Review *
+						</Text>
 						<MilkdownWebView
 							key={openCount}
 							value={initialMarkdown}
@@ -220,6 +226,10 @@ export function ReviewEditorSheet({
 							{needsTitle ? (
 								<Text className="text-destructive text-xs">
 									A title is required when you write a review.
+								</Text>
+							) : needsBody ? (
+								<Text className="text-destructive text-xs">
+									A review body is required before you can save.
 								</Text>
 							) : (
 								<View />

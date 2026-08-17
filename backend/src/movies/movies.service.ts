@@ -1,6 +1,7 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	$nsid as COLLECTION,
 	main as movieSchema,
@@ -309,7 +310,8 @@ export class MoviesService {
 
 	/**
 	 * Unmark a movie as watched by deleting AT Protocol record(s) from the user's PDS.
-	 * Database cleanup happens via the firehose ingester or optimistic update in controller.
+	 * Local cleanup follows each confirmed or idempotent PDS deletion. The
+	 * firehose remains the fallback if that best-effort cleanup fails.
 	 * @param mode - 'latest' removes most recent watch, 'all' removes all watches
 	 */
 	async unmarkWatched(
@@ -329,7 +331,7 @@ export class MoviesService {
 				orderBy: { watchedDate: "desc" },
 			});
 
-			// Delete all records from PDS
+			let firstFailure: unknown;
 			for (const tracked of trackedMovies) {
 				try {
 					await agent.com.atproto.repo.deleteRecord({
@@ -337,11 +339,17 @@ export class MoviesService {
 						collection: COLLECTION,
 						rkey: tracked.rkey,
 					});
-					this.logger.log(
-						`Deleted AT record for movie ${movieId} with rkey ${tracked.rkey}`,
-					);
-				} catch {}
+				} catch (error) {
+					if (!isAtprotoRecordMissingError(error)) {
+						firstFailure ??= error;
+						continue;
+					}
+				}
+
+				await this.removeTrackedMovieAfterPdsDelete(userDid, tracked.rkey);
 			}
+
+			if (firstFailure) throw firstFailure;
 
 			return { movieId, mode, deletedCount: trackedMovies.length };
 		} else {
@@ -356,11 +364,17 @@ export class MoviesService {
 			}
 
 			// Delete from PDS
-			await agent.com.atproto.repo.deleteRecord({
-				repo: session.did,
-				collection: COLLECTION,
-				rkey: latestWatch.rkey,
-			});
+			try {
+				await agent.com.atproto.repo.deleteRecord({
+					repo: session.did,
+					collection: COLLECTION,
+					rkey: latestWatch.rkey,
+				});
+			} catch (error) {
+				if (!isAtprotoRecordMissingError(error)) throw error;
+			}
+
+			await this.removeTrackedMovieAfterPdsDelete(userDid, latestWatch.rkey);
 
 			this.logger.log(
 				`Deleted AT record for movie ${movieId} with rkey ${latestWatch.rkey}`,
@@ -419,40 +433,17 @@ export class MoviesService {
 		});
 	}
 
-	/**
-	 * Remove all tracked movies for a user and movie.
-	 * Called by controller after successful PDS delete for immediate user feedback.
-	 */
-	async removeAllTrackedMovies(userDid: string, movieId: string) {
-		await this.prisma.trackedMovie.deleteMany({
-			where: {
-				userDid,
-				movieId,
-			},
-		});
-	}
-
-	/**
-	 * Remove the latest tracked movie for a user and movie.
-	 * Called by controller after successful PDS delete for immediate user feedback.
-	 */
-	async removeLatestTrackedMovie(userDid: string, movieId: string) {
-		const latest = await this.prisma.trackedMovie.findFirst({
-			where: {
-				userDid,
-				movieId,
-			},
-			orderBy: {
-				watchedDate: "desc",
-			},
-		});
-
-		if (latest) {
-			await this.prisma.trackedMovie.delete({
-				where: {
-					id: latest.id,
-				},
-			});
+	private async removeTrackedMovieAfterPdsDelete(
+		userDid: string,
+		rkey: string,
+	): Promise<void> {
+		try {
+			await this.prisma.trackedMovie.deleteMany({ where: { userDid, rkey } });
+		} catch (error) {
+			this.logger.warn(
+				{ err: error instanceof Error ? error.message : String(error) },
+				"Failed to optimistically remove tracked movie; firehose will catch it",
+			);
 		}
 	}
 

@@ -12,6 +12,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
 import { ReviewBody } from "#/components/ReviewBody";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { StatsStrip } from "#/components/StatsStrip";
@@ -316,6 +317,7 @@ function ProfileReviewCard({
 			title={review.mediaLabel || "Unknown"}
 			meta={review.reviewTitle}
 		>
+			<ReviewAuthorRating rating={review.authorRating} />
 			{review.markdown && (
 				<div className="text-(--foreground-muted) text-sm leading-relaxed">
 					{/* The whole card links to the review, so "Read more" is a cue. */}

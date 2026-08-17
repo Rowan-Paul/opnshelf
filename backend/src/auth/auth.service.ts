@@ -14,6 +14,7 @@ import {
 } from "@atproto/oauth-client-node";
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
 	buildOAuthScope,
@@ -366,9 +367,15 @@ export class AuthService implements OnModuleInit {
 	/**
 	 * Start the OAuth flow targeting a specific PDS directly.
 	 * The PDS's built-in authorization page supports both sign-in and account creation.
+	 * @param prompt pass "create" for signup; omit it for sign-in
+	 * @param sso optionally send sign-in straight to an enabled SSO provider
 	 * @returns The authorization URL to redirect the user to the PDS
 	 */
-	async authorizeWithPds(appState?: OAuthAppState): Promise<string> {
+	async authorizeWithPds(
+		appState?: OAuthAppState,
+		prompt?: "create",
+		sso?: "google",
+	): Promise<string> {
 		const client = this.getBaseClient();
 		const pdsUrl = this.configService.get<string>("PDS_URL");
 		if (!pdsUrl) {
@@ -376,9 +383,13 @@ export class AuthService implements OnModuleInit {
 		}
 		const url = await client.authorize(pdsUrl, {
 			scope: OAUTH_SCOPE,
-			prompt: "create",
+			// Without `create` the PDS shows its sign-in page instead of its signup
+			// form, which is what a returning user who doesn't know their handle (or
+			// who signed up with Google) needs.
+			...(prompt && { prompt }),
 			state: this.serializeOAuthAppState(appState),
 		});
+		if (sso) url.searchParams.set("sso", sso);
 		return url.toString();
 	}
 
@@ -715,6 +726,127 @@ export class AuthService implements OnModuleInit {
 	}
 
 	/**
+	 * Trade a Google `id_token` for a pending PDS registration.
+	 *
+	 * `POST /oauth/sso/register-token` is our own addition to the Tranquil fork.
+	 * The PDS verifies the token against Google's JWKS itself (signature,
+	 * audience, issuer, expiry), so opnshelf can never assert an identity it
+	 * hasn't proven. The returned token is what `completeSsoRegistration` spends.
+	 */
+	async startSsoRegistration(
+		idToken: string,
+		requestUri: string,
+	): Promise<{
+		token: string | null;
+		email: string | null;
+		emailVerified: boolean;
+		providerUsername: string | null;
+		redirectUrl: string | null;
+	}> {
+		const data = (await this.pdsSsoPost("register-token", {
+			provider: "google",
+			id_token: idToken,
+			request_uri: requestUri,
+		})) as {
+			token?: string | null;
+			email?: string | null;
+			emailVerified?: boolean;
+			providerUsername?: string | null;
+			redirectUrl?: string | null;
+		};
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		return {
+			token: data.token ?? null,
+			email: data.email ?? null,
+			emailVerified: data.emailVerified === true,
+			providerUsername: data.providerUsername ?? null,
+			redirectUrl:
+				data.redirectUrl && pdsUrl
+					? new URL(data.redirectUrl, pdsUrl).toString()
+					: null,
+		};
+	}
+
+	/**
+	 * Spend a pending SSO registration: this is what actually creates the account.
+	 *
+	 * We deliberately send no `email`. The PDS then falls back to the email the
+	 * provider reported, which is the only value its auto-verify check accepts
+	 * (it compares character for character). Sending our own copy would risk a
+	 * mismatch that drops the user onto an emailed code Tranquil cannot send.
+	 *
+	 * A registration bound to Core OAuth returns its consent redirect. Legacy
+	 * standalone registrations may additionally return session JWTs.
+	 */
+	async completeSsoRegistration(params: {
+		token: string;
+		handle: string;
+		inviteCode: string;
+	}): Promise<{
+		did: string;
+		handle: string;
+		redirectUrl: string;
+		accessJwt: string | null;
+		refreshJwt: string | null;
+	}> {
+		const data = (await this.pdsSsoPost("complete-registration", {
+			token: params.token,
+			handle: params.handle,
+			invite_code: params.inviteCode,
+		})) as {
+			did: string;
+			handle: string;
+			redirectUrl: string;
+			accessJwt?: string;
+			refreshJwt?: string;
+		};
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
+		return {
+			did: data.did,
+			handle: data.handle,
+			redirectUrl: new URL(data.redirectUrl, pdsUrl).toString(),
+			accessJwt: data.accessJwt ?? null,
+			refreshJwt: data.refreshJwt ?? null,
+		};
+	}
+
+	/**
+	 * POST to one of the PDS's `/oauth/sso/*` endpoints. These are plain JSON
+	 * routes, not XRPC, and need no auth — the invite code is the only gate.
+	 *
+	 * Errors are rethrown in the `{ error, message }` shape the rest of the
+	 * signup path already maps to HTTP responses.
+	 */
+	private async pdsSsoPost(
+		path: string,
+		body: Record<string, unknown>,
+	): Promise<unknown> {
+		const pdsUrl = this.configService.get<string>("PDS_URL");
+		if (!pdsUrl) {
+			throw new Error("PDS_URL not configured");
+		}
+		const res = await fetch(`${pdsUrl}/oauth/sso/${path}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
+			signal: AbortSignal.timeout(30_000),
+		});
+		const data = await res.json().catch(() => null);
+		if (!res.ok) {
+			const parsed = (data ?? {}) as { error?: string; message?: string };
+			throw {
+				status: res.status,
+				error: parsed.error ?? "PdsSsoRequestFailed",
+				message: parsed.message ?? `sso/${path} failed (${res.status})`,
+			};
+		}
+		return data;
+	}
+
+	/**
 	 * Persist a credential session (createAccount tokens) so the guard can
 	 * resume it on subsequent requests. Stored alongside OAuth sessions in the
 	 * same table, discriminated by `kind`.
@@ -1020,7 +1152,9 @@ export class AuthService implements OnModuleInit {
 	 * @returns how many sessions were revoked (0 = not this user's device)
 	 */
 	async revokeDevice(userDid: string, deviceId: string): Promise<number> {
-		return this.revokeWhere({ userDid, deviceId });
+		return this.revokeWhere(
+			Prisma.sql`"userDid" = ${userDid} AND "deviceId" = ${deviceId}`,
+		);
 	}
 
 	/** Revoke every device except the one making the request. */
@@ -1028,25 +1162,26 @@ export class AuthService implements OnModuleInit {
 		userDid: string,
 		currentSessionId: string,
 	): Promise<number> {
-		return this.revokeWhere({ userDid, id: { not: currentSessionId } });
+		return this.revokeWhere(
+			Prisma.sql`"userDid" = ${userDid} AND "id" <> ${currentSessionId}`,
+		);
 	}
 
-	private async revokeWhere(
-		where: { userDid: string } & Record<string, unknown>,
-	): Promise<number> {
-		const doomed = await this.prisma.authSession.findMany({
-			where,
-			select: { id: true },
-		});
-		if (doomed.length === 0) return 0;
-		const { count } = await this.prisma.authSession.deleteMany({
-			where: { id: { in: doomed.map((row) => row.id) } },
-		});
+	private async revokeWhere(predicate: Prisma.Sql): Promise<number> {
+		// PostgreSQL returns exactly the rows deleted by this statement, closing the
+		// find-then-delete window where a newly inserted session could survive.
+		const doomed = await this.prisma.$queryRaw<
+			Array<{ id: string }>
+		>(Prisma.sql`
+			DELETE FROM "AuthSession"
+			WHERE ${predicate}
+			RETURNING "id"
+		`);
 		for (const row of doomed) {
 			this.oauthClients.delete(row.id);
 			this.credentialSessions.delete(row.id);
 		}
-		return count;
+		return doomed.length;
 	}
 
 	/**
@@ -1054,25 +1189,15 @@ export class AuthService implements OnModuleInit {
 	 * deletion / bulk revoke.
 	 * @param did - User's DID
 	 */
-	async revoke(did: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { userDid: did } });
-		} catch (error) {
-			this.logger.error(`Failed to revoke session for ${did}`, error);
-		}
+	async revoke(did: string): Promise<number> {
+		return this.revokeWhere(Prisma.sql`"userDid" = ${did}`);
 	}
 
 	/**
 	 * Revoke session by opaque id (cookie value). Used on logout.
 	 */
-	async revokeBySessionId(sessionId: string) {
-		try {
-			await this.prisma.authSession.deleteMany({ where: { id: sessionId } });
-			this.oauthClients.delete(sessionId);
-			this.credentialSessions.delete(sessionId);
-		} catch (error) {
-			this.logger.error("Failed to revoke session by id", error);
-		}
+	async revokeBySessionId(sessionId: string): Promise<number> {
+		return this.revokeWhere(Prisma.sql`"id" = ${sessionId}`);
 	}
 
 	/**
@@ -1318,8 +1443,22 @@ export class AuthService implements OnModuleInit {
 		}
 		const constraintFields = (meta as { constraint?: { fields?: unknown } })
 			.constraint?.fields;
-		return Array.isArray(constraintFields)
-			? constraintFields.includes("handle")
+		if (Array.isArray(constraintFields)) {
+			return constraintFields.includes("handle");
+		}
+
+		// Prisma's JS driver adapters wrap the database cause one level deeper:
+		// meta.driverAdapterError.cause.constraint.fields. This is the production
+		// shape emitted by @prisma/adapter-pg for P2002 errors.
+		const adapterConstraintFields = (
+			meta as {
+				driverAdapterError?: {
+					cause?: { constraint?: { fields?: unknown } };
+				};
+			}
+		).driverAdapterError?.cause?.constraint?.fields;
+		return Array.isArray(adapterConstraintFields)
+			? adapterConstraintFields.includes("handle")
 			: false;
 	}
 

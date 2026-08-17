@@ -593,6 +593,80 @@
         ]
       }
     },
+    "/auth/google/start": {
+      "get": {
+        "operationId": "AuthController_googleStart",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google"
+          }
+        },
+        "summary": "Start a Google-backed signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleCallback",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to the handle picker"
+          }
+        },
+        "summary": "Google OAuth callback for signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/register": {
+      "post": {
+        "operationId": "AuthController_googleRegister",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleRegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Google signup was not started"
+          },
+          "403": {
+            "description": "Captcha verification failed"
+          },
+          "409": {
+            "description": "Username already taken"
+          },
+          "429": {
+            "description": "Too many signup attempts"
+          }
+        },
+        "summary": "Create an account from a verified Google identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/suggestions": {
       "get": {
         "operationId": "AuthController_suggestions",
@@ -6042,6 +6116,48 @@
           "sessionId"
         ]
       },
+      "GoogleRegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz",
+            "example": "jane"
+          },
+          "captchaToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token proving the request is human"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          }
+        },
+        "required": [
+          "username",
+          "captchaToken"
+        ]
+      },
+      "GoogleRegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "coreOAuthUrl": {
+            "type": "string",
+            "description": "Where to send the browser next: the PDS consent page for the OAuth request bound to this registration"
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "coreOAuthUrl"
+        ]
+      },
       "PermissionChangeDto": {
         "type": "object",
         "properties": {
@@ -8831,6 +8947,11 @@
           "hasLiked": {
             "type": "boolean",
             "description": "Whether the requesting user has liked this review"
+          },
+          "authorRating": {
+            "type": "number",
+            "description": "The author's own rating for this exact media item, joined from the separate Rating entity.",
+            "nullable": true
           },
           "createdAt": {
             "type": "string"

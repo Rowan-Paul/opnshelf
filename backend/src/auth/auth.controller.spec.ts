@@ -19,6 +19,7 @@ vi.mock("@atproto/tap", () => ({
 
 import { IngesterService } from "../ingester/ingester.service";
 import { CaptchaService } from "../pds/captcha.service";
+import { GoogleOAuthService } from "../pds/google-oauth.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { UsersService } from "../users/users.service";
 import { AuthController } from "./auth.controller";
@@ -48,6 +49,8 @@ describe("AuthController", () => {
 		confirmEmailWithCode: Mock;
 		resendEmailConfirmation: Mock;
 		markEmailVerified: Mock;
+		startSsoRegistration: Mock;
+		completeSsoRegistration: Mock;
 	} = {
 		getClientMetadata: vi.fn(),
 		authorize: vi.fn(),
@@ -69,6 +72,8 @@ describe("AuthController", () => {
 		confirmEmailWithCode: vi.fn().mockResolvedValue(true),
 		resendEmailConfirmation: vi.fn().mockResolvedValue(undefined),
 		markEmailVerified: vi.fn().mockResolvedValue(undefined),
+		startSsoRegistration: vi.fn(),
+		completeSsoRegistration: vi.fn(),
 	};
 
 	const mockIngesterService = {
@@ -86,6 +91,12 @@ describe("AuthController", () => {
 
 	const mockCaptcha = {
 		verify: vi.fn().mockResolvedValue(true),
+	};
+
+	const mockGoogleOAuth = {
+		configured: true,
+		buildAuthUrl: vi.fn().mockReturnValue("https://accounts.google.com/o/auth"),
+		exchangeCode: vi.fn().mockResolvedValue("id-token"),
 	};
 
 	const mockConfigService = {
@@ -136,6 +147,7 @@ describe("AuthController", () => {
 				{ provide: UsersService, useValue: mockUsersService },
 				{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
 				{ provide: CaptchaService, useValue: mockCaptcha },
+				{ provide: GoogleOAuthService, useValue: mockGoogleOAuth },
 			],
 		}).compile();
 
@@ -333,7 +345,7 @@ describe("AuthController", () => {
 				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.objectContaining({
 					httpOnly: true,
@@ -1211,15 +1223,15 @@ describe("AuthController", () => {
 				undefined,
 				{ emailVerified: true, isNativePds: false },
 			);
-			// In test/dev mode, domain should not be set
+			// The session cookie is host-only in every environment.
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.not.objectContaining({ domain: expect.any(String) }),
 			);
 		});
 
-		it("should set domain in production", async () => {
+		it("should keep the session cookie host-only in production", async () => {
 			// Override to production config
 			mockConfigService.get.mockImplementation((key: string) => {
 				const config: Record<string, string> = {
@@ -1254,12 +1266,16 @@ describe("AuthController", () => {
 				{ emailVerified: true, isNativePds: false },
 			);
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"session-123",
 				expect.objectContaining({
 					secure: true,
-					domain: "opnshelf.xyz",
 				}),
+			);
+			expect(res.cookie).toHaveBeenCalledWith(
+				"opnshelf_session",
+				"session-123",
+				expect.not.objectContaining({ domain: expect.any(String) }),
 			);
 		});
 	});
@@ -1322,7 +1338,7 @@ describe("AuthController", () => {
 			);
 			expect(mockAuthService.createCredentialSession).toHaveBeenCalled();
 			expect(res.cookie).toHaveBeenCalledWith(
-				"session",
+				"opnshelf_session",
 				"sess-1",
 				expect.objectContaining({ httpOnly: true }),
 			);
@@ -1379,6 +1395,216 @@ describe("AuthController", () => {
 					),
 				),
 			).toBe(429);
+		});
+	});
+
+	describe("google signup", () => {
+		const account = {
+			did: "did:plc:jane",
+			handle: "jane.opnshelf.xyz",
+			redirectUrl:
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
+			accessJwt: "a",
+			refreshJwt: "r",
+		};
+
+		beforeEach(() => {
+			mockConfigService.get.mockImplementation((key: string) => {
+				const config: Record<string, string> = {
+					FRONTEND_URL: "http://127.0.0.1:3000",
+					NODE_ENV: "test",
+					PDS_HANDLE_DOMAIN: "opnshelf.xyz",
+				};
+				return config[key];
+			});
+			mockCaptcha.verify.mockResolvedValue(true);
+			mockGoogleOAuth.configured = true;
+			mockGoogleOAuth.exchangeCode.mockResolvedValue("id-token");
+			mockTranquilAdmin.mintInviteCode.mockResolvedValue("invite-code");
+			mockAuthService.startSsoRegistration.mockResolvedValue({
+				token: "pending-tok",
+				email: "jane@gmail.com",
+				emailVerified: true,
+				providerUsername: "Jane Doe",
+				redirectUrl: null,
+			});
+			mockAuthService.completeSsoRegistration.mockResolvedValue(account);
+			mockAuthService.authorizeWithPds.mockResolvedValue(
+				"https://opnshelf.social/oauth/authorize?request_uri=urn%3Arequest",
+			);
+		});
+
+		const captureStatus = async (promise: Promise<unknown>) => {
+			try {
+				await promise;
+				return undefined;
+			} catch (error) {
+				return (error as HttpException).getStatus();
+			}
+		};
+
+		it("parks the pending token and sends the user to the handle picker", async () => {
+			const req = createMockRequest({ cookies: { google_state: "st" } });
+			const res = createMockResponse();
+
+			await controller.googleCallback("code", "st", undefined, req, res);
+
+			expect(mockAuthService.startSsoRegistration).toHaveBeenCalledWith(
+				"id-token",
+				"urn:request",
+			);
+
+			expect(res.cookie).toHaveBeenCalledWith(
+				"google_pending",
+				"pending-tok",
+				expect.objectContaining({ httpOnly: true }),
+			);
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup/google?email=jane%40gmail.com&suggested=jane-doe",
+			);
+		});
+
+		it("refuses a callback whose state doesn't match the cookie", async () => {
+			const req = createMockRequest({ cookies: { google_state: "st" } });
+			const res = createMockResponse();
+
+			await controller.googleCallback("code", "other", undefined, req, res);
+
+			expect(mockGoogleOAuth.exchangeCode).not.toHaveBeenCalled();
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup?error=google_failed",
+			);
+		});
+
+		it("stops before creating anything when Google hasn't verified the email", async () => {
+			mockAuthService.startSsoRegistration.mockResolvedValue({
+				token: "pending-tok",
+				email: "jane@gmail.com",
+				emailVerified: false,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+			const req = createMockRequest({ cookies: { google_state: "st" } });
+			const res = createMockResponse();
+
+			await controller.googleCallback("code", "st", undefined, req, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup?error=google_email_unverified",
+			);
+		});
+
+		it("signs a returning Google user in instead of erroring", async () => {
+			mockAuthService.startSsoRegistration.mockResolvedValue({
+				token: null,
+				email: "jane@gmail.com",
+				emailVerified: true,
+				providerUsername: "Jane Doe",
+				redirectUrl:
+					"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
+			});
+			const req = createMockRequest({ cookies: { google_state: "st" } });
+			const res = createMockResponse();
+
+			await controller.googleCallback("code", "st", undefined, req, res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
+			);
+			// It must never park a pending registration for an account that exists.
+			expect(res.cookie).not.toHaveBeenCalledWith(
+				"google_pending",
+				expect.anything(),
+				expect.anything(),
+			);
+		});
+
+		it("creates the account verified and hands into Core OAuth", async () => {
+			const req = createMockRequest({
+				ip: "2.2.2.1",
+				headers: {},
+				cookies: { google_pending: "pending-tok" },
+			});
+			const res = createMockResponse();
+
+			const result = await controller.googleRegister(
+				{ username: "Jane", captchaToken: "tok", timezone: "Europe/Amsterdam" },
+				req,
+				res,
+			);
+
+			// No email is sent: the PDS reuses the provider's, which is the only
+			// value its auto-verify comparison accepts.
+			expect(mockAuthService.completeSsoRegistration).toHaveBeenCalledWith({
+				token: "pending-tok",
+				handle: "jane.opnshelf.xyz",
+				inviteCode: "invite-code",
+			});
+			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
+				expect.objectContaining({ did: account.did }),
+				"Europe/Amsterdam",
+				{ isNativePds: true, emailVerified: true },
+			);
+			expect(result).toEqual({
+				did: account.did,
+				handle: account.handle,
+				coreOAuthUrl: account.redirectUrl,
+			});
+			expect(res.cookie).toHaveBeenCalledWith(
+				"auth_timezone",
+				"Europe/Amsterdam",
+				expect.objectContaining({ httpOnly: true }),
+			);
+		});
+
+		it("rejects with 400 when there is no pending Google signup", async () => {
+			const req = createMockRequest({
+				ip: "2.2.2.2",
+				headers: {},
+				cookies: {},
+			});
+			const res = createMockResponse();
+
+			expect(
+				await captureStatus(
+					controller.googleRegister(
+						{ username: "jane", captchaToken: "tok" },
+						req,
+						res,
+					),
+				),
+			).toBe(400);
+			expect(mockTranquilAdmin.mintInviteCode).not.toHaveBeenCalled();
+		});
+
+		it("frees the unused invite code when the handle is taken", async () => {
+			mockAuthService.completeSsoRegistration.mockRejectedValue(
+				Object.assign(new Error("taken"), { error: "HandleNotAvailable" }),
+			);
+			const req = createMockRequest({
+				ip: "2.2.2.3",
+				headers: {},
+				cookies: { google_pending: "pending-tok" },
+			});
+			const res = createMockResponse();
+
+			expect(
+				await captureStatus(
+					controller.googleRegister(
+						{ username: "jane", captchaToken: "tok" },
+						req,
+						res,
+					),
+				),
+			).toBe(409);
+			expect(mockTranquilAdmin.disableInviteCodes).toHaveBeenCalledWith([
+				"invite-code",
+			]);
+			// The pending token survives so the user can retry another username.
+			expect(res.clearCookie).not.toHaveBeenCalledWith(
+				"google_pending",
+				expect.anything(),
+			);
 		});
 	});
 });

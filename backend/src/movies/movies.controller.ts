@@ -262,21 +262,6 @@ export class MoviesController {
 			movieId,
 			mode,
 		);
-
-		// Optimistic update: remove from local DB so user sees their changes immediately
-		// If this fails, the firehose ingester will catch it later
-		try {
-			if (mode === "all") {
-				await this.moviesService.removeAllTrackedMovies(user.did, movieId);
-			} else {
-				await this.moviesService.removeLatestTrackedMovie(user.did, movieId);
-			}
-		} catch (err: unknown) {
-			this.logger.warn(
-				{ err: err instanceof Error ? err.message : String(err) },
-				"Failed to optimistically remove from DB; firehose will catch it",
-			);
-		}
 	}
 
 	@Get(":movieId")
