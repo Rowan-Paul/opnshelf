@@ -228,7 +228,7 @@ export type GoogleRegisterResponseDto = {
     did: string;
     handle: string;
     /**
-     * Where to send the browser next: the PDS authorization page that grants opnshelf its scopes and triggers seeding
+     * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
      */
     coreOAuthUrl: string;
 };
