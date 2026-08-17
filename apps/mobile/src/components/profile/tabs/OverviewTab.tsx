@@ -12,6 +12,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
+import { ProfileReviewRating } from "@/components/profile/ProfileReviewRating";
 import type { ProfileTab } from "@/components/profile/ProfileTabBar";
 import { StatsStrip } from "@/components/profile/StatsStrip";
 import { ReviewBody } from "@/components/ReviewBody";
@@ -209,6 +210,9 @@ export function OverviewTab({
 								href={mediaHref({ ...review, reviewId: review.id })}
 								title={review.mediaLabel || "Unknown"}
 								meta={review.reviewTitle}
+								headerRight={
+									<ProfileReviewRating authorRating={review.authorRating} />
+								}
 							>
 								{review.markdown ? (
 									<ReviewBody

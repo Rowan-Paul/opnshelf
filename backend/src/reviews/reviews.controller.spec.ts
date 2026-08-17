@@ -22,12 +22,14 @@ vi.mock("../auth/optional-auth.guard", () => ({
 describe("ReviewsController", () => {
 	let controller: ReviewsController;
 	let mockReviewsService: {
+		getUserReviews: Mock;
 		getMediaReviews: Mock;
 		retryBlueskyCrossPost: Mock;
 	};
 
 	beforeEach(async () => {
 		mockReviewsService = {
+			getUserReviews: vi.fn(),
 			getMediaReviews: vi.fn(),
 			retryBlueskyCrossPost: vi.fn(),
 		};
@@ -38,6 +40,39 @@ describe("ReviewsController", () => {
 		}).compile();
 
 		controller = module.get<ReviewsController>(ReviewsController);
+	});
+
+	it("maps the author's rating onto profile reviews", async () => {
+		mockReviewsService.getUserReviews.mockResolvedValue({
+			items: [
+				{
+					id: "r1",
+					rkey: "rkey1",
+					title: "Great film",
+					markdown: "It was great.",
+					spoiler: false,
+					mediaType: "movie",
+					mediaId: "123",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					likeCount: 2,
+					hasLiked: false,
+					authorRating: 8,
+					createdAt: new Date("2026-01-01"),
+					updatedAt: new Date("2026-01-02"),
+				},
+			],
+			nextCursor: null,
+			total: 1,
+		});
+
+		const result = await controller.getUserReviews(
+			"did:plc:alice",
+			{} as never,
+			{ user: { did: "did:plc:viewer" } } as never,
+		);
+
+		expect(result.items[0].authorRating).toBe(8);
 	});
 
 	it("builds the canonical reviewUrl as /reviews/{handle}/{rkey}", async () => {

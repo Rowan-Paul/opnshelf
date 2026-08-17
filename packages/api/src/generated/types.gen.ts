@@ -1463,6 +1463,10 @@ export type UserReviewDto = {
      * Whether the requesting user has liked this review
      */
     hasLiked: boolean;
+    /**
+     * The author's own rating for this exact media item, joined from the separate Rating entity.
+     */
+    authorRating?: number | null;
     createdAt: string;
     updatedAt: string;
 };

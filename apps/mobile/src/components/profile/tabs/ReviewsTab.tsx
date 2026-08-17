@@ -14,6 +14,7 @@ import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
+import { ProfileReviewRating } from "@/components/profile/ProfileReviewRating";
 import { ReviewBody } from "@/components/ReviewBody";
 import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { useDialog } from "@/components/ui/dialog";
@@ -243,33 +244,39 @@ function ReviewCard({
 				title={review.mediaLabel || "Unknown"}
 				meta={new Date(review.createdAt).toLocaleDateString()}
 				headerRight={
-					isOwner ? (
-						<View className="flex-row gap-1">
-							<Pressable
-								hitSlop={8}
-								onPress={(e) => {
-									e.stopPropagation();
-									setEditorVisible(true);
-								}}
-								className="size-8 items-center justify-center rounded-md"
-							>
-								<Pencil color="#6b7280" size={16} />
-							</Pressable>
-							<Pressable
-								hitSlop={8}
-								disabled={deleteMutation.isPending}
-								onPress={(e) => {
-									e.stopPropagation();
-									confirmDelete();
-								}}
-								className="size-8 items-center justify-center rounded-md"
-							>
-								{deleteMutation.isPending ? (
-									<ActivityIndicator size="small" color="#ef4444" />
-								) : (
-									<Trash2 color="#ef4444" size={16} />
-								)}
-							</Pressable>
+					isOwner ||
+					(review.authorRating != null && review.authorRating > 0) ? (
+						<View className="flex-row items-center gap-2">
+							<ProfileReviewRating authorRating={review.authorRating} />
+							{isOwner ? (
+								<View className="flex-row gap-1">
+									<Pressable
+										hitSlop={8}
+										onPress={(e) => {
+											e.stopPropagation();
+											setEditorVisible(true);
+										}}
+										className="size-8 items-center justify-center rounded-md"
+									>
+										<Pencil color="#6b7280" size={16} />
+									</Pressable>
+									<Pressable
+										hitSlop={8}
+										disabled={deleteMutation.isPending}
+										onPress={(e) => {
+											e.stopPropagation();
+											confirmDelete();
+										}}
+										className="size-8 items-center justify-center rounded-md"
+									>
+										{deleteMutation.isPending ? (
+											<ActivityIndicator size="small" color="#ef4444" />
+										) : (
+											<Trash2 color="#ef4444" size={16} />
+										)}
+									</Pressable>
+								</View>
+							) : null}
 						</View>
 					) : undefined
 				}

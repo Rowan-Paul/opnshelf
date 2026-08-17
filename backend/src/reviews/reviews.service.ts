@@ -755,6 +755,47 @@ export class ReviewsService {
 			where: { userDid },
 		});
 
+		// A profile page can mix movies, shows, seasons, and episodes. Fetch the
+		// user's separate Ratings in one query, matching every review by its exact
+		// media coordinates.
+		const ratingCoordinates = Array.from(
+			new Map(
+				items.map((review) => {
+					const coordinates = {
+						mediaType: review.mediaType,
+						mediaId: review.mediaId,
+						seasonNumber: review.seasonNumber ?? 0,
+						episodeNumber: review.episodeNumber ?? 0,
+					};
+					return [JSON.stringify(coordinates), coordinates] as const;
+				}),
+			).values(),
+		);
+		const ratings =
+			ratingCoordinates.length > 0
+				? await this.prisma.rating.findMany({
+						where: { userDid, OR: ratingCoordinates },
+						select: {
+							mediaType: true,
+							mediaId: true,
+							seasonNumber: true,
+							episodeNumber: true,
+							rating: true,
+						},
+					})
+				: [];
+		const ratingByCoordinates = new Map(
+			ratings.map((rating) => [
+				JSON.stringify({
+					mediaType: rating.mediaType,
+					mediaId: rating.mediaId,
+					seasonNumber: rating.seasonNumber,
+					episodeNumber: rating.episodeNumber,
+				}),
+				rating.rating,
+			]),
+		);
+
 		const mediaByReviewId = await this.enrichMediaForReviews(items);
 
 		const enrichedItems = items.map((review) => {
@@ -767,6 +808,15 @@ export class ReviewsService {
 				posterPath: media?.posterPath,
 				likeCount: review._count.likes,
 				hasLiked: requestingUserDid ? review.likes.length > 0 : false,
+				authorRating:
+					ratingByCoordinates.get(
+						JSON.stringify({
+							mediaType: review.mediaType,
+							mediaId: review.mediaId,
+							seasonNumber: review.seasonNumber ?? 0,
+							episodeNumber: review.episodeNumber ?? 0,
+						}),
+					) ?? null,
 			};
 		});
 

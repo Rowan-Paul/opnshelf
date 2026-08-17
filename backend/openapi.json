@@ -8948,6 +8948,11 @@
             "type": "boolean",
             "description": "Whether the requesting user has liked this review"
           },
+          "authorRating": {
+            "type": "number",
+            "description": "The author's own rating for this exact media item, joined from the separate Rating entity.",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string"
           },

@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import ConfirmDialog from "#/components/ConfirmDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
 import { ReviewBody } from "#/components/ReviewBody";
 import { ReviewDialog } from "#/components/ReviewDialog";
 import { SpoilerShield } from "#/components/SpoilerShield";
@@ -209,6 +210,7 @@ function ReviewCard({
 					) : undefined
 				}
 			>
+				<ReviewAuthorRating rating={review.authorRating} />
 				<p className="font-medium text-sm">{review.reviewTitle}</p>
 				{review.markdown && (
 					<div className="text-(--foreground-muted) text-sm leading-relaxed">
