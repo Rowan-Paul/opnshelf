@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import {
 	type WatchHistoryEntry,
@@ -125,6 +125,8 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				: props.mediaType === "season"
 					? actions.isUnmarkSeasonPending
 					: actions.isUnmarkEpisodePending;
+
+	const isPending = isMarkPending || isUnmarkPending;
 
 	// Movies and episodes can hold multiple plays, so they expose a manageable
 	// watch history (list + per-entry delete); shows/seasons stay binary.
@@ -252,15 +254,32 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			<View className="flex-row gap-2">
 				<Pressable
 					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
-					disabled={isMarkPending || isUnmarkPending}
+					disabled={isPending}
+					accessibilityState={{ busy: isPending }}
 					className={
 						isOnShelf
 							? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
 							: "flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
 					}
-					style={{ opacity: isMarkPending || isUnmarkPending ? 0.7 : 1 }}
+					style={{ opacity: isPending ? 0.7 : 1 }}
 				>
-					{isOnShelf ? (
+					{isPending ? (
+						<>
+							<ActivityIndicator
+								size="small"
+								color={isOnShelf ? "#94a3b8" : "#3f2e00"}
+							/>
+							<Text
+								className={
+									isOnShelf
+										? "font-semibold text-foreground"
+										: "font-semibold text-primary-foreground"
+								}
+							>
+								{isUnmarkPending ? "Removing…" : "Adding…"}
+							</Text>
+						</>
+					) : isOnShelf ? (
 						<>
 							<X color="#ef4444" size={18} />
 							<Text className="font-semibold text-foreground">
@@ -279,6 +298,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				{showCalendar ? (
 					<Pressable
 						onPress={() => setDatePickerVisible(true)}
+						disabled={isPending}
 						className="items-center justify-center rounded-lg border border-border px-4"
 					>
 						<Calendar color="#94a3b8" size={20} />
