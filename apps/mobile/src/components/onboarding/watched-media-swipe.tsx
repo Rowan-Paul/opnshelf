@@ -13,9 +13,11 @@ import {
 	Pressable,
 	useWindowDimensions,
 	View,
+	type ViewStyle,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+	Extrapolation,
 	interpolate,
 	useAnimatedStyle,
 	useSharedValue,
@@ -40,6 +42,7 @@ export function WatchedMediaSwipe({
 	onWatched: () => void;
 }) {
 	const { width } = useWindowDimensions();
+	const cardWidth = Math.min(width - 64, 280);
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [index, setIndex] = useState(0);
@@ -142,6 +145,44 @@ export function WatchedMediaSwipe({
 			},
 		],
 	}));
+	const skipFeedbackStyle = useAnimatedStyle(() => ({
+		opacity: interpolate(
+			x.value,
+			[-width * 0.25, -24, 0],
+			[1, 0.35, 0],
+			Extrapolation.CLAMP,
+		),
+		transform: [
+			{
+				scale: interpolate(
+					x.value,
+					[-width * 0.25, -24, 0],
+					[1, 0.9, 0.85],
+					Extrapolation.CLAMP,
+				),
+			},
+			{ rotate: "8deg" },
+		],
+	}));
+	const watchedFeedbackStyle = useAnimatedStyle(() => ({
+		opacity: interpolate(
+			x.value,
+			[0, 24, width * 0.25],
+			[0, 0.35, 1],
+			Extrapolation.CLAMP,
+		),
+		transform: [
+			{
+				scale: interpolate(
+					x.value,
+					[0, 24, width * 0.25],
+					[0.85, 0.9, 1],
+					Extrapolation.CLAMP,
+				),
+			},
+			{ rotate: "-8deg" },
+		],
+	}));
 
 	return (
 		<View className="flex-1 gap-4 pt-1">
@@ -154,7 +195,7 @@ export function WatchedMediaSwipe({
 				</Text>
 			</View>
 
-			<View className="relative min-h-0 flex-1 justify-center">
+			<View className="relative min-h-0 flex-1 items-center justify-center">
 				{discovery.isLoading ? <ActivityIndicator color="#f3bc00" /> : null}
 				{discovery.isError ? (
 					<View className="items-center gap-3">
@@ -168,46 +209,100 @@ export function WatchedMediaSwipe({
 						>
 							<Text className="font-semibold text-foreground">Try again</Text>
 						</Pressable>
+						<Pressable
+							accessibilityRole="button"
+							onPress={onNext}
+							className="py-2"
+						>
+							<Text className="font-semibold text-muted-foreground">
+								Skip this step
+							</Text>
+						</Pressable>
 					</View>
 				) : null}
 				{next ? (
-					<MediaSwipeCard item={next} className="absolute inset-x-3" />
+					<View className="absolute inset-0 items-center justify-center">
+						<MediaSwipeCard
+							item={next}
+							style={{
+								opacity: 0.6,
+								transform: [{ translateY: 8 }, { scale: 0.96 }],
+								width: cardWidth,
+							}}
+						/>
+					</View>
 				) : null}
 				{current ? (
 					<GestureDetector gesture={gesture}>
-						<Animated.View style={animatedStyle}>
+						<Animated.View style={[{ width: cardWidth }, animatedStyle]}>
 							<MediaSwipeCard item={current} />
+							<Animated.View
+								pointerEvents="none"
+								className="absolute top-5 right-4 flex-row items-center gap-1 rounded-lg border-4 border-red-400 px-3 py-1.5"
+								style={skipFeedbackStyle}
+							>
+								<X color="#f87171" size={20} strokeWidth={3} />
+								<Text className="font-bold text-lg text-red-400">SKIP</Text>
+							</Animated.View>
+							<Animated.View
+								pointerEvents="none"
+								className="absolute top-5 left-4 flex-row items-center gap-1 rounded-lg border-4 border-green-400 px-3 py-1.5"
+								style={watchedFeedbackStyle}
+							>
+								<Check color="#4ade80" size={20} strokeWidth={3} />
+								<Text className="font-bold text-green-400 text-lg">
+									WATCHED
+								</Text>
+							</Animated.View>
 						</Animated.View>
 					</GestureDetector>
 				) : !discovery.isLoading && !discovery.isError ? (
-					<Text className="text-center text-muted-foreground">
-						You reached the end of the deck.
-					</Text>
+					<View className="items-center gap-3 px-6">
+						<View className="size-16 items-center justify-center rounded-full bg-green-500/10">
+							<Check color="#22c55e" size={32} />
+						</View>
+						<Text className="text-center font-bold font-display text-2xl text-foreground">
+							That is the stack
+						</Text>
+						<Text className="text-center text-muted-foreground text-sm">
+							Your picks are now on your Shelf.
+						</Text>
+					</View>
 				) : null}
 			</View>
 
-			<View className="flex-row justify-center gap-5">
-				<ActionButton
-					label="Skip"
-					disabled={!current || moving}
-					onPress={() => void swipe("left")}
-					icon={<X color="#94a3b8" size={25} />}
-				/>
-				<ActionButton
-					label="Watched"
-					disabled={!current || moving}
-					onPress={() => void swipe("right")}
-					icon={<Check color="#3f2e00" size={25} />}
-					primary
-				/>
-			</View>
-			<Pressable
-				accessibilityRole="button"
-				onPress={onNext}
-				className="items-center py-3"
-			>
-				<Text className="font-semibold text-muted-foreground">Continue</Text>
-			</Pressable>
+			{current ? (
+				<View className="flex-row justify-center gap-5">
+					<ActionButton
+						label="Skip"
+						disabled={moving}
+						onPress={() => void swipe("left")}
+						icon={<X color="#94a3b8" size={25} />}
+					/>
+					<ActionButton
+						label="Watched"
+						disabled={moving}
+						onPress={() => void swipe("right")}
+						icon={<Check color="#3f2e00" size={25} />}
+						primary
+					/>
+				</View>
+			) : null}
+			{current || (!discovery.isLoading && !discovery.isError) ? (
+				<Pressable
+					accessibilityRole="button"
+					disabled={moving}
+					onPress={onNext}
+					className={`items-center rounded-lg py-3 ${current ? "" : "bg-primary"}`}
+					style={{ opacity: moving ? 0.5 : 1 }}
+				>
+					<Text
+						className={`font-semibold ${current ? "text-muted-foreground" : "text-primary-foreground"}`}
+					>
+						{current ? "Skip this step" : "Continue"}
+					</Text>
+				</Pressable>
+			) : null}
 		</View>
 	);
 }
@@ -215,9 +310,11 @@ export function WatchedMediaSwipe({
 function MediaSwipeCard({
 	item,
 	className,
+	style,
 }: {
 	item: OnboardingMediaItem;
 	className?: string;
+	style?: ViewStyle;
 }) {
 	return (
 		<View
@@ -225,6 +322,7 @@ function MediaSwipeCard({
 			style={{
 				borderCurve: "continuous",
 				boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
+				...style,
 			}}
 		>
 			<PosterImage
