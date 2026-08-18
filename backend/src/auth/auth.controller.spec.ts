@@ -1,5 +1,9 @@
 import type { Mock, Mocked } from "vitest";
-import { BadRequestException, HttpException } from "@nestjs/common";
+import {
+	BadRequestException,
+	HttpException,
+	UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
@@ -893,7 +897,7 @@ describe("AuthController", () => {
 			).rejects.toThrow(BadRequestException);
 		});
 
-		it("should throw BadRequestException when user not found in DB", async () => {
+		it("should throw UnauthorizedException when user not found in DB", async () => {
 			mockAuthService.getUser.mockResolvedValue(null);
 
 			const req = createMockRequest({
@@ -904,7 +908,7 @@ describe("AuthController", () => {
 				controller.me(
 					req as unknown as import("../auth/types").AuthenticatedRequest,
 				),
-			).rejects.toThrow(BadRequestException);
+			).rejects.toThrow(UnauthorizedException);
 		});
 	});
 

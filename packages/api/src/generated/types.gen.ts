@@ -233,6 +233,25 @@ export type GoogleRegisterResponseDto = {
     coreOAuthUrl: string;
 };
 
+export type ActorSuggestionDto = {
+    /**
+     * The actor's DID
+     */
+    did: string;
+    /**
+     * The actor's handle
+     */
+    handle: string;
+    /**
+     * The actor's display name, if set
+     */
+    displayName: string | null;
+    /**
+     * URL of the actor's avatar, if set
+     */
+    avatar: string | null;
+};
+
 export type PermissionChangeDto = {
     integration: 'atstore' | 'blog' | 'bluesky';
     action: 'connect' | 'disconnect';
@@ -2671,7 +2690,7 @@ export type AuthControllerSuggestionsData = {
         /**
          * Search query (handle prefix)
          */
-        q: unknown;
+        q: string;
     };
     url: '/auth/suggestions';
 };
@@ -2680,8 +2699,10 @@ export type AuthControllerSuggestionsResponses = {
     /**
      * Array of actor suggestions
      */
-    200: unknown;
+    200: Array<ActorSuggestionDto>;
 };
+
+export type AuthControllerSuggestionsResponse = AuthControllerSuggestionsResponses[keyof AuthControllerSuggestionsResponses];
 
 export type AuthControllerCallbackData = {
     body?: never;

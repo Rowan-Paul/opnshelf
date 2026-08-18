@@ -1,3 +1,5 @@
+import { authControllerSuggestionsOptions } from "@opnshelf/api";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -5,13 +7,16 @@ import {
 	useSearch,
 } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
 import { env } from "#/env";
+import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
+import { nextIndex } from "#/lib/list-navigation";
 
 export const Route = createFileRoute("/login")({
 	head: () => ({
@@ -24,11 +29,30 @@ function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSignupLoading, setIsSignupLoading] = useState(false);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(-1);
 	const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
 	const message = (search as { message?: string }).message;
 	const error = (search as { error?: string }).error;
+	const inputAreaRef = useRef<HTMLDivElement>(null);
+
+	const debouncedHandle = useDebounce(handle, 300).trim();
+	const suggestionsQuery = useQuery({
+		...authControllerSuggestionsOptions({ query: { q: debouncedHandle } }),
+		enabled: debouncedHandle.length >= 2,
+		// Keep the previous query's rows on screen while the next one loads, so
+		// typing dims the list instead of replacing it with a spinner.
+		placeholderData: keepPreviousData,
+	});
+	const suggestions = suggestionsQuery.data ?? [];
+	// Only the very first search has nothing to show, so that is the only time a
+	// spinner beats stale rows.
+	const isSearchingEmpty =
+		suggestionsQuery.isFetching && suggestions.length === 0;
+	const shouldShowSuggestions = showSuggestions && debouncedHandle.length >= 2;
+	const listId = "handle-suggestions";
 
 	// Redirect if already authenticated
 	useEffect(() => {
@@ -36,6 +60,21 @@ function LoginPage() {
 			navigate({ to: "/" });
 		}
 	}, [isAuthenticated, navigate]);
+
+	// Close the suggestions dropdown on outside clicks
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				inputAreaRef.current &&
+				!inputAreaRef.current.contains(e.target as Node)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
 
 	// Surface OAuth failures the backend redirects back with, then strip the
 	// param so a refresh doesn't re-toast.
@@ -57,6 +96,11 @@ function LoginPage() {
 		return <LoadingState />;
 	}
 
+	const startLogin = (loginHandle: string) => {
+		setIsLoading(true);
+		login(loginHandle);
+	};
+
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const trimmed = handle.trim();
@@ -75,6 +119,14 @@ function LoginPage() {
 			// Network error — let the backend handle it
 		}
 		login(trimmed);
+	};
+
+	// A picked suggestion is a known-resolvable handle, so skip the resolve
+	// pre-check and go straight to OAuth.
+	const handleSuggestionPick = (actorHandle: string) => {
+		setHandle(actorHandle);
+		setShowSuggestions(false);
+		startLogin(actorHandle);
 	};
 
 	const handleSignup = () => {
@@ -113,15 +165,108 @@ function LoginPage() {
 							>
 								Your Handle
 							</label>
-							<input
-								id="handle"
-								type="text"
-								placeholder="username.bsky.social"
-								value={handle}
-								onChange={(e) => setHandle(e.target.value)}
-								className="input"
-								disabled={isLoading}
-							/>
+							<div ref={inputAreaRef} className="relative">
+								<input
+									id="handle"
+									type="text"
+									placeholder="username.bsky.social"
+									value={handle}
+									onChange={(e) => {
+										setHandle(e.target.value);
+										setShowSuggestions(true);
+										// Typing changes the result set, so the old highlight is
+										// meaningless. Start over from nothing highlighted.
+										setActiveIndex(-1);
+									}}
+									onFocus={() => setShowSuggestions(true)}
+									onKeyDown={(e) => {
+										if (e.key === "Escape") {
+											setShowSuggestions(false);
+											setActiveIndex(-1);
+											return;
+										}
+										if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+											// Stop the caret jumping to either end of the input.
+											e.preventDefault();
+											setShowSuggestions(true);
+											setActiveIndex((current) =>
+												nextIndex(
+													current,
+													suggestions.length,
+													e.key === "ArrowDown" ? 1 : -1,
+												),
+											);
+											return;
+										}
+										// Enter on a highlighted row picks it. With nothing
+										// highlighted the form submits the typed handle as before.
+										if (e.key === "Enter" && activeIndex >= 0) {
+											const actor = suggestions[activeIndex];
+											if (actor) {
+												e.preventDefault();
+												handleSuggestionPick(actor.handle);
+											}
+										}
+									}}
+									className="input"
+									disabled={isLoading}
+									autoComplete="off"
+									role="combobox"
+									aria-expanded={shouldShowSuggestions}
+									aria-controls={listId}
+									aria-autocomplete="list"
+									aria-activedescendant={
+										activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined
+									}
+								/>
+								{shouldShowSuggestions &&
+									(isSearchingEmpty || suggestions.length > 0) && (
+										<div
+											id={listId}
+											role="listbox"
+											className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg"
+										>
+											{isSearchingEmpty ? (
+												<div className="flex items-center justify-center gap-2 p-4 text-(--foreground-muted) text-sm">
+													<Loader2 className="size-4 animate-spin" />
+													Searching...
+												</div>
+											) : (
+												suggestions.map((actor, index) => (
+													<button
+														key={actor.did}
+														id={`${listId}-${index}`}
+														type="button"
+														role="option"
+														aria-selected={index === activeIndex}
+														ref={(el) => {
+															if (index === activeIndex) {
+																el?.scrollIntoView({ block: "nearest" });
+															}
+														}}
+														onClick={() => handleSuggestionPick(actor.handle)}
+														onMouseEnter={() => setActiveIndex(index)}
+														className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index === activeIndex ? "bg-(--background-subtle)" : ""} ${suggestionsQuery.isFetching ? "opacity-60 transition-opacity" : ""}`}
+													>
+														<UserAvatar
+															src={actor.avatar}
+															alt={actor.displayName || actor.handle}
+															size="sm"
+														/>
+														<div className="min-w-0 flex-1">
+															<div className="truncate font-medium text-sm">
+																{actor.displayName || actor.handle}
+															</div>
+															<div className="truncate text-(--foreground-muted) text-xs">
+																@{actor.handle}
+															</div>
+														</div>
+													</button>
+												))
+											)}
+										</div>
+									)}
+							</div>
 							<p className="mt-1 text-(--foreground-muted) text-xs">
 								Enter your Bluesky or AT Protocol handle
 							</p>
