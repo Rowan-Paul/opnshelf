@@ -42,7 +42,7 @@ function toastBulkResult(
 function captureWatchLogged(
 	mediaType: "movie" | "show",
 	watchScope: "movie" | "episode" | "season" | "show",
-	watchedAt?: string,
+	watchedAt?: string | null,
 	itemsLogged?: number,
 ) {
 	if (itemsLogged === 0) return;
@@ -50,7 +50,8 @@ function captureWatchLogged(
 		media_type: mediaType,
 		watch_scope: watchScope,
 		source: "web",
-		date_kind: watchedAt ? "specified" : "current",
+		date_kind:
+			watchedAt === null ? "undated" : watchedAt ? "specified" : "current",
 		...(itemsLogged === undefined ? {} : { items_logged: itemsLogged }),
 	});
 }

@@ -293,7 +293,8 @@
                   "watchedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Custom watch datetime (ISO 8601)"
+                    "nullable": true,
+                    "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time."
                   }
                 }
               }
@@ -5519,6 +5520,28 @@
         ]
       }
     },
+    "/discover/onboarding": {
+      "get": {
+        "operationId": "DiscoverController_onboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverSectionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Movies and shows for the onboarding swipe deck",
+        "tags": [
+          "discover"
+        ]
+      }
+    },
     "/discover/from-follows": {
       "get": {
         "operationId": "DiscoverController_fromFollows",
@@ -7100,7 +7123,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -7145,7 +7170,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -7179,7 +7206,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [

@@ -4,6 +4,14 @@ type WatchDateFormatOptions = {
 	hour12?: boolean;
 };
 
+/** Resolve an optimistic date without turning an explicit undated Watch into now. */
+export function optimisticWatchDate(
+	watchedAt: string | null | undefined,
+	now: string,
+): string | undefined {
+	return watchedAt === null ? undefined : (watchedAt ?? now);
+}
+
 /**
  * Format a logged watch as a compact date and time. Formatting the two parts
  * separately keeps narrow poster cards from leaving a dangling locale-provided

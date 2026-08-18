@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
+import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -52,6 +53,7 @@ type OnboardingStep =
 	| "preferences"
 	| "trakt"
 	| "suggestions"
+	| "watched"
 	| "done";
 
 function OnboardingPage() {
@@ -60,6 +62,7 @@ function OnboardingPage() {
 	const [step, setStep] = useState<OnboardingStep>("welcome");
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
+	const [watchesAdded, setWatchesAdded] = useState(0);
 	const initialCheckDone = useRef(false);
 
 	// Check for an ongoing Trakt import so we can resume at the trakt step
@@ -143,6 +146,12 @@ function OnboardingPage() {
 						{step === "suggestions" && (
 							<FollowSuggestionsStep
 								onFollowed={() => setFollowedAnyone(true)}
+								onNext={() => setStep("watched")}
+							/>
+						)}
+						{step === "watched" && (
+							<WatchedSwipeStep
+								onWatched={() => setWatchesAdded((count) => count + 1)}
 								onNext={() => setStep("done")}
 							/>
 						)}
@@ -150,6 +159,7 @@ function OnboardingPage() {
 							<DoneStep
 								followedAnyone={followedAnyone}
 								importStarted={importStarted}
+								watchesAdded={watchesAdded}
 							/>
 						)}
 					</>
@@ -688,7 +698,7 @@ function TraktStep({
 }
 
 /* ------------------------------------------------------------------
-   Step 4: Follow Suggestions
+   Step 5: Follow Suggestions
    ------------------------------------------------------------------ */
 function FollowSuggestionsStep({
 	onNext,
@@ -801,14 +811,16 @@ function FollowSuggestionsStep({
 }
 
 /* ------------------------------------------------------------------
-   Step 5: Done
+   Step 7: Done
    ------------------------------------------------------------------ */
 function DoneStep({
 	importStarted,
 	followedAnyone,
+	watchesAdded,
 }: {
 	importStarted: boolean;
 	followedAnyone: boolean;
+	watchesAdded: number;
 }) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
@@ -826,6 +838,7 @@ function DoneStep({
 			posthog.capture("onboarding_completed", {
 				import_started: importStarted,
 				followed_anyone: followedAnyone,
+				watches_added: watchesAdded,
 				platform: "web",
 			});
 			const meKey = authControllerMeOptions().queryKey;

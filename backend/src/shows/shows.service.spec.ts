@@ -778,6 +778,29 @@ describe("ShowsService", () => {
 			);
 			expect(result.rkey).toBeDefined();
 		});
+
+		it("omits watchedAt when an undated Watch is requested", async () => {
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.episode/rkey",
+					cid: "cid",
+				},
+			});
+
+			const result = await service.markEpisodeWatched(
+				"did:plc:abc123",
+				{ did: "did:plc:abc123" },
+				"123",
+				1,
+				2,
+				null,
+			);
+
+			expect(result.record).not.toHaveProperty("watchedAt");
+			expect(mockPutRecord.mock.calls[0][0].record).not.toHaveProperty(
+				"watchedAt",
+			);
+		});
 	});
 
 	describe("markSeasonWatched (bulk)", () => {
@@ -864,6 +887,68 @@ describe("ShowsService", () => {
 				mockPrismaService.trackedEpisode.createMany.mock.calls[0][0].data,
 			).toHaveLength(200);
 			expect(result).toEqual({ count: 200, requested: 250 });
+		});
+
+		it("writes and indexes an undated season", async () => {
+			stubTmdb(2);
+			okApplyWrites();
+
+			await service.markSeasonWatched(
+				"did:plc:abc123",
+				mockSession,
+				"123",
+				1,
+				null,
+			);
+
+			for (const write of mockApplyWrites.mock.calls[0][0].writes) {
+				expect(write.value).not.toHaveProperty("watchedAt");
+			}
+			expect(mockPrismaService.trackedEpisode.createMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.arrayContaining([
+						expect.objectContaining({ watchedDate: null }),
+					]),
+				}),
+			);
+		});
+	});
+
+	describe("markShowWatched (bulk)", () => {
+		it("writes and indexes an undated show", async () => {
+			mockFetch.mockResolvedValue({
+				ok: true,
+				json: () =>
+					Promise.resolve({
+						id: 123,
+						name: "Test Show",
+						number_of_seasons: 1,
+						seasons: [],
+						episodes: [{ episode_number: 1 }],
+						results: [],
+					}),
+			});
+			mockApplyWrites.mockResolvedValue({ data: { results: [] }, headers: {} });
+			mockPrismaService.show.upsert.mockResolvedValue({ showId: "123" });
+			mockPrismaService.trackedEpisode.createMany.mockResolvedValue({
+				count: 1,
+			});
+
+			await service.markShowWatched(
+				"did:plc:abc123",
+				{ did: "did:plc:abc123" },
+				"123",
+				null,
+			);
+
+			expect(
+				mockApplyWrites.mock.calls[0][0].writes[0].value,
+			).not.toHaveProperty("watchedAt");
+			expect(mockPrismaService.trackedEpisode.createMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: [expect.objectContaining({ watchedDate: null })],
+				}),
+			);
 		});
 	});
 

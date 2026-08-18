@@ -625,9 +625,9 @@ export type MarkEpisodeWatchedDto = {
      */
     episodeNumber: number;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type EpisodeHistoryItemDto = {
@@ -647,9 +647,9 @@ export type MarkSeasonWatchedDto = {
      */
     seasonNumber: number;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type MarkedEpisodesResponseDto = {
@@ -669,9 +669,9 @@ export type MarkShowWatchedDto = {
      */
     showId: string;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type ProfileActivityDayDto = {
@@ -2412,9 +2412,9 @@ export type MoviesControllerMarkWatchedData = {
          */
         movieId: string;
         /**
-         * Custom watch datetime (ISO 8601)
+         * Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.
          */
-        watchedAt?: string;
+        watchedAt?: string | null;
     };
     path?: never;
     query?: never;
@@ -5419,6 +5419,19 @@ export type DiscoverControllerTrendingResponses = {
 };
 
 export type DiscoverControllerTrendingResponse = DiscoverControllerTrendingResponses[keyof DiscoverControllerTrendingResponses];
+
+export type DiscoverControllerOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/onboarding';
+};
+
+export type DiscoverControllerOnboardingResponses = {
+    200: DiscoverSectionResponseDto;
+};
+
+export type DiscoverControllerOnboardingResponse = DiscoverControllerOnboardingResponses[keyof DiscoverControllerOnboardingResponses];
 
 export type DiscoverControllerFromFollowsData = {
     body?: never;

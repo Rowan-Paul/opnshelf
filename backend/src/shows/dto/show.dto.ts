@@ -411,11 +411,14 @@ export class MarkEpisodeWatchedDto {
 
 	@ApiPropertyOptional({
 		description:
-			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+			"Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+		type: String,
+		format: "date-time",
+		nullable: true,
 	})
 	@IsOptional()
 	@IsDateString()
-	watchedAt?: string;
+	watchedAt?: string | null;
 }
 
 export class EpisodeHistoryItemDto {
@@ -653,11 +656,14 @@ export class MarkSeasonWatchedDto {
 
 	@ApiPropertyOptional({
 		description:
-			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+			"Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+		type: String,
+		format: "date-time",
+		nullable: true,
 	})
 	@IsOptional()
 	@IsDateString()
-	watchedAt?: string;
+	watchedAt?: string | null;
 }
 
 export class MarkShowWatchedDto {
@@ -667,11 +673,14 @@ export class MarkShowWatchedDto {
 
 	@ApiPropertyOptional({
 		description:
-			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+			"Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+		type: String,
+		format: "date-time",
+		nullable: true,
 	})
 	@IsOptional()
 	@IsDateString()
-	watchedAt?: string;
+	watchedAt?: string | null;
 }
 
 export class MarkedEpisodesResponseDto {

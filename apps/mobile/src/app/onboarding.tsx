@@ -18,6 +18,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { UserRow } from "@/components/social/UserRow";
@@ -42,6 +43,7 @@ type OnboardingStep =
 	| "preferences"
 	| "trakt"
 	| "suggestions"
+	| "watches"
 	| "done";
 
 const STEP_SEQUENCE: OnboardingStep[] = [
@@ -50,6 +52,7 @@ const STEP_SEQUENCE: OnboardingStep[] = [
 	"preferences",
 	"trakt",
 	"suggestions",
+	"watches",
 	"done",
 ];
 
@@ -130,6 +133,7 @@ export default function OnboardingScreen() {
 	const [step, setStep] = useState<OnboardingStep>("welcome");
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
+	const [watchesAdded, setWatchesAdded] = useState(0);
 
 	const goBack = useCallback(() => {
 		setStep((current) => {
@@ -208,6 +212,12 @@ export default function OnboardingScreen() {
 				{step === "suggestions" && (
 					<SuggestionsStep
 						onFollowed={() => setFollowedAnyone(true)}
+						onNext={() => setStep("watches")}
+					/>
+				)}
+				{step === "watches" && (
+					<WatchedMediaSwipe
+						onWatched={() => setWatchesAdded((count) => count + 1)}
 						onNext={() => setStep("done")}
 					/>
 				)}
@@ -215,6 +225,7 @@ export default function OnboardingScreen() {
 					<DoneStep
 						followedAnyone={followedAnyone}
 						importStarted={importStarted}
+						watchesAdded={watchesAdded}
 					/>
 				)}
 			</View>
@@ -498,9 +509,11 @@ function SuggestionsStep({
 function DoneStep({
 	importStarted,
 	followedAnyone,
+	watchesAdded,
 }: {
 	importStarted: boolean;
 	followedAnyone: boolean;
+	watchesAdded: number;
 }) {
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
@@ -518,6 +531,7 @@ function DoneStep({
 			posthog?.capture("onboarding_completed", {
 				import_started: importStarted,
 				followed_anyone: followedAnyone,
+				watches_added: watchesAdded,
 				platform: "mobile",
 			});
 			const meKey = authControllerMeQueryKey();

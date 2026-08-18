@@ -20,6 +20,7 @@ interface ActionableMediaCardProps {
 	duration?: string;
 	episodeInfo?: string;
 	watchedDate?: string;
+	undatedWatch?: boolean;
 	seasonNumber?: number;
 	episodeNumber?: number;
 	role?: string;
@@ -46,6 +47,7 @@ export default function ActionableMediaCard({
 	duration,
 	episodeInfo,
 	watchedDate,
+	undatedWatch = false,
 	seasonNumber,
 	episodeNumber,
 	role,
@@ -67,7 +69,9 @@ export default function ActionableMediaCard({
 
 	const formattedWatchedDate = watchedDate
 		? formatDateTime(watchedDate, userTimezone, userTimeFormat)
-		: undefined;
+		: undatedWatch
+			? "No date"
+			: undefined;
 
 	const isMovie = type === "movie";
 	const mediaId = String(id);

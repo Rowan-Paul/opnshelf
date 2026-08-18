@@ -924,20 +924,23 @@ export class ShowsService {
 		showId: string,
 		seasonNumber: number,
 		episodeNumber: number,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 		deterministicRkey?: string,
 	) {
 		const rkey = deterministicRkey ?? TID.nextStr();
 		const now = new Date().toISOString();
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: now;
+		const watchedAt =
+			customWatchedAt === undefined
+				? now
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 		const record: EpisodeRecord = episodeSchema.build({
 			showId,
 			seasonNumber,
 			episodeNumber,
 			source: "tmdb",
-			watchedAt,
+			...(watchedAt === undefined ? {} : { watchedAt }),
 			createdAt: now,
 		});
 		return { rkey, record, collection: COLLECTION };
@@ -949,12 +952,15 @@ export class ShowsService {
 		showId: string,
 		seasonNumber: number,
 		episodeNumber: number,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 	) {
 		const rkey = TID.nextStr();
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: new Date().toISOString();
+		const watchedAt =
+			customWatchedAt === undefined
+				? new Date().toISOString()
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 		const now = new Date().toISOString();
 
 		const record: EpisodeRecord = episodeSchema.build({
@@ -962,7 +968,7 @@ export class ShowsService {
 			seasonNumber,
 			episodeNumber,
 			source: "tmdb",
-			watchedAt,
+			...(watchedAt === undefined ? {} : { watchedAt }),
 			createdAt: now,
 		});
 
@@ -993,7 +999,7 @@ export class ShowsService {
 		showId: string,
 		seasonNumber: number,
 		episodeNumber: number,
-		watchedAt: string,
+		watchedAt: string | undefined,
 	) {
 		const showData = await this.getShowDetails(showId);
 
@@ -1032,7 +1038,7 @@ export class ShowsService {
 				showId: normalizedShowId,
 				seasonNumber,
 				episodeNumber,
-				watchedDate: new Date(watchedAt),
+				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
 			update: {
@@ -1041,7 +1047,7 @@ export class ShowsService {
 				showId: normalizedShowId,
 				seasonNumber,
 				episodeNumber,
-				watchedDate: new Date(watchedAt),
+				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
 			include: { show: true },
@@ -1239,7 +1245,7 @@ export class ShowsService {
 	private async indexWrittenEpisodes(
 		userDid: string,
 		showId: string,
-		watchedAt: string,
+		watchedAt: string | undefined,
 		written: Array<{
 			uri: string;
 			cid: string;
@@ -1258,7 +1264,7 @@ export class ShowsService {
 				showId,
 				seasonNumber: w.seasonNumber,
 				episodeNumber: w.episodeNumber,
-				watchedDate: new Date(watchedAt),
+				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			})),
 			skipDuplicates: true,
@@ -1271,7 +1277,7 @@ export class ShowsService {
 		session: ATSession,
 		showId: string,
 		seasonNumber: number,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 	) {
 		const season = await this.getSeasonDetails(showId, seasonNumber);
 		const episodes = season.episodes || [];
@@ -1281,9 +1287,12 @@ export class ShowsService {
 			return { count: 0, requested: 0 };
 		}
 
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: new Date().toISOString();
+		const watchedAt =
+			customWatchedAt === undefined
+				? new Date().toISOString()
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 		const now = new Date().toISOString();
 
 		const records = episodes.map((episode) => ({
@@ -1293,7 +1302,7 @@ export class ShowsService {
 				seasonNumber,
 				episodeNumber: episode.episode_number,
 				source: "tmdb",
-				watchedAt,
+				...(watchedAt === undefined ? {} : { watchedAt }),
 				createdAt: now,
 			}),
 			seasonNumber,
@@ -1331,14 +1340,17 @@ export class ShowsService {
 		userDid: string,
 		session: ATSession,
 		showId: string,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 	) {
 		const show = await this.getShowDetails(showId);
 		const numberOfSeasons = show.number_of_seasons || 1;
 
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: new Date().toISOString();
+		const watchedAt =
+			customWatchedAt === undefined
+				? new Date().toISOString()
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 
 		const now = new Date().toISOString();
 
@@ -1366,7 +1378,7 @@ export class ShowsService {
 					seasonNumber,
 					episodeNumber: episode.episode_number,
 					source: "tmdb",
-					watchedAt,
+					...(watchedAt === undefined ? {} : { watchedAt }),
 					createdAt: now,
 				}),
 				seasonNumber,

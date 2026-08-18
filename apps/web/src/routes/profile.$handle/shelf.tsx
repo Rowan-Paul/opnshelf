@@ -28,6 +28,7 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
+import { groupShelfItemsByDate } from "#/lib/shelf-sections";
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
@@ -179,17 +180,7 @@ function ProfileShelfPage() {
 	};
 
 	const items = data?.items ?? [];
-	const sections = items.reduce<Array<{ label: string; items: typeof items }>>(
-		(groups, item) => {
-			if (!item.watchedDate) return groups;
-			const label = sectionLabel(item.watchedDate);
-			const group = groups.at(-1);
-			if (group?.label === label) group.items.push(item);
-			else groups.push({ label, items: [item] });
-			return groups;
-		},
-		[],
-	);
+	const sections = groupShelfItemsByDate(items, sectionLabel);
 
 	return (
 		<div className="space-y-6">
@@ -384,6 +375,7 @@ function ShelfWatchCard({
 					: `S${item.seasonNumber}E${item.episodeNumber}${item.episodeTitle ? ` — ${item.episodeTitle}` : ""}`
 			}
 			watchedDate={item.watchedDate}
+			undatedWatch={!item.watchedDate}
 			interactive={false}
 			isWatched
 			onRemove={isOwner ? remove : undefined}

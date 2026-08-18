@@ -25,7 +25,7 @@ type Main = {
   /**
    * When the movie was watched
    */
-  watchedAt: l.DatetimeString
+  watchedAt?: l.DatetimeString
 
   /**
    * Record creation timestamp
@@ -42,7 +42,7 @@ const main = l.record<'tid', Main>(
   l.object({
     movieId: l.string(),
     source: l.string(),
-    watchedAt: l.string({ format: 'datetime' }),
+    watchedAt: l.optional(l.string({ format: 'datetime' })),
     createdAt: l.string({ format: 'datetime' }),
   }),
 )

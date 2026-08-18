@@ -599,12 +599,16 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					cid: evt.cid ?? "",
 					userDid: evt.did,
 					movieId: movieRecord.movieId,
-					watchedDate: new Date(movieRecord.watchedAt),
+					watchedDate: movieRecord.watchedAt
+						? new Date(movieRecord.watchedAt)
+						: null,
 					status: "watched",
 				},
 				update: {
 					cid: evt.cid ?? "",
-					watchedDate: new Date(movieRecord.watchedAt),
+					watchedDate: movieRecord.watchedAt
+						? new Date(movieRecord.watchedAt)
+						: null,
 					status: "watched",
 				},
 			});
@@ -755,14 +759,18 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					showId,
 					seasonNumber: episodeRecord.seasonNumber,
 					episodeNumber: episodeRecord.episodeNumber,
-					watchedDate: new Date(episodeRecord.watchedAt),
+					watchedDate: episodeRecord.watchedAt
+						? new Date(episodeRecord.watchedAt)
+						: null,
 					status: "watched",
 				},
 				update: {
 					cid: evt.cid ?? "",
 					seasonNumber: episodeRecord.seasonNumber,
 					episodeNumber: episodeRecord.episodeNumber,
-					watchedDate: new Date(episodeRecord.watchedAt),
+					watchedDate: episodeRecord.watchedAt
+						? new Date(episodeRecord.watchedAt)
+						: null,
 					status: "watched",
 				},
 			});
