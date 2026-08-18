@@ -677,12 +677,24 @@
             "required": true,
             "in": "query",
             "description": "Search query (handle prefix)",
-            "schema": {}
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Array of actor suggestions"
+            "description": "Array of actor suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActorSuggestionDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Search for actor suggestions by handle prefix",
@@ -6193,6 +6205,35 @@
           "did",
           "handle",
           "coreOAuthUrl"
+        ]
+      },
+      "ActorSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string",
+            "description": "The actor's DID"
+          },
+          "handle": {
+            "type": "string",
+            "description": "The actor's handle"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The actor's display name, if set",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "description": "URL of the actor's avatar, if set",
+            "nullable": true
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "displayName",
+          "avatar"
         ]
       },
       "PermissionChangeDto": {

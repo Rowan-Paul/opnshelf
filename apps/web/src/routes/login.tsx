@@ -1,3 +1,5 @@
+import { authControllerSuggestionsOptions } from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -5,12 +7,14 @@ import {
 	useSearch,
 } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { UserAvatar } from "#/components/following/UserAvatar";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
 import { env } from "#/env";
+import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/login")({
@@ -24,11 +28,21 @@ function LoginPage() {
 	const [handle, setHandle] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSignupLoading, setIsSignupLoading] = useState(false);
+	const [showSuggestions, setShowSuggestions] = useState(false);
 	const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
 	const message = (search as { message?: string }).message;
 	const error = (search as { error?: string }).error;
+	const inputAreaRef = useRef<HTMLDivElement>(null);
+
+	const debouncedHandle = useDebounce(handle, 300).trim();
+	const suggestionsQuery = useQuery({
+		...authControllerSuggestionsOptions({ query: { q: debouncedHandle } }),
+		enabled: debouncedHandle.length >= 2,
+	});
+	const suggestions = suggestionsQuery.data ?? [];
+	const shouldShowSuggestions = showSuggestions && debouncedHandle.length >= 2;
 
 	// Redirect if already authenticated
 	useEffect(() => {
@@ -36,6 +50,21 @@ function LoginPage() {
 			navigate({ to: "/" });
 		}
 	}, [isAuthenticated, navigate]);
+
+	// Close the suggestions dropdown on outside clicks
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				inputAreaRef.current &&
+				!inputAreaRef.current.contains(e.target as Node)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
 
 	// Surface OAuth failures the backend redirects back with, then strip the
 	// param so a refresh doesn't re-toast.
@@ -57,6 +86,11 @@ function LoginPage() {
 		return <LoadingState />;
 	}
 
+	const startLogin = (loginHandle: string) => {
+		setIsLoading(true);
+		login(loginHandle);
+	};
+
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const trimmed = handle.trim();
@@ -75,6 +109,14 @@ function LoginPage() {
 			// Network error — let the backend handle it
 		}
 		login(trimmed);
+	};
+
+	// A picked suggestion is a known-resolvable handle, so skip the resolve
+	// pre-check and go straight to OAuth.
+	const handleSuggestionPick = (actorHandle: string) => {
+		setHandle(actorHandle);
+		setShowSuggestions(false);
+		startLogin(actorHandle);
 	};
 
 	const handleSignup = () => {
@@ -113,15 +155,61 @@ function LoginPage() {
 							>
 								Your Handle
 							</label>
-							<input
-								id="handle"
-								type="text"
-								placeholder="username.bsky.social"
-								value={handle}
-								onChange={(e) => setHandle(e.target.value)}
-								className="input"
-								disabled={isLoading}
-							/>
+							<div ref={inputAreaRef} className="relative">
+								<input
+									id="handle"
+									type="text"
+									placeholder="username.bsky.social"
+									value={handle}
+									onChange={(e) => {
+										setHandle(e.target.value);
+										setShowSuggestions(true);
+									}}
+									onFocus={() => setShowSuggestions(true)}
+									onKeyDown={(e) => {
+										if (e.key === "Escape") {
+											setShowSuggestions(false);
+										}
+									}}
+									className="input"
+									disabled={isLoading}
+									autoComplete="off"
+								/>
+								{shouldShowSuggestions &&
+									(suggestionsQuery.isFetching || suggestions.length > 0) && (
+										<div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg">
+											{suggestionsQuery.isFetching ? (
+												<div className="flex items-center justify-center gap-2 p-4 text-(--foreground-muted) text-sm">
+													<Loader2 className="size-4 animate-spin" />
+													Searching...
+												</div>
+											) : (
+												suggestions.map((actor) => (
+													<button
+														key={actor.did}
+														type="button"
+														onClick={() => handleSuggestionPick(actor.handle)}
+														className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-(--background-subtle)"
+													>
+														<UserAvatar
+															src={actor.avatar}
+															alt={actor.displayName || actor.handle}
+															size="sm"
+														/>
+														<div className="min-w-0 flex-1">
+															<div className="truncate font-medium text-sm">
+																{actor.displayName || actor.handle}
+															</div>
+															<div className="truncate text-(--foreground-muted) text-xs">
+																@{actor.handle}
+															</div>
+														</div>
+													</button>
+												))
+											)}
+										</div>
+									)}
+							</div>
 							<p className="mt-1 text-(--foreground-muted) text-xs">
 								Enter your Bluesky or AT Protocol handle
 							</p>

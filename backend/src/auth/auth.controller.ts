@@ -32,6 +32,7 @@ import { UsersService } from "../users/users.service";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import type { OAuthIntegration, OAuthScopePreferences } from "./oauth-scopes";
+import { ActorSuggestionDto } from "./dto/actor-suggestion.dto";
 import { BlueskyProfileStatusDto } from "./dto/bluesky-profile-status.dto";
 import { DeviceDto, RevokeDevicesResponseDto } from "./dto/device.dto";
 import {
@@ -772,13 +773,17 @@ export class AuthController {
 	@ApiQuery({
 		name: "q",
 		required: true,
+		type: String,
 		description: "Search query (handle prefix)",
 	})
 	@ApiResponse({
 		status: 200,
 		description: "Array of actor suggestions",
+		type: [ActorSuggestionDto],
 	})
-	async suggestions(@Query("q") query: string | undefined) {
+	async suggestions(
+		@Query("q") query: string | undefined,
+	): Promise<ActorSuggestionDto[]> {
 		if (!query || query.trim().length < 2) {
 			return [];
 		}
