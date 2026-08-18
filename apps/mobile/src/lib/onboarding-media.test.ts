@@ -1,6 +1,10 @@
 import { onboardingDiscoveryOptions } from "@opnshelf/api";
 import { describe, expect, it } from "vitest";
-import { isSwipeAccepted, toOnboardingMediaItem } from "./onboarding-media";
+import {
+	isSwipeAccepted,
+	onboardingCardWidth,
+	toOnboardingMediaItem,
+} from "./onboarding-media";
 
 describe("onboarding media", () => {
 	it("uses the shared mixed discovery deck", () => {
@@ -38,5 +42,11 @@ describe("onboarding media", () => {
 		expect(isSwipeAccepted(79, 320)).toBe(false);
 		expect(isSwipeAccepted(80, 320)).toBe(true);
 		expect(isSwipeAccepted(-100, 320)).toBe(true);
+	});
+
+	it("shrinks the card to fit short screens", () => {
+		expect(onboardingCardWidth(375, 667)).toBe(218);
+		expect(onboardingCardWidth(390, 844)).toBe(280);
+		expect(onboardingCardWidth(320, 568)).toBe(184);
 	});
 });

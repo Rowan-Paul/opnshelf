@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/toast";
 import {
 	isSwipeAccepted,
 	type OnboardingMediaItem,
+	onboardingCardWidth,
 	toOnboardingMediaItem,
 } from "@/lib/onboarding-media";
 import { posterUrl } from "@/lib/tmdb";
@@ -41,8 +42,9 @@ export function WatchedMediaSwipe({
 	onNext: () => void;
 	onWatched: () => void;
 }) {
-	const { width } = useWindowDimensions();
-	const cardWidth = Math.min(width - 64, 280);
+	const { height, width } = useWindowDimensions();
+	const compact = height < 720;
+	const cardWidth = onboardingCardWidth(width, height);
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [index, setIndex] = useState(0);
@@ -185,12 +187,16 @@ export function WatchedMediaSwipe({
 	}));
 
 	return (
-		<View className="flex-1 gap-4 pt-1">
-			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+		<View className={`flex-1 pt-1 ${compact ? "gap-2" : "gap-4"}`}>
+			<View className={compact ? "gap-0.5" : "gap-1"}>
+				<Text
+					className={`font-bold font-display text-foreground ${compact ? "text-2xl leading-7" : "text-3xl"}`}
+				>
 					What have you watched?
 				</Text>
-				<Text className="text-muted-foreground text-sm">
+				<Text
+					className={`text-muted-foreground ${compact ? "text-xs leading-4" : "text-sm"}`}
+				>
 					Swipe right to add a title to your Shelf, or left to skip it.
 				</Text>
 			</View>
@@ -224,6 +230,7 @@ export function WatchedMediaSwipe({
 					<View className="absolute inset-0 items-center justify-center">
 						<MediaSwipeCard
 							item={next}
+							compact={compact}
 							style={{
 								opacity: 0.6,
 								transform: [{ translateY: 8 }, { scale: 0.96 }],
@@ -235,7 +242,7 @@ export function WatchedMediaSwipe({
 				{current ? (
 					<GestureDetector gesture={gesture}>
 						<Animated.View style={[{ width: cardWidth }, animatedStyle]}>
-							<MediaSwipeCard item={current} />
+							<MediaSwipeCard item={current} compact={compact} />
 							<Animated.View
 								pointerEvents="none"
 								className="absolute top-5 right-4 flex-row items-center gap-1 rounded-lg border-4 border-red-400 px-3 py-1.5"
@@ -275,12 +282,14 @@ export function WatchedMediaSwipe({
 				<View className="flex-row justify-center gap-5">
 					<ActionButton
 						label="Skip"
+						compact={compact}
 						disabled={moving}
 						onPress={() => void swipe("left")}
 						icon={<X color="#94a3b8" size={25} />}
 					/>
 					<ActionButton
 						label="Watched"
+						compact={compact}
 						disabled={moving}
 						onPress={() => void swipe("right")}
 						icon={<Check color="#3f2e00" size={25} />}
@@ -310,10 +319,12 @@ export function WatchedMediaSwipe({
 function MediaSwipeCard({
 	item,
 	className,
+	compact,
 	style,
 }: {
 	item: OnboardingMediaItem;
 	className?: string;
+	compact?: boolean;
 	style?: ViewStyle;
 }) {
 	return (
@@ -329,10 +340,10 @@ function MediaSwipeCard({
 				url={posterUrl(item.posterPath, "w500")}
 				className="aspect-2/3 w-full"
 			/>
-			<View className="gap-2 p-4">
+			<View className={compact ? "gap-1 p-3" : "gap-2 p-4"}>
 				<View className="flex-row items-start justify-between gap-3">
 					<Text
-						className="min-w-0 flex-1 font-bold font-display text-foreground text-xl"
+						className={`min-w-0 flex-1 font-bold font-display text-foreground ${compact ? "text-lg" : "text-xl"}`}
 						numberOfLines={2}
 					>
 						{item.title}
@@ -346,7 +357,9 @@ function MediaSwipeCard({
 						</View>
 					) : null}
 				</View>
-				<Text className="text-muted-foreground text-sm">
+				<Text
+					className={`text-muted-foreground ${compact ? "text-xs" : "text-sm"}`}
+				>
 					{item.type === "movie" ? "Movie" : "Show"}
 					{item.year ? ` · ${item.year}` : ""}
 				</Text>
@@ -359,12 +372,14 @@ function ActionButton({
 	label,
 	icon,
 	primary,
+	compact,
 	disabled,
 	onPress,
 }: {
 	label: string;
 	icon: React.ReactNode;
 	primary?: boolean;
+	compact?: boolean;
 	disabled: boolean;
 	onPress: () => void;
 }) {
@@ -374,7 +389,7 @@ function ActionButton({
 			accessibilityLabel={label}
 			disabled={disabled}
 			onPress={onPress}
-			className={`size-16 items-center justify-center rounded-full border ${primary ? "border-primary bg-primary" : "border-border bg-card"}`}
+			className={`${compact ? "size-14" : "size-16"} items-center justify-center rounded-full border ${primary ? "border-primary bg-primary" : "border-border bg-card"}`}
 			style={{ opacity: disabled ? 0.5 : 1 }}
 		>
 			{icon}
