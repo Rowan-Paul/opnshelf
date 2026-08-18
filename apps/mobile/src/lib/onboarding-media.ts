@@ -30,3 +30,14 @@ export function toOnboardingMediaItem(
 export function isSwipeAccepted(translationX: number, width: number) {
 	return Math.abs(translationX) >= width * 0.25;
 }
+
+/** Keep the full card between the onboarding header and controls. */
+export function onboardingCardWidth(
+	viewportWidth: number,
+	viewportHeight: number,
+) {
+	const heightConstrainedWidth = Math.floor(
+		Math.max(184, (viewportHeight - 340) / 1.5),
+	);
+	return Math.min(viewportWidth - 64, 280, heightConstrainedWidth);
+}
